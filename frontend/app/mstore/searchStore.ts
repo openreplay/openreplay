@@ -570,7 +570,6 @@ class SearchStore {
     let filter = this.instance.toSearch();
     filter = this.applyTagFilter(filter, this.activeTags);
     filter = this.applyDurationFilter(filter);
-
     this.latestRequestTime = filter.startDate;
     this.latestList = List();
     this.searchInProgress = true;
@@ -594,43 +593,27 @@ class SearchStore {
       return filter;
     }
 
-    // const tagFilter = filterStore.findEvent({
-    //   name: FilterKey.ISSUE,
-    //   autoCaptured: true,
-    // });
-
-    // if (!tagFilter) {
-    //   console.error('Tag filter not found');
-    //   return filter;
-    // }
-
-    const issueFilter = {
-      isEvent: true,
-      name: FilterKey.ISSUE,
+    const tagFilter = filterStore.findEvent({
+      name: 'issue',
+      isEvent: false,
       autoCaptured: true,
-      value: [],
-      operator: 'is',
-      propertyOrder: 'and',
-      filters: [
-        {
-          isEvent: false,
-          name: 'issue_type',
-          autoCaptured: true,
-          dataType: 'string',
-          operator: 'is',
-          value: [activeTags[0]],
-        },
-      ],
-    };
+    });
+
+    if (!tagFilter) {
+      console.error('Tag filter not found for issue');
+      return filter;
+    }
+
+    tagFilter.value = [activeTags[0]];
 
     return {
       ...filter,
-      filters: [...filter.filters, issueFilter],
+      filters: [...filter.filters, tagFilter.toJson()],
     };
   }
 
   private applyDurationFilter(filter: any): any {
-    if (filter.filters.some((f: any) => f.type === FilterKey.DURATION)) {
+    if (filter.filters.some((f: any) => f.name === FilterKey.DURATION)) {
       return filter;
     }
 
@@ -642,14 +625,17 @@ class SearchStore {
 
     const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
     const amount = durationFilter.count * multiplier;
-    const value = durationFilter.operator === '<' ? [amount, 0] : [0, amount];
+    const value =
+      durationFilter.operator === '<'
+        ? [amount.toString()]
+        : [null, amount.toString()];
 
     const durationFilterConfig = {
-      autoCaptured: false,
-      dataType: 'int',
+      autoCaptured: true,
+      dataType: 'number',
       name: FilterKey.DURATION,
       value,
-      operator: 'is',
+      operator: '=',
     };
 
     return {

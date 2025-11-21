@@ -9,56 +9,127 @@ metadata:
   labels:
     {{- include "http.labels" . | nindent 4 }}
   annotations:
-  {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
+    nginx.org/location-snippets: |
+      # CORS configuration
+      add_header 'Access-Control-Allow-Origin' '*' always;
+      add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS' always;
+      add_header 'Access-Control-Allow-Headers' 'Content-Type,Authorization,Content-Encoding,X-Openreplay-Batch' always;
+      add_header 'Access-Control-Expose-Headers' 'Content-Length' always;
+      
+      # Handle preflight
+      if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Content-Type,Authorization,Content-Encoding,X-Openreplay-Batch' always;
+        add_header 'Access-Control-Max-Age' 1728000;
+        add_header 'Content-Type' 'text/plain charset=UTF-8';
+        add_header 'Content-Length' 0;
+        return 204;
+      }
+      
+      # Strip /ingest prefix
+      rewrite ^/ingest/(.*)$ /$1 break;
 spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
-  tls:
-    - hosts:
-        - {{ .Values.global.domainName }}
-      {{- if .Values.ingress.tls.secretName}}
-      secretName: {{ .Values.ingress.tls.secretName }}
-      {{- end}}
+  ingressClassName: openreplay
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: ImplementationSpecific
+          - pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /ingest/(.*)
+            path: /ingest
 {{- end }}
 
 {{- if contains "minio" .Values.global.s3.endpoint }}
-## TODO:
-## Frontend service from minio will be migrated to nginx atomic container.
-## This ingress is just a workaround.
+## Minio static assets ingress
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: minio
   namespace: "{{(split "." .Values.global.s3.endpoint)._1}}"
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
 spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  ingressClassName: openreplay
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: ImplementationSpecific
+          - pathType: Prefix
             backend:
               service:
                 name: minio
                 port:
                   number: 9000
-            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images|records|uxtesting-records|spots)/
-  tls:
-    - hosts:
-      - {{ .Values.global.domainName }}
+            path: /minio
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /mobs
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /sessions-assets
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /frontend
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /static
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /sourcemaps
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /ios-images
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /records
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /uxtesting-records
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /spots
 {{- end }}

@@ -3,7 +3,6 @@ help: ## Prints help for targets with comments
 
 domain ?= $(shell echo $${DOMAIN:-})
 override_file ?= "/home/ubuntu/vars_override.yaml"
-shell := /bin/bash -eo pipefail
 version ?= $(shell yq e '.appVersion' openreplay/Chart.yaml || "")
 
 download-cli: ## Download the latest version of the application
@@ -29,3 +28,7 @@ pull: ## Pull the latest version of the application
 
 restart: ## Restart the application
 	kubectl rollout restart deployment -n app
+
+template: ## Generate a template for the application
+	@templater -i vars.yaml -o vars_templated.yaml
+	@helm template op ./openreplay -f vars_templated.yaml

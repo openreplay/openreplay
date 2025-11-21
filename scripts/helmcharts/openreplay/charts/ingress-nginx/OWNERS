@@ -1,4 +1,0 @@
-# See the OWNERS docs: https://www.kubernetes.dev/docs/guide/owners
-
-labels:
-- area/helm

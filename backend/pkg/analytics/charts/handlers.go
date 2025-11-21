@@ -127,6 +127,10 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		SortOrder:      params.SortOrder,
 	}
 
+	if req.MetricType == MetricUserJourney {
+		req.HideExcess = true
+	}
+
 	if err = e.validator.Struct(req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return

@@ -1,6 +1,6 @@
 {{- if .Values.ingress.enabled }}
 {{- $fullName := include "assist.fullname" . -}}
-{{- $socketioSvcPort := .Values.service.ports.socketio -}}
+{{- $svcPort := .Values.service.ports.socketio -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -9,29 +9,33 @@ metadata:
   labels:
     {{- include "assist.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/upstream-hash-by: $sessionid
-
-  {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/lb-method: "hash $sessionid consistent"
+    nginx.org/websocket-services: "{{ $fullName }}"
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
+    nginx.org/proxy-connect-timeout: "120s"
+    nginx.org/location-snippets: |
+      # CORS configuration for WebSocket
+      add_header 'Access-Control-Allow-Origin' $http_origin always;
+      add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
+      add_header 'Access-Control-Allow-Headers' 'sessionid, Content-Type, Authorization' always;
+      add_header 'Access-Control-Max-Age' 1728000 always;
+      add_header 'X-Debug-Session-ID' $sessionid always;
+      
+      # Strip /ws-assist prefix
+      rewrite ^/ws-assist/(.*)$ /$1 break;
 spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
-  tls:
-    - hosts:
-        - {{ .Values.global.domainName }}
-      {{- if .Values.ingress.tls.secretName}}
-      secretName: {{ .Values.ingress.tls.secretName }}
-      {{- end}}
+  ingressClassName: openreplay
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: ImplementationSpecific
+          - pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}
                 port:
-                  number: {{ $socketioSvcPort }}
-            path: /ws-assist/(.*)
+                  number: {{ $svcPort }}
+            path: /ws-assist
 {{- end }}

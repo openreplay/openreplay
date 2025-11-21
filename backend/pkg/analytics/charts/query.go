@@ -157,6 +157,11 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperti
 func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string, []string) {
 	var finalEventConditions []string = make([]string, 0)
 	var finalOtherConditions []string = make([]string, 0)
+
+	if option.EventsOrder == "" {
+		option.EventsOrder = "then"
+	}
+
 	opts := BuildConditionsOptions{
 		MainTableAlias:             "e",
 		PropertiesColumnName:       "`$properties`",

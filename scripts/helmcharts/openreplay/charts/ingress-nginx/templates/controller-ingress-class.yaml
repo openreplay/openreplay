@@ -1,0 +1,14 @@
+{{ if .Values.controller.ingressClass.create }}
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: {{ .Values.controller.ingressClass.name }}
+  labels:
+  {{- include "nginx-ingress.labels" . | nindent 4 }}
+{{- if .Values.controller.ingressClass.setAsDefaultIngress }}
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+{{- end }}
+spec:
+  controller: nginx.org/ingress-controller
+{{ end }}

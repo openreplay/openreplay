@@ -1,0 +1,98 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: apusersigs.appprotect.f5.com
+spec:
+  group: appprotect.f5.com
+  names:
+    kind: APUserSig
+    listKind: APUserSigList
+    plural: apusersigs
+    singular: apusersig
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: APUserSig is the Schema for the apusersigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: APUserSigSpec defines the desired state of APUserSig
+            properties:
+              properties:
+                type: string
+              signatures:
+                items:
+                  properties:
+                    accuracy:
+                      enum:
+                      - high
+                      - medium
+                      - low
+                      type: string
+                    attackType:
+                      properties:
+                        name:
+                          type: string
+                      type: object
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    references:
+                      properties:
+                        type:
+                          enum:
+                          - bugtraq
+                          - cve
+                          - nessus
+                          - url
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    risk:
+                      enum:
+                      - high
+                      - medium
+                      - low
+                      type: string
+                    rule:
+                      type: string
+                    signatureType:
+                      enum:
+                      - request
+                      - response
+                      type: string
+                    systems:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                        type: object
+                      type: array
+                  type: object
+                type: array
+              softwareVersion:
+                type: string
+              tag:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true

@@ -1,0 +1,240 @@
+{{- if eq .Values.controller.kind "statefulset" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "nginx-ingress.controller.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
+{{- if .Values.controller.annotations }}
+  annotations: {{ toYaml .Values.controller.annotations | nindent 4 }}
+{{- end }}
+spec:
+  {{- if not .Values.controller.autoscaling.enabled }}
+  replicas: {{ .Values.controller.replicaCount }}
+  {{- end }}
+  serviceName: {{ include "nginx-ingress.controller.service.name" . }}
+  selector:
+    matchLabels:
+      {{- include "nginx-ingress.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nginx-ingress.podLabels" . | nindent 8 }}
+{{- if or .Values.prometheus.create .Values.controller.pod.annotations }}
+      annotations:
+{{- if .Values.prometheus.create }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.prometheus.port }}"
+        prometheus.io/scheme: "{{ .Values.prometheus.scheme }}"
+{{- end }}
+{{- if .Values.controller.pod.annotations }}
+{{ toYaml .Values.controller.pod.annotations | indent 8 }}
+{{- end }}
+{{- end }}
+    spec:
+{{- if .Values.controller.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.controller.nodeSelector | indent 8 }}
+{{- end }}
+{{- if .Values.controller.tolerations }}
+      tolerations:
+{{ toYaml .Values.controller.tolerations | indent 6 }}
+{{- end }}
+{{- if .Values.controller.affinity }}
+      affinity:
+{{ toYaml .Values.controller.affinity | indent 8 }}
+{{- end }}
+{{- if .Values.controller.topologySpreadConstraints }}
+      topologySpreadConstraints:
+{{ toYaml .Values.controller.topologySpreadConstraints | indent 8 }}
+{{- end }}
+{{- include "nginx-ingress.volumes" .  | indent 6 }}
+{{- if .Values.controller.priorityClassName }}
+      priorityClassName: {{ .Values.controller.priorityClassName }}
+{{- end }}
+      serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      securityContext:
+{{ toYaml .Values.controller.podSecurityContext | indent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
+      hostNetwork: {{ .Values.controller.hostNetwork }}
+      dnsPolicy: {{ .Values.controller.dnsPolicy }}
+      {{- if .Values.controller.shareProcessNamespace }}
+      shareProcessNamespace: true
+      {{- end }}
+      containers:
+      - image: {{ include "nginx-ingress.image" . }}
+        name: {{ include "nginx-ingress.name" . }}
+        imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
+{{- if .Values.controller.lifecycle }}
+        lifecycle:
+{{ toYaml .Values.controller.lifecycle | indent 10 }}
+{{- end }}
+        ports:
+{{- range $key, $value := .Values.controller.containerPort }}
+        - name: {{ $key }}
+          containerPort: {{ $value }}
+          protocol: TCP
+          {{- if and $.Values.controller.hostPort.enable (index $.Values.controller.hostPort $key) }}
+          hostPort: {{ index $.Values.controller.hostPort $key }}
+          {{- end }}
+{{- end }}
+{{- if .Values.controller.customPorts }}
+{{ toYaml .Values.controller.customPorts | indent 8 }}
+{{- end }}
+{{- if .Values.prometheus.create }}
+        - name: prometheus
+          containerPort: {{ .Values.prometheus.port }}
+{{- end }}
+{{- if .Values.serviceInsight.create }}
+        - name: service-insight
+          containerPort: {{ .Values.serviceInsight.port }}
+{{- end }}
+{{- if .Values.controller.readyStatus.enable }}
+        - name: readiness-port
+          containerPort: {{ .Values.controller.readyStatus.port }}
+{{- end }}
+{{- if .Values.controller.startupStatus.enable }}
+        - name: startup-port
+          containerPort: {{ .Values.controller.startupStatus.port }}
+{{- end }}
+{{- if .Values.controller.readyStatus.enable }}
+        readinessProbe:
+          httpGet:
+            path: /nginx-ready
+            port: readiness-port
+          periodSeconds: 1
+          initialDelaySeconds: {{ .Values.controller.readyStatus.initialDelaySeconds }}
+{{- end }}
+{{- if .Values.controller.startupStatus.enable }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.controller.startupStatus.path }}
+            port: startup-port
+          initialDelaySeconds: {{ .Values.controller.startupStatus.initialDelaySeconds }}
+          periodSeconds: {{ .Values.controller.startupStatus.periodSeconds }}
+          timeoutSeconds: {{ .Values.controller.startupStatus.timeoutSeconds }}
+          successThreshold: {{ .Values.controller.startupStatus.successThreshold }}
+          failureThreshold: {{ .Values.controller.startupStatus.failureThreshold }}
+{{- end }}
+        resources:
+{{ toYaml .Values.controller.resources | indent 10 }}
+{{- if .Values.controller.securityContext }}
+        securityContext:
+{{ toYaml .Values.controller.securityContext | indent 10 }}
+{{- else }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: {{ .Values.controller.readOnlyRootFilesystem }}
+          runAsUser: 101 #nginx
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+{{- end }}
+{{- include "nginx-ingress.volumeMounts" . | indent 8 }}
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+{{- if .Values.controller.env }}
+{{ toYaml .Values.controller.env | indent 8 }}
+{{- end }}
+{{- if .Values.nginxServiceMesh.enable }}
+        - name: POD_SERVICEACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+{{- end }}
+{{- if hasKey .Values.controller.mgmt "usageReport" -}}
+{{- if hasKey .Values.controller.mgmt.usageReport "proxyCredentialsSecretName" }}
+{{- if not (hasKey .Values.controller.mgmt.usageReport "proxyHost") -}}
+{{- fail "Error: 'controller.mgmt.usageReport.proxyHost' must be set when using 'controller.mgmt.usageReport.proxyCredentialsSecretName'." }}
+{{- end }}
+        - name: PROXY_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.controller.mgmt.usageReport.proxyCredentialsSecretName }}
+              key: username
+        - name: PROXY_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.controller.mgmt.usageReport.proxyCredentialsSecretName }}
+              key: password
+{{- end }}
+{{- end }}
+        args:
+{{- include "nginx-ingress.args" . | nindent 10 }}
+{{- if .Values.controller.extraContainers }}
+      {{ toYaml .Values.controller.extraContainers | nindent 6 }}
+{{- end }}
+
+{{- include "nginx-ingress.appprotect.v5" . | nindent 6 }}
+
+{{- if or ( eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.initContainers }}
+      initContainers:
+{{- end }}
+{{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
+      - name: init-{{ include "nginx-ingress.name" . }}
+        image: {{ include "nginx-ingress.image" . }}
+        imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
+        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
+{{- if .Values.controller.initContainerResources }}
+        resources:
+{{ toYaml .Values.controller.initContainerResources | indent 10 }}
+{{- end }}
+{{- if .Values.controller.initContainerSecurityContext }}
+        securityContext:
+{{ toYaml .Values.controller.initContainerSecurityContext | indent 10 }}
+{{- else }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsUser: 101 #nginx
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+{{- end }}
+        volumeMounts:
+        - mountPath: /mnt/etc
+          name: nginx-etc
+{{- end }}
+{{- if .Values.controller.initContainers }}
+{{ toYaml .Values.controller.initContainers | indent 6 }}
+{{- end }}
+{{- if .Values.controller.strategy }}
+  updateStrategy:
+{{ toYaml .Values.controller.strategy | indent 4 }}
+{{- end }}
+{{- if .Values.controller.minReadySeconds }}
+  minReadySeconds: {{ .Values.controller.minReadySeconds }}
+{{- end }}
+{{- if .Values.controller.statefulset.podManagementPolicy }}
+  podManagementPolicy: {{ .Values.controller.statefulset.podManagementPolicy }}
+{{- end }}
+{{- if .Values.controller.statefulset.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy:
+{{ toYaml .Values.controller.statefulset.persistentVolumeClaimRetentionPolicy | indent 4 }}
+{{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: nginx-cache
+    spec:
+      accessModes:
+{{ toYaml .Values.controller.statefulset.nginxCachePVC.accessModes | indent 8 }}
+{{- if .Values.controller.statefulset.nginxCachePVC.storageClass }}
+      storageClassName: {{ .Values.controller.statefulset.nginxCachePVC.storageClass | quote }}
+{{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.controller.statefulset.nginxCachePVC.size | quote }}
+{{- end }}

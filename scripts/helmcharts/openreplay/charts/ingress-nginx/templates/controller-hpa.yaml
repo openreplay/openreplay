@@ -1,47 +1,41 @@
-{{- if and (eq .Values.controller.kind "Deployment") .Values.controller.autoscaling.enabled (not .Values.controller.keda.enabled) -}}
-apiVersion: {{ ternary "autoscaling/v2" "autoscaling/v2beta2" (.Capabilities.APIVersions.Has "autoscaling/v2") }}
+{{- if and .Values.controller.autoscaling.enabled (eq .Values.controller.kind "deployment") (.Capabilities.APIVersions.Has "autoscaling/v2") -}}
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  {{- with .Values.controller.autoscaling.annotations }}
-  annotations: {{ toYaml . | nindent 4 }}
-  {{- end }}
+  name: {{ include "nginx-ingress.controller.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ingress-nginx.labels" . | nindent 4 }}
-    app.kubernetes.io/component: controller
-    {{- with .Values.controller.labels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-  name: {{ include "ingress-nginx.controller.fullname" . }}
-  namespace: {{ include "ingress-nginx.namespace" . }}
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
+{{- if .Values.controller.autoscaling.annotations }}
+  annotations:
+{{ toYaml .Values.controller.autoscaling.annotations | indent 4 }}
+{{- end }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "ingress-nginx.controller.fullname" . }}
+    name: {{ include "nginx-ingress.controller.fullname" . }}
   minReplicas: {{ .Values.controller.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.controller.autoscaling.maxReplicas }}
-  metrics:
-  {{- with .Values.controller.autoscaling.targetMemoryUtilizationPercentage }}
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: {{ . }}
-  {{- end }}
-  {{- with .Values.controller.autoscaling.targetCPUUtilizationPercentage }}
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: {{ . }}
-  {{- end }}
-  {{- with .Values.controller.autoscalingTemplate }}
-  {{- toYaml . | nindent 2 }}
-  {{- end }}
-  {{- with .Values.controller.autoscaling.behavior }}
+{{- if .Values.controller.autoscaling.behavior }}
   behavior:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+{{ toYaml .Values.controller.autoscaling.behavior | indent 4 }}
+{{- end }}
+  metrics:
+    {{- if .Values.controller.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.controller.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.controller.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.controller.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
 {{- end }}
