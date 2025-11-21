@@ -59,6 +59,8 @@ ingress-nginx:
             default "";
             "~.*-(\d+)(?:-.*|$)" $1;
           }
+          # Increase client body buffer to avoid temp file warnings for ingestion
+          client_body_buffer_size 512k;
         server-tokens: "false"
         server-snippets: |-
           # Security headers
@@ -67,10 +69,12 @@ ingress-nginx:
           add_header Referrer-Policy "same-origin" always;
         # Proxy buffer configuration for large responses (session recordings, etc.)
         proxy-buffering: "true"
-        proxy-buffers: "8 16k" # 8 buffers, each 16KB in size
-        proxy-buffer-size: "16k"
-        proxy-busy-buffers-size: "32k"
+        proxy-buffers: "32 64k" # 32 buffers, each 64KB in size (2MB total)
+        proxy-buffer-size: "64k"
+        proxy-busy-buffers-size: "128k"
         proxy-max-temp-file-size: "2048m"
+        # Client body buffer configuration for large POST requests (ingestion data)
+        client-body-buffer-size: "512k"
 
 assist-api:
   enabled: false
