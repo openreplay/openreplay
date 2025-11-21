@@ -100,7 +100,6 @@ ingress-nginx: &ingress-nginx
         enable-real-ip: "true"
         real-ip-header: "X-Forwarded-For"
         set-real-ip-from: "0.0.0.0/0"
-        worker-connections: "0"
         ssl-redirect: "false"
         client-max-body-size: "10m"
         server-tokens: "false"
