@@ -65,6 +65,12 @@ ingress-nginx:
           add_header X-XSS-Protection "1; mode=block" always;
           add_header X-Content-Type-Options "nosniff" always;
           add_header Referrer-Policy "same-origin" always;
+        # Proxy buffer configuration for large responses (session recordings, etc.)
+        proxy-buffering: "true"
+        proxy-buffers: "8 16k" # 8 buffers, each 16KB in size
+        proxy-buffer-size: "16k"
+        proxy-busy-buffers-size: "32k"
+        proxy-max-temp-file-size: "2048m"
 
 assist-api:
   enabled: false
