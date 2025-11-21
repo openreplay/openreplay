@@ -11,6 +11,26 @@ metadata:
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
+    nginx.org/location-snippets: |
+      # CORS configuration
+      add_header 'Access-Control-Allow-Origin' '*' always;
+      add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS' always;
+      add_header 'Access-Control-Allow-Headers' 'Content-Type,Authorization,Content-Encoding,X-Openreplay-Batch' always;
+      add_header 'Access-Control-Expose-Headers' 'Content-Length' always;
+      
+      # Handle preflight
+      if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Content-Type,Authorization,Content-Encoding,X-Openreplay-Batch' always;
+        add_header 'Access-Control-Max-Age' 1728000;
+        add_header 'Content-Type' 'text/plain charset=UTF-8';
+        add_header 'Content-Length' 0;
+        return 204;
+      }
+      
+      # Strip /ingest prefix
+      rewrite ^/ingest/(.*)$ /$1 break;
 spec:
   ingressClassName: openreplay
   rules:
