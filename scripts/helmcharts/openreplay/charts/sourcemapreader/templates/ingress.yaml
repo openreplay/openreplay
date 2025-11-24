@@ -9,19 +9,32 @@ metadata:
   labels:
     {{- include "sourcemapreader.labels" . | nindent 4 }}
   annotations:
-    nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      index /index.html;
+      rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /index.html break;
+      proxy_intercept_errors on; # see sourcemapreader://nginx.org/en/docs/sourcemapreader/ngx_sourcemapreader_proxy_module.html#proxy_intercept_errors
+      error_page 404 =200 /index.html;
+      {{- .Values.ingress.cspSnippet | nindent 6}}
 spec:
-  ingressClassName: openreplay
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /sourcemaps
+            path: /(.*)
 {{- end }}

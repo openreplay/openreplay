@@ -24,6 +24,23 @@ redis: &redis
   tls:
     enabled: false
 
+ingress-nginx:
+  enabled: true
+  controller:
+    allowSnippetAnnotations: true
+    config:
+      annotations-risk-level: "Critical"
+      http-snippet: |-
+        # Extract sessionid from peerId, it'll be used for sticky session.
+        map $arg_peerId $sessionid {
+          default "";
+          "~.*-(\d+)(?:-.*|$)" $1;
+        }
+    admissionWebhooks:
+      patch:
+        podAnnotations:
+          linkerd.io/inject: disabled
+
 # For enterpriseEdition Only
 vault: &vault
   vaultHost: databases-vault.db.svc.cluster.local:8200
@@ -32,6 +49,7 @@ vault: &vault
     vault.hashicorp.com/agent-inject: "true"
     vault.hashicorp.com/agent-inject-token: "true"
     vault.hashicorp.com/template-static-secret-render-interval: 2m
+    # vault.hashicorp.com/log-level: debug
     vault.hashicorp.com/agent-run-as-same-user: "true"
     vault.hashicorp.com/agent-inject-command-processor.properties: |
       pkill -TERM openreplay
@@ -41,44 +59,6 @@ vault: &vault
       {{- with secret "database/creds/db-app" -}}
       POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
       {{- end -}}
-
-ingress-nginx:
-  enabled: true
-  controller:
-    enableSnippets: true
-    ingressClass:
-      name: openreplay
-      create: true
-      setAsDefaultIngress: false
-    pod:
-      extraLabels:
-        app.kubernetes.io/component: controller
-    config:
-      entries:
-        worker-connections: "1024"
-        http-snippets: |-
-          # Extract sessionid from peerId, it'll be used for sticky session.
-          map $arg_peerId $sessionid {
-            default "";
-            "~.*-(\d+)(?:-.*|$)" $1;
-          }
-          # Increase client body buffer to avoid temp file warnings for ingestion
-          client_body_buffer_size 512k;
-        server-tokens: "false"
-        server-snippets: |-
-          # Security headers
-          add_header X-XSS-Protection "1; mode=block" always;
-          add_header X-Content-Type-Options "nosniff" always;
-          add_header Referrer-Policy "same-origin" always;
-        # Proxy buffer configuration for large responses (session recordings, etc.)
-        proxy-buffering: "true"
-        proxy-buffers: "32 64k" # 32 buffers, each 64KB in size (2MB total)
-        proxy-buffer-size: "64k"
-        proxy-busy-buffers-size: "128k"
-        proxy-max-temp-file-size: "2048m"
-        # Client body buffer configuration for large POST requests (ingestion data)
-        client-body-buffer-size: "512k"
-
 assist-api:
   enabled: false
 
