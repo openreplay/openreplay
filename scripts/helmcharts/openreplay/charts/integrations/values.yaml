@@ -67,14 +67,16 @@ ingress:
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.org/proxy-connect-timeout: "120"
-    nginx.org/proxy-send-timeout: "300"
-    nginx.org/proxy-read-timeout: "300"
-    nginx.org/cors-allow-methods: POST,PATCH,DELETE
-    nginx.org/cors-allow-headers: Content-Type,Authorization,Content-Encoding,X-Openreplay-Batch
-    nginx.org/cors-allow-origin: '*'
-    nginx.org/enable-cors: "true"
-    nginx.org/cors-expose-headers: "Content-Length"
+    nginx.org/proxy-connect-timeout: "120s"
+    nginx.org/proxy-send-timeout: "300s"
+    nginx.org/proxy-read-timeout: "300s"
+  cors:
+    allowOrigin: "*"
+    allowMethods: "POST, PATCH, DELETE, OPTIONS"
+    allowHeaders: "Content-Type, Authorization, Content-Encoding, X-Openreplay-Batch"
+    exposeHeaders: "Content-Length"
+    maxAge: "3600"
+    allowCredentials: "false"
   tls:
     secretName: openreplay-ssl
 

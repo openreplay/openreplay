@@ -13,6 +13,29 @@ metadata:
     nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
     nginx.org/location-snippets: |
       rewrite ^/v2/api/(.*)$ /$1 break;
+      {{- if .Values.ingress.cors }}
+      
+      # CORS configuration
+      add_header 'Access-Control-Allow-Origin' '{{ tpl .Values.ingress.cors.allowOrigin . }}' always;
+      add_header 'Access-Control-Allow-Methods' '{{ tpl .Values.ingress.cors.allowMethods . }}' always;
+      add_header 'Access-Control-Allow-Headers' '{{ tpl .Values.ingress.cors.allowHeaders . }}' always;
+      add_header 'Access-Control-Expose-Headers' '{{ tpl .Values.ingress.cors.exposeHeaders . }}' always;
+      add_header 'Access-Control-Max-Age' '{{ tpl .Values.ingress.cors.maxAge . }}' always;
+      {{- if eq .Values.ingress.cors.allowCredentials "true" }}
+      add_header 'Access-Control-Allow-Credentials' 'true' always;
+      {{- end }}
+      
+      # Handle preflight
+      if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '{{ tpl .Values.ingress.cors.allowOrigin . }}' always;
+        add_header 'Access-Control-Allow-Methods' '{{ tpl .Values.ingress.cors.allowMethods . }}' always;
+        add_header 'Access-Control-Allow-Headers' '{{ tpl .Values.ingress.cors.allowHeaders . }}' always;
+        add_header 'Access-Control-Max-Age' '{{ tpl .Values.ingress.cors.maxAge . }}' always;
+        add_header 'Content-Length' '0';
+        add_header 'Content-Type' 'text/plain';
+        return 204;
+      }
+      {{- end }}
     {{- with .Values.ingress.annotations }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ tpl $value $ | quote }}
