@@ -5,8 +5,9 @@ export interface StorageLike {
   setItem: (key: string, value: string) => void
 }
 
-const refKey = '$__initial_ref__$'
-const distinctIdKey = '$__distinct_device_id__$'
+const refKey = '$__or__initial_ref__$'
+const distinctIdKey = '$__or__distinct_device_id__$'
+const utmParamsKey = '$__or__utm_params__$'
 const prefix = '$'
 
 const searchEngineList = [
@@ -63,12 +64,9 @@ export default class SharedProperties {
     this.screenHeight = height
     this.screenWidth = width
     this.initialReferrer = this.getReferrer()
-    const searchParams = new URLSearchParams(window.location.search)
-    this.utmSource = searchParams.get('utm_source') || null
-    this.utmMedium = searchParams.get('utm_medium') || null
-    this.utmCampaign = searchParams.get('utm_campaign') || null
     this.deviceId = this.getDistinctDeviceId()
-    this.searchEngine = this.getSerachEngine(this.initialReferrer)
+    this.searchEngine = this.getSearchEngine(this.initialReferrer)
+    this.parseUTM()
   }
 
   public get all() {
@@ -133,7 +131,29 @@ export default class SharedProperties {
     }
   }
 
-  private getSerachEngine = (ref: string) => {
+  private parseUTM = () => {
+    const potentialStored = this.sessionStorage.getItem(utmParamsKey)
+    if (potentialStored) {
+      const obj = JSON.parse(potentialStored)
+      this.utmSource = obj.utm_source
+      this.utmMedium = obj.utm_medium
+      this.utmCampaign = obj.utm_campaign
+    } else {
+      const searchParams = new URLSearchParams(window.location.search)
+      this.utmSource = searchParams.get('utm_source') || null
+      this.utmMedium = searchParams.get('utm_medium') || null
+      this.utmCampaign = searchParams.get('utm_campaign') || null
+
+      const obj = {
+        utm_source: this.utmSource,
+        utm_medium: this.utmMedium,
+        utm_campaign: this.utmCampaign,
+      }
+      this.sessionStorage.setItem(utmParamsKey, JSON.stringify(obj))
+    }
+  }
+
+  private getSearchEngine = (ref: string) => {
     for (const searchEngine of searchEngineList) {
       if (ref.includes(searchEngine)) {
         return searchEngine
