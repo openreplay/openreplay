@@ -73,41 +73,39 @@ ingress-nginx: &ingress-nginx
   #   http: 80
   #   https: 443
   controller:
-    ingressClass:
-      name: openreplay
-      create: true
-      setAsDefaultIngress: false
     ingressClassResource:
+      # -- Name of the ingressClass
       name: openreplay
-    enableSnippets: true
+    # -- For backwards compatibility with ingress.class annotation, use ingressClass.
+    # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
+    ingressClass: openreplay
+    addHeaders:
+      # Enable only if you know what you're doing!!!
+      # X-Frame-Options: "DENY"
+      X-XSS-Protection: "1; mode=block"
+      X-Content-Type-Options: "nosniff"
+      Referrer-Policy: "same-origin"
     service:
       externalTrafficPolicy: "Local"
       ports:
         http: 80
         https: 443
-      httpPort:
-        enable: true
-        port: 80
-      httpsPort:
-        enable: true
-        port: 443
     extraArgs:
-      default-server-secret: "app/openreplay-ssl"
-      enable-ewma: "true"
+      default-ssl-certificate: "app/openreplay-ssl"
     config:
-      entries:
-        use-gzip: "true"
-        enable-real-ip: "true"
-        real-ip-header: "X-Forwarded-For"
-        set-real-ip-from: "0.0.0.0/0"
-        ssl-redirect: "false"
-        client-max-body-size: "10m"
-        server-tokens: "false"
-        proxy-connect-timeout: "120s"
-        proxy-read-timeout: "300s"
-        proxy-send-timeout: "300s"
-        proxy-protocol: "false"
-        use-forwarded-headers: "true"
+      use-gzip: true
+      load-balance: ewma
+      enable-real-ip: true
+      # Enable LB forwarded protocol
+      # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers
+      # https://github.com/nginxinc/kubernetes-ingress/issues/1284#issuecomment-872869354
+      # use-forwarded-headers: true
+      # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#max-worker-connections
+      max-worker-connections: 0
+      # SSL redirection
+      ssl-redirect: false
+      force-ssl-redirect: false
+      proxy-body-size: 10m
 
 # Application specific variables
 global:
@@ -168,7 +166,7 @@ global:
   ee-components:
     enabled: false
   enterpriseEditionLicense: ""
-  domainName: "hello.rjsh.me"
+  domainName: ""
 
 # chalice:
   # env:
