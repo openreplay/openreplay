@@ -14,6 +14,11 @@ metadata:
       add_header Cache-Control "no-store,no-cache";
       add_header Pragma "no-cache";
       rewrite ^/api/(.*)$ /$1 break;
+    {{- with .Values.ingress.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+    {{- end }}
 spec:
   ingressClassName: openreplay
   rules:

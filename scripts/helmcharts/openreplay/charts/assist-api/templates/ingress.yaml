@@ -12,7 +12,9 @@ metadata:
     nginx.org/rewrites: "serviceName={{ $fullName }} rewrite=/$1"
     nginx.org/upstream-hash-by: $http_x_forwarded_for
     {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
     {{- end }}
 spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}"

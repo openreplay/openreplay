@@ -11,6 +11,11 @@ metadata:
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
+    {{- with .Values.ingress.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+    {{- end }}
 spec:
   ingressClassName: openreplay
   rules:

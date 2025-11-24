@@ -16,8 +16,13 @@ metadata:
       proxy_intercept_errors on;
       error_page 404 =200 /index.html;
       {{- .Values.ingress.cspSnippet | nindent 6}}
+    {{- with .Values.ingress.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+    {{- end }}
 spec:
-  ingressClassName: openreplay
+  ingressClassName: {{ tpl .Values.ingress.className . }}
   rules:
     - host: {{ default .Values.global.domainName .Values.ingress.domainName }} 
       http:
@@ -35,7 +40,7 @@ apiVersion: v1
 metadata:
   name: openreplay-tracker
 spec:
-  ingressClassName: openreplay
+  ingressClassName: {{ tpl .Values.ingress.className . }}
   type: ExternalName
   externalName: static.openreplay.com
 ---
@@ -55,17 +60,22 @@ metadata:
       proxy_ssl_name static.openreplay.com;
       proxy_ssl_server_name on;
       proxy_set_header Host static.openreplay.com;
+    {{- with .Values.ingress.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+    {{- end }}
 spec:
-  ingressClassName: openreplay
+  ingressClassName: {{ tpl .Values.ingress.className . }}
   rules:
-    - host: {{ .Values.global.domainName }} 
+    - host: {{ default .Values.global.domainName .Values.ingress.domainName }} 
       http:
         paths:
-          - path: /script
-            pathType: Prefix
+          - pathType: Prefix
             backend:
               service:
                 name: openreplay-tracker
                 port:
                   number: 443
+            path: /script/
 {{- end }}

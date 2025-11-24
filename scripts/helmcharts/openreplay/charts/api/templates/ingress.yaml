@@ -13,8 +13,13 @@ metadata:
     nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
     nginx.org/location-snippets: |
       rewrite ^/v2/api/(.*)$ /$1 break;
+    {{- with .Values.ingress.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+    {{- end }}
 spec:
-  ingressClassName: openreplay
+  ingressClassName: {{ tpl .Values.ingress.className . }}
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
