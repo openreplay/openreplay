@@ -332,6 +332,7 @@ export const CARD_LIST: (t: TFunction) => CardType[] = (t) => [
         name: 'LOCATION',
         autoCaptured: true,
         isEvent: true,
+        operator: 'isAny',
       },
     ],
     example: ExampleTrend,
