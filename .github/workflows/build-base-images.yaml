@@ -79,7 +79,7 @@ jobs:
               VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
               ;;
             minio)
-              VERSION=$(grep -oP "minio>=0\.2025\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
+              VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
               ;;
             nginx)
               VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
@@ -177,7 +177,7 @@ jobs:
               VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
               ;;
             minio)
-              VERSION=$(grep -oP "minio>=0\.2025\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
+              VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
               ;;
             nginx)
               VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
