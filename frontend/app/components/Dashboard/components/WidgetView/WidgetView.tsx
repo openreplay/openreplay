@@ -96,21 +96,23 @@ function WidgetView({
         };
 
         if (selectedCard.filters) {
-          const filters = await Promise.all(
-            selectedCard.filters.map(async (filter) => {
-              const f = filterStore.findEvent({
-                name: filter.name,
-                autoCaptured: filter.autoCaptured,
-              });
-              if (filter.filters?.length) {
-                f.filters = filter.filters;
-              } else if (f.isEvent) {
-                const props = await filterStore.getEventFilters(f.id);
-                f.filters = props?.filter((p) => p.defaultProperty) || [];
+          const filters = selectedCard.filters.map(async (filter) => {
+            const f = filterStore.findEvent({
+              name: filter.name,
+              autoCaptured: filter.autoCaptured,
+            });
+            if (filter.filters?.length) {
+              f.filters = filter.filters;
+            } else if (f.isEvent) {
+              const props = await filterStore.getEventFilters(f.id);
+              const defaults = props?.filter((p) => p.defaultProperty) || [];
+              if (selectedCard.cardType === WEBVITALS) {
+                defaults[0].operator = 'isAny';
               }
-              return f;
-            }),
-          );
+              f.filters = defaults;
+            }
+            return f;
+          });
           cardData.series = [
             new FilterSeries().fromJson({
               name: 'Series 1',
