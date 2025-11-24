@@ -25,6 +25,11 @@ metadata:
       
       # Strip /ws-assist prefix
       rewrite ^/ws-assist/(.*)$ /$1 break;
+    {{- with .Values.ingress.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+    {{- end }}
 spec:
   ingressClassName: openreplay
   rules:
