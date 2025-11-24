@@ -1,0 +1,21 @@
+name: Build Base Docker Images
+
+on:
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      images:
+        description: 'Specific images to build (comma-separated, e.g., postgres,nginx) or "all" for all images'
+        required: false
+        default: 'all'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+
