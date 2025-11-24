@@ -1,0 +1,91 @@
+name: Cleanup Old Container Images
+
+on:
+  schedule:
+    # Run monthly on the 1st at 00:00 UTC
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Run as dry-run (true/false)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Cleanup ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - kafka
+          - minio
+          - nginx
+          - postgres
+          - redis
+    steps:
+      - name: Prune old untagged versions
+        uses: vlaurin/action-ghcr-prune@v0.6.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          organization: ${{ github.repository_owner }}
+          container: ${{ matrix.image }}
+          dry-run: ${{ github.event.inputs.dry-run || 'false' }}
+          keep-younger-than: 365  # Keep versions newer than 1 year
+          keep-last: 5  # Always keep the 5 most recent versions
+          prune-untagged: true  # Only prune untagged versions
+
+      - name: Prune old tagged PR/test versions
+        uses: vlaurin/action-ghcr-prune@v0.6.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          organization: ${{ github.repository_owner }}
+          container: ${{ matrix.image }}
+          dry-run: ${{ github.event.inputs.dry-run || 'false' }}
+          keep-younger-than: 90  # Keep PR/test versions newer than 90 days
+          keep-last: 10  # Keep the 10 most recent PR/test versions
+          keep-tags-regexes: |
+            ^latest$
+            ^[0-9]+$
+            ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$
+          prune-tags-regexes: |
+            ^pr-
+            ^test-
+            ^dev-
+
+  notify:
+    name: Notify Cleanup Status
+    runs-on: ubuntu-latest
+    needs: cleanup
+    if: always() && github.event.inputs.dry-run != 'true'
+    steps:
+      - name: Alert Slack on Failure
+        if: needs.cleanup.result == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: foss
+          SLACK_TITLE: "Failed ${{ github.workflow }}"
+          SLACK_COLOR: failure
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+          SLACK_USERNAME: "OR Bot"
+          SLACK_MESSAGE: "Container image cleanup failed"
+
+      - name: Alert Slack on Success
+        if: needs.cleanup.result == 'success'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: foss
+          SLACK_TITLE: "Success ${{ github.workflow }}"
+          SLACK_COLOR: success
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+          SLACK_USERNAME: "OR Bot"
+          SLACK_MESSAGE: "Container image cleanup completed successfully"
