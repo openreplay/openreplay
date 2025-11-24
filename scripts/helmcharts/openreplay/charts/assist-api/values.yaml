@@ -70,10 +70,8 @@ ingress:
   enabled: false
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations:
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+    nginx.org/proxy-read-timeout: "3600"
+    nginx.org/proxy-send-timeout: "3600"
   tls:
     secretName: openreplay-ssl
 

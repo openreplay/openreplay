@@ -66,8 +66,6 @@ ingress:
   enabled: false
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
   tls:
     secretName: openreplay-ssl
 

@@ -70,22 +70,17 @@ ingress:
   enabled: true
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations:
-    nginx.ingress.kubernetes.io/configuration-snippet: |
+    nginx.org/location-snippets: |
       add_header X-Debug-Session-ID $http_sessionid;
       add_header X-Debug-Session-Type "wss";
-
-      # CORS configuration
-      # We don't need the upstream header
       proxy_hide_header Access-Control-Allow-Origin;
       add_header 'Access-Control-Allow-Origin' $http_origin always;
       add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
       add_header 'Access-Control-Allow-Headers' 'sessionid, Content-Type, Authorization' always;
       add_header 'Access-Control-Max-Age' 1728000;
       add_header 'Content-Type' 'text/plain charset=UTF-8';
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+    nginx.org/proxy-read-timeout: "3600"
+    nginx.org/proxy-send-timeout: "3600"
   tls:
     secretName: openreplay-ssl
 

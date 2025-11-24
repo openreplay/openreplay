@@ -63,8 +63,6 @@ ingress:
     nginx.org/proxy-connect-timeout: "120s"
     nginx.org/proxy-send-timeout: "300s"
     nginx.org/proxy-read-timeout: "300s"
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
   tls:
     secretName: openreplay-ssl
 

@@ -9,8 +9,8 @@ metadata:
   labels:
     {{- include "assist-api.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
+    nginx.org/rewrites: "serviceName={{ $fullName }} rewrite=/$1"
+    nginx.org/upstream-hash-by: $http_x_forwarded_for
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

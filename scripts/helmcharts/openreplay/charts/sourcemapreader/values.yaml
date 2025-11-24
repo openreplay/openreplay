@@ -69,11 +69,9 @@ ingress:
     # Custom CSP snippet here.
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "120"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+    nginx.org/proxy-connect-timeout: "120"
+    nginx.org/proxy-send-timeout: "300"
+    nginx.org/proxy-read-timeout: "300"
   tls:
     secretName: openreplay-ssl
 
