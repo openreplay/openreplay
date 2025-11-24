@@ -447,8 +447,7 @@ export default abstract class Observer {
         sl.assignedNodes({ flatten: true }).forEach((n) => {
           const nid = this.app.nodes.getID(n)
           if (nid !== undefined) {
-            this.recents.set(nid, RecentsType.Removed)
-            this.commitNode(nid)
+            this.recents.set(nid, RecentsType.Changed)
           }
         })
       })
