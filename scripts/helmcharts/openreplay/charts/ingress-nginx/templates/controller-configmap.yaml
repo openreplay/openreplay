@@ -1,82 +1,30 @@
-{{- if not .Values.controller.customConfigMap -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "nginx-ingress.configName" . }}
-  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "nginx-ingress.labels" . | nindent 4 }}
-{{- if .Values.controller.config.annotations }}
-  annotations:
-{{ toYaml .Values.controller.config.annotations | indent 4 }}
+    {{- include "ingress-nginx.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+    {{- with .Values.controller.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if .Values.controller.configAnnotations }}
+  annotations: {{ toYaml .Values.controller.configAnnotations | nindent 4 }}
 {{- end }}
+  name: {{ include "ingress-nginx.controller.fullname" . }}
+  namespace: {{ include "ingress-nginx.namespace" . }}
 data:
-{{ toYaml (default dict .Values.controller.config.entries) | indent 2 }}
+{{- if .Values.controller.allowSnippetAnnotations }}
+  allow-snippet-annotations: "true"
 {{- end }}
----
-{{- if and .Values.nginxAgent.enable (eq (.Values.nginxAgent.customConfigMap | default "") "") }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "nginx-ingress.agentConfigName" . }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "nginx-ingress.labels" . | nindent 4 }}
-{{- if .Values.controller.config.annotations }}
-  annotations:
-{{ toYaml .Values.controller.config.annotations | indent 4 }}
+{{- if .Values.controller.addHeaders }}
+  add-headers: {{ include "ingress-nginx.namespace" . }}/{{ include "ingress-nginx.fullname" . }}-custom-add-headers
 {{- end }}
-data:
-  nginx-agent.conf: |-
-{{ include "nginx-ingress.agentConfiguration" . | indent 4 }}
+{{- if .Values.controller.proxySetHeaders }}
+  proxy-set-headers: {{ include "ingress-nginx.namespace" . }}/{{ include "ingress-nginx.fullname" . }}-custom-proxy-headers
 {{- end }}
----
-{{- if .Values.controller.nginxplus }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "nginx-ingress.mgmtConfigName" . }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "nginx-ingress.labels" . | nindent 4 }}
-{{- if .Values.controller.config.annotations }}
-  annotations:
-{{ toYaml .Values.controller.config.annotations | indent 4 }}
+{{- if .Values.dhParam }}
+  ssl-dh-param: {{ include "ingress-nginx.namespace" . }}/{{ include "ingress-nginx.controller.fullname" . }}
 {{- end }}
-data:
-  license-token-secret-name: {{ required "When using Nginx Plus, 'controller.mgmt.licenseTokenSecretName' cannot be empty " (include "nginx-ingress.licenseTokenSecretName" . ) }}
-{{- if hasKey .Values.controller.mgmt "sslVerify" }}
-  ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt "enforceInitialReport" }}
-  enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt "usageReport" }}
-{{- if hasKey .Values.controller.mgmt.usageReport "endpoint" }}
-  usage-report-endpoint: {{ quote .Values.controller.mgmt.usageReport.endpoint }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt.usageReport "interval" }}
-  usage-report-interval: {{ quote .Values.controller.mgmt.usageReport.interval }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt.usageReport "proxyHost" }}
-  usage-report-proxy-host: {{ quote .Values.controller.mgmt.usageReport.proxyHost }}
-{{- end }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt "sslTrustedCertificateSecretName" }}
-  ssl-trusted-certificate-secret-name: {{ quote .Values.controller.mgmt.sslTrustedCertificateSecretName }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt "sslCertificateSecretName" }}
-  ssl-certificate-secret-name: {{ quote .Values.controller.mgmt.sslCertificateSecretName}}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt "resolver" }}
-{{- if hasKey .Values.controller.mgmt.resolver "addresses" }}
-  resolver-addresses: {{ join "," .Values.controller.mgmt.resolver.addresses | quote }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt.resolver "ipv6" }}
-  resolver-ipv6: {{ quote .Values.controller.mgmt.resolver.ipv6 }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt.resolver "valid" }}
-  resolver-valid: {{ quote .Values.controller.mgmt.resolver.valid }}
-{{- end }}
-{{- end }}
+{{- range $key, $value := .Values.controller.config }}
+  {{- $key | nindent 2 }}: {{ tpl (toString $value) $ | quote }}
 {{- end }}
