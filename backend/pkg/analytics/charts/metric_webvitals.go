@@ -46,13 +46,13 @@ var webVitalsRanges = map[string]struct{ good, medium, bad []int }{
 }
 
 type scannedValues struct {
-	domMin, domMax                     *int64
+	domMin, domMax                     *float64
 	domAvg, domP50, domP75, domP90     *float64
-	ttfbMin, ttfbMax                   *int64
+	ttfbMin, ttfbMax                   *float64
 	ttfbAvg, ttfbP50, ttfbP75, ttfbP90 *float64
-	siMin, siMax                       *int64
+	siMin, siMax                       *float64
 	siAvg, siP50, siP75, siP90         *float64
-	fcpMin, fcpMax                     *int64
+	fcpMin, fcpMax                     *float64
 	fcpAvg, fcpP50, fcpP75, fcpP90     *float64
 	lcpMin, lcpMax                     *float64
 	lcpAvg, lcpP50, lcpP75, lcpP90     *float64
@@ -134,10 +134,6 @@ func (v *scannedValues) hasData() bool {
 
 func safeFloat64(val interface{}) float64 {
 	switch v := val.(type) {
-	case *int64:
-		if v != nil && !math.IsNaN(float64(*v)) {
-			return float64(*v)
-		}
 	case *float64:
 		if v != nil && !math.IsNaN(*v) {
 			return *v
@@ -223,30 +219,30 @@ func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 
 	query := fmt.Sprintf(`
-SELECT minIf(events.`+"`$properties`"+`.dom_building_time::Int64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_min,
-       avgIf(events.`+"`$properties`"+`.dom_building_time::Int64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_avg,
-       maxIf(events.`+"`$properties`"+`.dom_building_time::Int64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.dom_building_time::Int64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.dom_building_time::Int64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.dom_building_time::Int64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p90,
-       minIf(events.`+"`$properties`"+`.ttfb::Int64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_min,
-       avgIf(events.`+"`$properties`"+`.ttfb::Int64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_avg,
-       maxIf(events.`+"`$properties`"+`.ttfb::Int64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.ttfb::Int64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.ttfb::Int64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.ttfb::Int64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p90,
-       minIf(events.`+"`$properties`"+`.speed_index::Int64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_min,
-       avgIf(events.`+"`$properties`"+`.speed_index::Int64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_avg,
-       maxIf(events.`+"`$properties`"+`.speed_index::Int64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.speed_index::Int64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.speed_index::Int64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.speed_index::Int64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p90,
-       minIf(events.`+"`$properties`"+`.first_contentful_paint_time::Int64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_min,
-       avgIf(events.`+"`$properties`"+`.first_contentful_paint_time::Int64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_avg,
-       maxIf(events.`+"`$properties`"+`.first_contentful_paint_time::Int64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.first_contentful_paint_time::Int64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.first_contentful_paint_time::Int64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.first_contentful_paint_time::Int64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p90,
+SELECT minIf(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_min,
+       avgIf(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_avg,
+       maxIf(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_max,
+       quantileIf(0.5)(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p50,
+       quantileIf(0.75)(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p75,
+       quantileIf(0.90)(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p90,
+       minIf(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_min,
+       avgIf(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_avg,
+       maxIf(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_max,
+       quantileIf(0.5)(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p50,
+       quantileIf(0.75)(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p75,
+       quantileIf(0.90)(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p90,
+       minIf(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_min,
+       avgIf(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_avg,
+       maxIf(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_max,
+       quantileIf(0.5)(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p50,
+       quantileIf(0.75)(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p75,
+       quantileIf(0.90)(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p90,
+       minIf(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_min,
+       avgIf(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_avg,
+       maxIf(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_max,
+       quantileIf(0.5)(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p50,
+       quantileIf(0.75)(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p75,
+       quantileIf(0.90)(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p90,
        minIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_min,
        avgIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_avg,
        maxIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_max,
@@ -289,6 +285,5 @@ WHERE events.project_id = %d
 		p.ProjectId, sessionsWhereStr, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp,
 		p.ProjectId, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp, outerFiltersWhereStr)
 
-	logQuery(fmt.Sprintf("WebVitalsQueryBuilder.buildQuery: %s", query))
 	return query, nil
 }
