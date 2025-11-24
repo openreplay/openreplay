@@ -204,9 +204,9 @@ export default class UserService {
     return this.updateClient(data);
   }
 
-  resendEmailVerification(data: any) {
+  resendEmailVerification() {
     return this.client
-      .post('/re-validate', data)
+      .post('/re-validate')
       .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || {});
   }
