@@ -9,21 +9,28 @@ metadata:
   labels:
     {{- include "api.labels" . | nindent 4 }}
   annotations:
-    nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
-    nginx.org/location-snippets: |
-      rewrite ^/v2/api/(.*)$ /$1 break;
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
 spec:
-  ingressClassName: openreplay
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /v2/api
+            path: /v2/api/(.*)
 {{- end }}

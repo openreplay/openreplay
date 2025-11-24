@@ -9,33 +9,47 @@ metadata:
   labels:
     {{- include "frontend.labels" . | nindent 4 }}
   annotations:
-    nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/location-snippets: |
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
       index /index.html;
       rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /index.html break;
-      proxy_intercept_errors on;
+      proxy_intercept_errors on; # see frontend://nginx.org/en/docs/frontend/ngx_frontend_proxy_module.html#proxy_intercept_errors
       error_page 404 =200 /index.html;
       {{- .Values.ingress.cspSnippet | nindent 6}}
 spec:
-  ingressClassName: openreplay
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ default .Values.global.domainName .Values.ingress.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
   rules:
     - host: {{ default .Values.global.domainName .Values.ingress.domainName }} 
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /
+            path: /(.*)
+          - backend:
+              service:
+                name: frontend-openreplay
+                port:
+                  number: 8080
+            path: /(api|assist|ws-assist)/(private|sockets-list|sockets-live|peers)(.*)
+            pathType: ImplementationSpecific
 ---
 kind: Service
 apiVersion: v1
 metadata:
   name: openreplay-tracker
 spec:
-  ingressClassName: openreplay
   type: ExternalName
   externalName: static.openreplay.com
 ---
@@ -46,23 +60,31 @@ metadata:
   labels:
     {{- include "frontend.labels" . | nindent 4 }}
   annotations:
-    nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/ssl-services: "openreplay-tracker"
-    nginx.org/client-max-body-size: "8m"
-    nginx.org/proxy-buffering: "true"
-    nginx.org/location-snippets: |
-      rewrite ^/script/(.*)/openreplay(.*).js$ /$1/openreplay$2.js break;
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    nginx.ingress.kubernetes.io/backend-protocol: https
+    nginx.ingress.kubernetes.io/upstream-vhost: static.openreplay.com
+    nginx.ingress.kubernetes.io/rewrite-target: '/$1/openreplay$2.js'
+    nginx.ingress.kubernetes.io/proxy-body-size: 8m
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/server-snippet: |
       proxy_ssl_name static.openreplay.com;
       proxy_ssl_server_name on;
-      proxy_set_header Host static.openreplay.com;
 spec:
-  ingressClassName: openreplay
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - path: /script
-            pathType: Prefix
+          - path: /script/(.*)/openreplay(.*).js
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: openreplay-tracker

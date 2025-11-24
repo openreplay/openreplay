@@ -9,22 +9,30 @@ metadata:
   labels:
     {{- include "chalice.labels" . | nindent 4 }}
   annotations:
-    nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/location-snippets: |
+    nginx.ingress.kubernetes.io/configuration-snippet: |
       add_header Cache-Control "no-store,no-cache";
       add_header Pragma "no-cache";
-      rewrite ^/api/(.*)$ /$1 break;
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  ingressClassName: openreplay
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /api
+            path: /api/(.*)
 {{- end }}

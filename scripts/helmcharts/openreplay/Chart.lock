@@ -1,12 +1,6 @@
 dependencies:
 - name: ingress-nginx
-  repository: file://charts/ingress-nginx
-  version: 2.3.1
-- name: connector
-  repository: file://charts/connector
-  version: 0.1.1
-- name: assist-api
-  repository: file://charts/assist-api
-  version: 0.1.1
-digest: sha256:6f82c3b3d5ecb487b0116631da2c1c346ba43e22193d7a792c0b4207fab165ab
-generated: "2025-11-19T17:53:31.559333952+01:00"
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.0.18
+digest: sha256:83b77c0a646b680654e41b2dc06c66b0ad8fe6b6f71fcb9d2496076e93c9ead8
+generated: "2022-03-22T16:38:20.650949981+01:00"
