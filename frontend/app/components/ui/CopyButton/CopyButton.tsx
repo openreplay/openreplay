@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import copy from 'copy-to-clipboard';
 import { Button, Tooltip } from 'antd';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Share2 } from 'lucide-react';
 
 interface Props {
   content: string;
@@ -12,17 +12,21 @@ interface Props {
   size?: 'small' | 'middle' | 'large';
   isIcon?: boolean;
   format?: string;
+  copyText?: [string, string];
+  isShare?: boolean;
 }
 
 function CopyButton({
   content,
   getHtml,
+  isShare = false,
   variant = 'text',
   className = 'capitalize mt-2 font-medium text-neutral-400',
   btnText = 'copy',
   size = 'small',
   isIcon = false,
   format = 'text/plain',
+  copyText = ['Copy', 'Copied!'],
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -32,7 +36,8 @@ function CopyButton({
     }, 1000);
   };
 
-  const copyHandler = () => {
+  const copyHandler = (e: any) => {
+    e.stopPropagation();
     setCopied(true);
 
     const raw = (getHtml?.() ?? content ?? '') as string;
@@ -95,7 +100,7 @@ function CopyButton({
 
   if (isIcon) {
     return (
-      <Tooltip title={copied ? 'Copied!' : 'Copy'}>
+      <Tooltip title={copied ? copyText[1] : copyText[0]}>
         <Button
           type="text"
           onClick={copyHandler}
@@ -103,6 +108,8 @@ function CopyButton({
           icon={
             copied ? (
               <Check strokeWidth={2} size={16} />
+            ) : isShare ? (
+              <Share2 strokeWidth={2} size={16} />
             ) : (
               <Copy strokeWidth={2} size={16} />
             )
@@ -118,7 +125,7 @@ function CopyButton({
       size={size}
       className={className}
     >
-      {copied ? 'copied' : btnText}
+      {copied ? copyText[1] : btnText}
     </Button>
   );
 }
