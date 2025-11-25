@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.23.0-ee';
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.24.0-ee';
 CREATE DATABASE IF NOT EXISTS experimental;
 
 CREATE TABLE IF NOT EXISTS experimental.autocomplete
@@ -331,7 +331,7 @@ CREATE DATABASE IF NOT EXISTS product_analytics;
 CREATE TABLE IF NOT EXISTS product_analytics.users
 (
     project_id           UInt16,
-    "$distinct_id"       UInt16,
+    "$user_id"           String,
     "$email"             String DEFAULT '',
     "$name"              String DEFAULT '',
     "$first_name"        String DEFAULT '',
@@ -368,7 +368,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.users
     _deleted_at          DateTime DEFAULT '1970-01-01 00:00:00',
     _timestamp           DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, "$distinct_id")
+      ORDER BY (project_id, "$user_id")
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
@@ -396,12 +396,13 @@ CREATE TABLE IF NOT EXISTS product_analytics.user_devices
 (
     project_id   UInt16,
     "$device_id" String,
-    user_id      UInt16 COMMENT 'if 0: the person has been deleted, and should set user_id to 0 in the events table',
+    "$user_id"   String,
 
     _deleted_at  DateTime DEFAULT '1970-01-01 00:00:00',
+    _is_deleted  UInt8    DEFAULT 0,
     _timestamp   DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, "$device_id", user_id)
+) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
+      ORDER BY (project_id, "$device_id", "$user_id")
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
 
 
@@ -411,11 +412,14 @@ CREATE TABLE IF NOT EXISTS product_analytics.users_distinct_id
 (
     project_id  UInt16,
     distinct_id String COMMENT 'this is the event\'s distinct_id',
-    user_id     UInt16 COMMENT 'if 0: the person has been deleted, and should set user_id to 0 in the events table',
+    "$user_id"  String,
 
+    _deleted_at DateTime DEFAULT '1970-01-01 00:00:00',
+    _is_deleted UInt8    DEFAULT 0,
     _timestamp  DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, distinct_id);
+) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
+      ORDER BY (project_id, distinct_id)
+      TTL _deleted_at;
 
 
 CREATE TABLE IF NOT EXISTS product_analytics.events
@@ -425,7 +429,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$event_name"               String,
     created_at                  DateTime64,
     distinct_id                 String,
-    "$user_id"                  UInt16 DEFAULT 0,
+    "$user_id"                  String,
+    "$device_id"                String,
     session_id                  UInt64 DEFAULT 0,
     "$time"                     UInt32 DEFAULT 0 COMMENT 'the time of the event in EPOCH, if not provided, the time of arrival to the server',
     "$source"                   LowCardinality(String) DEFAULT '' COMMENT 'the name of the integration that sent the event',
@@ -443,7 +448,6 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$auto_captured"            BOOL DEFAULT FALSE,
     "$sdk_edition"              LowCardinality(String),
     "$sdk_version"              LowCardinality(String),
-    "$device_id"                String,
     "$os"                       LowCardinality(String) DEFAULT '',
     "$os_version"               LowCardinality(String) DEFAULT '',
     "$browser"                  LowCardinality(String) DEFAULT '',
