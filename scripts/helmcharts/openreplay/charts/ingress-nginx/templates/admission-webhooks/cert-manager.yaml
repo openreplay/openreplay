@@ -6,7 +6,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: {{ include "ingress-nginx.fullname" . }}-self-signed-issuer
-  namespace: {{ include "ingress-nginx.namespace" . }}
+  namespace: {{ .Release.Namespace }}
 spec:
   selfSigned: {}
 ---
@@ -15,13 +15,10 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ include "ingress-nginx.fullname" . }}-root-cert
-  namespace: {{ include "ingress-nginx.namespace" . }}
+  namespace: {{ .Release.Namespace }}
 spec:
   secretName: {{ include "ingress-nginx.fullname" . }}-root-cert
   duration: {{ .Values.controller.admissionWebhooks.certManager.rootCert.duration | default "43800h0m0s" | quote }}
-  {{- if gt (.Values.controller.admissionWebhooks.certManager.rootCert.revisionHistoryLimit | int) 0 }}
-  revisionHistoryLimit: {{ .Values.controller.admissionWebhooks.certManager.rootCert.revisionHistoryLimit }}
-  {{- end }}
   issuerRef:
     name: {{ include "ingress-nginx.fullname" . }}-self-signed-issuer
   commonName: "ca.webhook.ingress-nginx"
@@ -35,7 +32,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: {{ include "ingress-nginx.fullname" . }}-root-issuer
-  namespace: {{ include "ingress-nginx.namespace" . }}
+  namespace: {{ .Release.Namespace }}
 spec:
   ca:
     secretName: {{ include "ingress-nginx.fullname" . }}-root-cert
@@ -45,14 +42,11 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "ingress-nginx.admissionWebhooks.fullname" . }}
-  namespace: {{ include "ingress-nginx.namespace" . }}
+  name: {{ include "ingress-nginx.fullname" . }}-admission
+  namespace: {{ .Release.Namespace }}
 spec:
-  secretName: {{ include "ingress-nginx.admissionWebhooks.fullname" . }}
+  secretName: {{ include "ingress-nginx.fullname" . }}-admission
   duration: {{ .Values.controller.admissionWebhooks.certManager.admissionCert.duration | default "8760h0m0s" | quote }}
-  {{- if gt (.Values.controller.admissionWebhooks.certManager.admissionCert.revisionHistoryLimit | int) 0 }}
-  revisionHistoryLimit: {{ .Values.controller.admissionWebhooks.certManager.admissionCert.revisionHistoryLimit }}
-  {{- end }}
   issuerRef:
     {{- if .Values.controller.admissionWebhooks.certManager.issuerRef }}
     {{- toYaml .Values.controller.admissionWebhooks.certManager.issuerRef | nindent 4 }}
@@ -61,8 +55,8 @@ spec:
     {{- end }}
   dnsNames:
     - {{ include "ingress-nginx.controller.fullname" . }}-admission
-    - {{ include "ingress-nginx.controller.fullname" . }}-admission.{{ include "ingress-nginx.namespace" . }}
-    - {{ include "ingress-nginx.controller.fullname" . }}-admission.{{ include "ingress-nginx.namespace" . }}.svc
+    - {{ include "ingress-nginx.controller.fullname" . }}-admission.{{ .Release.Namespace }}
+    - {{ include "ingress-nginx.controller.fullname" . }}-admission.{{ .Release.Namespace }}.svc
   subject:
     organizations:
       - ingress-nginx-admission
