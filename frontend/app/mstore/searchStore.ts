@@ -431,7 +431,9 @@ class SearchStore {
 
   async checkForLatestSessionCount(): Promise<void> {
     try {
-      const filter = this.instance.toSearch();
+      let filter = this.instance.toSearch();
+      filter = this.applyTagFilter(filter, this.activeTags);
+      filter = this.applyDurationFilter(filter);
 
       // Set time filter if we have the latest request time
       if (this.latestRequestTime) {
