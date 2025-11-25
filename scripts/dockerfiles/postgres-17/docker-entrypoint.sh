@@ -31,8 +31,17 @@ configure_postgresql() {
     # Always create/update config files in Bitnami conf directory
     echo "Creating PostgreSQL configuration files..."
 
-    # Filter out pg_audit from shared_preload_libraries if present
-    FILTERED_PRELOAD_LIBRARIES=$(echo "${POSTGRESQL_SHARED_PRELOAD_LIBRARIES}" | sed 's/pg_audit,\?//g' | sed 's/,pg_audit//g' | sed 's/,,/,/g' | sed 's/^,//;s/,$//')
+    # Filter out pgaudit/pg_audit from shared_preload_libraries if present
+    FILTERED_PRELOAD_LIBRARIES=$(echo "${POSTGRESQL_SHARED_PRELOAD_LIBRARIES}" | sed -E 's/(pgaudit|pg_audit),?//g' | sed 's/,(pgaudit|pg_audit)//g' | sed 's/,,/,/g' | sed 's/^,//;s/,$//')
+
+    # Warn if pgaudit was filtered out
+    if [[ "${POSTGRESQL_SHARED_PRELOAD_LIBRARIES}" =~ (pgaudit|pg_audit) ]]; then
+        echo "WARNING: pgaudit extension is not available in this PostgreSQL image and will be skipped"
+        echo "Filtered shared_preload_libraries: ${FILTERED_PRELOAD_LIBRARIES}"
+    fi
+
+    # Override the environment variable so pg_ctl doesn't pick up pgaudit
+    export POSTGRESQL_SHARED_PRELOAD_LIBRARIES="${FILTERED_PRELOAD_LIBRARIES}"
 
     # Create postgresql.conf in /opt/bitnami/postgresql/conf
     cat >"${POSTGRES_CONF_DIR}/postgresql.conf" <<EOF
