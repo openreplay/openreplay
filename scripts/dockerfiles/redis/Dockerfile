@@ -1,7 +1,7 @@
 FROM cgr.dev/chainguard/wolfi-base
 
 # Install Redis 7.x (latest available major version in Wolfi)
-RUN apk add --no-cache 'redis>=7' 'redis<8' redis-cli && \
+RUN apk add --no-cache 'redis>=7' 'redis<8' redis-cli bash && \
   mkdir -p /data && \
   chown -R 1001:1001 /data
 
