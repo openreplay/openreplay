@@ -1,10 +1,11 @@
 FROM cgr.dev/chainguard/wolfi-base
 
-# Install PostgreSQL 17 with contrib extensions and locale support
+# Install PostgreSQL 18 with contrib extensions and locale support
 RUN apk add --no-cache \
-  postgresql-17 \
-  postgresql-17-contrib \
-  postgresql-17-client \
+  postgresql-18 \
+  postgresql-18-contrib \
+  postgresql-18-client \
+  pgaudit-18 \
   glibc-locale-en \
   bash && \
   # Create user and group with ID 1001
@@ -43,7 +44,7 @@ ENV BITNAMI_DEBUG="false" \
   POSTGRESQL_LOG_CONNECTIONS="false" \
   POSTGRESQL_LOG_DISCONNECTIONS="false" \
   POSTGRESQL_CLIENT_MIN_MESSAGES="error" \
-  POSTGRESQL_SHARED_PRELOAD_LIBRARIES="pg_stat_statements"
+  POSTGRESQL_SHARED_PRELOAD_LIBRARIES="pgaudit,pg_stat_statements"
 
 # Copy custom entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
