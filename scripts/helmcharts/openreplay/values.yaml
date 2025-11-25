@@ -4,13 +4,13 @@ migrationJob:
 
 postgresql:
   image:
-    repository: bitnamilegacy/postgresql
-    tag: 17.6.0
+    repository: ghcr.io/openreplay/postgres
+    tag: "17"
 
 kafka:
   image:
-    repository: bitnamilegacy/kafka
-    tag: 3.9
+    repository: ghcr.io/openreplay/kafka
+    tag: "3"
 
 migration:
   env: {}
@@ -86,8 +86,8 @@ minio:
   # Force initialize minio, even if the instance is not provisioned by OR
   forceInit: false
   image:
-    repository: bitnamilegacy/minio
-    tag: 2025.7.23
+    repository: ghcr.io/openreplay/minio
+    tag: "2025"
 
 clickhouse: &clickhouse
   password: ""

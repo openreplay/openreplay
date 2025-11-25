@@ -13,12 +13,12 @@ global:
 ## ref: https://hub.docker.com/r/bitnami/redis/tags/
 ##
 image:
-  registry: docker.io
-  repository: bitnamilegacy/redis
+  registry: ghcr.io
+  repository: openreplay/redis
   ## Bitnami Redis(TM) image tag
   ## ref: https://github.com/bitnami/bitnami-docker-redis#supported-tags-and-respective-dockerfile-links
   ##
-  tag: 5.0.9-debian-10-r0
+  tag: "7"
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images

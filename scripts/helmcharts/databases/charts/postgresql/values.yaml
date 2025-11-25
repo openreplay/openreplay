@@ -13,9 +13,9 @@ global:
 ## ref: https://hub.docker.com/r/bitnami/postgresql/tags/
 ##
 image:
-  registry: docker.io
-  repository: bitnamilegacy/postgresql
-  tag: 11.9.0-debian-10-r48
+  registry: ghcr.io
+  repository: openreplay/postgres
+  tag: "17"
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images

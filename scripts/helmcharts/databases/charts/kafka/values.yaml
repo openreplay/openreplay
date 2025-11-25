@@ -67,9 +67,9 @@ diagnosticMode:
 ## @param image.debug Specify if debug values should be set
 ##
 image:
-  registry: docker.io
-  repository: bitnamilegacy/kafka
-  tag: 3.4.0-debian-11-r34
+  registry: ghcr.io
+  repository: openreplay/kafka
+  tag: "3"
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
