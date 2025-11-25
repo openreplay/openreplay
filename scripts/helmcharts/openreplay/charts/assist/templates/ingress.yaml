@@ -12,15 +12,16 @@ metadata:
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/lb-method: "hash $sessionid consistent"
     nginx.org/websocket-services: "{{ $fullName }}"
-    nginx.org/proxy-read-timeout: "3600s"
-    nginx.org/proxy-send-timeout: "3600s"
-    nginx.org/proxy-connect-timeout: "120s"
     nginx.org/location-snippets: |
+      {{- if .Values.ingress.cors }}
       # CORS configuration for WebSocket
-      add_header 'Access-Control-Allow-Origin' $http_origin always;
-      add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
-      add_header 'Access-Control-Allow-Headers' 'sessionid, Content-Type, Authorization' always;
-      add_header 'Access-Control-Max-Age' 1728000 always;
+      add_header 'Access-Control-Allow-Origin' '{{ tpl .Values.ingress.cors.allowOrigin . }}' always;
+      add_header 'Access-Control-Allow-Methods' '{{ tpl .Values.ingress.cors.allowMethods . }}' always;
+      add_header 'Access-Control-Allow-Headers' '{{ tpl .Values.ingress.cors.allowHeaders . }}' always;
+      add_header 'Access-Control-Max-Age' '{{ tpl .Values.ingress.cors.maxAge . }}' always;
+      {{- end }}
+      
+      # Debug headers
       add_header 'X-Debug-Session-ID' $sessionid always;
       
       # Strip /ws-assist prefix
@@ -31,7 +32,7 @@ metadata:
     {{- end }}
     {{- end }}
 spec:
-  ingressClassName: openreplay
+  ingressClassName: {{ tpl .Values.ingress.className . }}
   rules:
     - host: {{ .Values.global.domainName }} 
       http:
