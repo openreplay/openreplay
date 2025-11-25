@@ -62,6 +62,7 @@ function FilterModal({
       });
     }
   }, [category, matchingFilters, matchingCategories, activeFilters]);
+
   const isResultEmpty = useMemo(
     () =>
       matchingCategories.length <= 1 &&

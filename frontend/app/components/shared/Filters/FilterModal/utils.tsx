@@ -73,10 +73,8 @@ export const getFilteredEntries = (
 
   categories.forEach((cat) => {
     const catMatch = cat.toLowerCase().includes(trimmed);
-    const items = grouped[cat].filter(
-      (f) =>
-        f.displayName?.toLowerCase().includes(trimmed) ||
-        f.name?.toLowerCase().includes(trimmed),
+    const items = grouped[cat].filter((f) =>
+      f.displayName?.toLowerCase().includes(trimmed),
     );
     if (items.length) filtersMap[cat] = items;
     if (catMatch) filtersMap[cat] ||= grouped[cat];
