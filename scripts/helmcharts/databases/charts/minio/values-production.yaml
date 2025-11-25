@@ -17,9 +17,9 @@ global:
 ## ref: https://hub.docker.com/r/bitnami/minio/tags/
 ##
 image:
-  registry: docker.io
-  repository: bitnamilegacy/minio
-  tag: 2020.10.9-debian-10-r6
+  registry: ghcr.io
+  repository: openreplay/minio
+  tag: "2025"
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images

@@ -86,6 +86,8 @@ affinity: {}
 ## Child charts
 redis:
   image:
+    registry: ghcr.io
+    repository: openreplay/redis
     tag: 7
   enabled: true
   fullnameOverride: redis
@@ -106,7 +108,9 @@ postgresql:
   fullnameOverride: postgresql
   postgresqlSharedPreloadLibraries: "pgaudit,pg_stat_statements"
   image:
-    tag: 17.2.0
+    registry: ghcr.io
+    repository: openreplay/postgres
+    tag: 17
   resources:
     limits:
       cpu: 1
@@ -121,7 +125,8 @@ minio:
   #    accessKey: "{{ minio_access_key }}"
   #    secretKey: "{{ minio_secret_key }}"
   image:
-    tag: 2025.7.23
+    repository: openreplay/minio
+    tag: 2025
   fullnameOverride: minio
   enabled: true
   resources:
@@ -137,8 +142,12 @@ minio:
 
 kafka:
   image:
-    tag: 3.3
+    registry: ghcr.io
+    repository: openreplay/kafka
+    tag: 3
   fullnameOverride: kafka
+  zookeeper:
+    enabled: false
   enabled: false
   replicaCount: 2
   persistence:
@@ -166,7 +175,7 @@ kafka:
 # Enterprise dbs
 clickhouse:
   image:
-    tag: "25.1-alpine"
+    tag: "25.10-alpine"
   enabled: false
 
 postgreql:
