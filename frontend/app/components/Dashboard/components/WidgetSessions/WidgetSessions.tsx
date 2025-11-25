@@ -16,7 +16,7 @@ import { DateTime } from 'luxon';
 import { debounce, numberWithCommas } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { HEATMAP, USER_PATH, FUNNEL } from 'App/constants/card';
+import { HEATMAP, USER_PATH, FUNNEL, TABLE } from 'App/constants/card';
 import { useTranslation } from 'react-i18next';
 import Session from 'App/types/session/session';
 import { toast } from 'react-toastify';
@@ -49,8 +49,13 @@ const getListSessionsBySeries = (
 
 function WidgetSessions({ className = '' }) {
   const { t } = useTranslation();
-  const { dashboardStore, metricStore, sessionStore, customFieldStore } =
-    useStore();
+  const {
+    dashboardStore,
+    metricStore,
+    sessionStore,
+    customFieldStore,
+    filterStore,
+  } = useStore();
   const isMounted = useIsMounted();
   const listRef = useRef(null);
 
@@ -144,6 +149,12 @@ function WidgetSessions({ className = '' }) {
 
       setLoading(true);
       const params = { ...flt, filters: [] };
+      if (widget.metricType === TABLE && widget.metricOf === 'REQUEST') {
+        const reqFilter = filterStore.findEvent({ name: FilterKey.REQUEST });
+        if (reqFilter) {
+          params.filters.push(reqFilter);
+        }
+      }
       if (flt.filters?.length && params.series?.[0]?.filter) {
         if (widget.metricType === FUNNEL) {
           params.series[0].filter.filters = [...flt.filters];
