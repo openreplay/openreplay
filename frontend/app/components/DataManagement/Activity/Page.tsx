@@ -22,6 +22,8 @@ import { Code, Plus } from 'lucide-react';
 
 const limit = 100;
 
+// TODO: ADD PERMISSION CHECK DATA_MANAGEMENT
+
 const testEv = new Event({
   name: 'test ev #',
   time: Date.now(),
