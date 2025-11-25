@@ -5,7 +5,7 @@
 builder ?= podman
 repo ?= local
 name ?= postgresql
-version ?= 17
+version ?= 18
 image ?= $(repo)/$(name):$(version)
 
 .PHONY: help

@@ -40,7 +40,20 @@ echo "6. Testing pgcrypto password hashing..."
 exec_sql "SELECT length(crypt('mypassword', gen_salt('bf'))) as bcrypt_length;"
 
 echo
-echo "7. Listing all installed extensions..."
+echo "7. Testing pgaudit extension..."
+exec_sql "CREATE EXTENSION IF NOT EXISTS pgaudit;"
+echo "✓ pgaudit extension created"
+
+echo
+echo "8. Testing pgaudit configuration..."
+exec_sql "SHOW pgaudit.log;"
+
+echo
+echo "9. Testing pgaudit session logging..."
+exec_sql "SET pgaudit.log = 'READ,WRITE'; SELECT 1 as test_query;"
+
+echo
+echo "10. Listing all installed extensions..."
 exec_sql "SELECT extname, extversion FROM pg_extension ORDER BY extname;"
 
 echo
@@ -49,4 +62,5 @@ echo
 echo "Available extensions tested:"
 echo "  - pg_trgm - Fuzzy text search"
 echo "  - pgcrypto - Cryptographic functions"
+echo "  - pgaudit - Audit logging"
 echo "  - pg_stat_statements - Query tracking"
