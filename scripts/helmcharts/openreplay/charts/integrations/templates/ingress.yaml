@@ -11,8 +11,8 @@ metadata:
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
-    {{- if .Values.ingress.cors }}
     nginx.org/location-snippets: |
+      {{- if .Values.ingress.cors }}
       # CORS configuration
       add_header 'Access-Control-Allow-Origin' '{{ tpl .Values.ingress.cors.allowOrigin . }}' always;
       add_header 'Access-Control-Allow-Methods' '{{ tpl .Values.ingress.cors.allowMethods . }}' always;
@@ -29,7 +29,10 @@ metadata:
         add_header 'Content-Length' 0;
         return 204;
       }
-    {{- end }}
+      {{- end }}
+      
+      # Strip /integrations prefix
+      rewrite ^/integrations/(.*)$ /$1 break;
     {{- with .Values.ingress.annotations }}
     {{- range $key, $value := . }}
     {{ $key }}: {{ tpl $value $ | quote }}

@@ -10,12 +10,10 @@ metadata:
     {{- include "assist-stats.labels" . | nindent 4 }}
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
-    {{- with .Values.ingress.annotations }}
-    {{- range $key, $value := . }}
-    {{ $key }}: {{ tpl $value $ | quote }}
-    {{- end }}
-    {{- end }}
+    nginx.org/location-snippets: |
+      add_header Cache-Control "no-store,no-cache";
+      add_header Pragma "no-cache";
+      rewrite ^/assist-stats/(.*)$ /$1 break;
 spec:
   ingressClassName: openreplay
   rules:
