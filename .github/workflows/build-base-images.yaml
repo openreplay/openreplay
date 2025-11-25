@@ -133,7 +133,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha,prefix={{date 'YYYYMMDD'}}-
@@ -258,7 +258,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha,prefix={{date 'YYYYMMDD'}}-
