@@ -34,13 +34,15 @@ jobs:
         run: |
           IMAGES_INPUT="${{ github.event.inputs.images }}"
           
-          # Define all available images (excluding alpine, ingress-controller, maintnance)
-          ALL_IMAGES='["kafka", "minio", "nginx", "postgres", "redis"]'
+          # Define all available images with their versions
+          # Format: image:version or just image (for single version)
+          ALL_IMAGES='["kafka", "minio", "nginx", "postgres:17", "postgres:18", "redis"]'
           
           if [[ "$IMAGES_INPUT" == "all" ]] || [[ -z "$IMAGES_INPUT" ]]; then
             MATRIX="$ALL_IMAGES"
           else
             # Convert comma-separated input to JSON array
+            # Support both "postgres" (builds all versions) and "postgres:17" (specific version)
             MATRIX=$(echo "$IMAGES_INPUT" | jq -R -c 'split(",") | map(gsub("^\\s+|\\s+$"; ""))')
           fi
           
@@ -62,6 +64,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Parse image and version
+        id: parse
+        run: |
+          IMAGE_FULL="${{ matrix.image }}"
+          
+          # Split image:version format
+          if [[ "$IMAGE_FULL" == *":"* ]]; then
+            IMAGE_NAME="${IMAGE_FULL%%:*}"
+            IMAGE_VERSION="${IMAGE_FULL##*:}"
+            CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}/${IMAGE_VERSION}"
+          else
+            IMAGE_NAME="$IMAGE_FULL"
+            IMAGE_VERSION=""
+            CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}"
+          fi
+          
+          echo "name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "context=$CONTEXT_PATH" >> $GITHUB_OUTPUT
+          echo "Parsed: name=$IMAGE_NAME, version=$IMAGE_VERSION, context=$CONTEXT_PATH"
+
       - name: Set up platform pair
         id: platform
         run: |
@@ -71,38 +94,44 @@ jobs:
       - name: Extract version from Dockerfile
         id: app-version
         run: |
-          DOCKERFILE="./scripts/dockerfiles/${{ matrix.image }}/Dockerfile"
+          DOCKERFILE="${{ steps.parse.outputs.context }}/Dockerfile"
+          IMAGE_NAME="${{ steps.parse.outputs.name }}"
           
-          # Extract version based on the image
-          case "${{ matrix.image }}" in
-            kafka)
-              VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
-              ;;
-            minio)
-              VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
-              ;;
-            nginx)
-              VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
-              ;;
-            postgres)
-              VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
-              ;;
-            redis)
-              VERSION=$(grep -oP "redis>=\K[0-9]+" "$DOCKERFILE" || echo "7")
-              ;;
-            *)
-              VERSION="latest"
-              ;;
-          esac
+          # If version is explicitly provided in matrix, use it
+          if [[ -n "${{ steps.parse.outputs.version }}" ]]; then
+            VERSION="${{ steps.parse.outputs.version }}"
+          else
+            # Extract version based on the image
+            case "$IMAGE_NAME" in
+              kafka)
+                VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
+                ;;
+              minio)
+                VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
+                ;;
+              nginx)
+                VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
+                ;;
+              postgres)
+                VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
+                ;;
+              redis)
+                VERSION=$(grep -oP "redis>=\K[0-9]+" "$DOCKERFILE" || echo "7")
+                ;;
+              *)
+                VERSION="latest"
+                ;;
+            esac
+          fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected version for ${{ matrix.image }}: $VERSION"
+          echo "Detected version for $IMAGE_NAME: $VERSION"
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
             type=raw,value=latest
             type=raw,value=${{ steps.app-version.outputs.version }}
@@ -125,10 +154,10 @@ jobs:
         with:
           project: ${{ secrets.DEPOT_PROJECT_ID }}
           token: ${{ secrets.DEPOT_TOKEN }}
-          context: ./scripts/dockerfiles/${{ matrix.image }}
+          context: ${{ steps.parse.outputs.context }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -156,6 +185,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Parse image and version
+        id: parse
+        run: |
+          IMAGE_FULL="${{ matrix.image }}"
+          
+          # Split image:version format
+          if [[ "$IMAGE_FULL" == *":"* ]]; then
+            IMAGE_NAME="${IMAGE_FULL%%:*}"
+            IMAGE_VERSION="${IMAGE_FULL##*:}"
+            CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}/${IMAGE_VERSION}"
+          else
+            IMAGE_NAME="$IMAGE_FULL"
+            IMAGE_VERSION=""
+            CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}"
+          fi
+          
+          echo "name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "context=$CONTEXT_PATH" >> $GITHUB_OUTPUT
+          echo "Parsed: name=$IMAGE_NAME, version=$IMAGE_VERSION, context=$CONTEXT_PATH"
+
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
@@ -169,38 +219,44 @@ jobs:
       - name: Extract version from Dockerfile
         id: app-version
         run: |
-          DOCKERFILE="./scripts/dockerfiles/${{ matrix.image }}/Dockerfile"
+          DOCKERFILE="${{ steps.parse.outputs.context }}/Dockerfile"
+          IMAGE_NAME="${{ steps.parse.outputs.name }}"
           
-          # Extract version based on the image
-          case "${{ matrix.image }}" in
-            kafka)
-              VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
-              ;;
-            minio)
-              VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
-              ;;
-            nginx)
-              VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
-              ;;
-            postgres)
-              VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
-              ;;
-            redis)
-              VERSION=$(grep -oP "redis>=\K[0-9]+" "$DOCKERFILE" || echo "7")
-              ;;
+          # If version is explicitly provided in matrix, use it
+          if [[ -n "${{ steps.parse.outputs.version }}" ]]; then
+            VERSION="${{ steps.parse.outputs.version }}"
+          else
+            # Extract version based on the image
+            case "$IMAGE_NAME" in
+              kafka)
+                VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
+                ;;
+              minio)
+                VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
+                ;;
+              nginx)
+                VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
+                ;;
+              postgres)
+                VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
+                ;;
+              redis)
+                VERSION=$(grep -oP "redis>=\K[0-9]+" "$DOCKERFILE" || echo "7")
+                ;;
             *)
-              VERSION="latest"
-              ;;
-          esac
+                VERSION="latest"
+                ;;
+            esac
+          fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected version for ${{ matrix.image }}: $VERSION"
+          echo "Detected version for $IMAGE_NAME: $VERSION"
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
             type=raw,value=latest
             type=raw,value=${{ steps.app-version.outputs.version }}
@@ -218,11 +274,11 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}@sha256:%s ' *)
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}:${{ steps.app-version.outputs.version }}
 
   notify:
     name: Notify Build Status
