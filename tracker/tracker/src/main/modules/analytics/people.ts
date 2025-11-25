@@ -1,3 +1,4 @@
+import Batcher from './batcher.js'
 import SharedProperties from './sharedProperties.js'
 import { isObject } from './utils.js'
 
@@ -6,9 +7,9 @@ export default class People {
 
   constructor(
     private readonly sharedProperties: SharedProperties,
-    private readonly getToken: () => string,
     private readonly getTimestamp: () => number,
     private readonly onId: (user_id: string) => void,
+    private readonly batcher: Batcher,
   ) {}
 
   identify = (user_id: string, options?: { fromTracker: boolean }) => {
@@ -109,22 +110,5 @@ export default class People {
     if (!this.sharedProperties.defaultPropertyKeys.includes(key) && typeof this.ownProperties[key] === 'number') {
       this.ownProperties[key] += value
     }
-  }
-
-  fetchUserProperties = async () => {
-    if (!this.user_id) return
-    const userObj = {
-      user_id: this.user_id,
-      distinct_id: this.sharedProperties.distinctId,
-      properties: {
-        ...this.sharedProperties.all,
-        ...this.ownProperties,
-      },
-    }
-    const headers = {
-      Authorization: `Bearer ${this.getToken()}`,
-    }
-
-    // fetch user properties
   }
 }

@@ -1,24 +1,24 @@
+import Batcher from './batcher.js';
 import SharedProperties from './sharedProperties.js'
 import { isObject } from './utils.js'
 
 const maxProperties = 100;
 const maxPropLength = 100;
 
+const reservedProps = [
+  'properties',
+  'token',
+  'timestamp',
+];
+
 export default class Events {
-  queue: Record<string, any> = []
-  sendInterval: ReturnType<typeof setInterval> | null = null
   ownProperties: Record<string, any> = {}
 
   constructor(
     private readonly sharedProperties: SharedProperties,
-    private readonly getToken: () => string,
     private readonly getTimestamp: () => number,
-    private readonly batchInterval = 5000,
-  ) {
-    this.sendInterval = setInterval(() => {
-      void this.sendBatch()
-    }, batchInterval)
-  }
+    private readonly batcher: Batcher,
+  ) {}
 
   /**
    * Add event to batch with option to send it immediately,
@@ -47,29 +47,10 @@ export default class Events {
       timestamp: this.getTimestamp(),
     }
     if (options?.send_immediately) {
-      void this.sendSingle(event)
+      void this.batcher.sendImmediately(event);
     } else {
-      this.queue.push(event)
+      this.batcher.addEvent(event);
     }
-  }
-
-  sendBatch = async () => {
-    if (this.queue.length === 0) {
-      return
-    }
-    const headers = {
-      Authorization: `Bearer ${this.getToken()}`,
-      'Content-Type': 'application/json',
-    }
-    // await fetch blah blah + token
-  }
-
-  sendSingle = async (event) => {
-    const headers = {
-      Authorization: `Bearer ${this.getToken()}`,
-      'Content-Type': 'application/json',
-    }
-    // await fetch blah blah + token
   }
 
   /**
