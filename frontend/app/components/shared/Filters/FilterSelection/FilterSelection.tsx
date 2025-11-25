@@ -35,15 +35,11 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
           setOpen(false);
         }
       };
-      if (open) {
-        window.addEventListener('keydown', handler);
-      } else {
-        window.removeEventListener('keydown', handler);
-      }
+      window.addEventListener('keydown', handler);
       return () => {
         window.removeEventListener('keydown', handler);
       };
-    }, [open]);
+    }, []);
 
     const handleFilterClick = useCallback(
       (selectedFilter: Filter) => {
