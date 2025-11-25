@@ -29,6 +29,22 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
   }) => {
     const [open, setOpen] = useState(false);
 
+    React.useEffect(() => {
+      const handler = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setOpen(false);
+        }
+      };
+      if (open) {
+        window.addEventListener('keydown', handler);
+      } else {
+        window.removeEventListener('keydown', handler);
+      }
+      return () => {
+        window.removeEventListener('keydown', handler);
+      };
+    }, [open]);
+
     const handleFilterClick = useCallback(
       (selectedFilter: Filter) => {
         if (loading) return;
