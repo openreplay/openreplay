@@ -1,12 +1,12 @@
 FROM cgr.dev/chainguard/wolfi-base
 
-RUN apk add --no-cache kafka~3 openssl && \
-    mkdir -p /bitnami/kafka /usr/lib/kafka/logs && \
-    chown -R 1001:1001 /bitnami/kafka /usr/lib/kafka/logs
+RUN apk add --no-cache kafka~3 openssl bash && \
+  mkdir -p /bitnami/kafka /usr/lib/kafka/logs && \
+  chown -R 1001:1001 /bitnami/kafka /usr/lib/kafka/logs
 
 COPY start-kafka.sh /usr/local/bin/start-kafka.sh
 RUN chmod +x /usr/local/bin/start-kafka.sh && \
-    chown 1001:1001 /usr/local/bin/start-kafka.sh
+  chown 1001:1001 /usr/local/bin/start-kafka.sh
 
 USER 1001
 
