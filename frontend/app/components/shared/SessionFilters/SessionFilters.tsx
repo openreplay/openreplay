@@ -40,7 +40,6 @@ function SessionFilters() {
 
   const onAddFilter = (filter: Filter) => {
     searchStore.addFilter(filter);
-    void searchStore.fetchSessions();
   };
 
   const onChangeEventsOrder = (
