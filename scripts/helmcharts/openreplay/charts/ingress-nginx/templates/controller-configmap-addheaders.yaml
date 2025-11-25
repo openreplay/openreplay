@@ -9,6 +9,6 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
   name: {{ include "ingress-nginx.fullname" . }}-custom-add-headers
-  namespace: {{ include "ingress-nginx.namespace" . }}
+  namespace: {{ .Release.Namespace }}
 data: {{ toYaml .Values.controller.addHeaders | nindent 2 }}
 {{- end }}
