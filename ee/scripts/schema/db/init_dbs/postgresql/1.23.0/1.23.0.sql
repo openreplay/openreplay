@@ -89,7 +89,14 @@ CREATE TABLE IF NOT EXISTS public.scim_auth_codes
 );
 
 ALTER TABLE IF EXISTS public.users
-    ADD COLUMN IF NOT EXISTS updated_at timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc');
+    ADD COLUMN IF NOT EXISTS updated_at              timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    ADD COLUMN IF NOT EXISTS admin_privilege_role_id integer                     REFERENCES public.roles (role_id) ON DELETE SET NULL;
+
+ALTER TABLE IF EXISTS public.tenants
+    ADD COLUMN IF NOT EXISTS tenant_secret TEXT NOT NULL DEFAULT generate_api_key(40);
+
+ALTER TABLE IF EXISTS public.roles
+    ADD COLUMN IF NOT EXISTS hidden BOOLEAN DEFAULT FALSE;
 
 COMMIT;
 

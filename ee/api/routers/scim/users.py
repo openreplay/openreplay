@@ -1,3 +1,5 @@
+import json
+from chalicelib.utils import SAML2_helper
 from routers.scim import helpers
 
 from chalicelib.utils import pg_client
@@ -7,6 +9,7 @@ from scim2_models import Resource
 def convert_provider_resource_to_client_resource(
         provider_resource: dict,
 ) -> dict:
+    print(">>>>>>convert_provider_resource_to_client_resource")
     groups = []
     if provider_resource["role_id"]:
         groups.append(
@@ -45,23 +48,12 @@ def convert_provider_resource_to_client_resource(
 
 
 def query_resources(tenant_id: int) -> list[dict]:
+    print(">>>>>query_resources")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
-            SELECT
-                users.*,
-                roles.permissions AS permissions,
-                COALESCE(
-                    (
-                        SELECT json_agg(projects.project_key)
-                        FROM public.projects
-                        LEFT JOIN public.roles_projects USING (project_id)
-                        WHERE roles_projects.role_id = roles.role_id
-                    ),
-                    '[]'
-                ) AS project_keys
+            SELECT users.*
             FROM public.users
-                LEFT JOIN public.roles ON roles.role_id = users.role_id
             WHERE users.tenant_id = %(tenant_id)s 
                 AND users.deleted_at IS NULL
             """, {"tenant_id": tenant_id})
@@ -71,26 +63,16 @@ def query_resources(tenant_id: int) -> list[dict]:
 
 
 def get_resource(resource_id: str, tenant_id: int) -> dict | None:
+    print(">>>>>get_resource")
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            f"""
-            SELECT
-                users.*,
-                roles.permissions AS permissions,
-                COALESCE(
-                    (
-                        SELECT json_agg(projects.project_key)
-                        FROM public.projects
-                        LEFT JOIN public.roles_projects USING (project_id)
-                        WHERE roles_projects.role_id = roles.role_id
-                    ),
-                    '[]'
-                ) AS project_keys
+            cur.mogrify(f"""
+            SELECT users.*
             FROM public.users
-            LEFT JOIN public.roles ON roles.role_id = users.role_id
-            WHERE users.tenant_id = {tenant_id} AND users.deleted_at IS NULL AND users.user_id = {resource_id}
-            """
-        )
+            WHERE users.tenant_id = %(tenant_id)s 
+                AND users.deleted_at IS NULL 
+                AND users.user_id = %(user_id)s
+            """, {"tenant_id": tenant_id, "user_id": resource_id}))
         item = cur.fetchone()
         if item:
             return convert_provider_resource_to_client_resource(item)
@@ -98,12 +80,14 @@ def get_resource(resource_id: str, tenant_id: int) -> dict | None:
 
 
 def delete_resource(resource_id: str, tenatn_id: int) -> None:
+    print(">>>>>delete_resource")
+    print(">>>> resource_id = ", resource_id)
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """
+                """ \
                 UPDATE public.users
-                SET deleted_at = NULL,
+                SET deleted_at = now(),
                     updated_at = now()
                 WHERE users.user_id = %(user_id)s
                 """,
@@ -113,6 +97,7 @@ def delete_resource(resource_id: str, tenatn_id: int) -> None:
 
 
 def search_existing(tenant_id: int, resource: Resource) -> dict | None:
+    print(">>>>>search_existing")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -131,6 +116,7 @@ def search_existing(tenant_id: int, resource: Resource) -> dict | None:
 
 
 def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
+    print(">>>>>restore_resource")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -206,44 +192,59 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
 
 
 def create_resource(tenant_id: int, resource: Resource) -> dict:
+    print(">>>>>create_resource user")
+    print(resource)
+    params = {
+        "tenant_id": tenant_id,
+        "email": resource.user_name,
+        "name": " ".join(
+            [
+                x
+                for x in [
+                resource.name.honorific_prefix,
+                resource.name.given_name,
+                resource.name.middle_name,
+                resource.name.family_name,
+                resource.name.honorific_suffix,
+            ]
+                if x
+            ]
+        ) if resource.name else "",
+        "internal_id": resource.user_name,
+        "origin": SAML2_helper.get_saml2_provider(),
+        "data": json.dumps({"external_id": resource.external_id}),
+        "role": "member",
+        "role_id": None,
+        "admin_privilege_role_id": None,
+    }
     with pg_client.PostgresClient() as cur:
+        if resource.groups is not None and len(resource.groups) > 0:
+            role_ids = [g["value"] for g in resource.groups]
+            if len(role_ids) > 0:
+                cur.execute(cur.mogrify(
+                    """ \
+                    SELECT *
+                    FROM public.roles
+                    WHERE tenant_id = %(tenant_id)s
+                      AND roles.role_id IN %(role_ids)s
+                    """, {"tenant_id": tenant_id, "role_ids": tuple(role_ids)}
+                ))
+            roles = cur.fetchall()
+            for r in roles:
+                if r["hidden"] and r["name"] == "admin":
+                    params["admin_privilege_role_id"] = r["id"]
+                    params["role"] = "admin"
+                else:
+                    params["role_id"] = r["id"]
+
         cur.execute(
             cur.mogrify(
-                """
-                WITH u AS (
-                INSERT
-                INTO public.users (tenant_id,
-                                   email,
-                                   name,
-                                   internal_id)
-                VALUES (
-                    %(tenant_id)s, %(email)s, %(name)s, %(internal_id)s
-                    )
-                    RETURNING *
-                    )
-                SELECT *
-                FROM u
-                """,
-                {
-                    "tenant_id": tenant_id,
-                    "email": resource.user_name,
-                    "name": " ".join(
-                        [
-                            x
-                            for x in [
-                            resource.name.honorific_prefix,
-                            resource.name.given_name,
-                            resource.name.middle_name,
-                            resource.name.family_name,
-                            resource.name.honorific_suffix,
-                        ]
-                            if x
-                        ]
-                    )
-                    if resource.name
-                    else "",
-                    "internal_id": resource.external_id,
-                },
+                """ \
+                INSERT INTO public.users (tenant_id, email, name, internal_id, origin, data, role, role_id,
+                                          admin_privilege_role_id)
+                VALUES (%(tenant_id)s, %(email)s, %(name)s, %(internal_id)s, %(origin)s, %(data)s,
+                        %(role)s, %(role_id)s, %(admin_privilege_role_id)s) RETURNING *
+                """, params
             )
         )
         item = cur.fetchone()
@@ -251,25 +252,26 @@ def create_resource(tenant_id: int, resource: Resource) -> dict:
 
 
 def update_resource(tenant_id: int, resource: Resource) -> dict | None:
+    print(">>>>>update_resource")
     with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """
-                SELECT role_id
-                FROM public.users
-                WHERE user_id = %(user_id)s
-                """,
-                {"user_id": resource.id},
-            )
-        )
-        item = cur.fetchone()
-        if item and item["role_id"] is not None:
-            _update_role_projects_and_permissions(
-                item["role_id"],
-                resource.OpenreplayUser.project_keys,
-                resource.OpenreplayUser.permissions,
-                cur,
-            )
+        # cur.execute(
+        #     cur.mogrify(
+        #         """
+        #         SELECT role_id
+        #         FROM public.users
+        #         WHERE user_id = %(user_id)s
+        #         """,
+        #         {"user_id": resource.id},
+        #     )
+        # )
+        # item = cur.fetchone()
+        # if item and item["role_id"] is not None:
+        #     _update_role_projects_and_permissions(
+        #         item["role_id"],
+        #         resource.OpenreplayUser.project_keys,
+        #         resource.OpenreplayUser.permissions,
+        #         cur,
+        #     )
         cur.execute(
             cur.mogrify(
                 """
@@ -327,6 +329,7 @@ def _update_role_projects_and_permissions(
         permissions: list[str] | None,
         cur: pg_client.PostgresClient,
 ) -> None:
+    print(">>>>update_role_projects_and_permissions")
     all_projects = "true" if not project_keys else "false"
     project_key_clause = helpers.safe_mogrify_array(project_keys, "varchar", cur)
     permission_clause = helpers.safe_mogrify_array(permissions, "varchar", cur)

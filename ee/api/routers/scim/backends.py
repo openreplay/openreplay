@@ -1,18 +1,20 @@
-from scim2_server import backend
-from scim2_server.filter import evaluate_filter
-from scim2_server.utils import SCIMException
+import operator
 
+from scim2_filter_parser import lexer
+from scim2_filter_parser.parser import SCIMParser
 from scim2_models import (
     SearchRequest,
     Resource,
     Context,
     Error,
 )
-from scim2_filter_parser import lexer
-from scim2_filter_parser.parser import SCIMParser
-from routers.scim.postgres_resource import PostgresResource
+from scim2_server import backend
+from scim2_server.filter import evaluate_filter
 from scim2_server.operators import ResolveSortOperator
-import operator
+from scim2_server.utils import SCIMException
+
+from routers.scim import groups
+from routers.scim.postgres_resource import PostgresResource
 
 
 class PostgresBackend(backend.Backend):
@@ -21,15 +23,15 @@ class PostgresBackend(backend.Backend):
         self._postgres_resources = {}
 
     def register_postgres_resource(
-        self, resource_type_id: str, postgres_resource: PostgresResource
+            self, resource_type_id: str, postgres_resource: PostgresResource
     ):
         self._postgres_resources[resource_type_id] = postgres_resource
 
     def query_resources(
-        self,
-        search_request: SearchRequest,
-        tenant_id: int,
-        resource_type_id: str | None = None,
+            self,
+            search_request: SearchRequest,
+            tenant_id: int,
+            resource_type_id: str | None = None,
     ) -> tuple[int, list[Resource]]:
         """Query the backend for a set of resources.
 
@@ -50,6 +52,8 @@ class PostgresBackend(backend.Backend):
 
         tree = None
         if search_request.filter is not None:
+            if resource_type_id == "Group":
+                search_request.filter = groups.group_display_name_to_role_name(search_request.filter)
             token_stream = lexer.SCIMLexer().tokenize(search_request.filter)
             tree = SCIMParser().parse(token_stream)
 
@@ -59,13 +63,12 @@ class PostgresBackend(backend.Backend):
         # any of my tests yet.
         if not resource_type_id:
             raise NotImplementedError
-
         resources = self._postgres_resources[resource_type_id].query_resources(
             tenant_id
         )
         model = self.get_model(resource_type_id)
         resources = [
-            model.model_validate(r, scim_ctx=Context.RESOURCE_QUERY_RESPONSE)
+            model.model_validate(r, scim_ctx=Context.RESOURCE_QUERY_RESPONSE, extra='ignore')
             for r in resources
         ]
         resources = [r for r in resources if (tree is None or evaluate_filter(r, tree))]
@@ -99,7 +102,7 @@ class PostgresBackend(backend.Backend):
         return len(resources), found_resources
 
     def get_resource(
-        self, tenant_id: int, resource_type_id: str, object_id: str
+            self, tenant_id: int, resource_type_id: str, object_id: str
     ) -> Resource | None:
         """Query the backend for a resources by its ID.
 
@@ -115,11 +118,11 @@ class PostgresBackend(backend.Backend):
         )
         if resource:
             model = self.get_model(resource_type_id)
-            resource = model.model_validate(resource)
+            resource = model.model_validate(resource, extra='ignore')
         return resource
 
     def delete_resource(
-        self, tenant_id: int, resource_type_id: str, object_id: str
+            self, tenant_id: int, resource_type_id: str, object_id: str
     ) -> bool:
         """Delete a resource.
 
@@ -137,7 +140,7 @@ class PostgresBackend(backend.Backend):
         return False
 
     def create_resource(
-        self, tenant_id: int, resource_type_id: str, resource: Resource
+            self, tenant_id: int, resource_type_id: str, resource: Resource
     ) -> Resource | None:
         """Create a resource.
 
@@ -152,9 +155,10 @@ class PostgresBackend(backend.Backend):
             tenant_id, resource
         )
         if existing:
-            existing = model.model_validate(existing)
-            if existing.active:
+            # existing = model.model_validate(existing, extra='ignore')
+            if existing["active"]:
                 raise SCIMException(Error.make_uniqueness_error())
+            resource.id = existing["id"]
             resource = self._postgres_resources[resource_type_id].restore_resource(
                 tenant_id, resource
             )
@@ -162,11 +166,11 @@ class PostgresBackend(backend.Backend):
             resource = self._postgres_resources[resource_type_id].create_resource(
                 tenant_id, resource
             )
-        resource = model.model_validate(resource)
+        resource = model.model_validate(resource, extra='ignore')
         return resource
 
     def update_resource(
-        self, tenant_id: int, resource_type_id: str, resource: Resource
+            self, tenant_id: int, resource_type_id: str, resource: Resource
     ) -> Resource | None:
         """Update a resource. The resource is identified by its ID.
 
@@ -180,24 +184,29 @@ class PostgresBackend(backend.Backend):
         existing = self._postgres_resources[resource_type_id].search_existing(
             tenant_id, resource
         )
+        print(">>>>> existing resource", existing)
         if existing:
-            existing = model.model_validate(existing)
-            if existing.active:
-                if existing.id != resource.id:
+            # existing = model.model_validate(existing, extra='ignore')
+            if existing["active"]:
+                if existing["id"] != resource.id:
                     raise SCIMException(Error.make_uniqueness_error())
                 resource = self._postgres_resources[resource_type_id].update_resource(
                     tenant_id, resource
                 )
             else:
+                # TODO: do not delete here
                 self._postgres_resources[resource_type_id].delete_resource(
-                    existing.id, tenant_id
+                    existing["id"], tenant_id
                 )
                 resource = self._postgres_resources[resource_type_id].update_resource(
                     resource.id, tenant_id, resource
                 )
         else:
-            resource = self._postgres_resources[resource_type_id].update_resource(
-                tenant_id, resource
-            )
-        resource = model.model_validate(resource)
+            raise SCIMException(Error.make_no_target_error())
+
+        print(">>>>>> resource", resource)
+
+        if resource is not None:
+            resource = model.model_validate(resource, extra='ignore')
+
         return resource
