@@ -1,0 +1,36 @@
+{{- if .Values.headlessService.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kafka.fullname" . }}-headless
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+    {{- include "kafka.componentLabels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    {{- if .Values.listeners.client.enabled }}
+    - name: tcp-client
+      port: {{ .Values.listeners.client.port }}
+      protocol: TCP
+      targetPort: kafka-client
+    {{- end }}
+    {{- if .Values.listeners.internal.enabled }}
+    - name: tcp-internal
+      port: {{ .Values.listeners.internal.port }}
+      protocol: TCP
+      targetPort: kafka-internal
+    {{- end }}
+    {{- if .Values.listeners.ssl.enabled }}
+    - name: tcp-ssl
+      port: {{ .Values.listeners.ssl.port }}
+      protocol: TCP
+      targetPort: kafka-ssl
+    {{- end }}
+  selector:
+    {{- include "kafka.selectorLabels" . | nindent 4 }}
+    {{- include "kafka.componentLabels" . | nindent 4 }}
+{{- end }}
