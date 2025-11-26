@@ -1,0 +1,52 @@
+# Example values for TLS-enabled Kafka cluster
+replicaCount: 2
+
+image:
+  repository: ghcr.io/openreplay/kafka
+  pullPolicy: IfNotPresent
+  tag: "3"
+
+kraft:
+  enabled: true
+  clusterId: "Sjg_Rr1iQbO9xpahgDbYpQ"
+  processRoles: "broker,controller"
+  controllerListenerNames: "INTERNAL"
+
+listeners:
+  client:
+    enabled: true
+    port: 9092
+    protocol: PLAINTEXT
+  internal:
+    enabled: true
+    port: 9093
+    protocol: PLAINTEXT
+  ssl:
+    enabled: true
+    port: 9094
+    protocol: SSL
+
+tls:
+  enabled: true
+  secretName: kafka-tls-certs
+  clientAuth: "required"
+  endpointIdentificationAlgorithm: ""
+
+service:
+  type: ClusterIP
+  client:
+    port: 9092
+  ssl:
+    port: 9094
+
+persistence:
+  enabled: true
+  size: 100Gi
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
