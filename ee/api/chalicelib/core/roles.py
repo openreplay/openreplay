@@ -15,6 +15,7 @@ def __exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int]) -> bo
                                 WHERE tenant_id = %(tenant_id)s
                                   AND name ILIKE %(name)s
                                   AND deleted_at ISNULL
+                                  AND NOT hidden
                                   {"AND role_id!=%(exclude_id)s" if exclude_id else ""}) AS exists;""",
             {"tenant_id": tenant_id, "name": name, "exclude_id": exclude_id},
         )
@@ -160,7 +161,8 @@ def get_roles(tenant_id):
                ON (TRUE)
                WHERE tenant_id =%(tenant_id)s
                  AND deleted_at IS NULL
-                 AND not service_role
+                 AND NOT service_role
+                 AND NOT hidden
                ORDER BY role_id;""",
             {"tenant_id": tenant_id},
         )
@@ -178,6 +180,7 @@ def get_role_by_name(tenant_id, name):
                FROM public.roles
                WHERE tenant_id = %(tenant_id)s
                  AND deleted_at IS NULL
+                 AND NOT hidden
                  AND name ILIKE %(name)s;""",
             {"tenant_id": tenant_id, "name": name},
         )

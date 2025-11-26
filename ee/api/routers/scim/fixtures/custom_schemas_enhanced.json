@@ -1,0 +1,59 @@
+[
+  {
+    "id": "urn:ietf:params:scim:schemas:extension:openreplay:2.0:User",
+    "name": "OpenreplayUser",
+    "description": "Openreplay User Account Extension",
+    "attributes": [
+    ],
+    "meta": {
+      "resourceType": "Schema",
+      "location": "/v2/Schemas/urn:ietf:params:scim:schemas:extension:openreplay:2.0:User"
+    }
+  },
+  {
+    "id": "urn:ietf:params:scim:schemas:extension:openreplay:2.0:Group",
+    "name": "OpenReplayGroup",
+    "description": "OpenReplay custom attributes for Group resource",
+    "attributes": [
+      {
+        "name": "active",
+        "type": "boolean",
+        "multiValued": false,
+        "required": false,
+        "mutability": "readWrite",
+        "returned": "default"
+      },
+      {
+        "name": "permissions",
+        "type": "string",
+        "multiValued": true,
+        "description": "A list of permissions for the User that represent a thing the User is capable of doing.",
+        "required": false,
+        "canonicalValues": [
+          "SESSION_REPLAY",
+          "DEV_TOOLS",
+          "METRICS",
+          "ASSIST_LIVE",
+          "ASSIST_CALL",
+          "SPOT",
+          "SPOT_PUBLIC"
+        ],
+        "mutability": "readWrite",
+        "returned": "default"
+      },
+      {
+        "name": "projectKeys",
+        "type": "string",
+        "multiValued": true,
+        "description": "A list of project keys for the User that represent a project the User is allowed to work on.",
+        "required": false,
+        "mutability": "readWrite",
+        "returned": "default"
+      }
+    ],
+    "meta": {
+      "resourceType": "Schema",
+      "location": "/v2/Schemas/urn:ietf:params:scim:schemas:extension:openreplay:2.0:Group"
+    }
+  }
+]

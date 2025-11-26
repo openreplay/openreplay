@@ -6,9 +6,9 @@ import json
 
 
 def safe_mogrify_array(
-    items: list[Any] | None,
-    array_type: Literal["varchar", "int"],
-    cursor: pg_client.PostgresClient,
+        items: list[Any] | None,
+        array_type: Literal["varchar", "int"],
+        cursor: pg_client.PostgresClient,
 ) -> str:
     items = items or []
     fragments = [cursor.mogrify("%s", (item,)).decode("utf-8") for item in items]
@@ -22,7 +22,7 @@ def load_json_resource(json_name: str) -> dict:
 
 
 def load_scim_resource(
-    json_name: str, type_: type[Resource]
+        json_name: str, type_: type[Resource]
 ) -> dict[str, type[Resource]]:
     ret = {}
     definitions = load_json_resource(json_name)

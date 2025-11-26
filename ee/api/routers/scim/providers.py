@@ -1,8 +1,8 @@
+import logging
 import traceback
 from typing import Union
 
-from scim2_server import provider
-
+from pydantic import ValidationError
 from scim2_models import (
     AuthenticationScheme,
     ServiceProviderConfig,
@@ -19,22 +19,24 @@ from scim2_models import (
     ListResponse,
     PatchOp,
 )
-
+from scim2_server import provider
+from scim2_server.utils import SCIMException, merge_resources
 from werkzeug import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, PreconditionFailed
-from pydantic import ValidationError
 from werkzeug.routing.exceptions import RequestRedirect
-from scim2_server.utils import SCIMException, merge_resources
 
 from chalicelib.utils.scim_auth import verify_access_token
+
+logger = logging.getLogger(__name__)
 
 
 class MultiTenantProvider(provider.SCIMProvider):
     def check_auth(self, request: Request):
+        logger.debug(f"call processed by check_auth: {request.method} {request.path}")
         auth = request.headers.get("Authorization")
         if not auth or not auth.startswith("Bearer "):
             return None
-        token = auth[len("Bearer ") :]
+        token = auth[len("Bearer "):]
         if not token:
             return Response(
                 "Missing or invalid Authorization header",
@@ -68,8 +70,9 @@ class MultiTenantProvider(provider.SCIMProvider):
         )
 
     def query_resource(
-        self, request: Request, tenant_id: int, resource: ResourceType | None
+            self, request: Request, tenant_id: int, resource: ResourceType | None
     ):
+        logger.debug(f"call processed by query_resource: {request.method} {request.path}")
         search_request = self.build_search_request(request)
 
         kwargs = {}
@@ -98,8 +101,9 @@ class MultiTenantProvider(provider.SCIMProvider):
         )
 
     def call_resource(
-        self, request: Request, resource_endpoint: str, **kwargs
+            self, request: Request, resource_endpoint: str, **kwargs
     ) -> Response:
+        logger.debug(f"call processed by call_resource: {request.method} {request.path}")
         resource_type = self.backend.get_resource_type_by_endpoint(
             "/" + resource_endpoint
         )
@@ -137,8 +141,9 @@ class MultiTenantProvider(provider.SCIMProvider):
                 )
 
     def call_single_resource(
-        self, request: Request, resource_endpoint: str, resource_id: str, **kwargs
+            self, request: Request, resource_endpoint: str, resource_id: str, **kwargs
     ) -> Response:
+        logger.debug(f"call processed by call_single_resource: {request.method} {request.path}")
         find_endpoint = "/" + resource_endpoint
         resource_type = self.backend.get_resource_type_by_endpoint(find_endpoint)
         if not resource_type:
@@ -151,7 +156,7 @@ class MultiTenantProvider(provider.SCIMProvider):
         match request.method:
             case "GET":
                 if resource := self.backend.get_resource(
-                    tenant_id, resource_type.id, resource_id
+                        tenant_id, resource_type.id, resource_id
                 ):
                     if self.continue_etag(request, resource):
                         response_args = self.get_attrs_from_request(request)
@@ -167,7 +172,7 @@ class MultiTenantProvider(provider.SCIMProvider):
                 raise NotFound
             case "DELETE":
                 if self.backend.delete_resource(
-                    tenant_id, resource_type.id, resource_id
+                        tenant_id, resource_type.id, resource_id
                 ):
                     return self.make_response(None, 204)
                 else:
@@ -239,6 +244,7 @@ class MultiTenantProvider(provider.SCIMProvider):
                     )
 
     def wsgi_app(self, request: Request, environ):
+        logger.debug(f"call processed by wsgi_app: {request.method} {request.path}")
         try:
             if environ.get("PATH_INFO", "").endswith(".scim"):
                 # RFC 7644, Section 3.8
