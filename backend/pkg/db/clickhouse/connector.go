@@ -9,6 +9,7 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -1285,6 +1286,10 @@ func getUUID(m messages.Message) string {
 	hash.Write(uint64ToBytes(m.SessionID()))
 	hash.Write(uint64ToBytes(m.MsgID()))
 	hash.Write(uint64ToBytes(uint64(m.TypeID())))
+	if m.MsgID() == 1 && m.Time() == 0 {
+		// Temp fix to make an uniq backend message ID
+		hash.Write(uint64ToBytes(uint64(time.Now().UnixMilli())))
+	}
 	uuidObj, err := uuid.FromBytes(hash.Sum(nil))
 	if err != nil {
 		fmt.Printf("can't create uuid from bytes: %s", err)
