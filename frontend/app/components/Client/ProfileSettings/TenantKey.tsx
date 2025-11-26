@@ -21,7 +21,6 @@ function TenantKey() {
   };
   return (
     <Form.Field>
-      <label htmlFor="tenantKey">{t('Tenant Key')}</label>
       <Input
         name="tenantKey"
         id="tenantKey"

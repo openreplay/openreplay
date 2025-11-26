@@ -6,6 +6,6 @@ export interface SavedSearch {
   key: string;
   name: string;
   projectId: number;
-  searchId: number;
+  searchId: string;
   userId: number;
 }

@@ -1,4 +1,4 @@
-import { makeAutoObservable, observe } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 import { Operator } from '@/mstore/types/filterConstants';
 
 type JsonData = Record<string, any>;

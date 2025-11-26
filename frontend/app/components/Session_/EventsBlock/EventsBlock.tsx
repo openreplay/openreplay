@@ -121,6 +121,7 @@ function EventsBlock(props: IProps) {
       notes,
       incidents,
       tabChangeEvents,
+      uiPlayerStore.showOnlySearchEvents,
     ],
   );
 
