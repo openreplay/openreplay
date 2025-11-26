@@ -141,35 +141,84 @@ minio:
     size: 5Gi
 
 kafka:
-  image:
-    registry: ghcr.io
-    repository: openreplay/kafka
-    tag: 3
-  fullnameOverride: kafka
-  zookeeper:
-    enabled: false
   enabled: false
+  fullnameOverride: kafka
   replicaCount: 2
+  image:
+    repository: ghcr.io/openreplay/kafka
+    pullPolicy: IfNotPresent
+    tag: "3"
+  
+  kraft:
+    enabled: true
+    clusterId: "Sjg_Rr1iQbO9xpahgDbYpQ"
+    processRoles: "broker,controller"
+    controllerListenerNames: "INTERNAL"
+  
+  listeners:
+    client:
+      enabled: true
+      port: 9092
+      protocol: PLAINTEXT
+    internal:
+      enabled: true
+      port: 9093
+      protocol: PLAINTEXT
+    ssl:
+      enabled: false
+      port: 9094
+      protocol: SSL
+  
+  tls:
+    enabled: false
+    secretName: kafka-tls-certs
+    clientAuth: "required"
+    endpointIdentificationAlgorithm: ""
+  
+  service:
+    type: ClusterIP
+    client:
+      port: 9092
+    ssl:
+      port: 9094
+  
   persistence:
     enabled: true
     size: 100Gi
-  # resources:
-  #   limit:
-  #     memory: 4Gi
-  #   requests:
-  #     memory: 4Gi
-  #     cpu: 2
-  # metrics:
-  #   jmx:
-  #     enabled: true
-  #   kafka:
-  #     enabled: true
-  #   serviceMonitor:
-  #     enabled: false
-  #     labels:
-  #       release: observability
-  # prometheusRule:
-  #   enabled: false
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  
+  # Kafka configuration
+  kafka:
+    messageMaxBytes: "3145728"
+    replicaFetchMaxBytes: "3145728"
+    logRetentionHours: "168"
+    logRetentionBytes: "1073741824"
+    logSegmentBytes: "1073741824"
+    logFlushIntervalMessages: "10000"
+    logFlushIntervalMs: "1000"
+    logRetentionCheckIntervalMs: "300000"
+    defaultReplicationFactor: "1"
+    offsetsTopicReplicationFactor: "1"
+    transactionStateLogReplicationFactor: "1"
+    transactionStateLogMinIsr: "1"
+    numIoThreads: "8"
+    numNetworkThreads: "3"
+    numPartitions: "1"
+    numRecoveryThreadsPerDataDir: "1"
+    socketReceiveBufferBytes: "102400"
+    socketRequestMaxBytes: "104857600"
+    socketSendBufferBytes: "102400"
+    autoCreateTopicsEnable: "true"
+    deleteTopicEnable: "false"
+    allowEveryoneIfNoAclFound: "true"
+    superUsers: "User:admin"
 
 
 # Enterprise dbs
