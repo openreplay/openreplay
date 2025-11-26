@@ -1,0 +1,22 @@
+{{- if .Values.listeners.ssl.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kafka.fullname" . }}-ssl
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+    {{- include "kafka.componentLabels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  sessionAffinity: None
+  ports:
+    - name: tcp-ssl
+      port: {{ .Values.service.ssl.port }}
+      protocol: TCP
+      targetPort: kafka-ssl
+      nodePort: null
+  selector:
+    {{- include "kafka.selectorLabels" . | nindent 4 }}
+    {{- include "kafka.componentLabels" . | nindent 4 }}
+{{- end }}
