@@ -1,6 +1,7 @@
 import Batcher from './batcher.js'
 import SharedProperties from './sharedProperties.js'
 import { isObject } from './utils.js'
+import { mutationTypes, categories, createEvent } from './types.js'
 
 export default class People {
   ownProperties: Record<string, any> = {}
@@ -17,7 +18,9 @@ export default class People {
     if (!options?.fromTracker) {
       this.onId(user_id)
     }
-    // TODO: fetch endpoint when it will be here
+
+    const identityEvent = createEvent(categories.people, mutationTypes.identity, this.getTimestamp(), { user_id })
+    this.batcher.addEvent(identityEvent)
   }
 
   // add "hard" flag to force generate device id as well ?
@@ -35,7 +38,8 @@ export default class People {
     this.sharedProperties.setUserId(null)
     this.ownProperties = {}
 
-    // TODO: fetch endpoint when it will be here
+    const deleteEvent = createEvent(categories.people, mutationTypes.deleteUser, this.getTimestamp())
+    this.batcher.addEvent(deleteEvent)
   }
 
   /**
@@ -52,6 +56,8 @@ export default class People {
         this.ownProperties[key] = value
       }
     })
+    const setEvent = createEvent(categories.people, mutationTypes.setProperty, this.getTimestamp(), properties)
+    this.batcher.addEvent(setEvent)
   }
 
   /**
@@ -68,6 +74,9 @@ export default class People {
         this.ownProperties[key] = value
       }
     })
+
+    const setEvent = createEvent(categories.people, mutationTypes.setPropertyOnce, this.getTimestamp(), properties)
+    this.batcher.addEvent(setEvent)
   }
 
   /**
@@ -83,6 +92,11 @@ export default class People {
         this.ownProperties[key] = [this.ownProperties[key], value]
       }
     }
+
+    const appendEvent = createEvent(categories.people, mutationTypes.appendProperty, this.getTimestamp(), {
+      [key]: value,
+    })
+    this.batcher.addEvent(appendEvent)
   }
 
   /**
@@ -99,6 +113,11 @@ export default class People {
     } else if (this.ownProperties[key] !== value) {
       this.appendValues(key, value)
     }
+
+    const unionEvent = createEvent(categories.people, mutationTypes.appendUniqueProperty, this.getTimestamp(), {
+      [key]: value,
+    })
+    this.batcher.addEvent(unionEvent)
   }
 
   /**
@@ -107,8 +126,16 @@ export default class People {
    * TODO: exported as people.increment
    * */
   increment = (key: string, value: number) => {
-    if (!this.sharedProperties.defaultPropertyKeys.includes(key) && typeof this.ownProperties[key] === 'number') {
+    if (
+      !this.sharedProperties.defaultPropertyKeys.includes(key) &&
+      typeof this.ownProperties[key] === 'number'
+    ) {
       this.ownProperties[key] += value
     }
+
+    const incrementEvent = createEvent(categories.people, mutationTypes.incrementProperty, this.getTimestamp(), {
+      [key]: value,
+    })
+    this.batcher.addEvent(incrementEvent)
   }
 }

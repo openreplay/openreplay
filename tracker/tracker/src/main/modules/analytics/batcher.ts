@@ -1,3 +1,5 @@
+import { categories } from "./types"
+
 /**
  * Creates batches of events, then sends them at intervals.
  */
@@ -5,21 +7,29 @@ class Batcher {
   private readonly autosendInterval = 5 * 1000
   private readonly retryTimeout = 3 * 1000
   private readonly retryLimit = 3
-  private readonly apiEdp = 'https://api.openreplay.com/track/batch'
+  private readonly apiEdp = '/v1/sdk/i'
 
-  private batch: any[] = []
+  private batch = {
+    [categories.people]: [] as any[],
+    [categories.events]: [] as any[],
+  }
   private intervalId: any = null
 
   constructor(
+    private readonly backendUrl: string,
     private readonly getToken: () => string | null,
     private readonly init: () => Promise<void>,
   ) {}
 
+  getBatches() {
+    return JSON.stringify({ data: this.batch, token: this.getToken(), deviceId: '1a2b3-1a2b3-1a2b3' })
+  }
+
   addEvent(event: any) {
-    this.batch.push(event)
-    if (!this.intervalId) {
-      this.startAutosend()
-    }
+    this.batch[event.category].push(event)
+    // if (!this.intervalId) {
+    //   this.startAutosend()
+    // }
   }
 
   sendImmediately(event: any) {
@@ -34,13 +44,13 @@ class Batcher {
         return
       }
       attempts++
-      return fetch(this.apiEdp, {
+      return fetch(`${this.backendUrl}${this.apiEdp}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ events: batch }),
+        body: JSON.stringify({ events: batch, token, deviceId: '1a2b3-1a2b3-1a2b3' }),
       })
         .then((response) => {
           if (response.status === 403) {

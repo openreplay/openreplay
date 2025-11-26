@@ -8,7 +8,18 @@ export interface StorageLike {
 const refKey = '$__or__initial_ref__$'
 const distinctIdKey = '$__or__distinct_device_id__$'
 const utmParamsKey = '$__or__utm_params__$'
-const prefix = '$'
+const win =
+  'window' in globalThis
+    ? window
+    : ({
+        navigator: { userAgent: '' },
+        screen: {},
+        document: {
+          cookie: '',
+        },
+        location: { search: '' },
+      } as unknown as Window & typeof globalThis)
+const doc = 'document' in globalThis ? document : { referrer: ''}
 
 const searchEngineList = [
   'google',
@@ -55,7 +66,7 @@ export default class SharedProperties {
     private readonly sessionStorage: StorageLike,
   ) {
     const { width, height, browser, browserVersion, browserMajorVersion, os, osVersion, mobile } =
-      uaParse(window)
+      uaParse(win)
     this.os = os
     this.osVersion = osVersion
     this.browser = `${browser}`
@@ -124,7 +135,7 @@ export default class SharedProperties {
     if (potentialStored) {
       return potentialStored
     } else {
-      const ref = document.referrer
+      const ref = doc.referrer
       this.sessionStorage.setItem(refKey, ref)
       return ref
     }
@@ -138,7 +149,7 @@ export default class SharedProperties {
       this.utmMedium = obj.utm_medium
       this.utmCampaign = obj.utm_campaign
     } else {
-      const searchParams = new URLSearchParams(window.location.search)
+      const searchParams = new URLSearchParams(win.location.search)
       this.utmSource = searchParams.get('utm_source') || null
       this.utmMedium = searchParams.get('utm_medium') || null
       this.utmCampaign = searchParams.get('utm_campaign') || null
