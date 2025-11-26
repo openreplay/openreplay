@@ -29,6 +29,7 @@ export default class Analytics {
    * */
   constructor(
     private readonly projectKey: string,
+    private readonly backendUrl: string,
     private readonly localStorage: StorageLike,
     private readonly sessionStorage: StorageLike,
     private readonly getToken: () => string,
@@ -38,12 +39,8 @@ export default class Analytics {
   ) {
     this.token = this.sessionStorage.getItem(STORAGEKEY)
     this.sharedProperties = new SharedProperties(this.localStorage, this.sessionStorage)
-    this.batcher = new Batcher(this._getToken, this.init)
-    this.events = new Events(
-      this.sharedProperties,
-      this._getTimestamp,
-      this.batcher,
-    )
+    this.batcher = new Batcher(this.backendUrl, this._getToken, this.init)
+    this.events = new Events(this.sharedProperties, this._getTimestamp, this.batcher)
     this.people = new People(
       this.sharedProperties,
       this._getTimestamp,
@@ -68,28 +65,28 @@ export default class Analytics {
 
   init = async () => {
     if (!this.standalone) {
-      return;
+      return
     }
 
-    const defaultFields = this.sharedProperties.all;
-    const apiEdp = '/api/analytics/start';
+    const defaultFields = this.sharedProperties.all
+    const apiEdp = '/api/analytics/start'
     const data = {
       projectKey: this.projectKey,
       defaultFields,
-    };
+    }
     const resp = await fetch(apiEdp, {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     })
     if (!resp.ok) {
-      throw new Error(`HTTP error! status: ${resp.status}`);
+      throw new Error(`HTTP error! status: ${resp.status}`)
     }
-    const result = await resp.json();
+    const result = await resp.json()
     if (result.token) {
-      this.token = result.token;
-      this.sessionStorage.setItem(STORAGEKEY, result.token);
+      this.token = result.token
+      this.sessionStorage.setItem(STORAGEKEY, result.token)
     } else {
-      throw new Error('No token received from server');
+      throw new Error('No token received from server')
     }
   }
 }
