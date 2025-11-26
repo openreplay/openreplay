@@ -1,172 +1,84 @@
-{{- $replicaCount := int .Values.replicaCount }}
-{{- $fullname := include "common.names.fullname" . }}
-{{- $releaseNamespace := .Release.Namespace }}
-{{- $clusterDomain := .Values.clusterDomain }}
-{{- $interBrokerProtocol := include "kafka.listenerType" (dict "protocol" .Values.auth.interBrokerProtocol) -}}
-{{- $clientProtocol := include "kafka.listenerType" (dict "protocol" .Values.auth.clientProtocol) -}}
-{{- $externalClientProtocol := include "kafka.listenerType" (dict "protocol" (include "kafka.externalClientProtocol" . )) -}}
-apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "common.names.fullname" . }}
-  namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "common.labels.standard" . | nindent 4 }}
-    app.kubernetes.io/component: kafka
-    {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-    {{- end }}
-  {{- if .Values.commonAnnotations }}
-  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
-  {{- end }}
+  name: {{ include "kafka.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+    {{- include "kafka.componentLabels" . | nindent 4 }}
 spec:
   podManagementPolicy: {{ .Values.podManagementPolicy }}
   replicas: {{ .Values.replicaCount }}
   selector:
-    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
-      app.kubernetes.io/component: kafka
-  serviceName: {{ printf "%s-headless" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
-  updateStrategy: {{- include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" $ ) | nindent 4 }}
+    matchLabels:
+      {{- include "kafka.selectorLabels" . | nindent 6 }}
+      {{- include "kafka.componentLabels" . | nindent 6 }}
+  serviceName: {{ include "kafka.fullname" . }}-headless
+  updateStrategy:
+    {{- toYaml .Values.updateStrategy | nindent 4 }}
   template:
     metadata:
-      labels: {{- include "common.labels.standard" . | nindent 8 }}
-        app.kubernetes.io/component: kafka
-        {{- if .Values.podLabels }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.podLabels "context" $) | nindent 8 }}
+      labels:
+        {{- include "kafka.selectorLabels" . | nindent 8 }}
+        {{- include "kafka.componentLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- with .Values.podAnnotations }}
       annotations:
-        {{- if (include "kafka.createConfigmap" .) }}
-        checksum/configuration: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        {{- end }}
-        {{- if (include "kafka.createJaasSecret" .) }}
-        checksum/jaas-secret: {{ include (print $.Template.BasePath "/jaas-secret.yaml") . | sha256sum }}
-        {{- end }}
-         {{- if (include "kafka.createTlsSecret" .) }}
-        checksum/tls-secret: {{ include (print $.Template.BasePath "/tls-secrets.yaml") . | sha256sum }}
-        {{- end }}
-        {{- if .Values.externalAccess.enabled }}
-        checksum/scripts: {{ include (print $.Template.BasePath "/scripts-configmap.yaml") . | sha256sum }}
-        {{- end }}
-        {{- if (include "kafka.metrics.jmx.createConfigmap" .) }}
-        checksum/jmx-configuration: {{ include (print $.Template.BasePath "/jmx-configmap.yaml") . | sha256sum }}
-        {{- end }}
-        {{- if .Values.podAnnotations }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
-      {{- include "kafka.imagePullSecrets" . | nindent 6 }}
-      {{- if .Values.hostAliases }}
-      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hostAliases "context" $) | nindent 8 }}
-      {{- end }}
-      hostNetwork: {{ .Values.hostNetwork }}
-      hostIPC: {{ .Values.hostIPC }}
-      {{- if .Values.schedulerName }}
-      schedulerName: {{ .Values.schedulerName | quote }}
-      {{- end }}
-      {{- if .Values.affinity }}
-      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" $) | nindent 8 }}
-      {{- else }}
+      hostNetwork: false
+      hostIPC: false
+      {{- with .Values.affinity }}
       affinity:
-        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "component" "kafka" "context" $) | nindent 10 }}
-        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "component" "kafka" "context" $) | nindent 10 }}
-        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) | nindent 10 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.nodeSelector }}
-      nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
-      {{- end }}
-      {{- if .Values.tolerations }}
-      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
-      {{- end }}
-      {{- if .Values.topologySpreadConstraints }}
-      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" $) | nindent 8 }}
-      {{- end }}
-      {{- if .Values.terminationGracePeriodSeconds }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
-      {{- end }}
-      {{- if .Values.priorityClassName }}
-      priorityClassName: {{ .Values.priorityClassName }}
-      {{- end }}
-      {{- if .Values.podSecurityContext.enabled }}
-      securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "kafka.serviceAccountName" . }}
-      {{- if or (and .Values.volumePermissions.enabled .Values.persistence.enabled) (and .Values.externalAccess.enabled .Values.externalAccess.autoDiscovery.enabled) .Values.initContainers }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tls.enabled }}
       initContainers:
-        {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
-        - name: volume-permissions
-          image: {{ include "kafka.volumePermissions.image" . }}
-          imagePullPolicy: {{ .Values.volumePermissions.image.pullPolicy | quote }}
+        - name: setup-certs
+          image: busybox:latest
           command:
-            - /bin/bash
-          args:
-            - -ec
+            - sh
+            - -c
             - |
-              mkdir -p "{{ .Values.persistence.mountPath }}" "{{ .Values.logPersistence.mountPath }}"
-              chown -R {{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.fsGroup }} "{{ .Values.persistence.mountPath }}" "{{ .Values.logPersistence.mountPath }}"
-              find "{{ .Values.persistence.mountPath }}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | xargs -r chown -R {{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.fsGroup }}
-              find "{{ .Values.logPersistence.mountPath }}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | xargs -r chown -R {{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.fsGroup }}
-          {{- if eq ( toString ( .Values.volumePermissions.containerSecurityContext.runAsUser )) "auto" }}
-          securityContext: {{- omit .Values.volumePermissions.containerSecurityContext "runAsUser" | toYaml | nindent 12 }}
-          {{- else }}
-          securityContext: {{- .Values.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.volumePermissions.resources }}
-          resources: {{- toYaml .Values.volumePermissions.resources | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: data
-              mountPath: {{ .Values.persistence.mountPath }}
-            - name: logs
-              mountPath: {{ .Values.logPersistence.mountPath }}
-        {{- end }}
-        {{- if and .Values.externalAccess.enabled .Values.externalAccess.autoDiscovery.enabled }}
-        - name: auto-discovery
-          image: {{ include "kafka.externalAccess.autoDiscovery.image" . }}
-          imagePullPolicy: {{ .Values.externalAccess.autoDiscovery.image.pullPolicy | quote }}
-          command:
-            - /scripts/auto-discovery.sh
+              POD_ID=$(echo $POD_NAME | sed 's/{{ include "kafka.fullname" . }}-//')
+              cp /tls-secret/ca-cert.pem /tls/ca-cert.pem
+              cp /tls-secret/kafka-${POD_ID}-cert.pem /tls/server-cert.pem
+              cp /tls-secret/kafka-${POD_ID}-key.pem /tls/server-key.pem
+              chmod 644 /tls/*.pem
+              chmod 600 /tls/server-key.pem
           env:
-            - name: MY_POD_NAME
+            - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: SHARED_FILE
-              value: "/shared/info.txt"
-          {{- if .Values.externalAccess.autoDiscovery.resources }}
-          resources: {{- toYaml .Values.externalAccess.autoDiscovery.resources | nindent 12 }}
-          {{- end }}
           volumeMounts:
-            - name: shared
-              mountPath: /shared
-            - name: logs
-              mountPath: {{ .Values.logPersistence.mountPath }}
-            - name: scripts
-              mountPath: /scripts/auto-discovery.sh
-              subPath: auto-discovery.sh
-        {{- end }}
-        {{- if .Values.initContainers }}
-        {{- include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}
-        {{- end }}
+            - name: tls-secret
+              mountPath: /tls-secret
+              readOnly: true
+            - name: tls
+              mountPath: /tls
       {{- end }}
       containers:
         - name: kafka
-          image: {{ include "kafka.image" . }}
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
-          {{- if .Values.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.diagnosticMode.enabled }}
-          command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
-          {{- else if .Values.command }}
-          command: {{- include "common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
-          {{- end }}
-          {{- if .Values.diagnosticMode.enabled }}
-          args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 12 }}
-          {{- else if .Values.args }}
-          args: {{- include "common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
-            - name: BITNAMI_DEBUG
-              value: {{ ternary "true" "false" (or .Values.image.debug .Values.diagnosticMode.enabled) | quote }}
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:
@@ -175,434 +87,168 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: KAFKA_CFG_ZOOKEEPER_CONNECT
-              {{- if .Values.zookeeper.enabled }}
-              value: {{ printf "%s%s" (include "kafka.zookeeper.fullname" .) (tpl .Values.zookeeperChrootPath .) | quote }}
-              {{- else }}
-              value: {{ include "common.tplvalues.render" (dict "value" (printf "%s%s" (join "," .Values.externalZookeeper.servers) (tpl .Values.zookeeperChrootPath .)) "context" $)    }}
-              {{- end }}
-            - name: KAFKA_INTER_BROKER_LISTENER_NAME
-              value: {{ .Values.interBrokerListenerName | quote }}
-            - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
-              {{- if .Values.listenerSecurityProtocolMap }}
-              value: {{ .Values.listenerSecurityProtocolMap | quote }}
-              {{- else if .Values.externalAccess.enabled }}
-              value: "INTERNAL:{{ $interBrokerProtocol }},CLIENT:{{ $clientProtocol }},EXTERNAL:{{ $externalClientProtocol }}"
-              {{- else }}
-              value: "INTERNAL:{{ $interBrokerProtocol }},CLIENT:{{ $clientProtocol }}"
-              {{- end }}
-            {{- if or ($clientProtocol | regexFind "SASL") ($externalClientProtocol | regexFind "SASL") ($interBrokerProtocol | regexFind "SASL") .Values.auth.sasl.jaas.zookeeperUser }}
-            - name: KAFKA_CFG_SASL_ENABLED_MECHANISMS
-              value: {{ upper .Values.auth.sasl.mechanisms | quote }}
-            - name: KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL
-              value: {{ upper .Values.auth.sasl.interBrokerMechanism | quote }}
-            {{- end }}
-            - name: KAFKA_CFG_LISTENERS
-              {{- if .Values.listeners }}
-              value: {{ join "," .Values.listeners }}
-              {{- else if .Values.externalAccess.enabled }}
-              value: "INTERNAL://:{{ .Values.containerPorts.internal }},CLIENT://:{{ .Values.containerPorts.client }},EXTERNAL://:{{ .Values.containerPorts.external }}"
-              {{- else }}
-              value: "INTERNAL://:{{ .Values.containerPorts.internal }},CLIENT://:{{ .Values.containerPorts.client }}"
-              {{- end }}
-            {{- if .Values.externalAccess.enabled }}
-            {{- if .Values.externalAccess.autoDiscovery.enabled }}
-            - name: SHARED_FILE
-              value: "/shared/info.txt"
-            {{- end }}
-            {{- if eq .Values.externalAccess.service.type "NodePort" }}
-            - name: HOST_IP
+            - name: KAFKA_NODE_ID
               valueFrom:
                 fieldRef:
-                  fieldPath: status.hostIP
+                  fieldPath: metadata.name
+            {{- if .Values.kraft.enabled }}
+            - name: KAFKA_CLUSTER_ID
+              value: {{ .Values.kraft.clusterId | quote }}
+            - name: KAFKA_PROCESS_ROLES
+              value: {{ .Values.kraft.processRoles | quote }}
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: {{ include "kafka.controllerQuorumVoters" . | quote }}
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: {{ .Values.kraft.controllerListenerNames | quote }}
             {{- end }}
-            {{- else }}
-            - name: KAFKA_CFG_ADVERTISED_LISTENERS
-              {{- if .Values.advertisedListeners }}
-              value: {{ join "," .Values.advertisedListeners }}
-              {{- else }}
-              value: "INTERNAL://$(MY_POD_NAME).{{ $fullname }}-headless.{{ $releaseNamespace }}.svc.{{ $clusterDomain }}:{{ .Values.service.ports.internal }},CLIENT://$(MY_POD_NAME).{{ $fullname }}-headless.{{ $releaseNamespace }}.svc.{{ $clusterDomain }}:{{ .Values.service.ports.client }}"
-              {{- end }}
+            - name: KAFKA_LISTENERS
+              value: {{ include "kafka.listeners" . | quote }}
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: {{ include "kafka.advertisedListeners" . | quote }}
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: {{ include "kafka.listenerSecurityProtocolMap" . | quote }}
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "{{ .Values.listeners.client.enabled | ternary "CLIENT" "INTERNAL" }}"
+            {{- if .Values.tls.enabled }}
+            - name: KAFKA_SSL_CERT_FILE
+              value: "/tls/server-cert.pem"
+            - name: KAFKA_SSL_KEY_FILE
+              value: "/tls/server-key.pem"
+            - name: KAFKA_SSL_CA_FILE
+              value: "/tls/ca-cert.pem"
+            - name: KAFKA_SSL_CLIENT_AUTH
+              value: {{ .Values.tls.clientAuth | quote }}
+            - name: KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
+              value: {{ .Values.tls.endpointIdentificationAlgorithm | quote }}
             {{- end }}
-            - name: ALLOW_PLAINTEXT_LISTENER
-              value: {{ ternary "yes" "no" .Values.allowPlaintextListener | quote }}
-            {{- if or (include "kafka.client.saslAuthentication" .) (include "kafka.interBroker.saslAuthentication" .) }}
-            - name: KAFKA_OPTS
-              value: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf"
-            {{- if (include "kafka.client.saslAuthentication" .) }}
-            - name: KAFKA_CLIENT_USERS
-              value: {{ join "," .Values.auth.sasl.jaas.clientUsers | quote }}
-            - name: KAFKA_CLIENT_PASSWORDS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kafka.jaasSecretName" . }}
-                  key: client-passwords
-            {{- end }}
-            {{- if (include "kafka.interBroker.saslAuthentication" .) }}
-            - name: KAFKA_INTER_BROKER_USER
-              value: {{ .Values.auth.sasl.jaas.interBrokerUser | quote }}
-            - name: KAFKA_INTER_BROKER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kafka.jaasSecretName" . }}
-                  key: inter-broker-password
-            {{- end }}
-            {{- end }}
-            {{- if and .Values.zookeeper.auth.client.enabled .Values.auth.sasl.jaas.zookeeperUser }}
-            - name: KAFKA_ZOOKEEPER_USER
-              value: {{ .Values.auth.sasl.jaas.zookeeperUser | quote }}
-            - name: KAFKA_ZOOKEEPER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kafka.jaasSecretName" . }}
-                  key: zookeeper-password
-            {{- end }}
-            - name: KAFKA_ZOOKEEPER_PROTOCOL
-              value: {{ include "kafka.zookeeper.protocol" . }}
-            {{- if .Values.auth.zookeeper.tls.enabled }}
-            - name: KAFKA_ZOOKEEPER_TLS_TYPE
-              value: {{ upper .Values.auth.zookeeper.tls.type | quote }}
-            - name: KAFKA_ZOOKEEPER_TLS_VERIFY_HOSTNAME
-              value: {{ .Values.auth.zookeeper.tls.verifyHostname | quote }}
-            {{- if .Values.auth.zookeeper.tls.passwordsSecret }}
-            - name: KAFKA_ZOOKEEPER_TLS_KEYSTORE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.auth.zookeeper.tls.passwordsSecret }}
-                  key: {{ .Values.auth.zookeeper.tls.passwordsSecretKeystoreKey | quote }}
-            - name: KAFKA_ZOOKEEPER_TLS_TRUSTSTORE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.auth.zookeeper.tls.passwordsSecret }}
-                  key: {{ .Values.auth.zookeeper.tls.passwordsSecretTruststoreKey | quote }}
-            {{- end }}
-            {{- end }}
-            {{- if (include "kafka.tlsEncryption" .) }}
-            - name: KAFKA_TLS_TYPE
-              value: {{ upper .Values.auth.tls.type | quote }}
-            - name: KAFKA_CFG_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
-              value: {{ default "" .Values.auth.tls.endpointIdentificationAlgorithm | quote }}
-            - name: KAFKA_TLS_CLIENT_AUTH
-              value: {{ ternary "required" "none" (or (eq (include "kafka.externalClientProtocol" . ) "mtls") (eq .Values.auth.clientProtocol "mtls")) | quote }}
-            - name: KAFKA_CERTIFICATE_PASSWORD
-              {{- if .Values.auth.tls.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.auth.tls.existingSecret }}
-                  key: password
-              {{- else }}
-              value: {{ default "" .Values.auth.tls.password | quote }}
-              {{- end }}
-            {{- end }}
-            {{- if .Values.metrics.jmx.enabled }}
-            - name: JMX_PORT
-              value: "5555"
-            {{- end }}
-            - name: KAFKA_VOLUME_DIR
-              value: {{ .Values.persistence.mountPath | quote }}
-            - name: KAFKA_LOG_DIR
-              value: {{ .Values.logPersistence.mountPath | quote }}
-            - name: KAFKA_CFG_DELETE_TOPIC_ENABLE
-              value: {{ .Values.deleteTopicEnable | quote }}
-            - name: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
-              value: {{ .Values.autoCreateTopicsEnable | quote }}
-            - name: KAFKA_HEAP_OPTS
-              value: {{ .Values.heapOpts | quote }}
+            - name: KAFKA_LOG_DIRS
+              value: "/bitnami/kafka/data"
+            - name: LOG_DIR
+              value: "/bitnami/kafka/logs"
+            - name: KAFKA_MESSAGE_MAX_BYTES
+              value: {{ .Values.kafka.messageMaxBytes | quote }}
+            - name: KAFKA_REPLICA_FETCH_MAX_BYTES
+              value: {{ .Values.kafka.replicaFetchMaxBytes | quote }}
+            - name: KAFKA_LOG_RETENTION_HOURS
+              value: {{ .Values.kafka.logRetentionHours | quote }}
+            - name: KAFKA_LOG_RETENTION_BYTES
+              value: {{ .Values.kafka.logRetentionBytes | quote }}
+            - name: KAFKA_LOG_SEGMENT_BYTES
+              value: {{ .Values.kafka.logSegmentBytes | quote }}
             - name: KAFKA_CFG_LOG_FLUSH_INTERVAL_MESSAGES
-              value: {{ .Values.logFlushIntervalMessages | replace "_" "" | quote }}
+              value: {{ .Values.kafka.logFlushIntervalMessages | quote }}
             - name: KAFKA_CFG_LOG_FLUSH_INTERVAL_MS
-              value: {{ .Values.logFlushIntervalMs | quote }}
-            - name: KAFKA_CFG_LOG_RETENTION_BYTES
-              value: {{ .Values.logRetentionBytes | replace "_" "" | quote }}
+              value: {{ .Values.kafka.logFlushIntervalMs | quote }}
             - name: KAFKA_CFG_LOG_RETENTION_CHECK_INTERVAL_MS
-              value: {{ .Values.logRetentionCheckIntervalMs | quote }}
-            - name: KAFKA_CFG_LOG_RETENTION_HOURS
-              value: {{ .Values.logRetentionHours | quote }}
-            - name: KAFKA_CFG_MESSAGE_MAX_BYTES
-              value: {{ .Values.maxMessageBytes | replace "_" "" | quote }}
-            - name: KAFKA_CFG_LOG_SEGMENT_BYTES
-              value: {{ .Values.logSegmentBytes | replace "_" "" | quote }}
-            - name: KAFKA_CFG_LOG_DIRS
-              value: {{ .Values.logsDirs | quote }}
+              value: {{ .Values.kafka.logRetentionCheckIntervalMs | quote }}
             - name: KAFKA_CFG_DEFAULT_REPLICATION_FACTOR
-              value: {{ .Values.defaultReplicationFactor | quote }}
+              value: {{ .Values.kafka.defaultReplicationFactor | quote }}
             - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
-              value: {{ .Values.offsetsTopicReplicationFactor | quote }}
+              value: {{ .Values.kafka.offsetsTopicReplicationFactor | quote }}
             - name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
-              value: {{ .Values.transactionStateLogReplicationFactor | quote }}
+              value: {{ .Values.kafka.transactionStateLogReplicationFactor | quote }}
             - name: KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR
-              value: {{ .Values.transactionStateLogMinIsr | quote }}
+              value: {{ .Values.kafka.transactionStateLogMinIsr | quote }}
             - name: KAFKA_CFG_NUM_IO_THREADS
-              value: {{ .Values.numIoThreads | quote }}
+              value: {{ .Values.kafka.numIoThreads | quote }}
             - name: KAFKA_CFG_NUM_NETWORK_THREADS
-              value: {{ .Values.numNetworkThreads | quote }}
+              value: {{ .Values.kafka.numNetworkThreads | quote }}
             - name: KAFKA_CFG_NUM_PARTITIONS
-              value: {{ .Values.numPartitions | quote }}
+              value: {{ .Values.kafka.numPartitions | quote }}
             - name: KAFKA_CFG_NUM_RECOVERY_THREADS_PER_DATA_DIR
-              value: {{ .Values.numRecoveryThreadsPerDataDir | quote }}
+              value: {{ .Values.kafka.numRecoveryThreadsPerDataDir | quote }}
             - name: KAFKA_CFG_SOCKET_RECEIVE_BUFFER_BYTES
-              value: {{ .Values.socketReceiveBufferBytes | quote }}
+              value: {{ .Values.kafka.socketReceiveBufferBytes | quote }}
             - name: KAFKA_CFG_SOCKET_REQUEST_MAX_BYTES
-              value: {{ .Values.socketRequestMaxBytes | replace "_" "" | quote }}
+              value: {{ .Values.kafka.socketRequestMaxBytes | quote }}
             - name: KAFKA_CFG_SOCKET_SEND_BUFFER_BYTES
-              value: {{ .Values.socketSendBufferBytes | quote }}
-            - name: KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS
-              value: {{ .Values.zookeeperConnectionTimeoutMs | quote }}
-            - name: KAFKA_CFG_AUTHORIZER_CLASS_NAME
-              value: {{ .Values.authorizerClassName | quote }}
+              value: {{ .Values.kafka.socketSendBufferBytes | quote }}
+            - name: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
+              value: {{ .Values.kafka.autoCreateTopicsEnable | quote }}
+            - name: KAFKA_CFG_DELETE_TOPIC_ENABLE
+              value: {{ .Values.kafka.deleteTopicEnable | quote }}
             - name: KAFKA_CFG_ALLOW_EVERYONE_IF_NO_ACL_FOUND
-              value: {{ .Values.allowEveryoneIfNoAclFound | quote }}
+              value: {{ .Values.kafka.allowEveryoneIfNoAclFound | quote }}
             - name: KAFKA_CFG_SUPER_USERS
-              value: {{ .Values.superUsers | quote }}
-            {{- if .Values.extraEnvVars }}
-            {{- include "common.tplvalues.render" ( dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
+              value: {{ .Values.kafka.superUsers | quote }}
+            {{- with .Values.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
-          {{- if or .Values.extraEnvVarsCM .Values.extraEnvVarsSecret }}
-          envFrom:
-            {{- if .Values.extraEnvVarsCM }}
-            - configMapRef:
-                name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsCM "context" $) }}
-            {{- end }}
-            {{- if .Values.extraEnvVarsSecret }}
-            - secretRef:
-                name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
-            {{- end }}
-          {{- end }}
           ports:
+            {{- if .Values.listeners.client.enabled }}
             - name: kafka-client
-              containerPort: {{ .Values.containerPorts.client }}
-            - name: kafka-internal
-              containerPort: {{ .Values.containerPorts.internal }}
-            {{- if .Values.externalAccess.enabled }}
-            - name: kafka-external
-              containerPort: {{ .Values.containerPorts.external }}
+              containerPort: {{ .Values.listeners.client.port }}
             {{- end }}
-          {{- if not .Values.diagnosticMode.enabled }}
-          {{- if .Values.customLivenessProbe }}
-          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customLivenessProbe "context" $) | nindent 12 }}
-          {{- else if .Values.livenessProbe.enabled }}
-          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled") "context" $) | nindent 12 }}
-            tcpSocket:
-              port: kafka-client
+            {{- if .Values.listeners.internal.enabled }}
+            - name: kafka-internal
+              containerPort: {{ .Values.listeners.internal.port }}
+            {{- end }}
+            {{- if .Values.listeners.ssl.enabled }}
+            - name: kafka-ssl
+              containerPort: {{ .Values.listeners.ssl.port }}
+            {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.customReadinessProbe }}
-          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customReadinessProbe "context" $) | nindent 12 }}
-          {{- else if .Values.readinessProbe.enabled }}
-          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.readinessProbe "enabled") "context" $) | nindent 12 }}
-            tcpSocket:
-              port: kafka-client
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.customStartupProbe }}
-          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customStartupProbe "context" $) | nindent 12 }}
-          {{- else if .Values.startupProbe.enabled }}
-          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.startupProbe "enabled") "context" $) | nindent 12 }}
-            tcpSocket:
-              port: kafka-client
-          {{- end }}
-          {{- end }}
-          {{- if .Values.lifecycleHooks }}
-          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
-          {{- end }}
-          {{- if .Values.resources }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: data
-              mountPath: {{ .Values.persistence.mountPath }}
+              mountPath: /bitnami/kafka
             - name: logs
-              mountPath: {{ .Values.logPersistence.mountPath }}
-            {{- if or .Values.config .Values.existingConfigmap }}
-            - name: kafka-config
-              mountPath: {{ .Values.persistence.mountPath }}/config/server.properties
-              subPath: server.properties
-            {{- end }}
-            {{- if or .Values.log4j .Values.existingLog4jConfigMap }}
-            - name: log4j-config
-              mountPath: {{ .Values.persistence.mountPath }}/config/log4j.properties
-              subPath: log4j.properties
-            {{- end }}
-            - name: scripts
-              mountPath: /scripts/setup.sh
-              subPath: setup.sh
-            {{- if and .Values.externalAccess.enabled .Values.externalAccess.autoDiscovery.enabled }}
-            - name: shared
-              mountPath: /shared
-            {{- end }}
-            {{- if (include "kafka.tlsEncryption" .) }}
-            {{- if not (empty .Values.auth.tls.existingSecrets) }}
-            {{- range $index, $_ := .Values.auth.tls.existingSecrets }}
-            - name: kafka-certs-{{ $index }}
-              mountPath: /certs-{{ $index }}
+              mountPath: /bitnami/kafka/logs
+            {{- if .Values.tls.enabled }}
+            - name: tls
+              mountPath: /tls
               readOnly: true
             {{- end }}
-            {{- else if .Values.auth.tls.autoGenerated }}
-            {{- range $index := until $replicaCount }}
-            - name: kafka-certs-{{ $index }}
-              mountPath: /certs-{{ $index }}
-              readOnly: true
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
-            {{- end }}
-            {{- if and .Values.auth.zookeeper.tls.enabled .Values.auth.zookeeper.tls.existingSecret }}
-            - name: kafka-zookeeper-cert
-              mountPath: /kafka-zookeeper-cert
-              readOnly: true
-            {{- end }}
-            {{- if .Values.auth.tls.jksTruststoreSecret }}
-            - name: kafka-truststore
-              mountPath: /truststore
-              readOnly: true
-            {{- end }}
-            {{- end }}
-            {{- if .Values.extraVolumeMounts }}
-            {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
-            {{- end }}
-        {{- if .Values.metrics.jmx.enabled }}
-        - name: jmx-exporter
-          image: {{ include "kafka.metrics.jmx.image" . }}
-          imagePullPolicy: {{ .Values.metrics.jmx.image.pullPolicy | quote }}
-          {{- if .Values.metrics.jmx.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.metrics.jmx.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.diagnosticMode.enabled }}
-          command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
-          args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 12 }}
-          {{- else }}
-          command:
-            - java
-          args:
-            - -XX:MaxRAMPercentage=100
-            - -XshowSettings:vm
-            - -jar
-            - jmx_prometheus_httpserver.jar
-            - "5556"
-            - /etc/jmx-kafka/jmx-kafka-prometheus.yml
-          {{- end }}
-          ports:
-            - name: metrics
-              containerPort: {{ .Values.metrics.jmx.containerPorts.metrics }}
-          {{- if .Values.metrics.jmx.resources }}
-          resources: {{- toYaml .Values.metrics.jmx.resources | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: jmx-config
-              mountPath: /etc/jmx-kafka
-        {{- end }}
-        {{- if .Values.sidecars }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
-        {{- end }}
       volumes:
-        {{- if or .Values.config .Values.existingConfigmap }}
-        - name: kafka-config
-          configMap:
-            name: {{ include "kafka.configmapName" . }}
-        {{- end }}
-        {{- if or .Values.log4j .Values.existingLog4jConfigMap }}
-        - name: log4j-config
-          configMap:
-            name: {{ include "kafka.log4j.configMapName" . }}
-        {{ end }}
-        - name: scripts
-          configMap:
-            name: {{ include "common.names.fullname" . }}-scripts
-            defaultMode: 0755
-        {{- if and .Values.externalAccess.enabled .Values.externalAccess.autoDiscovery.enabled }}
-        - name: shared
-          emptyDir: {}
-        {{- end }}
-        {{- if .Values.metrics.jmx.enabled }}
-        - name: jmx-config
-          configMap:
-            name: {{ include "kafka.metrics.jmx.configmapName" . }}
-        {{- end }}
-        {{- if (include "kafka.tlsEncryption" .) }}
-        {{- if not (empty .Values.auth.tls.existingSecrets) }}
-        {{- range $index, $secret := .Values.auth.tls.existingSecrets }}
-        - name: kafka-certs-{{ $index }}
-          secret:
-            secretName: {{ tpl $secret $ }}
-            defaultMode: 256
-        {{- end }}
-        {{- else if .Values.auth.tls.autoGenerated }}
-        {{- range $index := until $replicaCount }}
-        - name: kafka-certs-{{ $index }}
-          secret:
-            secretName: {{ printf "%s-%d-tls" (include "common.names.fullname" $) $index }}
-            defaultMode: 256
-        {{- end }}
-        {{- end }}
-        {{- if and .Values.auth.zookeeper.tls.enabled .Values.auth.zookeeper.tls.existingSecret }}
-        - name: kafka-zookeeper-cert
-          secret:
-            secretName: {{ .Values.auth.zookeeper.tls.existingSecret }}
-            defaultMode: 256
-        {{- end }}
-        {{- if .Values.auth.tls.jksTruststoreSecret }}
-        - name: kafka-truststore
-          secret:
-            secretName: {{ .Values.auth.tls.jksTruststoreSecret }}
-            defaultMode: 256
-        {{- end }}
-        {{- end }}
-        {{- if .Values.extraVolumes }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
-        {{- end }}
-{{- if not .Values.persistence.enabled }}
-        - name: data
-          emptyDir: {}
-{{- else if .Values.persistence.existingClaim }}
-        - name: data
-          persistentVolumeClaim:
-            claimName: {{ printf "%s" (tpl .Values.persistence.existingClaim .) }}
-{{- end }}
-{{- if not .Values.logPersistence.enabled }}
         - name: logs
           emptyDir: {}
-{{- else if .Values.logPersistence.existingClaim }}
-        - name: logs
-          persistentVolumeClaim:
-            claimName: {{ printf "%s" (tpl .Values.logPersistence.existingClaim .) }}
-{{- end }}
-  {{- if or (and .Values.persistence.enabled (not .Values.persistence.existingClaim)) (and .Values.logPersistence.enabled (not .Values.logPersistence.existingClaim)) }}
+        {{- if .Values.tls.enabled }}
+        - name: tls-secret
+          secret:
+            secretName: {{ .Values.tls.secretName }}
+            defaultMode: 0644
+        - name: tls
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
-  {{- end }}
-{{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
     - metadata:
         name: data
-        {{- if .Values.persistence.annotations }}
-        annotations: {{- include "common.tplvalues.render" (dict "value" .Values.persistence.annotations "context" $) | nindent 10 }}
-        {{- end }}
-        {{- if .Values.persistence.labels }}
-        labels: {{- include "common.tplvalues.render" (dict "value" .Values.persistence.labels "context" $) | nindent 10 }}
+        {{- with .Values.persistence.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
         {{- end }}
       spec:
         accessModes:
-        {{- range .Values.persistence.accessModes }}
-          - {{ . | quote }}
+          {{- toYaml .Values.persistence.accessModes | nindent 10 }}
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: {{ .Values.persistence.storageClass }}
         {{- end }}
         resources:
           requests:
-            storage: {{ .Values.persistence.size | quote }}
-        {{ include "kafka.storageClass" . | nindent 8 }}
-        {{- if .Values.persistence.selector }}
-        selector: {{- include "common.tplvalues.render" (dict "value" .Values.persistence.selector "context" $) | nindent 10 }}
-        {{- end -}}
-{{- end }}
-{{- if and .Values.logPersistence.enabled (not .Values.logPersistence.existingClaim) }}
-    - metadata:
-        name: logs
-        {{- if .Values.logPersistence.annotations }}
-        annotations: {{- include "common.tplvalues.render" (dict "value" .Values.logPersistence.annotations "context" $) | nindent 10 }}
-        {{- end }}
-      spec:
-        accessModes:
-        {{- range .Values.logPersistence.accessModes }}
-          - {{ . | quote }}
-        {{- end }}
-        resources:
-          requests:
-            storage: {{ .Values.logPersistence.size | quote }}
-        {{ include "kafka.storageClass" . | nindent 8 }}
-        {{- if .Values.logPersistence.selector }}
-        selector: {{- include "common.tplvalues.render" (dict "value" .Values.logPersistence.selector "context" $) | nindent 10 }}
-        {{- end -}}
-{{- end }}
+            storage: {{ .Values.persistence.size }}
+  {{- end }}
