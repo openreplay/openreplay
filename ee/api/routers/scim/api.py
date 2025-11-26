@@ -35,7 +35,7 @@ b.register_postgres_resource(
         get_resource=groups.get_resource,
         create_resource=groups.create_resource,
         search_existing=groups.search_existing,
-        restore_resource=None,
+        restore_resource=groups.restore_resource,
         delete_resource=groups.delete_resource,
         update_resource=groups.update_resource,
     ),
@@ -57,19 +57,18 @@ public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
 @public_app.post("/token")
 async def post_token(r: Request):
     form = await r.form()
-    client_id = form.get("client_id")
-    client_secret = form.get("client_secret")
-    tenant_id = int(client_id)
+    tenant_key = form.get("client_id")
+    tenant_secret = form.get("client_secret")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """
                 SELECT tenant_id
                 FROM public.tenants
-                WHERE tenant_id = %(tenant_id)s
-                  AND tenant_key = %(tenant_key)s
+                WHERE tenant_key = %(tenant_key)s
+                  AND tenant_secret = %(tenant_secret)s
                 """,
-                {"tenant_id": tenant_id, "tenant_key": client_secret},
+                {"tenant_key": tenant_key, "tenant_secret": tenant_secret},
             )
         )
         tenant = cur.fetchone()
@@ -92,7 +91,7 @@ async def post_token(r: Request):
                       AND tenant_id = %(tenant_id)s
                       AND NOT used LIMIT 1;
                     """,
-                    {"auth_code": code, "tenant_id": int(client_id)},
+                    {"auth_code": code, "tenant_id": tenant["tenant_id"]},
                 )
             )
             row = cur.fetchone()
@@ -109,7 +108,7 @@ async def post_token(r: Request):
                       AND tenant_id = %(tenant_id)s
                       AND used IS FALSE
                     """,
-                    {"auth_code": code, "tenant_id": tenant_id},
+                    {"auth_code": code, "tenant_id": tenant["tenant_id"]},
                 )
             )
 
@@ -141,23 +140,26 @@ async def get_authorize(
                 """
                 UPDATE public.scim_auth_codes
                 SET used= TRUE
-                WHERE tenant_id = %(tenant_id)s
+                WHERE tenant_id = (SELECT tenant_id FROM public.tenants WHERE tenant_key = %(tenant_key)s LIMIT 1)
+                    RETURNING tenant_id;
                 """,
-                {"tenant_id": int(client_id)},
+                {"tenant_key": client_id},
             )
         )
+        tenant_id = cur.fetchone()
+        if tenant_id is None:
+            raise HTTPException(status_code=401, detail="Invalid SCIM-clientId")
         cur.execute(
             cur.mogrify(
                 """
                 INSERT INTO public.scim_auth_codes (tenant_id)
                 VALUES (%(tenant_id)s) RETURNING auth_code
                 """,
-                {"tenant_id": int(client_id)},
+                {"tenant_id": tenant_id["tenant_id"]},
             )
         )
         code = cur.fetchone()
-        if code is None:
-            raise HTTPException(status_code=401, detail="Invalid SCIM-clientId")
+
     params = {"code": code["auth_code"]}
     if state:
         params["state"] = state
