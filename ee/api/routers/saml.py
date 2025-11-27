@@ -71,6 +71,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
         logger.error(error_reason)
         return {"errors": [error_reason]}
 
+    internal_id = next(iter(user_data.get("internalId", [])), None)
     email = auth.get_nameid()
     if tenant_key is None:
         tenant_key = user_data.get("tenantKey", [])
@@ -78,9 +79,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
         logger.info("Using tenant key from ACS-URL")
         tenant_key = [tenant_key]
 
-    logger.debug(f"received nameId: {email}  tenant_key: {tenant_key}")
-    logger.debug(">user_data:")
-    logger.debug(user_data)
+    logger.debug(f"> nameId: {email} user_data: {user_data}")
     if len(tenant_key) == 0:
         logger.error("tenantKey not present in assertion, please check your SP-assertion-configuration")
         return {"errors": ["tenantKey not present in assertion, please check your SP-assertion-configuration"]}
@@ -90,78 +89,89 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             logger.error("invalid tenantKey, please copy the correct value from Preferences > Account")
             return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
     existing = users.get_by_email_only(email)
-    role_names = user_data.get("role", [])
-    role = None
-    if len(role_names) == 0:
-        if existing is None:
-            logger.info("No role specified, setting role to member")
-            role_names = ["member"]
-        else:
-            role_names = [existing["roleName"]]
-            role = {"name": existing["roleName"], "roleId": existing["roleId"]}
-    if role is None:
-        for r in role_names:
-            if existing and r.lower() == existing["roleName"].lower():
-                role = {"roleId": existing["roleId"], "name": r}
+    if existing:
+        internal_id = existing["internalId"]
+    if SAML2_helper.is_scim_available() and not existing:
+        return {"errors": [
+            f"User {email} is not provisioned by SCIM, please ask your administrator to provision this account"]}
+
+    if not SAML2_helper.is_scim_available():
+        # user_data["role"] and user_data["adminPrivileges"] are kept for backward compatibility
+        groups = user_data.get("groups", user_data.get("role", []))
+        admin_privileges = False
+        i = 0
+        while i < len(groups):
+            groups[i] = SAML2_helper.group_name_to_role_name(groups[i])
+            if groups[i] == "admin":
+                admin_privileges = True
+                del groups[i]
+                continue
+            i += 1
+        admin_privileges = admin_privileges or len(user_data.get("adminPrivileges", [])) > 0
+        role = None
+
+        if len(groups) == 0:
+            if existing is None or existing["roleName"] is None:
+                logger.info("No role specified, setting role to member")
+                groups = ["member"]
             else:
-                role = roles.get_role_by_name(tenant_id=t['tenantId'], name=r)
+                groups = [existing["roleName"]]
+                role = {"name": existing["roleName"], "roleId": existing["roleId"]}
 
-            if role is not None:
-                break
+        if role is None:
+            for r in groups:
+                if existing and r.lower() == existing["roleName"].lower():
+                    role = {"roleId": existing["roleId"], "name": r}
+                else:
+                    role = roles.get_role_by_name(tenant_id=t['tenantId'], name=r, include_owner=False)
 
-    if role is None:
-        return {"errors": [f"role '{role_names}' not found, please create it in OpenReplay first"]}
-    logger.info(f"received roles:{role_names}; using:{role['name']}")
-    admin_privileges = user_data.get("adminPrivileges", [])
-    if len(admin_privileges) == 0:
+                if role is not None:
+                    break
+
+        if role is None:
+            return {"errors": [f"role '{groups}' not found, please create it in OpenReplay first"]}
+        logger.info(f"received roles:{groups}; using:{role['name']}")
+
+        full_name = " ".join(user_data.get("firstName", []) + user_data.get("lastName", []))
         if existing is None:
-            admin_privileges = not (len(admin_privileges) == 0
-                                    or admin_privileges[0] is None
-                                    or admin_privileges[0].lower() == "false")
+            deleted = users.get_deleted_user_by_email(auth.get_nameid())
+            if deleted is not None:
+                logger.info("== restore deleted user ==")
+                users.restore_sso_user(user_id=deleted["userId"], tenant_id=t['tenantId'], email=email,
+                                       admin=admin_privileges, origin=SAML2_helper.get_saml2_provider(),
+                                       name=full_name, internal_id=internal_id, role_id=role["roleId"])
+            else:
+                logger.info("== new user ==")
+                users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
+                                      origin=SAML2_helper.get_saml2_provider(),
+                                      name=full_name, internal_id=internal_id, role_id=role["roleId"])
         else:
-            admin_privileges = existing["admin"]
+            if t['tenantId'] != existing["tenantId"]:
+                logger.warning("user exists for a different tenant")
+                return {"errors": ["user exists for a different tenant"]}
+            # Check difference between existing user and received data
+            received_data = {
+                "role": "admin" if admin_privileges else "member",
+                "origin": SAML2_helper.get_saml2_provider(),
+                "name": full_name,
+                "internal_id": internal_id,
+                "role_id": role["roleId"]
+            }
+            existing_data = {
+                "role": "admin" if existing["admin"] else "member",
+                "origin": existing["origin"],
+                "name": existing["name"],
+                "internal_id": existing["internalId"],
+                "role_id": existing["roleId"]
+            }
+            to_update = {}
+            for k in existing_data.keys():
+                if (k != "role" or not existing["superAdmin"]) and existing_data[k] != received_data[k]:
+                    to_update[k] = received_data[k]
 
-    internal_id = next(iter(user_data.get("internalId", [])), None)
-    full_name = " ".join(user_data.get("firstName", []) + user_data.get("lastName", []))
-    if existing is None:
-        deleted = users.get_deleted_user_by_email(auth.get_nameid())
-        if deleted is not None:
-            logger.info("== restore deleted user ==")
-            users.restore_sso_user(user_id=deleted["userId"], tenant_id=t['tenantId'], email=email,
-                                   admin=admin_privileges, origin=SAML2_helper.get_saml2_provider(),
-                                   name=full_name, internal_id=internal_id, role_id=role["roleId"])
-        else:
-            logger.info("== new user ==")
-            users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
-                                  origin=SAML2_helper.get_saml2_provider(),
-                                  name=full_name, internal_id=internal_id, role_id=role["roleId"])
-    else:
-        if t['tenantId'] != existing["tenantId"]:
-            logger.warning("user exists for a different tenant")
-            return {"errors": ["user exists for a different tenant"]}
-        # Check difference between existing user and received data
-        received_data = {
-            "role": "admin" if admin_privileges else "member",
-            "origin": SAML2_helper.get_saml2_provider(),
-            "name": full_name,
-            "internal_id": internal_id,
-            "role_id": role["roleId"]
-        }
-        existing_data = {
-            "role": "admin" if existing["admin"] else "member",
-            "origin": existing["origin"],
-            "name": existing["name"],
-            "internal_id": existing["internalId"],
-            "role_id": existing["roleId"]
-        }
-        to_update = {}
-        for k in existing_data.keys():
-            if (k != "role" or not existing["superAdmin"]) and existing_data[k] != received_data[k]:
-                to_update[k] = received_data[k]
-
-        if len(to_update.keys()) > 0:
-            logger.info(f"== Updating user:{existing['userId']}: {to_update} ==")
-            users.update(tenant_id=t['tenantId'], user_id=existing["userId"], changes=to_update)
+            if len(to_update.keys()) > 0:
+                logger.info(f"== Updating user:{existing['userId']}: {to_update} ==")
+                users.update(tenant_id=t['tenantId'], user_id=existing["userId"], changes=to_update)
 
     jwt = users.authenticate_sso(email=email, internal_id=internal_id)
     if jwt is None:
