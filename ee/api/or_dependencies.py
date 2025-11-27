@@ -31,7 +31,6 @@ class ORRoute(APIRoute):
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
-            logger.debug(f"call processed by: {self.methods} {self.path_format}")
             try:
                 response: Response = await original_route_handler(request)
             except RequestValidationError as exc:
