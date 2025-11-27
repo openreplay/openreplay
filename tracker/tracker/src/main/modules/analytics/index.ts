@@ -6,15 +6,6 @@ import Batcher from './batcher.js'
 
 const STORAGEKEY = '__or_sdk_analytics_token'
 
-// private readonly projectKey: string,
-//     private readonly backendUrl: string,
-//     private readonly localStorage: StorageLike,
-//     private readonly sessionStorage: StorageLike,
-//     private readonly getToken: () => string,
-//     private readonly getTimestamp: () => number,
-//     private readonly setUserId: (user_id: string) => void,
-//     private readonly standalone = false,
-
 interface Options {
   ingestPoint: string
   projectKey: string
