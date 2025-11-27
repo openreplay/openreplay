@@ -108,8 +108,9 @@ async def lifespan(app: FastAPI):
     await pg_client.terminate()
 
 
+ROOT_PATH = config("root_path", default="/api")
 app = FastAPI(
-    root_path=config("root_path", default="/api"),
+    root_path=ROOT_PATH,
     docs_url=config("docs_url", default=""),
     redoc_url=config("redoc_url", default=""),
     lifespan=lifespan,
@@ -194,4 +195,4 @@ if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(scim.public_app)
     app.include_router(scim.app)
     app.include_router(scim.app_apikey)
-    app.mount("/sso/scim/v2", WSGIMiddleware(scim.scim_app))
+    app.mount(ROOT_PATH + "/sso/scim/v2", WSGIMiddleware(scim.scim_app))
