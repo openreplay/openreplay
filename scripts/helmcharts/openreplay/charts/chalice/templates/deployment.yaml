@@ -29,6 +29,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       shareProcessNamespace: true
+      {{- include "openreplay.pod.hostAliases" . | nindent 6 }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
