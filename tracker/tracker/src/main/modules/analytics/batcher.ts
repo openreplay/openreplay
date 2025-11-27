@@ -22,21 +22,18 @@ class Batcher {
   ) {}
 
   getBatches() {
-    return JSON.stringify({ data: this.batch, token: this.getToken(), deviceId: '1a2b3-1a2b3-1a2b3' })
+    return JSON.stringify({ data: this.batch, token: this.getToken() })
   }
 
   addEvent(event: any) {
-    this.batch[event.category].push(event)
-    // if (!this.intervalId) {
-    //   this.startAutosend()
-    // }
+    this.batch[event.category].push(event.data)
   }
 
   sendImmediately(event: any) {
-    this.sendBatch([event])
+    this.sendBatch({ [event.category]: [event.data] })
   }
 
-  private sendBatch(batch: any[]) {
+  private sendBatch(batch: Record<string, any[]>) {
     let attempts = 0
     const send = () => {
       const token = this.getToken()
@@ -71,25 +68,29 @@ class Batcher {
     void send()
   }
 
-  private startAutosend() {
+  startAutosend() {
     this.intervalId = setInterval(() => {
       this.flush()
     }, this.autosendInterval)
   }
 
   flush() {
-    if (this.batch.length > 0) {
-      this.sendBatch(this.batch)
-      this.batch = []
+    const isEmpty = Object.values(this.batch).every((batch => batch.length === 0))
+    if (isEmpty) {
+      return
     }
+    this.sendBatch(this.batch)
+    Object.keys(this.batch).forEach((key) => {
+      this.batch[key] = []
+    })
   }
 
   stop() {
+    this.flush()
     if (this.intervalId) {
       clearInterval(this.intervalId)
       this.intervalId = null
     }
-    this.flush()
   }
 }
 

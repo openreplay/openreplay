@@ -34,9 +34,9 @@ export function uaParse(sWindow: Window & typeof globalThis): ClientData {
   }
 
   // Browser detection
-  const nVer: string = sWindow.navigator.appVersion
-  const nAgt: string = sWindow.navigator.userAgent
-  let browser: string = sWindow.navigator.appName
+  const nVer: string = sWindow.navigator.appVersion ?? '0'
+  const nAgt: string = sWindow.navigator.userAgent ?? 'unknown'
+  let browser: string = sWindow.navigator.appName ?? "unknown"
   let version: string = String(parseFloat(nVer))
   let nameOffset: number
   let verOffset: number

@@ -1,5 +1,5 @@
 import Batcher from './batcher.js'
-import SharedProperties from './sharedProperties.js'
+import ConstantProperties from './constantProperties.js'
 import { isObject } from './utils.js'
 import { mutationTypes, categories, createEvent } from './types.js'
 
@@ -7,14 +7,14 @@ export default class People {
   ownProperties: Record<string, any> = {}
 
   constructor(
-    private readonly sharedProperties: SharedProperties,
+    private readonly constantProperties: ConstantProperties,
     private readonly getTimestamp: () => number,
     private readonly onId: (user_id: string) => void,
     private readonly batcher: Batcher,
   ) {}
 
   identify = (user_id: string, options?: { fromTracker: boolean }) => {
-    this.sharedProperties.setUserId(user_id)
+    this.constantProperties.setUserId(user_id)
     if (!options?.fromTracker) {
       this.onId(user_id)
     }
@@ -25,20 +25,22 @@ export default class People {
 
   // add "hard" flag to force generate device id as well ?
   reset = () => {
-    this.sharedProperties.resetUserId()
+    this.constantProperties.resetUserId()
     this.ownProperties = {}
   }
 
   get user_id() {
-    return this.sharedProperties.user_id
+    return this.constantProperties.user_id
   }
 
   // TODO: what exactly we're removing here besides properties and id?
   deleteUser = () => {
-    this.sharedProperties.setUserId(null)
+    const removedUser = this.constantProperties.user_id
+    if (!removedUser) return
+    this.constantProperties.setUserId(null)
     this.ownProperties = {}
 
-    const deleteEvent = createEvent(categories.people, mutationTypes.deleteUser, this.getTimestamp())
+    const deleteEvent = createEvent(categories.people, mutationTypes.deleteUser, undefined, { user_id: removedUser })
     this.batcher.addEvent(deleteEvent)
   }
 
@@ -52,11 +54,11 @@ export default class People {
       throw new Error('Properties must be an object')
     }
     Object.entries(properties).forEach(([key, value]) => {
-      if (!this.sharedProperties.defaultPropertyKeys.includes(key)) {
+      if (!this.constantProperties.defaultPropertyKeys.includes(key)) {
         this.ownProperties[key] = value
       }
     })
-    const setEvent = createEvent(categories.people, mutationTypes.setProperty, this.getTimestamp(), properties)
+    const setEvent = createEvent(categories.people, mutationTypes.setProperty, undefined, properties)
     this.batcher.addEvent(setEvent)
   }
 
@@ -70,12 +72,12 @@ export default class People {
       throw new Error('Properties must be an object')
     }
     Object.entries(properties).forEach(([key, value]) => {
-      if (!this.sharedProperties.defaultPropertyKeys.includes(key) && !this.ownProperties[key]) {
+      if (!this.constantProperties.defaultPropertyKeys.includes(key) && !this.ownProperties[key]) {
         this.ownProperties[key] = value
       }
     })
 
-    const setEvent = createEvent(categories.people, mutationTypes.setPropertyOnce, this.getTimestamp(), properties)
+    const setEvent = createEvent(categories.people, mutationTypes.setPropertyOnce, undefined, properties)
     this.batcher.addEvent(setEvent)
   }
 
@@ -85,7 +87,7 @@ export default class People {
    * TODO: exported as people.append
    * */
   appendValues = (key: string, value: string | number) => {
-    if (!this.sharedProperties.defaultPropertyKeys.includes(key) && this.ownProperties[key]) {
+    if (!this.constantProperties.defaultPropertyKeys.includes(key) && this.ownProperties[key]) {
       if (Array.isArray(this.ownProperties[key])) {
         this.ownProperties[key].push(value)
       } else {
@@ -93,7 +95,7 @@ export default class People {
       }
     }
 
-    const appendEvent = createEvent(categories.people, mutationTypes.appendProperty, this.getTimestamp(), {
+    const appendEvent = createEvent(categories.people, mutationTypes.appendProperty, undefined, {
       [key]: value,
     })
     this.batcher.addEvent(appendEvent)
@@ -114,7 +116,7 @@ export default class People {
       this.appendValues(key, value)
     }
 
-    const unionEvent = createEvent(categories.people, mutationTypes.appendUniqueProperty, this.getTimestamp(), {
+    const unionEvent = createEvent(categories.people, mutationTypes.appendUniqueProperty, undefined, {
       [key]: value,
     })
     this.batcher.addEvent(unionEvent)
@@ -127,13 +129,13 @@ export default class People {
    * */
   increment = (key: string, value: number) => {
     if (
-      !this.sharedProperties.defaultPropertyKeys.includes(key) &&
+      !this.constantProperties.defaultPropertyKeys.includes(key) &&
       typeof this.ownProperties[key] === 'number'
     ) {
       this.ownProperties[key] += value
     }
 
-    const incrementEvent = createEvent(categories.people, mutationTypes.incrementProperty, this.getTimestamp(), {
+    const incrementEvent = createEvent(categories.people, mutationTypes.incrementProperty, undefined, {
       [key]: value,
     })
     this.batcher.addEvent(incrementEvent)
