@@ -1,15 +1,30 @@
 import json
-from chalicelib.utils import SAML2_helper
-from routers.scim import helpers
 
-from chalicelib.utils import pg_client
 from scim2_models import Resource
+
+from chalicelib.utils import SAML2_helper
+from chalicelib.utils import pg_client
+
+
+def _get_name(resource: Resource) -> str:
+    return " ".join(
+        [
+            x
+            for x in [
+            resource.name.honorific_prefix,
+            resource.name.given_name,
+            resource.name.middle_name,
+            resource.name.family_name,
+            resource.name.honorific_suffix,
+        ]
+            if x
+        ]
+    ) if resource.name else ""
 
 
 def convert_provider_resource_to_client_resource(
         provider_resource: dict,
 ) -> dict:
-    print(">>>>>>convert_provider_resource_to_client_resource")
     groups = []
     if provider_resource["role_id"]:
         groups.append(
@@ -48,7 +63,6 @@ def convert_provider_resource_to_client_resource(
 
 
 def query_resources(tenant_id: int) -> list[dict]:
-    print(">>>>>query_resources")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -63,7 +77,6 @@ def query_resources(tenant_id: int) -> list[dict]:
 
 
 def get_resource(resource_id: str, tenant_id: int) -> dict | None:
-    print(">>>>>get_resource")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""
@@ -80,8 +93,6 @@ def get_resource(resource_id: str, tenant_id: int) -> dict | None:
 
 
 def delete_resource(resource_id: str, tenatn_id: int) -> None:
-    print(">>>>>delete_resource")
-    print(">>>> resource_id = ", resource_id)
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -89,19 +100,20 @@ def delete_resource(resource_id: str, tenatn_id: int) -> None:
                 UPDATE public.users
                 SET deleted_at = now(),
                     updated_at = now()
-                WHERE users.user_id = %(user_id)s
+                WHERE user_id = %(user_id)s
+                  AND tenant_id = %(tenant_id)s
+                  AND role!='owner'
                 """,
-                {"user_id": resource_id},
+                {"user_id": resource_id, "tenant_id": tenatn_id},
             )
         )
 
 
 def search_existing(tenant_id: int, resource: Resource) -> dict | None:
-    print(">>>>>search_existing")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """
+                """ \
                 SELECT *
                 FROM public.users
                 WHERE email = %(email)s
@@ -116,30 +128,10 @@ def search_existing(tenant_id: int, resource: Resource) -> dict | None:
 
 
 def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
-    print(">>>>>restore_resource")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """
-                SELECT role_id
-                FROM public.users
-                WHERE user_id = %(user_id)s
-                """,
-                {"user_id": resource.id},
-            )
-        )
-        item = cur.fetchone()
-        if item and item["role_id"] is not None:
-            _update_role_projects_and_permissions(
-                item["role_id"],
-                resource.OpenreplayUser.project_keys,
-                resource.OpenreplayUser.permissions,
-                cur,
-            )
-        cur.execute(
-            cur.mogrify(
-                """
-                WITH u AS (
+                """ \
                 UPDATE public.users
                 SET tenant_id     = %(tenant_id)s,
                     email         = %(email)s,
@@ -151,38 +143,14 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
                     api_key       = default,
                     jwt_iat       = NULL,
                     weekly_report = default
-                WHERE users.email = %(email)s RETURNING *
-                )
-                SELECT u.*,
-                       roles.permissions AS permissions,
-                       COALESCE(
-                               (SELECT json_agg(projects.project_key)
-                                FROM public.projects
-                                         LEFT JOIN public.roles_projects USING (project_id)
-                                WHERE roles_projects.role_id = roles.role_id),
-                               '[]'
-                       )                 AS project_keys
-                FROM u
-                         LEFT JOIN public.roles ON roles.role_id = u.role_id
+                WHERE email = %(email)s
+                  AND role!='owner' 
+                RETURNING *
                 """,
                 {
                     "tenant_id": tenant_id,
                     "email": resource.user_name,
-                    "name": " ".join(
-                        [
-                            x
-                            for x in [
-                            resource.name.honorific_prefix,
-                            resource.name.given_name,
-                            resource.name.middle_name,
-                            resource.name.family_name,
-                            resource.name.honorific_suffix,
-                        ]
-                            if x
-                        ]
-                    )
-                    if resource.name
-                    else "",
+                    "name": _get_name(resource),
                     "internal_id": resource.external_id,
                 },
             )
@@ -192,24 +160,10 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
 
 
 def create_resource(tenant_id: int, resource: Resource) -> dict:
-    print(">>>>>create_resource user")
-    print(resource)
     params = {
         "tenant_id": tenant_id,
         "email": resource.user_name,
-        "name": " ".join(
-            [
-                x
-                for x in [
-                resource.name.honorific_prefix,
-                resource.name.given_name,
-                resource.name.middle_name,
-                resource.name.family_name,
-                resource.name.honorific_suffix,
-            ]
-                if x
-            ]
-        ) if resource.name else "",
+        "name": _get_name(resource),
         "internal_id": resource.user_name,
         "origin": SAML2_helper.get_saml2_provider(),
         "data": json.dumps({"external_id": resource.external_id}),
@@ -252,109 +206,33 @@ def create_resource(tenant_id: int, resource: Resource) -> dict:
 
 
 def update_resource(tenant_id: int, resource: Resource) -> dict | None:
-    print(">>>>>update_resource")
     with pg_client.PostgresClient() as cur:
-        # cur.execute(
-        #     cur.mogrify(
-        #         """
-        #         SELECT role_id
-        #         FROM public.users
-        #         WHERE user_id = %(user_id)s
-        #         """,
-        #         {"user_id": resource.id},
-        #     )
-        # )
-        # item = cur.fetchone()
-        # if item and item["role_id"] is not None:
-        #     _update_role_projects_and_permissions(
-        #         item["role_id"],
-        #         resource.OpenreplayUser.project_keys,
-        #         resource.OpenreplayUser.permissions,
-        #         cur,
-        #     )
+        params = {
+            "user_id": resource.id,
+            "tenant_id": tenant_id,
+            "email": resource.user_name,
+            "name": _get_name(resource),
+            "internal_id": resource.external_id,
+        }
+        updates = ["tenant_id   = %(tenant_id)s",
+                   "email       = %(email)s",
+                   "internal_id = %(internal_id)s",
+                   "updated_at  = now()"]
+        constraints = ["user_id = %(user_id)s"]
+        if resource.active is False:
+            updates.append("deleted_at = now()")
+            constraints.append("role!='owner'")
+        elif resource.name:
+            updates.append("name = %(name)s")
         cur.execute(
             cur.mogrify(
-                """
-                WITH u AS (
+                f"""\
                 UPDATE public.users
-                SET tenant_id   = %(tenant_id)s,
-                    email       = %(email)s,
-                    name        = %(name)s,
-                    internal_id = %(internal_id)s,
-                    updated_at  = now()
-                WHERE user_id = %(user_id)s RETURNING *
-                )
-                SELECT u.*,
-                       roles.permissions AS permissions,
-                       COALESCE(
-                               (SELECT json_agg(projects.project_key)
-                                FROM public.projects
-                                         LEFT JOIN public.roles_projects USING (project_id)
-                                WHERE roles_projects.role_id = roles.role_id),
-                               '[]'
-                       )                 AS project_keys
-                FROM u
-                         LEFT JOIN public.roles ON roles.role_id = u.role_id
-                """,
-                {
-                    "user_id": resource.id,
-                    "tenant_id": tenant_id,
-                    "email": resource.user_name,
-                    "name": " ".join(
-                        [
-                            x
-                            for x in [
-                            resource.name.honorific_prefix,
-                            resource.name.given_name,
-                            resource.name.middle_name,
-                            resource.name.family_name,
-                            resource.name.honorific_suffix,
-                        ]
-                            if x
-                        ]
-                    )
-                    if resource.name
-                    else "",
-                    "internal_id": resource.external_id,
-                },
+                SET {", ".join(updates)}
+                WHERE {" AND ".join(constraints)} 
+                RETURNING *
+                """, params
             )
         )
         item = cur.fetchone()
         return convert_provider_resource_to_client_resource(item)
-
-
-def _update_role_projects_and_permissions(
-        role_id: int,
-        project_keys: list[str] | None,
-        permissions: list[str] | None,
-        cur: pg_client.PostgresClient,
-) -> None:
-    print(">>>>update_role_projects_and_permissions")
-    all_projects = "true" if not project_keys else "false"
-    project_key_clause = helpers.safe_mogrify_array(project_keys, "varchar", cur)
-    permission_clause = helpers.safe_mogrify_array(permissions, "varchar", cur)
-    cur.execute(
-        f"""
-        UPDATE public.roles
-        SET
-            updated_at = now(),
-            all_projects = {all_projects},
-            permissions = {permission_clause}
-        WHERE role_id = {role_id}
-        RETURNING *
-        """
-    )
-    cur.execute(
-        f"""
-        DELETE FROM public.roles_projects
-        WHERE roles_projects.role_id = {role_id}
-        """
-    )
-    cur.execute(
-        f"""
-        INSERT INTO public.roles_projects (role_id, project_id)
-        SELECT {role_id}, projects.project_id
-        FROM public.projects
-        WHERE projects.project_key = ANY({project_key_clause})        
-        """
-    )

@@ -42,3 +42,34 @@ def load_custom_resource_types() -> dict[str, ResourceType]:
         "routers", "scim", "fixtures", "custom_resource_types.json"
     )
     return load_scim_resource(json_name, ResourceType)
+
+
+__SCIM_USED = False
+
+
+def is_scim_available():
+    global __SCIM_USED
+    if not __SCIM_USED:
+        with pg_client.PostgresClient() as cur:
+            cur.execute("""SELECT EXISTS(SELECT *
+                                         FROM public.scim_auth_codes);""")
+            __SCIM_USED = cur.fetchone()["exists"]
+    return __SCIM_USED
+
+
+def set_scim_available():
+    global __SCIM_USED
+    __SCIM_USED = True
+
+
+def group_name_to_role_name(group_name: str) -> str:
+    if group_name is None:
+        return None
+
+    if group_name.lower().startswith("openreplay"):
+        return group_name_to_role_name(group_name[len("openreplay"):])
+    elif group_name.lower().startswith("or"):
+        return group_name_to_role_name(group_name[len("or"):])
+    elif group_name.startswith((".", " ", "-", "_")):
+        return group_name_to_role_name(group_name[1:])
+    return group_name.strip()

@@ -8,6 +8,7 @@ from scim2_server.utils import SCIMException
 
 import schemas
 from chalicelib.utils import pg_client
+from routers.scim import helpers
 
 
 def convert_provider_resource_to_client_resource(
@@ -64,10 +65,12 @@ def delete_resource(resource_id: str, tenant_id: int) -> None:
         deleted_at=datetime.now(),
     )
     if r is not None:
+        args = {"tenant_id": tenant_id, "user_ids": [u["user_id"] for u in r["users"]],
+                "new_role_id": None, "initial_role_id": resource_id}
         if is_admin_priviledge(r["name"]):
-            _set_users_admin_privilege(tenant_id, user_ids=[u["user_id"] for u in r["users"]], admin_privilege=False)
+            _set_users_admin_privilege(**args)
         else:
-            _set_users_role(tenant_id=tenant_id, user_ids=[], new_role_id=None, initial_role_id=resource_id)
+            _set_users_role(**args)
 
 
 def search_existing(tenant_id: int, resource: Resource) -> dict | None:
@@ -82,7 +85,7 @@ def group_display_name_to_role_name(group_name_filter: str) -> str:
     # Replace ONLY displayName eq "<something>"
     pattern = r'(displayName\s+eq\s+)"([^"]*)"'
     s = re.match(pattern, group_name_filter)
-    new_value = group_name_to_role_name(s.group(2))
+    new_value = helpers.group_name_to_role_name(s.group(2))
     s = re.sub(
         pattern,
         rf'\1"{new_value}"',
@@ -91,26 +94,13 @@ def group_display_name_to_role_name(group_name_filter: str) -> str:
     return s
 
 
-def group_name_to_role_name(group_name: str) -> str:
-    if group_name is None:
-        return None
-
-    if group_name.lower().startswith("openreplay"):
-        return group_name_to_role_name(group_name[len("openreplay"):])
-    elif group_name.lower().startswith("or"):
-        return group_name_to_role_name(group_name[len("or"):])
-    elif group_name.startswith((".", " ", "-", "_")):
-        return group_name_to_role_name(group_name[1:])
-    return group_name.strip()
-
-
 def is_admin_priviledge(name: str) -> bool:
     return name.lower().strip() == "admin"
 
 
 def create_resource(tenant_id: int, resource: Resource) -> dict:
     with pg_client.PostgresClient() as cur:
-        role_name = group_name_to_role_name(resource.display_name)
+        role_name = helpers.group_name_to_role_name(resource.display_name)
         admin_privilege = is_admin_priviledge(role_name)
         if admin_privilege:
             role_name = role_name.lower()
@@ -135,16 +125,17 @@ def create_resource(tenant_id: int, resource: Resource) -> dict:
         role_id = cur.fetchone()["role_id"]
         if resource.members and len(resource.members) > 0:
             user_ids = [int(x.value) for x in resource.members]
+            args = {"tenant_id": tenant_id, "user_ids": user_ids, "new_role_id": role_id}
             if admin_privilege:
-                _set_users_admin_privilege(tenant_id, user_ids=user_ids, admin_privilege=True, new_role_id=role_id)
+                _set_users_admin_privilege(**args)
             else:
-                _set_users_role(tenant_id=tenant_id, user_ids=user_ids, new_role_id=role_id)
+                _set_users_role(**args)
 
     return get_resource(role_id, tenant_id)
 
 
 def update_resource(tenant_id: int, resource: Resource) -> dict | None:
-    role_name = group_name_to_role_name(resource.display_name)
+    role_name = helpers.group_name_to_role_name(resource.display_name)
     admin_privilege = is_admin_priviledge(role_name)
     item = _update_resource_sql(
         resource_id=resource.id,
@@ -160,7 +151,7 @@ def update_resource(tenant_id: int, resource: Resource) -> dict | None:
 def _main_select_query(tenant_id: int, resource_id: str = None,
                        resource_name: str = None) -> tuple[str, dict[str, Any]]:
     params = {"tenant_id": tenant_id, "resource_id": resource_id,
-              "resource_name": group_name_to_role_name(resource_name)}
+              "resource_name": helpers.group_name_to_role_name(resource_name)}
     where_and_clauses = [
         "roles.tenant_id = %(tenant_id)s",
     ]
@@ -205,12 +196,12 @@ def _set_users_role(tenant_id: int, user_ids: list[int], new_role_id: int | None
             "new_role_id": new_role_id,
             "initial_role_id": initial_role_id,
         }
-        constraints = []
+        constraints = ["role!='owner'"]
         if initial_role_id is not None:
             constraints.append("users.role_id = %(initial_role_id)s")
         if len(user_ids) > 0:
             constraints.append("users.user_id IN %(user_ids)s")
-        if len(constraints) == 0:
+        if len(constraints) == 1:
             return
         cur.execute(
             cur.mogrify(
@@ -225,21 +216,22 @@ def _set_users_role(tenant_id: int, user_ids: list[int], new_role_id: int | None
         )
 
 
-def _set_users_admin_privilege(tenant_id: int, user_ids: list[int], admin_privilege: bool,
+def _set_users_admin_privilege(tenant_id: int, user_ids: list[int],
                                new_role_id: int | None, initial_role_id: int | None = None) -> None:
-    constraints = []
+    constraints = ["role!='owner'"]
     if initial_role_id is not None:
-        constraints.append("users.role_id = %(initial_role_id)s")
+        constraints.append("users.admin_privilege_role_id = %(initial_role_id)s")
     if len(user_ids) > 0:
         constraints.append("users.user_id IN %(user_ids)s")
-    if len(constraints) == 0:
+    if len(constraints) == 1:
         return
     with pg_client.PostgresClient() as cur:
         params = {
             "tenant_id": tenant_id,
             "user_ids": tuple(user_ids),
-            "role": "admin" if admin_privilege else "member",
+            "role": "admin" if new_role_id else "member",
             "new_role_id": new_role_id,
+            "initial_role_id": initial_role_id
         }
         cur.execute(
             cur.mogrify(
@@ -262,10 +254,11 @@ def _update_resource_sql(
         **kwargs: dict[str, Any],
 ) -> dict[str, Any]:
     if user_ids is not None and len(user_ids) > 0:
+        args = {"tenant_id": tenant_id, "user_ids": user_ids, "new_role_id": resource_id}
         if admin_privilege:
-            _set_users_admin_privilege(tenant_id, user_ids, admin_privilege, new_role_id=resource_id)
+            _set_users_admin_privilege(**args)
         else:
-            _set_users_role(tenant_id, user_ids, resource_id)
+            _set_users_role(**args)
 
     with pg_client.PostgresClient() as cur:
         if admin_privilege is not None:
@@ -282,8 +275,9 @@ def _update_resource_sql(
                 cur.mogrify(f"""
                 UPDATE public.roles
                 SET {set_clause}
-                WHERE roles.role_id = %(role_id)s
-                    AND roles.tenant_id = %(tenant_id)s
+                WHERE role_id = %(role_id)s
+                    AND tenant_id = %(tenant_id)s
+                    AND NOT protected
                 """, params)
             )
         query, params = _main_select_query(tenant_id, resource_id)
@@ -298,7 +292,8 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
                 """ \
                 UPDATE public.roles
                 SET deleted_at = NULL
-                WHERE role_id = %(role_id)s RETURNING roles.*, 
+                WHERE role_id = %(role_id)s
+                  AND NOT protected RETURNING roles.*, 
                         COALESCE(
                         (SELECT json_agg(users)
                          FROM public.users
