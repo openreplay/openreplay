@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from decouple import config
 from fastapi import Request, HTTPException
 from starlette.datastructures import FormData
+from routers.scim import helpers as __scim_helpers
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -168,3 +169,11 @@ def get_landing_URL(query_params: dict = None, redirect_to_link2=False):
 
 
 environ["hastSAML2"] = str(is_saml2_available())
+
+
+def is_scim_available():
+    return __scim_helpers.is_scim_available()
+
+
+def group_name_to_role_name(group_name: str) -> str:
+    return __scim_helpers.group_name_to_role_name(group_name)

@@ -60,24 +60,23 @@ async def lifespan(app: FastAPI):
     await ch_client.init()
     await events_queue.init()
     app.schedule.start()
-    # TODO: remove this before pushing
-    # for job in (
-    #         core_crons.cron_jobs
-    #         + core_dynamic_crons.cron_jobs
-    #         + traces.cron_jobs
-    #         + ee_crons.ee_cron_jobs
-    # ):
-    #     app.schedule.add_job(id=job["func"].__name__, **job)
-    #
-    # ap_logger.info(">Scheduled jobs:")
-    # for job in app.schedule.get_jobs():
-    #     ap_logger.info(
-    #         {
-    #             "Name": str(job.id),
-    #             "Run Frequency": str(job.trigger),
-    #             "Next Run": str(job.next_run_time),
-    #         }
-    #     )
+    for job in (
+            core_crons.cron_jobs
+            + core_dynamic_crons.cron_jobs
+            + traces.cron_jobs
+            + ee_crons.ee_cron_jobs
+    ):
+        app.schedule.add_job(id=job["func"].__name__, **job)
+
+    ap_logger.info(">Scheduled jobs:")
+    for job in app.schedule.get_jobs():
+        ap_logger.info(
+            {
+                "Name": str(job.id),
+                "Run Frequency": str(job.trigger),
+                "Next Run": str(job.next_run_time),
+            }
+        )
 
     database = {
         "host": config("pg_host", default="localhost"),

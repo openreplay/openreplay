@@ -492,7 +492,7 @@ def get_by_email_only(email):
                           roles.name                                                 AS role_name
                    FROM public.users
                             LEFT JOIN public.basic_authentication USING (user_id)
-                            INNER JOIN public.roles USING (role_id)
+                            LEFT JOIN public.roles USING (role_id)
                    WHERE users.email = %(email)s
                      AND users.deleted_at IS NULL LIMIT 1;""",
                 {"email": email},
