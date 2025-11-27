@@ -40,6 +40,7 @@ people.setPropertiesOnce({ signup_date: '2024-01-01', country: 'FRANCE' })
 // ignoring append for now
 people.deleteUser()
 people.identify('user_123_with_events')
+events.sendEvent('test')
 events.sendEvent('page_view', { url: '/home' })
 events.setProperty('app_version', '1.0.0')
 events.setPropertiesOnce({ platform: 'web', os: 'windows', app_version: '2.0.0' })

@@ -140,4 +140,11 @@ export default class People {
     })
     this.batcher.addEvent(incrementEvent)
   }
+
+  /** mixpanel compatibility */
+  union = this.appendUniqueValues
+  set = this.setProperties
+  set_once = this.setPropertiesOnce
+  append = this.appendValues
+  incrementBy = this.increment
 }
