@@ -185,8 +185,8 @@ global:
     # SCIM_ACCESS_SECRET_KEY:
     # SCIM_REFRESH_SECRET_KEY:
     # SCIM_JWT_ALGORITHM: 'HS512'
-    # SCIM_ACCESS_TOKEN_EXPIRE_SECONDS: '900'
-    # SCIM_REFRESH_TOKEN_EXPIRE_SECONDS: '86400'
+    # SCIM_ACCESS_TOKEN_EXPIRE_SECONDS: '86400'
+    # SCIM_REFRESH_TOKEN_EXPIRE_SECONDS: '2592000'
 # Below is an example on how to override values
 # chartname:
 #   filedFrom chart/Values.yaml:

@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 ACCESS_SECRET_KEY = config("SCIM_ACCESS_SECRET_KEY", default="")
 REFRESH_SECRET_KEY = config("SCIM_REFRESH_SECRET_KEY", default="")
 ALGORITHM = config("SCIM_JWT_ALGORITHM", default="HS512")
-ACCESS_TOKEN_EXPIRE_SECONDS = config("SCIM_ACCESS_TOKEN_EXPIRE_SECONDS", default=900, cast=int)
-REFRESH_TOKEN_EXPIRE_SECONDS = config("SCIM_REFRESH_TOKEN_EXPIRE_SECONDS", default=86400, cast=int)
+ACCESS_TOKEN_EXPIRE_SECONDS = config("SCIM_ACCESS_TOKEN_EXPIRE_SECONDS", default=604800, cast=int)
+REFRESH_TOKEN_EXPIRE_SECONDS = config("SCIM_REFRESH_TOKEN_EXPIRE_SECONDS", default=2592000, cast=int)
 
 if len(ACCESS_SECRET_KEY) == 0:
     logger.info("SCIM not configured")
