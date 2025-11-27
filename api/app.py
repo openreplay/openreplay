@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import psycopg_pool
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from psycopg import AsyncConnection
@@ -21,6 +21,7 @@ from routers.subs import insights, metrics, v1_api, health, usability_tests, spo
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
+logger = logging.getLogger(__name__)
 
 
 class ORPYAsyncConnection(AsyncConnection):
@@ -77,16 +78,29 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await database.close()
     logging.info(">>>>> shutting down <<<<<")
-    app.schedule.shutdown(wait=False)
+    app.schedule.shutdown(wait=True)
     await pg_client.terminate()
 
 
-app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("docs_url", default=""),
-              redoc_url=config("redoc_url", default=""), lifespan=lifespan)
+app = FastAPI(
+    root_path=config("root_path", default="/api"),
+    docs_url=config("docs_url", default=""),
+    redoc_url=config("redoc_url", default=""),
+    lifespan=lifespan,
+)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-@app.middleware('http')
+@app.middleware("http")
+async def log_all_requests(request: Request, call_next):
+    method = request.method
+    endpoint = request.url.path
+    response: Response = await call_next(request)
+    logger.info(f"{method}:{endpoint} {response.status_code}")
+    return response
+
+
+@app.middleware("http")
 async def or_middleware(request: Request, call_next):
     if helper.TRACK_TIME:
         now = time.time()

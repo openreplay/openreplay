@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 import psycopg_pool
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -40,6 +40,7 @@ if config("ENABLE_SSO", cast=bool, default=True):
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
+logger = logging.getLogger(__name__)
 
 
 class ORPYAsyncConnection(AsyncConnection):
@@ -115,6 +116,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+@app.middleware("http")
+async def log_all_requests(request: Request, call_next):
+    method = request.method
+    endpoint = request.url.path
+    response: Response = await call_next(request)
+    logger.info(f"{method}:{endpoint} {response.status_code}")
+    return response
 
 
 @app.middleware("http")
