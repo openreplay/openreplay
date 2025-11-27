@@ -184,7 +184,6 @@ class PostgresBackend(backend.Backend):
         existing = self._postgres_resources[resource_type_id].search_existing(
             tenant_id, resource
         )
-        print(">>>>> existing resource", existing)
         if existing:
             # existing = model.model_validate(existing, extra='ignore')
             if existing["active"]:
@@ -203,8 +202,6 @@ class PostgresBackend(backend.Backend):
                 )
         else:
             raise SCIMException(Error.make_no_target_error())
-
-        print(">>>>>> resource", resource)
 
         if resource is not None:
             resource = model.model_validate(resource, extra='ignore')

@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
 
+from decouple import config
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
 from scim2_server import utils
@@ -41,7 +42,7 @@ b.register_postgres_resource(
     ),
 )
 
-scim_app = MultiTenantProvider(b)
+scim_app = MultiTenantProvider(config("root_path", default="/api"), b)
 
 for schema in utils.load_default_schemas().values():
     scim_app.register_schema(schema)
