@@ -102,12 +102,6 @@ autoscaling:
 env:
   TOKEN_SECRET: secret_token_string # TODO: generate on build
   ch_db: default
-  SCIM_ACCESS_TOKEN_EXPIRE_SECONDS: "500"
-  SCIM_JWT_ALGORITHM: ""
-  SCIM_REFRESH_SECRET_KEY: ""
-  SCIM_REFRESH_TOKEN_EXPIRE_SECONDS: "500"
-  SCIM_AUDIENCE: ""
-  JWT_ISSUER: ""
 
 
 pvc:
