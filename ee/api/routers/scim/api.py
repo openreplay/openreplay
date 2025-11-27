@@ -137,11 +137,10 @@ async def get_authorize(
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """
-                UPDATE public.scim_auth_codes
-                SET used= TRUE
-                WHERE tenant_id = (SELECT tenant_id FROM public.tenants WHERE tenant_key = %(tenant_key)s LIMIT 1)
-                    RETURNING tenant_id;
+                """ \
+                SELECT tenant_id
+                FROM public.tenants
+                WHERE tenant_key = %(tenant_key)s LIMIT 1
                 """,
                 {"tenant_key": client_id},
             )
@@ -149,17 +148,24 @@ async def get_authorize(
         tenant_id = cur.fetchone()
         if tenant_id is None:
             raise HTTPException(status_code=401, detail="Invalid SCIM-clientId")
+        tenant_id = tenant_id["tenant_id"]
+
         cur.execute(
             cur.mogrify(
-                """
-                INSERT INTO public.scim_auth_codes (tenant_id)
+                """ \
+                WITH u AS (
+                UPDATE public.scim_auth_codes
+                SET used= TRUE
+                WHERE tenant_id = %(tenant_id)s )
+                INSERT
+                INTO public.scim_auth_codes (tenant_id)
                 VALUES (%(tenant_id)s) RETURNING auth_code
                 """,
-                {"tenant_id": tenant_id["tenant_id"]},
+                {"tenant_id": tenant_id},
             )
         )
         code = cur.fetchone()
-
+    helpers.set_scim_available()
     params = {"code": code["auth_code"]}
     if state:
         params["state"] = state
