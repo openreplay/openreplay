@@ -40,7 +40,6 @@ apiVersion: v1
 metadata:
   name: openreplay-tracker
 spec:
-  ingressClassName: {{ tpl .Values.ingress.className . }}
   type: ExternalName
   externalName: static.openreplay.com
 ---
