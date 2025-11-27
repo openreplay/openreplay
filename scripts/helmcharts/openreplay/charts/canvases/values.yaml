@@ -120,3 +120,5 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+hostAliases: []

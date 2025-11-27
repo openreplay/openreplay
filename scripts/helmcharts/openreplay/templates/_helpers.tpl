@@ -209,3 +209,14 @@ key: {{ $secretKey }}
 {{- end -}}
 {{- end}}
 {{- end}}
+
+{{/*
+Add hostAliases configuration to pod spec
+Usage: {{- include "openreplay.pod.hostAliases" . | nindent 6 }}
+*/}}
+{{- define "openreplay.pod.hostAliases" -}}
+{{- with .Values.hostAliases }}
+hostAliases:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}

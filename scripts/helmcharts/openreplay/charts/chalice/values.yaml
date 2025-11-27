@@ -121,6 +121,8 @@ tolerations: []
 
 affinity: {}
 
+hostAliases: []
+
 healthCheck:
   livenessProbe:
     httpGet:

@@ -116,6 +116,8 @@ tolerations: []
 
 affinity: {}
 
+hostAliases: []
+
 global:
   postgresql: {}
   kafka: {}

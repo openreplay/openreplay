@@ -125,6 +125,8 @@ tolerations: []
 
 affinity: {}
 
+hostAliases: []
+
 
 persistence: {}
   # # Spec of spec.template.spec.containers[*].volumeMounts
