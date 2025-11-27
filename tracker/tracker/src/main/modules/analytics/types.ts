@@ -16,7 +16,7 @@ export const categories = {
 export const createEvent = (
   category: (typeof categories)[keyof typeof categories],
   type: (typeof mutationTypes)[keyof typeof mutationTypes],
-  timestamp: number,
+  timestamp?: number,
   payload?: Record<string, any>,
 ) => ({
   category,

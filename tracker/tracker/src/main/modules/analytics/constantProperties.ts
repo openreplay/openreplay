@@ -8,6 +8,8 @@ export interface StorageLike {
 const refKey = '$__or__initial_ref__$'
 const distinctIdKey = '$__or__distinct_device_id__$'
 const utmParamsKey = '$__or__utm_params__$'
+const superPropKey = '$__or__super_properties__$'
+
 const win =
   'window' in globalThis
     ? window
@@ -45,7 +47,7 @@ const searchEngineList = [
   'perplexity',
 ]
 
-export default class SharedProperties {
+export default class ConstantProperties {
   os: string
   osVersion: string
   browser: string
@@ -170,5 +172,22 @@ export default class SharedProperties {
       }
     }
     return null
+  }
+
+  getSuperProperties = (): Record<string, any> => {
+    const potentialStored = this.localStorage.getItem(superPropKey)
+    if (potentialStored) {
+      return JSON.parse(potentialStored)
+    } else {
+      return {}
+    }
+  }
+
+  saveSuperProperties = (props: Record<string, any>) => {
+    this.localStorage.setItem(superPropKey, JSON.stringify(props))
+  }
+
+  clearSuperProperties = () => {
+    this.localStorage.setItem(superPropKey, JSON.stringify({}))
   }
 }
