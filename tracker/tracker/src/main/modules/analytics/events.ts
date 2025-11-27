@@ -50,7 +50,7 @@ export default class Events {
     }
     const event = createEvent(
       categories.events,
-      'event',
+      undefined,
       this.getTimestamp(),
       eventPayload,
     )
