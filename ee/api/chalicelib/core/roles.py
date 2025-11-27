@@ -173,15 +173,20 @@ def get_roles(tenant_id):
     return helper.list_to_camel_case(rows)
 
 
-def get_role_by_name(tenant_id, name):
+def get_role_by_name(tenant_id: int, name: str, include_owner: bool = True):
+    constraints = [
+        "tenant_id = %(tenant_id)s",
+        "deleted_at IS NULL",
+        "NOT hidden",
+        "name ILIKE %(name)s"
+    ]
+    if not include_owner:
+        constraints.append("name !='owner'")
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """SELECT *
+            f"""SELECT *
                FROM public.roles
-               WHERE tenant_id = %(tenant_id)s
-                 AND deleted_at IS NULL
-                 AND NOT hidden
-                 AND name ILIKE %(name)s;""",
+               WHERE {" AND ".join(constraints)};""",
             {"tenant_id": tenant_id, "name": name},
         )
         cur.execute(query=query)
