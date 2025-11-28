@@ -3,8 +3,10 @@ import ConstantProperties from './constantProperties.js'
 import { isObject } from './utils.js'
 import { mutationTypes, categories, createEvent } from './types.js'
 
+type Value = string | number
+
 export default class People {
-  ownProperties: Record<string, any> = {}
+  ownProperties: Record<string, Value | Value[]> = {}
 
   constructor(
     private readonly constantProperties: ConstantProperties,
@@ -49,7 +51,7 @@ export default class People {
    *
    * TODO: exported as people.set
    * */
-  setProperties = (properties: Record<string, any>) => {
+  setProperties = (properties: Record<string, string | number>) => {
     if (!isObject(properties)) {
       throw new Error('Properties must be an object')
     }
@@ -67,7 +69,7 @@ export default class People {
    *
    * TODO: exported as people.set_once
    * */
-  setPropertiesOnce = (properties: Record<string, any>) => {
+  setPropertiesOnce = (properties: Record<string, string | number>) => {
     if (!isObject(properties)) {
       throw new Error('Properties must be an object')
     }
@@ -128,12 +130,10 @@ export default class People {
    * TODO: exported as people.increment
    * */
   increment = (key: string, value: number) => {
-    if (
-      !this.constantProperties.defaultPropertyKeys.includes(key) &&
-      typeof this.ownProperties[key] === 'number'
-    ) {
-      this.ownProperties[key] += value
+    if (!this.ownProperties[key] || typeof this.ownProperties[key] !== 'number') {
+      throw new Error('OR SDK: Property must be a number to increment')
     }
+    this.ownProperties[key] += value
 
     const incrementEvent = createEvent(categories.people, mutationTypes.incrementProperty, undefined, {
       [key]: value,

@@ -35,6 +35,11 @@ const events = new Events(
 
 people.identify('user_123')
 people.setProperties({ age: 30, country: 'USA' })
+people.setProperties({ age: 33, country: 'FR', city: 'New York' })
+people.setProperties({ gender: 'male' })
+people.increment('age', 1)
+people.increment('age', 1)
+people.increment('copies', 1)
 people.increment('age', 1)
 people.setPropertiesOnce({ signup_date: '2024-01-01', country: 'FRANCE' })
 // ignoring append for now

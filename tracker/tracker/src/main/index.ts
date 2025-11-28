@@ -190,13 +190,18 @@ export default class API {
       this.signalStartIssue,
       this.crossdomainMode,
     )
-    this.analytics = new AnalyticsSDK(
-      options.localStorage ?? localStorage,
-      options.sessionStorage ?? sessionStorage,
-      this.getAnalyticsToken,
-      this.app?.timestamp ?? Date.now,
-      this.setUserID,
-    )
+    if (options.projectKey) {
+      this.analytics = new AnalyticsSDK({
+        localStorage: options.localStorage ?? localStorage,
+        sessionStorage: sessionStorage ?? sessionStorage,
+        getToken: this.getAnalyticsToken,
+        getTimestamp: this.app?.timestamp ?? Date.now,
+        setUserId: this.setUserID,
+        notStandalone: true,
+        ingestPoint: options.ingestPoint ?? 'https://api.openreplay.com/',
+        projectKey: options.projectKey,
+      })
+    }
     this.app = app
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us

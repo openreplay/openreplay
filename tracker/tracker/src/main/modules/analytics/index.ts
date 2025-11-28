@@ -91,28 +91,29 @@ export default class Analytics {
 
   init = async () => {
     if (!this.standalone) {
-      return this.batcher.startAutosend()
-    }
-
-    const defaultFields = this.constantProperties.all
-    const apiEdp = '/api/analytics/start'
-    const data = {
-      projectKey: this.projectKey,
-      defaultFields,
-    }
-    const resp = await fetch(apiEdp, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-    if (!resp.ok) {
-      throw new Error(`HTTP error! status: ${resp.status}`)
-    }
-    const result = await resp.json()
-    if (result.token) {
-      this.token = result.token
-      this.sessionStorage.setItem(STORAGEKEY, result.token)
+      this.batcher.startAutosend()
+      return
     } else {
-      throw new Error('No token received from server')
+      const defaultFields = this.constantProperties.all
+      const apiEdp = '/api/analytics/start'
+      const data = {
+        projectKey: this.projectKey,
+        defaultFields,
+      }
+      const resp = await fetch(apiEdp, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      if (!resp.ok) {
+        throw new Error(`HTTP error! status: ${resp.status}`)
+      }
+      const result = await resp.json()
+      if (result.token) {
+        this.token = result.token
+        this.sessionStorage.setItem(STORAGEKEY, result.token)
+      } else {
+        throw new Error('No token received from server')
+      }
     }
   }
 

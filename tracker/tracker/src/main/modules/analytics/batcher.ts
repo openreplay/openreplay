@@ -1,4 +1,16 @@
-import { categories } from "./types"
+import { categories } from './types'
+
+interface PeopleEvent {
+  type: string
+  timestamp: number
+  payload: Record<string, any>
+}
+
+interface Event {
+  name: string
+  payload: Record<string, any>
+  timestamp: number
+}
 
 /**
  * Creates batches of events, then sends them at intervals.
@@ -10,8 +22,8 @@ class Batcher {
   private readonly apiEdp = '/v1/sdk/i'
 
   private batch = {
-    [categories.people]: [] as any[],
-    [categories.events]: [] as any[],
+    [categories.people]: [] as PeopleEvent[],
+    [categories.events]: [] as Event[],
   }
   private intervalId: any = null
 
@@ -22,7 +34,9 @@ class Batcher {
   ) {}
 
   getBatches() {
-    return JSON.stringify({ data: this.batch, token: this.getToken() })
+    this.batch[categories.people] = this.dedupePeopleEvents()
+    const finalData = JSON.stringify({ data: this.batch, token: this.getToken() })
+    return finalData
   }
 
   addEvent(event: any) {
@@ -30,10 +44,79 @@ class Batcher {
   }
 
   sendImmediately(event: any) {
-    this.sendBatch({ [event.category]: [event.data] })
+    this.sendBatch(JSON.stringify({ [event.category]: [event.data] }))
   }
 
-  private sendBatch(batch: Record<string, any[]>) {
+  /**
+   *
+   * Essentially we're dividing the batch by identify events and squash all same category events into one in each part,
+   * taking priority to the last one
+   */
+  dedupePeopleEvents() {
+
+    const peopleEvents = this.batch[categories.people] as PeopleEvent[]
+    const finalEvents = [] as PeopleEvent[]
+    const currentPart = [] as PeopleEvent[]
+    for (let event of peopleEvents) {
+      if (event.type === 'identity') {
+        if (currentPart.length > 0) {
+          finalEvents.push(...this.squashPeopleEvents(currentPart), event)
+          currentPart.length = 0
+        } else {
+          finalEvents.push(event)
+        }
+      } else {
+        currentPart.push(event)
+      }
+    }
+    if (currentPart.length > 0) {
+      finalEvents.push(...this.squashPeopleEvents(currentPart))
+    }
+
+    return finalEvents
+  }
+
+  private squashPeopleEvents(events: PeopleEvent[]) {
+    if (!events || events.length === 0) {
+      return []
+    }
+    const uniqueEventsByType = new Map<string, PeopleEvent>()
+
+    for (let event of events) {
+      const prev = uniqueEventsByType.get(event.type)
+      if (prev) {
+        if (event.type === 'increment_property') {
+          const previousValues = Object.entries(prev.payload)
+          const currentValues = Object.entries(event.payload)
+          const uniqueKeys = new Set<string>([...previousValues.map(([key]) => key), ...currentValues.map(([key]) => key)])
+          const mergedPayload: Record<string, number> = {}
+          uniqueKeys.forEach((key) => {
+            const prevValue = typeof prev.payload[key] === 'number' ? prev.payload[key] : 0
+            const currValue = typeof event.payload[key] === 'number' ? event.payload[key] : 0
+            mergedPayload[key] = prevValue + currValue
+          })
+          uniqueEventsByType.set(event.type, {
+            type: event.type,
+            timestamp: event.timestamp,
+            payload: mergedPayload,
+          })
+          continue
+        }
+        // merge payloads, taking priority to the latest one
+        uniqueEventsByType.set(event.type, {
+          type: event.type,
+          timestamp: event.timestamp,
+          payload: { ...(prev.payload ?? {}), ...(event.payload ?? {}) },
+        })
+      } else {
+        uniqueEventsByType.set(event.type, event)
+      }
+    }
+
+    return Array.from(uniqueEventsByType.values())
+  }
+
+  private sendBatch(batch: string) {
     let attempts = 0
     const send = () => {
       const token = this.getToken()
@@ -75,11 +158,11 @@ class Batcher {
   }
 
   flush() {
-    const isEmpty = Object.values(this.batch).every((batch => batch.length === 0))
+    const isEmpty = Object.values(this.batch).every((batch) => batch.length === 0)
     if (isEmpty) {
       return
     }
-    this.sendBatch(this.batch)
+    this.sendBatch(this.getBatches())
     Object.keys(this.batch).forEach((key) => {
       this.batch[key] = []
     })

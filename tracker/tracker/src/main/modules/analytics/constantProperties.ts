@@ -9,6 +9,7 @@ const refKey = '$__or__initial_ref__$'
 const distinctIdKey = '$__or__distinct_device_id__$'
 const utmParamsKey = '$__or__utm_params__$'
 const superPropKey = '$__or__super_properties__$'
+const userIdKey = '$__or__user_id__$'
 
 const win =
   'window' in globalThis
@@ -52,7 +53,7 @@ export default class ConstantProperties {
   osVersion: string
   browser: string
   browserVersion: string
-  device: string
+  platform: string
   screenHeight: number
   screenWidth: number
   initialReferrer: string
@@ -69,11 +70,15 @@ export default class ConstantProperties {
   ) {
     const { width, height, browser, browserVersion, browserMajorVersion, os, osVersion, mobile } =
       uaParse(win)
+    const storedUserId = this.sessionStorage.getItem(userIdKey)
+    if (storedUserId) {
+      this.user_id = storedUserId
+    }
     this.os = os
     this.osVersion = osVersion
     this.browser = `${browser}`
     this.browserVersion = `${browserVersion} (${browserMajorVersion})`
-    this.device = mobile ? 'Mobile' : 'Desktop'
+    this.platform = mobile ? 'mobile' : 'desktop'
     this.screenHeight = height
     this.screenWidth = width
     this.initialReferrer = this.getReferrer()
@@ -88,7 +93,7 @@ export default class ConstantProperties {
       os_version: this.osVersion,
       browser: this.browser,
       browser_version: this.browserVersion,
-      device: this.device,
+      platform: this.platform,
       screen_height: this.screenHeight,
       screen_width: this.screenWidth,
       initial_referrer: this.initialReferrer,
@@ -106,6 +111,7 @@ export default class ConstantProperties {
 
   setUserId = (user_id: string | null) => {
     this.user_id = user_id
+    this.sessionStorage.setItem(userIdKey, user_id ?? '')
   }
 
   resetUserId = () => {
