@@ -337,25 +337,6 @@ func formatColumnForSelect(alias, col string, dbCol string) string {
 		return fmt.Sprintf("toString(%s%s)", alias, dbCol)
 	}
 	
-	isNullable := col == "$user_id" || col == "$device_id" || col == "$source" || 
-		col == "description" || col == "group_id1" || col == "group_id2" || 
-		col == "group_id3" || col == "group_id4" || col == "group_id5" || 
-		col == "group_id6" || col == "$sdk_edition" || col == "$sdk_version" || 
-		col == "$os" || col == "$os_version" || col == "$browser" || 
-		col == "$browser_version" || col == "$device" || col == "$current_url" || 
-		col == "$current_path" || col == "$initial_referrer" || col == "$referring_domain" || 
-		col == "$referrer" || col == "$initial_referring_domain" || col == "$search_engine" || 
-		col == "$search_engine_keyword" || col == "utm_source" || col == "utm_medium" || 
-		col == "utm_campaign" || col == "$country" || col == "$state" || col == "$city" || 
-		col == "$or_api_endpoint" || col == "issue_type" || col == "issue_id" || 
-		col == "error_id" || col == "$tags" || col == "$time" || col == "$duration_s" || 
-		col == "$screen_height" || col == "$screen_width" || col == "$timezone" || 
-		col == "$auto_captured" || col == "$import"
-	
-	if isNullable && alias != "" {
-		return fmt.Sprintf("assumeNotNull(%s%s)", alias, dbCol)
-	}
-	
 	return alias + dbCol
 }
 
