@@ -14,6 +14,11 @@ import (
 	"openreplay/backend/pkg/session"
 )
 
+// @title OpenReplay Events API
+// @version 1.0
+// @description API for managing and querying product analytics events
+// @BasePath /api/v1
+
 type handlersImpl struct {
 	log           logger.Logger
 	responser     api.Responser
@@ -45,6 +50,17 @@ const (
 	GroupClickRage bool = true
 )
 
+// @Summary Get session events
+// @Description Retrieves all events, errors, custom events, issues, and incidents for a specific session
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param project path uint32 true "Project ID"
+// @Param session path uint64 true "Session ID"
+// @Success 200 {object} map[string]interface{} "Session events data"
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /{project}/sessions/{session}/events [get]
 func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
@@ -118,6 +134,17 @@ type getClickmapsRequest struct {
 	Url string `json:"url"`
 }
 
+// @Summary Get clickmap data
+// @Description Retrieves clickmap data for a specific session and URL
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param project path uint32 true "Project ID"
+// @Param session path uint64 true "Session ID"
+// @Param request body map[string]string true "Request body with URL"
+// @Success 200 {object} map[string]interface{} "Clickmap data"
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Router /{project}/sessions/{session}/clickmaps [post]
 func (h *handlersImpl) getClickmaps(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
@@ -156,6 +183,18 @@ func (h *handlersImpl) getClickmaps(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// @Summary Search events
+// @Description Search and filter product analytics events with pagination
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param project path uint32 true "Project ID"
+// @Param request body model.EventsSearchRequest true "Search parameters"
+// @Success 200 {object} model.EventsSearchResponse "Paginated events list"
+// @Failure 400 {object} map[string]interface{} "Invalid request or validation error"
+// @Failure 413 {object} map[string]interface{} "Request entity too large"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /{project}/events [post]
 func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
@@ -194,6 +233,17 @@ func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// @Summary Get event by ID
+// @Description Retrieves a single event by its ID
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param project path uint32 true "Project ID"
+// @Param eventId path string true "Event ID (UUID)"
+// @Success 200 {object} model.EventEntry "Event details"
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 404 {object} map[string]interface{} "Event not found"
+// @Router /{project}/events/{eventId} [get]
 func (h *handlersImpl) getEvent(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
