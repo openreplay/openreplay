@@ -10,17 +10,17 @@ import (
 )
 
 type EventEntry struct {
-	ProjectId              uint16                  `json:"project_id"`
+	ProjectId              uint16                  `json:"-"`
 	EventId                string                  `json:"event_id"`
-	EventName              string                  `json:"$event_name"`
+	EventName              string                  `json:"event_name"`
 	CreatedAt              int64                   `json:"created_at"`
 	DistinctId             string                  `json:"distinct_id"`
 	SessionId              string                  `json:"session_id"`
-	UserId                 *string                 `json:"$user_id,omitempty"`
-	DeviceId               *string                 `json:"$device_id,omitempty"`
-	Time                   *uint32                 `json:"$time,omitempty"`
-	Source                 *string                 `json:"$source,omitempty"`
-	DurationS              *uint16                 `json:"$duration_s,omitempty"`
+	UserId                 *string                 `json:"user_id,omitempty"`
+	DeviceId               *string                 `json:"device_id,omitempty"`
+	Time                   *uint32                 `json:"time,omitempty"`
+	Source                 *string                 `json:"source,omitempty"`
+	DurationS              *uint16                 `json:"duration_s,omitempty"`
 	Properties             *map[string]interface{} `json:"properties,omitempty"`
 	AutoProperties         *map[string]interface{} `json:"$properties,omitempty"`
 	Description            *string                 `json:"description,omitempty"`
@@ -30,37 +30,37 @@ type EventEntry struct {
 	GroupId4               *string                 `json:"group_id4,omitempty"`
 	GroupId5               *string                 `json:"group_id5,omitempty"`
 	GroupId6               *string                 `json:"group_id6,omitempty"`
-	AutoCaptured           *bool                   `json:"$auto_captured,omitempty"`
-	SdkEdition             *string                 `json:"$sdk_edition,omitempty"`
-	SdkVersion             *string                 `json:"$sdk_version,omitempty"`
-	Os                     *string                 `json:"$os,omitempty"`
-	OsVersion              *string                 `json:"$os_version,omitempty"`
-	Browser                *string                 `json:"$browser,omitempty"`
-	BrowserVersion         *string                 `json:"$browser_version,omitempty"`
-	Device                 *string                 `json:"$device,omitempty"`
-	ScreenHeight           *uint16                 `json:"$screen_height,omitempty"`
-	ScreenWidth            *uint16                 `json:"$screen_width,omitempty"`
-	CurrentUrl             *string                 `json:"$current_url,omitempty"`
-	CurrentPath            *string                 `json:"$current_path,omitempty"`
-	InitialReferrer        *string                 `json:"$initial_referrer,omitempty"`
-	ReferringDomain        *string                 `json:"$referring_domain,omitempty"`
-	Referrer               *string                 `json:"$referrer,omitempty"`
-	InitialReferringDomain *string                 `json:"$initial_referring_domain,omitempty"`
-	SearchEngine           *string                 `json:"$search_engine,omitempty"`
-	SearchEngineKeyword    *string                 `json:"$search_engine_keyword,omitempty"`
+	AutoCaptured           *bool                   `json:"auto_captured,omitempty"`
+	SdkEdition             *string                 `json:"sdk_edition,omitempty"`
+	SdkVersion             *string                 `json:"sdk_version,omitempty"`
+	Os                     *string                 `json:"os,omitempty"`
+	OsVersion              *string                 `json:"os_version,omitempty"`
+	Browser                *string                 `json:"browser,omitempty"`
+	BrowserVersion         *string                 `json:"browser_version,omitempty"`
+	Device                 *string                 `json:"device,omitempty"`
+	ScreenHeight           *uint16                 `json:"screen_height,omitempty"`
+	ScreenWidth            *uint16                 `json:"screen_width,omitempty"`
+	CurrentUrl             *string                 `json:"current_url,omitempty"`
+	CurrentPath            *string                 `json:"current_path,omitempty"`
+	InitialReferrer        *string                 `json:"initial_referrer,omitempty"`
+	ReferringDomain        *string                 `json:"referring_domain,omitempty"`
+	Referrer               *string                 `json:"referrer,omitempty"`
+	InitialReferringDomain *string                 `json:"initial_referring_domain,omitempty"`
+	SearchEngine           *string                 `json:"search_engine,omitempty"`
+	SearchEngineKeyword    *string                 `json:"search_engine_keyword,omitempty"`
 	UtmSource              *string                 `json:"utm_source,omitempty"`
 	UtmMedium              *string                 `json:"utm_medium,omitempty"`
 	UtmCampaign            *string                 `json:"utm_campaign,omitempty"`
-	Country                *string                 `json:"$country,omitempty"`
-	State                  *string                 `json:"$state,omitempty"`
-	City                   *string                 `json:"$city,omitempty"`
-	OrApiEndpoint          *string                 `json:"$or_api_endpoint,omitempty"`
-	Timezone               *int8                   `json:"$timezone,omitempty"`
+	Country                *string                 `json:"country,omitempty"`
+	State                  *string                 `json:"state,omitempty"`
+	City                   *string                 `json:"city,omitempty"`
+	OrApiEndpoint          *string                 `json:"or_api_endpoint,omitempty"`
+	Timezone               *int8                   `json:"timezone,omitempty"`
 	IssueType              *string                 `json:"issue_type,omitempty"`
 	IssueId                *string                 `json:"issue_id,omitempty"`
 	ErrorId                *string                 `json:"error_id,omitempty"`
-	Tags                   *string                 `json:"$tags,omitempty"`
-	Import                 *bool                   `json:"$import,omitempty"`
+	Tags                   *string                 `json:"tags,omitempty"`
+	Import                 *bool                   `json:"import,omitempty"`
 }
 
 type EventsSearchRequest struct {
