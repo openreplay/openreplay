@@ -8,7 +8,34 @@ import (
 	"openreplay/backend/pkg/events/model"
 )
 
-func buildOperatorCondition(fullCol string, operator string, values []string, isNumeric bool, nature string) (string, []interface{}) {
+func buildMultiValueCondition(fullCol string, values []string, conditionTemplate string, transformValue func(string) interface{}) (string, []interface{}) {
+	parts := make([]string, len(values))
+	params := make([]interface{}, len(values))
+	for i, v := range values {
+		parts[i] = conditionTemplate
+		if transformValue != nil {
+			params[i] = transformValue(v)
+		} else {
+			params[i] = v
+		}
+	}
+	if len(parts) == 1 {
+		return parts[0], params
+	}
+	return "(" + strings.Join(parts, " OR ") + ")", params
+}
+
+func buildPlaceholderList(values []string) ([]string, []interface{}) {
+	placeholders := make([]string, len(values))
+	params := make([]interface{}, len(values))
+	for i, v := range values {
+		placeholders[i] = "?"
+		params[i] = v
+	}
+	return placeholders, params
+}
+
+func buildOperatorCondition(fullCol string, operator string, values []string, nature string) (string, []interface{}) {
 	if len(values) == 0 && operator != "isAny" && operator != "isUndefined" && operator != "onAny" {
 		return "", nil
 	}
@@ -27,167 +54,74 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 		if len(values) == 1 {
 			return fmt.Sprintf("%s = ?", fullCol), []interface{}{values[0]}
 		}
-		placeholders := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			placeholders[i] = "?"
-			params[i] = v
-		}
+		placeholders, params := buildPlaceholderList(values)
 		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
 	case "isNot", "notEquals", "not", "off", "notOn":
 		if len(values) == 1 {
 			return fmt.Sprintf("%s != ?", fullCol), []interface{}{values[0]}
 		}
-		placeholders := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			placeholders[i] = "?"
-			params[i] = v
-		}
+		placeholders, params := buildPlaceholderList(values)
 		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
 	case "contains":
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = "%" + fmt.Sprint(v) + "%"
-		}
-		if len(parts) == 1 {
-			return parts[0], params
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol), 
+			func(v string) interface{} { return "%" + v + "%" })
 
 	case "notContains", "doesNotContain":
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = "%" + fmt.Sprint(v) + "%"
-		}
-		cond := ""
-		if len(parts) == 1 {
-			cond = parts[0]
-		} else {
-			cond = "(" + strings.Join(parts, " OR ") + ")"
-		}
+		cond, params := buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
+			func(v string) interface{} { return "%" + v + "%" })
 		return "NOT (" + cond + ")", params
 
 	case "startsWith":
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = fmt.Sprint(v) + "%"
-		}
-		if len(parts) == 1 {
-			return parts[0], params
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
+			func(v string) interface{} { return v + "%" })
 
 	case "endsWith":
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = "%" + fmt.Sprint(v)
-		}
-		if len(parts) == 1 {
-			return parts[0], params
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
+			func(v string) interface{} { return "%" + v })
 
 	case "regex":
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("match(%s, ?)", fullCol)
-			params[i] = v
-		}
-		if len(parts) == 1 {
-			return parts[0], params
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("match(%s, ?)", fullCol), nil)
 
 	case "in":
-		placeholders := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			placeholders[i] = "?"
-			params[i] = v
-		}
+		placeholders, params := buildPlaceholderList(values)
 		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
 	case "notIn":
-		placeholders := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			placeholders[i] = "?"
-			params[i] = v
-		}
+		placeholders, params := buildPlaceholderList(values)
 		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
 	case ">=", "gte", "greaterThanOrEqual":
 		if len(values) == 1 {
 			return fmt.Sprintf("%s >= ?", fullCol), []interface{}{values[0]}
 		}
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s >= ?", fullCol)
-			params[i] = v
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s >= ?", fullCol), nil)
 
 	case ">", "gt", "greaterThan":
 		if len(values) == 1 {
 			return fmt.Sprintf("%s > ?", fullCol), []interface{}{values[0]}
 		}
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s > ?", fullCol)
-			params[i] = v
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s > ?", fullCol), nil)
 
 	case "<=", "lte", "lessThanOrEqual":
 		if len(values) == 1 {
 			return fmt.Sprintf("%s <= ?", fullCol), []interface{}{values[0]}
 		}
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s <= ?", fullCol)
-			params[i] = v
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s <= ?", fullCol), nil)
 
 	case "<", "lt", "lessThan":
 		if len(values) == 1 {
 			return fmt.Sprintf("%s < ?", fullCol), []interface{}{values[0]}
 		}
-		parts := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			parts[i] = fmt.Sprintf("%s < ?", fullCol)
-			params[i] = v
-		}
-		return "(" + strings.Join(parts, " OR ") + ")", params
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s < ?", fullCol), nil)
 
 	default:
 		if nature == "arrayColumn" {
 			if len(values) == 0 {
 				return "", nil
 			}
-			placeholders := make([]string, len(values))
-			params := make([]interface{}, len(values))
-			for i, v := range values {
-				placeholders[i] = "?"
-				params[i] = v
-			}
-			
+			placeholders, params := buildPlaceholderList(values)
 			opFunc := "hasAny"
 			if operator == "isNot" || operator == "notEquals" || operator == "not" || operator == "off" || operator == "notOn" {
 				opFunc = "NOT hasAny"
@@ -201,17 +135,12 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 		if len(values) == 1 {
 			return fmt.Sprintf("%s = ?", fullCol), []interface{}{values[0]}
 		}
-		placeholders := make([]string, len(values))
-		params := make([]interface{}, len(values))
-		for i, v := range values {
-			placeholders[i] = "?"
-			params[i] = v
-		}
+		placeholders, params := buildPlaceholderList(values)
 		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 	}
 }
 
-func buildFilterCondition(tableAlias string, filter analyticsModel.Filter, isEventProperty bool) (string, []interface{}) {
+func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (string, []interface{}) {
 	alias := tableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
@@ -232,13 +161,26 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter, isEve
 			sb.WriteString(`"$auto_captured"`)
 		}
 
-		for _, sub := range filter.Filters {
-			subCond, subParams := buildFilterCondition(tableAlias, sub, true)
-			if subCond != "" {
+		if len(filter.Filters) > 0 {
+			var subConditions []string
+			var subAllParams []interface{}
+			for _, sub := range filter.Filters {
+				subCond, subParams := buildFilterCondition(tableAlias, sub)
+				if subCond != "" {
+					subConditions = append(subConditions, subCond)
+					subAllParams = append(subAllParams, subParams...)
+				}
+			}
+			
+			if len(subConditions) > 0 {
+				joinOp := " AND "
+				if filter.PropertyOrder == "or" {
+					joinOp = " OR "
+				}
 				sb.WriteString(" AND (")
-				sb.WriteString(subCond)
+				sb.WriteString(strings.Join(subConditions, joinOp))
 				sb.WriteString(")")
-				allParams = append(allParams, subParams...)
+				allParams = append(allParams, subAllParams...)
 			}
 		}
 		
@@ -276,7 +218,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter, isEve
 			fullCol = fmt.Sprintf("JSONExtractString(toString(%s%s), ?)", alias, propertiesCol)
 		}
 		
-		cond, params := buildOperatorCondition(fullCol, operator, values, isNumeric, nature)
+		cond, params := buildOperatorCondition(fullCol, operator, values, nature)
 		if cond != "" {
 			allParams := []interface{}{column}
 			allParams = append(allParams, params...)
@@ -285,8 +227,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter, isEve
 		return "", nil
 	}
 
-	isNumeric := filter.DataType == "float" || filter.DataType == "number" || filter.DataType == "int"
-	return buildOperatorCondition(fullCol, operator, values, isNumeric, nature)
+	return buildOperatorCondition(fullCol, operator, values, nature)
 }
 
 func BuildEventSearchQuery(tableAlias string, filters []analyticsModel.Filter) ([]string, []interface{}) {
@@ -298,7 +239,7 @@ func BuildEventSearchQuery(tableAlias string, filters []analyticsModel.Filter) (
 	params := make([]interface{}, 0)
 
 	for _, filter := range filters {
-		cond, condParams := buildFilterCondition(tableAlias, filter, false)
+		cond, condParams := buildFilterCondition(tableAlias, filter)
 		if cond != "" {
 			conditions = append(conditions, cond)
 			params = append(params, condParams...)
