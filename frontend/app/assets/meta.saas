@@ -1,0 +1,13 @@
+<!-- Open Graph Meta Tags -->
+<meta property="og:title" content="OpenReplay Serverless: Session Replay & Product Analytics" />
+<meta property="og:description" content="See how users interact with your app. No setup required—start analyzing sessions instantly in the cloud." />
+<meta property="og:image" content="https://openreplay.com/images/cloud-share.jpg" />
+<meta property="og:url" content="https://app.openreplay.com" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="OpenReplay" />
+
+<!-- Twitter Card Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OpenReplay Serverless: Session Replay & Product Analytics" />
+<meta name="twitter:description" content="See how users interact with your app. No setup required—start analyzing sessions instantly in the cloud." />
+<meta name="twitter:image" content="https://openreplay.com/images/cloud-share.jpg" />
