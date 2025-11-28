@@ -249,9 +249,12 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 		}
 		return []string{"(" + strings.Join(parts, " AND ") + ")"}, nameCondition
 	}
-	if f.AutoCaptured {
+
+	originalName := f.Name
+	if _, ok := opts.DefinedColumns[originalName]; !ok && f.AutoCaptured {
 		f.Name = CamelToSnake(f.Name)
 	}
+
 	// for event's properties that are represented by columns
 	if isEventProperty {
 		if col, ok := eventPropertyColumns[f.Name]; ok {
