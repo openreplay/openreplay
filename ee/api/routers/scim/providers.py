@@ -31,9 +31,6 @@ logger = logging.getLogger(__name__)
 
 
 class MultiTenantProvider(provider.SCIMProvider):
-    def __init__(self, root_path="", *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.root_path = root_path
 
     def check_auth(self, request: Request):
         auth = request.headers.get("Authorization")
