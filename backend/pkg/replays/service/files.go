@@ -26,8 +26,6 @@ type Files interface {
 }
 
 const (
-	MOBS_BUCKET          = "mobs"
-	CANVASES_BUCKET      = "mobs"
 	UNPROCESSED_MAX_SIZE = 200 * 1000
 )
 
@@ -84,11 +82,11 @@ func unprocessedPathAccessible(log logger.Logger, path string) bool {
 
 func (f *filesImpl) GetMobsUrls(sessID uint64) ([]string, error) {
 	key := fmt.Sprintf("%d%s", sessID, string(storage.DOM))
-	doms, err := f.objStore.GetPreSignedDownloadUrlFromBucket(MOBS_BUCKET, key+"s")
+	doms, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, key+"s")
 	if err != nil {
 		return nil, err
 	}
-	dome, err := f.objStore.GetPreSignedDownloadUrlFromBucket(MOBS_BUCKET, key+"e")
+	dome, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, key+"e")
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +95,7 @@ func (f *filesImpl) GetMobsUrls(sessID uint64) ([]string, error) {
 
 func (f *filesImpl) GetDevtoolsUrls(sessID uint64) ([]string, error) {
 	key := fmt.Sprintf("%d%s", sessID, string(storage.DEV))
-	dev, err := f.objStore.GetPreSignedDownloadUrlFromBucket(MOBS_BUCKET, key)
+	dev, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, key)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +104,7 @@ func (f *filesImpl) GetDevtoolsUrls(sessID uint64) ([]string, error) {
 
 func (f *filesImpl) GetMobStartUrl(sessID uint64) ([]string, error) {
 	key := fmt.Sprintf("%d%s", sessID, string(storage.DOM))
-	doms, err := f.objStore.GetPreSignedDownloadUrlFromBucket(MOBS_BUCKET, key+"s")
+	doms, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, key+"s")
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +118,7 @@ func (f *filesImpl) GetCanvasUrls(sessID uint64) ([]string, error) {
 	}
 	res := make([]string, 0, len(recIDs))
 	for _, recID := range recIDs {
-		url, err := f.objStore.GetPreSignedDownloadUrlFromBucket(CANVASES_BUCKET, fmt.Sprintf("%d/%s.tar.zst", sessID, recID))
+		url, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, fmt.Sprintf("%d/%s.tar.zst", sessID, recID))
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +129,7 @@ func (f *filesImpl) GetCanvasUrls(sessID uint64) ([]string, error) {
 
 func (f *filesImpl) GetMobileReplayUrls(sessID uint64) ([]string, error) {
 	key := fmt.Sprintf("%d/replay.tar.zst", sessID)
-	video, err := f.objStore.GetPreSignedDownloadUrlFromBucket(MOBS_BUCKET, key)
+	video, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, key)
 	if err != nil {
 		return nil, err
 	}
