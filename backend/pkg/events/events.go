@@ -3,12 +3,15 @@ package events
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
+	"strings"
 	"time"
 	"unicode"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"openreplay/backend/pkg/events/model"
 	"openreplay/backend/pkg/logger"
 )
 
@@ -37,6 +40,8 @@ type Events interface {
 	GetMobileCrashesBySessionID(sessID uint64) []interface{}
 	GetMobileCustomsBySessionID(sessID uint64) []interface{}
 	GetClickMaps(projID uint32, sessID uint64, url string) ([]interface{}, error)
+	SearchEvents(projID uint32, req *model.EventsSearchRequest) (*model.EventsSearchResponse, error)
+	GetEventByID(projID uint32, eventID string) (*model.EventEntry, error)
 }
 
 type eventsImpl struct {
@@ -607,4 +612,118 @@ func (e *eventsImpl) GetClickMaps(projID uint32, sessID uint64, url string) ([]i
 		response = append(response, map[string]interface{}{"selector": selector, "count": count})
 	}
 	return response, nil
+}
+
+func (e *eventsImpl) SearchEvents(projID uint32, req *model.EventsSearchRequest) (*model.EventsSearchResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("request is nil")
+	}
+
+	offset := (req.Page - 1) * req.Limit
+
+	baseConditions := []string{
+		"e.project_id = ?",
+		"e.created_at >= toDateTime64(?/1000, 3)",
+		"e.created_at <= toDateTime64(?/1000, 3)",
+	}
+	queryParams := []interface{}{projID, req.StartDate, req.EndDate}
+
+	filterConditions, filterParams := BuildEventSearchQuery("e", req.Filters)
+	whereClause := BuildWhereClause(baseConditions, filterConditions)
+	queryParams = append(queryParams, filterParams...)
+
+	selectColumns := BuildSelectColumns("e", req.Columns)
+
+	sortBy := "e." + ValidateSortColumn(req.SortBy)
+	sortOrder := ValidateSortOrder(req.SortOrder)
+
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM product_analytics.events AS e
+		WHERE %s`, whereClause)
+
+	var total uint64
+	if err := e.chConn.QueryRow(context.Background(), countQuery, queryParams...).Scan(&total); err != nil {
+		return nil, fmt.Errorf("failed to get total count: %w", err)
+	}
+
+	query := fmt.Sprintf(`
+		SELECT %s
+		FROM product_analytics.events AS e
+		WHERE %s
+		ORDER BY %s %s
+		LIMIT ? OFFSET ?`, strings.Join(selectColumns, ", "), whereClause, sortBy, sortOrder)
+
+	queryParams = append(queryParams, req.Limit, offset)
+	rows, err := e.chConn.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query events: %w", err)
+	}
+	defer rows.Close()
+
+	events := make([]model.EventEntry, 0, req.Limit)
+	for rows.Next() {
+		entry := model.EventEntry{}
+
+		valuePtrs := []interface{}{
+			&entry.ProjectId,
+			&entry.EventId,
+			&entry.EventName,
+			&entry.CreatedAt,
+			&entry.DistinctId,
+			&entry.SessionId,
+		}
+
+		for _, col := range req.Columns {
+			if col == "session_id" {
+				continue
+			}
+			if ptr := model.GetFieldPointer(&entry, col); ptr != nil {
+				valuePtrs = append(valuePtrs, ptr)
+			}
+		}
+
+		if err := rows.Scan(valuePtrs...); err != nil {
+			e.log.Error(context.Background(), "failed to scan event row: %v", err)
+			continue
+		}
+
+		events = append(events, entry)
+	}
+
+	return &model.EventsSearchResponse{
+		Total:  total,
+		Events: events,
+	}, nil
+}
+
+func (e *eventsImpl) GetEventByID(projID uint32, eventID string) (*model.EventEntry, error) {
+	allColumns := model.GetAllEventColumns()
+	selectColumns := BuildSelectColumns("", allColumns)
+
+	query := fmt.Sprintf(`
+		SELECT %s
+		FROM product_analytics.events
+		WHERE project_id = ? AND event_id = ?
+		LIMIT 1`, strings.Join(selectColumns, ", "))
+
+	entry := model.EventEntry{}
+	basePtrs := []interface{}{
+		&entry.ProjectId,
+		&entry.EventId,
+		&entry.EventName,
+		&entry.CreatedAt,
+		&entry.DistinctId,
+		&entry.SessionId,
+	}
+
+	columnPtrs := model.GetScanPointers(&entry, allColumns)
+	allPtrs := append(basePtrs, columnPtrs...)
+
+	err := e.chConn.QueryRow(context.Background(), query, projID, eventID).Scan(allPtrs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get event: %w", err)
+	}
+
+	return &entry, nil
 }

@@ -2,12 +2,16 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/events"
+	"openreplay/backend/pkg/events/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/session"
@@ -35,6 +39,8 @@ func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{"/{project}/sessions/{session}/events", "GET", h.getEvents, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
 		{"/{project}/sessions/{session}/clickmaps", "POST", h.getClickmaps, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/events", "POST", h.eventsSearch, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/events/{eventId}", "GET", h.getEvent, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 
@@ -149,6 +155,72 @@ func (h *handlersImpl) getClickmaps(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
+	return
+}
+
+func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	bodyBytes, err := api.ReadBody(h.log, w, r, h.jsonSizeLimit)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	req := &model.EventsSearchRequest{}
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if err = model.ValidateStruct(req); err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	projID, err := api.GetProject(r)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	response, err := h.events.SearchEvents(projID, req)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
+	return
+}
+
+func (h *handlersImpl) getEvent(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	projID, err := api.GetProject(r)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	vars := mux.Vars(r)
+	eventID := vars["eventId"]
+	
+	if eventID == "" {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("missing eventId parameter"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	response, err := h.events.GetEventByID(projID, eventID)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
 	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
 	return
 }
