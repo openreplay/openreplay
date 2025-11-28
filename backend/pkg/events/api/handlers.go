@@ -2,12 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/events"
@@ -39,8 +36,8 @@ func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{"/{project}/sessions/{session}/events", "GET", h.getEvents, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
 		{"/{project}/sessions/{session}/clickmaps", "POST", h.getClickmaps, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
-		{"/{project}/events", "POST", h.eventsSearch, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
-		{"/{project}/events/{eventId}", "GET", h.getEvent, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/events", "POST", h.eventsSearch, []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/events/{eventId}", "GET", h.getEvent, []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 	}
 }
 
@@ -181,7 +178,7 @@ func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projID, err := api.GetProject(r)
+	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -201,17 +198,15 @@ func (h *handlersImpl) getEvent(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	projID, err := api.GetProject(r)
+	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	vars := mux.Vars(r)
-	eventID := vars["eventId"]
-	
-	if eventID == "" {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("missing eventId parameter"), startTime, r.URL.Path, bodySize)
+	eventID, err := api.GetPathParam(r, "eventId", api.ParseString)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
