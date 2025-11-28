@@ -1,4 +1,4 @@
-import App from './app/index.js'
+import App from './app/index'
 
 export { default as App } from './app/index.js'
 
@@ -30,6 +30,7 @@ import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
 import LongAnimationTask from "./modules/longAnimationTask.js";
 import WebAnimations from './modules/webAnimations.js'
+import AnalyticsSDK from './modules/analytics/index.js'
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
 
@@ -117,6 +118,7 @@ const canAccessTop = () => {
 
 export default class API {
   private readonly app: App | null = null
+  public readonly analytics: AnalyticsSDK | null = null
   private readonly crossdomainMode: boolean = false
 
   constructor(public readonly options: Partial<Options>) {
@@ -188,6 +190,18 @@ export default class API {
       this.signalStartIssue,
       this.crossdomainMode,
     )
+    if (options.projectKey) {
+      this.analytics = new AnalyticsSDK({
+        localStorage: options.localStorage ?? localStorage,
+        sessionStorage: sessionStorage ?? sessionStorage,
+        getToken: this.getAnalyticsToken,
+        getTimestamp: this.app?.timestamp ?? Date.now,
+        setUserId: this.setUserID,
+        notStandalone: true,
+        ingestPoint: options.ingestPoint ?? 'https://api.openreplay.com/',
+        projectKey: options.projectKey,
+      })
+    }
     this.app = app
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
@@ -301,6 +315,9 @@ export default class API {
     if (this.browserEnvCheck()) {
       if (this.app === null) {
         return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
+      }
+      if (startOpts?.userID) {
+        this.analytics?.people.identify(startOpts.userID, { fromTracker: true })
       }
       return this.app.start(startOpts)
     } else {
@@ -430,6 +447,7 @@ export default class API {
   setUserID(id: string): void {
     if (typeof id === 'string' && this.app !== null) {
       this.app.session.setUserID(id)
+      this.analytics?.people.identify(id, { fromTracker: true })
     }
   }
 
@@ -526,5 +544,20 @@ export default class API {
       return
     }
     this.app.send(Incident(options.label ?? '', options.startTime, options.endTime ?? options.startTime))
+  }
+
+  private analyticsToken: string | null = null
+  /**
+   * Use custom token for analytics events without session recording
+   * */
+  public setAnalyticsToken = (token: string) => {
+    this.analyticsToken = token
+  }
+  public getAnalyticsToken = () => {
+    if (this.analyticsToken) {
+      return this.analyticsToken
+    } else {
+      return this.app?.session.getSessionToken() ?? ''
+    }
   }
 }
