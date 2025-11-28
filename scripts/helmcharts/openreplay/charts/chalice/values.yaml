@@ -91,6 +91,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
+  root_path='/api'
   captcha_server: ''
   captcha_key: ''
   async_Token: ''
