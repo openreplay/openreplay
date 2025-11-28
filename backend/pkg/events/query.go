@@ -52,19 +52,19 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 		params := make([]interface{}, len(values))
 		for i, v := range values {
 			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = fmt.Sprintf("%%%v%%", v)
+			params[i] = "%" + fmt.Sprint(v) + "%"
 		}
 		if len(parts) == 1 {
 			return parts[0], params
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	case "notContains", "doesNotContain":
 		parts := make([]string, len(values))
 		params := make([]interface{}, len(values))
 		for i, v := range values {
 			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = fmt.Sprintf("%%%v%%", v)
+			params[i] = "%" + fmt.Sprint(v) + "%"
 		}
 		cond := ""
 		if len(parts) == 1 {
@@ -79,24 +79,24 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 		params := make([]interface{}, len(values))
 		for i, v := range values {
 			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = fmt.Sprintf("%v%%", v)
+			params[i] = fmt.Sprint(v) + "%"
 		}
 		if len(parts) == 1 {
 			return parts[0], params
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	case "endsWith":
 		parts := make([]string, len(values))
 		params := make([]interface{}, len(values))
 		for i, v := range values {
 			parts[i] = fmt.Sprintf("%s ILIKE ?", fullCol)
-			params[i] = fmt.Sprintf("%%%v", v)
+			params[i] = "%" + fmt.Sprint(v)
 		}
 		if len(parts) == 1 {
 			return parts[0], params
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	case "regex":
 		parts := make([]string, len(values))
@@ -108,7 +108,7 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 		if len(parts) == 1 {
 			return parts[0], params
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	case "in":
 		placeholders := make([]string, len(values))
@@ -138,7 +138,7 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 			parts[i] = fmt.Sprintf("%s >= ?", fullCol)
 			params[i] = v
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	case ">", "gt", "greaterThan":
 		if len(values) == 1 {
@@ -150,7 +150,7 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 			parts[i] = fmt.Sprintf("%s > ?", fullCol)
 			params[i] = v
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	case "<=", "lte", "lessThanOrEqual":
 		if len(values) == 1 {
@@ -162,7 +162,7 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 			parts[i] = fmt.Sprintf("%s <= ?", fullCol)
 			params[i] = v
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	case "<", "lt", "lessThan":
 		if len(values) == 1 {
@@ -174,7 +174,7 @@ func buildOperatorCondition(fullCol string, operator string, values []string, is
 			parts[i] = fmt.Sprintf("%s < ?", fullCol)
 			params[i] = v
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " OR ")), params
+		return "(" + strings.Join(parts, " OR ") + ")", params
 
 	default:
 		if nature == "arrayColumn" {
@@ -218,28 +218,32 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter, isEve
 	}
 
 	if filter.IsEvent {
-		parts := make([]string, 0)
+		var sb strings.Builder
 		allParams := make([]interface{}, 0)
 		
-		parts = append(parts, fmt.Sprintf("%s\"$event_name\" = ?", alias))
+		sb.WriteString("(")
+		sb.WriteString(alias)
+		sb.WriteString(`"$event_name" = ?`)
 		allParams = append(allParams, filter.Name)
 
 		if filter.AutoCaptured {
-			parts = append(parts, fmt.Sprintf("%s\"$auto_captured\"", alias))
+			sb.WriteString(" AND ")
+			sb.WriteString(alias)
+			sb.WriteString(`"$auto_captured"`)
 		}
 
 		for _, sub := range filter.Filters {
 			subCond, subParams := buildFilterCondition(tableAlias, sub, true)
 			if subCond != "" {
-				parts = append(parts, "("+subCond+")")
+				sb.WriteString(" AND (")
+				sb.WriteString(subCond)
+				sb.WriteString(")")
 				allParams = append(allParams, subParams...)
 			}
 		}
 		
-		if len(parts) == 0 {
-			return "", nil
-		}
-		return "(" + strings.Join(parts, " AND ") + ")", allParams
+		sb.WriteString(")")
+		return sb.String(), allParams
 	}
 
 	column := filter.Name
@@ -328,6 +332,33 @@ func ValidateSortOrder(order string) string {
 	return "DESC"
 }
 
+func formatColumnForSelect(alias, col string, dbCol string) string {
+	if col == "properties" || col == "$properties" {
+		return fmt.Sprintf("toString(%s%s)", alias, dbCol)
+	}
+	
+	isNullable := col == "$user_id" || col == "$device_id" || col == "$source" || 
+		col == "description" || col == "group_id1" || col == "group_id2" || 
+		col == "group_id3" || col == "group_id4" || col == "group_id5" || 
+		col == "group_id6" || col == "$sdk_edition" || col == "$sdk_version" || 
+		col == "$os" || col == "$os_version" || col == "$browser" || 
+		col == "$browser_version" || col == "$device" || col == "$current_url" || 
+		col == "$current_path" || col == "$initial_referrer" || col == "$referring_domain" || 
+		col == "$referrer" || col == "$initial_referring_domain" || col == "$search_engine" || 
+		col == "$search_engine_keyword" || col == "utm_source" || col == "utm_medium" || 
+		col == "utm_campaign" || col == "$country" || col == "$state" || col == "$city" || 
+		col == "$or_api_endpoint" || col == "issue_type" || col == "issue_id" || 
+		col == "error_id" || col == "$tags" || col == "$time" || col == "$duration_s" || 
+		col == "$screen_height" || col == "$screen_width" || col == "$timezone" || 
+		col == "$auto_captured" || col == "$import"
+	
+	if isNullable && alias != "" {
+		return fmt.Sprintf("assumeNotNull(%s%s)", alias, dbCol)
+	}
+	
+	return alias + dbCol
+}
+
 func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 	alias := tableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
@@ -348,11 +379,11 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 	}
 
 	for _, col := range requestedColumns {
-		if col == "session_id" {
+		if col == "session_id" || col == "event_id" {
 			continue
 		}
 		if dbCol, ok := model.ColumnMapping[col]; ok {
-			baseColumns = append(baseColumns, alias+dbCol)
+			baseColumns = append(baseColumns, formatColumnForSelect(alias, col, dbCol))
 		}
 	}
 

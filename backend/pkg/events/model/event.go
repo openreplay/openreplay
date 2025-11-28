@@ -1,9 +1,8 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
-
 	analyticsModel "openreplay/backend/pkg/analytics/model"
 
 	"github.com/go-playground/validator/v10"
@@ -23,13 +22,15 @@ type EventEntry struct {
 	DurationS              *uint16                 `json:"duration_s,omitempty"`
 	Properties             *map[string]interface{} `json:"properties,omitempty"`
 	AutoProperties         *map[string]interface{} `json:"$properties,omitempty"`
+	PropertiesRaw          *string                 `json:"-"`
+	AutoPropertiesRaw      *string                 `json:"-"`
 	Description            *string                 `json:"description,omitempty"`
-	GroupId1               *string                 `json:"group_id1,omitempty"`
-	GroupId2               *string                 `json:"group_id2,omitempty"`
-	GroupId3               *string                 `json:"group_id3,omitempty"`
-	GroupId4               *string                 `json:"group_id4,omitempty"`
-	GroupId5               *string                 `json:"group_id5,omitempty"`
-	GroupId6               *string                 `json:"group_id6,omitempty"`
+	GroupId1               []string                `json:"group_id1,omitempty"`
+	GroupId2               []string                `json:"group_id2,omitempty"`
+	GroupId3               []string                `json:"group_id3,omitempty"`
+	GroupId4               []string                `json:"group_id4,omitempty"`
+	GroupId5               []string                `json:"group_id5,omitempty"`
+	GroupId6               []string                `json:"group_id6,omitempty"`
 	AutoCaptured           *bool                   `json:"auto_captured,omitempty"`
 	SdkEdition             *string                 `json:"sdk_edition,omitempty"`
 	SdkVersion             *string                 `json:"sdk_version,omitempty"`
@@ -59,8 +60,28 @@ type EventEntry struct {
 	IssueType              *string                 `json:"issue_type,omitempty"`
 	IssueId                *string                 `json:"issue_id,omitempty"`
 	ErrorId                *string                 `json:"error_id,omitempty"`
-	Tags                   *string                 `json:"tags,omitempty"`
+	Tags                   []string                `json:"tags,omitempty"`
 	Import                 *bool                   `json:"import,omitempty"`
+}
+
+func (e *EventEntry) UnmarshalProperties() error {
+	if e.PropertiesRaw != nil && *e.PropertiesRaw != "" && *e.PropertiesRaw != "null" {
+		m := make(map[string]interface{})
+		if err := json.Unmarshal([]byte(*e.PropertiesRaw), &m); err != nil {
+			return fmt.Errorf("failed to unmarshal properties: %w", err)
+		}
+		e.Properties = &m
+	}
+
+	if e.AutoPropertiesRaw != nil && *e.AutoPropertiesRaw != "" && *e.AutoPropertiesRaw != "null" {
+		m := make(map[string]interface{})
+		if err := json.Unmarshal([]byte(*e.AutoPropertiesRaw), &m); err != nil {
+			return fmt.Errorf("failed to unmarshal auto_properties: %w", err)
+		}
+		e.AutoProperties = &m
+	}
+
+	return nil
 }
 
 type EventsSearchRequest struct {
@@ -106,37 +127,6 @@ func validateEventColumn(fl validator.FieldLevel) bool {
 
 	_, ok := ColumnMapping[column]
 	return ok
-}
-
-func GetAllowedColumns() []string {
-	columns := make([]string, 0, len(ColumnMapping)+4)
-	for key := range ColumnMapping {
-		columns = append(columns, key)
-	}
-	columns = append(columns, "created_at", "time", "eventName", "distinctId")
-	return columns
-}
-
-func GetAllowedColumnsString() string {
-	columns := GetAllowedColumns()
-	return strings.Join(columns, ", ")
-}
-
-func IsValidColumn(column string) bool {
-	if column == "created_at" || column == "time" || column == "eventName" || column == "distinctId" {
-		return true
-	}
-	_, ok := ColumnMapping[column]
-	return ok
-}
-
-func ValidateColumns(columns []string) error {
-	for _, col := range columns {
-		if !IsValidColumn(col) {
-			return fmt.Errorf("invalid column: %s", col)
-		}
-	}
-	return nil
 }
 
 var ColumnMapping = map[string]string{
@@ -238,19 +228,9 @@ func GetFieldPointer(entry *EventEntry, column string) interface{} {
 	case "$duration_s":
 		return &entry.DurationS
 	case "properties":
-		if entry.Properties == nil {
-			propsMap := make(map[string]interface{})
-			entry.Properties = &propsMap
-			return &propsMap
-		}
-		return entry.Properties
+		return &entry.PropertiesRaw
 	case "$properties":
-		if entry.AutoProperties == nil {
-			autoPropsMap := make(map[string]interface{})
-			entry.AutoProperties = &autoPropsMap
-			return &autoPropsMap
-		}
-		return entry.AutoProperties
+		return &entry.AutoPropertiesRaw
 	case "description":
 		return &entry.Description
 	case "group_id1":
@@ -332,16 +312,6 @@ func GetFieldPointer(entry *EventEntry, column string) interface{} {
 	}
 }
 
-func GetScanPointers(entry *EventEntry, columns []string) []interface{} {
-	ptrs := make([]interface{}, 0, len(columns))
-	for _, col := range columns {
-		if ptr := GetFieldPointer(entry, col); ptr != nil {
-			ptrs = append(ptrs, ptr)
-		}
-	}
-	return ptrs
-}
-
 func GetAllEventColumns() []string {
 	return []string{
 		"event_id", "$user_id", "$device_id", "session_id", "$time", "$source",
@@ -356,14 +326,4 @@ func GetAllEventColumns() []string {
 		"$country", "$state", "$city", "$or_api_endpoint", "$timezone",
 		"issue_type", "issue_id", "error_id", "$tags", "$import",
 	}
-}
-
-func BuildSelectColumns(tableAlias string, columns []string) []string {
-	selectCols := make([]string, 0, len(columns))
-	for _, col := range columns {
-		if dbCol, ok := ColumnMapping[col]; ok {
-			selectCols = append(selectCols, fmt.Sprintf("%s.%s", tableAlias, dbCol))
-		}
-	}
-	return selectCols
 }
