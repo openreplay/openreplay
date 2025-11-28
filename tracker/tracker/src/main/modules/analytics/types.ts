@@ -18,7 +18,9 @@ export const createEvent = (
   type?: (typeof mutationTypes)[keyof typeof mutationTypes],
   timestamp?: number,
   payload?: Record<string, any>,
-) => ({
+) => {
+  if (category === categories.people) {0
+    return ({
   category,
   data: {
     type,
@@ -26,3 +28,17 @@ export const createEvent = (
     payload,
   },
 })
+  } else {
+    if (!payload) {
+      throw new Error('Payload is required for event creation')
+    }
+    return ({
+      category,
+      data: {
+        name: payload.name,
+        payload: payload.properties,
+        timestamp,
+      }
+    })
+  }
+}
