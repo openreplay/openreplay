@@ -103,7 +103,7 @@ services:
           bash /tmp/minio.sh init || exit 100
 
   db-migration:
-    image: bitnamilegacy/postgresql:14.5.0
+    image: bitnamilegacy/postgresql:14.18.0
     container_name: db-migration
     profiles:
       - "migration"
