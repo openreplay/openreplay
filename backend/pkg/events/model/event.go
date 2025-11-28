@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	analyticsModel "openreplay/backend/pkg/analytics/model"
+	"sync"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -100,14 +101,17 @@ type EventsSearchResponse struct {
 	Events []EventEntry `json:"events"`
 }
 
-var validate *validator.Validate
+var (
+	validate     *validator.Validate
+	validateOnce sync.Once
+)
 
 func GetValidator() *validator.Validate {
-	if validate == nil {
+	validateOnce.Do(func() {
 		validate = validator.New()
 		validate.RegisterStructValidation(analyticsModel.ValidateFilterFields, analyticsModel.Filter{})
 		validate.RegisterValidation("validEventColumn", validateEventColumn)
-	}
+	})
 	return validate
 }
 
@@ -120,64 +124,35 @@ func validateEventColumn(fl validator.FieldLevel) bool {
 	if column == "" {
 		return true
 	}
-
-	if column == "created_at" || column == "time" || column == "eventName" || column == "distinctId" {
-		return true
-	}
-
 	_, ok := ColumnMapping[column]
-	return ok
+	return ok || column == "created_at" || column == "time" || column == "eventName" || column == "distinctId"
 }
 
-var ColumnMapping = map[string]string{
-	"event_id":                  "event_id",
-	"distinct_id":               "distinct_id",
-	"$user_id":                  `"$user_id"`,
-	"$device_id":                `"$device_id"`,
-	"session_id":                "session_id",
-	"$time":                     `"$time"`,
-	"$source":                   `"$source"`,
-	"$duration_s":               `"$duration_s"`,
-	"properties":                "properties",
-	"$properties":               `"$properties"`,
-	"description":               "description",
-	"group_id1":                 "group_id1",
-	"group_id2":                 "group_id2",
-	"group_id3":                 "group_id3",
-	"group_id4":                 "group_id4",
-	"group_id5":                 "group_id5",
-	"group_id6":                 "group_id6",
-	"$auto_captured":            `"$auto_captured"`,
-	"$sdk_edition":              `"$sdk_edition"`,
-	"$sdk_version":              `"$sdk_version"`,
-	"$os":                       `"$os"`,
-	"$os_version":               `"$os_version"`,
-	"$browser":                  `"$browser"`,
-	"$browser_version":          `"$browser_version"`,
-	"$device":                   `"$device"`,
-	"$screen_height":            `"$screen_height"`,
-	"$screen_width":             `"$screen_width"`,
-	"$current_url":              `"$current_url"`,
-	"$current_path":             `"$current_path"`,
-	"$initial_referrer":         `"$initial_referrer"`,
-	"$referring_domain":         `"$referring_domain"`,
-	"$referrer":                 `"$referrer"`,
-	"$initial_referring_domain": `"$initial_referring_domain"`,
-	"$search_engine":            `"$search_engine"`,
-	"$search_engine_keyword":    `"$search_engine_keyword"`,
-	"utm_source":                "utm_source",
-	"utm_medium":                "utm_medium",
-	"utm_campaign":              "utm_campaign",
-	"$country":                  `"$country"`,
-	"$state":                    `"$state"`,
-	"$city":                     `"$city"`,
-	"$or_api_endpoint":          `"$or_api_endpoint"`,
-	"$timezone":                 `"$timezone"`,
-	"issue_type":                "issue_type",
-	"issue_id":                  "issue_id",
-	"error_id":                  "error_id",
-	"$tags":                     `"$tags"`,
-	"$import":                   `"$import"`,
+var ColumnMapping = buildColumnMapping()
+
+func buildColumnMapping() map[string]string {
+	unquoted := []string{
+		"event_id", "distinct_id", "session_id", "properties", "description",
+		"group_id1", "group_id2", "group_id3", "group_id4", "group_id5", "group_id6",
+		"utm_source", "utm_medium", "utm_campaign", "issue_type", "issue_id", "error_id",
+	}
+	quoted := []string{
+		"$user_id", "$device_id", "$time", "$source", "$duration_s", "$properties",
+		"$auto_captured", "$sdk_edition", "$sdk_version", "$os", "$os_version",
+		"$browser", "$browser_version", "$device", "$screen_height", "$screen_width",
+		"$current_url", "$current_path", "$initial_referrer", "$referring_domain",
+		"$referrer", "$initial_referring_domain", "$search_engine", "$search_engine_keyword",
+		"$country", "$state", "$city", "$or_api_endpoint", "$timezone", "$tags", "$import",
+	}
+
+	mapping := make(map[string]string, len(unquoted)+len(quoted))
+	for _, col := range unquoted {
+		mapping[col] = col
+	}
+	for _, col := range quoted {
+		mapping[col] = `"` + col + `"`
+	}
+	return mapping
 }
 
 var filterToColumnMapping = map[string]string{
@@ -198,7 +173,7 @@ var filterToColumnMapping = map[string]string{
 var FilterColumnMapping = buildFilterColumnMapping()
 
 func buildFilterColumnMapping() map[string][]string {
-	mapping := make(map[string][]string)
+	mapping := make(map[string][]string, len(filterToColumnMapping)+len(ColumnMapping))
 
 	for filterKey, columnKey := range filterToColumnMapping {
 		if dbCol, ok := ColumnMapping[columnKey]; ok {
@@ -206,10 +181,8 @@ func buildFilterColumnMapping() map[string][]string {
 		}
 	}
 
-	for columnKey := range ColumnMapping {
-		if dbCol, ok := ColumnMapping[columnKey]; ok {
-			mapping[columnKey] = []string{dbCol, "singleColumn"}
-		}
+	for columnKey, dbCol := range ColumnMapping {
+		mapping[columnKey] = []string{dbCol, "singleColumn"}
 	}
 
 	return mapping
