@@ -57,22 +57,29 @@ func New(log logger.Logger, conn driver.Conn) (Events, error) {
 }
 
 func getString(event *event, name string) *string {
-	if event == nil || event.Properties == nil || event.Properties[name] == nil {
+	if event == nil || event.Properties == nil {
 		return nil
 	}
-	val := event.Properties[name].(string)
-	return &val
+	if val, ok := event.Properties[name].(string); ok {
+		return &val
+	}
+	return nil
 }
 
 func getInt64(event *event, name string) *int64 {
-	if event == nil || event.Properties == nil || event.Properties[name] == nil {
+	if event == nil || event.Properties == nil {
 		return nil
 	}
-	val := event.Properties[name].(int64)
-	return &val
+	if val, ok := event.Properties[name].(int64); ok {
+		return &val
+	}
+	return nil
 }
 
 func getDiffInt64(event *event, start, end string) *int64 {
+	if event == nil || event.Properties == nil {
+		return nil
+	}
 	startVal, endVal := getInt64(event, start), getInt64(event, end)
 	if startVal != nil && endVal != nil {
 		res := *endVal - *startVal
@@ -350,7 +357,7 @@ func toCamelCase(s string) string {
 	if s == "" {
 		return s
 	}
-	var result []rune
+	result := make([]rune, 0, len(s))
 	capitalize := false
 	for i, r := range s {
 		if r == '_' {
