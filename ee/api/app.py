@@ -206,4 +206,6 @@ if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(scim.public_app)
     app.include_router(scim.app)
     app.include_router(scim.app_apikey)
-    app.mount("/sso/scim/v2", WSGIMiddleware(PrefixMiddleware(scim.scim_app, ROOT_PATH)))
+
+    SCIM_MOUNT_PATH = "/sso/scim/v2"
+    app.mount(SCIM_MOUNT_PATH, WSGIMiddleware(PrefixMiddleware(scim.scim_app, SCIM_MOUNT_PATH)))
