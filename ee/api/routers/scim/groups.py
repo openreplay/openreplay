@@ -123,13 +123,13 @@ def create_resource(tenant_id: int, resource: Resource) -> dict:
         except Exception:
             raise SCIMException(Error.make_invalid_value_error())
         role_id = cur.fetchone()["role_id"]
-        if resource.members and len(resource.members) > 0:
-            user_ids = [int(x.value) for x in resource.members]
-            args = {"tenant_id": tenant_id, "user_ids": user_ids, "new_role_id": role_id}
-            if admin_privilege:
-                _set_users_admin_privilege(**args)
-            else:
-                _set_users_role(**args)
+    if resource.members and len(resource.members) > 0:
+        user_ids = [int(x.value) for x in resource.members]
+        args = {"tenant_id": tenant_id, "user_ids": user_ids, "new_role_id": role_id}
+        if admin_privilege:
+            _set_users_admin_privilege(**args)
+        else:
+            _set_users_role(**args)
 
     return get_resource(role_id, tenant_id)
 
