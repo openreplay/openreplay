@@ -19,26 +19,26 @@ export const createEvent = (
   timestamp?: number,
   payload?: Record<string, any>,
 ) => {
-  if (category === categories.people) {0
-    return ({
-  category,
-  data: {
-    type,
-    timestamp,
-    payload,
-  },
-})
+  if (category === categories.people) {
+    return {
+      category,
+      data: {
+        type,
+        timestamp,
+        payload,
+      },
+    }
   } else {
     if (!payload) {
       throw new Error('Payload is required for event creation')
     }
-    return ({
+    return {
       category,
       data: {
         name: payload.name,
         payload: payload.properties,
         timestamp,
-      }
-    })
+      },
+    }
   }
 }
