@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from 'App/routes';
 import { Filter, Album } from 'lucide-react';
-import { list } from '../Activity/Page';
+import { list } from '../Activity/ActivityPage';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';

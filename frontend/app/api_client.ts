@@ -39,7 +39,7 @@ const newApiUrls = [
   '/notes',
   '/unprocessed',
   'first-mob',
-  // '/events',
+  '/events',
   '/favorite',
   '/clickmaps',
   '/replay',
