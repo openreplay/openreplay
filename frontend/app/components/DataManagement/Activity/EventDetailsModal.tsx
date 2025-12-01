@@ -1,61 +1,96 @@
-import React from 'react'
-import { EventData } from './data/Event'
+import React from 'react';
+import { SingleEvent, EventResp } from '@/services/AnalyticsService';
 import { Segmented, Input } from 'antd';
 import { X, List, Braces, Files } from 'lucide-react';
-import copy from 'copy-to-clipboard'
+import copy from 'copy-to-clipboard';
+import { useQuery } from '@tanstack/react-query';
+import { analyticsService } from '@/services';
 
-function EventDetailsModal({ ev, onClose }: { ev: EventData, onClose: () => void }) {
-  const tabs = [
-    {
-      label: 'All Properties',
-      value: 'all',
-    },
-    {
-      label: 'Openreplay Properties',
-      value: 'default',
-    },
-    {
-      label: 'Custom Properties',
-      value: 'custom',
-    },
-  ]
+const tabs = [
+  {
+    label: 'All Properties',
+    value: 'all',
+  },
+  {
+    label: 'Openreplay Properties',
+    value: 'default',
+  },
+  {
+    label: 'Custom Properties',
+    value: 'custom',
+  },
+];
 
-  const views = [
-    {
-      label: <List size={14} />,
-      value: 'pretty',
+const views = [
+  {
+    label: <List size={14} />,
+    value: 'pretty',
+  },
+  {
+    label: <Braces size={14} />,
+    value: 'json',
+  },
+];
+
+function EventDetailsModal({
+  ev,
+  onClose,
+}: {
+  ev: SingleEvent;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = React.useState('');
+  const [tab, setTab] = React.useState(tabs[0].value);
+  const [view, setView] = React.useState(views[0].value);
+  const { data: event } = useQuery<EventResp | null>({
+    queryKey: ['event-details', ev.event_id],
+    queryFn: async () => {
+      const data = await analyticsService.getEvent(ev.event_id);
+      return data;
     },
+    initialData: null,
+  });
+  const tabProps = event
+    ? {
+        all: { ...event, ...event.$properties },
+        custom: { ...event.$properties },
+        default: { ...event },
+      }
+    : {
+        all: { ...ev },
+        custom: {},
+        default: { ...ev },
+      };
+  const dataFields = tabProps[tab];
+  const fieldArr = Object.entries(dataFields);
+  const filteredArr =
+    view === 'json'
+      ? []
+      : fieldArr.filter(([key, value]) => {
+          const qReg = new RegExp(query, 'ig');
+          return qReg.test(key) || qReg.test(value);
+        });
+  const strProps = JSON.stringify(
     {
-      label: <Braces size={14} />,
-      value: 'json',
-    }
-  ]
-  const [query, setQuery] = React.useState('')
-  const [tab, setTab] = React.useState(tabs[0].value)
-  const [view, setView] = React.useState(views[0].value)
-  const tabProps = {
-    all: { ...ev.$_defaultFields, ...ev.$_customFields },
-    custom: ev.$_customFields,
-    default: ev.$_defaultFields,
-  }
-  const dataFields = tabProps[tab]
-  const fieldArr = Object.entries(dataFields)
-  const filteredArr = view === 'json' ? [] : fieldArr.filter(([key, value]) => {
-    const qReg = new RegExp(query, 'ig')
-    return qReg.test(key) || qReg.test(value)
-  })
-  const strProps = JSON.stringify({
-    event: ev.name,
-    properties: dataFields
-  }, null, 4)
-  const highlightedJson = view === 'pretty' ? '' : query ? strProps.replace(
-    new RegExp(query, 'ig'),
-    (match) => `<mark>${match}</mark>`
-  ) : strProps
+      event: ev.event_name,
+      properties: dataFields,
+    },
+    null,
+    4,
+  );
+  const highlightedJson =
+    view === 'pretty'
+      ? ''
+      : query
+        ? strProps.replace(
+            new RegExp(query, 'ig'),
+            (match) => `<mark>${match}</mark>`,
+          )
+        : strProps;
 
   const onCopy = () => {
-    copy(strProps)
-  }
+    copy(strProps);
+  };
 
   return (
     <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
@@ -67,7 +102,7 @@ function EventDetailsModal({ ev, onClose }: { ev: EventData, onClose: () => void
       </div>
       <div className={'p-2 rounded-lg bg-active-blue flex items-center gap-2'}>
         <div>icn</div>
-        <div className={'font-semibold'}>{ev.name}</div>
+        <div className={'font-semibold'}>{ev.event_name}</div>
         <div className={'link ml-auto flex gap-1 items-center'}>
           <span>Play Session</span>
           <Triangle size={10} color={'blue'} />
@@ -88,7 +123,7 @@ function EventDetailsModal({ ev, onClose }: { ev: EventData, onClose: () => void
           placeholder={'Find Property'}
         />
       </div>
-      {view === 'pretty' ?
+      {view === 'pretty' ? (
         <div
           className={'overflow-y-auto flex flex-col gap-2'}
           style={{ height: 'calc(100% - 200px)' }}
@@ -100,14 +135,17 @@ function EventDetailsModal({ ev, onClose }: { ev: EventData, onClose: () => void
             </div>
           ))}
         </div>
-      : (
+      ) : (
         <div className={'relative'}>
-          <div onClick={onCopy} className={'absolute right-0 top-0 cursor-pointer hover:text-blue'}>
+          <div
+            onClick={onCopy}
+            className={'absolute right-0 top-0 cursor-pointer hover:text-blue'}
+          >
             <Files size={16} />
           </div>
-        <pre dangerouslySetInnerHTML={{ __html: highlightedJson }} />
+          <pre dangerouslySetInnerHTML={{ __html: highlightedJson }} />
         </div>
-       )}
+      )}
     </div>
   );
 }

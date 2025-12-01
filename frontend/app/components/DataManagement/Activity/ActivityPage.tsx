@@ -9,7 +9,6 @@ import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import Event from './data/Event';
 import { useModal } from 'App/components/Modal';
 import EventDetailsModal from './EventDetailsModal';
-import { useQuery } from '@tanstack/react-query';
 import Select from 'Shared/Select';
 import { Link } from 'react-router-dom';
 import { dataManagement, withSiteId } from 'App/routes';
@@ -374,7 +373,9 @@ function ActivityPage() {
                   }}
                 />
               </div>
-              <Button type={'text'} onClick={analyticsStore.fetchEvents}>Refresh</Button>
+              <Button type={'text'} onClick={analyticsStore.fetchEvents}>
+                Refresh
+              </Button>
             </div>
           ) : (
             <>

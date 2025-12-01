@@ -65,18 +65,20 @@ export interface EventResp {
   utm_source: string;
 }
 
+export interface SingleEvent {
+  event_id: string;
+  event_name: string;
+  created_at: string;
+  distinct_id: string;
+  session_id: string;
+  os: string;
+  browser: string;
+  city: string;
+}
+
 export interface EventsResponse {
   total: number;
-  events: {
-    event_id: string;
-    event_name: string;
-    created_at: string;
-    distinct_id: string;
-    session_id: string;
-    os: string;
-    browser: string;
-    city: string;
-  }[];
+  events: SingleEvent[];
 }
 
 export default class AnalyticsService extends BaseService {
