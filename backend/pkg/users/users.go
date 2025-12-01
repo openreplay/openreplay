@@ -21,11 +21,11 @@ type usersImpl struct {
 	chConn driver.Conn
 }
 
-func New(log logger.Logger, conn driver.Conn) Users {
+func New(log logger.Logger, conn driver.Conn) (Users, error) {
 	return &usersImpl{
 		log:    log,
 		chConn: conn,
-	}
+	}, nil
 }
 
 func (u *usersImpl) GetByUserID(projID uint32, userId string) (*model.User, error) {

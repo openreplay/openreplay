@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"openreplay/backend/pkg/users"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/go-playground/validator/v10"
@@ -34,6 +35,7 @@ import (
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/session"
 	sessionAPI "openreplay/backend/pkg/session/api"
+	usersAPI "openreplay/backend/pkg/users/api"
 	"openreplay/backend/pkg/views"
 )
 
@@ -50,11 +52,12 @@ type serviceBuilder struct {
 	chartsAPI        api.Handlers
 	searchAPI        api.Handlers
 	savedSearchesAPI api.Handlers
+	usersAPI         api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
@@ -93,6 +96,15 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 	eventHandlers, err := eventAPI.NewHandlers(log, &cfg.HTTP, responser, eventService, sessionService)
+	if err != nil {
+		return nil, err
+	}
+
+	usersService, err := users.New(log, chconn)
+	if err != nil {
+		return nil, err
+	}
+	usersHanders, err := usersAPI.NewHandlers(log, &cfg.HTTP, responser, usersService)
 	if err != nil {
 		return nil, err
 	}
@@ -183,5 +195,6 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		chartsAPI:        chartsHandlers,
 		searchAPI:        searchHandlers,
 		savedSearchesAPI: savedSearchesHandlers,
+		usersAPI:         usersHanders,
 	}, nil
 }

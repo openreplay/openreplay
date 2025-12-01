@@ -12,6 +12,11 @@ import (
 	"openreplay/backend/pkg/users/model"
 )
 
+// @title OpenReplay Users API
+// @version 1.0
+// @description API for managing and querying product analytics users
+// @BasePath /api/v1
+
 type handlersImpl struct {
 	log           logger.Logger
 	responser     api.Responser
@@ -19,12 +24,24 @@ type handlersImpl struct {
 	jsonSizeLimit int64
 }
 
+func (h *handlersImpl) Log() logger.Logger {
+	return h.log
+}
+
+func (h *handlersImpl) Responser() api.Responser {
+	return h.responser
+}
+
+func (h *handlersImpl) JsonSizeLimit() int64 {
+	return h.jsonSizeLimit
+}
+
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/{project}/users", "POST", h.searchUsers, []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "GET", h.getUser, []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "DELETE", h.deleteUser, []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "PUT", h.updateUser, []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users", "POST", api.AutoRespondWithBody(h, h.searchUsers), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/user/{userID}", "GET", api.AutoRespond(h, h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/user/{userID}", "DELETE", api.AutoRespond(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/user/{userID}", "PUT", api.AutoRespondWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 	}
 }
 
@@ -49,42 +66,27 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, u
 // @Failure 413 {object} api.ErrorResponse "Request Entity Too Large"
 // @Failure 500 {object} api.ErrorResponse "Internal Server Error"
 // @Router /{project}/users [post]
-func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request) (*model.SearchUsersResponse, error) {
-	startTime := time.Now()
-	bodySize := 0
-
-	bodyBytes, err := api.ReadBody(h.log, w, r, h.jsonSizeLimit)
-	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return nil, err
-	}
-	bodySize = len(bodyBytes)
-
+func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyBytes []byte, startTime time.Time, bodySize *int) ([]*model.SearchUsersResponse, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	req := &model.SearchUsersRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if err = model.ValidateStruct(req); err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.users.SearchUsers(projID, req)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 
-	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
-	return nil, nil
+	return response, 0, nil
 }
 
 // @Summary Get User by UserID
@@ -99,30 +101,23 @@ func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request) (*mod
 // @Failure 404 {object} api.ErrorResponse "Not Found"
 // @Failure 500 {object} api.ErrorResponse "Internal Server Error"
 // @Router /{project}/user/{userID} [get]
-func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request) (*model.User, error) {
-	startTime := time.Now()
-	bodySize := 0
-
+func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (*model.User, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	userID, err := api.GetPathParam(r, "userID", api.ParseString)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.users.GetByUserID(projID, userID)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusNotFound, err
 	}
 
-	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
-	return nil, nil
+	return response, 0, nil
 }
 
 // @Summary Delete User
@@ -137,30 +132,23 @@ func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request) (*model.U
 // @Failure 404 {object} api.ErrorResponse "Not Found"
 // @Failure 500 {object} api.ErrorResponse "Internal Server Error"
 // @Router /{project}/user/{userID} [delete]
-func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request) (*model.User, error) {
-	startTime := time.Now()
-	bodySize := 0
-
+func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (*model.User, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	userID, err := api.GetPathParam(r, "userID", api.ParseUint32)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.users.DeleteUser(projID, userID)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusNotFound, err
 	}
 
-	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
-	return nil, nil
+	return response, 0, nil
 }
 
 // @Summary Update User
@@ -176,52 +164,34 @@ func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request) (*mode
 // @Failure 404 {object} api.ErrorResponse "Not Found"
 // @Failure 500 {object} api.ErrorResponse "Internal Server Error"
 // @Router /{project}/user/{userID} [put]
-func (h *handlersImpl) updateUser(w http.ResponseWriter, r *http.Request) (*model.User, error) {
-	startTime := time.Now()
-	bodySize := 0
-
-	bodyBytes, err := api.ReadBody(h.log, w, r, h.jsonSizeLimit)
-	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return nil, err
-	}
-	bodySize = len(bodyBytes)
-
+func (h *handlersImpl) updateUser(w http.ResponseWriter, r *http.Request, bodyBytes []byte, startTime time.Time, bodySize *int) (*model.User, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	userID, err := api.GetPathParam(r, "userID", api.ParseString)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	user := &model.User{}
 	if err := json.Unmarshal(bodyBytes, user); err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if user.UserID != userID {
-		//err := api.NewBadRequestError("User ID in path and body do not match")
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if err = model.ValidateStruct(user); err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.users.UpdateUser(projID, user)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		return nil, err
+		return nil, http.StatusNotFound, err
 	}
 
-	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
-	return nil, nil
+	return response, 0, nil
 }
