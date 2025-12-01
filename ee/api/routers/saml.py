@@ -102,7 +102,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
         i = 0
         while i < len(groups):
             groups[i] = SAML2_helper.group_name_to_role_name(groups[i])
-            if groups[i] == "admin":
+            if groups[i].lower() == "admin":
                 admin_privileges = True
                 del groups[i]
                 continue
