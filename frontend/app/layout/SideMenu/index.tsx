@@ -76,7 +76,7 @@ function SideMenu(props: Props) {
           item.isEnterprise && !isEnterprise,
           item.key === MENU.KAI && !hasAi,
           item.key === PREFERENCES_MENU.EXPORTED_VIDEOS &&
-          !account.hasVideoExport,
+            !account.hasVideoExport,
         ].some(Boolean);
 
         return { ...item, hidden: isHidden };
@@ -148,19 +148,16 @@ function SideMenu(props: Props) {
       : false;
   };
 
-  const renderMenu = () => (
-    <>
-      <MenuContent
-        menu={menu}
-        isMenuItemActive={isMenuItemActive}
-        handleClick={handleClick}
-      />
-    </>
-  );
-
   return (
     <>
-      {!isMobile && renderMenu()}
+      {!isMobile && (
+        <MenuContent
+          menu={menu}
+          isMenuItemActive={isMenuItemActive}
+          handleClick={handleClick}
+          isCollapsed={isCollapsed}
+        />
+      )}
 
       {isMobile && (
         <>

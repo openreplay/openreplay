@@ -22,6 +22,10 @@
   background-color: var(--bg-teal);
 }
 
+.ant-menu-submenu-title {
+  padding: 0px 20px 0px 21px!important;
+}
+
 .ml-15 { margin-left: 15px; }
 
 .ph-10 { padding-left: 10px; padding-right: 10px; }

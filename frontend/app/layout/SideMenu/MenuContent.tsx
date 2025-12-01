@@ -2,7 +2,6 @@ import { Menu, Tag, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { Icon } from 'UI';
-import SVG from 'UI/SVG';
 
 const { Text } = Typography;
 
@@ -10,6 +9,7 @@ interface Props {
   menu: any[];
   isMenuItemActive: (key: string) => boolean;
   handleClick: (item: any) => void;
+  isCollapsed?: boolean;
 }
 
 function RenderDivider({ index }: { index: number }) {
@@ -21,6 +21,7 @@ export default function MenuContent({
   menu,
   isMenuItemActive,
   handleClick,
+  isCollapsed,
 }: Props) {
   return (
     <Menu
@@ -69,8 +70,10 @@ export default function MenuContent({
                   return it.children ? (
                     <Menu.SubMenu
                       key={it.key}
-                      title={<Text className="ml-5 !rounded">{it.label}</Text>}
-                      icon={<SVG name={it.icon} size={16} />}
+                      title={isCollapsed ? false : <Text>{it.label}</Text>}
+                      icon={<Icon name={it.icon} size={16} />}
+                      className="test"
+                      rootClassName='test2'
                     >
                       {it.children.map((child: any) => (
                         <Menu.Item
