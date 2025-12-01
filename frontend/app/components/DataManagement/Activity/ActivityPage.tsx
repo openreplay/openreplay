@@ -19,6 +19,7 @@ import FullPagination from 'Shared/FullPagination';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import DndTable from 'Shared/DNDTable';
 import { Code, Plus } from 'lucide-react';
+import { Filter } from '@/mstore/types/filterConstants';
 
 const limit = 100;
 
@@ -70,7 +71,7 @@ const fetcher = async (
 const columnOrderKey = '$__activity_columns_order__$';
 
 function ActivityPage() {
-  const { projectsStore, filterStore } = useStore();
+  const { projectsStore, filterStore, analyticsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const allFilterOptions = filterStore.getCurrentProjectFilters();
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
@@ -154,20 +155,25 @@ function ActivityPage() {
     },
   ];
 
-  const [page, setPage] = React.useState(1);
+  const page = analyticsStore.payloadFilters.page;
+  const list = analyticsStore.events.events;
+  const total = analyticsStore.events.total;
+  const isPending = analyticsStore.loading;
   const [cols, setCols] = React.useState(columns);
   const [hiddenCols, setHiddenCols] = React.useState([]);
-  const { data, isPending } = useQuery({
-    queryKey: ['data', 'events', page],
-    queryFn: () => fetcher(page),
-    initialData: { list: [], total: 0 },
-  });
-  const { list, total } = data;
-  const appliedFilter = { filters: [] };
-  const appliedEvents = appliedFilter.filters.filter(f => f.isEvent)
-  const onAddFilter = () => {};
-  const onUpdateFilter = () => {};
-  const onRemoveFilter = () => {};
+
+  const appliedFilter = analyticsStore.payloadFilters;
+  const appliedEvents = appliedFilter.filters.filter((f) => f.isEvent);
+  const activeFilters = appliedFilter.filters.map((f) => f.name);
+  const onAddFilter = (filter: Filter) => {
+    analyticsStore.addFilter(filter);
+  };
+  const onUpdateFilter = (filterIndex: number, filter: Filter) => {
+    analyticsStore.updateFilter(filterIndex, filter);
+  };
+  const onRemoveFilter = (filterIndex: number) => {
+    analyticsStore.removeFilter(filterIndex);
+  };
   const onChangeEventsOrder = () => {};
   const saveRequestPayloads = () => {};
   const onFilterMove = () => {};
@@ -196,6 +202,10 @@ function ActivityPage() {
     }
   }, []);
 
+  React.useEffect(() => {
+    analyticsStore.fetchEvents();
+  }, [analyticsStore.payloadFilters]);
+
   const onOrderChange = (newCols) => {
     const order = newCols.map((col) => col.key).join(',');
     localStorage.setItem(columnOrderKey, order);
@@ -204,7 +214,7 @@ function ActivityPage() {
   };
 
   const onPageChange = (page: number) => {
-    setPage(page);
+    analyticsStore.editPayload({ page });
   };
 
   const onItemClick = (ev: Event) => {
@@ -224,6 +234,12 @@ function ActivityPage() {
     });
     setEditCols(false);
   };
+
+  const onSortOrderChange = (sortOrder) => {
+    analyticsStore.editPayload({
+      sortOrder,
+    });
+  };
   return (
     <div
       className={'flex flex-col gap-2'}
@@ -239,7 +255,7 @@ function ActivityPage() {
           filterSelection={
             <FilterSelection
               filters={eventOptions}
-              activeFilters={appliedFilter.filters}
+              activeFilters={activeFilters}
               onFilterClick={onAddFilter}
             >
               <Button type="default" size="small">
@@ -271,7 +287,7 @@ function ActivityPage() {
           filterSelection={
             <FilterSelection
               filters={propertyOptions}
-              activeFilters={appliedFilter.filters}
+              activeFilters={activeFilters}
               onFilterClick={onAddFilter}
             >
               <Button type="default" size="small">
@@ -328,23 +344,23 @@ function ActivityPage() {
             />
             <Select
               options={[
-                { label: 'Newest', value: 'DESC' },
-                { label: 'Oldest', value: 'ASC' },
+                { label: 'Newest', value: 'desc' },
+                { label: 'Oldest', value: 'asc' },
               ]}
-              defaultValue={'DESC'}
+              defaultValue={'desc'}
               plain
               onChange={({ value }) => {
-                console.log(value);
+                onSortOrderChange(value.value);
               }}
             />
           </div>
           {total === 0 ? (
-            <div className={'flex items-center justify-center flex-col gap-4'}>
+            <div
+              className={'flex items-center justify-center flex-col gap-4 py-8'}
+            >
               <AnimatedSVG name={'no-results'} size={56} />
               <div className={'flex items-center gap-2'}>
-                <div className={'text-lg font-semibold'}>
-                  No results in the{' '}
-                </div>
+                <div className={'text-lg font-semibold'}>No results in the</div>
                 <Select
                   options={[
                     { label: 'Past 24 Hours', value: 'DESC' },
@@ -358,7 +374,7 @@ function ActivityPage() {
                   }}
                 />
               </div>
-              <Button type={'text'}>Refresh</Button>
+              <Button type={'text'} onClick={analyticsStore.fetchEvents}>Refresh</Button>
             </div>
           ) : (
             <>

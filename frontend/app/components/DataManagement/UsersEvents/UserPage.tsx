@@ -6,7 +6,7 @@ import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import Event from 'Components/DataManagement/Activity/data/Event';
 import { Files, Users, Eye, EyeOff } from 'lucide-react';
 import copy from 'copy-to-clipboard';
-import { list } from '../Activity/Page';
+import { list } from '../Activity/ActivityPage';
 import Select from 'Shared/Select';
 import { tsToCheckRecent } from 'App/date';
 import { useModal } from 'App/components/Modal';
@@ -14,7 +14,7 @@ import UserPropertiesModal from './components/UserPropertiesModal';
 import Tag from './components/Tag';
 import EventsByDay from './components/EventsByDay';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { dataManagement } from 'App/routes'
+import { dataManagement } from 'App/routes';
 
 const card = 'rounded-lg border bg-white';
 
@@ -117,92 +117,94 @@ function UserInfo() {
 
   return (
     <>
-      <Breadcrumb items={[
-        { label: 'Users', to: dataManagement.users(), withSiteId: true },
-        { label: testUser.name },
-      ]} />
+      <Breadcrumb
+        items={[
+          { label: 'Users', to: dataManagement.users(), withSiteId: true },
+          { label: testUser.name },
+        ]}
+      />
 
-    <div className={card}>
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <div
-            className={
-              'bg-gray-lighter h-11 w-12 rounded-full flex items-center justify-center text-gray-medium border border-gray-medium'
-            }
-          >
-            {testUser.name.slice(0, 2)}
+      <div className={card}>
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            <div
+              className={
+                'bg-gray-lighter h-11 w-12 rounded-full flex items-center justify-center text-gray-medium border border-gray-medium'
+              }
+            >
+              {testUser.name.slice(0, 2)}
+            </div>
+            <div className="flex flex-col">
+              <div className="text-xl font-semibold">{testUser.name}</div>
+              <div>{testUser.userId}</div>
+            </div>
           </div>
           <div className="flex flex-col">
-            <div className="text-xl font-semibold">{testUser.name}</div>
-            <div>{testUser.userId}</div>
-          </div>
-        </div>
-        <div className="flex flex-col">
-          <div className={'font-semibold'}>Distinct ID</div>
-          <div>
-            {testUser.distinctId[0]}
-            {testUser.distinctId.length > 1 && (
-              <Popover
-                title={
-                  <div className={'text-disabled-text'}>
-                    Tracking IDs linked to this user
-                  </div>
-                }
-                trigger={'click'}
-                placement={'bottom'}
-                arrow={false}
-                content={
-                  <div className={'flex flex-col gap-2'}>
-                    {testUser.distinctId.map((id) => (
-                      <div className={'w-full group flex justify-between'}>
-                        <span>{id}</span>
-                        <div
-                          className={
-                            'hidden group-hover:block cursor-pointer active:text-blue'
-                          }
-                          onClick={() => copy(id)}
-                        >
-                          <Files size={14} />
+            <div className={'font-semibold'}>Distinct ID</div>
+            <div>
+              {testUser.distinctId[0]}
+              {testUser.distinctId.length > 1 && (
+                <Popover
+                  title={
+                    <div className={'text-disabled-text'}>
+                      Tracking IDs linked to this user
+                    </div>
+                  }
+                  trigger={'click'}
+                  placement={'bottom'}
+                  arrow={false}
+                  content={
+                    <div className={'flex flex-col gap-2'}>
+                      {testUser.distinctId.map((id) => (
+                        <div className={'w-full group flex justify-between'}>
+                          <span>{id}</span>
+                          <div
+                            className={
+                              'hidden group-hover:block cursor-pointer active:text-blue'
+                            }
+                            onClick={() => copy(id)}
+                          >
+                            <Files size={14} />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  }
+                >
+                  <div className={'w-fit cursor-pointer inline-block ml-2'}>
+                    <Tag>+{testUser.distinctId.length - 1}</Tag>
                   </div>
-                }
-              >
-                <div className={'w-fit cursor-pointer inline-block ml-2'}>
-                  <Tag>+{testUser.distinctId.length - 1}</Tag>
-                </div>
-              </Popover>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col">
-          <div className={'font-semibold'}>Location</div>
-          <div>{testUser.userLocation}</div>
-        </div>
-        <div className={'flex items-center gap-4'}>
-          <div onClick={showAll} className={'link font-semibold'}>
-            +{Object.keys(testUser.properties).length} properties
-          </div>
-          <Dropdown
-            menu={{ items: dropdownItems }}
-            trigger={['click']}
-            placement={'bottomRight'}
-          >
-            <div className={'cursor-pointer'}>
-              <MoreOutlined />
+                </Popover>
+              )}
             </div>
-          </Dropdown>
+          </div>
+          <div className="flex flex-col">
+            <div className={'font-semibold'}>Location</div>
+            <div>{testUser.userLocation}</div>
+          </div>
+          <div className={'flex items-center gap-4'}>
+            <div onClick={showAll} className={'link font-semibold'}>
+              +{Object.keys(testUser.properties).length} properties
+            </div>
+            <Dropdown
+              menu={{ items: dropdownItems }}
+              trigger={['click']}
+              placement={'bottomRight'}
+            >
+              <div className={'cursor-pointer'}>
+                <MoreOutlined />
+              </div>
+            </Dropdown>
+          </div>
+        </div>
+        <div className="flex items-center p-4">
+          <Users size={14} />
+          <div className={'mr-4 ml-2'}>Cohorts</div>
+          {testUser.cohorts.map((cohort) => (
+            <Tag>{cohort}</Tag>
+          ))}
         </div>
       </div>
-      <div className="flex items-center p-4">
-        <Users size={14} />
-        <div className={'mr-4 ml-2'}>Cohorts</div>
-        {testUser.cohorts.map((cohort) => (
-          <Tag>{cohort}</Tag>
-        ))}
-      </div>
-    </div>
     </>
   );
 }

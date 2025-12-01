@@ -34,6 +34,7 @@ import WeeklyReportStore from './weeklyReportConfigStore';
 import logger from '@/logger';
 import BillingStore from "@/mstore/billingStore";
 import ClipStore from "@/mstore/clipStore";
+import AnalyticsStore from "@/mstore/AnalyticsStore";
 
 const projectStore = new ProjectsStore();
 const sessionStore = new SessionStore();
@@ -111,6 +112,7 @@ export class RootStore {
   projectsStore: ProjectsStore;
   billingStore: BillingStore;
   clipStore: ClipStore;
+  analyticsStore: AnalyticsStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -143,6 +145,7 @@ export class RootStore {
     this.integrationsStore = new IntegrationsStore();
     this.billingStore = new BillingStore();
     this.clipStore = new ClipStore();
+    this.analyticsStore = new AnalyticsStore();
   }
 
   initClient() {

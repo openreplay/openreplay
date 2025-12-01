@@ -2,7 +2,7 @@ import React from 'react';
 import FullPagination from 'Shared/FullPagination';
 import { Input, Table } from 'antd';
 import Tabs from 'Shared/Tabs';
-import { list } from "../Activity/Page";
+import { list } from "../Activity/ActivityPage";
 
 function PropertiesPage() {
   const [query, setQuery] = React.useState('');
