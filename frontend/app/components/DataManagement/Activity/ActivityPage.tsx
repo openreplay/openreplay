@@ -19,6 +19,7 @@ import AnimatedSVG from 'Shared/AnimatedSVG';
 import DndTable from 'Shared/DNDTable';
 import { Code, Plus } from 'lucide-react';
 import { Filter } from '@/mstore/types/filterConstants';
+import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 
 const limit = 100;
 
@@ -329,17 +330,9 @@ function ActivityPage() {
           <div className={'px-4 py-2 flex items-center gap-2'}>
             <div className={'font-semibold text-lg'}>All users activity</div>
             <div className={'ml-auto'} />
-            <Select
-              options={[
-                { label: 'Past 24 Hours', value: 'DESC' },
-                { label: 'Weekly', value: 'ASC' },
-                { label: 'Other', value: 'Stuff' },
-              ]}
-              defaultValue={'DESC'}
-              plain
-              onChange={({ value }) => {
-                console.log(value);
-              }}
+            <SelectDateRange
+              period={analyticsStore.period}
+              onChange={analyticsStore.updateTimestamps}
             />
             <Select
               options={[

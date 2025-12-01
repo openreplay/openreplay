@@ -6,6 +6,7 @@ import {
   EventsPayload,
 } from '@/services/AnalyticsService';
 import { Filter } from '@/mstore/types/filterConstants';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
 
 export default class AnalyticsStore {
   events: EventsResponse = {
@@ -13,7 +14,7 @@ export default class AnalyticsStore {
     events: [],
   };
   loading: boolean = false;
-
+  period = Period({ rangeName: LAST_24_HOURS });
   payloadFilters: EventsPayload = {
     sortOrder: 'desc',
     sortBy: 'time',
@@ -28,6 +29,20 @@ export default class AnalyticsStore {
   constructor() {
     makeAutoObservable(this);
   }
+
+  setPeriod = (period: any) => {
+    this.period = period;
+  };
+
+  updateTimestamps = (period: any) => {
+    const { start, end, rangeName } = period;
+    this.setPeriod(Period({ start, end, rangeName }));
+    this.editPayload({
+      page: 1,
+      startTimestamp: start,
+      endTimestamp: end,
+    });
+  };
 
   editPayload = (newPayload: Partial<EventsPayload>) => {
     this.payloadFilters = {
