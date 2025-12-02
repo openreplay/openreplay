@@ -151,20 +151,20 @@ func (e *handlersImpl) startSession(w http.ResponseWriter, r *http.Request) {
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"token": e.tokenizer.Compose(*tokenData)}, startTime, r.URL.Path, bodySize)
 }
 
-type IngestSdkDataRequest struct {
-	Data  []byte `json:"data"`
-	Token string `json:"token"`
-}
-
 func (e *handlersImpl) ingestData(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
+
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
 
 	if r.Body == nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
-
 	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.cfg.BeaconSizeLimit)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
@@ -172,19 +172,7 @@ func (e *handlersImpl) ingestData(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &IngestSdkDataRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	sessData, err := e.tokenizer.Parse(req.Token)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	if err = e.producer.Produce(e.cfg.TopicRawAnalytics, sessData.ID, req.Data); err != nil {
+	if err = e.producer.Produce(e.cfg.TopicRawAnalytics, sessionData.ID, bodyBytes); err != nil {
 		e.log.Error(r.Context(), "can't send messages batch to queue: %s", err)
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
 		return
