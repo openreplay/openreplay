@@ -124,7 +124,7 @@ def get_events(project_id, session_id):
 
             data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
             data['issues'] = issues.reduce_issues(data['issues'])
-            data['incidents'] = events.get_incidents_by_session_id(session_id=session_id, project_id=project_id)
+            data['incidents'] = events.get_incidents_by_session_id(session_id=session_id, project_id=project_id) or []
             return data
         else:
             return None
