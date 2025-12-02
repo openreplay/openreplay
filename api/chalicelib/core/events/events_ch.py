@@ -21,7 +21,6 @@ def get_customs_by_session_id(session_id, project_id):
                                  FROM product_analytics.events
                                  WHERE session_id = %(session_id)s
                                    AND NOT `$auto_captured`
-                                   AND `$event_name`!='INCIDENT'
                                  ORDER BY created_at;""",
                            parameters={"project_id": project_id, "session_id": session_id})
         rows = cur.execute(query)
@@ -189,8 +188,9 @@ def get_incidents_by_session_id(session_id, project_id):
                                         `$event_name`            AS type
                                  FROM product_analytics.events
                                  WHERE session_id = %(session_id)s
-                                   AND `$event_name` = 'INCIDENT'
+                                   AND `$event_name` = 'ISSUE'
                                    AND `$auto_captured`
+                                   AND issue_type = 'incident'
                                  ORDER BY created_at;""",
                            parameters={"project_id": project_id, "session_id": session_id})
         rows = cur.execute(query)
