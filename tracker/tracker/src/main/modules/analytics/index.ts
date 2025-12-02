@@ -65,7 +65,11 @@ export default class Analytics {
 
     this.token = this.sessionStorage.getItem(STORAGEKEY)
     this.constantProperties = new ConstantProperties(this.localStorage, this.sessionStorage)
-    this.batcher = new Batcher(this.backendUrl, this._getToken, this.init)
+    this.batcher = new Batcher(
+      this.backendUrl,
+      this._getToken,
+      this.init,
+    )
     this.events = new Events(this.constantProperties, this._getTimestamp, this.batcher)
     this.people = new People(
       this.constantProperties,
@@ -73,6 +77,10 @@ export default class Analytics {
       this.setUserId,
       this.batcher,
     )
+
+    if (options.notStandalone) {
+      this.init()
+    }
   }
 
   _getToken = () => {
@@ -95,7 +103,7 @@ export default class Analytics {
       return
     } else {
       const defaultFields = this.constantProperties.all
-      const apiEdp = '/api/analytics/start'
+      const apiEdp = '/v1/sdk/start'
       const data = {
         projectKey: this.projectKey,
         defaultFields,

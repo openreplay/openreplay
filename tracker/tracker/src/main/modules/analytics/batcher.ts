@@ -35,7 +35,7 @@ class Batcher {
 
   getBatches() {
     this.batch[categories.people] = this.dedupePeopleEvents()
-    const finalData = JSON.stringify({ data: this.batch, token: this.getToken() })
+    const finalData = { data: this.batch }
     return finalData
   }
 
@@ -44,7 +44,7 @@ class Batcher {
   }
 
   sendImmediately(event: any) {
-    this.sendBatch(JSON.stringify({ [event.category]: [event.data] }))
+    this.sendBatch({ [event.category]: [event.data] })
   }
 
   /**
@@ -53,7 +53,6 @@ class Batcher {
    * taking priority to the last one
    */
   dedupePeopleEvents() {
-
     const peopleEvents = this.batch[categories.people] as PeopleEvent[]
     const finalEvents = [] as PeopleEvent[]
     const currentPart = [] as PeopleEvent[]
@@ -116,7 +115,7 @@ class Batcher {
     return Array.from(uniqueEventsByType.values())
   }
 
-  private sendBatch(batch: string) {
+  private sendBatch(batch: Record<string, any>) {
     let attempts = 0
     const send = () => {
       const token = this.getToken()
@@ -130,7 +129,7 @@ class Batcher {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ events: batch, token, deviceId: '1a2b3-1a2b3-1a2b3' }),
+        body: JSON.stringify(batch),
       })
         .then((response) => {
           if (response.status === 403) {

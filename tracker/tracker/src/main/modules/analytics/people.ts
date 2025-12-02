@@ -16,6 +16,9 @@ export default class People {
   ) {}
 
   identify = (user_id: string, options?: { fromTracker: boolean }) => {
+    if (!user_id) {
+      throw new Error('OR SDK: user_id is required for identify')
+    }
     this.constantProperties.setUserId(user_id)
     if (!options?.fromTracker) {
       this.onId(user_id)
@@ -60,7 +63,7 @@ export default class People {
         this.ownProperties[key] = value
       }
     })
-    const setEvent = createEvent(categories.people, mutationTypes.setProperty, undefined, properties)
+    const setEvent = createEvent(categories.people, mutationTypes.setProperty, undefined, { user_id: this.user_id, properties })
     this.batcher.addEvent(setEvent)
   }
 
@@ -79,7 +82,7 @@ export default class People {
       }
     })
 
-    const setEvent = createEvent(categories.people, mutationTypes.setPropertyOnce, undefined, properties)
+    const setEvent = createEvent(categories.people, mutationTypes.setPropertyOnce, undefined, { user_id: this.user_id, properties })
     this.batcher.addEvent(setEvent)
   }
 
@@ -98,7 +101,8 @@ export default class People {
     }
 
     const appendEvent = createEvent(categories.people, mutationTypes.appendProperty, undefined, {
-      [key]: value,
+      properties: { [key]: value },
+      user_id: this.user_id,
     })
     this.batcher.addEvent(appendEvent)
   }
@@ -119,7 +123,8 @@ export default class People {
     }
 
     const unionEvent = createEvent(categories.people, mutationTypes.appendUniqueProperty, undefined, {
-      [key]: value,
+      properties: { [key]: value },
+      user_id: this.user_id,
     })
     this.batcher.addEvent(unionEvent)
   }
@@ -136,7 +141,8 @@ export default class People {
     this.ownProperties[key] += value
 
     const incrementEvent = createEvent(categories.people, mutationTypes.incrementProperty, undefined, {
-      [key]: value,
+      user_id: this.user_id,
+      properties: { [key]: value },
     })
     this.batcher.addEvent(incrementEvent)
   }
