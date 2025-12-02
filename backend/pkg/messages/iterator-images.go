@@ -11,7 +11,6 @@ func NewImagesMessageIterator(messageHandler ImageMessageHandler, messageFilter 
 	enderIter := &imagesIteratorImpl{
 		handler: messageHandler,
 	}
-	//enderIter.coreIterator = NewMessageIterator(enderIter.handle, messageFilter, autoDecode)
 	return enderIter
 }
 

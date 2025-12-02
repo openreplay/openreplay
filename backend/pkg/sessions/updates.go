@@ -49,7 +49,7 @@ func (u *updatesImpl) AddAnonID(sessionID uint64, userID string) {
 	if u.updates[sessionID] == nil {
 		u.updates[sessionID] = NewSessionUpdate(sessionID)
 	}
-	u.updates[sessionID].setUserID(userID)
+	u.updates[sessionID].setAnonID(userID)
 }
 
 func (u *updatesImpl) SetReferrer(sessionID uint64, referrer, baseReferrer string) {
