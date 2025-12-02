@@ -55,11 +55,12 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, u
 }
 
 // @Summary Search Users
-// @Description Search users based on various criteria.
+// @Description Search users based on various criteria. Use 'q' query parameter to search by name, email, or user_id.
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
+// @Param q query string false "Search query for name, email, or user_id"
 // @Param searchUsersRequest body model.SearchUsersRequest true "Search Users Request"
 // @Success 200 {object} model.SearchUsersResponse
 // @Failure 400 {object} api.ErrorResponse "Bad Request"
@@ -75,6 +76,10 @@ func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyB
 	req := &model.SearchUsersRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		return nil, http.StatusBadRequest, err
+	}
+
+	if query := r.URL.Query().Get("q"); query != "" {
+		req.Query = query
 	}
 
 	if err = model.ValidateStruct(req); err != nil {
