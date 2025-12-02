@@ -25,7 +25,7 @@ def is_spot_token(token: str) -> bool:
 
 
 def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
-    if scheme.lower() != "bearer":
+    if scheme.lower() != "bearer" or len(token) < 5:
         return None
     try:
         payload = jwt.decode(jwt=token,
