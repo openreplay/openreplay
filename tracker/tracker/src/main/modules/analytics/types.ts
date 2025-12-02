@@ -24,8 +24,9 @@ export const createEvent = (
       category,
       data: {
         type,
+        user_id: payload!.user_id,
+        payload: payload!.properties,
         timestamp,
-        payload,
       },
     }
   } else {
