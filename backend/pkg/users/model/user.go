@@ -1,6 +1,8 @@
 package model
 
 import (
+	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/go-playground/validator/v10"
@@ -52,6 +54,15 @@ func validateUserColumn(fl validator.FieldLevel) bool {
 		"initial_utm_source":   true,
 		"initial_utm_medium":   true,
 		"initial_utm_campaign": true,
+		"properties":           true,
+		"group_id1":            true,
+		"group_id2":            true,
+		"group_id3":            true,
+		"group_id4":            true,
+		"group_id5":            true,
+		"group_id6":            true,
+		"project_id":           true,
+		"$or_api_endpoint":     true,
 	}
 	return validColumns[column]
 }
@@ -131,37 +142,49 @@ func buildColumnMapping() map[string]string {
 }
 
 type User struct {
-	ProjectID          uint16   `json:"-" db:"project_id"`
-	UserID             string   `json:"userId" db:"$user_id" validate:"required"`
-	Email              string   `json:"email" db:"$email" validate:"omitempty,email"`
-	Name               string   `json:"name" db:"$name" validate:"omitempty"`
-	FirstName          string   `json:"firstName" db:"$first_name" validate:"omitempty"`
-	LastName           string   `json:"lastName" db:"$last_name" validate:"omitempty"`
-	Phone              string   `json:"phone" db:"$phone" validate:"omitempty"`
-	Avatar             string   `json:"avatar" db:"$avatar" validate:"omitempty,url"`
-	CreatedAt          string   `json:"createdAt" db:"$created_at" validate:"omitempty"`
-	Properties         string   `json:"properties" db:"properties" validate:"omitempty,json"`
-	GroupID1           []string `json:"groupId1,omitempty" db:"group_id1"`
-	GroupID2           []string `json:"groupId2,omitempty" db:"group_id2"`
-	GroupID3           []string `json:"groupId3,omitempty" db:"group_id3"`
-	GroupID4           []string `json:"groupId4,omitempty" db:"group_id4"`
-	GroupID5           []string `json:"groupId5,omitempty" db:"group_id5"`
-	GroupID6           []string `json:"groupId6,omitempty" db:"group_id6"`
-	SDKEdition         string   `json:"sdkEdition,omitempty" db:"$sdk_edition" validate:"omitempty"`
-	SDKVersion         string   `json:"sdkVersion,omitempty" db:"$sdk_version" validate:"omitempty"`
-	CurrentUrl         string   `json:"currentUrl,omitempty" db:"$current_url" validate:"omitempty,url"`
-	InitialReferrer    string   `json:"initialReferrer,omitempty" db:"$initial_referrer" validate:"omitempty"`
-	ReferringDomain    string   `json:"referringDomain,omitempty" db:"$referring_domain" validate:"omitempty"`
-	InitialUtmSource   string   `json:"initialUtmSource,omitempty" db:"initial_utm_source" validate:"omitempty"`
-	InitialUtmMedium   string   `json:"initialUtmMedium,omitempty" db:"initial_utm_medium" validate:"omitempty"`
-	InitialUtmCampaign string   `json:"initialUtmCampaign,omitempty" db:"initial_utm_campaign" validate:"omitempty"`
-	Country            string   `json:"country,omitempty" db:"$country" validate:"omitempty,len=2"`
-	State              string   `json:"state,omitempty" db:"$state" validate:"omitempty"`
-	City               string   `json:"city,omitempty" db:"$city" validate:"omitempty"`
-	OrAPIEndpoint      string   `json:"orApiEndpoint,omitempty" db:"$or_api_endpoint" validate:"omitempty"`
-	Timezone           int8     `json:"timezone,omitempty" db:"$timezone" validate:"omitempty"`
-	FirstEventAt       string   `json:"firstEventAt,omitempty" db:"$first_event_at" validate:"omitempty"`
-	LastSeen           string   `json:"lastSeen,omitempty" db:"$last_seen" validate:"omitempty"`
+	ProjectID          uint16                  `json:"-" db:"project_id"`
+	UserID             string                  `json:"userId" db:"$user_id" validate:"required"`
+	Email              string                  `json:"email" db:"$email" validate:"omitempty,email"`
+	Name               string                  `json:"name" db:"$name" validate:"omitempty"`
+	FirstName          string                  `json:"firstName" db:"$first_name" validate:"omitempty"`
+	LastName           string                  `json:"lastName" db:"$last_name" validate:"omitempty"`
+	Phone              string                  `json:"phone" db:"$phone" validate:"omitempty"`
+	Avatar             string                  `json:"avatar" db:"$avatar" validate:"omitempty,url"`
+	CreatedAt          int64                   `json:"createdAt" db:"$created_at" validate:"omitempty"`
+	Properties         *map[string]interface{} `json:"properties,omitempty"`
+	PropertiesRaw      *string                 `json:"-"`
+	GroupID1           []string                `json:"groupId1,omitempty" db:"group_id1"`
+	GroupID2           []string                `json:"groupId2,omitempty" db:"group_id2"`
+	GroupID3           []string                `json:"groupId3,omitempty" db:"group_id3"`
+	GroupID4           []string                `json:"groupId4,omitempty" db:"group_id4"`
+	GroupID5           []string                `json:"groupId5,omitempty" db:"group_id5"`
+	GroupID6           []string                `json:"groupId6,omitempty" db:"group_id6"`
+	SDKEdition         string                  `json:"sdkEdition,omitempty" db:"$sdk_edition" validate:"omitempty"`
+	SDKVersion         string                  `json:"sdkVersion,omitempty" db:"$sdk_version" validate:"omitempty"`
+	CurrentUrl         string                  `json:"currentUrl,omitempty" db:"$current_url" validate:"omitempty,url"`
+	InitialReferrer    string                  `json:"initialReferrer,omitempty" db:"$initial_referrer" validate:"omitempty"`
+	ReferringDomain    string                  `json:"referringDomain,omitempty" db:"$referring_domain" validate:"omitempty"`
+	InitialUtmSource   string                  `json:"initialUtmSource,omitempty" db:"initial_utm_source" validate:"omitempty"`
+	InitialUtmMedium   string                  `json:"initialUtmMedium,omitempty" db:"initial_utm_medium" validate:"omitempty"`
+	InitialUtmCampaign string                  `json:"initialUtmCampaign,omitempty" db:"initial_utm_campaign" validate:"omitempty"`
+	Country            string                  `json:"country,omitempty" db:"$country" validate:"omitempty,len=2"`
+	State              string                  `json:"state,omitempty" db:"$state" validate:"omitempty"`
+	City               string                  `json:"city,omitempty" db:"$city" validate:"omitempty"`
+	OrAPIEndpoint      string                  `json:"orApiEndpoint,omitempty" db:"$or_api_endpoint" validate:"omitempty"`
+	Timezone           int8                    `json:"timezone,omitempty" db:"$timezone" validate:"omitempty"`
+	FirstEventAt       int64                   `json:"firstEventAt,omitempty" db:"$first_event_at" validate:"omitempty"`
+	LastSeen           int64                   `json:"lastSeen,omitempty" db:"$last_seen" validate:"omitempty"`
+}
+
+func (u *User) UnmarshalProperties() error {
+	if u.PropertiesRaw != nil && *u.PropertiesRaw != "" && *u.PropertiesRaw != "null" {
+		m := make(map[string]interface{})
+		if err := json.Unmarshal([]byte(*u.PropertiesRaw), &m); err != nil {
+			return fmt.Errorf("failed to unmarshal properties: %w", err)
+		}
+		u.Properties = &m
+	}
+	return nil
 }
 
 type UserFilter struct {
@@ -172,6 +195,7 @@ type UserFilter struct {
 
 type SearchUsersRequest struct {
 	Filters   []UserFilter `json:"filters" validate:"omitempty,dive"`
+	Query     string       `json:"query" validate:"omitempty,max=100"`
 	Limit     int          `json:"limit" validate:"omitempty,min=1,max=200"`
 	Page      int          `json:"page" validate:"omitempty,min=1"`
 	SortBy    string       `json:"sortBy" validate:"omitempty,validateUserColumn"`
