@@ -33,7 +33,7 @@ type serviceBuilder struct {
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.webAPI, b.mobileAPI, b.conditionsAPI, b.tagsAPI}
+	return []api.Handlers{b.webAPI, b.mobileAPI, b.conditionsAPI, b.tagsAPI, b.sdkAPI}
 }
 
 func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics database.Database, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (api.ServiceBuilder, error) {
