@@ -168,6 +168,7 @@ var filterToColumnMapping = map[string]string{
 	"url":                "$current_url",
 	"urlPath":            "$current_path",
 	"fetchDuration":      "$duration_s",
+	"autoCaptured":       "$auto_captured",
 }
 
 var FilterColumnMapping = buildFilterColumnMapping()

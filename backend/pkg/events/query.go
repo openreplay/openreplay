@@ -35,7 +35,22 @@ func buildPlaceholderList(values []string) ([]string, []interface{}) {
 	return placeholders, params
 }
 
-func buildOperatorCondition(fullCol string, operator string, values []string, nature string) (string, []interface{}) {
+func buildOperatorCondition(fullCol string, operator string, values []string, nature string, dataType string) (string, []interface{}) {
+	if dataType == "boolean" {
+		switch operator {
+		case "true":
+			return fmt.Sprintf("%s = 1", fullCol), nil
+		case "false":
+			return fmt.Sprintf("%s = 0", fullCol), nil
+		case "isUndefined":
+			return fmt.Sprintf("isNull(%s)", fullCol), nil
+		case "isAny", "onAny":
+			return fmt.Sprintf("isNotNull(%s)", fullCol), nil
+		default:
+			return "", nil
+		}
+	}
+
 	if len(values) == 0 && operator != "isAny" && operator != "isUndefined" && operator != "onAny" {
 		return "", nil
 	}
@@ -65,7 +80,7 @@ func buildOperatorCondition(fullCol string, operator string, values []string, na
 		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
 	case "contains":
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol), 
+		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
 			func(v string) interface{} { return "%" + v + "%" })
 
 	case "notContains", "doesNotContain":
@@ -128,7 +143,7 @@ func buildOperatorCondition(fullCol string, operator string, values []string, na
 			}
 			return fmt.Sprintf("%s(%s, [%s])", opFunc, fullCol, strings.Join(placeholders, ", ")), params
 		}
-		
+
 		if len(values) == 0 {
 			return "", nil
 		}
@@ -149,7 +164,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 	if filter.IsEvent {
 		var sb strings.Builder
 		allParams := make([]interface{}, 0)
-		
+
 		sb.WriteString("(")
 		sb.WriteString(alias)
 		sb.WriteString(`"$event_name" = ?`)
@@ -171,7 +186,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 					subAllParams = append(subAllParams, subParams...)
 				}
 			}
-			
+
 			if len(subConditions) > 0 {
 				joinOp := " AND "
 				if filter.PropertyOrder == "or" {
@@ -183,7 +198,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 				allParams = append(allParams, subAllParams...)
 			}
 		}
-		
+
 		sb.WriteString(")")
 		return sb.String(), allParams
 	}
@@ -195,6 +210,8 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 	var dbCol string
 	var fullCol string
 	var nature string = "singleColumn"
+
+	var dataType string = filter.DataType
 
 	if filterMapping, exists := model.FilterColumnMapping[column]; exists {
 		dbCol = filterMapping[0]
@@ -210,15 +227,17 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 		if !filter.AutoCaptured {
 			propertiesCol = "properties"
 		}
-		
+
 		isNumeric := filter.DataType == "float" || filter.DataType == "number" || filter.DataType == "int"
 		if isNumeric {
 			fullCol = fmt.Sprintf("JSONExtractFloat(toString(%s%s), ?)", alias, propertiesCol)
+		} else if isBoolean := filter.DataType == "boolean"; isBoolean {
+			fullCol = fmt.Sprintf("JSONExtractBool(toString(%s%s), ?)", alias, propertiesCol)
 		} else {
 			fullCol = fmt.Sprintf("JSONExtractString(toString(%s%s), ?)", alias, propertiesCol)
 		}
-		
-		cond, params := buildOperatorCondition(fullCol, operator, values, nature)
+
+		cond, params := buildOperatorCondition(fullCol, operator, values, nature, dataType)
 		if cond != "" {
 			allParams := []interface{}{column}
 			allParams = append(allParams, params...)
@@ -227,7 +246,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 		return "", nil
 	}
 
-	return buildOperatorCondition(fullCol, operator, values, nature)
+	return buildOperatorCondition(fullCol, operator, values, nature, dataType)
 }
 
 func BuildEventSearchQuery(tableAlias string, filters []analyticsModel.Filter) ([]string, []interface{}) {
@@ -251,11 +270,11 @@ func BuildEventSearchQuery(tableAlias string, filters []analyticsModel.Filter) (
 
 func ValidateSortColumn(column string) string {
 	switch column {
-	case "created_at", "time":
+	case "created_at", "time", "properties", "$properties":
 		return "created_at"
-	case "eventName":
+	case "eventName", "$event_name":
 		return `"$event_name"`
-	case "distinctId":
+	case "distinctId", "distinct_id":
 		return "distinct_id"
 	default:
 		if dbCol, ok := model.ColumnMapping[column]; ok {
@@ -277,7 +296,7 @@ func formatColumnForSelect(alias, col string, dbCol string) string {
 	if col == "properties" || col == "$properties" {
 		return fmt.Sprintf("toString(%s%s)", alias, dbCol)
 	}
-	
+
 	return alias + dbCol
 }
 
