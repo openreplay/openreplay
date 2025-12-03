@@ -124,7 +124,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 
 	for _, filter := range allFilters {
 		if !filter.IsEvent {
-			if _, ok := SessionColumns[filter.Name]; ok {
+			if _, ok := SessionColumns[filter.Name]; ok || filter.AutoCaptured && strings.HasPrefix(filter.Name, "metadata_") {
 				sessionFilters = append(sessionFilters, filter)
 			} else {
 				namelessEventFilters = append(namelessEventFilters, filter)
