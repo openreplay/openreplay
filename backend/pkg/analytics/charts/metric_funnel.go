@@ -123,15 +123,20 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	)
 
 	for _, filter := range allFilters {
+		filterName := filter.Name
+		if filter.AutoCaptured {
+			filterName = CamelToSnake(filterName)
+		}
 		if !filter.IsEvent {
-			if _, ok := SessionColumns[filter.Name]; ok || filter.AutoCaptured && strings.HasPrefix(filter.Name, "metadata_") {
+			if _, ok := SessionColumns[filterName]; ok ||
+				filter.AutoCaptured && strings.HasPrefix(filterName, "metadata_") {
 				sessionFilters = append(sessionFilters, filter)
 			} else {
 				namelessEventFilters = append(namelessEventFilters, filter)
 			}
 		} else {
 			eventFilters = append(eventFilters, filter)
-			stages = append(stages, filter.Name)
+			stages = append(stages, filterName)
 		}
 	}
 
