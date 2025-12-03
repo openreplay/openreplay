@@ -41,7 +41,7 @@ var OperatorsMath []string = []string{"=", "<", ">", "<=", ">="}
 
 type Filter struct {
 	Name          string   `json:"name" validate:"required_without=Type"` // excluded_with=Type
-	Operator      string   `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >="`
+	Operator      string   `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >= true false"`
 	PropertyOrder string   `json:"propertyOrder" validate:"omitempty,oneof=or and"`
 	Value         []string `json:"value" validate:"required_with=Type,max=10,dive"`
 	IsEvent       bool     `json:"isEvent"` // validate:"required" doesn't work with 'false' value
