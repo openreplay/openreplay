@@ -1,15 +1,12 @@
 import { makeAutoObservable } from 'mobx';
 import { analyticsService } from '@/services';
-import {
-  EventsResponse,
-  EventResp,
-  EventsPayload,
-} from '@/services/AnalyticsService';
+import { EventsResponse, EventsPayload } from '@/services/AnalyticsService';
 import { Filter } from '@/mstore/types/filterConstants';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
+import Event, { listColumns } from './types/Analytics/Event';
 
 export default class AnalyticsStore {
-  events: EventsResponse = {
+  events: { total: number; events: Event[] } = {
     total: 0,
     events: [],
   };
@@ -75,10 +72,14 @@ export default class AnalyticsStore {
   fetchEvents = async () => {
     this.setLoading(true);
     try {
-      const data: EventsResponse = await analyticsService.getEvents(
-        this.payloadFilters,
-      );
-      this.events = data;
+      const data: EventsResponse = await analyticsService.getEvents({
+        ...this.payloadFilters,
+        columns: listColumns,
+      });
+      this.events = {
+        total: data.total,
+        events: data.events.map((ev) => new Event(ev)),
+      };
 
       return data;
     } catch (e) {

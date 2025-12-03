@@ -1,10 +1,12 @@
 import React from 'react';
-import { SingleEvent, EventResp } from '@/services/AnalyticsService';
 import { Segmented, Input } from 'antd';
-import { X, List, Braces, Files } from 'lucide-react';
+import { X, List, Braces, Files, Code } from 'lucide-react';
 import copy from 'copy-to-clipboard';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsService } from '@/services';
+import Event from '@/mstore/types/Analytics/Event';
+import { session, withSiteId } from '@/routes';
+import { Link } from 'react-router-dom';
 
 const tabs = [
   {
@@ -33,33 +35,35 @@ const views = [
 ];
 
 function EventDetailsModal({
-  ev,
+  event_id,
   onClose,
+  siteId,
 }: {
-  ev: SingleEvent;
+  event_id: string;
   onClose: () => void;
+  siteId: string;
 }) {
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState(tabs[0].value);
   const [view, setView] = React.useState(views[0].value);
-  const { data: event } = useQuery<EventResp | null>({
-    queryKey: ['event-details', ev.event_id],
+  const { data: event } = useQuery<Event | null>({
+    queryKey: ['event-details', event_id],
     queryFn: async () => {
-      const data = await analyticsService.getEvent(ev.event_id);
-      return data;
+      const data = await analyticsService.getEvent(event_id);
+      return new Event(data);
     },
     initialData: null,
   });
   const tabProps = event
     ? {
-        all: { ...event, ...event.$properties },
-        custom: { ...event.$properties },
-        default: { ...event },
+        all: event.allProps,
+        custom: event.customProps,
+        default: event.defaultProps,
       }
     : {
-        all: { ...ev },
+        all: {},
         custom: {},
-        default: { ...ev },
+        default: {},
       };
   const dataFields = tabProps[tab];
   const fieldArr = Object.entries(dataFields);
@@ -72,7 +76,7 @@ function EventDetailsModal({
         });
   const strProps = JSON.stringify(
     {
-      event: ev.event_name,
+      event: event?.event_name ?? 'event',
       properties: dataFields,
     },
     null,
@@ -101,14 +105,21 @@ function EventDetailsModal({
         </div>
       </div>
       <div className={'p-2 rounded-lg bg-active-blue flex items-center gap-2'}>
-        <div>icn</div>
-        <div className={'font-semibold'}>{ev.event_name}</div>
-        <div className={'link ml-auto flex gap-1 items-center'}>
+        <div>
+          <Code size={16} />
+        </div>
+        <div className={'font-semibold'}>{event?.event_name ?? 'event'}</div>
+        <Link
+          to={withSiteId(session(event?.session_id), siteId)}
+          className={'link ml-auto flex gap-1 items-center'}
+        >
           <span>Play Session</span>
           <Triangle size={10} color={'blue'} />
-        </div>
+        </Link>
       </div>
-      <Segmented options={tabs} value={tab} onChange={(v) => setTab(v)} />
+      <div className="w-fit ml-auto">
+        <Segmented options={tabs} value={tab} onChange={(v) => setTab(v)} />
+      </div>
       <div className={'flex items-center gap-2'}>
         <Segmented
           value={view}
@@ -130,13 +141,16 @@ function EventDetailsModal({
         >
           {filteredArr.map(([key, value]) => (
             <div key={key} className={'flex items-center border-b'}>
-              <div className={'flex-1'}>{key}</div>
+              <div className={'w-[200px]'}>{key}</div>
               <div className={'flex-1 text-disabled-text'}>{value}</div>
             </div>
           ))}
         </div>
       ) : (
-        <div className={'relative'}>
+        <div
+          className={'relative overflow-y-auto'}
+          style={{ height: 'calc(100% - 200px)' }}
+        >
           <div
             onClick={onCopy}
             className={'absolute right-0 top-0 cursor-pointer hover:text-blue'}

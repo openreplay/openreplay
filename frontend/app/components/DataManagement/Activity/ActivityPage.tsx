@@ -6,7 +6,6 @@ import { Dropdown, Button, Divider } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
-import Event from './data/Event';
 import { useModal } from 'App/components/Modal';
 import EventDetailsModal from './EventDetailsModal';
 import Select from 'Shared/Select';
@@ -20,53 +19,11 @@ import DndTable from 'Shared/DNDTable';
 import { Code, Plus } from 'lucide-react';
 import { Filter } from '@/mstore/types/filterConstants';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
+import { resentOrDate } from 'App/date';
 
 const limit = 100;
 
 // TODO: ADD PERMISSION CHECK DATA_MANAGEMENT
-
-const testEv = new Event({
-  name: 'test ev #',
-  time: Date.now(),
-  defaultFields: {
-    userId: '123',
-    userLocation: 'NY',
-    userEnvironment: 'Mac OS',
-  },
-  customFields: {},
-  isAutoCapture: false,
-  sessionId: '123123',
-  displayName: 'Test Event',
-  description: 'This is A test Event',
-  monthQuery: 100,
-  monthVolume: 1000,
-});
-const testAutoEv = new Event({
-  name: 'auto test ev',
-  time: Date.now(),
-  defaultFields: {
-    userId: '123',
-    userLocation: 'NY',
-    userEnvironment: 'Mac OS',
-  },
-  customFields: {},
-  isAutoCapture: true,
-  sessionId: '123123',
-  displayName: 'Test Auto Event',
-  description: 'This is A test Auto Event',
-  monthQuery: 100,
-  monthVolume: 1000,
-});
-export const list = [testEv.toData(), testAutoEv.toData()];
-
-const fetcher = async (
-  page: number,
-): Promise<{ list: any[]; total: number }> => {
-  const total = 3000;
-  return new Promise((resolve) => {
-    resolve({ list, total });
-  });
-};
 
 const columnOrderKey = '$__activity_columns_order__$';
 
@@ -86,31 +43,32 @@ function ActivityPage() {
   const columns = [
     {
       title: 'Event Name',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'event_name',
+      key: 'event_name',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      sorter: (a, b) => a.event_name.localeCompare(b.event_name),
       render: (text, row) => (
         <div className={'flex items-center gap-2 code-font'}>
           <Code size={16} />
-          {row.$_isAutoCapture && <span className={'text-gray-500'}>[a]</span>}
-          <span>{row.name}</span>
+          {row.isAutoCapture && <span className={'text-gray-500'}>[a]</span>}
+          <span>{row.event_name}</span>
         </div>
       ),
     },
     {
       title: 'Time',
-      dataIndex: 'time',
-      key: 'time',
+      dataIndex: 'created_at',
+      key: 'created_at',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.time - b.time,
+      sorter: (a, b) => a.created_at - b.created_at,
+      render: (text) => resentOrDate(text),
     },
     {
       title: 'Distinct ID',
-      dataIndex: 'userId',
-      key: 'userId',
+      dataIndex: 'distinct_id',
+      key: 'distinct_id',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userId.localeCompare(b.userId),
+      sorter: (a, b) => a.distinct_id.localeCompare(b.distinct_id),
       render: (text) => (
         <Link
           to={withSiteId(dataManagement.userPage(text), siteId)}
@@ -125,17 +83,17 @@ function ActivityPage() {
     },
     {
       title: 'City',
-      dataIndex: 'userLocation',
-      key: 'userLocation',
+      dataIndex: 'city',
+      key: 'city',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userLocation.localeCompare(b.userLocation),
+      sorter: (a, b) => a.city.localeCompare(b.city),
     },
     {
       title: 'Environment',
-      dataIndex: 'userEnvironment',
-      key: 'userEnvironment',
+      dataIndex: 'environment',
+      key: 'environment',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userEnvironment.localeCompare(b.userEnvironment),
+      sorter: (a, b) => a.environment.localeCompare(b.environment),
     },
     {
       title: (
@@ -217,11 +175,18 @@ function ActivityPage() {
     analyticsStore.editPayload({ page });
   };
 
-  const onItemClick = (ev: Event) => {
-    showModal(<EventDetailsModal ev={ev} onClose={hideModal} />, {
-      width: 420,
-      right: true,
-    });
+  const onItemClick = (ev: { event_id: string }) => {
+    showModal(
+      <EventDetailsModal
+        siteId={siteId!}
+        event_id={ev.event_id}
+        onClose={hideModal}
+      />,
+      {
+        width: 620,
+        right: true,
+      },
+    );
   };
 
   const onUpdateVisibleCols = (cols: string[]) => {
@@ -315,7 +280,7 @@ function ActivityPage() {
         {editCols ? (
           <OutsideClickDetectingDiv onClickOutside={() => setEditCols(false)}>
             <ColumnsModal
-              columns={shownCols.filter((col) => col.key !== '$__opts__$')}
+              columns={cols.filter((col) => col.key !== '$__opts__$')}
               onSelect={onUpdateVisibleCols}
               hiddenCols={hiddenCols}
             />

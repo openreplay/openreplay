@@ -175,7 +175,14 @@ function SideMenu(props: Props) {
             open={mobileMenuOpen}
             closeIcon={false}
           >
-            {renderMenu()}
+            {
+              <MenuContent
+                menu={menu}
+                isMenuItemActive={isMenuItemActive}
+                handleClick={handleClick}
+                isCollapsed={isCollapsed}
+              />
+            }
           </Drawer>
 
           <Button
