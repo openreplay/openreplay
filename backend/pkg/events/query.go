@@ -293,11 +293,18 @@ func ValidateSortOrder(order string) string {
 }
 
 func formatColumnForSelect(alias, col string, dbCol string) string {
-	if col == "properties" || col == "$properties" {
-		return fmt.Sprintf("toString(%s%s)", alias, dbCol)
+	if col == "properties" {
+		return fmt.Sprintf("toString(%s%s) AS properties", alias, dbCol)
+	}
+	if col == "$properties" {
+		return fmt.Sprintf("toString(%s%s) AS \"$properties\"", alias, dbCol)
+	}
+	
+	if strings.HasPrefix(col, "$") {
+		return fmt.Sprintf("%s%s AS \"%s\"", alias, dbCol, col)
 	}
 
-	return alias + dbCol
+	return fmt.Sprintf("%s%s AS %s", alias, dbCol, col)
 }
 
 func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
@@ -309,7 +316,7 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 	baseColumns := []string{
 		alias + "project_id",
 		fmt.Sprintf("toString(%sevent_id) AS event_id", alias),
-		fmt.Sprintf("%s\"$event_name\" AS event_name", alias),
+		fmt.Sprintf("%s\"$event_name\" AS \"$event_name\"", alias),
 		fmt.Sprintf("toUnixTimestamp64Milli(%screated_at) AS created_at", alias),
 		alias + "distinct_id",
 		fmt.Sprintf("toString(%ssession_id) AS session_id", alias),
