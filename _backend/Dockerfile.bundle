@@ -1,0 +1,80 @@
+FROM golang:1.19-alpine3.15 AS prepare
+
+RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl-gssapi cyrus-sasl-devel
+
+WORKDIR /root
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+
+FROM prepare AS build
+COPY cmd cmd
+COPY pkg pkg
+COPY internal internal
+
+RUN for name in assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags dynamic openreplay/backend/cmd/$name; done
+
+FROM alpine AS entrypoint
+#FROM pygmy/alpine-tini:latest
+RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl-gssapi cyrus-sasl-devel pkgconf
+
+ENV TZ=UTC \
+    FS_ULIMIT=1000 \
+    FS_DIR=/filestorage \
+    MAXMINDDB_FILE=/root/geoip.mmdb \
+    UAPARSER_FILE=/root/regexes.yaml \
+    HTTP_PORT=80 \
+    BEACON_SIZE_LIMIT=7000000 \
+    KAFKA_USE_SSL=true \
+    # KAFKA_USE_KERBEROS should be set true if you wish to use Kerberos auth for Kafka
+    KAFKA_USE_KERBEROS=false \
+    # KERBEROS_SERVICE_NAME is the primary name of the Brokers configured in the Broker JAAS file
+    KERBEROS_SERVICE_NAME="" \
+    # KERBEROS_PRINCIPAL is this client's principal name
+    KERBEROS_PRINCIPAL="" \
+    # KERBEROS_PRINCIPAL is the absolute path to the keytab to be used for authentication
+    KERBEROS_KEYTAB_LOCATION="" \
+    # KAFKA_SSL_KEY is the absolute path to the CA cert for verifying the broker's key
+    KAFKA_SSL_KEY="" \
+    # KAFKA_SSL_CERT is a CA cert string (PEM format) for verifying the broker's key
+    KAFKA_SSL_CERT="" \
+    KAFKA_MAX_POLL_INTERVAL_MS=400000 \
+    REDIS_STREAMS_MAX_LEN=3000 \
+    TOPIC_RAW_WEB=raw \
+    TOPIC_RAW_IOS=raw-ios \
+    TOPIC_CACHE=cache \
+    TOPIC_ANALYTICS=analytics \
+    TOPIC_TRIGGER=trigger \
+    GROUP_SINK=sink \
+    GROUP_STORAGE=storage \
+    GROUP_DB=db \
+    GROUP_ENDER=ender \
+    GROUP_CACHE=cache \
+    AWS_REGION_WEB=eu-central-1 \
+    AWS_REGION_IOS=eu-west-1 \
+    AWS_REGION_ASSETS=eu-central-1 \
+    CACHE_ASSETS=true \
+    ASSETS_SIZE_LIMIT=6291456 \
+    FS_CLEAN_HRS=12 \
+    FILE_SPLIT_SIZE=300000 \
+    LOG_QUEUE_STATS_INTERVAL_SEC=60
+
+RUN mkdir $FS_DIR
+#VOLUME [ $FS_DIR ] # Uncomment in case of using Bind mount.
+
+RUN wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
+  wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"
+
+
+WORKDIR /work
+
+COPY --from=build /root/bin ./bin
+COPY entrypoint.sh .
+
+####
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["./entrypoint.sh"]
+
