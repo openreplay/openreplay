@@ -86,7 +86,7 @@ func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyB
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.users.SearchUsers(projID, req)
+	response, err := h.users.SearchUsers(r.Context(), projID, req)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -117,7 +117,7 @@ func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request, startTime
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.users.GetByUserID(projID, userID)
+	response, err := h.users.GetByUserID(r.Context(), projID, userID)
 	if err != nil {
 		return nil, http.StatusNotFound, err
 	}
@@ -131,29 +131,29 @@ func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request, startTime
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
-// @Param userID path uint true "User ID"
-// @Success 200 {object} model.User
+// @Param userID path string true "User ID"
+// @Success 200 {object} map[string]string
 // @Failure 400 {object} api.ErrorResponse "Bad Request"
 // @Failure 404 {object} api.ErrorResponse "Not Found"
 // @Failure 500 {object} api.ErrorResponse "Internal Server Error"
 // @Router /{project}/user/{userID} [delete]
-func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (*model.User, int, error) {
+func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (map[string]string, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
-	userID, err := api.GetPathParam(r, "userID", api.ParseUint32)
+	userID, err := api.GetPathParam(r, "userID", api.ParseString)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.users.DeleteUser(projID, userID)
+	err = h.users.DeleteUser(r.Context(), projID, userID)
 	if err != nil {
-		return nil, http.StatusNotFound, err
+		return nil, http.StatusInternalServerError, err
 	}
 
-	return response, 0, nil
+	return map[string]string{"message": "user deleted successfully"}, 0, nil
 }
 
 // @Summary Update User
@@ -162,7 +162,7 @@ func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startT
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
-// @Param userID path uint true "User ID"
+// @Param userID path string true "User ID"
 // @Param user body model.User true "User Data"
 // @Success 200 {object} model.User
 // @Failure 400 {object} api.ErrorResponse "Bad Request"
@@ -185,15 +185,13 @@ func (h *handlersImpl) updateUser(w http.ResponseWriter, r *http.Request, bodyBy
 		return nil, http.StatusBadRequest, err
 	}
 
-	if user.UserID != userID {
-		return nil, http.StatusBadRequest, err
-	}
+	user.UserID = userID
 
 	if err = model.ValidateStruct(user); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.users.UpdateUser(projID, user)
+	response, err := h.users.UpdateUser(r.Context(), projID, user)
 	if err != nil {
 		return nil, http.StatusNotFound, err
 	}

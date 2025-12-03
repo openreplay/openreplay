@@ -187,6 +187,17 @@ func (u *User) UnmarshalProperties() error {
 	return nil
 }
 
+func (u *User) MarshalProperties() (string, error) {
+	if u.Properties == nil {
+		return "{}", nil
+	}
+	data, err := json.Marshal(u.Properties)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal properties: %w", err)
+	}
+	return string(data), nil
+}
+
 type UserFilter struct {
 	Name     string   `json:"name" validate:"required,validateUserColumn"`
 	Operator string   `json:"operator" validate:"required,validateFilterOperator"`
