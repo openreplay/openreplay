@@ -9,6 +9,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"openreplay/backend/pkg/filters"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/users/model"
 )
@@ -85,8 +86,9 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	offset := (req.Page - 1) * req.Limit
 
 	whereClause, params := u.buildSearchQueryParams(projID, req)
-	selectColumns := u.buildSelectColumns(req.Columns)
-	sortBy, sortOrder := u.buildSortClause(req.SortBy, req.SortOrder)
+	selectColumns := BuildSelectColumns("", req.Columns)
+	sortBy := ValidateSortColumn(req.SortBy)
+	sortOrder := filters.ValidateSortOrder(req.SortOrder)
 
 	query := fmt.Sprintf(`
 		WITH latest_users AS (
@@ -101,7 +103,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 		WHERE _is_deleted = 0
 		ORDER BY %s %s
 		LIMIT ? OFFSET ?`,
-		whereClause, selectColumns, sortBy, sortOrder)
+		whereClause, strings.Join(selectColumns, ", "), sortBy, sortOrder)
 
 	queryParams := append(params, req.Limit, offset)
 
@@ -151,7 +153,6 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 	}
 	params := []interface{}{projID}
 
-	// Query string search for name, email, or user_id
 	if req.Query != "" {
 		queryPattern := "%" + req.Query + "%"
 		queryCondition := `("$user_id" ILIKE ? OR "$email" ILIKE ? OR "$name" ILIKE ?)`
@@ -159,209 +160,11 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 		params = append(params, queryPattern, queryPattern, queryPattern)
 	}
 
-	for _, filter := range req.Filters {
-		cond, condParams := u.buildFilterCondition(filter)
-		if cond != "" {
-			baseConditions = append(baseConditions, cond)
-			params = append(params, condParams...)
-		}
-	}
+	filterConditions, filterParams := BuildUserSearchQuery("", req.Filters)
+	whereClause := filters.BuildWhereClause(baseConditions, filterConditions)
+	params = append(params, filterParams...)
 
-	whereClause := strings.Join(baseConditions, " AND ")
 	return whereClause, params
-}
-
-func (u *usersImpl) buildFilterCondition(filter model.UserFilter) (string, []interface{}) {
-	mappedCol, ok := model.ColumnMapping[filter.Name]
-	if !ok {
-		mappedCol = filter.Name
-	}
-
-	switch filter.Operator {
-	case "isAny":
-		return fmt.Sprintf("isNotNull(%s)", mappedCol), nil
-
-	case "isUndefined":
-		return fmt.Sprintf("isNull(%s)", mappedCol), nil
-
-	case "is":
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		if len(filter.Value) == 1 {
-			return fmt.Sprintf("%s = ?", mappedCol), []interface{}{filter.Value[0]}
-		}
-		placeholders := make([]string, len(filter.Value))
-		params := make([]interface{}, len(filter.Value))
-		for i, v := range filter.Value {
-			placeholders[i] = "?"
-			params[i] = v
-		}
-		return fmt.Sprintf("%s IN (%s)", mappedCol, strings.Join(placeholders, ", ")), params
-
-	case "isNot":
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		if len(filter.Value) == 1 {
-			return fmt.Sprintf("%s != ?", mappedCol), []interface{}{filter.Value[0]}
-		}
-		placeholders := make([]string, len(filter.Value))
-		params := make([]interface{}, len(filter.Value))
-		for i, v := range filter.Value {
-			placeholders[i] = "?"
-			params[i] = v
-		}
-		return fmt.Sprintf("%s NOT IN (%s)", mappedCol, strings.Join(placeholders, ", ")), params
-
-	case "contains":
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		conditions := make([]string, len(filter.Value))
-		params := make([]interface{}, len(filter.Value))
-		for i, v := range filter.Value {
-			conditions[i] = fmt.Sprintf("%s ILIKE ?", mappedCol)
-			params[i] = "%" + v + "%"
-		}
-		if len(conditions) == 1 {
-			return conditions[0], params
-		}
-		return fmt.Sprintf("(%s)", strings.Join(conditions, " OR ")), params
-
-	case "notContains":
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		conditions := make([]string, len(filter.Value))
-		params := make([]interface{}, len(filter.Value))
-		for i, v := range filter.Value {
-			conditions[i] = fmt.Sprintf("%s ILIKE ?", mappedCol)
-			params[i] = "%" + v + "%"
-		}
-		cond := strings.Join(conditions, " OR ")
-		if len(conditions) == 1 {
-			return fmt.Sprintf("NOT (%s)", cond), params
-		}
-		return fmt.Sprintf("NOT (%s)", cond), params
-
-	case "startsWith":
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		conditions := make([]string, len(filter.Value))
-		params := make([]interface{}, len(filter.Value))
-		for i, v := range filter.Value {
-			conditions[i] = fmt.Sprintf("%s ILIKE ?", mappedCol)
-			params[i] = v + "%"
-		}
-		if len(conditions) == 1 {
-			return conditions[0], params
-		}
-		return fmt.Sprintf("(%s)", strings.Join(conditions, " OR ")), params
-
-	case "endsWith":
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		conditions := make([]string, len(filter.Value))
-		params := make([]interface{}, len(filter.Value))
-		for i, v := range filter.Value {
-			conditions[i] = fmt.Sprintf("%s ILIKE ?", mappedCol)
-			params[i] = "%" + v
-		}
-		if len(conditions) == 1 {
-			return conditions[0], params
-		}
-		return fmt.Sprintf("(%s)", strings.Join(conditions, " OR ")), params
-
-	case "=", ">", "<", ">=", "<=", "!=":
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		return fmt.Sprintf("%s %s ?", mappedCol, filter.Operator), []interface{}{filter.Value[0]}
-
-	default:
-		if len(filter.Value) == 0 {
-			return "", nil
-		}
-		if len(filter.Value) == 1 {
-			return fmt.Sprintf("%s = ?", mappedCol), []interface{}{filter.Value[0]}
-		}
-		placeholders := make([]string, len(filter.Value))
-		params := make([]interface{}, len(filter.Value))
-		for i, v := range filter.Value {
-			placeholders[i] = "?"
-			params[i] = v
-		}
-		return fmt.Sprintf("%s IN (%s)", mappedCol, strings.Join(placeholders, ", ")), params
-	}
-}
-
-func (u *usersImpl) buildSelectColumns(requestedCols []string) string {
-	baseColumns := []string{
-		"project_id",
-		`"$user_id"`,
-		`"$email"`,
-		`"$name"`,
-		`"$first_name"`,
-		`"$last_name"`,
-		`toInt64(toUnixTimestamp("$created_at") * 1000) AS created_at`,
-		`toInt64(toUnixTimestamp("$last_seen") * 1000) AS last_seen`,
-	}
-
-	if len(requestedCols) == 0 {
-		return strings.Join(baseColumns, ", ")
-	}
-
-	for _, col := range requestedCols {
-		if col == "$user_id" || col == "$email" || col == "$name" || col == "$first_name" || col == "$last_name" || col == "$created_at" || col == "$last_seen" || col == "project_id" {
-			continue
-		}
-		baseColumns = append(baseColumns, u.formatColumnForSelect(col))
-	}
-
-	return strings.Join(baseColumns, ", ")
-}
-
-func (u *usersImpl) formatColumnForSelect(col string) string {
-	mappedCol, ok := model.ColumnMapping[col]
-	if !ok {
-		mappedCol = col
-	}
-
-	switch col {
-	case "$created_at":
-		return `toInt64(toUnixTimestamp("$created_at") * 1000) AS created_at`
-	case "$first_event_at":
-		return `toInt64(toUnixTimestamp("$first_event_at") * 1000) AS first_event_at`
-	case "$last_seen":
-		return `toInt64(toUnixTimestamp("$last_seen") * 1000) AS last_seen`
-	case "properties":
-		return "toString(properties) AS properties"
-	default:
-		return mappedCol
-	}
-}
-
-func (u *usersImpl) buildSortClause(sortBy, sortOrder string) (string, string) {
-	sortCol := "_timestamp"
-	if sortBy != "" {
-		if mappedCol, ok := model.ColumnMapping[sortBy]; ok {
-			sortCol = mappedCol
-		} else {
-			sortCol = sortBy
-		}
-	}
-
-	order := "DESC"
-	if strings.ToUpper(sortOrder) == "ASC" {
-		order = "ASC"
-	} else if strings.ToUpper(sortOrder) == "DESC" {
-		order = "DESC"
-	}
-
-	return sortCol, order
 }
 
 func (u *usersImpl) getScanDestinations(user *model.User, requestedCols []string) []interface{} {
