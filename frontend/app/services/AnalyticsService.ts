@@ -90,7 +90,7 @@ export default class AnalyticsService extends BaseService {
 
   getEvent = async (eventId: string): Promise<EventResp> => {
     const r = await this.client.get(`/PROJECT_ID/events/${eventId}`);
-    const data = await r.json();
+    const { data } = await r.json();
     return data;
   };
 }
