@@ -27,6 +27,21 @@ export default class AnalyticsStore {
     makeAutoObservable(this);
   }
 
+  reset = () => {
+    this.payloadFilters = {
+      sortOrder: 'desc',
+      sortBy: 'time',
+      limit: 10,
+      startTimestamp: Date.now() - 3600 * 1000,
+      endTimestamp: Date.now(),
+      columns: [],
+      page: 1,
+      filters: [] as Filter[],
+    };
+    this.period = Period({ rangeName: LAST_24_HOURS });
+    this.events = { total: 0, events: [] };
+  };
+
   setPeriod = (period: any) => {
     this.period = period;
   };

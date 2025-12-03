@@ -20,6 +20,7 @@ import { Code, Plus } from 'lucide-react';
 import { Filter } from '@/mstore/types/filterConstants';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import { resentOrDate } from 'App/date';
+import { getSortingKey } from '@/mstore/types/Analytics/Event';
 
 const limit = 100;
 
@@ -46,7 +47,7 @@ function ActivityPage() {
       dataIndex: 'event_name',
       key: 'event_name',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.event_name.localeCompare(b.event_name),
+      sorter: true,
       render: (text, row) => (
         <div className={'flex items-center gap-2 code-font'}>
           <Code size={16} />
@@ -60,7 +61,7 @@ function ActivityPage() {
       dataIndex: 'created_at',
       key: 'created_at',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.created_at - b.created_at,
+      sorter: true,
       render: (text) => resentOrDate(text),
     },
     {
@@ -68,7 +69,7 @@ function ActivityPage() {
       dataIndex: 'distinct_id',
       key: 'distinct_id',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.distinct_id.localeCompare(b.distinct_id),
+      sorter: true,
       render: (text) => (
         <Link
           to={withSiteId(dataManagement.userPage(text), siteId)}
@@ -86,14 +87,14 @@ function ActivityPage() {
       dataIndex: 'city',
       key: 'city',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.city.localeCompare(b.city),
+      sorter: true,
     },
     {
       title: 'Environment',
       dataIndex: 'environment',
       key: 'environment',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.environment.localeCompare(b.environment),
+      sorter: true,
     },
     {
       title: (
@@ -128,13 +129,13 @@ function ActivityPage() {
   };
   const onUpdateFilter = (filterIndex: number, filter: Filter) => {
     analyticsStore.updateFilter(filterIndex, filter);
+    analyticsStore.fetchEvents();
   };
   const onRemoveFilter = (filterIndex: number) => {
     analyticsStore.removeFilter(filterIndex);
+    analyticsStore.fetchEvents();
   };
-  const onChangeEventsOrder = () => {};
-  const saveRequestPayloads = () => {};
-  const onFilterMove = () => {};
+
   const [editCols, setEditCols] = React.useState(false);
   const { showModal, hideModal } = useModal();
 
@@ -162,7 +163,7 @@ function ActivityPage() {
 
   React.useEffect(() => {
     analyticsStore.fetchEvents();
-  }, [analyticsStore.payloadFilters]);
+  }, [analyticsStore.payloadFilters, analyticsStore.payloadFilters.filters]);
 
   const onOrderChange = (newCols) => {
     const order = newCols.map((col) => col.key).join(',');
@@ -200,9 +201,83 @@ function ActivityPage() {
     setEditCols(false);
   };
 
-  const onSortOrderChange = (sortOrder) => {
+  const onColumnSort = (sorter: {
+    field: string;
+    order: 'ascend' | 'descend';
+  }) => {
+    if (!sorter.field) {
+      analyticsStore.editPayload({
+        sortOrder: 'desc',
+        sortBy: 'time',
+      });
+    } else {
+      analyticsStore.editPayload({
+        sortBy: getSortingKey(sorter.field),
+        sortOrder: sorter.order === 'ascend' ? 'asc' : 'desc',
+      });
+    }
+  };
+
+  // const onSortOrderChange = (sortOrder: 'asc' | 'desc' | 'time-asc' | 'time-desc') => {
+  //   if (sortOrder.startsWith('time-')) {
+  //     analyticsStore.editPayload({
+  //       sortOrder: sortOrder.endsWith('asc') ? 'asc' : 'desc',
+  //       sortBy: 'time',
+  //     });
+  //   } else {
+  //     analyticsStore.editPayload({
+  //       sortOrder,
+  //       sortBy: 'time',
+  //     });
+  //   }
+  // };
+  // const timeSortOptions =
+  //   analyticsStore.payloadFilters.sortBy !== 'time'
+  //     ? [
+  //         {
+  //           label:
+  //             columns.find(
+  //               (c) => c.key === analyticsStore.payloadFilters.sortBy,
+  //             )?.title ?? 'Custom',
+  //           value: 'desc',
+  //         },
+  //         {
+  //           label:
+  //             columns.find(
+  //               (c) => c.key === analyticsStore.payloadFilters.sortBy,
+  //             )?.title ?? 'Custom',
+  //           value: 'asc',
+  //         },
+  //         { label: 'Newest', value: 'time-desc' },
+  //         { label: 'Oldest', value: 'time-asc' },
+  //       ]
+  //     : [
+  //         { label: 'Newest', value: 'desc' },
+  //         { label: 'Oldest', value: 'asc' },
+  //       ];
+  // const timeSortDefault =
+  //   analyticsStore.payloadFilters.sortBy !== 'time' ? 'custom' : 'desc';
+
+  const sortedBy = columns.find(
+    (c) => c.key === analyticsStore.payloadFilters.sortBy,
+  )?.title;
+  const sortedAs =
+    analyticsStore.payloadFilters.sortOrder === 'asc'
+      ? 'ascending'
+      : 'descending';
+
+  const sortStr =
+    analyticsStore.payloadFilters.sortBy === 'time'
+      ? analyticsStore.payloadFilters.sortOrder === 'asc'
+        ? 'Oldest'
+        : 'Newest'
+      : `${sortedBy} (${sortedAs})`;
+  const sortDisabled = analyticsStore.payloadFilters.sortBy !== 'time';
+  const onQuickSort = () => {
+    const newSortOrder = analyticsStore.payloadFilters.sortOrder === 'asc' ? 'desc' : 'asc';
     analyticsStore.editPayload({
-      sortOrder,
+      sortBy: 'time',
+      sortOrder: newSortOrder,
     });
   };
   return (
@@ -214,9 +289,7 @@ function ActivityPage() {
       <div className={'shadow rounded-lg bg-white p-4 border'}>
         <FilterListHeader
           title="Events"
-          showEventsOrder={appliedEvents.length > 0}
           orderProps={appliedFilter}
-          onChangeOrder={onChangeEventsOrder}
           filterSelection={
             <FilterSelection
               filters={eventOptions}
@@ -242,7 +315,6 @@ function ActivityPage() {
           handleRemove={onRemoveFilter}
           handleUpdate={onUpdateFilter}
           handleAdd={onAddFilter}
-          handleMove={onFilterMove}
         />
 
         <Divider className="my-3" />
@@ -295,21 +367,21 @@ function ActivityPage() {
           <div className={'px-4 py-2 flex items-center gap-2'}>
             <div className={'font-semibold text-lg'}>All users activity</div>
             <div className={'ml-auto'} />
+            <Button onClick={onQuickSort} disabled={sortDisabled}>{sortStr}</Button>
             <SelectDateRange
               period={analyticsStore.period}
               onChange={analyticsStore.updateTimestamps}
+              right
             />
-            <Select
-              options={[
-                { label: 'Newest', value: 'desc' },
-                { label: 'Oldest', value: 'asc' },
-              ]}
-              defaultValue={'desc'}
+            {/* <Select
+              options={timeSortOptions}
+              defaultValue={timeSortDefault}
+              value={analyticsStore.payloadFilters.sortOrder}
               plain
               onChange={({ value }) => {
                 onSortOrderChange(value.value);
               }}
-            />
+            /> */}
           </div>
           {total === 0 ? (
             <div
@@ -346,6 +418,9 @@ function ActivityPage() {
                 pagination={false}
                 columns={cols}
                 onOrderChange={onOrderChange}
+                onChange={(a1, a2, sorter) => {
+                  onColumnSort(sorter);
+                }}
               />
               <FullPagination
                 page={page}
