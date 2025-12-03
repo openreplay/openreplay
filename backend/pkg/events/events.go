@@ -12,6 +12,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/events/model"
+	"openreplay/backend/pkg/filters"
 	"openreplay/backend/pkg/logger"
 )
 
@@ -630,7 +631,7 @@ func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSear
 	params = []interface{}{projID, req.StartDate, req.EndDate}
 
 	filterConditions, filterParams := BuildEventSearchQuery("e", req.Filters)
-	whereClause = BuildWhereClause(baseConditions, filterConditions)
+	whereClause = filters.BuildWhereClause(baseConditions, filterConditions)
 	params = append(params, filterParams...)
 
 	return whereClause, params
@@ -687,7 +688,7 @@ func (e *eventsImpl) SearchEvents(projID uint32, req *model.EventsSearchRequest)
 
 	selectColumns := BuildSelectColumns("e", req.Columns)
 	sortBy := "e." + ValidateSortColumn(req.SortBy)
-	sortOrder := ValidateSortOrder(req.SortOrder)
+	sortOrder := filters.ValidateSortOrder(req.SortOrder)
 
 	query := e.buildSearchQueryWithCount(whereClause, selectColumns, sortBy, sortOrder)
 	queryParams = append(queryParams, req.Limit, offset)

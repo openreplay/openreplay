@@ -6,154 +6,8 @@ import (
 
 	analyticsModel "openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/events/model"
+	"openreplay/backend/pkg/filters"
 )
-
-func buildMultiValueCondition(fullCol string, values []string, conditionTemplate string, transformValue func(string) interface{}) (string, []interface{}) {
-	parts := make([]string, len(values))
-	params := make([]interface{}, len(values))
-	for i, v := range values {
-		parts[i] = conditionTemplate
-		if transformValue != nil {
-			params[i] = transformValue(v)
-		} else {
-			params[i] = v
-		}
-	}
-	if len(parts) == 1 {
-		return parts[0], params
-	}
-	return "(" + strings.Join(parts, " OR ") + ")", params
-}
-
-func buildPlaceholderList(values []string) ([]string, []interface{}) {
-	placeholders := make([]string, len(values))
-	params := make([]interface{}, len(values))
-	for i, v := range values {
-		placeholders[i] = "?"
-		params[i] = v
-	}
-	return placeholders, params
-}
-
-func buildOperatorCondition(fullCol string, operator string, values []string, nature string, dataType string) (string, []interface{}) {
-	if dataType == "boolean" {
-		switch operator {
-		case "true":
-			return fmt.Sprintf("%s = 1", fullCol), nil
-		case "false":
-			return fmt.Sprintf("%s = 0", fullCol), nil
-		case "isUndefined":
-			return fmt.Sprintf("isNull(%s)", fullCol), nil
-		case "isAny", "onAny":
-			return fmt.Sprintf("isNotNull(%s)", fullCol), nil
-		default:
-			return "", nil
-		}
-	}
-
-	if len(values) == 0 && operator != "isAny" && operator != "isUndefined" && operator != "onAny" {
-		return "", nil
-	}
-
-	switch operator {
-	case "isAny", "onAny":
-		if nature == "arrayColumn" {
-			return fmt.Sprintf("notEmpty(%s)", fullCol), nil
-		}
-		return fmt.Sprintf("isNotNull(%s)", fullCol), nil
-
-	case "isUndefined":
-		return fmt.Sprintf("isNull(%s)", fullCol), nil
-
-	case "is", "equals", "on":
-		if len(values) == 1 {
-			return fmt.Sprintf("%s = ?", fullCol), []interface{}{values[0]}
-		}
-		placeholders, params := buildPlaceholderList(values)
-		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
-
-	case "isNot", "notEquals", "not", "off", "notOn":
-		if len(values) == 1 {
-			return fmt.Sprintf("%s != ?", fullCol), []interface{}{values[0]}
-		}
-		placeholders, params := buildPlaceholderList(values)
-		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
-
-	case "contains":
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
-			func(v string) interface{} { return "%" + v + "%" })
-
-	case "notContains", "doesNotContain":
-		cond, params := buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
-			func(v string) interface{} { return "%" + v + "%" })
-		return "NOT (" + cond + ")", params
-
-	case "startsWith":
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
-			func(v string) interface{} { return v + "%" })
-
-	case "endsWith":
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
-			func(v string) interface{} { return "%" + v })
-
-	case "regex":
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("match(%s, ?)", fullCol), nil)
-
-	case "in":
-		placeholders, params := buildPlaceholderList(values)
-		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
-
-	case "notIn":
-		placeholders, params := buildPlaceholderList(values)
-		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
-
-	case ">=", "gte", "greaterThanOrEqual":
-		if len(values) == 1 {
-			return fmt.Sprintf("%s >= ?", fullCol), []interface{}{values[0]}
-		}
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s >= ?", fullCol), nil)
-
-	case ">", "gt", "greaterThan":
-		if len(values) == 1 {
-			return fmt.Sprintf("%s > ?", fullCol), []interface{}{values[0]}
-		}
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s > ?", fullCol), nil)
-
-	case "<=", "lte", "lessThanOrEqual":
-		if len(values) == 1 {
-			return fmt.Sprintf("%s <= ?", fullCol), []interface{}{values[0]}
-		}
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s <= ?", fullCol), nil)
-
-	case "<", "lt", "lessThan":
-		if len(values) == 1 {
-			return fmt.Sprintf("%s < ?", fullCol), []interface{}{values[0]}
-		}
-		return buildMultiValueCondition(fullCol, values, fmt.Sprintf("%s < ?", fullCol), nil)
-
-	default:
-		if nature == "arrayColumn" {
-			if len(values) == 0 {
-				return "", nil
-			}
-			placeholders, params := buildPlaceholderList(values)
-			opFunc := "hasAny"
-			if operator == "isNot" || operator == "notEquals" || operator == "not" || operator == "off" || operator == "notOn" {
-				opFunc = "NOT hasAny"
-			}
-			return fmt.Sprintf("%s(%s, [%s])", opFunc, fullCol, strings.Join(placeholders, ", ")), params
-		}
-
-		if len(values) == 0 {
-			return "", nil
-		}
-		if len(values) == 1 {
-			return fmt.Sprintf("%s = ?", fullCol), []interface{}{values[0]}
-		}
-		placeholders, params := buildPlaceholderList(values)
-		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
-	}
-}
 
 func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (string, []interface{}) {
 	alias := tableAlias
@@ -237,7 +91,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 			fullCol = fmt.Sprintf("JSONExtractString(toString(%s%s), ?)", alias, propertiesCol)
 		}
 
-		cond, params := buildOperatorCondition(fullCol, operator, values, nature, dataType)
+		cond, params := filters.BuildOperatorCondition(fullCol, operator, values, filters.EventsConfig, nature, dataType)
 		if cond != "" {
 			allParams := []interface{}{column}
 			allParams = append(allParams, params...)
@@ -246,7 +100,7 @@ func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (stri
 		return "", nil
 	}
 
-	return buildOperatorCondition(fullCol, operator, values, nature, dataType)
+	return filters.BuildOperatorCondition(fullCol, operator, values, filters.EventsConfig, nature, dataType)
 }
 
 func BuildEventSearchQuery(tableAlias string, filters []analyticsModel.Filter) ([]string, []interface{}) {
@@ -282,14 +136,6 @@ func ValidateSortColumn(column string) string {
 		}
 		return "created_at"
 	}
-}
-
-func ValidateSortOrder(order string) string {
-	orderUpper := strings.ToUpper(order)
-	if orderUpper == "ASC" || orderUpper == "DESC" {
-		return orderUpper
-	}
-	return "DESC"
 }
 
 func formatColumnForSelect(alias, col string, dbCol string) string {
@@ -336,12 +182,4 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 	}
 
 	return baseColumns
-}
-
-func BuildWhereClause(baseConditions []string, filterConditions []string) string {
-	allConditions := append(baseConditions, filterConditions...)
-	if len(allConditions) == 0 {
-		return "1=1"
-	}
-	return strings.Join(allConditions, " AND ")
 }
