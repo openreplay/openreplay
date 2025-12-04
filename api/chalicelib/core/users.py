@@ -214,9 +214,8 @@ def get_user(user_id, tenant_id):
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         TRUE AS has_password,
                         settings
-                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
-                    WHERE
-                     users.user_id = %(userId)s
+                    FROM public.users  
+                    WHERE users.user_id = %(userId)s
                      AND deleted_at IS NULL
                     LIMIT 1;""",
                 {"userId": user_id})

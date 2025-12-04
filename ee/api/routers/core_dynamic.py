@@ -137,7 +137,6 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
             **r,
             **t,
             **license.get_status(context.tenant_id),
-            "settings": users.get_user_settings(context.user_id)["settings"],
             "smtp": smtp.has_smtp(),
             "saml2": SAML2_helper.is_saml2_available()
         }
