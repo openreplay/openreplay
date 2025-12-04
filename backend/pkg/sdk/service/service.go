@@ -104,15 +104,15 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 						}
 					case model.UserActionIncrementProperty:
 						for key, val := range action.Payload {
-							intVal, err := strconv.Atoi(val.(string))
-							if err != nil {
-								ds.log.Error(context.Background(), "can't convert value to int: %s", err)
+							intVal, ok := toInt(val)
+							if !ok {
+								ds.log.Error(context.Background(), "can't convert value to int, key=%s, val=%v", key, val)
 								continue
 							}
 							curr := user.Properties[key]
-							intCurr, err := strconv.Atoi(curr.(string))
-							if err != nil {
-								ds.log.Error(context.Background(), "can't convert value to int: %s", err)
+							intCurr, ok := toInt(curr)
+							if !ok {
+								ds.log.Error(context.Background(), "can't convert current value to int, key=%s, val=%v", key, curr)
 								continue
 							}
 							user.Properties[key] = intCurr + intVal
@@ -148,6 +148,29 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 	}
 	go ds.run()
 	return ds, nil
+}
+
+func toInt(v interface{}) (int, bool) {
+	switch n := v.(type) {
+	case int:
+		return n, true
+	case int32:
+		return int(n), true
+	case int64:
+		return int(n), true
+	case float32:
+		return int(n), true
+	case float64:
+		return int(n), true
+	case string:
+		i, err := strconv.Atoi(n)
+		if err != nil {
+			return 0, false
+		}
+		return i, true
+	default:
+		return 0, false
+	}
 }
 
 func (ds *dataSaverImpl) run() {
