@@ -10,11 +10,13 @@
     "staticPath": "./app/assets",
     "staticOutPath": "assets"
   },
-  "alias": { "@parcel/error-overlay": "./err-overlay.js" },
+  "alias": {
+    "@parcel/error-overlay": "./err-overlay.js"
+  },
   "scripts": {
     "start": "parcel app/index.html --port 3333 --open --lazy",
     "dev": "parcel app/index.html --port 3333 --open --lazy",
-    "build": "yarn gen:icons && yarn gen:colors && rm -rf public && parcel build app/assets/index.html --dist-dir public --no-source-maps",
+    "build": "yarn gen:icons && yarn gen:colors && rm -rf public && parcel build app/index.html --dist-dir public --no-source-maps",
     "upload:minio": "node ./scripts/upload-minio.js",
     "deploy:minio": "yarn build:minio && yarn upload:minio",
     "lint": "eslint --fix app; exit 0",
@@ -117,14 +119,12 @@
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
     "autoprefixer": "^10.4.21",
-    "compression-webpack-plugin": "^10.0.0",
     "country-data": "0.0.31",
     "css-loader": "^7.1.2",
     "cssnano": "^7.1.1",
     "cypress": "13.17.0",
     "cypress-image-snapshot": "^4.0.1",
     "dotenv": "^16.6.1",
-    "esbuild-loader": "^4.4.0",
     "eslint": "^9.37.0",
     "eslint-import-resolver-typescript": "^3.10.1",
     "eslint-plugin-jest": "^28.14.0",
