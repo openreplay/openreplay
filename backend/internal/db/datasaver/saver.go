@@ -3,6 +3,7 @@ package datasaver
 import (
 	"context"
 	"encoding/json"
+	"openreplay/backend/pkg/sdk/service"
 
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/canvas"
@@ -32,9 +33,10 @@ type saverImpl struct {
 	producer queue.Producer
 	tags     tags.Tags
 	canvases canvas.Canvases
+	users    service.Users
 }
 
-func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, issues issues.Issues, tags tags.Tags, canvases canvas.Canvases) Saver {
+func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, issues issues.Issues, tags tags.Tags, canvases canvas.Canvases, users service.Users) Saver {
 	if ch == nil {
 		log.Fatal(context.Background(), "ch pool is empty")
 	}
@@ -46,6 +48,7 @@ func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session ses
 		issues:   issues,
 		tags:     tags,
 		canvases: canvases,
+		users:    users,
 	}
 }
 
