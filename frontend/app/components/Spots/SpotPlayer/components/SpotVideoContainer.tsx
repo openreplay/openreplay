@@ -78,70 +78,68 @@ function SpotVideoContainer({
       } else {
         setProcessingState(ProcessingState.Ready);
       }
-      import('hls.js').then(({ default: Hls }) => {
-        const isSafari = /^((?!chrome|android).)*safari/i.test(
-          navigator.userAgent,
-        );
-        if (Hls.isSupported() && videoRef.current) {
-          if (isSafari) {
-            setLoaded(true);
-          } else {
-            videoRef.current.addEventListener('loadeddata', () => {
-              setLoaded(true);
-            });
-          }
-          if (streamFile) {
-            const hls = new Hls({
-              enableWorker: true,
-              maxBufferSize: 1000 * 1000,
-            });
-            const url = URL.createObjectURL(base64toblob(streamFile));
-            if (url && videoRef.current) {
-              hls.loadSource(url);
-              hls.attachMedia(videoRef.current);
-              startPlaying();
-              hlsRef.current = hls;
-            } else if (videoRef.current) {
-              videoRef.current.src = videoURL;
-              startPlaying();
-            }
-          } else {
-            const check = () => {
-              fetch(videoURL).then((r) => {
-                if (r.ok && r.status === 200) {
-                  if (videoRef.current) {
-                    videoRef.current.src = '';
-                    setTimeout(() => {
-                      videoRef.current!.src = videoURL;
-                      startPlaying();
-                    }, 0);
-                  }
-
-                  return true;
-                }
-                setTimeout(() => {
-                  check();
-                }, 1000);
-              });
-            };
-            check();
-          }
-        } else if (
-          streamFile &&
-          videoRef.current &&
-          videoRef.current.canPlayType('application/vnd.apple.mpegurl')
-        ) {
+      const isSafari = /^((?!chrome|android).)*safari/i.test(
+        navigator.userAgent,
+      );
+      if (Hls.isSupported() && videoRef.current) {
+        if (isSafari) {
           setLoaded(true);
-          videoRef.current.src = URL.createObjectURL(base64toblob(streamFile));
-          startPlaying();
-        } else if (videoRef.current) {
+        } else {
           videoRef.current.addEventListener('loadeddata', () => {
             setLoaded(true);
           });
-          videoRef.current.src = videoURL;
-          startPlaying();
         }
-      });
+        if (streamFile) {
+          const hls = new Hls({
+            enableWorker: true,
+            maxBufferSize: 1000 * 1000,
+          });
+          const url = URL.createObjectURL(base64toblob(streamFile));
+          if (url && videoRef.current) {
+            hls.loadSource(url);
+            hls.attachMedia(videoRef.current);
+            startPlaying();
+            hlsRef.current = hls;
+          } else if (videoRef.current) {
+            videoRef.current.src = videoURL;
+            startPlaying();
+          }
+        } else {
+          const check = () => {
+            fetch(videoURL).then((r) => {
+              if (r.ok && r.status === 200) {
+                if (videoRef.current) {
+                  videoRef.current.src = '';
+                  setTimeout(() => {
+                    videoRef.current!.src = videoURL;
+                    startPlaying();
+                  }, 0);
+                }
+
+                return true;
+              }
+              setTimeout(() => {
+                check();
+              }, 1000);
+            });
+          };
+          check();
+        }
+      } else if (
+        streamFile &&
+        videoRef.current &&
+        videoRef.current.canPlayType('application/vnd.apple.mpegurl')
+      ) {
+        setLoaded(true);
+        videoRef.current.src = URL.createObjectURL(base64toblob(streamFile));
+        startPlaying();
+      } else if (videoRef.current) {
+        videoRef.current.addEventListener('loadeddata', () => {
+          setLoaded(true);
+        });
+        videoRef.current.src = videoURL;
+        startPlaying();
+      }
     });
     return () => {
       hlsRef.current?.destroy();

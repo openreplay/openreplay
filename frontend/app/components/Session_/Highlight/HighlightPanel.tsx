@@ -9,6 +9,7 @@ import { observer } from 'mobx-react-lite';
 import { shortDurationFromMs } from 'App/date';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import html2canvas from '@codewonders/html2canvas';
 
 function maskDuration(input: string): string {
   const digits = input.replace(/\D/g, '');
@@ -148,6 +149,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       }
       onClose();
     } catch (e) {
+      console.error(e);
       toast.error(t('Failed to save highlight'));
     } finally {
       notesStore.setSaving(false);
@@ -286,16 +288,14 @@ async function elementToImage(el: any) {
 function elementToCanvas(doc: Document) {
   const el = doc.body;
   const srcMap = new WeakMap<HTMLImageElement, string>();
-  return import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
-    const images = doc.querySelectorAll('img');
-    images.forEach((img) => {
-      const sameOrigin =
-        new URL(img.src, location.href).origin === location.origin;
-      if (!sameOrigin) {
-        srcMap.set(img, img.src);
-        img.src = '';
-      }
-    });
+  const images = doc.querySelectorAll('img');
+  images.forEach((img) => {
+    const sameOrigin =
+      new URL(img.src, location.href).origin === location.origin;
+    if (!sameOrigin) {
+      srcMap.set(img, img.src);
+      img.src = '';
+    }
     return html2canvas(el, {
       scale: 1,
       allowTaint: false,

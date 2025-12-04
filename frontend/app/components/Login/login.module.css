@@ -6,9 +6,9 @@
   /* width: 520px; */
   /* left: 50%; */
   /* margin-left: -260px; */
-  
+
   & form {
-    padding: 10px 0;    
+    padding: 10px 0;
     border: solid 2px $gray-light;
     border-radius: 2px;
     background-color: white;
@@ -141,7 +141,7 @@
 
 .formField {
   margin-bottom: 20px;
-  > & label {
+  & label {
     margin-bottom: 10px !important;
   }
 }

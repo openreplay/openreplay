@@ -22,3 +22,5 @@ cypress.env.json
 *.diff.png
 cypress/videos/
 coverage
+dist
+.parcel-cache/

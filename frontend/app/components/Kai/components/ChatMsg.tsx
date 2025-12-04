@@ -20,6 +20,8 @@ import WidgetChart from '@/components/Dashboard/components/WidgetChart';
 import Widget from 'App/mstore/types/widget';
 import { useTranslation } from 'react-i18next';
 import SessionItem from 'Shared/SessionItem';
+import jsPDF from 'jspdf';
+import html2canvas from '@codewonders/html2canvas';
 
 function ChatMsg({
   userName,
@@ -63,7 +65,7 @@ function ChatMsg({
     kaiStore.sendMsgFeedback(feedback, messageId, siteId);
   };
 
-  const onExport = () => {
+  const onExport = async () => {
     setIsProcessing(true);
     if (!bodyRef.current) {
       toast.error('Failed to export message');
@@ -71,87 +73,83 @@ function ChatMsg({
       return;
     }
     const userPrompt = kaiStore.getPreviousMessage(message.messageId);
-    import('jspdf')
-      .then(async ({ jsPDF }) => {
-        const doc = new jsPDF();
-        const blockWidth = 170; // mm
-        const content = bodyRef.current!.cloneNode(true) as HTMLElement;
-        if (userPrompt) {
-          const titleHeader = document.createElement('h2');
-          titleHeader.textContent = userPrompt.text;
-          titleHeader.style.marginBottom = '10px';
-          content.prepend(titleHeader);
-        }
-        // insert logo  /assets/img/logo-img.png
-        const logo = new Image();
-        logo.src = '/assets/img/logo-img.png';
-        logo.style.width = '130px';
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.justifyContent = 'center';
-        container.style.marginBottom = '10mm';
-        container.style.width = `${blockWidth}mm`;
-        container.appendChild(logo);
-        content.prepend(container);
-        content.querySelectorAll('ul').forEach((ul) => {
-          const frag = document.createDocumentFragment();
-          ul.querySelectorAll('li').forEach((li) => {
-            const div = document.createElement('div');
-            div.textContent = '• ' + li.textContent;
-            frag.appendChild(div);
-          });
-          ul.replaceWith(frag);
+    try {
+      const doc = new jsPDF();
+      const blockWidth = 170; // mm
+      const content = bodyRef.current!.cloneNode(true) as HTMLElement;
+      if (userPrompt) {
+        const titleHeader = document.createElement('h2');
+        titleHeader.textContent = userPrompt.text;
+        titleHeader.style.marginBottom = '10px';
+        content.prepend(titleHeader);
+      }
+      // insert logo  /assets/img/logo-img.png
+      const logo = new Image();
+      logo.src = '/assets/img/logo-img.png';
+      logo.style.width = '130px';
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'center';
+      container.style.marginBottom = '10mm';
+      container.style.width = `${blockWidth}mm`;
+      container.appendChild(logo);
+      content.prepend(container);
+      content.querySelectorAll('ul').forEach((ul) => {
+        const frag = document.createDocumentFragment();
+        ul.querySelectorAll('li').forEach((li) => {
+          const div = document.createElement('div');
+          div.textContent = '• ' + li.textContent;
+          frag.appendChild(div);
         });
-        content.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((el) => {
-          (el as HTMLElement).style.letterSpacing = '0.5px';
-        });
-        content.querySelectorAll('*').forEach((node) => {
-          node.childNodes.forEach((child) => {
-            if (child.nodeType === Node.TEXT_NODE) {
-              const txt = child.textContent || '';
-              const replaced = txt.replace(/-/g, '–');
-              if (replaced !== txt) child.textContent = replaced;
-            }
-          });
-        });
-        if (metric && chartRef.current) {
-          const { default: html2canvas } = await import('html2canvas');
-          const metricContainer = chartRef.current;
-          const image = await html2canvas(metricContainer, {
-            backgroundColor: null,
-            scale: 2,
-          });
-          const imgData = image.toDataURL('image/png');
-          const imgHeight = (image.height * blockWidth) / image.width;
-          content.appendChild(
-            Object.assign(document.createElement('img'), {
-              src: imgData,
-              style: `width: ${blockWidth}mm; height: ${imgHeight}mm; margin-top: 10px;`,
-            }),
-          );
-        }
-        doc.html(content, {
-          callback: function (doc) {
-            doc.save((chatTitle ?? 'document') + '.pdf');
-          },
-          // top, bottom, ?, left
-          margin: [10, 10, 20, 20],
-          x: 0,
-          y: 0,
-          // Target width
-          width: blockWidth,
-          // Window width for rendering
-          windowWidth: 675,
-        });
-      })
-      .catch((e) => {
-        console.error('Error exporting message:', e);
-        toast.error('Failed to export message');
-      })
-      .finally(() => {
-        setIsProcessing(false);
+        ul.replaceWith(frag);
       });
+      content.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((el) => {
+        (el as HTMLElement).style.letterSpacing = '0.5px';
+      });
+      content.querySelectorAll('*').forEach((node) => {
+        node.childNodes.forEach((child) => {
+          if (child.nodeType === Node.TEXT_NODE) {
+            const txt = child.textContent || '';
+            const replaced = txt.replace(/-/g, '–');
+            if (replaced !== txt) child.textContent = replaced;
+          }
+        });
+      });
+      if (metric && chartRef.current) {
+        const metricContainer = chartRef.current;
+        const image = await html2canvas(metricContainer, {
+          backgroundColor: null,
+          scale: 2,
+        });
+        const imgData = image.toDataURL('image/png');
+        const imgHeight = (image.height * blockWidth) / image.width;
+        content.appendChild(
+          Object.assign(document.createElement('img'), {
+            src: imgData,
+            style: `width: ${blockWidth}mm; height: ${imgHeight}mm; margin-top: 10px;`,
+          }),
+        );
+      }
+      doc.html(content, {
+        callback: function (doc) {
+          doc.save((chatTitle ?? 'document') + '.pdf');
+        },
+        // top, bottom, ?, left
+        margin: [10, 10, 20, 20],
+        x: 0,
+        y: 0,
+        // Target width
+        width: blockWidth,
+        // Window width for rendering
+        windowWidth: 675,
+      });
+    } catch (e) {
+      console.error('Error exporting message:', e);
+      toast.error('Failed to export message');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   React.useEffect(() => {
