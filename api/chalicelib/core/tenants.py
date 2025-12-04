@@ -1,8 +1,14 @@
+from cachetools import TTLCache, cached
+from decouple import config
+
 from chalicelib.core import license
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
+cache = TTLCache(maxsize=1000, ttl=config("TENANTS_CACHE_TTL_S", cast=int, default=60))
 
+
+@cached(cache)
 def get_by_tenant_id(tenant_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT tenants.tenant_id,

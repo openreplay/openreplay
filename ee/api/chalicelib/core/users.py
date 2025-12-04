@@ -3,6 +3,7 @@ import logging
 import secrets
 from typing import Optional
 
+from cachetools import TTLCache, cached
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
 from psycopg2.extras import Json
@@ -328,6 +329,10 @@ def allow_password_change(user_id, delta_min=10):
     return pass_token
 
 
+cache = TTLCache(maxsize=5000, ttl=config("USERS_CACHE_TTL_S", cast=int, default=60))
+
+
+@cached(cache)
 def get_user(user_id, tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
