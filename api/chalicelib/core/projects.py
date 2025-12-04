@@ -3,6 +3,8 @@ import logging
 from collections import Counter
 from typing import Optional, List
 
+from cachetools import TTLCache, cached
+from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
@@ -56,6 +58,10 @@ def __create(tenant_id, data):
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
+cache = TTLCache(maxsize=5000, ttl=config("PROJECTS_CACHE_TTL_S", cast=int, default=20))
+
+
+@cached(cache)
 def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
     with pg_client.PostgresClient() as cur:
         extra_projection = ""
