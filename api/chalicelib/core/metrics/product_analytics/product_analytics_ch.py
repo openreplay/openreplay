@@ -459,7 +459,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                           FROM top_n
                                           WHERE top_n.event_number_in_session = {i})""")
 
-    with ch_client.ClickHouseClient(database="experimental") as ch:
+    with ch_client.ClickHouseClient() as ch:
         time_key = TimeUTC.now()
         _now = time()
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
