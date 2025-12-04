@@ -6,7 +6,6 @@ import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import Event from 'Components/DataManagement/Activity/data/Event';
 import { Files, Users, Eye, EyeOff } from 'lucide-react';
 import copy from 'copy-to-clipboard';
-import { list } from '../Activity/ActivityPage';
 import Select from 'Shared/Select';
 import { tsToCheckRecent } from 'App/date';
 import { useModal } from 'App/components/Modal';
@@ -16,6 +15,7 @@ import EventsByDay from './components/EventsByDay';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { dataManagement } from 'App/routes';
 
+const list = [];
 const card = 'rounded-lg border bg-white';
 
 function UserPage() {
