@@ -127,6 +127,7 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
         return {"errors": ["current user not found"]}
     t = tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
+        t = dict(t)
         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
         t["tenantName"] = t.pop("name")
     else:
