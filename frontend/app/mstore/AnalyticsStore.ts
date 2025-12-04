@@ -1,9 +1,11 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import { analyticsService } from '@/services';
 import { EventsResponse, EventsPayload } from '@/services/AnalyticsService';
 import { Filter } from '@/mstore/types/filterConstants';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import Event, { listColumns } from './types/Analytics/Event';
+import { filterStore } from 'App/mstore';
+import { checkFilterValue } from './types/filter';
 
 export default class AnalyticsStore {
   events: { total: number; events: Event[] } = {
@@ -20,7 +22,7 @@ export default class AnalyticsStore {
     endTimestamp: Date.now(),
     columns: [],
     page: 1,
-    filters: [] as Filter[],
+    filters: [],
   };
 
   constructor() {
@@ -66,8 +68,24 @@ export default class AnalyticsStore {
     }
   };
 
-  addFilter = (filter: Filter) => {
-    this.payloadFilters.filters.push(filter);
+  addFilter = async (filter: Filter) => {
+    if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
+      const props = await filterStore.getEventFilters(filter.id);
+      filter.filters = props?.filter((prop) => prop.defaultProperty);
+    }
+    filter.value = checkFilterValue(filter.value);
+    filter.operator = filter.operator || 'is';
+    filter.filters = filter.filters
+      ? filter.filters.map((subFilter: any) => ({
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
+      : [];
+    const oldFilters = this.payloadFilters.filters;
+
+    runInAction(() => {
+      this.payloadFilters.filters = [...oldFilters, filter];
+    });
   };
 
   updateFilter = (filterIndex: number, filter: Filter) => {
