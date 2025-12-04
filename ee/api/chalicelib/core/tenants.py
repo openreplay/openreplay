@@ -82,6 +82,7 @@ async def tenants_exists(use_pool=True):
             return row["exists"]
 
 
+@cached(cache)
 def get_by_tenant_key(tenant_key):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT tenants.tenant_id,
@@ -101,6 +102,7 @@ def get_by_tenant_key(tenant_key):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
+@cached(TTLCache(maxsize=10, ttl=config("S_ACCOUNT_CACHE_TTL_S", cast=int, default=300)))
 def has_service_account(tenant_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT 1
