@@ -37,7 +37,7 @@ var (
 )
 
 func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
-	u.log.Info(context.Background(), "user to insert: %+v", user)
+	u.log.Info(context.Background(), "sess: %d,user to insert: %+v", session.SessionID, user)
 	if err := u.conn.Exec(context.Background(), insertQuery,
 		session.ProjectID,
 		user.UserID,
