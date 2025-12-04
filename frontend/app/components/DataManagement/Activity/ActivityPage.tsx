@@ -22,8 +22,6 @@ import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import { resentOrDate } from 'App/date';
 import { getSortingKey } from '@/mstore/types/Analytics/Event';
 
-const limit = 100;
-
 // TODO: ADD PERMISSION CHECK DATA_MANAGEMENT
 
 const columnOrderKey = '$__activity_columns_order__$';
@@ -117,6 +115,7 @@ function ActivityPage() {
   const page = analyticsStore.payloadFilters.page;
   const list = analyticsStore.events.events;
   const total = analyticsStore.events.total;
+  const limit = analyticsStore.payloadFilters.limit;
   const isPending = analyticsStore.loading;
   const [cols, setCols] = React.useState(columns);
   const [hiddenCols, setHiddenCols] = React.useState([]);
