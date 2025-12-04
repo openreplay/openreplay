@@ -9,9 +9,9 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
-	"openreplay/backend/pkg/filters"
+	"openreplay/backend/pkg/analytics/filters"
+	"openreplay/backend/pkg/analytics/users/model"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/users/model"
 )
 
 type Users interface {

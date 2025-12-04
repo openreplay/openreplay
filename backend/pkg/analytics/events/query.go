@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	analyticsModel "openreplay/backend/pkg/analytics/model"
-	"openreplay/backend/pkg/events/model"
-	"openreplay/backend/pkg/filters"
+	"openreplay/backend/pkg/analytics/events/model"
+	"openreplay/backend/pkg/analytics/filters"
 )
 
 func buildFilterCondition(tableAlias string, filter analyticsModel.Filter) (string, []interface{}) {

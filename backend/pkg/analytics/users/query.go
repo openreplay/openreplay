@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"openreplay/backend/pkg/filters"
-	"openreplay/backend/pkg/users/model"
+	"openreplay/backend/pkg/analytics/filters"
+	"openreplay/backend/pkg/analytics/users/model"
 )
 
 func buildFilterCondition(tableAlias string, filter model.UserFilter) (string, []interface{}) {

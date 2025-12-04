@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"openreplay/backend/internal/config/common"
+	"openreplay/backend/pkg/analytics/users"
+	"openreplay/backend/pkg/analytics/users/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/users"
-	"openreplay/backend/pkg/users/model"
 )
 
 // @title OpenReplay Users API
