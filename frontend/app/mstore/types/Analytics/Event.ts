@@ -9,8 +9,6 @@ const default_keys = [
   '$time',
   '$source',
   '$duration_s',
-  'properties',
-  '$properties',
   'description',
   '$auto_captured',
   '$sdk_edition',
