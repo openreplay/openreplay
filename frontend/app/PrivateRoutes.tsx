@@ -53,7 +53,7 @@ const enhancedComponents: any = {
   Highlights: withSiteIdUpdater(components.HighlightsPure),
   Kai: withSiteIdUpdater(components.KaiPure),
   ScopeSetup: components.ScopeSetup,
-  Activity: components.ActivityPure,
+  Activity: withSiteIdUpdater(components.ActivityPure),
   UserPage: components.UserPage,
   UsersEventsPage: components.UsersEventsPage,
   EventPage: components.EventPage,
