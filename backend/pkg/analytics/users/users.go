@@ -91,8 +91,8 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	columnsStr := filters.ConvertColumnsToStrings(req.Columns)
 
 	whereClause, params := u.buildSearchQueryParams(projID, req)
-	cteSelectColumns := BuildSelectColumns("", columnsStr)
-	selectColumns := BuildSelectColumns("latest_users", columnsStr)
+	cteSelectColumns := BuildSelectColumns("", columnsStr, true)
+	outerSelectColumns := BuildSelectColumns("latest_users.", columnsStr, false)
 	sortBy := filters.ValidateSortColumnGeneric(string(req.SortBy), model.ColumnMapping, `"$user_id"`)
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
@@ -109,7 +109,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 		WHERE _deleted_at = '1970-01-01 00:00:00'
 		ORDER BY %s %s
 		LIMIT ? OFFSET ?`,
-		strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(selectColumns, ", "), sortBy, sortOrder)
+		strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), sortBy, sortOrder)
 
 	queryParams := append(params, req.Limit, offset)
 
@@ -159,9 +159,9 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 
 	if req.Query != "" {
 		queryPattern := "%" + req.Query + "%"
-		queryCondition := fmt.Sprintf(`("%s" ILIKE ? OR "%s" ILIKE ? OR "%s" ILIKE ?)`, 
-			string(filters.UserColumnUserID), 
-			string(filters.UserColumnEmail), 
+		queryCondition := fmt.Sprintf(`("%s" ILIKE ? OR "%s" ILIKE ? OR "%s" ILIKE ?)`,
+			string(filters.UserColumnUserID),
+			string(filters.UserColumnEmail),
 			string(filters.UserColumnName))
 		baseConditions = append(baseConditions, queryCondition)
 		params = append(params, queryPattern, queryPattern, queryPattern)

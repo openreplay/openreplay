@@ -8,7 +8,14 @@ import (
 	"openreplay/backend/pkg/analytics/users/model"
 )
 
-func formatColumnForSelect(alias, col string, dbCol string) string {
+func formatColumnForSelect(alias, col string, dbCol string, applyTransformations bool) string {
+	if !applyTransformations {
+		if strings.HasPrefix(col, "$") {
+			return fmt.Sprintf("%s\"%s\"", alias, col)
+		}
+		return fmt.Sprintf("%s%s", alias, col)
+	}
+
 	switch filters.UserColumn(col) {
 	case filters.UserColumnCreatedAt:
 		return fmt.Sprintf("toInt64(toUnixTimestamp(%s%s) * 1000) AS %s", alias, dbCol, col)
@@ -19,6 +26,10 @@ func formatColumnForSelect(alias, col string, dbCol string) string {
 	case filters.UserColumnProperties:
 		return fmt.Sprintf("toString(%s%s) AS %s", alias, dbCol, col)
 	default:
+		unquotedDbCol := strings.Trim(dbCol, `"`)
+		if col == unquotedDbCol {
+			return fmt.Sprintf("%s%s", alias, dbCol)
+		}
 		if strings.HasPrefix(col, "$") {
 			return fmt.Sprintf("%s%s AS \"%s\"", alias, dbCol, col)
 		}
@@ -26,13 +37,17 @@ func formatColumnForSelect(alias, col string, dbCol string) string {
 	}
 }
 
-func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
+func BuildSelectColumns(tableAlias string, requestedColumns []string, applyTransformations bool) []string {
 	alias := filters.NormalizeAlias(tableAlias)
 
 	baseColumns := []string{alias + "project_id"}
 	for _, col := range model.BaseUserColumns {
 		colStr := string(col)
-		baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, model.ColumnMapping[colStr]))
+		if applyTransformations {
+			baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, model.ColumnMapping[colStr], true))
+		} else {
+			baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, "", false))
+		}
 	}
 
 	if len(requestedColumns) == 0 {
@@ -48,8 +63,14 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 		if baseColumnSet[col] {
 			continue
 		}
-		if dbCol, ok := model.ColumnMapping[col]; ok {
-			result = append(result, formatColumnForSelect(alias, col, dbCol))
+		if applyTransformations {
+			if dbCol, ok := model.ColumnMapping[col]; ok {
+				result = append(result, formatColumnForSelect(alias, col, dbCol, true))
+			}
+		} else {
+			if _, ok := model.ColumnMapping[col]; ok {
+				result = append(result, formatColumnForSelect(alias, col, "", false))
+			}
 		}
 	}
 
