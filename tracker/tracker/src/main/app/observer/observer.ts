@@ -447,8 +447,7 @@ export default abstract class Observer {
         sl.assignedNodes({ flatten: true }).forEach((n) => {
           const nid = this.app.nodes.getID(n)
           if (nid !== undefined) {
-            this.recents.set(nid, RecentsType.Removed)
-            this.commitNode(nid)
+            this.recents.set(nid, RecentsType.Changed)
           }
         })
       })
@@ -530,13 +529,7 @@ export default abstract class Observer {
       return true
     }
     let slot = (node as any).assignedSlot as HTMLSlotElement | null
-    let isLightDom = false
-    if (slot) {
-      // Check if the node is in light DOM (not in shadow DOM)
-      // This is a workaround for the issue with shadow DOM and slots
-      // where the slot is not assigned to the node in shadow DOM.
-      isLightDom = node.getRootNode() instanceof ShadowRoot
-    }
+
     const parent = node.parentNode
     let parentID: number | undefined
 
@@ -550,14 +543,8 @@ export default abstract class Observer {
         this.unbindTree(node)
         return false
       }
-      if (isLightDom && slot) {
-        parentID = this.app.nodes.getID(slot)
-        // in light dom, we don't "slot" the node,
-        // but rather use the slot as a parent
-        slot = null
-      } else {
-        parentID = this.app.nodes.getID(parent)
-      }
+      parentID = this.app.nodes.getID(parent)
+
       if (parentID === undefined) {
         this.unbindTree(node)
         return false

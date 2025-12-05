@@ -110,7 +110,10 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     /* Inserting */
     this.mountChildren();
     if (this.notMontedChildren.size !== 0) {
-      console.error('VParent: Something went wrong with children insertion', this.notMontedChildren);
+      console.error(
+        'VParent: Something went wrong with children insertion',
+        this.notMontedChildren,
+      );
     }
     /* Removing in-between */
     const { node } = this;
@@ -176,6 +179,14 @@ export class VElement extends VParent<Element> {
     private readonly nodeId: number,
   ) {
     super();
+  }
+
+  getAttribute(name: string): string | null {
+    const queued = this.newAttributes.get(name);
+    if (queued !== undefined) {
+      return queued === false ? null : queued;
+    }
+    return this.node.getAttribute(name);
   }
 
   protected createNode() {
@@ -421,12 +432,12 @@ export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
     return new OnloadStyleSheet(
       new Promise((resolve, reject) =>
         vRoot.onNode((node) => {
-          let context: typeof globalThis | null;
-          if (isRootNode(node)) {
-            context = node.defaultView;
-          } else {
-            context = node.ownerDocument.defaultView;
-          }
+          const doc =
+            (node as Document | ShadowRoot).ownerDocument || (node as Document);
+
+          // added: use document.defaultView for both Document & ShadowRoot
+          const context = doc.defaultView;
+
           if (!context) {
             reject('Root node default view not found');
             return;
