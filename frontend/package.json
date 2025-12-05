@@ -36,7 +36,6 @@
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
-    "@babel/plugin-transform-private-methods": "^7.27.1",
     "@codewonders/html2canvas": "^1.0.2",
     "@eslint/js": "^9.37.0",
     "@medv/finder": "^4.0.2",
@@ -98,9 +97,7 @@
     "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.8.1",
-    "svgo": "^4.0.0",
     "syncod": "^0.0.1",
-    "ts-api-utils": "^2.1.0",
     "virtua": "^0.46.2"
   },
   "devDependencies": {
@@ -121,7 +118,9 @@
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
     "autoprefixer": "^10.4.21",
+    "baseline-browser-mapping": "^2.9.2",
     "country-data": "0.0.31",
+    "cssnano": "^7.1.1",
     "cypress": "13.17.0",
     "cypress-image-snapshot": "^4.0.1",
     "dotenv": "^16.6.1",
@@ -141,6 +140,8 @@
     "postcss-nesting": "^13.0.2",
     "postcss-simple-vars": "^6.0.3",
     "prettier": "^3.6.2",
+    "sass": "^1.93.2",
+    "svgo": "^2.8.0",
     "tailwindcss": "^3.4.18",
     "ts-jest": "^29.4.4",
     "ts-node": "^10.9.2",
