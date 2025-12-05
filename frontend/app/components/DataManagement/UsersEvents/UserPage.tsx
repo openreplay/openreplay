@@ -1,6 +1,5 @@
 import React from 'react';
 import EventDetailsModal, { Triangle } from '../Activity/EventDetailsModal';
-import User from './data/User';
 import { Dropdown, Popover } from 'antd';
 import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import Event from 'Components/DataManagement/Activity/data/Event';
@@ -87,7 +86,7 @@ function Activity() {
 
 function UserInfo() {
   const { showModal, hideModal } = useModal();
-  const testUser = new User({
+  const testUser = {
     name: 'test user',
     userId: 'test@email.com',
     distinctId: ['123123123123', '123123123123', '123123123123'],
@@ -97,7 +96,7 @@ function UserInfo() {
       email: 'test@test.com',
     },
     updatedAt: Date.now(),
-  });
+  };
 
   const dropdownItems = [
     {
