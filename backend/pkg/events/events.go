@@ -478,8 +478,8 @@ type incidentEvent struct {
 func (e *eventsImpl) GetIncidentsBySessionID(projectID uint32, sessID uint64) []interface{} {
 	query := `SELECT created_at,
 			 		"$properties".end_time  AS end_time,
-					"$properties.label AS label,
-					"$properties.start_time AS start_time
+					"$properties".label AS label,
+					"$properties".start_time AS start_time
 			FROM product_analytics.events
 			WHERE session_id = ? AND project_id = ?
 			  	AND issue_type = 'incident' 
