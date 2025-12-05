@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/analytics/filters"
@@ -19,39 +18,23 @@ import (
 // @BasePath /api/v1
 
 type handlersImpl struct {
-	log           logger.Logger
-	responser     api.Responser
-	users         users.Users
-	jsonSizeLimit int64
-}
-
-func (h *handlersImpl) Log() logger.Logger {
-	return h.log
-}
-
-func (h *handlersImpl) Responser() api.Responser {
-	return h.responser
-}
-
-func (h *handlersImpl) JsonSizeLimit() int64 {
-	return h.jsonSizeLimit
+	*api.BaseHandler
+	users users.Users
 }
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/{project}/users", "POST", api.AutoRespondWithBody(h, h.searchUsers), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "GET", api.AutoRespond(h, h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "DELETE", api.AutoRespond(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "PUT", api.AutoRespondWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users", "POST", api.AutoRespondContextWithBody(h, h.searchUsers), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/user/{userID}", "GET", api.AutoRespondContext(h, h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/user/{userID}", "DELETE", api.AutoRespondContext(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/user/{userID}", "PUT", api.AutoRespondContextWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 	}
 }
 
 func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, users users.Users) (api.Handlers, error) {
 	return &handlersImpl{
-		log:           log,
-		responser:     responser,
-		users:         users,
-		jsonSizeLimit: cfg.JsonSizeLimit,
+		BaseHandler: api.NewBaseHandler(log, responser, cfg.JsonSizeLimit),
+		users:       users,
 	}, nil
 }
 
@@ -68,27 +51,31 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, u
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/users [post]
-func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyBytes []byte, startTime time.Time, bodySize *int) (*model.SearchUsersResponse, int, error) {
-	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
+func (h *handlersImpl) searchUsers(ctx *api.RequestContext) (*model.SearchUsersResponse, int, error) {
+	projID, err := ctx.GetProjectID()
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	req := &model.SearchUsersRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
+	if err := json.Unmarshal(ctx.Body, req); err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to unmarshal search request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	if query := r.URL.Query().Get("q"); query != "" {
+	if query := ctx.Request.URL.Query().Get("q"); query != "" {
 		req.Query = query
 	}
 
 	if err = filters.ValidateStruct(req); err != nil {
+		h.Log().Error(ctx.Request.Context(), "validation failed for search request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.users.SearchUsers(r.Context(), projID, req)
+	response, err := h.users.SearchUsers(ctx.Request.Context(), projID, req)
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to search users for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
 	return response, 0, nil
@@ -106,19 +93,27 @@ func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyB
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/user/{userID} [get]
-func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (*model.User, int, error) {
-	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
+func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error) {
+	projID, err := ctx.GetProjectID()
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	userID, err := api.GetPathParam(r, "userID", api.ParseString)
+	userID, err := api.GetPathParam(ctx.Request, "userID", api.ParseString)
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get userID parameter: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.users.GetByUserID(r.Context(), projID, userID)
+	if userID == "" {
+		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
+		return nil, http.StatusBadRequest, http.ErrMissingFile
+	}
+
+	response, err := h.users.GetByUserID(ctx.Request.Context(), projID, userID)
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get user %s for project %d: %v", userID, projID, err)
 		return nil, http.StatusNotFound, err
 	}
 
@@ -137,22 +132,31 @@ func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request, startTime
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/user/{userID} [delete]
-func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (map[string]string, int, error) {
-	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
+func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, int, error) {
+	projID, err := ctx.GetProjectID()
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	userID, err := api.GetPathParam(r, "userID", api.ParseString)
+	userID, err := api.GetPathParam(ctx.Request, "userID", api.ParseString)
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get userID parameter: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	err = h.users.DeleteUser(r.Context(), projID, userID)
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
+	if userID == "" {
+		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
+		return nil, http.StatusBadRequest, http.ErrMissingFile
 	}
 
+	err = h.users.DeleteUser(ctx.Request.Context(), projID, userID)
+	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to delete user %s for project %d: %v", userID, projID, err)
+		return nil, http.StatusNotFound, err
+	}
+
+	h.Log().Info(ctx.Request.Context(), "successfully deleted user %s for project %d", userID, projID)
 	return map[string]string{"message": "user deleted successfully"}, 0, nil
 }
 
@@ -169,32 +173,43 @@ func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startT
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/user/{userID} [put]
-func (h *handlersImpl) updateUser(w http.ResponseWriter, r *http.Request, bodyBytes []byte, startTime time.Time, bodySize *int) (*model.User, int, error) {
-	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
+func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, error) {
+	projID, err := ctx.GetProjectID()
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	userID, err := api.GetPathParam(r, "userID", api.ParseString)
+	userID, err := api.GetPathParam(ctx.Request, "userID", api.ParseString)
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to get userID parameter: %v", err)
 		return nil, http.StatusBadRequest, err
+	}
+
+	if userID == "" {
+		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
+		return nil, http.StatusBadRequest, http.ErrMissingFile
 	}
 
 	user := &model.User{}
-	if err := json.Unmarshal(bodyBytes, user); err != nil {
+	if err := json.Unmarshal(ctx.Body, user); err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to unmarshal user data: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	user.UserID = userID
 
 	if err = filters.ValidateStruct(user); err != nil {
+		h.Log().Error(ctx.Request.Context(), "validation failed for user data: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.users.UpdateUser(r.Context(), projID, user)
+	response, err := h.users.UpdateUser(ctx.Request.Context(), projID, user)
 	if err != nil {
+		h.Log().Error(ctx.Request.Context(), "failed to update user %s for project %d: %v", userID, projID, err)
 		return nil, http.StatusNotFound, err
 	}
 
+	h.Log().Info(ctx.Request.Context(), "successfully updated user %s for project %d", userID, projID)
 	return response, 0, nil
 }
