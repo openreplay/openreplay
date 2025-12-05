@@ -74,7 +74,7 @@ services:
     restart: on-failure
 
   minio-migration:
-    image: bitnamilegacy/minio:2023.11.20
+    image: bitnamilegacy/minio:2023.12.23
     container_name: minio-migration
     profiles:
       - "migration"
