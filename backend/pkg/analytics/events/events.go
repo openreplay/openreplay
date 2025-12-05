@@ -29,7 +29,7 @@ func New(log logger.Logger, conn driver.Conn) (Events, error) {
 	}, nil
 }
 
-func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSearchRequest) (whereClause string, params []interface{}) {
+func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSearchRequest) (whereClause string, params []interface{}, needsUserJoin bool) {
 	baseConditions := []string{
 		"e.project_id = ?",
 		"e.created_at >= toDateTime64(?/1000, 3)",
@@ -37,18 +37,28 @@ func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSear
 	}
 	params = []interface{}{projID, req.StartDate, req.EndDate}
 
-	filterConditions, filterParams := BuildEventSearchQuery("e", req.Filters)
+	filterConditions, filterParams, needsUserJoin := BuildEventSearchQuery("e", req.Filters)
 	whereClause = filters.BuildWhereClause(baseConditions, filterConditions)
 	params = append(params, filterParams...)
 
-	return whereClause, params
+	return whereClause, params, needsUserJoin
 }
 
-func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy, sortOrder string) string {
+func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy, sortOrder string, needsUserJoin bool, projID uint32) string {
 	var sb strings.Builder
 	sb.WriteString("SELECT COUNT(*) OVER() as total_count, ")
 	sb.WriteString(strings.Join(selectColumns, ", "))
-	sb.WriteString(" FROM product_analytics.events AS e WHERE ")
+	sb.WriteString(" FROM product_analytics.events AS e")
+	
+	if needsUserJoin {
+		sb.WriteString(" LEFT JOIN (")
+		sb.WriteString("SELECT * FROM product_analytics.users WHERE project_id = ")
+		sb.WriteString(fmt.Sprintf("%d", projID))
+		sb.WriteString(" ORDER BY _timestamp DESC LIMIT 1 BY project_id, \"$user_id\"")
+		sb.WriteString(") AS u ON e.project_id = u.project_id AND e.\"$user_id\" = u.\"$user_id\"")
+	}
+	
+	sb.WriteString(" WHERE ")
 	sb.WriteString(whereClause)
 	sb.WriteString(" ORDER BY ")
 	sb.WriteString(sortBy)
@@ -70,7 +80,7 @@ func (e *eventsImpl) buildScanPointers(entry *model.EventEntry, columns []string
 	}
 
 	for _, col := range columns {
-		if col == "session_id" || col == "event_id" {
+		if col == string(filters.EventColumnSessionID) || col == string(filters.EventColumnEventID) {
 			continue
 		}
 		if ptr := model.GetFieldPointer(entry, col); ptr != nil {
@@ -87,15 +97,17 @@ func (e *eventsImpl) SearchEvents(projID uint32, req *model.EventsSearchRequest)
 	}
 
 	ctx := context.Background()
-	offset := (req.Page - 1) * req.Limit
+	offset := filters.CalculateOffset(req.Page, req.Limit)
 
-	whereClause, queryParams := e.buildSearchQueryParams(projID, req)
+	whereClause, queryParams, needsUserJoin := e.buildSearchQueryParams(projID, req)
 
-	selectColumns := BuildSelectColumns("e", req.Columns)
-	sortBy := "e." + ValidateSortColumn(req.SortBy)
-	sortOrder := filters.ValidateSortOrder(req.SortOrder)
+	columnsStr := filters.ConvertColumnsToStrings(req.Columns)
+	
+	selectColumns := BuildSelectColumns("e", columnsStr)
+	sortBy := "e." + ValidateSortColumn(string(req.SortBy))
+	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
-	query := e.buildSearchQueryWithCount(whereClause, selectColumns, sortBy, sortOrder)
+	query := e.buildSearchQueryWithCount(whereClause, selectColumns, sortBy, sortOrder, needsUserJoin, projID)
 	queryParams = append(queryParams, req.Limit, offset)
 
 	rows, err := e.chConn.Query(ctx, query, queryParams...)
@@ -109,7 +121,7 @@ func (e *eventsImpl) SearchEvents(projID uint32, req *model.EventsSearchRequest)
 	events := make([]model.EventEntry, 0, req.Limit)
 	for rows.Next() {
 		entry := model.EventEntry{}
-		valuePtrs := e.buildScanPointers(&entry, req.Columns)
+		valuePtrs := e.buildScanPointers(&entry, columnsStr)
 		
 		scanPtrs := append([]interface{}{&total}, valuePtrs...)
 		if err := rows.Scan(scanPtrs...); err != nil {
@@ -150,7 +162,7 @@ func (e *eventsImpl) GetEventByID(projID uint32, eventID string) (*model.EventEn
 	}
 
 	ctx := context.Background()
-	allColumns := model.GetAllEventColumns()
+	allColumns := filters.EventColumns
 	selectColumns := BuildSelectColumns("", allColumns)
 	query := e.buildGetEventQuery(selectColumns)
 

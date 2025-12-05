@@ -16,7 +16,7 @@ import (
 
 type Users interface {
 	GetByUserID(ctx context.Context, projID uint32, userId string) (*model.User, error)
-	SearchUsers(ctx context.Context, projID uint32, req *model.SearchUsersRequest) ([]*model.SearchUsersResponse, error)
+	SearchUsers(ctx context.Context, projID uint32, req *model.SearchUsersRequest) (*model.SearchUsersResponse, error)
 	UpdateUser(ctx context.Context, projID uint32, user *model.User) (*model.User, error)
 	DeleteUser(ctx context.Context, projID uint32, userID string) error
 }
@@ -49,7 +49,7 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 			initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city",
 			"$or_api_endpoint", "$timezone", toInt64(toUnixTimestamp("$first_event_at") * 1000) AS first_event_at, toInt64(toUnixTimestamp("$last_seen") * 1000) AS last_seen
 		FROM latest_user
-		WHERE _is_deleted = 0`
+		WHERE _deleted_at = '1970-01-01 00:00:00'`
 
 	row := u.chConn.QueryRow(ctx, query, projID, userId)
 
@@ -75,20 +75,21 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 	return user, nil
 }
 
-func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.SearchUsersRequest) ([]*model.SearchUsersResponse, error) {
+func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.SearchUsersRequest) (*model.SearchUsersResponse, error) {
 	if req.Limit == 0 {
-		req.Limit = 50
+		req.Limit = filters.DefaultLimit
 	}
 	if req.Page == 0 {
-		req.Page = 1
+		req.Page = filters.DefaultPage
 	}
 
-	offset := (req.Page - 1) * req.Limit
+	offset := filters.CalculateOffset(req.Page, req.Limit)
+	columnsStr := filters.ConvertColumnsToStrings(req.Columns)
 
 	whereClause, params := u.buildSearchQueryParams(projID, req)
-	selectColumns := BuildSelectColumns("", req.Columns)
-	sortBy := ValidateSortColumn(req.SortBy)
-	sortOrder := filters.ValidateSortOrder(req.SortOrder)
+	selectColumns := BuildSelectColumns("latest_users", columnsStr)
+	sortBy := filters.ValidateSortColumnGeneric(string(req.SortBy), model.ColumnMapping, `"$user_id"`)
+	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
 	query := fmt.Sprintf(`
 		WITH latest_users AS (
@@ -100,7 +101,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 		)
 		SELECT COUNT(*) OVER() as total_count, %s
 		FROM latest_users
-		WHERE _is_deleted = 0
+		WHERE _deleted_at = '1970-01-01 00:00:00'
 		ORDER BY %s %s
 		LIMIT ? OFFSET ?`,
 		whereClause, strings.Join(selectColumns, ", "), sortBy, sortOrder)
@@ -118,7 +119,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	users := []model.User{}
 	for rows.Next() {
 		user := model.User{}
-		scanDest := u.getScanDestinations(&user, req.Columns)
+		scanDest := u.getScanDestinations(&user, columnsStr)
 
 		scanPtrs := append([]interface{}{&total}, scanDest...)
 		if err := rows.Scan(scanPtrs...); err != nil {
@@ -139,12 +140,10 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 		return nil, fmt.Errorf("error iterating user rows: %w", err)
 	}
 
-	response := &model.SearchUsersResponse{
+	return &model.SearchUsersResponse{
 		Total: total,
 		Users: users,
-	}
-
-	return []*model.SearchUsersResponse{response}, nil
+	}, nil
 }
 
 func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsersRequest) (string, []interface{}) {
@@ -184,55 +183,57 @@ func (u *usersImpl) getScanDestinations(user *model.User, requestedCols []string
 	}
 
 	for _, col := range requestedCols {
-		if col == "$user_id" || col == "$email" || col == "$name" || col == "$first_name" || col == "$last_name" || col == "$created_at" || col == "$last_seen" || col == "project_id" {
+		if col == string(filters.UserColumnUserID) || col == string(filters.UserColumnEmail) || col == string(filters.UserColumnName) || 
+			col == string(filters.UserColumnFirstName) || col == string(filters.UserColumnLastName) || 
+			col == string(filters.UserColumnCreatedAt) || col == string(filters.UserColumnLastSeen) || col == "project_id" {
 			continue
 		}
-		switch col {
-		case "$phone":
+		switch filters.UserColumn(col) {
+		case filters.UserColumnPhone:
 			baseDest = append(baseDest, &user.Phone)
-		case "$avatar":
+		case filters.UserColumnAvatar:
 			baseDest = append(baseDest, &user.Avatar)
-		case "$country":
+		case filters.UserColumnCountry:
 			baseDest = append(baseDest, &user.Country)
-		case "$state":
+		case filters.UserColumnState:
 			baseDest = append(baseDest, &user.State)
-		case "$city":
+		case filters.UserColumnCity:
 			baseDest = append(baseDest, &user.City)
-		case "$timezone":
+		case filters.UserColumnTimezone:
 			baseDest = append(baseDest, &user.Timezone)
-		case "$first_event_at":
+		case filters.UserColumnFirstEventAt:
 			baseDest = append(baseDest, &user.FirstEventAt)
-		case "$sdk_edition":
+		case filters.UserColumnSDKEdition:
 			baseDest = append(baseDest, &user.SDKEdition)
-		case "$sdk_version":
+		case filters.UserColumnSDKVersion:
 			baseDest = append(baseDest, &user.SDKVersion)
-		case "$current_url":
+		case filters.UserColumnCurrentURL:
 			baseDest = append(baseDest, &user.CurrentUrl)
-		case "$initial_referrer":
+		case filters.UserColumnInitialReferrer:
 			baseDest = append(baseDest, &user.InitialReferrer)
-		case "$referring_domain":
+		case filters.UserColumnReferringDomain:
 			baseDest = append(baseDest, &user.ReferringDomain)
-		case "initial_utm_source":
+		case filters.UserColumnInitialUtmSource:
 			baseDest = append(baseDest, &user.InitialUtmSource)
-		case "initial_utm_medium":
+		case filters.UserColumnInitialUtmMedium:
 			baseDest = append(baseDest, &user.InitialUtmMedium)
-		case "initial_utm_campaign":
+		case filters.UserColumnInitialUtmCampaign:
 			baseDest = append(baseDest, &user.InitialUtmCampaign)
-		case "properties":
+		case filters.UserColumnProperties:
 			baseDest = append(baseDest, &user.PropertiesRaw)
-		case "group_id1":
+		case filters.UserColumnGroupID1:
 			baseDest = append(baseDest, &user.GroupID1)
-		case "group_id2":
+		case filters.UserColumnGroupID2:
 			baseDest = append(baseDest, &user.GroupID2)
-		case "group_id3":
+		case filters.UserColumnGroupID3:
 			baseDest = append(baseDest, &user.GroupID3)
-		case "group_id4":
+		case filters.UserColumnGroupID4:
 			baseDest = append(baseDest, &user.GroupID4)
-		case "group_id5":
+		case filters.UserColumnGroupID5:
 			baseDest = append(baseDest, &user.GroupID5)
-		case "group_id6":
+		case filters.UserColumnGroupID6:
 			baseDest = append(baseDest, &user.GroupID6)
-		case "$or_api_endpoint":
+		case filters.UserColumnOrAPIEndpoint:
 			baseDest = append(baseDest, &user.OrAPIEndpoint)
 		default:
 			var dummy string
@@ -307,7 +308,7 @@ func (u *usersImpl) UpdateUser(ctx context.Context, projID uint32, user *model.U
 	}
 
 	if existingUser.Properties != nil {
-		propJSON, err := existingUser.MarshalProperties()
+		propJSON, err := filters.MarshalJSONProperties(existingUser.Properties)
 		if err != nil {
 			u.log.Error(ctx, "failed to marshal properties: %v", err)
 			return nil, fmt.Errorf("failed to marshal properties: %w", err)

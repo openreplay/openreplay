@@ -6,15 +6,16 @@ import (
 	"time"
 
 	"openreplay/backend/internal/config/common"
+	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/users"
 	"openreplay/backend/pkg/analytics/users/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 )
 
-// @title OpenReplay Users API
+// @title OpenReplay Analytics API
 // @version 1.0
-// @description API for managing and querying product analytics users
+// @description API for product analytics - events and users management, querying, and filtering
 // @BasePath /api/v1
 
 type handlersImpl struct {
@@ -55,19 +56,19 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, u
 }
 
 // @Summary Search Users
-// @Description Search users based on various criteria. Use 'q' query parameter to search by name, email, or user_id.
-// @Tags Users
+// @Description Search and filter users based on various criteria. Query parameter 'q' performs full-text search across $user_id, $email, and $name fields. Valid values for sortBy and columns are any User field names. Filter operators: is, isAny, isNot, isUndefined, contains, notContains, startsWith, endsWith (strings); =, <, >, <=, >=, != (numbers/dates).
+// @Tags Analytics - Users
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
 // @Param q query string false "Search query for name, email, or user_id"
 // @Param searchUsersRequest body model.SearchUsersRequest true "Search Users Request"
 // @Success 200 {object} model.SearchUsersResponse
-// @Failure 400 {object} api.ErrorResponse "Bad Request"
-// @Failure 413 {object} api.ErrorResponse "Request Entity Too Large"
-// @Failure 500 {object} api.ErrorResponse "Internal Server Error"
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 413 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/users [post]
-func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyBytes []byte, startTime time.Time, bodySize *int) ([]*model.SearchUsersResponse, int, error) {
+func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyBytes []byte, startTime time.Time, bodySize *int) (*model.SearchUsersResponse, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
@@ -82,7 +83,7 @@ func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyB
 		req.Query = query
 	}
 
-	if err = model.ValidateStruct(req); err != nil {
+	if err = filters.ValidateStruct(req); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -90,21 +91,20 @@ func (h *handlersImpl) searchUsers(w http.ResponseWriter, r *http.Request, bodyB
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-
 	return response, 0, nil
 }
 
 // @Summary Get User by UserID
-// @Description Retrieve user details by UserID.
-// @Tags Users
+// @Description Retrieve detailed user information by their unique user ID with full profile data.
+// @Tags Analytics - Users
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
 // @Param userID path string true "User ID"
 // @Success 200 {object} model.User
-// @Failure 400 {object} api.ErrorResponse "Bad Request"
-// @Failure 404 {object} api.ErrorResponse "Not Found"
-// @Failure 500 {object} api.ErrorResponse "Internal Server Error"
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 404 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/user/{userID} [get]
 func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (*model.User, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
@@ -126,16 +126,16 @@ func (h *handlersImpl) getUser(w http.ResponseWriter, r *http.Request, startTime
 }
 
 // @Summary Delete User
-// @Description Delete a user by UserID.
-// @Tags Users
+// @Description Permanently delete a user and all associated data. This operation cannot be undone.
+// @Tags Analytics - Users
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
 // @Param userID path string true "User ID"
 // @Success 200 {object} map[string]string
-// @Failure 400 {object} api.ErrorResponse "Bad Request"
-// @Failure 404 {object} api.ErrorResponse "Not Found"
-// @Failure 500 {object} api.ErrorResponse "Internal Server Error"
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 404 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/user/{userID} [delete]
 func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startTime time.Time, bodySize *int) (map[string]string, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
@@ -157,17 +157,17 @@ func (h *handlersImpl) deleteUser(w http.ResponseWriter, r *http.Request, startT
 }
 
 // @Summary Update User
-// @Description Update user details.
-// @Tags Users
+// @Description Update user profile information. Partial updates supported - only provided fields are modified. Path parameter userId takes precedence over request body.
+// @Tags Analytics - Users
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
 // @Param userID path string true "User ID"
 // @Param user body model.User true "User Data"
 // @Success 200 {object} model.User
-// @Failure 400 {object} api.ErrorResponse "Bad Request"
-// @Failure 404 {object} api.ErrorResponse "Not Found"
-// @Failure 500 {object} api.ErrorResponse "Internal Server Error"
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 404 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/user/{userID} [put]
 func (h *handlersImpl) updateUser(w http.ResponseWriter, r *http.Request, bodyBytes []byte, startTime time.Time, bodySize *int) (*model.User, int, error) {
 	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
@@ -187,7 +187,7 @@ func (h *handlersImpl) updateUser(w http.ResponseWriter, r *http.Request, bodyBy
 
 	user.UserID = userID
 
-	if err = model.ValidateStruct(user); err != nil {
+	if err = filters.ValidateStruct(user); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
