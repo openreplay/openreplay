@@ -15,3 +15,11 @@ Non-negotiables
 - Build outputs feed `ai-hub-infra/docker-compose.openreplay.yml`; if you retag images, update that compose file and keep port 8091 reserved on the host.
 - Coordinate with infra when changing Dockerfiles/build scripts so downstream compose stacks stay in sync.
 - GitHub Action: `.github/workflows/codex-pr-review.yml` posts Codex reviews on PRs; set repo/org secret `OPENAI_API_KEY`.
+
+## Codex CLI 0.64+ (Dec 2025)
+- Use Codex CLI >=0.64 (local 0.65); verify with `codex --version`.
+- Codex now records cwd/git automatically; avoid repeating "run from ..." notes in tasks.
+- After any edit, run `/review` and lead with high-severity findings; review history persists across runs.
+- Default env injections live in `~/.codex/config.toml` (POSTGRES_PORT=55433, PGBOUNCER_PORT=65433, REDIS_PORT=6382, WP_PORT=8080, WP_DB_PORT=3312, MATOMO_PORT=8088, GCS_PORT=4443, GROWTHBOOK_UI=8092, GROWTHBOOK_API=8093). Override per session with `/env`.
+- Keep browser/URL safety prompts enabled (esp. Windows/WSL); they gate external opens.
+- If `.github/workflows/codex-pr-review.yml` is present, set the `OPENAI_API_KEY` secret so PR reviews run; otherwise ignore. Slack handoff is not in use.
