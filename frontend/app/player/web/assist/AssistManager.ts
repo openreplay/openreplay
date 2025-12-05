@@ -10,8 +10,9 @@ import JSONRawMessageReader from '../messages/JSONRawMessageReader';
 import Call, { CallingState } from './Call';
 import RemoteControl, { RemoteControlStatus } from './RemoteControl';
 import ScreenRecording, { SessionRecordingStatus } from './ScreenRecording';
-import { debounceCall } from 'App/utils'
+import { debounceCall } from 'App/utils';
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
+import io from 'socket.io-client';
 
 export enum ConnectionStatus {
   Connecting,
@@ -175,193 +176,187 @@ export default class AssistManager {
     this.store.update({ assistStart: now });
 
     // @ts-ignore
-    import('socket.io-client').then(({ default: io }) => {
-      if (this.socket != null || this.cleaned) {
-        return;
-      }
-      // @ts-ignore
-      const urlObject = new URL(window.env.API_EDP || window.location.origin);
-      // does it handle ssl automatically?
+    if (this.socket != null || this.cleaned) {
+      return;
+    }
+    // @ts-ignore
+    const urlObject = new URL(window.env.API_EDP || window.location.origin);
+    // does it handle ssl automatically?
 
-      const socket: Socket = (this.socket = io(urlObject.origin, {
-        withCredentials: true,
-        multiplex: true,
-        transports: ['websocket'],
-        path: '/ws-assist/socket',
-        auth: {
-          token: agentToken,
-        },
-        extraHeaders: {
-          sessionId: this.session.sessionId,
-        },
-        query: {
+    const socket: Socket = (this.socket = io(urlObject.origin, {
+      withCredentials: true,
+      multiplex: true,
+      transports: ['websocket'],
+      path: '/ws-assist/socket',
+      auth: {
+        token: agentToken,
+      },
+      extraHeaders: {
+        sessionId: this.session.sessionId,
+      },
+      query: {
+        peerId: this.peerID,
+        projectId,
+        identity: 'agent',
+        agentInfo: JSON.stringify({
+          ...this.session.agentInfo,
+          id: agentId,
           peerId: this.peerID,
-          projectId,
-          identity: 'agent',
-          agentInfo: JSON.stringify({
-            ...this.session.agentInfo,
-            id: agentId,
-            peerId: this.peerID,
-            query: document.location.search,
-          }),
-          config: JSON.stringify(this.getIceServers()),
-        },
-      }));
+          query: document.location.search,
+        }),
+        config: JSON.stringify(this.getIceServers()),
+      },
+    }));
 
-      // socket.onAny((event, ...args) => {
-      //   logger.log(`📩 Socket: ${event}`, args);
-      // });
+    // socket.onAny((event, ...args) => {
+    //   logger.log(`📩 Socket: ${event}`, args);
+    // });
 
-      socket.on('connect', () => {
-        waitingForMessages = true;
-        // TODO: reconnect happens frequently on bad network
-        this.setStatus(ConnectionStatus.WaitingMessages);
-      });
-
-      const processMessages = (messages: {
-        meta: { version: number; tabId: string };
-        data: Message[];
-      }) => {
-        const isOldVersion = messages.meta.version === 1;
-        this.assistVersion = isOldVersion ? 1 : 2;
-
-        const data = messages.data || messages;
-        jmr.append(data); // as RawMessage[]
-        if (waitingForMessages) {
-          waitingForMessages = false; // TODO: more explicit
-          this.setStatus(ConnectionStatus.Connected);
-        }
-        if (messages.meta.tabId !== this.store.get().currentTab) {
-          this.clearDisconnectTimeout();
-          if (isOldVersion) {
-            reader.currentTab = messages.meta.tabId;
-            this.store.update({ currentTab: messages.meta.tabId });
-          }
-        }
-
-        for (
-          let msg = reader.readNext();
-          msg !== null;
-          msg = reader.readNext()
-        ) {
-          if (msg.tp === MType.SetNodeAttribute) {
-            if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
-              debounceCall(this.updateSpriteMap, 250)()
-            }
-          }
-          this.handleMessage(msg, msg._index);
-        }
-      };
-
-      socket.on('messages', (messages) => {
-        processMessages(messages);
-      });
-      socket.on('messages_gz', (gzBuf) => {
-        const unpackData = gunzipSync(new Uint8Array(gzBuf.data));
-        const str = new TextDecoder().decode(unpackData);
-        const messages = JSON.parse(str);
-        processMessages({ ...gzBuf, data: messages });
-      });
-
-      socket.on('SESSION_RECONNECTED', () => {
-        this.clearDisconnectTimeout();
-        this.clearInactiveTimeout();
-        this.setStatus(ConnectionStatus.Connected);
-      });
-
-      socket.on('UPDATE_SESSION', (evData) => {
-        const { meta = {}, data = {} } = evData;
-        const { tabId } = meta;
-        const usedData = this.assistVersion === 1 ? evData : data;
-        const { active } = usedData;
-
-        const { currentTab } = this.store.get();
-
-        this.clearDisconnectTimeout();
-        !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected);
-
-        if (typeof active === 'boolean') {
-          this.clearInactiveTimeout();
-          if (active) {
-            this.setStatus(ConnectionStatus.Connected);
-            this.inactiveTabs = this.inactiveTabs.filter((t) => t !== tabId);
-          } else {
-            if (!this.inactiveTabs.includes(tabId)) {
-              this.inactiveTabs.push(tabId);
-            }
-            if (tabId === undefined || tabId === currentTab) {
-              this.inactiveTimeout = setTimeout(() => {
-                // @ts-ignore
-                const { tabs } = this.store.get();
-                if (this.inactiveTabs.length === tabs.size) {
-                  this.setStatus(ConnectionStatus.Inactive);
-                }
-              }, 10000);
-            }
-          }
-        }
-        if (data.agentIds) {
-          const filteredAgentIds = this.agentIds.filter(
-            (id: string) => id.split('-')[3] !== agentId.toString(),
-          );
-          this.agentIds = filteredAgentIds;
-        }
-      });
-      socket.on('SESSION_DISCONNECTED', (e) => {
-        waitingForMessages = true;
-        this.clearDisconnectTimeout();
-        this.disconnectTimeout = setTimeout(() => {
-          this.setStatus(ConnectionStatus.Disconnected);
-        }, 30000);
-      });
-      socket.on('error', (e) => {
-        console.warn('Socket error: ', e);
-        this.setStatus(ConnectionStatus.Error);
-      });
-
-      // Maybe  do lazy initialization for all?
-      // TODO: socket proxy (depend on interfaces)
-      this.callManager = new Call(
-        this.store,
-        socket,
-        this.getIceServers(),
-        this.peerID,
-        this.getAssistVersion,
-        {
-          ...this.session.agentInfo,
-          id: agentId,
-        },
-        this.agentIds,
-      );
-      this.remoteControl = new RemoteControl(
-        this.store,
-        socket,
-        this.screen,
-        this.session.agentInfo,
-        () => this.screen.setBorderStyle(this.borderStyle),
-        this.getAssistVersion,
-      );
-      this.screenRecording = new ScreenRecording(
-        this.store,
-        socket,
-        this.session.agentInfo,
-        () => this.screen.setBorderStyle(this.borderStyle),
-        this.uiErrorHandler,
-        this.getAssistVersion,
-      );
-      this.canvasReceiver = new CanvasReceiver(
-        this.peerID,
-        this.getIceServers(),
-        this.getNode,
-        {
-          ...this.session.agentInfo,
-          id: agentId,
-        },
-        socket,
-      );
-
-      document.addEventListener('visibilitychange', this.onVisChange);
+    socket.on('connect', () => {
+      waitingForMessages = true;
+      // TODO: reconnect happens frequently on bad network
+      this.setStatus(ConnectionStatus.WaitingMessages);
     });
+
+    const processMessages = (messages: {
+      meta: { version: number; tabId: string };
+      data: Message[];
+    }) => {
+      const isOldVersion = messages.meta.version === 1;
+      this.assistVersion = isOldVersion ? 1 : 2;
+
+      const data = messages.data || messages;
+      jmr.append(data); // as RawMessage[]
+      if (waitingForMessages) {
+        waitingForMessages = false; // TODO: more explicit
+        this.setStatus(ConnectionStatus.Connected);
+      }
+      if (messages.meta.tabId !== this.store.get().currentTab) {
+        this.clearDisconnectTimeout();
+        if (isOldVersion) {
+          reader.currentTab = messages.meta.tabId;
+          this.store.update({ currentTab: messages.meta.tabId });
+        }
+      }
+
+      for (let msg = reader.readNext(); msg !== null; msg = reader.readNext()) {
+        if (msg.tp === MType.SetNodeAttribute) {
+          if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
+            debounceCall(this.updateSpriteMap, 250)();
+          }
+        }
+        this.handleMessage(msg, msg._index);
+      }
+    };
+
+    socket.on('messages', (messages) => {
+      processMessages(messages);
+    });
+    socket.on('messages_gz', (gzBuf) => {
+      const unpackData = gunzipSync(new Uint8Array(gzBuf.data));
+      const str = new TextDecoder().decode(unpackData);
+      const messages = JSON.parse(str);
+      processMessages({ ...gzBuf, data: messages });
+    });
+
+    socket.on('SESSION_RECONNECTED', () => {
+      this.clearDisconnectTimeout();
+      this.clearInactiveTimeout();
+      this.setStatus(ConnectionStatus.Connected);
+    });
+
+    socket.on('UPDATE_SESSION', (evData) => {
+      const { meta = {}, data = {} } = evData;
+      const { tabId } = meta;
+      const usedData = this.assistVersion === 1 ? evData : data;
+      const { active } = usedData;
+
+      const { currentTab } = this.store.get();
+
+      this.clearDisconnectTimeout();
+      !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected);
+
+      if (typeof active === 'boolean') {
+        this.clearInactiveTimeout();
+        if (active) {
+          this.setStatus(ConnectionStatus.Connected);
+          this.inactiveTabs = this.inactiveTabs.filter((t) => t !== tabId);
+        } else {
+          if (!this.inactiveTabs.includes(tabId)) {
+            this.inactiveTabs.push(tabId);
+          }
+          if (tabId === undefined || tabId === currentTab) {
+            this.inactiveTimeout = setTimeout(() => {
+              // @ts-ignore
+              const { tabs } = this.store.get();
+              if (this.inactiveTabs.length === tabs.size) {
+                this.setStatus(ConnectionStatus.Inactive);
+              }
+            }, 10000);
+          }
+        }
+      }
+      if (data.agentIds) {
+        const filteredAgentIds = this.agentIds.filter(
+          (id: string) => id.split('-')[3] !== agentId.toString(),
+        );
+        this.agentIds = filteredAgentIds;
+      }
+    });
+    socket.on('SESSION_DISCONNECTED', (e) => {
+      waitingForMessages = true;
+      this.clearDisconnectTimeout();
+      this.disconnectTimeout = setTimeout(() => {
+        this.setStatus(ConnectionStatus.Disconnected);
+      }, 30000);
+    });
+    socket.on('error', (e) => {
+      console.warn('Socket error: ', e);
+      this.setStatus(ConnectionStatus.Error);
+    });
+
+    // Maybe  do lazy initialization for all?
+    // TODO: socket proxy (depend on interfaces)
+    this.callManager = new Call(
+      this.store,
+      socket,
+      this.getIceServers(),
+      this.peerID,
+      this.getAssistVersion,
+      {
+        ...this.session.agentInfo,
+        id: agentId,
+      },
+      this.agentIds,
+    );
+    this.remoteControl = new RemoteControl(
+      this.store,
+      socket,
+      this.screen,
+      this.session.agentInfo,
+      () => this.screen.setBorderStyle(this.borderStyle),
+      this.getAssistVersion,
+    );
+    this.screenRecording = new ScreenRecording(
+      this.store,
+      socket,
+      this.session.agentInfo,
+      () => this.screen.setBorderStyle(this.borderStyle),
+      this.uiErrorHandler,
+      this.getAssistVersion,
+    );
+    this.canvasReceiver = new CanvasReceiver(
+      this.peerID,
+      this.getIceServers(),
+      this.getNode,
+      {
+        ...this.session.agentInfo,
+        id: agentId,
+      },
+      socket,
+    );
+
+    document.addEventListener('visibilitychange', this.onVisChange);
   }
 
   private getIceServers = () => {

@@ -35,6 +35,9 @@ export default function CustomSelect<Value extends ValueObject>({
     onChange({ name, value: option });
   };
 
+  if ('right' in rest) {
+    rest.right = rest.right.toString();
+  }
   return (
     <Select
       className={className}

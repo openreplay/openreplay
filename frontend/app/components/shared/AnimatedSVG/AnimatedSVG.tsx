@@ -1,5 +1,26 @@
 import React from 'react';
-import { mobileScreen } from 'App/utils/isMobile'
+import { mobileScreen } from 'App/utils/isMobile';
+const dashboardIcn = new URL('../../../svg/dashboard-icn.svg', import.meta.url);
+const loader = new URL(
+  '../../../svg/openreplay-preloader.svg',
+  import.meta.url,
+);
+const emptyState = new URL('../../../svg/empty-state.svg', import.meta.url);
+const ghost = new URL('../../../svg/ghost.svg', import.meta.url);
+const signalGreen = new URL('../../../svg/signal-green.svg', import.meta.url);
+const signalRed = new URL('../../../svg/signal-red.svg', import.meta.url);
+const caNoCards = new URL('../../../svg/ca-no-cards.svg', import.meta.url);
+const caNoDashboards = new URL(
+  '../../../svg/ca-no-dashboards.svg',
+  import.meta.url,
+);
+const caProcessing = new URL('../../../svg/ca-processing.svg', import.meta.url);
+const emptyUxtList = new URL(
+  '../../../svg/empty-uxt-list.svg',
+  import.meta.url,
+);
+const logoSmall = new URL('../../../svg/logo-small.svg', import.meta.url);
+const logoFull = new URL('../../../svg/logo.svg', import.meta.url);
 
 export enum ICONS {
   DASHBOARD_ICON = 'dashboard-icn',
@@ -31,32 +52,32 @@ export enum ICONS {
 }
 
 const ICONS_SVGS = {
-  [ICONS.DASHBOARD_ICON]: require('../../../svg/dashboard-icn.svg').default,
-  [ICONS.EMPTY_STATE]: require('../../../svg/empty-state.svg').default,
-  [ICONS.LOGO_SMALL]: require('../../../svg/logo-small.svg').default,
-  [ICONS.LOGO_FULL]: require('../../../svg/logo.svg').default,
-  [ICONS.NO_RESULTS]: require('../../../svg/ghost.svg').default,
-  [ICONS.LOADER]: require('../../../svg/openreplay-preloader.svg').default,
-  [ICONS.SIGNAL_GREEN]: require('../../../svg/signal-green.svg').default,
-  [ICONS.SIGNAL_RED]: require('../../../svg/signal-red.svg').default,
-  [ICONS.NO_BOOKMARKS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_LIVE_SESSIONS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_SESSIONS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_SESSIONS_IN_VAULT]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_WEBHOOKS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_METADATA]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_ISSUES]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_AUDIT_TRAIL]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_ANNOUNCEMENTS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_ALERTS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_NOTES]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_CARDS]: require('../../../svg/ca-no-cards.svg').default,
-  [ICONS.NO_RECORDINGS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_SEARCH_RESULTS]: require('../../../svg/ghost.svg').default,
-  [ICONS.NO_DASHBOARDS]: require('../../../svg/ca-no-dashboards.svg').default,
-  [ICONS.NO_PROJECTS]: require('../../../svg/ghost.svg').default,
-  [ICONS.PROCESSING]: require('../../../svg/ca-processing.svg').default,
-  [ICONS.NO_UXT]: require('../../../svg/empty-uxt-list.svg').default,
+  [ICONS.DASHBOARD_ICON]: dashboardIcn,
+  [ICONS.EMPTY_STATE]: emptyState,
+  [ICONS.LOGO_SMALL]: logoSmall,
+  [ICONS.LOGO_FULL]: logoFull,
+  [ICONS.NO_RESULTS]: ghost,
+  [ICONS.LOADER]: loader,
+  [ICONS.SIGNAL_GREEN]: signalGreen,
+  [ICONS.SIGNAL_RED]: signalRed,
+  [ICONS.NO_BOOKMARKS]: ghost,
+  [ICONS.NO_LIVE_SESSIONS]: ghost,
+  [ICONS.NO_SESSIONS]: ghost,
+  [ICONS.NO_SESSIONS_IN_VAULT]: ghost,
+  [ICONS.NO_WEBHOOKS]: ghost,
+  [ICONS.NO_METADATA]: ghost,
+  [ICONS.NO_ISSUES]: ghost,
+  [ICONS.NO_AUDIT_TRAIL]: ghost,
+  [ICONS.NO_ANNOUNCEMENTS]: ghost,
+  [ICONS.NO_ALERTS]: ghost,
+  [ICONS.NO_NOTES]: ghost,
+  [ICONS.NO_CARDS]: caNoCards,
+  [ICONS.NO_RECORDINGS]: ghost,
+  [ICONS.NO_SEARCH_RESULTS]: ghost,
+  [ICONS.NO_DASHBOARDS]: caNoDashboards,
+  [ICONS.NO_PROJECTS]: ghost,
+  [ICONS.PROCESSING]: caProcessing,
+  [ICONS.NO_UXT]: emptyUxtList,
 };
 
 interface Props {
@@ -75,7 +96,14 @@ function AnimatedSVG(props: Props): JSX.Element | null {
   if (!SvgIcon) {
     return null;
   }
-  const style = disableSize ? {} : { width: `${size}px`, maxWidth: mobileScreen ? window.innerWidth - (window.innerWidth/10) : undefined };
+  const style = disableSize
+    ? {}
+    : {
+        width: `${size}px`,
+        maxWidth: mobileScreen
+          ? window.innerWidth - window.innerWidth / 10
+          : undefined,
+      };
   return <img src={SvgIcon} style={style} className={className} alt={name} />;
 }
 

@@ -8,7 +8,6 @@ import {
 } from 'App/routes';
 
 const withLocationHandlers = (propNames) => (BaseComponent) => {
-  @withRouter
   class WrapperClass extends React.Component {
     getQuery = (names) => parseQuery(this.props.location, names);
 
@@ -90,6 +89,6 @@ const withLocationHandlers = (propNames) => (BaseComponent) => {
       );
     }
   }
-  return WrapperClass;
+  return withRouter(WrapperClass);
 };
 export default withLocationHandlers;

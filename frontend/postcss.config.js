@@ -1,6 +1,5 @@
 const path = require('path');
 const colors = require('./app/theme/colors');
-const cssnanoOptions = { zindex: false };
 
 const transformColorsToCssVars = (colorsObj) => {
   const result = {};
@@ -25,7 +24,7 @@ const transformColorsToCssVars = (colorsObj) => {
 
 const cssVarColors = transformColorsToCssVars(colors);
 
-module.exports = ({ file, options, env }) => ({
+module.exports = ({
   // parser: 'sugarss',  // syntax check ?
   plugins: {
     'postcss-import': {
@@ -41,8 +40,7 @@ module.exports = ({ file, options, env }) => ({
     // },
     'tailwindcss/nesting': {},
     tailwindcss: {},
-    autoprefixer: {},
     //'postcss-preset-env': {}, //includes autoprefixer
-    cssnano: env === 'production' ? cssnanoOptions : false,
+    cssnano: false,
   }
 });

@@ -28,6 +28,7 @@
       "Shared/*": ["./app/components/shared/*"],
       "Player/*": ["./app/player/*"],
       "Player": ["./app/player"],
+      "HOCs": ["./app/components/hocs"],
       "HOCs/*": ["./app/components/hocs/*"]
     }
   },

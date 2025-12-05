@@ -14,7 +14,10 @@ import { StoreProvider, RootStore } from './mstore';
 import Router from './Router';
 import './i18n';
 import { ThemeProvider, useTheme } from './ThemeContext';
+import ENV from '../env';
 
+(window as any).env = ENV;
+(window as any).env.PRODUCTION = process.env.NODE_ENV === 'production';
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
 

@@ -7,14 +7,7 @@ import { Button } from 'antd';
 import stl from './metadataItem.module.css';
 import SessionList from './SessionList';
 
-@withToggle()
-@withRequest({
-  initialData: List(),
-  endpoint: '/metadata/session_search',
-  dataWrapper: (data) => Object.values(data),
-  dataName: 'similarSessions',
-})
-export default class extends React.PureComponent {
+class MetadataItem extends React.PureComponent {
   state = {
     requested: false,
   };
@@ -85,3 +78,12 @@ export default class extends React.PureComponent {
     );
   }
 }
+
+export default withToggle()(
+  withRequest({
+    initialData: List(),
+    endpoint: '/metadata/session_search',
+    dataWrapper: (data) => Object.values(data),
+    dataName: 'similarSessions',
+  })(MetadataItem),
+);
