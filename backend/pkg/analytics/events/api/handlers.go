@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"openreplay/backend/pkg/analytics/events"
 	"openreplay/backend/pkg/analytics/events/model"
@@ -22,18 +21,14 @@ type Handlers interface {
 }
 
 type handlersImpl struct {
-	log           logger.Logger
-	events        events.Events
-	responser     api.Responser
-	jsonSizeLimit int64
+	*api.BaseHandler
+	events events.Events
 }
 
 func NewHandlers(log logger.Logger, jsonSizeLimit int64, events events.Events, responser api.Responser) (Handlers, error) {
 	return &handlersImpl{
-		log:           log,
-		events:        events,
-		responser:     responser,
-		jsonSizeLimit: jsonSizeLimit,
+		BaseHandler: api.NewBaseHandler(log, responser, jsonSizeLimit),
+		events:      events,
 	}, nil
 }
 
@@ -42,14 +37,14 @@ func (h *handlersImpl) GetAll() []*api.Description {
 		{
 			Path:        "/{project}/events",
 			Method:      "POST",
-			Handler:     h.eventsSearch,
+			Handler:     api.AutoRespondContextWithBody(h, h.eventsSearch),
 			Permissions: []string{"DATA_MANAGEMENT"},
 			AuditTrail:  "",
 		},
 		{
 			Path:        "/{project}/events/{eventId}",
 			Method:      "GET",
-			Handler:     h.getEvent,
+			Handler:     api.AutoRespondContext(h, h.getEvent),
 			Permissions: []string{"DATA_MANAGEMENT"},
 			AuditTrail:  "",
 		},
@@ -68,42 +63,27 @@ func (h *handlersImpl) GetAll() []*api.Description {
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/events [post]
-func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	bodySize := 0
-
-	bodyBytes, err := api.ReadBody(h.log, w, r, h.jsonSizeLimit)
+func (h *handlersImpl) eventsSearch(r *api.RequestContext) (*model.EventsSearchResponse, int, error) {
+	projID, err := r.GetProjectID()
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
+		return nil, http.StatusBadRequest, err
 	}
-	bodySize = len(bodyBytes)
 
 	req := &model.EventsSearchRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
+	if err := json.Unmarshal(r.Body, req); err != nil {
+		return nil, http.StatusBadRequest, err
 	}
 
-	if err = filters.ValidateStruct(req); err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
-	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
+	if err := filters.ValidateStruct(req); err != nil {
+		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.events.SearchEvents(projID, req)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
+		return nil, http.StatusInternalServerError, err
 	}
 
-	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
-	return
+	return response, 0, nil
 }
 
 // @Summary Get Event by ID
@@ -118,28 +98,21 @@ func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/events/{eventId} [get]
-func (h *handlersImpl) getEvent(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	bodySize := 0
-
-	projID, err := api.GetPathParam(r, "project", api.ParseUint32)
+func (h *handlersImpl) getEvent(r *api.RequestContext) (*model.EventEntry, int, error) {
+	projID, err := r.GetProjectID()
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
+		return nil, http.StatusBadRequest, err
 	}
 
-	eventID, err := api.GetPathParam(r, "eventId", api.ParseString)
+	eventID, err := api.GetPathParam(r.Request, "eventId", api.ParseString)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
+		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.events.GetEventByID(projID, eventID)
 	if err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		return
+		return nil, http.StatusNotFound, err
 	}
 
-	h.responser.ResponseWithJSON(h.log, r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
-	return
+	return response, 0, nil
 }
