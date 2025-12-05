@@ -173,7 +173,18 @@ function WidgetChart(props: Props) {
         } else {
           setData(res);
         }
-        if (_metric.metricType === HEATMAP && res.urlPath) {
+        const noLocationFilter = !payload.series[0]?.filter?.filters?.some(
+          (filter: any) => {
+            return (
+              filter.name === 'LOCATION' &&
+              filter.filters.some(
+                (filter: any) =>
+                  filter.name === 'urlPath' && filter.value.length > 0,
+              )
+            );
+          },
+        );
+        if (_metric.metricType === HEATMAP && res.urlPath && noLocationFilter) {
           const locationIndex = _metric.series[0].filter.filters.findIndex(
             (f) => f.name === 'LOCATION',
           );
@@ -381,7 +392,9 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             onClick={onChartClick}
             onSeriesFocus={onFocus}
-            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
+            label={
+              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
+            }
           />
         );
       }
@@ -396,7 +409,9 @@ function WidgetChart(props: Props) {
             colors={colors}
             onSeriesFocus={onFocus}
             onClick={onChartClick}
-            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
+            label={
+              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
+            }
           />
         );
       }
@@ -412,7 +427,9 @@ function WidgetChart(props: Props) {
             params={params}
             colors={colors}
             onSeriesFocus={onFocus}
-            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
+            label={
+              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
+            }
           />
         );
       }
@@ -423,7 +440,9 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             data={chartData}
             onSeriesFocus={onFocus}
-            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
+            label={
+              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
+            }
           />
         );
       }
@@ -435,7 +454,9 @@ function WidgetChart(props: Props) {
             height={height}
             colors={colors}
             params={params}
-            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
+            label={
+              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
+            }
           />
         );
       }
@@ -473,7 +494,9 @@ function WidgetChart(props: Props) {
             colors={colors}
             onSeriesFocus={onFocus}
             onClick={onChartClick}
-            label={_metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount}
+            label={
+              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
+            }
           />
         );
       }
