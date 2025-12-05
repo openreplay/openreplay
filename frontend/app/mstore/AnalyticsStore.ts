@@ -9,7 +9,10 @@ import {
 } from '@/services/AnalyticsService';
 import { Filter } from '@/mstore/types/filterConstants';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
-import Event, { listColumns } from './types/Analytics/Event';
+import Event, {
+  listColumns as eventListColumns,
+} from './types/Analytics/Event';
+import User, { listColumns as userListColumns } from './types/Analytics/User';
 import { filterStore } from 'App/mstore';
 import { checkFilterValue } from './types/filter';
 
@@ -29,14 +32,17 @@ export default class AnalyticsStore {
     total: 0,
     events: [],
   };
-  users: { total: number; users: UserResp[] } = {
+  users: { total: number; users: User[] } = {
     total: 0,
     users: [],
   };
   loading: boolean = false;
   period = Period({ rangeName: LAST_24_HOURS });
   payloadFilters: EventsPayload = defaultPayload;
-  usersPayloadFilters: UsersPayload = defaultPayload;
+  usersPayloadFilters: UsersPayload = {
+    ...defaultPayload,
+    sortBy: '$created_at',
+  };
 
   constructor() {
     makeAutoObservable(this);
@@ -69,6 +75,16 @@ export default class AnalyticsStore {
     };
     if (!('page' in newPayload)) {
       this.payloadFilters.page = 1;
+    }
+  };
+
+  editUsersPayload = (newPayload: Partial<UsersPayload>) => {
+    this.usersPayloadFilters = {
+      ...this.usersPayloadFilters,
+      ...newPayload,
+    };
+    if (!('page' in newPayload)) {
+      this.usersPayloadFilters.page = 1;
     }
   };
 
@@ -111,7 +127,7 @@ export default class AnalyticsStore {
     try {
       const data: EventsResponse = await analyticsService.getEvents({
         ...this.payloadFilters,
-        columns: listColumns,
+        columns: eventListColumns,
       });
       this.events = {
         total: data.total,
@@ -129,5 +145,22 @@ export default class AnalyticsStore {
 
   fetchUsers = async () => {
     this.setLoading(true);
+    try {
+      const data: UsersResponse = await analyticsService.getUsers({
+        ...this.usersPayloadFilters,
+        columns: userListColumns,
+      });
+      this.users = {
+        total: data.total,
+        users: data.users.map((user) => new User(user)),
+      };
+
+      return data;
+    } catch (e) {
+      console.error('AnalyticsStore.fetchUsers', e);
+      return { users: [], total: 0 };
+    } finally {
+      this.setLoading(false);
+    }
   };
 }

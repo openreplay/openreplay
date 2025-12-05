@@ -1,6 +1,5 @@
 import React from 'react';
 import FilterSelection from 'Shared/Filters/FilterSelection/FilterSelection';
-import User from './data/User';
 import { Input, Table, Button, Dropdown } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { useHistory } from 'react-router-dom';
@@ -114,55 +113,20 @@ function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
 }
 
 function UsersList({ toUser }: { toUser: (id: string) => void }) {
+  const { analyticsStore } = useStore();
   const [editCols, setEditCols] = React.useState(false);
   const [hiddenCols, setHiddenCols] = React.useState([]);
-  const testUsers = [
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['123123123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['123123123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['123123123123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['1231214143123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-  ];
+  const testUsers = [];
+  const page = analyticsStore.usersPayloadFilters.page;
+  const limit = analyticsStore.usersPayloadFilters.limit;
+  const total = analyticsStore.users.total;
+  const users = analyticsStore.users.users;
 
+  React.useEffect(() => {
+    analyticsStore.fetchUsers();
+  }, [analyticsStore.usersPayloadFilters]);
+
+  console.log('Users:', users);
   const dropdownItems = [
     {
       label: 'Show/Hide Columns',
@@ -217,10 +181,10 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
     },
   ];
 
-  const page = 1;
-  const total = 10;
-  const onPageChange = (page: number) => {};
-  const limit = 10;
+
+  const onPageChange = (page: number) => {
+    analyticsStore.editUsersPayload({ page });
+  };
   const list = [];
 
   const onAddFilter = () => console.log('add filter');
