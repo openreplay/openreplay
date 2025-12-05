@@ -32,7 +32,14 @@ const default_keys = [
   'properties',
 ];
 
-export const listColumns = ['$city', '$country', '$created_at', '$email', '$name'];
+export const listColumns = [
+  '$city',
+  '$country',
+  '$created_at',
+  '$email',
+  '$name',
+  // 'distinct_ids',
+];
 
 export default class User {
   name: string;
