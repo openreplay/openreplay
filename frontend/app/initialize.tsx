@@ -16,6 +16,7 @@ import './i18n';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import ENV from '../env';
 
+(window as any).env = (window as any).env ?? {};
 (window as any).env.PRODUCTION = ENV.NODE_ENV === 'production';
 // @ts-ignore
 window.getCommitHash = () => console.log(ENV.COMMIT_HASH);
