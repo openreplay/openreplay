@@ -1,6 +1,15 @@
-import React, { useState, useRef, ComponentType, ReactNode, useCallback, useEffect, useLayoutEffect } from 'react';
+import React, {
+  useState,
+  useRef,
+  ComponentType,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
+import ENV from '../env';
 
 // Define a more specific type for submission data
 export interface SubmissionData {
@@ -23,38 +32,40 @@ export interface WithCaptchaOptions {
 
 // Safely get environment variables with fallbacks
 const getCaptchaConfig = () => {
-  const enabled = typeof window !== 'undefined' &&
-    window.env?.CAPTCHA_ENABLED === 'true';
+  const enabled =
+    typeof window !== 'undefined' && ENV.CAPTCHA_ENABLED === 'true';
 
-  const siteKey = typeof window !== 'undefined' ?
-    window.env?.CAPTCHA_SITE_KEY || '' : '';
+  const siteKey =
+    typeof window !== 'undefined' ? ENV.CAPTCHA_SITE_KEY || '' : '';
 
   return { enabled, siteKey };
 };
 
 /**
  * Higher-Order Component that adds reCAPTCHA functionality to a form component
- * 
+ *
  * @param WrappedComponent The component to wrap with CAPTCHA functionality
  * @param options Configuration options for the CAPTCHA behavior
  * @returns A new component with CAPTCHA capabilities
  */
 const withCaptcha = <P extends object>(
   WrappedComponent: ComponentType<P & WithCaptchaProps>,
-  options: WithCaptchaOptions = {}
+  options: WithCaptchaOptions = {},
 ): React.FC<P> => {
   // Default options
   const {
     position = 'hidden',
     errorMessage = 'Please complete the CAPTCHA verification',
     theme = 'light',
-    size = 'invisible'
+    size = 'invisible',
   } = options;
 
   const WithCaptchaComponent: React.FC<P> = (props: P) => {
-    const { enabled: CAPTCHA_ENABLED, siteKey: CAPTCHA_SITE_KEY } = getCaptchaConfig();
+    const { enabled: CAPTCHA_ENABLED, siteKey: CAPTCHA_SITE_KEY } =
+      getCaptchaConfig();
     const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-    const [isVerifyingCaptcha, setIsVerifyingCaptcha] = useState<boolean>(false);
+    const [isVerifyingCaptcha, setIsVerifyingCaptcha] =
+      useState<boolean>(false);
     const [tokenExpired, setTokenExpired] = useState<boolean>(false);
     const recaptchaRef = useRef<ReCAPTCHA>(null);
 
@@ -109,7 +120,7 @@ const withCaptcha = <P extends object>(
                 // We have a token, resolve the promise
                 const dataWithCaptcha = {
                   ...data,
-                  'g-recaptcha-response': receivedToken
+                  'g-recaptcha-response': receivedToken,
                 };
 
                 resolve(dataWithCaptcha);
@@ -127,7 +138,8 @@ const withCaptcha = <P extends object>(
               console.log('Executing invisible reCAPTCHA');
 
               // Execute the reCAPTCHA challenge
-              recaptchaRef.current.executeAsync()
+              recaptchaRef.current
+                .executeAsync()
                 .then((token: string | null) => {
                   handleToken(token);
                 })
@@ -142,7 +154,9 @@ const withCaptcha = <P extends object>(
                 if (isVerifyingCaptcha) {
                   console.log('reCAPTCHA verification timed out');
                   setIsVerifyingCaptcha(false);
-                  toast.error(errorMessage || 'Verification timed out. Please try again.');
+                  toast.error(
+                    errorMessage || 'Verification timed out. Please try again.',
+                  );
                   reject(new Error('CAPTCHA verification timeout'));
                 }
               }, 5000);
@@ -155,7 +169,7 @@ const withCaptcha = <P extends object>(
             // Standard reCAPTCHA with token already available
             const dataWithCaptcha = {
               ...data,
-              'g-recaptcha-response': captchaToken
+              'g-recaptcha-response': captchaToken,
             };
 
             resolve(dataWithCaptcha);
@@ -164,13 +178,15 @@ const withCaptcha = <P extends object>(
             setIsVerifyingCaptcha(false);
           } else {
             // Standard reCAPTCHA but no token yet
-            toast.error(errorMessage || 'Please complete the CAPTCHA verification');
+            toast.error(
+              errorMessage || 'Please complete the CAPTCHA verification',
+            );
             reject(new Error('CAPTCHA verification required'));
             setIsVerifyingCaptcha(false);
           }
         });
       },
-      [CAPTCHA_ENABLED, captchaToken, errorMessage, size, isVerifyingCaptcha]
+      [CAPTCHA_ENABLED, captchaToken, errorMessage, size, isVerifyingCaptcha],
     );
 
     const hasCaptchaError = !captchaToken && CAPTCHA_ENABLED === true;
@@ -188,9 +204,7 @@ const withCaptcha = <P extends object>(
               size={size}
             />
             {hasCaptchaError && (
-              <div className="text-red-500 text-sm mt-1">
-                {errorMessage}
-              </div>
+              <div className="text-red-500 text-sm mt-1">{errorMessage}</div>
             )}
           </div>
         )}
@@ -207,9 +221,7 @@ const withCaptcha = <P extends object>(
 
   // Display name for debugging
   const wrappedComponentName =
-    WrappedComponent.displayName ||
-    WrappedComponent.name ||
-    'Component';
+    WrappedComponent.displayName || WrappedComponent.name || 'Component';
 
   WithCaptchaComponent.displayName = `WithCaptcha(${wrappedComponentName})`;
 

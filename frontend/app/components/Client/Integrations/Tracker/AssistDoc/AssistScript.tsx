@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CodeBlock } from 'UI';
+import ENV from '../../../../../../ENV';;
 
 function AssistScript(props) {
   const { t } = useTranslation();
@@ -19,7 +20,7 @@ function AssistScript(props) {
   r.issue=function(k,p){r.push([6,k,p])};
   r.isActive=function(){return false};
   r.getSessionToken=function(){};
-})(0, "${props.projectKey}", "${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay-assist.js", 1, 28);
+})(0, "${props.projectKey}", "${ENV.TRACKER_HOST || '//static.openreplay.com'}/${ENV.TRACKER_VERSION}/openreplay-assist.js", 1, 28);
 </script>`;
   return (
     <div>

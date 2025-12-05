@@ -1,2 +1,4 @@
+import ENV from '../../../../env';
+
 export const trackerUrl = (isAssistEnabled: boolean) =>
-  `${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay${isAssistEnabled ? '-assist.js' : '.js'}`;
+  `${ENV.TRACKER_HOST || '//static.openreplay.com'}/${ENV.TRACKER_VERSION}/openreplay${isAssistEnabled ? '-assist.js' : '.js'}`;

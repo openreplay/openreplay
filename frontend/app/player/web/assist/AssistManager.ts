@@ -13,6 +13,7 @@ import ScreenRecording, { SessionRecordingStatus } from './ScreenRecording';
 import { debounceCall } from 'App/utils';
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 import io from 'socket.io-client';
+import ENV from '../../../../env';
 
 export enum ConnectionStatus {
   Connecting,
@@ -180,7 +181,7 @@ export default class AssistManager {
       return;
     }
     // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP || window.location.origin);
+    const urlObject = new URL(ENV.API_EDP || window.location.origin);
     // does it handle ssl automatically?
 
     const socket: Socket = (this.socket = io(urlObject.origin, {

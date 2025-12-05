@@ -1,7 +1,8 @@
 import { options } from 'App/dev/console';
+import ENV from '../../env';
 
 function log(...args) {
-  if (!window.env.PRODUCTION || options.verbose) {
+  if (!ENV.PRODUCTION || options.verbose) {
     if (Object.keys(groupTm).length > 0) {
       console.groupEnd();
     }
@@ -10,14 +11,14 @@ function log(...args) {
 }
 
 function warn(...args) {
-  if (!window.env.PRODUCTION || options.verbose) {
+  if (!ENV.PRODUCTION || options.verbose) {
     console.warn(...args);
   }
   options.exceptionsLogs.push(args);
 }
 
 function error(...args) {
-  if (!window.env.PRODUCTION || options.verbose) {
+  if (!ENV.PRODUCTION || options.verbose) {
     console.error(...args);
     options.exceptionsLogs.push(args);
   }
@@ -27,7 +28,7 @@ let groupTm = {};
 const groupedLogs = {};
 
 function group(groupName, ...args) {
-  if (!window.env.PRODUCTION || options.verbose) {
+  if (!ENV.PRODUCTION || options.verbose) {
     if (groupTm[groupName]) {
       clearTimeout(groupTm[groupName]);
       groupTm[groupName] = null;

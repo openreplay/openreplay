@@ -1,6 +1,7 @@
 import io from 'socket.io-client';
 import { toast } from 'react-toastify';
 import { ISession } from '@/types/session/session';
+import ENV from '../../../env';
 
 export class ChatManager {
   socket: ReturnType<typeof io>;
@@ -16,7 +17,7 @@ export class ChatManager {
     token: string;
   }) {
     this.threadId = threadId;
-    const urlObject = new URL(window.env.API_EDP || window.location.origin);
+    const urlObject = new URL(ENV.API_EDP || window.location.origin);
     const socket = io(`${urlObject.origin}/kai/chat`, {
       transports: ['websocket'],
       path: '/kai/chat/socket.io',

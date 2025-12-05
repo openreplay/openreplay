@@ -19,6 +19,7 @@ import { Form, Input, Link } from 'UI';
 
 import Select from 'Shared/Select';
 import { useTranslation } from 'react-i18next';
+import ENV from '../../../../env';
 
 const LOGIN_ROUTE = login();
 
@@ -37,7 +38,7 @@ function SignupForm() {
     projectName: '',
     organizationName: '',
     reload: false,
-    CAPTCHA_ENABLED: window.env.CAPTCHA_ENABLED === 'true',
+    CAPTCHA_ENABLED: ENV.CAPTCHA_ENABLED === 'true',
   });
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -135,7 +136,7 @@ function SignupForm() {
             <ReCAPTCHA
               ref={recaptchaRef}
               size="invisible"
-              sitekey={window.env.CAPTCHA_SITE_KEY}
+              sitekey={ENV.CAPTCHA_SITE_KEY}
               onChange={(token) => handleSubmit(token || '')}
             />
           )}

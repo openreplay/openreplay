@@ -1,4 +1,5 @@
 import { queried } from './routes';
+import ENV from '../env';
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -208,7 +209,7 @@ export default class APIClient {
         path.includes('refresh') ||
         path.includes('logout') ||
         path.includes('reset')) &&
-      window.env.NODE_ENV !== 'development'
+      ENV.NODE_ENV !== 'development'
     ) {
       init.credentials = 'include';
     } else {
@@ -220,7 +221,7 @@ export default class APIClient {
       path.includes('v1/integrations') ||
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('replay-exporter');
-    let edp = window.env.API_EDP || window.location.origin + '/api';
+    let edp = ENV.API_EDP || window.location.origin + '/api';
     const isSaas = edp.includes('api.openreplay.com');
     const safeV2Replacer = (url: string) => {
       if (isSaas) {

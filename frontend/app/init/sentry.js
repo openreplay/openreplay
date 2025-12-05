@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/browser';
+import ENV from '../../env';
 
-if (window.env && window.env.SENTRY_ENABLED === 'true') {
-  Sentry.init({ dsn: window.env.SENTRY_URL });
+if (ENV.SENTRY_ENABLED === 'true') {
+  Sentry.init({ dsn: ENV.SENTRY_URL });
 }

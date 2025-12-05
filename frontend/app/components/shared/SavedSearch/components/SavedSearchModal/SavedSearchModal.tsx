@@ -21,6 +21,7 @@ import { ISavedSearch } from 'App/mstore/types/savedSearch';
 import { useTranslation } from 'react-i18next';
 import { CopyButton } from 'UI';
 import { sessions } from '@/routes';
+import ENV from '../../../../../../env';
 
 const { Title } = Typography;
 
@@ -65,7 +66,7 @@ function SavedSearchModal() {
   };
 
   const listActions = (item: SavedSearch) => {
-    const shareURL = `https://${window.env.ORIGIN}/${projectsStore.activeSiteId}${sessions()}?sid=${item.searchId}`;
+    const shareURL = `https://${ENV.ORIGIN}/${projectsStore.activeSiteId}${sessions()}?sid=${item.searchId}`;
     const items = [
       <CopyButton
         isIcon

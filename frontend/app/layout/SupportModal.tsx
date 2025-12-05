@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import CrispIframe from './CrispIframe';
 import { Icon } from 'UI';
+import ENV from '../../env';
 
 const { Text } = Typography;
 
@@ -14,7 +15,7 @@ interface Props {
 
 function SupportModal(props: Props) {
   const { onClose, open } = props;
-  const WEBSITE_ID = window.env.CRISP_KEY;
+  const WEBSITE_ID = ENV.CRISP_KEY;
 
   const { t } = useTranslation();
 

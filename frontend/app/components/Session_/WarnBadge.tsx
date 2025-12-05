@@ -3,6 +3,7 @@ import { Alert } from 'antd';
 import { Icon } from 'UI';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight, X } from 'lucide-react';
+import ENV from '../../../env';
 
 const localhostWarn = (project: string) => `${project}_localhost_warn`;
 const vModeWarn = (project: string) => `${project}_v_mode_warn`;
@@ -85,7 +86,7 @@ const WarnBadge = React.memo(
         defaultLocalhostWarn &&
         /(localhost)|(127\.0\.0\.1)|(0\.0\.0\.0)/.test(currentLocation),
     );
-    const trackerVersion = window.env.TRACKER_VERSION ?? undefined;
+    const trackerVersion = ENV.TRACKER_VERSION ?? undefined;
     const trackerVerDiff = compareVersions(version, trackerVersion);
     const trackerWarnActive = trackerVerDiff !== VersionComparison.Same;
 

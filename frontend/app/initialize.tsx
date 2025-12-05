@@ -16,10 +16,9 @@ import './i18n';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import ENV from '../env';
 
-(window as any).env = ENV;
-(window as any).env.PRODUCTION = process.env.NODE_ENV === 'production';
+(window as any).env.PRODUCTION = ENV.NODE_ENV === 'production';
 // @ts-ignore
-window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
+window.getCommitHash = () => console.log(ENV.COMMIT_HASH);
 
 const queryClient = new QueryClient();
 
