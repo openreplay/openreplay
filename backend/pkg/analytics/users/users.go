@@ -91,13 +91,14 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	columnsStr := filters.ConvertColumnsToStrings(req.Columns)
 
 	whereClause, params := u.buildSearchQueryParams(projID, req)
+	cteSelectColumns := BuildSelectColumns("", columnsStr)
 	selectColumns := BuildSelectColumns("latest_users", columnsStr)
 	sortBy := filters.ValidateSortColumnGeneric(string(req.SortBy), model.ColumnMapping, `"$user_id"`)
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
 	query := fmt.Sprintf(`
 		WITH latest_users AS (
-			SELECT *
+			SELECT %s, _deleted_at, _timestamp
 			FROM product_analytics.users
 			WHERE %s
 			ORDER BY _timestamp DESC
@@ -108,7 +109,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 		WHERE _deleted_at = '1970-01-01 00:00:00'
 		ORDER BY %s %s
 		LIMIT ? OFFSET ?`,
-		whereClause, strings.Join(selectColumns, ", "), sortBy, sortOrder)
+		strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(selectColumns, ", "), sortBy, sortOrder)
 
 	queryParams := append(params, req.Limit, offset)
 
@@ -120,7 +121,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	defer rows.Close()
 
 	var total uint64
-	users := []model.User{}
+	users := []map[string]interface{}{}
 	for rows.Next() {
 		user := model.User{}
 		scanDest := u.getScanDestinations(&user, columnsStr)
@@ -136,7 +137,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 			continue
 		}
 
-		users = append(users, user)
+		users = append(users, user.ToMap(columnsStr))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -158,7 +159,10 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 
 	if req.Query != "" {
 		queryPattern := "%" + req.Query + "%"
-		queryCondition := `("$user_id" ILIKE ? OR "$email" ILIKE ? OR "$name" ILIKE ?)`
+		queryCondition := fmt.Sprintf(`("%s" ILIKE ? OR "%s" ILIKE ? OR "%s" ILIKE ?)`, 
+			string(filters.UserColumnUserID), 
+			string(filters.UserColumnEmail), 
+			string(filters.UserColumnName))
 		baseConditions = append(baseConditions, queryCondition)
 		params = append(params, queryPattern, queryPattern, queryPattern)
 	}
@@ -171,25 +175,21 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 }
 
 func (u *usersImpl) getScanDestinations(user *model.User, requestedCols []string) []interface{} {
-	baseDest := []interface{}{
-		&user.ProjectID,
-		&user.UserID,
-		&user.Email,
-		&user.Name,
-		&user.FirstName,
-		&user.LastName,
-		&user.CreatedAt,
-		&user.LastSeen,
+	baseDest := []interface{}{&user.ProjectID}
+	for _, col := range model.BaseUserColumns {
+		if ptr := model.GetFieldPointer(user, string(col)); ptr != nil {
+			baseDest = append(baseDest, ptr)
+		}
 	}
 
 	if len(requestedCols) == 0 {
 		return baseDest
 	}
 
+	baseColumnSet := model.GetBaseColumnStringSet()
+
 	for _, col := range requestedCols {
-		if col == string(filters.UserColumnUserID) || col == string(filters.UserColumnEmail) || col == string(filters.UserColumnName) ||
-			col == string(filters.UserColumnFirstName) || col == string(filters.UserColumnLastName) ||
-			col == string(filters.UserColumnCreatedAt) || col == string(filters.UserColumnLastSeen) || col == "project_id" {
+		if baseColumnSet[col] {
 			continue
 		}
 		if ptr := model.GetFieldPointer(user, col); ptr != nil {

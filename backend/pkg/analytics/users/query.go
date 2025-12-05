@@ -29,27 +29,29 @@ func formatColumnForSelect(alias, col string, dbCol string) string {
 func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 	alias := filters.NormalizeAlias(tableAlias)
 
-	baseColumns := []string{
-		alias + "project_id",
-		fmt.Sprintf("%s\"%s\" AS \"%s\"", alias, string(filters.UserColumnUserID), string(filters.UserColumnUserID)),
-		fmt.Sprintf("%s\"%s\" AS \"%s\"", alias, string(filters.UserColumnEmail), string(filters.UserColumnEmail)),
-		fmt.Sprintf("%s\"%s\" AS \"%s\"", alias, string(filters.UserColumnName), string(filters.UserColumnName)),
-		fmt.Sprintf("%s\"%s\" AS \"%s\"", alias, string(filters.UserColumnFirstName), string(filters.UserColumnFirstName)),
-		fmt.Sprintf("%s\"%s\" AS \"%s\"", alias, string(filters.UserColumnLastName), string(filters.UserColumnLastName)),
-		fmt.Sprintf("toInt64(toUnixTimestamp(%s\"%s\") * 1000) AS %s", alias, string(filters.UserColumnCreatedAt), string(filters.UserColumnCreatedAt)),
-		fmt.Sprintf("toInt64(toUnixTimestamp(%s\"%s\") * 1000) AS %s", alias, string(filters.UserColumnLastSeen), string(filters.UserColumnLastSeen)),
+	baseColumns := []string{alias + "project_id"}
+	for _, col := range model.BaseUserColumns {
+		colStr := string(col)
+		baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, model.ColumnMapping[colStr]))
 	}
 
-	skipColumns := map[string]bool{
-		string(filters.UserColumnUserID):    true,
-		string(filters.UserColumnEmail):     true,
-		string(filters.UserColumnName):      true,
-		string(filters.UserColumnFirstName): true,
-		string(filters.UserColumnLastName):  true,
-		string(filters.UserColumnCreatedAt): true,
-		string(filters.UserColumnLastSeen):  true,
-		"project_id":                        true,
+	if len(requestedColumns) == 0 {
+		return baseColumns
 	}
 
-	return filters.GenericBuildSelectColumns(tableAlias, baseColumns, requestedColumns, model.ColumnMapping, skipColumns, formatColumnForSelect)
+	result := make([]string, len(baseColumns))
+	copy(result, baseColumns)
+	
+	baseColumnSet := model.GetBaseColumnStringSet()
+	
+	for _, col := range requestedColumns {
+		if baseColumnSet[col] {
+			continue
+		}
+		if dbCol, ok := model.ColumnMapping[col]; ok {
+			result = append(result, formatColumnForSelect(alias, col, dbCol))
+		}
+	}
+
+	return result
 }
