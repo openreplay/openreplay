@@ -1,10 +1,15 @@
+from cachetools import TTLCache, cached
+
 from chalicelib.core import projects
 from chalicelib.core import users
 from chalicelib.core.log_tools import datadog, stackdriver, sentry
 from chalicelib.core.modules import TENANT_CONDITION
 from chalicelib.utils import pg_client
 
+cache = TTLCache(maxsize=1000, ttl=180)
 
+
+@cached(cache)
 def get_state(tenant_id):
     pids = projects.get_projects_ids(tenant_id=tenant_id)
     with pg_client.PostgresClient() as cur:
@@ -14,9 +19,9 @@ def get_state(tenant_id):
         if len(pids) > 0:
             cur.execute(
                 cur.mogrify(
-                    """SELECT EXISTS((  SELECT 1
-                                                FROM public.sessions AS s
-                                                WHERE s.project_id IN %(ids)s)) AS exists;""",
+                    """SELECT EXISTS((SELECT 1
+                                      FROM public.sessions AS s
+                                      WHERE s.project_id IN %(ids)s)) AS exists;""",
                     {"ids": tuple(pids)},
                 )
             )
@@ -64,8 +69,8 @@ def get_state(tenant_id):
         {
             "task": "Integrations",
             "done": len(datadog.get_all(tenant_id=tenant_id)) > 0
-            or len(sentry.get_all(tenant_id=tenant_id)) > 0
-            or len(stackdriver.get_all(tenant_id=tenant_id)) > 0,
+                    or len(sentry.get_all(tenant_id=tenant_id)) > 0
+                    or len(stackdriver.get_all(tenant_id=tenant_id)) > 0,
             "URL": "https://docs.openreplay.com/integrations",
         },
     ]
@@ -79,9 +84,9 @@ def get_state_installing(tenant_id):
         if len(pids) > 0:
             cur.execute(
                 cur.mogrify(
-                    """SELECT EXISTS((  SELECT 1
-                                                FROM public.sessions AS s
-                                                WHERE s.project_id IN %(ids)s)) AS exists;""",
+                    """SELECT EXISTS((SELECT 1
+                                      FROM public.sessions AS s
+                                      WHERE s.project_id IN %(ids)s)) AS exists;""",
                     {"ids": tuple(pids)},
                 )
             )
@@ -137,7 +142,7 @@ def get_state_integrations(tenant_id):
     return {
         "task": "Integrations",
         "done": len(datadog.get_all(tenant_id=tenant_id)) > 0
-        or len(sentry.get_all(tenant_id=tenant_id)) > 0
-        or len(stackdriver.get_all(tenant_id=tenant_id)) > 0,
+                or len(sentry.get_all(tenant_id=tenant_id)) > 0
+                or len(stackdriver.get_all(tenant_id=tenant_id)) > 0,
         "URL": "https://docs.openreplay.com/integrations",
     }
