@@ -22,10 +22,10 @@ func buildColumnMapping() map[string]string {
 type User struct {
 	ProjectID          uint16                  `json:"-" db:"project_id"`
 	UserID             string                  `json:"$user_id" db:"$user_id" validate:"required"`
-	Email              string                  `json:"$email,omitempty" db:"$email" validate:"omitempty,email"`
-	Name               string                  `json:"$name,omitempty" db:"$name" validate:"omitempty"`
-	FirstName          string                  `json:"$first_name,omitempty" db:"$first_name" validate:"omitempty"`
-	LastName           string                  `json:"$last_name,omitempty" db:"$last_name" validate:"omitempty"`
+	Email              string                  `json:"$email" db:"$email" validate:"omitempty,email"`
+	Name               string                  `json:"$name" db:"$name" validate:"omitempty"`
+	FirstName          string                  `json:"$first_name" db:"$first_name" validate:"omitempty"`
+	LastName           string                  `json:"$last_name" db:"$last_name" validate:"omitempty"`
 	Phone              string                  `json:"$phone,omitempty" db:"$phone" validate:"omitempty"`
 	Avatar             string                  `json:"$avatar,omitempty" db:"$avatar" validate:"omitempty,url"`
 	CreatedAt          int64                   `json:"$created_at,omitempty" db:"$created_at" validate:"omitempty"`
@@ -95,4 +95,71 @@ type UserEvent struct {
 type UserActivityResponse struct {
 	Total  uint64      `json:"total"`
 	Events []UserEvent `json:"events"`
+}
+
+func GetFieldPointer(user *User, column string) interface{} {
+	switch filters.UserColumn(column) {
+	case filters.UserColumnUserID:
+		return &user.UserID
+	case filters.UserColumnEmail:
+		return &user.Email
+	case filters.UserColumnName:
+		return &user.Name
+	case filters.UserColumnFirstName:
+		return &user.FirstName
+	case filters.UserColumnLastName:
+		return &user.LastName
+	case filters.UserColumnPhone:
+		return &user.Phone
+	case filters.UserColumnAvatar:
+		return &user.Avatar
+	case filters.UserColumnCreatedAt:
+		return &user.CreatedAt
+	case filters.UserColumnProperties:
+		return &user.PropertiesRaw
+	case filters.UserColumnGroupID1:
+		return &user.GroupID1
+	case filters.UserColumnGroupID2:
+		return &user.GroupID2
+	case filters.UserColumnGroupID3:
+		return &user.GroupID3
+	case filters.UserColumnGroupID4:
+		return &user.GroupID4
+	case filters.UserColumnGroupID5:
+		return &user.GroupID5
+	case filters.UserColumnGroupID6:
+		return &user.GroupID6
+	case filters.UserColumnSDKEdition:
+		return &user.SDKEdition
+	case filters.UserColumnSDKVersion:
+		return &user.SDKVersion
+	case filters.UserColumnCurrentURL:
+		return &user.CurrentUrl
+	case filters.UserColumnInitialReferrer:
+		return &user.InitialReferrer
+	case filters.UserColumnReferringDomain:
+		return &user.ReferringDomain
+	case filters.UserColumnInitialUtmSource:
+		return &user.InitialUtmSource
+	case filters.UserColumnInitialUtmMedium:
+		return &user.InitialUtmMedium
+	case filters.UserColumnInitialUtmCampaign:
+		return &user.InitialUtmCampaign
+	case filters.UserColumnCountry:
+		return &user.Country
+	case filters.UserColumnState:
+		return &user.State
+	case filters.UserColumnCity:
+		return &user.City
+	case filters.UserColumnOrAPIEndpoint:
+		return &user.OrAPIEndpoint
+	case filters.UserColumnTimezone:
+		return &user.Timezone
+	case filters.UserColumnFirstEventAt:
+		return &user.FirstEventAt
+	case filters.UserColumnLastSeen:
+		return &user.LastSeen
+	default:
+		return nil
+	}
 }

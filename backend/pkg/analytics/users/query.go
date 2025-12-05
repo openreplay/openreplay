@@ -8,10 +8,6 @@ import (
 	"openreplay/backend/pkg/analytics/users/model"
 )
 
-func BuildUserSearchQuery(tableAlias string, userFilters []filters.Filter) ([]string, []interface{}) {
-	return filters.BuildSimpleFilterQuery(tableAlias, userFilters, model.ColumnMapping, "properties")
-}
-
 func formatColumnForSelect(alias, col string, dbCol string) string {
 	switch filters.UserColumn(col) {
 	case filters.UserColumnCreatedAt:
