@@ -4,7 +4,7 @@ import re
 import string
 from typing import Union
 from urllib.parse import urlparse
-
+import hashlib
 from decouple import config
 
 import schemas
@@ -336,3 +336,9 @@ def cast_session_id_to_string(data):
             for key in keys:
                 data[key] = cast_session_id_to_string(data[key])
     return data
+
+
+def string_to_id(s: str):
+    if s is None:
+        return None
+    return str(int(hashlib.md5(s.encode()).hexdigest(), 16))
