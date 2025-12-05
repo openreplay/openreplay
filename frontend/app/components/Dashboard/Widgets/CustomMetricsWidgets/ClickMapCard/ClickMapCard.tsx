@@ -51,7 +51,7 @@ function ClickMapCard() {
         (filter: any) => {
           if (filter.name === 'LOCATION') {
             filter.filters = filter.filters.map((filter: any) => {
-              if (filter.name === 'url_path' && !!metric.data.urlPath) {
+              if (filter.name === 'urlPath' && !!metric.data.urlPath) {
                 filter.value = [metric.data.urlPath];
               }
               return filter;
@@ -76,7 +76,7 @@ function ClickMapCard() {
         filter.name === 'LOCATION' &&
         filter.filters.some(
           (filter: any) =>
-            filter.name === 'url_path' &&
+            filter.name === 'urlPath' &&
             filter.value.length > 0 &&
             filter.value[0].length > 0,
         )
