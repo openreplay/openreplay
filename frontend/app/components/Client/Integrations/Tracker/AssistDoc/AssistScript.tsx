@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CodeBlock } from 'UI';
-import ENV from '../../../../../../ENV';;
+import ENV from '../../../../../../env';
 
 function AssistScript(props) {
   const { t } = useTranslation();
