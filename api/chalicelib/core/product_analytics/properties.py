@@ -286,6 +286,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
         return {"total": total, "displayName": "Event Properties", "list": properties}
 
 
+@cached(TTLCache(maxsize=1000, ttl=180))
 def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
     if auto_captured and event_name == "TAG_TRIGGER":
         return [
