@@ -1,6 +1,7 @@
 import schemas
 
 from chalicelib.core.issues import issues
+from chalicelib.utils import helper
 
 
 def get_sessions_filters(project_id: int):
@@ -9,7 +10,7 @@ def get_sessions_filters(project_id: int):
         "displayName": "Session Filters",
         "list": [
             {
-                "id": "sf_1",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.REFERRER}'),
                 "name": schemas.FilterType.REFERRER,
                 "displayName": "Referrer",
                 "possibleTypes": ["string"],
@@ -20,7 +21,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_2",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.DURATION}'),
                 "name": schemas.FilterType.DURATION,
                 "displayName": "Duration",
                 "possibleTypes": ["int"],
@@ -31,7 +32,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": "sf_3",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.UTM_SOURCE}'),
                 "name": schemas.FilterType.UTM_SOURCE,
                 "displayName": "UTM Source",
                 "possibleTypes": ["string"],
@@ -42,7 +43,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_4",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.UTM_MEDIUM}'),
                 "name": schemas.FilterType.UTM_MEDIUM,
                 "displayName": "UTM Medium",
                 "possibleTypes": ["string"],
@@ -53,7 +54,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_5",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.UTM_CAMPAIGN}'),
                 "name": schemas.FilterType.UTM_CAMPAIGN,
                 "displayName": "UTM Campaign",
                 "possibleTypes": ["string"],
@@ -64,7 +65,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_6",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_COUNTRY}'),
                 "name": schemas.FilterType.USER_COUNTRY,
                 "displayName": "Country",
                 "possibleTypes": ["string"],
@@ -97,7 +98,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": "sf_7",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_CITY}'),
                 "name": schemas.FilterType.USER_CITY,
                 "displayName": "City",
                 "possibleTypes": ["string"],
@@ -108,7 +109,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_8",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_STATE}'),
                 "name": schemas.FilterType.USER_STATE,
                 "displayName": "State / Province",
                 "possibleTypes": ["string"],
@@ -119,7 +120,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_9",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_OS}'),
                 "name": schemas.FilterType.USER_OS,
                 "displayName": "OS",
                 "possibleTypes": ["string"],
@@ -130,7 +131,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": "sf_10",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_BROWSER}'),
                 "name": schemas.FilterType.USER_BROWSER,
                 "displayName": "Browser",
                 "possibleTypes": ["string"],
@@ -141,7 +142,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": "sf_11",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_DEVICE}'),
                 "name": schemas.FilterType.USER_DEVICE,
                 "displayName": "Device",
                 "possibleTypes": ["string"],
@@ -152,7 +153,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": "sf_12",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.PLATFORM}'),
                 "name": schemas.FilterType.PLATFORM,
                 "displayName": "Platform",
                 "possibleTypes": ["string"],
@@ -163,7 +164,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_13",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.REV_ID}'),
                 "name": schemas.FilterType.REV_ID,
                 "displayName": "Version ID",
                 "possibleTypes": ["string"],
@@ -174,7 +175,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_14",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.ISSUE}'),
                 "name": schemas.FilterType.ISSUE,
                 "displayName": "Issue",
                 "possibleTypes": ["string"],
@@ -186,7 +187,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_15",
+                "id": helper.string_to_id(f'sf_screenHeight'),
                 "name": "screenHeight",
                 "displayName": "Screen Height",
                 "possibleTypes": ["UInt16"],
@@ -197,7 +198,7 @@ def get_sessions_filters(project_id: int):
                 "isConditional": False
             },
             {
-                "id": "sf_16",
+                "id": helper.string_to_id(f'sf_screenWidth'),
                 "name": "screenWidth",
                 "displayName": "Screen Width",
                 "possibleTypes": ["UInt16"],
@@ -218,7 +219,7 @@ def get_users_filters(project_id: int):
         "displayName": "User Filters",
         "list": [
             {
-                "id": "uf_1",
+                "id": helper.string_to_id(f'uf_{schemas.FilterType.USER_ID}'),
                 "name": schemas.FilterType.USER_ID,
                 "displayName": "User ID",
                 "possibleTypes": ["string"],
@@ -229,7 +230,7 @@ def get_users_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": "uf_2",
+                "id": helper.string_to_id(f'uf_{schemas.FilterType.USER_ANONYMOUS_ID}'),
                 "name": schemas.FilterType.USER_ANONYMOUS_ID,
                 "displayName": "User Anonymous ID",
                 "possibleTypes": ["string"],
