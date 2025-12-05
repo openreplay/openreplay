@@ -147,7 +147,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
       {
         label: 'Data Management',
         // next DLC content
-        hidden: true,
+        hidden: false,
         key: MENU.DATA_MANAGEMENT,
         icon: 'memory',
         children: [

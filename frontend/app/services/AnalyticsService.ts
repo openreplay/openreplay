@@ -81,6 +81,56 @@ export interface EventsResponse {
   events: SingleEvent[];
 }
 
+export interface UsersPayload {
+  filters: Filter[];
+  sortOrder: 'asc' | 'desc';
+  sortBy: string;
+  limit: number;
+  startTimestamp: number;
+  endTimestamp: number;
+  columns: string[];
+  page: number;
+}
+
+export interface UserResp {
+  $avatar: string;
+  $city: string;
+  $country: string;
+  $created_at: 0;
+  $current_url: string;
+  $email: string;
+  $first_event_at: 0;
+  $first_name: string;
+  $initial_referrer: string;
+  $last_name: string;
+  $last_seen: 0;
+  $name: string;
+  $or_api_endpoint: string;
+  $phone: string;
+  $referring_domain: string;
+  $sdk_edition: string;
+  $sdk_version: string;
+  $state: string;
+  $timezone: 0;
+  $user_id: string;
+  distinct_ids: string[];
+  group_id1: string[];
+  group_id2: string[];
+  group_id3: string[];
+  group_id4: string[];
+  group_id5: string[];
+  group_id6: string[];
+  initial_utm_campaign: string;
+  initial_utm_medium: string;
+  initial_utm_source: string;
+  properties: Record<string, any>;
+}
+
+export interface UsersResponse {
+  total: number;
+  users: UserResp[];
+}
+
 export default class AnalyticsService extends BaseService {
   getEvents = async (payload: EventsPayload): Promise<EventsResponse> => {
     const r = await this.client.post('/PROJECT_ID/events', payload);
@@ -90,6 +140,18 @@ export default class AnalyticsService extends BaseService {
 
   getEvent = async (eventId: string): Promise<EventResp> => {
     const r = await this.client.get(`/PROJECT_ID/events/${eventId}`);
+    const { data } = await r.json();
+    return data;
+  };
+
+  getUsers = async (payload: UsersPayload): Promise<UsersResponse> => {
+    const r = await this.client.post('/PROJECT_ID/users', payload);
+    const { data } = await r.json();
+    return data;
+  };
+
+  getUser = async (userId: string): Promise<UserResp> => {
+    const r = await this.client.get(`/PROJECT_ID/users/${userId}`);
     const { data } = await r.json();
     return data;
   };

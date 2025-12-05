@@ -26,6 +26,14 @@ import { getSortingKey } from '@/mstore/types/Analytics/Event';
 
 const columnOrderKey = '$__activity_columns_order__$';
 
+const colToSort = {
+  $event_name: 'Event Name',
+  created_at: 'Time',
+  distinct_id: 'Distinct ID',
+  $city: 'City',
+  $os: 'Environment',
+};
+
 function ActivityPage() {
   const { projectsStore, filterStore, analyticsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
@@ -207,75 +215,36 @@ function ActivityPage() {
     if (!sorter.field) {
       analyticsStore.editPayload({
         sortOrder: 'desc',
-        sortBy: 'time',
+        sortBy: 'created_at',
       });
     } else {
+      const fieldName = sorter.field === 'environment' ? '$os' : sorter.field;
       analyticsStore.editPayload({
-        sortBy: getSortingKey(sorter.field),
+        sortBy: getSortingKey(fieldName),
         sortOrder: sorter.order === 'ascend' ? 'asc' : 'desc',
       });
     }
   };
 
-  // const onSortOrderChange = (sortOrder: 'asc' | 'desc' | 'time-asc' | 'time-desc') => {
-  //   if (sortOrder.startsWith('time-')) {
-  //     analyticsStore.editPayload({
-  //       sortOrder: sortOrder.endsWith('asc') ? 'asc' : 'desc',
-  //       sortBy: 'time',
-  //     });
-  //   } else {
-  //     analyticsStore.editPayload({
-  //       sortOrder,
-  //       sortBy: 'time',
-  //     });
-  //   }
-  // };
-  // const timeSortOptions =
-  //   analyticsStore.payloadFilters.sortBy !== 'time'
-  //     ? [
-  //         {
-  //           label:
-  //             columns.find(
-  //               (c) => c.key === analyticsStore.payloadFilters.sortBy,
-  //             )?.title ?? 'Custom',
-  //           value: 'desc',
-  //         },
-  //         {
-  //           label:
-  //             columns.find(
-  //               (c) => c.key === analyticsStore.payloadFilters.sortBy,
-  //             )?.title ?? 'Custom',
-  //           value: 'asc',
-  //         },
-  //         { label: 'Newest', value: 'time-desc' },
-  //         { label: 'Oldest', value: 'time-asc' },
-  //       ]
-  //     : [
-  //         { label: 'Newest', value: 'desc' },
-  //         { label: 'Oldest', value: 'asc' },
-  //       ];
-  // const timeSortDefault =
-  //   analyticsStore.payloadFilters.sortBy !== 'time' ? 'custom' : 'desc';
-
-  const sortedBy = columns.find(
-    (c) => c.key === analyticsStore.payloadFilters.sortBy,
-  )?.title;
+  // @ts-ignore
+  const sortedBy = colToSort[analyticsStore.payloadFilters.sortBy] ?? 'Custom';
   const sortedAs =
     analyticsStore.payloadFilters.sortOrder === 'asc'
       ? 'ascending'
       : 'descending';
 
   const sortStr =
-    analyticsStore.payloadFilters.sortBy === 'time'
+    analyticsStore.payloadFilters.sortBy === 'created_at'
       ? analyticsStore.payloadFilters.sortOrder === 'asc'
         ? 'Oldest'
         : 'Newest'
       : `${sortedBy} (${sortedAs})`;
-  const sortDisabled = analyticsStore.payloadFilters.sortBy !== 'time';
+  const sortDisabled = analyticsStore.payloadFilters.sortBy !== 'created_at';
   const onQuickSort = () => {
-    const newSortOrder = analyticsStore.payloadFilters.sortOrder === 'asc' ? 'desc' : 'asc';
+    const newSortOrder =
+      analyticsStore.payloadFilters.sortOrder === 'asc' ? 'desc' : 'asc';
     analyticsStore.editPayload({
-      sortBy: 'time',
+      sortBy: 'created_at',
       sortOrder: newSortOrder,
     });
   };
@@ -366,7 +335,9 @@ function ActivityPage() {
           <div className={'px-4 py-2 flex items-center gap-2'}>
             <div className={'font-semibold text-lg'}>All users activity</div>
             <div className={'ml-auto'} />
-            <Button onClick={onQuickSort} disabled={sortDisabled}>{sortStr}</Button>
+            <Button onClick={onQuickSort} disabled={sortDisabled}>
+              {sortStr}
+            </Button>
             <SelectDateRange
               period={analyticsStore.period}
               onChange={analyticsStore.updateTimestamps}

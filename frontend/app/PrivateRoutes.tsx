@@ -32,11 +32,21 @@ const components: any = {
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
-  ActivityPure: lazy(() => import('Components/DataManagement/Activity/ActivityPage')),
-  UserPage: lazy(() => import('Components/DataManagement/UsersEvents/UserPage')),
-  UsersEventsPage: lazy(() => import('Components/DataManagement/UsersEvents/ListPage')),
-  EventPage: lazy(() => import('Components/DataManagement/UsersEvents/EventPage')),
-  PropertiesList: lazy(() => import('Components/DataManagement/Properties/ListPage')),
+  ActivityPure: lazy(
+    () => import('Components/DataManagement/Activity/ActivityPage'),
+  ),
+  UserPage: lazy(
+    () => import('Components/DataManagement/UsersEvents/UserPage'),
+  ),
+  UsersEventsPage: lazy(
+    () => import('Components/DataManagement/UsersEvents/UsersListPage'),
+  ),
+  EventPage: lazy(
+    () => import('Components/DataManagement/UsersEvents/EventPage'),
+  ),
+  PropertiesList: lazy(
+    () => import('Components/DataManagement/Properties/ListPage'),
+  ),
 };
 
 const enhancedComponents: any = {
@@ -54,10 +64,10 @@ const enhancedComponents: any = {
   Kai: withSiteIdUpdater(components.KaiPure),
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
-  UserPage: components.UserPage,
-  UsersEventsPage: components.UsersEventsPage,
-  EventPage: components.EventPage,
-  PropertiesList: components.PropertiesList,
+  UserPage: withSiteIdUpdater(components.UserPage),
+  UsersEventsPage: withSiteIdUpdater(components.UsersEventsPage),
+  EventPage: withSiteIdUpdater(components.EventPage),
+  PropertiesList: withSiteIdUpdater(components.PropertiesList),
 };
 
 const { withSiteId } = routes;
@@ -320,17 +330,9 @@ function PrivateRoutes() {
         <Route
           exact
           strict
-          path={withSiteId(routes.dataManagement.users(), siteIdList)}
-        >
-          <enhancedComponents.UsersEventsPage view={'users'} />
-        </Route>
-        <Route
-          exact
-          strict
-          path={withSiteId(routes.dataManagement.events(), siteIdList)}
-        >
-          <enhancedComponents.UsersEventsPage view={'events'} />
-        </Route>
+          path={withSiteId(routes.dataManagement.usersEventsList(), siteIdList)}
+          component={enhancedComponents.UsersEventsPage}
+        />
         <Route
           exact
           strict
