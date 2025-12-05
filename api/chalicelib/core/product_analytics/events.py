@@ -46,15 +46,15 @@ def get_events(project_id: int):
             "displayName": PREDEFINED_EVENTS[e]["displayName"],
             "description": PREDEFINED_EVENTS[e]["description"],
             "autoCaptured": True,
-            "id": f"event_{i}",
+            "id": helper.string_to_id(f'event_{e}'),
             "dataType": "string",
             "possibleTypes": ["string"],
             "_foundInPredefinedList": False
         } for i, e in enumerate(PREDEFINED_EVENTS)]}
     total = rows[0]["total"]
     rows = helper.list_to_camel_case(rows)
-    for i, row in enumerate(rows):
-        row["id"] = f"event_{i}"
+    for row in rows:
+        row["id"] = helper.string_to_id(f'event_{row["name"]}')
         row["dataType"] = "string"
         row["possibleTypes"] = ["string"]
         row["isConditional"] = True
@@ -69,7 +69,7 @@ def get_events(project_id: int):
                 "displayName": PREDEFINED_EVENTS[e]["displayName"],
                 "description": PREDEFINED_EVENTS[e]["description"],
                 "autoCaptured": True,
-                "id": f"event_{total}",
+                "id": helper.string_to_id(f'event_{e}'),
                 "dataType": "string",
                 "possibleTypes": ["string"],
                 "isConditional": True,
@@ -189,8 +189,8 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
         return {"total": 0, "list": []}
     total = rows[0]["total"]
     rows = helper.list_to_camel_case(rows)
-    for i, row in enumerate(rows):
-        row["id"] = f"event_{i}"
+    for row in rows:
+        row["id"] = helper.string_to_id(f'event_{row["name"]}')
         row["dataType"] = "string"
         row["possibleTypes"] = ["string"]
         row["_foundInPredefinedList"] = True

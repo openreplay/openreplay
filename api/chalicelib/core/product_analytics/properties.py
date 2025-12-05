@@ -197,7 +197,7 @@ EVENTS_EXTRA_PROPERTIES = {
             "possibleTypes": [
                 "in"
             ],
-            "id": "prop_",
+            "id": helper.string_to_id('prop_duration'),
             "category": "events",
             "_foundInPredefinedList": True,
             "isPredefined": False,
@@ -243,11 +243,11 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
         properties = helper.list_to_camel_case(
             [p for p in properties if p["name"] not in EXCLUDED_PROPERTIES]
         )
-        for i, p in enumerate(properties):
+        for p in properties:
             snake_case_name = helper.key_to_snake_case(p["name"])
             if snake_case_name in PREDEFINED_PROPERTIES:
                 p["name"] = helper.key_to_camel_case(p["name"])
-            p["id"] = f"prop_{i}"
+            p["id"] = helper.string_to_id(f'prop_{p["name"]}')
             p["possibleTypes"] = list(
                 set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"]))
             )
@@ -274,7 +274,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                         "name": camel_case_name,
                         "displayName": PREDEFINED_PROPERTIES[p]["displayName"],
                         "possibleTypes": [PREDEFINED_PROPERTIES[p]["type"]],
-                        "id": f"prop_{total}",
+                        "id": helper.string_to_id(f'prop_{camel_case_name}'),
                         "_foundInPredefinedList": False,
                         "dataType": PREDEFINED_PROPERTIES[p]["type"],
                         "autoCaptured": True,
@@ -295,7 +295,7 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                 "displayName": "Name",
                 "autoCaptured": True,
                 "possibleTypes": ["string"],
-                "id": "prop_0",
+                "id": helper.string_to_id(f'prop_tagId'),
                 "category": "events",
                 "_foundInPredefinedList": False,
                 "defaultProperty": True,
@@ -333,7 +333,7 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
             snake_case_name = helper.key_to_snake_case(p["name"])
             if snake_case_name in PREDEFINED_PROPERTIES:
                 p["name"] = helper.key_to_camel_case(p["name"])
-            p["id"] = f"prop_{i}"
+            p["id"] = helper.string_to_id(f'prop_{p["name"]}')
             p["category"] = "events"
             p["_foundInPredefinedList"] = False
             p["isPredefined"] = False
@@ -364,7 +364,6 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                     if prop["name"] == p:
                         break
                 else:
-                    EVENTS_EXTRA_PROPERTIES[event_name][p]["id"] += str(len(properties))
                     properties.append(EVENTS_EXTRA_PROPERTIES[event_name][p])
 
         if not auto_captured and properties:
@@ -413,6 +412,6 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
             snake_case_name = helper.key_to_snake_case(p["name"])
             if snake_case_name in PREDEFINED_PROPERTIES:
                 p["name"] = helper.key_to_camel_case(p["name"])
-            p["id"] = f"prop_{i}"
+            p["id"] = helper.string_to_id(f'prop_{p["name"]}')
             p.pop("total")
         return {"total": total, "list": properties}
