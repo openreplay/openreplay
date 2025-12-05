@@ -124,7 +124,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 
 	for _, filter := range allFilters {
 		filterName := filter.Name
-		if filter.AutoCaptured {
+		if !filter.IsEvent && filter.AutoCaptured {
 			filterName = CamelToSnake(filterName)
 		}
 		if !filter.IsEvent {
