@@ -16,16 +16,12 @@ import (
 // @description API for product analytics - events and users management, querying, and filtering
 // @BasePath /api/v1
 
-type Handlers interface {
-	GetAll() []*api.Description
-}
-
 type handlersImpl struct {
 	*api.BaseHandler
 	events events.Events
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, events events.Events, responser api.Responser) (Handlers, error) {
+func NewHandlers(log logger.Logger, jsonSizeLimit int64, events events.Events, responser api.Responser) (api.Handlers, error) {
 	return &handlersImpl{
 		BaseHandler: api.NewBaseHandler(log, responser, jsonSizeLimit),
 		events:      events,
@@ -66,6 +62,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 func (h *handlersImpl) eventsSearch(r *api.RequestContext) (*model.EventsSearchResponse, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
