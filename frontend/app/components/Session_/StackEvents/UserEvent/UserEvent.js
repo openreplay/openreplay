@@ -7,8 +7,7 @@ import JumpButton from 'Shared/DevTools/JumpButton';
 
 // const modalSources = [ SENTRY, DATADOG ];
 
-@withToggle() //
-export default class UserEvent extends React.PureComponent {
+class UserEvent extends React.PureComponent {
   getIconProps() {
     const { source } = this.props.userEvent;
     return {
@@ -62,3 +61,5 @@ export default class UserEvent extends React.PureComponent {
     );
   }
 }
+
+export default withToggle()(UserEvent);

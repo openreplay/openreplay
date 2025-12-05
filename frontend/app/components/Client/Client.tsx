@@ -19,8 +19,7 @@ import Notifications from './Notifications';
 import Roles from './Roles';
 import ExportedVideosList from './ExportedVideos/ExportedVideosList';
 
-@withRouter
-export default class Client extends React.PureComponent {
+class Client extends React.PureComponent {
   constructor(props) {
     super(props);
   }
@@ -129,3 +128,5 @@ export default class Client extends React.PureComponent {
     );
   }
 }
+
+export default withRouter(Client);

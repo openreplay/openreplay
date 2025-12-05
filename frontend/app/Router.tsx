@@ -178,7 +178,6 @@ const Router: React.FC<RouterProps> = (props) => {
         const activeSite = sites.find((s) => s.id == siteId);
         initSite(activeSite ?? {});
         lastFetchedSiteIdRef.current = activeSite?.id;
-        await customFieldStore.fetchListActive(`${siteId}`);
         await searchStore.fetchSavedSearchList();
       }
     };

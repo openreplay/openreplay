@@ -8,11 +8,6 @@ import stl from './sentry.module.css';
 
 const { Panel } = Collapse;
 
-export default @withRequest({
-  endpoint: (props) => `/integrations/sentry/events/${props.event.id}`,
-  dataName: 'detailedEvent',
-  loadOnInitialize: true,
-})
 class SentryEventInfo extends React.PureComponent {
   makePanelsFromStackTrace(stacktrace) {
     return get(stacktrace, 'frames', []).map(
@@ -92,3 +87,9 @@ class SentryEventInfo extends React.PureComponent {
     );
   }
 }
+
+export default withRequest({
+  endpoint: (props) => `/integrations/sentry/events/${props.event.id}`,
+  dataName: 'detailedEvent',
+  loadOnInitialize: true,
+})(SentryEventInfo);
