@@ -19,6 +19,7 @@ type Users interface {
 	SearchUsers(ctx context.Context, projID uint32, req *model.SearchUsersRequest) (*model.SearchUsersResponse, error)
 	UpdateUser(ctx context.Context, projID uint32, user *model.User) (*model.User, error)
 	DeleteUser(ctx context.Context, projID uint32, userID string) error
+	GetUserActivity(ctx context.Context, projID uint32, userID string, req *model.UserActivityRequest) (*model.UserActivityResponse, error)
 }
 
 type usersImpl struct {
@@ -186,8 +187,8 @@ func (u *usersImpl) getScanDestinations(user *model.User, requestedCols []string
 	}
 
 	for _, col := range requestedCols {
-		if col == string(filters.UserColumnUserID) || col == string(filters.UserColumnEmail) || col == string(filters.UserColumnName) || 
-			col == string(filters.UserColumnFirstName) || col == string(filters.UserColumnLastName) || 
+		if col == string(filters.UserColumnUserID) || col == string(filters.UserColumnEmail) || col == string(filters.UserColumnName) ||
+			col == string(filters.UserColumnFirstName) || col == string(filters.UserColumnLastName) ||
 			col == string(filters.UserColumnCreatedAt) || col == string(filters.UserColumnLastSeen) || col == "project_id" {
 			continue
 		}
@@ -464,4 +465,99 @@ func (u *usersImpl) DeleteUser(ctx context.Context, projID uint32, userID string
 	}
 
 	return nil
+}
+
+func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID string, req *model.UserActivityRequest) (*model.UserActivityResponse, error) {
+	if userID == "" {
+		return nil, errors.New("user_id is required")
+	}
+
+	if req.Limit == 0 {
+		req.Limit = filters.DefaultLimit
+	}
+	if req.Page == 0 {
+		req.Page = filters.DefaultPage
+	}
+
+	offset := filters.CalculateOffset(req.Page, req.Limit)
+
+	sortBy := req.SortBy
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
+
+	if sortBy == "$event_name" {
+		sortBy = `"$event_name"`
+	} else {
+		sortBy = "created_at"
+	}
+
+	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
+
+	baseConditions := []string{
+		"e.project_id = ?",
+		`e."$user_id" = ?`,
+		"e.created_at >= toDateTime64(?/1000, 3)",
+		"e.created_at <= toDateTime64(?/1000, 3)",
+	}
+	params := []interface{}{projID, userID, req.StartDate, req.EndDate}
+
+	if len(req.HideEvents) > 0 {
+		placeholders := make([]string, len(req.HideEvents))
+		for i := range req.HideEvents {
+			placeholders[i] = "?"
+			params = append(params, req.HideEvents[i])
+		}
+		baseConditions = append(baseConditions, fmt.Sprintf(`e."$event_name" NOT IN (%s)`, strings.Join(placeholders, ", ")))
+	}
+
+	whereClause := strings.Join(baseConditions, " AND ")
+
+	query := fmt.Sprintf(`
+		SELECT COUNT(*) OVER() as total_count,
+			e.event_id,
+			e."$event_name",
+			toInt64(toUnixTimestamp(e.created_at) * 1000) AS created_at
+		FROM product_analytics.events AS e
+		WHERE %s
+		ORDER BY e.%s %s
+		LIMIT ? OFFSET ?`,
+		whereClause, sortBy, sortOrder)
+
+	queryParams := append(params, req.Limit, offset)
+
+	rows, err := u.chConn.Query(ctx, query, queryParams...)
+	if err != nil {
+		u.log.Error(ctx, "failed to query user activity: %v", err)
+		return nil, fmt.Errorf("failed to query user activity: %w", err)
+	}
+	defer rows.Close()
+
+	var total uint64
+	var events []model.UserEvent
+	for rows.Next() {
+		event := model.UserEvent{}
+
+		if err := rows.Scan(
+			&total,
+			&event.EventID,
+			&event.EventName,
+			&event.CreatedAt,
+		); err != nil {
+			u.log.Error(ctx, "failed to scan event row: %v", err)
+			return nil, fmt.Errorf("failed to scan event row: %w", err)
+		}
+
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		u.log.Error(ctx, "error iterating event rows: %v", err)
+		return nil, fmt.Errorf("error iterating event rows: %w", err)
+	}
+
+	return &model.UserActivityResponse{
+		Total:  total,
+		Events: events,
+	}, nil
 }

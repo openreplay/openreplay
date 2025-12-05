@@ -28,6 +28,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 		{"/{project}/user/{userID}", "GET", api.AutoRespondContext(h, h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 		{"/{project}/user/{userID}", "DELETE", api.AutoRespondContext(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 		{"/{project}/user/{userID}", "PUT", api.AutoRespondContextWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/user/{userID}/activity", "POST", api.AutoRespondContextWithBody(h, h.getUserActivity), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 	}
 }
 
@@ -211,5 +212,56 @@ func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, er
 	}
 
 	h.Log().Info(ctx.Request.Context(), "successfully updated user %s for project %d", userID, projID)
+	return response, 0, nil
+}
+
+// @Summary Get User Activity
+// @Description Get recent activity (events) for a specific user with pagination and date range filtering. Optionally hide specific events by $event_name.
+// @Tags Analytics - Users
+// @Accept json
+// @Produce json
+// @Param project path uint true "Project ID"
+// @Param userID path string true "User ID"
+// @Param userActivityRequest body model.UserActivityRequest true "User Activity Request"
+// @Success 200 {object} model.UserActivityResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 404 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /{project}/user/{userID}/activity [post]
+func (h *handlersImpl) getUserActivity(r *api.RequestContext) (*model.UserActivityResponse, int, error) {
+	projID, err := r.GetProjectID()
+	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	userID, err := api.GetPathParam(r.Request, "userID", api.ParseString)
+	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get userID parameter: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	if userID == "" {
+		h.Log().Error(r.Request.Context(), "userID cannot be empty")
+		return nil, http.StatusBadRequest, http.ErrMissingFile
+	}
+
+	req := &model.UserActivityRequest{}
+	if err := json.Unmarshal(r.Body, req); err != nil {
+		h.Log().Error(r.Request.Context(), "failed to unmarshal activity request: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	if err = filters.ValidateStruct(req); err != nil {
+		h.Log().Error(r.Request.Context(), "validation failed for activity request: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	response, err := h.users.GetUserActivity(r.Request.Context(), projID, userID, req)
+	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get activity for user %s in project %d: %v", userID, projID, err)
+		return nil, http.StatusInternalServerError, err
+	}
+
 	return response, 0, nil
 }

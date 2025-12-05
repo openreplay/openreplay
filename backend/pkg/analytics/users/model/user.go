@@ -75,3 +75,24 @@ type SearchUsersResponse struct {
 	Total uint64 `json:"total"`
 	Users []User `json:"users"`
 }
+
+type UserActivityRequest struct {
+	StartDate      int64                 `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndDate        int64                 `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
+	HideEvents     []string              `json:"hideEvents" validate:"omitempty"`
+	Limit          int                   `json:"limit" validate:"omitempty,min=1,max=200"`
+	Page           int                   `json:"page" validate:"omitempty,min=1"`
+	SortBy         string                `json:"sortBy" validate:"omitempty,oneof=created_at $event_name"`
+	SortOrder      filters.SortOrderType `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
+}
+
+type UserEvent struct {
+	EventID   string `json:"event_id"`
+	EventName string `json:"$event_name"`
+	CreatedAt int64  `json:"created_at"`
+}
+
+type UserActivityResponse struct {
+	Total  uint64      `json:"total"`
+	Events []UserEvent `json:"events"`
+}
