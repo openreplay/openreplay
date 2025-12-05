@@ -163,7 +163,7 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 		params = append(params, queryPattern, queryPattern, queryPattern)
 	}
 
-	filterConditions, filterParams := BuildUserSearchQuery("", req.Filters)
+	filterConditions, filterParams := filters.BuildSimpleFilterQuery("", req.Filters, model.ColumnMapping, "properties")
 	whereClause := filters.BuildWhereClause(baseConditions, filterConditions)
 	params = append(params, filterParams...)
 
@@ -192,54 +192,9 @@ func (u *usersImpl) getScanDestinations(user *model.User, requestedCols []string
 			col == string(filters.UserColumnCreatedAt) || col == string(filters.UserColumnLastSeen) || col == "project_id" {
 			continue
 		}
-		switch filters.UserColumn(col) {
-		case filters.UserColumnPhone:
-			baseDest = append(baseDest, &user.Phone)
-		case filters.UserColumnAvatar:
-			baseDest = append(baseDest, &user.Avatar)
-		case filters.UserColumnCountry:
-			baseDest = append(baseDest, &user.Country)
-		case filters.UserColumnState:
-			baseDest = append(baseDest, &user.State)
-		case filters.UserColumnCity:
-			baseDest = append(baseDest, &user.City)
-		case filters.UserColumnTimezone:
-			baseDest = append(baseDest, &user.Timezone)
-		case filters.UserColumnFirstEventAt:
-			baseDest = append(baseDest, &user.FirstEventAt)
-		case filters.UserColumnSDKEdition:
-			baseDest = append(baseDest, &user.SDKEdition)
-		case filters.UserColumnSDKVersion:
-			baseDest = append(baseDest, &user.SDKVersion)
-		case filters.UserColumnCurrentURL:
-			baseDest = append(baseDest, &user.CurrentUrl)
-		case filters.UserColumnInitialReferrer:
-			baseDest = append(baseDest, &user.InitialReferrer)
-		case filters.UserColumnReferringDomain:
-			baseDest = append(baseDest, &user.ReferringDomain)
-		case filters.UserColumnInitialUtmSource:
-			baseDest = append(baseDest, &user.InitialUtmSource)
-		case filters.UserColumnInitialUtmMedium:
-			baseDest = append(baseDest, &user.InitialUtmMedium)
-		case filters.UserColumnInitialUtmCampaign:
-			baseDest = append(baseDest, &user.InitialUtmCampaign)
-		case filters.UserColumnProperties:
-			baseDest = append(baseDest, &user.PropertiesRaw)
-		case filters.UserColumnGroupID1:
-			baseDest = append(baseDest, &user.GroupID1)
-		case filters.UserColumnGroupID2:
-			baseDest = append(baseDest, &user.GroupID2)
-		case filters.UserColumnGroupID3:
-			baseDest = append(baseDest, &user.GroupID3)
-		case filters.UserColumnGroupID4:
-			baseDest = append(baseDest, &user.GroupID4)
-		case filters.UserColumnGroupID5:
-			baseDest = append(baseDest, &user.GroupID5)
-		case filters.UserColumnGroupID6:
-			baseDest = append(baseDest, &user.GroupID6)
-		case filters.UserColumnOrAPIEndpoint:
-			baseDest = append(baseDest, &user.OrAPIEndpoint)
-		default:
+		if ptr := model.GetFieldPointer(user, col); ptr != nil {
+			baseDest = append(baseDest, ptr)
+		} else {
 			var dummy string
 			baseDest = append(baseDest, &dummy)
 		}
