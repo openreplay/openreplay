@@ -431,6 +431,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
 		"payload":          msg.Payload,
+		"context_string":   msg.ContextString,
 	}))
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
