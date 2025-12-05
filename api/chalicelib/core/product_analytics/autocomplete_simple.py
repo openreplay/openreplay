@@ -1,7 +1,11 @@
 from typing import Optional
 
+from cachetools import TTLCache, cached
+
 from chalicelib.utils import helper
 from chalicelib.utils.ch_client import ClickHouseClient
+
+cache = TTLCache(maxsize=1000, ttl=180)
 
 
 def is_simple_property(name: str, source: str = "session") -> bool:
@@ -15,6 +19,7 @@ def is_simple_property(name: str, source: str = "session") -> bool:
     return name in supported.get(source, [])
 
 
+@cached(cache)
 def search_simple_property(project_id: int, name: str, source: str = 'session', q: Optional[str] = None):
     with ClickHouseClient() as ch_client:
         full_args = {
