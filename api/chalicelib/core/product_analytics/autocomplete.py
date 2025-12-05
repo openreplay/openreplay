@@ -1,17 +1,19 @@
 from typing import Optional
 
+from cachetools import TTLCache, cached
+
 from chalicelib.utils import helper
 from chalicelib.utils.ch_client import ClickHouseClient
 
+cache = TTLCache(maxsize=1000, ttl=180)
 
+
+@cached(cache)
 def search_events(project_id: int, q: Optional[str] = None):
     with ClickHouseClient() as ch_client:
         full_args = {"project_id": project_id, "limit": 20}
 
-        constraints = [
-            "project_id = %(project_id)s",
-            "_timestamp >= now()-INTERVAL 1 MONTH",
-        ]
+        constraints = ["project_id = %(project_id)s"]
         if q:
             constraints += ["value ILIKE %(q)s"]
             full_args["q"] = helper.string_to_sql_like(q)
@@ -34,12 +36,8 @@ def search_events(project_id: int, q: Optional[str] = None):
         return helper.list_to_camel_case(rows)
 
 
-def search_properties(
-    project_id: int,
-    property_name: Optional[str] = None,
-    event_name: Optional[str] = None,
-    q: Optional[str] = None,
-):
+def search_properties(project_id: int, property_name: Optional[str] = None,
+                      event_name: Optional[str] = None, q: Optional[str] = None):
     with ClickHouseClient() as ch_client:
         select = "value, data_count AS row_count"
         grouping = ""
