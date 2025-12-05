@@ -135,9 +135,13 @@ export default class People {
    * TODO: exported as people.increment
    * */
   increment = (key: string, value: number) => {
-    if (!this.ownProperties[key] || typeof this.ownProperties[key] !== 'number') {
+    if (!this.ownProperties[key]) {
+      this.ownProperties[key] = 0
+    }
+    if (this.ownProperties[key] && typeof this.ownProperties[key] !== 'number') {
       throw new Error('OR SDK: Property must be a number to increment')
     }
+    // @ts-ignore
     this.ownProperties[key] += value
 
     const incrementEvent = createEvent(categories.people, mutationTypes.incrementProperty, undefined, {

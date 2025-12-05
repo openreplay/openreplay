@@ -200,7 +200,9 @@ export default class API {
         sessionStorage: sessionStorage ?? sessionStorage,
         getToken: () => this.getAnalyticsToken(),
         getTimestamp: () => this.app?.timestamp() ?? Date.now(),
-        setUserId: (id) => this.app?.session.setUserID(id),
+        setUserId: (id) => {
+          this.app?.session.setUserID(id)
+        },
         notStandalone: true,
         ingestPoint:
           options.analytics?.ingestPoint ?? options.ingestPoint ?? 'https://api.openreplay.com/',
