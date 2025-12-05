@@ -684,30 +684,13 @@ CREATE OR REPLACE FUNCTION or_event_description AS(event_name)->multiIf(
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_events_extractor_mv
     TO product_analytics.all_events AS
 SELECT project_id,
-       `$auto_captured`                                                                  AS auto_captured,
-       `$event_name`                                                                     AS event_name,
-       if(old_data.created_at != '1970-01-01 00:00:00', old_data.created_at, created_at) AS created_at,
-       multiIf(_edited_by_user AND notEmpty(old_data.display_name), old_data.display_name,
-               not `$auto_captured`, '',
-               or_event_display_name(`$event_name`))                                     AS display_name,
-       multiIf(_edited_by_user AND notEmpty(old_data.description), old_data.description,
-               not `$auto_captured`, '',
-               or_event_description(`$event_name`))                                      AS description,
-       coalesce(old_data._edited_by_user, FALSE)                                         AS _edited_by_user
+       `$auto_captured`                     AS auto_captured,
+       `$event_name`                        AS event_name,
+       created_at                           AS created_at,
+       or_event_display_name(`$event_name`) AS display_name,
+       or_event_description(`$event_name`)  AS description,
+       FALSE                                AS _edited_by_user
 FROM product_analytics.events
-         LEFT JOIN (SELECT project_id,
-                           auto_captured,
-                           event_name,
-                           display_name,
-                           description,
-                           created_at,
-                           _edited_by_user
-                    FROM product_analytics.all_events
-                    ORDER BY _timestamp DESC
-                    LIMIT 1 BY project_id,auto_captured,event_name) AS old_data
-                   ON (events.project_id = old_data.project_id
-                       AND events.`$auto_captured` = old_data.auto_captured
-                       AND events.`$event_name` = old_data.event_name)
 GROUP BY ALL;
 -- -------- END ---------
 
@@ -879,28 +862,19 @@ CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
 -- Incremental materialized view to fill all_properties
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_properties_extractor_mv
     TO product_analytics.all_properties AS
-(
 SELECT project_id,
        property_name,
-       TRUE                                                                                               AS is_event_property,
-       auto_captured_property                                                                             AS auto_captured,
+       TRUE                                    AS is_event_property,
+       auto_captured_property                  AS auto_captured,
 --        Think about display name if autocaptured and not autocaptured
-       multiIf(_edited_by_user OR not (auto_captured_property), old_data.display_name,
-               or_property_display_name(property_name))                                                   AS display_name,
-       old_data.description                                                                               AS description,
-       multiIf(notEmpty(old_data.status), old_data.status,
-               or_property_visibility(property_name))                                                     AS status,
-       old_data.data_count,
-       old_data.query_count,
-       if(old_data.created_at != '1970-01-01 00:00:00', old_data.created_at, event_properties.created_at) AS created_at,
-       if(isNotNull(old_data._edited_by_user), _edited_by_user, FALSE)                                    AS _edited_by_user
-FROM product_analytics.event_properties
-         LEFT JOIN (SELECT *
-                    FROM product_analytics.all_properties
-                    ORDER BY _timestamp DESC
-                    LIMIT 1 BY project_id,property_name) AS old_data
-                   ON (event_properties.project_id = old_data.project_id
-                       AND event_properties.property_name = old_data.property_name));
+       or_property_display_name(property_name) AS display_name,
+       ''                                      AS description,
+       or_property_visibility(property_name)   AS status,
+       0                                       AS data_count,
+       0                                       AS query_count,
+       event_properties.created_at             AS created_at,
+       FALSE                                   AS _edited_by_user
+FROM product_analytics.event_properties;
 -- -------- END ---------
 
 -- Some random examples of property-values, limited by 2 per property
