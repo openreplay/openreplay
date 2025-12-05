@@ -267,7 +267,7 @@ function WidgetSessions({ className = '' }) {
     filter.endTimestamp,
     filter.filters.length,
     filterStr,
-    widget.series,
+    widget.series.length,
     filterDeps,
     metricStore.clickMapSearch,
     focused,
