@@ -983,7 +983,8 @@ SELECT project_id,
        user_browser   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(user_browser);
+WHERE isNotNull(user_browser)
+  AND notEmpty(user_browser);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_country_mv
     TO product_analytics.autocomplete_simple AS
@@ -994,7 +995,8 @@ SELECT project_id,
        toString(user_country) AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(toString(user_country));
+WHERE isNotNull(user_country)
+  AND notEmpty(toString(user_country));
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_state_mv
     TO product_analytics.autocomplete_simple AS
@@ -1005,7 +1007,8 @@ SELECT project_id,
        user_state   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(user_state);
+WHERE isNotNull(user_state)
+  AND notEmpty(user_state);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_city_mv
     TO product_analytics.autocomplete_simple AS
@@ -1016,7 +1019,8 @@ SELECT project_id,
        user_city   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(user_city);
+WHERE isNotNull(user_city)
+  AND notEmpty(user_city);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_device_mv
     TO product_analytics.autocomplete_simple AS
@@ -1027,7 +1031,8 @@ SELECT project_id,
        user_device   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(user_device);
+WHERE isNotNull(user_device)
+  AND notEmpty(user_device);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_rev_id_mv
     TO product_analytics.autocomplete_simple AS
@@ -1038,7 +1043,8 @@ SELECT project_id,
        rev_id    AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(rev_id);
+WHERE isNotNull(rev_id)
+  AND notEmpty(rev_id);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_referrer_mv
     TO product_analytics.autocomplete_simple AS
@@ -1049,7 +1055,8 @@ SELECT project_id,
        referrer   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(referrer);
+WHERE isNotNull(referrer)
+  AND notEmpty(referrer);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_source_mv
     TO product_analytics.autocomplete_simple AS
@@ -1060,7 +1067,8 @@ SELECT project_id,
        referrer     AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(utm_source);
+WHERE isNotNull(utm_source)
+  AND notEmpty(utm_source);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_medium_mv
     TO product_analytics.autocomplete_simple AS
@@ -1071,7 +1079,8 @@ SELECT project_id,
        referrer     AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(utm_medium);
+WHERE isNotNull(utm_medium)
+  AND notEmpty(utm_medium);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_campaign_mv
     TO product_analytics.autocomplete_simple AS
@@ -1082,7 +1091,8 @@ SELECT project_id,
        referrer       AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(utm_campaign);
+WHERE isNotNull(utm_campaign)
+  AND notEmpty(utm_campaign);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_id_mv
     TO product_analytics.autocomplete_simple AS
@@ -1093,7 +1103,8 @@ SELECT project_id,
        user_id   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(user_id);
+WHERE isNotNull(user_id)
+  AND notEmpty(user_id);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_anonymous_id_mv
     TO product_analytics.autocomplete_simple AS
@@ -1104,7 +1115,8 @@ SELECT project_id,
        user_anonymous_id   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(user_anonymous_id);
+WHERE isNotNull(user_anonymous_id)
+  AND notEmpty(user_anonymous_id);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_1_mv
     TO product_analytics.autocomplete_simple AS
@@ -1115,7 +1127,8 @@ SELECT project_id,
        metadata_1   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_1);
+WHERE isNotNull(metadata_1)
+  AND notEmpty(metadata_1);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_2_mv
     TO product_analytics.autocomplete_simple AS
@@ -1126,7 +1139,8 @@ SELECT project_id,
        metadata_2   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_2);
+WHERE isNotNull(metadata_2)
+  AND notEmpty(metadata_2);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_3_mv
     TO product_analytics.autocomplete_simple AS
@@ -1137,7 +1151,8 @@ SELECT project_id,
        metadata_3   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_3);
+WHERE isNotNull(metadata_3)
+  AND notEmpty(metadata_3);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_4_mv
     TO product_analytics.autocomplete_simple AS
@@ -1148,7 +1163,8 @@ SELECT project_id,
        metadata_4   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_4);
+WHERE isNotNull(metadata_4)
+  AND notEmpty(metadata_4);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_5_mv
     TO product_analytics.autocomplete_simple AS
@@ -1159,7 +1175,8 @@ SELECT project_id,
        metadata_5   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_5);
+WHERE isNotNull(metadata_5)
+  AND notEmpty(metadata_5);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_6_mv
     TO product_analytics.autocomplete_simple AS
@@ -1170,7 +1187,8 @@ SELECT project_id,
        metadata_6   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_6);
+WHERE isNotNull(metadata_6)
+  AND notEmpty(metadata_6);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_7_mv
     TO product_analytics.autocomplete_simple AS
@@ -1181,7 +1199,8 @@ SELECT project_id,
        metadata_7   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_7);
+WHERE isNotNull(metadata_7)
+  AND notEmpty(metadata_7);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_8_mv
     TO product_analytics.autocomplete_simple AS
@@ -1192,7 +1211,8 @@ SELECT project_id,
        metadata_8   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_8);
+WHERE isNotNull(metadata_8)
+  AND notEmpty(metadata_8);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_9_mv
     TO product_analytics.autocomplete_simple AS
@@ -1203,7 +1223,8 @@ SELECT project_id,
        metadata_9   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_9);
+WHERE isNotNull(metadata_9)
+  AND notEmpty(metadata_9);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_10_mv
     TO product_analytics.autocomplete_simple AS
@@ -1214,4 +1235,5 @@ SELECT project_id,
        metadata_10   AS value,
        _timestamp
 FROM experimental.sessions
-WHERE notEmpty(metadata_10);
+WHERE isNotNull(metadata_10)
+  AND notEmpty(metadata_10);
