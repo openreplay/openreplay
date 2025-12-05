@@ -32,29 +32,9 @@ func BuildPlaceholderList(values []string) ([]string, []interface{}) {
 	return placeholders, params
 }
 
-type OperatorConfig struct {
-	SupportBoolean    bool
-	SupportArrays     bool
-	SupportRegex      bool
-	SupportComparison bool
-}
 
-var DefaultConfig = OperatorConfig{
-	SupportBoolean:    false,
-	SupportArrays:     false,
-	SupportRegex:      false,
-	SupportComparison: true,
-}
-
-var EventsConfig = OperatorConfig{
-	SupportBoolean:    true,
-	SupportArrays:     true,
-	SupportRegex:      true,
-	SupportComparison: true,
-}
-
-func BuildOperatorCondition(fullCol string, operator string, values []string, config OperatorConfig, nature string, dataType string) (string, []interface{}) {
-	if config.SupportBoolean && dataType == "boolean" {
+func BuildOperatorCondition(fullCol string, operator string, values []string, nature string, dataType string) (string, []interface{}) {
+	if dataType == "boolean" {
 		switch operator {
 		case "true":
 			return fmt.Sprintf("%s = 1", fullCol), nil
@@ -75,7 +55,7 @@ func BuildOperatorCondition(fullCol string, operator string, values []string, co
 
 	switch operator {
 	case "isAny", "onAny":
-		if config.SupportArrays && nature == "arrayColumn" {
+		if nature == "arrayColumn" {
 			return fmt.Sprintf("notEmpty(%s)", fullCol), nil
 		}
 		return fmt.Sprintf("isNotNull(%s)", fullCol), nil
@@ -115,10 +95,7 @@ func BuildOperatorCondition(fullCol string, operator string, values []string, co
 			func(v string) interface{} { return "%" + v })
 
 	case "regex":
-		if config.SupportRegex {
-			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("match(%s, ?)", fullCol), nil)
-		}
-		return "", nil
+		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("match(%s, ?)", fullCol), nil)
 
 	case "in":
 		placeholders, params := BuildPlaceholderList(values)
@@ -129,52 +106,37 @@ func BuildOperatorCondition(fullCol string, operator string, values []string, co
 		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
 	case ">=", "gte", "greaterThanOrEqual":
-		if !config.SupportComparison {
-			return "", nil
-		}
 		if len(values) == 1 {
 			return fmt.Sprintf("%s >= ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s >= ?", fullCol), nil)
 
 	case ">", "gt", "greaterThan":
-		if !config.SupportComparison {
-			return "", nil
-		}
 		if len(values) == 1 {
 			return fmt.Sprintf("%s > ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s > ?", fullCol), nil)
 
 	case "<=", "lte", "lessThanOrEqual":
-		if !config.SupportComparison {
-			return "", nil
-		}
 		if len(values) == 1 {
 			return fmt.Sprintf("%s <= ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s <= ?", fullCol), nil)
 
 	case "<", "lt", "lessThan":
-		if !config.SupportComparison {
-			return "", nil
-		}
 		if len(values) == 1 {
 			return fmt.Sprintf("%s < ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s < ?", fullCol), nil)
 
 	case "=", "!=":
-		if !config.SupportComparison {
-			return "", nil
-		}
 		if len(values) == 0 {
 			return "", nil
 		}
 		return fmt.Sprintf("%s %s ?", fullCol, operator), []interface{}{values[0]}
 
 	default:
-		if config.SupportArrays && nature == "arrayColumn" {
+		if nature == "arrayColumn" {
 			if len(values) == 0 {
 				return "", nil
 			}
@@ -206,9 +168,12 @@ func BuildWhereClause(baseConditions []string, filterConditions []string) string
 }
 
 func ValidateSortOrder(order string) string {
-	orderUpper := strings.ToUpper(order)
-	if orderUpper == "ASC" || orderUpper == "DESC" {
-		return orderUpper
+	switch SortOrderType(strings.ToLower(order)) {
+	case SortOrderAsc:
+		return strings.ToUpper(string(SortOrderAsc))
+	case SortOrderDesc:
+		return strings.ToUpper(string(SortOrderDesc))
+	default:
+		return strings.ToUpper(string(SortOrderDesc))
 	}
-	return "DESC"
 }

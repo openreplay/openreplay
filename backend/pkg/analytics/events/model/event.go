@@ -1,13 +1,9 @@
 package model
 
 import (
-	"encoding/json"
-	"fmt"
-	analyticsModel "openreplay/backend/pkg/analytics/model"
-	"sync"
-
-	"github.com/go-playground/validator/v10"
+	"openreplay/backend/pkg/analytics/filters"
 )
+
 
 type EventEntry struct {
 	ProjectId              uint16                  `json:"-"`
@@ -66,34 +62,29 @@ type EventEntry struct {
 }
 
 func (e *EventEntry) UnmarshalProperties() error {
-	if e.PropertiesRaw != nil && *e.PropertiesRaw != "" && *e.PropertiesRaw != "null" {
-		m := make(map[string]interface{})
-		if err := json.Unmarshal([]byte(*e.PropertiesRaw), &m); err != nil {
-			return fmt.Errorf("failed to unmarshal properties: %w", err)
-		}
-		e.Properties = &m
+	var err error
+	e.Properties, err = filters.UnmarshalJSONProperties(e.PropertiesRaw)
+	if err != nil {
+		return err
 	}
 
-	if e.AutoPropertiesRaw != nil && *e.AutoPropertiesRaw != "" && *e.AutoPropertiesRaw != "null" {
-		m := make(map[string]interface{})
-		if err := json.Unmarshal([]byte(*e.AutoPropertiesRaw), &m); err != nil {
-			return fmt.Errorf("failed to unmarshal auto_properties: %w", err)
-		}
-		e.AutoProperties = &m
+	e.AutoProperties, err = filters.UnmarshalJSONProperties(e.AutoPropertiesRaw)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 type EventsSearchRequest struct {
-	Filters   []analyticsModel.Filter `json:"filters" validate:"omitempty,dive"`
+	Filters   []filters.Filter        `json:"filters" validate:"omitempty,dive"`
 	StartDate int64                   `json:"startTimestamp" validate:"required,min=946684800000"`
 	EndDate   int64                   `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
-	SortBy    string                  `json:"sortBy" validate:"omitempty,validEventColumn"`
-	SortOrder string                  `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
+	SortBy    filters.EventColumn     `json:"sortBy" validate:"omitempty,validEventColumn"`
+	SortOrder filters.SortOrderType   `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
 	Limit     int                     `json:"limit" validate:"required,min=1,max=200"`
 	Page      int                     `json:"page" validate:"required,min=1"`
-	Columns   []string                `json:"columns" validate:"omitempty,dive,validEventColumn"`
+	Columns   []filters.EventColumn   `json:"columns" validate:"omitempty,dive,validEventColumn"`
 }
 
 type EventsSearchResponse struct {
@@ -101,59 +92,11 @@ type EventsSearchResponse struct {
 	Events []EventEntry `json:"events"`
 }
 
-var (
-	validate     *validator.Validate
-	validateOnce sync.Once
-)
-
-func GetValidator() *validator.Validate {
-	validateOnce.Do(func() {
-		validate = validator.New()
-		validate.RegisterStructValidation(analyticsModel.ValidateFilterFields, analyticsModel.Filter{})
-		validate.RegisterValidation("validEventColumn", validateEventColumn)
-	})
-	return validate
+func init() {
+	filters.RegisterCustomValidation("validEventColumn", filters.ValidateEventColumn)
 }
 
-func ValidateStruct(obj interface{}) error {
-	return GetValidator().Struct(obj)
-}
-
-func validateEventColumn(fl validator.FieldLevel) bool {
-	column := fl.Field().String()
-	if column == "" {
-		return true
-	}
-	_, ok := ColumnMapping[column]
-	return ok || column == "created_at" || column == "time" || column == "distinct_id" || column == "$event_name"
-}
-
-var ColumnMapping = buildColumnMapping()
-
-func buildColumnMapping() map[string]string {
-	unquoted := []string{
-		"event_id", "distinct_id", "session_id", "properties", "description",
-		"group_id1", "group_id2", "group_id3", "group_id4", "group_id5", "group_id6",
-		"utm_source", "utm_medium", "utm_campaign", "issue_type", "issue_id", "error_id",
-	}
-	quoted := []string{
-		"$user_id", "$device_id", "$time", "$source", "$duration_s", "$properties",
-		"$auto_captured", "$sdk_edition", "$sdk_version", "$os", "$os_version",
-		"$browser", "$browser_version", "$device", "$screen_height", "$screen_width",
-		"$current_url", "$current_path", "$initial_referrer", "$referring_domain",
-		"$referrer", "$initial_referring_domain", "$search_engine", "$search_engine_keyword",
-		"$country", "$state", "$city", "$or_api_endpoint", "$timezone", "$tags", "$import",
-	}
-
-	mapping := make(map[string]string, len(unquoted)+len(quoted))
-	for _, col := range unquoted {
-		mapping[col] = col
-	}
-	for _, col := range quoted {
-		mapping[col] = `"` + col + `"`
-	}
-	return mapping
-}
+var ColumnMapping = filters.BuildColumnMapping(filters.EventColumns)
 
 var filterToColumnMapping = map[string]string{
 	"userBrowser":        "$browser",
@@ -190,114 +133,100 @@ func buildFilterColumnMapping() map[string][]string {
 }
 
 func GetFieldPointer(entry *EventEntry, column string) interface{} {
-	switch column {
-	case "$user_id":
+	switch filters.EventColumn(column) {
+	case filters.EventColumnUserID:
 		return &entry.UserId
-	case "$device_id":
+	case filters.EventColumnDeviceID:
 		return &entry.DeviceId
-	case "$time":
+	case filters.EventColumnTime:
 		return &entry.Time
-	case "$source":
+	case filters.EventColumnSource:
 		return &entry.Source
-	case "$duration_s":
+	case filters.EventColumnDurationS:
 		return &entry.DurationS
-	case "properties":
+	case filters.EventColumnProperties:
 		return &entry.PropertiesRaw
-	case "$properties":
+	case filters.EventColumnAutoProperties:
 		return &entry.AutoPropertiesRaw
-	case "description":
+	case filters.EventColumnDescription:
 		return &entry.Description
-	case "group_id1":
+	case filters.EventColumnGroupID1:
 		return &entry.GroupId1
-	case "group_id2":
+	case filters.EventColumnGroupID2:
 		return &entry.GroupId2
-	case "group_id3":
+	case filters.EventColumnGroupID3:
 		return &entry.GroupId3
-	case "group_id4":
+	case filters.EventColumnGroupID4:
 		return &entry.GroupId4
-	case "group_id5":
+	case filters.EventColumnGroupID5:
 		return &entry.GroupId5
-	case "group_id6":
+	case filters.EventColumnGroupID6:
 		return &entry.GroupId6
-	case "$auto_captured":
+	case filters.EventColumnAutoCaptured:
 		return &entry.AutoCaptured
-	case "$sdk_edition":
+	case filters.EventColumnSDKEdition:
 		return &entry.SdkEdition
-	case "$sdk_version":
+	case filters.EventColumnSDKVersion:
 		return &entry.SdkVersion
-	case "$os":
+	case filters.EventColumnOS:
 		return &entry.Os
-	case "$os_version":
+	case filters.EventColumnOSVersion:
 		return &entry.OsVersion
-	case "$browser":
+	case filters.EventColumnBrowser:
 		return &entry.Browser
-	case "$browser_version":
+	case filters.EventColumnBrowserVersion:
 		return &entry.BrowserVersion
-	case "$device":
+	case filters.EventColumnDevice:
 		return &entry.Device
-	case "$screen_height":
+	case filters.EventColumnScreenHeight:
 		return &entry.ScreenHeight
-	case "$screen_width":
+	case filters.EventColumnScreenWidth:
 		return &entry.ScreenWidth
-	case "$current_url":
+	case filters.EventColumnCurrentURL:
 		return &entry.CurrentUrl
-	case "$current_path":
+	case filters.EventColumnCurrentPath:
 		return &entry.CurrentPath
-	case "$initial_referrer":
+	case filters.EventColumnInitialReferrer:
 		return &entry.InitialReferrer
-	case "$referring_domain":
+	case filters.EventColumnReferringDomain:
 		return &entry.ReferringDomain
-	case "$referrer":
+	case filters.EventColumnReferrer:
 		return &entry.Referrer
-	case "$initial_referring_domain":
+	case filters.EventColumnInitialReferringDomain:
 		return &entry.InitialReferringDomain
-	case "$search_engine":
+	case filters.EventColumnSearchEngine:
 		return &entry.SearchEngine
-	case "$search_engine_keyword":
+	case filters.EventColumnSearchEngineKeyword:
 		return &entry.SearchEngineKeyword
-	case "utm_source":
+	case filters.EventColumnUtmSource:
 		return &entry.UtmSource
-	case "utm_medium":
+	case filters.EventColumnUtmMedium:
 		return &entry.UtmMedium
-	case "utm_campaign":
+	case filters.EventColumnUtmCampaign:
 		return &entry.UtmCampaign
-	case "$country":
+	case filters.EventColumnCountry:
 		return &entry.Country
-	case "$state":
+	case filters.EventColumnState:
 		return &entry.State
-	case "$city":
+	case filters.EventColumnCity:
 		return &entry.City
-	case "$or_api_endpoint":
+	case filters.EventColumnOrAPIEndpoint:
 		return &entry.OrApiEndpoint
-	case "$timezone":
+	case filters.EventColumnTimezone:
 		return &entry.Timezone
-	case "issue_type":
+	case filters.EventColumnIssueType:
 		return &entry.IssueType
-	case "issue_id":
+	case filters.EventColumnIssueID:
 		return &entry.IssueId
-	case "error_id":
+	case filters.EventColumnErrorID:
 		return &entry.ErrorId
-	case "$tags":
+	case filters.EventColumnTags:
 		return &entry.Tags
-	case "$import":
+	case filters.EventColumnImport:
 		return &entry.Import
 	default:
 		return nil
 	}
 }
 
-func GetAllEventColumns() []string {
-	return []string{
-		"event_id", "$user_id", "$device_id", "session_id", "$time", "$source",
-		"$duration_s", "properties", "$properties", "description",
-		"group_id1", "group_id2", "group_id3", "group_id4", "group_id5", "group_id6",
-		"$auto_captured", "$sdk_edition", "$sdk_version",
-		"$os", "$os_version", "$browser", "$browser_version", "$device",
-		"$screen_height", "$screen_width", "$current_url", "$current_path",
-		"$initial_referrer", "$referring_domain", "$referrer", "$initial_referring_domain",
-		"$search_engine", "$search_engine_keyword",
-		"utm_source", "utm_medium", "utm_campaign",
-		"$country", "$state", "$city", "$or_api_endpoint", "$timezone",
-		"issue_type", "issue_id", "error_id", "$tags", "$import",
-	}
-}
+

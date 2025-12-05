@@ -7,9 +7,15 @@ import (
 
 	"openreplay/backend/pkg/analytics/events"
 	"openreplay/backend/pkg/analytics/events/model"
+	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 )
+
+// @title OpenReplay Analytics API
+// @version 1.0
+// @description API for product analytics - events and users management, querying, and filtering
+// @BasePath /api/v1
 
 type Handlers interface {
 	GetAll() []*api.Description
@@ -50,6 +56,18 @@ func (h *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
+// @Summary Search Events
+// @Description Search and filter events based on various criteria. Supports filtering, date range selection, sorting, pagination, and column selection. Valid values for sortBy and columns are any EventEntry field names. Filter operators: is, isAny, isNot, isUndefined, contains, notContains, startsWith, endsWith (strings); =, <, >, <=, >=, != (numbers/dates).
+// @Tags Analytics - Events
+// @Accept json
+// @Produce json
+// @Param project path uint true "Project ID"
+// @Param eventsSearchRequest body model.EventsSearchRequest true "Events Search Request"
+// @Success 200 {object} model.EventsSearchResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 413 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /{project}/events [post]
 func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
@@ -67,7 +85,7 @@ func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = model.ValidateStruct(req); err != nil {
+	if err = filters.ValidateStruct(req); err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -88,6 +106,18 @@ func (h *handlersImpl) eventsSearch(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// @Summary Get Event by ID
+// @Description Retrieve a specific event by its event ID with all event properties and metadata.
+// @Tags Analytics - Events
+// @Accept json
+// @Produce json
+// @Param project path uint true "Project ID"
+// @Param eventId path string true "Event ID"
+// @Success 200 {object} model.EventEntry
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 404 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /{project}/events/{eventId} [get]
 func (h *handlersImpl) getEvent(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
