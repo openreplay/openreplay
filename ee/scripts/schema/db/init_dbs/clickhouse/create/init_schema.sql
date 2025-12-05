@@ -918,31 +918,31 @@ CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
     ENGINE = ReplacingMergeTree(_timestamp)
         ORDER BY (project_id, property_name, is_event_property);
 -- Incremental materialized view to get random examples of property values using $properties & properties
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_dvalues_sampler_mv
-    TO product_analytics.property_values_samples AS
-SELECT project_id,
-       property_name,
-       TRUE                                                      AS is_event_property,
-       TRUE                                                      AS auto_captured,
-       JSONExtractString(toString(`$properties`), property_name) AS value
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-WHERE randCanonical() < 0.5 -- This randomly skips inserts
-  AND value != ''
-LIMIT 2 BY project_id,property_name;
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_dvalues_sampler_mv
+--     TO product_analytics.property_values_samples AS
+-- SELECT project_id,
+--        property_name,
+--        TRUE                                                      AS is_event_property,
+--        TRUE                                                      AS auto_captured,
+--        JSONExtractString(toString(`$properties`), property_name) AS value
+-- FROM product_analytics.events
+--          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
+-- WHERE randCanonical() < 0.5 -- This randomly skips inserts
+--   AND value != ''
+-- LIMIT 2 BY project_id,property_name;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mv
-    TO product_analytics.property_values_samples AS
-SELECT project_id,
-       property_name,
-       TRUE                                                     AS is_event_property,
-       FALSE                                                    AS auto_captured,
-       JSONExtractString(toString(`properties`), property_name) AS value
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
-WHERE randCanonical() < 0.5 -- This randomly skips inserts
-  AND value != ''
-LIMIT 2 BY project_id,property_name;
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mv
+--     TO product_analytics.property_values_samples AS
+-- SELECT project_id,
+--        property_name,
+--        TRUE                                                     AS is_event_property,
+--        FALSE                                                    AS auto_captured,
+--        JSONExtractString(toString(`properties`), property_name) AS value
+-- FROM product_analytics.events
+--          ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
+-- WHERE randCanonical() < 0.5 -- This randomly skips inserts
+--   AND value != ''
+-- LIMIT 2 BY project_id,property_name;
 
 -- Autocomplete
 
