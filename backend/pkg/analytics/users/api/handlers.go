@@ -25,10 +25,10 @@ type handlersImpl struct {
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{"/{project}/users", "POST", api.AutoRespondContextWithBody(h, h.searchUsers), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "GET", api.AutoRespondContext(h, h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "DELETE", api.AutoRespondContext(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}", "PUT", api.AutoRespondContextWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/user/{userID}/activity", "POST", api.AutoRespondContextWithBody(h, h.getUserActivity), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users/{userID}", "GET", api.AutoRespondContext(h, h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users/{userID}", "DELETE", api.AutoRespondContext(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users/{userID}", "PUT", api.AutoRespondContextWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users/{userID}/activity", "POST", api.AutoRespondContextWithBody(h, h.getUserActivity), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 	}
 }
 
@@ -93,7 +93,7 @@ func (h *handlersImpl) searchUsers(ctx *api.RequestContext) (*model.SearchUsersR
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
-// @Router /{project}/user/{userID} [get]
+// @Router /{project}/users/{userID} [get]
 func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error) {
 	projID, err := ctx.GetProjectID()
 	if err != nil {
@@ -132,7 +132,7 @@ func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
-// @Router /{project}/user/{userID} [delete]
+// @Router /{project}/users/{userID} [delete]
 func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, int, error) {
 	projID, err := ctx.GetProjectID()
 	if err != nil {
@@ -173,7 +173,7 @@ func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, i
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
-// @Router /{project}/user/{userID} [put]
+// @Router /{project}/users/{userID} [put]
 func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, error) {
 	projID, err := ctx.GetProjectID()
 	if err != nil {
@@ -227,7 +227,7 @@ func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, er
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
-// @Router /{project}/user/{userID}/activity [post]
+// @Router /{project}/users/{userID}/activity [post]
 func (h *handlersImpl) getUserActivity(r *api.RequestContext) (*model.UserActivityResponse, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
