@@ -44,6 +44,7 @@ const newApiUrls = [
   '/clickmaps',
   '/replay',
   '/conditions',
+  '/users',
 ];
 const except = [
   'integrations/slack/notify',
