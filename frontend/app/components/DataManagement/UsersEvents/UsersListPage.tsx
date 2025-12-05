@@ -11,9 +11,11 @@ import { Filter, Album } from 'lucide-react';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
+import { useParams } from 'react-router-dom';
 
-const list = [];
-function ListPage({ view }: { view: 'users' | 'events' }) {
+function UsersListPage() {
+  const params = useParams<{ view: string }>();
+  const view = params.view || 'users';
   const { projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
@@ -36,7 +38,11 @@ function ListPage({ view }: { view: 'users' | 'events' }) {
           <Input.Search size={'small'} placeholder={'Name, email, ID'} />
         </div>
       </div>
-      {view === 'users' ? <UsersList toUser={toUser} /> : <EventsList toEvent={toEvent} />}
+      {view === 'users' ? (
+        <UsersList toUser={toUser} />
+      ) : (
+        <EventsList toEvent={toEvent} />
+      )}
     </div>
   );
 }
@@ -83,6 +89,8 @@ function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
   const total = 100;
   const onPageChange = (page: number) => {};
   const limit = 10;
+
+  const list = [];
   return (
     <div>
       <Table
@@ -227,7 +235,7 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
     setHiddenCols((_) => {
       return columns
         .map((col) =>
-          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key
+          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key,
         )
         .filter(Boolean);
     });
@@ -296,4 +304,4 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
   );
 }
 
-export default observer(ListPage);
+export default observer(UsersListPage);

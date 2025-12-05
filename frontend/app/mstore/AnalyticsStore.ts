@@ -1,45 +1,49 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { analyticsService } from '@/services';
-import { EventsResponse, EventsPayload } from '@/services/AnalyticsService';
+import {
+  EventsResponse,
+  EventsPayload,
+  UserResp,
+  UsersResponse,
+  UsersPayload,
+} from '@/services/AnalyticsService';
 import { Filter } from '@/mstore/types/filterConstants';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import Event, { listColumns } from './types/Analytics/Event';
 import { filterStore } from 'App/mstore';
 import { checkFilterValue } from './types/filter';
 
+const defaultPayload = {
+  sortOrder: 'desc',
+  sortBy: 'created_at',
+  limit: 10,
+  startTimestamp: Date.now() - 3600 * 1000,
+  endTimestamp: Date.now(),
+  columns: [],
+  page: 1,
+  filters: [] as Filter[],
+} as EventsPayload | UsersPayload;
+
 export default class AnalyticsStore {
   events: { total: number; events: Event[] } = {
     total: 0,
     events: [],
   };
+  users: { total: number; users: UserResp[] } = {
+    total: 0,
+    users: [],
+  };
   loading: boolean = false;
   period = Period({ rangeName: LAST_24_HOURS });
-  payloadFilters: EventsPayload = {
-    sortOrder: 'desc',
-    sortBy: 'time',
-    limit: 10,
-    startTimestamp: Date.now() - 3600 * 1000,
-    endTimestamp: Date.now(),
-    columns: [],
-    page: 1,
-    filters: [],
-  };
+  payloadFilters: EventsPayload = defaultPayload;
+  usersPayloadFilters: UsersPayload = defaultPayload;
 
   constructor() {
     makeAutoObservable(this);
   }
 
   reset = () => {
-    this.payloadFilters = {
-      sortOrder: 'desc',
-      sortBy: 'time',
-      limit: 10,
-      startTimestamp: Date.now() - 3600 * 1000,
-      endTimestamp: Date.now(),
-      columns: [],
-      page: 1,
-      filters: [] as Filter[],
-    };
+    this.payloadFilters = defaultPayload;
     this.period = Period({ rangeName: LAST_24_HOURS });
     this.events = { total: 0, events: [] };
   };
@@ -121,5 +125,9 @@ export default class AnalyticsStore {
     } finally {
       this.setLoading(false);
     }
+  };
+
+  fetchUsers = async () => {
+    this.setLoading(true);
   };
 }
