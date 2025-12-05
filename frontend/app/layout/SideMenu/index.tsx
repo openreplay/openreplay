@@ -13,7 +13,7 @@ import {
   client,
   withSiteId,
 } from 'App/routes';
-import { MODULES } from 'Components/Client/Modules';
+import { MODULES } from 'Components/Client/Modules/extra';
 import { hasAi } from 'App/utils/split-utils';
 // added: util-based mobile detection
 import { mobileScreen } from 'App/utils/isMobile';

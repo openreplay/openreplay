@@ -4,7 +4,6 @@ export * from './extra';
 
 export { default } from './Modules';
 
-
 export interface Module {
   label: string;
   description: string;
