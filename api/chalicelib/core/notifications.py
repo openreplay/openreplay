@@ -1,5 +1,7 @@
 import json
 
+from cachetools import TTLCache, cached
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -7,16 +9,17 @@ from chalicelib.utils.TimeUTC import TimeUTC
 def get_all(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    SELECT notifications.*,
-                           user_viewed_notifications.notification_id NOTNULL AS viewed
-                    FROM public.notifications
-                             LEFT JOIN (SELECT notification_id
-                                        FROM public.user_viewed_notifications
-                                        WHERE user_viewed_notifications.user_id = %(user_id)s) AS user_viewed_notifications USING (notification_id)
-                    WHERE notifications.user_id IS NULL OR notifications.user_id =%(user_id)s
-                    ORDER BY created_at DESC
-                    LIMIT 100;""",
+            cur.mogrify(""" \
+                        SELECT notifications.*,
+                               user_viewed_notifications.notification_id NOTNULL AS viewed
+                        FROM public.notifications
+                                 LEFT JOIN (SELECT notification_id
+                                            FROM public.user_viewed_notifications
+                                            WHERE user_viewed_notifications.user_id = %(user_id)s) AS user_viewed_notifications
+                                           USING (notification_id)
+                        WHERE notifications.user_id IS NULL
+                           OR notifications.user_id = %(user_id)s
+                        ORDER BY created_at DESC LIMIT 100;""",
                         {"user_id": user_id})
         )
         rows = helper.list_to_camel_case(cur.fetchall())
@@ -25,16 +28,22 @@ def get_all(tenant_id, user_id):
     return rows
 
 
+cache = TTLCache(maxsize=1000, ttl=600)
+
+
+@cached(cache)
 def get_all_count(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    SELECT COALESCE(COUNT(notifications.*),0) AS count
-                    FROM public.notifications
-                             LEFT JOIN (SELECT notification_id
-                                        FROM public.user_viewed_notifications
-                                        WHERE user_viewed_notifications.user_id = %(user_id)s) AS user_viewed_notifications USING (notification_id)
-                    WHERE (notifications.user_id IS NULL OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL;""",
+            cur.mogrify(""" \
+                        SELECT COALESCE(COUNT(notifications.*), 0) AS count
+                        FROM public.notifications
+                            LEFT JOIN (SELECT notification_id
+                            FROM public.user_viewed_notifications
+                            WHERE user_viewed_notifications.user_id = %(user_id)s) AS user_viewed_notifications USING (notification_id)
+                        WHERE (notifications.user_id IS NULL
+                           OR notifications.user_id =%(user_id)s)
+                          AND user_viewed_notifications.notification_id IS NULL;""",
                         {"user_id": user_id})
         )
         row = cur.fetchone()
@@ -53,13 +62,12 @@ def view_notification(user_id, notification_ids=[], tenant_id=None, startTimesta
                 "INSERT INTO public.user_viewed_notifications(user_id, notification_id) VALUES (%s,%s) ON CONFLICT DO NOTHING;",
                 notification_ids)
         else:
-            query = """INSERT INTO public.user_viewed_notifications(user_id, notification_id) 
-                                SELECT %(user_id)s AS user_id, notification_id
-                                FROM public.notifications
-                                WHERE (user_id IS NULL OR user_id =%(user_id)s) 
-                                    AND EXTRACT(EPOCH FROM created_at)*1000>=(%(startTimestamp)s) 
-                                    AND EXTRACT(EPOCH FROM created_at)*1000<=(%(endTimestamp)s+1000) 
-                                ON CONFLICT DO NOTHING;"""
+            query = """INSERT INTO public.user_viewed_notifications(user_id, notification_id)
+                       SELECT %(user_id)s AS user_id, notification_id
+                       FROM public.notifications
+                       WHERE (user_id IS NULL OR user_id = %(user_id)s)
+                         AND EXTRACT(EPOCH FROM created_at) * 1000 >= (%(startTimestamp)s)
+                         AND EXTRACT(EPOCH FROM created_at) * 1000 <= (%(endTimestamp)s + 1000) ON CONFLICT DO NOTHING;"""
             params = {"user_id": user_id, "startTimestamp": startTimestamp,
                       "endTimestamp": endTimestamp}
             # print('-------------------')
