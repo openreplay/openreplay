@@ -1,7 +1,9 @@
+from cachetools import TTLCache, cached
+
 import schemas
+from chalicelib.core import tags
 from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.ch_client import ClickHouseClient
-from chalicelib.core import tags
 
 PREDEFINED_PROPERTIES = {
     "label": {
@@ -206,7 +208,10 @@ EVENTS_EXTRA_PROPERTIES = {
     }
 }
 
+cache = TTLCache(maxsize=1000, ttl=60)
 
+
+@cached(cache)
 def get_all_properties(project_id: int, include_all: bool = False) -> dict:
     with ClickHouseClient() as ch_client:
         r = ch_client.format(

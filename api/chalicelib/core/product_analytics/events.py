@@ -1,5 +1,7 @@
 import logging
 
+from cachetools import TTLCache, cached
+
 import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
@@ -20,7 +22,10 @@ PREDEFINED_EVENTS = {
                 "description": "Represents HTTP/HTTPS network activity from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to \"fetch\".\n\nContains URL, method, status code, duration, and timestamp"},
 }
 
+cache = TTLCache(maxsize=1000, ttl=60)
 
+
+@cached(cache)
 def get_events(project_id: int):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(

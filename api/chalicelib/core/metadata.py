@@ -1,6 +1,7 @@
 import re
 from typing import Optional
 
+from cachetools import TTLCache, cached
 from fastapi import HTTPException, status
 
 from chalicelib.core import projects
@@ -243,6 +244,10 @@ def get_colname_by_key(project_id, key):
     return index_to_colname(meta_keys[key])
 
 
+cache = TTLCache(maxsize=1000, ttl=120)
+
+
+@cached(cache)
 def get_for_filters(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT {",".join(column_names())}
