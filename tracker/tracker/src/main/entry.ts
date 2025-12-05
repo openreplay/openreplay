@@ -1,6 +1,7 @@
-import TrackerClass from './index.js'
+import TrackerClass from './index'
 
-export { default as App } from './app/index.js'
-export { SanitizeLevel, Messages, Options } from './index.js'
-export { default as tracker } from './singleton.js'
+export { default as App } from './app/index'
+export { default as tracker, default as openReplay } from './singleton'
+export { SanitizeLevel, Messages, Options } from './index'
+export { default as Analytics } from './modules/analytics/index'
 export default TrackerClass
