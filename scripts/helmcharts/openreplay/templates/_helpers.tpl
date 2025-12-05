@@ -106,7 +106,6 @@ Create the name of the service account to use
 Create the environment configuration for REDIS_STRING
 */}}
 {{- define "openreplay.env.redis_string" -}}
-{{- if .enabled }}
 {{- $scheme := (eq (.tls | default dict).enabled true) | ternary "rediss" "redis" -}}
 {{- $auth := "" -}}
 {{- if or .existingSecret .redisPassword -}}
@@ -124,7 +123,6 @@ Create the environment configuration for REDIS_STRING
 {{- end}}
 - name: REDIS_STRING
   value: '{{ $scheme }}://{{ $auth }}{{ .redisHost }}:{{ .redisPort }}'
-{{- end }}
 {{- end }}
 
 {{/*
