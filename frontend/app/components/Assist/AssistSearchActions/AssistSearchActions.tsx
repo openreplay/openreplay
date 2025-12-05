@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Tooltip } from 'antd';
 import { useModal } from 'App/components/Modal';
-import { MODULES } from 'Components/Client/Modules';
+import { MODULES } from 'Components/Client/Modules/extra';
 
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';

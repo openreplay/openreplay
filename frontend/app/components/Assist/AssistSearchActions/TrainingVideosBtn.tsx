@@ -4,7 +4,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
-import { MODULES } from 'Components/Client/Modules';
+import { MODULES } from 'Components/Client/Modules/extra';
 import Recordings from '../RecordingsList/Recordings';
 
 /** SAAS:
