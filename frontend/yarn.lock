@@ -11358,11 +11358,11 @@ __metadata:
     prettier: "npm:^3.6.2"
     prismjs: "npm:^1.30.0"
     rc-time-picker: "npm:^3.7.3"
-    react: "npm:^19.2.0"
+    react: "npm:^19.2.1"
     react-confirm: "npm:^0.5.0-1"
     react-dnd: "npm:^16.0.1"
     react-dnd-html5-backend: "npm:^16.0.1"
-    react-dom: "npm:^19.2.0"
+    react-dom: "npm:^19.2.1"
     react-google-recaptcha: "npm:^2.1.0"
     react-i18next: "npm:^15.7.4"
     react-intersection-observer: "npm:^9.16.0"
@@ -13181,14 +13181,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^19.2.0":
-  version: 19.2.0
-  resolution: "react-dom@npm:19.2.0"
+"react-dom@npm:^19.2.1":
+  version: 19.2.1
+  resolution: "react-dom@npm:19.2.1"
   dependencies:
     scheduler: "npm:^0.27.0"
   peerDependencies:
-    react: ^19.2.0
-  checksum: 10c1/9e2aa184fe2eb9dbf2b7630545b9323dc793d33c096743fc3737abc26ad4bb50f4b1f812958383e280be70fbf72fa0b4055e01acc606e207866d92fd194bdc48
+    react: ^19.2.1
+  checksum: 10c1/e8cea3506cc36ac6af4aadc21a4f1980943adea16069b3037e9174aa8f6cf170c94523db03c335332152ecf35feef2baea6995b797df06b6114b021d2e6d39c9
   languageName: node
   linkType: hard
 
@@ -13425,10 +13425,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:^19.2.0":
-  version: 19.2.0
-  resolution: "react@npm:19.2.0"
-  checksum: 10c1/cbf234b8e4f4cb3dea1f5b56924321ecbcd6c461e667a37c81d8c595584dd0e3ddc8b7f0ce5cab5a37389192f11eb9526ebee842165cc1969961efff0390e8a9
+"react@npm:^19.2.1":
+  version: 19.2.1
+  resolution: "react@npm:19.2.1"
+  checksum: 10c1/9d0beb9da0142b8c2ba9857415533650c8bad442c07bce13d0ee233efc97b12f14d52ddf7a9e757ed77decc56fe35f04e92f383722ea4726ea4616802eef505a
   languageName: node
   linkType: hard
 
