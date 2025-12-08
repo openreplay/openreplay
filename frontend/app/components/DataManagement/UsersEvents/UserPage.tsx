@@ -50,7 +50,7 @@ function UserInfo({ userId }: { userId: string }) {
               [key]: value,
             },
           }
-        : { [key]: value };
+        : { ['$' + key]: value };
 
     analyticsStore.updateUser(user.userId, payload);
     refetch();
