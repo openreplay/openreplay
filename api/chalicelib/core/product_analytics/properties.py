@@ -195,7 +195,7 @@ EVENTS_EXTRA_PROPERTIES = {
             "displayName": "Duration",
             "autoCaptured": True,
             "possibleTypes": [
-                "in"
+                "int"
             ],
             "id": helper.string_to_id('prop_duration'),
             "category": "events",
@@ -261,7 +261,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                 )
             else:
                 p["_foundInPredefinedList"] = False
-                p["dataType"] = p["possibleTypes"][0]
+                p["dataType"] = next(iter(p["possibleTypes"]), "string")
 
             p.pop("total")
         keys = [helper.key_to_snake_case(p["name"]) for p in properties]
