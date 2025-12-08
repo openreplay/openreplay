@@ -11,9 +11,6 @@ func (s *saverImpl) handleMobileMessage(session *sessions.Session, msg messages.
 	case *messages.MobileSessionEnd:
 		return s.ch.InsertMobileSession(session)
 	case *messages.MobileUserID:
-		if err := s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
-			return err
-		}
 		if err := s.users.Add(session, sdk.NewUser(m.ID)); err != nil {
 			return err
 		}

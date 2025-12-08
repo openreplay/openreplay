@@ -67,29 +67,9 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 				}
 				switch action.Type {
 				case model.UserActionIdentify:
-					if action.UserID == "" {
-						ds.log.Info(context.Background(), "empty userID for session: %d", sessID)
-						continue
-					}
-					if sessInfo.UserID != nil && *sessInfo.UserID == action.UserID {
-						ds.log.Info(context.Background(), "got the same userID for session: %d", sessID)
-					} else {
-						if err = ds.sessions.UpdateUserID(sessID, action.UserID); err != nil {
-							ds.log.Error(context.Background(), "can't update userID for session: %d", sessID)
-						}
-					}
-					sessInfo.UserID = &action.UserID
-					// Check that we don't have this user already in DB
-					_, err := ds.users.Get(sessInfo.ProjectID, action.UserID)
-					if err == nil {
-						ds.log.Info(context.Background(), "we already have this user in DB for session: %d", sessID)
-						if err = ds.users.AddUserDistinctID(sessInfo, model.NewUser(action.UserID)); err != nil {
-							ds.log.Error(context.Background(), "can't add user ID to distinct user table: %s", action.UserID)
-						}
-						continue
-					}
 					if err = ds.users.Add(sessInfo, model.NewUser(action.UserID)); err != nil {
-						ds.log.Error(context.Background(), "can't insert user: %s", err)
+						ds.log.Error(context.Background(), "can't add user to session: %d", sessID)
+						continue
 					}
 				case model.UserActionDelete:
 					if err = ds.users.Delete(sessInfo.ProjectID, action.UserID); err != nil {

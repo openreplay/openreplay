@@ -37,9 +37,6 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		}
 		return s.issues.Add(session.SessionID, ie.Type)
 	case *messages.UserID:
-		if err := s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
-			return err
-		}
 		if err := s.users.Add(session, sdk.NewUser(m.ID)); err != nil {
 			return err
 		}
