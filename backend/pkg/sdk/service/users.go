@@ -97,7 +97,7 @@ func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 		session.UserState,       // $state
 		session.UserCity,        // $city
 		nil,                     // $or_api_endpoint
-		session.Timestamp,       // $first_event_at
+		session.Timestamp/1000,  // $first_event_at
 	); err != nil {
 		return fmt.Errorf("can't insert user to users table: %s", err)
 	}
