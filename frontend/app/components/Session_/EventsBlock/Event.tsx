@@ -160,41 +160,37 @@ const Event: React.FC<Props> = ({
                 icon
               )}
             </div>
-            <div className="ml-3 w-full">
+            <div className="ml-3" style={{ maxWidth: 'calc(100% - 20px)' }}>
               <div className="flex w-full items-start">
                 <div
                   className="flex flex-col justify-center items-start w-full"
                   style={{ minWidth: '0' }}
                 >
-                  <span className={cn(cls.title, 'font-medium')}>{title}</span>
-                  {body && !isLocation && (
+                  <div className="flex items-center justify-between w-full">
+                    <span className={cn(cls.title, 'font-medium')}>
+                      {title}
+                    </span>
+                    {isLocation && event.speedIndex != null && (
+                      <div className="color-gray-medium flex gap-2 font-medium items-center leading-none">
+                        <div className="font-size-10">{t('Speed Index')}</div>
+                        <div>{numberWithCommas(event.speedIndex || 0)}</div>
+                      </div>
+                    )}
+                  </div>
+                  {body && (
                     <TextEllipsis
-                      maxWidth="80%"
+                      maxWidth="90%"
                       className="w-full text-sm color-gray-medium"
                       text={body}
                     />
                   )}
                 </div>
-                {isLocation && event.speedIndex != null && (
-                  <div className="color-gray-medium flex font-medium items-center leading-none justify-end">
-                    <div className="font-size-10 pr-2">{t('Speed Index')}</div>
-                    <div>{numberWithCommas(event.speedIndex || 0)}</div>
-                  </div>
-                )}
               </div>
               {event.target && event.target.label && (
                 <div className={cls.badge}>{event.target.label}</div>
               )}
             </div>
           </div>
-          {isLocation && (
-            <div className="pt-1 px-4">
-              <TextEllipsis
-                className="text-sm ms-8 font-normal color-gray-medium"
-                text={body}
-              />
-            </div>
-          )}
         </div>
       </Tooltip>
     );
