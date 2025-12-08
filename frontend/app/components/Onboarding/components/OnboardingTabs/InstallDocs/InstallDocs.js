@@ -7,7 +7,12 @@ import stl from './installDocs.module.css';
 import { useTranslation } from 'react-i18next';
 import { usageCode, usageCodeSST } from './code';
 
-const installationCommand = 'npm i @openreplay/tracker';
+const lastMajor = window.env.TRACKER_MAJOR_VERSION
+  ? window.env.TRACKER_MAJOR_VERSION
+  : window.env.TRACKER_VERSION
+    ? window.env.TRACKER_VERSION.split('.')[0]
+    : null;
+const installationCommand = `npm i @openreplay/tracker${lastMajor ? `@${lastMajor}` : ''}`;
 
 function InstallDocs({ site }) {
   const { t } = useTranslation();

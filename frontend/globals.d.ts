@@ -5,6 +5,7 @@ interface Window {
       ASSETS_HOST: string;
       VERSION: string;
       TRACKER_VERSION: string;
+      TRACKER_MAJOR_VERSION: string;
       TRACKER_HOST: string;
       COMMIT_HASH: string;
     }
