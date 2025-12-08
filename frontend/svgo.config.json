@@ -5,7 +5,9 @@
       "params": {
         "overrides": {
           "convertTransform": false,
-          "removeHiddenElems": false
+          "removeHiddenElems": false,
+          "moveGroupAttrsToElems": false,
+          "collapseGroups": false
         }
       }
     }
