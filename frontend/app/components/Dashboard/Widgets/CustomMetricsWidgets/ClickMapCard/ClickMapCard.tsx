@@ -113,7 +113,8 @@ function ClickMapCard() {
   };
   const ts = jumpToEvent.timestamp ?? metricStore.instance.data.startTs;
   const domTime = jumpToEvent.domBuildingTime ?? 0;
-  const jumpTimestamp = ts - metricStore.instance.data.startTs + domTime + 99; // 99ms safety margin to give some time for the DOM to load
+  const jumpTimestamp = ts - metricStore.instance.data.startTs + domTime + 10;
+
   return (
     <div id="clickmap-render">
       <ClickMapRenderer
