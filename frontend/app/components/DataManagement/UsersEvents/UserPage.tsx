@@ -13,90 +13,35 @@ import Tag from './components/Tag';
 import EventsByDay from './components/EventsByDay';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { dataManagement } from 'App/routes';
+import { useParams } from 'react-router';
+import { useStore } from 'App/mstore';
+import { useQuery } from '@tanstack/react-query';
+import Activity from './components/UserActivity';
 
 const list = [];
 const card = 'rounded-lg border bg-white';
 
 function UserPage() {
+  const { userId } = useParams<{ userId: string }>();
   return (
     <div className={'flex flex-col gap-2 mx-auto'} style={{ maxWidth: 1360 }}>
-      <UserInfo />
-      <Activity />
+      <UserInfo userId={userId} />
+      <Activity userId={userId} />
     </div>
   );
 }
 
-function Activity() {
-  const testEvs = [...list, ...list, ...list];
-  const [show, setShow] = React.useState(true);
+function UserInfo({ userId }: { userId: string }) {
   const { showModal, hideModal } = useModal();
+  const { analyticsStore } = useStore();
 
-  const onItemClick = (ev: Event) => {
-    showModal(<EventDetailsModal ev={ev} onClose={hideModal} />, {
-      width: 420,
-      right: true,
-    });
-  };
-  const byDays: Record<string, Event[]> = testEvs.reduce((acc, ev) => {
-    const date = tsToCheckRecent(ev.time, 'LLL dd, yyyy');
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(ev);
-    return acc;
-  }, {});
-
-  const toggleEvents = () => {
-    setShow((prev) => !prev);
-  };
-  return (
-    <div className={card}>
-      <div className={'px-4 py-2 flex items-center gap-2'}>
-        <div className={'text-lg font-semibold'}>Activity</div>
-        <div className={'link flex gap-1 items-center'}>
-          <span>Play Sessions</span>
-          <Triangle size={10} color={'blue'} />
-        </div>
-        <div className={'ml-auto'} />
-        <div
-          className={'flex items-center gap-2 cursor-pointer'}
-          onClick={toggleEvents}
-        >
-          {!show ? <Eye size={16} /> : <EyeOff size={16} />}
-          <span className={'font-medium'}>{show ? 'Hide' : 'Show'} Events</span>
-        </div>
-        <Select
-          options={[
-            { label: 'Newest', value: 'DESC' },
-            { label: 'Oldest', value: 'ASC' },
-          ]}
-          defaultValue={'DESC'}
-          plain
-          onChange={({ value }) => {
-            console.log(value);
-          }}
-        />
-      </div>
-      <div className={show ? 'block' : 'hidden'}>
-        <EventsByDay byDays={byDays} onItemClick={onItemClick} />
-      </div>
-    </div>
-  );
-}
-
-function UserInfo() {
-  const { showModal, hideModal } = useModal();
-  const testUser = {
-    name: 'test user',
-    userId: 'test@email.com',
-    distinctId: ['123123123123', '123123123123', '123123123123'],
-    userLocation: 'NY',
-    cohorts: ['test'],
-    properties: {
-      email: 'test@test.com',
+  const { data: user } = useQuery({
+    queryKey: ['user-info', userId],
+    queryFn: async () => {
+      const response = await analyticsStore.fetchUserInfo(userId);
+      return response;
     },
-    updatedAt: Date.now(),
-  };
+  });
 
   const dropdownItems = [
     {
@@ -108,18 +53,25 @@ function UserInfo() {
   ];
 
   const showAll = () => {
-    showModal(<UserPropertiesModal properties={testUser.properties} />, {
+    if (!user) return;
+    showModal(<UserPropertiesModal properties={user.properties} />, {
       width: 420,
       right: true,
     });
   };
 
+  const propLength = Object.keys(user?.properties ?? {}).length;
+  const hasProperties = propLength > 0;
   return (
     <>
       <Breadcrumb
         items={[
-          { label: 'Users', to: dataManagement.users(), withSiteId: true },
-          { label: testUser.name },
+          {
+            label: 'Users',
+            to: dataManagement.usersEventsList(),
+            withSiteId: true,
+          },
+          { label: user?.name ?? user?.userId ?? 'User Details' },
         ]}
       />
 
@@ -131,18 +83,18 @@ function UserInfo() {
                 'bg-gray-lighter h-11 w-12 rounded-full flex items-center justify-center text-gray-medium border border-gray-medium'
               }
             >
-              {testUser.name.slice(0, 2)}
+              {user?.name?.slice(0, 2) || 'OR'}
             </div>
             <div className="flex flex-col">
-              <div className="text-xl font-semibold">{testUser.name}</div>
-              <div>{testUser.userId}</div>
+              <div className="text-xl font-semibold">{user?.name}</div>
+              <div>{user?.userId}</div>
             </div>
           </div>
           <div className="flex flex-col">
             <div className={'font-semibold'}>Distinct ID</div>
             <div>
-              {testUser.distinctId[0]}
-              {testUser.distinctId.length > 1 && (
+              {user?.distinctId[0]}
+              {user?.distinctId?.length && user?.distinctId.length > 1 && (
                 <Popover
                   title={
                     <div className={'text-disabled-text'}>
@@ -154,12 +106,12 @@ function UserInfo() {
                   arrow={false}
                   content={
                     <div className={'flex flex-col gap-2'}>
-                      {testUser.distinctId.map((id) => (
+                      {user?.distinctId.map((id) => (
                         <div className={'w-full group flex justify-between'}>
                           <span>{id}</span>
                           <div
                             className={
-                              'hidden group-hover:block cursor-pointer active:text-blue'
+                              'ml-2 invisible group-hover:visible cursor-pointer active:text-blue'
                             }
                             onClick={() => copy(id)}
                           >
@@ -171,7 +123,7 @@ function UserInfo() {
                   }
                 >
                   <div className={'w-fit cursor-pointer inline-block ml-2'}>
-                    <Tag>+{testUser.distinctId.length - 1}</Tag>
+                    <Tag>+{user?.distinctId.length - 1}</Tag>
                   </div>
                 </Popover>
               )}
@@ -179,12 +131,14 @@ function UserInfo() {
           </div>
           <div className="flex flex-col">
             <div className={'font-semibold'}>Location</div>
-            <div>{testUser.userLocation}</div>
+            <div>{user?.userLocation}</div>
           </div>
           <div className={'flex items-center gap-4'}>
-            <div onClick={showAll} className={'link font-semibold'}>
-              +{Object.keys(testUser.properties).length} properties
-            </div>
+            {hasProperties ? (
+              <div onClick={showAll} className={'link font-semibold'}>
+                +{propLength} properties
+              </div>
+            ) : null}
             <Dropdown
               menu={{ items: dropdownItems }}
               trigger={['click']}
@@ -196,13 +150,13 @@ function UserInfo() {
             </Dropdown>
           </div>
         </div>
-        <div className="flex items-center p-4">
+        {/* <div className="flex items-center p-4">
           <Users size={14} />
           <div className={'mr-4 ml-2'}>Cohorts</div>
           {testUser.cohorts.map((cohort) => (
             <Tag>{cohort}</Tag>
           ))}
-        </div>
+        </div> */}
       </div>
     </>
   );

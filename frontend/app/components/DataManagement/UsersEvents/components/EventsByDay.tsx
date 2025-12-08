@@ -28,8 +28,10 @@ function EventsByDay({
                 'hover:bg-gray-lightest border-b cursor-pointer px-4 py-2 flex items-center group'
               }
             >
-              <div className={'w-56'}>{formatTs(ev.time, 'HH:mm:ss a')}</div>
-              <div>{ev.name}</div>
+              <div className={'w-56'}>
+                {formatTs(ev.created_at, 'HH:mm:ss a')}
+              </div>
+              <div>{ev.event_name}</div>
               <div className={'hidden group-hover:block ml-auto'}>
                 <ChevronRight size={16} />
               </div>

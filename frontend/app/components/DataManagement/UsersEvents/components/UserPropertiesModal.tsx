@@ -1,11 +1,11 @@
 import React from 'react';
-import { Input, Button } from 'antd'
-import { Pencil } from 'lucide-react'
+import { Input, Button } from 'antd';
+import { Pencil } from 'lucide-react';
 
 function UserPropertiesModal({
   properties,
 }: {
-  properties: Record<string, string>
+  properties: Record<string, string>;
 }) {
   return (
     <div className="p-4 flex flex-col gap-4 h-screen w-full">
@@ -15,15 +15,19 @@ function UserPropertiesModal({
         <Property pkey={key} value={value} />
       ))}
     </div>
-  )
+  );
 }
 
-function Property({ pkey, value, onSave }: {
-  pkey: string,
-  value: string,
-  onSave?: (key: string, value: string) => void
+function Property({
+  pkey,
+  value,
+  onSave,
+}: {
+  pkey: string;
+  value: string;
+  onSave?: (key: string, value: string) => void;
 }) {
-  const [isEdit, setIsEdit] = React.useState(false)
+  const [isEdit, setIsEdit] = React.useState(false);
 
   return (
     <div className="p-4 flex items-start border-b group w-full hover:bg-gray-lightest">
@@ -32,20 +36,31 @@ function Property({ pkey, value, onSave }: {
         <div className={'flex-1 flex flex-col gap-2'}>
           <Input size={'small'} defaultValue={value} />
           <div className={'flex items-center gap-2'}>
-            <Button type={'text'} onClick={() => setIsEdit(false)}>Cancel</Button>
+            <Button type={'text'} onClick={() => setIsEdit(false)}>
+              Cancel
+            </Button>
             <Button type={'primary'}>Save</Button>
           </div>
         </div>
       ) : (
-        <div className={'flex-1 text-disabled-text flex justify-between items-start'}>
+        <div
+          className={
+            'flex-1 text-disabled-text flex justify-between items-start'
+          }
+        >
           <span>{value}</span>
-          <div className={'hidden group-hover:block cursor-pointer active:text-blue ml-auto'} onClick={() => setIsEdit(true)}>
+          <div
+            className={
+              'hidden group-hover:block cursor-pointer active:text-blue ml-auto'
+            }
+            onClick={() => setIsEdit(true)}
+          >
             <Pencil size={16} />
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export default UserPropertiesModal;

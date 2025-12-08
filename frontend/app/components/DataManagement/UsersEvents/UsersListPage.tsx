@@ -1,11 +1,10 @@
 import React from 'react';
 import { Input, Button } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from 'App/routes';
 import { Album } from 'lucide-react';
-import { useParams } from 'react-router-dom';
 import UsersList from './components/UsersList';
 import EventsList from './components/EventsList';
 
