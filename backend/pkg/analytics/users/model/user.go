@@ -29,8 +29,9 @@ func GetBaseColumnSet() map[filters.UserColumn]bool {
 }
 
 func GetBaseColumnStringSet() map[string]bool {
-	set := make(map[string]bool, len(BaseUserColumns)+1)
-	for _, col := range BaseUserColumns {
+	baseSet := GetBaseColumnSet()
+	set := make(map[string]bool, len(baseSet)+1)
+	for col := range baseSet {
 		set[string(col)] = true
 	}
 	set["project_id"] = true
@@ -46,7 +47,7 @@ func buildColumnMapping() map[string]string {
 	return mapping
 }
 
-type User struct {
+type UserRequest struct {
 	ProjectID          uint16                  `json:"-" db:"project_id"`
 	UserID             string                  `json:"$user_id" db:"$user_id" validate:"required"`
 	Email              string                  `json:"$email" db:"$email" validate:"omitempty,email"`
@@ -82,13 +83,85 @@ type User struct {
 	LastSeen           int64                   `json:"$last_seen,omitempty" db:"$last_seen" validate:"omitempty"`
 }
 
-func (u *User) UnmarshalProperties() error {
+type User struct {
+	UserID             string                  `json:"$user_id"`
+	Email              string                  `json:"$email"`
+	Name               string                  `json:"$name"`
+	FirstName          string                  `json:"$first_name"`
+	LastName           string                  `json:"$last_name"`
+	Phone              string                  `json:"$phone"`
+	Avatar             string                  `json:"$avatar"`
+	CreatedAt          int64                   `json:"$created_at"`
+	Properties         *map[string]interface{} `json:"properties"`
+	DistinctIDs        []string                `json:"distinct_ids"`
+	GroupID1           []string                `json:"group_id1"`
+	GroupID2           []string                `json:"group_id2"`
+	GroupID3           []string                `json:"group_id3"`
+	GroupID4           []string                `json:"group_id4"`
+	GroupID5           []string                `json:"group_id5"`
+	GroupID6           []string                `json:"group_id6"`
+	SDKEdition         string                  `json:"$sdk_edition"`
+	SDKVersion         string                  `json:"$sdk_version"`
+	CurrentUrl         string                  `json:"$current_url"`
+	InitialReferrer    string                  `json:"$initial_referrer"`
+	ReferringDomain    string                  `json:"$referring_domain"`
+	InitialUtmSource   string                  `json:"initial_utm_source"`
+	InitialUtmMedium   string                  `json:"initial_utm_medium"`
+	InitialUtmCampaign string                  `json:"initial_utm_campaign"`
+	Country            string                  `json:"$country"`
+	State              string                  `json:"$state"`
+	City               string                  `json:"$city"`
+	OrAPIEndpoint      string                  `json:"$or_api_endpoint"`
+	Timezone           int8                    `json:"$timezone"`
+	FirstEventAt       int64                   `json:"$first_event_at"`
+	LastSeen           int64                   `json:"$last_seen"`
+}
+
+
+
+func (u *UserRequest) UnmarshalProperties() error {
 	var err error
 	u.Properties, err = filters.UnmarshalJSONProperties(u.PropertiesRaw)
 	return err
 }
 
-func (u *User) ToMap(requestedColumns []string) map[string]interface{} {
+func (u *UserRequest) ToUser() *User {
+	return &User{
+		UserID:             u.UserID,
+		Email:              u.Email,
+		Name:               u.Name,
+		FirstName:          u.FirstName,
+		LastName:           u.LastName,
+		Phone:              u.Phone,
+		Avatar:             u.Avatar,
+		CreatedAt:          u.CreatedAt,
+		Properties:         u.Properties,
+		DistinctIDs:        u.DistinctIDs,
+		GroupID1:           u.GroupID1,
+		GroupID2:           u.GroupID2,
+		GroupID3:           u.GroupID3,
+		GroupID4:           u.GroupID4,
+		GroupID5:           u.GroupID5,
+		GroupID6:           u.GroupID6,
+		SDKEdition:         u.SDKEdition,
+		SDKVersion:         u.SDKVersion,
+		CurrentUrl:         u.CurrentUrl,
+		InitialReferrer:    u.InitialReferrer,
+		ReferringDomain:    u.ReferringDomain,
+		InitialUtmSource:   u.InitialUtmSource,
+		InitialUtmMedium:   u.InitialUtmMedium,
+		InitialUtmCampaign: u.InitialUtmCampaign,
+		Country:            u.Country,
+		State:              u.State,
+		City:               u.City,
+		OrAPIEndpoint:      u.OrAPIEndpoint,
+		Timezone:           u.Timezone,
+		FirstEventAt:       u.FirstEventAt,
+		LastSeen:           u.LastSeen,
+	}
+}
+
+func (u *UserRequest) ToMap(requestedColumns []string) map[string]interface{} {
 	result := make(map[string]interface{}, len(BaseUserColumns))
 	result[string(filters.UserColumnUserID)] = u.UserID
 	result[string(filters.UserColumnEmail)] = u.Email
@@ -163,6 +236,8 @@ func (u *User) ToMap(requestedColumns []string) map[string]interface{} {
 	return result
 }
 
+
+
 type SearchUsersRequest struct {
 	Filters   []filters.Filter          `json:"filters" validate:"omitempty,dive"`
 	Query     string                    `json:"query" validate:"omitempty,max=100"`
@@ -199,7 +274,7 @@ type UserActivityResponse struct {
 	Events []UserEvent `json:"events"`
 }
 
-func GetFieldPointer(user *User, column string) interface{} {
+func GetFieldPointer(user *UserRequest, column string) interface{} {
 	if column == "project_id" {
 		return &user.ProjectID
 	}

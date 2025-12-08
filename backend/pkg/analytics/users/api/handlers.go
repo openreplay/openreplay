@@ -168,7 +168,7 @@ func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, i
 // @Produce json
 // @Param project path uint true "Project ID"
 // @Param userID path string true "User ID"
-// @Param user body model.User true "User Data"
+// @Param user body model.UserRequest true "User Data"
 // @Success 200 {object} model.User
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 404 {object} api.ErrorResponse
@@ -192,7 +192,7 @@ func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, er
 		return nil, http.StatusBadRequest, http.ErrMissingFile
 	}
 
-	user := &model.User{}
+	user := &model.UserRequest{}
 	if err := json.Unmarshal(ctx.Body, user); err != nil {
 		h.Log().Error(ctx.Request.Context(), "failed to unmarshal user data: %v", err)
 		return nil, http.StatusBadRequest, err

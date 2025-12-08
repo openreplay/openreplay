@@ -17,7 +17,7 @@ import (
 type Users interface {
 	GetByUserID(ctx context.Context, projID uint32, userId string) (*model.User, error)
 	SearchUsers(ctx context.Context, projID uint32, req *model.SearchUsersRequest) (*model.SearchUsersResponse, error)
-	UpdateUser(ctx context.Context, projID uint32, user *model.User) (*model.User, error)
+	UpdateUser(ctx context.Context, projID uint32, user *model.UserRequest) (*model.User, error)
 	DeleteUser(ctx context.Context, projID uint32, userID string) error
 	GetUserActivity(ctx context.Context, projID uint32, userID string, req *model.UserActivityRequest) (*model.UserActivityResponse, error)
 }
@@ -32,6 +32,81 @@ func New(log logger.Logger, conn driver.Conn) (Users, error) {
 		log:    log,
 		chConn: conn,
 	}, nil
+}
+
+func (u *usersImpl) insertUserBatch(ctx context.Context, projID uint32, user *model.User, isDeleted bool) error {
+	query := `INSERT INTO product_analytics.users`
+	batch, err := u.chConn.PrepareBatch(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare batch: %w", err)
+	}
+
+	propertiesValue := "{}"
+	if user.Properties != nil {
+		propJSON, err := filters.MarshalJSONProperties(user.Properties)
+		if err != nil {
+			return fmt.Errorf("failed to marshal properties: %w", err)
+		}
+		propertiesValue = propJSON
+	}
+
+	createdAt := time.Unix(0, user.CreatedAt*1000000)
+	firstEventAt := time.Unix(0, user.FirstEventAt*1000000)
+	lastSeen := time.Unix(0, user.LastSeen*1000000)
+	
+	deletedAt := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+	deletedFlag := uint8(0)
+	if isDeleted {
+		deletedAt = time.Now()
+		deletedFlag = uint8(1)
+	}
+
+	err = batch.Append(
+		projID,
+		user.UserID,
+		user.Email,
+		user.Name,
+		user.FirstName,
+		user.LastName,
+		user.Phone,
+		user.Avatar,
+		createdAt,
+		propertiesValue,
+		user.GroupID1,
+		user.GroupID2,
+		user.GroupID3,
+		user.GroupID4,
+		user.GroupID5,
+		user.GroupID6,
+		user.SDKEdition,
+		user.SDKVersion,
+		user.CurrentUrl,
+		user.InitialReferrer,
+		user.ReferringDomain,
+		user.InitialUtmSource,
+		user.InitialUtmMedium,
+		user.InitialUtmCampaign,
+		user.Country,
+		user.State,
+		user.City,
+		user.OrAPIEndpoint,
+		user.Timezone,
+		firstEventAt,
+		lastSeen,
+		deletedAt,
+		deletedFlag,
+		time.Now(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to append to batch: %w", err)
+	}
+
+	err = batch.Send()
+	if err != nil {
+		return fmt.Errorf("failed to send batch: %w", err)
+	}
+
+	return nil
 }
 
 func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId string) (*model.User, error) {
@@ -57,7 +132,7 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 
 	row := u.chConn.QueryRow(ctx, query, projID, userId, projID, userId)
 
-	user := &model.User{}
+	user := &model.UserRequest{}
 	err := row.Scan(
 		&user.ProjectID, &user.UserID, &user.Email, &user.Name, &user.FirstName, &user.LastName,
 		&user.Phone, &user.Avatar, &user.CreatedAt, &user.PropertiesRaw, &user.GroupID1, &user.GroupID2,
@@ -76,7 +151,7 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 		return nil, fmt.Errorf("failed to unmarshal properties: %w", err)
 	}
 
-	return user, nil
+	return user.ToUser(), nil
 }
 
 func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.SearchUsersRequest) (*model.SearchUsersResponse, error) {
@@ -145,7 +220,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	var total uint64
 	users := []map[string]interface{}{}
 	for rows.Next() {
-		user := model.User{}
+		user := model.UserRequest{}
 		scanDest := u.getScanDestinations(&user, columnsStr)
 
 		scanPtrs := append([]interface{}{&total}, scanDest...)
@@ -195,7 +270,7 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 	return whereClause, params
 }
 
-func (u *usersImpl) getScanDestinations(user *model.User, requestedCols []string) []interface{} {
+func (u *usersImpl) getScanDestinations(user *model.UserRequest, requestedCols []string) []interface{} {
 	baseDest := []interface{}{&user.ProjectID}
 	for _, col := range model.BaseUserColumns {
 		if ptr := model.GetFieldPointer(user, string(col)); ptr != nil {
@@ -224,7 +299,7 @@ func (u *usersImpl) getScanDestinations(user *model.User, requestedCols []string
 	return baseDest
 }
 
-func (u *usersImpl) UpdateUser(ctx context.Context, projID uint32, user *model.User) (*model.User, error) {
+func (u *usersImpl) UpdateUser(ctx context.Context, projID uint32, user *model.UserRequest) (*model.User, error) {
 	if user.UserID == "" {
 		return nil, errors.New("user_id is required")
 	}
@@ -235,133 +310,99 @@ func (u *usersImpl) UpdateUser(ctx context.Context, projID uint32, user *model.U
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
+	updatedUser := &model.User{
+		UserID:             existingUser.UserID,
+		Email:              existingUser.Email,
+		Name:               existingUser.Name,
+		FirstName:          existingUser.FirstName,
+		LastName:           existingUser.LastName,
+		Phone:              existingUser.Phone,
+		Avatar:             existingUser.Avatar,
+		CreatedAt:          existingUser.CreatedAt,
+		Properties:         existingUser.Properties,
+		DistinctIDs:        existingUser.DistinctIDs,
+		GroupID1:           existingUser.GroupID1,
+		GroupID2:           existingUser.GroupID2,
+		GroupID3:           existingUser.GroupID3,
+		GroupID4:           existingUser.GroupID4,
+		GroupID5:           existingUser.GroupID5,
+		GroupID6:           existingUser.GroupID6,
+		SDKEdition:         existingUser.SDKEdition,
+		SDKVersion:         existingUser.SDKVersion,
+		CurrentUrl:         existingUser.CurrentUrl,
+		InitialReferrer:    existingUser.InitialReferrer,
+		ReferringDomain:    existingUser.ReferringDomain,
+		InitialUtmSource:   existingUser.InitialUtmSource,
+		InitialUtmMedium:   existingUser.InitialUtmMedium,
+		InitialUtmCampaign: existingUser.InitialUtmCampaign,
+		Country:            existingUser.Country,
+		State:              existingUser.State,
+		City:               existingUser.City,
+		OrAPIEndpoint:      existingUser.OrAPIEndpoint,
+		Timezone:           existingUser.Timezone,
+		FirstEventAt:       existingUser.FirstEventAt,
+		LastSeen:           existingUser.LastSeen,
+	}
+
 	if user.Email != "" {
-		existingUser.Email = user.Email
+		updatedUser.Email = user.Email
 	}
 	if user.Name != "" {
-		existingUser.Name = user.Name
+		updatedUser.Name = user.Name
 	}
 	if user.FirstName != "" {
-		existingUser.FirstName = user.FirstName
+		updatedUser.FirstName = user.FirstName
 	}
 	if user.LastName != "" {
-		existingUser.LastName = user.LastName
+		updatedUser.LastName = user.LastName
 	}
 	if user.Phone != "" {
-		existingUser.Phone = user.Phone
+		updatedUser.Phone = user.Phone
 	}
 	if user.Avatar != "" {
-		existingUser.Avatar = user.Avatar
+		updatedUser.Avatar = user.Avatar
 	}
 	if user.Properties != nil {
-		existingUser.Properties = user.Properties
+		updatedUser.Properties = user.Properties
 	}
 	if len(user.GroupID1) > 0 {
-		existingUser.GroupID1 = user.GroupID1
+		updatedUser.GroupID1 = user.GroupID1
 	}
 	if len(user.GroupID2) > 0 {
-		existingUser.GroupID2 = user.GroupID2
+		updatedUser.GroupID2 = user.GroupID2
 	}
 	if len(user.GroupID3) > 0 {
-		existingUser.GroupID3 = user.GroupID3
+		updatedUser.GroupID3 = user.GroupID3
 	}
 	if len(user.GroupID4) > 0 {
-		existingUser.GroupID4 = user.GroupID4
+		updatedUser.GroupID4 = user.GroupID4
 	}
 	if len(user.GroupID5) > 0 {
-		existingUser.GroupID5 = user.GroupID5
+		updatedUser.GroupID5 = user.GroupID5
 	}
 	if len(user.GroupID6) > 0 {
-		existingUser.GroupID6 = user.GroupID6
+		updatedUser.GroupID6 = user.GroupID6
 	}
 	if user.Country != "" {
-		existingUser.Country = user.Country
+		updatedUser.Country = user.Country
 	}
 	if user.State != "" {
-		existingUser.State = user.State
+		updatedUser.State = user.State
 	}
 	if user.City != "" {
-		existingUser.City = user.City
+		updatedUser.City = user.City
 	}
 	if user.Timezone != 0 {
-		existingUser.Timezone = user.Timezone
+		updatedUser.Timezone = user.Timezone
 	}
 
-	if existingUser.Properties != nil {
-		propJSON, err := filters.MarshalJSONProperties(existingUser.Properties)
-		if err != nil {
-			u.log.Error(ctx, "failed to marshal properties: %v", err)
-			return nil, fmt.Errorf("failed to marshal properties: %w", err)
-		}
-		existingUser.PropertiesRaw = &propJSON
-	}
-
-	query := `INSERT INTO product_analytics.users`
-
-	batch, err := u.chConn.PrepareBatch(ctx, query)
+	err = u.insertUserBatch(ctx, projID, updatedUser, false)
 	if err != nil {
-		u.log.Error(ctx, "failed to prepare batch: %v", err)
-		return nil, fmt.Errorf("failed to prepare batch: %w", err)
+		u.log.Error(ctx, "failed to insert user batch: %v", err)
+		return nil, err
 	}
 
-	propertiesValue := "{}"
-	if existingUser.PropertiesRaw != nil && *existingUser.PropertiesRaw != "" {
-		propertiesValue = *existingUser.PropertiesRaw
-	}
-
-	createdAt := time.Unix(0, existingUser.CreatedAt*1000000)
-	firstEventAt := time.Unix(0, existingUser.FirstEventAt*1000000)
-	lastSeen := time.Unix(0, existingUser.LastSeen*1000000)
-	deletedAt := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	err = batch.Append(
-		projID,
-		existingUser.UserID,
-		existingUser.Email,
-		existingUser.Name,
-		existingUser.FirstName,
-		existingUser.LastName,
-		existingUser.Phone,
-		existingUser.Avatar,
-		createdAt,
-		propertiesValue,
-		existingUser.GroupID1,
-		existingUser.GroupID2,
-		existingUser.GroupID3,
-		existingUser.GroupID4,
-		existingUser.GroupID5,
-		existingUser.GroupID6,
-		existingUser.SDKEdition,
-		existingUser.SDKVersion,
-		existingUser.CurrentUrl,
-		existingUser.InitialReferrer,
-		existingUser.ReferringDomain,
-		existingUser.InitialUtmSource,
-		existingUser.InitialUtmMedium,
-		existingUser.InitialUtmCampaign,
-		existingUser.Country,
-		existingUser.State,
-		existingUser.City,
-		existingUser.OrAPIEndpoint,
-		existingUser.Timezone,
-		firstEventAt,
-		lastSeen,
-		deletedAt,
-		uint8(0),
-		time.Now(),
-	)
-	if err != nil {
-		u.log.Error(ctx, "failed to append to batch: %v", err)
-		return nil, fmt.Errorf("failed to append to batch: %w", err)
-	}
-
-	err = batch.Send()
-	if err != nil {
-		u.log.Error(ctx, "failed to send batch: %v", err)
-		return nil, fmt.Errorf("failed to send batch: %w", err)
-	}
-
-	return u.GetByUserID(ctx, projID, existingUser.UserID)
+	return u.GetByUserID(ctx, projID, updatedUser.UserID)
 }
 
 func (u *usersImpl) DeleteUser(ctx context.Context, projID uint32, userID string) error {
@@ -375,69 +416,10 @@ func (u *usersImpl) DeleteUser(ctx context.Context, projID uint32, userID string
 		return fmt.Errorf("user not found: %w", err)
 	}
 
-	now := time.Now()
-	query := `INSERT INTO product_analytics.users`
-
-	batch, err := u.chConn.PrepareBatch(ctx, query)
+	err = u.insertUserBatch(ctx, projID, existingUser, true)
 	if err != nil {
-		u.log.Error(ctx, "failed to prepare batch: %v", err)
-		return fmt.Errorf("failed to prepare batch: %w", err)
-	}
-
-	propertiesValue := "{}"
-	if existingUser.PropertiesRaw != nil && *existingUser.PropertiesRaw != "" {
-		propertiesValue = *existingUser.PropertiesRaw
-	}
-
-	createdAt := time.Unix(0, existingUser.CreatedAt*1000000)
-	firstEventAt := time.Unix(0, existingUser.FirstEventAt*1000000)
-	lastSeen := time.Unix(0, existingUser.LastSeen*1000000)
-
-	err = batch.Append(
-		projID,
-		existingUser.UserID,
-		existingUser.Email,
-		existingUser.Name,
-		existingUser.FirstName,
-		existingUser.LastName,
-		existingUser.Phone,
-		existingUser.Avatar,
-		createdAt,
-		propertiesValue,
-		existingUser.GroupID1,
-		existingUser.GroupID2,
-		existingUser.GroupID3,
-		existingUser.GroupID4,
-		existingUser.GroupID5,
-		existingUser.GroupID6,
-		existingUser.SDKEdition,
-		existingUser.SDKVersion,
-		existingUser.CurrentUrl,
-		existingUser.InitialReferrer,
-		existingUser.ReferringDomain,
-		existingUser.InitialUtmSource,
-		existingUser.InitialUtmMedium,
-		existingUser.InitialUtmCampaign,
-		existingUser.Country,
-		existingUser.State,
-		existingUser.City,
-		existingUser.OrAPIEndpoint,
-		existingUser.Timezone,
-		firstEventAt,
-		lastSeen,
-		now,
-		uint8(1),
-		now,
-	)
-	if err != nil {
-		u.log.Error(ctx, "failed to append to batch: %v", err)
-		return fmt.Errorf("failed to append to batch: %w", err)
-	}
-
-	err = batch.Send()
-	if err != nil {
-		u.log.Error(ctx, "failed to send batch: %v", err)
-		return fmt.Errorf("failed to send batch: %w", err)
+		u.log.Error(ctx, "failed to delete user: %v", err)
+		return err
 	}
 
 	return nil
