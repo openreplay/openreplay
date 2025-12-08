@@ -174,9 +174,8 @@ function SessionList() {
     });
   };
 
-  const loaderOn = true // loading;
   return (
-    <Loader loading={loaderOn}>
+    <Loader loading={loading}>
       {hasNoRecordings && statusData.status == 1 ? (
         <RecordingStatus data={statusData} />
       ) : (
