@@ -70,7 +70,7 @@ func main() {
 		log.Fatal(ctx, "can't init project service: %s", err)
 	}
 
-	users, err := sdk.NewUsers(log, chConn)
+	users, err := sdk.NewUsers(log, chConn, sessManager)
 	if err != nil {
 		log.Fatal(ctx, "can't init users: %s", err)
 	}

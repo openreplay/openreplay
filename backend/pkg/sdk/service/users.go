@@ -21,14 +21,16 @@ type Users interface {
 }
 
 type usersImpl struct {
-	log  logger.Logger
-	conn driver.Conn
+	log      logger.Logger
+	conn     driver.Conn
+	sessions sessions.Sessions
 }
 
-func NewUsers(log logger.Logger, conn driver.Conn) (Users, error) {
+func NewUsers(log logger.Logger, conn driver.Conn, sessions sessions.Sessions) (Users, error) {
 	return &usersImpl{
-		log:  log,
-		conn: conn,
+		log:      log,
+		conn:     conn,
+		sessions: sessions,
 	}, nil
 }
 
@@ -38,6 +40,34 @@ var (
 )
 
 func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
+	if user.UserID == "" {
+		return fmt.Errorf("empty userID for session: %d", session.SessionID)
+	}
+	if session.UserID != nil && *session.UserID == user.UserID {
+		return fmt.Errorf("got the same userID for session: %d", session.SessionID)
+	} else {
+		if err := u.sessions.UpdateUserID(session.SessionID, user.UserID); err != nil {
+			u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
+		}
+		session.UserID = &user.UserID
+	}
+
+	// Check that we don't have this user already in DB
+	_, err := u.Get(session.ProjectID, user.UserID)
+	if err == nil {
+		u.log.Info(context.Background(), "we already have this user in DB for session: %d", session.SessionID)
+		if err = u.AddUserDistinctID(session, user); err != nil {
+			u.log.Error(context.Background(), "can't add user ID to distinct user table: %s", user.UserID)
+		}
+		return nil
+	}
+	if err = u.add(session, user); err != nil {
+		return fmt.Errorf("can't insert user: %s", err)
+	}
+	return nil
+}
+
+func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 	u.log.Info(context.Background(), "sess: %d,user to insert: %+v", session.SessionID, user)
 	if err := u.conn.Exec(context.Background(), insertQuery,
 		session.ProjectID,
