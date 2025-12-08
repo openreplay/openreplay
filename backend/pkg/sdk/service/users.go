@@ -14,6 +14,7 @@ import (
 
 type Users interface {
 	Add(session *sessions.Session, user *model.User) error
+	AddUserDistinctID(session *sessions.Session, user *model.User) error
 	Get(projectID uint32, userID string) (*model.User, error)
 	Update(user *model.User) error
 	Delete(projectID uint32, userID string) error
@@ -70,6 +71,14 @@ func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 	); err != nil {
 		return fmt.Errorf("can't insert user to users table: %s", err)
 	}
+	query := `INSERT INTO product_analytics.users_distinct_id (project_id, distinct_id, "$user_id") VALUES (?, ?, ?)`
+	if err := u.conn.Exec(context.Background(), query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
+		return fmt.Errorf("can't insert user to users_distinct_id table: %s", err)
+	}
+	return nil
+}
+
+func (u *usersImpl) AddUserDistinctID(session *sessions.Session, user *model.User) error {
 	query := `INSERT INTO product_analytics.users_distinct_id (project_id, distinct_id, "$user_id") VALUES (?, ?, ?)`
 	if err := u.conn.Exec(context.Background(), query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
 		return fmt.Errorf("can't insert user to users_distinct_id table: %s", err)
