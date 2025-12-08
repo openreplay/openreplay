@@ -4,18 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"openreplay/backend/pkg/analytics/events"
 	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/users/model"
 )
 
-func formatColumnForSelect(alias, col string, dbCol string, applyTransformations bool) string {
-	if !applyTransformations {
-		if strings.HasPrefix(col, "$") {
-			return fmt.Sprintf("%s\"%s\"", alias, col)
-		}
-		return fmt.Sprintf("%s%s", alias, col)
-	}
-
+func formatColumnForSelect(alias, col string, dbCol string) string {
 	switch filters.UserColumn(col) {
 	case filters.UserColumnCreatedAt:
 		return fmt.Sprintf("toInt64(toUnixTimestamp(%s%s) * 1000) AS %s", alias, dbCol, col)
@@ -40,13 +34,22 @@ func formatColumnForSelect(alias, col string, dbCol string, applyTransformations
 func BuildSelectColumns(tableAlias string, requestedColumns []string, applyTransformations bool) []string {
 	alias := filters.NormalizeAlias(tableAlias)
 
-	baseColumns := []string{alias + "project_id"}
-	for _, col := range model.BaseUserColumns {
-		colStr := string(col)
-		if applyTransformations {
-			baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, model.ColumnMapping[colStr], true))
-		} else {
-			baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, "", false))
+	var baseColumns []string
+	if applyTransformations {
+		baseColumns = []string{alias + "project_id"}
+		for _, col := range model.BaseUserColumns {
+			colStr := string(col)
+			baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, model.ColumnMapping[colStr]))
+		}
+	} else {
+		baseColumns = []string{alias + "project_id"}
+		for _, col := range model.BaseUserColumns {
+			colStr := string(col)
+			if strings.HasPrefix(colStr, "$") {
+				baseColumns = append(baseColumns, fmt.Sprintf("%s\"%s\"", alias, colStr))
+			} else {
+				baseColumns = append(baseColumns, alias+colStr)
+			}
 		}
 	}
 
@@ -54,25 +57,61 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string, applyTrans
 		return baseColumns
 	}
 
+	skipColumns := model.GetBaseColumnStringSet()
+	
+	if applyTransformations {
+		return filters.GenericBuildSelectColumns(tableAlias, baseColumns, requestedColumns, model.ColumnMapping, skipColumns, formatColumnForSelect)
+	}
+	
 	result := make([]string, len(baseColumns))
 	copy(result, baseColumns)
 	
-	baseColumnSet := model.GetBaseColumnStringSet()
-	
 	for _, col := range requestedColumns {
-		if baseColumnSet[col] {
+		if skipColumns[col] {
 			continue
 		}
-		if applyTransformations {
-			if dbCol, ok := model.ColumnMapping[col]; ok {
-				result = append(result, formatColumnForSelect(alias, col, dbCol, true))
-			}
-		} else {
-			if _, ok := model.ColumnMapping[col]; ok {
-				result = append(result, formatColumnForSelect(alias, col, "", false))
+		if _, ok := model.ColumnMapping[col]; ok {
+			if strings.HasPrefix(col, "$") {
+				result = append(result, fmt.Sprintf("%s\"%s\"", alias, col))
+			} else {
+				result = append(result, alias+col)
 			}
 		}
 	}
 
 	return result
 }
+
+func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID uint32) (string, []interface{}, bool) {
+	eventFilters := filters.ExtractEventFilters(filtersList)
+	if len(eventFilters) == 0 {
+		return "", nil, false
+	}
+
+	conditions, condParams, _ := events.BuildEventSearchQuery("e", eventFilters)
+	if len(conditions) == 0 {
+		return "", nil, false
+	}
+
+	alias := filters.NormalizeAlias(tableAlias)
+	params := make([]interface{}, 0)
+	params = append(params, projID)
+	params = append(params, condParams...)
+
+	var sb strings.Builder
+	sb.WriteString(" INNER JOIN (")
+	sb.WriteString("SELECT project_id, \"$user_id\" FROM product_analytics.events AS e WHERE e.project_id = ? AND ")
+	sb.WriteString(strings.Join(conditions, " AND "))
+	sb.WriteString(" GROUP BY project_id, \"$user_id\"")
+	sb.WriteString(") AS events_filter ON ")
+	sb.WriteString(alias)
+	sb.WriteString("project_id = events_filter.project_id AND ")
+	sb.WriteString(alias)
+	sb.WriteString(`"$user_id" = events_filter."$user_id"`)
+
+	return sb.String(), params, true
+}
+
+
+
+

@@ -96,22 +96,44 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	sortBy := filters.ValidateSortColumnGeneric(string(req.SortBy), model.ColumnMapping, `"$user_id"`)
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
-	query := fmt.Sprintf(`
-		WITH latest_users AS (
-			SELECT %s, _deleted_at, _timestamp
-			FROM product_analytics.users
-			WHERE %s
-			ORDER BY _timestamp DESC
-			LIMIT 1 BY project_id, "$user_id"
-		)
-		SELECT COUNT(*) OVER() as total_count, %s
-		FROM latest_users
-		WHERE _deleted_at = '1970-01-01 00:00:00'
-		ORDER BY %s %s
-		LIMIT ? OFFSET ?`,
-		strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), sortBy, sortOrder)
+	eventJoinClause, eventJoinParams, hasEventFilters := BuildEventJoinQuery("latest_users.", req.Filters, projID)
 
-	queryParams := append(params, req.Limit, offset)
+	var query string
+	if hasEventFilters {
+		query = fmt.Sprintf(`
+			WITH latest_users AS (
+				SELECT %s
+				FROM product_analytics.users
+				WHERE %s AND _deleted_at = '1970-01-01 00:00:00'
+				ORDER BY _timestamp DESC
+				LIMIT 1 BY project_id, "$user_id"
+			)
+			SELECT COUNT(*) OVER() as total_count, %s
+			FROM latest_users%s
+			ORDER BY %s %s
+			LIMIT ? OFFSET ?`,
+			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), eventJoinClause, sortBy, sortOrder)
+	} else {
+		query = fmt.Sprintf(`
+			WITH latest_users AS (
+				SELECT %s
+				FROM product_analytics.users
+				WHERE %s AND _deleted_at = '1970-01-01 00:00:00'
+				ORDER BY _timestamp DESC
+				LIMIT 1 BY project_id, "$user_id"
+			)
+			SELECT COUNT(*) OVER() as total_count, %s
+			FROM latest_users
+			ORDER BY %s %s
+			LIMIT ? OFFSET ?`,
+			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), sortBy, sortOrder)
+	}
+
+	queryParams := params
+	if hasEventFilters {
+		queryParams = append(params, eventJoinParams...)
+	}
+	queryParams = append(queryParams, req.Limit, offset)
 
 	rows, err := u.chConn.Query(ctx, query, queryParams...)
 	if err != nil {
@@ -152,9 +174,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 }
 
 func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsersRequest) (string, []interface{}) {
-	baseConditions := []string{
-		"project_id = ?",
-	}
+	baseConditions := []string{"project_id = ?"}
 	params := []interface{}{projID}
 
 	if req.Query != "" {
@@ -167,7 +187,8 @@ func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsers
 		params = append(params, queryPattern, queryPattern, queryPattern)
 	}
 
-	filterConditions, filterParams := filters.BuildSimpleFilterQuery("", req.Filters, model.ColumnMapping, "properties")
+	nonEventFilters := filters.ExtractNonEventFilters(req.Filters)
+	filterConditions, filterParams := filters.BuildSimpleFilterQuery("", nonEventFilters, model.ColumnMapping, "properties")
 	whereClause := filters.BuildWhereClause(baseConditions, filterConditions)
 	params = append(params, filterParams...)
 

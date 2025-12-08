@@ -248,6 +248,37 @@ func HasUserOnlyFilters(filtersList []Filter) bool {
 	return false
 }
 
+func ExtractEventFilters(filtersList []Filter) []Filter {
+	eventFilters := make([]Filter, 0)
+	for _, filter := range filtersList {
+		if filter.IsEvent {
+			eventFilters = append(eventFilters, filter)
+		}
+	}
+	return eventFilters
+}
+
+func ExtractNonEventFilters(filtersList []Filter) []Filter {
+	nonEventFilters := make([]Filter, 0)
+	for _, filter := range filtersList {
+		if !filter.IsEvent {
+			nonEventFilters = append(nonEventFilters, filter)
+		}
+	}
+	return nonEventFilters
+}
+
+func BuildLatestRecordCTE(tableName, alias string, selectColumns []string, whereClause string) string {
+	return fmt.Sprintf(`
+		WITH %s AS (
+			SELECT %s
+			FROM product_analytics.%s
+			WHERE %s AND _deleted_at = '1970-01-01 00:00:00'
+			ORDER BY _timestamp DESC
+			LIMIT 1 BY project_id, "$user_id"
+		)`, alias, strings.Join(selectColumns, ", "), tableName, whereClause)
+}
+
 type FilterMappings struct {
 	ColumnMapping       map[string]string
 	FilterColumnMapping map[string][]string
