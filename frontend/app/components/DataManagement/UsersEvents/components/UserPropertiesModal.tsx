@@ -48,7 +48,7 @@ function Property({
 
   const onSaveClick = () => {
     if (onSave) {
-      const wasNumber = !isNaN(Number(value));
+      const wasNumber = typeof value === 'number';
       // @ts-ignore
       onSave(pkey, wasNumber ? parseFloat(strValue) : strValue);
     }

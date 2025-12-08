@@ -41,14 +41,17 @@ function UserInfo({ userId }: { userId: string }) {
   const onPropSave = (path: string, key: string, value: string | number) => {
     if (!user) return;
     // i.e if path is 'properties', then payload = { properties: { ...user.properties, [key]: value } }
-    const payload = path
-      ? {
-          [path]: {
-            ...user[path],
-            [key]: value,
-          },
-        }
-      : { [key]: value };
+
+    const payload =
+      path === 'properties'
+        ? {
+            [path]: {
+              ...user[path],
+              [key]: value,
+            },
+          }
+        : { [key]: value };
+
     analyticsStore.updateUser(user.userId, payload);
     refetch();
   };
@@ -82,7 +85,11 @@ function UserInfo({ userId }: { userId: string }) {
         flatProperties={{
           city: user.raw.$city,
           country: user.raw.$country,
-          device: user.raw.$device,
+          email: user.raw.$email,
+          name: user.raw.$name,
+          last_name: user.raw.$last_name,
+          first_name: user.raw.$first_name,
+          avatar: user.raw.$avatar,
         }}
         onSave={(path, key, value) => onPropSave(path, key, value)}
       />,
