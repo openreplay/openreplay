@@ -1,0 +1,6 @@
+controller:
+  name: controller
+  nginxplus: true
+  image:
+    repository: nginx-plus-ingress
+    tag: "5.2.1"
