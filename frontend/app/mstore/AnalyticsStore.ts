@@ -143,12 +143,13 @@ export default class AnalyticsStore {
     }
   };
 
-  fetchUsers = async () => {
+  fetchUsers = async (query: string) => {
     this.setLoading(true);
     try {
       const data: UsersResponse = await analyticsService.getUsers({
         ...this.usersPayloadFilters,
         columns: userListColumns,
+        query,
       });
       this.users = {
         total: data.total,

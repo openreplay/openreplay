@@ -68,7 +68,7 @@ function UserInfo({ userId }: { userId: string }) {
         items={[
           {
             label: 'Users',
-            to: dataManagement.usersEventsList(),
+            to: dataManagement.usersEventsList('users'),
             withSiteId: true,
           },
           { label: user?.name ?? user?.userId ?? 'User Details' },

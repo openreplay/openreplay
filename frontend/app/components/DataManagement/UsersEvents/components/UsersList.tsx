@@ -10,7 +10,13 @@ import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
 import { resentOrDate } from 'App/date';
 
-function UsersList({ toUser }: { toUser: (id: string) => void }) {
+function UsersList({
+  toUser,
+  query,
+}: {
+  toUser: (id: string) => void;
+  query: string;
+}) {
   const { analyticsStore } = useStore();
   const [editCols, setEditCols] = React.useState(false);
   const [hiddenCols, setHiddenCols] = React.useState<any[]>([]);
@@ -20,8 +26,8 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
   const users = analyticsStore.users.users;
 
   React.useEffect(() => {
-    analyticsStore.fetchUsers();
-  }, [analyticsStore.usersPayloadFilters]);
+    analyticsStore.fetchUsers(query);
+  }, [analyticsStore.usersPayloadFilters, query]);
 
   const dropdownItems = [
     {

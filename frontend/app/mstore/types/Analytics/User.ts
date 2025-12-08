@@ -54,7 +54,7 @@ export default class User {
     this.name = user.$name ?? 'N/A';
     this.userId = user.$user_id ?? 'N/A';
     this.distinctId = user.distinct_ids ?? [];
-    this.userLocation = `${user.$city ?? 'N/A'}, ${user.$country ?? 'N/A'}`;
+    this.userLocation = `${user.$city || 'N/A'}, ${user.$country || 'N/A'}`;
     this.cohorts = []; // 1.24
     this.properties = user.properties ?? {};
     this.updatedAt = user.$created_at ?? Date.now();
