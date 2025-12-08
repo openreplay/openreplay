@@ -48,7 +48,7 @@ export const getSortingKey = (key: string) => {
   return ind !== -1 ? default_keys[ind] : key;
 };
 
-export const listColumns = ['$city', '$os', '$auto_captured'];
+export const listColumns = ['$city', '$os', '$auto_captured', '$user_id'];
 
 export default class Event {
   /** TABLE DATA */
@@ -56,6 +56,7 @@ export default class Event {
   event_id: string;
   created_at: number;
   distinct_id: string;
+  user_id?: string;
   city: string;
   environment: string;
   session_id: string;
@@ -74,6 +75,7 @@ export default class Event {
     this.distinct_id = event.distinct_id || 'N/A';
     this.session_id = event.session_id || 'N/A';
     this.isAutoCapture = event.$auto_captured || false;
+    this.user_id = event.$user_id;
 
     const defaultVariableProps = Object.keys(event.$properties ?? {});
     for (let key of defaultVariableProps) {

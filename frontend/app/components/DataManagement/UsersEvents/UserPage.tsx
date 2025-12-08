@@ -79,7 +79,12 @@ function UserInfo({ userId }: { userId: string }) {
     showModal(
       <UserPropertiesModal
         properties={user.properties}
-        onSave={(key, value) => onPropSave('properties', key, value)}
+        flatProperties={{
+          city: user.raw.$city,
+          country: user.raw.$country,
+          device: user.raw.$device,
+        }}
+        onSave={(path, key, value) => onPropSave(path, key, value)}
       />,
       {
         width: 420,

@@ -1,4 +1,4 @@
-import { UserResp } from "@/services/AnalyticsService";
+import { UserResp } from '@/services/AnalyticsService';
 
 const default_keys = [
   '$avatar',
@@ -34,6 +34,31 @@ const default_keys = [
   'properties',
 ];
 
+export const searchableColumns = [
+  '$user_id',
+  '$email',
+  '$name',
+  '$first_name',
+  '$last_name',
+  '$phone',
+  '$avatar',
+  '$created_at',
+  '$country',
+  '$state',
+  '$city',
+  '$timezone',
+  '$first_event_at',
+  '$last_seen',
+  '$sdk_edition',
+  '$sdk_version',
+  '$current_url',
+  '$initial_referrer',
+  '$referring_domain',
+  'initial_utm_source',
+  'initial_utm_medium',
+  'initial_utm_campaign',
+  'properties',
+];
 export const listColumns = [
   '$city',
   '$country',
@@ -50,7 +75,7 @@ export default class User {
   userLocation: string;
   cohorts: string[];
   properties: Record<string, any>;
-  updatedAt: number;
+  createdAt: number;
 
   raw: UserResp;
 
@@ -62,7 +87,7 @@ export default class User {
     this.userLocation = `${user.$city || 'N/A'}, ${user.$country || 'N/A'}`;
     this.cohorts = []; // 1.24
     this.properties = user.properties ?? {};
-    this.updatedAt = user.$created_at ?? Date.now();
+    this.createdAt = user.$created_at ?? Date.now();
   }
 
   toRespType = (): UserResp => {

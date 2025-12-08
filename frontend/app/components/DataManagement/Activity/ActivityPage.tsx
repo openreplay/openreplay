@@ -2,7 +2,7 @@ import React from 'react';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import { Dropdown, Button, Divider } from 'antd';
+import { Dropdown, Button, Divider, Tooltip } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
@@ -19,7 +19,7 @@ import DndTable from 'Shared/DNDTable';
 import { Code, Plus } from 'lucide-react';
 import { Filter } from '@/mstore/types/filterConstants';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
-import { resentOrDate } from 'App/date';
+import { formatTimeOrDate } from 'App/date';
 import { getSortingKey } from '@/mstore/types/Analytics/Event';
 
 // TODO: ADD PERMISSION CHECK DATA_MANAGEMENT
@@ -35,11 +35,14 @@ const colToSort = {
 };
 
 function ActivityPage() {
-  const { projectsStore, filterStore, analyticsStore } = useStore();
+  const { projectsStore, filterStore, analyticsStore, settingsStore } = useStore();
+  const { timezone } = settingsStore.sessionSettings;
+
   const siteId = projectsStore.activeSiteId;
   const allFilterOptions = filterStore.getCurrentProjectFilters();
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
+
   const dropdownItems = [
     {
       label: 'Show/Hide Columns',
@@ -68,7 +71,7 @@ function ActivityPage() {
       key: 'created_at',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
-      render: (text) => resentOrDate(text),
+      render: (text) => formatTimeOrDate(text, timezone),
     },
     {
       title: 'Distinct ID',
@@ -76,17 +79,28 @@ function ActivityPage() {
       key: 'distinct_id',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
-      render: (text) => (
-        <Link
-          to={withSiteId(dataManagement.userPage(text), siteId)}
-          className={'link'}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          {text}
-        </Link>
-      ),
+      render: (text, r) => {
+        const clickable = r.user_id;
+        if (clickable) {
+          return (
+            <Link
+              to={withSiteId(dataManagement.userPage(text), siteId)}
+              className={'link'}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              {text}
+            </Link>
+          );
+        } else {
+          return (
+            <Tooltip title="This user was not identified yet">
+              <span>{text}</span>
+            </Tooltip>
+          );
+        }
+      },
     },
     {
       title: 'City',

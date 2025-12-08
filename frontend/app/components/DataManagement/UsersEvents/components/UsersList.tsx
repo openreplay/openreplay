@@ -9,6 +9,7 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
 import { resentOrDate } from 'App/date';
+import { searchableColumns } from '@/mstore/types/Analytics/User';
 
 function UsersList({
   toUser,
@@ -45,26 +46,26 @@ function UsersList({
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: 'Email',
+      title: 'User ID',
       dataIndex: 'userId',
       key: 'userId',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.userId.localeCompare(b.userId),
     },
     {
-      title: 'Distinct ID',
-      dataIndex: 'distinctId',
-      key: 'distinctId',
+      title: 'Location',
+      dataIndex: 'userLocation',
+      key: 'userLocation',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.distinctId[0].localeCompare(b.distinctId[0]),
+      sorter: (a, b) => a.userLocation.localeCompare(b.userLocation),
     },
     {
-      title: 'Updated',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
+      title: 'Created',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt),
-      render: (_: any, record: any) => resentOrDate(record.updatedAt),
+      sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
+      render: (_: any, record: any) => resentOrDate(record.createdAt),
     },
     {
       title: (

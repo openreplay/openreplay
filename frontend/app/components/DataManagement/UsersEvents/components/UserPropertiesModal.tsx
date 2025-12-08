@@ -4,17 +4,31 @@ import { Pencil } from 'lucide-react';
 
 function UserPropertiesModal({
   properties,
+  flatProperties,
   onSave,
 }: {
   properties: Record<string, string>;
-  onSave: (key: string, value: string | number) => void;
+  flatProperties: Record<string, string>;
+  onSave: (path: string, key: string, value: string | number) => void;
 }) {
   return (
     <div className="p-4 flex flex-col gap-4 h-screen w-full">
       <div className="font-semibold text-xl">All User Properties</div>
       <Input.Search size={'small'} />
+
+      {Object.entries(flatProperties).map(([key, value]) => (
+        <Property
+          pkey={key}
+          value={value}
+          onSave={(k, v) => onSave('flat', k, v)}
+        />
+      ))}
       {Object.entries(properties).map(([key, value]) => (
-        <Property pkey={key} value={value} onSave={onSave} />
+        <Property
+          pkey={key}
+          value={value}
+          onSave={(k, v) => onSave('properties', k, v)}
+        />
       ))}
     </div>
   );

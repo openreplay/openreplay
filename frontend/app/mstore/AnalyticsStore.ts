@@ -41,6 +41,7 @@ export default class AnalyticsStore {
   payloadFilters: EventsPayload = defaultPayload;
   usersPayloadFilters: UsersPayload = {
     ...defaultPayload,
+    columns: userListColumns,
     sortBy: '$created_at',
   };
 
@@ -148,7 +149,6 @@ export default class AnalyticsStore {
     try {
       const data: UsersResponse = await analyticsService.getUsers({
         ...this.usersPayloadFilters,
-        columns: userListColumns,
         query,
       });
       this.users = {

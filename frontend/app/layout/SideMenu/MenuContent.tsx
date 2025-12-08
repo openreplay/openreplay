@@ -73,7 +73,7 @@ export default function MenuContent({
                       title={isCollapsed ? false : <Text>{it.label}</Text>}
                       icon={<Icon name={it.icon} size={16} />}
                       className="test"
-                      rootClassName='test2'
+                      rootClassName="test2"
                     >
                       {it.children.map((child: any) => (
                         <Menu.Item
@@ -83,11 +83,13 @@ export default function MenuContent({
                               isMenuItemActive(child.key),
                           })}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-4 hover-fill-teal">
                             <Icon
                               name={child.icon}
                               size={16}
-                              color={isMenuItemActive(child.key) ? 'teal' : ''}
+                              color={
+                                isMenuItemActive(child.key) ? 'teal' : 'black'
+                              }
                               className="hover-fill-teal"
                             />
                             <span>{child.label}</span>
