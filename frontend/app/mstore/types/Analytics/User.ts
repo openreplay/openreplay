@@ -40,7 +40,7 @@ export const listColumns = [
   '$created_at',
   '$email',
   '$name',
-  // 'distinct_ids',
+  // '$distinct_ids',
 ];
 
 export default class User {

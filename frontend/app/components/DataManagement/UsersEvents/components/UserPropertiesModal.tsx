@@ -40,6 +40,11 @@ function Property({
     }
     setIsEdit(false);
   };
+
+  const onCancel = () => {
+    setValue(value);
+    setIsEdit(false);
+  };
   return (
     <div className="p-4 flex items-start border-b group w-full hover:bg-gray-lightest">
       <div className={'flex-1'}>{pkey}</div>
@@ -51,7 +56,7 @@ function Property({
             onChange={(e) => setValue(e.target.value)}
           />
           <div className={'flex items-center gap-2'}>
-            <Button type={'text'} onClick={() => setIsEdit(false)}>
+            <Button type={'text'} onClick={onCancel}>
               Cancel
             </Button>
             <Button type={'primary'} onClick={onSaveClick}>
@@ -65,7 +70,7 @@ function Property({
             'flex-1 text-disabled-text flex justify-between items-start'
           }
         >
-          <span>{value}</span>
+          <span>{strValue}</span>
           <div
             className={
               'hidden group-hover:block cursor-pointer active:text-blue ml-auto'

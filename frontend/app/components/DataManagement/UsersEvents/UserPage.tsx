@@ -8,11 +8,11 @@ import UserPropertiesModal from './components/UserPropertiesModal';
 import Tag from './components/Tag';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { dataManagement, withSiteId } from 'App/routes';
-import { useParams } from 'react-router';
+import { useParams, useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
-import { useHistory } from 'react-router';
+
 const card = 'rounded-lg border bg-white';
 
 function UserPage() {
@@ -55,7 +55,12 @@ function UserInfo({ userId }: { userId: string }) {
 
   const onDelete = async (userId: string) => {
     await analyticsStore.deleteUser(userId);
-    history.push(withSiteId(dataManagement.usersEventsList('users'), projectsStore.activeSiteId ?? ''));
+    history.push(
+      withSiteId(
+        dataManagement.usersEventsList('users'),
+        projectsStore.activeSiteId ?? '',
+      ),
+    );
   };
 
   const dropdownItems = [
