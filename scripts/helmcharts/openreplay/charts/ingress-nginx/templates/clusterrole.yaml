@@ -1,102 +1,181 @@
-{{- if .Values.rbac.create }}
-
-{{- if and .Values.rbac.scope (not .Values.controller.scope.enabled) -}}
-  {{ required "Invalid configuration: 'rbac.scope' should be equal to 'controller.scope.enabled' (true/false)." (index (dict) ".") }}
-{{- end }}
-
-{{- if not .Values.rbac.scope -}}
-apiVersion: rbac.authorization.k8s.io/v1
+{{- if and .Values.rbac.create .Values.rbac.clusterrole.create }}
 kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  name: {{ include "nginx-ingress.fullname" . }}
   labels:
-    {{- include "ingress-nginx.labels" . | nindent 4 }}
-    {{- with .Values.controller.labels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-  name: {{ include "ingress-nginx.fullname" . }}
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-      - endpoints
-      - nodes
-      - pods
-      - secrets
-{{- if not .Values.controller.scope.enabled }}
-      - namespaces
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - namespaces
+  - pods
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+- apiGroups:
+  - "apps"
+  resources:
+  - replicasets
+  - daemonsets
+  - statefulsets
+  verbs:
+  - get
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingressclasses
+  verbs:
+  - get
+  - list
+{{- if .Values.controller.reportIngressStatus.enable }}
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses/status
+  verbs:
+  - update
+{{- end }}
+{{- if .Values.controller.appprotect.enable }}
+- apiGroups:
+  - appprotect.f5.com
+  resources:
+  - appolicies
+  - aplogconfs
+  - apusersigs
+  verbs:
+  - get
+  - watch
+  - list
+{{- end }}
+{{- if .Values.controller.appprotectdos.enable }}
+- apiGroups:
+    - appprotectdos.f5.com
+  resources:
+    - apdospolicies
+    - apdoslogconfs
+    - dosprotectedresources
+  verbs:
+    - get
+    - watch
+    - list
+{{- end }}
+{{- if .Values.controller.enableCustomResources }}
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - virtualservers
+  - virtualserverroutes
+  - globalconfigurations
+  - transportservers
+  - policies
+  verbs:
+  - list
+  - watch
+  - get
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - virtualservers/status
+  - virtualserverroutes/status
+  - policies/status
+  - transportservers/status
+  verbs:
+  - update
+{{- end }}
+{{- if .Values.controller.reportIngressStatus.ingressLink }}
+- apiGroups:
+  - cis.f5.com
+  resources:
+  - ingresslinks
+  verbs:
+  - list
+  - watch
+  - get
+{{- end }}
+{{- if .Values.controller.enableCertManager }}
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificates
+  verbs:
+  - list
+  - watch
+  - get
+  - update
+  - create
+  - delete
+{{- end }}
+{{- if .Values.controller.enableExternalDNS }}
+- apiGroups:
+    - externaldns.nginx.org
+  resources:
+    - dnsendpoints
+  verbs:
+    - list
+    - watch
+    - get
+    - update
+    - create
+    - delete
+- apiGroups:
+  - externaldns.nginx.org
+  resources:
+  - dnsendpoints/status
+  verbs:
+  - update
+{{- end }}
 {{- end}}
-    verbs:
-      - list
-      - watch
-  - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - list
-      - watch
-{{- if and .Values.controller.scope.enabled .Values.controller.scope.namespace }}
-  - apiGroups:
-      - ""
-    resources:
-      - namespaces
-    resourceNames:
-      - "{{ .Values.controller.scope.namespace }}"
-    verbs:
-      - get
-{{- end }}
-  - apiGroups:
-      - ""
-    resources:
-      - nodes
-    verbs:
-      - get
-  - apiGroups:
-      - ""
-    resources:
-      - services
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - create
-      - patch
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses/status
-    verbs:
-      - update
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingressclasses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - discovery.k8s.io
-    resources:
-      - endpointslices
-    verbs:
-      - list
-      - watch
-      - get
-{{- end }}
-
-{{- end }}
