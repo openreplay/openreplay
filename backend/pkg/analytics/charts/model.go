@@ -69,16 +69,16 @@ var mainColumns = map[string][]string{
 }
 
 var mainSessionsColumns = map[string][]string{
-	"user_device":          {"user_device", "singleColumn"},
-	"referrer":             {"referrer", "singleColumn"},
-	"fetch_duration":       {"duration", "singleColumn"},
-	"ISSUE":                {"issue_types", "arrayColumn"},
-	"user_country":         {"user_country", "singleColumn"},
-	"user_city":            {"user_city", "singleColumn"},
-	"user_state":           {"user_state", "singleColumn"},
-	"user_os":              {"user_os", "singleColumn"},
-	"user_os_version":      {"user_os_version", "singleColumn"},
-	"user_browser":         {"user_browser", "singleColumn"},
-	"user_browser_version": {"user_browser_version", "singleColumn"},
-	"issue_type":           {"issue_types", "arrayColumn"},
+	"userDevice":         {"user_device", "singleColumn"},
+	"referrer":           {"referrer", "singleColumn"},
+	"fetchDuration":      {"duration", "singleColumn"},
+	"ISSUE":              {"issue_types", "arrayColumn"},
+	"userCountry":        {"user_country", "singleColumn"},
+	"userCity":           {"user_city", "singleColumn"},
+	"userState":          {"user_state", "singleColumn"},
+	"userOs":             {"user_os", "singleColumn"},
+	"userOsVersion":      {"user_os_version", "singleColumn"},
+	"userBrowser":        {"user_browser", "singleColumn"},
+	"userBrowserVersion": {"user_browser_version", "singleColumn"},
+	"issue_type":         {"issue_types", "arrayColumn"},
 }
