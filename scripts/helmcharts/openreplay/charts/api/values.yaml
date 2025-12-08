@@ -72,7 +72,7 @@ ingress:
     nginx.org/proxy-read-timeout: "300s"
   cors:
     allowOrigin: "$http_origin"
-    allowMethods: "POST, GET, PATCH, DELETE, OPTIONS"
+    allowMethods: "POST, GET, PATCH, DELETE, OPTIONS, PUT"
     allowHeaders: "Content-Type, Authorization, Content-Encoding, X-Openreplay-Batch"
     exposeHeaders: "Content-Length"
     maxAge: "3600"
