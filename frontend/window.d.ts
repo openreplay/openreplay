@@ -9,6 +9,7 @@ declare global {
       API_EDP: string;
       VERSION: string;
       TRACKER_VERSION: string;
+      TRACKER_MAJOR_VERSION: string;
       TRACKER_HOST: string;
       SOURCEMAP: boolean;
       CRISP_KEY: string;

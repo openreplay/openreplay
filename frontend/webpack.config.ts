@@ -41,6 +41,7 @@ export default function build({ production }: { production?: boolean }) {
     VERSION: process.env.VERSION,
     TRACKER_ENABLED: process.env.TRACKER_ENABLED,
     TRACKER_VERSION: process.env.TRACKER_VERSION,
+    TRACKER_MAJOR_VERSION: process.env.TRACKER_MAJOR_VERSION,
     TRACKER_PROJECT_KEY: process.env.TRACKER_PROJECT_KEY,
     COMMIT_HASH: process.env.COMMIT_HASH,
     TRACKER_HOST: process.env.TRACKER_HOST,
