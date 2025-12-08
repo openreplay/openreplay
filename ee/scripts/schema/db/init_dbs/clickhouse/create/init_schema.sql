@@ -716,18 +716,18 @@ CREATE TABLE IF NOT EXISTS product_analytics.event_properties
 
 -- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
 -- Incremental materialized view to fill event_properties using $properties & properties
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_dproperties_extractor_mv
-    TO product_analytics.event_properties AS
-SELECT project_id,
-       `$event_name`                                                              AS event_name,
-       property_name,
-       toString(JSONType(JSONExtractRaw(toString(`$properties`), property_name))) AS value_type,
-       `$auto_captured`                                                           AS auto_captured_event,
-       TRUE                                                                       AS auto_captured_property,
-       created_at
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-GROUP BY ALL;
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_dproperties_extractor_mv
+--     TO product_analytics.event_properties AS
+-- SELECT project_id,
+--        `$event_name`                                                              AS event_name,
+--        property_name,
+--        toString(JSONType(JSONExtractRaw(toString(`$properties`), property_name))) AS value_type,
+--        `$auto_captured`                                                           AS auto_captured_event,
+--        TRUE                                                                       AS auto_captured_property,
+--        created_at
+-- FROM product_analytics.events
+--          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
+-- GROUP BY ALL;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_properties_extractor_mv
     TO product_analytics.event_properties AS
@@ -1013,20 +1013,20 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_group
       ORDER BY (project_id, event_name, property_name, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
-    -- @formatter:off
-    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
-    -- @formatter:on
-SELECT project_id,
-       event_name,
-       property_name,
-       value,
-       count(1)        AS data_count,
-       max(_timestamp) AS _timestamp
-FROM product_analytics.autocomplete_event_properties
-WHERE length(value) > 0
-  AND autocomplete_event_properties._timestamp > now() - INTERVAL 1 MONTH
-GROUP BY project_id, event_name, property_name, value;
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
+--     -- @formatter:off
+--     REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
+--     -- @formatter:on
+-- SELECT project_id,
+--        event_name,
+--        property_name,
+--        value,
+--        count(1)        AS data_count,
+--        max(_timestamp) AS _timestamp
+-- FROM product_analytics.autocomplete_event_properties
+-- WHERE length(value) > 0
+--   AND autocomplete_event_properties._timestamp > now() - INTERVAL 1 MONTH
+-- GROUP BY project_id, event_name, property_name, value;
 
 
 CREATE TABLE IF NOT EXISTS experimental.parsed_errors
