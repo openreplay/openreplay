@@ -2,7 +2,7 @@ import React from 'react';
 import EventDetailsModal, {
   Triangle,
 } from 'Components/DataManagement/Activity/EventDetailsModal';
-import Event from 'Components/DataManagement/Activity/data/Event';
+import Event from 'App/mstore/types/Analytics/Event';
 import { Eye, EyeOff } from 'lucide-react';
 import Select from 'Shared/Select';
 import { tsToCheckRecent } from 'App/date';
@@ -10,10 +10,14 @@ import { useModal } from 'App/components/Modal';
 import EventsByDay from './EventsByDay';
 import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
+import { useHistory } from 'react-router';
+import { sessions, withSiteId } from 'App/routes';
 
 const card = 'rounded-lg border bg-white';
 
 function Activity({ userId }: { userId: string }) {
+  const history = useHistory();
+
   const { analyticsStore, projectsStore } = useStore();
   const [show, setShow] = React.useState(true);
   const { showModal, hideModal } = useModal();
@@ -56,11 +60,17 @@ function Activity({ userId }: { userId: string }) {
   const toggleEvents = () => {
     setShow((prev) => !prev);
   };
+
+  const toSessions = () => {
+    history.push(
+      withSiteId(sessions(), projectsStore.activeSiteId ?? ''),
+    );
+  }
   return (
     <div className={card}>
       <div className={'px-4 py-2 flex items-center gap-2'}>
         <div className={'text-lg font-semibold'}>Activity</div>
-        <div className={'link flex gap-1 items-center'}>
+        <div className={'link flex gap-1 items-center'} onClick={toSessions}>
           <span>Play Sessions</span>
           <Triangle size={10} color={'blue'} />
         </div>

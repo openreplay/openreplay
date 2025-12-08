@@ -1,3 +1,5 @@
+import { UserResp } from "@/services/AnalyticsService";
+
 const default_keys = [
   '$avatar',
   '$city',
@@ -50,7 +52,10 @@ export default class User {
   properties: Record<string, any>;
   updatedAt: number;
 
+  raw: UserResp;
+
   constructor(user: Record<string, any>) {
+    this.raw = user as UserResp;
     this.name = user.$name ?? 'N/A';
     this.userId = user.$user_id ?? 'N/A';
     this.distinctId = user.distinct_ids ?? [];
@@ -59,4 +64,8 @@ export default class User {
     this.properties = user.properties ?? {};
     this.updatedAt = user.$created_at ?? Date.now();
   }
+
+  toRespType = (): UserResp => {
+    return this.raw;
+  };
 }

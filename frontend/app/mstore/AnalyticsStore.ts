@@ -218,4 +218,33 @@ export default class AnalyticsStore {
       this.setLoading(false);
     }
   };
+
+  updateUser = async (
+    userId: string,
+    updatedUser: Partial<UserResp>,
+  ): Promise<boolean> => {
+    this.setLoading(true);
+    try {
+      await analyticsService.updateUser(userId, updatedUser);
+      return true;
+    } catch (e) {
+      console.error('AnalyticsStore.updateUser', e);
+      return false;
+    } finally {
+      this.setLoading(false);
+    }
+  };
+
+  deleteUser = async (userId: string): Promise<boolean> => {
+    this.setLoading(true);
+    try {
+      await analyticsService.deleteUser(userId);
+      return true;
+    } catch (e) {
+      console.error('AnalyticsStore.deleteUser', e);
+      return false;
+    } finally {
+      this.setLoading(false);
+    }
+  };
 }

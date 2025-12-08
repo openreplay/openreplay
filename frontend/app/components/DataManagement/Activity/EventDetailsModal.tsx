@@ -14,11 +14,11 @@ const tabs = [
     value: 'all',
   },
   {
-    label: 'Openreplay Properties',
+    label: 'Openreplay',
     value: 'default',
   },
   {
-    label: 'Custom Properties',
+    label: 'Custom',
     value: 'custom',
   },
 ];

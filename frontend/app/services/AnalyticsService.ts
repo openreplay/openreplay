@@ -144,7 +144,9 @@ export default class AnalyticsService extends BaseService {
     return data;
   };
 
-  getUsers = async (payload: UsersPayload): Promise<UsersResponse> => {
+  getUsers = async (
+    payload: UsersPayload & { query: string },
+  ): Promise<UsersResponse> => {
     const r = await this.client.post('/PROJECT_ID/users', payload);
     const { data } = await r.json();
     return data;
@@ -154,5 +156,17 @@ export default class AnalyticsService extends BaseService {
     const r = await this.client.get(`/PROJECT_ID/users/${userId}`);
     const { data } = await r.json();
     return data;
+  };
+
+  deleteUser = async (userId: string): Promise<void> => {
+    await this.client.delete(`/PROJECT_ID/users/${userId}`);
+  };
+
+  updateUser = async (
+    userId: string,
+    /** can be partial user data */
+    user: Partial<UserResp>,
+  ): Promise<void> => {
+    await this.client.put(`/PROJECT_ID/users/${userId}`, user);
   };
 }

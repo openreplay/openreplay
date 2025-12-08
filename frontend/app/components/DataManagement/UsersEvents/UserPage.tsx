@@ -1,24 +1,18 @@
 import React from 'react';
-import EventDetailsModal, { Triangle } from '../Activity/EventDetailsModal';
 import { Dropdown, Popover } from 'antd';
 import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
-import Event from 'Components/DataManagement/Activity/data/Event';
-import { Files, Users, Eye, EyeOff } from 'lucide-react';
+import { Files } from 'lucide-react';
 import copy from 'copy-to-clipboard';
-import Select from 'Shared/Select';
-import { tsToCheckRecent } from 'App/date';
 import { useModal } from 'App/components/Modal';
 import UserPropertiesModal from './components/UserPropertiesModal';
 import Tag from './components/Tag';
-import EventsByDay from './components/EventsByDay';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { dataManagement } from 'App/routes';
+import { dataManagement, withSiteId } from 'App/routes';
 import { useParams } from 'react-router';
 import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
-
-const list = [];
+import { useHistory } from 'react-router';
 const card = 'rounded-lg border bg-white';
 
 function UserPage() {
@@ -32,10 +26,11 @@ function UserPage() {
 }
 
 function UserInfo({ userId }: { userId: string }) {
-  const { showModal, hideModal } = useModal();
-  const { analyticsStore } = useStore();
+  const history = useHistory();
+  const { showModal } = useModal();
+  const { analyticsStore, projectsStore } = useStore();
 
-  const { data: user } = useQuery({
+  const { data: user, refetch } = useQuery({
     queryKey: ['user-info', userId],
     queryFn: async () => {
       const response = await analyticsStore.fetchUserInfo(userId);
@@ -43,21 +38,49 @@ function UserInfo({ userId }: { userId: string }) {
     },
   });
 
+  const onPropSave = (path: string, key: string, value: string | number) => {
+    if (!user) return;
+    // i.e if path is 'properties', then payload = { properties: { ...user.properties, [key]: value } }
+    const payload = path
+      ? {
+          [path]: {
+            ...user[path],
+            [key]: value,
+          },
+        }
+      : { [key]: value };
+    analyticsStore.updateUser(user.userId, payload);
+    refetch();
+  };
+
+  const onDelete = async (userId: string) => {
+    await analyticsStore.deleteUser(userId);
+    history.push(withSiteId(dataManagement.usersEventsList('users'), projectsStore.activeSiteId ?? ''));
+  };
+
   const dropdownItems = [
     {
       label: 'Delete User',
       key: 'delete-user',
       icon: <DeleteOutlined />,
-      onClick: () => console.log('confirm'),
+      onClick: () => {
+        onDelete(userId);
+      },
     },
   ];
 
   const showAll = () => {
     if (!user) return;
-    showModal(<UserPropertiesModal properties={user.properties} />, {
-      width: 420,
-      right: true,
-    });
+    showModal(
+      <UserPropertiesModal
+        properties={user.properties}
+        onSave={(key, value) => onPropSave('properties', key, value)}
+      />,
+      {
+        width: 420,
+        right: true,
+      },
+    );
   };
 
   const propLength = Object.keys(user?.properties ?? {}).length;
@@ -71,7 +94,7 @@ function UserInfo({ userId }: { userId: string }) {
             to: dataManagement.usersEventsList('users'),
             withSiteId: true,
           },
-          { label: user?.name ?? user?.userId ?? 'User Details' },
+          { label: user?.name || user?.userId || 'User Details' },
         ]}
       />
 
