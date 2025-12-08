@@ -153,24 +153,13 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         children: [
           { label: 'Users', key: MENU.USERS, icon: 'square-mouse-pointer' },
           { label: 'Events', key: MENU.EVENTS, icon: 'square-mouse-pointer' },
-          {
-            label: 'Properties',
-            key: MENU.PROPS,
-            icon: 'square-mouse-pointer',
-          },
+          // {
+          //   label: 'Properties',
+          //   key: MENU.PROPS,
+          //   icon: 'square-mouse-pointer',
+          //   hidden: true,
+          // },
         ],
-      },
-    ],
-  },
-  {
-    title: t('Product Optimization'),
-    key: 'product-optimization',
-    items: [
-      { label: t('Feature Flags'), key: MENU.FEATURE_FLAGS, icon: 'toggles' },
-      {
-        label: 'Usability Tests',
-        key: MENU.USABILITY_TESTS,
-        icon: 'clipboard-check',
       },
     ],
   },

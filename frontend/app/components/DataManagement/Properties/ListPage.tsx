@@ -5,12 +5,14 @@ import { useHistory } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from 'App/routes';
-import { Filter, Album } from 'lucide-react';
-import { list } from '../Activity/ActivityPage';
+import { Album } from 'lucide-react';
+
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
-import Tabs from 'Shared/Tabs'
+import Tabs from 'Shared/Tabs';
+
+const list = [];
 
 function ListPage() {
   const [view, setView] = React.useState('users');
