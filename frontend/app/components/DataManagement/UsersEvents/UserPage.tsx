@@ -38,7 +38,11 @@ function UserInfo({ userId }: { userId: string }) {
     },
   });
 
-  const onPropSave = (path: string, key: string, value: string | number) => {
+  const onPropSave = async (
+    path: string,
+    key: string,
+    value: string | number,
+  ) => {
     if (!user) return;
     // i.e if path is 'properties', then payload = { properties: { ...user.properties, [key]: value } }
 
@@ -52,8 +56,10 @@ function UserInfo({ userId }: { userId: string }) {
           }
         : { ['$' + key]: value };
 
-    analyticsStore.updateUser(user.userId, payload);
-    refetch();
+    await analyticsStore.updateUser(user.userId, payload);
+    setTimeout(() => {
+      refetch();
+    }, 100);
   };
 
   const onDelete = async (userId: string) => {
