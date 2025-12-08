@@ -370,11 +370,6 @@ export default class FilterStore implements IFilterStore {
   }
 
   addFunnelDefaultFilters() {
-    const clickFilter = filterStore.findEvent({
-      name: FilterKey.CLICK,
-      autoCaptured: true,
-    });
-
     const locationFilter = filterStore.findEvent({
       name: FilterKey.LOCATION,
       autoCaptured: true,
@@ -383,7 +378,6 @@ export default class FilterStore implements IFilterStore {
     runInAction(() => {
       this.filters = [];
       this.addFilter(locationFilter);
-      this.addFilter(clickFilter);
     });
   }
 
