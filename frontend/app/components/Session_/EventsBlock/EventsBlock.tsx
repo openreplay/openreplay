@@ -193,8 +193,8 @@ function EventsBlock(props: IProps) {
 
   const onEventClick = (_: React.MouseEvent, event: { time: number }) => {
     player.jump(event.time);
-    setEventFilter({ query: '' });
   };
+
   const onMouseOver = () => setMouseOver(true);
   const onMouseLeave = () => setMouseOver(false);
 

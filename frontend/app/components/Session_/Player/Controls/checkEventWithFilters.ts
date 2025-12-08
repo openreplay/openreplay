@@ -6,32 +6,36 @@ export const checkEventWithFilters = (event: Event, filters: FilterItem[]) => {
     (f) => f.name.toUpperCase() === event.type.toUpperCase(),
   );
   if (filter?.operator) {
-    const operator = operators[filter.operator];
+    let operator = operators[filter.operator];
     if (operator) {
       let usedValue = filter.value ?? [];
+      let target = '';
       if (filter.name === FilterKey.CLICK) {
-        usedValue = handleClick(filter);
-        if (isArrayEmpty(usedValue)) return true;
-        return !!operator(event.label, usedValue);
+        const { value, operator: opStr } = handleClick(filter);
+        usedValue = value;
+        operator = operators[opStr];
+        target = event.label;
       }
       if (filter.name === FilterKey.LOCATION) {
-        usedValue = handleLocation(filter);
-        const pathname = event.url ? new URL(event.url).pathname : '';
-        if (isArrayEmpty(usedValue)) return true;
-        return !!operator(pathname, usedValue);
+        const { value, operator: opStr } = handleLocation(filter);
+        usedValue = value;
+        operator = operators[opStr];
+        target = event.url ? new URL(event.url).pathname : '';
       }
       if (filter.name === FilterKey.TAGGED_ELEMENT) {
-        usedValue = handleTag(filter);
-        if (isArrayEmpty(usedValue)) return true;
-        return !!operator(event.name, usedValue);
+        const { value, operator: opStr } = handleTag(filter);
+        usedValue = value;
+        operator = operators[opStr];
+        target = event.name;
       }
       if (filter.name === FilterKey.INPUT) {
-        usedValue = handleInput(filter);
-        if (isArrayEmpty(usedValue)) return true;
-        return !!operator(event.label, usedValue);
+        const { value, operator: opStr } = handleInput(filter);
+        usedValue = value;
+        operator = operators[opStr];
+        target = event.label;
       }
       if (isArrayEmpty(usedValue)) return true;
-      return !!operator(event.label, usedValue);
+      return !!operator(target, usedValue);
     }
   }
   return false;
@@ -41,23 +45,31 @@ const isArrayEmpty = (arr: any[]) =>
   arr.length === 0 || (arr.length === 1 && arr[0] === '');
 
 const handleClick = (filter: FilterItem) => {
-  const value = filter.filters?.find((f) => f.name === 'label')?.value ?? [];
-  return value;
+  const subfilter = filter.filters?.find((f) => f.name === 'label');
+  const value = subfilter?.value ?? [];
+  const operator = subfilter?.operator || filter.operator;
+  return { value, operator };
 };
 
 const handleLocation = (filter: FilterItem) => {
-  const value = filter.filters?.find((f) => f.name === 'url_path')?.value ?? [];
-  return value;
+  const subfilter = filter.filters?.find((f) => f.name === 'urlPath');
+  const value = subfilter?.value ?? [];
+  const operator = subfilter?.operator || filter.operator;
+  return { value, operator };
 };
 
 const handleTag = (filter: FilterItem) => {
-  const value = filter.filters?.find((f) => f.name === 'tag_id')?.value ?? [];
-  return value;
+  const subfilter = filter.filters?.find((f) => f.name === 'tag_id');
+  const value = subfilter?.value ?? [];
+  const operator = subfilter?.operator || filter.operator;
+  return { value, operator };
 };
 
 const handleInput = (filter: FilterItem) => {
-  const value = filter.filters?.find((f) => f.name === 'label')?.value ?? [];
-  return value;
+  const subfilter = filter.filters?.find((f) => f.name === 'label');
+  const value = subfilter?.value ?? [];
+  const operator = subfilter?.operator || filter.operator;
+  return { value, operator };
 };
 
 const operators = {
