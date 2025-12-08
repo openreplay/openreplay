@@ -168,6 +168,9 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 }
 
 func toInt(v interface{}) (int, bool) {
+	if v == nil {
+		return 0, true // consider as an empty value
+	}
 	switch n := v.(type) {
 	case int:
 		return n, true
