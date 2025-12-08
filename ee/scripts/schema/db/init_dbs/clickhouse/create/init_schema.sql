@@ -1083,10 +1083,10 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_simple
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_browser_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE                   AS auto_captured,
-       'session'              AS source,
-       'user_browser'         AS name,
-       toString(user_browser) AS value,
+       TRUE           AS auto_captured,
+       'session'      AS source,
+       'user_browser' AS name,
+       user_browser   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(user_browser)
@@ -1107,10 +1107,10 @@ WHERE isNotNull(user_country)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_state_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE                 AS auto_captured,
-       'session'            AS source,
-       'user_state'         AS name,
-       toString(user_state) AS value,
+       TRUE         AS auto_captured,
+       'session'    AS source,
+       'user_state' AS name,
+       user_state   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(user_state)
@@ -1119,10 +1119,10 @@ WHERE isNotNull(user_state)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_city_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE                AS auto_captured,
-       'session'           AS source,
-       'user_city'         AS name,
-       toString(user_city) AS value,
+       TRUE        AS auto_captured,
+       'session'   AS source,
+       'user_city' AS name,
+       user_city   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(user_city)
@@ -1131,10 +1131,10 @@ WHERE isNotNull(user_city)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_device_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE                  AS auto_captured,
-       'session'             AS source,
-       'user_device'         AS name,
-       toString(user_device) AS value,
+       TRUE          AS auto_captured,
+       'session'     AS source,
+       'user_device' AS name,
+       user_device   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(user_device)
@@ -1143,10 +1143,10 @@ WHERE isNotNull(user_device)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_rev_id_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE             AS auto_captured,
-       'session'        AS source,
-       'rev_id'         AS name,
-       toString(rev_id) AS value,
+       TRUE      AS auto_captured,
+       'session' AS source,
+       'rev_id'  AS name,
+       rev_id    AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(rev_id)
@@ -1155,10 +1155,10 @@ WHERE isNotNull(rev_id)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_referrer_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE               AS auto_captured,
-       'session'          AS source,
-       'referrer'         AS name,
-       toString(referrer) AS value,
+       TRUE       AS auto_captured,
+       'session'  AS source,
+       'referrer' AS name,
+       referrer   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(referrer)
@@ -1167,10 +1167,10 @@ WHERE isNotNull(referrer)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_source_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE                 AS auto_captured,
-       'session'            AS source,
-       'utm_source'         AS name,
-       toString(utm_source) AS value,
+       TRUE         AS auto_captured,
+       'session'    AS source,
+       'utm_source' AS name,
+       referrer     AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(utm_source)
@@ -1179,10 +1179,10 @@ WHERE isNotNull(utm_source)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_medium_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE                 AS auto_captured,
-       'session'            AS source,
-       'utm_medium'         AS name,
-       toString(utm_medium) AS value,
+       TRUE         AS auto_captured,
+       'session'    AS source,
+       'utm_medium' AS name,
+       referrer     AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(utm_medium)
@@ -1191,10 +1191,10 @@ WHERE isNotNull(utm_medium)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_campaign_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       TRUE                   AS auto_captured,
-       'session'              AS source,
-       'utm_campaign'         AS name,
-       toString(utm_campaign) AS value,
+       TRUE           AS auto_captured,
+       'session'      AS source,
+       'utm_campaign' AS name,
+       referrer       AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(utm_campaign)
@@ -1203,10 +1203,10 @@ WHERE isNotNull(utm_campaign)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_id_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE             AS auto_captured,
-       'session'         AS source,
-       'user_id'         AS name,
-       toString(user_id) AS value,
+       FALSE     AS auto_captured,
+       'session' AS source,
+       'user_id' AS name,
+       user_id   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(user_id)
@@ -1215,10 +1215,10 @@ WHERE isNotNull(user_id)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_anonymous_id_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                       AS auto_captured,
-       'session'                   AS source,
-       'user_anonymous_id'         AS name,
-       toString(user_anonymous_id) AS value,
+       FALSE               AS auto_captured,
+       'session'           AS source,
+       'user_anonymous_id' AS name,
+       user_anonymous_id   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(user_anonymous_id)
@@ -1227,10 +1227,10 @@ WHERE isNotNull(user_anonymous_id)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_1_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_1'         AS name,
-       toString(metadata_1) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_1' AS name,
+       metadata_1   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_1)
@@ -1239,10 +1239,10 @@ WHERE isNotNull(metadata_1)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_2_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_2'         AS name,
-       toString(metadata_2) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_2' AS name,
+       metadata_2   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_2)
@@ -1251,10 +1251,10 @@ WHERE isNotNull(metadata_2)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_3_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_3'         AS name,
-       toString(metadata_3) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_3' AS name,
+       metadata_3   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_3)
@@ -1263,10 +1263,10 @@ WHERE isNotNull(metadata_3)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_4_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_4'         AS name,
-       toString(metadata_4) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_4' AS name,
+       metadata_4   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_4)
@@ -1275,10 +1275,10 @@ WHERE isNotNull(metadata_4)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_5_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_5'         AS name,
-       toString(metadata_5) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_5' AS name,
+       metadata_5   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_5)
@@ -1287,10 +1287,10 @@ WHERE isNotNull(metadata_5)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_6_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_6'         AS name,
-       toString(metadata_6) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_6' AS name,
+       metadata_6   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_6)
@@ -1299,10 +1299,10 @@ WHERE isNotNull(metadata_6)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_7_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_7'         AS name,
-       toString(metadata_7) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_7' AS name,
+       metadata_7   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_7)
@@ -1311,10 +1311,10 @@ WHERE isNotNull(metadata_7)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_8_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_8'         AS name,
-       toString(metadata_8) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_8' AS name,
+       metadata_8   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_8)
@@ -1323,10 +1323,10 @@ WHERE isNotNull(metadata_8)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_9_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                AS auto_captured,
-       'session'            AS source,
-       'metadata_9'         AS name,
-       toString(metadata_9) AS value,
+       FALSE        AS auto_captured,
+       'session'    AS source,
+       'metadata_9' AS name,
+       metadata_9   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_9)
@@ -1335,10 +1335,10 @@ WHERE isNotNull(metadata_9)
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_10_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                 AS auto_captured,
-       'session'             AS source,
-       'metadata_10'         AS name,
-       toString(metadata_10) AS value,
+       FALSE         AS auto_captured,
+       'session'     AS source,
+       'metadata_10' AS name,
+       metadata_10   AS value,
        _timestamp
 FROM experimental.sessions
 WHERE isNotNull(metadata_10)
