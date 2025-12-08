@@ -397,7 +397,7 @@ function cleanup() {
     kubectl run minio-cleanup -n "${APP_NS}" \
         --restart=Never \
         --env MINIO_HOST="$MINIO_HOST" \
-        --image bitnamilegacy/minio -- /bin/sh -c "
+        --image bitnami/minio:2020.10.9-debian-10-r6 -- /bin/sh -c "
       mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY &&
       mc rm --recursive --dangerous --force --older-than ${delete_from_number_days}d minio/mobs
       "
