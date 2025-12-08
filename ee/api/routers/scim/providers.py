@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 class MultiTenantProvider(provider.SCIMProvider):
 
     def check_auth(self, request: Request):
-        logger.debug(f"call processed by check_auth: {request.method} {request.path}")
         auth = request.headers.get("Authorization")
         if not auth or not auth.startswith("Bearer "):
             return None
@@ -73,7 +72,6 @@ class MultiTenantProvider(provider.SCIMProvider):
     def query_resource(
             self, request: Request, tenant_id: int, resource: ResourceType | None
     ):
-        logger.debug(f"call processed by query_resource: {request.method} {request.path}")
         search_request = self.build_search_request(request)
 
         kwargs = {}
@@ -104,7 +102,6 @@ class MultiTenantProvider(provider.SCIMProvider):
     def call_resource(
             self, request: Request, resource_endpoint: str, **kwargs
     ) -> Response:
-        logger.debug(f"call processed by call_resource: {request.method} {request.path}")
         resource_type = self.backend.get_resource_type_by_endpoint(
             "/" + resource_endpoint
         )
@@ -144,7 +141,6 @@ class MultiTenantProvider(provider.SCIMProvider):
     def call_single_resource(
             self, request: Request, resource_endpoint: str, resource_id: str, **kwargs
     ) -> Response:
-        logger.debug(f"call processed by call_single_resource: {request.method} {request.path}")
         find_endpoint = "/" + resource_endpoint
         resource_type = self.backend.get_resource_type_by_endpoint(find_endpoint)
         if not resource_type:
@@ -245,7 +241,6 @@ class MultiTenantProvider(provider.SCIMProvider):
                     )
 
     def wsgi_app(self, request: Request, environ):
-        logger.debug(f"call processed by wsgi_app: {request.method} {request.path}")
         try:
             if environ.get("PATH_INFO", "").endswith(".scim"):
                 # RFC 7644, Section 3.8
