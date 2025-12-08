@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    {
+      "name": "preset-default",
+      "params": {
+        "overrides": {
+          "convertTransform": false,
+          "removeHiddenElems": false
+        }
+      }
+    }
+  ]
+}
