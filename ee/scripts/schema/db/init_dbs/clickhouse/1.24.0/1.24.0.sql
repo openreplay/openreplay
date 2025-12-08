@@ -371,8 +371,3 @@ SELECT project_id,
 FROM experimental.sessions
 WHERE isNotNull(metadata_10)
   AND notEmpty(metadata_10);
-
-DROP TABLE IF EXISTS product_analytics.property_dvalues_sampler_mv;
-DROP TABLE IF EXISTS product_analytics.property_values_sampler_mv;
-DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv;
-DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties_grouped_mv;
