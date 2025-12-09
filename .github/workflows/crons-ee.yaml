@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - dev
-      - api-*
     paths:
       - "ee/api/**"
       - "api/**"
