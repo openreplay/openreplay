@@ -1,6 +1,7 @@
 package url
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 )
@@ -13,14 +14,40 @@ func GetURLParts(rawURL string) (string, string, string, error) {
 	rawURL = strings.Replace(rawURL, "\t", "", -1) // Other chars?
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		return "", "", "", err
+		// Try again with sanitization
+		u, err = url.Parse(sanitizeURL(rawURL))
+		if err != nil {
+			return "", "", "", fmt.Errorf("failed to parse url with sanitizer: %s", err)
+		}
 	}
-	// u.Scheme  u.Fragment / RawFragment ?
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
 	return u.Host, path, u.RawQuery, nil
+}
+
+func sanitizeURL(raw string) string {
+	var b strings.Builder
+	b.Grow(len(raw))
+
+	isHex := func(c byte) bool {
+		return ('0' <= c && c <= '9') ||
+			('a' <= c && c <= 'f') ||
+			('A' <= c && c <= 'F')
+	}
+
+	for i := 0; i < len(raw); i++ {
+		if raw[i] == '%' {
+			if i+2 >= len(raw) || !isHex(raw[i+1]) || !isHex(raw[i+2]) {
+				// Invalid escape, encode the '%' itself
+				b.WriteString("%25")
+				continue
+			}
+		}
+		b.WriteByte(raw[i])
+	}
+	return b.String()
 }
 
 func GetURLQueryParams(rawURL string) (map[string]string, error) {
@@ -34,13 +61,4 @@ func GetURLQueryParams(rawURL string) (map[string]string, error) {
 		params[key] = values[0]
 	}
 	return params, nil
-}
-
-func getURLExtension(URL string) string {
-	u, err := url.Parse(URL)
-	if err != nil {
-		return ""
-	}
-	i := strings.LastIndex(u.Path, ".")
-	return u.Path[i+1:]
 }
