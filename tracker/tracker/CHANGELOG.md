@@ -1,3 +1,7 @@
+## 17.0.2
+
+- improvements around old chrome tabs retaining frozen state
+
 ## 17.0.1
 
 - fix sessionHash parsing issue (and clarify & symbols usage in code)

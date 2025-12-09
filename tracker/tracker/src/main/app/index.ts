@@ -98,6 +98,10 @@ type RickRoll = {
       line: 'never-gonna-run-around-and-desert-you'
       token: string
     }
+  | {
+      line: 'reset-your-session-please'
+      token: string
+    }
 )
 
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
@@ -215,6 +219,9 @@ const proto = {
   startIframe: 'start tracker inside frame',
   // checking updates
   polling: 'hello-how-are-you-im-under-the-water-please-help-me',
+  // happens if tab is old and has outdated token but
+  // not communicating with backend to update it (for whatever reason)
+  reset: 'reset-your-session-please',
 } as const
 
 export default class App {
@@ -427,6 +434,12 @@ export default class App {
               projectKey: this.projectKey,
             })
           }
+        }
+        if (ev.data.line === proto.reset) {
+          const newToken = ev.data.token;
+          this.debug.log('Received reset signal from another tab')
+          this.session.setSessionToken(newToken, this.projectKey)
+          this.restart();
         }
       }
     }
@@ -747,6 +760,20 @@ export default class App {
     } catch (e) {
       this._debug('worker_start', e)
     }
+  }
+
+  private restart = () => {
+    this.stop(false)
+    this.waitStatus(ActivityState.NotActive).then(() => {
+      this.allowAppStart()
+      this.start(this.prevOpts, true)
+        .then((r) => {
+          this.debug.info('Session restart', r)
+        })
+        .catch((e) => {
+          this.debug.error('Session restart failed', e)
+        })
+    })
   }
 
   private handleWorkerMsg(data: FromWorkerData) {
@@ -1478,6 +1505,12 @@ export default class App {
 
       this.delay = delay
       this.session.setSessionToken(token, this.projectKey)
+      if (sessionToken && sessionToken !== token) {
+        this.bc?.postMessage({
+          type: proto.reset,
+          token: token,
+        })
+      }
       this.session.setUserInfo({
         userBrowser,
         userCity,
