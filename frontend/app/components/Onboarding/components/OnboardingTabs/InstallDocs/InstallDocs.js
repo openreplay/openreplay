@@ -6,7 +6,10 @@ import CircleNumber from '../../CircleNumber';
 import stl from './installDocs.module.css';
 import { useTranslation } from 'react-i18next';
 
-const installationCommand = 'npm i @openreplay/tracker';
+const latestMajor = window.env.TRACKER_MAJOR_VERSION
+  ? window.env.TRACKER_MAJOR_VERSION
+  : window.env.TRACKER_VERSION.split('.')[0];
+const installationCommand = `npm i @openreplay/tracker@^${latestMajor}`;
 const usageCode = `import Tracker from '@openreplay/tracker';
 
 const tracker = new Tracker({
@@ -25,7 +28,7 @@ function MyApp() {
   useEffect(() => { // use componentDidMount in case of React Class Component
     tracker.start()
   }, []);
-  
+
   //...
 }`;
 
