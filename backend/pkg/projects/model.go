@@ -3,6 +3,7 @@ package projects
 type Project struct {
 	ProjectID           uint32
 	ProjectKey          string
+	TenantID            int
 	MaxSessionDuration  int64
 	SampleRate          byte
 	SaveRequestPayloads bool
