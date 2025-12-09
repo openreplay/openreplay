@@ -131,6 +131,16 @@ export interface UsersResponse {
   users: UserResp[];
 }
 
+export interface ActivityPayload {
+  endTimestamp: number;
+  hideEvents: string[];
+  limit: number;
+  page: number;
+  sortBy: string;
+  sortOrder: string;
+  startTimestamp: number;
+}
+
 export default class AnalyticsService extends BaseService {
   getEvents = async (payload: EventsPayload): Promise<EventsResponse> => {
     const r = await this.client.post('/PROJECT_ID/events', payload);
@@ -155,6 +165,18 @@ export default class AnalyticsService extends BaseService {
   getUser = async (userId: string): Promise<UserResp> => {
     const r = await this.client.get(`/PROJECT_ID/users/${userId}`);
     const { data } = await r.json();
+    return data;
+  };
+
+  getUserActivity = async (
+    userId: string,
+    payload: ActivityPayload,
+  ): Promise<EventsResponse> => {
+    const r = await this.client.post(
+      `/PROJECT_ID/users/${userId}/activity`,
+      payload,
+    );
+    const data = await r.json();
     return data;
   };
 

@@ -180,33 +180,19 @@ export default class AnalyticsStore {
 
   fetchUserEvents = async (userId: string, sort: 'asc' | 'desc') => {
     this.setLoading(true);
-    // const filter = filterStore.findEvent({ name: 'userId' });
-    // if (!filter) {
-    //   this.setLoading(false);
-    //   return { events: [], total: 0 };
-    // }
-    const filter = {
-      value: [userId],
-      operator: 'is',
-      dataType: 'string',
-      propertyOrder: 'and',
-      filters: [],
-      isEvent: false,
-      name: '$user_id',
-      autoCaptured: false,
-    };
-
     try {
-      const data: EventsResponse = await analyticsService.getEvents({
-        sortOrder: sort,
-        sortBy: 'created_at',
-        limit: 30,
-        startTimestamp: Date.now() - 3600 * 1000,
-        endTimestamp: Date.now(),
-        page: 1,
-        columns: eventListColumns,
-        filters: [filter] as unknown as Filter[],
-      });
+      const data: EventsResponse = await analyticsService.getUserActivity(
+        userId,
+        {
+          sortOrder: sort,
+          sortBy: 'created_at',
+          limit: 30,
+          startTimestamp: Date.now() - 3600 * 1000,
+          endTimestamp: Date.now(),
+          page: 1,
+          hideEvents: [],
+        },
+      );
       return {
         total: data.total,
         events: data.events.map((ev) => new Event(ev)),
