@@ -898,7 +898,7 @@ WHERE length(value) > 0
   AND isNull(toFloat64OrNull(value))
   AND _timestamp > now() - INTERVAL 1 MONTH;
 
-
+-- TODO: replace this table's engine with AggregatedMergeTree in v1.24
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped
 (
     project_id    UInt16,
@@ -911,6 +911,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_group
       ORDER BY (project_id, event_name, property_name, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
+-- TODO: replace this MV with aggregate function in v1.24
 -- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
 --     -- @formatter:off
 --     REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
