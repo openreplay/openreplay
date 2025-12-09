@@ -3,9 +3,7 @@ package auth
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
-	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/tenant"
 	"openreplay/backend/pkg/server/user"
