@@ -108,6 +108,17 @@ function UserInfo({ userId }: { userId: string }) {
 
   const propLength = Object.keys(user?.properties ?? {}).length;
   const hasProperties = propLength > 0;
+
+  const getFirstLetters = (name: string) => {
+    const parts = name.split(' ');
+    let initials = '';
+    parts.slice(0, 2).forEach((part) => {
+      if (part.length > 0) {
+        initials += part[0].toUpperCase();
+      }
+    });
+    return initials;
+  };
   return (
     <>
       <Breadcrumb
@@ -124,18 +135,35 @@ function UserInfo({ userId }: { userId: string }) {
       <div className={card}>
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
-            <div
-              className={
-                'bg-gray-lighter h-11 w-12 rounded-full flex items-center justify-center text-gray-medium border border-gray-medium'
-              }
-            >
-              {user?.name?.slice(0, 2) || 'OR'}
-            </div>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt="avatar"
+                className="h-11 w-12 rounded-full"
+                style={{
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <div
+                className={
+                  'bg-gray-lighter h-11 w-12 rounded-full flex items-center justify-center text-gray-medium border border-gray-medium'
+                }
+              >
+                {getFirstLetters(user?.name?.slice(0, 2) || 'NA')}
+              </div>
+            )}
             <div className="flex flex-col">
-              <div className="text-xl font-semibold">{user?.name}</div>
+              <div className="text-xl font-semibold">{user?.name || 'N/A'}</div>
               <div>{user?.userId}</div>
             </div>
           </div>
+          {user?.email ? (
+            <div className="flex flex-col">
+              <div className={'font-semibold'}>Email</div>
+              <div>{user?.email}</div>
+            </div>
+          ) : null}
           <div className="flex flex-col">
             <div className={'font-semibold'}>Distinct ID</div>
             <div>

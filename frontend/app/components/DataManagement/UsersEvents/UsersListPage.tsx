@@ -30,6 +30,7 @@ function UsersListPage() {
   React.useEffect(() => {
     debouncedSetSearch(query);
   }, [query]);
+
   return (
     <div
       className="flex flex-col gap-4 rounded-lg border bg-white mx-auto"

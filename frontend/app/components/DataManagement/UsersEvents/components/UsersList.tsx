@@ -9,7 +9,7 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
 import { resentOrDate } from 'App/date';
-import { searchableColumns } from '@/mstore/types/Analytics/User';
+import { getSortingName } from '@/mstore/types/Analytics/User';
 
 function UsersList({
   toUser,
@@ -37,34 +37,97 @@ function UsersList({
       onClick: () => setTimeout(() => setEditCols(true), 1),
     },
   ];
+
+  const getFirstLetters = (name: string) => {
+    const parts = name.split(' ');
+    let initials = '';
+    parts.slice(0, 2).forEach((part) => {
+      if (part.length > 0) {
+        initials += part[0].toUpperCase();
+      }
+    });
+    return initials;
+  };
+  const onColumnSort = (
+    sorter:
+      | {
+          field: string;
+          order: 'ascend' | 'descend';
+        }
+      | undefined,
+  ) => {
+    if (!sorter.field) {
+      analyticsStore.editUsersPayload({
+        sortOrder: 'desc',
+        sortBy: '$created_at',
+      });
+    } else {
+      const fieldName = sorter.field;
+      analyticsStore.editUsersPayload({
+        sortBy: getSortingName(fieldName),
+        sortOrder: sorter.order === 'ascend' ? 'asc' : 'desc',
+      });
+    }
+  };
   const columns = [
     {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      sorter: true,
+      render: (_: any, record: any) => {
+        if (!record.name) {
+          return 'N/A';
+        }
+        return (
+          <div className="flex items-center gap-2">
+            {record.avatarUrl ? (
+              <img
+                src={record.avatarUrl}
+                alt="avatar"
+                className="w-7 h-7 rounded-full"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gray-300 relative text-xs text-white">
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-[9px] leading-none">
+                  {getFirstLetters(record.name)}
+                </div>
+              </div>
+            )}
+            <span>{record.name}</span>
+          </div>
+        );
+      },
     },
     {
       title: 'User ID',
       dataIndex: 'userId',
       key: 'userId',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userId.localeCompare(b.userId),
+      sorter: true,
     },
     {
       title: 'Location',
       dataIndex: 'userLocation',
       key: 'userLocation',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userLocation.localeCompare(b.userLocation),
+      sorter: true,
+    },
+    {
+      title: 'Last Seen',
+      dataIndex: 'lastSeen',
+      key: 'lastSeen',
+      showSorterTooltip: { target: 'full-header' },
+      sorter: true,
+      render: (_: any, record: any) => resentOrDate(record.createdAt),
     },
     {
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
+      sorter: true,
       render: (_: any, record: any) => resentOrDate(record.createdAt),
     },
     {
@@ -118,7 +181,7 @@ function UsersList({
         {/*    { label: 'Company', value: 'company' },*/}
         {/*  ]}*/}
         {/*/>*/}
-        <FilterSelection
+        {/* 1.23 -- filter support <FilterSelection
           mode={'filters'}
           filter={undefined}
           onFilterClick={onAddFilter}
@@ -135,7 +198,7 @@ function UsersList({
           >
             Filters
           </Button>
-        </FilterSelection>
+        </FilterSelection> */}
       </div>
       <div className={'relative'}>
         {editCols ? (
@@ -156,6 +219,10 @@ function UsersList({
           rowClassName={'cursor-pointer'}
           dataSource={users}
           columns={shownCols}
+          onChange={(a1, a2, sorter) => {
+            onColumnSort(sorter);
+          }}
+          rowKey={(record) => record.userId}
         />
       </div>
       <FullPagination

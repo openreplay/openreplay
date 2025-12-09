@@ -15,21 +15,24 @@ function UserPropertiesModal({
     <div className="p-4 flex flex-col gap-4 h-screen w-full">
       <div className="font-semibold text-xl">All User Properties</div>
       <Input.Search size={'small'} />
-
-      {Object.entries(flatProperties).map(([key, value]) => (
-        <Property
-          pkey={key}
-          value={value}
-          onSave={(k, v) => onSave('flat', k, v)}
-        />
-      ))}
-      {Object.entries(properties).map(([key, value]) => (
-        <Property
-          pkey={key}
-          value={value}
-          onSave={(k, v) => onSave('properties', k, v)}
-        />
-      ))}
+      <div
+        style={{ maxHeight: 'calc(100vh - 50px - 2rem)', overflowY: 'auto' }}
+      >
+        {Object.entries(flatProperties).map(([key, value]) => (
+          <Property
+            pkey={key}
+            value={value}
+            onSave={(k, v) => onSave('flat', k, v)}
+          />
+        ))}
+        {Object.entries(properties).map(([key, value]) => (
+          <Property
+            pkey={key}
+            value={value}
+            onSave={(k, v) => onSave('properties', k, v)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -35,7 +35,8 @@ const colToSort = {
 };
 
 function ActivityPage() {
-  const { projectsStore, filterStore, analyticsStore, settingsStore } = useStore();
+  const { projectsStore, filterStore, analyticsStore, settingsStore } =
+    useStore();
   const { timezone } = settingsStore.sessionSettings;
 
   const siteId = projectsStore.activeSiteId;
