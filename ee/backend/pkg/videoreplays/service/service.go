@@ -18,7 +18,7 @@ import (
 type SessionVideos interface {
 	ExportSessionVideo(projectId int, userId uint64, tenantID uint64, req *SessionVideoExportRequest) (*SessionVideoExportResponse, error)
 	GetAll(projectId int, userId uint64, req *SessionVideosGetRequest) (*GetSessionVideosResponse, error)
-	DeleteSessionVideo(projectId int, userId uint64, sessionId uint64) (interface{}, error)
+	DeleteSessionVideo(projectId int, sessionId uint64) (interface{}, error)
 	DownloadSessionVideo(projectId int, userId uint64, sessionId uint64) (string, error)
 	Iterate(batchData []byte, batchInfo *messages.BatchInfo) // for queue consumer support
 }
@@ -136,8 +136,8 @@ func (s *sessionVideosImpl) GetAll(projectId int, userId uint64, req *SessionVid
 	return s.storage.GetAllSessionVideos(s.ctx, projectId, userId, req)
 }
 
-func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, userId uint64, sessionId uint64) (interface{}, error) {
-	if err := s.storage.DeleteSessionVideo(s.ctx, projectId, userId, sessionId); err != nil {
+func (s *sessionVideosImpl) DeleteSessionVideo(projectId int, sessionId uint64) (interface{}, error) {
+	if err := s.storage.DeleteSessionVideo(s.ctx, projectId, sessionId); err != nil {
 		return nil, err
 	}
 	return map[string]string{"status": "deleted"}, nil

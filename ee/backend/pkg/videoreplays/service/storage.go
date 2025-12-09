@@ -269,20 +269,20 @@ func (h *Storage) GetAllSessionVideos(ctx context.Context, projectID int, userID
 	}, nil
 }
 
-func (h *Storage) DeleteSessionVideo(ctx context.Context, projectID int, userID uint64, sessionID uint64) error {
+func (h *Storage) DeleteSessionVideo(ctx context.Context, projectID int, sessionID uint64) error {
 	deleteQuery := `
 		DELETE FROM public.sessions_videos
-		WHERE session_id = $1 AND project_id = $2 AND user_id = $3
+		WHERE project_id = $1 AND session_id = $2
 		RETURNING session_id`
 
 	var deletedSessionID uint64
-	err := h.pgconn.QueryRow(deleteQuery, sessionID, projectID, userID).Scan(&deletedSessionID)
+	err := h.pgconn.QueryRow(deleteQuery, projectID, sessionID).Scan(&deletedSessionID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			h.log.Warn(ctx, "Session video not found for deletion", "sessionID", sessionID, "projectID", projectID, "userID", userID)
-			return fmt.Errorf("session video not found or you don't have permission to delete it")
+			h.log.Warn(ctx, "Session video not found for deletion", "sessionID", sessionID, "projectID", projectID)
+			return fmt.Errorf("session video not found")
 		}
-		h.log.Error(ctx, "Failed to delete session video", "error", err, "sessionID", sessionID, "projectID", projectID, "userID", userID)
+		h.log.Error(ctx, "Failed to delete session video", "error", err, "sessionID", sessionID, "projectID", projectID)
 		return fmt.Errorf("unable to delete session video at this time")
 	}
 

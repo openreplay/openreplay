@@ -130,8 +130,7 @@ func (e *handlersImpl) deleteSessionVideo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	currentUser := GetCurrentUser(r)
-	resp, err := e.sessionVideos.DeleteSessionVideo(projectID, currentUser.ID, sessionID)
+	resp, err := e.sessionVideos.DeleteSessionVideo(projectID, sessionID)
 	if err != nil {
 		HandleError(e.log, e.responser, ctx, w, r, http.StatusInternalServerError, err)
 		return
