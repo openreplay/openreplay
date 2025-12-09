@@ -114,9 +114,11 @@ export default class ConstantProperties {
     this.sessionStorage.setItem(userIdKey, user_id ?? '')
   }
 
-  resetUserId = () => {
+  resetUserId = (hard?: boolean) => {
     this.user_id = null
+    if (hard) {
     this.deviceId = this.getDistinctDeviceId(true)
+    }
   }
 
   public get defaultPropertyKeys() {

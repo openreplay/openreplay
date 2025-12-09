@@ -19,6 +19,10 @@ export default class People {
     if (!user_id) {
       throw new Error('OR SDK: user_id is required for identify')
     }
+    // if user exists already, reset properties
+    if (this.constantProperties.user_id && this.constantProperties.user_id !== user_id) {
+      this.reset();
+    }
     this.constantProperties.setUserId(user_id)
     if (!options?.fromTracker) {
       this.onId(user_id)
@@ -28,9 +32,8 @@ export default class People {
     this.batcher.addEvent(identityEvent)
   }
 
-  // add "hard" flag to force generate device id as well ?
-  reset = () => {
-    this.constantProperties.resetUserId()
+  reset = (hard?: boolean) => {
+    this.constantProperties.resetUserId(hard)
     this.ownProperties = {}
   }
 

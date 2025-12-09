@@ -126,7 +126,7 @@ export default class Analytics {
   }
 
   reset = () => {
-    this.people.reset()
+    this.people.reset(true)
     this.events.reset()
     this.batcher.stop()
     if (this.standalone) {
