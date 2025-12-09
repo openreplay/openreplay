@@ -10,6 +10,8 @@ interface UserInfo {
   userState: string
 }
 
+const tokenSeparator = '_$_'
+
 export interface SessionInfo {
   sessionID: string | undefined
   metadata: Record<string, string>
@@ -113,23 +115,27 @@ export default class Session {
   getSessionToken = (projectKey?: string): string | undefined => {
     const tokenWithProject = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
     if (projectKey && tokenWithProject) {
-      const savedProject = tokenWithProject.split('_&_')[1]
+      const savedProject = tokenWithProject.split(tokenSeparator)[1]
       if (!savedProject || savedProject !== projectKey) {
         this.app.sessionStorage.removeItem(this.options.session_token_key)
         this.token = undefined
         return undefined
       }
     }
-    const token = tokenWithProject ? tokenWithProject.split('_&_')[0] : null
+    const token = tokenWithProject ? tokenWithProject.split(tokenSeparator)[0] : null
     return token || undefined
   }
 
-  setSessionToken = (token: string, projectKey: string): void => {
-    this.token = `${token}_&_${projectKey}`
-    this.app.sessionStorage.setItem(this.options.session_token_key, `${token}_&_${projectKey}`)
+  getRawTokenWithProject = (): string | null => {
+    return this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
   }
 
-  applySessionHash(hash: string) {
+  setSessionToken = (token: string, projectKey: string): void => {
+    this.token = `${token}${tokenSeparator}${projectKey}`
+    this.app.sessionStorage.setItem(this.options.session_token_key, `${token}${tokenSeparator}${projectKey}`)
+  }
+
+  applySessionHash(hash: string): void {
     const hashParts = decodeURI(hash).split('&')
     let token = hash
     let pageNoStr = '100500' // back-compat for sessionToken
@@ -139,13 +145,14 @@ export default class Session {
     if (!pageNoStr || !token) {
       return
     }
+
     this.app.sessionStorage.setItem(this.options.session_token_key, token)
     this.app.sessionStorage.setItem(this.options.session_pageno_key, pageNoStr)
   }
 
   getSessionHash(): string | undefined {
     const pageNo = this.getPageNumber()
-    const token = this.getSessionToken()
+    const token = this.getRawTokenWithProject()
     if (pageNo === undefined || token === undefined) {
       return
     }

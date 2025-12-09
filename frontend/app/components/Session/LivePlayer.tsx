@@ -69,6 +69,7 @@ function LivePlayer({ isMultiview, customSession, query }: Props) {
       playerInst = player;
     };
 
+    console.trace('Initializing live player');
     if (isEnterprise) {
       sessionService.getAssistCredentials().then(initPlayer);
     } else {

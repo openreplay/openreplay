@@ -1,3 +1,7 @@
+## 17.0.1
+
+- fix sessionHash parsing issue (and clarify & symbols usage in code)
+
 ## 17.0.0
 
 - use `InlineCssMode.Inline` by default if testing in localhost and option is not set explicitly (to preserve css files)

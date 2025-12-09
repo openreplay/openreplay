@@ -61,6 +61,11 @@ function ClickMapCard() {
         },
       );
     }
+    console.log('changes', sessionId,
+    dashboardStore.drillDownPeriod.start,
+    dashboardStore.drillDownPeriod.end,
+    dashboardStore.drillDownPeriod.rangeValue,
+    metricStore.includeClickRage,)
     void fetchInsights(metric, payload);
   }, [
     sessionId,
