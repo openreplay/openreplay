@@ -49,7 +49,7 @@ func (a *authImpl) validateProjectAccess(r *http.Request, u *user.User) error {
 		}
 	}
 
-	project, err := a.projects.GetProject(projectID)
+	project, err := a.projects.GetProjectNotDeleted(projectID)
 	if err != nil {
 		return fmt.Errorf("project not found: %w", err)
 	}
