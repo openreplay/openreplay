@@ -2,7 +2,11 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
+
+	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/tenant"
+	"openreplay/backend/pkg/server/user"
 )
 
 func (a *authImpl) isAuthorizedApiKey(authHeader string, projectKey string) (*tenant.Tenant, error) {
@@ -30,4 +34,29 @@ func (a *authImpl) isAuthorizedApiKey(authHeader string, projectKey string) (*te
 	}
 
 	return dbTenant, nil
+}
+
+func (a *authImpl) validateProjectAccess(r *http.Request, u *user.User) error {
+	if a.projects == nil {
+		return nil
+	}
+
+	projectID, err := api.GetPathParam(r, "projectId", api.ParseUint32, uint32(0))
+	if err != nil || projectID == 0 {
+		projectID, err = api.GetPathParam(r, "project", api.ParseUint32, uint32(0))
+		if err != nil || projectID == 0 {
+			return nil
+		}
+	}
+
+	project, err := a.projects.GetProject(projectID)
+	if err != nil {
+		return fmt.Errorf("project not found: %w", err)
+	}
+
+	if project.TenantID != int(u.TenantID) {
+		return fmt.Errorf("project does not belong to user's tenant")
+	}
+
+	return nil
 }
