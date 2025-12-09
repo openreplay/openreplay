@@ -127,6 +127,13 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	endSec := (p.MetricPayload.EndTimestamp + 86400000) / 1000
 	series := p.MetricPayload.Series[0]
 
+	for i := range series.Filter.Filters {
+		for j := range series.Filter.Filters[i].Filters {
+			if series.Filter.Filters[i].Filters[j].AutoCaptured {
+				series.Filter.Filters[i].Filters[j].Name = CamelToSnake(series.Filter.Filters[i].Filters[j].Name)
+			}
+		}
+	}
 	filters := []model.Filter{}
 	hasLocationFilter := false
 	var urlPath string
