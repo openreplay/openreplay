@@ -78,9 +78,7 @@ func (s *saverImpl) Handle(msg Message) {
 		customPayload := &CustomEventPayload{}
 		if err := json.Unmarshal([]byte(m.Payload), customPayload); err == nil {
 			if customPayload.CustomTimestamp >= session.Timestamp {
-				s.log.Info(sessCtx, "custom event timestamp received: %v", m.Timestamp)
 				msg.Meta().Timestamp = customPayload.CustomTimestamp
-				s.log.Info(sessCtx, "custom event timestamp updated: %v", m.Timestamp)
 			}
 		}
 		defer s.Handle(types.WrapCustomEvent(m))
