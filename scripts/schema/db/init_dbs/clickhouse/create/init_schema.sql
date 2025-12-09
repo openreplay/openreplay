@@ -614,30 +614,30 @@ CREATE TABLE IF NOT EXISTS product_analytics.event_properties
 
 -- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
 -- Incremental materialized view to fill event_properties using $properties & properties
--- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_dproperties_extractor_mv
---     TO product_analytics.event_properties AS
--- SELECT project_id,
---        `$event_name`                                                              AS event_name,
---        property_name,
---        toString(JSONType(JSONExtractRaw(toString(`$properties`), property_name))) AS value_type,
---        `$auto_captured`                                                           AS auto_captured_event,
---        TRUE                                                                       AS auto_captured_property,
---        created_at
--- FROM product_analytics.events
---          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
--- GROUP BY ALL;
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_dproperties_extractor_mv
+    TO product_analytics.event_properties AS
+SELECT project_id,
+       `$event_name`    AS event_name,
+       a.1              AS property_name,
+       a.2              AS value_type,
+       `$auto_captured` AS auto_captured_event,
+       TRUE             AS auto_captured_property,
+       created_at
+FROM product_analytics.events
+         ARRAY JOIN JSONAllPathsWithTypes(`$properties`) AS a
+GROUP BY ALL;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_properties_extractor_mv
     TO product_analytics.event_properties AS
 SELECT project_id,
-       `$event_name`                                                             AS event_name,
-       property_name,
-       toString(JSONType(JSONExtractRaw(toString(`properties`), property_name))) AS value_type,
-       `$auto_captured`                                                          AS auto_captured_event,
-       FALSE                                                                     AS auto_captured_property,
+       `$event_name`    AS event_name,
+       a.1              AS property_name,
+       a.2              AS value_type,
+       `$auto_captured` AS auto_captured_event,
+       FALSE            AS auto_captured_property,
        created_at
 FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
+         ARRAY JOIN JSONAllPathsWithTypes(`properties`) AS a
 GROUP BY ALL;
 -- -------- END ---------
 
