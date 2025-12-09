@@ -64,6 +64,12 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
+		if err := a.validateProjectAccess(r, user); err != nil {
+			a.log.Warn(r.Context(), "Unauthorized request, project access denied: %s", err)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
 		r = r.WithContext(ctxStore.WithValues(r.Context(), map[string]interface{}{"userData": user}))
 		next.ServeHTTP(w, r)
 	})

@@ -2,8 +2,10 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
 
 	"openreplay/backend/pkg/server/tenant"
+	"openreplay/backend/pkg/server/user"
 )
 
 func (a *authImpl) isAuthorizedApiKey(apiKey string, projectKey string) (*tenant.Tenant, error) {
@@ -26,4 +28,8 @@ func (a *authImpl) isAuthorizedApiKey(apiKey string, projectKey string) (*tenant
 	}
 
 	return dbTenant, nil
+}
+
+func (a *authImpl) validateProjectAccess(r *http.Request, u *user.User) error {
+	return nil
 }

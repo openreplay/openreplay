@@ -30,11 +30,11 @@ func (c *projectsImpl) GetProjectByKeyAndTenant(projectKey string, tenantId int)
 func (c *projectsImpl) getProjectByKeyAndTenant(projectKey string, tenantId int) (*Project, error) {
 	p := &Project{ProjectKey: projectKey}
 	if err := c.db.QueryRow(`
-		SELECT project_id, project_key FROM projects
+		SELECT project_id, project_key, tenant_id FROM projects
 		WHERE project_key=$1 AND tenant_id = $2 AND active = true
 	`,
 		projectKey, tenantId,
-	).Scan(&p.ProjectID, &p.ProjectKey); err != nil {
+	).Scan(&p.ProjectID, &p.ProjectKey, &p.TenantID); err != nil {
 		return nil, err
 	}
 	return p, nil
