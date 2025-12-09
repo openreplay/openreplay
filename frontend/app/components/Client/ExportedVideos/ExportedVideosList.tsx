@@ -36,9 +36,10 @@ function ExportedVideosList() {
     win?.focus();
   };
 
-  const onDelete = (sessionId: string) => {
-    void recordingsStore.deleteSessionRecording(sessionId)
-  }
+  const onDelete = async (sessionId: string) => {
+    await recordingsStore.deleteSessionRecording(sessionId);
+    await recordingsStore.getRecordings();
+  };
   return (
     <div className="bg-white rounded-lg  border shadow-sm">
       <div className="flex items-center gap-4">
