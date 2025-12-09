@@ -39,7 +39,7 @@ function FunnelStepText(props: Props) {
                 <span className="font-medium color-gray-darkest">
                   {sf.name}
                 </span>
-                {sf.value.length ? (
+                {sf.value.length && sf.value[0] ? (
                   <>
                     <span>{sf.operator}</span>
                     {sf.value.map((v, i) => (
@@ -64,7 +64,7 @@ function FunnelStepText(props: Props) {
             );
           })}
         </>
-      ) : (
+      ) : filter.value.length && filter.value[0] ? (
         <>
           <span className="mx-1">{filter.operator}</span>
           {filter.value.map((value: any, index: number) => (
@@ -78,7 +78,7 @@ function FunnelStepText(props: Props) {
             </span>
           ))}
         </>
-      )}
+      ) : null}
     </div>
   );
 }
