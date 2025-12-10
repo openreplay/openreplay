@@ -55,7 +55,6 @@ function ClickMapCard() {
     metricStore.includeClickRage,
   ]);
 
-
   if (!metricStore.instance.data.domURL || insights.length === 0) {
     return (
       <NoContent
