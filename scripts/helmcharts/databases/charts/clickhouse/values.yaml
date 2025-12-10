@@ -91,8 +91,8 @@ configOverride:
         <logger>
             <level>information</level>
             <console>true</console>
-        <log remove="remove"></log>
-        <errorlog remove="remove"></errorlog>
+        <log remove="1"></log>
+        <errorlog remove="1"></errorlog>
         </logger>
         <listen_host>0.0.0.0</listen_host>
         <keep_alive_timeout>100</keep_alive_timeout>
