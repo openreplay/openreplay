@@ -178,21 +178,22 @@ export default class AnalyticsStore {
     }
   };
 
-  fetchUserEvents = async (userId: string, sort: 'asc' | 'desc', period: { start: number, end: number }) => {
+  fetchUserEvents = async (
+    userId: string,
+    sort: 'asc' | 'desc',
+    period: { start: number; end: number },
+  ) => {
     this.setLoading(true);
     try {
-      const data = await analyticsService.getUserActivity(
-        userId,
-        {
-          sortOrder: sort,
-          sortBy: 'created_at',
-          limit: 100,
-          startTimestamp: period.start,
-          endTimestamp: period.end,
-          page: 1,
-          hideEvents: [],
-        },
-      );
+      const data = await analyticsService.getUserActivity(userId, {
+        sortOrder: sort,
+        sortBy: 'created_at',
+        limit: 100,
+        startTimestamp: period.start,
+        endTimestamp: period.end,
+        page: 1,
+        hideEvents: [],
+      });
       return {
         total: data.total,
         events: data.events.map((ev) => new Event(ev)),

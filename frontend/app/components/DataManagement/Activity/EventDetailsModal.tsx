@@ -4,12 +4,14 @@ import { X, List, Braces, Files, Code } from 'lucide-react';
 import copy from 'copy-to-clipboard';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsService } from '@/services';
-import Event from '@/mstore/types/Analytics/Event';
+import Event from 'App/mstore/types/Analytics/Event';
 import { session, withSiteId } from '@/routes';
 import { Link } from 'react-router-dom';
 import { Icon, TextEllipsis } from 'UI';
 import { getEventIcon } from './getEventIcon';
 import Tabs from 'Components/shared/Tabs';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 const tabs = [
   {
@@ -49,6 +51,7 @@ function EventDetailsModal({
   onClose: () => void;
   siteId: string;
 }) {
+  const { filterStore } = useStore();
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState(tabs[0].value);
   const [view, setView] = React.useState(views[0].value);
@@ -119,7 +122,10 @@ function EventDetailsModal({
         <div>
           {event ? getEventIcon(event.isAutoCapture, event.event_name) : null}
         </div>
-        <div className={'font-semibold'}>{event?.event_name ?? 'event'}</div>
+        <div className={'font-semibold'}>
+          {filterStore.getFilterDisplayName(event?.event_name ?? 'Event')}
+        </div>
+        {event?.isAutoCapture ? <div>({event?.event_name ?? 'event'})</div> : null}
         <Link
           to={withSiteId(session(event?.session_id), siteId)}
           className={'ml-auto'}
@@ -204,4 +210,4 @@ export function Triangle({ size = 16, color = 'currentColor' }) {
   );
 }
 
-export default EventDetailsModal;
+export default observer(EventDetailsModal);

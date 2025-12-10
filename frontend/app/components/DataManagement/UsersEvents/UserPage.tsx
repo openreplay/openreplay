@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dropdown, Popover } from 'antd';
 import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Files } from 'lucide-react';
+import { Files, Mail } from 'lucide-react';
 import copy from 'copy-to-clipboard';
 import { useModal } from 'App/components/Modal';
 import withPermissions from 'HOCs/withPermissions';
@@ -14,6 +14,7 @@ import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
 import { observer } from 'mobx-react-lite';
+import { CopyButton } from 'UI';
 
 const card = 'rounded-lg border bg-white';
 
@@ -157,13 +158,19 @@ function UserInfo({ userId }: { userId: string }) {
             )}
             <div className="flex flex-col">
               <div className="text-xl font-semibold">{user?.name || 'N/A'}</div>
-              <div>{user?.userId}</div>
+              <div className={'flex items-center gap-2'}>
+                <div>{user?.userId}</div>
+                <CopyButton content={user?.userId || ''} isIcon />
+              </div>
             </div>
           </div>
           {user?.email ? (
             <div className="flex flex-col">
               <div className={'font-semibold'}>Email</div>
-              <div>{user?.email}</div>
+              <div className={'flex items-center gap-2'}>
+                <div>{user?.email}</div>
+                <CopyButton content={user?.email || ''} isIcon />
+              </div>
             </div>
           ) : null}
           <div className="flex flex-col">

@@ -34,7 +34,7 @@ function EventsByDay({
               <div className={'w-56 color-disabled-text'}>
                 {formatTs(ev.created_at, 'HH:mm:ss a')}
               </div>
-              <div>{getEventIcon(ev.isAutocapture, ev.event_name)}</div>
+              <div>{getEventIcon(ev.isAutoCapture, ev.event_name)}</div>
               <div className={'font-mono'}>{getName(ev.event_name)}</div>
               <div className={'hidden group-hover:block ml-auto'}>
                 <ChevronRight size={16} />
