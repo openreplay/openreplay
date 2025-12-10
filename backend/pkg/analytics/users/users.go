@@ -478,7 +478,8 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		SELECT COUNT(*) OVER() as total_count,
 			e.event_id,
 			e."$event_name",
-			toInt64(toUnixTimestamp(e.created_at) * 1000) AS created_at
+			toInt64(toUnixTimestamp(e.created_at) * 1000) AS created_at,
+			e."$auto_captured"
 		FROM product_analytics.events AS e
 		WHERE %s
 		ORDER BY e.%s %s
@@ -504,6 +505,7 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 			&event.EventID,
 			&event.EventName,
 			&event.CreatedAt,
+			&event.AutoCaptured,
 		); err != nil {
 			u.log.Error(ctx, "failed to scan event row: %v", err)
 			return nil, fmt.Errorf("failed to scan event row: %w", err)

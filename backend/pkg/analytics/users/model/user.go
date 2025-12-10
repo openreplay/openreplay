@@ -265,9 +265,10 @@ type UserActivityRequest struct {
 }
 
 type UserEvent struct {
-	EventID   string `json:"event_id"`
-	EventName string `json:"$event_name"`
-	CreatedAt int64  `json:"created_at"`
+	EventID      string `json:"event_id"`
+	EventName    string `json:"$event_name"`
+	CreatedAt    int64  `json:"created_at"`
+	AutoCaptured *bool  `json:"$auto_captured,omitempty"`
 }
 
 type UserActivityResponse struct {
