@@ -122,14 +122,10 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   const onSave = async () => {
     try {
       notesStore.setSaving(true);
-      const playerContainer =
-        document.querySelector('iframe')?.contentWindow?.document;
+      const playerContainer = document.querySelector('#replay-screen-wrapper');
       let thumbnail: string | undefined;
       if (playerContainer) {
-        thumbnail = await elementToCanvas(playerContainer);
-        if (!thumbnail) {
-          thumbnail = await elementToImage(playerContainer);
-        }
+        thumbnail = await elementToImage(playerContainer);
       }
       if (thumbnail) {
         thumbnail = await downscaleDataURL(thumbnail);

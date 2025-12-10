@@ -87,7 +87,11 @@ function ClickMapCard() {
   const jumpTimestamp = ts - metricStore.instance.data.startTs + domTime + 10;
 
   return (
-    <div id="clickmap-render">
+    <div
+      id="clickmap-render"
+      className="isolate"
+      style={{ transformStyle: 'flat' }}
+    >
       <ClickMapRenderer
         session={customSession}
         jumpTimestamp={jumpTimestamp}
