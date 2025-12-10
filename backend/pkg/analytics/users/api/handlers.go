@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"openreplay/backend/internal/config/common"
@@ -109,7 +110,7 @@ func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error
 
 	if userID == "" {
 		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
-		return nil, http.StatusBadRequest, http.ErrMissingFile
+		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
 	}
 
 	response, err := h.users.GetByUserID(ctx.Request.Context(), projID, userID)
@@ -148,7 +149,7 @@ func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, i
 
 	if userID == "" {
 		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
-		return nil, http.StatusBadRequest, http.ErrMissingFile
+		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
 	}
 
 	err = h.users.DeleteUser(ctx.Request.Context(), projID, userID)
@@ -189,7 +190,7 @@ func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, er
 
 	if userID == "" {
 		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
-		return nil, http.StatusBadRequest, http.ErrMissingFile
+		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
 	}
 
 	user := &model.UserRequest{}
@@ -243,7 +244,7 @@ func (h *handlersImpl) getUserActivity(r *api.RequestContext) (*model.UserActivi
 
 	if userID == "" {
 		h.Log().Error(r.Request.Context(), "userID cannot be empty")
-		return nil, http.StatusBadRequest, http.ErrMissingFile
+		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
 	}
 
 	req := &model.UserActivityRequest{}

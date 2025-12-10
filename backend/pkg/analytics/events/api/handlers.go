@@ -68,15 +68,18 @@ func (h *handlersImpl) eventsSearch(r *api.RequestContext) (*model.EventsSearchR
 
 	req := &model.EventsSearchRequest{}
 	if err := json.Unmarshal(r.Body, req); err != nil {
+		h.Log().Error(r.Request.Context(), "failed to unmarshal search request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	if err := filters.ValidateStruct(req); err != nil {
+		h.Log().Error(r.Request.Context(), "validation failed for search request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.events.SearchEvents(projID, req)
+	response, err := h.events.SearchEvents(r.Request.Context(), projID, req)
 	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to search events for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
 
@@ -98,16 +101,19 @@ func (h *handlersImpl) eventsSearch(r *api.RequestContext) (*model.EventsSearchR
 func (h *handlersImpl) getEvent(r *api.RequestContext) (*model.EventEntry, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	eventID, err := api.GetPathParam(r.Request, "eventId", api.ParseString)
 	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get eventId parameter: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
-	response, err := h.events.GetEventByID(projID, eventID)
+	response, err := h.events.GetEventByID(r.Request.Context(), projID, eventID)
 	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get event %s for project %d: %v", eventID, projID, err)
 		return nil, http.StatusNotFound, err
 	}
 

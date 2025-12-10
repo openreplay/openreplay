@@ -13,8 +13,8 @@ import (
 )
 
 type Events interface {
-	SearchEvents(projID uint32, req *model.EventsSearchRequest) (*model.EventsSearchResponse, error)
-	GetEventByID(projID uint32, eventID string) (*model.EventEntry, error)
+	SearchEvents(ctx context.Context, projID uint32, req *model.EventsSearchRequest) (*model.EventsSearchResponse, error)
+	GetEventByID(ctx context.Context, projID uint32, eventID string) (*model.EventEntry, error)
 }
 
 type eventsImpl struct {
@@ -91,12 +91,11 @@ func (e *eventsImpl) buildScanPointers(entry *model.EventEntry, columns []string
 	return valuePtrs
 }
 
-func (e *eventsImpl) SearchEvents(projID uint32, req *model.EventsSearchRequest) (*model.EventsSearchResponse, error) {
+func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model.EventsSearchRequest) (*model.EventsSearchResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("search events request cannot be nil")
 	}
 
-	ctx := context.Background()
 	offset := filters.CalculateOffset(req.Page, req.Limit)
 
 	whereClause, queryParams, needsUserJoin := e.buildSearchQueryParams(projID, req)
@@ -156,12 +155,11 @@ func (e *eventsImpl) buildGetEventQuery(selectColumns []string) string {
 	return sb.String()
 }
 
-func (e *eventsImpl) GetEventByID(projID uint32, eventID string) (*model.EventEntry, error) {
+func (e *eventsImpl) GetEventByID(ctx context.Context, projID uint32, eventID string) (*model.EventEntry, error) {
 	if eventID == "" {
 		return nil, fmt.Errorf("event ID cannot be empty")
 	}
 
-	ctx := context.Background()
 	allColumns := filters.EventColumns
 	selectColumns := BuildSelectColumns("", allColumns)
 	query := e.buildGetEventQuery(selectColumns)
