@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/logger"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
-type TableErrorsQueryBuilder struct{}
+type TableErrorsQueryBuilder struct {
+	Logger logger.Logger
+}
 
 type ErrorChartPoint struct {
 	Timestamp int64  `json:"timestamp"`
@@ -41,7 +44,11 @@ func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfa
 	}
 	rows, err := conn.Query(context.Background(), query)
 	if err != nil {
-		log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		if t.Logger != nil {
+			t.Logger.Error(context.Background(), "Error executing query: %v, query: %s", err, query)
+		} else {
+			log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		}
 		return nil, err
 	}
 	defer rows.Close()

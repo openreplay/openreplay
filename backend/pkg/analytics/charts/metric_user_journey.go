@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	analyticsConfig "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/logger"
 	"slices"
@@ -78,7 +77,9 @@ var PredefinedJourneys = map[string]JourneyStep{
 	"INPUT":    {EventName: "INPUT", Column: "`$properties`.label"},
 }
 
-type UserJourneyQueryBuilder struct{}
+type UserJourneyQueryBuilder struct {
+	Logger logger.Logger
+}
 
 func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interface{}, error) {
 	queries, err := h.buildQuery(p)
@@ -88,44 +89,46 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
-	logr := logger.New()
-	cfg := analyticsConfig.New(logr)
+	cfg := analyticsConfig.New(h.Logger)
 
 	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
 	if conn == nil {
 		return nil, fmt.Errorf("failed to establish clickhouse connection")
 	}
 
-	// Trying to use clickhouseContext in order to keep same session for tmp tables,
-	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
 	ctx := clickhouse.Context(context.Background(),
 		clickhouse.WithSettings(clickhouse.Settings{
 			"session_id":      uuid.NewString(),
 			"session_timeout": 60, // seconds
 		}))
-
 	for i := 0; i < len(queries)-1; i++ {
+		_start := time.Now()
+		h.Logger.Debug(ctx, "Executing query: %s", queries[i])
 		_, err = conn.ExecContext(ctx, queries[i])
 
+		if time.Since(_start) > 2*time.Second {
+			h.Logger.Warn(ctx, "Query execution took longer than 2s: %s", queries[i])
+		}
 		if err != nil {
 			for j := 0; j <= i; j++ {
-				log.Println("---------------------------------")
-				log.Println(queries[j])
-				log.Println("---------------------------------")
+				h.Logger.Error(ctx, "UserJourney query failed: %s", queries[j])
 			}
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
 	}
 
 	var rawData []UserJourneyRawData
+	_start := time.Now()
+	h.Logger.Debug(ctx, "Executing query: %s", queries[len(queries)-1])
 	if err = conn.SelectContext(ctx, &rawData, queries[len(queries)-1]); err != nil {
 		for j := 0; j < len(queries); j++ {
-			log.Println("---------------------------------")
-			log.Println(queries[j])
-			log.Println("---------------------------------")
+			h.Logger.Error(ctx, "UserJourney query failed: %s", queries[j])
 		}
-		log.Printf("Error executing userJourney query: %s\nQuery: %s", err, queries[len(queries)-1])
+		h.Logger.Error(ctx, "Error executing userJourney query: %s\nQuery: %s", err, queries[len(queries)-1])
 		return nil, err
+	}
+	if time.Since(_start) > 2*time.Second {
+		h.Logger.Warn(ctx, "Query execution took longer than 2s: %s", queries[len(queries)-1])
 	}
 	var result interface{}
 	if p.ViewType == "sunburst" {
@@ -134,7 +137,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 		result, err = h.transformJourney(rawData, p.StartType == "end")
 	}
 	if err != nil {
-		log.Printf("Error transforming userJourney data: %s", err)
+		h.Logger.Error(ctx, "Error transforming userJourney data: %s", err)
 		return nil, err
 	}
 	return result, nil
@@ -530,6 +533,9 @@ ORDER BY event_number_in_session, sessions_count DESC;
 }
 
 func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData, reverse bool) (JourneyData, error) {
+	if len(rows) == 0 {
+		return JourneyData{}, nil
+	}
 	var total100p uint64
 	for _, r := range rows {
 		if r.EventNumberInSession > 1 {

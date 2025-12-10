@@ -3,17 +3,18 @@ package charts
 import (
 	"context"
 	"fmt"
-	"log"
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/logger"
 	"sort"
 	"strings"
+	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 type TimeSeriesQueryBuilder struct {
-	conn *clickhouse.Conn
+	//conn   *clickhouse.Conn
+	Logger logger.Logger
 }
 
 // Supported metrics for time series queries
@@ -25,17 +26,24 @@ const (
 
 func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	data := make(map[uint64]map[string]uint64)
+
 	for _, series := range p.Series {
 		query, params, err := t.buildQuery(p, series)
 		if err != nil {
-			log.Printf("buildQuery %s: %v", series.Name, err)
+			t.Logger.Error(context.Background(), "buildQuery %s: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
+		_start := time.Now()
+
+		t.Logger.Debug(context.Background(), "Executing query: %s", query)
 
 		var pts []DataPoint
 		if err = conn.Select(context.Background(), &pts, query, convertParams(params)...); err != nil {
-			log.Printf("Select timeseries %s error: %v", series.Name, err)
+			t.Logger.Error(context.Background(), "Select timeseries %s error: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
+		}
+		if time.Since(_start) > 2*time.Second {
+			t.Logger.Warn(context.Background(), "Query execution took longer than 2s: %s", query)
 		}
 
 		for _, dp := range pts {

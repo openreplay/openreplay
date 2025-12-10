@@ -3,7 +3,9 @@ package charts
 import (
 	"context"
 	"fmt"
+	"openreplay/backend/pkg/logger"
 	"strings"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
@@ -30,7 +32,9 @@ type FunnelResponse struct {
 	Stages []FunnelStageResult `json:"stages"`
 }
 
-type FunnelQueryBuilder struct{}
+type FunnelQueryBuilder struct {
+	Logger logger.Logger
+}
 
 func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	if !hasEventFilter(p.MetricPayload.Series[0].Filter.Filters) {
@@ -41,11 +45,17 @@ func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{},
 		return nil, err
 	}
 
+	_start := time.Now() // Start timing
+	f.Logger.Debug(context.Background(), "Executing funnel query: %s", q)
 	rows, err := conn.Query(context.Background(), q)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
+	if time.Since(_start) > 2*time.Second {
+		f.Logger.Warn(context.Background(), "Funnel query took more than 2s: %s", q)
+	}
 
 	s := p.MetricPayload.Series[0]
 	var stepFilters []model.Filter

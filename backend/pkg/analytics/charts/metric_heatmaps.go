@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"openreplay/backend/pkg/logger"
 	"slices"
 	"strings"
 	"time"
@@ -23,18 +23,27 @@ type HeatmapPoint struct {
 	CreatedAt   time.Time `json:"-" ch:"created_at"`
 }
 
-type HeatmapQueryBuilder struct{}
+type HeatmapQueryBuilder struct {
+	Logger logger.Logger
+}
 
 func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := h.buildQuery(p)
 	if err != nil {
+		h.Logger.Error(context.Background(), "Error building query: %v", err)
 		return nil, err
 	}
+	_start := time.Now()
+	h.Logger.Debug(context.Background(), "Executing query: %s", query)
+
 	var pts []HeatmapPoint = make([]HeatmapPoint, 0)
 
 	if err = conn.Select(context.Background(), &pts, query); err != nil {
-		log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		h.Logger.Error(context.Background(), "Error executing query: %v, query: %s", err, query)
 		return nil, err
+	}
+	if time.Since(_start) > 2*time.Second {
+		h.Logger.Warn(context.Background(), "Query execution took longer than 2s: %s", query)
 	}
 
 	if pts == nil {
@@ -44,18 +53,20 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 	if !p.IncludeClickRage {
 		query, err = h.buildClickRageQuery(p)
 		if err != nil {
+			h.Logger.Error(context.Background(), "Error building click rage query: %v", err)
 			return nil, err
 		}
 		var clickRages []ClickRageRow = make([]ClickRageRow, 0)
 
 		if err = conn.Select(context.Background(), &clickRages, query); err != nil {
-			log.Printf("Error executing query: %s\nQuery: %s", err, query)
+			h.Logger.Error(context.Background(), "Error executing click rage query: %v, query: %s", err, query)
 			return nil, err
 		}
 		for _, cr := range clickRages {
 			// payload is a string like this: {"Count":3}
 			err := json.Unmarshal([]byte(cr.PayloadS), &cr)
 			if err != nil {
+				h.Logger.Error(context.Background(), "Error unmarshalling click rage payload: %v", err)
 				return nil, err
 			}
 			if cr.Count > 0 {
@@ -75,7 +86,6 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 					i++
 				}
 			}
-
 		}
 	}
 
