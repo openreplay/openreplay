@@ -527,7 +527,11 @@ function WidgetChart(props: Props) {
               marginBottom: '10px',
             }}
           >
-            <img src={_metric.thumbnail} alt="clickmap thumbnail" />
+            <img
+              src={_metric.thumbnail}
+              alt="clickmap thumbnail"
+              className="w-full h-full object-cover"
+            />
           </div>
         ) : (
           <div

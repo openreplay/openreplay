@@ -1,8 +1,4 @@
-import {
-  elementToImage,
-  elementToCanvas,
-  downscaleDataURL,
-} from 'App/utils/screenCapture';
+import { elementToImage, elementToCanvas } from 'App/utils/screenCapture';
 
 export const renderClickmapThumbnail = async (withIframe?: boolean) => {
   const element = document.querySelector<HTMLIFrameElement>('#clickmap-render');
@@ -14,11 +10,10 @@ export const renderClickmapThumbnail = async (withIframe?: boolean) => {
     }
     if (!thumbnail) {
       thumbnail = await elementToImage(element);
-      console.debug('trying to capture stream...', thumbnail);
     }
   }
-  if (thumbnail) {
-    thumbnail = await downscaleDataURL(thumbnail);
+  if (!thumbnail) {
+    console.error('Failed to render clickmap thumbnail');
   }
 
   return thumbnail;

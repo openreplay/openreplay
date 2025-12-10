@@ -51,7 +51,6 @@ export async function elementToImage(
       return;
     }
 
-    console.log(bitmap)
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
