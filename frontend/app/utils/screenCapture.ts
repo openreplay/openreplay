@@ -32,9 +32,10 @@ export async function elementToImage(
 
     if (
       'CropTarget' in window &&
-      typeof (window as any).CropTarget?.fromElement === 'function' &&
-      'cropTo' in track
+      typeof (window as any).CropTarget?.fromElement === 'function'
     ) {
+      element.scrollIntoView({ block: 'nearest' });
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
       const cropTarget = await (window as any).CropTarget.fromElement(element);
       await (track as any).cropTo(cropTarget);
     }

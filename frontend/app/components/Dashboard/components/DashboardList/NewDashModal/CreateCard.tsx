@@ -46,7 +46,7 @@ function CreateCard(props: Props) {
     const isClickMap = metric.metricType === HEATMAP;
     if (isClickMap) {
       try {
-        metric.thumbnail = await renderClickmapThumbnail();
+        metric.thumbnail = await renderClickmapThumbnail(true);
       } catch (e) {
         console.error(e);
       }
