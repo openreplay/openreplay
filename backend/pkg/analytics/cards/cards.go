@@ -350,8 +350,8 @@ func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *Card
 			tx.TxCommit()
 		}
 	}()
-	const upd = `UPDATE public.metrics SET name=$1,metric_type=$2,view_type=$3,metric_of=$4,metric_value=$5,metric_format=$6,is_public=$7,card_info=$8 WHERE metric_id=$9 AND project_id=$10 AND deleted_at IS NULL RETURNING metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
-	row := tx.TxQueryRow(upd, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, infoData, cardID, projectID)
+	const upd = `UPDATE public.metrics SET name=$1,metric_type=$2,view_type=$3,metric_of=$4,metric_value=$5,metric_format=$6,is_public=$7,card_info=$8,thumbnail=$9 WHERE metric_id=$10 AND project_id=$11 AND deleted_at IS NULL RETURNING metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
+	row := tx.TxQueryRow(upd, req.Name, req.MetricType, req.ViewType, req.MetricOf, req.MetricValue, req.MetricFormat, req.IsPublic, infoData, req.Thumbnail, cardID, projectID)
 	card, err := s.scanCard(row)
 	if err != nil {
 		return nil, fmt.Errorf("update card: %w", err)
