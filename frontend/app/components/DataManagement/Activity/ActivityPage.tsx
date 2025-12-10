@@ -2,7 +2,7 @@ import React from 'react';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import { Dropdown, Button, Divider, Tooltip } from 'antd';
+import { Dropdown, Button, Divider, Tooltip, TableProps } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
@@ -16,13 +16,15 @@ import { useStore } from 'App/mstore';
 import FullPagination from 'Shared/FullPagination';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import DndTable from 'Shared/DNDTable';
-import { Code, Plus } from 'lucide-react';
+import {
+  Plus,
+} from 'lucide-react';
 import { Filter } from '@/mstore/types/filterConstants';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import { formatTimeOrDate } from 'App/date';
-import { getSortingKey } from '@/mstore/types/Analytics/Event';
-
-// TODO: ADD PERMISSION CHECK DATA_MANAGEMENT
+import Event, { getSortingKey } from '@/mstore/types/Analytics/Event';
+import withPermissions from 'HOCs/withPermissions';
+import { getEventIcon } from './getEventIcon';
 
 const columnOrderKey = '$__activity_columns_order__$';
 
@@ -51,17 +53,17 @@ function ActivityPage() {
       onClick: () => setTimeout(() => setEditCols(true), 1),
     },
   ];
-  const columns = [
+
+  const columns: TableProps<Event>['columns'] = [
     {
       title: 'Event Name',
       dataIndex: 'event_name',
       key: 'event_name',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
-      render: (text, row) => (
+      render: (text: string, row) => (
         <div className={'flex items-center gap-2 code-font'}>
-          <Code size={16} />
-          {row.isAutoCapture && <span className={'text-gray-500'}>[a]</span>}
+          {getEventIcon(row.isAutoCapture, row.event_name)}
           <span>{row.event_name}</span>
         </div>
       ),
@@ -80,7 +82,7 @@ function ActivityPage() {
       key: 'distinct_id',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
-      render: (text, r) => {
+      render: (text: string, r) => {
         const clickable = r.user_id;
         if (clickable) {
           return (
@@ -171,6 +173,7 @@ function ActivityPage() {
       );
     }
   }, [hiddenCols]);
+
   React.useEffect(() => {
     const savedColumnOrder = localStorage.getItem(columnOrderKey);
     if (savedColumnOrder) {
@@ -423,4 +426,9 @@ function ActivityPage() {
   );
 }
 
-export default observer(ActivityPage);
+export default withPermissions(
+  ['DATA_MANAGEMENT'],
+  '',
+  false,
+  false,
+)(observer(ActivityPage));

@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from 'App/routes';
 import { Album } from 'lucide-react';
+import withPermissions from 'HOCs/withPermissions';
 import UsersList from './components/UsersList';
 import EventsList from './components/EventsList';
 import { debounce } from 'App/utils';
@@ -59,4 +60,9 @@ function UsersListPage() {
   );
 }
 
-export default observer(UsersListPage);
+export default withPermissions(
+  ['DATA_MANAGEMENT'],
+  '',
+  false,
+  false,
+)(observer(UsersListPage));

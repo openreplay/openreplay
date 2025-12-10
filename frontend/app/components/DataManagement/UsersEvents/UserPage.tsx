@@ -4,6 +4,7 @@ import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Files } from 'lucide-react';
 import copy from 'copy-to-clipboard';
 import { useModal } from 'App/components/Modal';
+import withPermissions from 'HOCs/withPermissions';
 import UserPropertiesModal from './components/UserPropertiesModal';
 import Tag from './components/Tag';
 import Breadcrumb from 'Shared/Breadcrumb';
@@ -12,6 +13,7 @@ import { useParams, useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
+import { observer } from 'mobx-react-lite';
 
 const card = 'rounded-lg border bg-white';
 
@@ -236,4 +238,9 @@ function UserInfo({ userId }: { userId: string }) {
   );
 }
 
-export default UserPage;
+export default withPermissions(
+  ['DATA_MANAGEMENT'],
+  '',
+  false,
+  false,
+)(observer(UserPage));

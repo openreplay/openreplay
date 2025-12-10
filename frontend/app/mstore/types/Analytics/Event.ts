@@ -127,6 +127,10 @@ export default class Event {
     return this.custom_properties;
   }
 
+  get customPropKeys() {
+    return Object.keys(this.custom_properties);
+  }
+
   get allProps() {
     return {
       ...this.defaultProps,

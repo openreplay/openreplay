@@ -1,5 +1,5 @@
 import React from 'react';
-import { Segmented, Input } from 'antd';
+import { Segmented, Input, Button } from 'antd';
 import { X, List, Braces, Files, Code } from 'lucide-react';
 import copy from 'copy-to-clipboard';
 import { useQuery } from '@tanstack/react-query';
@@ -7,19 +7,25 @@ import { analyticsService } from '@/services';
 import Event from '@/mstore/types/Analytics/Event';
 import { session, withSiteId } from '@/routes';
 import { Link } from 'react-router-dom';
+import { Icon } from 'UI';
+import { getEventIcon } from './getEventIcon';
+import Tabs from 'Components/shared/Tabs';
 
 const tabs = [
   {
     label: 'All Properties',
     value: 'all',
+    key: 'all',
   },
   {
     label: 'Openreplay',
     value: 'default',
+    key: 'default',
   },
   {
     label: 'Custom',
     value: 'custom',
+    key: 'custom',
   },
 ];
 
@@ -96,6 +102,11 @@ function EventDetailsModal({
     copy(strProps);
   };
 
+  const isCustomProp = (key: string) => {
+    if (!event) return false;
+    return !(key in event.defaultProps);
+  };
+
   return (
     <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
       <div className={'flex justify-between items-center'}>
@@ -104,21 +115,23 @@ function EventDetailsModal({
           <X size={16} />
         </div>
       </div>
-      <div className={'p-2 rounded-lg bg-active-blue flex items-center gap-2'}>
+      <div className={'p-2 rounded-lg bg-blueLight flex items-center gap-2'}>
         <div>
-          <Code size={16} />
+          {event ? getEventIcon(event.isAutoCapture, event.event_name) : null}
         </div>
         <div className={'font-semibold'}>{event?.event_name ?? 'event'}</div>
         <Link
           to={withSiteId(session(event?.session_id), siteId)}
-          className={'link ml-auto flex gap-1 items-center'}
+          className={'ml-auto'}
         >
-          <span>Play Session</span>
-          <Triangle size={10} color={'blue'} />
+          <Button className={'flex gap-2 items-center'}>
+            <span>Play Session</span>
+            <Triangle size={10} color={'blue'} />
+          </Button>
         </Link>
       </div>
-      <div className="w-fit ml-auto">
-        <Segmented options={tabs} value={tab} onChange={(v) => setTab(v)} />
+      <div className="w-full">
+        <Tabs items={tabs} activeKey={tab} onChange={setTab} />
       </div>
       <div className={'flex items-center gap-2'}>
         <Segmented
@@ -141,6 +154,13 @@ function EventDetailsModal({
         >
           {filteredArr.map(([key, value]) => (
             <div key={key} className={'flex items-center border-b'}>
+              <div className={'mr-2'}>
+                {isCustomProp(key) ? (
+                  <Code size={12} />
+                ) : (
+                  <Icon name={'logo-small-white'} size={12} />
+                )}
+              </div>
               <div className={'w-[200px]'}>{key}</div>
               <div className={'flex-1 text-disabled-text'}>{value}</div>
             </div>
