@@ -32,6 +32,21 @@ const components: any = {
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
+  ActivityPure: lazy(
+    () => import('Components/DataManagement/Activity/ActivityPage'),
+  ),
+  UserPage: lazy(
+    () => import('Components/DataManagement/UsersEvents/UserPage'),
+  ),
+  UsersEventsPage: lazy(
+    () => import('Components/DataManagement/UsersEvents/UsersListPage'),
+  ),
+  EventPage: lazy(
+    () => import('Components/DataManagement/UsersEvents/EventPage'),
+  ),
+  PropertiesList: lazy(
+    () => import('Components/DataManagement/Properties/ListPage'),
+  ),
 };
 
 const enhancedComponents: any = {
@@ -47,6 +62,12 @@ const enhancedComponents: any = {
   Spot: components.SpotPure,
   Highlights: withSiteIdUpdater(components.HighlightsPure),
   Kai: withSiteIdUpdater(components.KaiPure),
+  ScopeSetup: components.ScopeSetup,
+  Activity: withSiteIdUpdater(components.ActivityPure),
+  UserPage: withSiteIdUpdater(components.UserPage),
+  UsersEventsPage: withSiteIdUpdater(components.UsersEventsPage),
+  EventPage: withSiteIdUpdater(components.EventPage),
+  PropertiesList: withSiteIdUpdater(components.PropertiesList),
 };
 
 const { withSiteId } = routes;
@@ -294,6 +315,36 @@ function PrivateRoutes() {
             component={enhancedComponents.Kai}
           />
         ) : null}
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.activity(), siteIdList)}
+          component={enhancedComponents.Activity}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.userPage(), siteIdList)}
+          component={enhancedComponents.UserPage}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.usersEventsList(), siteIdList)}
+          component={enhancedComponents.UsersEventsPage}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.eventPage(), siteIdList)}
+          component={enhancedComponents.EventPage}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.properties(), siteIdList)}
+          component={enhancedComponents.PropertiesList}
+        />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}

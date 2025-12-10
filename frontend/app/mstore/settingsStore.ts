@@ -15,23 +15,14 @@ interface CaptureConditions {
 
 export default class SettingsStore {
   loadingCaptureRate: boolean = false;
-
   sessionSettings: SessionSettings = new SessionSettings();
-
   captureRateFetched: boolean = false;
-
   limits: any = null;
-
   webhooks: Webhook[] = [];
-
   webhookInst = new Webhook();
-
   hooksLoading = false;
-
   saving: boolean = false;
-
   gettingStarted: GettingStarted = new GettingStarted();
-
   menuCollapsed: boolean = localStorage.getItem(MENU_COLLAPSED) === 'true';
 
   constructor() {

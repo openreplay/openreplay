@@ -159,6 +159,16 @@ export const spot = (id = ':spotId', hash?: string | number): string =>
 export const highlights = (): string => '/highlights';
 
 export const kai = (): string => '/kai';
+export const dataManagement = {
+  activity: () => '/data-management/activity',
+  userPage: (id = ':userId', hash?: string | number) =>
+    hashed(`/data-management/user/${id}`, hash),
+  usersEventsList: (view = ':view(users|events)', hash?: string | number) =>
+    hashed(`/data-management/list/${view}`, hash),
+  eventPage: (id = ':eventId', hash?: string | number) =>
+    hashed(`/data-management/event/${id}`, hash),
+  properties: () => '/data-management/properties',
+};
 
 const REQUIRED_SITE_ID_ROUTES = [
   ...routeIdRequired,
@@ -195,6 +205,10 @@ const REQUIRED_SITE_ID_ROUTES = [
   highlights(),
 
   kai(),
+  dataManagement.activity(),
+  dataManagement.userPage(''),
+  dataManagement.usersEventsList(''),
+  dataManagement.eventPage(''),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));

@@ -76,7 +76,7 @@ function SideMenu(props: Props) {
           item.isEnterprise && !isEnterprise,
           item.key === MENU.KAI && !hasAi,
           item.key === PREFERENCES_MENU.EXPORTED_VIDEOS &&
-          !account.hasVideoExport,
+            !account.hasVideoExport,
         ].some(Boolean);
 
         return { ...item, hidden: isHidden };
@@ -122,6 +122,12 @@ function SideMenu(props: Props) {
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
+    [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
+    [MENU.USERS]: () =>
+      withSiteId(routes.dataManagement.usersEventsList('users'), siteId),
+    [MENU.EVENTS]: () =>
+      withSiteId(routes.dataManagement.usersEventsList('events'), siteId),
+    [MENU.PROPS]: () => withSiteId(routes.dataManagement.properties(), siteId),
     ...extraRoutes(siteId),
   };
 
@@ -144,19 +150,16 @@ function SideMenu(props: Props) {
       : false;
   };
 
-  const renderMenu = () => (
-    <>
-      <MenuContent
-        menu={menu}
-        isMenuItemActive={isMenuItemActive}
-        handleClick={handleClick}
-      />
-    </>
-  );
-
   return (
     <>
-      {!isMobile && renderMenu()}
+      {!isMobile && (
+        <MenuContent
+          menu={menu}
+          isMenuItemActive={isMenuItemActive}
+          handleClick={handleClick}
+          isCollapsed={isCollapsed}
+        />
+      )}
 
       {isMobile && (
         <>
@@ -174,7 +177,14 @@ function SideMenu(props: Props) {
             open={mobileMenuOpen}
             closeIcon={false}
           >
-            {renderMenu()}
+            {
+              <MenuContent
+                menu={menu}
+                isMenuItemActive={isMenuItemActive}
+                handleClick={handleClick}
+                isCollapsed={isCollapsed}
+              />
+            }
           </Drawer>
 
           <Button

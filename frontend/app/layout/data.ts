@@ -55,6 +55,12 @@ export const enum MENU {
   EXIT = 'exit',
   SPOTS = 'spots',
   KAI = 'kai',
+  ACTIVITY = 'activity',
+  USER = 'user-page',
+  USERS = 'data-users',
+  EVENTS = 'data-events',
+  PROPS = 'data-properties',
+  DATA_MANAGEMENT = 'data-management',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -131,6 +137,30 @@ export const categories: (t: TFunction) => Category[] = (t) => [
       //   ]
       // },
       { label: t('Alerts'), key: MENU.ALERTS, icon: 'bell' },
+    ],
+  },
+  {
+    title: 'Data Management',
+    key: 'data-management',
+    items: [
+      { label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' },
+      {
+        label: 'Data Management',
+        // next DLC content
+        hidden: false,
+        key: MENU.DATA_MANAGEMENT,
+        icon: 'memory',
+        children: [
+          { label: 'Users', key: MENU.USERS, icon: 'people' },
+          // { label: 'Events', key: MENU.EVENTS, icon: 'square-mouse-pointer' },
+          // {
+          //   label: 'Properties',
+          //   key: MENU.PROPS,
+          //   icon: 'square-mouse-pointer',
+          //   hidden: true,
+          // },
+        ],
+      },
     ],
   },
   {
