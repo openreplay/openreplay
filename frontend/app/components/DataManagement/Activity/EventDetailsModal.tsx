@@ -164,7 +164,7 @@ function EventDetailsModal({
               <div className={'w-[150px]'}>{key}</div>
               <TextEllipsis
                 text={value}
-                maxWidth={'220'}
+                maxWidth={'420'}
                 className={'text-disabled-text flex-1'}
               />
             </div>

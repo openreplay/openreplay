@@ -55,7 +55,7 @@ function Activity({ userId }: { userId: string }) {
         onClose={hideModal}
       />,
       {
-        width: 420,
+        width: 620,
         right: true,
       },
     );
