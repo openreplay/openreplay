@@ -9,6 +9,11 @@ import { observer } from 'mobx-react-lite';
 import { shortDurationFromMs } from 'App/date';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import {
+  elementToImage,
+  elementToCanvas,
+  downscaleDataURL,
+} from 'App/utils/screenCapture';
 
 function maskDuration(input: string): string {
   const digits = input.replace(/\D/g, '');
@@ -117,14 +122,10 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   const onSave = async () => {
     try {
       notesStore.setSaving(true);
-      const playerContainer =
-        document.querySelector('iframe')?.contentWindow?.document;
+      const playerContainer = document.querySelector('#replay-screen-wrapper');
       let thumbnail: string | undefined;
       if (playerContainer) {
-        thumbnail = await elementToCanvas(playerContainer);
-        if (!thumbnail) {
-          thumbnail = await elementToImage(thumbnail);
-        }
+        thumbnail = await elementToImage(playerContainer);
       }
       if (thumbnail) {
         thumbnail = await downscaleDataURL(thumbnail);
@@ -148,6 +149,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       }
       onClose();
     } catch (e) {
+      console.error(e);
       toast.error(t('Failed to save highlight'));
     } finally {
       notesStore.setSaving(false);
@@ -249,138 +251,5 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-window.__debugElementToImage = (el) =>
-  elementToImage(el).then((img) => {
-    const a = document.createElement('a');
-    a.href = img;
-    a.download = 'highlight.png';
-    a.click();
-  });
-
-async function elementToImage(el: any) {
-  const constraints = {
-    video: {
-      displaySurface: 'browser',
-      preferCurrentTab: true,
-    },
-    preferCurrentTab: true,
-    monitorTypeSurfaces: 'exclude',
-    audio: false,
-  };
-  try {
-    const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
-    const track = stream.getVideoTracks()[0];
-    const imageCapture = new ImageCapture(track);
-    const bitmap = await imageCapture.grabFrame();
-    track.stop();
-    const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    canvas.getContext('2d').drawImage(bitmap, 0, 0);
-    return canvas.toDataURL('image/png');
-  } catch (e) {
-    toast.error('Failed to capture screen image');
-  }
-}
-
-function elementToCanvas(doc: Document) {
-  const el = doc.body;
-  const srcMap = new WeakMap<HTMLImageElement, string>();
-  return import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
-    const images = doc.querySelectorAll('img');
-    images.forEach((img) => {
-      const sameOrigin =
-        new URL(img.src, location.href).origin === location.origin;
-      if (!sameOrigin) {
-        srcMap.set(img, img.src);
-        img.src = '';
-      }
-    });
-    return html2canvas(el, {
-      scale: 1,
-      allowTaint: false,
-      foreignObjectRendering: true,
-      useCORS: true,
-      logging: true,
-    })
-      .then((canvas) => {
-        images.forEach((img) => {
-          if (srcMap.has(img)) img.src = srcMap.get(img)!;
-        });
-        return canvas.toDataURL('image/png');
-      })
-      .catch((e) => {
-        console.log(e);
-        return undefined;
-      });
-  });
-}
-
-async function downscaleDataURL(
-  dataUrl: string,
-  maxW = 1280,
-  maxH = 720,
-  outType = 'image/png',
-  quality = 1,
-) {
-  try {
-    const img = new Image();
-    img.decoding = 'async';
-    img.src = dataUrl;
-    await img.decode();
-
-    const w = img.naturalWidth,
-      h = img.naturalHeight;
-    const s = Math.min(1, maxW / w, maxH / h);
-    const newW = Math.round(w * s);
-    const newH = Math.round(h * s);
-
-    const c = document.createElement('canvas');
-    c.width = newW;
-    c.height = newH;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, newW, newH);
-
-    const mime = outType || dataUrl.match(/^data:(.*?);/)?.[1] || 'image/png';
-    return c.toDataURL(mime, quality);
-  } catch (e) {
-    console.log('downscale', e);
-    return dataUrl;
-  }
-}
-
-const convertAllImagesToBase64 = (proxyURL, cloned) => {
-  const pendingImagesPromises = [];
-  const pendingPromisesData = [];
-
-  const images = cloned.getElementsByTagName('img');
-
-  for (let i = 0; i < images.length; i += 1) {
-    const promise = new Promise((resolve, reject) => {
-      pendingPromisesData.push({
-        index: i,
-        resolve,
-        reject,
-      });
-    });
-    pendingImagesPromises.push(promise);
-  }
-
-  for (let i = 0; i < images.length; i += 1) {
-    fetch(`${proxyURL}?url=${images[i].src}`)
-      .then((response) => response.json())
-      .then((data) => {
-        const pending = pendingPromisesData.find((p) => p.index === i);
-        images[i].src = data;
-        pending.resolve(data);
-      })
-      .catch((e) => {
-        const pending = pendingPromisesData.find((p) => p.index === i);
-        pending.reject(e);
-      });
-  }
-
-  return Promise.all(pendingImagesPromises);
-};
 
 export default observer(HighlightPanel);

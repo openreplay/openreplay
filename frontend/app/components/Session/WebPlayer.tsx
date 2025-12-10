@@ -19,6 +19,7 @@ import {
   defaultContextValue,
 } from './playerContext';
 import { signalService } from 'App/services';
+import FilterItem from 'App/mstore/types/filterItem';
 
 const TABS = {
   EVENTS: 'Activity',
@@ -26,18 +27,10 @@ const TABS = {
   INSPECTOR: 'Tag',
 };
 
-const UXTTABS = {
-  EVENTS: TABS.EVENTS,
-};
-
 let playerInst: IPlayerContext['player'] | undefined;
 
-const isDefaultEventsFilterSearch = (filters: FilterItem[]) => {
-  return (
-    filters.length === 1 &&
-    filters[0].key === 'location' &&
-    filters[0].value[0] === ''
-  );
+const hasEvents = (filters: FilterItem[]) => {
+  return filters.some((filter) => filter.isEvent);
 };
 
 function WebPlayer(props: any) {
@@ -70,7 +63,7 @@ function WebPlayer(props: any) {
   React.useEffect(() => {
     if (
       searchStore.instance.filters?.length &&
-      !isDefaultEventsFilterSearch(searchStore.instance.filters)
+      !hasEvents(searchStore.instance.filters)
     ) {
       uiPlayerStore.setSearchEventsSwitchButton(true);
       uiPlayerStore.setShowOnlySearchEvents(true);
@@ -194,7 +187,8 @@ function WebPlayer(props: any) {
 
         if (jumpToTime || shouldAdjustOffset) {
           if (jumpToTime && jumpToTime > visualOffset) {
-            const diff = jumpToTime > duration ? jumpToTime - startedAt : jumpToTime;
+            const diff =
+              jumpToTime > duration ? jumpToTime - startedAt : jumpToTime;
             contextValue.player.jump(Math.max(diff, 0));
             setAdjusted(true);
           } else {
@@ -232,7 +226,6 @@ function WebPlayer(props: any) {
     },
     [params.sessionId],
   );
-
 
   const onNoteClose = () => {
     setNoteItem(undefined);

@@ -210,7 +210,7 @@ function WidgetView({
     const wasCreating = !widget.exists();
     if (isClickMap) {
       try {
-        widget.thumbnail = await renderClickmapThumbnail();
+        widget.thumbnail = await renderClickmapThumbnail(true);
       } catch (e) {
         console.error(e);
       }

@@ -39,25 +39,32 @@ function FunnelStepText(props: Props) {
                 <span className="font-medium color-gray-darkest">
                   {sf.name}
                 </span>
-                <span>{sf.operator}</span>
-                {sf.value.map((v, i) => (
+                {sf.value.length && sf.value[0] ? (
                   <>
-                    <span className="font-medium color-gray-darkest" key={i}>
-                      {v}
-                    </span>
-                    {i < sf.value.length - 1 && <span>{t('or')}</span>}
+                    <span>{sf.operator}</span>
+                    {sf.value.map((v, i) => (
+                      <>
+                        <span
+                          className="font-medium color-gray-darkest"
+                          key={i}
+                        >
+                          {v}
+                        </span>
+                        {i < sf.value.length - 1 && <span>{t('or')}</span>}
+                      </>
+                    ))}
+                    {!isLast && filter.propertyOrder && (
+                      <span className="mx-1 color-gray-medium">
+                        {filter.propertyOrder}
+                      </span>
+                    )}
                   </>
-                ))}
-                {!isLast && filter.propertyOrder && (
-                  <span className="mx-1 color-gray-medium">
-                    {filter.propertyOrder}
-                  </span>
-                )}
+                ) : null}
               </React.Fragment>
             );
           })}
         </>
-      ) : (
+      ) : filter.value.length && filter.value[0] ? (
         <>
           <span className="mx-1">{filter.operator}</span>
           {filter.value.map((value: any, index: number) => (
@@ -71,7 +78,7 @@ function FunnelStepText(props: Props) {
             </span>
           ))}
         </>
-      )}
+      ) : null}
     </div>
   );
 }

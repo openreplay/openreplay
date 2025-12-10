@@ -139,6 +139,7 @@ function Player(props: IProps) {
         ) : undefined}
         <Overlay nextId={nextId} />
         <div
+          id="replay-screen-wrapper"
           className={cn(
             stl.screenWrapper,
             isInspMode ? stl.solidBg : stl.checkers,

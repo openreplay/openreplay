@@ -173,27 +173,7 @@ function WidgetChart(props: Props) {
         } else {
           setData(res);
         }
-        const noLocationFilter = !payload.series[0]?.filter?.filters?.some(
-          (filter: any) => {
-            return (
-              filter.name === 'LOCATION' &&
-              filter.filters.some(
-                (filter: any) =>
-                  filter.name === 'urlPath' && filter.value.length > 0,
-              )
-            );
-          },
-        );
-        if (_metric.metricType === HEATMAP && res.urlPath && noLocationFilter) {
-          const locationIndex = _metric.series[0].filter.filters.findIndex(
-            (f) => f.name === 'LOCATION',
-          );
-          if (locationIndex > -1) {
-            _metric.series[0].filter.filters[locationIndex].filters[0].value = [
-              res.urlPath,
-            ];
-          }
-        }
+
         clearTimeout(tm);
         setStale(false);
       })
@@ -547,7 +527,11 @@ function WidgetChart(props: Props) {
               marginBottom: '10px',
             }}
           >
-            <img src={_metric.thumbnail} alt="clickmap thumbnail" />
+            <img
+              src={_metric.thumbnail}
+              alt="clickmap thumbnail"
+              className="w-full h-full object-cover"
+            />
           </div>
         ) : (
           <div

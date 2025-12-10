@@ -46,7 +46,7 @@ function CreateCard(props: Props) {
     const isClickMap = metric.metricType === HEATMAP;
     if (isClickMap) {
       try {
-        metric.thumbnail = await renderClickmapThumbnail();
+        metric.thumbnail = await renderClickmapThumbnail(true);
       } catch (e) {
         console.error(e);
       }
@@ -83,7 +83,7 @@ function CreateCard(props: Props) {
           ) : null}
           <div className="text-xl leading-4 font-medium">{metric.name}</div>
         </Space>
-        <Button type="primary" onClick={createDashboardAndAddCard}>
+        <Button type="primary" id="create-card-btn" onClick={createDashboardAndAddCard}>
           <Space>
             {t('Create')} <ArrowRight size={14} />
           </Space>

@@ -5,25 +5,6 @@
   display: inline-block;
 }
 
-.menuBtn {
-  @mixin icon-before ellipsis-v, $gray-darkest, 18px {
-    margin: 5px;
-  }
-  width: 36px;
-  height: 36px;
-  /* border-radius: 18px; */
-  border: 1px solid transparent;
-  transition: all 0.2s;
-  margin: 0 auto;
-  cursor: pointer;
-
-  &:hover {
-    border-color: $active-blue-border;
-    transition: all 0.2s;
-    background-color: #fff;
-  }
-}
-
 .menuDim {
   border: none!important;
   box-shadow: 0 1px 3px 0 $gray-light!important;
@@ -58,7 +39,7 @@
     display: flex;
     align-items: center;
     border-bottom: 1px solid $gray-light;
-    
+
 
     & .iconWrapper {
       width: 13px;
