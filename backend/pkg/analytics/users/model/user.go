@@ -254,6 +254,7 @@ type SearchUsersResponse struct {
 }
 
 type UserActivityRequest struct {
+	Filters        []filters.Filter      `json:"filters" validate:"omitempty,dive"`
 	StartDate      int64                 `json:"startTimestamp" validate:"required,min=946684800000"`
 	EndDate        int64                 `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
 	HideEvents     []string              `json:"hideEvents" validate:"omitempty"`

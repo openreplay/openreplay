@@ -9,6 +9,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"openreplay/backend/pkg/analytics/events"
 	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/users/model"
 	"openreplay/backend/pkg/logger"
@@ -469,7 +470,9 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		baseConditions = append(baseConditions, fmt.Sprintf(`e."$event_name" NOT IN (%s)`, strings.Join(placeholders, ", ")))
 	}
 
-	whereClause := strings.Join(baseConditions, " AND ")
+	filterConditions, filterParams, _ := events.BuildEventSearchQuery("e", req.Filters)
+	whereClause := filters.BuildWhereClause(baseConditions, filterConditions)
+	params = append(params, filterParams...)
 
 	query := fmt.Sprintf(`
 		SELECT COUNT(*) OVER() as total_count,
