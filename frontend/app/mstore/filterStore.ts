@@ -575,6 +575,11 @@ export default class FilterStore {
     this.clearExpiredCacheEntries();
   };
 
+  getFilterDisplayName = (filterName: string): string => {
+    const filter = this.findEvent({ name: filterName });
+    return filter.displayName || filter.name;
+  }
+
   private clearExpiredCacheEntries = (): void => {
     const now = Date.now();
     Object.entries(this.filterCache).forEach(([key, entry]) => {

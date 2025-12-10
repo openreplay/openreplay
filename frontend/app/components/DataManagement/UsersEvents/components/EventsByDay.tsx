@@ -6,9 +6,11 @@ import { getEventIcon } from 'Components/DataManagement/Activity/getEventIcon';
 function EventsByDay({
   byDays,
   onItemClick,
+  getName,
 }: {
   byDays: Record<string, any[]>;
   onItemClick: (ev: any) => void;
+  getName: (evName: string) => string;
 }) {
   return (
     <>
@@ -33,7 +35,7 @@ function EventsByDay({
                 {formatTs(ev.created_at, 'HH:mm:ss a')}
               </div>
               <div>{getEventIcon(ev.isAutocapture, ev.event_name)}</div>
-              <div className={'font-mono'}>{ev.event_name}</div>
+              <div className={'font-mono'}>{getName(ev.event_name)}</div>
               <div className={'hidden group-hover:block ml-auto'}>
                 <ChevronRight size={16} />
               </div>

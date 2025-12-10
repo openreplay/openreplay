@@ -85,6 +85,8 @@ function Activity({ userId }: { userId: string }) {
     }
     history.push(withSiteId(sessions(), projectsStore.activeSiteId ?? ''));
   };
+
+  const getName = (filterName: string) => filterStore.getFilterDisplayName(filterName)
   return (
     <div className={card}>
       <div className={'px-4 py-2 flex items-center gap-2'}>
@@ -115,7 +117,11 @@ function Activity({ userId }: { userId: string }) {
         <SelectDateRange period={period} onChange={onDateChange} right />
       </div>
       <div className={show ? 'block' : 'hidden'}>
-        <EventsByDay byDays={byDays} onItemClick={onItemClick} />
+        <EventsByDay
+          getName={getName}
+          byDays={byDays}
+          onItemClick={onItemClick}
+        />
       </div>
     </div>
   );

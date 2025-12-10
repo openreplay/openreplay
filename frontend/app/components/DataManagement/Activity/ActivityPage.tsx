@@ -35,8 +35,12 @@ const colToSort = {
 };
 
 function ActivityPage() {
-  const { projectsStore, filterStore, analyticsStore, settingsStore } =
-    useStore();
+  const {
+    projectsStore,
+    filterStore,
+    analyticsStore,
+    settingsStore,
+  } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
   const siteId = projectsStore.activeSiteId;
@@ -62,7 +66,7 @@ function ActivityPage() {
       render: (text: string, row) => (
         <div className={'flex items-center gap-2 code-font'}>
           {getEventIcon(row.isAutoCapture, row.event_name)}
-          <span>{row.event_name}</span>
+          <span>{filterStore.getFilterDisplayName(row.event_name)}</span>
         </div>
       ),
     },
@@ -400,6 +404,7 @@ function ActivityPage() {
                 onRow={(record) => ({
                   onClick: () => onItemClick(record),
                 })}
+                rowClassName={'cursor-pointer'}
                 dataSource={list}
                 pagination={false}
                 columns={cols}
