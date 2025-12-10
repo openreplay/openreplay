@@ -125,6 +125,9 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		Limit:          params.Limit,
 		SortBy:         params.SortBy,
 		SortOrder:      params.SortOrder,
+		// These values will allow dashboard previews to have less data points (especially for user journeys)
+		HideExcess: true,
+		Rows:       5,
 	}
 
 	if req.MetricType == MetricUserJourney {
