@@ -263,7 +263,8 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 		}
 	}
 	if strings.HasPrefix(f.Name, "metadata_") {
-		cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn")
+		accessor := fmt.Sprintf("%s%s", alias, f.Name)
+		cond := buildCond(accessor, f.Value, f.Operator, false, "singleColumn")
 		if cond != "" {
 			return []string{cond}, ""
 		}
