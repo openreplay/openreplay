@@ -166,7 +166,7 @@ kafka:
 # Enterprise dbs
 clickhouse:
   image:
-    tag: "25.1-alpine"
+    tag: "25.9-alpine"
   enabled: false
 
 postgreql:
