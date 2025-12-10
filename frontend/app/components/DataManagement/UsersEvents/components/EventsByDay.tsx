@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatTs } from 'App/date';
 import { CalendarFold, ChevronRight } from 'lucide-react';
+import { getEventIcon } from 'Components/DataManagement/Activity/getEventIcon';
 
 function EventsByDay({
   byDays,
@@ -25,13 +26,14 @@ function EventsByDay({
             <div
               onClick={() => onItemClick(ev)}
               className={
-                'hover:bg-gray-lightest border-b cursor-pointer px-4 py-2 flex items-center group'
+                'hover:bg-gray-lightest border-b cursor-pointer px-4 py-2 flex items-center group gap-2'
               }
             >
-              <div className={'w-56'}>
+              <div className={'w-56 color-disabled-text'}>
                 {formatTs(ev.created_at, 'HH:mm:ss a')}
               </div>
-              <div>{ev.event_name}</div>
+              <div>{getEventIcon(ev.isAutocapture, ev.event_name)}</div>
+              <div className={'font-mono'}>{ev.event_name}</div>
               <div className={'hidden group-hover:block ml-auto'}>
                 <ChevronRight size={16} />
               </div>

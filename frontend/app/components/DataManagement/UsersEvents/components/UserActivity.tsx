@@ -12,20 +12,36 @@ import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import { useHistory } from 'react-router';
 import { sessions, withSiteId } from 'App/routes';
+import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
+import Period, { LAST_7_DAYS } from 'Types/app/period';
 
 const card = 'rounded-lg border bg-white';
 
 function Activity({ userId }: { userId: string }) {
   const history = useHistory();
+  const [period, setPeriod] = React.useState<{
+    start: number;
+    end: number;
+    rangeName: string;
+  }>(Period({ rangeName: LAST_7_DAYS }));
 
-  const { analyticsStore, projectsStore } = useStore();
+  const onDateChange = (period: any) => {
+    const { start, end, rangeName } = period;
+    setPeriod(Period({ start, end, rangeName }));
+  };
+  const { analyticsStore, projectsStore, searchStore, filterStore } =
+    useStore();
   const [show, setShow] = React.useState(true);
   const { showModal, hideModal } = useModal();
   const [sort, setSort] = React.useState<'asc' | 'desc'>('desc');
   const { data: list } = useQuery({
-    queryKey: ['user-events', userId, sort],
+    queryKey: ['user-events', userId, sort, period.start, period.end],
     queryFn: async () => {
-      const response = await analyticsStore.fetchUserEvents(userId, sort);
+      const response = await analyticsStore.fetchUserEvents(
+        userId,
+        sort,
+        period,
+      );
       return response;
     },
   });
@@ -62,10 +78,13 @@ function Activity({ userId }: { userId: string }) {
   };
 
   const toSessions = () => {
-    history.push(
-      withSiteId(sessions(), projectsStore.activeSiteId ?? ''),
-    );
-  }
+    const filter = filterStore.findEvent({ name: 'userId' });
+    if (filter) {
+      filter.value = [userId];
+      searchStore.addFilter(filter);
+    }
+    history.push(withSiteId(sessions(), projectsStore.activeSiteId ?? ''));
+  };
   return (
     <div className={card}>
       <div className={'px-4 py-2 flex items-center gap-2'}>
@@ -93,6 +112,7 @@ function Activity({ userId }: { userId: string }) {
             setSort(value.value);
           }}
         />
+        <SelectDateRange period={period} onChange={onDateChange} right />
       </div>
       <div className={show ? 'block' : 'hidden'}>
         <EventsByDay byDays={byDays} onItemClick={onItemClick} />

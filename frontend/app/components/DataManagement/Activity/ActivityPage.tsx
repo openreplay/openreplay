@@ -16,9 +16,7 @@ import { useStore } from 'App/mstore';
 import FullPagination from 'Shared/FullPagination';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import DndTable from 'Shared/DNDTable';
-import {
-  Plus,
-} from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Filter } from '@/mstore/types/filterConstants';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import { formatTimeOrDate } from 'App/date';

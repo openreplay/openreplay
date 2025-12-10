@@ -7,7 +7,7 @@ import { analyticsService } from '@/services';
 import Event from '@/mstore/types/Analytics/Event';
 import { session, withSiteId } from '@/routes';
 import { Link } from 'react-router-dom';
-import { Icon } from 'UI';
+import { Icon, TextEllipsis } from 'UI';
 import { getEventIcon } from './getEventIcon';
 import Tabs from 'Components/shared/Tabs';
 
@@ -161,8 +161,12 @@ function EventDetailsModal({
                   <Icon name={'logo-small-white'} size={12} />
                 )}
               </div>
-              <div className={'w-[200px]'}>{key}</div>
-              <div className={'flex-1 text-disabled-text'}>{value}</div>
+              <div className={'w-[150px]'}>{key}</div>
+              <TextEllipsis
+                text={value}
+                maxWidth={'220'}
+                className={'text-disabled-text flex-1'}
+              />
             </div>
           ))}
         </div>

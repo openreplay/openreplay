@@ -176,7 +176,7 @@ export default class AnalyticsService extends BaseService {
       `/PROJECT_ID/users/${userId}/activity`,
       payload,
     );
-    const data = await r.json();
+    const { data } = await r.json();
     return data;
   };
 

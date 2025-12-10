@@ -178,17 +178,17 @@ export default class AnalyticsStore {
     }
   };
 
-  fetchUserEvents = async (userId: string, sort: 'asc' | 'desc') => {
+  fetchUserEvents = async (userId: string, sort: 'asc' | 'desc', period: { start: number, end: number }) => {
     this.setLoading(true);
     try {
-      const data: EventsResponse = await analyticsService.getUserActivity(
+      const data = await analyticsService.getUserActivity(
         userId,
         {
           sortOrder: sort,
           sortBy: 'created_at',
-          limit: 30,
-          startTimestamp: Date.now() - 3600 * 1000,
-          endTimestamp: Date.now(),
+          limit: 100,
+          startTimestamp: period.start,
+          endTimestamp: period.end,
           page: 1,
           hideEvents: [],
         },
