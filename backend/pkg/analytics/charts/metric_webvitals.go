@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"openreplay/backend/pkg/logger"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -60,7 +61,9 @@ type scannedValues struct {
 	clsAvg, clsP50, clsP75, clsP90     *float64
 }
 
-type WebVitalsQueryBuilder struct{}
+type WebVitalsQueryBuilder struct {
+	Logger logger.Logger
+}
 
 func (h WebVitalsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := h.buildQuery(p)

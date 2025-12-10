@@ -31,7 +31,9 @@ var validMetricOfValues = map[MetricOfTable]struct{}{
 	MetricOfTableResolution: {},
 }
 
-type TableQueryBuilder struct{}
+type TableQueryBuilder struct {
+	Logger logger.Logger
+}
 
 type TableValue struct {
 	MetricName      string `json:"name" ch:"metric_name"`
@@ -95,10 +97,18 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
+
+	_start := time.Now()
+
+	t.Logger.Debug(context.Background(), "Executing query: %s", query)
+
 	var rawValues []TableValue = make([]TableValue, 0)
 	if err = conn.Select(context.Background(), &rawValues, query); err != nil {
-		log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		t.Logger.Error(context.Background(), "Error executing query: %s\nQuery: %s", err, query)
 		return nil, err
+	}
+	if time.Since(_start) > 2*time.Second {
+		t.Logger.Warn(context.Background(), "Query execution took longer than 2s: %s", query)
 	}
 
 	var valuesCount uint64
@@ -118,8 +128,8 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload) (interface{
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for table of resolutions")
 	}
-	logr := logger.New()
-	cfg := analyticsConfig.New(logr)
+
+	cfg := analyticsConfig.New(t.Logger)
 
 	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
 
@@ -134,20 +144,14 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload) (interface{
 	queryParams := convertParams(params)
 	_, err = conn.ExecContext(ctx, queries[0], queryParams...)
 	if err != nil {
-		log.Println("---------------------------------")
-		log.Println(queries[0])
-		log.Println("---------------------------------")
+		t.Logger.Error(context.Background(), "ScreenResolution query failed: %s", queries[0])
 		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
 	}
 	var rawValues []ResolutionTableValue = make([]ResolutionTableValue, 0)
 	if err = conn.SelectContext(ctx, &rawValues, queries[1], queryParams...); err != nil {
-		log.Println("---------------------------------")
-		log.Println(queries[0])
-		log.Println("---------------------------------")
-		log.Println("---------------------------------")
-		log.Println(queries[1])
-		log.Println("---------------------------------")
-		log.Printf("Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])
+		t.Logger.Error(context.Background(), "ScreenResolution query failed: %s", queries[0])
+		t.Logger.Error(context.Background(), "ScreenResolution query failed: %s", queries[1])
+		t.Logger.Error(context.Background(), "Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])
 		return nil, err
 	}
 

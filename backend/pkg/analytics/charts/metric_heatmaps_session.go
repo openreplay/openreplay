@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"openreplay/backend/pkg/analytics/model"
 	"strings"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"go.uber.org/zap"
+
+	"openreplay/backend/pkg/logger"
 )
 
 type HeatmapSessionResponse struct {
@@ -17,16 +21,25 @@ type HeatmapSessionResponse struct {
 	UrlPath        string `json:"urlPath"`
 }
 
-type HeatmapSessionQueryBuilder struct{}
+type HeatmapSessionQueryBuilder struct {
+	Logger logger.Logger
+}
 
 func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
 	shortestQ, err := h.buildQuery(p)
 	if err != nil {
+		h.Logger.Error(context.Background(), "Failed to build query", err)
 		return nil, err
 	}
 
+	h.Logger.Debug(context.Background(), "Executing query: %s", shortestQ)
+	_start := time.Now()
 	row := conn.QueryRow(context.Background(), shortestQ)
+	if time.Since(_start) > 2*time.Second {
+		h.Logger.Warn(context.Background(), "Query execution took longer than 2s: %s", shortestQ)
+	}
 	if err = row.Err(); err != nil {
+		h.Logger.Error(context.Background(), "QueryRow error", err)
 		return nil, err
 	}
 
@@ -38,6 +51,7 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 		urlPath  string
 	)
 	if err = row.Scan(&sid, &startTs, &duration, &eventTs, &urlPath); err != nil {
+		h.Logger.Error(context.Background(), "Row scan error", err)
 		return HeatmapSessionResponse{}, nil
 	}
 
@@ -160,9 +174,6 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	_, filtersWhere, _, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", true)
 	sessionsWhere = append(sessionsWhere, extraSessions...)
 
-	//fmt.Println("filtersWhere", filtersWhere)
-	//fmt.Println("extraSessions", extraSessions)
-
 	var query string
 	if hasLocationFilter {
 		eventsWhere := []string{
@@ -201,6 +212,6 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 		)
 	}
 
-	logQuery(fmt.Sprintf("HeatmapSessionQueryBuilder.buildQuery: %s", query))
+	h.Logger.Debug(context.Background(), "Built query", zap.String("query", query))
 	return query, nil
 }
