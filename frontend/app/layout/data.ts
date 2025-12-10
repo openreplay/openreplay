@@ -142,12 +142,17 @@ export const categories: (t: TFunction) => Category[] = (t) => [
   {
     title: 'Data Management',
     key: 'data-management',
+    hidden: menuHidden.dataAnalytics,
     items: [
-      { label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' },
+      {
+        label: 'Activity',
+        key: MENU.ACTIVITY,
+        icon: 'square-mouse-pointer',
+        hidden: menuHidden.dataAnalytics,
+      },
       {
         label: 'Data Management',
-        // next DLC content
-        hidden: false,
+        hidden: menuHidden.dataAnalytics,
         key: MENU.DATA_MANAGEMENT,
         icon: 'memory',
         children: [
