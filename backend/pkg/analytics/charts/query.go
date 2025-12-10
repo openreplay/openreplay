@@ -2,6 +2,7 @@ package charts
 
 import (
 	"fmt"
+	"openreplay/backend/pkg/logger"
 	"reflect"
 	"regexp"
 	"slices"
@@ -36,25 +37,25 @@ type QueryBuilder interface {
 	Execute(p *Payload, conn driver.Conn) (interface{}, error)
 }
 
-func NewQueryBuilder(p *Payload) (QueryBuilder, error) {
+func NewQueryBuilder(logger logger.Logger, p *Payload) (QueryBuilder, error) {
 	switch p.MetricType {
 	case MetricTypeTimeseries:
-		return &TimeSeriesQueryBuilder{}, nil
+		return &TimeSeriesQueryBuilder{Logger: logger}, nil
 	case MetricTypeFunnel:
-		return &FunnelQueryBuilder{}, nil
+		return &FunnelQueryBuilder{Logger: logger}, nil
 	case MetricTypeTable:
 		if p.MetricOf == "jsException" {
-			return &TableErrorsQueryBuilder{}, nil
+			return &TableErrorsQueryBuilder{Logger: logger}, nil
 		}
-		return &TableQueryBuilder{}, nil
+		return &TableQueryBuilder{Logger: logger}, nil
 	case MetricTypeHeatmap:
-		return &HeatmapSessionQueryBuilder{}, nil
+		return &HeatmapSessionQueryBuilder{Logger: logger}, nil
 	case MetricTypeSession:
-		return &HeatmapQueryBuilder{}, nil
+		return &HeatmapQueryBuilder{Logger: logger}, nil
 	case MetricUserJourney:
-		return &UserJourneyQueryBuilder{}, nil
+		return &UserJourneyQueryBuilder{Logger: logger}, nil
 	case MetricWebVitals:
-		return WebVitalsQueryBuilder{}, nil
+		return WebVitalsQueryBuilder{Logger: logger}, nil
 	default:
 		return nil, fmt.Errorf("unknown metric type: %s", p.MetricType)
 	}

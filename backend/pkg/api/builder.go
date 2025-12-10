@@ -155,7 +155,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	chartsService, err := charts.New(chconn)
+	chartsService, err := charts.New(log, chconn)
 	if err != nil {
 		return nil, err
 	}
