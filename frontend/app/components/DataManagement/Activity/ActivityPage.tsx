@@ -4,7 +4,6 @@ import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import { Dropdown, Button, Divider, Tooltip, TableProps } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import { useModal } from 'App/components/Modal';
 import EventDetailsModal from './EventDetailsModal';
@@ -35,12 +34,8 @@ const colToSort = {
 };
 
 function ActivityPage() {
-  const {
-    projectsStore,
-    filterStore,
-    analyticsStore,
-    settingsStore,
-  } = useStore();
+  const { projectsStore, filterStore, analyticsStore, settingsStore } =
+    useStore();
   const { timezone } = settingsStore.sessionSettings;
 
   const siteId = projectsStore.activeSiteId;
@@ -338,13 +333,12 @@ function ActivityPage() {
       </div>
       <div className={'relative'}>
         {editCols ? (
-          <OutsideClickDetectingDiv onClickOutside={() => setEditCols(false)}>
-            <ColumnsModal
-              columns={cols.filter((col) => col.key !== '$__opts__$')}
-              onSelect={onUpdateVisibleCols}
-              hiddenCols={hiddenCols}
-            />
-          </OutsideClickDetectingDiv>
+          <ColumnsModal
+            columns={cols.filter((col) => col.key !== '$__opts__$')}
+            onSelect={onUpdateVisibleCols}
+            hiddenCols={hiddenCols}
+            onClose={() => setEditCols(false)}
+          />
         ) : null}
 
         <div

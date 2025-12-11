@@ -14,6 +14,9 @@ import { useHistory } from 'react-router';
 import { sessions, withSiteId } from 'App/routes';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
+import { observer } from 'mobx-react-lite';
+import { Button } from 'antd';
+import FilterEntriesModal from 'Components/DataManagement/FilterEntriesModal';
 
 const card = 'rounded-lg border bg-white';
 
@@ -31,16 +34,31 @@ function Activity({ userId }: { userId: string }) {
   };
   const { analyticsStore, projectsStore, searchStore, filterStore } =
     useStore();
-  const [show, setShow] = React.useState(true);
+  const eventTypes = filterStore
+    .getCurrentProjectFilters()
+    .filter((f) => f.isEvent)
+    .map((f) => ({ title: f.displayName ?? f.name, key: f.name }));
+  const [shownTypes, setShownTypes] =
+    React.useState<{ title: string; key: string }[]>(eventTypes);
+  const [hiddenTypes, setHiddenTypes] = React.useState<string[]>([]);
+  const [editCols, setEditCols] = React.useState(false);
   const { showModal, hideModal } = useModal();
   const [sort, setSort] = React.useState<'asc' | 'desc'>('desc');
   const { data: list } = useQuery({
-    queryKey: ['user-events', userId, sort, period.start, period.end],
+    queryKey: [
+      'user-events',
+      userId,
+      sort,
+      period.start,
+      period.end,
+      hiddenTypes,
+    ],
     queryFn: async () => {
       const response = await analyticsStore.fetchUserEvents(
         userId,
         sort,
         period,
+        hiddenTypes,
       );
       return response;
     },
@@ -74,7 +92,9 @@ function Activity({ userId }: { userId: string }) {
   );
 
   const toggleEvents = () => {
-    setShow((prev) => !prev);
+    setTimeout(() => {
+      setEditCols(true);
+    }, 0)
   };
 
   const toSessions = () => {
@@ -86,23 +106,51 @@ function Activity({ userId }: { userId: string }) {
     history.push(withSiteId(sessions(), projectsStore.activeSiteId ?? ''));
   };
 
-  const getName = (filterName: string) => filterStore.getFilterDisplayName(filterName)
+  const getName = (filterName: string) =>
+    filterStore.getFilterDisplayName(filterName);
+
+  const saveShownTypes = (cols: any[]) => {
+    const selected = eventTypes.filter((et) => cols.includes(et.key));
+    setShownTypes(selected);
+    setHiddenTypes(
+      eventTypes
+        .map((et) => et.key)
+        .filter((key) => !selected.find((st) => st.key === key)),
+    );
+    setEditCols(false);
+  };
   return (
     <div className={card}>
-      <div className={'px-4 py-2 flex items-center gap-2'}>
+      <div className={'px-4 py-2 flex items-center gap-2 relative'}>
         <div className={'text-lg font-semibold'}>Activity</div>
         <div className={'link flex gap-1 items-center'} onClick={toSessions}>
           <span>Play Sessions</span>
           <Triangle size={10} color={'blue'} />
         </div>
-        <div className={'ml-auto'} />
-        <div
-          className={'flex items-center gap-2 cursor-pointer'}
+        <div className={'ml-auto relative'}>
+          {editCols ? (
+            <FilterEntriesModal
+              left
+              columns={eventTypes}
+              onSelect={saveShownTypes}
+              onClose={() => setEditCols(false)}
+              hiddenCols={hiddenTypes}
+              topOffset={'top-8'}
+              header={'Show/Hide Event Types'}
+              subheader={'Select event types to display in the activity feed.'}
+              searchText={'Search event types'}
+              confirmText={'Show Selected'}
+            />
+          ) : null}
+        </div>
+        <Button
+          className={'flex items-center gap-2'}
+          type={'text'}
           onClick={toggleEvents}
         >
-          {!show ? <Eye size={16} /> : <EyeOff size={16} />}
-          <span className={'font-medium'}>{show ? 'Hide' : 'Show'} Events</span>
-        </div>
+          <EyeOff size={16} />
+          <span className={'font-medium'}>Hide Events</span>
+        </Button>
         <Select
           options={[
             { label: 'Newest', value: 'desc' },
@@ -116,15 +164,13 @@ function Activity({ userId }: { userId: string }) {
         />
         <SelectDateRange period={period} onChange={onDateChange} right />
       </div>
-      <div className={show ? 'block' : 'hidden'}>
-        <EventsByDay
-          getName={getName}
-          byDays={byDays}
-          onItemClick={onItemClick}
-        />
-      </div>
+      <EventsByDay
+        getName={getName}
+        byDays={byDays}
+        onItemClick={onItemClick}
+      />
     </div>
   );
 }
 
-export default Activity;
+export default observer(Activity);

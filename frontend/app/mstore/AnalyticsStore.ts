@@ -182,6 +182,7 @@ export default class AnalyticsStore {
     userId: string,
     sort: 'asc' | 'desc',
     period: { start: number; end: number },
+    hiddenEvents: string[] = [],
   ) => {
     this.setLoading(true);
     try {
@@ -192,7 +193,7 @@ export default class AnalyticsStore {
         startTimestamp: period.start,
         endTimestamp: period.end,
         page: 1,
-        hideEvents: [],
+        hideEvents: hiddenEvents,
       });
       return {
         total: data.total,
