@@ -90,7 +90,7 @@ class CustomFieldStore {
   async fetchSources(): Promise<any> {
     this.isLoading = true;
     try {
-      const response = await customFieldService.get('/integration/sources');
+      const response = await customFieldService.get('/integration/v2/sources');
       this.sources = response.map(
         ({ value, ...item }: any) =>
           new CustomField({
