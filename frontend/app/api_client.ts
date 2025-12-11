@@ -38,11 +38,13 @@ const newApiUrls = [
   '/notes',
   '/unprocessed',
   'first-mob',
-  // '/events',
+  '/events',
   '/favorite',
   '/clickmaps',
   '/replay',
   '/conditions',
+  '/users',
+  '/integration/',
 ];
 const except = [
   'integrations/slack/notify',
