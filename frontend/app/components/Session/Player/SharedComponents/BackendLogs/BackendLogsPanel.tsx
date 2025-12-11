@@ -24,7 +24,7 @@ async function fetchLogs(
   sessionId: string,
 ): Promise<UnifiedLog[]> {
   const data = await client.get(
-    `/integrations/${projectId}/integration/${tab}/data/${sessionId}`,
+    `/integrations/v2/${projectId}/integration/${tab}/data/${sessionId}`,
   );
   const json = await data.json();
   try {
