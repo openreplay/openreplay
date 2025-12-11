@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"maps"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"slices"
 	"strings"
+	"time"
 
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/model"
+
+	"openreplay/backend/pkg/logger"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/lib/pq"
@@ -26,12 +28,14 @@ type Search interface {
 type searchImpl struct {
 	chConn driver.Conn
 	pgConn pool.Pool
+	Logger logger.Logger
 }
 
-func New(chConn driver.Conn, pgConn pool.Pool) (Search, error) {
+func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool) (Search, error) {
 	return &searchImpl{
 		chConn: chConn,
 		pgConn: pgConn,
+		Logger: logger,
 	}, nil
 }
 
@@ -214,16 +218,13 @@ func (s *searchImpl) getSingleSessions(projectId int, userId uint64, req *model.
 		qc.offset,
 	)
 
-	log.Printf("Sessions Search Query: %s", query)
-
-	rows, err := s.chConn.Query(context.Background(), query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
 	resp := &model.GetSessionsResponse{Sessions: make([]model.Session, 0)}
+	_start := time.Now()
 	if err := s.chConn.Select(context.Background(), &resp.Sessions, query); err != nil {
-		log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		if time.Since(_start) > 2*time.Second {
+			s.Logger.Warn(context.Background(), "Slow getSingleSession select: %s", query)
+		}
+		s.Logger.Warn(context.Background(), "Error executing query: %s\nQuery: %s", err, query)
 		return nil, err
 	}
 	if len(resp.Sessions) > 0 {
@@ -309,16 +310,18 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 			offset,
 		)
 
-		log.Printf("Series %d Sessions Search Query: %s", i, query)
-
 		seriesData := model.SeriesSessionData{
 			SeriesId:   series.SeriesID,
 			SeriesName: series.Name,
 			Sessions:   make([]model.Session, 0),
 		}
 
+		_start := time.Now()
 		if err := s.chConn.Select(context.Background(), &seriesData.Sessions, query); err != nil {
-			log.Printf("Error executing query: %s\nQuery: %s", err, query)
+			if time.Since(_start) > 2*time.Second {
+				s.Logger.Warn(context.Background(), "Slow getSeriesSessions [series %d]: %s", i, query)
+			}
+			s.Logger.Error(context.Background(), "Error executing query: %s\nQuery: %s", err, query)
 			return nil, err
 		}
 		if len(seriesData.Sessions) > 0 {
@@ -329,6 +332,7 @@ func (s *searchImpl) getSeriesSessions(projectId int, userId uint64, req *model.
 	processSessionsMetadata(response.Series[0].Sessions, metasMap)
 	return response, nil
 }
+
 func (s *searchImpl) getMetadataColumns(projectId int) map[string]string {
 	row, err := s.pgConn.Query(`
 SELECT metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
@@ -341,13 +345,13 @@ WHERE project_id = $1;`, projectId)
 	defer row.Close()
 	// Move to first row
 	if !row.Next() {
-		log.Println("No rows found")
+		s.Logger.Debug(context.Background(), "No rows found")
 		return make(map[string]string)
 	}
 	// Get values
 	values, err := row.Values()
 	if err != nil {
-		log.Println(err)
+		s.Logger.Error(context.Background(), "Error getting values: %v", err)
 		return make(map[string]string)
 	}
 	// Get column names
@@ -360,6 +364,7 @@ WHERE project_id = $1;`, projectId)
 	}
 	return result
 }
+
 func (s *searchImpl) GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
@@ -414,11 +419,14 @@ LIMIT $3 OFFSET $4`,
 		sortOrder,
 	)
 
-	log.Printf("Bookmarked Sessions Query: %s", query)
-
+	start := time.Now()
 	rows, err := s.pgConn.Query(query, userId, projectId, req.Limit, offset)
+	duration := time.Since(start)
+	if duration > 2*time.Second {
+		s.Logger.Warn(context.Background(), "Slow bookmarked query (%.2fs): %s", duration.Seconds(), query)
+	}
 	if err != nil {
-		log.Printf("Error executing bookmarked sessions query: %s\nQuery: %s", err, query)
+		s.Logger.Error(context.Background(), "Error executing bookmarked sessions query: %s\nQuery: %s", err, query)
 		return nil, err
 	}
 	defer rows.Close()
@@ -462,7 +470,7 @@ LIMIT $3 OFFSET $4`,
 			&session.Metadata10,
 		)
 		if err != nil {
-			log.Printf("Error scanning row: %s", err)
+			s.Logger.Error(context.Background(), "Error scanning row: %s", err)
 			return nil, err
 		}
 
@@ -505,14 +513,15 @@ LIMIT %d OFFSET %d;`,
 		qc.offset,
 	)
 
-	log.Printf("Session IDs Search Query: %s", query)
-
+	_start := time.Now()
 	sessionIds := make([]model.SessionIdData, 0)
 	if err := s.chConn.Select(context.Background(), &sessionIds, query); err != nil {
-		log.Printf("Error executing query: %s\nQuery: %s", err, query)
+		s.Logger.Error(context.Background(), "Error executing GetSessionIds query: %s\nQuery: %s", err, query)
 		return nil, err
 	}
-
+	if time.Since(_start) > 2*time.Second {
+		s.Logger.Warn(context.Background(), "Slow GetSessionIds select: %s", query)
+	}
 	return sessionIds, nil
 }
 
