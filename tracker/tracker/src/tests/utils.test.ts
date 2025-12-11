@@ -325,25 +325,22 @@ describe('requestIdleCb', () => {
     requestIdleCb(cb1)
     requestIdleCb(cb2)
 
-    expect(cb1).toBeCalled()
-    expect(cb2).toBeCalledTimes(0)
+    expect(cb1).toHaveBeenCalled()
+    expect(cb2).toHaveBeenCalledTimes(0)
     await jest.advanceTimersToNextTimerAsync(1)
 
-    expect(cb2).toBeCalledTimes(1)
+    expect(cb2).toHaveBeenCalledTimes(1)
   })
 })
 
 describe('inIframe', () => {
   test('returns true if the code is running inside an iframe', () => {
     const originalSelf = window.self
-    const originalTop = window.top
 
     Object.defineProperty(window, 'self', { value: {} })
-    Object.defineProperty(window, 'top', { value: {} })
 
     expect(inIframe()).toBe(true)
 
     Object.defineProperty(window, 'self', { value: originalSelf })
-    Object.defineProperty(window, 'top', { value: originalTop })
   })
 })

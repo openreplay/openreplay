@@ -1,4 +1,4 @@
-import App from './app/index.js'
+import App from './app/index'
 
 export { default as App } from './app/index.js'
 
@@ -28,8 +28,9 @@ import Network from './modules/network.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
-import LongAnimationTask from "./modules/longAnimationTask.js";
+import LongAnimationTask from './modules/longAnimationTask.js'
 import WebAnimations from './modules/webAnimations.js'
+import AnalyticsSDK from './modules/analytics/index.js'
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
 
@@ -53,12 +54,12 @@ import type { StartPromiseReturn } from './app/index.js'
 
 export type Options = Partial<
   AppOptions &
-  ConsoleOptions &
-  ExceptionOptions &
-  InputOptions &
-  PerformanceOptions &
-  TimingOptions &
-  LATOptions
+    ConsoleOptions &
+    ExceptionOptions &
+    InputOptions &
+    PerformanceOptions &
+    TimingOptions &
+    LATOptions
 > & {
   projectID?: number // For the back compatibility only (deprecated)
   projectKey: string
@@ -73,6 +74,10 @@ export type Options = Partial<
   css: CssRulesOptions
   webAnimations?: WapOptions
   urls?: Partial<ViewportOptions>
+  analytics?: {
+    ingestPoint?: string
+    active?: boolean
+  }
 }
 
 const DOCS_SETUP = '/en/sdk'
@@ -117,6 +122,7 @@ const canAccessTop = () => {
 
 export default class API {
   private readonly app: App | null = null
+  public readonly analytics: AnalyticsSDK | null = null
   private readonly crossdomainMode: boolean = false
 
   constructor(public readonly options: Partial<Options>) {
@@ -189,6 +195,21 @@ export default class API {
       this.crossdomainMode,
     )
     this.app = app
+    if (options.projectKey && options.analytics?.active) {
+      this.analytics = new AnalyticsSDK({
+        localStorage: options.localStorage ?? localStorage,
+        sessionStorage: sessionStorage ?? sessionStorage,
+        getToken: () => this.getAnalyticsToken(),
+        getTimestamp: () => this.app?.timestamp() ?? Date.now(),
+        setUserId: (id) => {
+          this.app?.session.setUserID(id)
+        },
+        notStandalone: true,
+        ingestPoint:
+          options.analytics?.ingestPoint ?? options.ingestPoint ?? 'https://api.openreplay.com/',
+        projectKey: options.projectKey,
+      })
+    }
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
       Viewport(app, options.urls)
@@ -301,6 +322,9 @@ export default class API {
     if (this.browserEnvCheck()) {
       if (this.app === null) {
         return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
+      }
+      if (startOpts?.userID) {
+        this.analytics?.people.identify(startOpts.userID, { fromTracker: true })
       }
       return this.app.start(startOpts)
     } else {
@@ -420,20 +444,21 @@ export default class API {
     return this.getSessionID()
   }
 
-  getSessionURL(options?: { withCurrentTime?: boolean }): string | undefined {
+  getSessionURL = (options?: { withCurrentTime?: boolean }): string | undefined => {
     if (this.app === null) {
       return undefined
     }
     return this.app.getSessionURL(options)
   }
 
-  setUserID(id: string): void {
+  setUserID = (id: string): void => {
     if (typeof id === 'string' && this.app !== null) {
       this.app.session.setUserID(id)
+      this.analytics?.people.identify(id, { fromTracker: true })
     }
   }
 
-  userID(id: string): void {
+  userID = (id: string): void => {
     deprecationWarn("'userID' method", "'setUserID' method", '/')
     this.setUserID(id)
   }
@@ -479,7 +504,7 @@ export default class API {
             }
           }
           payload = JSON.stringify(payload)
-        } catch (_) { }
+        } catch (_) {}
         this.app.send(CustomEvent(key, payload))
       }
     }
@@ -517,14 +542,27 @@ export default class API {
     }
   }
 
-  incident = (options: {
-    label?: string;
-    startTime: number;
-    endTime?: number;
-  }) => {
+  incident = (options: { label?: string; startTime: number; endTime?: number }) => {
     if (this.app === null) {
       return
     }
-    this.app.send(Incident(options.label ?? '', options.startTime, options.endTime ?? options.startTime))
+    this.app.send(
+      Incident(options.label ?? '', options.startTime, options.endTime ?? options.startTime),
+    )
+  }
+
+  private analyticsToken: string | null = null
+  /**
+   * Use custom token for analytics events without session recording
+   * */
+  public setAnalyticsToken = (token: string) => {
+    this.analyticsToken = token
+  }
+  public getAnalyticsToken = () => {
+    if (this.analyticsToken) {
+      return this.analyticsToken
+    } else {
+      return this.app?.session.getSessionToken() ?? ''
+    }
   }
 }
