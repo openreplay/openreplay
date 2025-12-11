@@ -36,6 +36,9 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
     except jwt.ExpiredSignatureError:
         logger.debug("! JWT Expired signature")
         return None
+    except jwt.exceptions.InvalidSignatureError:
+        logger.warning("! JWT Signature verification failed")
+        return None
     except BaseException as e:
         logger.warning("! JWT Base Exception", exc_info=e)
         return None
@@ -53,6 +56,9 @@ def jwt_refresh_authorizer(scheme: str, token: str):
                              audience=get_supported_audience())
     except jwt.ExpiredSignatureError:
         logger.debug("! JWT-refresh Expired signature")
+        return None
+    except jwt.exceptions.InvalidSignatureError:
+        logger.warning("! JWT-refresh Signature verification failed")
         return None
     except BaseException as e:
         logger.error("! JWT-refresh Base Exception", exc_info=e)
