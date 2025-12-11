@@ -17,6 +17,7 @@ import { processLog, UnifiedLog } from './utils';
 import { FailedFetch, LoadingFetch } from './StatusMessages';
 import { TableHeader, LogRow } from './Table';
 import { useTranslation } from 'react-i18next';
+import { integrationGoEdp } from 'Components/Client/Integrations/integrationGoEdp';
 
 async function fetchLogs(
   tab: string,
@@ -24,7 +25,7 @@ async function fetchLogs(
   sessionId: string,
 ): Promise<UnifiedLog[]> {
   const data = await client.get(
-    `/integrations/v2/${projectId}/integration/${tab}/data/${sessionId}`,
+    `${integrationGoEdp}${projectId}/integration/${tab}/data/${sessionId}`,
   );
   const json = await data.json();
   try {

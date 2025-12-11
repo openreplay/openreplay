@@ -218,7 +218,7 @@ export default class APIClient {
 
     const noChalice =
       path.includes('/kai') ||
-      path.includes('v1/integrations') ||
+      path.includes('/integration/') ||
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('replay-exporter');
     let edp = window.env.API_EDP || window.location.origin + '/api';
