@@ -375,6 +375,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     -- Created by the backend
     "$tags"                     Array(String) DEFAULT [] COMMENT 'tags are used to filter events',
     "$import"                   BOOL DEFAULT FALSE,
+    sample_key                  UInt8 MATERIALIZED cityHash64(event_id) % 100,
     _deleted_at                 DateTime DEFAULT '1970-01-01 00:00:00',
     _timestamp                  DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)

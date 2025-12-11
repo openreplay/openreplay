@@ -404,3 +404,7 @@ SELECT project_id,
 FROM product_analytics.events
          ARRAY JOIN JSONAllPathsWithTypes(`properties`) AS a
 GROUP BY ALL;
+
+ALTER TABLE product_analytics.events
+    ADD COLUMN sample_key UInt8
+        MATERIALIZED cityHash64(event_id) % 100;
