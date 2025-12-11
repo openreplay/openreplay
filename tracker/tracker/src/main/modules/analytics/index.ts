@@ -65,11 +65,7 @@ export default class Analytics {
 
     this.token = this.sessionStorage.getItem(STORAGEKEY)
     this.constantProperties = new ConstantProperties(this.localStorage, this.sessionStorage)
-    this.batcher = new Batcher(
-      this.backendUrl,
-      this._getToken,
-      this.init,
-    )
+    this.batcher = new Batcher(this.backendUrl, this._getToken, this.init)
     this.events = new Events(this.constantProperties, this._getTimestamp, this.batcher)
     this.people = new People(
       this.constantProperties,
@@ -133,5 +129,31 @@ export default class Analytics {
       this.token = null
       this.sessionStorage.setItem(STORAGEKEY, '')
     }
+  }
+
+  /**
+   * COMPATIBILITY LAYER
+   * */
+
+  /**
+   * Identify a user with an id (e.g. email, username, etc.)
+   * will bind all events and properties (including device_id) to this user
+   *
+   * you will need to manually call people.reset() to clear the id on logout event
+   * */
+  identify = (user_id: string) => {
+    return this.people.identify(user_id)
+  }
+
+  /**
+   * Add event to batch with option to send it immediately,
+   * properties are optional and will not be saved as super prop
+   * */
+  track = (
+    eventName: string,
+    properties?: Record<string, any>,
+    options?: { send_immediately: boolean },
+  ) => {
+    return this.events.track(eventName, properties, options)
   }
 }

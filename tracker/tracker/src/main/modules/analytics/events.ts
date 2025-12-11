@@ -132,14 +132,15 @@ export default class Events {
     }
   }
 
+  /** clears all super properties */
   reset = () => {
     this.ownProperties = {}
     this.constantProperties.clearSuperProperties();
   }
 
   /** mixpanel compatibility */
-  register = this.setProperty
-  register_once = this.setPropertiesOnce
-  unregister = this.unsetProperties
-  track = this.sendEvent
+  public register = this.setProperty
+  public register_once = this.setPropertiesOnce
+  public unregister = this.unsetProperties
+  public track = this.sendEvent
 }

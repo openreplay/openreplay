@@ -21,17 +21,26 @@ export default class People {
     }
     // if user exists already, reset properties
     if (this.constantProperties.user_id && this.constantProperties.user_id !== user_id) {
-      this.reset();
+      this.reset()
     }
     this.constantProperties.setUserId(user_id)
     if (!options?.fromTracker) {
       this.onId(user_id)
     }
 
-    const identityEvent = createEvent(categories.people, mutationTypes.identity, this.getTimestamp(), { user_id })
+    const identityEvent = createEvent(
+      categories.people,
+      mutationTypes.identity,
+      this.getTimestamp(),
+      { user_id },
+    )
     this.batcher.addEvent(identityEvent)
   }
 
+  /** Resets user id and own properties
+   *
+   * !hard reset will destroy persistent device id!
+   * */
   reset = (hard?: boolean) => {
     this.constantProperties.resetUserId(hard)
     this.ownProperties = {}
@@ -41,21 +50,25 @@ export default class People {
     return this.constantProperties.user_id
   }
 
-  // TODO: what exactly we're removing here besides properties and id?
+  /**
+   *  Will delete user and its data from backend, then reset all local properties
+   */
   deleteUser = () => {
     const removedUser = this.constantProperties.user_id
     if (!removedUser) return
     this.constantProperties.setUserId(null)
     this.ownProperties = {}
 
-    const deleteEvent = createEvent(categories.people, mutationTypes.deleteUser, undefined, { user_id: removedUser })
-    this.batcher.addEvent(deleteEvent)
+    const deleteEvent = createEvent(categories.people, mutationTypes.deleteUser, undefined, {
+      user_id: removedUser,
+    })
+    this.batcher.addEvent(deleteEvent);
+
+    this.reset()
   }
 
   /**
-   * set ownProperties, overwriting entire object
-   *
-   * TODO: exported as people.set
+   * set user properties, overwriting existing ones
    * */
   setProperties = (properties: Record<string, string | number>) => {
     if (!isObject(properties)) {
@@ -66,14 +79,15 @@ export default class People {
         this.ownProperties[key] = value
       }
     })
-    const setEvent = createEvent(categories.people, mutationTypes.setProperty, undefined, { user_id: this.user_id, properties })
+    const setEvent = createEvent(categories.people, mutationTypes.setProperty, undefined, {
+      user_id: this.user_id,
+      properties,
+    })
     this.batcher.addEvent(setEvent)
   }
 
   /**
    * Set property if it doesn't exist yet
-   *
-   * TODO: exported as people.set_once
    * */
   setPropertiesOnce = (properties: Record<string, string | number>) => {
     if (!isObject(properties)) {
@@ -85,14 +99,15 @@ export default class People {
       }
     })
 
-    const setEvent = createEvent(categories.people, mutationTypes.setPropertyOnce, undefined, { user_id: this.user_id, properties })
+    const setEvent = createEvent(categories.people, mutationTypes.setPropertyOnce, undefined, {
+      user_id: this.user_id,
+      properties,
+    })
     this.batcher.addEvent(setEvent)
   }
 
   /**
    * Add value to property (will turn string prop into array)
-   *
-   * TODO: exported as people.append
    * */
   appendValues = (key: string, value: string | number) => {
     if (!this.constantProperties.defaultPropertyKeys.includes(key) && this.ownProperties[key]) {
@@ -112,8 +127,6 @@ export default class People {
 
   /**
    * Add unique values to property (will turn string prop into array)
-   *
-   * TODO: exported as people.union
    * */
   appendUniqueValues = (key: string, value: string | number) => {
     if (!this.ownProperties[key]) return
@@ -125,17 +138,20 @@ export default class People {
       this.appendValues(key, value)
     }
 
-    const unionEvent = createEvent(categories.people, mutationTypes.appendUniqueProperty, undefined, {
-      properties: { [key]: value },
-      user_id: this.user_id,
-    })
+    const unionEvent = createEvent(
+      categories.people,
+      mutationTypes.appendUniqueProperty,
+      undefined,
+      {
+        properties: { [key]: value },
+        user_id: this.user_id,
+      },
+    )
     this.batcher.addEvent(unionEvent)
   }
 
   /**
    * Adds value (incl. negative) to existing numerical property
-   *
-   * TODO: exported as people.increment
    * */
   increment = (key: string, value: number) => {
     if (!this.ownProperties[key]) {
@@ -147,17 +163,22 @@ export default class People {
     // @ts-ignore
     this.ownProperties[key] += value
 
-    const incrementEvent = createEvent(categories.people, mutationTypes.incrementProperty, undefined, {
-      user_id: this.user_id,
-      properties: { [key]: value },
-    })
+    const incrementEvent = createEvent(
+      categories.people,
+      mutationTypes.incrementProperty,
+      undefined,
+      {
+        user_id: this.user_id,
+        properties: { [key]: value },
+      },
+    )
     this.batcher.addEvent(incrementEvent)
   }
 
   /** mixpanel compatibility */
-  union = this.appendUniqueValues
-  set = this.setProperties
-  set_once = this.setPropertiesOnce
-  append = this.appendValues
-  incrementBy = this.increment
+  public union = this.appendUniqueValues
+  public set = this.setProperties
+  public set_once = this.setPropertiesOnce
+  public append = this.appendValues
+  public incrementBy = this.increment
 }

@@ -1,3 +1,11 @@
+## 17.1.0
+
+- adds analytics package to the tracker to enable user & event tracking
+```azure
+tracker.analytics.identify('test_user', { email: 'test@test.com', name: 'Openreplino' })
+tracker.analytics.track('button_clicked', { buttonName: 'signup' })
+```
+
 ## 17.0.2
 
 - improvements around old chrome tabs retaining frozen state

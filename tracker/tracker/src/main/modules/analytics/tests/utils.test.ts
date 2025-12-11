@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals'
-import { uaParse, isObject } from '../utils.js'
+import { uaParse, isObject, getUTCOffsetString } from '../utils.js'
 
 describe('isObject', () => {
   test('returns true for objects', () => {
@@ -22,31 +22,14 @@ describe('isObject', () => {
 
 describe('uaParse', () => {
   let originalNavigator
-  let originalScreen
-  let originalDocument
   let mockWindow
 
   beforeEach(() => {
-    // Save original objects
     originalNavigator = global.navigator
-    originalScreen = global.screen
-    originalDocument = global.document
 
-    // Create mock screen
-    global.screen = {
-      width: 1920,
-      height: 1080,
-    }
-
-    // Setup mock document
-    global.document = {
-      cookie: 'testcookie=1',
-    }
-
-    // Setup mock window with basic navigator
     mockWindow = {
       navigator: {
-        appVersion: 'test version',
+        appVersion: '5.0 (Windows NT 10.0; Win64; x64)',
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         appName: 'Netscape',
@@ -56,39 +39,38 @@ describe('uaParse', () => {
         width: 1920,
         height: 1080,
       },
-      document: global.document,
+      document: {
+        cookie: 'testcookie=1',
+      },
     }
 
-    // Set global navigator
     global.navigator = mockWindow.navigator
   })
 
   afterEach(() => {
-    // Restore original objects
     global.navigator = originalNavigator
-    global.screen = originalScreen
-    global.document = originalDocument
   })
 
-  test('detects Chrome browser correctly', () => {
-    const result = uaParse(mockWindow)
+  test('detects Chrome browser and Windows OS correctly', () => {
+    const result = uaParse(mockWindow as any)
     expect(result.browser).toBe('Chrome')
     expect(result.browserMajorVersion).toBe(91)
     expect(result.os).toBe('Windows')
+    expect(result.osVersion).toBe('10')
   })
 
   test('detects screen dimensions correctly', () => {
-    const result = uaParse(mockWindow)
+    const result = uaParse(mockWindow as any)
     expect(result.width).toBe(1920)
     expect(result.height).toBe(1080)
     expect(result.screen).toBe('1920 x 1080')
   })
 
-  test('detects mobile devices correctly', () => {
+  test('detects mobile devices and iOS correctly', () => {
     mockWindow.navigator.userAgent =
       'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
-    mockWindow.navigator.appVersion = 'iPhone'
-    const result = uaParse(mockWindow)
+    mockWindow.navigator.appVersion = '5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X)'
+    const result = uaParse(mockWindow as any)
     expect(result.mobile).toBe(true)
     expect(result.os).toBe('iOS')
   })
@@ -96,7 +78,7 @@ describe('uaParse', () => {
   test('detects Firefox browser correctly', () => {
     mockWindow.navigator.userAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0'
-    const result = uaParse(mockWindow)
+    const result = uaParse(mockWindow as any)
     expect(result.browser).toBe('Firefox')
     expect(result.browserMajorVersion).toBe(89)
   })
@@ -104,28 +86,42 @@ describe('uaParse', () => {
   test('detects Edge browser correctly', () => {
     mockWindow.navigator.userAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59'
-    const result = uaParse(mockWindow)
+    const result = uaParse(mockWindow as any)
     expect(result.browser).toBe('Microsoft Edge')
   })
 
-  test('detects cookies correctly', () => {
-    const result = uaParse(mockWindow)
+  test('detects Mac OS X and version correctly', () => {
+    mockWindow.navigator.userAgent =
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
+    mockWindow.navigator.appVersion = '5.0 (Macintosh; Intel Mac OS X 10_15_7)'
+    const result = uaParse(mockWindow as any)
+    expect(result.os).toBe('Mac OS X')
+    expect(result.osVersion).toBe('10_15_7')
+  })
+
+  test('detects cookies correctly from navigator.cookieEnabled', () => {
+    const result = uaParse(mockWindow as any)
     expect(result.cookies).toBe(true)
 
     mockWindow.navigator.cookieEnabled = false
-    const result2 = uaParse(mockWindow)
+    const result2 = uaParse(mockWindow as any)
     expect(result2.cookies).toBe(false)
   })
 
   test('handles undefined screen dimensions', () => {
-    delete global.screen.width
-    delete global.screen.height
     delete mockWindow.screen.width
     delete mockWindow.screen.height
 
-    const result = uaParse(mockWindow)
+    const result = uaParse(mockWindow as any)
     expect(result.width).toBe(0)
     expect(result.height).toBe(0)
     expect(result.screen).toBe('')
+  })
+})
+
+describe('getUTCOffsetString', () => {
+  test('returns string in UTC±HH:MM format', () => {
+    const result = getUTCOffsetString()
+    expect(result).toMatch(/^UTC[+-]\d{2}:\d{2}$/)
   })
 })

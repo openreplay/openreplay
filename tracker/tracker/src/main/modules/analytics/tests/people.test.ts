@@ -2,257 +2,342 @@
 import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals'
 import People from '../people.js'
 import * as utils from '../utils.js'
+import { createEvent, categories, mutationTypes } from '../types.js'
 
-jest.spyOn(utils, 'isObject')
+jest.mock('../types.js', () => ({
+  mutationTypes: {
+    identity: 'identity',
+    deleteUser: 'deleteUser',
+    setProperty: 'setProperty',
+    setPropertyOnce: 'setPropertyOnce',
+    appendProperty: 'appendProperty',
+    appendUniqueProperty: 'appendUniqueProperty',
+    incrementProperty: 'incrementProperty',
+  },
+  categories: {
+    people: 'people',
+  },
+  createEvent: jest.fn((category, type, timestamp, payload) => ({
+    category,
+    type,
+    timestamp,
+    payload,
+  })),
+}))
 
 describe('People', () => {
-  let mockSharedProperties
-  let mockGetToken
-  let mockGetTimestamp
-  let people
+  let constantProps: any
+  let getTimestamp: jest.Mock
+  let onId: jest.Mock
+  let batcher: { addEvent: jest.Mock }
+  let people: People
 
   beforeEach(() => {
-    // Mock shared properties
-    mockSharedProperties = {
-      all: {
-        $__os: 'Windows 10',
-        $__browser: 'Chrome 91.0.4472.124 (91)',
-        $__deviceId: 'test-device-id',
-      },
+    constantProps = {
+      user_id: null,
+      defaultPropertyKeys: ['os', 'browser', 'reserved'], // added: simulate reserved/default keys
+      setUserId: jest.fn((id: string | null) => {
+        constantProps.user_id = id
+      }),
+      resetUserId: jest.fn(),
     }
 
-    // Mock token and timestamp functions
-    mockGetToken = jest.fn(() => 'test-token-123')
-    mockGetTimestamp = jest.fn(() => 1635186000000)
+    getTimestamp = jest.fn(() => 1635186000000)
+    onId = jest.fn()
+    batcher = {
+      addEvent: jest.fn(),
+    }
 
-    // Create People instance
-    people = new People(mockSharedProperties, mockGetToken, mockGetTimestamp)
-
-    // Mock fetch globally if needed for future implementations
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ success: true }),
-    })
+    people = new People(constantProps, getTimestamp, onId, batcher)
   })
 
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
-  test('constructor initializes with empty properties and null user_id', () => {
+  test('constructor initializes with empty ownProperties and reads user_id from constantProperties', () => {
     expect(people.ownProperties).toEqual({})
     expect(people.user_id).toBeNull()
+
+    constantProps.user_id = 'existing-user'
+    const other = new People(constantProps, getTimestamp, onId, batcher)
+    expect(other.user_id).toBe('existing-user')
   })
 
-  test('identify sets user_id correctly', () => {
-    people.identify('test-user-123')
-    expect(people.user_id).toBe('test-user-123')
-    // Note: We're not testing the fetch endpoint as it's marked as TODO in the code
+  test('identify throws if user_id is missing', () => {
+    expect(() => people.identify('')).toThrow('OR SDK: user_id is required for identify')
+    expect(() => people.identify(null as any)).toThrow('OR SDK: user_id is required for identify')
   })
 
-  test('deleteUser resets user_id and properties', () => {
-    // Set up initial state
-    people.user_id = 'test-user-123'
-    people.ownProperties = {
-      name: 'Test User',
-      email: 'test@example.com',
-    }
+  test('identify sets user_id, calls onId, and sends identity event', () => {
+    people.identify('user-123')
 
-    // Call deleteUser
+    expect(constantProps.setUserId).toHaveBeenCalledWith('user-123')
+    expect(people.user_id).toBe('user-123')
+    expect(onId).toHaveBeenCalledWith('user-123')
+    expect(getTimestamp).toHaveBeenCalled()
+
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event).toEqual({
+      category: categories.people,
+      type: mutationTypes.identity,
+      timestamp: 1635186000000,
+      payload: { user_id: 'user-123' },
+    })
+    expect((createEvent as jest.Mock).mock.calls[0]).toEqual([
+      categories.people,
+      mutationTypes.identity,
+      1635186000000,
+      { user_id: 'user-123' },
+    ])
+  })
+
+  test('identify does not call onId when fromTracker=true', () => {
+    people.identify('user-123', { fromTracker: true })
+
+    expect(constantProps.setUserId).toHaveBeenCalledWith('user-123')
+    expect(onId).not.toHaveBeenCalled()
+  })
+
+  test('identify resets when switching from existing different user', () => {
+    constantProps.user_id = 'old-user'
+    const p = new People(constantProps, getTimestamp, onId, batcher)
+    const resetSpy = jest.spyOn(p, 'reset')
+
+    p.identify('new-user')
+
+    expect(resetSpy).toHaveBeenCalled()
+    expect(constantProps.setUserId).toHaveBeenCalledWith('new-user')
+  })
+
+  test('reset soft resets user and clears ownProperties', () => {
+    people.ownProperties = { a: 1 }
+    people.reset()
+
+    expect(constantProps.resetUserId).toHaveBeenCalledWith(undefined)
+    expect(people.ownProperties).toEqual({})
+  })
+
+  test('reset hard resets user and clears ownProperties', () => {
+    people.ownProperties = { a: 1 }
+    people.reset(true)
+
+    expect(constantProps.resetUserId).toHaveBeenCalledWith(true)
+    expect(people.ownProperties).toEqual({})
+  })
+
+  test('deleteUser does nothing when no user_id', () => {
+    constantProps.user_id = null
+
     people.deleteUser()
 
-    // Check results
-    expect(people.user_id).toBeNull()
+    expect(constantProps.setUserId).not.toHaveBeenCalled()
+    expect(batcher.addEvent).not.toHaveBeenCalled()
+  })
+
+  test('deleteUser clears user, ownProperties and adds delete event then calls reset', () => {
+    constantProps.user_id = 'user-123'
+    people.ownProperties = { name: 'Test' }
+    const resetSpy = jest.spyOn(people, 'reset')
+
+    people.deleteUser()
+
+    expect(constantProps.setUserId).toHaveBeenCalledWith(null)
     expect(people.ownProperties).toEqual({})
+    expect(resetSpy).toHaveBeenCalled()
+
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event).toEqual({
+      category: categories.people,
+      type: mutationTypes.deleteUser,
+      timestamp: undefined,
+      payload: { user_id: 'user-123' },
+    })
   })
 
-  test('setProperties adds properties correctly', () => {
+  test('setProperties adds non-default properties and sends event', () => {
+    const isObjectSpy = jest.spyOn(utils, 'isObject')
+
     people.setProperties({
       name: 'Test User',
-      email: 'test@example.com',
+      age: 30,
+      os: 'Windows', // should be ignored by defaultPropertyKeys
+    })
+
+    expect(isObjectSpy).toHaveBeenCalled()
+    expect(people.ownProperties).toEqual({
+      name: 'Test User',
       age: 30,
     })
 
-    expect(people.ownProperties).toEqual({
-      name: 'Test User',
-      email: 'test@example.com',
-      age: 30,
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event.type).toBe(mutationTypes.setProperty)
+    expect(event.payload).toEqual({
+      user_id: null,
+      properties: {
+        name: 'Test User',
+        age: 30,
+        os: 'Windows',
+      },
     })
   })
 
-  test('setProperties validates properties are objects', () => {
-    expect(() => {
-      people.setProperties('not an object')
-    }).toThrow('Properties must be an object')
+  test('setProperties throws for non-object input', () => {
+    expect(() => people.setProperties('not-an-object' as any)).toThrow(
+      'Properties must be an object',
+    )
   })
 
-  test('setProperties ignores reserved properties', () => {
-    people.setProperties({
-      name: 'Test User',
-      distinct_id: 'should-be-ignored',
-      event_name: 'also-ignored',
-      properties: 'ignored-too',
-    })
-
-    expect(people.ownProperties).toEqual({
-      name: 'Test User',
-    })
-
-    // Reserved properties should not be present
-    expect(people.ownProperties.distinct_id).toBeUndefined()
-    expect(people.ownProperties.event_name).toBeUndefined()
-    expect(people.ownProperties.properties).toBeUndefined()
-  })
-
-  test('setPropertiesOnce only sets properties that do not exist', () => {
-    // Set initial property
+  test('setPropertiesOnce only sets properties that do not exist and ignores default keys', () => {
     people.ownProperties = {
-      name: 'Initial Name',
+      name: 'Initial',
     }
 
-    // Try to set name again and add new properties
     people.setPropertiesOnce({
-      name: 'New Name',
+      name: 'New',
       email: 'test@example.com',
-      age: 30,
+      reserved: 'should-be-ignored',
     })
 
     expect(people.ownProperties).toEqual({
-      name: 'Initial Name', // Should not change
-      email: 'test@example.com', // Should be added
-      age: 30, // Should be added
+      name: 'Initial',
+      email: 'test@example.com',
+    })
+
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event.type).toBe(mutationTypes.setPropertyOnce)
+    expect(event.payload.properties).toEqual({
+      name: 'New',
+      email: 'test@example.com',
+      reserved: 'should-be-ignored',
     })
   })
 
-  test('setPropertiesOnce validates properties are objects', () => {
-    expect(() => {
-      people.setPropertiesOnce('not an object')
-    }).toThrow('Properties must be an object')
+  test('setPropertiesOnce throws for non-object input', () => {
+    expect(() => people.setPropertiesOnce('not-an-object' as any)).toThrow(
+      'Properties must be an object',
+    )
   })
 
-  test('appendValues adds value to existing property turning it into an array', () => {
-    // Set initial string property
+  test('appendValues turns string property into array', () => {
     people.ownProperties = {
       tags: 'tag1',
     }
 
-    // Append a value
     people.appendValues('tags', 'tag2')
 
     expect(people.ownProperties.tags).toEqual(['tag1', 'tag2'])
+
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event.type).toBe(mutationTypes.appendProperty)
+    expect(event.payload.properties).toEqual({ tags: 'tag2' })
   })
 
-  test('appendValues adds value to existing array property', () => {
-    // Set initial array property
+  test('appendValues appends to existing array property', () => {
     people.ownProperties = {
       tags: ['tag1', 'tag2'],
     }
 
-    // Append a value
     people.appendValues('tags', 'tag3')
 
     expect(people.ownProperties.tags).toEqual(['tag1', 'tag2', 'tag3'])
   })
 
-  test('appendValues does nothing if property does not exist', () => {
+  test('appendValues does not change undefined or default-key property but still sends event', () => {
     people.ownProperties = {}
+    people.appendValues('missing', 'value')
+    expect(people.ownProperties.missing).toBeUndefined()
 
-    people.appendValues('nonexistent', 'value')
+    people.ownProperties = { reserved: 'keep' }
+    people.appendValues('reserved', 'new')
+    expect(people.ownProperties.reserved).toBe('keep')
 
-    expect(people.ownProperties.nonexistent).toBeUndefined()
+    expect(batcher.addEvent).toHaveBeenCalledTimes(2)
   })
 
-  test('appendValues ignores reserved properties', () => {
-    people.ownProperties = {
-      distinct_id: 'reserved',
-    }
-
-    people.appendValues('distinct_id', 'new-value')
-
-    expect(people.ownProperties.distinct_id).toBe('reserved')
-  })
-
-  test('appendUniqueValues adds unique value to array property', () => {
-    // Set initial array property
+  test('appendUniqueValues adds unique value to array property and sends both append and union events', () => {
     people.ownProperties = {
       tags: ['tag1', 'tag2'],
     }
 
-    // Append a unique value
     people.appendUniqueValues('tags', 'tag3')
 
     expect(people.ownProperties.tags).toEqual(['tag1', 'tag2', 'tag3'])
 
-    // Try to append a duplicate value
-    people.appendUniqueValues('tags', 'tag2')
+    expect(batcher.addEvent).toHaveBeenCalledTimes(2)
+    const [appendEvent, unionEvent] = batcher.addEvent.mock.calls.map((c) => c[0])
 
-    // Array should remain unchanged
-    expect(people.ownProperties.tags).toEqual(['tag1', 'tag2', 'tag3'])
+    expect(appendEvent.type).toBe(mutationTypes.appendProperty)
+    expect(unionEvent.type).toBe(mutationTypes.appendUniqueProperty)
   })
 
-  test('appendUniqueValues adds unique value to string property', () => {
-    // Set initial string property
+  test('appendUniqueValues only sends union event when value already present in array', () => {
+    people.ownProperties = {
+      tags: ['tag1', 'tag2'],
+    }
+
+    people.appendUniqueValues('tags', 'tag2')
+
+    expect(people.ownProperties.tags).toEqual(['tag1', 'tag2'])
+    expect(batcher.addEvent).toHaveBeenCalledTimes(1)
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event.type).toBe(mutationTypes.appendUniqueProperty)
+  })
+
+  test('appendUniqueValues turns scalar into array when different value', () => {
     people.ownProperties = {
       tag: 'tag1',
     }
 
-    // Append a different value
     people.appendUniqueValues('tag', 'tag2')
 
     expect(people.ownProperties.tag).toEqual(['tag1', 'tag2'])
-
-    // Try to append the same value
-    people.appendUniqueValues('tag', 'tag1')
-
-    // Array should remain unchanged
-    expect(people.ownProperties.tag).toEqual(['tag1', 'tag2'])
   })
 
-  test('appendUniqueValues does nothing if property does not exist', () => {
+  test('appendUniqueValues does nothing when property does not exist', () => {
     people.ownProperties = {}
 
-    people.appendUniqueValues('nonexistent', 'value')
+    people.appendUniqueValues('missing', 'value')
 
-    expect(people.ownProperties.nonexistent).toBeUndefined()
+    expect(people.ownProperties.missing).toBeUndefined()
+    expect(batcher.addEvent).not.toHaveBeenCalled()
   })
 
-  test('increment adds value to existing numerical property', () => {
-    // Set initial numerical property
+  test('increment initializes missing numeric property and adds value', () => {
+    people.ownProperties = {}
+
+    people.increment('count', 5)
+
+    expect(people.ownProperties.count).toBe(5)
+
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event.type).toBe(mutationTypes.incrementProperty)
+    expect(event.payload.properties).toEqual({ count: 5 })
+  })
+
+  test('increment adds to existing numeric property and supports negative values', () => {
     people.ownProperties = {
       count: 10,
     }
 
-    // Increment it
     people.increment('count', 5)
-
-    expect(people.ownProperties.count).toBe(15)
-
-    // Decrement it
     people.increment('count', -3)
 
     expect(people.ownProperties.count).toBe(12)
+    expect(batcher.addEvent).toHaveBeenCalledTimes(2)
   })
 
-  test('increment does nothing for non-numerical properties', () => {
+  test('increment throws for non-numeric property', () => {
     people.ownProperties = {
       name: 'Test',
-      arrayProp: [1, 2, 3],
+      arr: [1, 2, 3],
     }
 
-    people.increment('name', 5)
-    people.increment('arrayProp', 5)
-
-    expect(people.ownProperties.name).toBe('Test')
-    expect(people.ownProperties.arrayProp).toEqual([1, 2, 3])
-  })
-
-  test('increment ignores reserved properties', () => {
-    people.ownProperties = {
-      distinct_id: 10,
-    }
-
-    people.increment('distinct_id', 5)
-
-    expect(people.ownProperties.distinct_id).toBe(10)
+    expect(() => people.increment('name', 5)).toThrow(
+      'OR SDK: Property must be a number to increment',
+    )
+    expect(() => people.increment('arr', 5)).toThrow(
+      'OR SDK: Property must be a number to increment',
+    )
   })
 })

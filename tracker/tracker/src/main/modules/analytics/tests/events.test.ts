@@ -1,201 +1,275 @@
 // @ts-nocheck
 import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals'
 import Events from '../events.js'
+import * as utils from '../utils.js'
+import { createEvent, categories } from '../types.js'
+
+jest.mock('../types.js', () => ({
+  categories: {
+    events: 'events',
+  },
+  createEvent: jest.fn((category, type, timestamp, payload) => ({
+    category,
+    type,
+    timestamp,
+    payload,
+  })),
+}))
 
 describe('Events', () => {
-  let mockSharedProperties
-  let events
-  let mockTimestamp
-  let mockToken
-  let mockGetTimestamp
-  let originalSetInterval
-  let originalClearInterval
-  let setIntervalMock
+  let constantProps: any
+  let getTimestamp: jest.Mock
+  let batcher: { addEvent: jest.Mock; sendImmediately: jest.Mock }
+  let events: Events
 
   beforeEach(() => {
-    originalSetInterval = global.setInterval
-    originalClearInterval = global.clearInterval
-
-    setIntervalMock = jest.fn(() => 123)
-    global.setInterval = setIntervalMock
-    global.clearInterval = jest.fn()
-
-    mockTimestamp = 1635186000000 // Example timestamp
-    mockGetTimestamp = jest.fn(() => mockTimestamp)
-
-    mockSharedProperties = {
-      all: {
-        $__os: 'Windows 10',
-        $__browser: 'Chrome 91.0.4472.124 (91)',
-        $__device: 'Desktop',
-        $__screenHeight: 1080,
-        $__screenWidth: 1920,
-        $__initialReferrer: 'https://example.com',
-        $__utmSource: 'test_source',
-        $__utmMedium: 'test_medium',
-        $__utmCampaign: 'test_campaign',
-        $__deviceId: 'test-device-id',
-      },
+    constantProps = {
+      defaultPropertyKeys: ['os', 'browser', 'reservedKey'],
+      getSuperProperties: jest.fn(() => ({
+        superA: 'A',
+        superB: 2,
+      })),
+      saveSuperProperties: jest.fn(),
+      clearSuperProperties: jest.fn(),
     }
 
-    mockToken = 'test-token-123'
+    getTimestamp = jest.fn(() => 1635186000000)
+    batcher = {
+      addEvent: jest.fn(),
+      sendImmediately: jest.fn().mockResolvedValue(undefined),
+    }
 
-    events = new Events(mockSharedProperties, mockToken, mockGetTimestamp, 1000)
-
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ success: true }),
-    })
+    events = new Events(constantProps, getTimestamp, batcher)
   })
 
   afterEach(() => {
-    global.setInterval = originalSetInterval
-    global.clearInterval = originalClearInterval
-
-    if (events.sendInterval) {
-      clearInterval(events.sendInterval)
-    }
-
     jest.restoreAllMocks()
   })
 
-  test('constructor sets up event queue and batch interval', () => {
-    expect(events.queue).toEqual([])
-    expect(events.ownProperties).toEqual({})
-    expect(setIntervalMock).toHaveBeenCalledWith(expect.any(Function), 1000)
-    expect(events.sendInterval).toBe(123)
-  })
-
-  test('sendEvent adds event to queue with correct properties', () => {
-    events.sendEvent('test_event', { testProp: 'value' })
-
-    expect(events.queue).toHaveLength(1)
-    expect(events.queue[0]).toEqual({
-      event: 'test_event',
-      properties: {
-        ...mockSharedProperties.all,
-        testProp: 'value',
-      },
-      timestamp: mockTimestamp,
+  test('constructor initializes ownProperties from constantProperties.getSuperProperties', () => {
+    expect(constantProps.getSuperProperties).toHaveBeenCalled()
+    expect(events.ownProperties).toEqual({
+      superA: 'A',
+      superB: 2,
     })
   })
 
-  test('sendEvent validates properties are objects', () => {
-    expect(() => {
-      events.sendEvent('test_event', 'not an object')
-    }).toThrow('Properties must be an object')
-  })
+  test('sendEvent merges ownProperties and non-default properties, sends via addEvent', () => {
+    const spyIsObject = jest.spyOn(utils, 'isObject')
 
-  test('sendEvent with send_immediately option calls sendSingle', async () => {
-    const sendSingleSpy = jest.spyOn(events, 'sendSingle').mockResolvedValue(undefined)
-
-    await events.sendEvent('immediate_test', { testProp: 'value' }, { send_immediately: true })
-
-    expect(sendSingleSpy).toHaveBeenCalledWith({
-      event: 'immediate_test',
-      properties: {
-        ...mockSharedProperties.all,
-        testProp: 'value',
-      },
-      timestamp: mockTimestamp,
+    events.sendEvent('test_event', {
+      foo: 'bar',
+      os: 'Windows', // should be filtered out by defaultPropertyKeys
     })
-    expect(events.queue).toHaveLength(0) // Should not add to queue
+
+    expect(spyIsObject).toHaveBeenCalledWith({
+      foo: 'bar',
+      os: 'Windows',
+    })
+    expect(getTimestamp).toHaveBeenCalled()
+
+    expect(batcher.addEvent).toHaveBeenCalledTimes(1)
+    const event = batcher.addEvent.mock.calls[0][0]
+
+    expect(event).toEqual({
+      category: categories.events,
+      type: undefined,
+      timestamp: 1635186000000,
+      payload: {
+        name: 'test_event',
+        properties: {
+          superA: 'A',
+          superB: 2,
+          foo: 'bar',
+        },
+      },
+    })
   })
 
-  test('sendBatch does nothing when queue is empty', async () => {
-    await events.sendBatch()
-    expect(global.fetch).not.toHaveBeenCalled()
+  test('sendEvent throws when properties is not an object', () => {
+    expect(() => events.sendEvent('bad', 'not-object' as any)).toThrow(
+      'Properties must be an object',
+    )
   })
 
-  test('setProperty sets a single property correctly', () => {
-    events.setProperty('testProp', 'value')
-    expect(events.ownProperties).toEqual({ testProp: 'value' })
+  test('sendEvent works without properties, uses only ownProperties', () => {
+    events.sendEvent('no_props')
 
-    events.setProperty('event_name', 'should not be set')
-    expect(events.ownProperties.event_name).toBeUndefined()
+    expect(batcher.addEvent).toHaveBeenCalledTimes(1)
+    const event = batcher.addEvent.mock.calls[0][0]
+
+    expect(event.payload).toEqual({
+      name: 'no_props',
+      properties: {
+        superA: 'A',
+        superB: 2,
+      },
+    })
   })
 
-  test('setProperty sets multiple properties from object', () => {
+  test('sendEvent with send_immediately option calls batcher.sendImmediately instead of addEvent', () => {
+    events.sendEvent('immediate_event', { foo: 'bar' }, { send_immediately: true })
+
+    expect(batcher.sendImmediately).toHaveBeenCalledTimes(1)
+    const event = batcher.sendImmediately.mock.calls[0][0]
+
+    expect(event.payload.name).toBe('immediate_event')
+    expect(batcher.addEvent).not.toHaveBeenCalled()
+  })
+
+  test('setProperty with object sets non-default keys and calls saveSuperProperties once', () => {
     events.setProperty({
-      prop1: 'value1',
-      prop2: 'value2',
-      event_name: 'should not be set', // Reserved
+      a: 1,
+      browser: 'Chrome', // defaultPropertyKeys, should be ignored
+      b: 2,
     })
 
     expect(events.ownProperties).toEqual({
-      prop1: 'value1',
-      prop2: 'value2',
+      superA: 'A',
+      superB: 2,
+      a: 1,
+      b: 2,
     })
+    expect(constantProps.saveSuperProperties).toHaveBeenCalledWith(events.ownProperties)
   })
 
-  test('setPropertiesOnce only sets properties that do not exist', () => {
-    events.setProperty('existingProp', 'initial value')
+  test('setProperty with string/value sets non-default key and calls saveSuperProperties', () => {
+    events.setProperty('a', 1)
+    expect(events.ownProperties.a).toBe(1)
+    expect(constantProps.saveSuperProperties).toHaveBeenCalledWith(events.ownProperties)
+  })
+
+  test('setProperty ignores defaultPropertyKeys and does not call saveSuperProperties when nothing changed', () => {
+    events.setProperty('os', 'Windows')
+    expect(events.ownProperties.os).toBeUndefined()
+    expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
+  })
+
+  test('setProperty with object that yields no changes does not call saveSuperProperties', () => {
+    events.setProperty({
+      os: 'Windows',
+      browser: 'Chrome',
+    })
+
+    expect(events.ownProperties).toEqual({
+      superA: 'A',
+      superB: 2,
+    })
+    expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
+  })
+
+  test('setPropertiesOnce with object only sets missing and non-reserved keys', () => {
+    events.ownProperties = {
+      superA: 'A',
+      existing: 'keep',
+      properties: 'reserved',
+      token: 'reserved-token',
+      timestamp: 1234,
+    }
 
     events.setPropertiesOnce({
-      existingProp: 'new value',
-      newProp: 'value',
+      existing: 'new', // should not change
+      newKey: 'newValue',
+      properties: 'should-not-set',
+      token: 'should-not-set',
+      timestamp: 'should-not-set',
     })
 
     expect(events.ownProperties).toEqual({
-      existingProp: 'initial value', // Should not change
-      newProp: 'value', // Should be added
+      superA: 'A',
+      existing: 'keep',
+      properties: 'reserved',
+      token: 'reserved-token',
+      timestamp: 1234,
+      newKey: 'newValue',
     })
+    expect(constantProps.saveSuperProperties).toHaveBeenCalledWith(events.ownProperties)
   })
 
-  test('setPropertiesOnce sets a single property if it does not exist', () => {
-    events.setPropertiesOnce('newProp', 'value')
-    expect(events.ownProperties).toEqual({ newProp: 'value' })
+  test('setPropertiesOnce with string/value sets only if missing and non-reserved', () => {
+    events.ownProperties = {}
 
-    events.setPropertiesOnce('newProp', 'new value')
-    expect(events.ownProperties).toEqual({ newProp: 'value' }) // Should not change
+    events.setPropertiesOnce('newKey', 'v')
+    expect(events.ownProperties).toEqual({ newKey: 'v' })
+
+    events.setPropertiesOnce('newKey', 'other')
+    expect(events.ownProperties).toEqual({ newKey: 'v' })
+
+    events.setPropertiesOnce('properties', 'nope')
+    expect(events.ownProperties.properties).toBeUndefined()
   })
 
-  test('unsetProperties removes a single property', () => {
-    events.setProperty({
-      prop1: 'value1',
-      prop2: 'value2',
-    })
-    events.unsetProperties('prop1')
+  test('setPropertiesOnce does not call saveSuperProperties when nothing changed', () => {
+    events.ownProperties = { existing: 1 }
+
+    events.setPropertiesOnce({ existing: 2 })
+    expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
+  })
+
+  test('unsetProperties removes a single non-reserved property and saves', () => {
+    events.ownProperties = {
+      a: 1,
+      b: 2,
+      token: 'keep',
+    }
+
+    events.unsetProperties('a')
 
     expect(events.ownProperties).toEqual({
-      prop2: 'value2',
+      b: 2,
+      token: 'keep',
     })
+    expect(constantProps.saveSuperProperties).toHaveBeenCalledWith(events.ownProperties)
   })
 
-  test('unsetProperties removes multiple properties', () => {
-    events.setProperty({
-      prop1: 'value1',
-      prop2: 'value2',
-      prop3: 'value3',
-    })
-    events.unsetProperties(['prop1', 'prop3'])
+  test('unsetProperties removes multiple non-reserved properties and saves', () => {
+    events.ownProperties = {
+      a: 1,
+      b: 2,
+      properties: 'keep',
+      timestamp: 1234,
+    }
+
+    events.unsetProperties(['a', 'b', 'timestamp'])
 
     expect(events.ownProperties).toEqual({
-      prop2: 'value2',
+      properties: 'keep',
+      timestamp: 1234,
     })
+    expect(constantProps.saveSuperProperties).toHaveBeenCalledWith(events.ownProperties)
   })
 
-  test('unsetProperties does not remove reserved properties', () => {
-    events.ownProperties.event_name = 'test'
-    events.unsetProperties('event_name')
+  test('unsetProperties does not remove reserved properties and does not save if nothing changed', () => {
+    events.ownProperties = {
+      properties: 'keep',
+      token: 'keep-token',
+    }
 
-    expect(events.ownProperties.event_name).toBe('test')
-  })
+    events.unsetProperties('properties')
+    events.unsetProperties(['token'])
 
-  test('events include both shared and own properties', () => {
-    events.setProperty('customProp', 'custom value')
-    events.sendEvent('test_event')
-
-    expect(events.queue[0].properties).toEqual({
-      ...mockSharedProperties.all,
-      customProp: 'custom value',
+    expect(events.ownProperties).toEqual({
+      properties: 'keep',
+      token: 'keep-token',
     })
+    expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
   })
 
-  test('event properties override own properties', () => {
-    events.setProperty('customProp', 'own value')
+  test('reset clears all super properties and calls clearSuperProperties', () => {
+    events.ownProperties = { something: 'here' }
 
-    events.sendEvent('test_event', { customProp: 'event value' })
-    expect(events.queue[0].properties.customProp).toBe('event value')
+    events.reset()
+
+    expect(events.ownProperties).toEqual({})
+    expect(constantProps.clearSuperProperties).toHaveBeenCalled()
+  })
+
+  test('event properties override ownProperties on sendEvent', () => {
+    events.setProperty('foo', 'from_super')
+
+    events.sendEvent('test', { foo: 'from_event' })
+
+    const event = batcher.addEvent.mock.calls[0][0]
+    expect(event.payload.properties.foo).toBe('from_event')
   })
 })
