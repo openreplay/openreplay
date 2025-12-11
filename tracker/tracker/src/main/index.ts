@@ -194,6 +194,7 @@ export default class API {
       this.signalStartIssue,
       this.crossdomainMode,
     )
+    this.app = app
     if (options.projectKey && options.analytics?.active) {
       this.analytics = new AnalyticsSDK({
         localStorage: options.localStorage ?? localStorage,
@@ -209,7 +210,6 @@ export default class API {
         projectKey: options.projectKey,
       })
     }
-    this.app = app
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
       Viewport(app, options.urls)
