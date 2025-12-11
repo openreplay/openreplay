@@ -131,7 +131,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	searchService, err := search.New(chconn, pgconn)
+	searchService, err := search.New(log, chconn, pgconn)
 	if err != nil {
 		return nil, err
 	}
