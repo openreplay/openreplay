@@ -14,7 +14,7 @@ import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
 import { observer } from 'mobx-react-lite';
-import { CopyButton } from 'UI';
+import { CopyButton, confirm } from 'UI';
 
 const card = 'rounded-lg border bg-white';
 
@@ -66,6 +66,12 @@ function UserInfo({ userId }: { userId: string }) {
   };
 
   const onDelete = async (userId: string) => {
+    const confirmed = await confirm({
+      header: 'Delete User',
+      confirmation: 'Are you sure you want to permanently delete this user?',
+      confirmButton: 'Yes, Delete',
+    } as any);
+    if (!confirmed) return;
     await analyticsStore.deleteUser(userId);
     history.push(
       withSiteId(
@@ -103,14 +109,13 @@ function UserInfo({ userId }: { userId: string }) {
         onSave={(path, key, value) => onPropSave(path, key, value)}
       />,
       {
-        width: 420,
+        width: 620,
         right: true,
       },
     );
   };
 
-  const propLength = Object.keys(user?.properties ?? {}).length;
-  const hasProperties = propLength > 0;
+  const propLength = Object.keys(user?.properties ?? {}).length + 7;
 
   const getFirstLetters = (name: string) => {
     const parts = name.split(' ');
@@ -217,11 +222,9 @@ function UserInfo({ userId }: { userId: string }) {
             <div>{user?.userLocation}</div>
           </div>
           <div className={'flex items-center gap-4'}>
-            {hasProperties ? (
-              <div onClick={showAll} className={'link font-semibold'}>
-                +{propLength} properties
-              </div>
-            ) : null}
+            <div onClick={showAll} className={'link font-semibold'}>
+              +{propLength} properties
+            </div>
             <Dropdown
               menu={{ items: dropdownItems }}
               trigger={['click']}
