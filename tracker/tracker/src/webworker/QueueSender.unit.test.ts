@@ -49,16 +49,16 @@ describe('QueueSender', () => {
     const fetchMock = mockFetch(200)
 
     queueSender.push(sampleArray)
-    expect(fetchMock).not.toBeCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
   test('Calls fetch on push() if authorised', () => {
     const queueSender = defaultQueueSender()
     const fetchMock = mockFetch(200)
 
     queueSender.authorise(randomToken)
-    expect(fetchMock).toBeCalledTimes(0)
+    expect(fetchMock).toHaveBeenCalledTimes(0)
     queueSender.push(sampleArray)
-    expect(fetchMock).toBeCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0][1]).toMatchObject(requestMock)
   })
   test('Sends compressed request if onCompress is provided and compressed batch is included', () => {
@@ -72,11 +72,11 @@ describe('QueueSender', () => {
 
     queueSender.authorise(randomToken)
     queueSender.push(sampleArray)
-    expect(spyOnCompress).toBeCalledTimes(1)
+    expect(spyOnCompress).toHaveBeenCalledTimes(1)
     queueSender.sendCompressed(sampleArray)
-    expect(fetchMock).toBeCalledTimes(1)
-    expect(spyOnSendNext).toBeCalledTimes(1)
-    expect(spyOnCompress).toBeCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(spyOnSendNext).toHaveBeenCalledTimes(1)
+    expect(spyOnCompress).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0][1]).toMatchObject(gzipRequestMock)
   })
   test('Calls fetch on authorisation if there was a push() call before', () => {
@@ -85,7 +85,7 @@ describe('QueueSender', () => {
 
     queueSender.push(sampleArray)
     queueSender.authorise(randomToken)
-    expect(fetchMock).toBeCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   // .clean()
@@ -97,7 +97,7 @@ describe('QueueSender', () => {
     queueSender.clean()
     jest.runAllTimers()
     queueSender.push(sampleArray)
-    expect(fetchMock).not.toBeCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
   test("Doesn't call fetch on authorisation if there was push() & clean() calls before", () => {
     const queueSender = defaultQueueSender()
@@ -106,7 +106,7 @@ describe('QueueSender', () => {
     queueSender.push(sampleArray)
     queueSender.clean()
     queueSender.authorise(randomToken)
-    expect(fetchMock).not.toBeCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   //Test N sequential ToBeCalledTimes(N)
@@ -123,7 +123,7 @@ describe('QueueSender', () => {
     queueSender.push(sampleArray)
     setTimeout(() => {
       // how to make test simpler and more explicit?
-      expect(onUnauthorised).toBeCalled()
+      expect(onUnauthorised).toHaveBeenCalled()
       done()
     }, 100)
   })
