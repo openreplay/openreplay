@@ -22,7 +22,7 @@ const win =
         },
         location: { search: '' },
       } as unknown as Window & typeof globalThis)
-const doc = 'document' in globalThis ? document : { referrer: ''}
+const doc = 'document' in globalThis ? document : { referrer: '' }
 
 const searchEngineList = [
   'google',
@@ -117,7 +117,7 @@ export default class ConstantProperties {
   resetUserId = (hard?: boolean) => {
     this.user_id = null
     if (hard) {
-    this.deviceId = this.getDistinctDeviceId(true)
+      this.deviceId = this.getDistinctDeviceId(true)
     }
   }
 

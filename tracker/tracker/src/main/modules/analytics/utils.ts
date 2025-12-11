@@ -187,7 +187,7 @@ export function uaParse(sWindow: Window & typeof globalThis): ClientData {
               osVersion = version < 13 ? '10' : '11'
             })
             .catch(() => {
-              // Fallback if high entropy values not available
+              // ignore errors and keep osVersion as is
             })
         }
       }

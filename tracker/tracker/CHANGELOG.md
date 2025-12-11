@@ -1,7 +1,7 @@
 ## 17.1.0
 
 - adds analytics package to the tracker to enable user & event tracking
-```azure
+```js
 tracker.analytics.identify('test_user', { email: 'test@test.com', name: 'Openreplino' })
 tracker.analytics.track('button_clicked', { buttonName: 'signup' })
 ```
