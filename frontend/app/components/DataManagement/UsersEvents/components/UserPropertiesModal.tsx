@@ -76,7 +76,6 @@ function Property({
 }) {
   const [strValue, setValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
-  console.log(pkey, value, strValue);
 
   const onSaveClick = () => {
     if (onSave) {
