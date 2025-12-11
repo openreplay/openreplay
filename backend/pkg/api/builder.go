@@ -10,9 +10,13 @@ import (
 	"openreplay/backend/pkg/analytics/cards"
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/dashboards"
+	analyticsEvents "openreplay/backend/pkg/analytics/events"
+	analyticsEventsAPI "openreplay/backend/pkg/analytics/events/api"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/analytics/saved_searches"
 	"openreplay/backend/pkg/analytics/search"
+	"openreplay/backend/pkg/analytics/users"
+	usersAPI "openreplay/backend/pkg/analytics/users/api"
 	"openreplay/backend/pkg/api_key"
 	"openreplay/backend/pkg/assist/proxy"
 	"openreplay/backend/pkg/canvas"
@@ -38,23 +42,25 @@ import (
 )
 
 type serviceBuilder struct {
-	sessionAPI       api.Handlers
-	eventAPI         api.Handlers
-	favoriteAPI      api.Handlers
-	noteAPI          api.Handlers
-	replayAPI        api.Handlers
-	apiKeyAPI        api.Handlers
-	conditionsAPI    api.Handlers
-	cardsAPI         api.Handlers
-	dashboardsAPI    api.Handlers
-	chartsAPI        api.Handlers
-	searchAPI        api.Handlers
-	savedSearchesAPI api.Handlers
+	sessionAPI          api.Handlers
+	eventAPI            api.Handlers
+	analyticsEventsAPI  api.Handlers
+	favoriteAPI         api.Handlers
+	noteAPI             api.Handlers
+	replayAPI           api.Handlers
+	apiKeyAPI           api.Handlers
+	conditionsAPI       api.Handlers
+	cardsAPI            api.Handlers
+	dashboardsAPI       api.Handlers
+	chartsAPI           api.Handlers
+	searchAPI           api.Handlers
+	savedSearchesAPI    api.Handlers
+	usersAPI            api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.sessionAPI, b.eventAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI}
+	return []api.Handlers{b.sessionAPI, b.eventAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
@@ -93,6 +99,24 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 	eventHandlers, err := eventAPI.NewHandlers(log, &cfg.HTTP, responser, eventService, sessionService)
+	if err != nil {
+		return nil, err
+	}
+
+	analyticsEventsService, err := analyticsEvents.New(log, chconn)
+	if err != nil {
+		return nil, err
+	}
+	analyticsEventsHandlers, err := analyticsEventsAPI.NewHandlers(log, cfg.HTTP.JsonSizeLimit, analyticsEventsService, responser)
+	if err != nil {
+		return nil, err
+	}
+
+	usersService, err := users.New(log, chconn)
+	if err != nil {
+		return nil, err
+	}
+	usersHandlers, err := usersAPI.NewHandlers(log, &cfg.HTTP, responser, usersService)
 	if err != nil {
 		return nil, err
 	}
@@ -171,17 +195,19 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	}
 
 	return &serviceBuilder{
-		sessionAPI:       sessionHandlers,
-		eventAPI:         eventHandlers,
-		favoriteAPI:      favHandlers,
-		noteAPI:          noteHandlers,
-		replayAPI:        replayHandlers,
-		apiKeyAPI:        apiKeyHandlers,
-		conditionsAPI:    conditionsHandlers,
-		cardsAPI:         cardsHandlers,
-		dashboardsAPI:    dashboardsHandlers,
-		chartsAPI:        chartsHandlers,
-		searchAPI:        searchHandlers,
-		savedSearchesAPI: savedSearchesHandlers,
+		sessionAPI:         sessionHandlers,
+		eventAPI:           eventHandlers,
+		analyticsEventsAPI: analyticsEventsHandlers,
+		favoriteAPI:        favHandlers,
+		noteAPI:            noteHandlers,
+		replayAPI:          replayHandlers,
+		apiKeyAPI:          apiKeyHandlers,
+		conditionsAPI:      conditionsHandlers,
+		cardsAPI:           cardsHandlers,
+		dashboardsAPI:      dashboardsHandlers,
+		chartsAPI:          chartsHandlers,
+		searchAPI:          searchHandlers,
+		savedSearchesAPI:   savedSearchesHandlers,
+		usersAPI:           usersHandlers,
 	}, nil
 }

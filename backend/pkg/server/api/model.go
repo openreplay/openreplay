@@ -30,3 +30,7 @@ type MiddlewareBuilder interface {
 type RouterMiddleware interface {
 	Middleware(next http.Handler) http.Handler
 }
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
