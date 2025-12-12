@@ -18,4 +18,5 @@ export interface LongAnimationTask {
       forcedStyleAndLayoutDuration: number;
     },
   ];
+  key: string;
 }
