@@ -241,6 +241,8 @@ func (u *UserRequest) ToMap(requestedColumns []string) map[string]interface{} {
 type SearchUsersRequest struct {
 	Filters   []filters.Filter          `json:"filters" validate:"omitempty,dive"`
 	Query     string                    `json:"query" validate:"omitempty,max=100"`
+	StartDate int64                     `json:"startTimestamp" validate:"omitempty,min=946684800000"`
+	EndDate   int64                     `json:"endTimestamp" validate:"omitempty,min=946684800000,gtfield=StartDate"`
 	Limit     int                       `json:"limit" validate:"omitempty,min=1,max=200"`
 	Page      int                       `json:"page" validate:"omitempty,min=1"`
 	SortBy    filters.UserColumn        `json:"sortBy" validate:"omitempty,validateUserColumn"`

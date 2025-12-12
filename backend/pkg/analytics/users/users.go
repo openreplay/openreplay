@@ -178,7 +178,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	sortBy := filters.ValidateSortColumnGeneric(string(req.SortBy), model.ColumnMapping, `"$user_id"`)
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
-	eventJoinClause, eventJoinParams, hasEventFilters := BuildEventJoinQuery("latest_users.", req.Filters, projID)
+	eventJoinClause, eventJoinParams, hasEventFilters := BuildEventJoinQuery("latest_users.", req.Filters, projID, req.StartDate, req.EndDate)
 
 	var query string
 	if hasEventFilters {

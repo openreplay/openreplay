@@ -82,7 +82,7 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string, applyTrans
 	return result
 }
 
-func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID uint32) (string, []interface{}, bool) {
+func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID uint32, startDate int64, endDate int64) (string, []interface{}, bool) {
 	eventFilters := filters.ExtractEventFilters(filtersList)
 	if len(eventFilters) == 0 {
 		return "", nil, false
@@ -96,11 +96,31 @@ func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID
 	alias := filters.NormalizeAlias(tableAlias)
 	params := make([]interface{}, 0)
 	params = append(params, projID)
+	
+	dateConditions := make([]string, 0, 2)
+	if startDate > 0 {
+		dateConditions = append(dateConditions, "e.created_at >= ?")
+		startTime := filters.ConvertMillisToTime(startDate)
+		params = append(params, startTime)
+	}
+	if endDate > 0 {
+		dateConditions = append(dateConditions, "e.created_at <= ?")
+		endTime := filters.ConvertMillisToTime(endDate)
+		params = append(params, endTime)
+	}
+	
 	params = append(params, condParams...)
 
 	var sb strings.Builder
 	sb.WriteString(" INNER JOIN (")
-	sb.WriteString("SELECT project_id, \"$user_id\" FROM product_analytics.events AS e WHERE e.project_id = ? AND ")
+	sb.WriteString("SELECT project_id, \"$user_id\" FROM product_analytics.events AS e WHERE e.project_id = ?")
+	
+	if len(dateConditions) > 0 {
+		sb.WriteString(" AND ")
+		sb.WriteString(strings.Join(dateConditions, " AND "))
+	}
+	
+	sb.WriteString(" AND ")
 	sb.WriteString(strings.Join(conditions, " AND "))
 	sb.WriteString(" GROUP BY project_id, \"$user_id\"")
 	sb.WriteString(") AS events_filter ON ")
@@ -111,6 +131,3 @@ func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID
 
 	return sb.String(), params, true
 }
-
-
-
