@@ -712,7 +712,9 @@ func convertParams(params map[string]any) []interface{} {
 
 func GetSessionColumns(join ...bool) map[string][]string {
 	if len(join) > 0 && join[0] {
-		keys := []string{"userId", "userAnonymousId", "userDevice", "platform"}
+		keys := []string{"user_id", "user_anonymous_id", "user_device", "platform",
+			"user_browser", "user_os", "user_os_version", "user_browser_version",
+			"user_country", "user_state", "user_city", "referrer"}
 		out := make(map[string][]string, len(keys))
 		for _, k := range keys {
 			out[k] = SessionColumns[k]
