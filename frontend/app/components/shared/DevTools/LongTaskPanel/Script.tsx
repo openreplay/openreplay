@@ -52,7 +52,7 @@ function InfoEntry({
   return (
     <div className={'flex items-center gap-1 text-sm'}>
       <div className={'text-disabled-text'}>{title}</div>
-      <div className='font-mono text-neutral-600'>{value}</div>
+      <div className='font-mono color-gray-medium'>{value}</div>
     </div>
   );
 }
