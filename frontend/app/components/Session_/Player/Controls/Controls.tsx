@@ -29,6 +29,7 @@ import {
   STACKEVENTS,
   STORAGE,
   BACKENDLOGS,
+  LONG_TASK,
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
@@ -323,6 +324,7 @@ const DevtoolsButtons = observer(
     const resourceRedCount = tabStates[currentTab]?.resourceMarkedCountNow || 0;
     const stackRedCount = tabStates[currentTab]?.stackMarkedCountNow || 0;
     const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
+    const ltList = tabStates[currentTab]?.laTaskList || [];
 
     const storageType = store.get().tabStates[currentTab]
       ? selectStorageType(store.get().tabStates[currentTab])
@@ -333,6 +335,7 @@ const DevtoolsButtons = observer(
     const showProfiler = profilesCount > 0;
     const showExceptions = exceptionsList.length > 0;
     const showStorage = storageType !== STORAGE_TYPES.NONE || showStorageRedux;
+    const showLongTask = ltList.length;
 
     const showSummary = () => {
       player.pause();
@@ -481,6 +484,15 @@ const DevtoolsButtons = observer(
           label={getLabel('events')}
           hasErrors={stackRedCount > 0}
         />
+        {showLongTask ? (
+          <ControlButton
+            customKey="longTask"
+            disabled={disableButtons}
+            onClick={() => toggleBottomTools(LONG_TASK)}
+            active={bottomBlock === LONG_TASK && !inspectorMode}
+            label={getLabel('longTask')}
+          />
+        ) : null}
         {showProfiler && (
           <ControlButton
             customKey="profiler"

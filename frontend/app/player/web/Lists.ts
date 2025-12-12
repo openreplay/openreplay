@@ -70,7 +70,7 @@ const MARKED_LIST_NAMES = [
   'fetch',
   'stack',
   'websocket',
-  'longTask',
+  'laTask',
 ] as const;
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES] as const;
