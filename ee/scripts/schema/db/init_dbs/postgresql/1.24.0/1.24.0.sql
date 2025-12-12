@@ -36,6 +36,11 @@ ALTER TABLE IF EXISTS public.sessions_videos
     ADD CONSTRAINT sessions_videos_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE SET NULL;
 
+UPDATE public.roles
+SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{DATA_MANAGEMENT}') AS e)
+WHERE NOT permissions @> '{DATA_MANAGEMENT}'
+  AND NOT service_role
+  AND name ILIKE 'owner';
 
 COMMIT;
 

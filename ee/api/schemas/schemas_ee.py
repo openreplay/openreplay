@@ -18,6 +18,7 @@ class Permissions(str, Enum):
     FEATURE_FLAGS = "FEATURE_FLAGS"
     SPOT = "SPOT"
     SPOT_PUBLIC = "SPOT_PUBLIC"
+    DATA_MANAGEMENT = "DATA_MANAGEMENT"
 
 
 class ServicePermissions(str, Enum):
