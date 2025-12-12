@@ -225,9 +225,22 @@ func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[
 	
 	cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 	if cond != "" {
-		allParams := []interface{}{column}
-		allParams = append(allParams, params...)
-		return cond, allParams
+		needsPropertyParam := strings.Contains(fullCol, "?")
+		if needsPropertyParam {
+			propertyPlaceholderCount := strings.Count(cond, "?") - len(params)
+			if propertyPlaceholderCount > 1 {
+				allParams := make([]interface{}, 0, len(values)*2)
+				for _, param := range params {
+					allParams = append(allParams, column)
+					allParams = append(allParams, param)
+				}
+				return cond, allParams
+			}
+			allParams := []interface{}{column}
+			allParams = append(allParams, params...)
+			return cond, allParams
+		}
+		return cond, params
 	}
 
 	return "", nil
@@ -390,9 +403,22 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			
 			cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 			if cond != "" {
-				allParams := []interface{}{column}
-				allParams = append(allParams, params...)
-				return cond, allParams
+				needsPropertyParam := strings.Contains(fullCol, "?")
+				if needsPropertyParam {
+					propertyPlaceholderCount := strings.Count(cond, "?") - len(params)
+					if propertyPlaceholderCount > 1 {
+						allParams := make([]interface{}, 0, len(values)*2)
+						for _, param := range params {
+							allParams = append(allParams, column)
+							allParams = append(allParams, param)
+						}
+						return cond, allParams
+					}
+					allParams := []interface{}{column}
+					allParams = append(allParams, params...)
+					return cond, allParams
+				}
+				return cond, params
 			}
 			return "", nil
 		}
@@ -420,9 +446,22 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 		
 		cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 		if cond != "" {
-			allParams := []interface{}{column}
-			allParams = append(allParams, params...)
-			return cond, allParams
+			needsPropertyParam := strings.Contains(fullCol, "?")
+			if needsPropertyParam {
+				propertyPlaceholderCount := strings.Count(cond, "?") - len(params)
+				if propertyPlaceholderCount > 1 {
+					allParams := make([]interface{}, 0, len(values)*2)
+					for _, param := range params {
+						allParams = append(allParams, column)
+						allParams = append(allParams, param)
+					}
+					return cond, allParams
+				}
+				allParams := []interface{}{column}
+				allParams = append(allParams, params...)
+				return cond, allParams
+			}
+			return cond, params
 		}
 		return "", nil
 	}

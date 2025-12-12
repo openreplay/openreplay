@@ -138,6 +138,15 @@ const (
 	FilterOperatorNotEquals           FilterOperatorType = "notEquals"
 	FilterOperatorNot                 FilterOperatorType = "not"
 	FilterOperatorOff                 FilterOperatorType = "off"
+	FilterOperatorLt                  FilterOperatorType = "lt"
+	FilterOperatorGt                  FilterOperatorType = "gt"
+	FilterOperatorLte                 FilterOperatorType = "lte"
+	FilterOperatorGte                 FilterOperatorType = "gte"
+	FilterOperatorLessThanAlias       FilterOperatorType = "lessThan"
+	FilterOperatorGreaterThanAlias    FilterOperatorType = "greaterThan"
+	FilterOperatorLessEqualAlias      FilterOperatorType = "lessThanOrEqual"
+	FilterOperatorGreaterEqualAlias   FilterOperatorType = "greaterThanOrEqual"
+	FilterOperatorDoesNotContain      FilterOperatorType = "doesNotContain"
 )
 
 type SortOrderType string
@@ -181,7 +190,7 @@ const (
 
 type Filter struct {
 	Name          string             `json:"name" validate:"required_without=Type"`
-	Operator      FilterOperatorType `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >= != true false in notIn equals notEquals not off"`
+	Operator      FilterOperatorType `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >= != true false in notIn equals notEquals not off lt gt lte gte lessThan greaterThan lessThanOrEqual greaterThanOrEqual doesNotContain"`
 	PropertyOrder PropertyOrderType  `json:"propertyOrder" validate:"omitempty,oneof=or and"`
 	Value         []string           `json:"value" validate:"required_with=Type,max=10,dive"`
 	IsEvent       bool               `json:"isEvent"`
@@ -318,6 +327,15 @@ var FilterOperators = []FilterOperatorType{
 	FilterOperatorNotEquals,
 	FilterOperatorNot,
 	FilterOperatorOff,
+	FilterOperatorLt,
+	FilterOperatorGt,
+	FilterOperatorLte,
+	FilterOperatorGte,
+	FilterOperatorLessThanAlias,
+	FilterOperatorGreaterThanAlias,
+	FilterOperatorLessEqualAlias,
+	FilterOperatorGreaterEqualAlias,
+	FilterOperatorDoesNotContain,
 }
 
 var SortOrders = []SortOrderType{

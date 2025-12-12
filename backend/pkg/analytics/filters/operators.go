@@ -84,7 +84,7 @@ func BuildOperatorCondition(fullCol string, operator string, values []string, na
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
 			func(v string) interface{} { return "%" + v + "%" })
 
-	case FilterOperatorNotContains:
+	case FilterOperatorNotContains, FilterOperatorDoesNotContain:
 		cond, params := BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
 			func(v string) interface{} { return "%" + v + "%" })
 		return "NOT (" + cond + ")", params
@@ -108,25 +108,25 @@ func BuildOperatorCondition(fullCol string, operator string, values []string, na
 		placeholders, params := BuildPlaceholderList(values)
 		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
-	case FilterOperatorGreaterEqual:
+	case FilterOperatorGreaterEqual, FilterOperatorGte, FilterOperatorGreaterEqualAlias:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s >= ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s >= ?", fullCol), nil)
 
-	case FilterOperatorGreaterThan:
+	case FilterOperatorGreaterThan, FilterOperatorGt, FilterOperatorGreaterThanAlias:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s > ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s > ?", fullCol), nil)
 
-	case FilterOperatorLessEqual:
+	case FilterOperatorLessEqual, FilterOperatorLte, FilterOperatorLessEqualAlias:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s <= ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s <= ?", fullCol), nil)
 
-	case FilterOperatorLessThan:
+	case FilterOperatorLessThan, FilterOperatorLt, FilterOperatorLessThanAlias:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s < ?", fullCol), []interface{}{values[0]}
 		}
