@@ -6,6 +6,7 @@ import {
 import { projectsService } from 'App/services';
 import GDPR from './types/gdpr';
 import Project from './types/project';
+import ENV from '../../env'
 
 interface Config {
   project: Project | null;
@@ -29,7 +30,15 @@ export default class BaseProjectsStore {
   };
 
   constructor() {
-    const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
+    const origin = ENV.ORIGIN || window.location.origin;
+    const storedSiteData = localStorage.getItem(SITE_ID_STORAGE_KEY);
+    let [storedSiteId, storedOrigin] = storedSiteData
+      ? storedSiteData.split('_$_')
+      : [null, null];
+    if (storedOrigin !== origin) {
+      localStorage.removeItem(SITE_ID_STORAGE_KEY);
+      storedSiteId = null;
+    }
     this.siteId = storedSiteId ?? null;
     makeAutoObservable(this);
 
@@ -78,7 +87,7 @@ export default class BaseProjectsStore {
   };
 
   setSiteId = (siteId: string) => {
-    localStorage.setItem(SITE_ID_STORAGE_KEY, siteId.toString());
+    localStorage.setItem(SITE_ID_STORAGE_KEY, siteId.toString() + '_$_' + ENV.ORIGIN ?? window.location.origin);
     this.siteId = siteId;
     this.active = this.list.find((site) => site.id! === siteId) ?? null;
   };
