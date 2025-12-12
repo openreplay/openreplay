@@ -160,7 +160,7 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": True,
-                "possibleValues": ["web", "ios", "android"],
+                "possibleValues": ["web", "mobile"],
                 "isConditional": False
             },
             {
