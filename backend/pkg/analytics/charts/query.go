@@ -192,7 +192,10 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 	var eventConds map[string]any = make(map[string]any)
 	var otherConds map[string]any = make(map[string]any)
 	for _, f := range filters {
-		if f.Name == string(FilterDuration) || f.Name == string(FilterUserAnonymousId) {
+		if f.AutoCaptured && !f.IsEvent {
+			f.Name = CamelToSnake(f.Name)
+		}
+		if f.Name == string(FilterDuration) {
 			continue
 		}
 		conds, nameCondition := addFilter(f, opts, f.IsEvent)

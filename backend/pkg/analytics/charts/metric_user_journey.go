@@ -103,7 +103,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 		}))
 	for i := 0; i < len(queries)-1; i++ {
 		_start := time.Now()
-		h.Logger.Debug(ctx, "Executing query: %s", queries[i])
+		h.Logger.Debug(ctx, "Executing query %d: %s", i+1, queries[i])
 		_, err = conn.ExecContext(ctx, queries[i])
 
 		if time.Since(_start) > 2*time.Second {
@@ -111,7 +111,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 		}
 		if err != nil {
 			for j := 0; j <= i; j++ {
-				h.Logger.Error(ctx, "UserJourney query failed: %s", queries[j])
+				h.Logger.Error(ctx, "UserJourney query %d failed: %s\n", i+1, queries[j])
 			}
 			return nil, fmt.Errorf("error executing tmp query for userJourney: %w", err)
 		}
