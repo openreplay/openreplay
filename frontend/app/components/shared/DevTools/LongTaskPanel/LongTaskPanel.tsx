@@ -152,7 +152,11 @@ function LongTaskPanel() {
         >
           <VList ref={_list} itemSize={25} data={rows}>
             {(task) => (
-              <LongTaskRow key={task.time} task={task} onJump={onRowClick} />
+              <LongTaskRow
+                key={task.key ?? task.startTime}
+                task={task}
+                onJump={onRowClick}
+              />
             )}
           </VList>
         </NoContent>

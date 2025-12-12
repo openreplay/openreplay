@@ -21,6 +21,22 @@ export interface ILongAnimationTask {
     },
   ];
   isRed: boolean;
+  key: string;
+}
+const ID_CHARS =
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+function shortId(len = 6) {
+  const bytes = new Uint8Array(len);
+  if (globalThis.crypto?.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < len; i++) bytes[i] = (Math.random() * 256) | 0;
+  }
+
+  let out = '';
+  for (let i = 0; i < len; i++) out += ID_CHARS[bytes[i] % 62];
+  return out;
 }
 
 export const getLongTask = (msg: LongAnimationTask): ILongAnimationTask => {
@@ -39,5 +55,6 @@ export const getLongTask = (msg: LongAnimationTask): ILongAnimationTask => {
     scripts,
     isRed: msg.blockingDuration > 50,
     time: msg.startTime,
+    key: shortId(),
   });
 }
