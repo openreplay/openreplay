@@ -133,7 +133,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 	)
 
 	for _, filter := range allFilters {
-		if filter.AutoCaptured {
+		if filter.AutoCaptured && !filter.IsEvent {
 			filter.Name = CamelToSnake(filter.Name)
 		}
 		if _, exists := SessionColumns[filter.Name]; exists || strings.HasPrefix(filter.Name, "metadata_") {

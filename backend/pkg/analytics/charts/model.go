@@ -81,4 +81,6 @@ var mainSessionsColumns = map[string][]string{
 	"user_browser":         {"user_browser", "singleColumn"},
 	"user_browser_version": {"user_browser_version", "singleColumn"},
 	"issue_type":           {"issue_types", "arrayColumn"},
+	"user_id":              {"user_id", "singleColumn"},
+	"user_anonymous_id":    {"user_anonymous_id", "singleColumn"},
 }
