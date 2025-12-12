@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	analyticsConfig "openreplay/backend/internal/config/api"
 	orClickhouse "openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/logger"
@@ -99,7 +98,6 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	}
 
 	_start := time.Now()
-
 	t.Logger.Debug(context.Background(), "Executing query: %s", query)
 
 	var rawValues []TableValue = make([]TableValue, 0)
@@ -189,7 +187,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
 	}
 
 	s := r.Series[0]
-	log.Printf("MetricOf: %s, MetricFormat: %s", r.MetricOf, r.MetricFormat)
+	t.Logger.Debug(context.Background(), "MetricOf: %s, MetricFormat: %s", r.MetricOf, r.MetricFormat)
 	if r.MetricOf == "screenResolution" {
 		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
 	}
@@ -558,31 +556,31 @@ func (t *TableQueryBuilder) buildPrewhereConditions(r *Payload, eventsOrder mode
 
 // The list of session properties and its column names
 var sessionProperties = map[string]string{
-	"userOs":          "user_os",
-	"userBrowser":     "user_browser",
-	"userDevice":      "user_device",
-	"userCountry":     "user_country",
-	"userCity":        "user_city",
-	"userState":       "user_state",
-	"userId":          "user_id",
-	"userAnonymousId": "user_anonymous_id",
-	"referrer":        "referrer",
-	"revId":           "rev_id",
-	"duration":        "duration",
-	"platform":        "platform",
-	"metadata":        "metadata",
-	"issue":           "issues",
-	"eventsCount":     "events_count",
-	"utmSource":       "utm_source",
-	"utmMedium":       "utm_medium",
-	"utmCampaign":     "utm_campaign",
+	"user_os":           "user_os",
+	"user_browser":      "user_browser",
+	"user_device":       "user_device",
+	"user_country":      "user_country",
+	"user_city":         "user_city",
+	"user_state":        "user_state",
+	"user_id":           "user_id",
+	"user_anonymous_id": "user_anonymous_id",
+	"referrer":          "referrer",
+	"rev_id":            "rev_id",
+	"duration":          "duration",
+	"platform":          "platform",
+	"metadata":          "metadata",
+	"issue":             "issues",
+	"events_count":      "events_count",
+	"utm_source":        "utm_source",
+	"utm_medium":        "utm_medium",
+	"utm_campaign":      "utm_campaign",
 	//	IOS
-	"userOsIos":          "user_os",
-	"userDeviceIos":      "user_device",
-	"userCountryIos":     "user_country",
-	"userIdIos":          "user_id",
-	"userAnonymousIdIos": "user_anonymous_id",
-	"revIdIos":           "rev_id",
+	"user_os_ios":           "user_os",
+	"user_device_ios":       "user_device",
+	"user_country_ios":      "user_country",
+	"user_id_ios":           "user_id",
+	"user_anonymous_id_ios": "user_anonymous_id",
+	"rev_id_ios":            "rev_id",
 }
 
 // buildSessionConditions constructs the session conditions for the sessions query
@@ -610,11 +608,12 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 	// To add session's specific filters (like user_os, user_browser, etc...)
 	for _, f := range r.Series[0].Filter.Filters {
 		if !f.IsEvent {
+			if f.AutoCaptured {
+				f.Name = CamelToSnake(f.Name)
+			}
 			var subCondition []string
 			if column, ok := sessionProperties[f.Name]; ok {
-				for _, value := range f.Value {
-					subCondition = append(subCondition, fmt.Sprintf("%s='%s'", column, value))
-				}
+				subCondition = append(subCondition, buildCond(column, f.Value, f.Operator, false, "singleColumn"))
 			} else if strings.HasPrefix(f.Name, "metadata_") {
 				subCondition = append(subCondition, buildCond(f.Name, f.Value, f.Operator, false, "singleColumn"))
 			}
