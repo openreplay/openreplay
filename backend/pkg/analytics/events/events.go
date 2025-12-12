@@ -48,7 +48,7 @@ func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSear
 	return whereClause, params, needsUserJoin
 }
 
-func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy, sortOrder string, needsUserJoin bool, projID uint32) string {
+func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy string, sortOrder filters.SortOrderType, needsUserJoin bool, projID uint32) string {
 	var sb strings.Builder
 	sb.WriteString("SELECT COUNT(*) OVER() as total_count, ")
 	sb.WriteString(strings.Join(selectColumns, ", "))
@@ -67,13 +67,13 @@ func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns
 	sb.WriteString(" ORDER BY ")
 	sb.WriteString(sortBy)
 	sb.WriteString(" ")
-	sb.WriteString(sortOrder)
+	sb.WriteString(strings.ToUpper(string(sortOrder)))
 	sb.WriteString(" LIMIT ? OFFSET ?")
 
 	return sb.String()
 }
 
-func (e *eventsImpl) buildScanPointers(entry *model.EventEntry, columns []string, createdAt *time.Time) []interface{} {
+func (e *eventsImpl) buildScanPointers(entry *model.EventEntry, columns []filters.EventColumn, createdAt *time.Time) []interface{} {
 	valuePtrs := []interface{}{
 		&entry.ProjectId,
 		&entry.EventId,
@@ -84,10 +84,10 @@ func (e *eventsImpl) buildScanPointers(entry *model.EventEntry, columns []string
 	}
 
 	for _, col := range columns {
-		if col == string(filters.EventColumnSessionID) || col == string(filters.EventColumnEventID) {
+		if col == filters.EventColumnSessionID || col == filters.EventColumnEventID {
 			continue
 		}
-		if ptr := model.GetFieldPointer(entry, col); ptr != nil {
+		if ptr := model.GetFieldPointer(entry, string(col)); ptr != nil {
 			valuePtrs = append(valuePtrs, ptr)
 		}
 	}
@@ -104,9 +104,7 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 
 	whereClause, queryParams, needsUserJoin := e.buildSearchQueryParams(projID, req)
 
-	columnsStr := filters.ConvertColumnsToStrings(req.Columns)
-	
-	selectColumns := BuildSelectColumns("e", columnsStr)
+	selectColumns := BuildSelectColumns("e", req.Columns)
 	sortBy := "e." + ValidateSortColumn(string(req.SortBy))
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
@@ -125,7 +123,7 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 	for rows.Next() {
 		entry := model.EventEntry{}
 		var createdAt time.Time
-		valuePtrs := e.buildScanPointers(&entry, columnsStr, &createdAt)
+		valuePtrs := e.buildScanPointers(&entry, req.Columns, &createdAt)
 		
 		scanPtrs := append([]interface{}{&total}, valuePtrs...)
 		if err := rows.Scan(scanPtrs...); err != nil {

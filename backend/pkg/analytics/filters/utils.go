@@ -15,13 +15,14 @@ func ConvertMillisToTime(millis int64) time.Time {
 	return time.UnixMilli(millis)
 }
 
-func BuildColumnMapping(columns []string) map[string]string {
+func BuildColumnMapping[T ~string](columns []T) map[string]string {
 	mapping := make(map[string]string, len(columns))
 	for _, col := range columns {
-		if strings.HasPrefix(col, "$") {
-			mapping[col] = `"` + col + `"`
+		colStr := string(col)
+		if strings.HasPrefix(colStr, "$") {
+			mapping[colStr] = `"` + colStr + `"`
 		} else {
-			mapping[col] = col
+			mapping[colStr] = colStr
 		}
 	}
 	return mapping
@@ -51,14 +52,35 @@ func MarshalJSONProperties(properties *map[string]interface{}) (string, error) {
 }
 
 func BuildJSONExtractColumn(alias, propertiesCol, dataType string) string {
-	switch dataType {
-	case "float", "number", "int":
+	dtType := DataTypeType(dataType)
+	switch dtType {
+	case DataTypeNumber, DataTypeInteger:
 		return fmt.Sprintf("toFloat64OrNull(getSubcolumn(%s%s, ?))", alias, propertiesCol)
-	case "boolean":
+	case DataTypeBoolean:
 		return fmt.Sprintf("toBool(getSubcolumn(%s%s, ?))", alias, propertiesCol)
 	default:
 		return fmt.Sprintf("getSubcolumn(%s%s, ?)", alias, propertiesCol)
 	}
+}
+
+func IsDynamicColumn(propertiesCol string) bool {
+	return strings.Contains(propertiesCol, `"$properties"`) || strings.Contains(propertiesCol, string(EventColumnAutoProperties))
+}
+
+func RequiresToString(operator FilterOperatorType) bool {
+	return OperatorsRequiringToString[operator]
+}
+
+func WrapWithToStringIfNeeded(columnExpr, propertiesCol, operator string) string {
+	if !IsDynamicColumn(propertiesCol) {
+		return columnExpr
+	}
+	
+	if RequiresToString(FilterOperatorType(operator)) {
+		return fmt.Sprintf("toString(%s)", columnExpr)
+	}
+	
+	return columnExpr
 }
 
 func NormalizeAlias(alias string) string {
@@ -78,60 +100,60 @@ func BuildQuotedColumn(alias, column string) string {
 	return alias + column
 }
 
-var UserColumnMapping = map[string]string{
-	"$email":               `"$email"`,
-	"$name":                `"$name"`,
-	"$first_name":          `"$first_name"`,
-	"$last_name":           `"$last_name"`,
-	"$phone":               `"$phone"`,
-	"$avatar":              `"$avatar"`,
-	"$created_at":          `"$created_at"`,
-	"$first_event_at":      `"$first_event_at"`,
-	"$last_seen":           `"$last_seen"`,
-	"$user_id":             `"$user_id"`,
-	"$country":             `"$country"`,
-	"$state":               `"$state"`,
-	"$city":                `"$city"`,
-	"$timezone":            `"$timezone"`,
-	"$sdk_edition":         `"$sdk_edition"`,
-	"$sdk_version":         `"$sdk_version"`,
-	"$current_url":         `"$current_url"`,
-	"$initial_referrer":    `"$initial_referrer"`,
-	"$referring_domain":    `"$referring_domain"`,
-	"initial_utm_source":   "initial_utm_source",
-	"initial_utm_medium":              "initial_utm_medium",
-	"initial_utm_campaign":            "initial_utm_campaign",
-	string(UserColumnProperties):      string(UserColumnProperties),
-	string(UserColumnGroupID1):        string(UserColumnGroupID1),
-	string(UserColumnGroupID2):        string(UserColumnGroupID2),
-	string(UserColumnGroupID3):        string(UserColumnGroupID3),
-	string(UserColumnGroupID4):        string(UserColumnGroupID4),
-	string(UserColumnGroupID5):        string(UserColumnGroupID5),
-	string(UserColumnGroupID6):        string(UserColumnGroupID6),
-	string(UserColumnOrAPIEndpoint):   `"` + string(UserColumnOrAPIEndpoint) + `"`,
+var UserColumnMapping = map[UserColumn]string{
+	UserColumnEmail:              `"` + string(UserColumnEmail) + `"`,
+	UserColumnName:               `"` + string(UserColumnName) + `"`,
+	UserColumnFirstName:          `"` + string(UserColumnFirstName) + `"`,
+	UserColumnLastName:           `"` + string(UserColumnLastName) + `"`,
+	UserColumnPhone:              `"` + string(UserColumnPhone) + `"`,
+	UserColumnAvatar:             `"` + string(UserColumnAvatar) + `"`,
+	UserColumnCreatedAt:          `"` + string(UserColumnCreatedAt) + `"`,
+	UserColumnFirstEventAt:       `"` + string(UserColumnFirstEventAt) + `"`,
+	UserColumnLastSeen:           `"` + string(UserColumnLastSeen) + `"`,
+	UserColumnUserID:             `"` + string(UserColumnUserID) + `"`,
+	UserColumnCountry:            `"` + string(UserColumnCountry) + `"`,
+	UserColumnState:              `"` + string(UserColumnState) + `"`,
+	UserColumnCity:               `"` + string(UserColumnCity) + `"`,
+	UserColumnTimezone:           `"` + string(UserColumnTimezone) + `"`,
+	UserColumnSDKEdition:         `"` + string(UserColumnSDKEdition) + `"`,
+	UserColumnSDKVersion:         `"` + string(UserColumnSDKVersion) + `"`,
+	UserColumnCurrentURL:         `"` + string(UserColumnCurrentURL) + `"`,
+	UserColumnInitialReferrer:    `"` + string(UserColumnInitialReferrer) + `"`,
+	UserColumnReferringDomain:    `"` + string(UserColumnReferringDomain) + `"`,
+	UserColumnInitialUtmSource:   string(UserColumnInitialUtmSource),
+	UserColumnInitialUtmMedium:   string(UserColumnInitialUtmMedium),
+	UserColumnInitialUtmCampaign: string(UserColumnInitialUtmCampaign),
+	UserColumnProperties:         string(UserColumnProperties),
+	UserColumnGroupID1:           string(UserColumnGroupID1),
+	UserColumnGroupID2:           string(UserColumnGroupID2),
+	UserColumnGroupID3:           string(UserColumnGroupID3),
+	UserColumnGroupID4:           string(UserColumnGroupID4),
+	UserColumnGroupID5:           string(UserColumnGroupID5),
+	UserColumnGroupID6:           string(UserColumnGroupID6),
+	UserColumnOrAPIEndpoint:      `"` + string(UserColumnOrAPIEndpoint) + `"`,
 }
 
-var UserOnlyColumns = map[string]bool{
-	"$email":               true,
-	"$name":                true,
-	"$first_name":          true,
-	"$last_name":           true,
-	"$phone":               true,
-	"$avatar":              true,
-	"$created_at":          true,
-	"$first_event_at":      true,
-	"$last_seen":           true,
-	"initial_utm_source":   true,
-	"initial_utm_medium":   true,
-	"initial_utm_campaign": true,
+var UserOnlyColumns = map[UserColumn]bool{
+	UserColumnEmail:              true,
+	UserColumnName:               true,
+	UserColumnFirstName:          true,
+	UserColumnLastName:           true,
+	UserColumnPhone:              true,
+	UserColumnAvatar:             true,
+	UserColumnCreatedAt:          true,
+	UserColumnFirstEventAt:       true,
+	UserColumnLastSeen:           true,
+	UserColumnInitialUtmSource:   true,
+	UserColumnInitialUtmMedium:   true,
+	UserColumnInitialUtmCampaign: true,
 }
 
 func IsUserOnlyColumn(column string) bool {
-	return UserOnlyColumns[column]
+	return UserOnlyColumns[UserColumn(column)]
 }
 
 func GetUserColumnMapping(column string) (string, bool) {
-	col, ok := UserColumnMapping[column]
+	col, ok := UserColumnMapping[UserColumn(column)]
 	return col, ok
 }
 
@@ -147,7 +169,7 @@ func FormatColumnForSelect(alias, col, dbCol string, formatter ColumnFormatter) 
 	return fmt.Sprintf("%s%s AS %s", alias, dbCol, col)
 }
 
-func GenericBuildSelectColumns(tableAlias string, baseColumns []string, requestedColumns []string, columnMapping map[string]string, skipColumns map[string]bool, formatter ColumnFormatter) []string {
+func GenericBuildSelectColumns[T ~string](tableAlias string, baseColumns []string, requestedColumns []T, columnMapping map[string]string, skipColumns map[string]bool, formatter ColumnFormatter) []string {
 	if len(requestedColumns) == 0 {
 		return baseColumns
 	}
@@ -157,11 +179,12 @@ func GenericBuildSelectColumns(tableAlias string, baseColumns []string, requeste
 	copy(result, baseColumns)
 
 	for _, col := range requestedColumns {
-		if skipColumns[col] {
+		colStr := string(col)
+		if skipColumns[colStr] {
 			continue
 		}
-		if dbCol, ok := columnMapping[col]; ok {
-			result = append(result, FormatColumnForSelect(alias, col, dbCol, formatter))
+		if dbCol, ok := columnMapping[colStr]; ok {
+			result = append(result, FormatColumnForSelect(alias, colStr, dbCol, formatter))
 		}
 	}
 
@@ -192,6 +215,14 @@ func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[
 	}
 
 	fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType)
+	
+	dtType := DataTypeType(dataType)
+	if dtType == "" || dtType == DataTypeString {
+		if len(values) > 1 {
+			fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator))
+		}
+	}
+	
 	cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 	if cond != "" {
 		allParams := []interface{}{column}
@@ -351,6 +382,12 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			fullCol = uAlias + col
 		} else {
 			fullCol = BuildJSONExtractColumn(uAlias, string(UserColumnProperties), dataType)
+				
+			dtType := DataTypeType(dataType)
+			if (dtType == "" || dtType == DataTypeString) && len(values) > 1 {
+				fullCol = WrapWithToStringIfNeeded(fullCol, string(UserColumnProperties), string(operator))
+			}
+			
 			cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 			if cond != "" {
 				allParams := []interface{}{column}
@@ -375,6 +412,12 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			propertiesCol = string(EventColumnProperties)
 		}
 		fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType)
+		
+		dtType := DataTypeType(dataType)
+		if (dtType == "" || dtType == DataTypeString) && len(values) > 1 {
+			fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator))
+		}
+		
 		cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 		if cond != "" {
 			allParams := []interface{}{column}

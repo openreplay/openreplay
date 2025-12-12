@@ -33,7 +33,7 @@ func ValidateEventColumn(fl validator.FieldLevel) bool {
 		return true
 	}
 	for _, validCol := range EventColumns {
-		if column == validCol {
+		if column == string(validCol) {
 			return true
 		}
 	}
@@ -46,7 +46,7 @@ func ValidateUserColumn(fl validator.FieldLevel) bool {
 		return true
 	}
 	for _, validCol := range UserColumns {
-		if column == validCol {
+		if column == string(validCol) {
 			return true
 		}
 	}

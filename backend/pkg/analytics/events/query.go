@@ -66,7 +66,7 @@ func formatColumnForSelect(alias, col string, dbCol string) string {
 	}
 }
 
-func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
+func BuildSelectColumns(tableAlias string, requestedColumns []filters.EventColumn) []string {
 	alias := filters.NormalizeAlias(tableAlias)
 
 	baseColumns := []string{

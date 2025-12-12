@@ -34,102 +34,105 @@ func BuildPlaceholderList(values []string) ([]string, []interface{}) {
 
 
 func BuildOperatorCondition(fullCol string, operator string, values []string, nature string, dataType string) (string, []interface{}) {
-	if dataType == "boolean" {
-		switch operator {
-		case "true":
+	opType := FilterOperatorType(operator)
+	dtType := DataTypeType(dataType)
+
+	if dtType == DataTypeBoolean {
+		switch opType {
+		case FilterOperatorTrue:
 			return fmt.Sprintf("%s = 1", fullCol), nil
-		case "false":
+		case FilterOperatorFalse:
 			return fmt.Sprintf("%s = 0", fullCol), nil
-		case "isUndefined":
+		case FilterOperatorIsUndefined:
 			return fmt.Sprintf("isNull(%s)", fullCol), nil
-		case "isAny", "onAny":
+		case FilterOperatorIsAny, FilterOperatorOnAny:
 			return fmt.Sprintf("isNotNull(%s)", fullCol), nil
 		default:
 			return "", nil
 		}
 	}
 
-	if len(values) == 0 && operator != "isAny" && operator != "isUndefined" && operator != "onAny" {
+	if len(values) == 0 && opType != FilterOperatorIsAny && opType != FilterOperatorIsUndefined && opType != FilterOperatorOnAny {
 		return "", nil
 	}
 
-	switch operator {
-	case "isAny", "onAny":
+	switch opType {
+	case FilterOperatorIsAny, FilterOperatorOnAny:
 		if nature == "arrayColumn" {
 			return fmt.Sprintf("notEmpty(%s)", fullCol), nil
 		}
 		return fmt.Sprintf("isNotNull(%s)", fullCol), nil
 
-	case "isUndefined":
+	case FilterOperatorIsUndefined:
 		return fmt.Sprintf("isNull(%s)", fullCol), nil
 
-	case "is", "equals", "on":
+	case FilterOperatorIs, FilterOperatorEquals, FilterOperatorOn:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s = ?", fullCol), []interface{}{values[0]}
 		}
 		placeholders, params := BuildPlaceholderList(values)
 		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
-	case "isNot", "notEquals", "not", "off", "notOn":
+	case FilterOperatorIsNot, FilterOperatorNotEquals, FilterOperatorNot, FilterOperatorOff, FilterOperatorNotOn:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s != ?", fullCol), []interface{}{values[0]}
 		}
 		placeholders, params := BuildPlaceholderList(values)
 		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
-	case "contains":
+	case FilterOperatorContains:
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
 			func(v string) interface{} { return "%" + v + "%" })
 
-	case "notContains", "doesNotContain":
+	case FilterOperatorNotContains:
 		cond, params := BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
 			func(v string) interface{} { return "%" + v + "%" })
 		return "NOT (" + cond + ")", params
 
-	case "startsWith":
+	case FilterOperatorStartsWith:
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
 			func(v string) interface{} { return v + "%" })
 
-	case "endsWith":
+	case FilterOperatorEndsWith:
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s ILIKE ?", fullCol),
 			func(v string) interface{} { return "%" + v })
 
-	case "regex":
+	case FilterOperatorRegex:
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("match(%s, ?)", fullCol), nil)
 
-	case "in":
+	case FilterOperatorIn:
 		placeholders, params := BuildPlaceholderList(values)
 		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
-	case "notIn":
+	case FilterOperatorNotIn:
 		placeholders, params := BuildPlaceholderList(values)
 		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
-	case ">=", "gte", "greaterThanOrEqual":
+	case FilterOperatorGreaterEqual:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s >= ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s >= ?", fullCol), nil)
 
-	case ">", "gt", "greaterThan":
+	case FilterOperatorGreaterThan:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s > ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s > ?", fullCol), nil)
 
-	case "<=", "lte", "lessThanOrEqual":
+	case FilterOperatorLessEqual:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s <= ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s <= ?", fullCol), nil)
 
-	case "<", "lt", "lessThan":
+	case FilterOperatorLessThan:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s < ?", fullCol), []interface{}{values[0]}
 		}
 		return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s < ?", fullCol), nil)
 
-	case "=", "!=":
+	case FilterOperatorEqual, FilterOperatorNotEqual:
 		if len(values) == 0 {
 			return "", nil
 		}
@@ -142,7 +145,7 @@ func BuildOperatorCondition(fullCol string, operator string, values []string, na
 			}
 			placeholders, params := BuildPlaceholderList(values)
 			opFunc := "hasAny"
-			if operator == "isNot" || operator == "notEquals" || operator == "not" || operator == "off" || operator == "notOn" {
+			if opType == FilterOperatorIsNot || opType == FilterOperatorNotEquals || opType == FilterOperatorNot || opType == FilterOperatorOff || opType == FilterOperatorNotOn {
 				opFunc = "NOT hasAny"
 			}
 			return fmt.Sprintf("%s(%s, [%s])", opFunc, fullCol, strings.Join(placeholders, ", ")), params
@@ -167,13 +170,14 @@ func BuildWhereClause(baseConditions []string, filterConditions []string) string
 	return strings.Join(allConditions, " AND ")
 }
 
-func ValidateSortOrder(order string) string {
-	switch SortOrderType(strings.ToLower(order)) {
+func ValidateSortOrder(order string) SortOrderType {
+	orderType := SortOrderType(strings.ToLower(order))
+	switch orderType {
 	case SortOrderAsc:
-		return strings.ToUpper(string(SortOrderAsc))
+		return SortOrderAsc
 	case SortOrderDesc:
-		return strings.ToUpper(string(SortOrderDesc))
+		return SortOrderDesc
 	default:
-		return strings.ToUpper(string(SortOrderDesc))
+		return SortOrderDesc
 	}
 }

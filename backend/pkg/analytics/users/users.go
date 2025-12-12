@@ -194,7 +194,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 			FROM latest_users%s
 			ORDER BY %s %s
 			LIMIT ? OFFSET ?`,
-			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), eventJoinClause, sortBy, sortOrder)
+			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), eventJoinClause, sortBy, strings.ToUpper(string(sortOrder)))
 	} else {
 		query = fmt.Sprintf(`
 			WITH latest_users AS (
@@ -208,7 +208,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 			FROM latest_users
 			ORDER BY %s %s
 			LIMIT ? OFFSET ?`,
-			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), sortBy, sortOrder)
+			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), sortBy, strings.ToUpper(string(sortOrder)))
 	}
 
 	queryParams := params
@@ -493,7 +493,7 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		WHERE %s
 		ORDER BY e.%s %s
 		LIMIT ? OFFSET ?`,
-		whereClause, sortBy, sortOrder)
+		whereClause, sortBy, strings.ToUpper(string(sortOrder)))
 
 	queryParams := append(params, req.Limit, offset)
 
