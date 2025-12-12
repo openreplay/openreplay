@@ -71,12 +71,22 @@ func RequiresToString(operator FilterOperatorType) bool {
 	return OperatorsRequiringToString[operator]
 }
 
-func WrapWithToStringIfNeeded(columnExpr, propertiesCol, operator string) string {
+func WrapWithToStringIfNeeded(columnExpr, propertiesCol, operator string, valueCount int) string {
 	if !IsDynamicColumn(propertiesCol) {
 		return columnExpr
 	}
 	
-	if RequiresToString(FilterOperatorType(operator)) {
+	opType := FilterOperatorType(operator)
+	
+	// Always wrap for string pattern operators (ILIKE, regex)
+	if opType == FilterOperatorContains || opType == FilterOperatorNotContains || 
+		opType == FilterOperatorDoesNotContain || opType == FilterOperatorStartsWith || 
+		opType == FilterOperatorEndsWith || opType == FilterOperatorRegex {
+		return fmt.Sprintf("toString(%s)", columnExpr)
+	}
+	
+	// For equality/set operators, only wrap when multiple values
+	if valueCount > 1 && RequiresToString(opType) {
 		return fmt.Sprintf("toString(%s)", columnExpr)
 	}
 	
@@ -218,9 +228,7 @@ func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[
 	
 	dtType := DataTypeType(dataType)
 	if dtType == "" || dtType == DataTypeString {
-		if len(values) > 1 {
-			fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator))
-		}
+		fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator), len(values))
 	}
 	
 	cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
@@ -397,8 +405,8 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			fullCol = BuildJSONExtractColumn(uAlias, string(UserColumnProperties), dataType)
 				
 			dtType := DataTypeType(dataType)
-			if (dtType == "" || dtType == DataTypeString) && len(values) > 1 {
-				fullCol = WrapWithToStringIfNeeded(fullCol, string(UserColumnProperties), string(operator))
+			if dtType == "" || dtType == DataTypeString {
+				fullCol = WrapWithToStringIfNeeded(fullCol, string(UserColumnProperties), string(operator), len(values))
 			}
 			
 			cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
@@ -440,8 +448,8 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 		fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType)
 		
 		dtType := DataTypeType(dataType)
-		if (dtType == "" || dtType == DataTypeString) && len(values) > 1 {
-			fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator))
+		if dtType == "" || dtType == DataTypeString {
+			fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator), len(values))
 		}
 		
 		cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)

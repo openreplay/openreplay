@@ -158,18 +158,24 @@ const (
 
 // Operators that require toString wrapper for Dynamic columns when used with multiple values
 var OperatorsRequiringToString = map[FilterOperatorType]bool{
-	FilterOperatorIn:        true,
-	FilterOperatorNotIn:     true,
-	FilterOperatorIs:        true,
-	FilterOperatorEquals:    true,
-	FilterOperatorOn:        true,
-	FilterOperatorIsNot:     true,
-	FilterOperatorNotEquals: true,
-	FilterOperatorNot:       true,
-	FilterOperatorOff:       true,
-	FilterOperatorNotOn:     true,
-	FilterOperatorEqual:     true,
-	FilterOperatorNotEqual:  true,
+	FilterOperatorIn:               true,
+	FilterOperatorNotIn:            true,
+	FilterOperatorIs:               true,
+	FilterOperatorEquals:           true,
+	FilterOperatorOn:               true,
+	FilterOperatorIsNot:            true,
+	FilterOperatorNotEquals:        true,
+	FilterOperatorNot:              true,
+	FilterOperatorOff:              true,
+	FilterOperatorNotOn:            true,
+	FilterOperatorEqual:            true,
+	FilterOperatorNotEqual:         true,
+	FilterOperatorContains:         true,
+	FilterOperatorNotContains:      true,
+	FilterOperatorDoesNotContain:   true,
+	FilterOperatorStartsWith:       true,
+	FilterOperatorEndsWith:         true,
+	FilterOperatorRegex:            true,
 }
 
 type PropertyOrderType string

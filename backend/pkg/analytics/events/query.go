@@ -13,7 +13,8 @@ func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter) ([]
 		tableAlias = "e"
 	}
 
-	conditions := make([]string, 0)
+	eventFilters := make([]filters.Filter, 0)
+	nonEventConditions := make([]string, 0)
 	params := make([]interface{}, 0)
 	needsUserJoin := filters.HasUserOnlyFilters(filtersSlice)
 
@@ -27,15 +28,146 @@ func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter) ([]
 		FilterColumnMapping: model.FilterColumnMapping,
 	}
 
+	// Separate event filters from non-event filters
 	for _, filter := range filtersSlice {
-		cond, condParams := filters.BuildFilterCondition(tableAlias, filter, userAlias, mappings)
-		if cond != "" {
-			conditions = append(conditions, cond)
-			params = append(params, condParams...)
+		if filter.IsEvent {
+			eventFilters = append(eventFilters, filter)
+		} else {
+			cond, condParams := filters.BuildFilterCondition(tableAlias, filter, userAlias, mappings)
+			if cond != "" {
+				nonEventConditions = append(nonEventConditions, cond)
+				params = append(params, condParams...)
+			}
 		}
 	}
 
+	conditions := make([]string, 0)
+
+	// Optimize event filters: use IN when possible, OR when necessary
+	if len(eventFilters) > 0 {
+		eventCond, eventParams := buildOptimizedEventCondition(tableAlias, eventFilters, userAlias, mappings)
+		if eventCond != "" {
+			conditions = append(conditions, eventCond)
+			params = append(params, eventParams...)
+		}
+	}
+
+	conditions = append(conditions, nonEventConditions...)
+
 	return conditions, params, needsUserJoin
+}
+
+func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filter, userAlias string, mappings filters.FilterMappings) (string, []interface{}) {
+	if len(eventFilters) == 0 {
+		return "", nil
+	}
+
+	alias := filters.NormalizeAlias(tableAlias)
+
+	if len(eventFilters) == 1 {
+		return filters.BuildFilterCondition(tableAlias, eventFilters[0], userAlias, mappings)
+	}
+
+	autoCapturedEvents := make([]filters.Filter, 0)
+	nonAutoCapturedEvents := make([]filters.Filter, 0)
+
+	for _, ef := range eventFilters {
+		if ef.AutoCaptured {
+			autoCapturedEvents = append(autoCapturedEvents, ef)
+		} else {
+			nonAutoCapturedEvents = append(nonAutoCapturedEvents, ef)
+		}
+	}
+
+	groupConditions := make([]string, 0, 2)
+	allParams := make([]interface{}, 0)
+
+	// Build condition for autoCaptured events
+	if len(autoCapturedEvents) > 0 {
+		cond, params := buildEventGroupCondition(alias, autoCapturedEvents, true, userAlias, mappings)
+		if cond != "" {
+			groupConditions = append(groupConditions, cond)
+			allParams = append(allParams, params...)
+		}
+	}
+
+	// Build condition for non-autoCaptured events
+	if len(nonAutoCapturedEvents) > 0 {
+		cond, params := buildEventGroupCondition(alias, nonAutoCapturedEvents, false, userAlias, mappings)
+		if cond != "" {
+			groupConditions = append(groupConditions, cond)
+			allParams = append(allParams, params...)
+		}
+	}
+
+	if len(groupConditions) == 0 {
+		return "", nil
+	}
+
+	if len(groupConditions) == 1 {
+		return groupConditions[0], allParams
+	}
+
+	return "(" + strings.Join(groupConditions, " OR ") + ")", allParams
+}
+
+func buildEventGroupCondition(alias string, eventFilters []filters.Filter, isAutoCaptured bool, userAlias string, mappings filters.FilterMappings) (string, []interface{}) {
+	if len(eventFilters) == 0 {
+		return "", nil
+	}
+
+	if len(eventFilters) == 1 {
+		return filters.BuildFilterCondition(strings.TrimSuffix(alias, "."), eventFilters[0], userAlias, mappings)
+	}
+
+	// Use IN for event names (multiple events in same autoCaptured group)
+	eventNames := make([]string, len(eventFilters))
+	for i, ef := range eventFilters {
+		eventNames[i] = ef.Name
+	}
+
+	var parts []string
+	params := make([]interface{}, 0)
+
+	// Build event name IN clause
+	placeholders := make([]string, len(eventNames))
+	for i := range eventNames {
+		placeholders[i] = "?"
+		params = append(params, eventNames[i])
+	}
+	parts = append(parts, alias+`"$event_name" IN (`+strings.Join(placeholders, ", ")+`)`)
+
+	if isAutoCaptured {
+		parts = append(parts, alias+`"$auto_captured"`)
+	}
+
+	// Collect all sub-filters from all events and OR them together
+	hasSubFilters := false
+	for _, ef := range eventFilters {
+		if len(ef.Filters) > 0 {
+			hasSubFilters = true
+			break
+		}
+	}
+
+	if hasSubFilters {
+		allSubConds := make([]string, 0)
+		for _, eventFilter := range eventFilters {
+			for _, subFilter := range eventFilter.Filters {
+				cond, condParams := filters.BuildFilterCondition(strings.TrimSuffix(alias, "."), subFilter, userAlias, mappings)
+				if cond != "" {
+					allSubConds = append(allSubConds, cond)
+					params = append(params, condParams...)
+				}
+			}
+		}
+
+		if len(allSubConds) > 0 {
+			parts = append(parts, "("+strings.Join(allSubConds, " OR ")+")")
+		}
+	}
+
+	return "(" + strings.Join(parts, " AND ") + ")", params
 }
 
 func ValidateSortColumn(column string) string {
@@ -79,12 +211,12 @@ func BuildSelectColumns(tableAlias string, requestedColumns []filters.EventColum
 	}
 
 	skipColumns := map[string]bool{
-		"project_id":                           true,
-		string(filters.EventColumnEventID):     true,
-		string(filters.EventColumnEventName):   true,
-		string(filters.EventColumnCreatedAt):   true,
-		string(filters.EventColumnDistinctID):  true,
-		string(filters.EventColumnSessionID):   true,
+		"project_id":                          true,
+		string(filters.EventColumnEventID):    true,
+		string(filters.EventColumnEventName):  true,
+		string(filters.EventColumnCreatedAt):  true,
+		string(filters.EventColumnDistinctID): true,
+		string(filters.EventColumnSessionID):  true,
 	}
 
 	return filters.GenericBuildSelectColumns(tableAlias, baseColumns, requestedColumns, model.ColumnMapping, skipColumns, formatColumnForSelect)
