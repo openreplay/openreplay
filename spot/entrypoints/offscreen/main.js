@@ -32,6 +32,14 @@ function getRecordingSettings(qualityValue) {
   ];
 
   let mimeType = mimeTypes[0];
+  if (MediaRecorder.isTypeSupported && !MediaRecorder.isTypeSupported(mimeType)) {
+    for (let i = 1; i < mimeTypes.length; i++) {
+      if (MediaRecorder.isTypeSupported(mimeTypes[i])) {
+        mimeType = mimeTypes[i];
+        break;
+      }
+    }
+  }
 
   const constrains = {
     frameRate: {
@@ -139,14 +147,18 @@ class ScreenRecorder {
 
     this.mRecorder.ondataavailable = this._handleDataAvailable;
     this.mRecorder.onstop = this._handleStop;
+    this.mRecorder.onerror = (e) => console.error("MediaRecorder error:", e);
 
-    this.mRecorder.start();
+    this.mRecorder.start(1000);
     this.isRecording = true;
     this.trackDuration();
   }
 
   stop() {
     if (this.mRecorder) {
+      try {
+        this.mRecorder.requestData?.();
+      } catch (e) {}
       this.mRecorder.stop();
       this.mRecorder = null;
     }
@@ -262,6 +274,9 @@ class ScreenRecorder {
     }
 
     this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+      await this.audioCtx.resume();
+    } catch (e) {}
     this.mixDest = this.audioCtx.createMediaStreamDestination();
 
     const existingAudioTracks = this.videoStream.getAudioTracks();
@@ -279,9 +294,11 @@ class ScreenRecorder {
       this.micSource.connect(this.mixDest);
     }
 
+    const mixedTrack = this.mixDest.stream.getAudioTracks()[0];
+
     return new MediaStream([
       ...this.videoStream.getVideoTracks(),
-      this.mixDest.stream.getAudioTracks()[0],
+      ...(mixedTrack ? [mixedTrack] : []),
     ]);
   }
 
@@ -308,7 +325,7 @@ class ScreenRecorder {
 
   recorded = false;
   _handleStop = () => {
-    const blob = new Blob(this.chunks, { type: this.settings.mimeType });
+    const blob = new Blob(this.chunks, { type: this.mRecorder.mimeType });
     const url = URL.createObjectURL(blob);
 
     this.videoBlob = blob;
@@ -325,7 +342,7 @@ class ScreenRecorder {
       if (this.recorded) {
         resolve({
           blob: this.videoBlob,
-          mtype: this.settings.mimeType,
+          mtype: this.mRecorder.mimeType,
         });
       } else {
         if (iteration > 10 * 1000) {
@@ -377,8 +394,11 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
       recorder.stop();
       const duration = recorder.duration;
       recorder.getVideoData().then((data) => {
-        if (!data.blob) {
+        if (!data.blob || data.blob.size === 0) {
+          console.error('No data recorded');
           respond({ status: "empty" });
+          recorder.clearAll();
+          return true;
         }
         convertBlobToBase64(data.blob).then(({ result, size }) => {
           if (size > hardLimit) {

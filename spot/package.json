@@ -2,7 +2,7 @@
   "name": "spot",
   "description": "manifest.json description",
   "private": true,
-  "version": "1.0.25",
+  "version": "1.0.26",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -17,21 +17,21 @@
   },
   "dependencies": {
     "@neodrag/solid": "^2.3.0",
-    "@openreplay/network-proxy": "^1.1.0",
+    "@openreplay/network-proxy": "^1.2.2",
     "@tailwindcss/postcss": "^4.1.7",
     "@tailwindcss/vite": "^4.1.7",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
-    "solid-js": "^1.9.7",
+    "solid-js": "^1.9.10",
     "tailwindcss": "4.1.7",
-    "web-vitals": "^4.2.4"
+    "web-vitals": "^5.1.0"
   },
   "devDependencies": {
-    "@wxt-dev/module-solid": "^1.1.3",
-    "daisyui": "5.0.37",
-    "typescript": "^5.8.2",
+    "@wxt-dev/module-solid": "^1.1.4",
+    "daisyui": "5.5.13",
+    "typescript": "^5.9.3",
     "wxt": "0.20.11"
   },
   "packageManager": "yarn@4.5.3"
