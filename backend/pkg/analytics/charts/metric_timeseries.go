@@ -34,9 +34,7 @@ func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interfac
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
 		_start := time.Now()
-
 		t.Logger.Debug(context.Background(), "Executing query: %s", query)
-
 		var pts []DataPoint
 		if err = conn.Select(context.Background(), &pts, query, convertParams(params)...); err != nil {
 			t.Logger.Error(context.Background(), "Select timeseries %s error: %v", series.Name, err)
@@ -135,6 +133,9 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 	)
 
 	for _, filter := range allFilters {
+		if filter.AutoCaptured {
+			filter.Name = CamelToSnake(filter.Name)
+		}
 		if _, exists := SessionColumns[filter.Name]; exists || strings.HasPrefix(filter.Name, "metadata_") {
 			sessionFilters = append(sessionFilters, filter)
 		} else {
