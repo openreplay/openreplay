@@ -22,6 +22,7 @@ type bulkImpl struct {
 	metrics database.Database
 	table   string
 	query   string
+	counter int
 	values  [][]interface{}
 }
 
@@ -45,10 +46,14 @@ func NewBulk(conn driver.Conn, metrics database.Database, table, query string) (
 
 func (b *bulkImpl) Append(args ...interface{}) error {
 	b.values = append(b.values, args)
+	b.counter++
 	return nil
 }
 
 func (b *bulkImpl) Send() error {
+	if len(b.values) == 0 {
+		return nil
+	}
 	start := time.Now()
 	batch, err := b.conn.PrepareBatch(context.Background(), b.query)
 	if err != nil {
@@ -61,9 +66,12 @@ func (b *bulkImpl) Send() error {
 		}
 	}
 	err = batch.Send()
+	log.Printf("[!] batch name: %s, rows: %d, duration: %d ms", b.table, b.counter, time.Now().Sub(start).Milliseconds())
 	// Save bulk metrics
-	b.metrics.RecordBulkElements(float64(len(b.values)), "ch", b.table)
-	b.metrics.RecordBulkInsertDuration(float64(time.Now().Sub(start).Milliseconds()), "ch", b.table)
+	if b.metrics != nil {
+		b.metrics.RecordBulkElements(float64(len(b.values)), "ch", b.table)
+		b.metrics.RecordBulkInsertDuration(float64(time.Now().Sub(start).Milliseconds()), "ch", b.table)
+	}
 	// Prepare values slice for a new data
 	b.values = make([][]interface{}, 0)
 	return err
