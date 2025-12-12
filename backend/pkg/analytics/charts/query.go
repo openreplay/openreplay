@@ -787,7 +787,7 @@ func BuildCountJoinClause(eventConditions []string, operator string, tableAlias 
 var SessionColumns = map[string][]string{
 	"user_browser":          {"user_browser", "singleColumn"},
 	"user_device":           {"user_device", "singleColumn"},
-	"platform":              {"user_device_type", "singleColumn"},
+	"platform":              {"platform", "singleColumn"},
 	"user_id":               {"user_id", "singleColumn"},
 	"user_anonymous_id":     {"user_anonymous_id", "singleColumn"},
 	"referrer":              {"referrer", "singleColumn"},
