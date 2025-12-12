@@ -68,7 +68,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 				switch action.Type {
 				case model.UserActionIdentify:
 					if err = ds.users.Add(sessInfo, model.NewUser(action.UserID)); err != nil {
-						ds.log.Error(context.Background(), "can't add user to session: %d", sessID)
+						ds.log.Error(context.Background(), "can't add user to session: %d, err: %s", sessID, err)
 						continue
 					}
 				case model.UserActionDelete:
