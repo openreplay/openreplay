@@ -91,6 +91,7 @@ export const genStringBody = (body?: BodyInit) => {
     } else if (
       body instanceof Blob ||
       body instanceof ReadableStream ||
+      ArrayBuffer.isView(body) ||
       body instanceof ArrayBuffer
     ) {
       result = 'byte data'
