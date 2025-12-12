@@ -120,6 +120,9 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	sessionColumns := GetSessionColumns()
 	needsSessionJoin := false
 	for _, filter := range regularFilters {
+		if filter.AutoCaptured && !filter.IsEvent {
+			filter.Name = CamelToSnake(filter.Name)
+		}
 		if _, exists := sessionColumns[filter.Name]; exists {
 			needsSessionJoin = true
 			break
