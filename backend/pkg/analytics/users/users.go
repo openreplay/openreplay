@@ -121,10 +121,10 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 		)
 		SELECT 
 			project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar",
-			toInt64(toUnixTimestamp("$created_at") * 1000) AS created_at, toString(properties) AS properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6,
+			"$created_at", toString(properties) AS properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6,
 			"$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain",
 			initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city",
-			"$or_api_endpoint", "$timezone", toInt64(toUnixTimestamp("$first_event_at") * 1000) AS first_event_at, toInt64(toUnixTimestamp("$last_seen") * 1000) AS last_seen,
+			"$or_api_endpoint", "$timezone", "$first_event_at", "$last_seen",
 			(SELECT arraySort(groupUniqArray(distinct_id)) 
 			 FROM product_analytics.users_distinct_id 
 			 WHERE project_id = ? AND "$user_id" = ? AND _deleted_at = '1970-01-01 00:00:00') AS distinct_ids
@@ -134,14 +134,20 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 	row := u.chConn.QueryRow(ctx, query, projID, userId, projID, userId)
 
 	user := &model.UserRequest{}
+	var createdAt, firstEventAt, lastSeen time.Time
 	err := row.Scan(
 		&user.ProjectID, &user.UserID, &user.Email, &user.Name, &user.FirstName, &user.LastName,
-		&user.Phone, &user.Avatar, &user.CreatedAt, &user.PropertiesRaw, &user.GroupID1, &user.GroupID2,
+		&user.Phone, &user.Avatar, &createdAt, &user.PropertiesRaw, &user.GroupID1, &user.GroupID2,
 		&user.GroupID3, &user.GroupID4, &user.GroupID5, &user.GroupID6, &user.SDKEdition, &user.SDKVersion,
 		&user.CurrentUrl, &user.InitialReferrer, &user.ReferringDomain, &user.InitialUtmSource,
 		&user.InitialUtmMedium, &user.InitialUtmCampaign, &user.Country, &user.State, &user.City,
-		&user.OrAPIEndpoint, &user.Timezone, &user.FirstEventAt, &user.LastSeen, &user.DistinctIDs,
+		&user.OrAPIEndpoint, &user.Timezone, &firstEventAt, &lastSeen, &user.DistinctIDs,
 	)
+
+
+	user.CreatedAt = filters.ConvertTimeToMillis(createdAt)
+	user.FirstEventAt = filters.ConvertTimeToMillis(firstEventAt)
+	user.LastSeen = filters.ConvertTimeToMillis(lastSeen)
 	if err != nil {
 		u.log.Error(ctx, "failed to get user by ID: %v", err)
 		return nil, fmt.Errorf("failed to get user by ID: %w", err)
@@ -453,13 +459,16 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
+	startTime := filters.ConvertMillisToTime(req.StartDate)
+	endTime := filters.ConvertMillisToTime(req.EndDate)
+
 	baseConditions := []string{
 		"e.project_id = ?",
 		`e."$user_id" = ?`,
-		"e.created_at >= toDateTime64(?/1000, 3)",
-		"e.created_at <= toDateTime64(?/1000, 3)",
+		"e.created_at >= ?",
+		"e.created_at <= ?",
 	}
-	params := []interface{}{projID, userID, req.StartDate, req.EndDate}
+	params := []interface{}{projID, userID, startTime, endTime}
 
 	if len(req.HideEvents) > 0 {
 		placeholders := make([]string, len(req.HideEvents))
@@ -478,7 +487,7 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		SELECT COUNT(*) OVER() as total_count,
 			e.event_id,
 			e."$event_name",
-			toInt64(toUnixTimestamp(e.created_at) * 1000) AS created_at,
+			e.created_at,
 			e."$auto_captured"
 		FROM product_analytics.events AS e
 		WHERE %s
@@ -499,18 +508,20 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 	var events []model.UserEvent
 	for rows.Next() {
 		event := model.UserEvent{}
+		var createdAt time.Time
 
 		if err := rows.Scan(
 			&total,
 			&event.EventID,
 			&event.EventName,
-			&event.CreatedAt,
+			&createdAt,
 			&event.AutoCaptured,
 		); err != nil {
 			u.log.Error(ctx, "failed to scan event row: %v", err)
 			return nil, fmt.Errorf("failed to scan event row: %w", err)
 		}
 
+		event.CreatedAt = filters.ConvertTimeToMillis(createdAt)
 		events = append(events, event)
 	}
 

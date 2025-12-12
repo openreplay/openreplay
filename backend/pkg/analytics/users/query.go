@@ -114,4 +114,3 @@ func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID
 
 
 
-

@@ -4,7 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
+
+func ConvertTimeToMillis(t time.Time) int64 {
+	return t.UnixMilli()
+}
+
+func ConvertMillisToTime(millis int64) time.Time {
+	return time.UnixMilli(millis)
+}
 
 func BuildColumnMapping(columns []string) map[string]string {
 	mapping := make(map[string]string, len(columns))
@@ -44,11 +53,11 @@ func MarshalJSONProperties(properties *map[string]interface{}) (string, error) {
 func BuildJSONExtractColumn(alias, propertiesCol, dataType string) string {
 	switch dataType {
 	case "float", "number", "int":
-		return fmt.Sprintf("JSONExtractFloat(toString(%s%s), ?)", alias, propertiesCol)
+		return fmt.Sprintf("toFloat64OrNull(getSubcolumn(%s%s, ?))", alias, propertiesCol)
 	case "boolean":
-		return fmt.Sprintf("JSONExtractBool(toString(%s%s), ?)", alias, propertiesCol)
+		return fmt.Sprintf("toBool(getSubcolumn(%s%s, ?))", alias, propertiesCol)
 	default:
-		return fmt.Sprintf("JSONExtractString(toString(%s%s), ?)", alias, propertiesCol)
+		return fmt.Sprintf("getSubcolumn(%s%s, ?)", alias, propertiesCol)
 	}
 }
 

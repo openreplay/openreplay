@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
@@ -30,12 +31,15 @@ func New(log logger.Logger, conn driver.Conn) (Events, error) {
 }
 
 func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSearchRequest) (whereClause string, params []interface{}, needsUserJoin bool) {
+	startTime := filters.ConvertMillisToTime(req.StartDate)
+	endTime := filters.ConvertMillisToTime(req.EndDate)
+
 	baseConditions := []string{
 		"e.project_id = ?",
-		"e.created_at >= toDateTime64(?/1000, 3)",
-		"e.created_at <= toDateTime64(?/1000, 3)",
+		"e.created_at >= ?",
+		"e.created_at <= ?",
 	}
-	params = []interface{}{projID, req.StartDate, req.EndDate}
+	params = []interface{}{projID, startTime, endTime}
 
 	filterConditions, filterParams, needsUserJoin := BuildEventSearchQuery("e", req.Filters)
 	whereClause = filters.BuildWhereClause(baseConditions, filterConditions)
@@ -69,12 +73,12 @@ func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns
 	return sb.String()
 }
 
-func (e *eventsImpl) buildScanPointers(entry *model.EventEntry, columns []string) []interface{} {
+func (e *eventsImpl) buildScanPointers(entry *model.EventEntry, columns []string, createdAt *time.Time) []interface{} {
 	valuePtrs := []interface{}{
 		&entry.ProjectId,
 		&entry.EventId,
 		&entry.EventName,
-		&entry.CreatedAt,
+		createdAt,
 		&entry.DistinctId,
 		&entry.SessionId,
 	}
@@ -120,13 +124,16 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 	events := make([]model.EventEntry, 0, req.Limit)
 	for rows.Next() {
 		entry := model.EventEntry{}
-		valuePtrs := e.buildScanPointers(&entry, columnsStr)
+		var createdAt time.Time
+		valuePtrs := e.buildScanPointers(&entry, columnsStr, &createdAt)
 		
 		scanPtrs := append([]interface{}{&total}, valuePtrs...)
 		if err := rows.Scan(scanPtrs...); err != nil {
 			e.log.Error(ctx, "failed to scan event row for project %d: %v", projID, err)
 			continue
 		}
+
+		entry.CreatedAt = filters.ConvertTimeToMillis(createdAt)
 
 		if err := entry.UnmarshalProperties(); err != nil {
 			e.log.Error(ctx, "failed to unmarshal properties for event in project %d: %v", projID, err)
@@ -165,13 +172,16 @@ func (e *eventsImpl) GetEventByID(ctx context.Context, projID uint32, eventID st
 	query := e.buildGetEventQuery(selectColumns)
 
 	entry := model.EventEntry{}
-	scanPtrs := e.buildScanPointers(&entry, allColumns)
+	var createdAt time.Time
+	scanPtrs := e.buildScanPointers(&entry, allColumns, &createdAt)
 
 	err := e.chConn.QueryRow(ctx, query, projID, eventID).Scan(scanPtrs...)
 	if err != nil {
 		e.log.Error(ctx, "failed to get event %s for project %d: %v", eventID, projID, err)
 		return nil, fmt.Errorf("failed to get event %s for project %d: %w", eventID, projID, err)
 	}
+
+	entry.CreatedAt = filters.ConvertTimeToMillis(createdAt)
 
 	if err := entry.UnmarshalProperties(); err != nil {
 		e.log.Error(ctx, "failed to unmarshal properties for event %s in project %d: %v", eventID, projID, err)

@@ -73,18 +73,18 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 		alias + "project_id",
 		fmt.Sprintf("toString(%s%s) AS %s", alias, string(filters.EventColumnEventID), string(filters.EventColumnEventID)),
 		fmt.Sprintf("%s\"%s\" AS \"%s\"", alias, string(filters.EventColumnEventName), string(filters.EventColumnEventName)),
-		fmt.Sprintf("toUnixTimestamp64Milli(%s%s) AS %s", alias, string(filters.EventColumnCreatedAt), string(filters.EventColumnCreatedAt)),
+		fmt.Sprintf("%s%s AS %s", alias, string(filters.EventColumnCreatedAt), string(filters.EventColumnCreatedAt)),
 		alias + string(filters.EventColumnDistinctID),
 		fmt.Sprintf("toString(%s%s) AS %s", alias, string(filters.EventColumnSessionID), string(filters.EventColumnSessionID)),
 	}
 
 	skipColumns := map[string]bool{
-		"project_id":                         true,
-		string(filters.EventColumnEventID):   true,
-		string(filters.EventColumnEventName): true,
-		string(filters.EventColumnCreatedAt): true,
-		string(filters.EventColumnDistinctID): true,
-		string(filters.EventColumnSessionID): true,
+		"project_id":                           true,
+		string(filters.EventColumnEventID):     true,
+		string(filters.EventColumnEventName):   true,
+		string(filters.EventColumnCreatedAt):   true,
+		string(filters.EventColumnDistinctID):  true,
+		string(filters.EventColumnSessionID):   true,
 	}
 
 	return filters.GenericBuildSelectColumns(tableAlias, baseColumns, requestedColumns, model.ColumnMapping, skipColumns, formatColumnForSelect)
