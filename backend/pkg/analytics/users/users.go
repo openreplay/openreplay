@@ -173,8 +173,7 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	columnsStr := filters.ConvertColumnsToStrings(req.Columns)
 
 	whereClause, params := u.buildSearchQueryParams(projID, req)
-	cteSelectColumns := BuildSelectColumns("", columnsStr, true)
-	outerSelectColumns := BuildSelectColumns("latest_users.", columnsStr, false)
+	selectColumns := BuildSelectColumns("", columnsStr)
 	sortBy := filters.ValidateSortColumnGeneric(string(req.SortBy), model.ColumnMapping, `"$user_id"`)
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
@@ -190,11 +189,11 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 				ORDER BY _timestamp DESC
 				LIMIT 1 BY project_id, "$user_id"
 			)
-			SELECT COUNT(*) OVER() as total_count, %s
+			SELECT COUNT(*) OVER() as total_count, latest_users.*
 			FROM latest_users%s
 			ORDER BY %s %s
 			LIMIT ? OFFSET ?`,
-			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), eventJoinClause, sortBy, strings.ToUpper(string(sortOrder)))
+			strings.Join(selectColumns, ", "), whereClause, eventJoinClause, sortBy, strings.ToUpper(string(sortOrder)))
 	} else {
 		query = fmt.Sprintf(`
 			WITH latest_users AS (
@@ -204,11 +203,11 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 				ORDER BY _timestamp DESC
 				LIMIT 1 BY project_id, "$user_id"
 			)
-			SELECT COUNT(*) OVER() as total_count, %s
+			SELECT COUNT(*) OVER() as total_count, latest_users.*
 			FROM latest_users
 			ORDER BY %s %s
 			LIMIT ? OFFSET ?`,
-			strings.Join(cteSelectColumns, ", "), whereClause, strings.Join(outerSelectColumns, ", "), sortBy, strings.ToUpper(string(sortOrder)))
+			strings.Join(selectColumns, ", "), whereClause, sortBy, strings.ToUpper(string(sortOrder)))
 	}
 
 	queryParams := params
@@ -235,6 +234,8 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 			u.log.Error(ctx, "failed to scan user row: %v", err)
 			return nil, fmt.Errorf("failed to scan user row: %w", err)
 		}
+
+		user.ConvertTimeFields()
 
 		if err := user.UnmarshalProperties(); err != nil {
 			u.log.Error(ctx, "failed to unmarshal properties: %v", err)

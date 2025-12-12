@@ -11,12 +11,6 @@ import (
 
 func formatColumnForSelect(alias, col string, dbCol string) string {
 	switch filters.UserColumn(col) {
-	case filters.UserColumnCreatedAt:
-		return fmt.Sprintf("toInt64(toUnixTimestamp(%s%s) * 1000) AS %s", alias, dbCol, col)
-	case filters.UserColumnFirstEventAt:
-		return fmt.Sprintf("toInt64(toUnixTimestamp(%s%s) * 1000) AS %s", alias, dbCol, col)
-	case filters.UserColumnLastSeen:
-		return fmt.Sprintf("toInt64(toUnixTimestamp(%s%s) * 1000) AS %s", alias, dbCol, col)
 	case filters.UserColumnProperties:
 		return fmt.Sprintf("toString(%s%s) AS %s", alias, dbCol, col)
 	default:
@@ -31,26 +25,13 @@ func formatColumnForSelect(alias, col string, dbCol string) string {
 	}
 }
 
-func BuildSelectColumns(tableAlias string, requestedColumns []string, applyTransformations bool) []string {
+func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 	alias := filters.NormalizeAlias(tableAlias)
 
-	var baseColumns []string
-	if applyTransformations {
-		baseColumns = []string{alias + "project_id"}
-		for _, col := range model.BaseUserColumns {
-			colStr := string(col)
-			baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, model.ColumnMapping[colStr]))
-		}
-	} else {
-		baseColumns = []string{alias + "project_id"}
-		for _, col := range model.BaseUserColumns {
-			colStr := string(col)
-			if strings.HasPrefix(colStr, "$") {
-				baseColumns = append(baseColumns, fmt.Sprintf("%s\"%s\"", alias, colStr))
-			} else {
-				baseColumns = append(baseColumns, alias+colStr)
-			}
-		}
+	baseColumns := []string{alias + "project_id"}
+	for _, col := range model.BaseUserColumns {
+		colStr := string(col)
+		baseColumns = append(baseColumns, formatColumnForSelect(alias, colStr, model.ColumnMapping[colStr]))
 	}
 
 	if len(requestedColumns) == 0 {
@@ -58,28 +39,7 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string, applyTrans
 	}
 
 	skipColumns := model.GetBaseColumnStringSet()
-	
-	if applyTransformations {
-		return filters.GenericBuildSelectColumns(tableAlias, baseColumns, requestedColumns, model.ColumnMapping, skipColumns, formatColumnForSelect)
-	}
-	
-	result := make([]string, len(baseColumns))
-	copy(result, baseColumns)
-	
-	for _, col := range requestedColumns {
-		if skipColumns[col] {
-			continue
-		}
-		if _, ok := model.ColumnMapping[col]; ok {
-			if strings.HasPrefix(col, "$") {
-				result = append(result, fmt.Sprintf("%s\"%s\"", alias, col))
-			} else {
-				result = append(result, alias+col)
-			}
-		}
-	}
-
-	return result
+	return filters.GenericBuildSelectColumns(tableAlias, baseColumns, requestedColumns, model.ColumnMapping, skipColumns, formatColumnForSelect)
 }
 
 func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID uint32, startDate int64, endDate int64) (string, []interface{}, bool) {

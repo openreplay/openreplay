@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"openreplay/backend/pkg/analytics/filters"
 )
 
@@ -57,6 +59,7 @@ type UserRequest struct {
 	Phone              string                  `json:"$phone,omitempty" db:"$phone" validate:"omitempty"`
 	Avatar             string                  `json:"$avatar,omitempty" db:"$avatar" validate:"omitempty,url"`
 	CreatedAt          int64                   `json:"$created_at,omitempty" db:"$created_at" validate:"omitempty"`
+	CreatedAtTime      time.Time               `json:"-"`
 	Properties         *map[string]interface{} `json:"properties,omitempty"`
 	PropertiesRaw      *string                 `json:"-"`
 	DistinctIDs        []string                `json:"distinct_ids,omitempty"`
@@ -80,7 +83,9 @@ type UserRequest struct {
 	OrAPIEndpoint      string                  `json:"$or_api_endpoint,omitempty" db:"$or_api_endpoint" validate:"omitempty"`
 	Timezone           int8                    `json:"$timezone,omitempty" db:"$timezone" validate:"omitempty"`
 	FirstEventAt       int64                   `json:"$first_event_at,omitempty" db:"$first_event_at" validate:"omitempty"`
+	FirstEventAtTime   time.Time               `json:"-"`
 	LastSeen           int64                   `json:"$last_seen,omitempty" db:"$last_seen" validate:"omitempty"`
+	LastSeenTime       time.Time               `json:"-"`
 }
 
 type User struct {
@@ -117,12 +122,22 @@ type User struct {
 	LastSeen           int64                   `json:"$last_seen"`
 }
 
-
-
 func (u *UserRequest) UnmarshalProperties() error {
 	var err error
 	u.Properties, err = filters.UnmarshalJSONProperties(u.PropertiesRaw)
 	return err
+}
+
+func (u *UserRequest) ConvertTimeFields() {
+	if !u.CreatedAtTime.IsZero() {
+		u.CreatedAt = filters.ConvertTimeToMillis(u.CreatedAtTime)
+	}
+	if !u.FirstEventAtTime.IsZero() {
+		u.FirstEventAt = filters.ConvertTimeToMillis(u.FirstEventAtTime)
+	}
+	if !u.LastSeenTime.IsZero() {
+		u.LastSeen = filters.ConvertTimeToMillis(u.LastSeenTime)
+	}
 }
 
 func (u *UserRequest) ToUser() *User {
@@ -236,18 +251,16 @@ func (u *UserRequest) ToMap(requestedColumns []string) map[string]interface{} {
 	return result
 }
 
-
-
 type SearchUsersRequest struct {
-	Filters   []filters.Filter          `json:"filters" validate:"omitempty,dive"`
-	Query     string                    `json:"query" validate:"omitempty,max=100"`
-	StartDate int64                     `json:"startTimestamp" validate:"omitempty,min=946684800000"`
-	EndDate   int64                     `json:"endTimestamp" validate:"omitempty,min=946684800000,gtfield=StartDate"`
-	Limit     int                       `json:"limit" validate:"omitempty,min=1,max=200"`
-	Page      int                       `json:"page" validate:"omitempty,min=1"`
-	SortBy    filters.UserColumn        `json:"sortBy" validate:"omitempty,validateUserColumn"`
-	SortOrder filters.SortOrderType     `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
-	Columns   []filters.UserColumn      `json:"columns" validate:"omitempty,dive,validateUserColumn"`
+	Filters   []filters.Filter      `json:"filters" validate:"omitempty,dive"`
+	Query     string                `json:"query" validate:"omitempty,max=100"`
+	StartDate int64                 `json:"startTimestamp" validate:"omitempty,min=946684800000"`
+	EndDate   int64                 `json:"endTimestamp" validate:"omitempty,min=946684800000,gtfield=StartDate"`
+	Limit     int                   `json:"limit" validate:"omitempty,min=1,max=200"`
+	Page      int                   `json:"page" validate:"omitempty,min=1"`
+	SortBy    filters.UserColumn    `json:"sortBy" validate:"omitempty,validateUserColumn"`
+	SortOrder filters.SortOrderType `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
+	Columns   []filters.UserColumn  `json:"columns" validate:"omitempty,dive,validateUserColumn"`
 }
 
 type SearchUsersResponse struct {
@@ -256,14 +269,14 @@ type SearchUsersResponse struct {
 }
 
 type UserActivityRequest struct {
-	Filters        []filters.Filter      `json:"filters" validate:"omitempty,dive"`
-	StartDate      int64                 `json:"startTimestamp" validate:"required,min=946684800000"`
-	EndDate        int64                 `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
-	HideEvents     []string              `json:"hideEvents" validate:"omitempty"`
-	Limit          int                   `json:"limit" validate:"omitempty,min=1,max=200"`
-	Page           int                   `json:"page" validate:"omitempty,min=1"`
-	SortBy         string                `json:"sortBy" validate:"omitempty,oneof=created_at $event_name"`
-	SortOrder      filters.SortOrderType `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
+	Filters    []filters.Filter      `json:"filters" validate:"omitempty,dive"`
+	StartDate  int64                 `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndDate    int64                 `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
+	HideEvents []string              `json:"hideEvents" validate:"omitempty"`
+	Limit      int                   `json:"limit" validate:"omitempty,min=1,max=200"`
+	Page       int                   `json:"page" validate:"omitempty,min=1"`
+	SortBy     string                `json:"sortBy" validate:"omitempty,oneof=created_at $event_name"`
+	SortOrder  filters.SortOrderType `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
 }
 
 type UserEvent struct {
@@ -282,7 +295,7 @@ func GetFieldPointer(user *UserRequest, column string) interface{} {
 	if column == "project_id" {
 		return &user.ProjectID
 	}
-	
+
 	switch filters.UserColumn(column) {
 	case filters.UserColumnUserID:
 		return &user.UserID
@@ -299,7 +312,7 @@ func GetFieldPointer(user *UserRequest, column string) interface{} {
 	case filters.UserColumnAvatar:
 		return &user.Avatar
 	case filters.UserColumnCreatedAt:
-		return &user.CreatedAt
+		return &user.CreatedAtTime
 	case filters.UserColumnProperties:
 		return &user.PropertiesRaw
 	case filters.UserColumnGroupID1:
@@ -341,9 +354,9 @@ func GetFieldPointer(user *UserRequest, column string) interface{} {
 	case filters.UserColumnTimezone:
 		return &user.Timezone
 	case filters.UserColumnFirstEventAt:
-		return &user.FirstEventAt
+		return &user.FirstEventAtTime
 	case filters.UserColumnLastSeen:
-		return &user.LastSeen
+		return &user.LastSeenTime
 	default:
 		return nil
 	}
