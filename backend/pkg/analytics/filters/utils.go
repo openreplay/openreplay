@@ -64,7 +64,9 @@ func BuildJSONExtractColumn(alias, propertiesCol, dataType string) string {
 }
 
 func IsDynamicColumn(propertiesCol string) bool {
-	return strings.Contains(propertiesCol, `"$properties"`) || strings.Contains(propertiesCol, string(EventColumnAutoProperties))
+	return strings.Contains(propertiesCol, `"$properties"`) || 
+		strings.Contains(propertiesCol, string(EventColumnAutoProperties)) ||
+		strings.Contains(propertiesCol, string(EventColumnProperties))
 }
 
 func RequiresToString(operator FilterOperatorType) bool {
@@ -82,6 +84,11 @@ func WrapWithToStringIfNeeded(columnExpr, propertiesCol, operator string, valueC
 	if opType == FilterOperatorContains || opType == FilterOperatorNotContains || 
 		opType == FilterOperatorDoesNotContain || opType == FilterOperatorStartsWith || 
 		opType == FilterOperatorEndsWith || opType == FilterOperatorRegex {
+		return fmt.Sprintf("toString(%s)", columnExpr)
+	}
+	
+	// Always wrap for IN/NOT IN operators with Dynamic columns
+	if opType == FilterOperatorIn || opType == FilterOperatorNotIn {
 		return fmt.Sprintf("toString(%s)", columnExpr)
 	}
 	
