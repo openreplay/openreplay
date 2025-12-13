@@ -28,9 +28,9 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
 
         return meta
 
-    def create_new_assignment(self, project_id, title, description, assignee,
+    def create_new_assignment(self, integration_project_id, title, description, assignee,
                               issue_type):
-        repoId = project_id
+        repoId = integration_project_id
         assignees = [assignee]
         labels = [str(issue_type)]
 
@@ -59,11 +59,11 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
     def get_by_ids(self, saved_issues):
         results = []
         for i in saved_issues:
-            results.append(self.get(project_id=i["integrationProjectId"], assignment_id=i["id"]))
+            results.append(self.get(integration_project_id=i["integrationProjectId"], assignment_id=i["id"]))
         return {"issues": results}
 
-    def get(self, project_id, assignment_id):
-        repoId = project_id
+    def get(self, integration_project_id, assignment_id):
+        repoId = integration_project_id
         issueNumber = assignment_id
         issue = self.__client.get(f"/repositories/{repoId}/issues/{issueNumber}")
         issue = formatter.issue(issue)
@@ -72,17 +72,17 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
                                  self.__client.get(f"/repositories/{repoId}/issues/{issueNumber}/comments")]
         return issue
 
-    def comment(self, project_id, assignment_id, comment):
-        repoId = project_id
+    def comment(self, integration_project_id, assignment_id, comment):
+        repoId = integration_project_id
         issueNumber = assignment_id
         commentCreated = self.__client.post(f"/repositories/{repoId}/issues/{issueNumber}/comments",
                                             body={"body": comment})
         return formatter.comment(commentCreated)
 
-    def get_metas(self, project_id):
+    def get_metas(self, integration_project_id):
         current_user = self.get_current_user()
         try:
-            users = self.__client.get(f"/repositories/{project_id}/collaborators")
+            users = self.__client.get(f"/repositories/{integration_project_id}/collaborators")
         except Exception as e:
             users = []
         users = [formatter.user(u) for u in users]
@@ -92,7 +92,7 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
         return {"provider": self.provider.lower(),
                 'users': users,
                 'issueTypes': [formatter.label(l) for l in
-                               self.__client.get(f"/repositories/{project_id}/labels")]
+                               self.__client.get(f"/repositories/{integration_project_id}/labels")]
                 }
 
     def get_projects(self):
