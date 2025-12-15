@@ -399,6 +399,7 @@ export const compareJsonObjects = (obj1: any, obj2: any) =>
 
 export const getInitials = (name = '') => {
   const names = name.split(' ');
+  if (names.every(n => !n)) return '';
 
   return names
     .slice(0, 2)
