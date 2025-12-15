@@ -32,58 +32,171 @@ func BuildPlaceholderList(values []string) ([]string, []interface{}) {
 	return placeholders, params
 }
 
+func convertMillisToSeconds(milliStr string) (int64, error) {
+	var millis int64
+	_, err := fmt.Sscanf(milliStr, "%d", &millis)
+	if err != nil {
+		return 0, err
+	}
+	return millis / 1000, nil
+}
+
+func convertTimestampValues(values []string) ([]interface{}, error) {
+	converted := make([]interface{}, len(values))
+	for i, v := range values {
+		seconds, err := convertMillisToSeconds(v)
+		if err != nil {
+			return nil, err
+		}
+		converted[i] = seconds
+	}
+	return converted, nil
+}
+
 func BuildOperatorCondition(fullCol string, operator string, values []string, nature string, dataType string) (string, []interface{}) {
 	opType := FilterOperatorType(operator)
 	dtType := DataTypeType(dataType)
 
 	if dtType == DataTypeTimestamp {
+		convertedValues, err := convertTimestampValues(values)
+		if err != nil {
+			return "", nil
+		}
+
 		switch opType {
-		case FilterOperatorGreaterEqual, FilterOperatorGte, FilterOperatorGreaterEqualAlias:
-			if len(values) == 1 {
-				return fmt.Sprintf("%s >= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
-			}
-			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s >= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
-		case FilterOperatorGreaterThan, FilterOperatorGt, FilterOperatorGreaterThanAlias:
-			if len(values) == 1 {
-				return fmt.Sprintf("%s > fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
-			}
-			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s > fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
-		case FilterOperatorLessEqual, FilterOperatorLte, FilterOperatorLessEqualAlias:
-			if len(values) == 1 {
-				return fmt.Sprintf("%s <= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
-			}
-			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s <= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
-		case FilterOperatorLessThan, FilterOperatorLt, FilterOperatorLessThanAlias:
-			if len(values) == 1 {
-				return fmt.Sprintf("%s < fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
-			}
-			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s < fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
-		case FilterOperatorIs, FilterOperatorEquals, FilterOperatorOn, FilterOperatorEqual:
-			if len(values) == 1 {
-				return fmt.Sprintf("%s = fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
-			}
-			placeholders := make([]string, len(values))
-			params := make([]interface{}, len(values))
-			for i, v := range values {
-				placeholders[i] = "fromUnixTimestamp64Milli(CAST(? AS Int64))"
-				params[i] = v
-			}
-			return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
-		case FilterOperatorIsNot, FilterOperatorNotEquals, FilterOperatorNot, FilterOperatorNotEqual:
-			if len(values) == 1 {
-				return fmt.Sprintf("%s != fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
-			}
-			placeholders := make([]string, len(values))
-			params := make([]interface{}, len(values))
-			for i, v := range values {
-				placeholders[i] = "fromUnixTimestamp64Milli(CAST(? AS Int64))"
-				params[i] = v
-			}
-			return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
-		case FilterOperatorIsUndefined:
+		case FilterOperatorIsBlank, FilterOperatorIsUndefined:
 			return fmt.Sprintf("isNull(%s)", fullCol), nil
-		case FilterOperatorIsAny, FilterOperatorOnAny:
+
+		case FilterOperatorIsNotBlank, FilterOperatorIsAny, FilterOperatorOnAny:
 			return fmt.Sprintf("isNotNull(%s)", fullCol), nil
+
+		case FilterOperatorBetween:
+			if len(convertedValues) == 2 {
+				return fmt.Sprintf("%s >= toDateTime(?) AND %s <= toDateTime(?)", fullCol, fullCol), convertedValues
+			}
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s = toDateTime(?)", fullCol), convertedValues
+			}
+			return "", nil
+
+		case FilterOperatorOn:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s = toDateTime(?)", fullCol), convertedValues
+			}
+			if len(convertedValues) == 2 {
+				return fmt.Sprintf("%s >= toDateTime(?) AND %s <= toDateTime(?)", fullCol, fullCol), convertedValues
+			}
+			placeholders := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				placeholders[i] = "toDateTime(?)"
+			}
+			return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), convertedValues
+
+		case FilterOperatorNotOn:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s != toDateTime(?)", fullCol), convertedValues
+			}
+			if len(convertedValues) == 2 {
+				return fmt.Sprintf("NOT (%s >= toDateTime(?) AND %s <= toDateTime(?))", fullCol, fullCol), convertedValues
+			}
+			placeholders := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				placeholders[i] = "toDateTime(?)"
+			}
+			return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), convertedValues
+
+		case FilterOperatorOnOrAfter, FilterOperatorGreaterEqual, FilterOperatorGte, FilterOperatorGreaterEqualAlias:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s >= toDateTime(?)", fullCol), convertedValues
+			}
+			parts := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				parts[i] = fmt.Sprintf("%s >= toDateTime(?)", fullCol)
+			}
+			return "(" + strings.Join(parts, " OR ") + ")", convertedValues
+
+		case FilterOperatorAfter, FilterOperatorGreaterThan, FilterOperatorGt, FilterOperatorGreaterThanAlias:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s > toDateTime(?)", fullCol), convertedValues
+			}
+			parts := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				parts[i] = fmt.Sprintf("%s > toDateTime(?)", fullCol)
+			}
+			return "(" + strings.Join(parts, " OR ") + ")", convertedValues
+
+		case FilterOperatorOnOrBefore, FilterOperatorLessEqual, FilterOperatorLte, FilterOperatorLessEqualAlias:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s <= toDateTime(?)", fullCol), convertedValues
+			}
+			parts := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				parts[i] = fmt.Sprintf("%s <= toDateTime(?)", fullCol)
+			}
+			return "(" + strings.Join(parts, " OR ") + ")", convertedValues
+
+		case FilterOperatorBefore, FilterOperatorLessThan, FilterOperatorLt, FilterOperatorLessThanAlias:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s < toDateTime(?)", fullCol), convertedValues
+			}
+			parts := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				parts[i] = fmt.Sprintf("%s < toDateTime(?)", fullCol)
+			}
+			return "(" + strings.Join(parts, " OR ") + ")", convertedValues
+
+		case FilterOperatorIs, FilterOperatorEquals, FilterOperatorEqual:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s = toDateTime(?)", fullCol), convertedValues
+			}
+			placeholders := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				placeholders[i] = "toDateTime(?)"
+			}
+			return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), convertedValues
+
+		case FilterOperatorIsNot, FilterOperatorNotEquals, FilterOperatorNot, FilterOperatorNotEqual:
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s != toDateTime(?)", fullCol), convertedValues
+			}
+			placeholders := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				placeholders[i] = "toDateTime(?)"
+			}
+			return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), convertedValues
+
+		case FilterOperatorIn:
+			if len(convertedValues) == 0 {
+				return "", nil
+			}
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s = toDateTime(?)", fullCol), convertedValues
+			}
+			if len(convertedValues) == 2 {
+				return fmt.Sprintf("%s >= toDateTime(?) AND %s <= toDateTime(?)", fullCol, fullCol), convertedValues
+			}
+			placeholders := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				placeholders[i] = "toDateTime(?)"
+			}
+			return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), convertedValues
+
+		case FilterOperatorNotIn:
+			if len(convertedValues) == 0 {
+				return "", nil
+			}
+			if len(convertedValues) == 1 {
+				return fmt.Sprintf("%s != toDateTime(?)", fullCol), convertedValues
+			}
+			if len(convertedValues) == 2 {
+				return fmt.Sprintf("NOT (%s >= toDateTime(?) AND %s <= toDateTime(?))", fullCol, fullCol), convertedValues
+			}
+			placeholders := make([]string, len(convertedValues))
+			for i := range convertedValues {
+				placeholders[i] = "toDateTime(?)"
+			}
+			return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), convertedValues
+
 		default:
 			return "", nil
 		}
@@ -118,14 +231,28 @@ func BuildOperatorCondition(fullCol string, operator string, values []string, na
 	case FilterOperatorIsUndefined:
 		return fmt.Sprintf("isNull(%s)", fullCol), nil
 
-	case FilterOperatorIs, FilterOperatorEquals, FilterOperatorOn:
+	case FilterOperatorIs, FilterOperatorEquals:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s = ?", fullCol), []interface{}{values[0]}
 		}
 		placeholders, params := BuildPlaceholderList(values)
 		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
 
-	case FilterOperatorIsNot, FilterOperatorNotEquals, FilterOperatorNot, FilterOperatorOff, FilterOperatorNotOn:
+	case FilterOperatorIsNot, FilterOperatorNotEquals, FilterOperatorNot, FilterOperatorOff:
+		if len(values) == 1 {
+			return fmt.Sprintf("%s != ?", fullCol), []interface{}{values[0]}
+		}
+		placeholders, params := BuildPlaceholderList(values)
+		return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
+
+	case FilterOperatorOn:
+		if len(values) == 1 {
+			return fmt.Sprintf("%s = ?", fullCol), []interface{}{values[0]}
+		}
+		placeholders, params := BuildPlaceholderList(values)
+		return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
+
+	case FilterOperatorNotOn:
 		if len(values) == 1 {
 			return fmt.Sprintf("%s != ?", fullCol), []interface{}{values[0]}
 		}

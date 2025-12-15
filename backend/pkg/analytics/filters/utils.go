@@ -59,7 +59,7 @@ func BuildJSONExtractColumn(alias, propertiesCol, dataType string) string {
 	case DataTypeBoolean:
 		return fmt.Sprintf("toBool(getSubcolumn(%s%s, ?))", alias, propertiesCol)
 	case DataTypeTimestamp:
-		return fmt.Sprintf("fromUnixTimestamp64Milli(toInt64OrNull(getSubcolumn(%s%s, ?)))", alias, propertiesCol)
+		return fmt.Sprintf("toDateTime(toInt64OrNull(getSubcolumn(%s%s, ?)))", alias, propertiesCol)
 	default:
 		return fmt.Sprintf("getSubcolumn(%s%s, ?)", alias, propertiesCol)
 	}
@@ -241,6 +241,14 @@ func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[
 	dtType := DataTypeType(dataType)
 	if dtType == "" || dtType == DataTypeString {
 		fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator), len(values))
+	} else if dtType == DataTypeTimestamp {
+		adjustedValues := make([]string, len(values))
+		for i, v := range values {
+			var millis int64
+			fmt.Sscanf(v, "%d", &millis)
+			adjustedValues[i] = fmt.Sprintf("%d", millis/1000)
+		}
+		values = adjustedValues
 	}
 
 	cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
@@ -419,6 +427,14 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			dtType := DataTypeType(dataType)
 			if dtType == "" || dtType == DataTypeString {
 				fullCol = WrapWithToStringIfNeeded(fullCol, string(UserColumnProperties), string(operator), len(values))
+			} else if dtType == DataTypeTimestamp {
+				adjustedValues := make([]string, len(values))
+				for i, v := range values {
+					var millis int64
+					fmt.Sscanf(v, "%d", &millis)
+					adjustedValues[i] = fmt.Sprintf("%d", millis/1000)
+				}
+				values = adjustedValues
 			}
 
 			cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
@@ -462,6 +478,14 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 		dtType := DataTypeType(dataType)
 		if dtType == "" || dtType == DataTypeString {
 			fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator), len(values))
+		} else if dtType == DataTypeTimestamp {
+			adjustedValues := make([]string, len(values))
+			for i, v := range values {
+				var millis int64
+				fmt.Sscanf(v, "%d", &millis)
+				adjustedValues[i] = fmt.Sprintf("%d", millis/1000)
+			}
+			values = adjustedValues
 		}
 
 		cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)

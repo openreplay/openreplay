@@ -147,6 +147,13 @@ const (
 	FilterOperatorLessEqualAlias      FilterOperatorType = "lessThanOrEqual"
 	FilterOperatorGreaterEqualAlias   FilterOperatorType = "greaterThanOrEqual"
 	FilterOperatorDoesNotContain      FilterOperatorType = "doesNotContain"
+	FilterOperatorBefore              FilterOperatorType = "before"
+	FilterOperatorAfter               FilterOperatorType = "after"
+	FilterOperatorOnOrBefore          FilterOperatorType = "onOrBefore"
+	FilterOperatorOnOrAfter           FilterOperatorType = "onOrAfter"
+	FilterOperatorIsBlank             FilterOperatorType = "isBlank"
+	FilterOperatorIsNotBlank          FilterOperatorType = "isNotBlank"
+	FilterOperatorBetween             FilterOperatorType = "between"
 )
 
 type SortOrderType string
@@ -197,7 +204,7 @@ const (
 
 type Filter struct {
 	Name          string             `json:"name" validate:"required_without=Type"`
-	Operator      FilterOperatorType `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >= != true false in notIn equals notEquals not off lt gt lte gte lessThan greaterThan lessThanOrEqual greaterThanOrEqual doesNotContain"`
+	Operator      FilterOperatorType `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >= != true false in notIn equals notEquals not off lt gt lte gte lessThan greaterThan lessThanOrEqual greaterThanOrEqual doesNotContain before after onOrBefore onOrAfter isBlank isNotBlank between"`
 	PropertyOrder PropertyOrderType  `json:"propertyOrder" validate:"omitempty,oneof=or and"`
 	Value         []string           `json:"value" validate:"required_with=Type,max=10,dive"`
 	IsEvent       bool               `json:"isEvent"`
@@ -343,6 +350,13 @@ var FilterOperators = []FilterOperatorType{
 	FilterOperatorLessEqualAlias,
 	FilterOperatorGreaterEqualAlias,
 	FilterOperatorDoesNotContain,
+	FilterOperatorBefore,
+	FilterOperatorAfter,
+	FilterOperatorOnOrBefore,
+	FilterOperatorOnOrAfter,
+	FilterOperatorIsBlank,
+	FilterOperatorIsNotBlank,
+	FilterOperatorBetween,
 }
 
 var SortOrders = []SortOrderType{
