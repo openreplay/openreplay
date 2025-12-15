@@ -231,16 +231,27 @@ def get_users_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": helper.string_to_id(f'uf_{schemas.FilterType.USER_ANONYMOUS_ID}'),
-                "name": schemas.FilterType.USER_ANONYMOUS_ID,
-                "displayName": "User Anonymous ID",
+                "id": helper.string_to_id(f'uf_{schemas.FilterType.DISTINCT_ID}'),
+                "name": schemas.FilterType.DISTINCT_ID,
+                "displayName": "User Distinct ID",
                 "possibleTypes": ["string"],
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": False,
                 "possibleValues": [],
                 "isConditional": True
-            }
+            },
+            # {
+            #     "id": helper.string_to_id(f'uf_{schemas.FilterType.USER_ANONYMOUS_ID}'),
+            #     "name": schemas.FilterType.USER_ANONYMOUS_ID,
+            #     "displayName": "User Anonymous ID",
+            #     "possibleTypes": ["string"],
+            #     "dataType": "string",
+            #     "autoCaptured": True,
+            #     "isPredefined": False,
+            #     "possibleValues": [],
+            #     "isConditional": True
+            # }
         ]}
 
 

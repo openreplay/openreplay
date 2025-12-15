@@ -458,6 +458,7 @@ class FilterType(str, Enum):
     USER_CITY = "userCity"
     USER_STATE = "userState"
     USER_ID = "userId"
+    DISTINCT_ID = "distinct_id"
     USER_ANONYMOUS_ID = "userAnonymousId"
     REFERRER = "referrer"
     REV_ID = "revId"
