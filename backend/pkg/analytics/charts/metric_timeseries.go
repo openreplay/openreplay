@@ -205,7 +205,7 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 
 	subQuery := sb.String()
 	sessionsQuery := t.buildSessionsFilterQuery(sessionFilters, p.StartTimestamp)
-	projection, joinEvents := t.getProjectionAndJoin(metric)
+	projection, joinEvents := t.getProjectionAndJoin(metric, p)
 
 	return fmt.Sprintf(
 		`SELECT %s
@@ -280,7 +280,7 @@ func (t *TimeSeriesQueryBuilder) getSessionsOnlyProjection(metric string) string
 	}
 }
 
-func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string) (string, string) {
+func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string, p *Payload) (string, string) {
 	switch metric {
 	case MetricSessionCount:
 		return "evt.session_id AS session_id, s.datetime AS datetime", ""
@@ -294,6 +294,9 @@ func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string) (string, st
 		LEFT JOIN product_analytics.events AS e
 		  ON e.session_id = evt.session_id
 		 AND e.project_id = @project_id`
+		if p.SampleRate > 0 && p.SampleRate < 100 {
+			joinEvents += fmt.Sprintf(" AND e.sample_key < %d", p.SampleRate)
+		}
 		return projection, joinEvents
 
 	default:

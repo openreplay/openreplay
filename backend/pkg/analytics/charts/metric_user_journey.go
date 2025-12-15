@@ -231,6 +231,9 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId))
 		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.created_at >= toDateTime(%d / 1000)", p.StartTimestamp))
 		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.created_at < toDateTime(%d / 1000)", p.EndTimestamp))
+		if p.SampleRate > 0 && p.SampleRate < 100 {
+			startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.sample_key < %d", p.SampleRate))
+		}
 		step0Conditions = []string{fmt.Sprintf("(%s)", strings.Join(step0Conditions, " OR "))}
 		step0Conditions = append(step0Conditions, "pre_ranked_events.event_number_in_session = 1")
 	}
@@ -253,6 +256,9 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	chSubQuery := []string{fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId),
 		fmt.Sprintf("events.created_at >= toDateTime(%d / 1000)", p.StartTimestamp),
 		fmt.Sprintf("events.created_at < toDateTime(%d / 1000)", p.EndTimestamp)}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		chSubQuery = append(chSubQuery, fmt.Sprintf("events.sample_key < %d", p.SampleRate))
+	}
 	selectedEventTypeSubQuery := make([]string, 0)
 	for _, s := range p.MetricValue {
 		if _, ok := PredefinedJourneys[s]; ok {

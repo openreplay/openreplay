@@ -103,6 +103,9 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 		"isNotNull(e.\"$properties\".normalized_x)",
 		"isNotNull(e.\"$properties\".normalized_y)",
 	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		base = append(base, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+	}
 
 	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
 
@@ -110,6 +113,9 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("l.project_id = %d", p.ProjectId),
 		fmt.Sprintf("l.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
 		"l.session_id IS NOT NULL",
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		subBase = append(subBase, fmt.Sprintf("l.sample_key < %d", p.SampleRate))
 	}
 	subBase = append(subBase, eventsWhere...)
 	subBase = append(subBase, filtersWhere...)
@@ -164,6 +170,9 @@ func (h *HeatmapQueryBuilder) buildClickRageQuery(p *Payload) (string, error) {
 		"e.issue_type = 'click_rage'",
 		"isNotNull(e.\"$properties\".payload)",
 	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		base = append(base, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+	}
 
 	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
 
@@ -171,6 +180,9 @@ func (h *HeatmapQueryBuilder) buildClickRageQuery(p *Payload) (string, error) {
 		fmt.Sprintf("l.project_id = %d", p.ProjectId),
 		fmt.Sprintf("l.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
 		"l.session_id IS NOT NULL",
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		subBase = append(subBase, fmt.Sprintf("l.sample_key < %d", p.SampleRate))
 	}
 	subBase = append(subBase, eventsWhere...)
 	subBase = append(subBase, filtersWhere...)

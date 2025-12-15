@@ -449,11 +449,15 @@ func buildInClause(values []string) string {
 }
 
 func buildStaticEventWhere(p *Payload) string {
-	return strings.Join([]string{
+	conditions := []string{
 		fmt.Sprintf("main.project_id = %d", p.ProjectId),
 		fmt.Sprintf("main.created_at >= toDateTime(%d / 1000)", p.StartTimestamp),
 		fmt.Sprintf("main.created_at <= toDateTime(%d / 1000)", p.EndTimestamp),
-	}, " AND ")
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		conditions = append(conditions, fmt.Sprintf("main.sample_key < %d", p.SampleRate))
+	}
+	return strings.Join(conditions, " AND ")
 }
 
 func BuildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []string {
@@ -461,10 +465,14 @@ func BuildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []st
 	if len(timeColumn) > 0 && timeColumn[0] != "" {
 		col = timeColumn[0]
 	}
-	return []string{
+	conditions := []string{
 		fmt.Sprintf("%s.project_id = %d", tableAlias, p.ProjectId),
 		fmt.Sprintf("%s.%s BETWEEN toDateTime(%d) AND toDateTime(%d)", tableAlias, col, p.StartTimestamp/1000, p.EndTimestamp/1000),
 	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		conditions = append(conditions, fmt.Sprintf("%s.sample_key < %d", tableAlias, p.SampleRate))
+	}
+	return conditions
 }
 
 func getStepSize(startTimestamp uint64, endTimestamp uint64, density int, factor int) uint64 {

@@ -210,10 +210,16 @@ func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(innerEventsWhere) > 0 {
 		innerEventsWhereStr = " AND " + strings.Join(innerEventsWhere, " AND ")
 	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		innerEventsWhereStr += fmt.Sprintf(" AND main.sample_key < %d", p.SampleRate)
+	}
 
 	outerFiltersWhereStr := ""
 	if len(outerFiltersWhere) > 0 {
 		outerFiltersWhereStr = " AND " + strings.Join(outerFiltersWhere, " AND ")
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		outerFiltersWhereStr += fmt.Sprintf(" AND events.sample_key < %d", p.SampleRate)
 	}
 
 	sessionsWhereStr := ""

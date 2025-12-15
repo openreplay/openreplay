@@ -186,6 +186,10 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages)),
 	}
 
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		baseWhere = append(baseWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+	}
+
 	if p.MetricFormat == MetricFormatUserCount {
 		baseWhere = append(baseWhere, fmt.Sprintf("isNotNull(s.user_id)"))
 	}

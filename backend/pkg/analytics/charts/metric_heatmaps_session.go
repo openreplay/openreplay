@@ -182,6 +182,9 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 			"e.`$event_name` = 'CLICK'",
 			fmt.Sprintf("$current_path = '%s'", urlPath),
 		}
+		if p.SampleRate > 0 && p.SampleRate < 100 {
+			eventsWhere = append(eventsWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+		}
 		eventsWhere = append(eventsWhere, filtersWhere...)
 
 		query = fmt.Sprintf(
@@ -196,13 +199,22 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 			"e.`$event_name` = 'CLICK'",
 		}
+		if p.SampleRate > 0 && p.SampleRate < 100 {
+			eventsWhere = append(eventsWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+		}
 		eventsWhere = append(eventsWhere, filtersWhere...)
 		cteWhere := strings.Join(eventsWhere, " AND ")
 
-		subWhere := fmt.Sprintf(
-			"created_at BETWEEN toDateTime(%d) AND toDateTime(%d) AND project_id = %d AND `$event_name` = 'CLICK' AND `$current_path` = (SELECT url_path FROM top_url_path)",
-			startSec, endSec, projectId,
-		)
+		subWhereConditions := []string{
+			fmt.Sprintf("created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+			fmt.Sprintf("project_id = %d", projectId),
+			"`$event_name` = 'CLICK'",
+			"`$current_path` = (SELECT url_path FROM top_url_path)",
+		}
+		if p.SampleRate > 0 && p.SampleRate < 100 {
+			subWhereConditions = append(subWhereConditions, fmt.Sprintf("sample_key < %d", p.SampleRate))
+		}
+		subWhere := strings.Join(subWhereConditions, " AND ")
 
 		query = fmt.Sprintf(
 			sqlWithoutLocationTemplate,
