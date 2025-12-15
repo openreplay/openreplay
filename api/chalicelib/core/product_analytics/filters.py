@@ -8,6 +8,7 @@ def get_sessions_filters(project_id: int):
     return {
         "total": 13,
         "displayName": "Session Filters",
+        "scope": ["sessions", "events", "users"],
         "list": [
             {
                 "id": helper.string_to_id(f'sf_{schemas.FilterType.REFERRER}'),
@@ -208,7 +209,6 @@ def get_sessions_filters(project_id: int):
                 "possibleValues": [],
                 "isConditional": False
             },
-
         ]
     }
 
@@ -217,6 +217,7 @@ def get_users_filters(project_id: int):
     return {
         "total": 2,
         "displayName": "User Filters",
+        "scope": ["sessions"],
         "list": [
             {
                 "id": helper.string_to_id(f'uf_{schemas.FilterType.USER_ID}'),
@@ -241,6 +242,55 @@ def get_users_filters(project_id: int):
                 "isConditional": True
             }
         ]}
+
+
+def get_users_filters_identified(project_id: int):
+    filters_config = [
+        ("$user_id", "User ID", "string", False),
+        ("$email", "Email", "string", False),
+        ("$name", "Name", "string", False),
+        ("$first_name", "First Name", "string", False),
+        ("$last_name", "Last Name", "string", False),
+        ("$phone", "Phone", "string", False),
+        ("$avatar", "Avatar", "string", False),
+        ("$sdk_edition", "SDK Edition", "string", False),
+        ("$sdk_version", "SDK Version", "string", False),
+        ("$current_url", "Current URL", "string", False),
+        ("$current_path", "Current Path", "string", False),
+        ("$initial_referrer", "Initial Referrer", "string", False),
+        ("$referring_domain", "Referring Domain", "string", False),
+        ("initial_utm_source", "Initial UTM Source", "string", False),
+        ("initial_utm_medium", "Initial UTM Medium", "string", False),
+        ("initial_utm_campaign", "Initial UTM Campaign", "string", False),
+        ("$country", "Country", "string", False),
+        ("$state", "State", "string", False),
+        ("$city", "City", "string", False),
+        ("$or_api_endpoint", "OR API Endpoint", "string", False),
+        # ("$created_at", "Created At", "timestamp", False),
+        # ("$first_event_at", "First Event At", "timestamp", False),
+        # ("$last_seen", "Last Seen", "timestamp", False),
+    ]
+    
+    filter_list = []
+    for name, display_name, data_type, is_conditional in filters_config:
+        filter_list.append({
+            "id": helper.string_to_id(f'uif_{name}'),
+            "name": name,
+            "displayName": display_name,
+            "possibleTypes": [data_type],
+            "dataType": data_type,
+            "autoCaptured": True,
+            "isPredefined": False,
+            "possibleValues": [],
+            "isConditional": is_conditional
+        })
+    
+    return {
+        "total": len(filter_list),
+        "displayName": "Identified User Filters",
+        "scope": ["events", "users"],
+        "list": filter_list
+    }
 
 
 def get_global_filters(project_id: int):

@@ -270,5 +270,6 @@ def get_for_filters(project_id):
         return {
             "total": len(results),
             "displayName": "Metadata",
+            "scope": ["sessions"],
             "list": results
         }

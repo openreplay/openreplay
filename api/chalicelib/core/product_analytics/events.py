@@ -78,6 +78,7 @@ def get_events(project_id: int):
     return {
         "total": total,
         "displayName": "Events",
+        "scope": ["sessions", "events", "users"],
         "list": rows
     }
 

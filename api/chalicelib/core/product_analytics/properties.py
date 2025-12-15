@@ -283,7 +283,12 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                         "isConditional": PREDEFINED_PROPERTIES[p]["isConditional"],
                     }
                 )
-        return {"total": total, "displayName": "Event Properties", "list": properties}
+        return {
+            "total": total,
+            "displayName": "Event Properties",
+            "scope": ["sessions", "events", "users"],
+            "list": properties
+        }
 
 
 @cached(TTLCache(maxsize=1000, ttl=180))
