@@ -250,7 +250,7 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
   return (
     <div className="mt-4">
       <Tabs tabs={usedTabs} active={activeTab} onClick={onTabClick} border />
-      <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>
+      <div style={{ height: 'calc(100vh - 380px)', overflowY: 'auto' }}>
         {renderActiveTab()}
       </div>
     </div>
