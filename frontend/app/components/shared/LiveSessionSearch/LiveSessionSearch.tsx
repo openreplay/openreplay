@@ -27,7 +27,7 @@ function LiveSessionSearch() {
   const { projectsStore, searchStoreLive, filterStore } = useStore();
   const saveRequestPayloads = projectsStore.active?.saveRequestPayloads;
   const appliedFilter = searchStoreLive.instance;
-  const allFilterOptions = filterStore.getCurrentProjectFilters();
+  const allFilterOptions = filterStore.getScopedCurrentProjectFilters(['sessions']);
   const propertyOptions = allFilterOptions
     .filter((i) => !i.isEvent && i.category !== 'event')
     .filter(

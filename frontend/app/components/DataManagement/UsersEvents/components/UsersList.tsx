@@ -1,6 +1,10 @@
 import React from 'react';
-import { Table, Dropdown } from 'antd';
+import { Table, Dropdown, Button } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
+import { Filter } from 'lucide-react';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
@@ -17,7 +21,7 @@ function UsersList({
   toUser: (id: string) => void;
   query: string;
 }) {
-  const { analyticsStore } = useStore();
+  const { analyticsStore, filterStore } = useStore();
   const [editCols, setEditCols] = React.useState(false);
   const [hiddenCols, setHiddenCols] = React.useState<any[]>([]);
   const page = analyticsStore.usersPayloadFilters.page;
@@ -25,9 +29,20 @@ function UsersList({
   const total = analyticsStore.users.total;
   const users = analyticsStore.users.users;
 
+  const allFilterOptions = filterStore
+    .getScopedCurrentProjectFilters(['users'])
+    .filter((f) => !f.isEvent);
+  const activeFilters = analyticsStore.usersPayloadFilters.filters.map(
+    (f) => f.name,
+  );
+
   React.useEffect(() => {
     analyticsStore.fetchUsers(query);
-  }, [analyticsStore.usersPayloadFilters, query]);
+  }, [
+    analyticsStore.usersPayloadFilters,
+    analyticsStore.usersPayloadFilters.filters,
+    query,
+  ]);
 
   const dropdownItems = [
     {
@@ -37,16 +52,6 @@ function UsersList({
     },
   ];
 
-  const getFirstLetters = (name: string) => {
-    const parts = name.split(' ');
-    let initials = '';
-    parts.slice(0, 2).forEach((part) => {
-      if (part.length > 0) {
-        initials += part[0].toUpperCase();
-      }
-    });
-    return initials;
-  };
   const onColumnSort = (
     sorter:
       | {
@@ -157,9 +162,15 @@ function UsersList({
     analyticsStore.editUsersPayload({ page });
   };
 
-  const onAddFilter = () => console.log('add filter');
-  const excludeFilterKeys = [];
-  const excludeCategory = [];
+  const onAddFilter = (f: any) => {
+    analyticsStore.addUserFilter(f);
+  };
+  const onUpdateFilter = (index: number, f: any) => {
+    analyticsStore.updateUserFilter(index, f);
+  };
+  const onRemoveFilter = (index: number) => {
+    analyticsStore.removeUserFilter(index);
+  };
 
   const shownCols = columns.map((col) => ({
     ...col,
@@ -177,7 +188,7 @@ function UsersList({
   };
   return (
     <div className="flex flex-col">
-      {/*<div className="flex items-center gap-2 px-4 pb-2">*/}
+      <div className="flex flex-col gap-2 px-4 py-2">
         {/* 1.23 -- <span>Show by</span>*/}
         {/*<Segmented*/}
         {/*  size={'small'}*/}
@@ -186,25 +197,33 @@ function UsersList({
         {/*    { label: 'Company', value: 'company' },*/}
         {/*  ]}*/}
         {/*/>*/}
-        {/* 1.23 -- filter support <FilterSelection
-          mode={'filters'}
-          filter={undefined}
-          onFilterClick={onAddFilter}
-          disabled={false}
-          excludeFilterKeys={excludeFilterKeys}
-          excludeCategory={excludeCategory}
-          isLive={false}
-        >
-          <Button
-            icon={<Filter size={16} strokeWidth={1} />}
-            type="default"
-            size={'small'}
-            className="btn-add-filter"
+        <div>
+          <FilterSelection
+            filters={allFilterOptions}
+            activeFilters={activeFilters}
+            onFilterClick={onAddFilter}
           >
-            Filters
-          </Button>
-        </FilterSelection> */}
-      {/*</div>*/}
+            <Button
+              icon={<Filter size={16} strokeWidth={1} />}
+              type="default"
+              size={'small'}
+              className="btn-add-filter"
+            >
+              Filters
+            </Button>
+          </FilterSelection>
+        </div>
+        <UnifiedFilterList
+          title="Filters"
+          filters={analyticsStore.usersPayloadFilters.filters}
+          className="mt-2"
+          isDraggable={false}
+          showIndices={false}
+          handleRemove={onRemoveFilter}
+          handleUpdate={onUpdateFilter}
+          handleAdd={onAddFilter}
+        />
+      </div>
       <div className={'relative'}>
         {editCols ? (
           <ColumnsModal

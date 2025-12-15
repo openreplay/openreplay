@@ -676,3 +676,19 @@ export function normalizeDataType(rawType: string): string {
 
   return 'string';
 }
+
+export function arraysIntersect(a: string[], b: string[]) {
+  if (a.length === 0 || b.length === 0) return false;
+
+  if (a.length > b.length) {
+    const t = a;
+    a = b;
+    b = t;
+  }
+
+  const set = new Set(a);
+  for (let i = 0; i < b.length; i++) {
+    if (set.has(b[i])) return true;
+  }
+  return false;
+}

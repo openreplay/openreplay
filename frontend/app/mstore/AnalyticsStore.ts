@@ -91,7 +91,7 @@ export default class AnalyticsStore {
     }
   };
 
-  addFilter = async (filter: Filter) => {
+  processFilter = async (filter: Filter) => {
     if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
       const props = await filterStore.getEventFilters(filter.id);
       filter.filters = props?.filter((prop) => prop.defaultProperty);
@@ -104,11 +104,36 @@ export default class AnalyticsStore {
           value: checkFilterValue(subFilter.value),
         }))
       : [];
-    const oldFilters = this.payloadFilters.filters;
 
+    return filter;
+  };
+
+  addFilter = async (filter: Filter) => {
+    const newFilter = await this.processFilter(filter);
+
+    const oldFilters = this.payloadFilters.filters;
     runInAction(() => {
-      this.payloadFilters.filters = [...oldFilters, filter];
+      this.payloadFilters.filters = [...oldFilters, newFilter];
     });
+  };
+
+  addUserFilter = async (filter: Filter) => {
+    const newFilter = await this.processFilter(filter);
+
+    const oldFilters = this.usersPayloadFilters.filters;
+    runInAction(() => {
+      this.usersPayloadFilters.filters = [...oldFilters, newFilter];
+    });
+  };
+
+  updateUserFilter = (filterIndex: number, filter: Filter) => {
+    this.usersPayloadFilters.filters[filterIndex] = filter;
+  };
+
+  removeUserFilter = (filterIndex: number) => {
+    this.usersPayloadFilters.filters = this.usersPayloadFilters.filters.filter(
+      (_filter, i) => i !== filterIndex,
+    );
   };
 
   updateFilter = (filterIndex: number, filter: Filter) => {

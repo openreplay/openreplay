@@ -3,7 +3,7 @@ import { filterService, searchService } from 'App/services';
 import { Filter, COMMON_FILTERS } from './types/filterConstants';
 import { projectStore } from '@/mstore/index';
 import FilterItem from './types/filterItem';
-import { normalizeDataType } from 'App/utils';
+import { arraysIntersect, normalizeDataType } from 'App/utils';
 import { countries } from '@/constants';
 
 const countryMap = countries as Record<string, string>;
@@ -242,6 +242,16 @@ export default class FilterStore {
     return this.addOperatorsToFilters(filters);
   };
 
+  getScopedFilters = (projectId: string, scope: string[]): Filter[] => {
+    const filters = this.filters[projectId] || [];
+
+    return this.addOperatorsToFilters(
+      filters.filter(
+        (filter) => arraysIntersect(filter?.scope ?? [], scope) || true,
+      ),
+    );
+  };
+
   setIsLoadingFilters = (loading: boolean): void => {
     this.isLoadingFilters = loading;
   };
@@ -327,6 +337,7 @@ export default class FilterStore {
           filter.name,
           Boolean(filter.isPredefined),
         ),
+        scope: filter.scope || ['sessions', 'users', 'events'],
         toJSON: function () {
           const { toJSON, ...rest } = this;
           return rest;
@@ -477,6 +488,12 @@ export default class FilterStore {
     );
   };
 
+  getScopedCurrentProjectFilters = (scope: string[]): Filter[] => {
+    return this.getScopedFilters(String(projectStore.activeSiteId), scope).map(
+      (f) => ({ ...f, filters: [] }) as Filter,
+    );
+  };
+
   setEventFilters = async (
     eventId: string,
     filters: Filter[],
@@ -578,7 +595,7 @@ export default class FilterStore {
   getFilterDisplayName = (filterName: string): string => {
     const filter = this.findEvent({ name: filterName });
     return filter.displayName || filter.name;
-  }
+  };
 
   private clearExpiredCacheEntries = (): void => {
     const now = Date.now();

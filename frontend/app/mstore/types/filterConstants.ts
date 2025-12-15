@@ -7,6 +7,8 @@ export interface Operator {
   description?: string;
 }
 
+type FilterScope = 'users' | 'sessions' | 'events';
+
 export interface Filter {
   id: string;
   name: string;
@@ -30,6 +32,7 @@ export interface Filter {
   autoOpen?: boolean;
   defaultProperty?: boolean;
   isConditional?: boolean;
+  scope?: FilterScope[];
 
   toJSON(): JsonData;
 }

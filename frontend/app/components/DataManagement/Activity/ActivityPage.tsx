@@ -41,7 +41,7 @@ function ActivityPage() {
   const { timezone } = settingsStore.sessionSettings;
 
   const siteId = projectsStore.activeSiteId;
-  const allFilterOptions = filterStore.getCurrentProjectFilters();
+  const allFilterOptions = filterStore.getScopedCurrentProjectFilters(['events']);
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
 
