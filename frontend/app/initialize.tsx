@@ -6,10 +6,18 @@ import { createRoot } from 'react-dom/client';
 import './init';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
-import { ConfigProvider, App, theme as antdTheme, ThemeConfig } from 'antd';
+import {
+  ConfigProvider,
+  App,
+  theme as antdTheme,
+  ThemeConfig,
+  Empty,
+} from 'antd';
 import { BrowserRouter } from 'react-router-dom';
 import { Notification, MountPoint } from 'UI';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AnimatedSVG from './components/shared/AnimatedSVG';
+import { ICONS } from './components/shared/AnimatedSVG/AnimatedSVG';
 import { StoreProvider, RootStore } from './mstore';
 import Router from './Router';
 import './i18n';
@@ -30,7 +38,8 @@ const ThemedApp: React.FC = () => {
 
   // Create theme based on current theme setting
   const customTheme: ThemeConfig = {
-    algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+    algorithm:
+      theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
     components: {
       Layout: {
         headerBg: cssVar('gray-lightest'),
@@ -159,8 +168,11 @@ const ThemedApp: React.FC = () => {
     },
   };
 
+  const emptyImg = <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />;
+
+  const renderEmpty = () => <Empty image={emptyImg} />;
   return (
-    <ConfigProvider theme={customTheme}>
+    <ConfigProvider theme={customTheme} renderEmpty={renderEmpty}>
       <App>
         <StoreProvider store={new RootStore()}>
           <DndProvider backend={HTML5Backend}>
@@ -186,6 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
       <ThemeProvider>
         <ThemedApp />
       </ThemeProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 });

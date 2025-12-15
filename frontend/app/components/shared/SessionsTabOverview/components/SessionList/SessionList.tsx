@@ -206,7 +206,6 @@ function SessionList() {
                   </div>
                 )}
                 <Button
-                  variant="text"
                   className="mt-4"
                   icon={<Icon name="arrow-repeat" size={20} />}
                   onClick={() => {

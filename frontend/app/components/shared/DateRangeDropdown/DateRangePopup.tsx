@@ -19,7 +19,10 @@ import { useTranslation } from 'react-i18next';
 
 function DateRangePopup(props: any) {
   const { t } = useTranslation();
-  const [displayDates, setDisplayDates] = React.useState<[Date, Date]>([new Date(), new Date()]);
+  const [displayDates, setDisplayDates] = React.useState<[Date, Date]>([
+    new Date(),
+    new Date(),
+  ]);
   const [range, setRange] = React.useState(
     props.selectedDateRange ||
       Interval.fromDateTimes(DateTime.now(), DateTime.now()),
@@ -27,29 +30,28 @@ function DateRangePopup(props: any) {
   const [value, setValue] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-      if (props.selectedDateRange) {
-        const start = new Date(
-          props.selectedDateRange.start.year,
-          props.selectedDateRange.start.month - 1, // JS months are 0-based
-          props.selectedDateRange.start.day
-        );
-        const end = new Date(
-          props.selectedDateRange.end.year,
-          props.selectedDateRange.end.month - 1,
-          props.selectedDateRange.end.day
-        );
-        setDisplayDates([start, end]);
-      }
-    }, [props.selectedDateRange]);
+    if (props.selectedDateRange) {
+      const start = new Date(
+        props.selectedDateRange.start.year,
+        props.selectedDateRange.start.month - 1, // JS months are 0-based
+        props.selectedDateRange.start.day,
+      );
+      const end = new Date(
+        props.selectedDateRange.end.year,
+        props.selectedDateRange.end.month - 1,
+        props.selectedDateRange.end.day,
+      );
+      setDisplayDates([start, end]);
+    }
+  }, [props.selectedDateRange]);
 
-    const createNaiveTime = (dateTime: DateTime) => {
-      if (!dateTime) return null;
-      return DateTime.fromObject({
-        hour: dateTime.hour,
-        minute: dateTime.minute
-      });
-    };
-
+  const createNaiveTime = (dateTime: DateTime) => {
+    if (!dateTime) return null;
+    return DateTime.fromObject({
+      hour: dateTime.hour,
+      minute: dateTime.minute,
+    });
+  };
 
   const selectCustomRange = (newDates: [Date, Date]) => {
     if (!newDates || !newDates[0] || !newDates[1]) return;
@@ -61,7 +63,7 @@ function DateRangePopup(props: any) {
       month: newDates[0].getMonth() + 1,
       day: newDates[0].getDate(),
       hour: 0,
-      minute: 0
+      minute: 0,
     }).setZone(Settings.defaultZone);
 
     const selectedTzEnd = DateTime.fromObject({
@@ -69,7 +71,7 @@ function DateRangePopup(props: any) {
       month: newDates[1].getMonth() + 1,
       day: newDates[1].getDate(),
       hour: 23,
-      minute: 59
+      minute: 59,
     }).setZone(Settings.defaultZone);
 
     const updatedRange = Interval.fromDateTimes(selectedTzStart, selectedTzEnd);
@@ -82,7 +84,7 @@ function DateRangePopup(props: any) {
 
     const newStart = range.start.set({
       hour: naiveTime.hour,
-      minute: naiveTime.minute
+      minute: naiveTime.minute,
     });
 
     if (newStart > range.end) return;
@@ -96,7 +98,7 @@ function DateRangePopup(props: any) {
 
     const newEnd = range.end.set({
       hour: naiveTime.hour,
-      minute: naiveTime.minute
+      minute: naiveTime.minute,
     });
 
     if (newEnd < range.start) return;
@@ -121,13 +123,9 @@ function DateRangePopup(props: any) {
     const start = new Date(
       zonedStart.year,
       zonedStart.month - 1,
-      zonedStart.day
+      zonedStart.day,
     );
-    const end = new Date(
-      zonedEnd.year,
-      zonedEnd.month - 1,
-      zonedEnd.day
-    );
+    const end = new Date(zonedEnd.year, zonedEnd.month - 1, zonedEnd.day);
     setDisplayDates([start, end]);
     setValue(value);
   };

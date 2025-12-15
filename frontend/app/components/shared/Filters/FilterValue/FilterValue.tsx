@@ -6,6 +6,7 @@ import FilterDuration from '../FilterDuration';
 import ValueAutoComplete from 'Shared/Filters/FilterValue/ValueAutoComplete';
 import { Input, Select } from 'antd';
 import { useStore } from '@/mstore';
+import FilterTimestamp from 'Shared/Filters/FilterTimestamp';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -193,6 +194,15 @@ function FilterValue(props: Props) {
             { label: 'True', value: true },
             { label: 'False', value: false },
           ]}
+        />
+      );
+    case FilterType.DATE:
+    case FilterType.TIMESTAMP:
+      return (
+        <FilterTimestamp
+          value={filter.value}
+          onChange={(value: number | null) => onUpdate({ ...filter, value })}
+          placeholder={filter.placeholder}
         />
       );
 

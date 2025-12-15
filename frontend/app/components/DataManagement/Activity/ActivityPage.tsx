@@ -24,16 +24,9 @@ import Event, { getSortingKey } from '@/mstore/types/Analytics/Event';
 import withPermissions from 'HOCs/withPermissions';
 import { getEventIcon } from './getEventIcon';
 import NewEventsBadge from './NewEventsBadge';
+import { Icon } from 'UI';
 
 const columnOrderKey = '$__activity_columns_order__$';
-
-const colToSort = {
-  $event_name: 'Event Name',
-  created_at: 'Time',
-  distinct_id: 'Distinct ID',
-  $city: 'City',
-  $os: 'Environment',
-};
 
 function ActivityPage() {
   const { projectsStore, filterStore, analyticsStore, settingsStore } =
@@ -41,10 +34,12 @@ function ActivityPage() {
   const { timezone } = settingsStore.sessionSettings;
 
   const siteId = projectsStore.activeSiteId;
-  const allFilterOptions = filterStore.getScopedCurrentProjectFilters(['events']);
+  const allFilterOptions = filterStore.getScopedCurrentProjectFilters([
+    'events',
+  ]);
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
-
+  console.log(allFilterOptions.map((f) => ({ ...f })));
   const dropdownItems = [
     {
       label: 'Show/Hide Columns',
@@ -250,29 +245,6 @@ function ActivityPage() {
       });
     }
   };
-
-  // @ts-ignore
-  const sortedBy = colToSort[analyticsStore.payloadFilters.sortBy] ?? 'Custom';
-  const sortedAs =
-    analyticsStore.payloadFilters.sortOrder === 'asc'
-      ? 'ascending'
-      : 'descending';
-
-  const sortStr =
-    analyticsStore.payloadFilters.sortBy === 'created_at'
-      ? analyticsStore.payloadFilters.sortOrder === 'asc'
-        ? 'Oldest'
-        : 'Newest'
-      : `${sortedBy} (${sortedAs})`;
-  const sortDisabled = analyticsStore.payloadFilters.sortBy !== 'created_at';
-  const onQuickSort = () => {
-    const newSortOrder =
-      analyticsStore.payloadFilters.sortOrder === 'asc' ? 'desc' : 'asc';
-    analyticsStore.editPayload({
-      sortBy: 'created_at',
-      sortOrder: newSortOrder,
-    });
-  };
   return (
     <div
       className={'flex flex-col gap-2'}
@@ -366,48 +338,33 @@ function ActivityPage() {
           }
         >
           <div className={'px-4 py-2 flex items-center gap-2'}>
-            <div className={'font-semibold text-lg'}>All users activity</div>
+            <div className={'font-semibold text-lg'}>All Events</div>
             <div className={'ml-auto'} />
-            <Button type={'text'} onClick={onQuickSort} disabled={sortDisabled}>
-              {sortStr}
-            </Button>
             <SelectDateRange
               period={analyticsStore.period}
               onChange={analyticsStore.updateTimestamps}
               right
               isAnt
             />
-            {/* <Select
-              options={timeSortOptions}
-              defaultValue={timeSortDefault}
-              value={analyticsStore.payloadFilters.sortOrder}
-              plain
-              onChange={({ value }) => {
-                onSortOrderChange(value.value);
-              }}
-            /> */}
           </div>
-          {total === 0 ? (
+          {total === 0 && !analyticsStore.loading ? (
             <div
               className={'flex items-center justify-center flex-col gap-4 py-8'}
             >
               <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
               <div className={'flex items-center gap-2'}>
                 <div className={'text-lg font-semibold'}>No results in the</div>
-                <Select
-                  options={[
-                    { label: 'Past 24 Hours', value: 'DESC' },
-                    { label: 'Weekly', value: 'ASC' },
-                    { label: 'Other', value: 'Stuff' },
-                  ]}
-                  defaultValue={'DESC'}
-                  plain
-                  onChange={({ value }) => {
-                    console.log(value);
-                  }}
+                <SelectDateRange
+                  period={analyticsStore.period}
+                  onChange={analyticsStore.updateTimestamps}
+                  right
+                  isAnt
                 />
               </div>
-              <Button type={'text'} onClick={analyticsStore.fetchEvents}>
+              <Button
+                onClick={analyticsStore.fetchEvents}
+                icon={<Icon name={'arrow-repeat'} size={20} />}
+              >
                 Refresh
               </Button>
             </div>

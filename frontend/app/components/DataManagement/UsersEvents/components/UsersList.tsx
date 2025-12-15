@@ -4,15 +4,17 @@ import { MoreOutlined } from '@ant-design/icons';
 import { Filter } from 'lucide-react';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
-import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
 import { diffIfRecent } from 'App/date';
 import { getSortingName } from '@/mstore/types/Analytics/User';
-import { CountryFlag } from 'UI';
+import { CountryFlag, Icon, NoContent } from 'UI';
 import NameAvatar from 'Shared/NameAvatar';
+import AnimatedSVG from 'Shared/AnimatedSVG';
+import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import SelectDateRange from '../../../shared/SelectDateRange/SelectDateRange';
 
 function UsersList({
   toUser,
@@ -167,6 +169,7 @@ function UsersList({
   };
   const onUpdateFilter = (index: number, f: any) => {
     analyticsStore.updateUserFilter(index, f);
+    analyticsStore.fetchUsers(query);
   };
   const onRemoveFilter = (index: number) => {
     analyticsStore.removeUserFilter(index);
@@ -224,6 +227,7 @@ function UsersList({
           handleAdd={onAddFilter}
         />
       </div>
+
       <div className={'relative'}>
         {editCols ? (
           <ColumnsModal
@@ -238,6 +242,7 @@ function UsersList({
           onRow={(record) => ({
             onClick: () => toUser(record.userId),
           })}
+          loading={analyticsStore.loading}
           pagination={false}
           rowClassName={'cursor-pointer'}
           dataSource={users}

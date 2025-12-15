@@ -196,6 +196,8 @@ export enum FilterType {
   DROPDOWN = 'DROPDOWN',
   MULTIPLE_DROPDOWN = 'MULTIPLE_DROPDOWN',
   AUTOCOMPLETE_LOCAL = 'AUTOCOMPLETE_LOCAL',
+  DATE = 'date',
+  TIMESTAMP = 'timestamp',
 }
 
 export enum FilterKey {

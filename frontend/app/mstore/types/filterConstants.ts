@@ -300,6 +300,7 @@ export const getOperatorsByType = (type?: string): Operator[] => {
       operators = OPERATORS.boolean;
       break;
     case 'date':
+    case 'timestamp':
       operators = OPERATORS.date;
       break;
     case 'array':

@@ -56,9 +56,9 @@ function SelectDateRange(props: Props) {
         (obj: any) => obj.value === usedPeriod?.rangeName,
       )
     : null;
-  const options = dateRangeOptionsLocalized.filter((obj: any) =>
-    disableCustom ? obj.value !== CUSTOM_RANGE : true,
-  ).map((obj) => ({ ...obj, label: t(obj.label) }));
+  const options = dateRangeOptionsLocalized
+    .filter((obj: any) => (disableCustom ? obj.value !== CUSTOM_RANGE : true))
+    .map((obj) => ({ ...obj, label: t(obj.label) }));
 
   const onChange = (value: any) => {
     if (value === CUSTOM_RANGE) {
@@ -284,7 +284,10 @@ function AndDateRange({
       {isCustom && (
         <OutsideClickDetectingDiv
           onClickOutside={(e: any) => {
-            if (customRangeRef.current && customRangeRef.current.contains(e.target)) {
+            if (
+              customRangeRef.current &&
+              customRangeRef.current.contains(e.target)
+            ) {
               return false;
             }
             if (
@@ -302,7 +305,7 @@ function AndDateRange({
               ) ||
               e.target.parentElement.className.includes('react-calendar')
             ) {
-              return false
+              return false;
             }
             setIsCustom(false);
           }}

@@ -54,6 +54,7 @@ export default class FilterItem implements IFilter {
   autoOpen?: boolean = false;
   defaultProperty?: boolean = false;
   isConditional?: boolean = false;
+  scope?: string[]
 
   constructor(data: IFilter = {}) {
     this.initializeFromData(data);

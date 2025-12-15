@@ -661,9 +661,12 @@ export function normalizeDataType(rawType: string): string {
   }
 
   if (
-    ['date', 'datetime', 'timestamp', 'date32', 'datetime64'].includes(type)
+    ['date', 'datetime', 'date32', 'datetime64'].includes(type)
   ) {
     return 'date';
+  }
+  if (type === 'timestamp') {
+    return 'timestamp';
   }
 
   if (type.startsWith('array') || type === 'array') {

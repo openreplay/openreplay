@@ -244,12 +244,10 @@ export default class FilterStore {
 
   getScopedFilters = (projectId: string, scope: string[]): Filter[] => {
     const filters = this.filters[projectId] || [];
-
-    return this.addOperatorsToFilters(
-      filters.filter(
-        (filter) => arraysIntersect(filter?.scope ?? [], scope) || true,
-      ),
+    const possibleFilters = filters.filter((filter) =>
+      arraysIntersect(filter?.scope ?? [], scope),
     );
+    return this.addOperatorsToFilters(possibleFilters);
   };
 
   setIsLoadingFilters = (loading: boolean): void => {
@@ -304,7 +302,11 @@ export default class FilterStore {
     return possibleValues.map((v) => this.processPossibleValue(v, filterName));
   };
 
-  processFilters = (filters: any[], category?: string): Filter[] => {
+  processFilters = (
+    filters: any[],
+    category?: string,
+    customScope?: string[],
+  ): Filter[] => {
     return filters.map((filter) => {
       let dataType = filter.dataType
         ? normalizeDataType(filter.dataType)
@@ -337,7 +339,7 @@ export default class FilterStore {
           filter.name,
           Boolean(filter.isPredefined),
         ),
-        scope: filter.scope || ['sessions', 'users', 'events'],
+        scope: customScope || filter.scope || ['sessions', 'users', 'events'],
         toJSON: function () {
           const { toJSON, ...rest } = this;
           return rest;
@@ -357,6 +359,8 @@ export default class FilterStore {
         return '=';
       case 'boolean':
         return 'true';
+      case 'timestamp':
+        return 'on';
       default:
         return 'is';
     }
@@ -444,6 +448,7 @@ export default class FilterStore {
     Object.entries(data).forEach(([category, categoryData]) => {
       const { list = [] } = categoryData || {};
 
+      const customScope = categoryData.scope;
       if (category === 'events') {
         const autoCaptured = list.filter(
           (item: any) => item.autoCaptured === true,
@@ -456,16 +461,21 @@ export default class FilterStore {
           const autoFilters = this.processFilters(
             autoCaptured,
             'auto_captured',
+            customScope,
           );
           processedFilters.push(...autoFilters);
         }
 
         if (userEvents.length > 0) {
-          const userFilters = this.processFilters(userEvents, 'user_events');
+          const userFilters = this.processFilters(
+            userEvents,
+            'user_events',
+            customScope,
+          );
           processedFilters.push(...userFilters);
         }
       } else {
-        const filters = this.processFilters(list, category);
+        const filters = this.processFilters(list, category, customScope);
         processedFilters.push(...filters);
       }
     });
