@@ -49,6 +49,7 @@ const except = [
   'integrations/slack/notify',
   'integrations/msteams/notify',
   '/events/search',
+  'assign/projects',
 ];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
