@@ -64,7 +64,7 @@ func BuildJSONExtractColumn(alias, propertiesCol, dataType string) string {
 }
 
 func IsDynamicColumn(propertiesCol string) bool {
-	return strings.Contains(propertiesCol, `"$properties"`) || 
+	return strings.Contains(propertiesCol, `"$properties"`) ||
 		strings.Contains(propertiesCol, string(EventColumnAutoProperties)) ||
 		strings.Contains(propertiesCol, string(EventColumnProperties))
 }
@@ -77,26 +77,26 @@ func WrapWithToStringIfNeeded(columnExpr, propertiesCol, operator string, valueC
 	if !IsDynamicColumn(propertiesCol) {
 		return columnExpr
 	}
-	
+
 	opType := FilterOperatorType(operator)
-	
+
 	// Always wrap for string pattern operators (ILIKE, regex)
-	if opType == FilterOperatorContains || opType == FilterOperatorNotContains || 
-		opType == FilterOperatorDoesNotContain || opType == FilterOperatorStartsWith || 
+	if opType == FilterOperatorContains || opType == FilterOperatorNotContains ||
+		opType == FilterOperatorDoesNotContain || opType == FilterOperatorStartsWith ||
 		opType == FilterOperatorEndsWith || opType == FilterOperatorRegex {
 		return fmt.Sprintf("toString(%s)", columnExpr)
 	}
-	
+
 	// Always wrap for IN/NOT IN operators with Dynamic columns
 	if opType == FilterOperatorIn || opType == FilterOperatorNotIn {
 		return fmt.Sprintf("toString(%s)", columnExpr)
 	}
-	
+
 	// For equality/set operators, only wrap when multiple values
 	if valueCount > 1 && RequiresToString(opType) {
 		return fmt.Sprintf("toString(%s)", columnExpr)
 	}
-	
+
 	return columnExpr
 }
 
@@ -160,9 +160,12 @@ var UserOnlyColumns = map[UserColumn]bool{
 	UserColumnCreatedAt:          true,
 	UserColumnFirstEventAt:       true,
 	UserColumnLastSeen:           true,
+	UserColumnInitialReferrer:    true,
+	UserColumnReferringDomain:    true,
 	UserColumnInitialUtmSource:   true,
 	UserColumnInitialUtmMedium:   true,
 	UserColumnInitialUtmCampaign: true,
+	UserColumnOrAPIEndpoint:      true,
 }
 
 func IsUserOnlyColumn(column string) bool {
@@ -232,12 +235,12 @@ func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[
 	}
 
 	fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType)
-	
+
 	dtType := DataTypeType(dataType)
 	if dtType == "" || dtType == DataTypeString {
 		fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator), len(values))
 	}
-	
+
 	cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 	if cond != "" {
 		needsPropertyParam := strings.Contains(fullCol, "?")
@@ -410,12 +413,12 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			fullCol = uAlias + col
 		} else {
 			fullCol = BuildJSONExtractColumn(uAlias, string(UserColumnProperties), dataType)
-				
+
 			dtType := DataTypeType(dataType)
 			if dtType == "" || dtType == DataTypeString {
 				fullCol = WrapWithToStringIfNeeded(fullCol, string(UserColumnProperties), string(operator), len(values))
 			}
-			
+
 			cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 			if cond != "" {
 				needsPropertyParam := strings.Contains(fullCol, "?")
@@ -453,12 +456,12 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			propertiesCol = string(EventColumnProperties)
 		}
 		fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType)
-		
+
 		dtType := DataTypeType(dataType)
 		if dtType == "" || dtType == DataTypeString {
 			fullCol = WrapWithToStringIfNeeded(fullCol, propertiesCol, string(operator), len(values))
 		}
-		
+
 		cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
 		if cond != "" {
 			needsPropertyParam := strings.Contains(fullCol, "?")
