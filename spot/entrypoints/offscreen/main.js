@@ -325,7 +325,7 @@ class ScreenRecorder {
 
   recorded = false;
   _handleStop = () => {
-    const blob = new Blob(this.chunks, { type: this.mRecorder.mimeType });
+    const blob = new Blob(this.chunks, { type: this.mRecorder?.mimeType ?? this.settings.mimeType  });
     const url = URL.createObjectURL(blob);
 
     this.videoBlob = blob;
@@ -342,7 +342,7 @@ class ScreenRecorder {
       if (this.recorded) {
         resolve({
           blob: this.videoBlob,
-          mtype: this.mRecorder.mimeType,
+          mtype: this.mRecorder?.mimeType ?? this.settings.mimeType,
         });
       } else {
         if (iteration > 10 * 1000) {
