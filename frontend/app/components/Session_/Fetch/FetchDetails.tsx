@@ -169,7 +169,7 @@ const FetchDetails = ({
       <div className="mt-6">
         <div>
           <Tabs tabs={tabs} active={activeTab} onClick={onTabClick} border />
-          <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>
+          <div style={{ height: 'calc(100vh - 380px)', overflowY: 'auto' }}>
             {renderActiveTab(activeTab)}
           </div>
         </div>
