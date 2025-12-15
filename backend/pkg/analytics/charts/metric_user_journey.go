@@ -81,7 +81,7 @@ type UserJourneyQueryBuilder struct {
 	Logger logger.Logger
 }
 
-func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interface{}, error) {
+func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _conn driver.Conn) (interface{}, error) {
 	queries, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 		return nil, fmt.Errorf("failed to establish clickhouse connection")
 	}
 
-	ctx := clickhouse.Context(context.Background(),
+	chCtx := clickhouse.Context(ctx,
 		clickhouse.WithSettings(clickhouse.Settings{
 			"session_id":      uuid.NewString(),
 			"session_timeout": 60, // seconds
@@ -104,7 +104,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 	for i := 0; i < len(queries)-1; i++ {
 		_start := time.Now()
 		h.Logger.Debug(ctx, "Executing query %d: %s", i+1, queries[i])
-		_, err = conn.ExecContext(ctx, queries[i])
+		_, err = conn.ExecContext(chCtx, queries[i])
 
 		if time.Since(_start) > 2*time.Second {
 			h.Logger.Warn(ctx, "Query execution took longer than 2s: %s", queries[i])
@@ -120,7 +120,7 @@ func (h *UserJourneyQueryBuilder) Execute(p *Payload, _conn driver.Conn) (interf
 	var rawData []UserJourneyRawData
 	_start := time.Now()
 	h.Logger.Debug(ctx, "Executing query: %s", queries[len(queries)-1])
-	if err = conn.SelectContext(ctx, &rawData, queries[len(queries)-1]); err != nil {
+	if err = conn.SelectContext(chCtx, &rawData, queries[len(queries)-1]); err != nil {
 		for j := 0; j < len(queries); j++ {
 			h.Logger.Error(ctx, "UserJourney query failed: %s", queries[j])
 		}

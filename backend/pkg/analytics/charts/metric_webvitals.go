@@ -65,12 +65,12 @@ type WebVitalsQueryBuilder struct {
 	Logger logger.Logger
 }
 
-func (h WebVitalsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (h WebVitalsQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}

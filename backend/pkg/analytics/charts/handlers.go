@@ -140,7 +140,7 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.charts.GetData(projectID, currentUser.ID, req)
+	resp, err := e.charts.GetData(r.Context(), projectID, currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -185,7 +185,7 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.charts.GetData(projectID, currentUser.ID, req)
+	resp, err := e.charts.GetData(r.Context(), projectID, currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

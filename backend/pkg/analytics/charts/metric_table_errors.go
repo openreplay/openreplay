@@ -37,15 +37,15 @@ type TableErrorsResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
 
-func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := t.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		if t.Logger != nil {
-			t.Logger.Error(context.Background(), "Error executing query: %v, query: %s", err, query)
+			t.Logger.Error(ctx, "Error executing query: %v, query: %s", err, query)
 		} else {
 			log.Printf("Error executing query: %s\nQuery: %s", err, query)
 		}

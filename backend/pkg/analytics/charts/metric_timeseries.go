@@ -24,24 +24,24 @@ const (
 	MetricEventCount   = "eventCount"
 )
 
-func (t *TimeSeriesQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (t *TimeSeriesQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	data := make(map[uint64]map[string]uint64)
 
 	for _, series := range p.Series {
 		query, params, err := t.buildQuery(p, series)
 		if err != nil {
-			t.Logger.Error(context.Background(), "buildQuery %s: %v", series.Name, err)
+			t.Logger.Error(ctx, "buildQuery %s: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
 		_start := time.Now()
-		t.Logger.Debug(context.Background(), "Executing query: %s", query)
+		t.Logger.Debug(ctx, "Executing query: %s", query)
 		var pts []DataPoint
-		if err = conn.Select(context.Background(), &pts, query, convertParams(params)...); err != nil {
-			t.Logger.Error(context.Background(), "Select timeseries %s error: %v", series.Name, err)
+		if err = conn.Select(ctx, &pts, query, convertParams(params)...); err != nil {
+			t.Logger.Error(ctx, "Select timeseries %s error: %v", series.Name, err)
 			return nil, fmt.Errorf("series %s: %v", series.Name, err)
 		}
 		if time.Since(_start) > 2*time.Second {
-			t.Logger.Warn(context.Background(), "Query execution took longer than 2s: %s", query)
+			t.Logger.Warn(ctx, "Query execution took longer than 2s: %s", query)
 		}
 
 		for _, dp := range pts {

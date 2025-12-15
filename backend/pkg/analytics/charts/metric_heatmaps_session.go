@@ -25,21 +25,21 @@ type HeatmapSessionQueryBuilder struct {
 	Logger logger.Logger
 }
 
-func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	shortestQ, err := h.buildQuery(p)
 	if err != nil {
-		h.Logger.Error(context.Background(), "Failed to build query", err)
+		h.Logger.Error(ctx, "Failed to build query", err)
 		return nil, err
 	}
 
-	h.Logger.Debug(context.Background(), "Executing Heatmap query: %s", shortestQ)
+	h.Logger.Debug(ctx, "Executing Heatmap query: %s", shortestQ)
 	_start := time.Now()
-	row := conn.QueryRow(context.Background(), shortestQ)
+	row := conn.QueryRow(ctx, shortestQ)
 	if time.Since(_start) > 2*time.Second {
-		h.Logger.Warn(context.Background(), "Heatmap query execution took longer than 2s: %s", shortestQ)
+		h.Logger.Warn(ctx, "Heatmap query execution took longer than 2s: %s", shortestQ)
 	}
 	if err = row.Err(); err != nil {
-		h.Logger.Error(context.Background(), "QueryRow error", err)
+		h.Logger.Error(ctx, "QueryRow error", err)
 		return nil, err
 	}
 
@@ -51,7 +51,7 @@ func (h *HeatmapSessionQueryBuilder) Execute(p *Payload, conn driver.Conn) (inte
 		urlPath  string
 	)
 	if err = row.Scan(&sid, &startTs, &duration, &eventTs, &urlPath); err != nil {
-		h.Logger.Error(context.Background(), "Row scan error", err)
+		h.Logger.Error(ctx, "Row scan error", err)
 		return HeatmapSessionResponse{}, nil
 	}
 

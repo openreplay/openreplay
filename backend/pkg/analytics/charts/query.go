@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"openreplay/backend/pkg/logger"
 	"reflect"
@@ -34,7 +35,7 @@ type Payload struct {
 }
 
 type QueryBuilder interface {
-	Execute(p *Payload, conn driver.Conn) (interface{}, error)
+	Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error)
 }
 
 func NewQueryBuilder(logger logger.Logger, p *Payload) (QueryBuilder, error) {

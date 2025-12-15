@@ -80,7 +80,7 @@ var sessionsPorpertySelectorMap = map[string]string{
 	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
 }
 
-func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	if p.MetricOf == "" {
 		return nil, fmt.Errorf("MetricOf is empty")
 	}
@@ -89,7 +89,7 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	}
 
 	if p.MetricOf == "screenResolution" {
-		return t.executeForTableOfResolutions(p)
+		return t.executeForTableOfResolutions(ctx, p)
 	}
 
 	query, err := t.buildQuery(p)
@@ -98,15 +98,15 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 	}
 
 	_start := time.Now()
-	t.Logger.Debug(context.Background(), "Executing query: %s", query)
+	t.Logger.Debug(ctx, "Executing query: %s", query)
 
 	var rawValues []TableValue = make([]TableValue, 0)
-	if err = conn.Select(context.Background(), &rawValues, query); err != nil {
-		t.Logger.Error(context.Background(), "Error executing query: %s\nQuery: %s", err, query)
+	if err = conn.Select(ctx, &rawValues, query); err != nil {
+		t.Logger.Error(ctx, "Error executing query: %s\nQuery: %s", err, query)
 		return nil, err
 	}
 	if time.Since(_start) > 2*time.Second {
-		t.Logger.Warn(context.Background(), "Query execution took longer than 2s: %s", query)
+		t.Logger.Warn(ctx, "Query execution took longer than 2s: %s", query)
 	}
 
 	var valuesCount uint64
@@ -118,7 +118,7 @@ func (t *TableQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, 
 
 	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
 }
-func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload) (interface{}, error) {
+func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p *Payload) (interface{}, error) {
 	queries, params, err := t.buildTableOfResolutionsQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building screenResolution queries: %w", err)
@@ -133,23 +133,23 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(p *Payload) (interface{
 
 	// Trying to use clickhouseContext in order to keep same session for tmp tables,
 	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
-	ctx := clickhouse.Context(context.Background(),
+	chCtx := clickhouse.Context(ctx,
 		clickhouse.WithSettings(clickhouse.Settings{
 			"session_id":      uuid.NewString(),
 			"session_timeout": 60, // seconds
 		}))
 
 	queryParams := convertParams(params)
-	_, err = conn.ExecContext(ctx, queries[0], queryParams...)
+	_, err = conn.ExecContext(chCtx, queries[0], queryParams...)
 	if err != nil {
-		t.Logger.Error(context.Background(), "ScreenResolution query failed: %s", queries[0])
+		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[0])
 		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
 	}
 	var rawValues []ResolutionTableValue = make([]ResolutionTableValue, 0)
-	if err = conn.SelectContext(ctx, &rawValues, queries[1], queryParams...); err != nil {
-		t.Logger.Error(context.Background(), "ScreenResolution query failed: %s", queries[0])
-		t.Logger.Error(context.Background(), "ScreenResolution query failed: %s", queries[1])
-		t.Logger.Error(context.Background(), "Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])
+	if err = conn.SelectContext(chCtx, &rawValues, queries[1], queryParams...); err != nil {
+		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[0])
+		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[1])
+		t.Logger.Error(ctx, "Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])
 		return nil, err
 	}
 
@@ -187,7 +187,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
 	}
 
 	s := r.Series[0]
-	t.Logger.Debug(context.Background(), "MetricOf: %s, MetricFormat: %s", r.MetricOf, r.MetricFormat)
 	if r.MetricOf == "screenResolution" {
 		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
 	}
