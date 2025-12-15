@@ -32,10 +32,62 @@ func BuildPlaceholderList(values []string) ([]string, []interface{}) {
 	return placeholders, params
 }
 
-
 func BuildOperatorCondition(fullCol string, operator string, values []string, nature string, dataType string) (string, []interface{}) {
 	opType := FilterOperatorType(operator)
 	dtType := DataTypeType(dataType)
+
+	if dtType == DataTypeTimestamp {
+		switch opType {
+		case FilterOperatorGreaterEqual, FilterOperatorGte, FilterOperatorGreaterEqualAlias:
+			if len(values) == 1 {
+				return fmt.Sprintf("%s >= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
+			}
+			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s >= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
+		case FilterOperatorGreaterThan, FilterOperatorGt, FilterOperatorGreaterThanAlias:
+			if len(values) == 1 {
+				return fmt.Sprintf("%s > fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
+			}
+			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s > fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
+		case FilterOperatorLessEqual, FilterOperatorLte, FilterOperatorLessEqualAlias:
+			if len(values) == 1 {
+				return fmt.Sprintf("%s <= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
+			}
+			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s <= fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
+		case FilterOperatorLessThan, FilterOperatorLt, FilterOperatorLessThanAlias:
+			if len(values) == 1 {
+				return fmt.Sprintf("%s < fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
+			}
+			return BuildMultiValueCondition(fullCol, values, fmt.Sprintf("%s < fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), nil)
+		case FilterOperatorIs, FilterOperatorEquals, FilterOperatorOn, FilterOperatorEqual:
+			if len(values) == 1 {
+				return fmt.Sprintf("%s = fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
+			}
+			placeholders := make([]string, len(values))
+			params := make([]interface{}, len(values))
+			for i, v := range values {
+				placeholders[i] = "fromUnixTimestamp64Milli(CAST(? AS Int64))"
+				params[i] = v
+			}
+			return fmt.Sprintf("%s IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
+		case FilterOperatorIsNot, FilterOperatorNotEquals, FilterOperatorNot, FilterOperatorNotEqual:
+			if len(values) == 1 {
+				return fmt.Sprintf("%s != fromUnixTimestamp64Milli(CAST(? AS Int64))", fullCol), []interface{}{values[0]}
+			}
+			placeholders := make([]string, len(values))
+			params := make([]interface{}, len(values))
+			for i, v := range values {
+				placeholders[i] = "fromUnixTimestamp64Milli(CAST(? AS Int64))"
+				params[i] = v
+			}
+			return fmt.Sprintf("%s NOT IN (%s)", fullCol, strings.Join(placeholders, ", ")), params
+		case FilterOperatorIsUndefined:
+			return fmt.Sprintf("isNull(%s)", fullCol), nil
+		case FilterOperatorIsAny, FilterOperatorOnAny:
+			return fmt.Sprintf("isNotNull(%s)", fullCol), nil
+		default:
+			return "", nil
+		}
+	}
 
 	if dtType == DataTypeBoolean {
 		switch opType {

@@ -188,10 +188,11 @@ const (
 type DataTypeType string
 
 const (
-	DataTypeString  DataTypeType = "string"
-	DataTypeNumber  DataTypeType = "number"
-	DataTypeBoolean DataTypeType = "boolean"
-	DataTypeInteger DataTypeType = "integer"
+	DataTypeString    DataTypeType = "string"
+	DataTypeNumber    DataTypeType = "number"
+	DataTypeBoolean   DataTypeType = "boolean"
+	DataTypeInteger   DataTypeType = "integer"
+	DataTypeTimestamp DataTypeType = "timestamp"
 )
 
 type Filter struct {
@@ -200,7 +201,7 @@ type Filter struct {
 	PropertyOrder PropertyOrderType  `json:"propertyOrder" validate:"omitempty,oneof=or and"`
 	Value         []string           `json:"value" validate:"required_with=Type,max=10,dive"`
 	IsEvent       bool               `json:"isEvent"`
-	DataType      DataTypeType       `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
+	DataType      DataTypeType       `json:"dataType" validate:"omitempty,oneof=string number boolean integer timestamp"`
 	AutoCaptured  bool               `json:"autoCaptured"`
 	Filters       []Filter           `json:"filters,omitempty"`
 }
@@ -359,4 +360,5 @@ var DataTypes = []DataTypeType{
 	DataTypeNumber,
 	DataTypeBoolean,
 	DataTypeInteger,
+	DataTypeTimestamp,
 }
