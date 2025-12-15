@@ -276,9 +276,9 @@ def get_users_filters_identified(project_id: int):
         ("$state", "State", "string", False),
         ("$city", "City", "string", False),
         ("$or_api_endpoint", "OR API Endpoint", "string", False),
-        # ("$created_at", "Created At", "timestamp", False),
-        # ("$first_event_at", "First Event At", "timestamp", False),
-        # ("$last_seen", "Last Seen", "timestamp", False),
+        ("$created_at", "Created At", "timestamp", False),
+        ("$first_event_at", "First Event At", "timestamp", False),
+        ("$last_seen", "Last Seen", "timestamp", False),
     ]
     
     filter_list = []
