@@ -165,7 +165,7 @@ const IssueForm: React.FC<Props> = observer(
               name="description"
               rows={2}
               value={instance?.description}
-              placeholder={t('E.g. Found this issue at 3:29secs')}
+              placeholder={'E.g. Found this issue at 3:29secs'}
               onChange={handleChange}
               className="text-area"
             />
