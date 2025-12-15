@@ -8,7 +8,7 @@ def get_sessions_filters(project_id: int):
     return {
         "total": 13,
         "displayName": "Session Filters",
-        "scope": ["sessions", "events", "users"],
+        "scope": ["sessions"],
         "list": [
             {
                 "id": helper.string_to_id(f'sf_{schemas.FilterType.REFERRER}'),
@@ -263,7 +263,6 @@ def get_users_filters_identified(project_id: int):
         ("$first_name", "First Name", "string", False),
         ("$last_name", "Last Name", "string", False),
         ("$phone", "Phone", "string", False),
-        ("$avatar", "Avatar", "string", False),
         ("$sdk_edition", "SDK Edition", "string", False),
         ("$sdk_version", "SDK Version", "string", False),
         ("$current_url", "Current URL", "string", False),
