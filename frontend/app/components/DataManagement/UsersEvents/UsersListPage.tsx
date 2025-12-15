@@ -34,10 +34,10 @@ function UsersListPage() {
 
   return (
     <div
-      className="flex flex-col gap-4 rounded-lg border bg-white mx-auto"
+      className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
-      <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
+      <div className={'flex items-center justify-between border-b px-4 py-2'}>
         <div className={'font-semibold text-lg capitalize'}>{view}</div>
         <div className="flex items-center gap-2">
           <Button type={'text'} icon={<Album size={14} />}>
@@ -47,6 +47,7 @@ function UsersListPage() {
             size={'small'}
             placeholder={'Name, email, ID'}
             value={query}
+            allowClear
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>

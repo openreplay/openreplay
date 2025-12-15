@@ -19,7 +19,7 @@ import { checkFilterValue } from './types/filter';
 const defaultPayload = {
   sortOrder: 'desc',
   sortBy: 'created_at',
-  limit: 10,
+  limit: 20,
   startTimestamp: Date.now() - 3600 * 1000,
   endTimestamp: Date.now(),
   columns: [],
@@ -32,6 +32,8 @@ export default class AnalyticsStore {
     total: 0,
     events: [],
   };
+  newEvents = 0;
+  lastFetchedAt: number = 0;
   users: { total: number; users: User[] } = {
     total: 0,
     users: [],
@@ -124,6 +126,8 @@ export default class AnalyticsStore {
   };
 
   fetchEvents = async () => {
+    this.newEvents = 0;
+    this.lastFetchedAt = Date.now();
     this.setLoading(true);
     try {
       const data: EventsResponse = await analyticsService.getEvents({
@@ -141,6 +145,21 @@ export default class AnalyticsStore {
       return { events: [], total: 0 };
     } finally {
       this.setLoading(false);
+    }
+  };
+
+  checkLatest = async () => {
+    const data = await analyticsService.getEvents({
+      ...this.payloadFilters,
+      startTimestamp: this.lastFetchedAt,
+      endTimestamp: Date.now(),
+      limit: 1,
+      sortOrder: 'desc',
+      sortBy: 'created_at',
+      columns: eventListColumns,
+    });
+    if (data.total > 0) {
+      this.newEvents = data.total;
     }
   };
 

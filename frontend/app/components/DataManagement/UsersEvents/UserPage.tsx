@@ -14,7 +14,8 @@ import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
 import { observer } from 'mobx-react-lite';
-import { CopyButton, confirm } from 'UI';
+import { CopyButton, confirm, CountryFlag } from 'UI';
+import NameAvatar from 'Shared/NameAvatar';
 
 const card = 'rounded-lg border bg-white';
 
@@ -153,13 +154,7 @@ function UserInfo({ userId }: { userId: string }) {
                 }}
               />
             ) : (
-              <div
-                className={
-                  'bg-gray-lighter h-11 w-12 rounded-full flex items-center justify-center text-gray-medium border border-gray-medium'
-                }
-              >
-                {getFirstLetters(user?.name?.slice(0, 2) || 'NA')}
-              </div>
+              <NameAvatar name={user?.name || 'N/A'} size={48} />
             )}
             <div className="flex flex-col">
               <div className="text-xl font-semibold">{user?.name || 'N/A'}</div>
@@ -219,7 +214,14 @@ function UserInfo({ userId }: { userId: string }) {
           </div>
           <div className="flex flex-col">
             <div className={'font-semibold'}>Location</div>
-            <div>{user?.userLocation}</div>
+            <div className={'flex items-center gap-2'}>
+              <CountryFlag
+                userCity={user?.city}
+                userState={user?.state}
+                country={user?.country}
+              />
+              {user?.userLocation}
+            </div>
           </div>
           <div className={'flex items-center gap-4'}>
             <div onClick={showAll} className={'link font-semibold'}>

@@ -92,6 +92,9 @@ export default class User {
   avatarUrl?: string;
   lastSeen?: number;
   email?: string;
+  city?: string;
+  state?: string
+  country?: string;
 
   raw: UserResp;
 
@@ -102,6 +105,9 @@ export default class User {
     this.userId = user.$user_id ?? 'N/A';
     this.distinctId = user.distinct_ids ?? [];
     this.userLocation = `${user.$city || 'N/A'}, ${user.$state ? user.$state + ', ' : ''}${user.$country || 'N/A'}`;
+    this.city = user.$city;
+    this.state = user.$state;
+    this.country = user.$country;
     this.cohorts = []; // 1.24
     this.properties = user.properties ?? {};
     this.createdAt = user.$created_at ?? Date.now();

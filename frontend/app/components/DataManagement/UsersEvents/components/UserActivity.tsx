@@ -94,11 +94,11 @@ function Activity({ userId }: { userId: string }) {
   const toggleEvents = () => {
     setTimeout(() => {
       setEditCols(true);
-    }, 0)
+    }, 0);
   };
 
   const toSessions = () => {
-    const filter = filterStore.findEvent({ name: 'userId' });
+    const filter = filterStore.findEvent({ name: 'distinctId' });
     if (filter) {
       filter.value = [userId];
       searchStore.addFilter(filter);
@@ -146,23 +146,13 @@ function Activity({ userId }: { userId: string }) {
         <Button
           className={'flex items-center gap-2'}
           type={'text'}
+          size={'small'}
           onClick={toggleEvents}
         >
           <EyeOff size={16} />
           <span className={'font-medium'}>Hide Events</span>
         </Button>
-        <Select
-          options={[
-            { label: 'Newest', value: 'desc' },
-            { label: 'Oldest', value: 'asc' },
-          ]}
-          value={sort}
-          plain
-          onChange={({ value }) => {
-            setSort(value.value);
-          }}
-        />
-        <SelectDateRange period={period} onChange={onDateChange} right />
+        <SelectDateRange isAnt period={period} onChange={onDateChange} right />
       </div>
       <EventsByDay
         getName={getName}

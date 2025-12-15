@@ -28,7 +28,7 @@ function EventsByDay({
             <div
               onClick={() => onItemClick(ev)}
               className={
-                'hover:bg-gray-lightest border-b cursor-pointer px-4 py-2 flex items-center group gap-2'
+                'hover:bg-active-blue border-b cursor-pointer px-4 py-2 flex items-center group gap-2'
               }
             >
               <div className={'w-56 color-disabled-text'}>

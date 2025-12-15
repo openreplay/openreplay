@@ -6,6 +6,7 @@ import { Dropdown, Button, Divider, Tooltip, TableProps } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import { useModal } from 'App/components/Modal';
+import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import EventDetailsModal from './EventDetailsModal';
 import Select from 'Shared/Select';
 import { Link } from 'react-router-dom';
@@ -22,6 +23,7 @@ import { formatTimeOrDate } from 'App/date';
 import Event, { getSortingKey } from '@/mstore/types/Analytics/Event';
 import withPermissions from 'HOCs/withPermissions';
 import { getEventIcon } from './getEventIcon';
+import NewEventsBadge from './NewEventsBadge';
 
 const columnOrderKey = '$__activity_columns_order__$';
 
@@ -58,8 +60,10 @@ function ActivityPage() {
       key: 'event_name',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
-      render: (text: string, row) => (
-        <div className={'flex items-center gap-2 code-font'}>
+      render: (_: string, row) => (
+        <div
+          className={'flex items-center gap-2 code-font fill-black color-black'}
+        >
           {getEventIcon(row.isAutoCapture, row.event_name)}
           <span>{filterStore.getFilterDisplayName(row.event_name)}</span>
         </div>
@@ -154,7 +158,6 @@ function ActivityPage() {
   };
   const onRemoveFilter = (filterIndex: number) => {
     analyticsStore.removeFilter(filterIndex);
-    analyticsStore.fetchEvents();
   };
 
   const [editCols, setEditCols] = React.useState(false);
@@ -181,11 +184,18 @@ function ActivityPage() {
         });
       });
     }
+    const int = setInterval(() => {
+      analyticsStore.checkLatest();
+    }, 30000);
+    return () => clearInterval(int);
   }, []);
 
   React.useEffect(() => {
     analyticsStore.fetchEvents();
   }, [analyticsStore.payloadFilters, analyticsStore.payloadFilters.filters]);
+  React.useEffect(() => {
+    analyticsStore.reset();
+  }, [projectsStore.activeSiteId]);
 
   const onOrderChange = (newCols) => {
     const order = newCols.map((col) => col.key).join(',');
@@ -268,7 +278,16 @@ function ActivityPage() {
       className={'flex flex-col gap-2'}
       style={{ maxWidth: '1360px', margin: 'auto' }}
     >
-      <h2 className="text-2xl capitalize mr-4">Activity</h2>
+      <div className={'flex justify-between items-center'}>
+        <h2 className="text-2xl capitalize mr-4">Activity</h2>
+        <Button
+          type={'text'}
+          onClick={analyticsStore.reset}
+          disabled={!analyticsStore.payloadFilters.filters.length}
+        >
+          Clear
+        </Button>
+      </div>
       <div className={'shadow rounded-lg bg-white p-4 border'}>
         <FilterListHeader
           title="Events"
@@ -349,13 +368,14 @@ function ActivityPage() {
           <div className={'px-4 py-2 flex items-center gap-2'}>
             <div className={'font-semibold text-lg'}>All users activity</div>
             <div className={'ml-auto'} />
-            <Button onClick={onQuickSort} disabled={sortDisabled}>
+            <Button type={'text'} onClick={onQuickSort} disabled={sortDisabled}>
               {sortStr}
             </Button>
             <SelectDateRange
               period={analyticsStore.period}
               onChange={analyticsStore.updateTimestamps}
               right
+              isAnt
             />
             {/* <Select
               options={timeSortOptions}
@@ -371,7 +391,7 @@ function ActivityPage() {
             <div
               className={'flex items-center justify-center flex-col gap-4 py-8'}
             >
-              <AnimatedSVG name={'no-results'} size={56} />
+              <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
               <div className={'flex items-center gap-2'}>
                 <div className={'text-lg font-semibold'}>No results in the</div>
                 <Select
@@ -393,6 +413,7 @@ function ActivityPage() {
             </div>
           ) : (
             <>
+              <NewEventsBadge />
               <DndTable
                 loading={isPending}
                 onRow={(record) => ({

@@ -1,15 +1,14 @@
 import React from 'react';
-import FilterSelection from 'Shared/Filters/FilterSelection/FilterSelection';
-import { Table, Button, Dropdown } from 'antd';
+import { Table, Dropdown } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Filter } from 'lucide-react';
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
-import { resentOrDate } from 'App/date';
+import { diffIfRecent } from 'App/date';
 import { getSortingName } from '@/mstore/types/Analytics/User';
+import { CountryFlag } from 'UI';
+import NameAvatar from 'Shared/NameAvatar';
 
 function UsersList({
   toUser,
@@ -77,9 +76,6 @@ function UsersList({
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (_: any, record: any) => {
-        if (!record.name) {
-          return 'N/A';
-        }
         return (
           <div className="flex items-center gap-2">
             {record.avatarUrl ? (
@@ -89,13 +85,9 @@ function UsersList({
                 className="w-7 h-7 rounded-full"
               />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gray-300 relative text-xs text-white">
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-[9px] leading-none">
-                  {getFirstLetters(record.name)}
-                </div>
-              </div>
+              <NameAvatar name={record.name || 'N/A'} size={28} />
             )}
-            <span>{record.name}</span>
+            <span>{record.name || 'N/A'}</span>
           </div>
         );
       },
@@ -106,6 +98,9 @@ function UsersList({
       key: 'userId',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
+      render: (_: any, record: any) => (
+        <div className={'link'}>{record.userId ? record.userId : 'N/A'}</div>
+      ),
     },
     {
       title: 'Location',
@@ -113,6 +108,16 @@ function UsersList({
       key: 'userLocation',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
+      render: (_: any, record: any) => (
+        <div className={'flex items-center gap-2'}>
+          <CountryFlag
+            userCity={record.city}
+            userState={record.state}
+            country={record.country}
+          />
+          <div>{record.userLocation}</div>
+        </div>
+      ),
     },
     {
       title: 'Last Seen',
@@ -120,7 +125,7 @@ function UsersList({
       key: 'lastSeen',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
-      render: (_: any, record: any) => resentOrDate(record.createdAt),
+      render: (_: any, record: any) => diffIfRecent(record.createdAt),
     },
     {
       title: 'Created',
@@ -128,13 +133,13 @@ function UsersList({
       key: 'createdAt',
       showSorterTooltip: { target: 'full-header' },
       sorter: true,
-      render: (_: any, record: any) => resentOrDate(record.createdAt),
+      render: (_: any, record: any) => diffIfRecent(record.createdAt),
     },
     {
       title: (
         <Dropdown
           menu={{ items: dropdownItems }}
-          trigger={['click']}
+          trigger={'click'}
           placement={'bottomRight'}
         >
           <div className={'cursor-pointer'}>
@@ -172,7 +177,7 @@ function UsersList({
   };
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-2 px-4 pb-2">
+      {/*<div className="flex items-center gap-2 px-4 pb-2">*/}
         {/* 1.23 -- <span>Show by</span>*/}
         {/*<Segmented*/}
         {/*  size={'small'}*/}
@@ -199,17 +204,16 @@ function UsersList({
             Filters
           </Button>
         </FilterSelection> */}
-      </div>
+      {/*</div>*/}
       <div className={'relative'}>
         {editCols ? (
-          <OutsideClickDetectingDiv onClickOutside={() => setEditCols(false)}>
-            <ColumnsModal
-              columns={shownCols.filter((col) => col.key !== '$__opts__$')}
-              onSelect={onUpdateVisibleCols}
-              hiddenCols={hiddenCols}
-              topOffset={'top-24 -mt-4'}
-            />
-          </OutsideClickDetectingDiv>
+          <ColumnsModal
+            columns={shownCols.filter((col) => col.key !== '$__opts__$')}
+            onSelect={onUpdateVisibleCols}
+            hiddenCols={hiddenCols}
+            topOffset={'top-24 -mt-4'}
+            onClose={() => setEditCols(false)}
+          />
         ) : null}
         <Table
           onRow={(record) => ({

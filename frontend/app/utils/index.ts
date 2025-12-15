@@ -39,7 +39,6 @@ export function debounceCall(func, wait) {
   };
 }
 
-
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;
   const max = b || a || Number.MAX_SAFE_INTEGER;
@@ -400,12 +399,11 @@ export const compareJsonObjects = (obj1: any, obj2: any) =>
 
 export const getInitials = (name = '') => {
   const names = name.split(' ');
-  return (
-    names
-      .slice(0, 2)
-      .map((n: any) => n[0]?.toUpperCase())
-      .join('') || ''
-  );
+
+  return names
+    .slice(0, 2)
+    .map((n: any) => n[0].toUpperCase())
+    .join('');
 };
 export function getTimelinePosition(value: any, scale: any) {
   const pos = value * scale;
@@ -636,46 +634,45 @@ export function roundToNextMinutes(timestamp: number, minutes: number): number {
   return date.getTime();
 }
 
-
 export function normalizeDataType(rawType: string): string {
   const type = rawType.toLowerCase();
 
   if (
     [
-      "number",
-      "integer",
-      "int",
-      "float",
-      "double",
-      "decimal",
-      "int8",
-      "int16",
-      "int32",
-      "int64",
-      "uint8",
-      "uint16",
-      "uint32",
-      "uint64",
-      "float32",
-      "float64",
+      'number',
+      'integer',
+      'int',
+      'float',
+      'double',
+      'decimal',
+      'int8',
+      'int16',
+      'int32',
+      'int64',
+      'uint8',
+      'uint16',
+      'uint32',
+      'uint64',
+      'float32',
+      'float64',
     ].includes(type)
   ) {
-    return "number";
+    return 'number';
   }
 
   if (
-    ["date", "datetime", "timestamp", "date32", "datetime64"].includes(type)
+    ['date', 'datetime', 'timestamp', 'date32', 'datetime64'].includes(type)
   ) {
-    return "date";
+    return 'date';
   }
 
-  if (type.startsWith("array") || type === "array") {
-    return "array";
+  if (type.startsWith('array') || type === 'array') {
+    return 'array';
   }
 
-  if (["bool", "boolean"].includes(type)) {
-    return "boolean";
+  if (['bool', 'boolean'].includes(type)) {
+    return 'boolean';
   }
 
-  return "string";
+  return 'string';
 }

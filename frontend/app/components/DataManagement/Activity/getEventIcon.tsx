@@ -28,5 +28,5 @@ export const getEventIcon = (isAutocapture: boolean, eventName: string) => {
   if (eventName === 'REQUEST') {
     return <ArrowUpDown size={16} />;
   }
-  return <Icon name={'logo-small-white'} size={16} />;
+  return <Icon name={'logo-small'} size={16} color={"black"} />;
 };

@@ -20,12 +20,12 @@ const tabs = [
     key: 'all',
   },
   {
-    label: 'Openreplay',
+    label: 'OpenReplay Properties',
     value: 'default',
     key: 'default',
   },
   {
-    label: 'Custom',
+    label: 'Your Properties',
     value: 'custom',
     key: 'custom',
   },
@@ -118,14 +118,22 @@ function EventDetailsModal({
           <X size={16} />
         </div>
       </div>
-      <div className={'p-2 rounded-lg bg-blueLight flex items-center gap-2'}>
-        <div>
-          {event ? getEventIcon(event.isAutoCapture, event.event_name) : null}
+      <div className={'flex items-center justify-between'}>
+        <div className={'px-2 py-1 rounded-lg bg-gray-lighter flex items-center gap-2'}>
+          <div
+            className={
+              'flex items-center gap-2 code-font fill-black color-black'
+            }
+          >
+            {event ? getEventIcon(event.isAutoCapture, event.event_name) : null}
+          </div>
+          <div className={'font-semibold'}>
+            {filterStore.getFilterDisplayName(event?.event_name ?? 'Event')}
+          </div>
+          {event?.isAutoCapture ? (
+            <div>({event?.event_name ?? 'event'})</div>
+          ) : null}
         </div>
-        <div className={'font-semibold'}>
-          {filterStore.getFilterDisplayName(event?.event_name ?? 'Event')}
-        </div>
-        {event?.isAutoCapture ? <div>({event?.event_name ?? 'event'})</div> : null}
         <Link
           to={withSiteId(session(event?.session_id), siteId)}
           className={'ml-auto'}
@@ -160,14 +168,18 @@ function EventDetailsModal({
         >
           {filteredArr.map(([key, value]) => (
             <div key={key} className={'flex items-center border-b'}>
-              <div className={'mr-2'}>
+              <div className={'mr-2 fill-black color-black'}>
                 {isCustomProp(key) ? (
                   <Code size={12} />
                 ) : (
-                  <Icon name={'logo-small-white'} size={12} />
+                  <Icon name={'logo-small'} size={12} />
                 )}
               </div>
-              <div className={'w-[150px]'}>{key}</div>
+              <TextEllipsis
+                text={key}
+                maxWidth={'150'}
+                className={'w-[150px]'}
+              />
               <TextEllipsis
                 text={value}
                 maxWidth={'420'}

@@ -14,8 +14,7 @@ export function getDateFromString(
 
 export const formatTs = (ts: number, format: string): string => {
   return DateTime.fromMillis(ts).toFormat(format);
-}
-
+};
 
 /**
  * Formats a given duration.
@@ -195,7 +194,7 @@ export const checkForRecent = (date: DateTime, format: string): string => {
 };
 export const tsToCheckRecent = (ts: number, format: string): string => {
   return checkForRecent(DateTime.fromMillis(ts), format);
-}
+};
 export const resentOrDate = (ts, short?: boolean) => {
   const date = DateTime.fromMillis(ts);
   const d = new Date();
@@ -263,4 +262,15 @@ export const getDateRangeUTC = (
     startDate,
     endDate,
   };
+};
+
+export const diffIfRecent = (ts: number): string => {
+  const now = Date.now();
+  const diffInHours = (now - ts) / (1000 * 60 * 60);
+
+  if (diffInHours < 24 * 3) {
+    return diffFromNowString(ts);
+  } else {
+    return resentOrDate(ts);
+  }
 };
