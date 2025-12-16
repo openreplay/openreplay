@@ -159,10 +159,11 @@ class Batcher {
 
   flush() {
     const categories = Object.keys(this.batch)
-    const isEmpty = categories.every((batch) => batch.length === 0)
+    const isEmpty = categories.every((category) => this.batch[category].length === 0)
     if (isEmpty) {
       return
     }
+
     this.sendBatch(this.getBatches())
     categories.forEach((key) => {
       this.batch[key] = []

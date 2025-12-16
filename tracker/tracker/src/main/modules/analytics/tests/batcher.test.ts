@@ -204,7 +204,7 @@ describe('Batcher', () => {
     expect(batchesAfter.data[categories.events]).toEqual([])
   })
 
-  test('flush is a no-op when there are no events', () => {
+  test('flush is not called when there are no events', () => {
     batcher.flush()
     expect(fetchMock).not.toHaveBeenCalled()
   })
