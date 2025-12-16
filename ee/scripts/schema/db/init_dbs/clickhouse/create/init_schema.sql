@@ -884,18 +884,18 @@ FROM product_analytics.event_properties;
 
 -- Some random examples of property-values, limited by 2 per property
 -- Experimental: This table is filled by a refreshable materialized view
-CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
-(
-    project_id        UInt16,
-    property_name     String,
-    is_event_property BOOL,
-    auto_captured     BOOL,
-    value             String,
-
-    _timestamp        DateTime DEFAULT now()
-)
-    ENGINE = ReplacingMergeTree(_timestamp)
-        ORDER BY (project_id, property_name, is_event_property);
+-- CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
+-- (
+--     project_id        UInt16,
+--     property_name     String,
+--     is_event_property BOOL,
+--     auto_captured     BOOL,
+--     value             String,
+--
+--     _timestamp        DateTime DEFAULT now()
+-- )
+--     ENGINE = ReplacingMergeTree(_timestamp)
+--         ORDER BY (project_id, property_name, is_event_property);
 -- Incremental materialized view to get random examples of property values using $properties & properties
 -- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_dvalues_sampler_mv
 --     TO product_analytics.property_values_samples AS
@@ -925,6 +925,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
 
 -- Autocomplete
 
+-- TODO: remove this in v1.24.0
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events
 (
     project_id UInt16,
@@ -934,36 +935,26 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events
       ORDER BY (project_id, value, _timestamp)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_mv
-    TO product_analytics.autocomplete_events AS
-SELECT project_id,
-       `$event_name` AS value,
-       _timestamp
-FROM product_analytics.events
-WHERE _timestamp > now() - INTERVAL 1 MONTH;
-
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events_grouped
 (
     project_id UInt16,
     value      String COMMENT 'The $event_name',
-    data_count UInt16 COMMENT 'The number of appearance during the past month',
+    data_count AggregateFunction(sum, UInt16) COMMENT 'The number of appearance during the past month',
     _timestamp DateTime
-) ENGINE = ReplacingMergeTree(_timestamp)
+) ENGINE = AggregatingMergeTree()
       ORDER BY (project_id, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mv
-    -- @formatter:off
-    REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_events_grouped AS
-    -- @formatter:on
+    TO product_analytics.autocomplete_events_grouped AS
 SELECT project_id,
-       value,
-       count(1)        AS data_count,
-       max(_timestamp) AS _timestamp
-FROM product_analytics.autocomplete_events
-WHERE autocomplete_events._timestamp > now() - INTERVAL 1 MONTH
-GROUP BY project_id, value;
+       `$event_name`         AS value,
+       sumState(toUInt16(1)) AS data_count
+FROM product_analytics.events
+WHERE value != ''
+GROUP BY ALL;
 
+-- TODO: remove this in v1.24.0
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties
 (
     project_id    UInt16,
@@ -975,60 +966,44 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties
       ORDER BY (project_id, event_name, property_name, value, _timestamp)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_dproperties_mv
-    TO product_analytics.autocomplete_event_properties AS
-SELECT project_id,
-       `$event_name`                                             AS event_name,
-       property_name,
-       JSONExtractString(toString(`$properties`), property_name) AS value,
-       _timestamp
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
-WHERE length(value) > 0
-  AND isNull(toFloat64OrNull(value))
-  AND _timestamp > now() - INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_mv
-    TO product_analytics.autocomplete_event_properties AS
-SELECT project_id,
-       `$event_name`                                            AS event_name,
-       property_name,
-       JSONExtractString(toString(`properties`), property_name) AS value,
-       _timestamp
-FROM product_analytics.events
-         ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
-WHERE length(value) > 0
-  AND isNull(toFloat64OrNull(value))
-  AND _timestamp > now() - INTERVAL 1 MONTH;
-
--- TODO: replace this table's engine with AggregatedMergeTree in v1.24
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped
 (
     project_id    UInt16,
     event_name    String COMMENT 'The $event_name',
     property_name String,
     value         String COMMENT 'The property-value as a string',
-    data_count    UInt16 COMMENT 'The number of appearance during the past month',
+    data_count    AggregateFunction(sum, UInt16) COMMENT 'The number of appearance during the past month',
     _timestamp    DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
+) ENGINE = AggregatingMergeTree()
       ORDER BY (project_id, event_name, property_name, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
--- TODO: replace this MV with aggregate function in v1.24
--- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
---     -- @formatter:off
---     REFRESH EVERY 30 MINUTE TO product_analytics.autocomplete_event_properties_grouped AS
---     -- @formatter:on
--- SELECT project_id,
---        event_name,
---        property_name,
---        value,
---        count(1)        AS data_count,
---        max(_timestamp) AS _timestamp
--- FROM product_analytics.autocomplete_event_properties
--- WHERE length(value) > 0
---   AND autocomplete_event_properties._timestamp > now() - INTERVAL 1 MONTH
--- GROUP BY project_id, event_name, property_name, value;
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
+    TO product_analytics.autocomplete_event_properties_grouped AS
+SELECT project_id,
+       `$event_name`         AS event_name,
+       a.1                   AS property_name,
+       a.2                   AS value,
+       sumState(toUInt16(1)) AS data_count
+FROM product_analytics.events
+         ARRAY JOIN JSONExtractKeysAndValues(toString(`properties`), 'String') AS a
+WHERE length(a.1) > 0
+  AND isNull(toFloat64OrNull(a.1))
+GROUP BY ALL;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_dproperties_grouped_mv
+    TO product_analytics.autocomplete_event_properties_grouped AS
+SELECT project_id,
+       `$event_name`         AS event_name,
+       a.1                   AS property_name,
+       a.2                   AS value,
+       sumState(toUInt16(1)) AS data_count
+FROM product_analytics.events
+         ARRAY JOIN JSONExtractKeysAndValues(toString(`$properties`), 'String') AS a
+WHERE length(a.1) > 0
+  AND isNull(toFloat64OrNull(a.1))
+GROUP BY ALL;
 
 
 CREATE TABLE IF NOT EXISTS experimental.parsed_errors
