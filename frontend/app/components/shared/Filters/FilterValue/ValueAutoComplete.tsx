@@ -314,7 +314,6 @@ const ValueAutoComplete = observer(
         const merged = Array.from(new Set([...selectedValues, ...vals]));
         onApplyValues(merged);
         setShowValueModal(false);
-        console.trace('apply query');
       }
     };
 
