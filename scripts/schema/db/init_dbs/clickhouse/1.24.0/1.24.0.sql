@@ -374,8 +374,13 @@ WHERE isNotNull(metadata_10)
 
 DROP TABLE IF EXISTS product_analytics.property_dvalues_sampler_mv;
 DROP TABLE IF EXISTS product_analytics.property_values_sampler_mv;
+DROP TABLE IF EXISTS product_analytics.property_values_samples;
 DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties_grouped_mv;
+DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties_grouped;
+DROP TABLE IF EXISTS product_analytics.autocomplete_events_mv;
+DROP TABLE IF EXISTS product_analytics.autocomplete_event_dproperties_mv;
+DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties_mv;
 
 DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv SYNC;
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_dproperties_extractor_mv
@@ -408,3 +413,6 @@ GROUP BY ALL;
 ALTER TABLE product_analytics.events
     ADD COLUMN sample_key UInt8
         MATERIALIZED cityHash64(event_id) % 100;
+
+DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties;
+DROP TABLE IF EXISTS product_analytics.autocomplete_events;
