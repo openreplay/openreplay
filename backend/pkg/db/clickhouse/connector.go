@@ -95,7 +95,7 @@ func NewConnector(conn driver.Conn, metrics database.Database) (Connector, error
 var batches = map[string]string{
 	"sessions":        "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone, utm_source, utm_medium, utm_campaign, screen_width, screen_height) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
 	"autocompletes":   "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
-	"web_events":      `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$duration_s", error_id, issue_type, issue_id, "$properties", properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"web_events":      `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$duration_s", error_id, issue_type, issue_id, "$screen_width", "$screen_height", "$properties", properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"issues":          "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
 	"mobile_sessions": "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?)",
 	"mobile_events":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", "$os_version", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -349,6 +349,8 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -402,6 +404,8 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		defaultErrorID,
 		"mouse_thrashing",
 		issueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -472,6 +476,8 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		defaultErrorID,
 		msg.Type,
 		issueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -584,6 +590,8 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -661,6 +669,8 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -709,6 +719,8 @@ func (c *connectorImpl) InsertWebJSException(session *sessions.Session, msg *mes
 		msgID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -773,6 +785,8 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -839,6 +853,8 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -893,6 +909,8 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,          // $properties
 		customPayloadString, // properties
 	); err != nil {
@@ -939,6 +957,8 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -998,6 +1018,8 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		defaultErrorID,
 		fakeMsg.Type,
 		issueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
@@ -1048,6 +1070,8 @@ func (c *connectorImpl) InsertTagTrigger(session *sessions.Session, msg *message
 		defaultErrorID,
 		defaultIssueType,
 		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
 		jsonString,
 		defaultProperties,
 	); err != nil {
