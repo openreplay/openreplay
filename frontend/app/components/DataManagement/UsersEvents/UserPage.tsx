@@ -148,7 +148,7 @@ function UserInfo({ userId }: { userId: string }) {
               <img
                 src={user.avatarUrl}
                 alt="avatar"
-                className="h-11 w-12 rounded-full"
+                className="h-12 w-12 rounded-full"
                 style={{
                   objectFit: 'cover',
                 }}
