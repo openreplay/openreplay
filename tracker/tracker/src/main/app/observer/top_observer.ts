@@ -54,13 +54,13 @@ function getInlineOptions(mode: InlineCssMode, logger: (args: any) => void) {
       )
       if (isLocalhost) {
         logger(
-          `Enabling InlineCssMode by default on localhost to preserve css styles, refer to ${localhostStylesDoc} for details, set InlineCssMode to 0 to skip this behavior`,
+          `Enabling InlineCssMode.PlainFetched by default on localhost to preserve css styles, refer to ${localhostStylesDoc} for details, set InlineCssMode to 0 to skip this behavior`,
         )
         return {
           inlineRemoteCss: true,
           inlinerOptions: {
-            forceFetch: false,
-            forcePlain: false,
+            forceFetch: true,
+            forcePlain: true,
           },
         }
       } else {
