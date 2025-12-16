@@ -203,7 +203,9 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 		if !slices.Contains(eventNames, nameCondition) && nameCondition != "" {
 			eventNames = append(eventNames, nameCondition)
 		}
-		if f.IsEvent {
+		isSessionProperty := false
+		_, isSessionProperty = sessionProperties[f.Name]
+		if f.IsEvent || !isSessionProperty {
 			if option.EventsOrder == "then" {
 				//for "then" order, we can have duplicate conditions
 				finalEventConditions = append(finalEventConditions, conds...)
