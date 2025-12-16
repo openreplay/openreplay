@@ -116,6 +116,7 @@ class Batcher {
   }
 
   private sendBatch(batch: Record<string, any>) {
+    const sentBatch = batch
     let attempts = 0
     const send = () => {
       const token = this.getToken()
@@ -129,7 +130,7 @@ class Batcher {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(batch),
+        body: JSON.stringify(sentBatch),
       })
         .then((response) => {
           if (response.status === 403) {
@@ -143,7 +144,7 @@ class Batcher {
         })
         .catch(() => {
           if (attempts < this.retryLimit) {
-            setTimeout(send, this.retryTimeout)
+            setTimeout(() => void send(), this.retryTimeout)
           }
         })
     }
@@ -157,12 +158,13 @@ class Batcher {
   }
 
   flush() {
-    const isEmpty = Object.values(this.batch).every((batch) => batch.length === 0)
+    const categories = Object.keys(this.batch)
+    const isEmpty = categories.every((batch) => batch.length === 0)
     if (isEmpty) {
       return
     }
     this.sendBatch(this.getBatches())
-    Object.keys(this.batch).forEach((key) => {
+    categories.forEach((key) => {
       this.batch[key] = []
     })
   }
