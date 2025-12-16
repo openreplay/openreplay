@@ -18,15 +18,16 @@ type Bulk interface {
 }
 
 type bulkImpl struct {
-	conn    driver.Conn
-	metrics database.Database
-	table   string
-	query   string
-	counter int
-	values  [][]interface{}
+	conn      driver.Conn
+	metrics   database.Database
+	table     string
+	query     string
+	counter   int
+	values    [][]interface{}
+	sizeLimit int
 }
 
-func NewBulk(conn driver.Conn, metrics database.Database, table, query string) (Bulk, error) {
+func NewBulk(conn driver.Conn, metrics database.Database, table, query string, sizeLimit int) (Bulk, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("clickhouse connection is empty")
@@ -36,17 +37,21 @@ func NewBulk(conn driver.Conn, metrics database.Database, table, query string) (
 		return nil, errors.New("query is empty")
 	}
 	return &bulkImpl{
-		conn:    conn,
-		metrics: metrics,
-		table:   table,
-		query:   query,
-		values:  make([][]interface{}, 0),
+		conn:      conn,
+		metrics:   metrics,
+		table:     table,
+		query:     query,
+		values:    make([][]interface{}, 0),
+		sizeLimit: sizeLimit,
 	}, nil
 }
 
 func (b *bulkImpl) Append(args ...interface{}) error {
 	b.values = append(b.values, args)
 	b.counter++
+	if b.sizeLimit > 0 && b.counter >= b.sizeLimit {
+		return b.Send()
+	}
 	return nil
 }
 
@@ -66,7 +71,7 @@ func (b *bulkImpl) Send() error {
 		}
 	}
 	err = batch.Send()
-	log.Printf("[!] batch name: %s, rows: %d, duration: %d ms", b.table, b.counter, time.Now().Sub(start).Milliseconds())
+	//log.Printf("[!] batch name: %s, rows: %d, duration: %d ms", b.table, b.counter, time.Now().Sub(start).Milliseconds())
 	// Save bulk metrics
 	if b.metrics != nil {
 		b.metrics.RecordBulkElements(float64(len(b.values)), "ch", b.table)
@@ -74,5 +79,6 @@ func (b *bulkImpl) Send() error {
 	}
 	// Prepare values slice for a new data
 	b.values = make([][]interface{}, 0)
+	b.counter = 0
 	return err
 }

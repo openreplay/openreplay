@@ -113,7 +113,7 @@ func main() {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
 
-	sdkSaver, err := sdk.New(cfg, log, chConnector, sessManager, users)
+	sdkSaver, err := sdk.New(cfg, log, chConnector, sessManager, users, chConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init sdk saver: %s", err)
 	}

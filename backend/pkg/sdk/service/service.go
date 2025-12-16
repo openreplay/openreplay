@@ -3,7 +3,10 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
+	"strings"
+	"time"
 
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/db/clickhouse"
@@ -13,6 +16,9 @@ import (
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sdk/model"
 	"openreplay/backend/pkg/sessions"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 type SdkDataSaver interface {
@@ -20,23 +26,41 @@ type SdkDataSaver interface {
 }
 
 type dataSaverImpl struct {
-	log      logger.Logger
-	ch       clickhouse.Connector
-	users    Users
-	sessions sessions.Sessions
-	consumer types.Consumer
-	done     chan struct{}
+	cfg          *db.Config
+	log          logger.Logger
+	ch           clickhouse.Connector
+	users        Users
+	sessions     sessions.Sessions
+	consumer     types.Consumer
+	done         chan struct{}
+	conn         driver.Conn
+	startTime    int
+	endTime      int
+	usersOffset  int
+	currUser     *UserRecord
+	eventsOffset int
 }
 
-func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions sessions.Sessions, users Users) (SdkDataSaver, error) {
+func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions sessions.Sessions, users Users, conn driver.Conn) (SdkDataSaver, error) {
 	ds := &dataSaverImpl{
+		cfg:      cfg,
 		log:      log,
 		ch:       ch,
 		users:    users,
 		sessions: sessions,
 		done:     make(chan struct{}, 1),
+		conn:     conn,
 	}
 	var err error
+	ds.startTime, err = parseHHMM(cfg.PAUpdaterStartTime)
+	if err != nil {
+		log.Warn(context.Background(), "failed to parse pa-updater start time: %s", err)
+	}
+	ds.endTime, err = parseHHMM(cfg.PAUpdaterEndTime)
+	if err != nil {
+		log.Warn(context.Background(), "failed to parse pa-updater end time: %s", err)
+	}
+
 	ds.consumer, err = queue.NewConsumer(
 		log,
 		cfg.GroupAnalytics,
@@ -147,6 +171,34 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 	return ds, nil
 }
 
+func parseHHMM(s string) (minutes int, err error) {
+	parts := strings.Split(s, ":")
+	if len(parts) != 2 {
+		return -1, fmt.Errorf("expected HH:MM, got %q", s)
+	}
+	h, err := strconv.Atoi(parts[0])
+	if err != nil || h < 0 || h > 23 {
+		return -1, fmt.Errorf("bad hour in %q", s)
+	}
+	m, err := strconv.Atoi(parts[1])
+	if err != nil || m < 0 || m > 59 {
+		return -1, fmt.Errorf("bad minute in %q", s)
+	}
+	return h*60 + m, nil
+}
+
+func inWindow(now time.Time, startMin, endMin int) bool {
+	if startMin < 0 || endMin < 0 || startMin == endMin {
+		return true
+	}
+	curMin := now.Hour()*60 + now.Minute()
+
+	if startMin < endMin {
+		return curMin >= startMin && curMin < endMin
+	}
+	return curMin >= startMin || curMin < endMin
+}
+
 func toInt(v interface{}) (int, bool) {
 	if v == nil {
 		return 0, true // consider as an empty value
@@ -174,8 +226,19 @@ func toInt(v interface{}) (int, bool) {
 }
 
 func (ds *dataSaverImpl) run() {
+	updateTimer := time.NewTimer(ds.cfg.PAUpdaterTickDuration)
+	defer updateTimer.Stop()
+
 	for {
 		select {
+		case <-updateTimer.C:
+			if inWindow(time.Now(), ds.startTime, ds.endTime) {
+				ds.log.Info(context.Background(), "run events updater")
+				if err := ds.updateEvents(); err != nil {
+					ds.log.Error(context.Background(), "can't update events: %s", err)
+				}
+			}
+			updateTimer.Reset(ds.cfg.PAUpdaterTickDuration)
 		case <-ds.done:
 			return
 		default:
@@ -184,6 +247,146 @@ func (ds *dataSaverImpl) run() {
 			}
 		}
 	}
+}
+
+func (ds *dataSaverImpl) updateEvents() error {
+	batch, err := clickhouse.NewBulk(ds.conn, nil, "updatedEvents", insertEventsQuery,
+		ds.cfg.CHSendBatchSizeLimit+ds.cfg.BatchSizeLimit+1)
+	if err != nil {
+		return err
+	}
+
+	rowsCounter := 0
+	for rowsCounter < ds.cfg.CHSendBatchSizeLimit {
+		// Use current or load a new user
+		if err = ds.loadNewUser(); err != nil {
+			ds.log.Error(context.Background(), "can't load new user: %s", err)
+			break
+		}
+		ds.log.Info(context.Background(), "user record: %+v", ds.currUser)
+		//ds.currUser = nil // TODO: temp behavior
+		//continue
+		// Get user's events to update
+		rows := make([]UserEvent, 0, ds.cfg.CHReadBatchSizeLimit)
+		if err := ds.conn.Select(context.Background(), &rows, selectEventsQuery,
+			ds.currUser.ProjectID, ds.currUser.DistinctID, ds.cfg.CHReadBatchSizeLimit, ds.eventsOffset); err != nil {
+			ds.log.Error(context.Background(), "can't select events: %s", err)
+			break
+		}
+		if len(rows) == 0 {
+			// No more events for this user
+			ds.log.Info(context.Background(), "no events found for user: %s", ds.currUser.UserID)
+			ds.currUser = nil
+			continue
+		}
+		ds.log.Info(context.Background(), "got %d events to update", len(rows))
+		//addedNum, err := addUserEvents(batch, rows, ds.currUser)
+		//ds.eventsOffset += addedNum
+		//if err != nil {
+		//	ds.log.Error(context.Background(), "can't add events: %s", err)
+		//	break
+		//}
+		rowsCounter += len(rows)
+		ds.eventsOffset += len(rows)
+		ds.log.Info(context.Background(), "total events: %d", rowsCounter)
+		if len(rows) < ds.cfg.CHReadBatchSizeLimit {
+			ds.log.Info(context.Background(), "got less that asked, selecting the next user")
+			ds.currUser = nil
+		}
+	}
+	return batch.Send()
+}
+
+func (ds *dataSaverImpl) loadNewUser() error {
+	if ds.currUser != nil {
+		return nil
+	}
+	rec := &UserRecord{}
+	if err := ds.conn.QueryRow(context.Background(), selectUser, ds.usersOffset).ScanStruct(rec); err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			// Reset users offset
+			ds.log.Info(context.Background(), "[!] users offset reset")
+			ds.currUser = nil
+			ds.usersOffset = 0
+		}
+		return err
+	}
+	ds.currUser = rec
+	ds.usersOffset++
+	ds.eventsOffset = 0
+	return nil
+}
+
+func addUserEvents(batch clickhouse.Bulk, rows []UserEvent, userRec *UserRecord) (int, error) {
+	for i := 0; i < len(rows); i++ {
+		if err := batch.Append(
+			rows[i].SessionID,
+			userRec.ProjectID,
+			rows[i].EventID,
+			rows[i].EventName,
+			rows[i].CreatedAt,
+			rows[i].Timestamp,
+			userRec.UserID,
+			rows[i].DeviceID,
+			userRec.UserID,
+			rows[i].AutoCapture,
+			rows[i].Device,
+			rows[i].OSVersion,
+			rows[i].Os,
+			rows[i].Browser,
+			rows[i].Referrer,
+			rows[i].Country,
+			rows[i].State,
+			rows[i].City,
+			rows[i].CurrentURL,
+			rows[i].DurationS,
+			rows[i].ErrorID,
+			rows[i].IssueType,
+			rows[i].IssueID,
+			rows[i].ACProperties,
+			rows[i].Properties,
+		); err != nil {
+			return i, err
+		}
+	}
+	return len(rows), nil
+}
+
+type UserRecord struct {
+	ProjectID  uint16 `ch:"project_id"`
+	DistinctID string `ch:"distinct_id"`
+	UserID     string `ch:"$user_id"`
+}
+
+var selectUser = `SELECT project_id, distinct_id, "$user_id" FROM product_analytics.users_distinct_id ORDER BY _timestamp LIMIT 1 OFFSET ?`
+var selectEventsQuery = `SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured", 
+       "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", 
+       "$duration_s", error_id, issue_type, issue_id, "$properties", properties FROM product_analytics.events WHERE project_id = ? AND distinct_id = ? ORDER BY _timestamp LIMIT ? OFFSET ?`
+var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$duration_s", error_id, issue_type, issue_id, "$properties", properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+type UserEvent struct {
+	SessionID    uint64     `ch:"session_id"`
+	EventID      string     `ch:"event_id"`
+	EventName    string     `ch:"$event_name"`
+	CreatedAt    time.Time  `ch:"created_at"`
+	Timestamp    uint32     `ch:"$time"`
+	DeviceID     string     `ch:"$device_id"`
+	AutoCapture  bool       `ch:"$auto_captured"`
+	Device       string     `ch:"$device"`
+	OSVersion    string     `ch:"$os_version"`
+	Os           string     `ch:"$os"`
+	Browser      string     `ch:"$browser"`
+	Referrer     *string    `ch:"$referrer"`
+	Country      string     `ch:"$country"`
+	State        string     `ch:"$state"`
+	City         string     `ch:"$city"`
+	CurrentURL   string     `ch:"$current_url"`
+	DurationS    uint16     `ch:"$duration_s"`
+	ErrorID      string     `ch:"error_id"`
+	IssueType    string     `ch:"issue_type"`
+	IssueID      string     `ch:"issue_id"`
+	ACProperties chcol.JSON `ch:"$properties"`
+	Properties   chcol.JSON `ch:"properties"`
 }
 
 func (ds *dataSaverImpl) Stop() {

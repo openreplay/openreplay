@@ -102,7 +102,7 @@ var batches = map[string]string{
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, c.metrics, name, query)
+	batch, err := NewBulk(c.conn, c.metrics, name, query, 20000)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
