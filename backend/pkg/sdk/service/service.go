@@ -358,11 +358,25 @@ type UserRecord struct {
 	UserID     string `ch:"$user_id"`
 }
 
-var selectUser = `SELECT project_id, distinct_id, "$user_id" FROM product_analytics.users_distinct_id ORDER BY _timestamp LIMIT 1 OFFSET ?`
-var selectEventsQuery = `SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured", 
+var selectUser = `SELECT project_id, distinct_id, "$user_id" FROM product_analytics.users_distinct_id 
+                                           ORDER BY _timestamp LIMIT 1 OFFSET ?`
+
+var selectEventsQuery = `SELECT *
+FROM (SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured", 
        "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", 
-       "$duration_s", error_id, issue_type, issue_id, "$properties", properties FROM product_analytics.events WHERE project_id = ? AND distinct_id = ? ORDER BY _timestamp LIMIT ? OFFSET ?`
-var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$duration_s", error_id, issue_type, issue_id, "$properties", properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       "$duration_s", error_id, issue_type, issue_id, "$properties", properties, "$user_id"
+      FROM product_analytics.events
+      WHERE project_id = ?
+        AND distinct_id = ?
+      ORDER BY _timestamp DESC
+      LIMIT 1 BY project_id, "$event_name", created_at, session_id)
+WHERE empty("$user_id") LIMIT ? OFFSET ?;`
+
+var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, 
+                                      "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", 
+                                      "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", 
+                                      "$current_url", "$duration_s", error_id, issue_type, issue_id, "$properties", 
+                                      properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 type UserEvent struct {
 	SessionID    uint64     `ch:"session_id"`
@@ -387,6 +401,7 @@ type UserEvent struct {
 	IssueID      string     `ch:"issue_id"`
 	ACProperties chcol.JSON `ch:"$properties"`
 	Properties   chcol.JSON `ch:"properties"`
+	UserID       *string    `ch:"$user_id"`
 }
 
 func (ds *dataSaverImpl) Stop() {
