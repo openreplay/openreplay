@@ -44,7 +44,10 @@ export const groupFiltersByCategory = (
   if (!filters?.length) return {};
   return filters.reduce(
     (acc, filter) => {
-      const key = filter.category || 'Other';
+      const key =
+        filter.autoCaptured && filter.category.includes('event')
+          ? 'autocapture'
+          : filter.category || 'Other';
       const cat = getCategoryDisplayName(key);
       (acc[cat] ||= []).push(filter);
       return acc;

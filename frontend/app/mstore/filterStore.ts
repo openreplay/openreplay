@@ -403,7 +403,8 @@ export default class FilterStore {
     if (
       category === 'events' ||
       category === 'auto_captured' ||
-      category === 'user_events'
+      category === 'user_events' ||
+      category === 'event'
     ) {
       return filter.autoCaptured ? 'autocapture' : 'event';
     }
