@@ -300,7 +300,6 @@ const ValueAutoComplete = observer(
     const applySelectedValues = () => {
       onApplyValues(selectedValues);
       setShowValueModal(false);
-      console.trace('apply selected');
     };
 
     const applyQuery = () => {
