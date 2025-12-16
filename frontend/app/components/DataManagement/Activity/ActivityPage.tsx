@@ -8,7 +8,6 @@ import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import { useModal } from 'App/components/Modal';
 import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import EventDetailsModal from './EventDetailsModal';
-import Select from 'Shared/Select';
 import { Link } from 'react-router-dom';
 import { dataManagement, withSiteId } from 'App/routes';
 import { observer } from 'mobx-react-lite';
@@ -25,10 +24,14 @@ import withPermissions from 'HOCs/withPermissions';
 import { getEventIcon } from './getEventIcon';
 import NewEventsBadge from './NewEventsBadge';
 import { Icon } from 'UI';
+import { useHistory } from 'react-router';
 
 const columnOrderKey = '$__activity_columns_order__$';
 
 function ActivityPage() {
+  const history = useHistory();
+  const searchParams = new URLSearchParams(window.location.search);
+  const eventId = searchParams.get('event_id');
   const { projectsStore, filterStore, analyticsStore, settingsStore } =
     useStore();
   const { timezone } = settingsStore.sessionSettings;
@@ -39,7 +42,6 @@ function ActivityPage() {
   ]);
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
-  console.log(allFilterOptions.map((f) => ({ ...f })));
   const dropdownItems = [
     {
       label: 'Show/Hide Columns',
@@ -192,6 +194,27 @@ function ActivityPage() {
     analyticsStore.reset();
   }, [projectsStore.activeSiteId]);
 
+  React.useEffect(() => {
+    if (eventId) {
+      showModal(
+        <EventDetailsModal
+          siteId={siteId!}
+          event_id={eventId}
+          onClose={hideModal}
+        />,
+        {
+          width: 620,
+          right: true,
+        },
+        () => {
+          history.replace({ search: '' });
+        },
+      );
+    } else {
+      hideModal();
+    }
+  }, [eventId]);
+
   const onOrderChange = (newCols) => {
     const order = newCols.map((col) => col.key).join(',');
     localStorage.setItem(columnOrderKey, order);
@@ -204,17 +227,10 @@ function ActivityPage() {
   };
 
   const onItemClick = (ev: { event_id: string }) => {
-    showModal(
-      <EventDetailsModal
-        siteId={siteId!}
-        event_id={ev.event_id}
-        onClose={hideModal}
-      />,
-      {
-        width: 620,
-        right: true,
-      },
-    );
+    if (!siteId) return;
+    if (!eventId) {
+      history.replace({ search: `?event_id=${ev.event_id}` });
+    }
   };
 
   const onUpdateVisibleCols = (cols: string[]) => {
