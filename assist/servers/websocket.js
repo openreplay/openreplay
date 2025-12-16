@@ -22,6 +22,7 @@ const {
     errorHandler,
     authorizer
 } = require('../utils/assistHelper');
+const deepMerge = require('@fastify/deepmerge')({all: true});
 const wsRouter = express.Router();
 
 let io;
@@ -348,7 +349,7 @@ module.exports = {
                 if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
                     args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
                 }
-                Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
+                socket.handshake.query.sessionInfo = deepMerge(socket.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
                 // Update sessionInfo for all sessions in room
                 const rooms = await getAvailableRooms(io);
@@ -357,7 +358,7 @@ module.exports = {
                         const connected_sockets = await io.in(roomId).fetchSockets();
                         for (let item of connected_sockets) {
                             if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
-                                Object.assign(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
+                                item.handshake.query.sessionInfo = deepMerge(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
                             }
                         }
                     }
