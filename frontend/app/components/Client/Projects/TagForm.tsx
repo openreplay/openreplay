@@ -50,6 +50,7 @@ function TagForm(props: Props) {
   return (
     <Form layout="vertical">
       <Form.Item label={t('Name:')} className="font-medium">
+        <label htmlFor="name">{t('Name')}</label>
         <Input
           autoFocus
           name="name"
@@ -59,6 +60,10 @@ function TagForm(props: Props) {
           maxLength={50}
           className="font-normal rounded-lg"
         />
+      </Form.Item>
+      <Form.Item label={t('Selector:')} className="font-medium">
+        <label htmlFor={'selector'}>Selector:</label>
+        <Input value={tag.selector} disabled name={'selector'} />
       </Form.Item>
 
       <div className="flex justify-between">

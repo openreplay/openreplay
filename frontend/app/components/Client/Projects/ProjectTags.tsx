@@ -30,22 +30,28 @@ function ProjectTags() {
     <div className="flex flex-col gap-6">
       <List
         locale={{
-          emptyText: (                  
-                <div>
-                <div className="w-fit border border-gray-100 rounded-lg overflow-hidden  bg-white shadow-sm mx-auto">                      
-                        <div className="w-full h-48 md:h-64 lg:h-96 flex items-center justify-center border border-gray-100  bg-white  rounded-md">
-                          <img src="/assets/img/img-tagging.jpg" alt="Tag Elements" className="max-w-full max-h-full object-contain" />
-                        </div>
-                    </div>
-                    <div className="text-center mt-4">
-                        <Typography.Text className="my-2 text-lg font-medium">
-                          {t('Organize and Manage Your Element Tags')}
-                        </Typography.Text>
-                        <div className="mb-2 text-lg text-gray-500 leading-normal">
-                          {t('Tag elements during session playback and use them in OmniSearch to find relevant sessions.')}
-                        </div>
-                      </div>
-                  </div>
+          emptyText: (
+            <div>
+              <div className="w-fit border border-gray-100 rounded-lg overflow-hidden  bg-white shadow-sm mx-auto">
+                <div className="w-full h-48 md:h-64 lg:h-96 flex items-center justify-center border border-gray-100  bg-white  rounded-md">
+                  <img
+                    src="/assets/img/img-tagging.jpg"
+                    alt="Tag Elements"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              </div>
+              <div className="text-center mt-4">
+                <Typography.Text className="my-2 text-lg font-medium">
+                  {t('Organize and Manage Your Element Tags')}
+                </Typography.Text>
+                <div className="mb-2 text-lg text-gray-500 leading-normal">
+                  {t(
+                    'Tag elements during session playback and use them in OmniSearch to find relevant sessions.',
+                  )}
+                </div>
+              </div>
+            </div>
           ),
         }}
         loading={tagWatchStore.isLoading}
@@ -64,6 +70,7 @@ function ProjectTags() {
           >
             <List.Item.Meta
               title={item.name}
+              description={item.selector}
               avatar={<ScanSearch size={20} />}
             />
           </List.Item>
