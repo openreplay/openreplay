@@ -468,6 +468,7 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		`e."$user_id" = ?`,
 		"e.created_at >= ?",
 		"e.created_at <= ?",
+		`e."$event_name" != 'TAG_TRIGGER'`,
 	}
 	params := []interface{}{projID, userID, startTime, endTime}
 

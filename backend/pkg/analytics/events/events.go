@@ -38,6 +38,7 @@ func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSear
 		"e.project_id = ?",
 		"e.created_at >= ?",
 		"e.created_at <= ?",
+		`e."$event_name" != 'TAG_TRIGGER'`,
 	}
 	params = []interface{}{projID, startTime, endTime}
 
