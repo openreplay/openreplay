@@ -290,7 +290,7 @@ func sanitizePayload(payload map[string]interface{}) map[string]interface{} {
 }
 
 func getDistinctID(session *sessions.Session) string {
-	if session.UserID != nil {
+	if session.UserID != nil && *session.UserID != "" {
 		return *session.UserID
 	}
 	return session.UserUUID
