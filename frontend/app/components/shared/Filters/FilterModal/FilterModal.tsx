@@ -9,7 +9,6 @@ import { VList } from 'virtua';
 import { FilterKey } from 'Types/filter/filterType';
 import { FilterItem, CategoryList } from './components';
 import {
-  getIconForFilter,
   groupFiltersByCategory,
   getFilteredEntries,
   useDebounce,
