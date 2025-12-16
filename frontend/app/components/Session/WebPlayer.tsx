@@ -19,7 +19,6 @@ import {
   defaultContextValue,
 } from './playerContext';
 import { signalService } from 'App/services';
-import FilterItem from 'App/mstore/types/filterItem';
 
 const TABS = {
   EVENTS: 'Activity',
@@ -29,7 +28,7 @@ const TABS = {
 
 let playerInst: IPlayerContext['player'] | undefined;
 
-const hasEvents = (filters: FilterItem[]) => {
+const hasEvents = (filters: { isEvent?: boolean }[] = []) => {
   return filters.some((filter) => filter.isEvent);
 };
 
@@ -63,7 +62,7 @@ function WebPlayer(props: any) {
   React.useEffect(() => {
     if (
       searchStore.instance.filters?.length &&
-      !hasEvents(searchStore.instance.filters)
+      hasEvents(searchStore.instance.filters)
     ) {
       uiPlayerStore.setSearchEventsSwitchButton(true);
       uiPlayerStore.setShowOnlySearchEvents(true);
