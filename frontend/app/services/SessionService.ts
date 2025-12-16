@@ -93,12 +93,20 @@ export default class SettingsService {
       .catch(Promise.reject);
   }
 
-  getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
+  getSessionInfo(
+    sessionId: string,
+    isLive?: boolean,
+    abortSignal?: AbortSignal,
+  ): Promise<ISession> {
     return this.client
       .get(
         isLive
           ? `/assist/sessions/${sessionId}`
           : `/sessions/${sessionId}/replay`,
+        undefined,
+        undefined,
+        undefined,
+        abortSignal,
       )
       .then((r) => r.json())
       .then((j) => j.data || {})

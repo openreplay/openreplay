@@ -3,7 +3,13 @@ import { Progress, Button } from 'antd';
 import { Icon } from 'UI';
 import { useTranslation } from 'react-i18next';
 
-function LongLoader({ onClick }: { onClick: () => void }) {
+function LongLoader({
+  onClick,
+  withSampling,
+}: {
+  onClick: () => void;
+  withSampling?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <div
@@ -26,15 +32,14 @@ function LongLoader({ onClick }: { onClick: () => void }) {
         />
       </div>
       <div>{t('This is taking longer than expected.')}</div>
-      {/*<div>*/}
-      {/*  {t('Use sample data to speed up query and get a faster response.')}*/}
-      {/*</div>*/}
-      {/*<div>*/}
-      {/*  Use sample data to speed up query and get a faster response.*/}
-      {/*</div>*/}
-      {/*<Button onClick={onClick}>*/}
-      {/*  Use Sample Data*/}
-      {/*</Button>*/}
+      {withSampling ? (
+        <>
+          <div>
+            {t('Use sample data to speed up query and get a faster response.')}
+          </div>
+          <Button onClick={onClick}>{t('Use Sample Data')}</Button>
+        </>
+      ) : null}
     </div>
   );
 }

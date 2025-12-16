@@ -56,8 +56,10 @@ function WidgetChart(props: Props) {
     triggerOnce: true,
     rootMargin: '200px 0px',
   });
+  const abortController = React.useRef<AbortController>(null);
   const { isSaved = false, metric, isTemplate, height } = props;
-  const { dashboardStore, metricStore, filterStore } = useStore();
+  const { dashboardStore, metricStore, filterStore, userStore } = useStore();
+  const isEE = userStore.isEnterprise;
   const _metric: any = props.metric;
   const [data, setData] = useState(_metric.data ?? { chart: [] });
   const { period } = dashboardStore;
@@ -136,7 +138,26 @@ function WidgetChart(props: Props) {
     }
   };
 
-  const loadSample = () => console.log('clicked');
+  const loadSample = async () => {
+    if (abortController.current) {
+      abortController.current.abort();
+    }
+    const timestmaps = drillDownPeriod.toTimestamps();
+    const density = dashboardStore.selectedDensity;
+    const payload = isSaved
+      ? { ...metricParams, density }
+      : { ...params, ...timestmaps, ..._metric.toJson(), density };
+    const res = await dashboardStore.fetchSampleData(
+      metric,
+      payload,
+      isSaved,
+      period,
+    );
+    if (res) {
+      setData(res);
+      setStale(false);
+    }
+  };
 
   const depsString =
     _metric.metricType === USER_PATH
@@ -161,12 +182,21 @@ function WidgetChart(props: Props) {
     isComparison?: boolean,
   ) => {
     if (!isMounted()) return;
+    abortController.current = new AbortController();
+    const signal = abortController.current.signal;
     setLoading(true);
     const tm = setTimeout(() => {
       setStale(true);
     }, 4000);
     dashboardStore
-      .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
+      .fetchMetricChartData(
+        metric,
+        payload,
+        isSaved,
+        period,
+        isComparison,
+        signal,
+      )
       .then((res) => {
         if (isComparison) {
           setCompData(res);
@@ -634,7 +664,7 @@ function WidgetChart(props: Props) {
     <div ref={ref}>
       {loading ? (
         stale ? (
-          <LongLoader onClick={loadSample} />
+          <LongLoader onClick={loadSample} withSampling={isEE} />
         ) : (
           <Loader loading={loading} style={{ height: '240px' }} />
         )
