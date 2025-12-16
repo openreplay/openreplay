@@ -38,16 +38,18 @@ const newApiUrls = [
   '/notes',
   '/unprocessed',
   'first-mob',
-  // '/events',
+  '/events',
   '/favorite',
   '/clickmaps',
   '/replay',
   '/conditions',
+  '/users',
 ];
 const except = [
   'integrations/slack/notify',
   'integrations/msteams/notify',
   '/events/search',
+  'assign/projects',
 ];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
@@ -217,7 +219,7 @@ export default class APIClient {
 
     const noChalice =
       path.includes('/kai') ||
-      path.includes('v1/integrations') ||
+      path.includes('/integration/') ||
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('replay-exporter');
     let edp = window.env.API_EDP || window.location.origin + '/api';

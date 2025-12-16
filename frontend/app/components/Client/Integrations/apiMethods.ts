@@ -1,6 +1,7 @@
 import { client } from 'App/mstore';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { integrationGoEdp } from './integrationGoEdp'
 
 export type ServiceName = 'datadog' | 'dynatrace' | 'elasticsearch' | 'sentry';
 export const serviceNames: Record<ServiceName, string> = {
@@ -14,7 +15,9 @@ export async function getIntegrationData<T>(
   name: ServiceName,
   projectId: string,
 ): Promise<T> {
-  const r = await client.get(`/integrations/${projectId}/integration/${name}`);
+  const r = await client.get(
+    `${integrationGoEdp}${projectId}/integration/${name}`,
+  );
   return r.json();
 }
 
@@ -75,7 +78,7 @@ export async function saveIntegration<T>(
   const method = exists ? 'patch' : 'post';
   try {
     const r = await client[method](
-      `/integrations/${projectId}/integration/${name}`,
+      `${integrationGoEdp}${projectId}/integration/${name}`,
       { data },
     );
     if (r.ok) {
@@ -97,7 +100,7 @@ export async function saveIntegration<T>(
 export async function removeIntegration(name: string, projectId: string) {
   try {
     const r = await client.delete(
-      `/integrations/${projectId}/integration/${name}`,
+      `${integrationGoEdp}${projectId}/integration/${name}`,
     );
     if (r.ok) {
       toast.success(`${name} integration removed`);

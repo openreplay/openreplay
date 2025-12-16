@@ -39,7 +39,7 @@ function LongTaskPanel() {
   const [searchValue, setSearchValue] = React.useState('');
 
   const { currentTab, tabStates } = store.get();
-  const longTasks = tabStates[currentTab]?.longTaskList || [];
+  const longTasks = tabStates[currentTab]?.laTaskList || [];
 
   const filteredList = useRegExListFilterMemo(
     longTasks,
@@ -152,7 +152,11 @@ function LongTaskPanel() {
         >
           <VList ref={_list} itemSize={25} data={rows}>
             {(task) => (
-              <LongTaskRow key={task.time} task={task} onJump={onRowClick} />
+              <LongTaskRow
+                key={task.key ?? task.startTime}
+                task={task}
+                onJump={onRowClick}
+              />
             )}
           </VList>
         </NoContent>
@@ -173,7 +177,7 @@ function LongTaskRow({
   return (
     <div
       className={
-        'relative border-b border-neutral-950/5 group hover:bg-active-blue py-1 px-4 pe-8'
+        'relative border-b border-gray-lighter group hover:bg-active-blue py-1 px-4 pe-8'
       }
     >
       <div className="flex flex-col w-full">
@@ -186,14 +190,14 @@ function LongTaskRow({
           <>
             <TaskTimeline task={task} />
             <div className={'flex items-center gap-1 mb-2'}>
-              <div className={'text-neutral-900 font-medium'}>
+              <div className={'text-black font-medium'}>
                 First UI event timestamp:
               </div>
-              <div className="text-neutral-600 font-mono block">
+              <div className="color-gray-medium font-mono block">
                 {Math.round(task.firstUIEventTimestamp)} ms
               </div>
             </div>
-            <div className={'text-neutral-900 font-medium'}>Scripts:</div>
+            <div className={'text-black font-medium'}>Scripts:</div>
             <div className="flex flex-col gap-1">
               {task.scripts.map((script, index) => (
                 <Script script={script} key={index} />
@@ -238,14 +242,14 @@ function TaskTitle({
       <Tag color="default" bordered={false}>
         {plusMore}
       </Tag>
-      <span className={'text-neutral-600 font-mono'}>
+      <span className={'color-gray-medium font-mono'}>
         {Math.round(entry.duration)} ms
       </span>
       {isBlocking ? (
         <Tag
           bordered={false}
           color="red"
-          className="font-mono rounded-lg text-xs flex gap-1 items-center text-red-600"
+          className="font-mono rounded-lg text-xs flex gap-1 items-center color-red"
         >
           <Hourglass size={11} /> {Math.round(entry.blockingDuration!)} ms
           blocking

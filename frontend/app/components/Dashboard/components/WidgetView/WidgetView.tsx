@@ -96,7 +96,8 @@ function WidgetView({
         };
 
         if (selectedCard.filters) {
-          const filters = selectedCard.filters.map(async (filter) => {
+          const filters = []
+          for (const filter of selectedCard.filters) {
             const f = filterStore.findEvent({
               name: filter.name,
               autoCaptured: filter.autoCaptured,
@@ -111,8 +112,8 @@ function WidgetView({
               }
               f.filters = defaults;
             }
-            return f;
-          });
+            filters.push(f);
+          }
           cardData.series = [
             new FilterSeries().fromJson({
               name: 'Series 1',

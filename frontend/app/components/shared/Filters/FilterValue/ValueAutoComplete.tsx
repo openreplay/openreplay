@@ -28,6 +28,7 @@ import { TopValue } from '@/mstore/filterStore';
 import { mobileScreen } from 'App/utils/isMobile';
 import { VList } from 'virtua';
 const { Text } = Typography;
+import OutsideClickDetectingDiv from 'Shared//OutsideClickDetectingDiv';
 
 interface FilterParams {
   id: string;
@@ -368,18 +369,19 @@ const ValueAutoComplete = observer(
     const queryStr = useMemo(() => {
       return queryBlocks
         .map((block) => `"${block}"`)
-        .join(blocksAmount > 1 ? ', ' : '');
+        .join(blocksAmount > 1 ? ' OR ' : '');
     }, [queryBlocks]);
 
     const onClearClick = (event: React.MouseEvent | React.KeyboardEvent) => {
       event.stopPropagation(); // Prevent popover toggle
       onApplyValues([]);
       setShowValueModal(false);
+      console.trace('clear click');
     };
 
     const handleOpenChange = (visible: boolean) => {
       if (isDisabled) return;
-      setShowValueModal(visible);
+      if (visible) setShowValueModal(visible);
     };
 
     const isEmpty = initialValues[0] === '' || initialValues.length === 0;
@@ -389,7 +391,10 @@ const ValueAutoComplete = observer(
         <Input.Search
           value={query}
           loading={loadingSearch}
-          onChange={(e) => handleInputChange(e.target.value)}
+          onChange={(e) => {
+            e.stopPropagation();
+            handleInputChange(e.target.value);
+          }}
           placeholder={placeholder}
           className="mb-2" // Antd margin class
           autoFocus
@@ -437,7 +442,9 @@ const ValueAutoComplete = observer(
                   lineHeight: 'inherit',
                 }}
               >
-                {t('Apply search')}: {queryStr}
+                <div className={'text-black'}>
+                  {t('Apply search')}: {queryStr}
+                </div>
               </Button>
             </>
           ) : null}
@@ -465,107 +472,108 @@ const ValueAutoComplete = observer(
     );
 
     return (
-      <Popover
-        content={popoverContent}
-        trigger="click"
-        open={showValueModal && !isDisabled}
-        onOpenChange={handleOpenChange}
-        placement={mobileScreen ? 'bottom' : 'bottomLeft'}
-        arrow={false}
-        getPopupContainer={(triggerNode) => triggerNode || document.body}
-      >
-        <Button
-          className="pr-8"
-          size="small"
-          ref={triggerRef}
-          disabled={isDisabled}
-          onMouseEnter={() => !isDisabled && setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+      <OutsideClickDetectingDiv onClickOutside={() => setShowValueModal(false)}>
+        <Popover
+          content={popoverContent}
+          trigger="click"
+          open={showValueModal && !isDisabled}
+          onOpenChange={handleOpenChange}
+          placement={mobileScreen ? 'bottom' : 'bottomLeft'}
+          arrow={false}
         >
-          <Space size={4} wrap className="w-full overflow-hidden">
-            {!isEmpty ? (
-              <>
-                <Text
-                  ellipsis={{
-                    tooltip: {
-                      title: mapValues
-                        ? mapValues(initialValues[0])
-                        : getDisplayLabel(initialValues[0]),
-                      placement: 'topLeft',
-                      mouseEnterDelay: 0.5,
-                    },
-                  }}
-                  style={{ maxWidth: '8rem' }}
-                >
-                  {mapValues
-                    ? mapValues(initialValues[0])
-                    : getDisplayLabel(initialValues[0])}
-                </Text>
-                {initialValues.length > 1 && (
-                  <>
-                    <Text type="secondary" className="flex-shrink-0">
-                      {t('or')}
-                    </Text>
-                    <Text
-                      ellipsis={{
-                        tooltip: {
-                          title: mapValues
-                            ? mapValues(initialValues[1])
-                            : getDisplayLabel(initialValues[1]),
-                          placement: 'topLeft',
-                          mouseEnterDelay: 0.5,
-                        },
-                      }}
-                      style={{ maxWidth: '8rem' }}
-                    >
-                      {mapValues
-                        ? mapValues(initialValues[1])
-                        : getDisplayLabel(initialValues[1])}
-                    </Text>
-                    {initialValues.length > 2 && (
+          <Button
+            className="pr-8"
+            size="small"
+            ref={triggerRef}
+            disabled={isDisabled}
+            onMouseEnter={() => !isDisabled && setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+          >
+            <Space size={4} wrap className="w-full overflow-hidden">
+              {!isEmpty ? (
+                <>
+                  <Text
+                    ellipsis={{
+                      tooltip: {
+                        title: mapValues
+                          ? mapValues(initialValues[0])
+                          : getDisplayLabel(initialValues[0]),
+                        placement: 'topLeft',
+                        mouseEnterDelay: 0.5,
+                      },
+                    }}
+                    style={{ maxWidth: '8rem' }}
+                  >
+                    {mapValues
+                      ? mapValues(initialValues[0])
+                      : getDisplayLabel(initialValues[0])}
+                  </Text>
+                  {initialValues.length > 1 && (
+                    <>
                       <Text type="secondary" className="flex-shrink-0">
-                        {`+ ${initialValues.length - 2}`}
+                        {t('or')}
                       </Text>
-                    )}
-                  </>
-                )}
-              </>
-            ) : (
-              <Text
-                type={'secondary'}
-                className={cn({ 'text-disabled': isDisabled })}
-              >
-                {placeholder}
-              </Text>
-            )}
-          </Space>
+                      <Text
+                        ellipsis={{
+                          tooltip: {
+                            title: mapValues
+                              ? mapValues(initialValues[1])
+                              : getDisplayLabel(initialValues[1]),
+                            placement: 'topLeft',
+                            mouseEnterDelay: 0.5,
+                          },
+                        }}
+                        style={{ maxWidth: '8rem' }}
+                      >
+                        {mapValues
+                          ? mapValues(initialValues[1])
+                          : getDisplayLabel(initialValues[1])}
+                      </Text>
+                      {initialValues.length > 2 && (
+                        <Text type="secondary" className="flex-shrink-0">
+                          {`+ ${initialValues.length - 2}`}
+                        </Text>
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <Text
+                  type={'secondary'}
+                  className={cn({ 'text-disabled': isDisabled })}
+                >
+                  {placeholder}
+                </Text>
+              )}
+            </Space>
 
-          {!isEmpty && hovered && !isDisabled && (
-            <span
-              role="button"
-              aria-label={t('Clear selection')}
-              onClick={onClearClick}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  onClearClick(e);
-                }
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              tabIndex={0} // Make it focusable if needed
-              className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center text-neutral-400 hover:text-neutral-600"
-              style={{
-                height: '100%',
-                cursor: 'pointer',
-                zIndex: 1,
-                padding: '0 4px',
-              }}
-            >
-              <CloseCircleFilled />
-            </span>
-          )}
-        </Button>
-      </Popover>
+            {!isEmpty && hovered && !isDisabled && (
+              <span
+                role="button"
+                aria-label={t('Clear selection')}
+                onClick={onClearClick}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    onClearClick(e);
+                  }
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                tabIndex={0} // Make it focusable if needed
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center text-neutral-400 hover:text-neutral-600"
+                style={{
+                  height: '100%',
+                  cursor: 'pointer',
+                  zIndex: 1,
+                  padding: '0 4px',
+                }}
+              >
+                <CloseCircleFilled />
+              </span>
+            )}
+          </Button>
+        </Popover>
+      </OutsideClickDetectingDiv>
     );
   },
 );
