@@ -1,8 +1,6 @@
 import React from 'react';
 import { Dropdown, Popover } from 'antd';
 import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Files, Mail } from 'lucide-react';
-import copy from 'copy-to-clipboard';
 import { useModal } from 'App/components/Modal';
 import withPermissions from 'HOCs/withPermissions';
 import UserPropertiesModal from './components/UserPropertiesModal';
@@ -117,17 +115,6 @@ function UserInfo({ userId }: { userId: string }) {
   };
 
   const propLength = Object.keys(user?.properties ?? {}).length + 7;
-
-  const getFirstLetters = (name: string) => {
-    const parts = name.split(' ');
-    let initials = '';
-    parts.slice(0, 2).forEach((part) => {
-      if (part.length > 0) {
-        initials += part[0].toUpperCase();
-      }
-    });
-    return initials;
-  };
   return (
     <>
       <Breadcrumb
@@ -193,12 +180,9 @@ function UserInfo({ userId }: { userId: string }) {
                         <div className={'w-full group flex justify-between'}>
                           <span>{id}</span>
                           <div
-                            className={
-                              'ml-2 invisible group-hover:visible cursor-pointer active:text-blue'
-                            }
-                            onClick={() => copy(id)}
+                            className={'ml-2 invisible group-hover:visible'}
                           >
-                            <Files size={14} />
+                            <CopyButton content={id} isIcon />
                           </div>
                         </div>
                       ))}
