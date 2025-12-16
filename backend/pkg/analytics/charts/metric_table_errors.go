@@ -37,15 +37,15 @@ type TableErrorsResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
 
-func (t *TableErrorsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := t.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		if t.Logger != nil {
-			t.Logger.Error(context.Background(), "Error executing query: %v, query: %s", err, query)
+			t.Logger.Error(ctx, "Error executing query: %v, query: %s", err, query)
 		} else {
 			log.Printf("Error executing query: %s\nQuery: %s", err, query)
 		}
@@ -149,14 +149,20 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "se"},
 		)
 		if len(sessionEventFilterConds) > 0 {
+			subqueryConds := []string{
+				fmt.Sprintf("se.project_id = %d", p.ProjectId),
+				fmt.Sprintf("se.created_at >= toDateTime(%d/1000)", (p.StartTimestamp/1000)*1000),
+				fmt.Sprintf("se.created_at <= toDateTime(%d/1000)", (p.EndTimestamp/1000)*1000),
+			}
+			if p.SampleRate > 0 && p.SampleRate < 100 {
+				subqueryConds = append(subqueryConds, fmt.Sprintf("se.sample_key < %d", p.SampleRate))
+			}
+			subqueryConds = append(subqueryConds, sessionEventFilterConds...)
 			sessionEventConds = []string{fmt.Sprintf(`e.session_id IN (
 				SELECT DISTINCT se.session_id
 				FROM product_analytics.events se
-				WHERE se.project_id = %d
-				AND se.created_at >= toDateTime(%d/1000)
-				AND se.created_at <= toDateTime(%d/1000)
-				AND %s
-			)`, p.ProjectId, (p.StartTimestamp/1000)*1000, (p.EndTimestamp/1000)*1000, strings.Join(sessionEventFilterConds, " AND "))}
+				WHERE %s
+			)`, strings.Join(subqueryConds, " AND "))}
 		}
 	}
 
@@ -165,6 +171,9 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", startMs),
 		fmt.Sprintf("e.created_at <= toDateTime(%d/1000)", endMs),
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		conds = append(conds, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
 	}
 
 	// If no specific ERROR event filter is provided, add the default ERROR event conditions

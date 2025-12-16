@@ -27,23 +27,23 @@ type HeatmapQueryBuilder struct {
 	Logger logger.Logger
 }
 
-func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (h *HeatmapQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := h.buildQuery(p)
 	if err != nil {
-		h.Logger.Error(context.Background(), "Error building query: %v", err)
+		h.Logger.Error(ctx, "Error building query: %v", err)
 		return nil, err
 	}
 	_start := time.Now()
-	h.Logger.Debug(context.Background(), "Executing query: %s", query)
+	h.Logger.Debug(ctx, "Executing query: %s", query)
 
 	var pts []HeatmapPoint = make([]HeatmapPoint, 0)
 
-	if err = conn.Select(context.Background(), &pts, query); err != nil {
-		h.Logger.Error(context.Background(), "Error executing query: %v, query: %s", err, query)
+	if err = conn.Select(ctx, &pts, query); err != nil {
+		h.Logger.Error(ctx, "Error executing query: %v, query: %s", err, query)
 		return nil, err
 	}
 	if time.Since(_start) > 2*time.Second {
-		h.Logger.Warn(context.Background(), "Query execution took longer than 2s: %s", query)
+		h.Logger.Warn(ctx, "Query execution took longer than 2s: %s", query)
 	}
 
 	if pts == nil {
@@ -53,20 +53,20 @@ func (h *HeatmapQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}
 	if !p.IncludeClickRage {
 		query, err = h.buildClickRageQuery(p)
 		if err != nil {
-			h.Logger.Error(context.Background(), "Error building click rage query: %v", err)
+			h.Logger.Error(ctx, "Error building click rage query: %v", err)
 			return nil, err
 		}
 		var clickRages []ClickRageRow = make([]ClickRageRow, 0)
 
-		if err = conn.Select(context.Background(), &clickRages, query); err != nil {
-			h.Logger.Error(context.Background(), "Error executing click rage query: %v, query: %s", err, query)
+		if err = conn.Select(ctx, &clickRages, query); err != nil {
+			h.Logger.Error(ctx, "Error executing click rage query: %v, query: %s", err, query)
 			return nil, err
 		}
 		for _, cr := range clickRages {
 			// payload is a string like this: {"Count":3}
 			err := json.Unmarshal([]byte(cr.PayloadS), &cr)
 			if err != nil {
-				h.Logger.Error(context.Background(), "Error unmarshalling click rage payload: %v", err)
+				h.Logger.Error(ctx, "Error unmarshalling click rage payload: %v", err)
 				return nil, err
 			}
 			if cr.Count > 0 {
@@ -103,6 +103,9 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 		"isNotNull(e.\"$properties\".normalized_x)",
 		"isNotNull(e.\"$properties\".normalized_y)",
 	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		base = append(base, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+	}
 
 	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
 
@@ -110,6 +113,9 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("l.project_id = %d", p.ProjectId),
 		fmt.Sprintf("l.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
 		"l.session_id IS NOT NULL",
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		subBase = append(subBase, fmt.Sprintf("l.sample_key < %d", p.SampleRate))
 	}
 	subBase = append(subBase, eventsWhere...)
 	subBase = append(subBase, filtersWhere...)
@@ -164,6 +170,9 @@ func (h *HeatmapQueryBuilder) buildClickRageQuery(p *Payload) (string, error) {
 		"e.issue_type = 'click_rage'",
 		"isNotNull(e.\"$properties\".payload)",
 	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		base = append(base, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+	}
 
 	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
 
@@ -171,6 +180,9 @@ func (h *HeatmapQueryBuilder) buildClickRageQuery(p *Payload) (string, error) {
 		fmt.Sprintf("l.project_id = %d", p.ProjectId),
 		fmt.Sprintf("l.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
 		"l.session_id IS NOT NULL",
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		subBase = append(subBase, fmt.Sprintf("l.sample_key < %d", p.SampleRate))
 	}
 	subBase = append(subBase, eventsWhere...)
 	subBase = append(subBase, filtersWhere...)

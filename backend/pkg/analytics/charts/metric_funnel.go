@@ -36,7 +36,7 @@ type FunnelQueryBuilder struct {
 	Logger logger.Logger
 }
 
-func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	if !hasEventFilter(p.MetricPayload.Series[0].Filter.Filters) {
 		return FunnelResponse{Stages: make([]FunnelStageResult, 0)}, nil
 	}
@@ -46,15 +46,15 @@ func (f *FunnelQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{},
 	}
 
 	_start := time.Now() // Start timing
-	f.Logger.Debug(context.Background(), "Executing funnel query: %s", q)
-	rows, err := conn.Query(context.Background(), q)
+	f.Logger.Debug(ctx, "Executing funnel query: %s", q)
+	rows, err := conn.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	if time.Since(_start) > 2*time.Second {
-		f.Logger.Warn(context.Background(), "Funnel query took more than 2s: %s", q)
+		f.Logger.Warn(ctx, "Funnel query took more than 2s: %s", q)
 	}
 
 	s := p.MetricPayload.Series[0]
@@ -184,6 +184,10 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("e.created_at < toDateTime(%d)", (p.MetricPayload.EndTimestamp)/1000),
 		fmt.Sprintf("e.project_id = %d", p.ProjectId),
 		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages)),
+	}
+
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		baseWhere = append(baseWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
 	}
 
 	if p.MetricFormat == MetricFormatUserCount {

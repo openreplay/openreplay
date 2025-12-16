@@ -65,12 +65,12 @@ type WebVitalsQueryBuilder struct {
 	Logger logger.Logger
 }
 
-func (h WebVitalsQueryBuilder) Execute(p *Payload, conn driver.Conn) (interface{}, error) {
+func (h WebVitalsQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	query, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -210,10 +210,16 @@ func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(innerEventsWhere) > 0 {
 		innerEventsWhereStr = " AND " + strings.Join(innerEventsWhere, " AND ")
 	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		innerEventsWhereStr += fmt.Sprintf(" AND main.sample_key < %d", p.SampleRate)
+	}
 
 	outerFiltersWhereStr := ""
 	if len(outerFiltersWhere) > 0 {
 		outerFiltersWhereStr = " AND " + strings.Join(outerFiltersWhere, " AND ")
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		outerFiltersWhereStr += fmt.Sprintf(" AND events.sample_key < %d", p.SampleRate)
 	}
 
 	sessionsWhereStr := ""

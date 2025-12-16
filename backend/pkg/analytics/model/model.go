@@ -85,6 +85,7 @@ type MetricPayload struct {
 	IncludeClickRage bool       `json:"includeClickRage"`
 	StartType        string     `json:"startType" validate:"omitempty,oneof=start end"`
 	HideExcess       bool       `json:"hideExcess" default:"true"`
+	SampleRate       int        `json:"sampleRate,omitempty" validate:"omitempty,min=0,max=100"`
 }
 
 func ValidateMetricFields(sl validator.StructLevel) {
