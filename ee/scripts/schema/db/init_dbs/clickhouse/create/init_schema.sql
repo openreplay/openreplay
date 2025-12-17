@@ -857,6 +857,7 @@ CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
         property_name = 'max_total_js_heap_size', 'hidden',
         property_name = 'min_total_js_heap_size', 'hidden',
         property_name = 'userAnonymousId', 'hidden',
+        property_name = 'user_device', 'hidden',
         'visible');
 -- ----------------- This is experimental, if it doesn't work, we need to do it in db worker -------------
 -- Incremental materialized view to fill all_properties
