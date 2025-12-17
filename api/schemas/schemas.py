@@ -454,6 +454,7 @@ class FilterType(str, Enum):
     USER_OS = "userOs"
     USER_BROWSER = "userBrowser"
     USER_DEVICE = "userDevice"
+    USER_DEVICE_TYPE = "userDeviceType"
     USER_COUNTRY = "userCountry"
     USER_CITY = "userCity"
     USER_STATE = "userState"
@@ -711,7 +712,7 @@ class SessionSearchEventSchema(BaseModel):
             )
         elif self.name == EventType.CLICK_COORDINATES:
             assert isinstance(self.value, List) and (
-                len(self.value) == 0 or len(self.value) == 2 or len(self.value) == 4
+                    len(self.value) == 0 or len(self.value) == 2 or len(self.value) == 4
             ), (
                 f"value should be [x,y] or [x1,x2,y1,y2] for {EventType.CLICK_COORDINATES}"
             )
@@ -832,9 +833,9 @@ class SortOrderType(str, Enum):
 def add_missing_is_event(values: dict):
     if values.get("isEvent") is None:
         values["isEvent"] = (
-            EventType.has_value(values["name"])
-            or PerformanceEventType.has_value(values["name"])
-            or ProductAnalyticsSelectedEventType.has_value(values["name"])
+                EventType.has_value(values["name"])
+                or PerformanceEventType.has_value(values["name"])
+                or ProductAnalyticsSelectedEventType.has_value(values["name"])
         )
     return values
 
@@ -897,7 +898,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
                 if f.get("name", "") == FilterType.DURATION.value and v is None:
                     v = 0
                 if v is not None and (
-                    f.get("name", "") != FilterType.DURATION.value or str(v).isnumeric()
+                        f.get("name", "") != FilterType.DURATION.value or str(v).isnumeric()
                 ):
                     vals.append(v)
             f["value"] = vals
@@ -942,12 +943,12 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
             j = i + 1
             while j < len(values):
                 if (
-                    values[i].name == values[j].name
-                    and values[i].operator == values[j].operator
-                    and (
+                        values[i].name == values[j].name
+                        and values[i].operator == values[j].operator
+                        and (
                         values[i].name != FilterType.METADATA
                         or values[i].source == values[j].source
-                    )
+                )
                 ):
                     values[i].value += values[j].value
                     del values[j]
@@ -1289,8 +1290,8 @@ class CardTable(__CardSchema):
     @classmethod
     def __enforce_default(cls, values):
         if (
-            values.get("metricOf") is not None
-            and values.get("metricOf") != MetricOfTable.ISSUES
+                values.get("metricOf") is not None
+                and values.get("metricOf") != MetricOfTable.ISSUES
         ):
             values["metricValue"] = []
         return values
@@ -1299,10 +1300,10 @@ class CardTable(__CardSchema):
     def __enforce_AND_operator(self):
         self.metric_of = MetricOfTable(self.metric_of)
         if self.metric_of in (
-            MetricOfTable.VISITED_URL,
-            MetricOfTable.FETCH,
-            MetricOfTable.VISITED_URL.value,
-            MetricOfTable.FETCH.value,
+                MetricOfTable.VISITED_URL,
+                MetricOfTable.FETCH,
+                MetricOfTable.VISITED_URL.value,
+                MetricOfTable.FETCH.value,
         ):
             for s in self.series:
                 if s.filter is not None:
@@ -1323,13 +1324,13 @@ class CardTable(__CardSchema):
     @model_validator(mode="after")
     def __validator(self):
         if self.metric_of not in (
-            MetricOfTable.ISSUES,
-            MetricOfTable.USER_BROWSER,
-            MetricOfTable.USER_DEVICE,
-            MetricOfTable.USER_COUNTRY,
-            MetricOfTable.VISITED_URL,
-            MetricOfTable.REFERRER,
-            MetricOfTable.FETCH,
+                MetricOfTable.ISSUES,
+                MetricOfTable.USER_BROWSER,
+                MetricOfTable.USER_DEVICE,
+                MetricOfTable.USER_COUNTRY,
+                MetricOfTable.VISITED_URL,
+                MetricOfTable.REFERRER,
+                MetricOfTable.FETCH,
         ):
             assert self.metric_format == MetricExtendedFormatType.SESSION_COUNT, (
                 f"metricFormat:{MetricExtendedFormatType.USER_COUNT.value} is not supported for this metricOf"
@@ -1386,9 +1387,9 @@ class CardPathAnalysisSeriesSchema(CardSeriesSchema):
     @classmethod
     def __enforce_default(cls, values):
         if (
-            values.get("filter") is None
-            and values.get("startTimestamp")
-            and values.get("endTimestamp")
+                values.get("filter") is None
+                and values.get("startTimestamp")
+                and values.get("endTimestamp")
         ):
             values["filter"] = PathAnalysisSchema(
                 startTimestamp=values["startTimestamp"],
@@ -1596,8 +1597,8 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
             i = 0
             while i < len(values["filters"]):
                 if (
-                    values["filters"][i]["value"] is None
-                    or len(values["filters"][i]["value"]) == 0
+                        values["filters"][i]["value"] is None
+                        or len(values["filters"][i]["value"]) == 0
                 ):
                     del values["filters"][i]
                 else:
@@ -1655,9 +1656,9 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
     @model_validator(mode="after")
     def __validator(self):
         assert (
-            self.message is not None
-            or self.timestamp is not None
-            or self.is_public is not None
+                self.message is not None
+                or self.timestamp is not None
+                or self.is_public is not None
         ), "at least 1 attribute should be provided for update"
         return self
 
