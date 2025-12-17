@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type sentryClient struct {
@@ -24,10 +25,12 @@ type sentryConfig struct {
 }
 
 type SentryEvent struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Message     string `json:"message"`
-	Environment string `json:"environment"`
+	ID          string     `json:"id"`
+	Title       string     `json:"title"`
+	Message     string     `json:"message"`
+	Environment string     `json:"environment"`
+	DateCreated *time.Time `json:"dateCreated"`
+	LastSeen    *time.Time `json:"lastSeen"`
 }
 
 func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint64) (interface{}, error) {

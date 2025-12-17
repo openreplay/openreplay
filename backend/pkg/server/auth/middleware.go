@@ -14,7 +14,7 @@ import (
 func (a *authImpl) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString, err := getTokenString(r.Header.Get("Authorization"))
-		if err != nil {
+		if err != nil && a.keys == nil {
 			a.log.Warn(r.Context(), "Unauthorized request: %s", err)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -53,7 +53,7 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 		if err != nil {
 			if a.keys == nil || !api.IsSpotKeyRequest(r) {
 				a.log.Warn(r.Context(), "Unauthorized request, wrong jwt token: %s", err)
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 			user, err = a.keys.IsValid(r.URL.Query().Get("key"))
