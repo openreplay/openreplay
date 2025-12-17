@@ -180,6 +180,11 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// TODO: Remove this hack later after done with frontend testing.
+	if req.SampleRate == 0 {
+		time.Sleep(30 * time.Second)
+	}
+
 	currentUser := r.Context().Value("userData").(*user.User)
 	resp, err := e.charts.GetData(r.Context(), projectID, currentUser.ID, req)
 	if err != nil {
