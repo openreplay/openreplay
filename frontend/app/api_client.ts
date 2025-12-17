@@ -76,15 +76,10 @@ export const clean = (
 
 export default class APIClient {
   private init: RequestInit;
-
   private siteId: string | undefined;
-
   private siteIdCheck: (() => { siteId: string | null }) | undefined;
-
   public getJwt: () => string | null = () => null;
-
   private onUpdateJwt: (data: { jwt?: string; spotJwt?: string }) => void;
-
   private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
@@ -120,6 +115,7 @@ export default class APIClient {
     method: string = 'GET',
     params?: any,
     reqHeaders?: Record<string, any>,
+    abortSignal?: AbortSignal,
   ): RequestInit {
     // Always fetch the latest JWT from the store
     const jwt = this.getJwt();
@@ -143,6 +139,7 @@ export default class APIClient {
       method,
       headers,
       body: params ? JSON.stringify(params) : undefined,
+      signal: abortSignal,
     };
 
     if (method === 'GET') {
@@ -184,6 +181,7 @@ export default class APIClient {
     method: string = 'GET',
     options: { clean?: boolean } = { clean: true },
     headers?: Record<string, any>,
+    abortSignal?: AbortSignal,
   ): Promise<Response> {
     let _path = path;
     let jwt = this.getJwt();
@@ -196,6 +194,7 @@ export default class APIClient {
       method,
       options.clean && params ? clean(params) : params,
       headers,
+      abortSignal,
     );
 
     if (params !== undefined) {
@@ -314,6 +313,7 @@ export default class APIClient {
     params?: any,
     options?: any,
     headers?: Record<string, any>,
+    abortSignal?: AbortSignal,
   ): Promise<Response> {
     this.init.method = 'GET';
     return this.fetch(
@@ -322,6 +322,7 @@ export default class APIClient {
       'GET',
       undefined,
       headers,
+      abortSignal,
     );
   }
 
@@ -330,22 +331,38 @@ export default class APIClient {
     params?: any,
     options?: any,
     headers?: Record<string, any>,
+    abortSignal?: AbortSignal,
   ): Promise<Response> {
     this.init.method = 'POST';
-    return this.fetch(path, params, 'POST', options, headers);
+    return this.fetch(path, params, 'POST', options, headers, abortSignal);
   }
 
-  put(path: string, params?: any, options?: any): Promise<Response> {
+  put(
+    path: string,
+    params?: any,
+    options?: any,
+    abortSignal?: AbortSignal,
+  ): Promise<Response> {
     this.init.method = 'PUT';
     return this.fetch(path, params, 'PUT');
   }
 
-  delete(path: string, params?: any, options?: any): Promise<Response> {
+  delete(
+    path: string,
+    params?: any,
+    options?: any,
+    abortSignal?: AbortSignal,
+  ): Promise<Response> {
     this.init.method = 'DELETE';
     return this.fetch(path, params, 'DELETE');
   }
 
-  patch(path: string, params?: any, options?: any): Promise<Response> {
+  patch(
+    path: string,
+    params?: any,
+    options?: any,
+    abortSignal?: AbortSignal,
+  ): Promise<Response> {
     this.init.method = 'PATCH';
     return this.fetch(path, params, 'PATCH');
   }

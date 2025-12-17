@@ -300,7 +300,6 @@ const ValueAutoComplete = observer(
     const applySelectedValues = () => {
       onApplyValues(selectedValues);
       setShowValueModal(false);
-      console.trace('apply selected');
     };
 
     const applyQuery = () => {
@@ -314,7 +313,6 @@ const ValueAutoComplete = observer(
         const merged = Array.from(new Set([...selectedValues, ...vals]));
         onApplyValues(merged);
         setShowValueModal(false);
-        console.trace('apply query');
       }
     };
 
@@ -378,7 +376,6 @@ const ValueAutoComplete = observer(
       event.stopPropagation(); // Prevent popover toggle
       onApplyValues([]);
       setShowValueModal(false);
-      console.trace('clear click');
     };
 
     const handleOpenChange = (visible: boolean) => {
@@ -491,7 +488,7 @@ const ValueAutoComplete = observer(
             onMouseEnter={() => !isDisabled && setHovered(true)}
             onMouseLeave={() => setHovered(false)}
           >
-            <Space size={4} wrap className="w-full overflow-hidden">
+            <Space size={4} className="w-full overflow-hidden">
               {!isEmpty ? (
                 <>
                   <Text

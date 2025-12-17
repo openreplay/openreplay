@@ -91,6 +91,7 @@ export default class MetricService {
     metric: Widget,
     data: any,
     isSaved: boolean = false,
+    abortSignal?: AbortSignal,
   ): Promise<any> {
     if (
       metric.metricType === HEATMAP &&
@@ -112,7 +113,13 @@ export default class MetricService {
       data.density = 20;
     }
     try {
-      const r = await this.client.post(path, data);
+      const r = await this.client.post(
+        path,
+        data,
+        undefined,
+        undefined,
+        abortSignal,
+      );
       const response = await r.json();
       return response.data || {};
     } catch (e) {

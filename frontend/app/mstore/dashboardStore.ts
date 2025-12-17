@@ -522,12 +522,27 @@ export default class DashboardStore {
     this.pendingRequests -= 1;
   };
 
+  fetchSampleData = async (
+    metric: Widget,
+    data: any,
+    isSaved: boolean = false,
+    period: Record<string, any>,
+  ) => {
+    return this.fetchMetricChartData(
+      metric,
+      { ...data, sampleRate: 15 },
+      isSaved,
+      period,
+    );
+  };
+
   fetchMetricChartData(
     metric: Widget,
     data: any,
     isSaved: boolean = false,
     period: Record<string, any>,
     isComparison?: boolean,
+    abortSignal?: AbortSignal,
   ): Promise<any> {
     period = period.toTimestamps();
     const params = { ...period, ...data, key: metric.predefinedKey };
@@ -553,11 +568,13 @@ export default class DashboardStore {
           metric,
           params,
           isSaved,
+          abortSignal,
         );
 
         if (metric.metricType === HEATMAP && data.sessionId) {
           const sessionResp = await sessionStore.fetchSessionInfo(
             data.sessionId,
+            abortSignal,
           );
           data.domURL = sessionResp?.domURL || [];
           data.events = [];

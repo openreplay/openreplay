@@ -334,10 +334,10 @@ export default class SessionStore {
     this.clearCurrentSession();
   };
 
-  fetchSessionInfo = async (sessionId: string) => {
+  fetchSessionInfo = async (sessionId: string, abortSignal?: AbortSignal) => {
     this.loadingSessions = true;
     try {
-      const data = await sessionService.getSessionInfo(sessionId);
+      const data = await sessionService.getSessionInfo(sessionId, false, abortSignal);
       return data;
     } catch (e) {
       console.error(e);
