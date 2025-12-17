@@ -366,7 +366,13 @@ def get_user(user_id, tenant_id):
             )
         )
         r = cur.fetchone()
-        return helper.dict_to_camel_case(r)
+        result = helper.dict_to_camel_case(r)
+        if result and isinstance(result, dict):
+            if result.get("settings") is None or not isinstance(result.get("settings"), dict):
+                result["settings"] = {}
+            if not result["settings"].get("modules"):
+                result["settings"]["modules"] = []
+        return result
 
 
 def generate_new_api_key(user_id):
