@@ -200,7 +200,9 @@ const ValueAutoComplete = observer(
 
     useEffect(() => {
       if (isAutoOpen && !isDisabled) {
-        setShowValueModal(true);
+        setTimeout(() => {
+          setShowValueModal(true);
+        }, 0);
       }
     }, [isAutoOpen, isDisabled]);
 
@@ -469,7 +471,6 @@ const ValueAutoComplete = observer(
         </div>
       </div>
     );
-
     return (
       <OutsideClickDetectingDiv onClickOutside={() => setShowValueModal(false)}>
         <Popover

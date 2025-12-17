@@ -54,7 +54,7 @@ export default class FilterItem implements IFilter {
   autoOpen?: boolean = false;
   defaultProperty?: boolean = false;
   isConditional?: boolean = false;
-  scope?: string[]
+  scope?: string[];
 
   constructor(data: IFilter = {}) {
     this.initializeFromData(data);
@@ -64,7 +64,10 @@ export default class FilterItem implements IFilter {
   private initializeFromData(data: IFilter): void {
     const processedData = {
       ...data,
-      subCategory: data.autoCaptured ? 'autocapture' : data.subCategory,
+      subCategory:
+        data.autoCaptured && data.category?.toLowerCase().includes('event')
+          ? 'autocapture'
+          : data.subCategory,
       operator: data.operator || 'is',
       // id: Math.random().toString(36).substring(2, 9),
     };
