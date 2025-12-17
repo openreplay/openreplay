@@ -453,6 +453,7 @@ class PerformanceEventType(str, Enum):
 class FilterType(str, Enum):
     USER_OS = "userOs"
     USER_BROWSER = "userBrowser"
+    USER_BROWSER_VERSION = "userBrowserVersion"
     USER_DEVICE = "userDevice"
     USER_DEVICE_TYPE = "userDeviceType"
     USER_COUNTRY = "userCountry"
