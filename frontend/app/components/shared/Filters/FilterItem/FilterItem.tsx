@@ -200,6 +200,7 @@ function FilterItem(props: Props) {
   const categoryPart = filter?.subCategory
     ? filter.subCategory
     : filter?.category;
+
   const namePart = filter?.displayName || filter?.name;
   const hasCategory = Boolean(categoryPart);
   const hasName = Boolean(namePart);
@@ -210,15 +211,11 @@ function FilterItem(props: Props) {
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
       <div className="flex items-start w-full gap-x-2">
-        {' '}
-        {/* Use items-start */}
         {!isSubItem &&
           !hideIndex &&
           filterIndex !== undefined &&
           filterIndex >= 0 && (
             <div className="flex-shrink-0 w-6 h-6 mt-[2px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium">
-              {' '}
-              {/* Align index top */}
               <span>{filterIndex + 1}</span>
             </div>
           )}
@@ -244,8 +241,7 @@ function FilterItem(props: Props) {
             )}
           </div>
         )}
-        {/* Main content area */}
-        <div className="flex flex-grow flex-wrap gap-x-2 items-center">
+        <div className="flex flex-grow flex-wrap gap-2 items-center">
           <FilterSelection
             filters={filterSelections}
             activeFilters={activeFilters}
@@ -258,22 +254,18 @@ function FilterItem(props: Props) {
             <Button
               type="default"
               size="small"
-              // disabled={isDisabled}
-              // onClick={onClick} // Pass onClick handler
               style={{
                 maxWidth: '20rem',
                 flexShrink: 0,
               }}
             >
               <Space size={4} align="center">
-                {/* Icon */}
                 {filter && (
                   <span className="text-gray-600 flex-shrink-0">
                     {getIconForFilter(filter)}
                   </span>
                 )}
 
-                {/* Category/SubCategory */}
                 {hasCategory && (
                   <span className="text-neutral-500/90 capitalize truncate">
                     {categoryPart}
@@ -290,12 +282,6 @@ function FilterItem(props: Props) {
             </Button>
           </FilterSelection>
 
-          {/*<div*/}
-          {/*  className={cn(*/}
-          {/*    'flex items-center flex-wrap gap-x-2 gap-y-1', // Use baseline inside here*/}
-          {/*    isReversed ? 'flex-row-reverse' : 'flex-row'*/}
-          {/*  )}*/}
-          {/*>*/}
           {filter.hasSource && (
             <>
               <FilterOperator
@@ -334,7 +320,6 @@ function FilterItem(props: Props) {
                   </div>
                 ) : (
                   <div className="inline-flex">
-                    {' '}
                     <FilterValue
                       isConditional={isConditional}
                       filter={filter}
@@ -367,13 +352,9 @@ function FilterItem(props: Props) {
               </Tooltip>
             </FilterSelection>
           )}
-          {/*</div>*/}
         </div>
-        {/* Action Buttons */}
         {!readonly && !hideDelete && (
           <div className="flex flex-shrink-0 gap-1 items-center self-start">
-            {' '}
-            {/* Align top */}
             <Tooltip
               title={isSubItem ? 'Remove filter condition' : 'Remove filter'}
               mouseEnterDelay={1}
@@ -384,17 +365,15 @@ function FilterItem(props: Props) {
                 disabled={disableDelete}
                 onClick={onRemoveFilter}
                 size="small"
-                className="flex items-center justify-center" // Fixed size button
+                className="flex items-center justify-center"
               />
             </Tooltip>
           </div>
         )}
       </div>
 
-      {/* Sub-Filter Rendering */}
       {filteredSubFilters.length > 0 && (
         <div className={cn('relative w-full mt-3 mb-2 flex flex-col gap-2')}>
-          {/* Dashed line */}
           <div
             className={cn(
               'absolute top-0 bottom-0 left-1 w-px',

@@ -166,7 +166,7 @@ export default class FilterStore implements IFilterStore {
     return new FilterItem(dataWithValue);
   }
 
-  addFilter(data: any) {
+  addFilter(data: any, first?: boolean) {
     console.debug('Adding widget fitler:', data);
     const filter = this.createFilterItemFromData(data);
 
@@ -182,7 +182,11 @@ export default class FilterStore implements IFilterStore {
       });
     }
 
-    this.filters.push(filter);
+    if (first) {
+      this.filters.unshift(filter);
+    } else {
+      this.filters.push(filter);
+    }
   }
 
   replaceFilters(newFilters: FilterItem[]) {

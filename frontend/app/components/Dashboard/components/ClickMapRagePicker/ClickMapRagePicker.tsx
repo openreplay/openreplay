@@ -12,7 +12,7 @@ function ClickMapRagePicker() {
   const metric = metricStore.instance;
   // @ts-ignore
   const metricPlatform = metric.series[0]?.filter.filters.find(
-    (f) => f.name === FilterKey.PLATFORM,
+    (f) => f.name === FilterKey.USER_DEVICE_TYPE,
   )?.value[0] as 'desktop' | 'mobile' | 'tablet' | undefined;
 
   const [platform, setPlatform] = React.useState<
@@ -53,7 +53,7 @@ function ClickMapRagePicker() {
 
   React.useEffect(() => {
     const platformId = metricStore.instance.series[0].filter.filters.findIndex(
-      (f) => f.name === FilterKey.PLATFORM,
+      (f) => f.name === FilterKey.USER_DEVICE_TYPE,
     );
     if (platformId >= 0) {
       metricStore.instance.series[0].filter.filters[platformId].value = [
@@ -61,10 +61,12 @@ function ClickMapRagePicker() {
       ];
       metricStore.instance.updateKey('hasChanged', true);
     } else {
-      const newFilter = filterStore.findEvent({ name: FilterKey.PLATFORM });
+      const newFilter = filterStore.findEvent({
+        name: FilterKey.USER_DEVICE_TYPE,
+      });
       if (newFilter) {
         newFilter.value = [platform];
-        metricStore.instance.series[0].filter.addFilter(newFilter);
+        metricStore.instance.series[0].filter.addFilter(newFilter, true);
       }
     }
   }, [platform]);
