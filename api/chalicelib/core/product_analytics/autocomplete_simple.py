@@ -42,8 +42,8 @@ def search_simple_property(project_id: int, name: str, source: str = 'session', 
 
         query = ch_client.format(
             f"""\
-SELECT value, row_count, truncate(100 * row_count / sum(row_count) OVER (), 2) AS rowPercentage
-FROM (SELECT value, count(1) AS row_count
+SELECT value, truncate(100 * row_count / sum(row_count) OVER (), 2) AS rowPercentage
+FROM (SELECT value, sumMerge(data_count) AS row_count
       FROM product_analytics.autocomplete_simple
       WHERE {" AND ".join(constraints)} 
       GROUP BY 1) AS raw
