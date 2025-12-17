@@ -42,17 +42,6 @@ function SpotPlayer() {
       document.title = `${spotStore.currentSpot.title} - OpenReplay`;
     }
   }, [spotStore.currentSpot]);
-  React.useEffect(() => {
-    if (!loggedIn) {
-      const query = new URLSearchParams(window.location.search);
-      const pubKey = query.get('pub_key');
-      if (pubKey) {
-        spotStore.setAccessKey(pubKey);
-      } else {
-        history.push('/');
-      }
-    }
-  }, [loggedIn]);
 
   const jumpForward = () => {
     spotPlayerStore.setTime(
@@ -93,34 +82,45 @@ function SpotPlayer() {
     document.addEventListener('mouseup', handleMouseUp);
   };
   React.useEffect(() => {
-    spotStore.fetchSpotById(spotId).then(async (spotInst) => {
-      if (spotInst.mobURL) {
-        try {
-          void spotStore.getPubKey(spotId);
-        } catch {
-          // ignore
+    const query = new URLSearchParams(window.location.search);
+    const pubKey = query.get('pub_key');
+    if (!loggedIn && !pubKey) {
+      history.push('/');
+    }
+    if (pubKey) {
+      spotStore.setAccessKey(pubKey);
+    }
+
+    spotStore
+      .fetchSpotById(spotId, pubKey ?? undefined)
+      .then(async (spotInst) => {
+        if (spotInst.mobURL) {
+          try {
+            void spotStore.getPubKey(spotId);
+          } catch {
+            // ignore
+          }
+          try {
+            const mobResp = await fetch(spotInst.mobURL);
+            const {
+              clicks = [],
+              logs = [],
+              network = [],
+              locations = [],
+              startTs = 0,
+              browserVersion,
+              resolution,
+              platform,
+            } = await mobResp.json();
+            spotPlayerStore.setStartTs(startTs);
+            spotPlayerStore.setDuration(spotInst.duration);
+            spotPlayerStore.setDeviceData(browserVersion, resolution, platform);
+            spotPlayerStore.setEvents(logs, locations, clicks, network);
+          } catch (e) {
+            console.error("Couldn't parse mob file", e);
+          }
         }
-        try {
-          const mobResp = await fetch(spotInst.mobURL);
-          const {
-            clicks = [],
-            logs = [],
-            network = [],
-            locations = [],
-            startTs = 0,
-            browserVersion,
-            resolution,
-            platform,
-          } = await mobResp.json();
-          spotPlayerStore.setStartTs(startTs);
-          spotPlayerStore.setDuration(spotInst.duration);
-          spotPlayerStore.setDeviceData(browserVersion, resolution, platform);
-          spotPlayerStore.setEvents(logs, locations, clicks, network);
-        } catch (e) {
-          console.error("Couldn't parse mob file", e);
-        }
-      }
-    });
+      });
 
     const ev = (e: KeyboardEvent) => {
       if (
@@ -161,7 +161,8 @@ function SpotPlayer() {
       spotStore.clearCurrent();
       spotPlayerStore.clearData();
     };
-  }, []);
+  }, [loggedIn]);
+
   if (!spotStore.currentSpot) {
     return (
       <div className="w-screen h-screen flex items-center justify-center flex-col gap-2">

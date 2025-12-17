@@ -106,10 +106,10 @@ export default class SpotStore {
     this.tenantHasSpots = hasSpots;
   }
 
-  async fetchSpotById(id: string) {
+  async fetchSpotById(id: string, key?: string) {
     try {
       const response = await this.withLoader(() =>
-        spotService.fetchSpot(id, this.accessKey),
+        spotService.fetchSpot(id, key),
       );
 
       const spotInst = new Spot({ ...response.spot, id });
