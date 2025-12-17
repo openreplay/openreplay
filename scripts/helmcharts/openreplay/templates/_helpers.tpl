@@ -218,3 +218,13 @@ hostAliases:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end }}
+
+{{- /*
+Check if enterprise edition is enabled by checking if license exists.
+Usage: {{- if include "openreplay.isEnterprise" . }}
+*/ -}}
+{{- define "openreplay.isEnterprise" -}}
+{{- if .Values.global.enterpriseEditionLicense -}}
+true
+{{- end -}}
+{{- end -}}
