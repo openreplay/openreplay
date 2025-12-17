@@ -3,6 +3,30 @@ import schemas
 from chalicelib.core.issues import issues
 from chalicelib.utils import helper
 
+COUNTRY_CODES = [
+    "AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR", "AM",
+    "AW", "AU", "AT", "AZ", "BS", "BH", "BD", "BB", "BY", "BE", "BZ", "BJ",
+    "BM", "BT", "BO", "BQ", "BA", "BW", "BV", "BR", "IO", "BN", "BG", "BF",
+    "BI", "CV", "KH", "CM", "CA", "KY", "CF", "TD", "CL", "CN", "CX", "CC",
+    "CO", "KM", "CG", "CD", "CK", "CR", "CI", "HR", "CU", "CW", "CY", "CZ",
+    "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "SZ", "ET",
+    "FK", "FO", "FJ", "FI", "FR", "GF", "PF", "TF", "GA", "GM", "GE", "DE",
+    "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY",
+    "HT", "HM", "VA", "HN", "HK", "HU", "IS", "IN", "ID", "IR", "IQ", "IE",
+    "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KP", "KR",
+    "KW", "KG", "LA", "LV", "LB", "LS", "LR", "LY", "LI", "LT", "LU", "MO",
+    "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "YT", "MX",
+    "FM", "MD", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP",
+    "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MK", "MP", "NO", "OM",
+    "PK", "PW", "PS", "PA", "PG", "PY", "PE", "PH", "PN", "PL", "PT", "PR",
+    "QA", "RE", "RO", "RU", "RW", "BL", "SH", "KN", "LC", "MF", "PM", "VC",
+    "WS", "SM", "ST", "SA", "SN", "RS", "SC", "SL", "SG", "SX", "SK", "SI",
+    "SB", "SO", "ZA", "GS", "SS", "ES", "LK", "SD", "SR", "SJ", "SE", "CH",
+    "SY", "TW", "TJ", "TZ", "TH", "TL", "TG", "TK", "TO", "TT", "TN", "TR",
+    "TM", "TC", "TV", "UG", "UA", "AE", "GB", "US", "UM", "UY", "UZ", "VU",
+    "VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW"
+]
+
 
 def get_sessions_filters(project_id: int):
     return {
@@ -73,29 +97,7 @@ def get_sessions_filters(project_id: int):
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": True,
-                "possibleValues": [
-                    "AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR", "AM",
-                    "AW", "AU", "AT", "AZ", "BS", "BH", "BD", "BB", "BY", "BE", "BZ", "BJ",
-                    "BM", "BT", "BO", "BQ", "BA", "BW", "BV", "BR", "IO", "BN", "BG", "BF",
-                    "BI", "CV", "KH", "CM", "CA", "KY", "CF", "TD", "CL", "CN", "CX", "CC",
-                    "CO", "KM", "CG", "CD", "CK", "CR", "CI", "HR", "CU", "CW", "CY", "CZ",
-                    "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "SZ", "ET",
-                    "FK", "FO", "FJ", "FI", "FR", "GF", "PF", "TF", "GA", "GM", "GE", "DE",
-                    "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY",
-                    "HT", "HM", "VA", "HN", "HK", "HU", "IS", "IN", "ID", "IR", "IQ", "IE",
-                    "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KP", "KR",
-                    "KW", "KG", "LA", "LV", "LB", "LS", "LR", "LY", "LI", "LT", "LU", "MO",
-                    "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "YT", "MX",
-                    "FM", "MD", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP",
-                    "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MK", "MP", "NO", "OM",
-                    "PK", "PW", "PS", "PA", "PG", "PY", "PE", "PH", "PN", "PL", "PT", "PR",
-                    "QA", "RE", "RO", "RU", "RW", "BL", "SH", "KN", "LC", "MF", "PM", "VC",
-                    "WS", "SM", "ST", "SA", "SN", "RS", "SC", "SL", "SG", "SX", "SK", "SI",
-                    "SB", "SO", "ZA", "GS", "SS", "ES", "LK", "SD", "SR", "SJ", "SE", "CH",
-                    "SY", "TW", "TJ", "TZ", "TH", "TL", "TG", "TK", "TO", "TT", "TN", "TR",
-                    "TM", "TC", "TV", "UG", "UA", "AE", "GB", "US", "UM", "UY", "UZ", "VU",
-                    "VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW"
-                ],
+                "possibleValues": COUNTRY_CODES,
                 "isConditional": True
             },
             {
@@ -257,32 +259,32 @@ def get_users_filters(project_id: int):
 
 def get_users_filters_identified(project_id: int):
     filters_config = [
-        ("$user_id", "User ID", "string", False),
-        ("$email", "Email", "string", False),
-        ("$name", "Name", "string", False),
-        ("$first_name", "First Name", "string", False),
-        ("$last_name", "Last Name", "string", False),
-        ("$phone", "Phone", "string", False),
-        ("$sdk_edition", "SDK Edition", "string", False),
-        ("$sdk_version", "SDK Version", "string", False),
-        ("$current_url", "Current URL", "string", False),
-        ("$current_path", "Current Path", "string", False),
-        ("$initial_referrer", "Initial Referrer", "string", False),
-        ("$referring_domain", "Referring Domain", "string", False),
-        ("initial_utm_source", "Initial UTM Source", "string", False),
-        ("initial_utm_medium", "Initial UTM Medium", "string", False),
-        ("initial_utm_campaign", "Initial UTM Campaign", "string", False),
-        ("$country", "Country", "string", False),
-        ("$state", "State", "string", False),
-        ("$city", "City", "string", False),
-        ("$or_api_endpoint", "OR API Endpoint", "string", False),
-        ("$created_at", "Created At", "timestamp", False),
-        ("$first_event_at", "First Event At", "timestamp", False),
-        ("$last_seen", "Last Seen", "timestamp", False),
+        ("$user_id", "User ID", "string", False, []),
+        ("$email", "Email", "string", False, []),
+        ("$name", "Name", "string", False, []),
+        ("$first_name", "First Name", "string", False, []),
+        ("$last_name", "Last Name", "string", False, []),
+        ("$phone", "Phone", "string", False, []),
+        ("$sdk_edition", "SDK Edition", "string", False, []),
+        ("$sdk_version", "SDK Version", "string", False, []),
+        ("$current_url", "Current URL", "string", False, []),
+        ("$current_path", "Current Path", "string", False, []),
+        ("$initial_referrer", "Initial Referrer", "string", False, []),
+        ("$referring_domain", "Referring Domain", "string", False, []),
+        ("initial_utm_source", "Initial UTM Source", "string", False, []),
+        ("initial_utm_medium", "Initial UTM Medium", "string", False, []),
+        ("initial_utm_campaign", "Initial UTM Campaign", "string", False, []),
+        ("$country", "Country", "string", False, COUNTRY_CODES),
+        ("$state", "State", "string", False, []),
+        ("$city", "City", "string", False, []),
+        ("$or_api_endpoint", "OR API Endpoint", "string", False, []),
+        ("$created_at", "Created At", "timestamp", False, []),
+        ("$first_event_at", "First Event At", "timestamp", False, []),
+        ("$last_seen", "Last Seen", "timestamp", False, []),
     ]
     
     filter_list = []
-    for name, display_name, data_type, is_conditional in filters_config:
+    for name, display_name, data_type, is_conditional, possible_values in filters_config:
         filter_list.append({
             "id": helper.string_to_id(f'uif_{name}'),
             "name": name,
@@ -290,8 +292,8 @@ def get_users_filters_identified(project_id: int):
             "possibleTypes": [data_type],
             "dataType": data_type,
             "autoCaptured": True,
-            "isPredefined": False,
-            "possibleValues": [],
+            "isPredefined": len(possible_values) > 0,
+            "possibleValues": possible_values,
             "isConditional": is_conditional
         })
     
