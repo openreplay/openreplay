@@ -145,6 +145,17 @@ def get_sessions_filters(project_id: int):
                 "isConditional": True
             },
             {
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_BROWSER_VERSION}'),
+                "name": schemas.FilterType.USER_BROWSER_VERSION,
+                "displayName": "Browser Version",
+                "possibleTypes": ["string"],
+                "dataType": "string",
+                "autoCaptured": True,
+                "isPredefined": False,
+                "possibleValues": [],
+                "isConditional": True
+            },
+            {
                 "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_DEVICE}'),
                 "name": schemas.FilterType.USER_DEVICE,
                 "displayName": "Device",
