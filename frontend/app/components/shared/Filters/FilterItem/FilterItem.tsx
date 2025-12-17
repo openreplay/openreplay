@@ -223,7 +223,7 @@ function FilterItem(props: Props) {
             </div>
           )}
         {isSubItem && (
-          <div className="flex-shrink-0 w-14 text-right text-neutral-500/90 pr-2">
+          <div className="flex-shrink-0 text-right color-disabled-text">
             {subFilterIndex === 0 && (
               <Typography.Text className="text-inherit">where</Typography.Text>
             )}
@@ -245,7 +245,7 @@ function FilterItem(props: Props) {
           </div>
         )}
         {/* Main content area */}
-        <div className="flex flex-grow flex-wrap gap-x-2 items-center">
+        <div className="flex flex-grow flex-wrap gap-2 items-center">
           <FilterSelection
             filters={filterSelections}
             activeFilters={activeFilters}
