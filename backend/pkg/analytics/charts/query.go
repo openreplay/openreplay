@@ -205,6 +205,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 		}
 		isSessionProperty := false
 		_, isSessionProperty = sessionProperties[f.Name]
+		isSessionProperty = isSessionProperty || strings.HasPrefix(f.Name, "metadata_") && f.AutoCaptured
 		if f.IsEvent || !isSessionProperty {
 			if option.EventsOrder == "then" {
 				//for "then" order, we can have duplicate conditions
