@@ -41,6 +41,7 @@ import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
 import LongLoader from './LongLoader';
 import { useTranslation } from 'react-i18next';
+import { hasSampling } from 'App/utils/split-utils';
 
 interface Props {
   metric: any;
@@ -59,7 +60,7 @@ function WidgetChart(props: Props) {
   const abortController = React.useRef<AbortController>(null);
   const { isSaved = false, metric, isTemplate, height } = props;
   const { dashboardStore, metricStore, filterStore, userStore } = useStore();
-  const isEE = userStore.isEnterprise;
+  const showSampling = hasSampling && userStore.isEnterprise;
   const _metric: any = props.metric;
   const [data, setData] = useState(_metric.data ?? { chart: [] });
   const { period } = dashboardStore;
@@ -665,7 +666,7 @@ function WidgetChart(props: Props) {
     <div ref={ref}>
       {loading ? (
         stale ? (
-          <LongLoader onClick={loadSample} withSampling={isEE} />
+          <LongLoader onClick={loadSample} withSampling={showSampling} />
         ) : (
           <Loader loading={loading} style={{ height: '240px' }} />
         )

@@ -5,6 +5,7 @@
 export const hasAi = false;
 export const hasHealth = true;
 export const hasIssuesSummary = false;
+export const hasSampling = true;
 
 export const menuHidden = {
   clips: true,

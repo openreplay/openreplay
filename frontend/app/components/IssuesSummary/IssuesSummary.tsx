@@ -3,14 +3,15 @@ import {
   Card,
   Tag,
   Select,
-  Tooltip,
   Button,
   Input,
   Table,
   TableProps,
   Checkbox,
+  Dropdown,
 } from 'antd';
-import { EyeOff, Pencil, X } from 'lucide-react';
+import { MoreOutlined } from '@ant-design/icons';
+import { X } from 'lucide-react';
 import { useModal } from '../Modal';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,7 @@ import { useRouteMatch } from 'react-router-dom';
 import { Data } from './types';
 import { getIssues, getTagLabels, hideIssue, renameIssue } from './api';
 import IssueSessions from './IssueSessionsModal';
-import { Modal } from 'UI';
+import { Modal, confirm } from 'UI';
 
 function getTagColor(label: string): string {
   const safeLabel = label.toLowerCase();
@@ -81,6 +82,12 @@ function IssuesSummary() {
   };
 
   const onHide = async (issue: string) => {
+    const ok = await confirm({
+      header: 'Hide Issue',
+      confirmButton: 'Yes, hide',
+      confirmation: 'Permamently hide this issue?',
+    });
+    if (!ok) return;
     await hideIssue(projectId, issue);
     refetch();
   };
@@ -103,6 +110,7 @@ function IssuesSummary() {
       dataIndex: 'impact',
       key: 'impact',
       render: (impact: number) => <span className="mr-2">{impact}%</span>,
+      sorter: (a, b) => a.impact - b.impact,
     },
     {
       title: 'Issue Name',
@@ -124,33 +132,42 @@ function IssuesSummary() {
       ),
     },
     {
-      title: 'Actions',
+      title: '',
+      width: '5%',
       key: 'actions',
       render: (_, record) => (
-        <div className="flex items-center gap-2">
-          <Tooltip title="Rename this issue">
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            arrow={false}
+            trigger={['click']}
+            className={'ignore-prop-dp'}
+            menu={{
+              items: [
+                {
+                  key: 'rename',
+                  label: 'Rename',
+                },
+                {
+                  key: 'hide',
+                  label: 'Hide',
+                },
+              ],
+              onClick: ({ key }) => {
+                if (key === 'rename') {
+                  onRename(record.issueName);
+                } else if (key === 'hide') {
+                  void onHide(record.issueName);
+                }
+              },
+            }}
+          >
             <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onRename(record.issueName);
-              }}
-              className="ml-auto"
-              size="small"
-            >
-              <Pencil size={16} />
-            </Button>
-          </Tooltip>
-          <Tooltip title="Hide this issue">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onHide(record.issueName);
-              }}
-              size="small"
-            >
-              <EyeOff size={16} />
-            </Button>
-          </Tooltip>
+              id="ignore-prop"
+              icon={<MoreOutlined />}
+              type="text"
+              className="btn-dashboards-list-item-more-options"
+            />
+          </Dropdown>
         </div>
       ),
     },
