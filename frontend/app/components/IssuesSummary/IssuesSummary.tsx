@@ -1,13 +1,16 @@
 import React from 'react';
-import { Card, Tag, Select, Tooltip, Button, Input } from 'antd';
 import {
-  ChevronDown,
-  ChevronRight,
-  EyeOff,
-  Loader,
-  Pencil,
-  X,
-} from 'lucide-react';
+  Card,
+  Tag,
+  Select,
+  Tooltip,
+  Button,
+  Input,
+  Table,
+  TableProps,
+  Checkbox,
+} from 'antd';
+import { EyeOff, Pencil, X } from 'lucide-react';
 import { useModal } from '../Modal';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -92,6 +95,68 @@ function IssuesSummary() {
     refetch();
     setRenameModal(null);
   };
+
+  const cols: TableProps['columns'] = [
+    {
+      title: 'Impact',
+      width: 100,
+      dataIndex: 'impact',
+      key: 'impact',
+      render: (impact: number) => <span className="mr-2">{impact}%</span>,
+    },
+    {
+      title: 'Issue Name',
+      dataIndex: 'issueName',
+      key: 'issueName',
+    },
+    {
+      title: 'Labels',
+      dataIndex: 'issueLabels',
+      key: 'issueLabels',
+      render: (labels: { name: string }[]) => (
+        <>
+          {labels.map((label, idx) => (
+            <Tag key={idx} color={getTagColor(label.name)}>
+              {label.name}
+            </Tag>
+          ))}
+        </>
+      ),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <div className="flex items-center gap-2">
+          <Tooltip title="Rename this issue">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRename(record.issueName);
+              }}
+              className="ml-auto"
+              size="small"
+            >
+              <Pencil size={16} />
+            </Button>
+          </Tooltip>
+          <Tooltip title="Hide this issue">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onHide(record.issueName);
+              }}
+              size="small"
+            >
+              <EyeOff size={16} />
+            </Button>
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
+
+  const usedData = showOther ? data.critical.concat(data.other) : data.critical;
   return (
     <>
       <Modal open={renameModal !== null} onClose={() => setRenameModal(null)}>
@@ -120,109 +185,48 @@ function IssuesSummary() {
         loading={isPending}
         title={t('Issues Summary')}
         extra={
-          <Select
-            mode="multiple"
-            allowClear
-            style={{ width: 300 }}
-            placeholder="Pick issue labels to filter"
-            onChange={handleChange}
-            options={labels}
-            loading={isLabelsPending}
-          />
-        }
-      >
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-4 px-2">
-            <Tag>Impact</Tag>
-            <div>Issues</div>
-            {isPending && <Loader className="animate-spin" size={16} />}
-          </div>
-          {data.critical.map((issue, index) => (
-            <Issue
-              key={index}
-              issue={issue}
-              index={index}
-              onIssueClick={onIssueClick}
-              onHide={() => onHide(issue.issueName)}
-              onRename={() => onRename(issue.issueName)}
+          <div className={'flex items-center gap-2'}>
+            {data.other.length ? (
+              <Checkbox
+                checked={showOther}
+                onChange={() => setShowOther(!showOther)}
+              >
+                Show non-critical ({data.other.length})
+              </Checkbox>
+            ) : null}
+            <Select
+              mode="multiple"
+              allowClear
+              style={{ width: 300 }}
+              placeholder="Pick issue labels to filter"
+              onChange={handleChange}
+              options={labels}
+              loading={isLabelsPending}
             />
-          ))}
-          <div
-            className="cursor-pointer p-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-active-blue"
-            onClick={() => setShowOther(!showOther)}
-          >
-            <div>
-              {t('Other issues')} ({data.other.length})
-            </div>
-            {showOther ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </div>
-          {showOther
-            ? data.other.map((issue, index) => (
-                <Issue
-                  key={index}
-                  issue={issue}
-                  index={index}
-                  onIssueClick={onIssueClick}
-                  onHide={() => onHide(issue.issueName)}
-                  onRename={() => onRename(issue.issueName)}
-                />
-              ))
-            : null}
-        </div>
+        }
+        styles={{
+          body: {
+            padding: 0,
+          },
+          header: {
+            padding: '0 12px',
+          },
+        }}
+      >
+        <Table
+          columns={cols}
+          dataSource={usedData}
+          loading={isPending}
+          rowKey="issueName"
+          pagination={false}
+          onRow={(record) => ({
+            onClick: () => onIssueClick(record),
+          })}
+          rowClassName={'cursor-pointer'}
+        />
       </Card>
     </>
-  );
-}
-
-function Issue({
-  issue,
-  index,
-  onIssueClick,
-  onHide,
-  onRename,
-}: {
-  issue: Data;
-  index: number;
-  onIssueClick: (issue: Data) => void;
-  onHide: () => void;
-  onRename: () => void;
-}) {
-  const onHideClick = (e) => {
-    e.stopPropagation();
-    onHide();
-  };
-  const onRenameClick = (e) => {
-    e.stopPropagation();
-    onRename();
-  };
-  return (
-    <div
-      className="w-full gap-4 flex items-center p-2 hover:bg-active-blue rounded-lg cursor-pointer"
-      key={index}
-      onClick={() => onIssueClick(issue)}
-    >
-      <Tag className="min-w-[56px] text-center">
-        {Math.round(issue.impact)}%
-      </Tag>
-      <div className="font-semibold">{issue.issueName}</div>
-      <div className="flex items-center flex-wrap">
-        {issue.issueLabels.map((label, idx) => (
-          <Tag key={idx} color={getTagColor(label.name)}>
-            {label.name}
-          </Tag>
-        ))}
-      </div>
-      <Tooltip title="Rename this issue">
-        <Button onClick={onRenameClick} className="ml-auto" size="small">
-          <Pencil size={16} />
-        </Button>
-      </Tooltip>
-      <Tooltip title="Hide this issue">
-        <Button onClick={onHideClick} size="small">
-          <EyeOff size={16} />
-        </Button>
-      </Tooltip>
-    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, Input, Tag, Radio } from 'antd';
+import { Select, Input, Tag } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import SessionItem from 'Shared/SessionItem';
@@ -28,7 +28,7 @@ function IssueSessions({
   issueLabels,
   journeyLabels,
   projectId,
-  hideModal
+  hideModal,
 }: {
   issueName: string;
   issueLabels: string[];
@@ -94,8 +94,9 @@ function IssueSessions({
   });
 
   return (
-    <div className="flex flex-col gap-2 h-screen overflow-y-auto bg-white">
-      <div className="w-full flex items-center gap-4 justify-end pt-4 px-4">
+    <div className="flex flex-col h-screen bg-white">
+      <div className={'font-semibold text-xl mx-4 pt-4'}>{issueName}</div>
+      <div className="w-full flex items-center gap-4 justify-end py-4 px-4 border-b border-b-gray-light">
         <Input.Search
           value={query}
           allowClear
@@ -134,19 +135,24 @@ function IssueSessions({
           sortOptions={sortOptions(t)}
         />
       </div>
-      {isPending ? (
-        <div className="flex items-center justify-center h-[300px]">
-          <Loader />
-        </div>
-      ) : null}
-      {data.map((issueSession, index) => (
-        <SessionWithIssue
-          issueSession={issueSession}
-          key={index}
-          index={index}
-          hideModal={hideModal}
-        />
-      ))}
+      <div
+        className={'overflow-y-auto'}
+        style={{ maxWidth: 'calc(100vw - 87px)', width: '100%' }}
+      >
+        {isPending ? (
+          <div className="flex items-center justify-center h-[300px]">
+            <Loader />
+          </div>
+        ) : null}
+        {data.map((issueSession, index) => (
+          <SessionWithIssue
+            issueSession={issueSession}
+            key={index}
+            index={index}
+            hideModal={hideModal}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -154,7 +160,7 @@ function IssueSessions({
 function SessionWithIssue({
   issueSession,
   index,
-  hideModal
+  hideModal,
 }: {
   issueSession: IssueSession;
   index: number;
@@ -175,7 +181,7 @@ function SessionWithIssue({
       ? issueSession.issueDescription
       : issueSession.journey;
   return (
-    <div>
+    <div className={'mb-2'}>
       <SessionItem
         key={index}
         session={issueSession.session}
@@ -186,20 +192,26 @@ function SessionWithIssue({
         }
         onBeforeOpen={hideModal}
       />
-      <div className="rounded-lg px-4 py-2 border border-gray-light flex flex-col gap-2 mx-4">
-        <Radio.Group
-          size="small"
-          value={displayType}
-          onChange={(ev) => setDisplayType(ev.target.value)}
-          buttonStyle="solid"
-        >
-          <Radio.Button value="issue">Issue</Radio.Button>
-          <Radio.Button value="journey">Journey</Radio.Button>
-        </Radio.Group>
-        <div className="flex items-center flex-wrap gap-2">
-          {labels.map((l, i) => (
-            <Tag className="!m-0" key={`${l.replace(' ', '.')}_${i}`}>{l}</Tag>
-          ))}
+      <div className="px-4 py-2 border-b border-b-gray-light flex flex-col gap-2">
+        <div className={'flex items-center gap-2'}>
+          <Select
+            options={[
+              { label: 'Issue', value: 'issue' },
+              { label: 'Journey', value: 'journey' },
+            ]}
+            className={"w-[90px]"}
+            size={'small'}
+            value={displayType}
+            popupMatchSelectWidth
+            onChange={(value) => setDisplayType(value)}
+          />
+          <div className="flex items-center flex-wrap gap-2">
+            {labels.map((l, i) => (
+              <Tag className="!m-0" key={`${l.replace(' ', '.')}_${i}`}>
+                {l}
+              </Tag>
+            ))}
+          </div>
         </div>
         <div className="text-gray-500 text-sm">
           {description ? description : 'No description available'}
