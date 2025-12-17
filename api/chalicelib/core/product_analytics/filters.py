@@ -156,14 +156,14 @@ def get_sessions_filters(project_id: int):
                 "isConditional": True
             },
             {
-                "id": helper.string_to_id(f'sf_{schemas.FilterType.PLATFORM}'),
-                "name": schemas.FilterType.PLATFORM,
-                "displayName": "Platform",
+                "id": helper.string_to_id(f'sf_{schemas.FilterType.USER_DEVICE_TYPE}'),
+                "name": schemas.FilterType.USER_DEVICE_TYPE,
+                "displayName": "Device Type",
                 "possibleTypes": ["string"],
                 "dataType": "string",
                 "autoCaptured": True,
                 "isPredefined": True,
-                "possibleValues": ["web", "mobile"],
+                "possibleValues": ["desktop", "mobile", "tablet"],
                 "isConditional": False
             },
             {
