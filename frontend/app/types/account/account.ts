@@ -66,6 +66,9 @@ export default class Account {
   }
 
   get hasVideoExport() {
+    if (!this.settings || !this.settings.modules) {
+      return false;
+    }
     return this.settings.modules?.includes('replay-export');
   }
 
