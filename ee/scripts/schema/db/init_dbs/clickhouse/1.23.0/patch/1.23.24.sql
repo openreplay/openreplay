@@ -46,19 +46,6 @@ GROUP BY ALL;
 DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_event_dproperties_mv;
 
-INSERT INTO product_analytics.autocomplete_event_properties_grouped
-SELECT project_id,
-       event_name,
-       property_name,
-       value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM product_analytics.autocomplete_event_properties
-GROUP BY ALL;
-
-TRUNCATE TABLE IF EXISTS product_analytics.autocomplete_event_properties;
-
-
 -- changes for events-autocomplete
 DROP TABLE IF EXISTS product_analytics.autocomplete_events_grouped_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_events_grouped;
@@ -84,18 +71,34 @@ GROUP BY ALL;
 
 DROP TABLE IF EXISTS product_analytics.autocomplete_events_mv;
 
-INSERT INTO product_analytics.autocomplete_events_grouped
-SELECT project_id,
-       value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM product_analytics.autocomplete_events
-WHERE value != ''
-GROUP BY ALL;
-
-TRUNCATE TABLE IF EXISTS product_analytics.autocomplete_events;
-
 -- changes for sample-values:
 DROP TABLE IF EXISTS product_analytics.property_dvalues_sampler_mv;
 DROP TABLE IF EXISTS product_analytics.property_values_sampler_mv;
 DROP TABLE IF EXISTS product_analytics.property_values_samples;
+
+
+-- -- Use the following queries to copy existing data to the new autocomplete table
+-- INSERT INTO product_analytics.autocomplete_events_grouped
+--     SETTINGS async_insert = 1, wait_for_async_insert = 0
+-- SELECT project_id,
+--        value,
+--        sumState(toUInt16(1)) AS data_count,
+--        _timestamp
+-- FROM product_analytics.autocomplete_events
+-- WHERE value != ''
+-- GROUP BY ALL;
+--
+-- TRUNCATE TABLE IF EXISTS product_analytics.autocomplete_events;
+--
+-- INSERT INTO product_analytics.autocomplete_event_properties_grouped
+--     SETTINGS async_insert = 1, wait_for_async_insert = 0
+-- SELECT project_id,
+--        event_name,
+--        property_name,
+--        value,
+--        sumState(toUInt16(1)) AS data_count,
+--        _timestamp
+-- FROM product_analytics.autocomplete_event_properties
+-- GROUP BY ALL;
+--
+-- TRUNCATE TABLE IF EXISTS product_analytics.autocomplete_event_properties;
