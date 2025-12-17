@@ -139,4 +139,14 @@ CREATE OR REPLACE FUNCTION or_property_visibility AS(property_name)->multiIf(
         property_name = 'user_device', 'hidden',
         'visible');
 
-
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_browser_version_mv
+    TO product_analytics.autocomplete_simple AS
+SELECT project_id,
+       TRUE                           AS auto_captured,
+       'session'                      AS source,
+       'user_browser_version'         AS name,
+       toString(user_browser_version) AS value,
+       _timestamp
+FROM experimental.sessions
+WHERE isNotNull(user_browser_version)
+  AND notEmpty(user_browser_version);
