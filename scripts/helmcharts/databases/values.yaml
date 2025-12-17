@@ -86,7 +86,7 @@ affinity: {}
 ## Child charts
 redis:
   image:
-    tag: 7
+    tag: 7.2
   enabled: true
   fullnameOverride: redis
   usePassword: false
