@@ -13,8 +13,8 @@ global:
 ## ref: https://hub.docker.com/r/bitnami/redis/tags/
 ##
 image:
-  registry: ghcr.io
-  repository: openreplay/redis
+  registry: docker.io
+  repository: rjshrjndrn/redis
   ## Bitnami Redis(TM) image tag
   ## ref: https://github.com/bitnami/bitnami-docker-redis#supported-tags-and-respective-dockerfile-links
   ##
