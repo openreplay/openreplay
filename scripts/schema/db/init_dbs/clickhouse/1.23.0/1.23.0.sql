@@ -434,18 +434,6 @@ WHERE isNotNull(user_browser_version)
   AND notEmpty(user_browser_version)
 GROUP BY ALL;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_browser_version_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                           AS auto_captured,
-       'session'                      AS source,
-       'user_browser_version'         AS name,
-       toString(user_browser_version) AS value,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_browser_version)
-  AND notEmpty(user_browser_version);
-
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_country_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_country_mv
     TO product_analytics.autocomplete_simple AS

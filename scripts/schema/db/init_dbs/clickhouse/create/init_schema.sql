@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.24.0';
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.23.0';
 CREATE DATABASE IF NOT EXISTS experimental;
 
 CREATE TABLE IF NOT EXISTS experimental.autocomplete
@@ -229,7 +229,7 @@ CREATE DATABASE IF NOT EXISTS product_analytics;
 CREATE TABLE IF NOT EXISTS product_analytics.users
 (
     project_id           UInt16,
-    "$user_id"           String,
+    "$distinct_id"       UInt16,
     "$email"             String DEFAULT '',
     "$name"              String DEFAULT '',
     "$first_name"        String DEFAULT '',
@@ -266,7 +266,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.users
     _deleted_at          DateTime DEFAULT '1970-01-01 00:00:00',
     _timestamp           DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, "$user_id")
+      ORDER BY (project_id, "$distinct_id")
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
@@ -294,13 +294,12 @@ CREATE TABLE IF NOT EXISTS product_analytics.user_devices
 (
     project_id   UInt16,
     "$device_id" String,
-    "$user_id"   String,
+    user_id      UInt16 COMMENT 'if 0: the person has been deleted, and should set user_id to 0 in the events table',
 
     _deleted_at  DateTime DEFAULT '1970-01-01 00:00:00',
-    _is_deleted  UInt8    DEFAULT 0,
     _timestamp   DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
-      ORDER BY (project_id, "$device_id", "$user_id")
+) ENGINE = ReplacingMergeTree(_timestamp)
+      ORDER BY (project_id, "$device_id", user_id)
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
 
 
@@ -310,14 +309,11 @@ CREATE TABLE IF NOT EXISTS product_analytics.users_distinct_id
 (
     project_id  UInt16,
     distinct_id String COMMENT 'this is the event\'s distinct_id',
-    "$user_id"  String,
+    user_id     UInt16 COMMENT 'if 0: the person has been deleted, and should set user_id to 0 in the events table',
 
-    _deleted_at DateTime DEFAULT '1970-01-01 00:00:00',
-    _is_deleted UInt8    DEFAULT 0,
     _timestamp  DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
-      ORDER BY (project_id, distinct_id)
-      TTL _deleted_at;
+) ENGINE = ReplacingMergeTree(_timestamp)
+      ORDER BY (project_id, distinct_id);
 
 
 CREATE TABLE IF NOT EXISTS product_analytics.events
@@ -327,8 +323,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$event_name"               String,
     created_at                  DateTime64,
     distinct_id                 String,
-    "$user_id"                  String,
-    "$device_id"                String,
+    "$user_id"                  UInt16 DEFAULT 0,
     session_id                  UInt64 DEFAULT 0,
     "$time"                     UInt32 DEFAULT 0 COMMENT 'the time of the event in EPOCH, if not provided, the time of arrival to the server',
     "$source"                   LowCardinality(String) DEFAULT '' COMMENT 'the name of the integration that sent the event',
@@ -346,6 +341,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$auto_captured"            BOOL DEFAULT FALSE,
     "$sdk_edition"              LowCardinality(String),
     "$sdk_version"              LowCardinality(String),
+    "$device_id"                String,
     "$os"                       LowCardinality(String) DEFAULT '',
     "$os_version"               LowCardinality(String) DEFAULT '',
     "$browser"                  LowCardinality(String) DEFAULT '',
@@ -375,7 +371,6 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     -- Created by the backend
     "$tags"                     Array(String) DEFAULT [] COMMENT 'tags are used to filter events',
     "$import"                   BOOL DEFAULT FALSE,
-    sample_key                  UInt8 MATERIALIZED cityHash64(event_id) % 100,
     _deleted_at                 DateTime DEFAULT '1970-01-01 00:00:00',
     _timestamp                  DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -781,47 +776,6 @@ SELECT project_id,
 FROM product_analytics.event_properties;
 -- -------- END ---------
 
--- Some random examples of property-values, limited by 2 per property
--- Experimental: This table is filled by a refreshable materialized view
--- CREATE TABLE IF NOT EXISTS product_analytics.property_values_samples
--- (
---     project_id        UInt16,
---     property_name     String,
---     is_event_property BOOL,
---     auto_captured     BOOL,
---     value             String,
---
---     _timestamp        DateTime DEFAULT now()
--- )
---     ENGINE = ReplacingMergeTree(_timestamp)
---         ORDER BY (project_id, property_name, is_event_property);
--- Incremental materialized view to get random examples of property values using $properties & properties
--- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_dvalues_sampler_mv
---     TO product_analytics.property_values_samples AS
--- SELECT project_id,
---        property_name,
---        TRUE                                                      AS is_event_property,
---        TRUE                                                      AS auto_captured,
---        JSONExtractString(toString(`$properties`), property_name) AS value
--- FROM product_analytics.events
---          ARRAY JOIN JSONExtractKeys(toString(`$properties`)) as property_name
--- WHERE randCanonical() < 0.5 -- This randomly skips inserts
---   AND value != ''
--- LIMIT 2 BY project_id,property_name;
-
--- CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.property_values_sampler_mv
---     TO product_analytics.property_values_samples AS
--- SELECT project_id,
---        property_name,
---        TRUE                                                     AS is_event_property,
---        FALSE                                                    AS auto_captured,
---        JSONExtractString(toString(`properties`), property_name) AS value
--- FROM product_analytics.events
---          ARRAY JOIN JSONExtractKeys(toString(`properties`)) as property_name
--- WHERE randCanonical() < 0.5 -- This randomly skips inserts
---   AND value != ''
--- LIMIT 2 BY project_id,property_name;
-
 -- Autocomplete
 
 -- TODO: remove this in v1.24.0
@@ -958,18 +912,6 @@ FROM experimental.sessions
 WHERE isNotNull(user_browser_version)
   AND notEmpty(user_browser_version)
 GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_browser_version_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                           AS auto_captured,
-       'session'                      AS source,
-       'user_browser_version'         AS name,
-       toString(user_browser_version) AS value,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_browser_version)
-  AND notEmpty(user_browser_version);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_country_mv
     TO product_analytics.autocomplete_simple AS
