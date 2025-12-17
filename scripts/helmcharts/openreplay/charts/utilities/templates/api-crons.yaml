@@ -52,7 +52,8 @@ spec:
                 value: '{{ $val }}'
               {{- end }}
               - name: LICENSE_KEY
-                value: '{{ .Values.global.enterpriseEditionLicense }}'
+                valueFrom:
+                  secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 20 }}
               - name: version_number
                 value: '{{ .Chart.AppVersion }}'
               - name: pg_host

@@ -53,7 +53,8 @@ spec:
             - name: BUCKET_NAME
               value: {{ .Values.global.s3.assetsBucket }}
             - name: LICENSE_KEY
-              value: '{{ .Values.global.enterpriseEditionLicense }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 18 }}
             - name: AWS_ENDPOINT
               value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: AWS_REGION
