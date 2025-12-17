@@ -334,7 +334,7 @@ export default class APIClient {
     abortSignal?: AbortSignal,
   ): Promise<Response> {
     this.init.method = 'POST';
-    return this.fetch(path, params, 'POST', options, headers);
+    return this.fetch(path, params, 'POST', options, headers, abortSignal);
   }
 
   put(

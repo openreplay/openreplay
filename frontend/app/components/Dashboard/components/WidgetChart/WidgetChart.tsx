@@ -156,6 +156,7 @@ function WidgetChart(props: Props) {
     if (res) {
       setData(res);
       setStale(false);
+      setLoading(false);
     }
   };
 
