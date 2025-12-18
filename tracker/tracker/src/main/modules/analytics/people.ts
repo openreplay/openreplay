@@ -15,7 +15,7 @@ export default class People {
     private readonly batcher: Batcher,
   ) {}
 
-  identify = (user_id: string, options?: { fromTracker: boolean }) => {
+  public identify = (user_id: string, options?: { fromTracker: boolean }) => {
     if (!user_id || typeof user_id !== 'string') {
       throw new Error('OR SDK: user_id (string) is required for .identify()')
     }
@@ -41,7 +41,7 @@ export default class People {
    *
    * !hard reset will destroy persistent device id!
    * */
-  reset = (hard?: boolean) => {
+  public reset = (hard?: boolean) => {
     this.constantProperties.resetUserId(hard)
     this.ownProperties = {}
   }
@@ -53,7 +53,7 @@ export default class People {
   /**
    *  Will delete user and its data from backend, then reset all local properties
    */
-  deleteUser = () => {
+  public deleteUser = () => {
     const removedUser = this.constantProperties.user_id
     if (!removedUser) return
     this.constantProperties.setUserId(null)
@@ -70,7 +70,7 @@ export default class People {
   /**
    * set user properties, overwriting existing ones
    * */
-  setProperties = (propertyOrObj: Record<string, string | number> | string, value?: string) => {
+  public setProperties = (propertyOrObj: Record<string, string | number> | string, value?: string) => {
     if (!propertyOrObj) {
       throw new Error('OR SDK: no user properties provided to set')
     }
@@ -97,7 +97,7 @@ export default class People {
   /**
    * Set property if it doesn't exist yet
    * */
-  setPropertiesOnce = (properties: Record<string, string | number>) => {
+  public setPropertiesOnce = (properties: Record<string, string | number>) => {
     if (!isObject(properties)) {
       throw new Error('Properties must be an object')
     }
@@ -117,7 +117,7 @@ export default class People {
   /**
    * Add value to property (will turn string prop into array)
    * */
-  appendValues = (key: string, value: string | number) => {
+  public appendValues = (key: string, value: string | number) => {
     if (!this.constantProperties.defaultPropertyKeys.includes(key) && this.ownProperties[key]) {
       if (Array.isArray(this.ownProperties[key])) {
         this.ownProperties[key].push(value)
@@ -136,7 +136,7 @@ export default class People {
   /**
    * Add unique values to property (will turn string prop into array)
    * */
-  appendUniqueValues = (key: string, value: string | number) => {
+  public appendUniqueValues = (key: string, value: string | number) => {
     if (!this.ownProperties[key]) return
     if (Array.isArray(this.ownProperties[key])) {
       if (!this.ownProperties[key].includes(value)) {
@@ -161,7 +161,7 @@ export default class People {
   /**
    * Adds value (incl. negative) to existing numerical property
    * */
-  increment = (key: string, value: number) => {
+  public increment = (key: string, value: number) => {
     if (!this.ownProperties[key]) {
       this.ownProperties[key] = 0
     }

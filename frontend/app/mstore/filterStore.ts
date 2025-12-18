@@ -14,6 +14,7 @@ interface ValueMapper {
 
 const VALUE_MAPPERS: ValueMapper = {
   userCountry: countryMap,
+  '$country': countryMap,
 };
 
 export interface TopValue {

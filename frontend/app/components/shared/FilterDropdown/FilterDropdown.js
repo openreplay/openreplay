@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 const PLATFORM = 'platform';
 const COUNTRY = 'country';
+const USER_COUNTRY = 'userCountry';
 const LOCATION = 'location';
 
 const platformOptions = [
@@ -130,7 +131,7 @@ function FilterDropdown(props) {
     if (filterKey === PLATFORM) {
       return platformOptions;
     }
-    if (filterKey === COUNTRY) {
+    if (filterKey === COUNTRY || filterKey === USER_COUNTRY) {
       return countryOptions;
     }
     if (filterKey === LOCATION) {

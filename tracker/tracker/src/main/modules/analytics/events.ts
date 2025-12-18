@@ -3,8 +3,6 @@ import ConstantProperties from './constantProperties.js'
 import { isObject } from './utils.js'
 import { createEvent, categories } from './types.js'
 
-const maxProperties = 100
-const maxPropLength = 100
 const reservedProps = ['properties', 'token', 'timestamp']
 
 export default class Events {
@@ -22,7 +20,7 @@ export default class Events {
    * Add event to batch with option to send it immediately,
    * properties are optional and will not be saved as super prop
    * */
-  sendEvent = (
+  public sendEvent = (
     eventName: string,
     properties?: Record<string, any>,
     options?: { send_immediately: boolean },
@@ -54,7 +52,7 @@ export default class Events {
   /**
    * creates super property for all events
    * */
-  setProperty = (nameOrProperties: Record<string, any> | string, value?: any) => {
+  public setProperty = (nameOrProperties: Record<string, any> | string, value?: any) => {
     let changed = false
     if (isObject(nameOrProperties)) {
       Object.entries(nameOrProperties).forEach(([key, val]) => {
@@ -79,7 +77,7 @@ export default class Events {
   /**
    * set super property only if it doesn't exist yet
    * */
-  setPropertiesOnce = (nameOrProperties: Record<string, any> | string, value?: any) => {
+  public setPropertiesOnce = (nameOrProperties: Record<string, any> | string, value?: any) => {
     let changed = false
     if (isObject(nameOrProperties)) {
       Object.entries(nameOrProperties).forEach(([key, val]) => {
@@ -104,7 +102,7 @@ export default class Events {
   /**
    * removes properties from list of super properties
    * */
-  unsetProperties = (properties: string | string[]) => {
+  public unsetProperties = (properties: string | string[]) => {
     let changed = false
     if (Array.isArray(properties)) {
       properties.forEach((key) => {
@@ -123,7 +121,7 @@ export default class Events {
   }
 
   /** clears all super properties */
-  reset = () => {
+  public reset = () => {
     this.ownProperties = {}
     this.constantProperties.clearSuperProperties()
   }
