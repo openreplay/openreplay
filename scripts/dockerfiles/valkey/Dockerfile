@@ -1,7 +1,7 @@
 FROM cgr.dev/chainguard/wolfi-base
 
 # Install Valkey 8.x, tini and bash
-RUN apk add --no-cache valkey-8.1 valkey-8.1-cli tini bash && \
+RUN apk add --no-cache 'valkey>=8' 'valkey<9' valkey-cli tini bash && \
   mkdir -p /data && \
   chown -R nonroot:nonroot /data
 
