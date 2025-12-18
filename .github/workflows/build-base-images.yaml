@@ -125,6 +125,7 @@ jobs:
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major_version=${VERSION%%.*}" >> $GITHUB_OUTPUT
           echo "Detected version for $IMAGE_NAME: $VERSION"
 
       - name: Docker meta
@@ -135,6 +136,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
+            type=raw,value=${{ steps.app-version.outputs.major_version }},enable=${{ steps.parse.outputs.name == 'valkey' }}
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha,prefix={{date 'YYYYMMDD'}}-
 
@@ -251,6 +253,7 @@ jobs:
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major_version=${VERSION%%.*}" >> $GITHUB_OUTPUT
           echo "Detected version for $IMAGE_NAME: $VERSION"
 
       - name: Docker meta
@@ -261,6 +264,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
+            type=raw,value=${{ steps.app-version.outputs.major_version }},enable=${{ steps.parse.outputs.name == 'valkey' }}
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha,prefix={{date 'YYYYMMDD'}}-
 
