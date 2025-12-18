@@ -530,7 +530,7 @@ export default class DashboardStore {
   ) => {
     return this.fetchMetricChartData(
       metric,
-      { ...data, sampleRate: 15 },
+      { ...data, sampleRate: 5 },
       isSaved,
       period,
     );

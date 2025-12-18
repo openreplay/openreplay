@@ -10,11 +10,8 @@ import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
 import { diffIfRecent } from 'App/date';
 import { getSortingName } from '@/mstore/types/Analytics/User';
-import { CountryFlag, Icon, NoContent } from 'UI';
+import { CountryFlag } from 'UI';
 import NameAvatar from 'Shared/NameAvatar';
-import AnimatedSVG from 'Shared/AnimatedSVG';
-import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import SelectDateRange from '../../../shared/SelectDateRange/SelectDateRange';
 
 function UsersList({
   toUser,

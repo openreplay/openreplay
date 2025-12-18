@@ -10,6 +10,11 @@ import UsersList from './components/UsersList';
 import EventsList from './components/EventsList';
 import { debounce } from 'App/utils';
 
+const naming = {
+  users: 'People',
+  events: 'Events',
+};
+
 function UsersListPage() {
   const [search, setSearch] = React.useState('');
   const [query, setQuery] = React.useState('');
@@ -32,15 +37,21 @@ function UsersListPage() {
     debouncedSetSearch(query);
   }, [query]);
 
+  const openDocs = () => {
+    const url = 'https://docs.openreplay.com/sdk/analytics';
+    window.open(url, '_blank');
+  };
   return (
     <div
       className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 py-2'}>
-        <div className={'font-semibold text-lg capitalize'}>{view}</div>
+        <div className={'font-semibold text-lg capitalize'}>
+          {naming[view] ?? view}
+        </div>
         <div className="flex items-center gap-2">
-          <Button type={'text'} icon={<Album size={14} />}>
+          <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             Docs
           </Button>
           <Input.Search
