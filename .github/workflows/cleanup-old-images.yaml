@@ -31,7 +31,7 @@ jobs:
           - minio
           - nginx
           - postgres
-          - redis
+          - valkey
     steps:
       - name: Prune old untagged versions
         uses: vlaurin/action-ghcr-prune@v0.6.0
