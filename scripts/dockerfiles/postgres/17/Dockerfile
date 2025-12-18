@@ -6,6 +6,7 @@ RUN apk add --no-cache \
   postgresql-17-contrib \
   postgresql-17-client \
   glibc-locale-en \
+  tini \
   bash && \
   # Create user and group with ID 1001
   addgroup -g 1001 postgres || true && \
@@ -53,5 +54,5 @@ USER 1001
 
 EXPOSE 5432
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
 CMD ["postgres"]
