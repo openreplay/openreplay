@@ -6,6 +6,10 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
     inputs:
+      ref:
+        description: 'Git ref (branch/tag/SHA) to build from'
+        required: false
+        default: 'dev'
       images:
         description: 'Specific images to build (comma-separated, e.g., postgres,nginx) or "all" for all images'
         required: false
@@ -18,6 +22,10 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}
+  # NOTE:
+  # - schedule workflows are always evaluated from the repository default branch.
+  # - to build Docker images from the dev branch anyway, we explicitly checkout dev.
+  TARGET_REF: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.ref) || 'dev' }}
 
 jobs:
   prepare:
@@ -28,16 +36,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_REF }}
 
       - name: Set up build matrix
         id: set-matrix
         run: |
           IMAGES_INPUT="${{ github.event.inputs.images }}"
-          
+
           # Define all available images with their versions
           # Format: image:version or just image (for single version)
           ALL_IMAGES='["kafka", "minio", "postgres:17", "postgres:18", "valkey"]'
-          
+
           if [[ "$IMAGES_INPUT" == "all" ]] || [[ -z "$IMAGES_INPUT" ]]; then
             MATRIX="$ALL_IMAGES"
           else
@@ -45,7 +55,7 @@ jobs:
             # Support both "postgres" (builds all versions) and "postgres:17" (specific version)
             MATRIX=$(echo "$IMAGES_INPUT" | jq -R -c 'split(",") | map(gsub("^\\s+|\\s+$"; ""))')
           fi
-          
+
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "Building images: $MATRIX"
 
@@ -63,12 +73,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_REF }}
 
       - name: Parse image and version
         id: parse
         run: |
           IMAGE_FULL="${{ matrix.image }}"
-          
+
           # Split image:version format
           if [[ "$IMAGE_FULL" == *":"* ]]; then
             IMAGE_NAME="${IMAGE_FULL%%:*}"
@@ -79,7 +91,7 @@ jobs:
             IMAGE_VERSION=""
             CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}"
           fi
-          
+
           echo "name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT_PATH" >> $GITHUB_OUTPUT
@@ -96,7 +108,7 @@ jobs:
         run: |
           DOCKERFILE="${{ steps.parse.outputs.context }}/Dockerfile"
           IMAGE_NAME="${{ steps.parse.outputs.name }}"
-          
+
           # If version is explicitly provided in matrix, use it
           if [[ -n "${{ steps.parse.outputs.version }}" ]]; then
             VERSION="${{ steps.parse.outputs.version }}"
@@ -123,7 +135,7 @@ jobs:
                 ;;
             esac
           fi
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "major_version=${VERSION%%.*}" >> $GITHUB_OUTPUT
           echo "Detected version for $IMAGE_NAME: $VERSION"
@@ -187,12 +199,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_REF }}
 
       - name: Parse image and version
         id: parse
         run: |
           IMAGE_FULL="${{ matrix.image }}"
-          
+
           # Split image:version format
           if [[ "$IMAGE_FULL" == *":"* ]]; then
             IMAGE_NAME="${IMAGE_FULL%%:*}"
@@ -203,7 +217,7 @@ jobs:
             IMAGE_VERSION=""
             CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}"
           fi
-          
+
           echo "name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT_PATH" >> $GITHUB_OUTPUT
@@ -224,7 +238,7 @@ jobs:
         run: |
           DOCKERFILE="${{ steps.parse.outputs.context }}/Dockerfile"
           IMAGE_NAME="${{ steps.parse.outputs.name }}"
-          
+
           # If version is explicitly provided in matrix, use it
           if [[ -n "${{ steps.parse.outputs.version }}" ]]; then
             VERSION="${{ steps.parse.outputs.version }}"
@@ -246,12 +260,12 @@ jobs:
               valkey)
                 VERSION=$(grep -oP "valkey>=\K[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
                 ;;
-            *)
+              *)
                 VERSION="latest"
                 ;;
             esac
           fi
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "major_version=${VERSION%%.*}" >> $GITHUB_OUTPUT
           echo "Detected version for $IMAGE_NAME: $VERSION"
