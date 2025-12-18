@@ -36,7 +36,7 @@ jobs:
           
           # Define all available images with their versions
           # Format: image:version or just image (for single version)
-          ALL_IMAGES='["kafka", "minio", "nginx", "postgres:17", "postgres:18", "valkey"]'
+          ALL_IMAGES='["kafka", "minio", "postgres:17", "postgres:18", "valkey"]'
           
           if [[ "$IMAGES_INPUT" == "all" ]] || [[ -z "$IMAGES_INPUT" ]]; then
             MATRIX="$ALL_IMAGES"

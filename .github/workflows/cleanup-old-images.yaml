@@ -29,7 +29,6 @@ jobs:
         image:
           - kafka
           - minio
-          - nginx
           - postgres
           - valkey
     steps:
