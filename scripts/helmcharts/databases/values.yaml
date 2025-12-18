@@ -87,8 +87,8 @@ affinity: {}
 redis:
   image:
     registry: ghcr.io
-    repository: openreplay/redis
-    tag: 7
+    repository: openreplay/valkey
+    tag: 8
   enabled: true
   fullnameOverride: redis
   usePassword: false
