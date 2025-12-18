@@ -65,8 +65,12 @@ describe('People', () => {
   })
 
   test('identify throws if user_id is missing', () => {
-    expect(() => people.identify('')).toThrow('OR SDK: user_id is required for identify')
-    expect(() => people.identify(null as any)).toThrow('OR SDK: user_id is required for identify')
+    expect(() => people.identify('')).toThrow(
+      'OR SDK: user_id (string) is required for .identify()',
+    )
+    expect(() => people.identify(null as any)).toThrow(
+      'OR SDK: user_id (string) is required for .identify()',
+    )
   })
 
   test('identify sets user_id, calls onId, and sends identity event', () => {
@@ -184,7 +188,7 @@ describe('People', () => {
 
   test('setProperties throws for non-object input', () => {
     expect(() => people.setProperties('not-an-object' as any)).toThrow(
-      'Properties must be an object',
+      'OR SDK: invalid user properties provided to set',
     )
   })
 

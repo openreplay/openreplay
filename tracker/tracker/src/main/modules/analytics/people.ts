@@ -16,8 +16,8 @@ export default class People {
   ) {}
 
   identify = (user_id: string, options?: { fromTracker: boolean }) => {
-    if (!user_id) {
-      throw new Error('OR SDK: user_id is required for identify')
+    if (!user_id || typeof user_id !== 'string') {
+      throw new Error('OR SDK: user_id (string) is required for .identify()')
     }
     // if user exists already, reset properties
     if (this.constantProperties.user_id && this.constantProperties.user_id !== user_id) {
@@ -70,9 +70,17 @@ export default class People {
   /**
    * set user properties, overwriting existing ones
    * */
-  setProperties = (properties: Record<string, string | number>) => {
-    if (!isObject(properties)) {
-      throw new Error('Properties must be an object')
+  setProperties = (propertyOrObj: Record<string, string | number> | string, value?: string) => {
+    if (!propertyOrObj) {
+      throw new Error('OR SDK: no user properties provided to set')
+    }
+    const properties: Record<string, string | number> = {}
+    if (typeof propertyOrObj === 'string' && propertyOrObj && value) {
+      properties[propertyOrObj] = value
+    } else if (isObject(propertyOrObj)) {
+      Object.assign(properties, propertyOrObj)
+    } else {
+      throw new Error('OR SDK: invalid user properties provided to set')
     }
     Object.entries(properties).forEach(([key, value]) => {
       if (!this.constantProperties.defaultPropertyKeys.includes(key)) {

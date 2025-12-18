@@ -355,10 +355,9 @@ export default class App {
     })
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
-        if (typeof userID === 'string' && userID.length === 0) {
-          return;
+        if (!userID || typeof userID !== 'string') {
+          return
         }
-        // TODO: nullable userID
         this.send(UserID(userID))
       }
       if (metadata != null) {

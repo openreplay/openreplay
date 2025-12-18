@@ -3,7 +3,9 @@
 - adds analytics package to the tracker to enable user & event tracking
 ```js
 tracker.analytics.identify('test_user', { email: 'test@test.com', name: 'Openreplino' })
+tracker.analytics.people.setProperties({ plan: 'pro', signupDate: '2024-01-01' })
 tracker.analytics.track('button_clicked', { buttonName: 'signup' })
+tracker.analytics.events.setProperty('last_page', 'homepage')
 ```
 
 ## 17.0.2

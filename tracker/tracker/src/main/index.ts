@@ -198,7 +198,7 @@ export default class API {
     if (options.projectKey && options.analytics?.active) {
       this.analytics = new AnalyticsSDK({
         localStorage: options.localStorage ?? localStorage,
-        sessionStorage: sessionStorage ?? sessionStorage,
+        sessionStorage: options.sessionStorage ?? sessionStorage,
         getToken: () => this.getAnalyticsToken(),
         getTimestamp: () => this.app?.timestamp() ?? Date.now(),
         setUserId: (id) => {
@@ -206,7 +206,9 @@ export default class API {
         },
         notStandalone: true,
         ingestPoint:
-          options.analytics?.ingestPoint ?? options.ingestPoint ?? 'https://api.openreplay.com/',
+          options.analytics?.ingestPoint ??
+          options.ingestPoint ??
+          'https://api.openreplay.com/ingest',
         projectKey: options.projectKey,
       })
     }
