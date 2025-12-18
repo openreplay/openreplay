@@ -1,6 +1,7 @@
 import { GripVertical } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 import cn from 'classnames';
+import { FilterKey } from 'App/types/filter/filterType';
 import FilterItem from '../FilterItem';
 import { Filter } from '@/mstore/types/filterConstants';
 
@@ -166,7 +167,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
 
   const activeFilters = filters.map((f) => f.name);
   const shownFilters = isHeatmap
-    ? filters.filter((f) => f.name !== 'platform')
+    ? filters.filter((f) => f.name !== FilterKey.USER_DEVICE_TYPE)
     : filters;
 
   return shownFilters.length ? (
@@ -247,7 +248,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             }
             // Pass down if this is the first item for potential styling (e.g., no 'and'/'or' toggle)
             isFirst={filterIndex === 0}
-            isLast={filterIndex === filters.length - 1}
+            isLast={filterIndex === shownFilters.length - 1}
             isLive={isLive}
           />
         </div>
