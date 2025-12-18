@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 
 function LongLoader({ onClick }: { onClick: () => void }) {
   const { t } = useTranslation();
-  withSampling = true;
   return (
     <div
       className="flex flex-col gap-2 items-center justify-center"
