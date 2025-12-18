@@ -139,11 +139,12 @@ jobs:
             type=sha,prefix={{date 'YYYYMMDD'}}-
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: nick-fields/retry@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 10
+          command: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
@@ -264,11 +265,12 @@ jobs:
             type=sha,prefix={{date 'YYYYMMDD'}}-
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: nick-fields/retry@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 10
+          command: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
