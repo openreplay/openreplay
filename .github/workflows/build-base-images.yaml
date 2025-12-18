@@ -116,7 +116,7 @@ jobs:
                 VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
                 ;;
               valkey)
-                VERSION=$(grep -oP "valkey-\K[0-9]+\.[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
+                VERSION=$(grep -oP "valkey>=\K[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
                 ;;
               *)
                 VERSION="latest"
@@ -244,7 +244,7 @@ jobs:
                 VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
                 ;;
               valkey)
-                VERSION=$(grep -oP "valkey-\K[0-9]+\.[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
+                VERSION=$(grep -oP "valkey>=\K[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
                 ;;
             *)
                 VERSION="latest"
