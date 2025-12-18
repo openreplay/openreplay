@@ -14,11 +14,10 @@ global:
 ##
 image:
   registry: ghcr.io
-  repository: openreplay/redis
-  ## Bitnami Redis(TM) image tag
-  ## ref: https://github.com/bitnami/bitnami-docker-redis#supported-tags-and-respective-dockerfile-links
+  repository: openreplay/valkey
+  ## Valkey image tag (Redis-compatible)
   ##
-  tag: 7
+  tag: 8
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
