@@ -315,5 +315,5 @@ export enum FilterKey {
   CLICKMAP_URL = 'clickMapUrl',
   TAGGED_ELEMENT = 'tag_trigger',
 
-  USER_DEVICE_TYPE = 'user_device_type',
+  USER_DEVICE_TYPE = 'userDeviceType',
 }
