@@ -25,6 +25,7 @@ import { getEventIcon } from './getEventIcon';
 import NewEventsBadge from './NewEventsBadge';
 import { Icon } from 'UI';
 import { useHistory } from 'react-router';
+import withPageTitle from '@/components/hocs/withPageTitle';
 
 const columnOrderKey = '$__activity_columns_order__$';
 
@@ -417,9 +418,11 @@ function ActivityPage() {
   );
 }
 
-export default withPermissions(
-  ['DATA_MANAGEMENT'],
-  '',
-  false,
-  false,
-)(observer(ActivityPage));
+export default withPageTitle('Activity')(
+  withPermissions(
+    ['DATA_MANAGEMENT'],
+    '',
+    false,
+    false,
+  )(observer(ActivityPage)),
+);

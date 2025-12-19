@@ -6,7 +6,7 @@ import {
 import { projectsService } from 'App/services';
 import GDPR from './types/gdpr';
 import Project from './types/project';
-import ENV from '../../env'
+import ENV from '../../env';
 
 interface Config {
   project: Project | null;
@@ -87,7 +87,10 @@ export default class BaseProjectsStore {
   };
 
   setSiteId = (siteId: string) => {
-    localStorage.setItem(SITE_ID_STORAGE_KEY, siteId.toString() + '_$_' + ENV.ORIGIN ?? window.location.origin);
+    localStorage.setItem(
+      SITE_ID_STORAGE_KEY,
+      siteId.toString() + '_$_' + (ENV.ORIGIN || window.location.origin),
+    );
     this.siteId = siteId;
     this.active = this.list.find((site) => site.id! === siteId) ?? null;
   };

@@ -12,6 +12,7 @@ import { diffIfRecent } from 'App/date';
 import { getSortingName } from '@/mstore/types/Analytics/User';
 import { CountryFlag } from 'UI';
 import NameAvatar from 'Shared/NameAvatar';
+import withPageTitle from '@/components/hocs/withPageTitle';
 
 function UsersList({
   toUser,
@@ -262,4 +263,4 @@ function UsersList({
   );
 }
 
-export default observer(UsersList);
+export default withPageTitle('People')(observer(UsersList));
