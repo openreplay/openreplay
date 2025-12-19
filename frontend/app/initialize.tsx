@@ -71,6 +71,7 @@ const ThemedApp: React.FC = () => {
       },
       Button: {
         colorPrimary: cssVar('main'),
+        defaultColor: cssVar('black'),
       },
       Select: {
         colorBgContainer: cssVar('white'),

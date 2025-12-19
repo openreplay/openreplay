@@ -46,9 +46,13 @@ function NoSessionsMessage() {
                     type="link"
                     size="small"
                     onClick={openTroubleshoot}
-                    icon={<SquareArrowOutUpRight size={16} />}
+                    icon={
+                      <div className="color-black fill-black">
+                        <SquareArrowOutUpRight size={16} />
+                      </div>
+                    }
                   >
-                    {t('Troubleshoot')}
+                    <div className="color-black">{t('Troubleshoot')}</div>
                   </Button>
                   <Button
                     type="default"
