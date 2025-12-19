@@ -98,7 +98,7 @@ function Activity({ userId }: { userId: string }) {
   };
 
   const toSessions = () => {
-    const filter = filterStore.findEvent({ name: 'distinctId' });
+    const filter = filterStore.findEvent({ name: 'distinct_id' });
     if (filter) {
       filter.value = [userId];
       searchStore.addFilter(filter);
