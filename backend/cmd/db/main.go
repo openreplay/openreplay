@@ -19,6 +19,7 @@ import (
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	sdk "openreplay/backend/pkg/sdk/service"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/tags"
 	"openreplay/backend/pkg/terminator"
@@ -69,7 +70,12 @@ func main() {
 		log.Fatal(ctx, "can't init project service: %s", err)
 	}
 
-	saver := datasaver.New(log, cfg, chConnector, sessManager, issuesManager, tagsManager, canvases)
+	users, err := sdk.NewUsers(log, chConn, sessManager)
+	if err != nil {
+		log.Fatal(ctx, "can't init users: %s", err)
+	}
+
+	saver := datasaver.New(log, cfg, chConnector, sessManager, issuesManager, tagsManager, canvases, users)
 
 	msgFilter := []int{
 		// Web messages
@@ -106,6 +112,12 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
+
+	sdkSaver, err := sdk.New(cfg, log, chConnector, sessManager, users, chConn)
+	if err != nil {
+		log.Fatal(ctx, "can't init sdk saver: %s", err)
+	}
+	defer sdkSaver.Stop()
 
 	// Init memory manager
 	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)

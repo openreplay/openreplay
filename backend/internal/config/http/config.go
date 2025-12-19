@@ -20,6 +20,7 @@ type Config struct {
 	TopicRawMobile       string        `env:"TOPIC_RAW_IOS,required"`
 	TopicRawImages       string        `env:"TOPIC_RAW_IMAGES,required"`
 	TopicCanvasImages    string        `env:"TOPIC_CANVAS_IMAGES,required"`
+	TopicRawAnalytics    string        `env:"TOPIC_RAW_ANALYTICS,required"`
 	BeaconSizeLimit      int64         `env:"BEACON_SIZE_LIMIT,required"`
 	CompressionThreshold int64         `env:"COMPRESSION_THRESHOLD,default=20000"`
 	FileSizeLimit        int64         `env:"FILE_SIZE_LIMIT,default=10000000"`

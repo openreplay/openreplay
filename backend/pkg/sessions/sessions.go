@@ -196,7 +196,15 @@ func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
 
 // UpdateUserID usage: in db handler
 func (s *sessionsImpl) UpdateUserID(sessionID uint64, userID string) error {
-	s.updates.AddUserID(sessionID, userID)
+	//s.updates.AddUserID(sessionID, userID)
+	if err := s.storage.InsertUserID(sessionID, userID); err != nil {
+		return err
+	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		return err
+	}
+	s.cache.Set(session)
 	return nil
 }
 

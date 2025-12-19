@@ -2,6 +2,7 @@ package datasaver
 
 import (
 	"openreplay/backend/pkg/messages"
+	sdk "openreplay/backend/pkg/sdk/model"
 	"openreplay/backend/pkg/sessions"
 )
 
@@ -10,7 +11,7 @@ func (s *saverImpl) handleMobileMessage(session *sessions.Session, msg messages.
 	case *messages.MobileSessionEnd:
 		return s.ch.InsertMobileSession(session)
 	case *messages.MobileUserID:
-		if err := s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
+		if err := s.users.Add(session, sdk.NewUser(m.ID)); err != nil {
 			return err
 		}
 		return s.ch.InsertAutocomplete(session, "USERIDMOBILE", m.ID)
