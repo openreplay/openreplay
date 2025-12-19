@@ -19,9 +19,23 @@ $fn_def$, :'next_version')
 
 --
 
+DELETE
+FROM public.assist_events
+WHERE event_id IN (SELECT DISTINCT event_id
+                   FROM public.assist_events
+                            LEFT JOIN public.projects USING (project_id)
+                   WHERE projects.project_id IS NULL);
+
 ALTER TABLE IF EXISTS public.assist_events
     ADD CONSTRAINT assist_events_project_id_fkey
         FOREIGN KEY (project_id) REFERENCES public.projects (project_id) ON DELETE CASCADE;
+
+DELETE
+FROM public.assist_events_aggregates
+WHERE project_id IN (SELECT DISTINCT assist_events_aggregates.project_id
+                   FROM public.assist_events_aggregates
+                            LEFT JOIN public.projects USING (project_id)
+                   WHERE projects.project_id IS NULL);
 
 ALTER TABLE IF EXISTS public.assist_events_aggregates
     ADD CONSTRAINT assist_events_aggregates_project_id_fkey
@@ -30,6 +44,12 @@ ALTER TABLE IF EXISTS public.assist_events_aggregates
 ALTER TABLE IF EXISTS public.assist_records
     ALTER COLUMN user_id DROP NOT NULL;
 
+DELETE
+FROM public.sessions_videos
+WHERE project_id IN (SELECT DISTINCT sessions_videos.project_id
+                   FROM public.sessions_videos
+                            LEFT JOIN public.projects USING (project_id)
+                   WHERE projects.project_id IS NULL);
 
 ALTER TABLE IF EXISTS public.sessions_videos
     ALTER COLUMN user_id DROP NOT NULL,
@@ -39,8 +59,7 @@ ALTER TABLE IF EXISTS public.sessions_videos
 UPDATE public.roles
 SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{DATA_MANAGEMENT}') AS e)
 WHERE NOT permissions @> '{DATA_MANAGEMENT}'
-  AND NOT service_role
-  AND name ILIKE 'owner';
+  AND NOT service_role;
 
 COMMIT;
 
