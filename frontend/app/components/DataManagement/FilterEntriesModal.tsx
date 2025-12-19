@@ -47,7 +47,7 @@ function FilterEntriesModal({
     <OutsideClickDetectingDiv onClickOutside={onClose}>
       <div
         className={cn(
-          'flex flex-col gap-2 shadow border rounded-lg p-4 absolute z-50 bg-white min-w-[300px] max-h-[600px] overflow-y-auto',
+          'flex flex-col gap-2 shadow border rounded-lg p-4 absolute z-50 bg-white min-w-[300px]',
           left ? `left-${left ?? 0}` : 'right-0',
           topOffset,
         )}
@@ -59,14 +59,16 @@ function FilterEntriesModal({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        {filteredList.map((col) => (
-          <Checkbox
-            onChange={(e) => onToggle(col.key, e.target.checked)}
-            checked={selected.includes(col.key)}
-          >
-            {col.title}
-          </Checkbox>
-        ))}
+        <div className="max-h-[500px] overflow-y-auto flex flex-col gap-2">
+          {filteredList.map((col) => (
+            <Checkbox
+              onChange={(e) => onToggle(col.key, e.target.checked)}
+              checked={selected.includes(col.key)}
+            >
+              {col.title}
+            </Checkbox>
+          ))}
+        </div>
         <Button onClick={onConfirm} type={'primary'}>
           {confirmText || 'Show Selected'}
         </Button>
