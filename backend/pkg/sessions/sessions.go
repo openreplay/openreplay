@@ -196,7 +196,7 @@ func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
 
 // UpdateUserID usage: in db handler
 func (s *sessionsImpl) UpdateUserID(sessionID uint64, userID string) error {
-	//s.updates.AddUserID(sessionID, userID)
+	//s.updates.AddUserID(sessionID, userID) // TODO: maybe there is better solution with global cache
 	if err := s.storage.InsertUserID(sessionID, userID); err != nil {
 		return err
 	}

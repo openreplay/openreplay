@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -14,7 +15,6 @@ import (
 
 type Users interface {
 	Add(session *sessions.Session, user *model.User) error
-	AddUserDistinctID(session *sessions.Session, user *model.User) error
 	Get(projectID uint32, userID string) (*model.User, error)
 	Update(user *model.User) error
 	Delete(projectID uint32, userID string) error
@@ -40,28 +40,27 @@ var (
 )
 
 func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
+	user.UserID = strings.TrimSpace(user.UserID)
 	if user.UserID == "" {
 		return fmt.Errorf("empty userID for session: %d", session.SessionID)
 	}
 	if session.UserID != nil && *session.UserID == user.UserID {
 		return fmt.Errorf("got the same userID for session: %d", session.SessionID)
-	} else {
-		if err := u.sessions.UpdateUserID(session.SessionID, user.UserID); err != nil {
-			u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
-		}
-		session.UserID = &user.UserID
 	}
+	if err := u.sessions.UpdateUserID(session.SessionID, user.UserID); err != nil {
+		u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
+	}
+	session.UserID = &user.UserID
 
 	// Check that we don't have this user already in DB
-	_, err := u.Get(session.ProjectID, user.UserID)
-	if err == nil {
+	if _, err := u.Get(session.ProjectID, user.UserID); err == nil {
 		u.log.Info(context.Background(), "we already have this user in DB for session: %d", session.SessionID)
-		if err = u.AddUserDistinctID(session, user); err != nil {
+		if err = u.addUserDistinctID(session, user); err != nil {
 			u.log.Error(context.Background(), "can't add user ID to distinct user table: %s", user.UserID)
 		}
 		return nil
 	}
-	if err = u.add(session, user); err != nil {
+	if err := u.add(session, user); err != nil {
 		return fmt.Errorf("can't insert user: %s", err)
 	}
 	return nil
@@ -108,7 +107,7 @@ func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 	return nil
 }
 
-func (u *usersImpl) AddUserDistinctID(session *sessions.Session, user *model.User) error {
+func (u *usersImpl) addUserDistinctID(session *sessions.Session, user *model.User) error {
 	query := `INSERT INTO product_analytics.users_distinct_id (project_id, distinct_id, "$user_id") VALUES (?, ?, ?)`
 	if err := u.conn.Exec(context.Background(), query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
 		return fmt.Errorf("can't insert user to users_distinct_id table: %s", err)
