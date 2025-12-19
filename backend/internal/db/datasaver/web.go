@@ -3,6 +3,7 @@ package datasaver
 import (
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
+	sdk "openreplay/backend/pkg/sdk/model"
 	"openreplay/backend/pkg/sessions"
 )
 
@@ -37,6 +38,9 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		return s.issues.Add(session.SessionID, ie.Type)
 	case *messages.UserID:
 		if err := s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
+			return err
+		}
+		if err := s.users.Add(session, sdk.NewUser(m.ID)); err != nil {
 			return err
 		}
 		return s.ch.InsertAutocomplete(session, "USERID", m.ID)
