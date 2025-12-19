@@ -24,7 +24,7 @@ function FilterEntriesModal({
   searchText?: string;
   confirmText?: string;
   onClose?: () => void;
-  left?: boolean;
+  left?: string;
 }) {
   const [query, setQuery] = React.useState('');
   const [selected, setSelected] = React.useState(
@@ -48,7 +48,7 @@ function FilterEntriesModal({
       <div
         className={cn(
           'flex flex-col gap-2 shadow border rounded-lg p-4 absolute z-50 bg-white min-w-[300px] max-h-[600px] overflow-y-auto',
-          left ? 'left-0' : 'right-0',
+          left ? `left-${left ?? 0}` : 'right-0',
           topOffset,
         )}
       >

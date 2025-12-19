@@ -44,7 +44,7 @@ function Activity({ userId }: { userId: string }) {
   const [editCols, setEditCols] = React.useState(false);
   const { showModal, hideModal } = useModal();
   const [sort, setSort] = React.useState<'asc' | 'desc'>('desc');
-  const { data: list } = useQuery({
+  const { data: list, isPending } = useQuery({
     queryKey: [
       'user-events',
       userId,
@@ -127,10 +127,10 @@ function Activity({ userId }: { userId: string }) {
           <span>Play Sessions</span>
           <Triangle size={10} color={'blue'} />
         </div>
-        <div className={'ml-auto relative'}>
+        <div className={'ml-auto'} />
+        <div className="relative">
           {editCols ? (
             <FilterEntriesModal
-              left
               columns={eventTypes}
               onSelect={saveShownTypes}
               onClose={() => setEditCols(false)}
@@ -142,18 +142,25 @@ function Activity({ userId }: { userId: string }) {
               confirmText={'Show Selected'}
             />
           ) : null}
+          <Button
+            className={'flex items-center gap-2'}
+            type={'text'}
+            size={'small'}
+            onClick={toggleEvents}
+          >
+            <EyeOff size={16} />
+            <span className={'font-medium'}>Hide Events</span>
+          </Button>
         </div>
-        <Button
-          className={'flex items-center gap-2'}
-          type={'text'}
-          size={'small'}
-          onClick={toggleEvents}
-        >
-          <EyeOff size={16} />
-          <span className={'font-medium'}>Hide Events</span>
-        </Button>
         <SelectDateRange isAnt period={period} onChange={onDateChange} right />
       </div>
+      {isPending ? (
+        <div className="p-4">Loading...</div>
+      ) : (list?.events ?? []).length === 0 ? (
+        <div className="p-4">
+          No events found for the selected period or user.
+        </div>
+      ) : null}
       <EventsByDay
         getName={getName}
         byDays={byDays}
