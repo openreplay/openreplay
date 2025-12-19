@@ -355,7 +355,12 @@ export default class App {
     })
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
-        if (!userID || typeof userID !== 'string') {
+        if (
+          !userID ||
+          typeof userID !== 'string' ||
+          userID.trim().length === 0
+        ) {
+          this.debug.warn('Invalid userID (must be type string), ignoring.')
           return
         }
         this.send(UserID(userID))
@@ -1412,9 +1417,10 @@ export default class App {
       // Reset session metadata only if requested directly
       this.session.reset()
     }
+    const userId = startOpts.userID ? startOpts.userID.trim() : undefined;
     this.session.assign({
       // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
-      userID: startOpts.userID,
+      userID: userId || undefined,
       metadata: startOpts.metadata,
     })
 
