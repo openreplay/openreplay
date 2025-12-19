@@ -40,6 +40,7 @@ interface Props {
   activeFilters?: string[];
   isLast?: boolean;
   isLive?: boolean;
+  scope?: 'users' | 'sessions' | 'events';
 }
 
 function FilterItem(props: Props) {
@@ -64,6 +65,7 @@ function FilterItem(props: Props) {
     activeFilters = [],
     isLast = false, // Default to false
     isLive = false,
+    scope,
   } = props;
 
   const [eventFilterOptions, setEventFilterOptions] = useState<Filter[]>([]);
@@ -328,6 +330,7 @@ function FilterItem(props: Props) {
                       isLast={isLast}
                       isLive={isLive}
                       isDurationFilter={isDurationFilter}
+                      scope={scope}
                     />
                   </div>
                 ))}

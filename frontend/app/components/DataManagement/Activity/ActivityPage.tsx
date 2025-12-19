@@ -337,6 +337,7 @@ function ActivityPage() {
           handleRemove={onRemoveFilter}
           handleUpdate={onUpdateFilter}
           handleAdd={onAddFilter}
+          scope="events"
         />
       </div>
       <div className={'relative'}>

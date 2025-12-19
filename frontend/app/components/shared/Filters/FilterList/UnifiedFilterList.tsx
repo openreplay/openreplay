@@ -30,6 +30,7 @@ interface UnifiedFilterListProps {
   orderProps?: any;
   isHeatmap?: boolean;
   isLive?: boolean;
+  scope?: 'users' | 'sessions' | 'events';
 }
 
 const UnifiedFilterList = (props: UnifiedFilterListProps) => {
@@ -48,6 +49,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
     className,
     isHeatmap,
     isLive,
+    scope,
   } = props;
 
   const [hoveredItem, setHoveredItem] = useState<{
@@ -250,6 +252,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             isFirst={filterIndex === 0}
             isLast={filterIndex === shownFilters.length - 1}
             isLive={isLive}
+            scope={scope}
           />
         </div>
       ))}

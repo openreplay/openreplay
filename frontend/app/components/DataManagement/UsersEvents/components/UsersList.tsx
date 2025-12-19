@@ -223,6 +223,7 @@ function UsersList({
           handleRemove={onRemoveFilter}
           handleUpdate={onUpdateFilter}
           handleAdd={onAddFilter}
+          scope="users"
         />
       </div>
 

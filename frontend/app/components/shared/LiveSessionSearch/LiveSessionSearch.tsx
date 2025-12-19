@@ -89,6 +89,7 @@ function LiveSessionSearch() {
         saveRequestPayloads={saveRequestPayloads}
         filters={appliedFilter.filters}
         isLive
+        scope="sessions"
       />
     </Card>
   );

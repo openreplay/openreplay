@@ -16,11 +16,13 @@ import User, { listColumns as userListColumns } from './types/Analytics/User';
 import { filterStore } from 'App/mstore';
 import { checkFilterValue } from './types/filter';
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
 const defaultPayload = {
   sortOrder: 'desc',
   sortBy: 'created_at',
   limit: 20,
-  startTimestamp: Date.now() - 3600 * 1000,
+  startTimestamp: Date.now() - ONE_DAY_MS,
   endTimestamp: Date.now(),
   columns: [],
   page: 1,
@@ -114,6 +116,7 @@ export default class AnalyticsStore {
     const oldFilters = this.payloadFilters.filters;
     runInAction(() => {
       this.payloadFilters.filters = [...oldFilters, newFilter];
+      this.payloadFilters.page = 1;
     });
   };
 
@@ -123,27 +126,32 @@ export default class AnalyticsStore {
     const oldFilters = this.usersPayloadFilters.filters;
     runInAction(() => {
       this.usersPayloadFilters.filters = [...oldFilters, newFilter];
+      this.usersPayloadFilters.page = 1;
     });
   };
 
   updateUserFilter = (filterIndex: number, filter: Filter) => {
     this.usersPayloadFilters.filters[filterIndex] = filter;
+    this.usersPayloadFilters.page = 1;
   };
 
   removeUserFilter = (filterIndex: number) => {
     this.usersPayloadFilters.filters = this.usersPayloadFilters.filters.filter(
       (_filter, i) => i !== filterIndex,
     );
+    this.usersPayloadFilters.page = 1;
   };
 
   updateFilter = (filterIndex: number, filter: Filter) => {
     this.payloadFilters.filters[filterIndex] = filter;
+    this.payloadFilters.page = 1;
   };
 
   removeFilter = (filterIndex: number) => {
     this.payloadFilters.filters = this.payloadFilters.filters.filter(
       (_filter, i) => i !== filterIndex,
     );
+    this.payloadFilters.page = 1;
   };
 
   setLoading = (loading: boolean) => {

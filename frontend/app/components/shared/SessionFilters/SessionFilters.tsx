@@ -171,6 +171,7 @@ function SessionFilters() {
         handleRemove={handleAttributeRemove}
         handleUpdate={handleAttributeUpdate}
         handleAdd={searchStore.addFilter}
+        scope="sessions"
       />
     </Card>
   );

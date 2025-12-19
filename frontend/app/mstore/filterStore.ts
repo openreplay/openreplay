@@ -104,6 +104,7 @@ export default class FilterStore {
   fetchTopValues = async (
     id: string,
     isLive?: boolean,
+    page?: string,
   ): Promise<TopValue[]> => {
     if (this.topValues[id]?.length) {
       return this.topValues[id];
@@ -127,6 +128,9 @@ export default class FilterStore {
       }
       if (isLive) {
         params['live'] = 'true';
+      }
+      if (page) {
+        params['scope'] = page;
       }
       params.ac = filter.autoCaptured;
 

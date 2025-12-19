@@ -18,6 +18,7 @@ interface Props {
   isLast?: boolean;
   isLive?: boolean;
   isDurationFilter?: boolean;
+  scope?: string;
 }
 
 function FilterValue(props: Props) {
@@ -158,6 +159,7 @@ function FilterValue(props: Props) {
           params={params}
           commaQuery={true}
           isLive={props.isLive}
+          scope={props.scope}
         />
       );
 
