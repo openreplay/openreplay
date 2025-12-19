@@ -1,1 +1,1 @@
-export { default } from './AnimatedSVG';
+export { default, ICONS } from './AnimatedSVG';

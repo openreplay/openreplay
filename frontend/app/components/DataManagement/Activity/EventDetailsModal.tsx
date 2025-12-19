@@ -12,6 +12,7 @@ import { getEventIcon } from './getEventIcon';
 import Tabs from 'Components/shared/Tabs';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import AnimatedSVG, { ICONS } from '@/components/shared/AnimatedSVG';
 
 const tabs = [
   {
@@ -55,8 +56,13 @@ function EventDetailsModal({
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState(tabs[0].value);
   const [view, setView] = React.useState(views[0].value);
-  const { data: event } = useQuery<Event | null>({
+  const {
+    data: event,
+    error,
+    isPending,
+  } = useQuery<Event | null>({
     queryKey: ['event-details', event_id],
+    retry: false,
     queryFn: async () => {
       const data = await analyticsService.getEvent(event_id);
       return new Event(data);
@@ -110,16 +116,43 @@ function EventDetailsModal({
     return !(key in event.defaultProps);
   };
 
-  return (
-    <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
-      <div className={'flex justify-between items-center'}>
-        <div className={'font-semibold text-xl'}>Event</div>
-        <div className={'p-2 cursor-pointer'} onClick={onClose}>
-          <X size={16} />
+  const header = (
+    <div className={'flex justify-between items-center'}>
+      <div className={'font-semibold text-xl'}>Event</div>
+      <div className={'p-2 cursor-pointer'} onClick={onClose}>
+        <X size={16} />
+      </div>
+    </div>
+  );
+  console.log(isPending, error);
+  if (isPending) {
+    return (
+      <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
+        {header}
+        <div className="font-semibold">Loading...</div>
+      </div>
+    );
+  }
+  if (!isPending && error) {
+    return (
+      <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
+        {header}
+        <div className="flex flex-col w-full items-center justify-center mt-8 gap-4">
+          <AnimatedSVG name={ICONS.EMPTY_STATE} size={72} />
+          <div className="font-semibold">Error loading event details.</div>
         </div>
       </div>
+    );
+  }
+  return (
+    <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
+      {header}
       <div className={'flex items-center justify-between'}>
-        <div className={'px-2 py-1 rounded-lg bg-gray-lighter flex items-center gap-2'}>
+        <div
+          className={
+            'px-2 py-1 rounded-lg bg-gray-lighter flex items-center gap-2'
+          }
+        >
           <div
             className={
               'flex items-center gap-2 code-font fill-black color-black'
