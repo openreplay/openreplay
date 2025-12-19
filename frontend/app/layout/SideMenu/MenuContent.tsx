@@ -79,8 +79,9 @@ export default function MenuContent({
                         <Menu.Item
                           key={child.key}
                           className={cn('ml-8', {
-                            'ant-menu-item-selected !bg-active-dark-blue':
-                              isMenuItemActive(child.key),
+                            'ant-menu-item-selected': isMenuItemActive(
+                              child.key,
+                            ),
                           })}
                         >
                           <div className="flex items-center gap-4 hover-fill-teal">
