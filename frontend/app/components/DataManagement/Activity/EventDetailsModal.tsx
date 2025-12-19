@@ -124,7 +124,7 @@ function EventDetailsModal({
       </div>
     </div>
   );
-  console.log(isPending, error);
+
   if (isPending || !event) {
     return (
       <div className={'h-screen w-full flex flex-col gap-4 p-4'}>

@@ -147,15 +147,37 @@ function ActivityPage() {
   const appliedFilter = analyticsStore.payloadFilters;
   const appliedEvents = appliedFilter.filters.filter((f) => f.isEvent);
   const activeFilters = appliedFilter.filters.map((f) => f.name);
+  const eventFiltersWithIndices = appliedFilter.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => filter.isEvent);
+
+  const attributeFiltersWithIndices = appliedFilter.filters
+    .map((filter, originalIndex) => ({ filter, originalIndex }))
+    .filter(({ filter }) => !filter.isEvent);
+  const getOriginalEventIndex = (filteredIndex: number) => {
+    return eventFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
+  };
+
+  const getOriginalAttributeIndex = (filteredIndex: number) => {
+    return attributeFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
+  };
   const onAddFilter = (filter: Filter) => {
     analyticsStore.addFilter(filter);
   };
-  const onUpdateFilter = (filterIndex: number, filter: Filter) => {
-    analyticsStore.updateFilter(filterIndex, filter);
+  const onUpdateFilter = (filterIndex: number, filter: Filter, isEvent: boolean) => {
+    const index = isEvent
+      ? getOriginalEventIndex(filterIndex)
+      : getOriginalAttributeIndex(filterIndex);
+    if (index === -1) return;
+    analyticsStore.updateFilter(index, filter);
     analyticsStore.fetchEvents();
   };
-  const onRemoveFilter = (filterIndex: number) => {
-    analyticsStore.removeFilter(filterIndex);
+  const onRemoveFilter = (filterIndex: number, isEvent: boolean) => {
+    const index = isEvent
+      ? getOriginalEventIndex(filterIndex)
+      : getOriginalAttributeIndex(filterIndex);
+    if (index === -1) return;
+    analyticsStore.removeFilter(index);
   };
 
   const [editCols, setEditCols] = React.useState(false);
@@ -208,7 +230,7 @@ function ActivityPage() {
           right: true,
         },
         () => {
-          history.replace({ search: '' });
+          history.replace({ search: undefined });
         },
       );
     } else {
@@ -303,8 +325,8 @@ function ActivityPage() {
           isDraggable={true}
           showIndices={true}
           className="mt-2"
-          handleRemove={onRemoveFilter}
-          handleUpdate={onUpdateFilter}
+          handleRemove={(i) => onRemoveFilter(i, true)}
+          handleUpdate={(i, filter) => onUpdateFilter(i, filter, true)}
           handleAdd={onAddFilter}
         />
 
@@ -334,8 +356,8 @@ function ActivityPage() {
           className="mt-2"
           isDraggable={false}
           showIndices={false}
-          handleRemove={onRemoveFilter}
-          handleUpdate={onUpdateFilter}
+          handleRemove={(i) => onRemoveFilter(i, false)}
+          handleUpdate={(i, filter) => onUpdateFilter(i, filter, false)}
           handleAdd={onAddFilter}
           scope="events"
         />
