@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 
-const Logo = require('../../svg/logo-gray.svg').default;
+const Logo = new URL('../../svg/logo-gray.svg', import.meta.url);
 
 function VersionTag() {
   const { userStore } = useStore();
