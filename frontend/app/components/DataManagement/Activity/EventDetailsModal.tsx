@@ -226,12 +226,12 @@ function EventDetailsModal({
         </div>
       ) : (
         <div
-          className={'relative overflow-y-auto'}
+          className={'relative overflow-y-auto bg-gray-lighter p-2 rounded-lg'}
           style={{ height: 'calc(100% - 200px)' }}
         >
           <div
             onClick={onCopy}
-            className={'absolute right-0 top-0 cursor-pointer hover:text-blue'}
+            className={'absolute right-2 top-2 cursor-pointer hover:text-blue'}
           >
             <Files size={16} />
           </div>

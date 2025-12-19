@@ -7,9 +7,6 @@ tracker.analytics.people.setProperties({ plan: 'pro', signupDate: '2024-01-01' }
 tracker.analytics.track('button_clicked', { buttonName: 'signup' })
 tracker.analytics.events.setProperty('last_page', 'homepage')
 ```
-
-## 17.0.2
-
 - improvements around old chrome tabs retaining frozen state
 
 ## 17.0.1
