@@ -71,7 +71,7 @@ func (b *bulkImpl) Send() error {
 		}
 	}
 	err = batch.Send()
-	//log.Printf("[!] batch name: %s, rows: %d, duration: %d ms", b.table, b.counter, time.Now().Sub(start).Milliseconds())
+	// log.Printf("[!] batch name: %s, rows: %d, duration: %d ms", b.table, b.counter, time.Now().Sub(start).Milliseconds())
 	// Save bulk metrics
 	if b.metrics != nil {
 		b.metrics.RecordBulkElements(float64(len(b.values)), "ch", b.table)

@@ -36,8 +36,8 @@ type dataSaverImpl struct {
 	conn         driver.Conn
 	startTime    int
 	endTime      int
-	usersOffset  int
 	currUser     *UserRecord
+	lastTs       time.Time
 	eventsOffset int
 }
 
@@ -50,6 +50,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 		sessions: sessions,
 		done:     make(chan struct{}, 1),
 		conn:     conn,
+		lastTs:   time.Now(),
 	}
 	var err error
 	ds.startTime, err = parseHHMM(cfg.PAUpdaterStartTime)
@@ -226,7 +227,7 @@ func toInt(v interface{}) (int, bool) {
 }
 
 func (ds *dataSaverImpl) run() {
-	updateTimer := time.NewTimer(ds.cfg.PAUpdaterTickDuration)
+	updateTimer := time.NewTimer(0)
 	defer updateTimer.Stop()
 
 	for {
@@ -260,12 +261,11 @@ func (ds *dataSaverImpl) updateEvents() error {
 	for rowsCounter < ds.cfg.CHSendBatchSizeLimit {
 		// Use current or load a new user
 		if err = ds.loadNewUser(); err != nil {
-			ds.log.Error(context.Background(), "can't load new user: %s", err)
+			ds.log.Error(context.Background(), "[!] can't load new user: %s", err)
 			break
 		}
-		ds.log.Info(context.Background(), "user record: %+v", ds.currUser)
-		//ds.currUser = nil // TODO: temp behavior
-		//continue
+		ds.log.Debug(context.Background(), "user record: %+v", ds.currUser)
+
 		// Get user's events to update
 		rows := make([]UserEvent, 0, ds.cfg.CHReadBatchSizeLimit)
 		if err := ds.conn.Select(context.Background(), &rows, selectEventsQuery,
@@ -275,22 +275,22 @@ func (ds *dataSaverImpl) updateEvents() error {
 		}
 		if len(rows) == 0 {
 			// No more events for this user
-			ds.log.Info(context.Background(), "no events found for user: %s", ds.currUser.UserID)
+			ds.log.Debug(context.Background(), "no events found for user: %s", ds.currUser.UserID)
 			ds.currUser = nil
 			continue
 		}
-		ds.log.Info(context.Background(), "got %d events to update", len(rows))
-		//addedNum, err := addUserEvents(batch, rows, ds.currUser)
-		//ds.eventsOffset += addedNum
-		//if err != nil {
-		//	ds.log.Error(context.Background(), "can't add events: %s", err)
-		//	break
-		//}
-		rowsCounter += len(rows)
-		ds.eventsOffset += len(rows)
+		ds.log.Debug(context.Background(), "got %d events to update", len(rows))
+		addedNum, err := addUserEvents(batch, rows, ds.currUser)
+		ds.eventsOffset += addedNum
+		if err != nil {
+			ds.log.Error(context.Background(), "can't add events: %s", err)
+			break
+		}
+		rowsCounter += addedNum
 		ds.log.Info(context.Background(), "total events: %d", rowsCounter)
+		ds.log.Info(context.Background(), "user record: %+v", ds.currUser)
 		if len(rows) < ds.cfg.CHReadBatchSizeLimit {
-			ds.log.Info(context.Background(), "got less that asked, selecting the next user")
+			ds.log.Debug(context.Background(), "got less that asked, selecting the next user")
 			ds.currUser = nil
 		}
 	}
@@ -302,19 +302,22 @@ func (ds *dataSaverImpl) loadNewUser() error {
 		return nil
 	}
 	rec := &UserRecord{}
-	if err := ds.conn.QueryRow(context.Background(), selectUser, ds.usersOffset).ScanStruct(rec); err != nil {
+	if err := ds.conn.QueryRow(context.Background(), selectUser, ds.lastTs).ScanStruct(rec); err != nil {
 		if strings.Contains(err.Error(), "no rows in result set") {
-			// Reset users offset
-			ds.log.Info(context.Background(), "[!] users offset reset")
-			ds.currUser = nil
-			ds.usersOffset = 0
+			ds.resetUser()
 		}
 		return err
 	}
 	ds.currUser = rec
-	ds.usersOffset++
+	ds.lastTs = rec.Timestamp
 	ds.eventsOffset = 0
 	return nil
+}
+
+func (ds *dataSaverImpl) resetUser() {
+	ds.log.Info(context.Background(), "[!] users offset reset")
+	ds.currUser = nil
+	ds.lastTs = time.Now()
 }
 
 func addUserEvents(batch clickhouse.Bulk, rows []UserEvent, userRec *UserRecord) (int, error) {
@@ -353,23 +356,28 @@ func addUserEvents(batch clickhouse.Bulk, rows []UserEvent, userRec *UserRecord)
 }
 
 type UserRecord struct {
-	ProjectID  uint16 `ch:"project_id"`
-	DistinctID string `ch:"distinct_id"`
-	UserID     string `ch:"$user_id"`
+	ProjectID  uint16    `ch:"project_id"`
+	DistinctID string    `ch:"distinct_id"`
+	UserID     string    `ch:"$user_id"`
+	Timestamp  time.Time `ch:"_timestamp"`
 }
 
-var selectUser = `SELECT project_id, distinct_id, "$user_id" FROM product_analytics.users_distinct_id 
-                                           ORDER BY _timestamp LIMIT 1 OFFSET ?`
+var selectUser = `SELECT *
+FROM (SELECT project_id, distinct_id, "$user_id", _timestamp
+      FROM product_analytics.users_distinct_id
+      ORDER BY _timestamp DESC
+      LIMIT 1 BY project_id,distinct_id) AS raw
+WHERE _timestamp < ?
+LIMIT 1;`
 
 var selectEventsQuery = `SELECT *
 FROM (SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured", 
        "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", 
        "$duration_s", error_id, issue_type, issue_id, "$properties", properties, "$user_id"
       FROM product_analytics.events
-      WHERE project_id = ?
-        AND distinct_id = ?
+      WHERE project_id = ? AND "$device_id" = ? -- TODO: change the condition in case of overwriting device_id
       ORDER BY _timestamp DESC
-      LIMIT 1 BY project_id, "$event_name", created_at, session_id)
+      LIMIT 1 BY event_id, "$event_name", created_at, session_id)
 WHERE empty("$user_id") LIMIT ? OFFSET ?;`
 
 var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, 
