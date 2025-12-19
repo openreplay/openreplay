@@ -211,9 +211,9 @@ func (s *serviceImpl) IsExists(projectID uint32, sessionID uint64) (bool, error)
 }
 
 func (s *serviceImpl) GetPlatform(projectID uint32, sessionID uint64) (string, error) {
-	query := `SELECT platform FROM public.sessions WHERE project_id = $1 AND session_id = $2`
+	query := `SELECT platform FROM public.projects WHERE project_id = $1`
 	var platform string
-	if err := s.conn.QueryRow(query, projectID, sessionID).Scan(&platform); err != nil {
+	if err := s.conn.QueryRow(query, projectID).Scan(&platform); err != nil {
 		return "", err
 	}
 	return platform, nil
