@@ -287,8 +287,7 @@ func (ds *dataSaverImpl) updateEvents() error {
 			break
 		}
 		rowsCounter += addedNum
-		ds.log.Info(context.Background(), "total events: %d", rowsCounter)
-		ds.log.Info(context.Background(), "user record: %+v", ds.currUser)
+		ds.log.Debug(context.Background(), "total events: %d", rowsCounter)
 		if len(rows) < ds.cfg.CHReadBatchSizeLimit {
 			ds.log.Debug(context.Background(), "got less that asked, selecting the next user")
 			ds.currUser = nil
