@@ -196,6 +196,8 @@ export default class API {
     )
     this.app = app
     if (options.projectKey && options.analytics?.active) {
+      const isSaas = !options.ingestPoint || options.ingestPoint.includes('api.openreplay.com')
+      const defaultEdp = 'https://api.openreplay.com/ingest'
       this.analytics = new AnalyticsSDK({
         localStorage: options.localStorage ?? localStorage,
         sessionStorage: options.sessionStorage ?? sessionStorage,
@@ -205,10 +207,9 @@ export default class API {
           this.app?.session.setUserID(id)
         },
         notStandalone: true,
-        ingestPoint:
-          options.analytics?.ingestPoint ??
-          options.ingestPoint ??
-          'https://api.openreplay.com/ingest',
+        ingestPoint: isSaas
+          ? defaultEdp
+          : (options.analytics?.ingestPoint ?? options.ingestPoint ?? defaultEdp),
         projectKey: options.projectKey,
       })
     }
