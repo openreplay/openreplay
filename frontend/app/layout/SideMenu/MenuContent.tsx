@@ -71,7 +71,14 @@ export default function MenuContent({
                     <Menu.SubMenu
                       key={it.key}
                       title={isCollapsed ? false : <Text>{it.label}</Text>}
-                      icon={<Icon name={it.icon} size={16} />}
+                      icon={
+                        <Icon
+                          name={it.icon}
+                          size={16}
+                          color={active ? 'teal' : 'black'}
+                          className="hover-fill-teal"
+                        />
+                      }
                       className="test"
                       rootClassName="test2"
                     >

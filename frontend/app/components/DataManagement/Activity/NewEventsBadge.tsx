@@ -15,7 +15,7 @@ function NewEventsBadge() {
 
   return count > 0 ? (
     <div
-      className="bg-amber p-1 flex w-full border-b text-center justify-center link"
+      className="bg-amber p-1 flex w-full border-b text-center justify-center link border-t border-t-gray-light"
       onClick={onReload}
     >
       {t('Show')} {numberWithCommas(count)} {t('New')}{' '}

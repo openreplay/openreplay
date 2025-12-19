@@ -14,6 +14,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { SortDropdown } from '../SessionsTabOverview/components/SessionSort/SessionSort';
 
 const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
@@ -99,17 +100,21 @@ function LiveSessionList() {
                   disabled: sortOptions.length === 0,
                 })}
               >
-                <Select
-                  plain
-                  right
-                  options={sortOptions}
-                  onChange={onSortChange}
-                  value={
-                    sortOptions.find((i: any) => i.value === filter.sort) ||
-                    sortOptions[0]
+                <SortDropdown
+                  defaultOption={sortOptions[0].value}
+                  onSort={({ key }: { key: string }) => {
+                    onSortChange({ value: { value: key } });
+                  }}
+                  sortOptions={sortOptions.map((option) => ({
+                    key: option.value,
+                    label: option.label,
+                    value: option.value,
+                  }))}
+                  current={
+                    sortOptions.find((i: any) => i.value === filter.sort)
+                      ?.label || t('Select')
                   }
                 />
-
                 <div className="mx-2" />
                 <SortOrderButton
                   onChange={(state: any) => {
