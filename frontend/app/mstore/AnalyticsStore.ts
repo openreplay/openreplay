@@ -216,7 +216,7 @@ export default class AnalyticsStore {
       return new User(data);
     } catch (e) {
       console.error('AnalyticsStore.fetchUserInfo', e);
-      return null;
+      throw e;
     } finally {
       this.setLoading(false);
     }

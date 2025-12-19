@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dropdown, Popover } from 'antd';
+import { Dropdown, Popover, Button } from 'antd';
 import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useModal } from 'App/components/Modal';
 import withPermissions from 'HOCs/withPermissions';
@@ -31,9 +31,19 @@ function UserInfo({ userId }: { userId: string }) {
   const history = useHistory();
   const { showModal } = useModal();
   const { analyticsStore, projectsStore } = useStore();
-
-  const { data: user, refetch } = useQuery({
+  const {
+    data: user,
+    refetch,
+    failureCount,
+    error,
+  } = useQuery({
     queryKey: ['user-info', userId],
+    retry: (c, e) => {
+      if (e.cause?.status === 404) {
+        return false;
+      }
+      return c < 3;
+    },
     queryFn: async () => {
       const response = await analyticsStore.fetchUserInfo(userId);
       return response;
@@ -114,7 +124,44 @@ function UserInfo({ userId }: { userId: string }) {
     );
   };
 
+  const openList = () => {
+    history.push(
+      withSiteId(
+        dataManagement.usersEventsList('users'),
+        projectsStore.activeSiteId ?? '',
+      ),
+    );
+  };
   const propLength = Object.keys(user?.properties ?? {}).length + 7;
+  if (error?.cause?.status === 404 || failureCount > 2) {
+    return (
+      <>
+        <Breadcrumb
+          items={[
+            {
+              label: 'Users',
+              to: dataManagement.usersEventsList('users'),
+              withSiteId: true,
+            },
+            { label: 'User Details' },
+          ]}
+        />
+
+        <div className={card}>
+          <div className="flex flex-col items-center justify-center p-8 gap-4">
+            <h2 className="text-xl font-semibold p-4 border-b">
+              Something went wrong or user was not found
+            </h2>
+            <div className="p-4">
+              The user you are looking for does not exist.
+            </div>
+            <Button onClick={openList}>Go Back</Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Breadcrumb
@@ -179,9 +226,7 @@ function UserInfo({ userId }: { userId: string }) {
                       {user?.distinctId.map((id) => (
                         <div className={'w-full group flex justify-between'}>
                           <span>{id}</span>
-                          <div
-                            className={'ml-2 invisible group-hover:visible'}
-                          >
+                          <div className={'ml-2 invisible group-hover:visible'}>
                             <CopyButton content={id} isIcon />
                           </div>
                         </div>
