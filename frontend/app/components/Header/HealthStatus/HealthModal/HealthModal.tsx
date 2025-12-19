@@ -1,6 +1,6 @@
 import React from 'react';
 // @ts-ignore
-import slide from 'App/svg/cheers.svg';
+const slide = new URL('../../../../svg/cheers.svg', import.meta.url);
 import { Loader } from 'UI';
 import { Button } from 'antd';
 import { getHighest } from 'App/constants/zindex';
@@ -96,18 +96,18 @@ function HealthModal({
                   {isLoading
                     ? null
                     : Object.keys(healthResponse.healthMap).map((service) => (
-                      <React.Fragment key={service}>
-                        <Category
-                          onClick={() => setSelectedService(service)}
-                          healthOk={
-                            healthResponse.healthMap[service].healthOk
-                          }
-                          name={healthResponse.healthMap[service].name}
-                          isSelectable
-                          isSelected={selectedService === service}
-                        />
-                      </React.Fragment>
-                    ))}
+                        <React.Fragment key={service}>
+                          <Category
+                            onClick={() => setSelectedService(service)}
+                            healthOk={
+                              healthResponse.healthMap[service].healthOk
+                            }
+                            name={healthResponse.healthMap[service].name}
+                            isSelectable
+                            isSelected={selectedService === service}
+                          />
+                        </React.Fragment>
+                      ))}
                 </div>
                 <div
                   className="bg-gray-lightest border-l w-fit border-figmaColors-divider overflow-y-scroll relative"
@@ -118,7 +118,7 @@ function HealthModal({
                       service={healthResponse.healthMap[selectedService]}
                     />
                   ) : (
-                    <img src={slide} width={392} />
+                    <img src={slide} width={392} className="w-full h-full" />
                   )}
                 </div>
               </div>
