@@ -44,7 +44,8 @@ spec:
           {{- end}}
           env:
             - name: LICENSE_KEY
-              value: '{{ .Values.global.enterpriseEditionLicense }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 18 }}
             - name: ASSIST_KEY
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}

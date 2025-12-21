@@ -80,7 +80,8 @@ spec:
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-spot-secret" "ctx" .) | nindent 18 }}
             - name: LICENSE_KEY
-              value: '{{ .Values.global.enterpriseEditionLicense }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 18 }}
             - name: version_number
               value: '{{ .Chart.AppVersion }}'
             - name: pg_host

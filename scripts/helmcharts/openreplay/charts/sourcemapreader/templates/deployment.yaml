@@ -55,7 +55,8 @@ spec:
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
             - name: LICENSE_KEY
-              value: '{{ .Values.global.enterpriseEditionLicense }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 18 }}
             # We need to check what is the object store endpoint.
             # There can be 4 options
             # 1. Using minio inside kube clster

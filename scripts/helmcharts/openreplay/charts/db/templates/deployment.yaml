@@ -51,7 +51,8 @@ spec:
             - name: CLICKHOUSE_STRING
               value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
             - name: LICENSE_KEY
-              value: '{{ .Values.global.enterpriseEditionLicense }}'
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 18 }}
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
