@@ -87,7 +87,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 			for _, action := range sdkDataBatch.Data.UserActions {
 				ds.log.Info(context.Background(), "userAction: %+v", action)
 				if action.UserID == "" {
-					ds.log.Error(context.Background(), "empty userID for session: %d", sessID)
+					ds.log.Debug(context.Background(), "empty userID for session: %d", sessID)
 					continue
 				}
 				switch action.Type {

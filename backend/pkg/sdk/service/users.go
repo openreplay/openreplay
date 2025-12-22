@@ -42,7 +42,8 @@ var (
 func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 	user.UserID = strings.TrimSpace(user.UserID)
 	if user.UserID == "" {
-		return fmt.Errorf("empty userID for session: %d", session.SessionID)
+		u.log.Debug(context.Background(), "add user with empty userID, session: %d", session.SessionID)
+		return nil
 	}
 	if session.UserID != nil && *session.UserID == user.UserID {
 		u.log.Debug(context.Background(), "user %s already exists", user.UserID)
