@@ -70,6 +70,7 @@ def autocomplete_events(projectId: int, q: Optional[str] = None,
 
 @app.get('/{projectId}/properties/autocomplete', tags=["autocomplete"])
 def autocomplete_properties(projectId: int, propertyName: str, eventName: Optional[str] = None,
+                            userId: Optional[str] = None, scope: Optional[str] = None,
                             q: Optional[str] = None, ac: bool = Query(description="auto captured"),
                             live: bool = False, context: schemas.CurrentContext = Depends(OR_context)):
     if live:
@@ -79,11 +80,18 @@ def autocomplete_properties(projectId: int, propertyName: str, eventName: Option
         propertyName = helper.key_to_snake_case(propertyName)
     # restrict autocomplete-simple to auto-captured properties only
     # (for the moment as we don't have other way to tell if it belongs to events or something else)
-    if ac and autocomplete_simple.is_simple_property(source='session', name=propertyName):
+    if scope == "sessions":
         return {"data": autocomplete_simple.search_simple_property(project_id=projectId, name=propertyName,
-                                                                   source='session', q=q)}
-    return {"data": autocomplete.search_properties(project_id=projectId,
-                                                   event_name=None if not eventName \
-                                                                      or len(eventName) == 0 else eventName,
-                                                   property_name=propertyName,
-                                                   q=None if not q or len(q) == 0 else q)}
+                                                                   source=scope, q=q)}
+    elif scope == "users":
+        return {"data": autocomplete.search_users_properties(project_id=projectId,
+                                                             user_id=None if not userId \
+                                                                             or len(userId) == 0 else userId,
+                                                             property_name=propertyName,
+                                                             q=None if not q or len(q) == 0 else q)}
+
+    return {"data": autocomplete.search_events_properties(project_id=projectId,
+                                                          event_name=None if not eventName \
+                                                                             or len(eventName) == 0 else eventName,
+                                                          property_name=propertyName,
+                                                          q=None if not q or len(q) == 0 else q)}

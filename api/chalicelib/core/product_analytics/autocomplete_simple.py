@@ -8,19 +8,8 @@ from chalicelib.utils.ch_client import ClickHouseClient
 cache = TTLCache(maxsize=1000, ttl=180)
 
 
-def is_simple_property(name: str, source: str = "session") -> bool:
-    supported = {
-        "session": ["user_browser", "user_country", "user_state", "user_city", "user_device", "rev_id", "referrer",
-                    "utm_source", "utm_medium", "utm_campaign", "user_id", "user_anonymous_id", "metadata_1",
-                    "metadata_2", "metadata_3", "metadata_4", "metadata_5", "metadata_6", "metadata_7", "metadata_8",
-                    "metadata_9", "metadata_10", "user_browser_version"]
-    }
-
-    return name in supported.get(source, [])
-
-
 @cached(cache)
-def search_simple_property(project_id: int, name: str, source: str = 'session', q: Optional[str] = None):
+def search_simple_property(project_id: int, name: str, source: str = 'sessions', q: Optional[str] = None):
     with ClickHouseClient() as ch_client:
         full_args = {
             "project_id": project_id,
