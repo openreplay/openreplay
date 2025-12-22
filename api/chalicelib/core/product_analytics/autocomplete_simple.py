@@ -13,7 +13,7 @@ def is_simple_property(name: str, source: str = "session") -> bool:
         "session": ["user_browser", "user_country", "user_state", "user_city", "user_device", "rev_id", "referrer",
                     "utm_source", "utm_medium", "utm_campaign", "user_id", "user_anonymous_id", "metadata_1",
                     "metadata_2", "metadata_3", "metadata_4", "metadata_5", "metadata_6", "metadata_7", "metadata_8",
-                    "metadata_9", "metadata_10"]
+                    "metadata_9", "metadata_10", "user_browser_version"]
     }
 
     return name in supported.get(source, [])
