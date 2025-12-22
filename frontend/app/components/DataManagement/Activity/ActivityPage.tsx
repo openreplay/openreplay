@@ -237,6 +237,7 @@ function ActivityPage() {
           width: 620,
           right: true,
         },
+        () => history.replace({ search: undefined }),
       );
     } else {
       hideModal();
