@@ -475,8 +475,8 @@ function migrate_ingress_controller() {
         kubectl delete serviceaccount -n "${APP_NS}" -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true
 
         # Delete old IngressClass (may conflict with new one)
+        # Delete old IngressClass only if managed by old controller
         kubectl delete ingressclass openreplay --ignore-not-found=true 2>/dev/null || true
-        kubectl delete ingressclass nginx --ignore-not-found=true 2>/dev/null || true
 
         # Delete old admission webhooks that may block new controller
         kubectl delete validatingwebhookconfiguration -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true 2>/dev/null || true
