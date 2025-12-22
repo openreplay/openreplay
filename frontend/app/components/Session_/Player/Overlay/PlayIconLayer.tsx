@@ -58,7 +58,7 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
   }, []);
 
   const doubleLeft = () => {
-    jumpInterval(SKIP_INTERVALS[15]);
+    jumpInterval(-SKIP_INTERVALS[15]);
   };
   const doubleRight = () => {
     jumpInterval(SKIP_INTERVALS[15]);
