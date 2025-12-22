@@ -168,7 +168,7 @@ function SessionWithIssue({
 }) {
   const [showDescription, setShowDescription] = React.useState(false);
   const onShow = () => {
-    setShowDescription(true);
+    setShowDescription(!showDescription);
   };
   if (!issueSession) return null;
   return (
@@ -196,11 +196,9 @@ function SessionWithIssue({
               </Tag>
             ))}
           </div>
-          {!showDescription ? (
-            <div className="text-sm color-blue cursor-pointer" onClick={onShow}>
-              Learn more
-            </div>
-          ) : null}
+          <div className="text-sm color-blue cursor-pointer" onClick={onShow}>
+            {showDescription ? 'Show less' : 'Learn more'}
+          </div>
         </div>
         {showDescription ? (
           <>
