@@ -166,20 +166,11 @@ function SessionWithIssue({
   index: number;
   hideModal: () => void;
 }) {
-  const [displayType, setDisplayType] = React.useState<'issue' | 'journey'>(
-    'issue',
-  );
-
+  const [showDescription, setShowDescription] = React.useState(false);
+  const onShow = () => {
+    setShowDescription(true);
+  };
   if (!issueSession) return null;
-
-  const labels =
-    displayType === 'issue'
-      ? issueSession.issueLabels
-      : issueSession.journeyLabels;
-  const description =
-    displayType === 'issue'
-      ? issueSession.issueDescription
-      : issueSession.journey;
   return (
     <div className={'mb-2'}>
       <SessionItem
@@ -193,29 +184,29 @@ function SessionWithIssue({
         onBeforeOpen={hideModal}
       />
       <div className="px-4 py-2 border-b border-b-gray-light flex flex-col gap-2">
-        <div className={'flex items-center gap-2'}>
-          <Select
-            options={[
-              { label: 'Issue', value: 'issue' },
-              { label: 'Journey', value: 'journey' },
-            ]}
-            className={"w-[90px]"}
-            size={'small'}
-            value={displayType}
-            popupMatchSelectWidth
-            onChange={(value) => setDisplayType(value)}
-          />
-          <div className="flex items-center flex-wrap gap-2">
-            {labels.map((l, i) => (
-              <Tag className="!m-0" key={`${l.replace(' ', '.')}_${i}`}>
-                {l}
-              </Tag>
-            ))}
+        <div className="rounded-lg p-2 bg-gray-lightest flex flex-col gap-2">
+          <div>{issueSession.issueDescription}</div>
+        </div>
+        {showDescription ? (
+          <>
+            <div className="flex items-center flex-wrap gap-2">
+              {issueSession.journeyLabels.map((l, i) => (
+                <Tag className="!m-0" key={`${l.replace(' ', '.')}_${i}`}>
+                  {l}
+                </Tag>
+              ))}
+            </div>
+            <div className="text-gray-500 text-sm">
+              {issueSession.journey
+                ? issueSession.journey
+                : 'No description available'}
+            </div>
+          </>
+        ) : (
+          <div className="text-sm color-blue cursor-pointer" onClick={onShow}>
+            Learn more
           </div>
-        </div>
-        <div className="text-gray-500 text-sm">
-          {description ? description : 'No description available'}
-        </div>
+        )}
       </div>
     </div>
   );
