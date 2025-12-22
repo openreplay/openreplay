@@ -75,6 +75,7 @@ interface Props {
   noWrap?: boolean;
   timestamp?: number;
   onBeforeOpen?: () => void;
+  noHover?: boolean;
 }
 
 const PREFETCH_STATE = {
@@ -112,6 +113,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     slim,
     noWrap,
     onBeforeOpen,
+    noHover,
   } = props;
 
   const {
@@ -284,6 +286,7 @@ function SessionItem(props: RouteComponentProps & Props) {
       <div
         className={cn(
           stl.sessionItem,
+          noHover ? '' : stl.hoverable,
           'flex flex-col',
           slim ? 'px-4 py-2 text-sm' : 'p-4',
           noWrap ? '!px-0 py-2' : '',

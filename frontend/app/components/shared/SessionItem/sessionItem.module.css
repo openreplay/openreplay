@@ -9,23 +9,6 @@
       opacity: 1;
     }
   }
-
-  &:hover {
-    background-color: $active-blue;
-    /* border: solid thin $active-blue-border; */
-    transition: all 0.2s;
-
-    & .playLink {
-      transition: all 0.4s;
-      opacity: 1;
-    }
-
-    & .favorite {
-      transition: all 0.4s;
-      opacity: 1;
-    }
-  }
-
   /* & .iconStack {
     min-width: 200px;
     display: flex;
@@ -72,6 +55,24 @@
   & .count {
     font-size: 18px;
     font-weight: 400;
+  }
+}
+
+.hoverable {
+  &:hover {
+    background-color: $active-blue;
+    /* border: solid thin $active-blue-border; */
+    transition: all 0.2s;
+
+    & .playLink {
+      transition: all 0.4s;
+      opacity: 1;
+    }
+
+    & .favorite {
+      transition: all 0.4s;
+      opacity: 1;
+    }
   }
 }
 

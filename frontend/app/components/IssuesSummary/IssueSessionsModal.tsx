@@ -175,6 +175,7 @@ function SessionWithIssue({
     <div className={'mb-2'}>
       <SessionItem
         key={index}
+        noHover
         session={issueSession.session}
         query={
           issueSession.issueTimestamp
