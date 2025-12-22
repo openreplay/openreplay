@@ -451,7 +451,48 @@ function version_specific_checks() {
             fi
         fi
     fi
+    # v1.24.0: Migrate from k8s/ingress-nginx to nginx/nginx-ingress controller
+    if [ "$version" -lt 1240 ]; then
+        migrate_ingress_controller
+    fi
     return
+}
+
+# Migrate from kubernetes/ingress-nginx to nginx/nginx-ingress
+# The two controllers have incompatible configurations
+function migrate_ingress_controller() {
+    log info "Migrating ingress controller from kubernetes/ingress-nginx to nginx/nginx-ingress"
+
+    # Check if old k8s ingress-nginx is deployed by looking for its specific labels
+    if kubectl get deployment -n "${APP_NS}" -l app.kubernetes.io/name=ingress-nginx,app.kubernetes.io/component=controller --no-headers 2>/dev/null | grep -q .; then
+        log info "Detected old kubernetes/ingress-nginx controller, removing..."
+
+        # Delete old ingress-nginx resources
+        # The helm release will be upgraded but we need to clean conflicting resources first
+        kubectl delete deployment -n "${APP_NS}" -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true
+        kubectl delete service -n "${APP_NS}" -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true
+        kubectl delete configmap -n "${APP_NS}" -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true
+        kubectl delete serviceaccount -n "${APP_NS}" -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true
+
+        # Delete old IngressClass (may conflict with new one)
+        kubectl delete ingressclass openreplay --ignore-not-found=true 2>/dev/null || true
+        kubectl delete ingressclass nginx --ignore-not-found=true 2>/dev/null || true
+
+        # Delete old admission webhooks that may block new controller
+        kubectl delete validatingwebhookconfiguration -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true 2>/dev/null || true
+
+        # Delete old ClusterRole and ClusterRoleBinding
+        kubectl delete clusterrole -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true 2>/dev/null || true
+        kubectl delete clusterrolebinding -l app.kubernetes.io/name=ingress-nginx --ignore-not-found=true 2>/dev/null || true
+
+        log info "Old ingress-nginx resources removed"
+    else
+        log info "No old kubernetes/ingress-nginx controller detected, skipping cleanup"
+    fi
+
+    # Mark that ingress migration is needed for vars.yaml processing
+    INGRESS_MIGRATION_NEEDED=1
+    export INGRESS_MIGRATION_NEEDED
 }
 
 function upgrade() {
@@ -519,10 +560,23 @@ function upgrade() {
     cp "$OR_DIR/vars.yaml" old_vars.yaml
     # Remove global.quickwit and .quickwit keys from old vars.yaml if present
     yq -i 'del(.global.quickwit) | del(.quickwit)' old_vars.yaml
+    # Remove ingress-nginx.controller block if migrating from k8s to nginx controller (incompatible config structure)
+    if [[ $INGRESS_MIGRATION_NEEDED -eq 1 ]]; then
+        log info "Removing old ingress-nginx.controller config (incompatible with new nginx/nginx-ingress controller)"
+        # Backup old controller config for reference, then remove it so new defaults are used
+        yq -i '."ingress-nginx-old-k8s-controller" = ."ingress-nginx".controller | del(."ingress-nginx".controller)' old_vars.yaml
+    fi
     or_new_version=$(awk '/fromVersion/{print $2}' <"vars.yaml")
     yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' vars.yaml >new_vars.yaml
     mv new_vars.yaml vars.yaml
     templater -i vars.yaml -o vars.yaml
+
+    # Apply new ingress-nginx CRDs if migrating (Helm doesn't update CRDs on upgrade)
+    if [[ $INGRESS_MIGRATION_NEEDED -eq 1 ]]; then
+        log info "Applying new nginx-ingress CRDs"
+        kubectl apply -f openreplay/charts/ingress-nginx/crds/ 2>/dev/null || log warn "Failed to apply some CRDs (may already exist or not needed)"
+    fi
+
     or_helm_upgrade
 
     # Update the version
