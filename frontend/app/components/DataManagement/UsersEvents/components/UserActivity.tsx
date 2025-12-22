@@ -17,10 +17,13 @@ import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { observer } from 'mobx-react-lite';
 import { Button } from 'antd';
 import FilterEntriesModal from 'Components/DataManagement/FilterEntriesModal';
+import FullPagination from 'Shared/FullPagination';
 
 const card = 'rounded-lg border bg-white';
 
 function Activity({ userId }: { userId: string }) {
+  const limit = 50;
+  const [page, setPage] = React.useState(1);
   const history = useHistory();
   const [period, setPeriod] = React.useState<{
     start: number;
@@ -43,22 +46,23 @@ function Activity({ userId }: { userId: string }) {
   const [hiddenTypes, setHiddenTypes] = React.useState<string[]>([]);
   const [editCols, setEditCols] = React.useState(false);
   const { showModal, hideModal } = useModal();
-  const [sort, setSort] = React.useState<'asc' | 'desc'>('desc');
   const { data: list, isPending } = useQuery({
     queryKey: [
       'user-events',
       userId,
-      sort,
       period.start,
       period.end,
       hiddenTypes,
+      page,
     ],
     queryFn: async () => {
       const response = await analyticsStore.fetchUserEvents(
         userId,
-        sort,
+        'desc',
         period,
         hiddenTypes,
+        page,
+        limit,
       );
       return response;
     },
@@ -119,6 +123,11 @@ function Activity({ userId }: { userId: string }) {
     );
     setEditCols(false);
   };
+
+  const total = list?.total ?? 0;
+  const onPageChange = (newPage: number) => {
+    setPage(newPage);
+  };
   return (
     <div className={card}>
       <div className={'px-4 py-2 flex items-center gap-2 relative'}>
@@ -166,6 +175,16 @@ function Activity({ userId }: { userId: string }) {
         byDays={byDays}
         onItemClick={onItemClick}
       />
+      {list && total > limit ? (
+        <FullPagination
+          page={page}
+          limit={limit}
+          total={total}
+          listLen={list?.events.length}
+          onPageChange={onPageChange}
+          entity={'events'}
+        />
+      ) : null}
     </div>
   );
 }

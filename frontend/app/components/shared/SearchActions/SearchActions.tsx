@@ -29,18 +29,17 @@ function SearchActions() {
     return t('Sessions');
   }, [activeTab?.type, isEnterprise, i18n.language]);
 
-  const showAiField = activeTab?.type === 'sessions';
   const showPanel = hasEvents || hasFilters || aiFiltersStore.isLoading;
   return !metaLoading ? (
     <div className="mb-2">
       {/* mobile */}
       <div className={'flex flex-col lg:hidden items-start  gap-2 w-full'}>
-        <div className='flex items-center justify-between w-full'>
+        <div className="flex items-center justify-between w-full">
           <h2 className="text-2xl capitalize mr-4 inline">{title}</h2>
           <div className={'ml-auto flex items-center gap-1'}>
-            <SavedSearch/>
+            <SavedSearch />
             <Divider type="vertical" className="h-6" />
-            <Tooltip title='Clear Search Filters'>
+            <Tooltip title="Clear Search Filters">
               <Button
                 type="text"
                 disabled={!hasSearch}

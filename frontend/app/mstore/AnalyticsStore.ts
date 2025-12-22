@@ -235,16 +235,18 @@ export default class AnalyticsStore {
     sort: 'asc' | 'desc',
     period: { start: number; end: number },
     hiddenEvents: string[] = [],
+    page: number = 1,
+    limit: number = 100,
   ) => {
     this.setLoading(true);
     try {
       const data = await analyticsService.getUserActivity(userId, {
         sortOrder: sort,
         sortBy: 'created_at',
-        limit: 100,
+        limit,
         startTimestamp: period.start,
         endTimestamp: period.end,
-        page: 1,
+        page,
         hideEvents: hiddenEvents,
       });
       return {
