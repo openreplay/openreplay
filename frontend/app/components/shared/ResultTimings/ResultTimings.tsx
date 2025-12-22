@@ -1,5 +1,4 @@
 import React from 'react';
-import { List } from 'immutable';
 import { percentOf } from 'App/utils';
 import { NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -8,7 +7,7 @@ import Barwrapper from './Barwrapper';
 import Bar from './Bar';
 import { useTranslation } from 'react-i18next';
 
-function ResultTimings({ duration, timing }) {
+function ResultTimings({ timing }) {
   const { t } = useTranslation();
   const { blocked, connect, dns, queued, receive, send, ssl, wait } = timing;
   const _dns = Math.max(dns, 0);
@@ -35,7 +34,7 @@ function ResultTimings({ duration, timing }) {
         </div>
       }
       // animatedIcon="no-results"
-      show={List.isList(timing)}
+      show={!timing}
       size="small"
     >
       <div className="bg-white flex flex-col rounded m-3">

@@ -38,6 +38,8 @@ function NewSiteForm({ location: { pathname }, onClose }: Props) {
   }, []);
 
   const onSubmit = (e: FormEvent) => {
+    const errSize = (response) =>
+      response?.errors.size || response?.errors.length || 0;
     e.preventDefault();
     if (!projectsStore.instance) return;
     if (projectsStore.instance.id && projectsStore.instance.exists()) {
@@ -47,7 +49,7 @@ function NewSiteForm({ location: { pathname }, onClose }: Props) {
           projectsStore.instance.toData(),
         )
         .then((response: any) => {
-          if (!response || !response.errors || response.errors.size === 0) {
+          if (!response || !response.errors || errSize(response) === 0) {
             onClose(null);
             if (!pathname.includes('onboarding')) {
               void fetchList();
@@ -59,7 +61,7 @@ function NewSiteForm({ location: { pathname }, onClose }: Props) {
         });
     } else {
       saveProject(projectsStore.instance!).then((response: any) => {
-        if (!response || !response.errors || response.errors.size === 0) {
+        if (!response || !response.errors || errSize(response) === 0) {
           onClose(null);
           searchStore.clearSearch();
           mstore.searchStoreLive.clearSearch();

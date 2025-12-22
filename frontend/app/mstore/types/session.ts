@@ -1,5 +1,4 @@
 import { runInAction, makeAutoObservable, observable } from 'mobx';
-import { Map } from 'immutable';
 import { Duration } from 'luxon';
 
 const HASH_MOD = 1610612741;
@@ -16,43 +15,24 @@ export function hashString(s: string): number {
 
 export default class Session {
   intertag = '_mobx';
-
   sessionId: string = '';
-
   viewed: boolean = false;
-
   duration: number = 0;
-
   durationMs: number = 0;
-
-  metadata: any = Map();
-
+  metadata: any = {};
   startedAt: number = 0;
-
   userBrowser: string = '';
-
   userOs: string = '';
-
   userId: string = '';
-
   userDeviceType: string = '';
-
   userCountry: string = '';
-
   userCity: string = '';
-
   userState: string = '';
-
   eventsCount: number = 0;
-
   userNumericHash: number = 0;
-
   userDisplayName: string = '';
-
   canvasURL: string[] = [];
-
   domURL: string[] = [];
-
   devtoolsURL: string[] = [];
 
   constructor() {

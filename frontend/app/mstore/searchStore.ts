@@ -5,7 +5,6 @@ import {
   generateFilterOptions,
   liveFiltersMap,
 } from 'Types/filter/newFilter';
-import { List } from 'immutable';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { searchService, sessionService } from 'App/services';
 import Search from 'App/mstore/types/search';
@@ -71,7 +70,7 @@ export const TAB_MAP: any = {
 class SearchStore {
   list: SavedSearch[] = [];
   latestRequestTime: number | null = null;
-  latestList = List();
+  latestList = [];
   alertMetricId: number | null = null;
   instance = new Search({
     startDate: Date.now() - 24 * 60 * 60 * 1000,
@@ -89,7 +88,7 @@ class SearchStore {
   pageSize = PER_PAGE;
   activeTab = { name: 'All', type: 'all' };
   scrollY = 0;
-  sessions = List();
+  sessions = [];
   total: number = 0;
   latestSessionCount: number = 0;
   loadingFilterSearch = false;
@@ -573,7 +572,7 @@ class SearchStore {
     filter = this.applyTagFilter(filter, this.activeTags);
     filter = this.applyDurationFilter(filter);
     this.latestRequestTime = filter.startDate;
-    this.latestList = List();
+    this.latestList = [];
     this.searchInProgress = true;
     await sessionStore
       .fetchSessions(

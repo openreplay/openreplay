@@ -124,7 +124,7 @@ function ExceptionsCont() {
             <div className="px-4">
               <Loader loading={loading}>
                 <NoContent
-                  show={!loading && errorStack.size === 0}
+                  show={!loading && errorStack.length === 0}
                   title={t('Nothing found!')}
                 >
                   <ErrorDetails

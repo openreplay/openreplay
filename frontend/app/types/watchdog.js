@@ -1,5 +1,4 @@
 import Record from 'Types/Record';
-import { Map } from 'immutable';
 
 const ERRORS = 'errors';
 const BAD_REQUEST = 'bad_request';
@@ -69,7 +68,7 @@ export default Record(
     ruleConfig: {},
     enabled: undefined,
     projectId: undefined,
-    payload: Map({ captureAll: false, rate: 0 }),
+    payload: { captureAll: false, rate: 0 },
     visible: undefined,
   },
   {

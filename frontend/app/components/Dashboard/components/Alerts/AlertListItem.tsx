@@ -21,8 +21,7 @@ const getThreshold = (threshold: number) => {
 };
 
 const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
-  // @ts-ignore god damn you immutable
-  if (webhooks.size === 0) {
+  if (webhooks.length === 0) {
     return 'OpenReplay';
   }
   const getSlackChannels = () =>

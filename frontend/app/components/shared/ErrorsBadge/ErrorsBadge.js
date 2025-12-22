@@ -15,7 +15,7 @@ function ErrorsBadge() {
   const projects = projectsStore.list;
   const errorsStats = errorsStore.stats;
   useEffect(() => {
-    if (projects.size === 0 || !!intervalId) return;
+    if (projects.length === 0 || !!intervalId) return;
 
     const params = {
       startTimestamp: weekRange.start.ts,

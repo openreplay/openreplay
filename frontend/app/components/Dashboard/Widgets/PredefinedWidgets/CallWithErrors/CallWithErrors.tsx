@@ -3,7 +3,6 @@ import { NoContent } from 'UI';
 import { getRE } from 'App/utils';
 import cn from 'classnames';
 import { NO_METRIC_DATA } from 'App/constants/messages';
-import { List } from 'immutable';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import stl from './callWithErrors.module.css';
 import MethodType from './MethodType';
@@ -82,12 +81,7 @@ function CallWithErrors(props: Props) {
             onChange={write}
           />
         </div>
-        <Table
-          small
-          cols={cols}
-          rows={List(_data)}
-          isTemplate={props.isTemplate}
-        />
+        <Table small cols={cols} rows={_data} isTemplate={props.isTemplate} />
       </div>
     </NoContent>
   );

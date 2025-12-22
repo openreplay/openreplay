@@ -1,5 +1,4 @@
 import React from 'react';
-import { List } from 'immutable';
 import { filtersMap } from 'Types/filter/newFilter';
 import { NoContent, Icon } from 'UI';
 import { tableColumnName } from 'App/constants/filterOptions';
@@ -38,7 +37,7 @@ function CustomMetricTable(props: Props) {
     isTemplate,
   } = props;
   const { t } = useTranslation();
-  const rows = List(data.values);
+  const rows = data.values;
 
   const onClickHandler = (event: any, data: any) => {
     const filters = Array<any>();

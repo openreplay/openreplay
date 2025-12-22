@@ -1,5 +1,4 @@
 import React from 'react';
-import { List } from 'immutable';
 import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
@@ -183,7 +182,7 @@ function UserCard({ className, width, height }) {
 const component = observer(UserCard);
 
 export default withRequest({
-  initialData: List(),
+  initialData: [],
   endpoint: '/metadata/session_search',
   dataWrapper: (data) => Object.values(data),
   dataName: 'similarSessions',

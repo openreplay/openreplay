@@ -1,5 +1,4 @@
 import React from 'react';
-import { List } from 'immutable';
 import cn from 'classnames';
 import { withRequest, withToggle } from 'HOCs';
 import { Icon, SlideModal, TextEllipsis } from 'UI';
@@ -7,8 +6,7 @@ import { Button } from 'antd';
 import stl from './metadataItem.module.css';
 import SessionList from './SessionList';
 
-
-class extends React.PureComponent {
+class MetadataItem extends React.PureComponent {
   state = {
     requested: false,
   };
@@ -80,9 +78,11 @@ class extends React.PureComponent {
   }
 }
 
-export default withToggle()(withRequest({
-  initialData: List(),
-  endpoint: '/metadata/session_search',
-  dataWrapper: (data) => Object.values(data),
-  dataName: 'similarSessions',
-})(MetadataItem));
+export default withToggle()(
+  withRequest({
+    initialData: [],
+    endpoint: '/metadata/session_search',
+    dataWrapper: (data) => Object.values(data),
+    dataName: 'similarSessions',
+  })(MetadataItem),
+);

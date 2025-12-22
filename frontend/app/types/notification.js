@@ -1,5 +1,4 @@
 import { DateTime } from 'luxon';
-import { Record, Map } from 'immutable';
 
 const ALERT = 'alert';
 
@@ -19,12 +18,12 @@ class Notification extends Record({
   description: '',
   type: '',
   filterKey: '',
-  options: Map({
+  options: {
     source: '',
     sourceId: '',
     projectId: '',
     sourceMeta: '',
-  }),
+  },
 }) {
   idKey = 'notificationId';
 }

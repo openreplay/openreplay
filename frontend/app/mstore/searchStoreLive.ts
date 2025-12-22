@@ -4,7 +4,6 @@ import {
   generateFilterOptions,
   liveFiltersMap,
 } from 'Types/filter/newFilter';
-import { List } from 'immutable';
 import { makeAutoObservable, reaction } from 'mobx';
 import Search from 'App/mstore/types/search';
 import { checkFilterValue, IFilter } from 'App/mstore/types/filter';
@@ -45,36 +44,21 @@ export const filterMap = ({
 });
 
 class SearchStoreLive {
-  list = List();
-
+  list = [];
   latestRequestTime: number | null = null;
-
-  latestList = List();
-
+  latestList = [];
   alertMetricId: number | null = null;
-
   instance = new Search({ sort: 'timestamp', order: 'desc' });
-
   instanceLive = new Search();
-
   savedSearch = new Search();
-
   filterSearchList: any = {};
-
   currentPage = 1;
-
   pageSize = PER_PAGE;
-
   activeTab = { name: 'All', type: 'all' };
-
   scrollY = 0;
-
-  sessions = List();
-
+  sessions = [];
   total: number = 0;
-
   loadingFilterSearch = false;
-
   loading = false;
 
   constructor() {
@@ -177,7 +161,7 @@ class SearchStoreLive {
       : null;
 
     if (index > -1) {
-    // Update existing filter
+      // Update existing filter
       // @ts-ignore
       this.instance.filters[index] = {
         ...this.instance.filters[index],
@@ -242,13 +226,13 @@ class SearchStoreLive {
 
   setLoading = (val: boolean) => {
     this.loading = val;
-  }
+  };
 
   fetchSessions = async (force?: boolean) => {
     if (!force && this.loading) {
       return;
     }
-    this.setLoading(true)
+    this.setLoading(true);
     try {
       await sessionStore.fetchLiveSessions({
         ...this.instance.toSearch(),
@@ -257,9 +241,9 @@ class SearchStoreLive {
     } catch (e) {
       console.error('Error fetching sessions:', e);
     } finally {
-      this.setLoading(false)
+      this.setLoading(false);
     }
-  }
+  };
 }
 
 export default SearchStoreLive;

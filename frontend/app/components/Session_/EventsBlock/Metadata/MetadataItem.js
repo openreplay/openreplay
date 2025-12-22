@@ -1,5 +1,4 @@
 import React from 'react';
-import { List } from 'immutable';
 import cn from 'classnames';
 import { withRequest, withToggle } from 'HOCs';
 import { Icon, SlideModal, TextEllipsis } from 'UI';
@@ -81,7 +80,7 @@ class MetadataItem extends React.PureComponent {
 
 export default withToggle()(
   withRequest({
-    initialData: List(),
+    initialData: [],
     endpoint: '/metadata/session_search',
     dataWrapper: (data) => Object.values(data),
     dataName: 'similarSessions',

@@ -1,5 +1,4 @@
 import React from 'react';
-import { getIn, get } from 'immutable';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import { Loader, Icon, JSONTree } from 'UI';
@@ -10,7 +9,7 @@ const { Panel } = Collapse;
 
 class SentryEventInfo extends React.PureComponent {
   makePanelsFromStackTrace(stacktrace) {
-    return get(stacktrace, 'frames', []).map(
+    return (stacktrace?.frames || []).map(
       ({ filename, function: method, lineNo, context = [] }) => ({
         key: `${filename}_${method}_${lineNo}`,
         header: (
@@ -23,7 +22,7 @@ class SentryEventInfo extends React.PureComponent {
           </span>
         ),
         content: (
-          <ol start={getIn(context, [0, 0], 0)} className={stl.lineList}>
+          <ol start={context?.[0]?.[0] || 0} className={stl.lineList}>
             {context.map(([ctxLineNo, codeText]) => (
               <li
                 key={ctxLineNo}
@@ -43,10 +42,10 @@ class SentryEventInfo extends React.PureComponent {
   renderBody() {
     const { detailedEvent, requestError, event } = this.props;
 
-    const exceptionEntry = get(detailedEvent, ['entries'], []).find(
+    const exceptionEntry = (detailedEvent?.entries || []).find(
       ({ type }) => type === 'exception',
     );
-    const stacktraces = getIn(exceptionEntry, ['data', 'values']);
+    const stacktraces = exceptionEntry?.data?.values;
     if (!stacktraces) {
       return (
         <JSONTree
@@ -72,7 +71,7 @@ class SentryEventInfo extends React.PureComponent {
   }
 
   render() {
-    const { open, toggleOpen, loading } = this.props;
+    const { loading } = this.props;
     return (
       <div className={stl.wrapper}>
         <Icon

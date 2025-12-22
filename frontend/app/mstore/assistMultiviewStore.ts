@@ -2,7 +2,6 @@ import { makeAutoObservable } from 'mobx';
 import { sessionService } from 'App/services';
 import Filter from 'Types/filter';
 import Session from 'Types/session';
-import { List } from 'immutable';
 
 type MultiSessions = [
   LiveSessionListItem?,
@@ -103,9 +102,7 @@ export default class AssistMultiviewStore {
       (s: Record<string, any>) =>
         ids.includes(s.sessionID) || ids.includes(s.sessionId),
     );
-    const immutMatchingSessions = List(matchingSessions).map(
-      (s) => new Session(s),
-    );
+    const immutMatchingSessions = matchingSessions.map((s) => new Session(s));
     immutMatchingSessions.forEach((session: Record<string, any>) => {
       this.addSession(session);
       this.fetchAgentTokenInfo(session.sessionId);

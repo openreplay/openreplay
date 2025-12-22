@@ -1,2 +1,1 @@
-import './immutable';
 import './sentry';

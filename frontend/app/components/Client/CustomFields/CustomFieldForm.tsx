@@ -37,11 +37,12 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
   };
 
   const onSave = (field: any) => {
+    const errSize = (response) => response?.errors.size || response?.errors.length || 0;
     setLoading(true);
     store
       .save(siteId, field)
       .then((response) => {
-        if (!response || !response.errors || response.errors.size === 0) {
+        if (!response || !response.errors || errSize(response) === 0) {
           hideModal();
           toast.success(t('Metadata added successfully!'));
         } else {

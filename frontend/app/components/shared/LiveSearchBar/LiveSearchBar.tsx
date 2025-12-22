@@ -15,7 +15,7 @@ function LiveSearchBar(props: Props) {
   const { searchStoreLive } = useStore();
   const appliedFilter = searchStoreLive.instance;
   const hasFilters =
-    appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
+    appliedFilter && appliedFilter.filters && appliedFilter.filters.length > 0;
   return (
     <div className="flex items-center">
       <div style={{ width: '60%', marginRight: '10px' }}>

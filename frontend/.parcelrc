@@ -1,7 +1,0 @@
-{
-  "extends": ["@parcel/config-default"],
-  "reporters":  ["...", "parcel-reporter-static-files-copy"],
-  "optimizers": {
-    "*.svg": ["@parcel/optimizer-svgo"]
-  }
-}

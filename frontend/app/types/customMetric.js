@@ -1,5 +1,4 @@
 import Record from 'Types/Record';
-import { List } from 'immutable';
 import Filter from 'Types/filter';
 import { validateName } from 'App/validate';
 import { LAST_7_DAYS } from 'Types/app/period';
@@ -37,7 +36,7 @@ export default Record(
     metricValue: ['sessionCount'],
     metricFormat: 'sessionCount',
     viewType: 'lineChart',
-    series: List(),
+    series: [],
     isPublic: true,
     startDate: '',
     endDate: '',
@@ -77,7 +76,7 @@ export default Record(
     },
     fromJS: ({ metricOf, metricValue, series, ...rest }) => ({
       ...rest,
-      series: List(series).map(FilterSeries),
+      series: series.map(FilterSeries),
       metricOf,
       metricValue:
         metricOf === FilterKey.ISSUE && metricValue.length === 0

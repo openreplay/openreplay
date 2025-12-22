@@ -23,7 +23,8 @@ function MetadataList() {
   const save = (field: any) => {
     if (!site) return;
     customFieldStore.save(site.id!, field).then((response) => {
-      if (!response || !response.errors || response.errors.size === 0) {
+      const errSize = (response) => response?.errors.size || response?.errors.length || 0;
+      if (!response || !response.errors || errSize(response) === 0) {
         hideModal();
         toast.success(t('Metadata added successfully!'));
       } else {
