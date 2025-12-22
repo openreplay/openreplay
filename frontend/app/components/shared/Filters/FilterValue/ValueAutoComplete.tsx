@@ -463,7 +463,7 @@ const ValueAutoComplete = observer(
             onClick={applySelectedValues}
             disabled={selectedValues.length === 0 && initialValues.length === 0}
           >
-            {t('Apply')}
+            {t('Apply selected')}
           </Button>
           <Tooltip title={t('Clear all selection')}>
             <Button
