@@ -45,7 +45,8 @@ func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 		return fmt.Errorf("empty userID for session: %d", session.SessionID)
 	}
 	if session.UserID != nil && *session.UserID == user.UserID {
-		return fmt.Errorf("got the same userID for session: %d", session.SessionID)
+		u.log.Debug(context.Background(), "user %s already exists", user.UserID)
+		return nil
 	}
 	if err := u.sessions.UpdateUserID(session.SessionID, user.UserID); err != nil {
 		u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
