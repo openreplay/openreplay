@@ -609,7 +609,10 @@ export default class FilterStore {
   };
 
   getFilterDisplayName = (filterName: string): string => {
-    const filter = this.findEvent({ name: filterName });
+    const filter = this.getCurrentProjectFilters().find((f => f.name === filterName));
+    if (!filter) {
+      return filterName;
+    }
     return filter.displayName || filter.name;
   };
 
