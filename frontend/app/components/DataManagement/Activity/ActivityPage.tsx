@@ -164,7 +164,11 @@ function ActivityPage() {
   const onAddFilter = (filter: Filter) => {
     analyticsStore.addFilter(filter);
   };
-  const onUpdateFilter = (filterIndex: number, filter: Filter, isEvent: boolean) => {
+  const onUpdateFilter = (
+    filterIndex: number,
+    filter: Filter,
+    isEvent: boolean,
+  ) => {
     const index = isEvent
       ? getOriginalEventIndex(filterIndex)
       : getOriginalAttributeIndex(filterIndex);
@@ -218,19 +222,20 @@ function ActivityPage() {
   }, [projectsStore.activeSiteId]);
 
   React.useEffect(() => {
+    const onModalClose = () => {
+      hideModal();
+      history.replace({ search: undefined });
+    };
     if (eventId) {
       showModal(
         <EventDetailsModal
           siteId={siteId!}
           event_id={eventId}
-          onClose={hideModal}
+          onClose={onModalClose}
         />,
         {
           width: 620,
           right: true,
-        },
-        () => {
-          history.replace({ search: undefined });
         },
       );
     } else {
@@ -328,6 +333,7 @@ function ActivityPage() {
           handleRemove={(i) => onRemoveFilter(i, true)}
           handleUpdate={(i, filter) => onUpdateFilter(i, filter, true)}
           handleAdd={onAddFilter}
+          scope={'events'}
         />
 
         <Divider className="my-3" />

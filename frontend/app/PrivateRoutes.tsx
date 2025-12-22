@@ -193,7 +193,6 @@ function PrivateRoutes() {
   React.useEffect(() => {
     searchStore.resetTags();
   }, [projectsStore.activeSiteId]);
-
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
       <Switch key="content">

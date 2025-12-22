@@ -93,7 +93,7 @@ export default class User {
   lastSeen?: number;
   email?: string;
   city?: string;
-  state?: string
+  state?: string;
   country?: string;
 
   raw: UserResp;

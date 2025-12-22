@@ -72,7 +72,9 @@ function FilterItem(props: Props) {
 
   const fltId = filter?.id?.toString();
   const { filterStore } = useStore();
-  const allFilters = filterStore.getCurrentProjectFilters();
+  const allFilters = scope
+    ? filterStore.getScopedCurrentProjectFilters([scope])
+    : filterStore.getCurrentProjectFilters();
 
   useMemo(() => {
     if (isSubItem || filter?.name === 'duration' || !filter.isEvent || !fltId)
@@ -252,6 +254,7 @@ function FilterItem(props: Props) {
             type={
               isSubItem ? 'Properties' : filter.isEvent ? 'Events' : 'Filters'
             }
+            scope={scope}
           >
             <Button
               type="default"
