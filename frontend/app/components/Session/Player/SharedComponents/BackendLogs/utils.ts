@@ -112,7 +112,7 @@ function getLevelFromElasticTags(tags: string[]): string {
 
 function processSentryLog(log: any): UnifiedLog {
   const key = log.id || log.eventID || '';
-  const timestamp = log.dateCreated || 'N/A';
+  const timestamp = log.dateCreated || log.lastSeen || 'N/A';
   const message = `${log.title}: \n ${log.message}`;
   const level = log.tags ? getLevelFromSentryTags(log.tags) : 'N/A';
   return {
