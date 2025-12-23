@@ -5,7 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: "{{ .Values.global.openReplayContainerRegistry }}/sourcemapreader"
+  registry: "{{ .Values.global.openReplayContainerRegistry }}"
+  repository: sourcemapreader
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""

@@ -44,7 +44,7 @@ spec:
           {{- end }}
           containers:
           - name: report-cron
-            image: "{{ tpl $job.image.repository . }}:{{ $job.image.tag | default .Chart.AppVersion }}-ee"
+            image: "{{ tpl $job.image.registry . }}/{{ $job.image.repository }}:{{ $job.image.tag | default .Chart.AppVersion }}-ee"
             imagePullPolicy: "{{ $job.image.pullPolicy}}"
             env:
               {{- range $key, $val := .Values.global.env }}
