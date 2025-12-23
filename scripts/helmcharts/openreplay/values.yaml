@@ -4,11 +4,13 @@ migrationJob:
 
 postgresql:
   image:
+    registry: docker.io
     repository: bitnamilegacy/postgresql
     tag: 17.6.0
 
 kafka:
   image:
+    registry: docker.io
     repository: bitnamilegacy/kafka
     tag: 3.9
 
@@ -66,12 +68,14 @@ minio:
   # Force initialize minio, even if the instance is not provisioned by OR
   forceInit: false
   image:
+    registry: docker.io
     repository: bitnamilegacy/minio
     tag: 2025.7.23
 
 clickhouse: &clickhouse
   password: ""
   image:
+    registry: docker.io
     repository: clickhouse/clickhouse-server
     tag: 25.9-alpine
 

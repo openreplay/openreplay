@@ -21,7 +21,8 @@ telemetry:
   # Midnight 12.05
   cron: "5 12 * * *"
   image:
-    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+    registry: "{{ .Values.global.openReplayContainerRegistry }}"
+    repository: crons
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
@@ -34,7 +35,8 @@ apiCrons:
     # Midnight 12.05
     cron: "0 * * * *"
     image:
-      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      registry: "{{ .Values.global.openReplayContainerRegistry }}"
+      repository: crons
       pullPolicy: Always
       # Overrides the image tag whose default is the chart appVersion.
       tag: ""
@@ -45,7 +47,8 @@ apiCrons:
     # Monday morning 5am
     cron: "0 5 * * 1"
     image:
-      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      registry: "{{ .Values.global.openReplayContainerRegistry }}"
+      repository: crons
       pullPolicy: Always
       # Overrides the image tag whose default is the chart appVersion.
       tag: ""
@@ -56,7 +59,8 @@ apiCrons:
     # Midnight 1.05
     cron: "5 1 * * *"
     image:
-      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      registry: "{{ .Values.global.openReplayContainerRegistry }}"
+      repository: crons
       pullPolicy: Always
       # Overrides the image tag whose default is the chart appVersion.
       tag: ""
@@ -67,7 +71,8 @@ apiCrons:
     # Every 18 min
     cron: "*/18 * * * *"
     image:
-      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      registry: "{{ .Values.global.openReplayContainerRegistry }}"
+      repository: crons
       pullPolicy: Always
       # Overrides the image tag whose default is the chart appVersion.
       tag: ""
@@ -78,7 +83,8 @@ apiCrons:
     # Sunday at 5am
     cron: "0 5 * * 0"
     image:
-      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      registry: "{{ .Values.global.openReplayContainerRegistry }}"
+      repository: crons
       pullPolicy: Always
       # Overrides the image tag whose default is the chart appVersion.
       tag: ""
