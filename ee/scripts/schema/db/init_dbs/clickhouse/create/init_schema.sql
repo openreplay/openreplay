@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.23.0-ee';
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.24.0-ee';
 CREATE DATABASE IF NOT EXISTS experimental;
 
 CREATE TABLE IF NOT EXISTS experimental.autocomplete
@@ -806,16 +806,6 @@ FROM product_analytics.event_properties;
 
 -- Autocomplete
 
--- TODO: remove this in v1.25.0
-CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events
-(
-    project_id UInt16,
-    value      String COMMENT 'The $event_name',
-    _timestamp DateTime
-) ENGINE = MergeTree()
-      ORDER BY (project_id, value, _timestamp)
-      TTL _timestamp + INTERVAL 1 MONTH;
-
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events_grouped
 (
     project_id UInt16,
@@ -835,18 +825,6 @@ SELECT project_id,
 FROM product_analytics.events
 WHERE value != ''
 GROUP BY ALL;
-
--- TODO: remove this in v1.24.0
-CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties
-(
-    project_id    UInt16,
-    event_name    String COMMENT 'The $event_name',
-    property_name String,
-    value         String COMMENT 'The property-value as a string',
-    _timestamp    DateTime DEFAULT now()
-) ENGINE = MergeTree()
-      ORDER BY (project_id, event_name, property_name, value, _timestamp)
-      TTL _timestamp + INTERVAL 1 MONTH;
 
 
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped
