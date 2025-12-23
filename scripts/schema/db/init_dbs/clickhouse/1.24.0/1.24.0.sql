@@ -91,8 +91,6 @@ ALTER TABLE product_analytics.events
     MODIFY COLUMN "$device_id" String AFTER "$user_id";
 
 
-DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv;
-
 DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv SYNC;
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_dproperties_extractor_mv
     TO product_analytics.event_properties AS
