@@ -19,13 +19,13 @@ export default function MetaItem(props: Props) {
       <TextEllipsis
         text={label}
         className="p-0"
-        maxWidth={'300px'}
+        maxWidth={'100px'}
         popupProps={{ size: 'small', disabled: true }}
       />
       <span className="bg-gray-light inline-block w-[1px] min-h-[17px]"></span>
       <TextEllipsis
         text={value}
-        maxWidth={'350px'}
+        maxWidth={'175px'}
         className="p-0 text-neutral-500"
         popupProps={{ size: 'small', disabled: true }}
       />
