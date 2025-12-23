@@ -185,7 +185,8 @@ function SessionWithIssue({
         onBeforeOpen={hideModal}
       />
       <div className="px-4 py-2 border-b border-b-gray-light flex flex-col gap-2">
-        <div className="rounded-lg p-2 bg-gray-lightest">
+        <div className="rounded-lg p-2 bg-gray-lightest flex items-start gap-2">
+          <div className="bg-red rounded-lg w-1 h-[21px]" />
           <div>{issueSession.issueDescription}</div>
         </div>
         <div className="flex items-center gap-4">
