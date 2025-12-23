@@ -16,7 +16,6 @@ create-yamls: helm-template
 	@awk -v RS='---' 'NR>1{kind=""; name=""; if(match($$0, /kind:[[:space:]]*([a-zA-Z]+)/, k) &&  \
 				match($$0, /name:[[:space:]]*([a-zA-Z0-9_.-]+)/, n)) \
 				{kind=k[1]; name=n[1]; if(kind == "Deployment" || (kind == "Secret" && name == "or-secrets")) print $$0 > "yamls/"name".yaml";}}' yamls/deployment.yaml
-	@rm yamls/ingress-nginx.yaml
 	@rm yamls/deployment.yaml
 	@bash process-secrets.sh
 
