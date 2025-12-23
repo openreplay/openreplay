@@ -5,7 +5,7 @@ version: '3'
 services:
 
   postgresql:
-    image: bitnamilegacy/postgresql:${POSTGRES_VERSION}
+    image: ghcr.io/openreplay/postgres:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
       - pgdata:/bitnami/postgresql
@@ -31,7 +31,7 @@ services:
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
 
   redis:
-    image: bitnamilegacy/redis:${REDIS_VERSION}
+    image: ghcr.io/openreplay/valkey:${REDIS_VERSION}
     container_name: redis
     volumes:
       - redisdata:/bitnami/redis/data
@@ -43,7 +43,7 @@ services:
       ALLOW_EMPTY_PASSWORD: "yes"
 
   minio:
-    image: bitnamilegacy/minio:${MINIO_VERSION}
+    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
     container_name: minio
     volumes:
       - miniodata:/bitnami/minio/data
