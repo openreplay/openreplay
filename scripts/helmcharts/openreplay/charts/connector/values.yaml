@@ -5,7 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: "{{ .Values.global.openReplayContainerRegistry }}/connector"
+  registry: "{{ .Values.global.openReplayContainerRegistry }}"
+  repository: connector
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
