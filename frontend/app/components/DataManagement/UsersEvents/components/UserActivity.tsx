@@ -102,7 +102,7 @@ function Activity({ userId }: { userId: string }) {
   };
 
   const toSessions = () => {
-    const filter = filterStore.findEvent({ name: 'distinct_id' });
+    const filter = filterStore.findEvent({ name: 'userId' });
     if (filter) {
       filter.value = [userId];
       searchStore.addFilter(filter);
