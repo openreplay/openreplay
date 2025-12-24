@@ -135,4 +135,5 @@ SCRIPT_PATH="$SCRIPT_DIR/install.sh"
 [[ -f "$SCRIPT_PATH" ]] || die "Installer script not found: $SCRIPT_PATH"
 
 info "Running installer: $SCRIPT_PATH"
-bash "$SCRIPT_PATH"
+cd "$SCRIPT_DIR" || die "Failed to cd into $SCRIPT_DIR"
+bash install.sh
