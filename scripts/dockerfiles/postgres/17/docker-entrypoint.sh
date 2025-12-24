@@ -92,9 +92,10 @@ EOF
             -o "--config-file=${POSTGRES_CONF_DIR}/postgresql.conf --hba_file=${POSTGRES_CONF_DIR}/pg_hba.conf" \
             -w start
 
-        # Set password if provided
-        if [ -n "${POSTGRES_PASSWORD}" ]; then
-            ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" -v password="${POSTGRES_PASSWORD}" <<-EOSQL
+        # Set password if provided (support both POSTGRES_PASSWORD and POSTGRESQL_PASSWORD for Bitnami compatibility)
+        PASSWORD="${POSTGRES_PASSWORD:-${POSTGRESQL_PASSWORD}}"
+        if [ -n "${PASSWORD}" ]; then
+            ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" -v password="${PASSWORD}" <<-EOSQL
                 ALTER USER ${POSTGRES_USER} WITH PASSWORD :'password';
 EOSQL
         fi
