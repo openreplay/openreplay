@@ -1,4 +1,4 @@
-FROM python:3.13-alpine AS builder
+FROM python:3.14-alpine AS builder
 LABEL maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 
@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir --upgrade uv && \
   uv pip install --no-cache-dir --upgrade pip setuptools wheel && \
   uv pip install --no-cache-dir --upgrade -r requirements.txt
 
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 ARG GIT_SHA
 ARG envarg
 # Add Tini
