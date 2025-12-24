@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Interactive Bash Script with Emojis
-
-set -e
+set -Eeuo pipefail
 
 # Color codes for pretty printing
 RED='\033[0;31m'
@@ -12,21 +10,42 @@ NC='\033[0m' # No Color
 
 # --- Helper functions for logs ---
 info() {
-    echo -e "${GREEN}[INFO] $1 ${NC} 👍"
+    echo -e "${GREEN}[INFO] $1 ${NC}"
 }
 
 warn() {
-    echo -e "${YELLOW}[WARN] $1 ${NC} ⚠️"
+    echo -e "${YELLOW}[WARN] $1 ${NC}"
 }
 
 fatal() {
-    echo -e "${RED}[FATAL] $1 ${NC} 🔥"
+    echo -e "${RED}[FATAL] $1 ${NC}"
     exit 1
 }
 
-# Function to check if a command exists
-function exists() {
-    type "$1" &>/dev/null
+exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+require_cmd() {
+    exists "$1" || fatal "$2"
+}
+
+# Prefer docker compose plugin if present.
+COMPOSE_CMD=()
+if exists docker && docker compose version >/dev/null 2>&1; then
+    COMPOSE_CMD=(docker compose)
+elif exists docker-compose; then
+    COMPOSE_CMD=(docker-compose)
+fi
+
+docker_preflight() {
+    require_cmd docker "Docker is not installed or not in PATH. Install Docker and rerun."
+
+    if ! docker info >/dev/null 2>&1; then
+        fatal "Docker is installed but the daemon is not reachable. Ensure Docker is running and that you have permissions (Linux: add user to 'docker' group or run via sudo)."
+    fi
+
+    ((${#COMPOSE_CMD[@]})) || fatal "Docker Compose not found. Install compose plugin (docker compose) or docker-compose and rerun."
 }
 
 # Generate a random password using openssl
@@ -56,16 +75,12 @@ function create_passwords() {
     info "Passwords created and updated in common.env file."
 }
 
-# update apt cache
-info "Grabbing latest apt caches"
-sudo apt update
+docker_preflight
 
-# setup docker
-info "Setting up Docker"
-sudo apt install docker.io docker-compose -y
-
-# enable docker without sudo
-sudo usermod -aG docker "${USER}" || true
+# Best-effort: allow docker without sudo (optional)
+if command -v sudo >/dev/null 2>&1; then
+    sudo usermod -aG docker "${USER}" 2>/dev/null || true
+fi
 
 # Prompt for DOMAIN_NAME input
 echo -e "${GREEN}Please provide your domain name.${NC}"
@@ -129,14 +144,14 @@ n)
     ;;
 esac
 
-readarray -t services < <(sudo -E docker-compose config --services)
+readarray -t services < <(sudo -E "${COMPOSE_CMD[@]}" config --services)
 for service in "${services[@]}"; do
     echo "Pulling image for $service..."
-    sudo -E docker-compose pull --no-parallel "$service"
+    sudo -E "${COMPOSE_CMD[@]}" pull --no-parallel "$service"
     sleep 5
 done
 
-sudo -E docker-compose --profile migration up --force-recreate --build -d
+sudo -E "${COMPOSE_CMD[@]}" --profile migration up --force-recreate --build -d
 cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
