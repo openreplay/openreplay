@@ -5,7 +5,7 @@ migrationJob:
 postgresql:
   image:
     registry: ghcr.io/openreplay
-    repository: postgresql
+    repository: postgres
     tag: 17
 
 kafka:
