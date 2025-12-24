@@ -162,8 +162,8 @@ esac
 readarray -t services < <(sudo -E "${COMPOSE_CMD[@]}" config --services)
 for service in "${services[@]}"; do
     echo "Pulling image for $service..."
-    sudo -E "${COMPOSE_CMD[@]}" pull --no-parallel "$service"
-    sleep 5
+    sudo -E "${COMPOSE_CMD[@]}" pull "$service"
+    sleep 2
 done
 
 sudo -E "${COMPOSE_CMD[@]}" --profile migration up --force-recreate --build -d
