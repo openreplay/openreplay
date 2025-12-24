@@ -62,11 +62,15 @@ randomPass() {
 function create_passwords() {
     info "Creating dynamic passwords..."
 
+    [[ -f common.env ]] || fatal "common.env not found in $(pwd)"
+
     # Update domain name replacement
     sed -i "s/change_me_domain/${DOMAIN_NAME}/g" common.env
 
-    # Find all change_me_ entries and replace them with random passwords
-    grep -o 'change_me_[a-zA-Z0-9_]*' common.env | sort -u | while read -r token; do
+    # Find all change_me_ entries and replace them with random passwords.
+    # NOTE: grep exits non-zero when no matches; with pipefail enabled that would abort the script.
+    mapfile -t _tokens < <(grep -o 'change_me_[a-zA-Z0-9_]*' common.env | sort -u || true)
+    for token in "${_tokens[@]}"; do
         random_pass=$(randomPass)
         sed -i "s/${token}/${random_pass}/g" common.env
         info "Generated password for ${token}"
