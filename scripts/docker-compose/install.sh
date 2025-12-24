@@ -166,7 +166,7 @@ for service in "${services[@]}"; do
     sleep 2
 done
 
-sudo -E "${COMPOSE_CMD[@]}" --profile migration up --force-recreate --build -d
+COMPOSE_PROFILES=migration sudo -E "${COMPOSE_CMD[@]}" up --force-recreate --build -d
 cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
