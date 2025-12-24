@@ -85,9 +85,10 @@ EOF
             exit 1
         fi
 
-        # Start PostgreSQL temporarily with Bitnami-style config
+        # Start PostgreSQL temporarily with localhost-only access for security
+        # Override listen_addresses to prevent external connections during password setup
         ${POSTGRES_BIN_DIR}/pg_ctl -D "${PGDATA}" \
-            -o "--config-file=${POSTGRES_CONF_DIR}/postgresql.conf --hba_file=${POSTGRES_CONF_DIR}/pg_hba.conf" \
+            -o "--config-file=${POSTGRES_CONF_DIR}/postgresql.conf --hba_file=${POSTGRES_CONF_DIR}/pg_hba.conf -c listen_addresses=127.0.0.1" \
             -w start
 
         # Set password
