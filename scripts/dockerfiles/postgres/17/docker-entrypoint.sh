@@ -87,18 +87,22 @@ EOF
     if [ ! -f "${PGDATA}/.initialized" ]; then
         echo "Running first-time setup..."
 
+        # Validate password is provided (support both POSTGRES_PASSWORD and POSTGRESQL_PASSWORD for Bitnami compatibility)
+        PASSWORD="${POSTGRES_PASSWORD:-${POSTGRESQL_PASSWORD}}"
+        if [ -z "${PASSWORD}" ]; then
+            echo "ERROR: POSTGRES_PASSWORD or POSTGRESQL_PASSWORD must be set during initialization" >&2
+            exit 1
+        fi
+
         # Start PostgreSQL temporarily with Bitnami-style config
         ${POSTGRES_BIN_DIR}/pg_ctl -D "${PGDATA}" \
             -o "--config-file=${POSTGRES_CONF_DIR}/postgresql.conf --hba_file=${POSTGRES_CONF_DIR}/pg_hba.conf" \
             -w start
 
-        # Set password if provided (support both POSTGRES_PASSWORD and POSTGRESQL_PASSWORD for Bitnami compatibility)
-        PASSWORD="${POSTGRES_PASSWORD:-${POSTGRESQL_PASSWORD}}"
-        if [ -n "${PASSWORD}" ]; then
-            ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" -v password="${PASSWORD}" <<-EOSQL
-                ALTER USER ${POSTGRES_USER} WITH PASSWORD :'password';
+        # Set password
+        ${POSTGRES_BIN_DIR}/psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" -v password="${PASSWORD}" <<-EOSQL
+            ALTER USER ${POSTGRES_USER} WITH PASSWORD :'password';
 EOSQL
-        fi
 
         # Create database if specified and different from default
         if [ "${POSTGRES_DB}" != "postgres" ]; then
@@ -110,8 +114,9 @@ EOSQL
         # Stop PostgreSQL
         ${POSTGRES_BIN_DIR}/pg_ctl -D "${PGDATA}" -m fast -w stop
 
-        # Mark as initialized
+        # Mark as initialized and password as set
         touch "${PGDATA}/.initialized"
+        touch "${PGDATA}/.password_set"
 
         echo "First-time setup completed"
     fi
