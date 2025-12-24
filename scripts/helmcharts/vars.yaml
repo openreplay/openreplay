@@ -168,6 +168,10 @@ global:
   ee-components:
     enabled: false
   enterpriseEditionLicense: ""
+  # Optional: Use external secret for license key
+  # license:
+  #   existingSecret: "my-license-secret"
+  #   existingSecretKey: "license-key"
   domainName: ""
 
 # chalice:
