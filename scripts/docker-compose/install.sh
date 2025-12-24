@@ -81,6 +81,12 @@ function create_passwords() {
 
 docker_preflight
 
+[[ -f docker-compose.yaml ]] || fatal "docker-compose.yaml not found in $(pwd)"
+
+is_git_repo() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1
+}
+
 # Best-effort: allow docker without sudo (optional)
 if command -v sudo >/dev/null 2>&1; then
     sudo usermod -aG docker "${USER}" 2>/dev/null || true
@@ -129,8 +135,13 @@ set -a # automatically export all variables
 source common.env
 set +a
 
-# Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
-find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+# Use envsubst to substitute the shell environment variables into *.env and docker-compose.yaml.
+# If we are in a git repo, restore files first (so reruns start clean).
+if is_git_repo; then
+    find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="$1"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm -f "$file.bak"' _ {} \;
+else
+    find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="$1"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm -f "$file.bak"' _ {} \;
+fi
 
 case $yn in
 y)
