@@ -1,6 +1,5 @@
 
 # vim: ft=yaml
-version: '3'
 
 services:
 
@@ -14,7 +13,7 @@ services:
         aliases:
           - postgresql.db.svc.cluster.local
     environment:
-      POSTGRESQL_PASSWORD: "${COMMON_PG_PASSWORD}"
+      POSTGRES_PASSWORD: "${COMMON_PG_PASSWORD}"
 
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
