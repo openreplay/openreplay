@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Interactive Bash Script with Emojis
-
-set -e
+set -Eeuo pipefail
 
 # Color codes for pretty printing
 RED='\033[0;31m'
@@ -12,21 +10,42 @@ NC='\033[0m' # No Color
 
 # --- Helper functions for logs ---
 info() {
-    echo -e "${GREEN}[INFO] $1 ${NC} 👍"
+    echo -e "${GREEN}[INFO] $1 ${NC}"
 }
 
 warn() {
-    echo -e "${YELLOW}[WARN] $1 ${NC} ⚠️"
+    echo -e "${YELLOW}[WARN] $1 ${NC}"
 }
 
 fatal() {
-    echo -e "${RED}[FATAL] $1 ${NC} 🔥"
+    echo -e "${RED}[FATAL] $1 ${NC}"
     exit 1
 }
 
-# Function to check if a command exists
-function exists() {
-    type "$1" &>/dev/null
+exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+require_cmd() {
+    exists "$1" || fatal "$2"
+}
+
+# Prefer docker compose plugin if present.
+COMPOSE_CMD=()
+if exists docker && docker compose version >/dev/null 2>&1; then
+    COMPOSE_CMD=(docker compose)
+elif exists docker-compose; then
+    COMPOSE_CMD=(docker-compose)
+fi
+
+docker_preflight() {
+    require_cmd docker "Docker is not installed or not in PATH. Install Docker and rerun."
+
+    if ! docker info >/dev/null 2>&1; then
+        fatal "Docker is installed but the daemon is not reachable. Ensure Docker is running and that you have permissions (Linux: add user to 'docker' group or run via sudo)."
+    fi
+
+    ((${#COMPOSE_CMD[@]})) || fatal "Docker Compose not found. Install compose plugin (docker compose) or docker-compose and rerun."
 }
 
 # Generate a random password using openssl
@@ -43,11 +62,15 @@ randomPass() {
 function create_passwords() {
     info "Creating dynamic passwords..."
 
+    [[ -f common.env ]] || fatal "common.env not found in $(pwd)"
+
     # Update domain name replacement
     sed -i "s/change_me_domain/${DOMAIN_NAME}/g" common.env
 
-    # Find all change_me_ entries and replace them with random passwords
-    grep -o 'change_me_[a-zA-Z0-9_]*' common.env | sort -u | while read -r token; do
+    # Find all change_me_ entries and replace them with random passwords.
+    # NOTE: grep exits non-zero when no matches; with pipefail enabled that would abort the script.
+    mapfile -t _tokens < <(grep -o 'change_me_[a-zA-Z0-9_]*' common.env | sort -u || true)
+    for token in "${_tokens[@]}"; do
         random_pass=$(randomPass)
         sed -i "s/${token}/${random_pass}/g" common.env
         info "Generated password for ${token}"
@@ -56,16 +79,18 @@ function create_passwords() {
     info "Passwords created and updated in common.env file."
 }
 
-# update apt cache
-info "Grabbing latest apt caches"
-sudo apt update
+docker_preflight
 
-# setup docker
-info "Setting up Docker"
-sudo apt install docker.io docker-compose -y
+[[ -f docker-compose.yaml ]] || fatal "docker-compose.yaml not found in $(pwd)"
 
-# enable docker without sudo
-sudo usermod -aG docker "${USER}" || true
+is_git_repo() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1
+}
+
+# Best-effort: allow docker without sudo (optional)
+if command -v sudo >/dev/null 2>&1; then
+    sudo usermod -aG docker "${USER}" 2>/dev/null || true
+fi
 
 # Prompt for DOMAIN_NAME input
 echo -e "${GREEN}Please provide your domain name.${NC}"
@@ -110,8 +135,13 @@ set -a # automatically export all variables
 source common.env
 set +a
 
-# Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
-find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+# Use envsubst to substitute the shell environment variables into *.env and docker-compose.yaml.
+# If we are in a git repo, restore files first (so reruns start clean).
+if is_git_repo; then
+    find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="$1"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm -f "$file.bak"' _ {} \;
+else
+    find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="$1"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm -f "$file.bak"' _ {} \;
+fi
 
 case $yn in
 y)
@@ -129,14 +159,14 @@ n)
     ;;
 esac
 
-readarray -t services < <(sudo -E docker-compose config --services)
+readarray -t services < <(sudo -E "${COMPOSE_CMD[@]}" config --services)
 for service in "${services[@]}"; do
     echo "Pulling image for $service..."
-    sudo -E docker-compose pull --no-parallel "$service"
-    sleep 5
+    sudo -E "${COMPOSE_CMD[@]}" pull "$service"
+    sleep 2
 done
 
-sudo -E docker-compose --profile migration up --force-recreate --build -d
+COMPOSE_PROFILES=migration sudo -E "${COMPOSE_CMD[@]}" up --force-recreate --build -d
 cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
