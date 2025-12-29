@@ -114,30 +114,15 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 					switch action.Type {
 					case model.UserActionSetProperty:
 						for key, val := range action.Payload {
-							user.Properties[key] = val
+							user.SetProperty(key, val)
 						}
 					case model.UserActionSetPropertyOnce:
 						for key, val := range action.Payload {
-							if _, ok := user.Properties[key]; !ok {
-								user.Properties[key] = val
-							} else {
-								ds.log.Warn(context.Background(), "user property already set: %s", key)
-							}
+							user.SetPropertyOnce(key, val)
 						}
 					case model.UserActionIncrementProperty:
 						for key, val := range action.Payload {
-							intVal, ok := toInt(val)
-							if !ok {
-								ds.log.Error(context.Background(), "can't convert value to int, key=%s, val=%v", key, val)
-								continue
-							}
-							curr := user.Properties[key]
-							intCurr, ok := toInt(curr)
-							if !ok {
-								ds.log.Error(context.Background(), "can't convert current value to int, key=%s, val=%v", key, curr)
-								continue
-							}
-							user.Properties[key] = intCurr + intVal
+							user.IncrementProperty(key, val)
 						}
 					}
 					if err = ds.users.Update(user); err != nil {
@@ -198,32 +183,6 @@ func inWindow(now time.Time, startMin, endMin int) bool {
 		return curMin >= startMin && curMin < endMin
 	}
 	return curMin >= startMin || curMin < endMin
-}
-
-func toInt(v interface{}) (int, bool) {
-	if v == nil {
-		return 0, true // consider as an empty value
-	}
-	switch n := v.(type) {
-	case int:
-		return n, true
-	case int32:
-		return int(n), true
-	case int64:
-		return int(n), true
-	case float32:
-		return int(n), true
-	case float64:
-		return int(n), true
-	case string:
-		i, err := strconv.Atoi(n)
-		if err != nil {
-			return 0, false
-		}
-		return i, true
-	default:
-		return 0, false
-	}
 }
 
 func (ds *dataSaverImpl) run() {
