@@ -1,7 +1,6 @@
 import { makeAutoObservable, runInAction, reaction } from 'mobx';
 import {
   GLOBAL_HAS_NO_RECORDINGS,
-  SITE_ID_STORAGE_KEY,
 } from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
 import GDPR from './types/gdpr';
@@ -30,16 +29,6 @@ export default class BaseProjectsStore {
   };
 
   constructor() {
-    const origin = ENV.ORIGIN || window.location.origin;
-    const storedSiteData = localStorage.getItem(SITE_ID_STORAGE_KEY);
-    let [storedSiteId, storedOrigin] = storedSiteData
-      ? storedSiteData.split('_$_')
-      : [null, null];
-    if (storedOrigin !== origin) {
-      localStorage.removeItem(SITE_ID_STORAGE_KEY);
-      storedSiteId = null;
-    }
-    this.siteId = storedSiteId ?? null;
     makeAutoObservable(this);
 
     reaction(
@@ -87,10 +76,6 @@ export default class BaseProjectsStore {
   };
 
   setSiteId = (siteId: string) => {
-    localStorage.setItem(
-      SITE_ID_STORAGE_KEY,
-      siteId.toString() + '_$_' + (ENV.ORIGIN || window.location.origin),
-    );
     this.siteId = siteId;
     this.active = this.list.find((site) => site.id! === siteId) ?? null;
   };

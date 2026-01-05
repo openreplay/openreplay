@@ -128,7 +128,7 @@ export default Record(
           range,
           start: range.start.toMillis(),
           end: range.end.toMillis(),
-          rangeName: period.substract ? period.substract : undefined,
+          rangeName: period.substract ? period.substract : CUSTOM_RANGE,
         };
       }
       const range = getRange(period.rangeName, offset);

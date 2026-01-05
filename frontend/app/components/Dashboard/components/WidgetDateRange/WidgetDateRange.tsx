@@ -47,7 +47,7 @@ function WidgetDateRange({
       const option = DATE_RANGE_COMPARISON_OPTIONS.find((option: any) => option.value === presetComparison[0]);
       if (option) {
         // @ts-ignore
-        const newPeriod = new Period({
+        const newPeriod = Period({
           start: period.start,
           end: period.end,
           substract: option.value,
@@ -60,7 +60,7 @@ function WidgetDateRange({
         const end = parseInt(presetComparison[1], 10);
 
         // @ts-ignore
-        const compRange = new Period({
+        const compRange = Period({
           start,
           end,
           rangeName: CUSTOM_RANGE,

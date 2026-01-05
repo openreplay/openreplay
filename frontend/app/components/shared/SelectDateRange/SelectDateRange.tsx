@@ -72,7 +72,7 @@ function SelectDateRange(props: Props) {
         props.updateInstComparison?.(null);
         return props.onChangeComparison(null);
       }
-      const newPeriod = new Period({
+      const newPeriod = Period({
         start: props.period.start,
         end: props.period.end,
         substract: value,
@@ -80,7 +80,7 @@ function SelectDateRange(props: Props) {
       props.updateInstComparison?.([value]);
       props.onChangeComparison(newPeriod);
     } else {
-      props.onChange(new Period({ rangeName: value }));
+      props.onChange(Period({ rangeName: value }));
     }
   };
 
@@ -93,7 +93,7 @@ function SelectDateRange(props: Props) {
       const start = value.start.ts;
       const end = value.start.ts + originalPeriodLength * day;
 
-      const compRange = new Period({
+      const compRange = Period({
         start,
         end,
         rangeName: CUSTOM_RANGE,
@@ -101,7 +101,7 @@ function SelectDateRange(props: Props) {
       props.updateInstComparison?.([start.toString(), end.toString()]);
       props.onChangeComparison(compRange);
     } else {
-      const range = new Period({
+      const range = Period({
         rangeName: CUSTOM_RANGE,
         start: value.start,
         end: value.end,
