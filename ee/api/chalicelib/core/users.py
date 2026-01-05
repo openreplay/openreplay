@@ -1218,9 +1218,11 @@ def update_user_module(user_id, data: schemas.ModuleStatus):
     #   if module property is not exists, it will be created
     #  if module property exists, it will be updated, modify here and call update_user_settings
     # module is a single element to be added or removed
-    settings = get_user_settings(user_id)["settings"]
-    if settings is None:
+    user_settings = get_user_settings(user_id)
+    if user_settings is None or user_settings.get("settings") is None:
         settings = {}
+    else:
+        settings = user_settings["settings"]
 
     if settings.get("modules") is None:
         settings["modules"] = []
