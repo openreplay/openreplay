@@ -15,6 +15,7 @@ import EditHlModal from './EditHlModal';
 import HighlightPlayer from './HighlightPlayer';
 import HighlightClip from './HighlightClip';
 import { useTranslation } from 'react-i18next';
+import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG';
 
 function HighlightsList() {
   const { t } = useTranslation();
@@ -150,9 +151,12 @@ function HighlightsList() {
         <Loader loading={isPending}>
           <NoContent
             show={isEmpty}
+            title={<AnimatedSVG name={ICONS.NO_RESULTS} size={60} />}
             subtext={
               <div className="w-full text-center">
-                {t('Highlight and note observations during session replays and share them with your team.')}
+                {t(
+                  'Highlight and note observations during session replays and share them with your team.',
+                )}
               </div>
             }
           >

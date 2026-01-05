@@ -209,6 +209,7 @@ function SessionList() {
                   className="mt-4"
                   icon={<Icon name="arrow-repeat" size={20} />}
                   onClick={() => {
+                    searchStore.updateCurrentPage(1);
                     void searchStore.fetchSessions(true, isBookmark);
                   }}
                 >

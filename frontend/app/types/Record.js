@@ -74,7 +74,7 @@ export default function createRecordFactory(fields = {}, options = {}) {
     return `${name}_${uniqueKey}`;
   }
 
-  const defaults = { [keyKey]: undefined, ...fields }; // MODIFIED
+  const defaults = { [keyKey]: undefined, ...fields };
 
   class RecordType extends Record {}
   RecordType.defaults = defaults;
