@@ -1,11 +1,11 @@
 import { makeAutoObservable, runInAction, reaction } from 'mobx';
 import {
   GLOBAL_HAS_NO_RECORDINGS,
+  SITE_ID_STORAGE_KEY,
 } from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
 import GDPR from './types/gdpr';
 import Project from './types/project';
-import ENV from '../../env';
 
 interface Config {
   project: Project | null;
@@ -17,6 +17,7 @@ export default class BaseProjectsStore {
   list: Project[] = [];
   instance: Project | null = null;
   siteId: string | null = null;
+  tenantId: string | null = null;
   previousSiteid: string | null = null;
   active: Project | null = null;
   sitesLoading = true;
@@ -76,8 +77,15 @@ export default class BaseProjectsStore {
   };
 
   setSiteId = (siteId: string) => {
+    if (this.tenantId) {
+      localStorage.setItem(SITE_ID_STORAGE_KEY, `${siteId}_$_${this.tenantId}`);
+    }
     this.siteId = siteId;
     this.active = this.list.find((site) => site.id! === siteId) ?? null;
+  };
+
+  setTenantId = (tenantId: string) => {
+    this.tenantId = tenantId;
   };
 
   editGDPR = (gdprData: Partial<GDPR>) => {

@@ -12,7 +12,6 @@ import { useStore } from './mstore';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
 import { Loader } from 'UI';
-
 import APIClient from './api_client';
 import * as routes from './routes';
 import { debounceCall } from '@/utils';
@@ -130,23 +129,6 @@ function PrivateRoutes() {
   const [filtersLoaded, setFiltersLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    if (siteId && integrationsStore.integrations.siteId !== siteId) {
-      integrationsStore.integrations.setSiteId(siteId);
-      void integrationsStore.integrations.fetchIntegrations(siteId);
-      filterStore
-        .fetchFilters(siteId)
-        .then(() => {
-          setFiltersLoaded(true);
-        })
-        .catch((e) => {
-          console.error(e);
-          // if filters failed, there may be some sessions still available in the list
-          void searchStore.fetchSessions(true);
-        });
-    }
-  }, [siteId]);
-
-  React.useEffect(() => {
     if (!searchStore.urlParsed && filtersLoaded) {
       const searchParams = new URLSearchParams(location.search);
       const searchId = searchParams.get('sid');
@@ -191,7 +173,22 @@ function PrivateRoutes() {
   }, [searchStore.instance.filters, searchStore.instance.eventsOrder]);
 
   React.useEffect(() => {
+    const siteId = projectsStore.activeSiteId;
     searchStore.resetTags();
+    if (siteId && integrationsStore.integrations.siteId !== siteId) {
+      integrationsStore.integrations.setSiteId(siteId);
+      void integrationsStore.integrations.fetchIntegrations(siteId);
+      filterStore
+        .fetchFilters(siteId)
+        .then(() => {
+          setFiltersLoaded(true);
+        })
+        .catch((e) => {
+          console.error(e);
+          // if filters failed, there may be some sessions still available in the list
+          void searchStore.fetchSessions(true);
+        });
+    }
   }, [projectsStore.activeSiteId]);
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
