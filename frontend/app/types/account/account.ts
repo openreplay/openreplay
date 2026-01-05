@@ -83,6 +83,7 @@ export default class Account {
     settings: this.settings,
     iceServers: this.iceServers,
     hasPassword: this.hasPassword,
+    tenantId: this.tenantId,
     apiKey: this.apiKey,
     tenantKey: this.tenantKey,
     edition: this.edition,
