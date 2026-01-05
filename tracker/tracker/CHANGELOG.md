@@ -1,3 +1,7 @@
+## 17.1.1
+
+- fix type reexport for analytics.categories
+
 ## 17.1.0
 
 - adds analytics package to the tracker to enable user & event tracking

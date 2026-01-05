@@ -11,7 +11,7 @@ export const mutationTypes = {
 export const categories = {
   people: 'user_actions',
   events: 'events',
-}
+} as const;
 
 export const createEvent = (
   category: (typeof categories)[keyof typeof categories],
