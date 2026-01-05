@@ -51,6 +51,7 @@ const except = [
   'integrations/msteams/notify',
   '/events/search',
   'assign/projects',
+  '/users/modules',
 ];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
