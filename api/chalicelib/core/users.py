@@ -756,7 +756,7 @@ def update_user_module(user_id, data: schemas.ModuleStatus):
         settings = {}
     else:
         settings = user_settings.get("settings")
-        if settings is None:
+        if settings is None or not isinstance(settings, dict):
             settings = {}
 
     if settings.get("modules") is None:
