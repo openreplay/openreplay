@@ -3,25 +3,25 @@ import EventDetailsModal, {
   Triangle,
 } from 'Components/DataManagement/Activity/EventDetailsModal';
 import Event from 'App/mstore/types/Analytics/Event';
-import { Eye, EyeOff } from 'lucide-react';
-import Select from 'Shared/Select';
+import { EyeOff } from 'lucide-react';
 import { tsToCheckRecent } from 'App/date';
 import { useModal } from 'App/components/Modal';
 import EventsByDay from './EventsByDay';
 import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import { useHistory } from 'react-router';
-import { sessions, withSiteId } from 'App/routes';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { observer } from 'mobx-react-lite';
 import { Button } from 'antd';
 import FilterEntriesModal from 'Components/DataManagement/FilterEntriesModal';
 import FullPagination from 'Shared/FullPagination';
+import { hashString } from 'App/types/session/session';
+import UserSessionsModal from 'Shared/UserSessionsModal';
 
 const card = 'rounded-lg border bg-white';
 
-function Activity({ userId }: { userId: string }) {
+function Activity({ userId, userName }: { userId: string; userName: string }) {
   const limit = 50;
   const [page, setPage] = React.useState(1);
   const history = useHistory();
@@ -41,8 +41,6 @@ function Activity({ userId }: { userId: string }) {
     .getCurrentProjectFilters()
     .filter((f) => f.isEvent)
     .map((f) => ({ title: f.displayName ?? f.name, key: f.name }));
-  const [shownTypes, setShownTypes] =
-    React.useState<{ title: string; key: string }[]>(eventTypes);
   const [hiddenTypes, setHiddenTypes] = React.useState<string[]>([]);
   const [editCols, setEditCols] = React.useState(false);
   const { showModal, hideModal } = useModal();
@@ -101,21 +99,11 @@ function Activity({ userId }: { userId: string }) {
     }, 0);
   };
 
-  const toSessions = () => {
-    const filter = filterStore.findEvent({ name: 'userId' });
-    if (filter) {
-      filter.value = [userId];
-      searchStore.addFilter(filter);
-    }
-    history.push(withSiteId(sessions(), projectsStore.activeSiteId ?? ''));
-  };
-
   const getName = (filterName: string) =>
     filterStore.getFilterDisplayName(filterName);
 
   const saveShownTypes = (cols: any[]) => {
     const selected = eventTypes.filter((et) => cols.includes(et.key));
-    setShownTypes(selected);
     setHiddenTypes(
       eventTypes
         .map((et) => et.key)
@@ -128,11 +116,26 @@ function Activity({ userId }: { userId: string }) {
   const onPageChange = (newPage: number) => {
     setPage(newPage);
   };
+
+  const openSessions = () => {
+    const hash = hashString(userId) as unknown as string;
+    showModal(
+      <UserSessionsModal
+        userId={userId}
+        hash={hash}
+        name={userName ?? 'User'}
+      />,
+      {
+        width: 700,
+        right: true,
+      },
+    );
+  };
   return (
     <div className={card}>
       <div className={'px-4 py-2 flex items-center gap-2 relative'}>
         <div className={'text-lg font-semibold'}>Activity</div>
-        <div className={'link flex gap-1 items-center'} onClick={toSessions}>
+        <div className={'link flex gap-1 items-center'} onClick={openSessions}>
           <span>Play Sessions</span>
           <Triangle size={10} color={'blue'} />
         </div>
