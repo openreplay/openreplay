@@ -159,7 +159,7 @@ function UserInfo({ userId }: { userId: string }) {
       <Breadcrumb
         items={[
           {
-            label: 'Users',
+            label: 'People',
             to: dataManagement.usersEventsList('users'),
             withSiteId: true,
           },

@@ -9,7 +9,6 @@ import { useModal } from 'App/components/Modal';
 import EventsByDay from './EventsByDay';
 import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
-import { useHistory } from 'react-router';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { observer } from 'mobx-react-lite';
@@ -21,10 +20,9 @@ import UserSessionsModal from 'Shared/UserSessionsModal';
 
 const card = 'rounded-lg border bg-white';
 
-function Activity({ userId, userName }: { userId: string; userName: string }) {
+function Activity({ userId }: { userId: string }) {
   const limit = 50;
   const [page, setPage] = React.useState(1);
-  const history = useHistory();
   const [period, setPeriod] = React.useState<{
     start: number;
     end: number;
@@ -119,17 +117,10 @@ function Activity({ userId, userName }: { userId: string; userName: string }) {
 
   const openSessions = () => {
     const hash = hashString(userId) as unknown as string;
-    showModal(
-      <UserSessionsModal
-        userId={userId}
-        hash={hash}
-        name={userName ?? 'User'}
-      />,
-      {
-        width: 700,
-        right: true,
-      },
-    );
+    showModal(<UserSessionsModal userId={userId} name="User" />, {
+      width: 700,
+      right: true,
+    });
   };
   return (
     <div className={card}>

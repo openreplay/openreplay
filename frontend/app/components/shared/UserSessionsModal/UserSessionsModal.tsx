@@ -13,8 +13,8 @@ import { useTranslation } from 'react-i18next';
 const PER_PAGE = 10;
 interface Props {
   userId: string;
-  hash: string;
-  name: string;
+  hash?: string;
+  name?: string;
 }
 function UserSessionsModal(props: Props) {
   const { t } = useTranslation();
@@ -56,7 +56,9 @@ function UserSessionsModal(props: Props) {
     <div className="bg-white pb-6 h-screen">
       <div className="flex items-center justify-between w-full px-5 py-3">
         <div className="text-lg flex items-center">
-          <Avatar isActive={false} seed={hash} isAssist={false} className="" />
+          {hash ? (
+            <Avatar isActive={false} seed={hash} isAssist={false} />
+          ) : null}
           <div className="ml-3">
             <span>
               {name}
@@ -85,7 +87,7 @@ function UserSessionsModal(props: Props) {
         }
       >
         <div
-          className="border rounded m-5 overflow-y-auto"
+          className="border rounded m-5 mt-0 overflow-y-auto"
           style={{ maxHeight: 'calc(100vh - 85px)' }}
         >
           <Loader loading={loading}>
