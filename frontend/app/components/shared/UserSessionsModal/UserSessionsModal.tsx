@@ -58,9 +58,11 @@ function UserSessionsModal(props: Props) {
         <div className="text-lg flex items-center">
           <Avatar isActive={false} seed={hash} isAssist={false} className="" />
           <div className="ml-3">
-            {name}
-            &apos;s
-            <span className="color-gray-dark">{t('Sessions')}</span>
+            <span>
+              {name}
+              &apos;s
+            </span>
+            <span className="color-gray-dark ml-1">{t('Sessions')}</span>
           </div>
         </div>
         <div>
