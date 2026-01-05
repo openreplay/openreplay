@@ -1,19 +1,39 @@
 import React from 'react';
-import Event from 'Components/DataManagement/Activity/data/Event'
+import DataItemPage from '../DataItemPage';
+import type { CommonProp } from './commonProp';
 
-function UserProperty() {
-  const testEv = new Event({
-    name: '$broswerthing',
-    displayName: 'Browser Thing',
-    description: 'The browser the user is using',
-    customFields: {
-      exampleValue: 'Chrome',
-      type: 'String',
-    }
-  })
+function UserPropsPage() {
+  const userWithFields: CommonProp = {
+    id: 'user_loc',
+    name: 'User_loc',
+    fields: {
+      displayName: { value: 'User Location', readonly: false },
+      description: { value: 'Location of the user', readonly: false },
+      volume: { value: '1,234', readonly: true },
+      type: { value: 'String', readonly: true },
+    },
+  };
   return (
-    <div className="border rounded-lg flex flex-col gap-4 w-full mx-auto" style={{ maxWidth: 1360 }}>
-
-    </div>
-  )
+    <DataItemPage
+      type="user"
+      item={userWithFields}
+      backLink={{ name: 'Event Properties', to: '/data/events' }}
+      footer={
+        <div className={'rounded-lg border bg-white'}>
+          <UsersWithProp />
+        </div>
+      }
+    />
+  );
 }
+
+function UsersWithProp() {
+  return (
+    <div className="py-4 flex flex-col gap-2">
+      <span className="text-xl font-semibold px-4">Users with this property</span>
+      <div>table</div>
+    </div>
+  );
+}
+
+export default UserPropsPage;

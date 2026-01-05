@@ -40,11 +40,7 @@ function ListPage() {
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
-        <Tabs
-          activeKey={view}
-          onChange={(key) => setView(key)}
-          items={views}
-        />
+        <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
           <Button type={'text'} icon={<Album size={14} />}>
             Docs
@@ -52,7 +48,11 @@ function ListPage() {
           <Input.Search size={'small'} placeholder={'Name, email, ID'} />
         </div>
       </div>
-      {view === 'users' ? <UserPropsList toUser={toUser} /> : <EventPropsList toEvent={toEvent} />}
+      {view === 'users' ? (
+        <UserPropsList toUser={toUser} />
+      ) : (
+        <EventPropsList toEvent={toEvent} />
+      )}
     </div>
   );
 }
@@ -190,7 +190,7 @@ function UserPropsList({ toUser }: { toUser: (id: string) => void }) {
     setHiddenCols((_) => {
       return columns
         .map((col) =>
-          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key
+          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key,
         )
         .filter(Boolean);
     });

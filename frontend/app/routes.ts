@@ -165,9 +165,11 @@ export const dataManagement = {
     hashed(`/data-management/user/${id}`, hash),
   usersEventsList: (view = ':view(users|events)', hash?: string | number) =>
     hashed(`/data-management/list/${view}`, hash),
-  eventPage: (id = ':eventId', hash?: string | number) =>
-    hashed(`/data-management/event/${id}`, hash),
-  properties: () => '/data-management/properties',
+  eventPropsPage: (id = ':propId', hash?: string | number) =>
+    hashed(`/data-management/list/properties/event/${id}`, hash),
+  userPropsPage: (id = ':propId', hash?: string | number) =>
+    hashed(`/data-management/list/properties/user/${id}`, hash),
+  properties: () => '/data-management/list/properties',
 };
 
 const REQUIRED_SITE_ID_ROUTES = [
@@ -208,7 +210,8 @@ const REQUIRED_SITE_ID_ROUTES = [
   dataManagement.activity(),
   dataManagement.userPage(''),
   dataManagement.usersEventsList(''),
-  dataManagement.eventPage(''),
+  dataManagement.eventPropsPage(''),
+  dataManagement.userPropsPage(''),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));

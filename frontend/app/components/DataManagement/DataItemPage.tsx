@@ -1,21 +1,28 @@
 import React from 'react';
 import { Button, Input } from 'antd';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { Triangle } from './Activity/EventDetailsModal';
 import cn from 'classnames';
 import { EditOutlined } from '@ant-design/icons';
+import type { CommonProp } from './Properties/commonProp';
+import { FieldNames } from './Properties/commonProp';
 
 function DataItemPage({
-  sessionId,
   footer,
   item,
   backLink,
+  type,
 }: {
-  sessionId?: string;
   footer?: React.ReactNode;
-  item: Record<string, any>;
+  item: CommonProp;
   backLink: { name: string; to: string };
+  type: 'user' | 'event';
 }) {
+  const fields = Object.entries(item.fields).map(([key, field]) => ({
+    name: FieldNames(key, type),
+    value: field.value,
+    readonly: field.readonly,
+  }));
+
   return (
     <div
       className={'flex flex-col gap-2 mx-auto w-full'}
@@ -36,18 +43,13 @@ function DataItemPage({
           >
             {item.name}
           </div>
-          {sessionId ? (
-            <div className={'link flex gap-1 items-center'}>
-              <span>Play Sessions</span>
-              <Triangle size={10} color={'blue'} />
-            </div>
-          ) : null}
         </div>
-        {item.fields.map((field) => (
+        {fields.map((field) => (
           <EditableField
             onSave={() => null}
             fieldName={field.name}
             value={field.value}
+            readonly={field.readonly}
           />
         ))}
       </div>
@@ -61,17 +63,19 @@ function EditableField({
   onSave,
   fieldName,
   value,
+  readonly,
 }: {
   onSave: (value: string) => void;
   fieldName: string;
   value: string;
+  readonly?: boolean;
 }) {
   const [isEdit, setIsEdit] = React.useState(false);
   return (
     <div
       className={cn(
         'flex border-b last:border-b-0 items-center px-4 py-2 gap-2',
-        isEdit ? 'bg-active-blue' : 'hover:bg-active-blue'
+        isEdit ? 'bg-active-blue' : 'hover:bg-active-blue',
       )}
     >
       <div className={'font-semibold'} style={{ flex: 1 }}>
@@ -96,12 +100,14 @@ function EditableField({
         ) : (
           <div className={'flex items-center justify-between'}>
             <span>{value}</span>
-            <div
-              className={'cursor-pointer text-main'}
-              onClick={() => setIsEdit(true)}
-            >
-              <EditOutlined size={16} />
-            </div>
+            {readonly ? null : (
+              <div
+                className={'cursor-pointer text-main'}
+                onClick={() => setIsEdit(true)}
+              >
+                <EditOutlined size={16} />
+              </div>
+            )}
           </div>
         )}
       </div>
