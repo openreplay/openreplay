@@ -464,6 +464,7 @@ class UserStore {
         this.scopeState = data.scopeState;
         this.passwordErrors = [];
       });
+      return this.account;
     } catch (error) {
       runInAction(() => {
         deleteCookie('jwt', '/', 'openreplay.com');
