@@ -9,6 +9,7 @@ import {
   IFRAME,
   JWT_PARAM,
   SPOT_ONBOARDING,
+  SITE_ID_STORAGE_KEY,
 } from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
 import { useStore } from 'App/mstore';
@@ -99,10 +100,22 @@ const Router: React.FC<RouterProps> = (props) => {
     if (isSpotCb) {
       localStorage.setItem(SPOT_ONBOARDING, 'true');
     }
-    await fetchUserInfo();
+    const userData = await fetchUserInfo();
     const siteIdFromPath = location.pathname.split('/')[1];
     await fetchSiteList(siteIdFromPath);
     mstore.initClient();
+
+    if (userData?.tenantId) {
+      projectsStore.setTenantId(userData.tenantId);
+      const existing = localStorage.getItem(SITE_ID_STORAGE_KEY);
+      const [storedSiteId, storedTenantId] = existing
+        ? existing.split('_$_')
+        : [null, null];
+
+      if (userData?.tenantId === storedTenantId) {
+        projectsStore.setSiteId(storedSiteId!);
+      }
+    }
 
     if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
       handleSpotLogin(localSpotJwt);
