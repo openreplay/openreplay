@@ -163,8 +163,10 @@ export const dataManagement = {
   activity: () => '/data-management/activity',
   userPage: (id = ':userId', hash?: string | number) =>
     hashed(`/data-management/user/${id}`, hash),
-  usersEventsList: (view = ':view(users|events)', hash?: string | number) =>
-    hashed(`/data-management/list/${view}`, hash),
+  eventPage: (id = ':eventId', hash?: string | number) =>
+    hashed(`/data-management/event/${id}`, hash),
+  usersList: () => `/data-management/list/users`,
+  eventsList: () => `/data-management/list/events`,
   eventPropsPage: (id = ':propId', hash?: string | number) =>
     hashed(`/data-management/list/properties/event/${id}`, hash),
   userPropsPage: (id = ':propId', hash?: string | number) =>
@@ -209,7 +211,9 @@ const REQUIRED_SITE_ID_ROUTES = [
   kai(),
   dataManagement.activity(),
   dataManagement.userPage(''),
-  dataManagement.usersEventsList(''),
+  dataManagement.usersList(),
+  dataManagement.eventPage(''),
+  dataManagement.eventsList(),
   dataManagement.eventPropsPage(''),
   dataManagement.userPropsPage(''),
 ];

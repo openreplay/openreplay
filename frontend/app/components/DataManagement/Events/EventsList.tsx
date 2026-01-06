@@ -1,10 +1,9 @@
 import React from 'react';
 import { Table } from 'antd';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import FullPagination from 'Shared/FullPagination';
 
-function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
+function EventsList({ toEvent }: { toEvent?: (id: string) => void }) {
   const columns = [
     {
       title: 'Event Name',

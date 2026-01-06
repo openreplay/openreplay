@@ -17,7 +17,6 @@ import * as routes from './routes';
 import { debounceCall } from '@/utils';
 import { hasAi } from './utils/split-utils';
 import { saasRoutes } from './saasComponents';
-import UserPropsPage from './components/DataManagement/Properties/UserProperty';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -38,9 +37,10 @@ const components: any = {
   UserPage: lazy(
     () => import('Components/DataManagement/UsersEvents/UserPage'),
   ),
-  UsersEventsPage: lazy(
+  UsersPage: lazy(
     () => import('Components/DataManagement/UsersEvents/UsersListPage'),
   ),
+  EventsPage: lazy(() => import('Components/DataManagement/Events/index')),
   EventPropsPage: lazy(
     () => import('Components/DataManagement/Properties/EventPropsPage'),
   ),
@@ -68,7 +68,8 @@ const enhancedComponents: any = {
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
   UserPage: withSiteIdUpdater(components.UserPage),
-  UsersEventsPage: withSiteIdUpdater(components.UsersEventsPage),
+  UsersPage: withSiteIdUpdater(components.UsersPage),
+  EventsPage: withSiteIdUpdater(components.EventsPage),
   EventPropsPage: withSiteIdUpdater(components.EventPropsPage),
   UserPropsPage: withSiteIdUpdater(components.UserPropsPage),
   PropertiesList: withSiteIdUpdater(components.PropertiesList),
@@ -331,8 +332,14 @@ function PrivateRoutes() {
         <Route
           exact
           strict
-          path={withSiteId(routes.dataManagement.usersEventsList(), siteIdList)}
-          component={enhancedComponents.UsersEventsPage}
+          path={withSiteId(routes.dataManagement.usersList(), siteIdList)}
+          component={enhancedComponents.UsersPage}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.eventsList(), siteIdList)}
+          component={enhancedComponents.EventsPage}
         />
         <Route
           exact

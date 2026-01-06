@@ -6,17 +6,17 @@ import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from 'App/routes';
 import { Album } from 'lucide-react';
 import withPermissions from 'HOCs/withPermissions';
-import UsersList from './components/UsersList';
+import EventsList from './EventsList';
 import { debounce } from 'App/utils';
 
-function UsersListPage() {
+function EventsListPage() {
   const [search, setSearch] = React.useState('');
   const [query, setQuery] = React.useState('');
   const { projectsStore } = useStore();
-  const siteId = projectsStore.activeSiteId;
   const history = useHistory();
-  const toUser = (id: string) =>
-    history.push(withSiteId(dataManagement.userPage(id), siteId));
+  const siteId = projectsStore.activeSiteId;
+  const toEvent = (id: string) =>
+    history.push(withSiteId(dataManagement.eventPage(id), siteId));
 
   const debouncedSetSearch = React.useRef(
     debounce((value: string) => {
@@ -37,9 +37,7 @@ function UsersListPage() {
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 py-2'}>
-        <div className={'font-semibold text-lg capitalize'}>
-          People
-        </div>
+        <div className={'font-semibold text-lg capitalize'}>Events</div>
         <div className="flex items-center gap-2">
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             Docs
@@ -53,7 +51,7 @@ function UsersListPage() {
           />
         </div>
       </div>
-      <UsersList toUser={toUser} query={search} />
+      <EventsList toEvent={toEvent} />
     </div>
   );
 }
@@ -63,4 +61,4 @@ export default withPermissions(
   '',
   false,
   false,
-)(observer(UsersListPage));
+)(observer(EventsListPage));
