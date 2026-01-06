@@ -18,7 +18,6 @@ function createEmojiImage(emoji: string, parentEl: HTMLElement) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // ADDED: Emoji-capable font stack for canvas
   ctx.font = `${canvasSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
   ctx.fillText(emoji, canvasSize / 2, canvasSize / 2);
 

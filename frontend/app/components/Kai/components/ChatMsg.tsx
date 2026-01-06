@@ -25,7 +25,6 @@ import html2canvas from '@codewonders/html2canvas';
 import { replaceEmojisWithImages, waitForImages } from './pdfUtils'
 
 function ChatMsg({
-  userName,
   siteId,
   canEdit,
   message,
@@ -33,7 +32,6 @@ function ChatMsg({
   onReplay,
 }: {
   message: Message;
-  userName?: string;
   canEdit?: boolean;
   siteId: string;
   chatTitle: string | null;
@@ -91,7 +89,6 @@ function ChatMsg({
       offscreen.style.background = 'white';
       offscreen.style.width = '900px';
 
-      // insert logo  /assets/img/logo-img.png
       const logo = new Image();
       logo.src = '/assets/img/logo-img.png';
       logo.style.width = '130px';
@@ -153,13 +150,13 @@ function ChatMsg({
         callback: function (doc) {
           doc.save((chatTitle ?? 'document') + '.pdf');
         },
-        // top, bottom, ?, left
+        // top, bottom, right, left
         margin: [10, 10, 20, 20],
         x: 0,
         y: 0,
         // Target width
         width: blockWidth,
-        // Window width for rendering
+        // Window (or vpoint) width for rendering
         windowWidth: 675,
       });
       offscreen.remove();
