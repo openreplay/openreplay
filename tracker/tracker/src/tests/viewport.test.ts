@@ -52,4 +52,19 @@ describe('viewport module', () => {
       expect(app.send).toHaveBeenCalledWith(SetPageVisibility(document.hidden))
     }
   })
+
+  test('testing hashrouter replacer', () => {
+    // @ts-ignore
+    const testURL = new URL("http://example.com/#/path/to/page?query=123")
+    jest.spyOn(window, 'URL').mockImplementation(() => testURL)
+    jest.spyOn(document, 'URL', 'get').mockReturnValue(testURL.toString())
+    const customApp = createApp()
+    viewportModule(customApp, { replaceHashSymbol: true })
+    const startCallback = customApp.attachStartCallback.mock.calls[0][0]
+    startCallback()
+    expect(customApp.send).toHaveBeenCalledWith(
+      // @ts-ignore
+      SetPageLocation('http://example.com/path/to/page?query=123', document.referrer, expect.any(Number), document.title)
+    )
+  })
 })

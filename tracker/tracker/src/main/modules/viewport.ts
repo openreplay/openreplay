@@ -6,13 +6,13 @@ import { stringWiper } from '../app/sanitizer.js'
 export interface Options {
   urlSanitizer?: (url: string) => string
   titleSanitizer?: (title: string) => string
-  /** if present, tracker will remove given symbol to present url as regular router url on replay level;
+  /** if present, tracker will remove hash symbol to present url as regular router url on replay level;
    *
    * applied BEFORE sanitizers.
    *
-   * @example passing '#/' will result in 'site.com/#/path' -> 'site.com/path'
+   * @example 'site.com/#/path' -> 'site.com/path'
    */
-  replaceHashSymbol?: string
+  replaceHashSymbol?: boolean
 }
 
 export default function (app: App, options?: Options): void {
@@ -29,7 +29,7 @@ export default function (app: App, options?: Options): void {
       if (options?.replaceHashSymbol) {
         // replace hash router symbol if needed without affecting pathname of the url
         const u = new URL(currURL);
-        const hashRoute = u.hash.startsWith("#/") ? u.hash.slice(2) : "";
+        const hashRoute = u.hash.startsWith('#/') ? u.hash.slice(2) : "";
         const routePath = hashRoute ? "/" + hashRoute.replace(/^\/+/, "") : "";
         const cleaned = u.origin + u.pathname.replace(/\/$/, "") + routePath + u.search;
         url = cleaned;
