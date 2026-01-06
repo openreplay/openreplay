@@ -485,7 +485,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.26.9":
+"@babel/runtime@npm:^7.28.4":
   version: 7.28.4
   resolution: "@babel/runtime@npm:7.28.4"
   checksum: 10c1/658db7294bdd07ce6c355b9dd8b3a595710e3e7118e484c9c7a191a9f0d91c43f10469e57882d64b69f5df1a8c112a083c67ae0d9a290ec7ba6fdcfe7bf53532
@@ -9668,11 +9668,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jspdf@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "jspdf@npm:3.0.3"
+"jspdf@npm:4.0.0":
+  version: 4.0.0
+  resolution: "jspdf@npm:4.0.0"
   dependencies:
-    "@babel/runtime": "npm:^7.26.9"
+    "@babel/runtime": "npm:^7.28.4"
     canvg: "npm:^3.0.11"
     core-js: "npm:^3.6.0"
     dompurify: "npm:^3.2.4"
@@ -9688,7 +9688,7 @@ __metadata:
       optional: true
     html2canvas:
       optional: true
-  checksum: 10c1/5d137b49afd81ffe58594326f69fa40d984c998481b7d6d8e38e8d29d9d40b470ecb6ffe144a087d6bacd43316ec927d98f1e9c28821525174a35f868cd586dc
+  checksum: 10c1/d3fb68f7ebac04ac56bd48ca08b51f559a9c82ba2c5ed46a87b6de625fda748c65f3d8f640f439b90c60cc2c5a00c57e883907dae56080d6ac7ec0c4edd7b998
   languageName: node
   linkType: hard
 
@@ -11562,7 +11562,7 @@ __metadata:
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     js-untar: "npm:^2.0.0"
-    jspdf: "npm:^3.0.3"
+    jspdf: "npm:4.0.0"
     lucide-react: "npm:0.487.0"
     luxon: "npm:^3.7.2"
     microdiff: "npm:^1.5.0"

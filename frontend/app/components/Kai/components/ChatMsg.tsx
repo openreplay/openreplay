@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import SessionItem from 'Shared/SessionItem';
 import jsPDF from 'jspdf';
 import html2canvas from '@codewonders/html2canvas';
+import { replaceEmojisWithImages, waitForImages } from './pdfUtils'
 
 function ChatMsg({
   userName,
@@ -83,6 +84,13 @@ function ChatMsg({
         titleHeader.style.marginBottom = '10px';
         content.prepend(titleHeader);
       }
+      const offscreen = document.createElement('div');
+      offscreen.style.position = 'fixed';
+      offscreen.style.left = '-100000px';
+      offscreen.style.top = '0';
+      offscreen.style.background = 'white';
+      offscreen.style.width = '900px';
+
       // insert logo  /assets/img/logo-img.png
       const logo = new Image();
       logo.src = '/assets/img/logo-img.png';
@@ -93,6 +101,8 @@ function ChatMsg({
       container.style.justifyContent = 'center';
       container.style.marginBottom = '10mm';
       container.style.width = `${blockWidth}mm`;
+      content.style.background = 'white';
+      content.style.color = 'black';
       container.appendChild(logo);
       content.prepend(container);
       content.querySelectorAll('ul').forEach((ul) => {
@@ -131,6 +141,14 @@ function ChatMsg({
           }),
         );
       }
+
+      offscreen.appendChild(content);
+      document.body.appendChild(offscreen);
+
+      replaceEmojisWithImages(content);
+
+      await waitForImages(content);
+
       doc.html(content, {
         callback: function (doc) {
           doc.save((chatTitle ?? 'document') + '.pdf');
@@ -144,6 +162,7 @@ function ChatMsg({
         // Window width for rendering
         windowWidth: 675,
       });
+      offscreen.remove();
     } catch (e) {
       console.error('Error exporting message:', e);
       toast.error('Failed to export message');
@@ -284,7 +303,7 @@ function ChatMsg({
               tooltip="Export as PDF"
               onClick={onExport}
             >
-              <Icon name="export-pdf" size={16} />
+              <Icon name="export-pdf" size={16} color="black" />
             </IconButton>
           </div>
         )}
