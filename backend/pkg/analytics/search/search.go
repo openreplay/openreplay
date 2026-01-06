@@ -68,7 +68,7 @@ SELECT DISTINCT ON (session_id)
 	s.screen_height,
 	s.events_count,
 	viewed_sessions.session_id>0 AS viewed,
-	count(1) OVER() AS total_number_of_sessions
+	count(DISTINCT session_id) OVER() AS total_number_of_sessions
 	%s
 FROM experimental.sessions AS s
 	%s
