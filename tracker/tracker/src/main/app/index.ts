@@ -1466,6 +1466,7 @@ export default class App {
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
           height: window.screen.height,
+          referrer: document.referrer,
         }),
       })
       if (r.status !== 200) {

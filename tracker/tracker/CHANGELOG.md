@@ -1,3 +1,7 @@
+## 17.1.2
+
+- added referrer field for start req (defaults to document.referrer)
+
 ## 17.1.1
 
 - fix type reexport for analytics.categories
