@@ -223,6 +223,9 @@ export default class Widget {
       }
 
       if (this.metricType === USER_PATH) {
+        if (json.viewType === 'chart') {
+          this.viewType = 'lineChart';
+        }
         this.hideExcess = json.hideExcess;
         this.startType = json.startType;
         this.rows = json.rows;
