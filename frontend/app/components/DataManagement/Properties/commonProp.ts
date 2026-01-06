@@ -20,9 +20,13 @@ export const FieldNames = (field: string, type: 'user' | 'event') => {
   }
 };
 
-export interface CommonProp {
+export interface CommonEntry {
   id: string;
   name: string;
+  fields: Record<string, Field>;
+}
+
+export interface CommonProp extends CommonEntry {
   fields: {
     displayName: Field;
     description: Field;
