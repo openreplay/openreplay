@@ -1,6 +1,13 @@
 ## 17.1.2
 
 - added referrer field for start req (defaults to document.referrer)
+- add hashrouter replacer (to ommit hash symbol -- tracker side fix)
+```js
+urls: {
+  // https://site.com/#/path -> https://site.com/path
+  replaceHashSymbol: "#/",
+},
+```
 
 ## 17.1.1
 

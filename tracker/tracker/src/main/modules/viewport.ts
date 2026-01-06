@@ -6,6 +6,13 @@ import { stringWiper } from '../app/sanitizer.js'
 export interface Options {
   urlSanitizer?: (url: string) => string
   titleSanitizer?: (title: string) => string
+  /** if present, tracker will remove given symbol to present url as regular router url on replay level;
+   *
+   * applied BEFORE sanitizers.
+   *
+   * @example passing '#/' will result in 'site.com/#/path' -> 'site.com/path'
+   */
+  replaceHashSymbol?: string
 }
 
 export default function (app: App, options?: Options): void {
@@ -16,11 +23,21 @@ export default function (app: App, options?: Options): void {
   const titleSanitizer = options?.titleSanitizer || ((t) => t)
 
   const sendSetPageLocation = app.safe(() => {
-    const { URL } = document
-    if (URL !== url) {
-      url = URL
+    const currURL = document.URL;
+    if (currURL !== url) {
+      url = currURL
+      if (options?.replaceHashSymbol) {
+        // replace hash router symbol if needed without affecting pathname of the url
+        const u = new URL(currURL);
+        const hashRoute = u.hash.startsWith("#/") ? u.hash.slice(2) : "";
+        const routePath = hashRoute ? "/" + hashRoute.replace(/^\/+/, "") : "";
+        const cleaned = u.origin + u.pathname.replace(/\/$/, "") + routePath + u.search;
+        url = cleaned;
+      }
       const sanitized = urlSanitizer(url)
-      const safeTitle = app.sanitizer.privateMode ? stringWiper(document.title) : titleSanitizer(document.title)
+      const safeTitle = app.sanitizer.privateMode
+        ? stringWiper(document.title)
+        : titleSanitizer(document.title)
       const safeUrl = app.sanitizer.privateMode ? stringWiper(sanitized) : sanitized
       const safeReferrer = app.sanitizer.privateMode ? stringWiper(referrer) : referrer
       app.send(SetPageLocation(safeUrl, safeReferrer, navigationStart, safeTitle))
