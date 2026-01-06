@@ -6,27 +6,27 @@ name = "pypi"
 [packages]
 urllib3 = "==2.6.2"
 requests = "==2.32.5"
-boto3 = "==1.42.11"
+boto3 = "==1.42.22"
 pyjwt = "==2.10.1"
 psycopg2-binary = "==2.9.11"
 clickhouse-connect = "==0.10.0"
-elasticsearch = "==9.2.0"
+elasticsearch = "==9.2.1"
 jira = "==3.10.5"
 cachetools = "==6.2.4"
-fastapi = "==0.124.4"
+fastapi = "==0.128.0"
 gunicorn = "==23.0.0"
 python-decouple = "==3.8"
 apscheduler = "==3.11.1"
 python3-saml = "==1.16.0"
-python-multipart = "==0.0.20"
+python-multipart = "==0.0.21"
 scim2-models = "==0.5.1"
 scim2-server = "==0.1.7"
 scim2-filter-parser = "==0.7.0"
 werkzeug = "==3.1.4"
 redis = "==7.1.0"
 azure-storage-blob = "==12.27.1"
-psycopg = {extras = ["pool", "binary"], version = "==3.3.2"}
-uvicorn = {extras = ["standard"], version = "==0.38.0"}
+psycopg = {extras = ["binary", "pool"], version = "==3.3.2"}
+uvicorn = {extras = ["standard"], version = "==0.40.0"}
 pydantic = {extras = ["email"], version = "==2.12.5"}
 
 [dev-packages]
