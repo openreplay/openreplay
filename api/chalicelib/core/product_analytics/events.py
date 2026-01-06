@@ -26,10 +26,10 @@ cache = TTLCache(maxsize=1000, ttl=60)
 
 
 @cached(cache)
-def get_events(project_id: int):
+def get_events(project_id: int, include_all: bool = False):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """ \
+            f"""\
             SELECT DISTINCT
             ON(event_name,auto_captured)
                 COUNT (1) OVER () AS total,
@@ -37,6 +37,7 @@ def get_events(project_id: int):
                 auto_captured
             FROM product_analytics.all_events
             WHERE project_id=%(project_id)s
+                {"" if include_all else "AND status = 'visible'"}
             ORDER BY auto_captured, display_name, event_name;""",
             parameters={"project_id": project_id})
         rows = ch_client.execute(r)
@@ -177,13 +178,14 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
 def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT COUNT(1) OVER () AS total, all_events.event_name AS name,
-                      *
-               FROM product_analytics.all_events
-               WHERE project_id = %(project_id)s
-               ORDER BY display_name
-                   LIMIT %(limit)s
-               OFFSET %(offset)s;""",
+            """\
+            SELECT COUNT(1) OVER () AS total, all_events.event_name AS name,
+                   *
+            FROM product_analytics.all_events
+            WHERE project_id = %(project_id)s
+            ORDER BY display_name
+                LIMIT %(limit)s
+            OFFSET %(offset)s;""",
             parameters={"project_id": project_id, "limit": page.limit, "offset": (page.page - 1) * page.limit})
         rows = ch_client.execute(r)
     if len(rows) == 0:
