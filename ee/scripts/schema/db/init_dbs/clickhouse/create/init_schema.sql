@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.24.0-ee';
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.25.0-ee';
 CREATE DATABASE IF NOT EXISTS experimental;
 
 CREATE TABLE IF NOT EXISTS experimental.autocomplete
@@ -570,16 +570,17 @@ CREATE TABLE IF NOT EXISTS product_analytics.group_properties
 CREATE TABLE IF NOT EXISTS product_analytics.all_events
 (
     project_id          UInt16,
-    auto_captured       BOOL     DEFAULT FALSE,
+    auto_captured       BOOL                   DEFAULT FALSE,
     event_name          String,
-    display_name        String   DEFAULT '',
-    description         String   DEFAULT '',
-    event_count_l30days UInt32   DEFAULT 0,
-    query_count_l30days UInt32   DEFAULT 0,
+    display_name        String                 DEFAULT '',
+    description         String                 DEFAULT '',
+    status              LowCardinality(String) DEFAULT 'visible' COMMENT 'visible/hidden/dropped',
+    event_count_l30days UInt32                 DEFAULT 0,
+    query_count_l30days UInt32                 DEFAULT 0,
 
     created_at          DateTime64,
-    _edited_by_user     BOOL     DEFAULT FALSE,
-    _timestamp          DateTime DEFAULT now()
+    _edited_by_user     BOOL                   DEFAULT FALSE,
+    _timestamp          DateTime               DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, auto_captured, event_name);
 
