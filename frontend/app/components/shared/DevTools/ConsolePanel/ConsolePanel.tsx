@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { LogLevel } from 'Player';
 import { Tabs, NoContent } from 'UI';
-import { Input } from 'antd';
+import { Input, Switch } from 'antd';
 import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import cn from 'classnames';
 import { PlayerContext } from 'App/components/Session/playerContext';
@@ -95,8 +95,15 @@ export const getIconProps = (level: LogLevel) => {
 };
 
 const INDEX_KEY = 'console';
+const ERORRS_STORAGE_KEY = '_$_console_errors_only';
+
+const getDefaultValue = () => {
+  const stored = localStorage.getItem(ERORRS_STORAGE_KEY);
+  return stored === 'true';
+};
 
 function ConsolePanel({ isLive }: { isLive?: boolean }) {
+  const [showErrorsOnly, setShowErrorsOnly] = useState(getDefaultValue());
   const { t } = useTranslation();
   const {
     sessionStore: { devTools },
@@ -216,6 +223,23 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
     stopAutoscroll();
   };
 
+  const changeErrorsOnly = (value: boolean) => {
+    setShowErrorsOnly(value);
+    localStorage.setItem(ERORRS_STORAGE_KEY, value.toString());
+  };
+
+  const hasErrors = useMemo(
+    () => list.some((log) => LEVEL_TAB[log.level] === ERRORS),
+    [list],
+  );
+
+  useEffect(() => {
+    const flipDefaulTab = showErrorsOnly && hasErrors;
+    if (flipDefaulTab) {
+      onTabClick(ERRORS);
+    }
+  }, [showErrorsOnly, hasErrors]);
+
   return (
     <BottomBlock
       style={{ height: '100%' }}
@@ -236,6 +260,12 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
           />
         </div>
         <div className="flex items-center gap-2">
+          <span className="whitespace-nowrap">Open Errors By Default</span>
+          <Switch
+            size="small"
+            checked={showErrorsOnly}
+            onChange={changeErrorsOnly}
+          />
           <TabSelector />
           <Input
             className="rounded-lg"
