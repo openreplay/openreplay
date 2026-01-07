@@ -52,7 +52,8 @@ export default class Cursor {
     } else {
       this.tagElement.style.display = 'block';
       const nameStr = tag.length > 10 ? `${tag.slice(0, 9)}...` : tag;
-      this.tagElement.innerHTML = `<span>${nameStr}</span>`;
+      const textTag = document.createTextNode(nameStr);
+      this.tagElement.replaceChildren(textTag);
     }
   }
 
