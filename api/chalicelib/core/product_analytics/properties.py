@@ -386,7 +386,7 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
             SELECT COUNT(1)                  OVER () AS total, all_properties.property_name AS name,
                    all_properties.*,
                    possible_types.values  AS possible_types,
-                   possible_values.values AS sample_values
+                   sumMerge(aepg.data_count)    AS row_count
             FROM product_analytics.all_properties
                      LEFT JOIN (SELECT project_id, property_name, array_agg(DISTINCT value_type) AS
                                 values
@@ -394,12 +394,11 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
                                 WHERE project_id=%(project_id)s
                                 GROUP BY 1, 2) AS possible_types
                                USING (project_id, property_name)
-                     LEFT JOIN (SELECT project_id, property_name, array_agg(DISTINCT value) AS
-                                values
-                                FROM product_analytics.property_values_samples
-                                WHERE project_id=%(project_id)s
-                                GROUP BY 1, 2) AS possible_values USING (project_id, property_name)
-            WHERE project_id = %(project_id)s
+                LEFT JOIN product_analytics.autocomplete_event_properties_grouped AS aepg
+                   ON (all_properties.property_name = aepg.property_name)
+            WHERE all_properties.project_id = %(project_id)s 
+              AND (aepg.project_id = 0 OR aepg.project_id = %(project_id)s)
+            GROUP BY ALL
             ORDER BY display_name
                 LIMIT %(limit)s
             OFFSET %(offset)s;""",
