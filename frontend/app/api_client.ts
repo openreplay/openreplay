@@ -259,8 +259,8 @@ export default class APIClient {
     let fullUrl = edp + _path;
     if (useNewApi) {
       if (
-        newApiUrls.some((u) => fullUrl.includes(u)) &&
-        !except.some((e) => fullUrl.includes(e)) &&
+        newApiUrls.some((u) => _path.includes(u)) &&
+        !except.some((e) => _path.includes(e)) &&
         !edp.includes('/v2')
       ) {
         fullUrl = safeV2Replacer(fullUrl);
