@@ -180,9 +180,13 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
         r = ch_client.format(
             """\
             SELECT COUNT(1) OVER () AS total, all_events.event_name AS name,
-                   *
+                   all_events.*,sumMerge(data_count)  AS row_count
             FROM product_analytics.all_events
-            WHERE project_id = %(project_id)s
+                LEFT JOIN product_analytics.autocomplete_events_grouped AS aeg
+                   ON (all_events.event_name = aeg.value)
+            WHERE all_events.project_id = %(project_id)s
+                AND (aeg.project_id = 0 OR aeg.project_id = %(project_id)s)
+            GROUP BY ALL
             ORDER BY display_name
                 LIMIT %(limit)s
             OFFSET %(offset)s;""",
