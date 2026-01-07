@@ -12,6 +12,8 @@ import (
 	"openreplay/backend/pkg/analytics/dashboards"
 	analyticsEvents "openreplay/backend/pkg/analytics/events"
 	analyticsEventsAPI "openreplay/backend/pkg/analytics/events/api"
+	"openreplay/backend/pkg/analytics/lexicon"
+	lexiconAPI "openreplay/backend/pkg/analytics/lexicon/api"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/analytics/saved_searches"
 	"openreplay/backend/pkg/analytics/search"
@@ -42,25 +44,26 @@ import (
 )
 
 type serviceBuilder struct {
-	sessionAPI          api.Handlers
-	eventAPI            api.Handlers
-	analyticsEventsAPI  api.Handlers
-	favoriteAPI         api.Handlers
-	noteAPI             api.Handlers
-	replayAPI           api.Handlers
-	apiKeyAPI           api.Handlers
-	conditionsAPI       api.Handlers
-	cardsAPI            api.Handlers
-	dashboardsAPI       api.Handlers
-	chartsAPI           api.Handlers
-	searchAPI           api.Handlers
-	savedSearchesAPI    api.Handlers
-	usersAPI            api.Handlers
+	sessionAPI         api.Handlers
+	eventAPI           api.Handlers
+	analyticsEventsAPI api.Handlers
+	favoriteAPI        api.Handlers
+	noteAPI            api.Handlers
+	replayAPI          api.Handlers
+	apiKeyAPI          api.Handlers
+	conditionsAPI      api.Handlers
+	cardsAPI           api.Handlers
+	dashboardsAPI      api.Handlers
+	chartsAPI          api.Handlers
+	searchAPI          api.Handlers
+	savedSearchesAPI   api.Handlers
+	usersAPI           api.Handlers
+	lexiconAPI         api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.sessionAPI, b.eventAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
@@ -194,6 +197,12 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	lexiconService := lexicon.New(log, chconn)
+	lexiconHandlers, err := lexiconAPI.NewHandlers(log, cfg.HTTP.JsonSizeLimit, lexiconService, responser)
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
 		sessionAPI:         sessionHandlers,
 		eventAPI:           eventHandlers,
@@ -209,5 +218,6 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		searchAPI:          searchHandlers,
 		savedSearchesAPI:   savedSearchesHandlers,
 		usersAPI:           usersHandlers,
+		lexiconAPI:         lexiconHandlers,
 	}, nil
 }
