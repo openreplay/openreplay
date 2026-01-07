@@ -6,7 +6,7 @@ import { Copy, Check, Share2 } from 'lucide-react';
 interface Props {
   content: string;
   getHtml?: () => any;
-  variant?: 'text' | 'primary' | 'ghost' | 'link' | 'default';
+  variant?: 'text' | 'primary' | 'link' | 'default';
   className?: string;
   btnText?: string;
   size?: 'small' | 'middle' | 'large';
@@ -102,7 +102,7 @@ function CopyButton({
     return (
       <Tooltip title={copied ? copyText[1] : copyText[0]}>
         <Button
-          type="text"
+          type={variant}
           onClick={copyHandler}
           size={size}
           icon={

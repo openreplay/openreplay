@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
 import ExplainButton from 'Shared/DevTools/ExplainButton';
-import { Icon } from 'UI';
+import { Icon, CopyButton } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
 import TabTag from '../TabTag';
 
@@ -54,6 +54,9 @@ function ConsoleRow(props: Props) {
   const restLines = lines.slice(1);
   const logSource = props.showSingleTab ? -1 : props.getTabNum?.(log.tabId);
   const logTabId = log.tabId;
+
+  const logMessage = (log) =>
+    log.message ? `${log.value} ${log.message}` : log.value;
   return (
     <div
       style={style}
@@ -110,13 +113,16 @@ function ConsoleRow(props: Props) {
       </div>
       <JumpButton
         extra={
-          <ExplainButton
-            sessionId={props.sessionId}
-            log={{
-              level: log.level,
-              message: log.message ? `${log.value} ${log.message}` : log.value,
-            }}
-          />
+          <>
+            <CopyButton variant="default" isIcon content={logMessage(log)} />
+            <ExplainButton
+              sessionId={props.sessionId}
+              log={{
+                level: log.level,
+                message: logMessage(log),
+              }}
+            />
+          </>
         }
         time={log.time}
         onClick={() => {
