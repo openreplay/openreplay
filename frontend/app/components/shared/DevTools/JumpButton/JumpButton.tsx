@@ -15,7 +15,9 @@ function JumpButton(props: Props) {
   return (
     <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center gap-2">
       {props.extra ? (
-        <div className={'hidden group-hover:block'}>{props.extra}</div>
+        <div className={'hidden group-hover:flex gap-2 items-center'}>
+          {props.extra}
+        </div>
       ) : null}
       <Tooltip title={tooltip} disabled={!tooltip}>
         <Button
