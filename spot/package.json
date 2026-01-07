@@ -16,16 +16,16 @@
     "prettier": "prettier --write ."
   },
   "dependencies": {
-    "@neodrag/solid": "^2.3.0",
+    "@neodrag/solid": "^2.3.1",
     "@openreplay/network-proxy": "^1.2.2",
-    "@tailwindcss/postcss": "^4.1.7",
-    "@tailwindcss/vite": "^4.1.7",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/vite": "^4.1.18",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
     "prettier": "^3.5.3",
     "solid-js": "^1.9.10",
-    "tailwindcss": "4.1.7",
+    "tailwindcss": "4.1.18",
     "web-vitals": "^5.1.0"
   },
   "devDependencies": {

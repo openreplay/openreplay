@@ -35,9 +35,9 @@ function makeButton(options: ButtonOptions, defaultStyle?: Properties): HTMLButt
     marginRight: '10px',
   }, defaultStyle)
   if (typeof options === 'string') {
-    btn.innerHTML = options
+    btn.textContent = options
   } else {
-    btn.innerHTML = options.innerHTML
+    btn.textContent = options.innerHTML
     Object.assign(btn.style, options.style)
   }
   return btn
