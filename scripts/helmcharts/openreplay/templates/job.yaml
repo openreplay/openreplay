@@ -142,7 +142,7 @@ spec:
             error_connection=1
 
             while [ $exit_count -le 20 ];do
-              nc -zv {{.Values.global.clickhouse.chHost}} 9000 -w 1
+              nc -zv {{.Values.global.clickhouse.chHost}} {{.Values.global.clickhouse.service.webPort}} -w 1
               if [ $? -ne 0 ]; then
                 echo "[info] clickhouse is not up; retrying in 5 seconds"
                 sleep 4
