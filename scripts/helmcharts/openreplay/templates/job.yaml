@@ -177,6 +177,8 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlHost }}"
           - name: PGPORT
             value: "{{ .Values.global.postgresql.postgresqlPort }}"
+          - name: PGDATABASE
+            value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
