@@ -10,6 +10,8 @@ import { useStore } from 'App/mstore';
 import { Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { NetworkPanelComp } from './NetworkPanelComp';
+import { IResourceRequest, IResourceTiming } from 'App/player';
+import { WsChannel } from '@/player/web/messages';
 
 // Constants remain the same
 const ALL = 'ALL';
@@ -103,33 +105,61 @@ function NetworkPanelCont({
   const { dataSource } = uiPlayerStore;
   const showSingleTab = dataSource === 'current';
 
-  let fetchList = [];
-  let resourceList = [];
-  let fetchListNow = [];
-  let resourceListNow = [];
-  let websocketList = [];
-  let websocketListNow = [];
+  const {
+    fetchList = [],
+    resourceList = [],
+    fetchListNow = [],
+    resourceListNow = [],
+    websocketList = [],
+    websocketListNow = [],
+  } = React.useMemo(() => {
+    let fetchList: IResourceRequest[] = [];
+    let resourceList: IResourceTiming[] = [];
+    let fetchListNow: IResourceRequest[] = [];
+    let resourceListNow: IResourceTiming[] = [];
+    let websocketList: WsChannel[] = [];
+    let websocketListNow: WsChannel[] = [];
 
-  if (showSingleTab) {
-    const state = tabStates[currentTab] ?? {};
-    fetchList = state.fetchList ?? [];
-    resourceList = state.resourceList ?? [];
-    fetchListNow = state.fetchListNow ?? [];
-    resourceListNow = state.resourceListNow ?? [];
-    websocketList = state.websocketList ?? [];
-    websocketListNow = state.websocketListNow ?? [];
-  } else {
-    fetchList = tabValues.flatMap((tab) => tab.fetchList);
-    resourceList = tabValues.flatMap((tab) => tab.resourceList);
-    fetchListNow = tabValues.flatMap((tab) => tab.fetchListNow).filter(Boolean);
-    resourceListNow = tabValues
-      .flatMap((tab) => tab.resourceListNow)
-      .filter(Boolean);
-    websocketList = tabValues.flatMap((tab) => tab.websocketList);
-    websocketListNow = tabValues
-      .flatMap((tab) => tab.websocketListNow)
-      .filter(Boolean);
-  }
+    if (showSingleTab) {
+      const state = tabStates[currentTab] ?? {};
+      fetchList = state.fetchList ?? [];
+      resourceList = state.resourceList ?? [];
+      fetchListNow = state.fetchListNow ?? [];
+      resourceListNow = state.resourceListNow ?? [];
+      websocketList = state.websocketList ?? [];
+      websocketListNow = state.websocketListNow ?? [];
+    } else {
+      fetchList = tabValues
+        .flatMap((tab) => tab.fetchList)
+        .sort((a, b) => a.time - b.time);
+      resourceList = tabValues
+        .flatMap((tab) => tab.resourceList)
+        .sort((a, b) => a.time - b.time);
+      fetchListNow = tabValues
+        .flatMap((tab) => tab.fetchListNow)
+        .filter(Boolean)
+        .sort((a, b) => a.time - b.time);
+      resourceListNow = tabValues
+        .flatMap((tab) => tab.resourceListNow)
+        .filter(Boolean)
+        .sort((a, b) => a.time - b.time);
+      websocketList = tabValues
+        .flatMap((tab) => tab.websocketList)
+        .sort((a, b) => a.time - b.time);
+      websocketListNow = tabValues
+        .flatMap((tab) => tab.websocketListNow)
+        .filter(Boolean)
+        .sort((a, b) => a.time - b.time);
+    }
+    return {
+      fetchList,
+      resourceList,
+      fetchListNow,
+      resourceListNow,
+      websocketList,
+      websocketListNow,
+    };
+  }, [showSingleTab, currentTab, tabStates, tabValues]);
 
   const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
   const getTabName = (tabId: string) => tabNames[tabId];
