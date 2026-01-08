@@ -23,6 +23,7 @@ type LexiconProperty struct {
 	DisplayName    string   `json:"displayName" ch:"display_name"`
 	Description    string   `json:"description" ch:"description"`
 	Type           string   `json:"type" ch:"type"`
+	DataType       string   `json:"dataType" ch:"data_type"`
 	IsHidden       bool     `json:"isHidden" ch:"is_hidden"`
 	IsAutoCaptured bool     `json:"isAutoCaptured" ch:"is_auto_captured"`
 	Count          uint64   `json:"count" ch:"count"`

@@ -13,7 +13,7 @@ import (
 
 type Lexicon interface {
 	GetDistinctEvents(ctx context.Context, projID uint32) ([]model.LexiconEvent, uint64, error)
-	GetProperties(ctx context.Context, projID uint32) ([]model.LexiconProperty, uint64, error)
+	GetProperties(ctx context.Context, projID uint32, source *string) ([]model.LexiconProperty, uint64, error)
 }
 
 type lexiconImpl struct {
@@ -77,25 +77,38 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 	return events, total, nil
 }
 
-func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32) ([]model.LexiconProperty, uint64, error) {
+func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string) ([]model.LexiconProperty, uint64, error) {
 	query := `SELECT COUNT(1) OVER () AS total,
-	                 property_name AS name,
-	                 display_name,
-	                 description,
-	                 source,
-	                 is_event_property,
-	                 auto_captured,
-	                 status,
-	                 data_count,
-	                 query_count,
-	                 created_at,
-	                 _edited_by_user
-	          FROM product_analytics.all_properties
-	          WHERE project_id = ?
-	          ORDER BY _timestamp DESC, display_name
-	          LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured`
+	                 ap.property_name AS name,
+	                 ap.display_name,
+	                 ap.description,
+	                 ap.source,
+	                 ep.value_type,
+	                 ap.is_event_property,
+	                 ap.auto_captured,
+	                 ap.status,
+	                 ap.data_count,
+	                 ap.query_count,
+	                 ap.created_at,
+	                 ap._edited_by_user
+	          FROM product_analytics.all_properties ap
+	          LEFT JOIN product_analytics.event_properties ep 
+	              ON ap.project_id = ep.project_id 
+	              AND ap.property_name = ep.property_name
+	              AND ap.auto_captured = ep.auto_captured_property
+	          WHERE ap.project_id = ?`
 
-	rows, err := e.chConn.Query(ctx, query, projID)
+	args := []interface{}{projID}
+	if source != nil {
+		query += ` AND ap.source = ?`
+		args = append(args, *source)
+	}
+
+	query += `
+	          ORDER BY ap._timestamp DESC, ap.display_name
+	          LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
+
+	rows, err := e.chConn.Query(ctx, query, args...)
 	if err != nil {
 		e.log.Error(ctx, "failed to query distinct properties for project %d: %v", projID, err)
 		return nil, 0, fmt.Errorf("failed to query distinct properties for project %d: %w", projID, err)
@@ -107,15 +120,16 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32) ([]model
 	for rows.Next() {
 		var property model.LexiconProperty
 		var createdAt time.Time
-		var source string
+		var source, valueType string
 		var isEventProperty, editedByUser bool
 		var status string
 		var dataCount, queryCount uint32
-		if err := rows.Scan(&total, &property.Name, &property.DisplayName, &property.Description, &source, &isEventProperty, &property.IsAutoCaptured, &status, &dataCount, &queryCount, &createdAt, &editedByUser); err != nil {
+		if err := rows.Scan(&total, &property.Name, &property.DisplayName, &property.Description, &source, &valueType, &isEventProperty, &property.IsAutoCaptured, &status, &dataCount, &queryCount, &createdAt, &editedByUser); err != nil {
 			e.log.Error(ctx, "failed to scan distinct property for project %d, error: %v, query: %s", projID, err, query)
 			return nil, 0, fmt.Errorf("failed to scan property row: %w", err)
 		}
 		property.Type = source
+		property.DataType = valueType
 		property.Count = uint64(dataCount)
 		property.QueryCount = uint64(queryCount)
 		property.IsHidden = (status == "hidden" || status == "dropped")

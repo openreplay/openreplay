@@ -83,6 +83,7 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (*model.LexiconE
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
+// @Param source query string false "Source filter (events or users)"
 // @Success 200 {object} []model.LexiconProperty
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 413 {object} api.ErrorResponse
@@ -95,7 +96,14 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (*model.LexiconPrope
 		return nil, http.StatusBadRequest, err
 	}
 
-	properties, total, err := h.lexicon.GetProperties(r.Request.Context(), projID)
+	var source *string
+	if sourceParam := r.Request.URL.Query().Get("source"); sourceParam != "" {
+		if sourceParam == "events" || sourceParam == "users" {
+			source = &sourceParam
+		}
+	}
+
+	properties, total, err := h.lexicon.GetProperties(r.Request.Context(), projID, source)
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get properties for project %d: %v", projID, err)
 		return nil, http.StatusNotFound, err
