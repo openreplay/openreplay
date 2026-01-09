@@ -152,7 +152,7 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 	if req.DisplayName != nil && *req.DisplayName == "" {
 		return fmt.Errorf("displayName cannot be empty")
 	}
-	if req.Status != nil && *req.Status != "" && *req.Status != "visible" && *req.Status != "hidden" && *req.Status != "dropped" {
+	if req.Status != nil && (*req.Status != "visible" && *req.Status != "hidden" && *req.Status != "dropped") {
 		return fmt.Errorf("status must be one of: visible, hidden, dropped")
 	}
 
@@ -184,6 +184,7 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		event_name,
 		display_name,
 		description,
+		status,
 		event_count_l30days,
 		query_count_l30days,
 		created_at,
@@ -196,6 +197,7 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		event_name,
 		COALESCE(?, display_name) as display_name,
 		COALESCE(?, description) as description,
+		COALESCE(?, status) as status,
 		event_count_l30days,
 		query_count_l30days,
 		created_at,
@@ -208,15 +210,18 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 	ORDER BY _timestamp DESC
 	LIMIT 1`
 
-	var displayName, description interface{}
+	var displayName, description, status interface{}
 	if req.DisplayName != nil {
 		displayName = *req.DisplayName
 	}
 	if req.Description != nil {
 		description = *req.Description
 	}
+	if req.Status != nil {
+		status = *req.Status
+	}
 
-	err = e.chConn.Exec(ctx, query, displayName, description, projID, req.Name, req.AutoCaptured)
+	err = e.chConn.Exec(ctx, query, displayName, description, status, projID, req.Name, req.AutoCaptured)
 	if err != nil {
 		e.log.Error(ctx, "failed to update event %s for project %d: %v", req.Name, projID, err)
 		return fmt.Errorf("failed to update event: %w", err)
@@ -229,7 +234,7 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 	if req.DisplayName != nil && *req.DisplayName == "" {
 		return fmt.Errorf("displayName cannot be empty")
 	}
-	if req.Status != nil && *req.Status != "" && *req.Status != "visible" && *req.Status != "hidden" && *req.Status != "dropped" {
+	if req.Status != nil && (*req.Status != "visible" && *req.Status != "hidden" && *req.Status != "dropped") {
 		return fmt.Errorf("status must be one of: visible, hidden, dropped")
 	}
 	if req.Source != "sessions" && req.Source != "users" && req.Source != "events" {
