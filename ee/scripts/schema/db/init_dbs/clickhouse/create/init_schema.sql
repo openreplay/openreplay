@@ -293,7 +293,6 @@ CREATE TABLE IF NOT EXISTS product_analytics.users
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       ORDER BY (project_id, "$user_id")
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, "$user_id")
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
