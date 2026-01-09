@@ -143,8 +143,8 @@ function SubHeader(props: any) {
       currentSession.sessionId,
     );
     const statusLabels = {
-      pending: 'Sesison export started',
-      success: 'Session already exported',
+      pending: 'Session export started',
+      success: 'Session already exported, go to Preferences > Exported Videos',
       failure: 'Session export failed, please try again later',
     };
     // @ts-ignore
