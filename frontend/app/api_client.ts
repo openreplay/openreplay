@@ -224,7 +224,12 @@ export default class APIClient {
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('replay-exporter');
     let edp = ENV.API_EDP || window.location.origin + '/api';
-    const isSaas = edp.includes('api.openreplay.com');
+    let isSaas = false;
+    const saasHost = 'api.openreplay.com';
+    const urlObj = new URL(edp);
+    if (urlObj.hostname === saasHost) {
+      isSaas = true;
+    }
     const safeV2Replacer = (url: string) => {
       if (isSaas) {
         if (url.includes('replay-exporter')) return url;
@@ -242,7 +247,7 @@ export default class APIClient {
       edp = safeV2Replacer(edp);
     }
 
-    if (noChalice && !edp.includes('api.openreplay.com')) {
+    if (noChalice && !isSaas) {
       edp = edp.replace('/api', '');
     }
     if (

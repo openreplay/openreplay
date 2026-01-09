@@ -3,8 +3,10 @@ export function safeApiUrl(url: string) {
   if (str.endsWith("/")) {
     str = str.slice(0, -1);
   }
-  if (str.includes("app.openreplay.com")) {
-    str = str.replace("app.openreplay.com", "api.openreplay.com");
+  const urlObj = new URL(str);
+  if (urlObj.hostname === "app.openreplay.com") {
+    urlObj.hostname = "api.openreplay.com";
+    str = urlObj.toString();
   }
   return str;
 }

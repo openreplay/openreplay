@@ -866,9 +866,8 @@ export default defineBackground(() => {
                     });
                   }
                   const { id, mobURL, videoURL } = resp;
-                  const link = settings.ingestPoint.includes(
-                    "api.openreplay.com",
-                  )
+                  const ingestUrl = settings.ingestPoint ? new URL(settings.ingestPoint) : { hostname: '' };
+                  const link = ingestUrl.hostname === "api.openreplay.com"
                     ? "https://app.openreplay.com"
                     : settings.ingestPoint;
                   void sendToActiveTab({
