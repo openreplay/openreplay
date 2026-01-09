@@ -9,5 +9,10 @@ export default function (app: App): void {
     }
   }
 
+  app.attachStartCallback(() => {
+    // just for the good measure in case of restarts caused by assist plugin,
+    // to keep latest active tab in state for live player
+    changeTab()
+  })
   app.attachEventListener(window, 'focus', changeTab as EventListener, false, false)
 }

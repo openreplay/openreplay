@@ -306,16 +306,16 @@ export default class MessageManager {
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
     this.activeTabManager.moveReady(t).then(async (tabId) => {
-      const newState: Record<string, any> = {}
+      const newState: Record<string, any> = {};
       const closeMessage = await this.tabCloseManager.moveReady(t);
       if (closeMessage) {
         const { closedTabs } = this.tabCloseManager;
         if (closedTabs.size === this.tabsAmount) {
           if (this.session.durationMs - t < 250) {
-            newState['closedTabs'] = Array.from(closedTabs)
+            newState['closedTabs'] = Array.from(closedTabs);
           }
         } else {
-          newState['closedTabs'] = Array.from(closedTabs)
+          newState['closedTabs'] = Array.from(closedTabs);
         }
       }
       // Moving mouse and setting :hover classes on ready view

@@ -232,9 +232,10 @@ export default class AssistManager {
         waitingForMessages = false; // TODO: more explicit
         this.setStatus(ConnectionStatus.Connected);
       }
-      if (messages.meta.tabId !== this.store.get().currentTab) {
+      const currentTab = this.store.get().currentTab;
+      if (messages.meta.tabId !== currentTab) {
         this.clearDisconnectTimeout();
-        if (isOldVersion) {
+        if (isOldVersion || !currentTab) {
           reader.currentTab = messages.meta.tabId;
           this.store.update({ currentTab: messages.meta.tabId });
         }
