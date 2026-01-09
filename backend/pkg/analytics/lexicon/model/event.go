@@ -9,7 +9,7 @@ type LexiconEvent struct {
 	Name         string `json:"name" ch:"name"`
 	DisplayName  string `json:"displayName" ch:"display_name"`
 	Description  string `json:"description" ch:"description"`
-	Hidden       bool   `json:"hidden" ch:"is_hidden"`
+	Status       string `json:"status" ch:"status"`
 	AutoCaptured bool   `json:"autoCaptured" ch:"is_auto_captured"`
 	Count        uint64 `json:"count" ch:"count"`
 	QueryCount   uint64 `json:"queryCount" ch:"query_count"`
@@ -22,7 +22,7 @@ type LexiconProperty struct {
 	Description   string   `json:"description" ch:"description"`
 	Type          string   `json:"type" ch:"type"`
 	DataType      string   `json:"dataType" ch:"data_type"`
-	Hidden        bool     `json:"hidden" ch:"is_hidden"`
+	Status        string   `json:"status" ch:"status"`
 	AutoCaptured  bool     `json:"autoCaptured" ch:"is_auto_captured"`
 	Count         uint64   `json:"count" ch:"count"`
 	QueryCount    uint64   `json:"queryCount" ch:"query_count"`

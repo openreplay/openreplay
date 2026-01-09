@@ -35,6 +35,7 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 	                 event_name AS name,
 	                 display_name,
 	                 description,
+	                 status,
 	                 auto_captured,
 	                 event_count_l30days,
 	                 query_count_l30days,
@@ -59,13 +60,12 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 		var editedByUser bool
 		var createdAt time.Time
 		var count, queryCount uint32
-		if err := rows.Scan(&total, &event.Name, &event.DisplayName, &event.Description, &event.AutoCaptured, &count, &queryCount, &createdAt, &editedByUser); err != nil {
+		if err := rows.Scan(&total, &event.Name, &event.DisplayName, &event.Description, &event.Status, &event.AutoCaptured, &count, &queryCount, &createdAt, &editedByUser); err != nil {
 			e.log.Error(ctx, "failed to scan distinct event for project %d, error: %v, query: %s", projID, err, query)
 			return nil, 0, fmt.Errorf("failed to scan event row: %w", err)
 		}
 		event.Count = uint64(count)
 		event.QueryCount = uint64(queryCount)
-		event.Hidden = false
 		event.CreatedAt = createdAt.UnixMilli()
 		events = append(events, event)
 	}
@@ -133,7 +133,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		property.DataType = valueType
 		property.Count = uint64(dataCount)
 		property.QueryCount = uint64(queryCount)
-		property.Hidden = (status == "hidden" || status == "dropped")
+		property.Status = status
 		property.CreatedAt = createdAt.UnixMilli()
 		property.PossibleTypes = []string{}
 		property.SampleValues = []string{}
