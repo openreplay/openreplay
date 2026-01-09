@@ -31,8 +31,7 @@ func New(log logger.Logger, chConn driver.Conn) Lexicon {
 }
 
 func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]model.LexiconEvent, uint64, error) {
-	query := `SELECT COUNT(1) OVER () AS total,
-	                 ae.event_name AS name,
+	subquery := `SELECT ae.event_name AS name,
 	                 ae.display_name,
 	                 ae.description,
 	                 ae.status,
@@ -50,6 +49,8 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 	                   ae.auto_captured, ae.query_count_l30days, ae.created_at, ae._edited_by_user, ae._timestamp
 	          ORDER BY ae._timestamp DESC, ae.display_name
 	          LIMIT 1 BY ae.project_id, ae.auto_captured, ae.event_name`
+
+	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
 
 	rows, err := e.chConn.Query(ctx, query, projID)
 	if err != nil {
@@ -85,8 +86,7 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 }
 
 func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string) ([]model.LexiconProperty, uint64, error) {
-	query := `SELECT COUNT(1) OVER () AS total,
-	                 ap.property_name AS name,
+	subquery := `SELECT ap.property_name AS name,
 	                 ap.display_name,
 	                 ap.description,
 	                 ap.source,
@@ -110,16 +110,18 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 
 	args := []interface{}{projID}
 	if source != nil {
-		query += ` AND ap.source = ?`
+		subquery += ` AND ap.source = ?`
 		args = append(args, *source)
 	}
 
-	query += `
+	subquery += `
 	          GROUP BY ap.project_id, ap.property_name, ap.display_name, ap.description, ap.source,
 	                   ep.value_type, ap.is_event_property, ap.auto_captured, ap.status,
 	                   ap.query_count, ap.created_at, ap._edited_by_user, ap._timestamp
 	          ORDER BY ap._timestamp DESC, ap.display_name
 	          LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
+
+	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
 
 	rows, err := e.chConn.Query(ctx, query, args...)
 	if err != nil {
