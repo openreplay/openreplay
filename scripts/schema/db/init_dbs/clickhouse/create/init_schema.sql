@@ -189,7 +189,6 @@ CREATE TABLE IF NOT EXISTS product_analytics.users
     _is_deleted          UInt8 DEFAULT 0,
     _timestamp           DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
-      ORDER BY (project_id, "$user_id")
       PARTITION BY toYYYYMM(_timestamp)
       ORDER BY (project_id, "$user_id")
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
