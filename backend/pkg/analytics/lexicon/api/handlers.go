@@ -1,7 +1,10 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/lexicon/model"
@@ -39,6 +42,20 @@ func (h *handlersImpl) GetAll() []*api.Description {
 			Path:        "/{project}/data/properties",
 			Method:      "GET",
 			Handler:     api.AutoRespondContext(h, h.getProperties),
+			Permissions: []string{"DATA_MANAGEMENT"},
+			AuditTrail:  "",
+		},
+		{
+			Path:        "/{project}/data/events",
+			Method:      "PUT",
+			Handler:     api.AutoRespondContextWithBody(h, h.updateEvent),
+			Permissions: []string{"DATA_MANAGEMENT"},
+			AuditTrail:  "",
+		},
+		{
+			Path:        "/{project}/data/properties",
+			Method:      "PUT",
+			Handler:     api.AutoRespondContextWithBody(h, h.updateProperty),
 			Permissions: []string{"DATA_MANAGEMENT"},
 			AuditTrail:  "",
 		},
@@ -115,4 +132,90 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (*model.LexiconPrope
 	}
 
 	return response, 0, nil
+}
+
+// @Summary Update Event
+// @Description Update an event's display name, description, or status. Requires name and autoCaptured to identify the event, checks if event exists before updating.
+// @Tags Analytics - Lexicon
+// @Accept json
+// @Produce json
+// @Param project path uint true "Project ID"
+// @Param body body model.UpdateEventRequest true "Update Event Request (name and autoCaptured are required)"
+// @Success 200 {object} map[string]interface{} "Returns success: true"
+// @Failure 400 {object} api.ErrorResponse "Invalid request, missing required fields, or event not found"
+// @Failure 500 {object} api.ErrorResponse "Internal server error"
+// @Router /{project}/data/events [put]
+func (h *handlersImpl) updateEvent(r *api.RequestContext) (map[string]interface{}, int, error) {
+	projID, err := r.GetProjectID()
+	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	var req model.UpdateEventRequest
+	if err := json.Unmarshal(r.Body, &req); err != nil {
+		h.Log().Error(r.Request.Context(), "failed to parse request body: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	if req.Name == "" {
+		h.Log().Error(r.Request.Context(), "event name is required")
+		return nil, http.StatusBadRequest, fmt.Errorf("event name is required")
+	}
+
+	userData := api.GetUser(r.Request)
+	userID := ""
+	if userData != nil {
+		userID = strconv.FormatUint(userData.ID, 10)
+	}
+
+	if err := h.lexicon.UpdateEvent(r.Request.Context(), projID, req, userID); err != nil {
+		h.Log().Error(r.Request.Context(), "failed to update event %s for project %d: %v", req.Name, projID, err)
+		return nil, http.StatusInternalServerError, err
+	}
+
+	return map[string]interface{}{"success": true}, 0, nil
+}
+
+// @Summary Update Property
+// @Description Update a property's display name, description, or status. Requires name, source, and autoCaptured to identify the property, fetches is_event_property from existing record and checks if property exists before updating.
+// @Tags Analytics - Lexicon
+// @Accept json
+// @Produce json
+// @Param project path uint true "Project ID"
+// @Param body body model.UpdatePropertyRequest true "Update Property Request (name, source, and autoCaptured are required)"
+// @Success 200 {object} map[string]interface{} "Returns success: true"
+// @Failure 400 {object} api.ErrorResponse "Invalid request, missing required fields, invalid source value, or property not found"
+// @Failure 500 {object} api.ErrorResponse "Internal server error"
+// @Router /{project}/data/properties [put]
+func (h *handlersImpl) updateProperty(r *api.RequestContext) (map[string]interface{}, int, error) {
+	projID, err := r.GetProjectID()
+	if err != nil {
+		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	var req model.UpdatePropertyRequest
+	if err := json.Unmarshal(r.Body, &req); err != nil {
+		h.Log().Error(r.Request.Context(), "failed to parse request body: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	if req.Name == "" {
+		h.Log().Error(r.Request.Context(), "property name is required")
+		return nil, http.StatusBadRequest, fmt.Errorf("property name is required")
+	}
+
+	userData := api.GetUser(r.Request)
+	userID := ""
+	if userData != nil {
+		userID = strconv.FormatUint(userData.ID, 10)
+	}
+
+	if err := h.lexicon.UpdateProperty(r.Request.Context(), projID, req, userID); err != nil {
+		h.Log().Error(r.Request.Context(), "failed to update property %s for project %d: %v", req.Name, projID, err)
+		return nil, http.StatusInternalServerError, err
+	}
+
+	return map[string]interface{}{"success": true}, 0, nil
 }
