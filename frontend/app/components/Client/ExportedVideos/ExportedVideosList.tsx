@@ -7,11 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { session } from 'App/routes';
 import SiteDropdown from 'Shared/SiteDropdown';
 import ExportedVideo from './ExportedVideoRow';
+import ReloadButton from '@/components/shared/ReloadButton';
 
 function ExportedVideosList() {
   const { t } = useTranslation();
   const { recordingsStore, projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const siteId = projectsStore.activeSiteId;
   const loading = recordingsStore.loading;
   const list = recordingsStore.exportedVideosList;
 
@@ -19,12 +20,20 @@ function ExportedVideosList() {
     recordingsStore.getRecordings();
   }, [siteId, recordingsStore.page]);
 
+  const onRefresh = () => {
+    if (recordingsStore.page !== 1) {
+      recordingsStore.updatePage(1);
+    } else {
+      recordingsStore.getRecordings();
+    }
+  };
+
   const onSiteChange = ({ value }) => {
     projectsStore.setSiteId(value.value);
   };
 
   const onRecOpen = async (sessionId: string) => {
-    const fileURL = await recordingsStore.getRecordingLink(sessionId)
+    const fileURL = await recordingsStore.getRecordingLink(sessionId);
     window.open(fileURL, '_blank');
   };
 
@@ -42,10 +51,15 @@ function ExportedVideosList() {
   };
   return (
     <div className="bg-white rounded-lg  border shadow-sm">
-      <div className="flex items-center gap-4">
-        <PageTitle
-          title={<div className="py-4 pl-4">{t('Exported Videos')}</div>}
+      <div className="flex items-center gap-4 p-4">
+        <PageTitle title={t('Exported Videos')} />
+        <ReloadButton
+          label="Reload"
+          onClick={onRefresh}
+          loading={loading}
+          buttonSize="middle"
         />
+        <div className="ml-auto" />
         <SiteDropdown value={siteId} onChange={onSiteChange} />
       </div>
       <div className="grid grid-cols-12 py-2 px-4 font-medium">

@@ -48,6 +48,7 @@ export default function CustomSelect<Value extends ValueObject>({
       placeholder={placeholder}
       mode={mode}
       style={styles}
+      popupMatchSelectWidth
       {...rest}
     />
   );

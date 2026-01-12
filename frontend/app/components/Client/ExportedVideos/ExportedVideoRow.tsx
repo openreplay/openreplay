@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatDateTimeDefault } from 'App/date';
-import { Button, Tag } from 'antd';
+import { Button, Tag, Tooltip } from 'antd';
 import { FileDown, Trash } from 'lucide-react';
 
 interface VideoRow {
@@ -37,12 +37,20 @@ function ExportedVideo(props: {
       </div>
       <div className="col-span-2">{props.item.userName || 'Unknown user'}</div>
       <div className="col-span-2">
-        <Tag
-          color={getColor(props.item.status)}
-          className="rounded-lg capitalize"
+        <Tooltip
+          title={
+            props.item.status === 'pending'
+              ? 'Replay is queued for processing, check back later'
+              : ''
+          }
         >
-          {props.item.status}
-        </Tag>
+          <Tag
+            color={getColor(props.item.status)}
+            className="rounded-lg capitalize"
+          >
+            {props.item.status}
+          </Tag>
+        </Tooltip>
       </div>
       <div className="col-span-2 items-center justify-end gap-2 hidden group-hover:flex w-full">
         {props.item.status === 'success' ? (

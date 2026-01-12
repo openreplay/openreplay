@@ -12,7 +12,7 @@ function SiteDropdown({ contextName = '', onChange, value }) {
       name={`${contextName}_site`}
       placeholder="Select Site"
       options={options}
-      value={options.find((option) => option.value === value)}
+      value={options.find((option) => option.value === String(value))}
       onChange={onChange}
       className={'max-w-[220px]'}
     />

@@ -1,8 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { recordingsService } from 'App/services';
-import { IRecord } from 'App/services/RecordingsService';
+import { IRecord, ExportsResponse } from 'App/services/RecordingsService';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
-import { ExportsResponse } from 'App/services/RecordingsService';
 
 export default class RecordingsStore {
   recordings: IRecord[] = [];
@@ -131,13 +130,21 @@ export default class RecordingsStore {
 
     try {
       const resp = await recordingsService.getExports(params);
-      this.exportedVideosList = resp.data.videos ?? [];
-      this.total = resp.data.total;
+      this.setExportedVideosList(resp.data.videos ?? []);
+      this.setTotal(resp.data.total);
     } catch (e) {
       console.error(e);
     } finally {
       this.loading = false;
     }
+  };
+
+  setExportedVideosList = (list: ExportsResponse['data']['videos']) => {
+    this.exportedVideosList = list;
+  };
+
+  setTotal = (total: number) => {
+    this.total = total;
   };
 
   getRecordingLink = async (sessionId: string) => {
