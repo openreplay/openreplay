@@ -3,6 +3,7 @@ package keys
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/xid"
@@ -103,7 +104,9 @@ func (k *keysImpl) Get(spotID uint64, user *user.User) (*Key, error) {
 			JOIN spots.spots s ON s.spot_id = k.spot_id
 			WHERE k.spot_id = $1 AND s.tenant_id = $2`
 	if err := k.conn.QueryRow(sql, spotID, user.TenantID).Scan(&key.Value, &key.Expiration, &key.ExpiredAt); err != nil {
-		k.log.Error(context.Background(), "failed to get key: %v", err)
+		if !strings.Contains(err.Error(), "no rows in result set") {
+			k.log.Error(context.Background(), "failed to get key: %v", err)
+		}
 		return nil, fmt.Errorf("key not found")
 	}
 	now := time.Now()
