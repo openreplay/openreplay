@@ -155,4 +155,16 @@ export default class Lists {
       }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
     ) as State;
   }
+
+  resetListNowStates = (): State => {
+    const state = LIST_NAMES.reduce((state, name) => {
+      state[`${name}ListNow`] = [];
+      return state;
+    }, {} as Partial<StateListNow>);
+    MARKED_LIST_NAMES.forEach((name) => {
+      state[`${name}MarkedCountNow`] = 0;
+    });
+
+    return state as State;
+  };
 }

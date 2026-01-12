@@ -79,6 +79,7 @@ export default class TabSessionManager {
   public readonly decoder = new Decoder();
 
   public lastMessageTs = 0;
+  public firstMessageTs = 0;
 
   private lists: Lists;
 
@@ -224,6 +225,9 @@ export default class TabSessionManager {
   distributeMessage(msg: Message): void {
     if (this.lastMessageTs < msg.time) {
       this.lastMessageTs = msg.time;
+    }
+    if (!this.firstMessageTs) {
+      this.firstMessageTs = msg.time;
     }
     switch (msg.tp) {
       case MType.CanvasNode:
@@ -406,7 +410,7 @@ export default class TabSessionManager {
     }
   }
 
-  move(t: number, index?: number): void {
+  move(t: number, index?: number, silent?: boolean): void {
     const stateToUpdate: Record<string, any> = {};
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(
@@ -458,9 +462,13 @@ export default class TabSessionManager {
     }
 
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
+    if (t === 0) {
+      console.log(stateToUpdate, this.id)
+    }
     if (Object.keys(stateToUpdate).length > 0) {
       this.updateLocalState(stateToUpdate);
     }
+    if (silent) return;
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);
@@ -547,4 +555,11 @@ export default class TabSessionManager {
   clean() {
     this.pagesManager.reset();
   }
+
+  resetToStart = () => {
+    this.pagesManager.reset();
+    this.move(0, 0, true);
+    const newStates = this.lists.resetListNowStates();
+    this.updateLocalState(newStates);
+  };
 }
