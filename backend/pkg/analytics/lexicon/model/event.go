@@ -43,7 +43,7 @@ type LexiconPropertiesResponse struct {
 
 type UpdateEventRequest struct {
 	Name         string  `json:"name" validate:"required"`
-	AutoCaptured bool    `json:"autoCaptured" validate:"required"`
+	AutoCaptured *bool   `json:"autoCaptured" validate:"required"`
 	DisplayName  *string `json:"displayName"`
 	Description  *string `json:"description"`
 	Status       *string `json:"status"`
@@ -52,7 +52,7 @@ type UpdateEventRequest struct {
 type UpdatePropertyRequest struct {
 	Name         string  `json:"name" validate:"required"`
 	Source       string  `json:"source" validate:"required"`
-	AutoCaptured bool    `json:"autoCaptured" validate:"required"`
+	AutoCaptured *bool   `json:"autoCaptured" validate:"required"`
 	DisplayName  *string `json:"displayName"`
 	Description  *string `json:"description"`
 	Status       *string `json:"status"`

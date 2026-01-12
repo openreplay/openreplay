@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/lexicon/model"
 	"openreplay/backend/pkg/logger"
@@ -83,7 +84,7 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (*model.LexiconE
 	events, total, err := h.lexicon.GetDistinctEvents(r.Request.Context(), projID)
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get events for project %d: %v", projID, err)
-		return nil, http.StatusNotFound, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	response := &model.LexiconEventsResponse{
@@ -115,15 +116,18 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (*model.LexiconPrope
 
 	var source *string
 	if sourceParam := r.Request.URL.Query().Get("source"); sourceParam != "" {
-		if sourceParam == "events" || sourceParam == "users" {
+		if sourceParam == "events" || sourceParam == "users" || sourceParam == "sessions" {
 			source = &sourceParam
+		} else {
+			h.Log().Error(r.Request.Context(), "invalid source parameter: %s", sourceParam)
+			return nil, http.StatusBadRequest, fmt.Errorf("invalid source parameter: must be one of 'events', 'users', or 'sessions'")
 		}
 	}
 
 	properties, total, err := h.lexicon.GetProperties(r.Request.Context(), projID, source)
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get properties for project %d: %v", projID, err)
-		return nil, http.StatusNotFound, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	response := &model.LexiconPropertiesResponse{
@@ -158,9 +162,9 @@ func (h *handlersImpl) updateEvent(r *api.RequestContext) (map[string]interface{
 		return nil, http.StatusBadRequest, err
 	}
 
-	if req.Name == "" {
-		h.Log().Error(r.Request.Context(), "event name is required")
-		return nil, http.StatusBadRequest, fmt.Errorf("event name is required")
+	if err := filters.ValidateStruct(req); err != nil {
+		h.Log().Error(r.Request.Context(), "validation failed for update event request: %v", err)
+		return nil, http.StatusBadRequest, err
 	}
 
 	userData := api.GetUser(r.Request)
@@ -201,9 +205,9 @@ func (h *handlersImpl) updateProperty(r *api.RequestContext) (map[string]interfa
 		return nil, http.StatusBadRequest, err
 	}
 
-	if req.Name == "" {
-		h.Log().Error(r.Request.Context(), "property name is required")
-		return nil, http.StatusBadRequest, fmt.Errorf("property name is required")
+	if err := filters.ValidateStruct(req); err != nil {
+		h.Log().Error(r.Request.Context(), "validation failed for update property request: %v", err)
+		return nil, http.StatusBadRequest, err
 	}
 
 	userData := api.GetUser(r.Request)

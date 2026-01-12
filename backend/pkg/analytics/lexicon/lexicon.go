@@ -164,6 +164,9 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 }
 
 func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error {
+	if req.AutoCaptured == nil {
+		return fmt.Errorf("autoCaptured is required")
+	}
 	if req.DisplayName != nil && *req.DisplayName == "" {
 		return fmt.Errorf("displayName cannot be empty")
 	}
@@ -183,14 +186,14 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 	               )`
 
 	var count uint64
-	err := e.chConn.QueryRow(ctx, checkQuery, projID, req.Name, req.AutoCaptured).Scan(&count)
+	err := e.chConn.QueryRow(ctx, checkQuery, projID, req.Name, *req.AutoCaptured).Scan(&count)
 	if err != nil {
 		e.log.Error(ctx, "failed to check event existence %s for project %d: %v", req.Name, projID, err)
 		return fmt.Errorf("failed to check event existence: %w", err)
 	}
 
 	if count == 0 {
-		return fmt.Errorf("event %s with autoCaptured=%v not found for project %d", req.Name, req.AutoCaptured, projID)
+		return fmt.Errorf("event %s with autoCaptured=%v not found for project %d", req.Name, *req.AutoCaptured, projID)
 	}
 
 	query := `INSERT INTO product_analytics.all_events (
@@ -236,7 +239,7 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		status = *req.Status
 	}
 
-	err = e.chConn.Exec(ctx, query, displayName, description, status, projID, req.Name, req.AutoCaptured)
+	err = e.chConn.Exec(ctx, query, displayName, description, status, projID, req.Name, *req.AutoCaptured)
 	if err != nil {
 		e.log.Error(ctx, "failed to update event %s for project %d: %v", req.Name, projID, err)
 		return fmt.Errorf("failed to update event: %w", err)
@@ -246,6 +249,9 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 }
 
 func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req model.UpdatePropertyRequest, userID string) error {
+	if req.AutoCaptured == nil {
+		return fmt.Errorf("autoCaptured is required")
+	}
 	if req.DisplayName != nil && *req.DisplayName == "" {
 		return fmt.Errorf("displayName cannot be empty")
 	}
@@ -266,11 +272,11 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 	               LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured`
 
 	var isEventProperty bool
-	err := e.chConn.QueryRow(ctx, fetchQuery, projID, req.Name, req.Source, req.AutoCaptured).Scan(&isEventProperty)
+	err := e.chConn.QueryRow(ctx, fetchQuery, projID, req.Name, req.Source, *req.AutoCaptured).Scan(&isEventProperty)
 	if err != nil {
 		e.log.Error(ctx, "failed to fetch property %s for project %d: %v", req.Name, projID, err)
 		return fmt.Errorf("property %s with source=%s, autoCaptured=%v not found for project %d: %w",
-			req.Name, req.Source, req.AutoCaptured, projID, err)
+			req.Name, req.Source, *req.AutoCaptured, projID, err)
 	}
 
 	query := `INSERT INTO product_analytics.all_properties (
@@ -322,7 +328,7 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 		status = *req.Status
 	}
 
-	err = e.chConn.Exec(ctx, query, displayName, description, status, projID, req.Name, req.Source, isEventProperty, req.AutoCaptured)
+	err = e.chConn.Exec(ctx, query, displayName, description, status, projID, req.Name, req.Source, isEventProperty, *req.AutoCaptured)
 	if err != nil {
 		e.log.Error(ctx, "failed to update property %s for project %d: %v", req.Name, projID, err)
 		return fmt.Errorf("failed to update property: %w", err)
