@@ -8,25 +8,42 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/analytics/lexicon/model"
+	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/logger"
 )
+
+type HiddenEvent struct {
+	EventName    string
+	AutoCaptured bool
+}
+
+type HiddenProperty struct {
+	PropertyName string
+	AutoCaptured bool
+	IsEventProp  bool
+}
 
 type Lexicon interface {
 	GetDistinctEvents(ctx context.Context, projID uint32) ([]model.LexiconEvent, uint64, error)
 	GetProperties(ctx context.Context, projID uint32, source *string) ([]model.LexiconProperty, uint64, error)
 	UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error
 	UpdateProperty(ctx context.Context, projID uint32, req model.UpdatePropertyRequest, userID string) error
+	GetHiddenEvents(ctx context.Context, projID uint32) ([]HiddenEvent, error)
+	GetHiddenProperties(ctx context.Context, projID uint32) ([]HiddenProperty, error)
+	InvalidateCache(projID uint32)
 }
 
 type lexiconImpl struct {
 	log    logger.Logger
 	chConn driver.Conn
+	cache  cache.Cache
 }
 
 func New(log logger.Logger, chConn driver.Conn) Lexicon {
 	return &lexiconImpl{
 		log:    log,
 		chConn: chConn,
+		cache:  cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
@@ -163,6 +180,95 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	return properties, total, nil
 }
 
+func (e *lexiconImpl) GetHiddenEvents(ctx context.Context, projID uint32) ([]HiddenEvent, error) {
+	cacheKey := fmt.Sprintf("hidden_events:%d", projID)
+
+	if cached, ok := e.cache.Get(cacheKey); ok {
+		if events, ok := cached.([]HiddenEvent); ok {
+			return events, nil
+		}
+	}
+
+	query := `
+		SELECT event_name, auto_captured
+		FROM product_analytics.all_events
+		WHERE project_id = ? AND status = 'hidden'
+		ORDER BY _timestamp DESC
+		LIMIT 1 BY project_id, auto_captured, event_name
+	`
+
+	rows, err := e.chConn.Query(ctx, query, projID)
+	if err != nil {
+		e.log.Error(ctx, "failed to query hidden events for project %d: %v", projID, err)
+		return nil, fmt.Errorf("failed to query hidden events: %w", err)
+	}
+	defer rows.Close()
+
+	hiddenEvents := make([]HiddenEvent, 0)
+	for rows.Next() {
+		var he HiddenEvent
+		if err := rows.Scan(&he.EventName, &he.AutoCaptured); err != nil {
+			e.log.Error(ctx, "failed to scan hidden event row: %v", err)
+			continue
+		}
+		hiddenEvents = append(hiddenEvents, he)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	e.cache.Set(cacheKey, hiddenEvents)
+	return hiddenEvents, nil
+}
+
+func (e *lexiconImpl) GetHiddenProperties(ctx context.Context, projID uint32) ([]HiddenProperty, error) {
+	cacheKey := fmt.Sprintf("hidden_properties:%d", projID)
+
+	if cached, ok := e.cache.Get(cacheKey); ok {
+		if props, ok := cached.([]HiddenProperty); ok {
+			return props, nil
+		}
+	}
+
+	query := `
+		SELECT property_name, auto_captured, is_event_property
+		FROM product_analytics.all_properties
+		WHERE project_id = ? AND status = 'hidden' AND source = 'events'
+		ORDER BY _timestamp DESC
+		LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured
+	`
+
+	rows, err := e.chConn.Query(ctx, query, projID)
+	if err != nil {
+		e.log.Error(ctx, "failed to query hidden properties for project %d: %v", projID, err)
+		return nil, fmt.Errorf("failed to query hidden properties: %w", err)
+	}
+	defer rows.Close()
+
+	hiddenProps := make([]HiddenProperty, 0)
+	for rows.Next() {
+		var hp HiddenProperty
+		if err := rows.Scan(&hp.PropertyName, &hp.AutoCaptured, &hp.IsEventProp); err != nil {
+			e.log.Error(ctx, "failed to scan hidden property row: %v", err)
+			continue
+		}
+		hiddenProps = append(hiddenProps, hp)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	e.cache.Set(cacheKey, hiddenProps)
+	return hiddenProps, nil
+}
+
+func (e *lexiconImpl) InvalidateCache(projID uint32) {
+	e.cache.Set(fmt.Sprintf("hidden_events:%d", projID), nil)
+	e.cache.Set(fmt.Sprintf("hidden_properties:%d", projID), nil)
+}
+
 func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error {
 	if req.AutoCaptured == nil {
 		return fmt.Errorf("autoCaptured is required")
@@ -245,6 +351,7 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		return fmt.Errorf("failed to update event: %w", err)
 	}
 
+	e.InvalidateCache(projID)
 	return nil
 }
 
@@ -334,5 +441,6 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 		return fmt.Errorf("failed to update property: %w", err)
 	}
 
+	e.InvalidateCache(projID)
 	return nil
 }

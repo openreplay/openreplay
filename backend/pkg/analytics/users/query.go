@@ -6,6 +6,7 @@ import (
 
 	"openreplay/backend/pkg/analytics/events"
 	"openreplay/backend/pkg/analytics/filters"
+	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/users/model"
 )
 
@@ -48,7 +49,7 @@ func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID
 		return "", nil, false
 	}
 
-	conditions, condParams, _ := events.BuildEventSearchQuery("e", eventFilters)
+	conditions, condParams, _ := events.BuildEventSearchQuery("e", eventFilters, []lexicon.HiddenProperty{})
 	if len(conditions) == 0 {
 		return "", nil, false
 	}
@@ -56,7 +57,7 @@ func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID
 	alias := filters.NormalizeAlias(tableAlias)
 	params := make([]interface{}, 0)
 	params = append(params, projID)
-	
+
 	dateConditions := make([]string, 0, 2)
 	if startDate > 0 {
 		dateConditions = append(dateConditions, "e.created_at >= ?")
@@ -68,18 +69,18 @@ func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID
 		endTime := filters.ConvertMillisToTime(endDate)
 		params = append(params, endTime)
 	}
-	
+
 	params = append(params, condParams...)
 
 	var sb strings.Builder
 	sb.WriteString(" INNER JOIN (")
 	sb.WriteString("SELECT project_id, \"$user_id\" FROM product_analytics.events AS e WHERE e.project_id = ?")
-	
+
 	if len(dateConditions) > 0 {
 		sb.WriteString(" AND ")
 		sb.WriteString(strings.Join(dateConditions, " AND "))
 	}
-	
+
 	sb.WriteString(" AND ")
 	sb.WriteString(strings.Join(conditions, " AND "))
 	sb.WriteString(" GROUP BY project_id, \"$user_id\"")

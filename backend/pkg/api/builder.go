@@ -106,7 +106,9 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	analyticsEventsService, err := analyticsEvents.New(log, chconn)
+	lexiconService := lexicon.New(log, chconn)
+
+	analyticsEventsService, err := analyticsEvents.New(log, chconn, lexiconService)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +199,6 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	lexiconService := lexicon.New(log, chconn)
 	lexiconHandlers, err := lexiconAPI.NewHandlers(log, cfg.HTTP.JsonSizeLimit, lexiconService, responser)
 	if err != nil {
 		return nil, err

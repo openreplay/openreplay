@@ -6,9 +6,10 @@ import (
 
 	"openreplay/backend/pkg/analytics/events/model"
 	"openreplay/backend/pkg/analytics/filters"
+	"openreplay/backend/pkg/analytics/lexicon"
 )
 
-func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter) ([]string, []interface{}, bool) {
+func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter, hiddenProps []lexicon.HiddenProperty) ([]string, []interface{}, bool) {
 	if tableAlias == "" {
 		tableAlias = "e"
 	}
@@ -28,11 +29,19 @@ func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter) ([]
 		FilterColumnMapping: model.FilterColumnMapping,
 	}
 
-	// Separate event filters from non-event filters
+	hiddenPropsMap := make(map[string]bool)
+	for _, hp := range hiddenProps {
+		key := fmt.Sprintf("%s:%t:%t", hp.PropertyName, hp.AutoCaptured, hp.IsEventProp)
+		hiddenPropsMap[key] = true
+	}
+
 	for _, filter := range filtersSlice {
 		if filter.IsEvent {
 			eventFilters = append(eventFilters, filter)
 		} else {
+			if isHiddenPropertyFilter(filter, mappings, hiddenPropsMap) {
+				continue
+			}
 			cond, condParams := filters.BuildFilterCondition(tableAlias, filter, userAlias, mappings)
 			if cond != "" {
 				nonEventConditions = append(nonEventConditions, cond)
@@ -43,9 +52,8 @@ func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter) ([]
 
 	conditions := make([]string, 0)
 
-	// Optimize event filters: use IN when possible, OR when necessary
 	if len(eventFilters) > 0 {
-		eventCond, eventParams := buildOptimizedEventCondition(tableAlias, eventFilters, userAlias, mappings)
+		eventCond, eventParams := buildOptimizedEventCondition(tableAlias, eventFilters, userAlias, mappings, hiddenPropsMap)
 		if eventCond != "" {
 			conditions = append(conditions, eventCond)
 			params = append(params, eventParams...)
@@ -57,7 +65,29 @@ func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter) ([]
 	return conditions, params, needsUserJoin
 }
 
-func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filter, userAlias string, mappings filters.FilterMappings) (string, []interface{}) {
+func isPropertyFilter(filter filters.Filter, mappings filters.FilterMappings) bool {
+	if _, ok := mappings.ColumnMapping[filter.Name]; ok {
+		return false
+	}
+	if _, ok := mappings.FilterColumnMapping[filter.Name]; ok {
+		return false
+	}
+	return true
+}
+
+func isHiddenPropertyFilter(filter filters.Filter, mappings filters.FilterMappings, hiddenPropsMap map[string]bool) bool {
+	if !isPropertyFilter(filter, mappings) {
+		return false
+	}
+	key := fmt.Sprintf("%s:%t:%t", filter.Name, false, true)
+	if hiddenPropsMap[key] {
+		return true
+	}
+	keyAuto := fmt.Sprintf("%s:%t:%t", filter.Name, true, true)
+	return hiddenPropsMap[keyAuto]
+}
+
+func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filter, userAlias string, mappings filters.FilterMappings, hiddenPropsMap map[string]bool) (string, []interface{}) {
 	if len(eventFilters) == 0 {
 		return "", nil
 	}
@@ -65,7 +95,7 @@ func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filt
 	alias := filters.NormalizeAlias(tableAlias)
 
 	if len(eventFilters) == 1 {
-		return filters.BuildFilterCondition(tableAlias, eventFilters[0], userAlias, mappings)
+		return buildEventFilterCondition(tableAlias, eventFilters[0], userAlias, mappings, hiddenPropsMap)
 	}
 
 	autoCapturedEvents := make([]filters.Filter, 0)
@@ -84,16 +114,15 @@ func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filt
 
 	// Build condition for autoCaptured events
 	if len(autoCapturedEvents) > 0 {
-		cond, params := buildEventGroupCondition(alias, autoCapturedEvents, true, userAlias, mappings)
+		cond, params := buildEventGroupCondition(alias, autoCapturedEvents, true, userAlias, mappings, hiddenPropsMap)
 		if cond != "" {
 			groupConditions = append(groupConditions, cond)
 			allParams = append(allParams, params...)
 		}
 	}
 
-	// Build condition for non-autoCaptured events
 	if len(nonAutoCapturedEvents) > 0 {
-		cond, params := buildEventGroupCondition(alias, nonAutoCapturedEvents, false, userAlias, mappings)
+		cond, params := buildEventGroupCondition(alias, nonAutoCapturedEvents, false, userAlias, mappings, hiddenPropsMap)
 		if cond != "" {
 			groupConditions = append(groupConditions, cond)
 			allParams = append(allParams, params...)
@@ -111,13 +140,53 @@ func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filt
 	return "(" + strings.Join(groupConditions, " OR ") + ")", allParams
 }
 
-func buildEventGroupCondition(alias string, eventFilters []filters.Filter, isAutoCaptured bool, userAlias string, mappings filters.FilterMappings) (string, []interface{}) {
+func buildEventFilterCondition(tableAlias string, eventFilter filters.Filter, userAlias string, mappings filters.FilterMappings, hiddenPropsMap map[string]bool) (string, []interface{}) {
+	alias := filters.NormalizeAlias(tableAlias)
+	allParams := make([]interface{}, 0)
+
+	var sb strings.Builder
+	sb.WriteString("(")
+	sb.WriteString(alias)
+	sb.WriteString(`"$event_name" = ?`)
+	allParams = append(allParams, eventFilter.Name)
+
+	if eventFilter.AutoCaptured {
+		sb.WriteString(" AND ")
+		sb.WriteString(alias)
+		sb.WriteString(`"$auto_captured"`)
+	}
+
+	if len(eventFilter.Filters) > 0 {
+		subConditions := make([]string, 0)
+		for _, subFilter := range eventFilter.Filters {
+			if isHiddenPropertyFilter(subFilter, mappings, hiddenPropsMap) {
+				continue
+			}
+			subCond, subParams := filters.BuildFilterCondition(tableAlias, subFilter, userAlias, mappings)
+			if subCond != "" {
+				subConditions = append(subConditions, subCond)
+				allParams = append(allParams, subParams...)
+			}
+		}
+
+		if len(subConditions) > 0 {
+			sb.WriteString(" AND (")
+			sb.WriteString(strings.Join(subConditions, " OR "))
+			sb.WriteString(")")
+		}
+	}
+
+	sb.WriteString(")")
+	return sb.String(), allParams
+}
+
+func buildEventGroupCondition(alias string, eventFilters []filters.Filter, isAutoCaptured bool, userAlias string, mappings filters.FilterMappings, hiddenPropsMap map[string]bool) (string, []interface{}) {
 	if len(eventFilters) == 0 {
 		return "", nil
 	}
 
 	if len(eventFilters) == 1 {
-		return filters.BuildFilterCondition(strings.TrimSuffix(alias, "."), eventFilters[0], userAlias, mappings)
+		return buildEventFilterCondition(strings.TrimSuffix(alias, "."), eventFilters[0], userAlias, mappings, hiddenPropsMap)
 	}
 
 	// Use IN for event names (multiple events in same autoCaptured group)
@@ -154,6 +223,9 @@ func buildEventGroupCondition(alias string, eventFilters []filters.Filter, isAut
 		allSubConds := make([]string, 0)
 		for _, eventFilter := range eventFilters {
 			for _, subFilter := range eventFilter.Filters {
+				if isHiddenPropertyFilter(subFilter, mappings, hiddenPropsMap) {
+					continue
+				}
 				cond, condParams := filters.BuildFilterCondition(strings.TrimSuffix(alias, "."), subFilter, userAlias, mappings)
 				if cond != "" {
 					allSubConds = append(allSubConds, cond)
