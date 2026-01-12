@@ -70,6 +70,15 @@ class TrackerSingleton {
     this.instance.setUserID(id)
   }
 
+  identify = this.setUserID
+  track = (eventName: string, properties?: Record<string, any>, options?: { send_immediately: boolean }): void => {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return
+    }
+
+    this.instance.track?.(eventName, properties)
+  }
+
   /**
    * Set metadata for the current session
    *

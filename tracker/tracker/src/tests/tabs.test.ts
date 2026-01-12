@@ -9,6 +9,7 @@ describe('tabs module', () => {
       session: { getTabId: jest.fn().mockReturnValue('tab1') },
       send: jest.fn(),
       attachEventListener: jest.fn(),
+      attachStartCallback: jest.fn(),
     }
     // @ts-ignore
     tabs(app)
@@ -31,6 +32,7 @@ describe('tabs module', () => {
       session: { getTabId: jest.fn().mockReturnValue('tab1') },
       send: jest.fn(),
       attachEventListener: jest.fn(),
+      attachStartCallback: jest.fn(),
     }
     // @ts-ignore
     tabs(app)

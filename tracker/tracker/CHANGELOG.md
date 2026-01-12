@@ -1,3 +1,8 @@
+## 17.1.4
+
+- reexport sdk methods on top level
+- send "changetab" message on tracker start immediately
+
 ## 17.1.3
 
 - add hashrouter replacer (to ommit hash symbol -- tracker side fix)
