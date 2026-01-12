@@ -23,6 +23,13 @@ interface Props extends WithOnboardingProps {
   platformMap: Record<string, any>;
 }
 
+const setUserIdString = `tracker.setUserID('john@doe.com');
+// same as
+tracker.identify('john@doe.com');
+// or
+tracker.analytics.identify('john@doe.com');
+`;
+
 function IdentifyUsersTab(props: Props) {
   const { t } = useTranslation();
   const { site, platforms, platform, setPlatform, platformMap } = props;
@@ -45,7 +52,7 @@ function IdentifyUsersTab(props: Props) {
         </div>
 
         <a
-          href={`https://docs.openreplay.com/en/session-replay/identify-user${platform.value === "web" ? "/#with-npm" : "/#with-ios-app"}`}
+          href={`https://docs.openreplay.com/en/session-replay/identify-user${platform.value === 'web' ? '/#with-npm' : '/#with-ios-app'}`}
           target="_blank"
           rel="noreferrer"
         >
@@ -84,10 +91,7 @@ function IdentifyUsersTab(props: Props) {
           </div>
 
           {platform.value === 'web' ? (
-            <HighlightCode
-              className="js"
-              text={"tracker.setUserID('john@doe.com');"}
-            />
+            <HighlightCode className="js" text={setUserIdString} />
           ) : (
             <HighlightCode
               className="swift"
@@ -136,15 +140,13 @@ function IdentifyUsersTab(props: Props) {
             </div>
 
             <div className="my-6" />
-            <div className="flex items-start">
-              <div>
-                <CircleNumber text="2" />
-                <span className="font-bold">
-                  {t('Inject metadata when recording sessions')}
-                </span>
-              </div>
-              <div className="pt-1 w-full">
-                <div className="my-2">
+            <div className="flex items-start gap-2">
+              <CircleNumber text="2" />
+              <span className="font-bold whitespace-nowrap">
+                {t('Inject metadata')}
+              </span>
+              <div className="w-full">
+                <div>
                   {t('Use the')}&nbsp;
                   <span className="highlight-blue">setMetadata</span>{' '}
                   {t(
@@ -171,6 +173,25 @@ function IdentifyUsersTab(props: Props) {
             {t(
               'Additional information about users can be provided with metadata (also known as traits or user variables). They take the form of key/value pairs, and are useful for filtering and searching for specific session replays.',
             )}
+          </DocCard>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-6 gap-4 w-full p-4">
+        <div className="col-span-4">
+          <DocCard title={t('Analytics SDK')} icon="lightbulb">
+            {t(
+              'Want to learn more about ways you can analyze user data? Visit our analytics SDK documentation',
+            )}{' '}
+            <a
+              href="https://docs.openreplay.com/en/sdk/analytics/"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              {t('here')}
+            </a>
+            .
           </DocCard>
         </div>
       </div>

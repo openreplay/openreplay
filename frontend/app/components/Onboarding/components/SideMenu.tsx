@@ -50,7 +50,7 @@ function SideMenu(props: Props) {
               <Icon
                 name="tools"
                 size={16}
-                color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray'}
+                color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray-medium'}
               />
             }
             className="!rounded-lg hover-fill-teal"
@@ -63,7 +63,7 @@ function SideMenu(props: Props) {
               <Icon
                 name="person-border"
                 size={16}
-                color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray'}
+                color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray-medium'}
               />
             }
             className="!rounded-lg hover-fill-teal"
@@ -76,7 +76,7 @@ function SideMenu(props: Props) {
               <Icon
                 name="people"
                 size={16}
-                color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray'}
+                color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray-medium'}
               />
             }
             className="!rounded-lg hover-fill-teal"
@@ -89,7 +89,7 @@ function SideMenu(props: Props) {
               <Icon
                 name="plug"
                 size={16}
-                color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray'}
+                color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray-medium'}
               />
             }
             className="!rounded-lg hover-fill-teal"
@@ -103,7 +103,7 @@ function SideMenu(props: Props) {
               <Icon
                 name="question-circle"
                 size={16}
-                color={activeTab === 'support' ? 'teal' : 'gray'}
+                color={activeTab === 'support' ? 'teal' : 'gray-medium'}
               />
             }
             className="!rounded-lg hover-fill-teal"

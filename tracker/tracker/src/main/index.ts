@@ -337,6 +337,7 @@ export default class API {
         return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
       }
       if (startOpts?.userID) {
+        this.app.session.setUserID(startOpts.userID);
         this.analytics?.people.identify(startOpts.userID, { fromTracker: true })
       }
       return this.app.start(startOpts)
@@ -470,6 +471,9 @@ export default class API {
       this.analytics?.people.identify(id, { fromTracker: true })
     }
   }
+
+  identify = this.setUserID
+  track = this.analytics?.track
 
   userID = (id: string): void => {
     deprecationWarn("'userID' method", "'setUserID' method", '/')

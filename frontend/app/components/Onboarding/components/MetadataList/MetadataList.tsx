@@ -52,8 +52,8 @@ function MetadataList() {
   };
 
   return (
-    <div className="py-2 flex">
-      <Button type="default" onClick={() => openModal()}>
+    <>
+      <Button size="small" type="default" onClick={() => openModal()}>
         {t('Add Metadata')}
       </Button>
       {fields.map((f, index) => (
@@ -64,7 +64,7 @@ function MetadataList() {
           outline
         />
       ))}
-    </div>
+    </>
   );
 }
 

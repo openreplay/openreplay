@@ -21,7 +21,11 @@ export default class TagBadge extends React.PureComponent {
     } = this.props;
     return (
       <div
-        className={cn(styles.badge, { 'cursor-pointer': !!onClick }, className)}
+        className={cn(
+          'bg-gray-lightest text-gray-darkest px-2 py-1 rounded-xl flex items-center gap-2',
+          { 'cursor-pointer': !!onClick },
+          className,
+        )}
         onClick={this.onClick}
         data-hashed={hashed}
         data-outline={outline}
