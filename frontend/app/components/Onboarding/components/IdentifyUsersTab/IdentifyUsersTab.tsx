@@ -23,10 +23,8 @@ interface Props extends WithOnboardingProps {
   platformMap: Record<string, any>;
 }
 
-const setUserIdString = `tracker.setUserID('john@doe.com');
+const setUserIdString = `tracker.identify('john@doe.com');
 // same as
-tracker.identify('john@doe.com');
-// or
 tracker.analytics.identify('john@doe.com');
 `;
 
