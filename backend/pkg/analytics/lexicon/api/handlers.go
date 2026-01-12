@@ -33,28 +33,28 @@ func NewHandlers(log logger.Logger, jsonSizeLimit int64, lexicon lexicon.Lexicon
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{
-			Path:        "/{project}/data/events",
+			Path:        "/{project}/lexicon/events",
 			Method:      "GET",
 			Handler:     api.AutoRespondContext(h, h.getDistinctEvents),
 			Permissions: []string{"DATA_MANAGEMENT"},
 			AuditTrail:  "",
 		},
 		{
-			Path:        "/{project}/data/properties",
+			Path:        "/{project}/lexicon/properties",
 			Method:      "GET",
 			Handler:     api.AutoRespondContext(h, h.getProperties),
 			Permissions: []string{"DATA_MANAGEMENT"},
 			AuditTrail:  "",
 		},
 		{
-			Path:        "/{project}/data/events",
+			Path:        "/{project}/lexicon/events",
 			Method:      "PUT",
 			Handler:     api.AutoRespondContextWithBody(h, h.updateEvent),
 			Permissions: []string{"DATA_MANAGEMENT"},
 			AuditTrail:  "",
 		},
 		{
-			Path:        "/{project}/data/properties",
+			Path:        "/{project}/lexicon/properties",
 			Method:      "PUT",
 			Handler:     api.AutoRespondContextWithBody(h, h.updateProperty),
 			Permissions: []string{"DATA_MANAGEMENT"},
@@ -73,7 +73,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
-// @Router /{project}/data/events [get]
+// @Router /{project}/lexicon/events [get]
 func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (*model.LexiconEventsResponse, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
@@ -106,7 +106,7 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (*model.LexiconE
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
-// @Router /{project}/data/properties [get]
+// @Router /{project}/lexicon/properties [get]
 func (h *handlersImpl) getProperties(r *api.RequestContext) (*model.LexiconPropertiesResponse, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
@@ -148,7 +148,7 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (*model.LexiconPrope
 // @Success 200 {object} map[string]interface{} "Returns success: true"
 // @Failure 400 {object} api.ErrorResponse "Invalid request, missing required fields, or event not found"
 // @Failure 500 {object} api.ErrorResponse "Internal server error"
-// @Router /{project}/data/events [put]
+// @Router /{project}/lexicon/events [put]
 func (h *handlersImpl) updateEvent(r *api.RequestContext) (map[string]interface{}, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
@@ -191,7 +191,7 @@ func (h *handlersImpl) updateEvent(r *api.RequestContext) (map[string]interface{
 // @Success 200 {object} map[string]interface{} "Returns success: true"
 // @Failure 400 {object} api.ErrorResponse "Invalid request, missing required fields, invalid source value, or property not found"
 // @Failure 500 {object} api.ErrorResponse "Internal server error"
-// @Router /{project}/data/properties [put]
+// @Router /{project}/lexicon/properties [put]
 func (h *handlersImpl) updateProperty(r *api.RequestContext) (map[string]interface{}, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
