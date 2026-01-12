@@ -462,9 +462,6 @@ export default class TabSessionManager {
     }
 
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
-    if (t === 0) {
-      console.log(stateToUpdate, this.id)
-    }
     if (Object.keys(stateToUpdate).length > 0) {
       this.updateLocalState(stateToUpdate);
     }
