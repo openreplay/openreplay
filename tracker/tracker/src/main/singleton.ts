@@ -70,6 +70,14 @@ class TrackerSingleton {
     this.instance.setUserID(id)
   }
 
+  get analytics() {
+    if (this.instance?.analytics) {
+      return this.instance.analytics
+    } else {
+      return null;
+    }
+  };
+
   identify = this.setUserID
   track = (eventName: string, properties?: Record<string, any>, options?: { send_immediately: boolean }): void => {
     if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {

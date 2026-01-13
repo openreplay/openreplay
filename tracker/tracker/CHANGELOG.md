@@ -1,3 +1,8 @@
+## 17.1.5
+
+- reexport analytics in singleton impl
+- add webanimations fix (https://github.com/openreplay/openreplay/pull/4186)[#4186] @cdemi
+
 ## 17.1.4
 
 - reexport sdk methods on top level
