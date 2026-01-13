@@ -24,9 +24,6 @@ export const enum MType {
   StringDictGlobal = 34,
   SetNodeAttributeDictGlobal = 35,
   NodeAnimationResult = 36,
-  CssInsertRule = 37,
-  CssDeleteRule = 38,
-  Fetch = 39,
   Profiler = 40,
   OTable = 41,
   ReduxDeprecated = 44,
@@ -44,11 +41,9 @@ export const enum MType {
   SetPageVisibility = 55,
   LoadFontFace = 57,
   SetNodeFocus = 58,
-  LongTask = 59,
   SetNodeAttributeURLBased = 60,
   SetCssDataURLBased = 61,
   SetNodeSlot = 65,
-  CssInsertRuleURLBased = 67,
   MouseClick = 68,
   MouseClickDeprecated = 69,
   CreateIFrameDocument = 70,
@@ -234,30 +229,6 @@ export interface RawNodeAnimationResult {
   styles: string,
 }
 
-export interface RawCssInsertRule {
-  tp: MType.CssInsertRule,
-  id: number,
-  rule: string,
-  index: number,
-}
-
-export interface RawCssDeleteRule {
-  tp: MType.CssDeleteRule,
-  id: number,
-  index: number,
-}
-
-export interface RawFetch {
-  tp: MType.Fetch,
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-}
-
 export interface RawProfiler {
   tp: MType.Profiler,
   name: string,
@@ -377,17 +348,6 @@ export interface RawSetNodeFocus {
   id: number,
 }
 
-export interface RawLongTask {
-  tp: MType.LongTask,
-  timestamp: number,
-  duration: number,
-  context: number,
-  containerType: number,
-  containerSrc: string,
-  containerId: string,
-  containerName: string,
-}
-
 export interface RawSetNodeAttributeURLBased {
   tp: MType.SetNodeAttributeURLBased,
   id: number,
@@ -407,14 +367,6 @@ export interface RawSetNodeSlot {
   tp: MType.SetNodeSlot,
   id: number,
   slotID: number,
-}
-
-export interface RawCssInsertRuleURLBased {
-  tp: MType.CssInsertRuleURLBased,
-  id: number,
-  rule: string,
-  index: number,
-  baseURL: string,
 }
 
 export interface RawMouseClick {
@@ -729,4 +681,4 @@ export interface RawMobileIssueEvent {
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawStringDictGlobal | RawSetNodeAttributeDictGlobal | RawNodeAnimationResult | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQlDeprecated | RawPerformanceTrack | RawStringDictDeprecated | RawSetNodeAttributeDictDeprecated | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecatedDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawSetNodeSlot | RawCssInsertRuleURLBased | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawResourceTiming | RawIncident | RawLongAnimationTask | RawSelectionChange | RawMouseThrashing | RawResourceTimingDeprecated | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawGraphQl | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileGraphQl | RawMobileIssueEvent;
+export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawStringDictGlobal | RawSetNodeAttributeDictGlobal | RawNodeAnimationResult | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQlDeprecated | RawPerformanceTrack | RawStringDictDeprecated | RawSetNodeAttributeDictDeprecated | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecatedDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawSetNodeSlot | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawResourceTiming | RawIncident | RawLongAnimationTask | RawSelectionChange | RawMouseThrashing | RawResourceTimingDeprecated | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawGraphQl | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileGraphQl | RawMobileIssueEvent;

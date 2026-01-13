@@ -351,51 +351,6 @@ export function NodeAnimationResult(
   ]
 }
 
-export function CSSInsertRule(
-  id: number,
-  rule: string,
-  index: number,
-): Messages.CSSInsertRule {
-  return [
-    Messages.Type.CSSInsertRule,
-    id,
-    rule,
-    index,
-  ]
-}
-
-export function CSSDeleteRule(
-  id: number,
-  index: number,
-): Messages.CSSDeleteRule {
-  return [
-    Messages.Type.CSSDeleteRule,
-    id,
-    index,
-  ]
-}
-
-export function Fetch(
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-): Messages.Fetch {
-  return [
-    Messages.Type.Fetch,
-    method,
-    url,
-    request,
-    response,
-    status,
-    timestamp,
-    duration,
-  ]
-}
-
 export function Profiler(
   name: string,
   duration: number,
@@ -626,27 +581,6 @@ export function SetNodeFocus(
   ]
 }
 
-export function LongTask(
-  timestamp: number,
-  duration: number,
-  context: number,
-  containerType: number,
-  containerSrc: string,
-  containerId: string,
-  containerName: string,
-): Messages.LongTask {
-  return [
-    Messages.Type.LongTask,
-    timestamp,
-    duration,
-    context,
-    containerType,
-    containerSrc,
-    containerId,
-    containerName,
-  ]
-}
-
 export function SetNodeAttributeURLBased(
   id: number,
   name: string,
@@ -705,21 +639,6 @@ export function SetNodeSlot(
     Messages.Type.SetNodeSlot,
     id,
     slotID,
-  ]
-}
-
-export function CSSInsertRuleURLBased(
-  id: number,
-  rule: string,
-  index: number,
-  baseURL: string,
-): Messages.CSSInsertRuleURLBased {
-  return [
-    Messages.Type.CSSInsertRuleURLBased,
-    id,
-    rule,
-    index,
-    baseURL,
   ]
 }
 

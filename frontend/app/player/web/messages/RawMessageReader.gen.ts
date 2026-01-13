@@ -265,48 +265,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
-    case 37: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const rule = this.readString(); if (rule === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
-      return {
-        tp: MType.CssInsertRule,
-        id,
-        rule,
-        index,
-      };
-    }
-
-    case 38: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
-      return {
-        tp: MType.CssDeleteRule,
-        id,
-        index,
-      };
-    }
-
-    case 39: {
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      return {
-        tp: MType.Fetch,
-        method,
-        url,
-        request,
-        response,
-        status,
-        timestamp,
-        duration,
-      };
-    }
-
     case 40: {
       const name = this.readString(); if (name === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
@@ -511,26 +469,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
-    case 59: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const context = this.readUint(); if (context === null) { return resetPointer() }
-      const containerType = this.readUint(); if (containerType === null) { return resetPointer() }
-      const containerSrc = this.readString(); if (containerSrc === null) { return resetPointer() }
-      const containerId = this.readString(); if (containerId === null) { return resetPointer() }
-      const containerName = this.readString(); if (containerName === null) { return resetPointer() }
-      return {
-        tp: MType.LongTask,
-        timestamp,
-        duration,
-        context,
-        containerType,
-        containerSrc,
-        containerId,
-        containerName,
-      };
-    }
-
     case 60: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const name = this.readString(); if (name === null) { return resetPointer() }
@@ -564,20 +502,6 @@ export default class RawMessageReader extends PrimitiveReader {
         tp: MType.SetNodeSlot,
         id,
         slotID,
-      };
-    }
-
-    case 67: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const rule = this.readString(); if (rule === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
-      return {
-        tp: MType.CssInsertRuleURLBased,
-        id,
-        rule,
-        index,
-        baseURL,
       };
     }
 

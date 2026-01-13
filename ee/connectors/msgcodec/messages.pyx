@@ -58,15 +58,6 @@ cdef class SessionStart(PyMessage):
         self.user_id = user_id
 
 
-cdef class SessionEndDeprecated(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-
-    def __init__(self, unsigned long timestamp):
-        self.__id__ = 3
-        self.timestamp = timestamp
-
-
 cdef class SetPageLocationDeprecated(PyMessage):
     cdef public int __id__
     cdef public str url
@@ -340,19 +331,6 @@ cdef class PageRenderTiming(PyMessage):
         self.time_to_interactive = time_to_interactive
 
 
-cdef class JSExceptionDeprecated(PyMessage):
-    cdef public int __id__
-    cdef public str name
-    cdef public str message
-    cdef public str payload
-
-    def __init__(self, str name, str message, str payload):
-        self.__id__ = 25
-        self.name = name
-        self.message = message
-        self.payload = payload
-
-
 cdef class CustomEvent(PyMessage):
     cdef public int __id__
     cdef public str name
@@ -527,51 +505,6 @@ cdef class NodeAnimationResult(PyMessage):
         self.__id__ = 36
         self.id = id
         self.styles = styles
-
-
-cdef class CSSInsertRule(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long id
-    cdef public str rule
-    cdef public unsigned long index
-
-    def __init__(self, unsigned long id, str rule, unsigned long index):
-        self.__id__ = 37
-        self.id = id
-        self.rule = rule
-        self.index = index
-
-
-cdef class CSSDeleteRule(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long id
-    cdef public unsigned long index
-
-    def __init__(self, unsigned long id, unsigned long index):
-        self.__id__ = 38
-        self.id = id
-        self.index = index
-
-
-cdef class Fetch(PyMessage):
-    cdef public int __id__
-    cdef public str method
-    cdef public str url
-    cdef public str request
-    cdef public str response
-    cdef public unsigned long status
-    cdef public unsigned long timestamp
-    cdef public unsigned long duration
-
-    def __init__(self, str method, str url, str request, str response, unsigned long status, unsigned long timestamp, unsigned long duration):
-        self.__id__ = 39
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.timestamp = timestamp
-        self.duration = duration
 
 
 cdef class Profiler(PyMessage):
@@ -839,27 +772,6 @@ cdef class SetNodeFocus(PyMessage):
         self.id = id
 
 
-cdef class LongTask(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-    cdef public unsigned long duration
-    cdef public unsigned long context
-    cdef public unsigned long container_type
-    cdef public str container_src
-    cdef public str container_id
-    cdef public str container_name
-
-    def __init__(self, unsigned long timestamp, unsigned long duration, unsigned long context, unsigned long container_type, str container_src, str container_id, str container_name):
-        self.__id__ = 59
-        self.timestamp = timestamp
-        self.duration = duration
-        self.context = context
-        self.container_type = container_type
-        self.container_src = container_src
-        self.container_id = container_id
-        self.container_name = container_name
-
-
 cdef class SetNodeAttributeURLBased(PyMessage):
     cdef public int __id__
     cdef public unsigned long id
@@ -886,25 +798,6 @@ cdef class SetCSSDataURLBased(PyMessage):
         self.id = id
         self.data = data
         self.base_url = base_url
-
-
-cdef class IssueEventDeprecated(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long message_id
-    cdef public unsigned long timestamp
-    cdef public str type
-    cdef public str context_string
-    cdef public str context
-    cdef public str payload
-
-    def __init__(self, unsigned long message_id, unsigned long timestamp, str type, str context_string, str context, str payload):
-        self.__id__ = 62
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.type = type
-        self.context_string = context_string
-        self.context = context
-        self.payload = payload
 
 
 cdef class TechnicalInfo(PyMessage):
@@ -947,21 +840,6 @@ cdef class AssetCache(PyMessage):
     def __init__(self, str url):
         self.__id__ = 66
         self.url = url
-
-
-cdef class CSSInsertRuleURLBased(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long id
-    cdef public str rule
-    cdef public unsigned long index
-    cdef public str base_url
-
-    def __init__(self, unsigned long id, str rule, unsigned long index, str base_url):
-        self.__id__ = 67
-        self.id = id
-        self.rule = rule
-        self.index = index
-        self.base_url = base_url
 
 
 cdef class MouseClick(PyMessage):
@@ -1118,19 +996,6 @@ cdef class Zustand(PyMessage):
         self.__id__ = 79
         self.mutation = mutation
         self.state = state
-
-
-cdef class BatchMeta(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long page_no
-    cdef public unsigned long first_index
-    cdef public long timestamp
-
-    def __init__(self, unsigned long page_no, unsigned long first_index, long timestamp):
-        self.__id__ = 80
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
 
 
 cdef class BatchMetadata(PyMessage):

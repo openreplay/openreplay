@@ -216,11 +216,6 @@ cdef class MessageCodec:
                 user_id=self.read_string(reader)
             )
 
-        if message_id == 3:
-            return SessionEndDeprecated(
-                timestamp=self.read_uint(reader)
-            )
-
         if message_id == 4:
             return SetPageLocationDeprecated(
                 url=self.read_string(reader),
@@ -368,13 +363,6 @@ cdef class MessageCodec:
                 time_to_interactive=self.read_uint(reader)
             )
 
-        if message_id == 25:
-            return JSExceptionDeprecated(
-                name=self.read_string(reader),
-                message=self.read_string(reader),
-                payload=self.read_string(reader)
-            )
-
         if message_id == 27:
             return CustomEvent(
                 name=self.read_string(reader),
@@ -466,30 +454,6 @@ cdef class MessageCodec:
             return NodeAnimationResult(
                 id=self.read_uint(reader),
                 styles=self.read_string(reader)
-            )
-
-        if message_id == 37:
-            return CSSInsertRule(
-                id=self.read_uint(reader),
-                rule=self.read_string(reader),
-                index=self.read_uint(reader)
-            )
-
-        if message_id == 38:
-            return CSSDeleteRule(
-                id=self.read_uint(reader),
-                index=self.read_uint(reader)
-            )
-
-        if message_id == 39:
-            return Fetch(
-                method=self.read_string(reader),
-                url=self.read_string(reader),
-                request=self.read_string(reader),
-                response=self.read_string(reader),
-                status=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                duration=self.read_uint(reader)
             )
 
         if message_id == 40:
@@ -634,17 +598,6 @@ cdef class MessageCodec:
                 id=self.read_int(reader)
             )
 
-        if message_id == 59:
-            return LongTask(
-                timestamp=self.read_uint(reader),
-                duration=self.read_uint(reader),
-                context=self.read_uint(reader),
-                container_type=self.read_uint(reader),
-                container_src=self.read_string(reader),
-                container_id=self.read_string(reader),
-                container_name=self.read_string(reader)
-            )
-
         if message_id == 60:
             return SetNodeAttributeURLBased(
                 id=self.read_uint(reader),
@@ -658,16 +611,6 @@ cdef class MessageCodec:
                 id=self.read_uint(reader),
                 data=self.read_string(reader),
                 base_url=self.read_string(reader)
-            )
-
-        if message_id == 62:
-            return IssueEventDeprecated(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                type=self.read_string(reader),
-                context_string=self.read_string(reader),
-                context=self.read_string(reader),
-                payload=self.read_string(reader)
             )
 
         if message_id == 63:
@@ -691,14 +634,6 @@ cdef class MessageCodec:
         if message_id == 66:
             return AssetCache(
                 url=self.read_string(reader)
-            )
-
-        if message_id == 67:
-            return CSSInsertRuleURLBased(
-                id=self.read_uint(reader),
-                rule=self.read_string(reader),
-                index=self.read_uint(reader),
-                base_url=self.read_string(reader)
             )
 
         if message_id == 68:
@@ -783,13 +718,6 @@ cdef class MessageCodec:
             return Zustand(
                 mutation=self.read_string(reader),
                 state=self.read_string(reader)
-            )
-
-        if message_id == 80:
-            return BatchMeta(
-                page_no=self.read_uint(reader),
-                first_index=self.read_uint(reader),
-                timestamp=self.read_int(reader)
             )
 
         if message_id == 81:

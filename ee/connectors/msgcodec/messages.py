@@ -35,13 +35,6 @@ class SessionStart(Message):
         self.user_id = user_id
 
 
-class SessionEndDeprecated(Message):
-    __id__ = 3
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-
 class SetPageLocationDeprecated(Message):
     __id__ = 4
 
@@ -231,15 +224,6 @@ class PageRenderTiming(Message):
         self.time_to_interactive = time_to_interactive
 
 
-class JSExceptionDeprecated(Message):
-    __id__ = 25
-
-    def __init__(self, name, message, payload):
-        self.name = name
-        self.message = message
-        self.payload = payload
-
-
 class CustomEvent(Message):
     __id__ = 27
 
@@ -351,36 +335,6 @@ class NodeAnimationResult(Message):
     def __init__(self, id, styles):
         self.id = id
         self.styles = styles
-
-
-class CSSInsertRule(Message):
-    __id__ = 37
-
-    def __init__(self, id, rule, index):
-        self.id = id
-        self.rule = rule
-        self.index = index
-
-
-class CSSDeleteRule(Message):
-    __id__ = 38
-
-    def __init__(self, id, index):
-        self.id = id
-        self.index = index
-
-
-class Fetch(Message):
-    __id__ = 39
-
-    def __init__(self, method, url, request, response, status, timestamp, duration):
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.timestamp = timestamp
-        self.duration = duration
 
 
 class Profiler(Message):
@@ -563,19 +517,6 @@ class SetNodeFocus(Message):
         self.id = id
 
 
-class LongTask(Message):
-    __id__ = 59
-
-    def __init__(self, timestamp, duration, context, container_type, container_src, container_id, container_name):
-        self.timestamp = timestamp
-        self.duration = duration
-        self.context = context
-        self.container_type = container_type
-        self.container_src = container_src
-        self.container_id = container_id
-        self.container_name = container_name
-
-
 class SetNodeAttributeURLBased(Message):
     __id__ = 60
 
@@ -593,18 +534,6 @@ class SetCSSDataURLBased(Message):
         self.id = id
         self.data = data
         self.base_url = base_url
-
-
-class IssueEventDeprecated(Message):
-    __id__ = 62
-
-    def __init__(self, message_id, timestamp, type, context_string, context, payload):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.type = type
-        self.context_string = context_string
-        self.context = context
-        self.payload = payload
 
 
 class TechnicalInfo(Message):
@@ -636,16 +565,6 @@ class AssetCache(Message):
 
     def __init__(self, url):
         self.url = url
-
-
-class CSSInsertRuleURLBased(Message):
-    __id__ = 67
-
-    def __init__(self, id, rule, index, base_url):
-        self.id = id
-        self.rule = rule
-        self.index = index
-        self.base_url = base_url
 
 
 class MouseClick(Message):
@@ -754,15 +673,6 @@ class Zustand(Message):
     def __init__(self, mutation, state):
         self.mutation = mutation
         self.state = state
-
-
-class BatchMeta(Message):
-    __id__ = 80
-
-    def __init__(self, page_no, first_index, timestamp):
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
 
 
 class BatchMetadata(Message):

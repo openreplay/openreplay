@@ -26,9 +26,6 @@ import type {
   RawStringDictGlobal,
   RawSetNodeAttributeDictGlobal,
   RawNodeAnimationResult,
-  RawCssInsertRule,
-  RawCssDeleteRule,
-  RawFetch,
   RawProfiler,
   RawOTable,
   RawReduxDeprecated,
@@ -46,11 +43,9 @@ import type {
   RawSetPageVisibility,
   RawLoadFontFace,
   RawSetNodeFocus,
-  RawLongTask,
   RawSetNodeAttributeURLBased,
   RawSetCssDataURLBased,
   RawSetNodeSlot,
-  RawCssInsertRuleURLBased,
   RawMouseClick,
   RawMouseClickDeprecated,
   RawCreateIFrameDocument,
@@ -137,12 +132,6 @@ export type SetNodeAttributeDictGlobal = RawSetNodeAttributeDictGlobal & Timed
 
 export type NodeAnimationResult = RawNodeAnimationResult & Timed
 
-export type CssInsertRule = RawCssInsertRule & Timed
-
-export type CssDeleteRule = RawCssDeleteRule & Timed
-
-export type Fetch = RawFetch & Timed
-
 export type Profiler = RawProfiler & Timed
 
 export type OTable = RawOTable & Timed
@@ -177,15 +166,11 @@ export type LoadFontFace = RawLoadFontFace & Timed
 
 export type SetNodeFocus = RawSetNodeFocus & Timed
 
-export type LongTask = RawLongTask & Timed
-
 export type SetNodeAttributeURLBased = RawSetNodeAttributeURLBased & Timed
 
 export type SetCssDataURLBased = RawSetCssDataURLBased & Timed
 
 export type SetNodeSlot = RawSetNodeSlot & Timed
-
-export type CssInsertRuleURLBased = RawCssInsertRuleURLBased & Timed
 
 export type MouseClick = RawMouseClick & Timed
 

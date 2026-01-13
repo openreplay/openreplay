@@ -192,30 +192,6 @@ type TrNodeAnimationResult = [
   styles: string,
 ]
 
-type TrCSSInsertRule = [
-  type: 37,
-  id: number,
-  rule: string,
-  index: number,
-]
-
-type TrCSSDeleteRule = [
-  type: 38,
-  id: number,
-  index: number,
-]
-
-type TrFetch = [
-  type: 39,
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-]
-
 type TrProfiler = [
   type: 40,
   name: string,
@@ -340,17 +316,6 @@ type TrSetNodeFocus = [
   id: number,
 ]
 
-type TrLongTask = [
-  type: 59,
-  timestamp: number,
-  duration: number,
-  context: number,
-  containerType: number,
-  containerSrc: string,
-  containerId: string,
-  containerName: string,
-]
-
 type TrSetNodeAttributeURLBased = [
   type: 60,
   id: number,
@@ -382,14 +347,6 @@ type TrSetNodeSlot = [
   type: 65,
   id: number,
   slotID: number,
-]
-
-type TrCSSInsertRuleURLBased = [
-  type: 67,
-  id: number,
-  rule: string,
-  index: number,
-  baseURL: string,
 ]
 
 type TrMouseClick = [
@@ -633,7 +590,7 @@ type TrWebVitals = [
 ]
 
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrNodeAnimationResult | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecatedDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrSetNodeSlot | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrResourceTiming | TrIncident | TrLongAnimationTask | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTimingDeprecated | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrStringDictGlobal | TrSetNodeAttributeDictGlobal | TrNodeAnimationResult | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDictDeprecated | TrSetNodeAttributeDictDeprecated | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecatedDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrSetNodeSlot | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrResourceTiming | TrIncident | TrLongAnimationTask | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTimingDeprecated | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -819,36 +776,6 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
-    case 37: {
-      return {
-        tp: MType.CssInsertRule,
-        id: tMsg[1],
-        rule: tMsg[2],
-        index: tMsg[3],
-      }
-    }
-    
-    case 38: {
-      return {
-        tp: MType.CssDeleteRule,
-        id: tMsg[1],
-        index: tMsg[2],
-      }
-    }
-    
-    case 39: {
-      return {
-        tp: MType.Fetch,
-        method: tMsg[1],
-        url: tMsg[2],
-        request: tMsg[3],
-        response: tMsg[4],
-        status: tMsg[5],
-        timestamp: tMsg[6],
-        duration: tMsg[7],
-      }
-    }
-    
     case 40: {
       return {
         tp: MType.Profiler,
@@ -1002,19 +929,6 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
-    case 59: {
-      return {
-        tp: MType.LongTask,
-        timestamp: tMsg[1],
-        duration: tMsg[2],
-        context: tMsg[3],
-        containerType: tMsg[4],
-        containerSrc: tMsg[5],
-        containerId: tMsg[6],
-        containerName: tMsg[7],
-      }
-    }
-    
     case 60: {
       return {
         tp: MType.SetNodeAttributeURLBased,
@@ -1039,16 +953,6 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         tp: MType.SetNodeSlot,
         id: tMsg[1],
         slotID: tMsg[2],
-      }
-    }
-    
-    case 67: {
-      return {
-        tp: MType.CssInsertRuleURLBased,
-        id: tMsg[1],
-        rule: tMsg[2],
-        index: tMsg[3],
-        baseURL: tMsg[4],
       }
     }
     
