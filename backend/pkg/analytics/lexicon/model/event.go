@@ -1,10 +1,5 @@
 package model
 
-type User struct {
-	UserId string  `json:"userId" ch:"user_id"`
-	Name   *string `json:"name" ch:"name"`
-}
-
 type LexiconEvent struct {
 	Name         string `json:"name" ch:"name"`
 	DisplayName  string `json:"displayName" ch:"display_name"`
