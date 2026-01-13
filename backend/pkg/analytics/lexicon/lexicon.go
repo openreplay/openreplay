@@ -25,7 +25,7 @@ type HiddenProperty struct {
 
 type Lexicon interface {
 	GetDistinctEvents(ctx context.Context, projID uint32) ([]model.LexiconEvent, uint64, error)
-	GetProperties(ctx context.Context, projID uint32, source *string) ([]model.LexiconProperty, uint64, error)
+	GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error)
 	UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error
 	UpdateProperty(ctx context.Context, projID uint32, req model.UpdatePropertyRequest, userID string) error
 	GetHiddenEvents(ctx context.Context, projID uint32) ([]HiddenEvent, error)
@@ -102,7 +102,7 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 	return events, total, nil
 }
 
-func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string) ([]model.LexiconProperty, uint64, error) {
+func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error) {
 	subquery := `SELECT ap.property_name AS name,
 	                 ap.display_name,
 	                 ap.description,
@@ -129,6 +129,10 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	if source != nil {
 		subquery += ` AND ap.source = ?`
 		args = append(args, *source)
+	}
+	if eventName != nil {
+		subquery += ` AND ep.event_name = ?`
+		args = append(args, *eventName)
 	}
 
 	subquery += `
