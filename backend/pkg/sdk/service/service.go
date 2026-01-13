@@ -333,7 +333,7 @@ FROM (SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_
        "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", 
        "$duration_s", error_id, issue_type, issue_id, "$properties", properties, "$user_id"
       FROM product_analytics.events
-      WHERE project_id = ? AND "$device_id" = ? -- TODO: change the condition in case of overwriting device_id
+      WHERE project_id = ? AND "$device_id" = ? AND _timestamp > now() - INTERVAL 7 DAY AND _timestamp <= now()
       ORDER BY _timestamp DESC
       LIMIT 1 BY event_id, "$event_name", created_at, session_id)
 WHERE empty("$user_id") LIMIT ? OFFSET ?;`
