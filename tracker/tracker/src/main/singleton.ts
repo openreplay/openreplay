@@ -31,6 +31,8 @@ class TrackerSingleton {
     this.isConfigured = true
   }
 
+  analytics = this.instance?.analytics
+
   get options(): Partial<Options> | null {
     return this.instance?.options || null
   }

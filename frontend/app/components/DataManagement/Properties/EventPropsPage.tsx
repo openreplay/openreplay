@@ -1,23 +1,39 @@
 import React from 'react';
 import DataItemPage from '../DataItemPage';
 import type { CommonProp } from './commonProp';
+import { dataManagement, withSiteId } from '@/routes';
+import { updateProperty } from './api';
+import type { DistinctProperty } from './api';
+import { toast } from 'react-toastify';
 
-function EventPropsPage() {
-  const evWithFields: CommonProp = {
-    id: 'event_signed_up',
-    name: 'sign_up_ev',
-    fields: {
-      displayName: { value: 'Sign Up Event', readonly: false },
-      description: { value: 'Event when user signs up', readonly: false },
-      volume: { value: '5,678', readonly: true },
-      type: { value: 'Event', readonly: true },
-    },
+function EventPropsPage({
+  event,
+  siteId,
+  raw,
+}: {
+  event: CommonProp;
+  siteId: string;
+  raw: DistinctProperty;
+}) {
+  const backLink = withSiteId(dataManagement.properties(), siteId);
+
+  const onSave = async (property: { key: string; value: string }) => {
+    try {
+      const updatedEvent = raw;
+      updatedEvent[property.key.toLocaleLowerCase()] = property.value;
+      await updateProperty({ ...updatedEvent, source: 'events' });
+      toast.success('Property updated successfully');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update property');
+    }
   };
   return (
     <DataItemPage
       type="event"
-      item={evWithFields}
-      backLink={{ name: 'Event Properties', to: '/data/events' }}
+      item={event}
+      onSave={onSave}
+      backLink={{ name: 'Event Properties', to: backLink }}
       footer={
         <div className={'rounded-lg border bg-white'}>
           <EventsWithProp />

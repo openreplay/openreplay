@@ -3,13 +3,16 @@ type Field = {
   readonly: boolean;
 };
 
-export const FieldNames = (field: string, type: 'user' | 'event') => {
+export const FieldNames = (field: string, type: 'user' | 'event' | 'distinct_event') => {
   switch (field) {
     case 'displayName':
       return 'Display Name';
     case 'description':
       return 'Description';
     case 'volume':
+      if (type === 'distinct_event') {
+        return '30 Day Volume';
+      }
       return type === 'user'
         ? '# Users with property'
         : '# Events with property';
@@ -21,7 +24,6 @@ export const FieldNames = (field: string, type: 'user' | 'event') => {
 };
 
 export interface CommonEntry {
-  id: string;
   name: string;
   fields: Record<string, Field>;
 }

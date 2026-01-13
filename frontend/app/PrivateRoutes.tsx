@@ -41,12 +41,6 @@ const components: any = {
     () => import('Components/DataManagement/UsersEvents/UsersListPage'),
   ),
   EventsPage: lazy(() => import('Components/DataManagement/Events/index')),
-  EventPropsPage: lazy(
-    () => import('Components/DataManagement/Properties/EventPropsPage'),
-  ),
-  UserPropsPage: lazy(
-    () => import('Components/DataManagement/Properties/UserProperty'),
-  ),
   PropertiesList: lazy(
     () => import('Components/DataManagement/Properties/ListPage'),
   ),
@@ -70,8 +64,6 @@ const enhancedComponents: any = {
   UserPage: withSiteIdUpdater(components.UserPage),
   UsersPage: withSiteIdUpdater(components.UsersPage),
   EventsPage: withSiteIdUpdater(components.EventsPage),
-  EventPropsPage: withSiteIdUpdater(components.EventPropsPage),
-  UserPropsPage: withSiteIdUpdater(components.UserPropsPage),
   PropertiesList: withSiteIdUpdater(components.PropertiesList),
 };
 
@@ -340,18 +332,6 @@ function PrivateRoutes() {
           strict
           path={withSiteId(routes.dataManagement.eventsList(), siteIdList)}
           component={enhancedComponents.EventsPage}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(routes.dataManagement.eventPropsPage(), siteIdList)}
-          component={enhancedComponents.EventPropsPage}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(routes.dataManagement.userPropsPage(), siteIdList)}
-          component={enhancedComponents.UserPropsPage}
         />
         <Route
           exact

@@ -3,20 +3,22 @@ import { Button, Input } from 'antd';
 import Breadcrumb from 'Shared/Breadcrumb';
 import cn from 'classnames';
 import { EditOutlined } from '@ant-design/icons';
-import type { CommonProp } from './Properties/commonProp';
+import type { CommonProp, CommonEntry } from './Properties/commonProp';
 import { FieldNames } from './Properties/commonProp';
+import { TextEllipsis } from 'UI';
+import { useTranslation } from 'react-i18next';
 
-function DataItemPage({
-  footer,
-  item,
-  backLink,
-  type,
-}: {
+type BaseProps = {
   footer?: React.ReactNode;
-  item: CommonProp;
   backLink: { name: string; to: string };
-  type: 'user' | 'event';
-}) {
+  onSave: (property: { key: string; value: string }) => Promise<void>;
+};
+
+type Props =
+  | (BaseProps & { type: 'distinct_event'; item: CommonEntry })
+  | (BaseProps & { type: 'user' | 'event'; item: CommonProp });
+
+function DataItemPage({ footer, item, backLink, type, onSave }: Props) {
   const fields = Object.entries(item.fields).map(([key, field]) => ({
     name: FieldNames(key, type),
     value: field.value,
@@ -46,7 +48,7 @@ function DataItemPage({
         </div>
         {fields.map((field) => (
           <EditableField
-            onSave={() => null}
+            onSave={onSave}
             fieldName={field.name}
             value={field.value}
             readonly={field.readonly}
@@ -65,12 +67,19 @@ function EditableField({
   value,
   readonly,
 }: {
-  onSave: (value: string) => void;
+  onSave: (property: { key: string; value: string }) => void;
   fieldName: string;
   value: string;
   readonly?: boolean;
 }) {
+  const { t } = useTranslation();
+  const [inputValue, setInputValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
+
+  const handleSave = () => {
+    onSave({ key: fieldName, value: inputValue });
+    setIsEdit(false);
+  };
   return (
     <div
       className={cn(
@@ -84,22 +93,26 @@ function EditableField({
       <div style={{ flex: 6 }}>
         {isEdit ? (
           <div className={'flex items-center gap-2'}>
-            <Input size={'small'} defaultValue={value} />
+            <Input.TextArea
+              size={'small'}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
             <div className={'ml-auto'} />
             <Button
               size={'small'}
               type={'text'}
               onClick={() => setIsEdit(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
-            <Button size={'small'} type={'primary'}>
-              Save
+            <Button size={'small'} type={'primary'} onClick={handleSave}>
+              {t('Save')}
             </Button>
           </div>
         ) : (
           <div className={'flex items-center justify-between'}>
-            <span>{value}</span>
+            <TextEllipsis text={inputValue || 'N/A'} maxWidth={'900px'} />
             {readonly ? null : (
               <div
                 className={'cursor-pointer text-main'}

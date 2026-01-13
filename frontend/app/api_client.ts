@@ -45,6 +45,7 @@ const newApiUrls = [
   '/replay',
   '/conditions',
   '/users',
+  'lexicon',
 ];
 const except = [
   'integrations/slack/notify',

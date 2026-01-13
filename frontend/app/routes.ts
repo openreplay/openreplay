@@ -167,10 +167,6 @@ export const dataManagement = {
     hashed(`/data-management/event/${id}`, hash),
   usersList: () => `/data-management/list/users`,
   eventsList: () => `/data-management/list/events`,
-  eventPropsPage: (id = ':propId', hash?: string | number) =>
-    hashed(`/data-management/list/properties/event/${id}`, hash),
-  userPropsPage: (id = ':propId', hash?: string | number) =>
-    hashed(`/data-management/list/properties/user/${id}`, hash),
   properties: () => '/data-management/list/properties',
 };
 
@@ -214,8 +210,7 @@ const REQUIRED_SITE_ID_ROUTES = [
   dataManagement.usersList(),
   dataManagement.eventPage(''),
   dataManagement.eventsList(),
-  dataManagement.eventPropsPage(''),
-  dataManagement.userPropsPage(''),
+  dataManagement.properties(),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));
