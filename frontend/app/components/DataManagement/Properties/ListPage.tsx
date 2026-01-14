@@ -3,7 +3,6 @@ import { Input, Table, Button } from 'antd';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { withSiteId, dataManagement } from 'App/routes';
 import { Album } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';

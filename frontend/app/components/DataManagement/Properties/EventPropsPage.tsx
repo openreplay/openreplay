@@ -20,7 +20,7 @@ function EventPropsPage({
 
   const onSave = async (property: { key: string; value: string }) => {
     try {
-      const updatedEvent = raw;
+      const updatedEvent = { ...raw };
       updatedEvent[property.key.toLocaleLowerCase()] = property.value;
       await updateProperty({ ...updatedEvent, source: 'events' });
       toast.success('Property updated successfully');

@@ -17,8 +17,8 @@ function DistinctEventPage({
 
   const onSave = async (property: { key: string; value: string }) => {
     try {
-      const updatedEvent = event;
-      event[property.key.toLocaleLowerCase()] = property.value;
+      const updatedEvent = { ...event };
+      updatedEvent[property.key.toLocaleLowerCase()] = property.value;
       await updateEventProperty(updatedEvent);
       toast.success('Property updated successfully');
     } catch (error) {
