@@ -74,7 +74,9 @@ type User struct {
 	State         string                 `ch:"$state"`
 	City          string                 `ch:"$city"`
 	OrApiEndpoint string                 `ch:"$or_api_endpoint"`
+	CreatedAt     time.Time              `ch:"$created_at"`
 	FirstEventAt  time.Time              `ch:"$first_event_at"`
+	LastSeen      time.Time              `ch:"$last_seen"`
 }
 
 var defaultUserProperties = map[string]struct{}{
