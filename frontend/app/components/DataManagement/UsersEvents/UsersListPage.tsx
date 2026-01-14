@@ -37,9 +37,7 @@ function UsersListPage() {
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 py-2'}>
-        <div className={'font-semibold text-lg capitalize'}>
-          People
-        </div>
+        <div className={'font-semibold text-lg capitalize'}>People</div>
         <div className="flex items-center gap-2">
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             Docs

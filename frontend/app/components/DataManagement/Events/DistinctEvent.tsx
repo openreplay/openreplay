@@ -4,6 +4,7 @@ import { dataManagement, withSiteId } from '@/routes';
 import DataItemPage from '../DataItemPage';
 import { toast } from 'react-toastify';
 import { updateEventProperty } from './api';
+import DistinctEventPropsList from './DistinctEventPropsList';
 
 function DistinctEventPage({
   event,
@@ -24,7 +25,7 @@ function DistinctEventPage({
       console.error(error);
       toast.error('Failed to update property');
     }
-  }
+  };
   return (
     <DataItemPage
       onSave={onSave}
@@ -41,6 +42,7 @@ function DistinctEventPage({
         to: backLink,
       }}
       type="distinct_event"
+      footer={<DistinctEventPropsList eventName={event.name} />}
     />
   );
 }

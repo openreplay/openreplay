@@ -21,6 +21,7 @@ type Props =
 function DataItemPage({ footer, item, backLink, type, onSave }: Props) {
   const fields = Object.entries(item.fields).map(([key, field]) => ({
     name: FieldNames(key, type),
+    raw_name: key,
     value: field.value,
     readonly: field.readonly,
   }));
@@ -50,6 +51,7 @@ function DataItemPage({ footer, item, backLink, type, onSave }: Props) {
           <EditableField
             onSave={onSave}
             fieldName={field.name}
+            rawName={field.raw_name}
             value={field.value}
             readonly={field.readonly}
           />
@@ -66,18 +68,20 @@ function EditableField({
   fieldName,
   value,
   readonly,
+  rawName,
 }: {
   onSave: (property: { key: string; value: string }) => void;
   fieldName: string;
   value: string;
   readonly?: boolean;
+  rawName: string;
 }) {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
 
   const handleSave = () => {
-    onSave({ key: fieldName, value: inputValue });
+    onSave({ key: rawName, value: inputValue });
     setIsEdit(false);
   };
   return (

@@ -49,8 +49,9 @@ function ListPage() {
 
   React.useEffect(() => {
     setPage(1);
+    queryParams.set('view', view);
     history.replace({
-      search: new URLSearchParams({ view }).toString(),
+      search: queryParams.toString(),
     });
   }, [view]);
 
@@ -114,7 +115,7 @@ function ListPage() {
         };
         return (
           <EventPropsPage
-            raw={pickedUserProp}
+            raw={pickedEventProp}
             siteId={siteId!}
             event={evWithFields}
           />

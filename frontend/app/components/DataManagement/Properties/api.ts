@@ -15,12 +15,15 @@ export interface DistinctProperty {
   type: string;
 }
 
-export function fetchList(source: 'events' | 'users'): Promise<{
+export function fetchList(
+  source: 'events' | 'users',
+  eventName?: string,
+): Promise<{
   properties: DistinctProperty[];
   total: number;
 }> {
   return client
-    .get(`/PROJECT_ID/lexicon/properties`, { source })
+    .get(`/PROJECT_ID/lexicon/properties`, { source, eventName })
     .then((res) => res.json())
     .then((json) => json.data);
 }

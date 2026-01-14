@@ -158,6 +158,26 @@ export default class AnalyticsStore {
     this.loading = loading;
   };
 
+  fetchPropertyEvents = async (propFilter: Filter) => {
+    this.setLoading(true);
+    try {
+      const data: EventsResponse = await analyticsService.getEvents({
+        ...this.payloadFilters,
+        filters: [propFilter],
+        columns: [...eventListColumns, 'description'],
+      });
+      return {
+        total: data.total,
+        events: data.events.map((ev) => new Event(ev)),
+      };
+    } catch (e) {
+      console.error('AnalyticsStore.fetchPropertyEvents', e);
+      return { events: [], total: 0 };
+    } finally {
+      this.setLoading(false);
+    }
+  };
+
   fetchEvents = async () => {
     this.newEvents = 0;
     this.lastFetchedAt = Date.now();
@@ -194,6 +214,20 @@ export default class AnalyticsStore {
     if (data.total > 0) {
       this.newEvents = data.total;
     }
+  };
+
+  addUserPropFilter = (propName: string, customLimit: number) => {
+    const defaultPayload = JSON.parse(JSON.stringify(this.usersPayloadFilters));
+    const propFilter = filterStore.findEvent({ name: propName });
+    if (propFilter) {
+      propFilter.operator = 'isAny';
+      propFilter.readonly = true;
+      // @ts-ignore
+      this.addUserFilter(propFilter);
+    }
+    this.editUsersPayload({ limit: customLimit });
+
+    return defaultPayload;
   };
 
   fetchUsers = async (query: string) => {

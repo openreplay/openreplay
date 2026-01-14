@@ -61,6 +61,7 @@ export default class Event {
   environment: string;
   session_id: string;
   isAutoCapture: boolean = false;
+  description?: string;
   /** TABLE DATA */
 
   custom_properties: Record<string, any> = {};
@@ -76,6 +77,7 @@ export default class Event {
     this.session_id = event.session_id || 'N/A';
     this.isAutoCapture = event.$auto_captured || false;
     this.user_id = event.$user_id;
+    this.description = event.description;
 
     const defaultVariableProps = Object.keys(event.$properties ?? {});
     for (let key of defaultVariableProps) {

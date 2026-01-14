@@ -55,6 +55,7 @@ export default class FilterItem implements IFilter {
   defaultProperty?: boolean = false;
   isConditional?: boolean = false;
   scope?: string[];
+  readonly?: boolean = false;
 
   constructor(data: IFilter = {}) {
     this.initializeFromData(data);

@@ -17,9 +17,11 @@ import withPageTitle from '@/components/hocs/withPageTitle';
 function UsersList({
   toUser,
   query,
+  propName,
 }: {
   toUser: (id: string) => void;
   query: string;
+  propName?: string;
 }) {
   const { analyticsStore, filterStore } = useStore();
   const [editCols, setEditCols] = React.useState(false);
@@ -36,6 +38,16 @@ function UsersList({
     (f) => f.name,
   );
 
+  React.useEffect(() => {
+    if (propName) {
+      const defaultPayload = analyticsStore.addUserPropFilter(propName, 10);
+      return () => {
+        if (propName) {
+          analyticsStore.editUsersPayload(defaultPayload);
+        }
+      };
+    }
+  }, []);
   React.useEffect(() => {
     analyticsStore.fetchUsers(query);
   }, [

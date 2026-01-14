@@ -5,6 +5,7 @@ import { dataManagement, withSiteId } from '@/routes';
 import { updateProperty } from './api';
 import type { DistinctProperty } from './api';
 import { toast } from 'react-toastify';
+import EventsWithProp from './EventsWithProp';
 
 function EventPropsPage({
   event,
@@ -34,23 +35,8 @@ function EventPropsPage({
       item={event}
       onSave={onSave}
       backLink={{ name: 'Event Properties', to: backLink }}
-      footer={
-        <div className={'rounded-lg border bg-white'}>
-          <EventsWithProp />
-        </div>
-      }
+      footer={<EventsWithProp propName={raw.name} />}
     />
-  );
-}
-
-function EventsWithProp() {
-  return (
-    <div className="py-4 flex flex-col gap-2">
-      <span className="text-xl font-semibold px-4">
-        Events with this property
-      </span>
-      <div>table</div>
-    </div>
   );
 }
 

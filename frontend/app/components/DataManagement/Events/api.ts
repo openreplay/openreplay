@@ -21,6 +21,16 @@ export function fetchList(): Promise<{
     .then((json) => json.data);
 }
 
+export function fetchListByProp(propertyName: string): Promise<{
+  events: DistinctEvent[];
+  total: number;
+}> {
+  return client
+    .get('/PROJECT_ID/lexicon/events', { propertyName })
+    .then((res) => res.json())
+    .then((json) => json.data);
+}
+
 interface UpdateEventPayload {
   autoCaptured: boolean;
   description: string;

@@ -5,6 +5,7 @@ import { dataManagement, withSiteId } from '@/routes';
 import { updateProperty } from './api';
 import type { DistinctProperty } from './api';
 import { toast } from 'react-toastify';
+import UsersWithProp from './UsersWithProp';
 
 function UserPropsPage({
   properties,
@@ -20,7 +21,7 @@ function UserPropsPage({
   const onSave = async (property: { key: string; value: string }) => {
     try {
       const updatedEvent = raw;
-      updatedEvent[property.key.toLocaleLowerCase()] = property.value;
+      updatedEvent[property.key] = property.value;
       await updateProperty({ ...updatedEvent, source: 'users' });
       toast.success('Property updated successfully');
     } catch (error) {
@@ -36,21 +37,10 @@ function UserPropsPage({
       backLink={{ name: 'User Properties', to: backLink }}
       footer={
         <div className={'rounded-lg border bg-white'}>
-          <UsersWithProp />
+          <UsersWithProp propName={raw.name} />
         </div>
       }
     />
-  );
-}
-
-function UsersWithProp() {
-  return (
-    <div className="py-4 flex flex-col gap-2">
-      <span className="text-xl font-semibold px-4">
-        Users with this property
-      </span>
-      <div>table</div>
-    </div>
   );
 }
 
