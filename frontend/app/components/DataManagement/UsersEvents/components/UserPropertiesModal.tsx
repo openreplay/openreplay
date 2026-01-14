@@ -3,6 +3,8 @@ import { Input, Button } from 'antd';
 import { Pencil, ArrowDownZA } from 'lucide-react';
 import { TextEllipsis } from 'UI';
 import { observer } from 'mobx-react-lite';
+import usePropertyNames from 'App/components/DataManagement/Properties/usePropertyNames';
+import { useTranslation } from 'react-i18next';
 
 const caseInsensitiveMatch = (str: string, search: string) => {
   return str.toLowerCase().includes(search.toLowerCase());
@@ -17,6 +19,7 @@ function UserPropertiesModal({
   rawProperties: Record<string, any>;
   onSave: (path: string, key: string, value: string | number) => void;
 }) {
+  const { t } = useTranslation();
   const flatProperties = {
     city: rawProperties.$city,
     country: rawProperties.$country,
@@ -82,7 +85,7 @@ function UserPropertiesModal({
   return (
     <div className="p-4 flex flex-col gap-4 h-screen w-full">
       <div className={'flex items-center gap-4'}>
-        <div className="font-semibold text-xl">All User Properties</div>
+        <div className="font-semibold text-xl">{t('All User Properties')}</div>
         <div className={'rounded-full px-2 bg-gray-lighter'}>
           {allPropLength}
         </div>
@@ -125,6 +128,9 @@ function Property({
   value: string | number;
   onSave?: (key: string, value: string | number) => void;
 }) {
+  const { t } = useTranslation();
+  const { getDisplayName, isPending: isPropertyNamesPending } =
+    usePropertyNames('users');
   const [strValue, setValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
 
@@ -141,9 +147,14 @@ function Property({
     setValue(value);
     setIsEdit(false);
   };
+  console.log(pkey, getDisplayName(pkey));
   return (
     <div className="flex px-4 py-1 items-start border-b group w-full hover:bg-active-blue">
-      <TextEllipsis text={pkey} maxWidth={'150'} className={'w-[150px]'} />
+      <TextEllipsis
+        text={getDisplayName(pkey)}
+        maxWidth={'150'}
+        className={'w-[150px]'}
+      />
       {isEdit ? (
         <div className={'flex-1 flex flex-col gap-2'}>
           <Input
@@ -159,10 +170,10 @@ function Property({
           />
           <div className={'flex items-center gap-2 ml-auto'}>
             <Button type={'text'} onClick={onCancel} size={'small'}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type={'primary'} onClick={onSaveClick} size={'small'}>
-              Save
+              {t('Save')}
             </Button>
           </div>
         </div>

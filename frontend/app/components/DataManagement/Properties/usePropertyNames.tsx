@@ -1,6 +1,8 @@
+import React from 'react';
 import { fetchList } from './api';
 import { useQuery } from '@tanstack/react-query';
-
+import { Icon } from 'UI';
+import { Loader } from 'lucide-react'
 /**
  * hook that will get all properties and then return a method to grab displayname by property name
  */
@@ -11,8 +13,17 @@ function usePropertyNames(source: 'events' | 'users') {
   });
 
   const getDisplayName = (propName: string) => {
+    if (isPending)
+      return (
+        <div className="flex items-center gap-1">
+          <span>{propName}</span>
+          <Loader className="animate-spin" size={12} />
+        </div>
+      );
     const prop = data.properties.find((p) => p.name === propName);
-    return prop ? prop.displayName : propName;
+    const hasDisplayName =
+      prop && prop.displayName && prop.displayName.length > 0;
+    return hasDisplayName ? prop.displayName : propName;
   };
 
   return { getDisplayName, isPending };
