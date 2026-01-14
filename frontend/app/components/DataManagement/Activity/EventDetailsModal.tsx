@@ -13,6 +13,7 @@ import Tabs from 'Components/shared/Tabs';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from '@/components/shared/AnimatedSVG';
+import usePropertyNames from 'App/components/DataManagement/Properties/usePropertyNames';
 
 const tabs = [
   {
@@ -52,6 +53,7 @@ function EventDetailsModal({
   onClose: () => void;
   siteId: string;
 }) {
+  const { getDisplayName, isPending: isPropertyNamesPending } = usePropertyNames('events');
   const { filterStore } = useStore();
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState(tabs[0].value);
@@ -212,7 +214,7 @@ function EventDetailsModal({
                 )}
               </div>
               <TextEllipsis
-                text={key}
+                text={isPropertyNamesPending ? key : getDisplayName(key)}
                 maxWidth={'150'}
                 className={'w-[150px]'}
               />

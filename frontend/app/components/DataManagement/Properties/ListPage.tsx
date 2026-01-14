@@ -203,10 +203,10 @@ function EventPropsList({
     },
     {
       title: '30 Day Volume',
-      dataIndex: 'monthVolume',
-      key: 'monthVolume',
+      dataIndex: 'count',
+      key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.monthVolume.localeCompare(b.monthVolume),
+      sorter: (a, b) => a.count.localeCompare(b.count),
     },
   ];
   return (
@@ -273,10 +273,10 @@ function UserPropsList({
     },
     {
       title: '# Users',
-      dataIndex: 'users',
-      key: 'users',
+      dataIndex: 'count',
+      key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.users.localeCompare(b.users),
+      sorter: (a, b) => a.count.localeCompare(b.count),
     },
   ];
 
