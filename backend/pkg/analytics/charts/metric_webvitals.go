@@ -255,15 +255,15 @@ SELECT minIf(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(ev
        minIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_min,
        avgIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_avg,
        maxIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_p90,
-       minIf(events.`+"`$properties`"+`.CLS::Float64, isNotNull(events.`+"`$properties`"+`.CLS)) AS cumulative_layout_shift_min,
-       avgIf(events.`+"`$properties`"+`.CLS::Float64, isNotNull(events.`+"`$properties`"+`.CLS)) AS cumulative_layout_shift_avg,
-       maxIf(events.`+"`$properties`"+`.CLS::Float64, isNotNull(events.`+"`$properties`"+`.CLS)) AS cumulative_layout_shift_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.CLS::Float64, isNotNull(events.`+"`$properties`"+`.CLS)) AS cumulative_layout_shift_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.CLS::Float64, isNotNull(events.`+"`$properties`"+`.CLS)) AS cumulative_layout_shift_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.CLS::Float64, isNotNull(events.`+"`$properties`"+`.CLS)) AS cumulative_layout_shift_p90
+       quantileIf(0.5)(events.`+"`$properties`"+`.lcp::Float64, isNotNull(events.`+"`$properties`"+`.lcp)) AS largest_contentful_paint_p50,
+       quantileIf(0.75)(events.`+"`$properties`"+`.lcp::Float64, isNotNull(events.`+"`$properties`"+`.lcp)) AS largest_contentful_paint_p75,
+       quantileIf(0.90)(events.`+"`$properties`"+`.lcp::Float64, isNotNull(events.`+"`$properties`"+`.lcp)) AS largest_contentful_paint_p90,
+       minIf(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_min,
+       avgIf(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_avg,
+       maxIf(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_max,
+       quantileIf(0.5)(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_p50,
+       quantileIf(0.75)(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_p75,
+       quantileIf(0.90)(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_p90
 FROM (SELECT session_id
       FROM (SELECT main.session_id,
                    MIN(main.created_at) AS first_event_ts,
@@ -287,8 +287,8 @@ WHERE events.project_id = %d
         OR isNotNull(events.`+"`$properties`"+`.ttfb)
         OR isNotNull(events.`+"`$properties`"+`.speed_index)
         OR isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)
-        OR isNotNull(events.`+"`$properties`"+`.LCP)
-        OR isNotNull(events.`+"`$properties`"+`.CLS)
+        OR isNotNull(events.`+"`$properties`"+`.lcp)
+        OR isNotNull(events.`+"`$properties`"+`.cls)
     )`,
 		p.ProjectId, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp, innerEventsWhereStr,
 		p.ProjectId, sessionsWhereStr, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp,
