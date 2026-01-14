@@ -24,7 +24,7 @@ type HiddenProperty struct {
 }
 
 type Lexicon interface {
-	GetDistinctEvents(ctx context.Context, projID uint32) ([]model.LexiconEvent, uint64, error)
+	GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string) ([]model.LexiconEvent, uint64, error)
 	GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error)
 	UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error
 	UpdateProperty(ctx context.Context, projID uint32, req model.UpdatePropertyRequest, userID string) error
@@ -47,7 +47,7 @@ func New(log logger.Logger, chConn driver.Conn) Lexicon {
 	}
 }
 
-func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]model.LexiconEvent, uint64, error) {
+func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string) ([]model.LexiconEvent, uint64, error) {
 	subquery := `SELECT ae.event_name AS name,
 	                 ae.display_name,
 	                 ae.description,
@@ -60,8 +60,27 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 	          FROM product_analytics.all_events ae
 	          LEFT JOIN product_analytics.autocomplete_events_grouped aeg
 	              ON ae.project_id = aeg.project_id
-	              AND ae.event_name = aeg.value
-	          WHERE ae.project_id = ?
+	              AND ae.event_name = aeg.value`
+
+	args := []interface{}{projID}
+
+	if propertyName != nil {
+		subquery += `
+	          LEFT JOIN product_analytics.event_properties ep
+	              ON ae.project_id = ep.project_id
+	              AND ae.event_name = ep.event_name
+	              AND ae.auto_captured = ep.auto_captured_event`
+	}
+
+	subquery += `
+	          WHERE ae.project_id = ?`
+
+	if propertyName != nil {
+		subquery += ` AND ep.property_name = ?`
+		args = append(args, *propertyName)
+	}
+
+	subquery += `
 	          GROUP BY ae.project_id, ae.event_name, ae.display_name, ae.description, ae.status, 
 	                   ae.auto_captured, ae.query_count_l30days, ae.created_at, ae._edited_by_user, ae._timestamp
 	          ORDER BY ae._timestamp DESC, ae.display_name
@@ -69,7 +88,7 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32) ([]m
 
 	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
 
-	rows, err := e.chConn.Query(ctx, query, projID)
+	rows, err := e.chConn.Query(ctx, query, args...)
 	if err != nil {
 		e.log.Error(ctx, "failed to query distinct events for project %d: %v", projID, err)
 		return nil, 0, fmt.Errorf("failed to query distinct events for project %d: %w", projID, err)

@@ -69,6 +69,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
+// @Param propertyName query string false "Property name filter"
 // @Success 200 {object} model.LexiconEventsResponse
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 413 {object} api.ErrorResponse
@@ -81,7 +82,12 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (*model.LexiconE
 		return nil, http.StatusBadRequest, err
 	}
 
-	events, total, err := h.lexicon.GetDistinctEvents(r.Request.Context(), projID)
+	var propertyName *string
+	if propertyNameParam := r.Request.URL.Query().Get("propertyName"); propertyNameParam != "" {
+		propertyName = &propertyNameParam
+	}
+
+	events, total, err := h.lexicon.GetDistinctEvents(r.Request.Context(), projID, propertyName)
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get events for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
