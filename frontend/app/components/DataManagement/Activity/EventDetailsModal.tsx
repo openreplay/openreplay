@@ -218,11 +218,10 @@ function EventDetailsModal({
                   <Icon name={'logo-small'} size={12} />
                 )}
               </div>
-              <TextEllipsis
-                text={isPropertyNamesPending ? key : getDisplayName(key)}
-                maxWidth={'150'}
-                className={'w-[150px]'}
-              />
+              {getDisplayName(key, {
+                maxWidth: '150px',
+                className: 'w-[150px]',
+              })}
               <TextEllipsis
                 text={value}
                 maxWidth={'420'}

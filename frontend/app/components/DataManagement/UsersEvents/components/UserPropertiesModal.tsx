@@ -147,14 +147,10 @@ function Property({
     setValue(value);
     setIsEdit(false);
   };
-  console.log(pkey, getDisplayName(pkey));
+
   return (
     <div className="flex px-4 py-1 items-start border-b group w-full hover:bg-active-blue">
-      <TextEllipsis
-        text={getDisplayName(pkey)}
-        maxWidth={'150'}
-        className={'w-[150px]'}
-      />
+      {getDisplayName(pkey, { maxWidth: '150px', className: 'w-[150px]' })}
       {isEdit ? (
         <div className={'flex-1 flex flex-col gap-2'}>
           <Input
