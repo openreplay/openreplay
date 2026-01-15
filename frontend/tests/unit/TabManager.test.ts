@@ -7,6 +7,7 @@ import { MType } from '../../app/player/web/messages/raw.gen';
 jest.mock('@medv/finder', () => ({
   default: jest.fn(() => 'mocked network-proxy content'),
 }));
+
 jest.mock('syncod', () => {
   return {
     Decoder: jest

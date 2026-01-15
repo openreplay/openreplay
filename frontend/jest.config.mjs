@@ -2,6 +2,7 @@ export default {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   moduleNameMapper: {
+    '^Shared/AnimatedSVG/AnimatedSVG$': '<rootDir>/tests/mocks/AnimatedSVGMock.tsx',
     '^Types/(.+)$': '<rootDir>/app/types/$1',
     '^App/(.+)$': '<rootDir>/app/$1',
     "\\.(css|less)$": "<rootDir>/tests/mocks/style.mock.js",
@@ -29,7 +30,7 @@ export default {
   },
   moduleDirectories: ['node_modules'],
   transformIgnorePatterns: [
-    '/node_modules/(?!syncod)',
+    '/node_modules/(?!(@medv/finder|syncod)/)',
   ],
   setupFiles: ['<rootDir>/tests/unit/jest.setup.ts'],
   testPathIgnorePatterns: [
