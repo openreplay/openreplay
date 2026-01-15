@@ -53,7 +53,7 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	                 ae.description,
 	                 ae.status,
 	                 ae.auto_captured,
-	                 COALESCE(sumMerge(aeg.data_count), 0) AS data_count,
+	                 sumMerge(aeg.data_count) AS data_count,
 	                 ae.query_count_l30days,
 	                 ae.created_at,
 	                 ae._edited_by_user
@@ -101,13 +101,17 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 		var event model.LexiconEvent
 		var editedByUser bool
 		var createdAt time.Time
-		var count uint64
+		var count *uint64
 		var queryCount uint32
 		if err := rows.Scan(&total, &event.Name, &event.DisplayName, &event.Description, &event.Status, &event.AutoCaptured, &count, &queryCount, &createdAt, &editedByUser); err != nil {
 			e.log.Error(ctx, "failed to scan distinct event for project %d, error: %v, query: %s", projID, err, query)
 			return nil, 0, fmt.Errorf("failed to scan event row: %w", err)
 		}
-		event.Count = count
+		if count != nil {
+			event.Count = *count
+		} else {
+			event.Count = 0
+		}
 		event.QueryCount = uint64(queryCount)
 		event.CreatedAt = createdAt.UnixMilli()
 		events = append(events, event)
@@ -130,7 +134,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	                 ap.is_event_property,
 	                 ap.auto_captured,
 	                 ap.status,
-	                 COALESCE(sumMerge(aepg.data_count), 0) AS data_count,
+	                 sumMerge(aepg.data_count) AS data_count,
 	                 ap.query_count,
 	                 ap.created_at,
 	                 ap._edited_by_user
@@ -178,7 +182,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		var source, valueType string
 		var isEventProperty, editedByUser bool
 		var status string
-		var dataCount uint64
+		var dataCount *uint64
 		var queryCount uint32
 		if err := rows.Scan(&total, &property.Name, &property.DisplayName, &property.Description, &source, &valueType, &isEventProperty, &property.AutoCaptured, &status, &dataCount, &queryCount, &createdAt, &editedByUser); err != nil {
 			e.log.Error(ctx, "failed to scan distinct property for project %d, error: %v, query: %s", projID, err, query)
@@ -186,7 +190,11 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		}
 		property.Type = source
 		property.DataType = valueType
-		property.Count = dataCount
+		if dataCount != nil {
+			property.Count = *dataCount
+		} else {
+			property.Count = 0
+		}
 		property.QueryCount = uint64(queryCount)
 		property.Status = status
 		property.CreatedAt = createdAt.UnixMilli()
