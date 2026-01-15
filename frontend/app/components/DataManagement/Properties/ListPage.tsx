@@ -133,7 +133,12 @@ function ListPage() {
           <Button type={'text'} icon={<Album size={14} />}>
             {t('Docs')}
           </Button>
-          <Input.Search size={'small'} placeholder={t('Name, email, ID')} />
+          <Input.Search
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            size={'small'}
+            placeholder={t('Name, email, ID')}
+          />
         </div>
       </div>
       {view === 'users' ? (
@@ -184,28 +189,28 @@ function EventPropsList({
       dataIndex: 'name',
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      sorter: (a: any, b: any) => a.name.localeCompare(b.name),
     },
     {
       title: 'Display Name',
       dataIndex: 'displayName',
       key: 'displayName',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.displayName.localeCompare(b.displayName),
+      sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
     },
     {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.description.localeCompare(b.description),
+      sorter: (a: any, b: any) => a.description.localeCompare(b.description),
     },
     {
       title: '30 Day Volume',
       dataIndex: 'count',
       key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.count.localeCompare(b.count),
+      sorter: (a: any, b: any) => a.count.localeCompare(b.count),
     },
   ];
   return (
