@@ -53,7 +53,7 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, u
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/users [post]
-func (h *handlersImpl) searchUsers(ctx *api.RequestContext) (*model.SearchUsersResponse, int, error) {
+func (h *handlersImpl) searchUsers(ctx *api.RequestContext) (any, int, error) {
 	projID, err := ctx.GetProjectID()
 	if err != nil {
 		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
@@ -95,7 +95,7 @@ func (h *handlersImpl) searchUsers(ctx *api.RequestContext) (*model.SearchUsersR
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/users/{userID} [get]
-func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error) {
+func (h *handlersImpl) getUser(ctx *api.RequestContext) (any, int, error) {
 	projID, err := ctx.GetProjectID()
 	if err != nil {
 		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
@@ -134,7 +134,7 @@ func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/users/{userID} [delete]
-func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, int, error) {
+func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (any, int, error) {
 	projID, err := ctx.GetProjectID()
 	if err != nil {
 		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
@@ -175,7 +175,7 @@ func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, i
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/users/{userID} [put]
-func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, error) {
+func (h *handlersImpl) updateUser(ctx *api.RequestContext) (any, int, error) {
 	projID, err := ctx.GetProjectID()
 	if err != nil {
 		h.Log().Error(ctx.Request.Context(), "failed to get project ID: %v", err)
@@ -229,7 +229,7 @@ func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, er
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/users/{userID}/activity [post]
-func (h *handlersImpl) getUserActivity(r *api.RequestContext) (*model.UserActivityResponse, int, error) {
+func (h *handlersImpl) getUserActivity(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)

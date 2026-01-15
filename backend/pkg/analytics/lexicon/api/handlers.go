@@ -37,28 +37,28 @@ func (h *handlersImpl) GetAll() []*api.Description {
 			Method:      "GET",
 			Handler:     api.AutoRespondContext(h, h.getDistinctEvents),
 			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
+			AuditTrail:  api.DoNotTrack,
 		},
 		{
 			Path:        "/{project}/lexicon/properties",
 			Method:      "GET",
 			Handler:     api.AutoRespondContext(h, h.getProperties),
 			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
+			AuditTrail:  api.DoNotTrack,
 		},
 		{
 			Path:        "/{project}/lexicon/events",
 			Method:      "PUT",
 			Handler:     api.AutoRespondContextWithBody(h, h.updateEvent),
 			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
+			AuditTrail:  api.DoNotTrack,
 		},
 		{
 			Path:        "/{project}/lexicon/properties",
 			Method:      "PUT",
 			Handler:     api.AutoRespondContextWithBody(h, h.updateProperty),
 			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
+			AuditTrail:  api.DoNotTrack,
 		},
 	}
 }
@@ -75,7 +75,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/lexicon/events [get]
-func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (*model.LexiconEventsResponse, int, error) {
+func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
@@ -114,7 +114,7 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (*model.LexiconE
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/lexicon/properties [get]
-func (h *handlersImpl) getProperties(r *api.RequestContext) (*model.LexiconPropertiesResponse, int, error) {
+func (h *handlersImpl) getProperties(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
@@ -161,7 +161,7 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (*model.LexiconPrope
 // @Failure 400 {object} api.ErrorResponse "Invalid request, missing required fields, or event not found"
 // @Failure 500 {object} api.ErrorResponse "Internal server error"
 // @Router /{project}/lexicon/events [put]
-func (h *handlersImpl) updateEvent(r *api.RequestContext) (map[string]interface{}, int, error) {
+func (h *handlersImpl) updateEvent(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
@@ -204,7 +204,7 @@ func (h *handlersImpl) updateEvent(r *api.RequestContext) (map[string]interface{
 // @Failure 400 {object} api.ErrorResponse "Invalid request, missing required fields, invalid source value, or property not found"
 // @Failure 500 {object} api.ErrorResponse "Internal server error"
 // @Router /{project}/lexicon/properties [put]
-func (h *handlersImpl) updateProperty(r *api.RequestContext) (map[string]interface{}, int, error) {
+func (h *handlersImpl) updateProperty(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)

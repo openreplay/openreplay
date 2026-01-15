@@ -212,7 +212,7 @@ func (rc *RequestContext) GetProjectID() (uint32, error) {
 	return projID, nil
 }
 
-func AutoRespondContext[T any, H HandlerContext](h H, handler func(ctx *RequestContext) (T, int, error)) http.HandlerFunc {
+func AutoRespondContext(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 		bodySize := 0
@@ -238,7 +238,7 @@ func AutoRespondContext[T any, H HandlerContext](h H, handler func(ctx *RequestC
 	}
 }
 
-func AutoRespondContextWithBody[T any, H HandlerContext](h H, handler func(ctx *RequestContext) (T, int, error)) http.HandlerFunc {
+func AutoRespondContextWithBody(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 		bodySize := 0

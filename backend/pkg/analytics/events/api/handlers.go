@@ -59,7 +59,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/events [post]
-func (h *handlersImpl) eventsSearch(r *api.RequestContext) (*model.EventsSearchResponse, int, error) {
+func (h *handlersImpl) eventsSearch(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
@@ -98,7 +98,7 @@ func (h *handlersImpl) eventsSearch(r *api.RequestContext) (*model.EventsSearchR
 // @Failure 404 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /{project}/events/{eventId} [get]
-func (h *handlersImpl) getEvent(r *api.RequestContext) (*model.EventEntry, int, error) {
+func (h *handlersImpl) getEvent(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
 		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
