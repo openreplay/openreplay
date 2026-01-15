@@ -196,7 +196,7 @@ type RequestContext struct {
 	Request   *http.Request
 	Body      []byte
 	StartTime time.Time
-	BodySize  *int
+	BodySize  int
 	ProjectID uint32
 }
 
@@ -214,60 +214,42 @@ func (rc *RequestContext) GetProjectID() (uint32, error) {
 
 func AutoRespondContext(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
-		bodySize := 0
-
-		ctx := &RequestContext{
-			Writer:    w,
-			Request:   r,
-			StartTime: startTime,
-			BodySize:  &bodySize,
-		}
+		ctx := &RequestContext{Writer: w, Request: r, StartTime: time.Now()}
 
 		response, statusCode, err := handler(ctx)
-
 		if err != nil {
 			if statusCode == 0 {
 				statusCode = http.StatusInternalServerError
 			}
-			h.Responser().ResponseWithError(h.Log(), r.Context(), w, statusCode, err, startTime, r.URL.Path, bodySize)
+			h.Responser().ResponseWithError(h.Log(), r.Context(), w, statusCode, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
 			return
 		}
 
-		h.Responser().ResponseWithJSON(h.Log(), r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
+		h.Responser().ResponseWithJSON(h.Log(), r.Context(), w, map[string]interface{}{"data": response}, ctx.StartTime, r.URL.Path, ctx.BodySize)
 	}
 }
 
 func AutoRespondContextWithBody(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
-		bodySize := 0
+		ctx := &RequestContext{Writer: w, Request: r, StartTime: time.Now()}
 
-		bodyBytes, err := ReadBody(h.Log(), w, r, h.JsonSizeLimit())
+		var err error
+		ctx.Body, err = ReadBody(h.Log(), w, r, h.JsonSizeLimit())
 		if err != nil {
-			h.Responser().ResponseWithError(h.Log(), r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+			h.Responser().ResponseWithError(h.Log(), r.Context(), w, http.StatusRequestEntityTooLarge, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
 			return
 		}
-		bodySize = len(bodyBytes)
-
-		ctx := &RequestContext{
-			Writer:    w,
-			Request:   r,
-			Body:      bodyBytes,
-			StartTime: startTime,
-			BodySize:  &bodySize,
-		}
+		ctx.BodySize = len(ctx.Body)
 
 		response, statusCode, err := handler(ctx)
-
 		if err != nil {
 			if statusCode == 0 {
 				statusCode = http.StatusInternalServerError
 			}
-			h.Responser().ResponseWithError(h.Log(), r.Context(), w, statusCode, err, startTime, r.URL.Path, bodySize)
+			h.Responser().ResponseWithError(h.Log(), r.Context(), w, statusCode, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
 			return
 		}
 
-		h.Responser().ResponseWithJSON(h.Log(), r.Context(), w, map[string]interface{}{"data": response}, startTime, r.URL.Path, bodySize)
+		h.Responser().ResponseWithJSON(h.Log(), r.Context(), w, map[string]interface{}{"data": response}, ctx.StartTime, r.URL.Path, ctx.BodySize)
 	}
 }
