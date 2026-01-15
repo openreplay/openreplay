@@ -122,6 +122,11 @@ function ListPage() {
       }
     }
   }
+
+  const openDocs = () => {
+    const url = 'https://docs.openreplay.com/en/sdk/analytics/events/';
+    window.open(url, '_blank');
+  };
   return (
     <div
       className="flex flex-col gap-4 rounded-lg border bg-white mx-auto"
@@ -130,7 +135,7 @@ function ListPage() {
       <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
         <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
-          <Button type={'text'} icon={<Album size={14} />}>
+          <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             {t('Docs')}
           </Button>
           <Input.Search
@@ -210,7 +215,7 @@ function EventPropsList({
       dataIndex: 'count',
       key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a: any, b: any) => a.count.localeCompare(b.count),
+      sorter: (a: any, b: any) => a.count - b.count,
     },
   ];
   return (
@@ -280,7 +285,7 @@ function UserPropsList({
       dataIndex: 'count',
       key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.count.localeCompare(b.count),
+      sorter: (a, b) => a.count - b.count,
     },
   ];
 

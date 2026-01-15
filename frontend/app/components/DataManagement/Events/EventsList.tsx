@@ -54,13 +54,6 @@ function EventsList({
       showSorterTooltip: { target: 'full-header' },
       sorter: (a: number, b: number) => a - b,
     },
-    {
-      title: '30 Day Queries',
-      dataIndex: 'queryCount',
-      key: 'queryCount',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a: number, b: number) => a - b,
-    },
   ];
   return (
     <>
