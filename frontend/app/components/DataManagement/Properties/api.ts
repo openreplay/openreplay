@@ -25,7 +25,13 @@ export function fetchList(
   return client
     .get(`/PROJECT_ID/lexicon/properties`, { source, eventName })
     .then((res) => res.json())
-    .then((json) => json.data);
+    .then((json) => {
+      const safeObj = {
+        properties: json.data.properties || [],
+        total: json.data.total || 0,
+      };
+      return safeObj;
+    });
 }
 
 interface UpdatePropPayload {

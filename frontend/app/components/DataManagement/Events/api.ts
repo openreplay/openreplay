@@ -18,7 +18,13 @@ export function fetchList(): Promise<{
   return client
     .get('/PROJECT_ID/lexicon/events')
     .then((res) => res.json())
-    .then((json) => json.data);
+    .then((json) => {
+      const safeObj = {
+        events: json.data.events || [],
+        total: json.data.total || 0,
+      };
+      return safeObj;
+    });
 }
 
 export function fetchListByProp(propertyName: string): Promise<{
