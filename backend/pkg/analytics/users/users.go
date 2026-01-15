@@ -11,6 +11,7 @@ import (
 
 	"openreplay/backend/pkg/analytics/events"
 	"openreplay/backend/pkg/analytics/filters"
+	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/users/model"
 	"openreplay/backend/pkg/logger"
 )
@@ -54,7 +55,7 @@ func (u *usersImpl) insertUserBatch(ctx context.Context, projID uint32, user *mo
 	createdAt := time.Unix(0, user.CreatedAt*1000000)
 	firstEventAt := time.Unix(0, user.FirstEventAt*1000000)
 	lastSeen := time.Unix(0, user.LastSeen*1000000)
-	
+
 	deletedAt := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 	deletedFlag := uint8(0)
 	if isDeleted {
@@ -143,7 +144,6 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 		&user.InitialUtmMedium, &user.InitialUtmCampaign, &user.Country, &user.State, &user.City,
 		&user.OrAPIEndpoint, &user.Timezone, &firstEventAt, &lastSeen, &user.DistinctIDs,
 	)
-
 
 	user.CreatedAt = filters.ConvertTimeToMillis(createdAt)
 	user.FirstEventAt = filters.ConvertTimeToMillis(firstEventAt)
@@ -481,7 +481,7 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		baseConditions = append(baseConditions, fmt.Sprintf(`e."$event_name" NOT IN (%s)`, strings.Join(placeholders, ", ")))
 	}
 
-	filterConditions, filterParams, _ := events.BuildEventSearchQuery("e", req.Filters)
+	filterConditions, filterParams, _ := events.BuildEventSearchQuery("e", req.Filters, []lexicon.HiddenProperty{})
 	whereClause := filters.BuildWhereClause(baseConditions, filterConditions)
 	params = append(params, filterParams...)
 
