@@ -213,33 +213,26 @@ func (rc *RequestContext) GetProjectID() (uint32, error) {
 }
 
 func AutoRespondContext(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := &RequestContext{Writer: w, Request: r, StartTime: time.Now()}
-
-		response, statusCode, err := handler(ctx)
-		if err != nil {
-			if statusCode == 0 {
-				statusCode = http.StatusInternalServerError
-			}
-			h.Responser().ResponseWithError(h.Log(), r.Context(), w, statusCode, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
-			return
-		}
-
-		h.Responser().ResponseWithJSON(h.Log(), r.Context(), w, map[string]interface{}{"data": response}, ctx.StartTime, r.URL.Path, ctx.BodySize)
-	}
+	return responder(h, handler, false)
 }
 
 func AutoRespondContextWithBody(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
+	return responder(h, handler, true)
+}
+
+func responder(h HandlerContext, handler func(ctx *RequestContext) (any, int, error), withBody bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := &RequestContext{Writer: w, Request: r, StartTime: time.Now()}
 
-		var err error
-		ctx.Body, err = ReadBody(h.Log(), w, r, h.JsonSizeLimit())
-		if err != nil {
-			h.Responser().ResponseWithError(h.Log(), r.Context(), w, http.StatusRequestEntityTooLarge, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
-			return
+		if withBody {
+			var err error
+			ctx.Body, err = ReadBody(h.Log(), w, r, h.JsonSizeLimit())
+			if err != nil {
+				h.Responser().ResponseWithError(h.Log(), r.Context(), w, http.StatusRequestEntityTooLarge, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
+				return
+			}
+			ctx.BodySize = len(ctx.Body)
 		}
-		ctx.BodySize = len(ctx.Body)
 
 		response, statusCode, err := handler(ctx)
 		if err != nil {
