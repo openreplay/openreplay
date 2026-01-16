@@ -902,7 +902,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_simple
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       FALSE                 AS auto_captured,
+       t.3                   AS auto_captured,
        'sessions'            AS source,
        t.1                   AS name,
        toString(t.2)         AS value,
