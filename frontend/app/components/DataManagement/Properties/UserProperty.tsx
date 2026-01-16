@@ -20,7 +20,7 @@ function UserPropsPage({
 
   const onSave = async (property: { key: string; value: string }) => {
     try {
-      const updatedEvent = raw;
+      const updatedEvent = { ...raw };
       updatedEvent[property.key] = property.value;
       await updateProperty({ ...updatedEvent, source: 'users' });
       toast.success('Property updated successfully');
