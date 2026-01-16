@@ -797,327 +797,44 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_simple
       PARTITION BY toYYYYMM(_timestamp)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_browser_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                   AS auto_captured,
-       'sessions'             AS source,
-       'user_browser'         AS name,
-       toString(user_browser) AS value,
-       sumState(toUInt16(1))  AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_browser)
-  AND notEmpty(user_browser)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_browser_version_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                           AS auto_captured,
-       'sessions'                     AS source,
-       'user_browser_version'         AS name,
-       toString(user_browser_version) AS value,
-       sumState(toUInt16(1))          AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_browser_version)
-  AND notEmpty(user_browser_version)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_country_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                   AS auto_captured,
-       'sessions'             AS source,
-       'user_country'         AS name,
-       toString(user_country) AS value,
-       sumState(toUInt16(1))  AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_country)
-  AND notEmpty(toString(user_country))
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_state_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                  AS auto_captured,
-       'sessions'            AS source,
-       'user_state'          AS name,
-       toString(user_state)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_state)
-  AND notEmpty(user_state)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_city_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                  AS auto_captured,
-       'sessions'            AS source,
-       'user_city'           AS name,
-       toString(user_city)   AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_city)
-  AND notEmpty(user_city)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_device_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                  AS auto_captured,
-       'sessions'            AS source,
-       'user_device'         AS name,
-       toString(user_device) AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_device)
-  AND notEmpty(user_device)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_rev_id_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                  AS auto_captured,
-       'sessions'            AS source,
-       'rev_id'              AS name,
-       toString(rev_id)      AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(rev_id)
-  AND notEmpty(rev_id)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_referrer_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                  AS auto_captured,
-       'sessions'            AS source,
-       'referrer'            AS name,
-       toString(referrer)    AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(referrer)
-  AND notEmpty(referrer)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_source_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                  AS auto_captured,
-       'sessions'            AS source,
-       'utm_source'          AS name,
-       toString(utm_source)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(utm_source)
-  AND notEmpty(utm_source)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_medium_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                  AS auto_captured,
-       'sessions'            AS source,
-       'utm_medium'          AS name,
-       toString(utm_medium)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(utm_medium)
-  AND notEmpty(utm_medium)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_utm_campaign_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       TRUE                   AS auto_captured,
-       'sessions'             AS source,
-       'utm_campaign'         AS name,
-       toString(utm_campaign) AS value,
-       sumState(toUInt16(1))  AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(utm_campaign)
-  AND notEmpty(utm_campaign)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_id_mv
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        FALSE                 AS auto_captured,
        'sessions'            AS source,
-       'user_id'             AS name,
-       toString(user_id)     AS value,
+       t.1                   AS name,
+       toString(t.2)         AS value,
        sumState(toUInt16(1)) AS data_count,
        _timestamp
 FROM experimental.sessions
-WHERE isNotNull(user_id)
-  AND notEmpty(user_id)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_user_anonymous_id_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                       AS auto_captured,
-       'sessions'                  AS source,
-       'user_anonymous_id'         AS name,
-       toString(user_anonymous_id) AS value,
-       sumState(toUInt16(1))       AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(user_anonymous_id)
-  AND notEmpty(user_anonymous_id)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_1_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_1'          AS name,
-       toString(metadata_1)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_1)
-  AND notEmpty(metadata_1)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_2_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_2'          AS name,
-       toString(metadata_2)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_2)
-  AND notEmpty(metadata_2)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_3_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_3'          AS name,
-       toString(metadata_3)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_3)
-  AND notEmpty(metadata_3)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_4_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_4'          AS name,
-       toString(metadata_4)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_4)
-  AND notEmpty(metadata_4)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_5_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_5'          AS name,
-       toString(metadata_5)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_5)
-  AND notEmpty(metadata_5)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_6_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_6'          AS name,
-       toString(metadata_6)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_6)
-  AND notEmpty(metadata_6)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_7_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_7'          AS name,
-       toString(metadata_7)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_7)
-  AND notEmpty(metadata_7)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_8_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_8'          AS name,
-       toString(metadata_8)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_8)
-  AND notEmpty(metadata_8)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_9_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_9'          AS name,
-       toString(metadata_9)  AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_9)
-  AND notEmpty(metadata_9)
-GROUP BY ALL;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_metadata_10_mv
-    TO product_analytics.autocomplete_simple AS
-SELECT project_id,
-       FALSE                 AS auto_captured,
-       'sessions'            AS source,
-       'metadata_10'         AS name,
-       toString(metadata_10) AS value,
-       sumState(toUInt16(1)) AS data_count,
-       _timestamp
-FROM experimental.sessions
-WHERE isNotNull(metadata_10)
-  AND notEmpty(metadata_10)
+         ARRAY JOIN
+     [--(name,column,auto-captured)
+         ('user_browser', user_browser, TRUE),
+         ('user_browser_version', user_browser_version, TRUE),
+         ('user_country', user_country, TRUE),
+         ('user_state', user_state, TRUE),
+         ('user_city', user_city, TRUE),
+         ('user_device', user_device, TRUE),
+         ('rev_id', rev_id, TRUE),
+         ('referrer', referrer, TRUE),
+         ('utm_source', utm_source, TRUE),
+         ('utm_medium', utm_medium, TRUE),
+         ('utm_campaign', utm_campaign, TRUE),
+         ('user_id', user_id, FALSE),
+         ('user_anonymous_id', user_anonymous_id, FALSE),
+         ('metadata_1', metadata_1, FALSE),
+         ('metadata_2', metadata_2, FALSE),
+         ('metadata_3', metadata_3, FALSE),
+         ('metadata_4', metadata_4, FALSE),
+         ('metadata_5', metadata_5, FALSE),
+         ('metadata_6', metadata_6, FALSE),
+         ('metadata_7', metadata_7, FALSE),
+         ('metadata_8', metadata_8, FALSE),
+         ('metadata_9', metadata_9, FALSE),
+         ('metadata_10', metadata_10, FALSE)
+         ] AS t
+WHERE isNotNull(t.2)
+  AND notEmpty(toString(t.2))
 GROUP BY ALL;
 
 CREATE TABLE IF NOT EXISTS product_analytics.user_properties
