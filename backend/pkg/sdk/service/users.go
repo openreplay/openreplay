@@ -35,7 +35,7 @@ func NewUsers(log logger.Logger, conn driver.Conn, sessions sessions.Sessions) (
 }
 
 var (
-	insertQuery = `INSERT INTO product_analytics.users (project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$first_event_at") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	insertQuery = `INSERT INTO product_analytics.users (project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	selectQuery = `SELECT project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$first_event_at" from product_analytics.users WHERE project_id = ? AND "$user_id" = ? LIMIT 1`
 )
 
@@ -55,10 +55,14 @@ func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 	session.UserID = &user.UserID
 
 	// Check that we don't have this user already in DB
-	if _, err := u.Get(session.ProjectID, user.UserID); err == nil {
-		u.log.Info(context.Background(), "we already have this user in DB for session: %d", session.SessionID)
+	if currUser, err := u.Get(session.ProjectID, user.UserID); err == nil {
+		u.log.Debug(context.Background(), "we already have this user in DB for session: %d", session.SessionID)
 		if err = u.addUserDistinctID(session, user); err != nil {
 			u.log.Error(context.Background(), "can't add user ID to distinct user table: %s", user.UserID)
+		}
+		currUser.LastSeen = time.Now()
+		if err = u.Update(currUser); err != nil {
+			u.log.Error(context.Background(), "can't update user: %s", err.Error())
 		}
 		return nil
 	}
@@ -98,7 +102,9 @@ func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 		session.UserState,       // $state
 		session.UserCity,        // $city
 		nil,                     // $or_api_endpoint
+		session.Timestamp/1000,  // created_at
 		session.Timestamp/1000,  // $first_event_at
+		session.Timestamp/1000,  // $last_seen
 	); err != nil {
 		return fmt.Errorf("can't insert user to users table: %s", err)
 	}
@@ -155,7 +161,9 @@ func (u *usersImpl) Update(user *model.User) error {
 		user.State,              // $state
 		user.City,               // $city
 		user.OrApiEndpoint,      // $or_api_endpoint
-		user.FirstEventAt,       // $first_event_at
+		user.CreatedAt,
+		user.FirstEventAt,
+		user.LastSeen,
 	); err != nil {
 		return fmt.Errorf("can't insert user to users table: %s", err)
 	}
@@ -163,6 +171,6 @@ func (u *usersImpl) Update(user *model.User) error {
 }
 
 func (u *usersImpl) Delete(projectID uint32, userID string) error {
-	query := `INSERT INTO product_analytics.users (project_id, user_id, _deleted_at) VALUES (?, ?, ?)`
+	query := `INSERT INTO product_analytics.users (project_id, "$user_id", _deleted_at) VALUES (?, ?, ?)`
 	return u.conn.Exec(context.Background(), query, projectID, userID, time.Now())
 }
