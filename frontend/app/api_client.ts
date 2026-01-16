@@ -52,6 +52,7 @@ const except = [
   '/events/search',
   'assign/projects',
   '/users/modules',
+  '/intelligent/',
 ];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
