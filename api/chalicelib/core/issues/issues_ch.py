@@ -31,7 +31,7 @@ def get_by_session_id(session_id, project_id, issue_type=None):
                                 AND events.project_id= %(project_id)s
                                 AND issues.project_id= %(project_id)s
                                 AND `$event_name`='ISSUE'
-                                {"AND events.issue_type = %(type)s AND issues.type = %(type)s" if issue_type is not None else "issue_type = 'incident'"}
+                                AND {"events.issue_type = %(type)s AND issues.type = %(type)s" if issue_type is not None else "issue_type = 'incident'"}
                             ORDER BY created_at;""",
                            parameters={"session_id": session_id, "project_id": project_id, "type": issue_type})
         rows = cur.execute(query)
