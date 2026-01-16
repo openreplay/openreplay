@@ -162,7 +162,7 @@ func (u *usersImpl) Update(user *model.User) error {
 		user.City,               // $city
 		user.OrApiEndpoint,      // $or_api_endpoint
 		user.CreatedAt,
-		user.FirstEventAt, // $first_event_at
+		user.FirstEventAt,
 		user.LastSeen,
 	); err != nil {
 		return fmt.Errorf("can't insert user to users table: %s", err)
@@ -171,6 +171,6 @@ func (u *usersImpl) Update(user *model.User) error {
 }
 
 func (u *usersImpl) Delete(projectID uint32, userID string) error {
-	query := `INSERT INTO product_analytics.users (project_id, user_id, _deleted_at) VALUES (?, ?, ?)`
+	query := `INSERT INTO product_analytics.users (project_id, "$user_id", _deleted_at) VALUES (?, ?, ?)`
 	return u.conn.Exec(context.Background(), query, projectID, userID, time.Now())
 }
