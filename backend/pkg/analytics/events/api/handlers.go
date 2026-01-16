@@ -17,34 +17,25 @@ import (
 // @BasePath /api/v1
 
 type handlersImpl struct {
-	*api.BaseHandler
-	events events.Events
+	log      logger.Logger
+	events   events.Events
+	handlers []*api.Description
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, events events.Events, responser api.Responser) (api.Handlers, error) {
-	return &handlersImpl{
-		BaseHandler: api.NewBaseHandler(log, responser, jsonSizeLimit),
-		events:      events,
-	}, nil
+func NewHandlers(log logger.Logger, req api.RequestHandler, events events.Events) (api.Handlers, error) {
+	h := &handlersImpl{
+		log:    log,
+		events: events,
+	}
+	h.handlers = []*api.Description{
+		{"/{project}/events", "POST", req.HandleWithBody(h.eventsSearch), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/events/{eventId}", "GET", req.Handle(h.getEvent), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+	}
+	return h, nil
 }
 
 func (h *handlersImpl) GetAll() []*api.Description {
-	return []*api.Description{
-		{
-			Path:        "/{project}/events",
-			Method:      "POST",
-			Handler:     api.AutoRespondContextWithBody(h, h.eventsSearch),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
-		},
-		{
-			Path:        "/{project}/events/{eventId}",
-			Method:      "GET",
-			Handler:     api.AutoRespondContext(h, h.getEvent),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
-		},
-	}
+	return h.handlers
 }
 
 // @Summary Search Events
@@ -62,24 +53,24 @@ func (h *handlersImpl) GetAll() []*api.Description {
 func (h *handlersImpl) eventsSearch(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		h.log.Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	req := &model.EventsSearchRequest{}
 	if err := json.Unmarshal(r.Body, req); err != nil {
-		h.Log().Error(r.Request.Context(), "failed to unmarshal search request: %v", err)
+		h.log.Error(r.Request.Context(), "failed to unmarshal search request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	if err := filters.ValidateStruct(req); err != nil {
-		h.Log().Error(r.Request.Context(), "validation failed for search request: %v", err)
+		h.log.Error(r.Request.Context(), "validation failed for search request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.events.SearchEvents(r.Request.Context(), projID, req)
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to search events for project %d: %v", projID, err)
+		h.log.Error(r.Request.Context(), "failed to search events for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
 
@@ -101,19 +92,19 @@ func (h *handlersImpl) eventsSearch(r *api.RequestContext) (any, int, error) {
 func (h *handlersImpl) getEvent(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		h.log.Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	eventID, err := api.GetPathParam(r.Request, "eventId", api.ParseString)
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get eventId parameter: %v", err)
+		h.log.Error(r.Request.Context(), "failed to get eventId parameter: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	response, err := h.events.GetEventByID(r.Request.Context(), projID, eventID)
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get event %s for project %d: %v", eventID, projID, err)
+		h.log.Error(r.Request.Context(), "failed to get event %s for project %d: %v", eventID, projID, err)
 		return nil, http.StatusNotFound, err
 	}
 

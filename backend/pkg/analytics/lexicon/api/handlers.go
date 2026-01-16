@@ -19,48 +19,27 @@ import (
 // @BasePath /api/v1
 
 type handlersImpl struct {
-	*api.BaseHandler
-	lexicon lexicon.Lexicon
+	log      logger.Logger
+	lexicon  lexicon.Lexicon
+	handlers []*api.Description
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, lexicon lexicon.Lexicon, responser api.Responser) (api.Handlers, error) {
-	return &handlersImpl{
-		BaseHandler: api.NewBaseHandler(log, responser, jsonSizeLimit),
-		lexicon:     lexicon,
-	}, nil
+func NewHandlers(log logger.Logger, req api.RequestHandler, lexicon lexicon.Lexicon) (api.Handlers, error) {
+	h := &handlersImpl{
+		log:     log,
+		lexicon: lexicon,
+	}
+	h.handlers = []*api.Description{
+		{"/{project}/lexicon/events", "GET", req.Handle(h.getDistinctEvents), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/lexicon/properties", "GET", req.Handle(h.getProperties), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/lexicon/events", "PUT", req.HandleWithBody(h.updateEvent), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/lexicon/properties", "PUT", req.HandleWithBody(h.updateProperty), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+	}
+	return h, nil
 }
 
 func (h *handlersImpl) GetAll() []*api.Description {
-	return []*api.Description{
-		{
-			Path:        "/{project}/lexicon/events",
-			Method:      "GET",
-			Handler:     api.AutoRespondContext(h, h.getDistinctEvents),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  api.DoNotTrack,
-		},
-		{
-			Path:        "/{project}/lexicon/properties",
-			Method:      "GET",
-			Handler:     api.AutoRespondContext(h, h.getProperties),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  api.DoNotTrack,
-		},
-		{
-			Path:        "/{project}/lexicon/events",
-			Method:      "PUT",
-			Handler:     api.AutoRespondContextWithBody(h, h.updateEvent),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  api.DoNotTrack,
-		},
-		{
-			Path:        "/{project}/lexicon/properties",
-			Method:      "PUT",
-			Handler:     api.AutoRespondContextWithBody(h, h.updateProperty),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  api.DoNotTrack,
-		},
-	}
+	return h.handlers
 }
 
 // @Summary Get Distinct Events
@@ -78,7 +57,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		h.log.Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -89,7 +68,7 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (any, int, error
 
 	events, total, err := h.lexicon.GetDistinctEvents(r.Request.Context(), projID, propertyName)
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get events for project %d: %v", projID, err)
+		h.log.Error(r.Request.Context(), "failed to get events for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
 
@@ -117,7 +96,7 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (any, int, error
 func (h *handlersImpl) getProperties(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		h.log.Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -126,7 +105,7 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (any, int, error) {
 		if sourceParam == "events" || sourceParam == "users" || sourceParam == "sessions" {
 			source = &sourceParam
 		} else {
-			h.Log().Error(r.Request.Context(), "invalid source parameter: %s", sourceParam)
+			h.log.Error(r.Request.Context(), "invalid source parameter: %s", sourceParam)
 			return nil, http.StatusBadRequest, fmt.Errorf("invalid source parameter: must be one of 'events', 'users', or 'sessions'")
 		}
 	}
@@ -138,7 +117,7 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (any, int, error) {
 
 	properties, total, err := h.lexicon.GetProperties(r.Request.Context(), projID, source, eventName)
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get properties for project %d: %v", projID, err)
+		h.log.Error(r.Request.Context(), "failed to get properties for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
 
@@ -164,18 +143,18 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (any, int, error) {
 func (h *handlersImpl) updateEvent(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		h.log.Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	var req model.UpdateEventRequest
 	if err := json.Unmarshal(r.Body, &req); err != nil {
-		h.Log().Error(r.Request.Context(), "failed to parse request body: %v", err)
+		h.log.Error(r.Request.Context(), "failed to parse request body: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	if err := filters.ValidateStruct(req); err != nil {
-		h.Log().Error(r.Request.Context(), "validation failed for update event request: %v", err)
+		h.log.Error(r.Request.Context(), "validation failed for update event request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -186,7 +165,7 @@ func (h *handlersImpl) updateEvent(r *api.RequestContext) (any, int, error) {
 	}
 
 	if err := h.lexicon.UpdateEvent(r.Request.Context(), projID, req, userID); err != nil {
-		h.Log().Error(r.Request.Context(), "failed to update event %s for project %d: %v", req.Name, projID, err)
+		h.log.Error(r.Request.Context(), "failed to update event %s for project %d: %v", req.Name, projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
 
@@ -207,18 +186,18 @@ func (h *handlersImpl) updateEvent(r *api.RequestContext) (any, int, error) {
 func (h *handlersImpl) updateProperty(r *api.RequestContext) (any, int, error) {
 	projID, err := r.GetProjectID()
 	if err != nil {
-		h.Log().Error(r.Request.Context(), "failed to get project ID: %v", err)
+		h.log.Error(r.Request.Context(), "failed to get project ID: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	var req model.UpdatePropertyRequest
 	if err := json.Unmarshal(r.Body, &req); err != nil {
-		h.Log().Error(r.Request.Context(), "failed to parse request body: %v", err)
+		h.log.Error(r.Request.Context(), "failed to parse request body: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
 	if err := filters.ValidateStruct(req); err != nil {
-		h.Log().Error(r.Request.Context(), "validation failed for update property request: %v", err)
+		h.log.Error(r.Request.Context(), "validation failed for update property request: %v", err)
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -229,7 +208,7 @@ func (h *handlersImpl) updateProperty(r *api.RequestContext) (any, int, error) {
 	}
 
 	if err := h.lexicon.UpdateProperty(r.Request.Context(), projID, req, userID); err != nil {
-		h.Log().Error(r.Request.Context(), "failed to update property %s for project %d: %v", req.Name, projID, err)
+		h.log.Error(r.Request.Context(), "failed to update property %s for project %d: %v", req.Name, projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
 

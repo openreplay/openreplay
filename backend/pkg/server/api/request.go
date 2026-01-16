@@ -185,12 +185,6 @@ func ParseUint64(s string) (uint64, error) {
 	return strconv.ParseUint(s, 10, 64)
 }
 
-type HandlerContext interface {
-	Log() logger.Logger
-	Responser() Responser
-	JsonSizeLimit() int64
-}
-
 type RequestContext struct {
 	Writer    http.ResponseWriter
 	Request   *http.Request
@@ -210,39 +204,4 @@ func (rc *RequestContext) GetProjectID() (uint32, error) {
 	}
 	rc.ProjectID = projID
 	return projID, nil
-}
-
-func AutoRespondContext(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
-	return responder(h, handler, false)
-}
-
-func AutoRespondContextWithBody(h HandlerContext, handler func(ctx *RequestContext) (any, int, error)) http.HandlerFunc {
-	return responder(h, handler, true)
-}
-
-func responder(h HandlerContext, handler func(ctx *RequestContext) (any, int, error), withBody bool) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := &RequestContext{Writer: w, Request: r, StartTime: time.Now()}
-
-		if withBody {
-			var err error
-			ctx.Body, err = ReadBody(h.Log(), w, r, h.JsonSizeLimit())
-			if err != nil {
-				h.Responser().ResponseWithError(h.Log(), r.Context(), w, http.StatusRequestEntityTooLarge, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
-				return
-			}
-			ctx.BodySize = len(ctx.Body)
-		}
-
-		response, statusCode, err := handler(ctx)
-		if err != nil {
-			if statusCode == 0 {
-				statusCode = http.StatusInternalServerError
-			}
-			h.Responser().ResponseWithError(h.Log(), r.Context(), w, statusCode, err, ctx.StartTime, r.URL.Path, ctx.BodySize)
-			return
-		}
-
-		h.Responser().ResponseWithJSON(h.Log(), r.Context(), w, map[string]interface{}{"data": response}, ctx.StartTime, r.URL.Path, ctx.BodySize)
-	}
 }
