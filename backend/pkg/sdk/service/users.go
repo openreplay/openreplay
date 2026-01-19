@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"openreplay/backend/pkg/db/redis"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	rds "github.com/redis/go-redis/v9"
 
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/sdk/model"
 	"openreplay/backend/pkg/sessions"
@@ -148,7 +149,7 @@ func (u *usersImpl) getUserFromCache(projectID uint32, userID string) (*model.Us
 	}
 	userBytes, err := u.redis.Redis.Get(context.Background(), fmt.Sprintf(usersCacheString, projectID, userID)).Result()
 	if err != nil {
-		return nil, fmt.Errorf("can't get user from cache: %s", err)
+		return nil, err
 	}
 	user := &model.User{}
 	if err := json.Unmarshal([]byte(userBytes), user); err != nil {
@@ -159,7 +160,9 @@ func (u *usersImpl) getUserFromCache(projectID uint32, userID string) (*model.Us
 
 func (u *usersImpl) Get(projectID uint32, userID string) (*model.User, error) {
 	if user, err := u.getUserFromCache(projectID, userID); err != nil {
-		u.log.Warn(context.Background(), "can't get user from cache: %s", userID)
+		if !errors.Is(err, rds.Nil) {
+			u.log.Warn(context.Background(), "can't get user from cache: %s", err)
+		}
 	} else {
 		return user, nil
 	}
@@ -195,7 +198,9 @@ func (u *usersImpl) addUserDistinctID(session *sessions.Session, user *model.Use
 func (u *usersImpl) GetUserIDByDistinctID(projectID uint32, distinctID string) (string, error) {
 	if u.redis != nil {
 		if userID, err := u.redis.Redis.Get(context.Background(), fmt.Sprintf(usersDistinctCacheString, projectID, distinctID)).Result(); err != nil {
-			u.log.Warn(context.Background(), "can't get user from cache: %s", distinctID)
+			if !errors.Is(err, rds.Nil) {
+				u.log.Warn(context.Background(), "can't get user from cache: %s", err)
+			}
 		} else {
 			return userID, nil
 		}
