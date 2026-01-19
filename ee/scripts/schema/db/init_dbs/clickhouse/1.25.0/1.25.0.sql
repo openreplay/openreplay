@@ -67,3 +67,6 @@ FROM experimental.sessions
 WHERE isNotNull(t.2)
   AND notEmpty(toString(t.2))
 GROUP BY ALL;
+
+ALTER TABLE product_analytics.autocomplete_events_grouped
+    MODIFY COLUMN _timestamp DateTime DEFAULT now();
