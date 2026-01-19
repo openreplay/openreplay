@@ -131,14 +131,18 @@ export default defineContentScript({
       stopClickRecording();
       stopLocationRecording();
       const result = await browser.runtime.sendMessage({ type: messages.content.from.toStop });
-      if (result.status === "full") {
-        chunksReady = true;
-        data = result;
-        return result;
-      }
-      if (result.status === "parts") {
+      const maxWait = 1000 * 60;
+      if (result.status === "ok") {
         return new Promise((res) => {
           const interval = setInterval(() => {
+            const now = Date.now();
+            const elapsed = now - result.startTime;
+            if (elapsed > maxWait) {
+              console.error("Spot: timed out waiting for video data");
+              clearInterval(interval);
+              res(false);
+              return;
+            }
             if (chunksReady) {
               data = Object.assign({}, result, {
                 base64data: videoChunks.concat([]),
@@ -174,7 +178,6 @@ export default defineContentScript({
     const onClose = async (
       save: boolean,
       spotObj?: {
-        blob?: Blob;
         name?: string;
         comment?: string;
         useHook?: boolean;
@@ -192,8 +195,7 @@ export default defineContentScript({
         recState = "stopped";
         return;
       }
-      const { name, comment, useHook, thumbnail, crop, blob } = spotObj;
-      const videoData = await convertBlobToBase64(blob!);
+      const { name, comment, useHook, thumbnail, crop } = spotObj;
       const resolution = `${window.screen.width}x${window.screen.height}`;
       const browserVersion = getChromeFullVersion();
       const spot = {
@@ -207,29 +209,16 @@ export default defineContentScript({
       };
 
       try {
+        console.log(data)
         await browser.runtime.sendMessage({
           type: messages.content.from.saveSpotData,
           spot,
         });
-        let index = 0;
-        for (let part of videoData.result) {
-          if (part) {
-            await browser.runtime.sendMessage({
-              type: messages.content.from.saveSpotVidChunk,
-              part,
-              index,
-              total: videoData.result.length,
-            });
-            index += 1;
-          }
-        }
-
         ui.remove();
       } catch (e) {
         console.trace(
           "error saving video",
           spot,
-          videoData,
           resolution,
           browserVersion,
         );

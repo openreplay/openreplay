@@ -2,6 +2,7 @@
 
 import { createSignal, onCleanup, createEffect } from 'solid-js';
 import { formatMsToTime } from '~/entrypoints/content/utils';
+import { base64ToBlob } from '~/utils/smallUtils';
 import './style.css';
 import './dragControls.css';
 
@@ -20,41 +21,6 @@ interface ISavingControls {
   getVideoData: () => Promise<any>;
   getErrorEvents: () => Promise<{ title: string; time: number }[]>;
 }
-
-const base64ToBlob = (base64OrParts: string | string[], mime = 'video/mp4') => {
-  const parts = Array.isArray(base64OrParts) ? base64OrParts : [base64OrParts];
-
-  const normalized = parts.map((p) => {
-    const idx = p.indexOf(',');
-    return idx >= 0 ? p.slice(idx + 1) : p;
-  });
-
-  const byteArrays: Uint8Array[] = [];
-  let totalLen = 0;
-
-  for (let i = 0; i < normalized.length; i++) {
-    const b64 = normalized[i];
-
-    const clean = b64.replace(/\s+/g, '');
-
-    const byteString = atob(clean);
-    const bytes = new Uint8Array(byteString.length);
-    for (let j = 0; j < byteString.length; j++) {
-      bytes[j] = byteString.charCodeAt(j);
-    }
-    byteArrays.push(bytes);
-    totalLen += bytes.length;
-  }
-
-  const merged = new Uint8Array(totalLen);
-  let offset = 0;
-  for (let i = 0; i < byteArrays.length; i++) {
-    merged.set(byteArrays[i], offset);
-    offset += byteArrays[i].length;
-  }
-
-  return new Blob([merged], { type: mime });
-};
 
 function SavingControls({
   onClose,
@@ -212,7 +178,6 @@ function SavingControls({
         ? null
         : [Math.floor(bounds[0] * 1000), Math.ceil(bounds[1] * 1000)];
     const dataObj = {
-      blob: videoBlob(),
       name: name(),
       comment: description(),
       useHook: false,

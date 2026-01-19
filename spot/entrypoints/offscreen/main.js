@@ -727,8 +727,8 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
 
         const { parts } = await convertBlobToBase64Chunks(data.blob, hardLimit);
 
-        if (parts.length > 1) {
-          respond({ status: 'parts' });
+        if (parts.length > 0) {
+          respond({ status: 'ok' });
           for (let i = 0; i < parts.length; i++) {
             void browser.runtime.sendMessage({
               type: 'offscr:video-data-chunk',
@@ -740,12 +740,7 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
             });
           }
         } else {
-          respond({
-            status: 'full',
-            base64data: [parts[0]],
-            duration,
-            mtype: data.mtype,
-          });
+          respond({ status: 'empty' });
         }
 
         recorder.clearAll();
