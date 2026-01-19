@@ -132,11 +132,12 @@ export default defineContentScript({
       stopLocationRecording();
       const result = await browser.runtime.sendMessage({ type: messages.content.from.toStop });
       const maxWait = 1000 * 60;
+      const startTime = Date.now();
       if (result.status === "ok") {
         return new Promise((res) => {
           const interval = setInterval(() => {
             const now = Date.now();
-            const elapsed = now - result.startTime;
+            const elapsed = now - startTime;
             if (elapsed > maxWait) {
               console.error("Spot: timed out waiting for video data");
               clearInterval(interval);
