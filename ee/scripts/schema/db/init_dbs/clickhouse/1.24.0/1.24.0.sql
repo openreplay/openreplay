@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.users_distinct_id
     _timestamp  DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       ORDER BY (project_id, distinct_id)
-      TTL _deleted_at;
+      PARTITION BY toMonday(_timestamp)
+      TTL _deleted_at WHERE _deleted_at != '1970-01-01 00:00:00';
 
 
 ALTER TABLE product_analytics.events
