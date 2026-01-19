@@ -246,7 +246,7 @@ func (l *logDetails) Log(log logger.Logger, ctx context.Context) {
 		log.Debug(ctx, "sessions without info in DB: %d, %v", n, l.NotFound)
 	}
 	var logBuilder strings.Builder
-	logValues := []interface{}{}
+	var logValues []interface{}
 
 	if len(l.Failed) > 0 {
 		logBuilder.WriteString("failed: %d, ")
