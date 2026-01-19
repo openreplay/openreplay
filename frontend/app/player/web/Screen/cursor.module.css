@@ -71,6 +71,7 @@
 .mobileTouch {
     width: 25px;
     height: 25px;
+    transform: translate(-12.5px, -12.5px);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 42 42'%3E%3Cstyle%3E @keyframes x2menhl6cupbu94auppeu01e_t %7B 0%25 %7B transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px); %7D 62.5%25 %7B transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px); animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 75%25 %7B transform: translate(23px, 23px) scale(0.9, 0.9) translate(-2px, -2px); animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 100%25 %7B transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px); %7D %7D @keyframes x2menhl6cupbu94auppeu01e_sw %7B 0%25 %7B stroke-width: 2px; %7D 62.5%25 %7B stroke-width: 2px; animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 75%25 %7B stroke-width: 5px; animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 100%25 %7B stroke-width: 2px; %7D %7D %3C/style%3E%3Cellipse rx='20' ry='20' fill='rgba(0,0,0,0.50)' stroke='%23fff' stroke-width='2' transform='translate(23,23) translate(-2,-2)' style='animation: 0.6s infinite linear both x2menhl6cupbu94auppeu01e_t, 0.6s infinite linear both x2menhl6cupbu94auppeu01e_sw;' /%3E%3C/svg%3E")!important;
 }
 
