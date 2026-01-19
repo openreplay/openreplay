@@ -234,7 +234,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             onRemoveFilter={() => removeFilter(filterIndex)}
             saveRequestPayloads={saveRequestPayloads}
             disableDelete={cannotDelete}
-            readonly={readonly}
+            readonly={readonly || filterItem.readonly}
             isConditional={isConditional}
             hideIndex={!showIndices}
             isDragging={draggedInd === filterIndex}

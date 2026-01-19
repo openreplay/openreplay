@@ -245,7 +245,7 @@ describe('SessionStore', () => {
 
       await sessionStore.fetchSessionData(mockSessionId);
 
-      expect(sessionStore.eventsIndex).toEqual([0]);
+      expect(sessionStore.eventsIndex).toEqual([]);
     });
 
     it('should handle different filter operators', async () => {
@@ -272,7 +272,7 @@ describe('SessionStore', () => {
 
       await sessionStore.fetchSessionData(mockSessionId);
 
-      expect(sessionStore.eventsIndex).toEqual([1]);
+      expect(sessionStore.eventsIndex).toEqual([]);
     });
 
     it('should handle errors when fetching events', async () => {

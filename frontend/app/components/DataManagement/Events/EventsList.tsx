@@ -1,17 +1,36 @@
 import React from 'react';
 import { Table } from 'antd';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import FullPagination from 'Shared/FullPagination';
+import { TextEllipsis } from 'UI';
+import type { DistinctEvent } from './api';
 
-function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
+function EventsList({
+  list,
+  page,
+  onPageChange,
+  limit,
+  toEvent,
+  isPending,
+  total,
+  listLen,
+}: {
+  list: DistinctEvent[];
+  page: number;
+  limit: number;
+  total: number;
+  listLen: number;
+  isPending: boolean;
+  onPageChange: (page: number) => void;
+  toEvent: (name: string) => void;
+}) {
   const columns = [
     {
       title: 'Event Name',
       dataIndex: 'name',
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      sorter: (a: any, b: any) => a.name.localeCompare(b.name),
     },
     {
       title: 'Display Name',
@@ -26,47 +45,36 @@ function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
       key: 'description',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.description.localeCompare(b.description),
+      render: (text: string) => <TextEllipsis maxWidth={'400px'} text={text} />,
     },
     {
       title: '30 Day Volume',
-      dataIndex: 'monthVolume',
-      key: 'monthVolume',
+      dataIndex: 'count',
+      key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.monthVolume.localeCompare(b.monthVolume),
-    },
-    {
-      title: '30 Day Queries',
-      dataIndex: 'monthQuery',
-      key: 'monthQuery',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.monthQuery.localeCompare(b.monthQuery),
+      sorter: (a: number, b: number) => a - b,
     },
   ];
-  const page = 1;
-  const total = 100;
-  const onPageChange = (page: number) => {};
-  const limit = 10;
-
-  const list = [];
   return (
-    <div>
+    <>
       <Table
         columns={columns}
         dataSource={list}
         pagination={false}
         onRow={(record) => ({
-          onClick: () => toEvent(record.eventId),
+          onClick: () => toEvent(record.name),
         })}
+        loading={isPending}
       />
       <FullPagination
         page={page}
         limit={limit}
         total={total}
-        listLen={list.length}
+        listLen={listLen}
         onPageChange={onPageChange}
         entity={'events'}
       />
-    </div>
+    </>
   );
 }
 

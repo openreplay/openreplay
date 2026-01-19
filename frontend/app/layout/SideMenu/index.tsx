@@ -123,10 +123,8 @@ function SideMenu(props: Props) {
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
-    [MENU.USERS]: () =>
-      withSiteId(routes.dataManagement.usersEventsList('users'), siteId),
-    [MENU.EVENTS]: () =>
-      withSiteId(routes.dataManagement.usersEventsList('events'), siteId),
+    [MENU.USERS]: () => withSiteId(routes.dataManagement.usersList(), siteId),
+    [MENU.EVENTS]: () => withSiteId(routes.dataManagement.eventsList(), siteId),
     [MENU.PROPS]: () => withSiteId(routes.dataManagement.properties(), siteId),
     ...extraRoutes(siteId),
   };

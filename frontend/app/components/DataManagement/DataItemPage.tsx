@@ -1,21 +1,31 @@
 import React from 'react';
 import { Button, Input } from 'antd';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { Triangle } from './Activity/EventDetailsModal';
 import cn from 'classnames';
 import { EditOutlined } from '@ant-design/icons';
+import type { CommonProp, CommonEntry } from './Properties/commonProp';
+import { FieldNames } from './Properties/commonProp';
+import { TextEllipsis } from 'UI';
+import { useTranslation } from 'react-i18next';
 
-function DataItemPage({
-  sessionId,
-  footer,
-  item,
-  backLink,
-}: {
-  sessionId?: string;
+type BaseProps = {
   footer?: React.ReactNode;
-  item: Record<string, any>;
   backLink: { name: string; to: string };
-}) {
+  onSave: (property: { key: string; value: string }) => Promise<void>;
+};
+
+type Props =
+  | (BaseProps & { type: 'distinct_event'; item: CommonEntry })
+  | (BaseProps & { type: 'user' | 'event'; item: CommonProp });
+
+function DataItemPage({ footer, item, backLink, type, onSave }: Props) {
+  const fields = Object.entries(item.fields).map(([key, field]) => ({
+    name: FieldNames(key, type),
+    raw_name: key,
+    value: field.value,
+    readonly: field.readonly,
+  }));
+
   return (
     <div
       className={'flex flex-col gap-2 mx-auto w-full'}
@@ -36,18 +46,14 @@ function DataItemPage({
           >
             {item.name}
           </div>
-          {sessionId ? (
-            <div className={'link flex gap-1 items-center'}>
-              <span>Play Sessions</span>
-              <Triangle size={10} color={'blue'} />
-            </div>
-          ) : null}
         </div>
-        {item.fields.map((field) => (
+        {fields.map((field) => (
           <EditableField
-            onSave={() => null}
+            onSave={onSave}
             fieldName={field.name}
+            rawName={field.raw_name}
             value={field.value}
+            readonly={field.readonly}
           />
         ))}
       </div>
@@ -61,17 +67,28 @@ function EditableField({
   onSave,
   fieldName,
   value,
+  readonly,
+  rawName,
 }: {
-  onSave: (value: string) => void;
+  onSave: (property: { key: string; value: string }) => void;
   fieldName: string;
   value: string;
+  readonly?: boolean;
+  rawName: string;
 }) {
+  const { t } = useTranslation();
+  const [inputValue, setInputValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
+
+  const handleSave = () => {
+    onSave({ key: rawName, value: inputValue });
+    setIsEdit(false);
+  };
   return (
     <div
       className={cn(
         'flex border-b last:border-b-0 items-center px-4 py-2 gap-2',
-        isEdit ? 'bg-active-blue' : 'hover:bg-active-blue'
+        isEdit ? 'bg-active-blue' : 'hover:bg-active-blue',
       )}
     >
       <div className={'font-semibold'} style={{ flex: 1 }}>
@@ -80,28 +97,34 @@ function EditableField({
       <div style={{ flex: 6 }}>
         {isEdit ? (
           <div className={'flex items-center gap-2'}>
-            <Input size={'small'} defaultValue={value} />
+            <Input.TextArea
+              size={'small'}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
             <div className={'ml-auto'} />
             <Button
               size={'small'}
               type={'text'}
               onClick={() => setIsEdit(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
-            <Button size={'small'} type={'primary'}>
-              Save
+            <Button size={'small'} type={'primary'} onClick={handleSave}>
+              {t('Save')}
             </Button>
           </div>
         ) : (
           <div className={'flex items-center justify-between'}>
-            <span>{value}</span>
-            <div
-              className={'cursor-pointer text-main'}
-              onClick={() => setIsEdit(true)}
-            >
-              <EditOutlined size={16} />
-            </div>
+            <TextEllipsis text={inputValue || 'N/A'} maxWidth={'900px'} />
+            {readonly ? null : (
+              <div
+                className={'cursor-pointer text-main'}
+                onClick={() => setIsEdit(true)}
+              >
+                <EditOutlined size={16} />
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -33,6 +33,7 @@ export interface Filter {
   defaultProperty?: boolean;
   isConditional?: boolean;
   scope?: FilterScope[];
+  readonly?: boolean;
 
   toJSON(): JsonData;
 }

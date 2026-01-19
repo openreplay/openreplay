@@ -5,14 +5,14 @@ import { dataManagement, withSiteId } from '@/routes';
 import { updateProperty } from './api';
 import type { DistinctProperty } from './api';
 import { toast } from 'react-toastify';
-import UsersWithProp from './UsersWithProp';
+import EventsWithProp from './EventsWithProp';
 
-function UserPropsPage({
-  properties,
+function EventPropsPage({
+  event,
   siteId,
   raw,
 }: {
-  properties: CommonProp;
+  event: CommonProp;
   siteId: string;
   raw: DistinctProperty;
 }) {
@@ -21,8 +21,8 @@ function UserPropsPage({
   const onSave = async (property: { key: string; value: string }) => {
     try {
       const updatedEvent = { ...raw };
-      updatedEvent[property.key] = property.value;
-      await updateProperty({ ...updatedEvent, source: 'users' });
+      updatedEvent[property.key.toLocaleLowerCase()] = property.value;
+      await updateProperty({ ...updatedEvent, source: 'events' });
       toast.success('Property updated successfully');
     } catch (error) {
       console.error(error);
@@ -31,17 +31,13 @@ function UserPropsPage({
   };
   return (
     <DataItemPage
-      type="user"
+      type="event"
+      item={event}
       onSave={onSave}
-      item={properties}
-      backLink={{ name: 'User Properties', to: backLink }}
-      footer={
-        <div className={'rounded-lg border bg-white'}>
-          <UsersWithProp propName={raw.name} />
-        </div>
-      }
+      backLink={{ name: 'Event Properties', to: backLink }}
+      footer={<EventsWithProp propName={raw.name} />}
     />
   );
 }
 
-export default UserPropsPage;
+export default EventPropsPage;

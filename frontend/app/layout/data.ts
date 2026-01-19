@@ -157,13 +157,13 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         icon: 'memory',
         children: [
           { label: 'People', key: MENU.USERS, icon: 'people' },
-          // { label: 'Events', key: MENU.EVENTS, icon: 'square-mouse-pointer' },
-          // {
-          //   label: 'Properties',
-          //   key: MENU.PROPS,
-          //   icon: 'square-mouse-pointer',
-          //   hidden: true,
-          // },
+          { label: 'Events', key: MENU.EVENTS, icon: 'puzzle-piece' },
+          {
+            label: 'Properties',
+            key: MENU.PROPS,
+            icon: 'sliders',
+            hidden: true,
+          },
         ],
       },
     ],

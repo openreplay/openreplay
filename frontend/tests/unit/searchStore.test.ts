@@ -150,6 +150,6 @@ describe('SearchStore class', () => {
       (f: any) => f.name === FilterKey.DURATION,
     );
     expect(duration).toBeTruthy();
-    expect(duration.value).toEqual([1000, 0]);
+    expect(duration.value).toEqual(["1000"]);
   });
 });

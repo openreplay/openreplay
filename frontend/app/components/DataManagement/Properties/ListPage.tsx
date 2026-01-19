@@ -1,97 +1,223 @@
 import React from 'react';
-import { Input, Table, Button, Dropdown } from 'antd';
-import { MoreOutlined } from '@ant-design/icons';
-import { useHistory } from 'react-router-dom';
+import { Input, Table, Button } from 'antd';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { withSiteId, dataManagement } from 'App/routes';
 import { Album } from 'lucide-react';
-
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
-import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import FullPagination from 'Shared/FullPagination';
 import Tabs from 'Shared/Tabs';
-
-const list = [];
+import { fetchList } from './api';
+import EventPropsPage from './EventPropsPage';
+import UserPropsPage from './UserProperty';
 
 function ListPage() {
-  const [view, setView] = React.useState('users');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const defaultView = queryParams.get('view') as 'users' | 'events' | null;
+  const pickedItem = queryParams.get('property');
+  const limit = 10;
+  const [page, setPage] = React.useState(1);
+  const [query, setQuery] = React.useState('');
+  const { t } = useTranslation();
+  const [view, setView] = React.useState<'users' | 'events'>(
+    defaultView ?? 'users',
+  );
   const views = [
     {
       key: 'users',
-      label: <div className={'text-lg font-medium'}>Users</div>,
+      label: <div className={'text-lg font-medium'}>{t('Users')}</div>,
     },
     {
       key: 'events',
-      label: <div className={'text-lg font-medium'}>Events</div>,
+      label: <div className={'text-lg font-medium'}>{t('Events')}</div>,
     },
   ];
+  const { data = { properties: [], total: 0 }, isPending } = useQuery({
+    queryKey: ['props-list', view],
+    queryFn: () => fetchList(view),
+  });
   const { projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
-  const toUser = (id: string) =>
-    history.push(withSiteId(dataManagement.userPage(id), siteId));
-  const toEvent = (id: string) =>
-    history.push(withSiteId(dataManagement.eventPage(id), siteId));
+  const openProp = (name: string) => {
+    queryParams.set('property', name);
+    return history.push({ search: queryParams.toString() });
+  };
 
+  React.useEffect(() => {
+    setPage(1);
+    queryParams.set('view', view);
+    history.replace({
+      search: queryParams.toString(),
+    });
+  }, [view]);
+
+  const list = React.useMemo(() => {
+    if (!data.properties) return [];
+    if (!query) {
+      return data.properties.slice((page - 1) * limit, page * limit);
+    }
+    const filtered = data.properties.filter(
+      (prop) =>
+        prop.name.toLowerCase().includes(query.toLowerCase()) ||
+        prop.displayName.toLowerCase().includes(query.toLowerCase()) ||
+        prop.description.toLowerCase().includes(query.toLowerCase()),
+    );
+    return filtered.slice((page - 1) * limit, page * limit);
+  }, [page, data.properties, query]);
+
+  if (pickedItem) {
+    if (view === 'users') {
+      const pickedUserProp = data.properties.find(
+        (prop) => prop.name === pickedItem,
+      );
+      if (pickedUserProp) {
+        const userWithFields = {
+          name: pickedUserProp.name,
+          fields: {
+            displayName: { value: pickedUserProp.displayName, readonly: false },
+            description: { value: pickedUserProp.description, readonly: false },
+            volume: { value: pickedUserProp.count.toString(), readonly: true },
+            type: { value: pickedUserProp.type, readonly: true },
+          },
+        };
+        return (
+          <UserPropsPage
+            siteId={siteId!}
+            properties={userWithFields}
+            raw={pickedUserProp}
+          />
+        );
+      }
+    }
+    if (view === 'events') {
+      const pickedEventProp = data.properties.find(
+        (prop) => prop.name === pickedItem,
+      );
+      if (pickedEventProp) {
+        const evWithFields = {
+          name: pickedEventProp.name,
+          fields: {
+            displayName: {
+              value: pickedEventProp.displayName,
+              readonly: false,
+            },
+            description: {
+              value: pickedEventProp.description,
+              readonly: false,
+            },
+            volume: { value: pickedEventProp.count.toString(), readonly: true },
+            type: { value: pickedEventProp.type, readonly: true },
+          },
+        };
+        return (
+          <EventPropsPage
+            raw={pickedEventProp}
+            siteId={siteId!}
+            event={evWithFields}
+          />
+        );
+      }
+    }
+  }
+
+  const openDocs = () => {
+    const url = 'https://docs.openreplay.com/en/sdk/analytics/events/';
+    window.open(url, '_blank');
+  };
   return (
     <div
       className="flex flex-col gap-4 rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
-        <Tabs
-          activeKey={view}
-          onChange={(key) => setView(key)}
-          items={views}
-        />
+        <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
-          <Button type={'text'} icon={<Album size={14} />}>
-            Docs
+          <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
+            {t('Docs')}
           </Button>
-          <Input.Search size={'small'} placeholder={'Name, email, ID'} />
+          <Input.Search
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            size={'small'}
+            placeholder={t('Name, email, ID')}
+          />
         </div>
       </div>
-      {view === 'users' ? <UserPropsList toUser={toUser} /> : <EventPropsList toEvent={toEvent} />}
+      {view === 'users' ? (
+        <UserPropsList
+          list={list}
+          page={page}
+          isLoading={isPending}
+          toUserProp={openProp}
+          limit={limit}
+          total={data.total}
+          onPageChange={(page) => setPage(page)}
+        />
+      ) : (
+        <EventPropsList
+          list={list}
+          limit={limit}
+          total={data.total}
+          page={page}
+          isLoading={isPending}
+          toEventProp={openProp}
+          onPageChange={(page) => setPage(page)}
+        />
+      )}
     </div>
   );
 }
 
-function EventPropsList({ toEvent }: { toEvent: (id: string) => void }) {
+function EventPropsList({
+  toEventProp,
+  list,
+  limit,
+  total,
+  page,
+  isLoading,
+  onPageChange,
+}: {
+  toEventProp: (name: string) => void;
+  onPageChange: (page: number) => void;
+  list: any[];
+  limit: number;
+  total: number;
+  page: number;
+  isLoading: boolean;
+}) {
   const columns = [
     {
       title: 'Property',
       dataIndex: 'name',
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      sorter: (a: any, b: any) => a.name.localeCompare(b.name),
     },
     {
       title: 'Display Name',
       dataIndex: 'displayName',
       key: 'displayName',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.displayName.localeCompare(b.displayName),
+      sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
     },
     {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.description.localeCompare(b.description),
+      sorter: (a: any, b: any) => a.description.localeCompare(b.description),
     },
     {
       title: '30 Day Volume',
-      dataIndex: 'monthVolume',
-      key: 'monthVolume',
+      dataIndex: 'count',
+      key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.monthVolume.localeCompare(b.monthVolume),
+      sorter: (a: any, b: any) => a.count - b.count,
     },
   ];
-  const page = 1;
-  const total = 100;
-  const onPageChange = (page: number) => {};
-  const limit = 10;
   return (
     <div>
       <Table
@@ -99,8 +225,9 @@ function EventPropsList({ toEvent }: { toEvent: (id: string) => void }) {
         dataSource={list}
         pagination={false}
         onRow={(record) => ({
-          onClick: () => toEvent(record.eventId),
+          onClick: () => toEventProp(record.name),
         })}
+        loading={isLoading}
       />
       <FullPagination
         page={page}
@@ -108,23 +235,29 @@ function EventPropsList({ toEvent }: { toEvent: (id: string) => void }) {
         total={total}
         listLen={list.length}
         onPageChange={onPageChange}
-        entity={'events'}
+        entity={'event properties'}
       />
     </div>
   );
 }
 
-function UserPropsList({ toUser }: { toUser: (id: string) => void }) {
-  const [editCols, setEditCols] = React.useState(false);
-  const [hiddenCols, setHiddenCols] = React.useState([]);
-
-  const dropdownItems = [
-    {
-      label: 'Show/Hide Columns',
-      key: 'edit-columns',
-      onClick: () => setTimeout(() => setEditCols(true), 1),
-    },
-  ];
+function UserPropsList({
+  toUserProp,
+  list,
+  limit,
+  total,
+  page,
+  isLoading,
+  onPageChange,
+}: {
+  toUserProp: (name: string) => void;
+  onPageChange: (page: number) => void;
+  list: any[];
+  limit: number;
+  total: number;
+  page: number;
+  isLoading: boolean;
+}) {
   const columns = [
     {
       title: 'Name',
@@ -149,74 +282,25 @@ function UserPropsList({ toUser }: { toUser: (id: string) => void }) {
     },
     {
       title: '# Users',
-      dataIndex: 'users',
-      key: 'users',
+      dataIndex: 'count',
+      key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.users.localeCompare(b.users),
-    },
-    {
-      title: (
-        <Dropdown
-          menu={{ items: dropdownItems }}
-          trigger={'click'}
-          placement={'bottomRight'}
-        >
-          <div className={'cursor-pointer'}>
-            <MoreOutlined />
-          </div>
-        </Dropdown>
-      ),
-      dataIndex: '$__opts__$',
-      key: '$__opts__$',
-      width: 50,
+      sorter: (a, b) => a.count - b.count,
     },
   ];
 
-  const page = 1;
-  const total = 10;
-  const onPageChange = (page: number) => {};
-  const limit = 10;
-  const list = [];
-
-  const onAddFilter = () => console.log('add filter');
-  const excludeFilterKeys = [];
-  const excludeCategory = [];
-
-  const shownCols = columns.map((col) => ({
-    ...col,
-    hidden: hiddenCols.includes(col.key),
-  }));
-  const onUpdateVisibleCols = (cols: string[]) => {
-    setHiddenCols((_) => {
-      return columns
-        .map((col) =>
-          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key
-        )
-        .filter(Boolean);
-    });
-    setEditCols(false);
-  };
   return (
     <div className="flex flex-col">
       <div className={'relative'}>
-        {editCols ? (
-          <OutsideClickDetectingDiv onClickOutside={() => setEditCols(false)}>
-            <ColumnsModal
-              columns={shownCols.filter((col) => col.key !== '$__opts__$')}
-              onSelect={onUpdateVisibleCols}
-              hiddenCols={hiddenCols}
-              topOffset={'top-24 -mt-4'}
-            />
-          </OutsideClickDetectingDiv>
-        ) : null}
         <Table
           onRow={(record) => ({
-            onClick: () => toUser(record.userId),
+            onClick: () => toUserProp(record.name),
           })}
           pagination={false}
           rowClassName={'cursor-pointer'}
-          dataSource={[]}
-          columns={shownCols}
+          dataSource={list}
+          columns={columns}
+          loading={isLoading}
         />
       </div>
       <FullPagination
@@ -225,7 +309,7 @@ function UserPropsList({ toUser }: { toUser: (id: string) => void }) {
         total={total}
         listLen={list.length}
         onPageChange={onPageChange}
-        entity={'users'}
+        entity={'user properties'}
       />
     </div>
   );

@@ -13,6 +13,8 @@ import Tabs from 'Components/shared/Tabs';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from '@/components/shared/AnimatedSVG';
+import usePropertyNames from 'App/components/DataManagement/Properties/usePropertyNames';
+import { useTranslation } from 'react-i18next';
 
 const tabs = [
   {
@@ -52,6 +54,9 @@ function EventDetailsModal({
   onClose: () => void;
   siteId: string;
 }) {
+  const { t } = useTranslation();
+  const { getDisplayName, isPending: isPropertyNamesPending } =
+    usePropertyNames('events');
   const { filterStore } = useStore();
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState(tabs[0].value);
@@ -85,7 +90,7 @@ function EventDetailsModal({
   const filteredArr =
     view === 'json'
       ? []
-      : fieldArr.filter(([key, value]) => {
+      : fieldArr.filter(([key, value]: [string, any]) => {
           const qReg = new RegExp(query, 'ig');
           return qReg.test(key) || qReg.test(value);
         });
@@ -118,7 +123,7 @@ function EventDetailsModal({
 
   const header = (
     <div className={'flex justify-between items-center'}>
-      <div className={'font-semibold text-xl'}>Event</div>
+      <div className={'font-semibold text-xl'}>{t('Event')}</div>
       <div className={'p-2 cursor-pointer'} onClick={onClose}>
         <X size={16} />
       </div>
@@ -142,7 +147,9 @@ function EventDetailsModal({
         {header}
         <div className="flex flex-col w-full items-center justify-center mt-8 gap-4">
           <AnimatedSVG name={ICONS.EMPTY_STATE} size={72} />
-          <div className="font-semibold">Error loading event details.</div>
+          <div className="font-semibold">
+            {t('Error loading event details.')}
+          </div>
         </div>
       </div>
     );
@@ -175,7 +182,7 @@ function EventDetailsModal({
           className={'ml-auto'}
         >
           <Button className={'flex gap-2 items-center'}>
-            <span>Play Session</span>
+            <span>{t('Play Session')}</span>
             <Triangle size={10} color={'blue'} />
           </Button>
         </Link>
@@ -211,11 +218,10 @@ function EventDetailsModal({
                   <Icon name={'logo-small'} size={12} />
                 )}
               </div>
-              <TextEllipsis
-                text={key}
-                maxWidth={'150'}
-                className={'w-[150px]'}
-              />
+              {getDisplayName(key, {
+                maxWidth: '150px',
+                className: 'w-[150px]',
+              })}
               <TextEllipsis
                 text={value}
                 maxWidth={'420'}
