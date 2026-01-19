@@ -70,7 +70,7 @@ func main() {
 		log.Fatal(ctx, "can't init project service: %s", err)
 	}
 
-	users, err := sdk.NewUsers(log, chConn, sessManager)
+	users, err := sdk.NewUsers(log, chConn, sessManager, redisConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init users: %s", err)
 	}
@@ -126,7 +126,7 @@ func main() {
 	}
 
 	// Run service and wait for TERM signal
-	service := db.New(log, cfg, consumer, saver, memoryManager, sessManager)
+	service := db.New(log, cfg, consumer, saver, memoryManager, sessManager, users)
 	log.Info(ctx, "Db service started")
 	terminator.Wait(log, service)
 }

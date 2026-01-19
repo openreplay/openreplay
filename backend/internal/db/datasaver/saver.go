@@ -86,6 +86,7 @@ func (s *saverImpl) Handle(msg Message) {
 		}
 		defer s.Handle(types.WrapCustomEvent(m))
 	}
+	s.addUserID(session)
 
 	if IsMobileType(msg.TypeID()) {
 		if err := s.handleMobileMessage(session, msg); err != nil {
@@ -103,6 +104,15 @@ func (s *saverImpl) Handle(msg Message) {
 		}
 	}
 	return
+}
+
+func (s *saverImpl) addUserID(session *sessions.Session) {
+	if session.UserID != nil {
+		return
+	}
+	if userID, err := s.users.GetUserIDByDistinctID(session.ProjectID, session.UserUUID); err == nil {
+		session.UserID = &userID
+	}
 }
 
 func (s *saverImpl) Commit() error {

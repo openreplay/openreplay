@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	sdk "openreplay/backend/pkg/sdk/service"
 	"time"
 
 	"openreplay/backend/internal/config/db"
@@ -21,11 +22,12 @@ type dbImpl struct {
 	saver    datasaver.Saver
 	mm       memory.Manager
 	sessions sessions.Sessions
+	users    sdk.Users
 	done     chan struct{}
 	finished chan struct{}
 }
 
-func New(log logger.Logger, cfg *db.Config, consumer types.Consumer, saver datasaver.Saver, mm memory.Manager, sessions sessions.Sessions) service.Interface {
+func New(log logger.Logger, cfg *db.Config, consumer types.Consumer, saver datasaver.Saver, mm memory.Manager, sessions sessions.Sessions, users sdk.Users) service.Interface {
 	s := &dbImpl{
 		log:      log,
 		cfg:      cfg,
@@ -34,6 +36,7 @@ func New(log logger.Logger, cfg *db.Config, consumer types.Consumer, saver datas
 		saver:    saver,
 		mm:       mm,
 		sessions: sessions,
+		users:    users,
 		done:     make(chan struct{}),
 		finished: make(chan struct{}),
 	}
@@ -71,6 +74,7 @@ func (d *dbImpl) run() {
 func (d *dbImpl) commit() {
 	d.saver.Commit()
 	d.sessions.Commit()
+	d.users.Commit()
 	d.consumer.Commit()
 }
 
