@@ -11,7 +11,6 @@ from chalicelib.core.issues import issues
 from chalicelib.core.sourcemaps import sourcemaps
 from chalicelib.core.metrics import custom_metrics
 from chalicelib.core.alerts import alerts
-from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
     jira_cloud
 from chalicelib.core.log_tools import datadog, newrelic, stackdriver, elasticsearch, \
@@ -27,40 +26,17 @@ public_app, app, app_apikey = get_routers()
 
 @app.get('/{projectId}/autocomplete', tags=["autocomplete"])
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: Optional[str] = None,
-                  type: Union[schemas.FilterType, schemas.EventType,
-                  schemas.PerformanceEventType, schemas.FetchFilterType,
-                  schemas.GraphqlFilterType, str] = None,
-                  key: str = None, source: str = None, live: bool = False,
-                  context: schemas.CurrentContext = Depends(OR_context)):
-    if type and (not q or len(q) == 0) \
-            and (autocomplete.is_top_supported(type)):
-        return autocomplete.get_top_values(project_id=projectId, event_type=type, event_key=key)
-    elif not q or len(q) == 0:
-        return {"data": []}
-
+def global_autocomplete_search(projectId: int, q: Optional[str] = None,
+                               type: Union[schemas.FilterType, schemas.EventType,
+                               schemas.PerformanceEventType, schemas.FetchFilterType,
+                               schemas.GraphqlFilterType, str] = None,
+                               key: str = None, live: bool = False,
+                               context: schemas.CurrentContext = Depends(OR_context)):
     if live:
         return assist.autocomplete(project_id=projectId, q=q,
                                    key=key if key is not None else type)
-    if type in [schemas.FetchFilterType.FETCH_URL]:
-        type = schemas.EventType.REQUEST
-    elif type in [schemas.GraphqlFilterType.GRAPHQL_NAME]:
-        type = schemas.EventType.GRAPHQL
-    elif isinstance(type, schemas.PerformanceEventType):
-        if type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
-                    schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
-                    schemas.PerformanceEventType.LOCATION_TTFB,
-                    schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
-                    schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE
-                    ]:
-            type = schemas.EventType.LOCATION
-        elif type in [schemas.PerformanceEventType.FETCH_FAILED]:
-            type = schemas.EventType.REQUEST
-        else:
-            return {"data": []}
 
-    result = events.search(text=q, event_type=type, project_id=projectId, source=source, key=key)
-    return result
+    return {"data": [], "errors": ["not available for global search"]}
 
 
 @app.get('/{projectId}/integrations', tags=["integrations"])
