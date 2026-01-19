@@ -715,7 +715,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_events_grouped
     project_id UInt16,
     value      String COMMENT 'The $event_name',
     data_count AggregateFunction(sum, UInt16) COMMENT 'The number of appearance during the past month',
-    _timestamp DateTime
+    _timestamp DateTime DEFAULT now()
 ) ENGINE = AggregatingMergeTree()
       ORDER BY (project_id, value)
       PARTITION BY toYYYYMM(_timestamp)

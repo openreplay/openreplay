@@ -32,7 +32,7 @@ DROP TABLE IF EXISTS product_analytics.autocomplete_simple_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
-       t.3                 AS auto_captured,
+       t.3                   AS auto_captured,
        'sessions'            AS source,
        t.1                   AS name,
        toString(t.2)         AS value,
@@ -68,3 +68,6 @@ FROM experimental.sessions
 WHERE isNotNull(t.2)
   AND notEmpty(toString(t.2))
 GROUP BY ALL;
+
+ALTER TABLE product_analytics.autocomplete_events_grouped
+    MODIFY COLUMN _timestamp DateTime DEFAULT now();
