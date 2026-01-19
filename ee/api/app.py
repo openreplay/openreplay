@@ -119,13 +119,17 @@ app = FastAPI(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+IGNORE_ENDPOINT_LOG = ["/"]
+
 
 @app.middleware("http")
 async def log_all_requests(request: Request, call_next):
     method = request.method
     endpoint = request.url.path
     response: Response = await call_next(request)
-    logger.info(f"{method}:{endpoint} {response.status_code}")
+    # Log all endpoints except health check
+    if endpoint not in IGNORE_ENDPOINT_LOG or response.status_code != 200:
+        logger.info(f"{method}:{endpoint} {response.status_code}")
     return response
 
 
