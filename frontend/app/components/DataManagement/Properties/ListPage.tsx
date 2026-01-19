@@ -57,7 +57,9 @@ function ListPage() {
   const list = React.useMemo(() => {
     if (!data.properties) return [];
     if (!query) {
-      return data.properties.slice((page - 1) * limit, page * limit);
+      return data.properties
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice((page - 1) * limit, page * limit);
     }
     const filtered = data.properties.filter(
       (prop) =>
@@ -65,7 +67,9 @@ function ListPage() {
         prop.displayName.toLowerCase().includes(query.toLowerCase()) ||
         prop.description.toLowerCase().includes(query.toLowerCase()),
     );
-    return filtered.slice((page - 1) * limit, page * limit);
+    return filtered
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice((page - 1) * limit, page * limit);
   }, [page, data.properties, query]);
 
   if (pickedItem) {
