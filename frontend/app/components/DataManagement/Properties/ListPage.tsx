@@ -192,6 +192,7 @@ function EventPropsList({
   page: number;
   isLoading: boolean;
 }) {
+  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US');
   const columns = [
     {
       title: 'Property',
@@ -220,6 +221,9 @@ function EventPropsList({
       key: 'count',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.count - b.count,
+      render: (text: string) => (
+        <span>{numberFormatter.format(Number(text))}</span>
+      ),
     },
   ];
   return (
@@ -262,6 +266,9 @@ function UserPropsList({
   page: number;
   isLoading: boolean;
 }) {
+  const numberFormatter = Intl.NumberFormat(
+    navigator.language || 'en-US',
+  );
   const columns = [
     {
       title: 'Name',
@@ -290,6 +297,9 @@ function UserPropsList({
       key: 'count',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.count - b.count,
+      render: (text: string) => (
+        <span>{numberFormatter.format(Number(text))}</span>
+      ),
     },
   ];
 
