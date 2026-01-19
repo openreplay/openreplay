@@ -210,7 +210,6 @@ export default defineContentScript({
       };
 
       try {
-        console.log(data)
         await browser.runtime.sendMessage({
           type: messages.content.from.saveSpotData,
           spot,

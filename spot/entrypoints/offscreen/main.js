@@ -660,7 +660,6 @@ const convertBlobToBase64Chunks = async (blob, maxChars = hardLimit) => {
         // should not happen, but avoid infinite loop
         throw new Error('Base64 chunk exceeds max size unexpectedly.');
       }
-      offset = offset;
       const retrySlice = blob.slice(offset, offset + smaller);
       const retryAb = await readBlobAsArrayBuffer(retrySlice);
       const retryB64 = arrayBufferToBase64(retryAb);
