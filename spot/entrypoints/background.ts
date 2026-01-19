@@ -690,6 +690,7 @@ export default defineBackground(() => {
         data: request.data,
         index: request.index,
         total: request.total,
+        mtype: request.mtype,
       });
     }
     if (request.type === "ort:pause") {
