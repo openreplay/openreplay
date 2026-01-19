@@ -279,7 +279,7 @@ spec:
               for aof_file in /data/appendonlydir/*.aof; do
                 if [ -f "$aof_file" ]; then
                   echo "Checking $aof_file"
-                  redis-check-aof --fix "$aof_file" < /dev/null || true
+                  yes | redis-check-aof --fix "$aof_file" || true
                 fi
               done
             fi
