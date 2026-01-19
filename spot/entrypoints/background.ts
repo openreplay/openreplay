@@ -5,7 +5,7 @@ import {
   stopTrackingNetwork,
 } from "~/utils/networkTracking";
 import { mergeRequests, SpotNetworkRequest } from "~/utils/networkTrackingUtils";
-import { safeApiUrl } from '~/utils/smallUtils'
+import { safeApiUrl, base64ToBlob } from '~/utils/smallUtils'
 import {
   attachDebuggerToTab,
   stopDebugger,
@@ -27,6 +27,7 @@ export default defineBackground(() => {
     useHook: string;
     preview: string;
     base64data: string;
+    mtype: string;
     duration: number;
     network: SpotNetworkRequest[];
     logs: { level: string; msg: string; time: number }[];
@@ -71,6 +72,7 @@ export default defineBackground(() => {
     useHook: "",
     preview: "",
     base64data: "",
+    mtype: "video/mp4",
     duration: 100,
     network: [],
     logs: [],
@@ -86,7 +88,6 @@ export default defineBackground(() => {
   };
   let contentArmy: Record<any, boolean> = {};
   let micStatus = "off";
-  let finalVideoBase64 = "";
   let finalReady = false;
   let finalSpotObj: SpotObj = defaultSpotObj;
   let injectNetworkRequests = [];
@@ -333,8 +334,8 @@ export default defineBackground(() => {
           setJWTToken(data.jwtToken);
         });
       }
-      finalVideoBase64 = "";
       const recArea = request.area;
+      finalSpotObj.base64data = "";
       finalSpotObj.startTs = Date.now();
       if (settings.networkLogs) {
         if (settings.useDebugger) {
@@ -575,6 +576,7 @@ export default defineBackground(() => {
         useHook: "",
         preview: "",
         base64data: "",
+        mtype: "video/mp4",
         duration: 100,
         network: [],
         logs: [],
@@ -588,7 +590,6 @@ export default defineBackground(() => {
         resolution: "",
         crop: null,
       };
-      finalVideoBase64 = "";
       finalReady = false;
       recordingState = {
         activeTabId: null,
@@ -602,7 +603,6 @@ export default defineBackground(() => {
         type: "offscr:stop-discard",
         target: "offscreen",
       });
-      finalVideoBase64 = "";
       finalReady = false;
       finalSpotObj = defaultSpotObj;
       recordingState = {
@@ -685,11 +685,14 @@ export default defineBackground(() => {
     }
     if (request.type === "offscr:video-data-chunk") {
       finalSpotObj.duration = request.duration;
+      finalSpotObj.base64data += request.data;
+      finalSpotObj.mtype = request.mtype;
       void sendToActiveTab({
         type: "content:video-chunk",
         data: request.data,
         index: request.index,
         total: request.total,
+        mtype: request.mtype,
       });
     }
     if (request.type === "ort:pause") {
@@ -740,13 +743,7 @@ export default defineBackground(() => {
     }
     if (request.type === messages.content.from.saveSpotData) {
       Object.assign(finalSpotObj, request.spot);
-      return "pong";
-    }
-    if (request.type === messages.content.from.saveSpotVidChunk) {
-      finalVideoBase64 += request.part;
-      finalReady = request.index === request.total - 1;
-      if (finalReady) {
-        const getPlatformData = async () => {
+      const getPlatformData = async () => {
           const vendor = await browser.runtime.getPlatformInfo();
           const platform = `${vendor.os} ${vendor.arch}`;
           return { platform };
@@ -762,7 +759,6 @@ export default defineBackground(() => {
           crop: finalSpotObj.crop,
           vitals: finalSpotObj.vitals,
         };
-        const videoData = finalVideoBase64;
 
         getPlatformData().then(async ({ platform }) => {
           const cropped =
@@ -880,7 +876,7 @@ export default defineBackground(() => {
                       active: settings.openInNewTab,
                     });
                   }, 250);
-                  const blob = base64ToBlob(videoData);
+                  const blob = base64ToBlob(finalSpotObj.base64data, finalSpotObj.mtype);
 
                   const mPromise = fetch(mobURL, {
                     method: "PUT",
@@ -926,8 +922,6 @@ export default defineBackground(() => {
               });
             });
         });
-      }
-
       return "pong";
     }
   });
@@ -1030,17 +1024,6 @@ export default defineBackground(() => {
     } catch (e) {
       console.error("Sending to offscreen", e);
     }
-  }
-
-  function base64ToBlob(base64: string, mimeType = "video/mp4") {
-    const binaryString = atob(base64.split(",")[1]);
-    const byteNumbers = new Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      byteNumbers[i] = binaryString.charCodeAt(i);
-    }
-
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mimeType });
   }
 
   async function startRecording(
@@ -1192,7 +1175,6 @@ export default defineBackground(() => {
             type: "offscr:stop-discard",
             target: "offscreen",
           });
-          finalVideoBase64 = "";
           finalReady = false;
           finalSpotObj = defaultSpotObj;
           recordingState = {
