@@ -37,12 +37,25 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
 
     def getconn(self, *args, **kwargs):
         self._semaphore.acquire()
-        try:
-            return super().getconn(*args, **kwargs)
-        except psycopg2.pool.PoolError as e:
-            if str(e) == "connection pool is closed":
-                make_pool()
-            raise e
+        while True:
+            try:
+                conn = super().getconn(*args, **kwargs)
+                if not config("PG_CHECK_CONNECTION", cast=bool, default=False):
+                    return conn
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT 1')
+                    return conn
+                except (psycopg2.InterfaceError, psycopg2.OperationalError):
+                    try:
+                        super().putconn(conn, close=True)
+                    except Exception:
+                        pass
+                    # Loop will retry
+            except psycopg2.pool.PoolError as e:
+                if str(e) == "connection pool is closed":
+                    make_pool()
+                raise e
 
     def putconn(self, *args, **kwargs):
         try:
