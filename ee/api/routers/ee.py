@@ -123,16 +123,6 @@ def delete_record(projectId: int, recordId: int, _=Body(None),
     return {"data": result}
 
 
-@app.post('/{projectId}/signals', tags=['signals'])
-def send_interactions(projectId: int, data: schemas.SignalsSchema = Body(...),
-                      context: schemas.CurrentContext = Depends(OR_context)):
-    data = signals.handle_frontend_signals_queued(project_id=projectId, user_id=context.user_id, data=data)
-
-    if "errors" in data:
-        return data
-    return {'data': data}
-
-
 @public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
 def get_assist_stats_avg(
         project_id: int,
