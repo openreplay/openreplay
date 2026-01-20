@@ -9,7 +9,9 @@ RUN pip install --no-cache-dir --upgrade uv && \
   export UV_SYSTEM_PYTHON=true && \
   uv pip install --no-cache-dir --upgrade pip setuptools wheel && \
   uv pip install --no-cache-dir --upgrade -r requirements.txt
-
+# to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
+# remove in the future
+RUN pip install jaraco.context
 FROM python:3.13-alpine
 ARG GIT_SHA
 ARG envarg

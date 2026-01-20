@@ -19,7 +19,9 @@ COPY requirements-alerts.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade uv
 RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
 RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
-
+# to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
+# remove in the future
+RUN pip install jaraco.context
 COPY . .
 RUN mv env.default .env && mv app_alerts.py app.py && mv entrypoint_alerts.sh entrypoint.sh
 
