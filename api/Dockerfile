@@ -5,13 +5,12 @@ LABEL maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
+# removed this to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
+#RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
 RUN pip install --no-cache-dir --upgrade uv && \
   export UV_SYSTEM_PYTHON=true && \
-  uv pip install --no-cache-dir --upgrade pip setuptools wheel && \
   uv pip install --no-cache-dir --upgrade -r requirements.txt
-# to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
-# remove in the future
-RUN pip install jaraco.context==6.1.0
+
 FROM python:3.13-alpine
 ARG GIT_SHA
 ARG envarg
