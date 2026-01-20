@@ -54,14 +54,6 @@ class RolePayloadSchema(BaseModel):
     _transform_name = field_validator('name', mode="before")(remove_whitespace)
 
 
-class SignalsSchema(BaseModel):
-    timestamp: int = Field(...)
-    action: str = Field(...)
-    source: str = Field(...)
-    category: str = Field(...)
-    data: dict = Field(default={})
-
-
 class CreateMemberSchema(schemas.CreateMemberSchema):
     roleId: Optional[int] = Field(default=None)
 
