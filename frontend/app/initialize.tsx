@@ -1,7 +1,6 @@
 import './styles/index.css';
 import './styles/global.css';
 import React from 'react';
-import '@ant-design/v5-patch-for-react-19';
 import { createRoot } from 'react-dom/client';
 import './init';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -173,7 +172,27 @@ const ThemedApp: React.FC = () => {
 
   const renderEmpty = () => <Empty image={emptyImg} />;
   return (
-    <ConfigProvider theme={customTheme} renderEmpty={renderEmpty}>
+    <ConfigProvider
+      theme={customTheme}
+      renderEmpty={renderEmpty}
+      modal={{
+        mask: {
+          blur: false,
+        },
+      }}
+      drawer={{
+        mask: {
+          blur: false,
+        },
+      }}
+      tag={{
+        styles: {
+          root: {
+            marginInlineEnd: 8,
+          },
+        },
+      }}
+    >
       <App>
         <StoreProvider store={new RootStore()}>
           <DndProvider backend={HTML5Backend}>

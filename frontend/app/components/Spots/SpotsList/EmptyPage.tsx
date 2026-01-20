@@ -31,12 +31,12 @@ function EmptyPage() {
 
       <Modal
         title="Learn How to Spot Your First Bug"
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={handleModalClose}
         footer={null}
         centered
         className="aspect-video px-0 m-auto"
-        destroyOnClose
+        destroyOnHidden
         width="820"
       >
         {isModalVisible && (

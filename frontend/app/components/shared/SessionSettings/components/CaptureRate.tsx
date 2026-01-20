@@ -103,7 +103,7 @@ function CaptureRate(props: Props) {
         </div>
       }
       closable={false}
-      destroyOnClose
+      destroyOnHidden
     >
       <Loader loading={loadingCaptureRate || !projectId}>
         <Tooltip title={isAdmin ? '' : "You don't have permission to change."}>

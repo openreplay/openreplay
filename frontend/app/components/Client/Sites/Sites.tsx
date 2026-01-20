@@ -105,7 +105,7 @@ function Sites() {
             <span className="ml-2">{project.host}</span>
             <div className="ml-4 flex items-center gap-2">
               {project.platform === 'web' ? null : (
-                <Tag bordered={false} color="green">
+                <Tag variant="filled" color="green">
                   {t('MOBILE BETA')}
                 </Tag>
               )}

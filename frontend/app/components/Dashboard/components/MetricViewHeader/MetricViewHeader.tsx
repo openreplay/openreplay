@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { PageTitle } from 'UI';
-import { Button, Popover, Space, Dropdown, Menu } from 'antd';
+import { Button, Popover, Space, Dropdown, MenuProps } from 'antd';
 import { PlusOutlined, DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -46,17 +46,14 @@ function MetricViewHeader() {
   //   metricStore.updateKey('sort', { by: 'desc' });
   // }, [metricStore]);
 
-  const handleMenuClick = ({ key }: { key: string }) => {
+  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     metricStore.updateKey('filter', { ...filter, type: key });
   };
 
-  const menu = (
-    <Menu onClick={handleMenuClick}>
-      {options(t).map((option) => (
-        <Menu.Item key={option.key}>{option.label}</Menu.Item>
-      ))}
-    </Menu>
-  );
+  const menuItems: MenuProps['items'] = options(t).map((option) => ({
+    key: option.key,
+    label: option.label,
+  }));
 
   return (
     <div>
@@ -66,7 +63,7 @@ function MetricViewHeader() {
 
           <div className="flex items-center gap-2 w-full">
             {showHeader && (
-              <Dropdown overlay={menu} trigger={['click']}>
+              <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']}>
                 <Button type="text" size="small" className="mt-1 !pl-0 md:pl-unset">
                   {options(t).find((opt) => opt.key === filter.type)?.label ||
                     t('Select Type')}

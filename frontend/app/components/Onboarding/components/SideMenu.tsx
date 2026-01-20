@@ -1,4 +1,4 @@
-import { Divider, Layout, Menu } from 'antd';
+import { Layout, Menu, MenuProps } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
@@ -19,12 +19,77 @@ function SideMenu(props: Props) {
   const { settingsStore } = useStore();
   const { activeTab } = props;
 
-  const handleClick = (item: any) => {
+  const handleClick: MenuProps['onClick'] = (item) => {
     if (item.key === 'support') {
       return setSupportOpen(true);
     }
     props.onClick(item.key);
   };
+
+  const items: MenuProps['items'] = [
+    {
+      key: OB_TABS.INSTALLING,
+      label: t('Setup OpenReplay'),
+      icon: (
+        <Icon
+          name="tools"
+          size={16}
+          color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray-medium'}
+        />
+      ),
+      className: '!rounded-lg hover-fill-teal',
+    },
+    {
+      key: OB_TABS.IDENTIFY_USERS,
+      label: t('Identify Users'),
+      icon: (
+        <Icon
+          name="person-border"
+          size={16}
+          color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray-medium'}
+        />
+      ),
+      className: '!rounded-lg hover-fill-teal',
+    },
+    {
+      key: OB_TABS.MANAGE_USERS,
+      label: t('Invite Collaborators'),
+      icon: (
+        <Icon
+          name="people"
+          size={16}
+          color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray-medium'}
+        />
+      ),
+      className: '!rounded-lg hover-fill-teal',
+    },
+    {
+      key: OB_TABS.INTEGRATIONS,
+      label: t('Integrations'),
+      icon: (
+        <Icon
+          name="plug"
+          size={16}
+          color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray-medium'}
+        />
+      ),
+      className: '!rounded-lg hover-fill-teal',
+    },
+    { type: 'divider' },
+    {
+      key: 'support',
+      label: t('Support'),
+      icon: (
+        <Icon
+          name="question-circle"
+          size={16}
+          color={activeTab === 'support' ? 'teal' : 'gray-medium'}
+        />
+      ),
+      className: '!rounded-lg hover-fill-teal',
+    },
+  ];
+
   return (
     <Layout.Sider
       style={{
@@ -43,74 +108,8 @@ function SideMenu(props: Props) {
           onClick={handleClick}
           style={{ border: 'none' }}
           selectedKeys={activeTab ? [activeTab] : []}
-        >
-          <Menu.Item
-            key={OB_TABS.INSTALLING}
-            icon={
-              <Icon
-                name="tools"
-                size={16}
-                color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray-medium'}
-              />
-            }
-            className="!rounded-lg hover-fill-teal"
-          >
-            {t('Setup OpenReplay')}
-          </Menu.Item>
-          <Menu.Item
-            key={OB_TABS.IDENTIFY_USERS}
-            icon={
-              <Icon
-                name="person-border"
-                size={16}
-                color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray-medium'}
-              />
-            }
-            className="!rounded-lg hover-fill-teal"
-          >
-            {t('Identify Users')}
-          </Menu.Item>
-          <Menu.Item
-            key={OB_TABS.MANAGE_USERS}
-            icon={
-              <Icon
-                name="people"
-                size={16}
-                color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray-medium'}
-              />
-            }
-            className="!rounded-lg hover-fill-teal"
-          >
-            {t('Invite Collaborators')}
-          </Menu.Item>
-          <Menu.Item
-            key={OB_TABS.INTEGRATIONS}
-            icon={
-              <Icon
-                name="plug"
-                size={16}
-                color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray-medium'}
-              />
-            }
-            className="!rounded-lg hover-fill-teal"
-          >
-            {t('Integrations')}
-          </Menu.Item>
-          <Divider style={{ margin: '6px 0' }} />
-          <Menu.Item
-            key="support"
-            icon={
-              <Icon
-                name="question-circle"
-                size={16}
-                color={activeTab === 'support' ? 'teal' : 'gray-medium'}
-              />
-            }
-            className="!rounded-lg hover-fill-teal"
-          >
-            {t('Support')}
-          </Menu.Item>
-        </Menu>
+          items={items}
+        />
       </div>
       <SupportModal
         onClose={() => {

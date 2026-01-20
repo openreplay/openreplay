@@ -24,7 +24,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
         <div className="font-medium w-36">{t('Name')}</div>
         <Tag
           className="text-base rounded-lg bg-indigo-lightest whitespace-normal break-words"
-          bordered={false}
+          variant="filled"
           style={{ maxWidth: '300px' }}
         >
           <div>{displayUrl}</div>
@@ -36,7 +36,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
           <div className="font-medium w-36">{t('Request Method')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-lightest whitespace-nowrap overflow-hidden text-ellipsis"
-            bordered={false}
+            variant="filled"
           >
             {resource.method}
           </Tag>
@@ -47,7 +47,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
         <div className="flex items-center py-1">
           <div className="text-base font-medium w-36">{t('Status Code')}</div>
           <Tag
-            bordered={false}
+            variant="filled"
             className={cn(
               'text-base rounded-lg bg-indigo-lightest whitespace-nowrap overflow-hidden text-ellipsis flex items-center',
               { 'error color-red': !resource.success },
@@ -62,7 +62,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
         <div className="font-medium w-36">{t('Type')}</div>
         <Tag
           className="text-base capitalize rounded-lg bg-indigo-lightest whitespace-nowrap overflow-hidden text-ellipsis"
-          bordered={false}
+          variant="filled"
         >
           {resource.type}
         </Tag>
@@ -73,7 +73,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
           <div className="font-medium w-36">{t('Size')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-lightest whitespace-nowrap overflow-hidden text-ellipsis"
-            bordered={false}
+            variant="filled"
           >
             {formatBytes(resource.decodedBodySize)}
           </Tag>
@@ -85,7 +85,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
           <div className="font-medium w-36">{t('Duration')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-lightest whitespace-nowrap overflow-hidden text-ellipsis"
-            bordered={false}
+            variant="filled"
           >
             {_duration}&nbsp;{t('ms')}
           </Tag>
@@ -97,7 +97,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
           <div className="font-medium w-36">{t('Time')}</div>
           <Tag
             className="text-base rounded-lg bg-indigo-lightest whitespace-nowrap overflow-hidden text-ellipsis"
-            bordered={false}
+            variant="filled"
           >
             {timestamp}
           </Tag>

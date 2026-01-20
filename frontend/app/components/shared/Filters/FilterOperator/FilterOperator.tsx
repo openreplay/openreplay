@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dropdown, Menu, Button, Typography } from 'antd';
+import { Dropdown, Button, Typography, MenuProps } from 'antd';
 
 interface OptionType {
   label: React.ReactNode;
@@ -45,7 +45,7 @@ function FilterOperator(props: Props) {
     </Typography.Text>
   );
 
-  const handleMenuClick = (e: { key: string }) => {
+  const handleMenuClick: MenuProps['onClick'] = (e) => {
     let selectedValue: string | number | undefined;
 
     if (e.key === CLEAR_VALUE_KEY) {
@@ -60,33 +60,34 @@ function FilterOperator(props: Props) {
     onChange(null, { name: name, value: selectedValue });
   };
 
-  const menu = (
-    <Menu
-      onClick={handleMenuClick}
-      selectedKeys={value !== undefined ? [String(value)] : []}
-    >
-      {allowClear && value !== undefined && (
-        <>
-          <Menu.Item key={CLEAR_VALUE_KEY} danger>
-            Clear Selection {/* Or use a specific label */}
-          </Menu.Item>
-          <Menu.Divider />
-        </>
-      )}
-      {/* Map options to Menu.Item */}
-      {options.map((option) => (
-        <Menu.Item key={String(option.value)}>{option.label}</Menu.Item>
-      ))}
-    </Menu>
-  );
+  const menuItems: MenuProps['items'] = [
+    ...(allowClear && value !== undefined
+      ? [
+          {
+            key: CLEAR_VALUE_KEY,
+            label: 'Clear Selection',
+            danger: true,
+          },
+          { type: 'divider' as const },
+        ]
+      : []),
+    ...options.map((option) => ({
+      key: String(option.value),
+      label: option.label,
+    })),
+  ];
 
   return (
     <>
       <Dropdown
-        overlay={menu}
+        menu={{
+          items: menuItems,
+          onClick: handleMenuClick,
+          selectedKeys: value !== undefined ? [String(value)] : [],
+        }}
         trigger={['click']}
         disabled={isDisabled}
-        overlayClassName={popupClassName}
+        classNames={{ root: popupClassName }}
       >
         <Button
           type="default"

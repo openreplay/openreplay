@@ -1,5 +1,5 @@
 import { DownOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Segmented, Modal } from 'antd';
+import { Button, Dropdown, MenuProps, Segmented } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
@@ -41,7 +41,7 @@ function AccessModal() {
     spotStore.pubKey ? `?pub_key=${spotStore.pubKey.value}` : ''
   }`;
 
-  const menuItems = [
+  const menuItems: MenuProps['items'] = [
     {
       key: Intervals.hour.toString(),
       label: <div>{t('1 Hour')}</div>,
@@ -60,9 +60,9 @@ function AccessModal() {
     },
   ];
 
-  const onMenuClick = async (info: { key: string }) => {
-    const val = expirationValues[Number(info.key) as Intervals];
-    setSelectedInterval(Number(info.key) as Intervals);
+  const onMenuClick: MenuProps['onClick'] = async ({ key }) => {
+    const val = expirationValues[Number(key) as Intervals];
+    setSelectedInterval(Number(key) as Intervals);
     await spotStore.generateKey(spotId, val);
   };
 
@@ -162,9 +162,7 @@ function AccessModal() {
 
           <div className="flex items-center gap-2">
             <div>{t('Link expires in')}</div>
-            <Dropdown
-              overlay={<Menu items={menuItems} onClick={onMenuClick} />}
-            >
+            <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
               <div className="flex items-center cursor-pointer">
                 {loadingKey
                   ? t('Loading')
