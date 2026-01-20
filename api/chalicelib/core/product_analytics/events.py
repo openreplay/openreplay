@@ -71,7 +71,7 @@ def __is_mobile_platform(platform):
 
 
 @cached(cache)
-def get_events(project_id: int, include_all: bool = False, platform: str = "web"):
+def get_events(project_id: int, platform: str = "web"):
     predefined_events = (
         PREDEFINED_EVENTS_MOBILE
         if __is_mobile_platform(platform)
