@@ -29,7 +29,7 @@ export const stars: (str: string) => string =
     : (str: string): string => str.replace(/./g, '*')
 
 export function normSpaces(str: string): string {
-  return str.trim().replace(/\s+/g, ' ')
+  return str ? str.trim().replace(/\s+/g, ' ') : ''
 }
 
 // isAbsoluteUrl regexp:  /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url)
