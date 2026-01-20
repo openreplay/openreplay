@@ -58,11 +58,13 @@ function getRecordingSettings(qualityValue) {
   const duration = 3 * 60 * 1000; // 3 minutes
 
   const mimeTypes = [
-    // mp4-first for faster HLS encoding backend path
+    'video/webm;codecs=vp8,opus',
+    'video/mp4',
+    'video/webm',
+    'video/webm;codecs=vp9,opus',
+    // faster HLS encoding backend path, breaks for some chrome configs?
     'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
     'video/mp4;codecs=avc1',
-    'video/webm;codecs=vp8,opus',
-    'video/webm;codecs=vp9,opus',
   ];
 
   let mimeType = mimeTypes[0];
@@ -718,7 +720,107 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
         const data = await recorder.getVideoData();
 
         if (!data.blob || data.blob.size === 0) {
-          console.error('No data recorded', data, duration, recorder);
+          const safeTrackInfo = (t) => {
+            try {
+              return {
+                kind: t?.kind,
+                label: t?.label,
+                readyState: t?.readyState,
+                enabled: t?.enabled,
+                muted: t?.muted,
+              };
+            } catch (e) {
+              return null;
+            }
+          };
+
+          const candidates =
+            recorder?.settings?.mimeTypeCandidates ||
+            [recorder?.settings?.mimeType].filter(Boolean);
+
+          let platformInfo = null;
+          try {
+            platformInfo = (await browser.runtime.getPlatformInfo?.()) || null;
+          } catch (e) {
+            platformInfo = null;
+          }
+
+          const diag = {
+            at: Date.now(),
+            duration,
+            blob: {
+              exists: !!data?.blob,
+              size: data?.blob?.size || 0,
+              type: data?.blob?.type || '',
+            },
+            env: {
+              userAgent: (() => {
+                try {
+                  return navigator.userAgent;
+                } catch (e) {
+                  return '';
+                }
+              })(),
+              platform: platformInfo,
+            },
+            recorder: {
+              state: recorder?.mRecorder?.state,
+              mimeType: recorder?.mRecorder?.mimeType,
+              effectiveMimeType: recorder?._effectiveMimeType,
+              settingsMimeType: recorder?.settings?.mimeType,
+            },
+            mimeTypeCandidates: candidates,
+            isTypeSupported: (() => {
+              try {
+                return candidates.reduce((acc, mt) => {
+                  acc[mt] = MediaRecorder.isTypeSupported?.(mt) ?? null;
+                  return acc;
+                }, {});
+              } catch (e) {
+                return {};
+              }
+            })(),
+            chunks: {
+              count: recorder?.chunks?.length || 0,
+              bytes: (() => {
+                try {
+                  return (recorder?.chunks || []).reduce((s, b) => s + (b?.size || 0), 0);
+                } catch (e) {
+                  return 0;
+                }
+              })(),
+            },
+            stream: {
+              active: recorder?.stream?.active,
+              tracks: (() => {
+                try {
+                  return (recorder?.stream?.getTracks?.() || []).map(safeTrackInfo);
+                } catch (e) {
+                  return [];
+                }
+              })(),
+            },
+            videoStream: {
+              active: recorder?.videoStream?.active,
+              videoTracks: (() => {
+                try {
+                  return (recorder?.videoStream?.getVideoTracks?.() || []).map(safeTrackInfo);
+                } catch (e) {
+                  return [];
+                }
+              })(),
+              audioTracks: (() => {
+                try {
+                  return (recorder?.videoStream?.getAudioTracks?.() || []).map(safeTrackInfo);
+                } catch (e) {
+                  return [];
+                }
+              })(),
+            },
+            micTrack: recorder?.audioTrack ? safeTrackInfo(recorder.audioTrack) : null,
+          };
+
+          console.error('No data recorded', diag);
           respond({ status: 'empty' });
           recorder.clearAll();
           return;
