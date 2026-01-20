@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir --upgrade uv && \
   uv pip install --no-cache-dir --upgrade -r requirements.txt
 # to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
 # remove in the future
-RUN pip install jaraco.context
+RUN pip install jaraco.context==6.1.0
 FROM python:3.13-alpine
 ARG GIT_SHA
 ARG envarg
