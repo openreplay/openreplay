@@ -30,6 +30,9 @@ RUN mkdir -p /build/nix-minimal/store && \
   fi; \
   done
 
+# to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
+# remove in the future
+RUN pip install jaraco.context
 # Final stage - use Alpine for smaller base
 FROM alpine:3.20
 
