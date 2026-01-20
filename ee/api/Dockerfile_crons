@@ -14,4 +14,16 @@ ENV APP_NAME=crons \
 WORKDIR /work
 COPY requirements-crons.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade uv
-RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
+
+RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
+# to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
+# remove in the future
+RUN pip install jaraco.context==6.1.0
+COPY . .
+RUN mv env.default .env && mv entrypoint_crons.sh entrypoint.sh
+
+RUN adduser -u 1001 openreplay -D
+USER 1001
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ./entrypoint.sh
