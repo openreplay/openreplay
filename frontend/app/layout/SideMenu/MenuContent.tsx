@@ -82,37 +82,39 @@ export default function MenuContent({
                       className="test"
                       rootClassName="test2"
                     >
-                      {it.children.map((child: any) => (
-                        <Menu.Item
-                          key={child.key}
-                          className={cn('ml-8', {
-                            'ant-menu-item-selected': isMenuItemActive(
-                              child.key,
-                            ),
-                          })}
-                        >
-                          <div className="flex items-center gap-4 hover-fill-teal">
-                            <Icon
-                              name={child.icon}
-                              size={16}
-                              color={
-                                isMenuItemActive(child.key) ? 'teal' : 'black'
-                              }
-                              className="hover-fill-teal"
-                            />
-                            <span>{child.label}</span>
-                            {child.tag && (
-                              <Tag
-                                color={child.tag.color}
-                                bordered={child.tag.border}
-                                className="text-xs ml-auto"
-                              >
-                                {child.tag.label}
-                              </Tag>
-                            )}
-                          </div>
-                        </Menu.Item>
-                      ))}
+                      {it.children
+                        .filter((ch: any) => !ch.hidden)
+                        .map((child: any) => (
+                          <Menu.Item
+                            key={child.key}
+                            className={cn('ml-8', {
+                              'ant-menu-item-selected': isMenuItemActive(
+                                child.key,
+                              ),
+                            })}
+                          >
+                            <div className="flex items-center gap-4 hover-fill-teal">
+                              <Icon
+                                name={child.icon}
+                                size={16}
+                                color={
+                                  isMenuItemActive(child.key) ? 'teal' : 'black'
+                                }
+                                className="hover-fill-teal"
+                              />
+                              <span>{child.label}</span>
+                              {child.tag && (
+                                <Tag
+                                  color={child.tag.color}
+                                  bordered={child.tag.border}
+                                  className="text-xs ml-auto"
+                                >
+                                  {child.tag.label}
+                                </Tag>
+                              )}
+                            </div>
+                          </Menu.Item>
+                        ))}
                     </Menu.SubMenu>
                   ) : (
                     <Menu.Item
