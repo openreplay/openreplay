@@ -5,6 +5,9 @@ import { Icon } from 'UI';
 import { useTheme } from 'App/ThemeContext';
 import { mobileScreen } from '@/utils/isMobile';
 
+const whiteLogo = new URL('../assets/logo-white.svg', import.meta.url);
+const defaultLogo = new URL('../assets/logo.svg', import.meta.url);
+
 const SESSIONS_PATH = sessions();
 
 interface Props {
@@ -29,10 +32,7 @@ function Logo(props: Props) {
       to={withSiteId(SESSIONS_PATH, props.siteId)}
       className="flex items-center"
     >
-      <img
-        src={`/assets/logo${theme === 'dark' ? '-white' : ''}.svg`}
-        width={120}
-      />
+      <img src={theme === 'dark' ? whiteLogo : defaultLogo} width={120} />
     </NavLink>
   );
 }

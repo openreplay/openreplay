@@ -125,7 +125,7 @@ function NoteEvent(props: Props) {
           {props.note.tag ? (
             <Tag
               color={tagProps[props.note.tag]}
-              bordered={false}
+              variant="filled"
               className="rounded-lg"
             >
               {props.note.tag}

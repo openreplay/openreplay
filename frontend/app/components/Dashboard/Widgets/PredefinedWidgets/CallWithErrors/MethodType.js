@@ -3,7 +3,7 @@ import { Tag } from 'antd';
 
 function MethodType({ data }) {
   return (
-    <Tag bordered={false} className="rounded-lg bg-indigo-lightest">
+    <Tag variant="filled" className="rounded-lg bg-indigo-lightest">
       {data.method}
     </Tag>
   );

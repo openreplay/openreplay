@@ -38,7 +38,7 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
       open={open}
       onCancel={onClose}
       width={900}
-      destroyOnClose
+      destroyOnHidden
       footer={null}
       closeIcon={false}
       styles={{

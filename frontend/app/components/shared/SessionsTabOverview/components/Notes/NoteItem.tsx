@@ -68,7 +68,7 @@ function NoteItem(props: Props) {
               <Tag
                 color={tagProps[props.note.tag]}
                 className="border-0 rounded-lg hover:inherit gap-2 w-14 text-center"
-                bordered={false}
+                variant="filled"
               >
                 {props.note.tag}
               </Tag>

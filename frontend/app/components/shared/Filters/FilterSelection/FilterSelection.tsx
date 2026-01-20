@@ -105,7 +105,9 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
         open={open}
         onOpenChange={handleOpenChange}
         placement={mobileScreen ? 'bottom' : 'bottomLeft'}
-        overlayClassName="filter-selection-popover rounded-lg border border-gray-200 shadow-sm shadow-gray-200 overflow-hidden"
+        classNames={{
+          root: 'filter-selection-popover rounded-lg border border-gray-200 shadow-sm shadow-gray-200 overflow-hidden',
+        }}
         destroyOnHidden={true}
         arrow={false}
       >

@@ -213,7 +213,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
             key={tag}
             className="cursor-pointer rounded-lg hover:bg-indigo-lightest mr-0"
             color={tagProps[tag]}
-            bordered={false}
+            variant="filled"
           >
             <div className="flex items-center gap-1 text-sm">
               {tagActive(tag) ? (

@@ -239,7 +239,7 @@ function TaskTitle({
     >
       <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} />
       <span className="font-mono font-bold">{title}</span>
-      <Tag color="default" bordered={false}>
+      <Tag color="default" variant="filled">
         {plusMore}
       </Tag>
       <span className={'color-gray-medium font-mono'}>
@@ -247,7 +247,7 @@ function TaskTitle({
       </span>
       {isBlocking ? (
         <Tag
-          bordered={false}
+          variant="filled"
           color="red"
           className="font-mono rounded-lg text-xs flex gap-1 items-center color-red"
         >

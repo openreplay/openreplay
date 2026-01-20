@@ -169,7 +169,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
               </div>
               <Tag
                 color="red"
-                bordered={false}
+                variant="filled"
                 className="rounded-lg text-base mr-0"
               >
                 {'</head>'}

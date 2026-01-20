@@ -17,7 +17,7 @@ function FunnelIssuesSelectedFilters(props: Props) {
     <div className="flex items-center flex-wrap">
       {issuesFilter.map((option, index) => (
         <Tag
-          bordered={false}
+          variant="filled"
           key={index}
           closable
           onClose={() => removeSelectedValue(option.value)}

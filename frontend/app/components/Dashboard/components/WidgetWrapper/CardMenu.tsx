@@ -46,7 +46,7 @@ function CardMenu({ card }: any) {
 
   return (
     <div className="flex items-center justify-between">
-      <Dropdown menu={{ items, onClick }} overlayStyle={{ minWidth: '120px' }}>
+      <Dropdown menu={{ items, onClick }} styles={{ root: { minWidth: '120px' } }}>
         <Button type="text" icon={<EllipsisVertical size={16} />} />
       </Dropdown>
     </div>

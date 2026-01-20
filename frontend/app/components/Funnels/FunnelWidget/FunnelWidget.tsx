@@ -163,7 +163,7 @@ function FunnelWidget(props: Props) {
             title={`${funnel.totalConversions} ${isUsers ? t('Users') : t('Sessions')} ${funnel.totalConversionsPercentage}%`}
           >
             <Tag
-              bordered={false}
+              variant="filled"
               color="var(--color-gray-lightest)"
               className="text-lg rounded-lg !text-black"
             >
@@ -179,7 +179,7 @@ function FunnelWidget(props: Props) {
             title={`${funnel.lostConversions} Sessions ${funnel.lostConversionsPercentage}%`}
           >
             <Tag
-              bordered={false}
+              variant="filled"
               color="var(--color-red-lightest)"
               className="text-lg rounded-lg !text-black"
             >

@@ -111,7 +111,7 @@ function HighlightClip({
             <Tag
               color={tagProps[tag]}
               className="border-0 rounded-lg hover:inherit gap-2 text-center capitalize"
-              bordered={false}
+              variant="filled"
             >
               {t(tag.toLowerCase())}
             </Tag>

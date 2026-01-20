@@ -119,7 +119,7 @@ function DashboardList() {
       render: (isPublic: boolean) => (
         <Tag
           icon={isPublic ? <TeamOutlined /> : <LockOutlined />}
-          bordered={false}
+          variant="filled"
           className="rounded-lg"
         >
           {isPublic ? t('Team') : t('Private')}

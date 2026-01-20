@@ -107,7 +107,7 @@ function ReadNote(props: Props) {
                 </Tag>
               ) : null}
 
-              <Tag bordered={false}>
+              <Tag variant="filled">
                 {!props.note.isPublic ? null : <TeamBadge />}
               </Tag>
             </div>

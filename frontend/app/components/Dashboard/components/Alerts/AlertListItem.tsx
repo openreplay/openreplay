@@ -123,7 +123,7 @@ function AlertListItem(props: Props) {
           <div className="flex items-center">
             <Tag
               className="rounded-full bg-indigo-lightest cap-first text-base"
-              bordered={false}
+              variant="filled"
             >
               {alert.detectionMethod}
             </Tag>

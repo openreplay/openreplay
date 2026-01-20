@@ -11,7 +11,8 @@
     "staticOutPath": "assets"
   },
   "alias": {
-    "@parcel/error-overlay": "./err-overlay.js"
+    "@parcel/error-overlay": "./err-overlay.js",
+    "antd": "antd/es/index.js"
   },
   "scripts": {
     "start": "parcel app/index.html --port 3333 --open --lazy",
@@ -34,8 +35,7 @@
     "check-unimported": "npx unimported"
   },
   "dependencies": {
-    "@ant-design/icons": "^5.6.1",
-    "@ant-design/v5-patch-for-react-19": "^1.0.3",
+    "@ant-design/icons": "^6.1.0",
     "@codewonders/html2canvas": "^1.0.2",
     "@eslint/js": "^9.37.0",
     "@medv/finder": "^4.0.2",
@@ -45,7 +45,7 @@
     "@svg-maps/world": "^1.0.1",
     "@tanstack/react-query": "^5.90.16",
     "@wojtekmaj/react-daterange-picker": "^7.0.0",
-    "antd": "^5.27.4",
+    "antd": "6.2.1",
     "chroma-js": "^3.1.2",
     "classnames": "^2.5.1",
     "copy-to-clipboard": "^3.3.3",
@@ -151,7 +151,7 @@
     "tailwindcss": "^3.4.18",
     "ts-jest": "^29.4.4",
     "ts-node": "^10.9.2",
-    "typescript": "^4.9.5",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.45.0"
   },
   "engines": {

@@ -194,7 +194,7 @@ const MetricListItem: React.FC<Props> = ({
     case 'visibility':
       return (
         <div className="flex items-center">
-          <Tag className="rounded-lg" bordered={false}>
+          <Tag className="rounded-lg" variant="filled">
             {metric.isPublic ? (
               <TeamOutlined className="mr-2" />
             ) : (
