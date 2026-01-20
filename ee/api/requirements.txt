@@ -1,6 +1,6 @@
-urllib3==2.6.2
+urllib3==2.6.3
 requests==2.32.5
-boto3==1.42.22
+boto3==1.42.30
 pyjwt==2.10.1
 psycopg2-binary==2.9.11
 psycopg[pool,binary]==3.3.2
@@ -14,7 +14,7 @@ uvicorn[standard]==0.40.0
 gunicorn==23.0.0
 python-decouple==3.8
 pydantic[email]==2.12.5
-apscheduler==3.11.1
+apscheduler==3.11.2
 
 # xmlsec and lxml are provided by Nix. Check shell.nix and Dockerfile
 
@@ -25,8 +25,8 @@ python-multipart==0.0.21
 scim2-models==0.5.1
 scim2-server==0.1.7
 scim2-filter-parser==0.7.0
-werkzeug==3.1.4
+werkzeug==3.1.5
 
 redis==7.1.0
 #confluent-kafka==2.1.0
-azure-storage-blob==12.27.1
+azure-storage-blob==12.28.0
