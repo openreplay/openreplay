@@ -14,5 +14,3 @@ uvicorn[standard]==0.40.0
 python-decouple==3.8
 pydantic[email]==2.12.5
 apscheduler==3.11.2
-
-azure-storage-blob==12.28.0
