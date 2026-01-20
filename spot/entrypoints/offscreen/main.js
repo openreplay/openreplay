@@ -718,7 +718,7 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
         const data = await recorder.getVideoData();
 
         if (!data.blob || data.blob.size === 0) {
-          console.error('No data recorded');
+          console.error('No data recorded', data, duration, recorder);
           respond({ status: 'empty' });
           recorder.clearAll();
           return;

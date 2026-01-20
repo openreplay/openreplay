@@ -52,7 +52,7 @@ function NoSessionsMessage() {
                       </div>
                     }
                   >
-                    <div className="color-black">{t('Troubleshoot')}</div>
+                    <div className="text-black">{t('Troubleshoot')}</div>
                   </Button>
                   <Button
                     type="default"
