@@ -27,11 +27,15 @@ function ListPage() {
   const views = [
     {
       key: 'users',
-      label: <div className={'text-lg font-medium'}>{t('Users')}</div>,
+      label: (
+        <div className={'text-lg font-medium'}>{t('User Properties')}</div>
+      ),
     },
     {
       key: 'events',
-      label: <div className={'text-lg font-medium'}>{t('Events')}</div>,
+      label: (
+        <div className={'text-lg font-medium'}>{t('Event Properties')}</div>
+      ),
     },
   ];
   const { data = { properties: [], total: 0 }, isPending } = useQuery({
@@ -200,6 +204,7 @@ function EventPropsList({
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+      render: (text: string) => <div className="link">{text}</div>,
     },
     {
       title: 'Display Name',
@@ -235,6 +240,8 @@ function EventPropsList({
         onRow={(record) => ({
           onClick: () => toEventProp(record.name),
         })}
+        rowHoverable
+        rowClassName={'cursor-pointer'}
         loading={isLoading}
       />
       <FullPagination
@@ -266,9 +273,7 @@ function UserPropsList({
   page: number;
   isLoading: boolean;
 }) {
-  const numberFormatter = Intl.NumberFormat(
-    navigator.language || 'en-US',
-  );
+  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US');
   const columns = [
     {
       title: 'Name',
@@ -276,6 +281,7 @@ function UserPropsList({
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.name.localeCompare(b.name),
+      render: (text: string) => <div className="link">{text}</div>,
     },
     {
       title: 'Display Name',
@@ -310,8 +316,9 @@ function UserPropsList({
           onRow={(record) => ({
             onClick: () => toUserProp(record.name),
           })}
-          pagination={false}
+          rowHoverable
           rowClassName={'cursor-pointer'}
+          pagination={false}
           dataSource={list}
           columns={columns}
           loading={isLoading}

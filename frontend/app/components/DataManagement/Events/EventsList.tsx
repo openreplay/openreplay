@@ -24,6 +24,8 @@ function EventsList({
   onPageChange: (page: number) => void;
   toEvent: (name: string) => void;
 }) {
+  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US');
+
   const columns = [
     {
       title: 'Event Name',
@@ -31,6 +33,7 @@ function EventsList({
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+      render: (text: string) => <div className="link">{text}</div>,
     },
     {
       title: 'Display Name',
@@ -52,7 +55,10 @@ function EventsList({
       dataIndex: 'count',
       key: 'count',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a: number, b: number) => a - b,
+      sorter: (a: any, b: any) => a.count - b.count,
+      render: (text: string) => (
+        <span>{numberFormatter.format(Number(text))}</span>
+      ),
     },
   ];
   return (
@@ -64,6 +70,8 @@ function EventsList({
         onRow={(record) => ({
           onClick: () => toEvent(record.name),
         })}
+        rowHoverable
+        rowClassName={'cursor-pointer'}
         loading={isPending}
       />
       <FullPagination
