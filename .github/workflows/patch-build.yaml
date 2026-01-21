@@ -164,7 +164,10 @@ jobs:
 
             local command="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$docker_arch DOCKER_REPO=$docker_repo PUSH_IMAGE=0 bash $build_script $build_args"
             echo "Executing: $command"
-            eval "$command"
+            if ! eval "$command"; then
+                echo "Build failed for $service with args: $build_args"
+                exit 1
+            fi
         }
 
         # Update chart version and commit changes
