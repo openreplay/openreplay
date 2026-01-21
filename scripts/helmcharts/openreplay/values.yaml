@@ -47,6 +47,8 @@ vault: &vault
 ingress-nginx:
   enabled: true
   controller:
+    image:
+      tag: 5.3.1-alpine
     enableSnippets: true
     ingressClass:
       name: openreplay

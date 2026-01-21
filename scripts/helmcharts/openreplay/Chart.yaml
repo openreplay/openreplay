@@ -26,7 +26,7 @@ AppVersion: "v1.24.0"
 
 dependencies:
   - name: ingress-nginx
-    version: "2.3.1"
+    version: 2.4.1
     repository: "file://charts/ingress-nginx"
     condition: ingress-nginx.enabled
   - name: connector

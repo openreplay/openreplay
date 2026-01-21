@@ -10,7 +10,7 @@ kubeVersion: '>= 1.25.0-0'
 maintainers:
 - email: kubernetes@nginx.com
   name: nginx
-name: nginx-ingress
+name: ingress-nginx
 sources:
 - https://github.com/nginx/kubernetes-ingress/tree/v5.3.1/charts/nginx-ingress
 type: application

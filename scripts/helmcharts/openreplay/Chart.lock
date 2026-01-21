@@ -1,12 +1,12 @@
 dependencies:
 - name: ingress-nginx
   repository: file://charts/ingress-nginx
-  version: 2.3.1
+  version: 2.4.1
 - name: connector
   repository: file://charts/connector
   version: 0.1.1
 - name: assist-api
   repository: file://charts/assist-api
   version: 0.1.1
-digest: sha256:6f82c3b3d5ecb487b0116631da2c1c346ba43e22193d7a792c0b4207fab165ab
-generated: "2025-11-19T17:53:31.559333952+01:00"
+digest: sha256:a9289137f14b753c8dd65fef3d0a10151822a115c79003a58117c0888a6c434c
+generated: "2026-01-21T14:00:19.563781693+01:00"
