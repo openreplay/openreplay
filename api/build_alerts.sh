@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Script to build alerts module
 # flags to accept:

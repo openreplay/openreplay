@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Script to build crons module
 # flags to accept:
