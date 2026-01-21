@@ -20,6 +20,7 @@ type LexiconProperty struct {
 	Status        string   `json:"status" ch:"status"`
 	AutoCaptured  bool     `json:"autoCaptured" ch:"is_auto_captured"`
 	Count         uint64   `json:"count" ch:"count"`
+	UsersCount    uint64   `json:"usersCount" ch:"users_count"`
 	QueryCount    uint64   `json:"queryCount" ch:"query_count"`
 	CreatedAt     int64    `json:"createdAt" ch:"created_at"`
 	PossibleTypes []string `json:"possibleTypes" ch:"possible_types"`

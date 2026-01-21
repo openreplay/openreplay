@@ -126,6 +126,17 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 }
 
 func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error) {
+	usersCountColumn := "CAST(0 AS UInt64) AS users_count"
+	userJoin := ""
+
+	if source != nil && *source == "users" {
+		usersCountColumn = "uniqIf(aupg.user_id, aupg.user_id IS NOT NULL AND aupg.user_id != '') AS users_count"
+		userJoin = `
+	          LEFT JOIN product_analytics.autocomplete_user_properties_grouped aupg
+	              ON ap.project_id = aupg.project_id
+	              AND ap.property_name = aupg.property_name`
+	}
+
 	subquery := `SELECT ap.property_name AS name,
 	                 ap.display_name,
 	                 ap.description,
@@ -137,7 +148,8 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	                 sumMerge(aepg.data_count) AS data_count,
 	                 ap.query_count,
 	                 ap.created_at,
-	                 ap._edited_by_user
+	                 ap._edited_by_user,
+	                 ` + usersCountColumn + `
 	          FROM product_analytics.all_properties ap
 	          LEFT JOIN product_analytics.event_properties ep 
 	              ON ap.project_id = ep.project_id 
@@ -145,7 +157,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	              AND ap.auto_captured = ep.auto_captured_property
 	          LEFT JOIN product_analytics.autocomplete_event_properties_grouped aepg
 	              ON ap.project_id = aepg.project_id
-	              AND ap.property_name = aepg.property_name
+	              AND ap.property_name = aepg.property_name` + userJoin + `
 	          WHERE ap.project_id = ?`
 
 	args := []interface{}{projID}
@@ -184,7 +196,8 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		var status string
 		var dataCount *uint64
 		var queryCount uint32
-		if err := rows.Scan(&total, &property.Name, &property.DisplayName, &property.Description, &source, &valueType, &isEventProperty, &property.AutoCaptured, &status, &dataCount, &queryCount, &createdAt, &editedByUser); err != nil {
+		var usersCount uint64
+		if err := rows.Scan(&total, &property.Name, &property.DisplayName, &property.Description, &source, &valueType, &isEventProperty, &property.AutoCaptured, &status, &dataCount, &queryCount, &createdAt, &editedByUser, &usersCount); err != nil {
 			e.log.Error(ctx, "failed to scan distinct property for project %d, error: %v, query: %s", projID, err, query)
 			return nil, 0, fmt.Errorf("failed to scan property row: %w", err)
 		}
@@ -195,6 +208,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		} else {
 			property.Count = 0
 		}
+		property.UsersCount = usersCount
 		property.QueryCount = uint64(queryCount)
 		property.Status = status
 		property.CreatedAt = createdAt.UnixMilli()
