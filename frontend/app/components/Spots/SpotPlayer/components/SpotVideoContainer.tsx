@@ -63,15 +63,22 @@ function SpotVideoContainer({
           });
       }
     };
+    let intId;
     checkReady().then((isReady) => {
       if (!isReady) {
         setProcessingState(ProcessingState.Processing);
         setPrevIsProcessing(true);
-        const int = setInterval(() => {
+        let times = 0;
+        intId = setInterval(() => {
+          times += 1;
+          if (times >= 12) {
+            // after 1 min
+            clearInterval(intId);
+          }
           checkReady().then((r) => {
             if (r) {
               setProcessingState(ProcessingState.Ready);
-              clearInterval(int);
+              clearInterval(intId);
             }
           });
         }, 5000);
@@ -141,8 +148,10 @@ function SpotVideoContainer({
         startPlaying();
       }
     });
+
     return () => {
       hlsRef.current?.destroy();
+      clearInterval(intId);
     };
   }, []);
 
