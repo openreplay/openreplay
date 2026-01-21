@@ -4,7 +4,7 @@ controller:
   nginxplus: true
   image:
     repository: mycluster.icp:8500/kube-system/nginx-plus-ingress
-    tag: "5.2.1"
+    tag: "5.3.1"
   nodeSelector:
     beta.kubernetes.io/arch: "amd64"
     proxy: true

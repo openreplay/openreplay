@@ -1,4 +1,4 @@
-{{- if and .Values.controller.autoscaling.enabled (eq .Values.controller.kind "deployment") (.Capabilities.APIVersions.Has "autoscaling/v2") -}}
+{{- if and .Values.controller.autoscaling.enabled .Values.controller.autoscaling.create (eq .Values.controller.kind "deployment") (.Capabilities.APIVersions.Has "autoscaling/v2") -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

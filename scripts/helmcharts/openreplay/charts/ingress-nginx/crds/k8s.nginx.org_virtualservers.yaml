@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: virtualservers.k8s.nginx.org
 spec:
   group: k8s.nginx.org
@@ -1067,6 +1067,13 @@ spec:
                         is enabled. The default is set in the proxy-busy-buffers-size
                         ConfigMap key.'
                       type: string
+                    client-body-buffer-size:
+                      description: |-
+                        ClientBodyBufferSize sets the size of the buffer used for reading the client request body. Must be specified as a number followed by:
+                        'k' for kilobytes or 'm' for megabytes.
+                        Examples: "10m" or "512k".
+                      pattern: ^\d+[kKmM]?$
+                      type: string
                     client-max-body-size:
                       description: Sets the maximum allowed size of the client request
                         body. The default is set in the client-max-body-size ConfigMap
@@ -1284,12 +1291,13 @@ spec:
                         ConfigMap key.
                       type: string
                     service:
-                      description: The name of a service. The service must belong
-                        to the same namespace as the resource. If the service doesn’t
-                        exist, NGINX will assume the service has zero endpoints and
-                        return a 502 response for requests for this upstream. For
-                        NGINX Plus only, services of type ExternalName are also supported
-                        .
+                      description: The name of a service. If the Service belongs to
+                        a different namespace than the VirtualServer or VirtualServerRoute,
+                        you need to include the namespace. For example, tea-namespace/tea.
+                        If the service doesn’t exist, NGINX will assume the service
+                        has zero endpoints and return a 502 response for requests
+                        for this upstream. For NGINX Plus only, services of type ExternalName
+                        are also supported in the same namespace.
                       type: string
                     sessionCookie:
                       description: The SessionCookie field configures session persistence

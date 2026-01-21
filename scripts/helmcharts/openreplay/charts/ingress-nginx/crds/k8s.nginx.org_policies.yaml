@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: policies.k8s.nginx.org
 spec:
   group: k8s.nginx.org
@@ -140,6 +140,29 @@ spec:
                     x-kubernetes-validations:
                     - message: 'allowed methods must be one of: GET, HEAD, POST'
                       rule: self.all(method, method in ['GET', 'HEAD', 'POST'])
+                  cacheBackgroundUpdate:
+                    default: false
+                    description: |-
+                      CacheBackgroundUpdate allows starting a background subrequest to update an expired cache item (proxy_cache_background_update).
+                      A stale cached response is returned to the client while the cache is being updated.
+                    type: boolean
+                  cacheKey:
+                    description: |-
+                      CacheKey defines a key for caching (proxy_cache_key).
+                      By default, close to "$scheme$proxy_host$uri$is_args$args".
+                      Must not contain command execution patterns: $(, `, ;, &&, ||
+                    maxLength: 1024
+                    type: string
+                    x-kubernetes-validations:
+                    - message: 'cache key must not contain command execution patterns:
+                        $(, `, ;, &&, ||'
+                      rule: '!self.contains(''$('') && !self.contains(''`'') && !self.contains('';'')
+                        && !self.contains(''&&'') && !self.contains(''||'')'
+                  cacheMinUses:
+                    description: CacheMinUses sets the number of requests after which
+                      the response will be cached (proxy_cache_min_uses).
+                    minimum: 1
+                    type: integer
                   cachePurgeAllow:
                     description: |-
                       CachePurgeAllow defines IP addresses or CIDR blocks allowed to purge cache.
@@ -148,6 +171,20 @@ spec:
                       Invalid in NGINX OSS (will be ignored).
                     items:
                       type: string
+                    type: array
+                  cacheRevalidate:
+                    default: false
+                    description: |-
+                      CacheRevalidate enables revalidation of expired cache items using conditional requests (proxy_cache_revalidate).
+                      Uses "If-Modified-Since" and "If-None-Match" header fields.
+                    type: boolean
+                  cacheUseStale:
+                    description: |-
+                      CacheUseStale determines in which cases a stale cached response can be used (proxy_cache_use_stale).
+                      Valid parameters: error, timeout, invalid_header, updating, http_500, http_502, http_503, http_504, http_403, http_404, http_429, off.
+                    items:
+                      type: string
+                    maxItems: 11
                     type: array
                   cacheZoneName:
                     description: |-
@@ -159,9 +196,34 @@ spec:
                   cacheZoneSize:
                     description: |-
                       CacheZoneSize defines the size of the cache zone. Must be a number followed by a size unit:
-                      'k' for kilobytes, 'm' for megabytes, or 'g' for gigabytes.
+                      'k' or 'K' for kilobytes, 'm' or 'M' for megabytes, or 'g' or 'G' for gigabytes.
                       Examples: "10m", "1g", "512k".
-                    pattern: ^[0-9]+[kmg]$
+                    pattern: ^[0-9]+[kmgKMG]$
+                    type: string
+                  conditions:
+                    description: Conditions defines when responses should not be cached
+                      or taken from cache.
+                    properties:
+                      bypass:
+                        description: |-
+                          Bypass defines conditions under which the response will not be taken from a cache (proxy_cache_bypass).
+                          If at least one value of the string parameters is not empty and is not equal to "0" then the response will not be taken from the cache.
+                        items:
+                          type: string
+                        type: array
+                      noCache:
+                        description: |-
+                          NoCache defines conditions under which the response will not be saved to a cache (proxy_no_cache).
+                          If at least one value of the string parameters is not empty and is not equal to "0" then the response will not be saved.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  inactive:
+                    description: |-
+                      Inactive sets the time after which cached data that are not accessed get removed from the cache (inactive parameter).
+                      By default, inactive is set to 10 minutes.
+                    pattern: ^[0-9]+[smhd]$
                     type: string
                   levels:
                     description: |-
@@ -171,6 +233,67 @@ spec:
                       Examples: "1:2", "2:2", "1:2:2".
                       Invalid: "3:1", "1:3", "1:2:3".
                     pattern: ^[12](?::[12]){0,2}$
+                    type: string
+                  lock:
+                    description: Lock configures cache locking to prevent multiple
+                      identical requests from populating the same cache element simultaneously.
+                    properties:
+                      age:
+                        description: |-
+                          Age sets the maximum time a cache lock can be held (proxy_cache_lock_age).
+                          If the last request passed to the proxied server for populating a new cache element has not completed for the specified time, one more request may be passed.
+                        pattern: ^[0-9]+[smhd]$
+                        type: string
+                      enable:
+                        default: false
+                        description: |-
+                          Enable sets whether cache locking is enabled (proxy_cache_lock).
+                          When enabled, only one request at a time will be allowed to populate a new cache element according to the proxy_cache_key.
+                        type: boolean
+                      timeout:
+                        description: |-
+                          Timeout sets a timeout for proxy_cache_lock.
+                          When the time expires, the request will be passed to the proxied server, however, the response will not be cached.
+                        pattern: ^[0-9]+[smhd]$
+                        type: string
+                    type: object
+                    x-kubernetes-validations:
+                    - message: timeout or age require enable=true
+                      rule: (!has(self.timeout) && !has(self.age)) || self.enable
+                  manager:
+                    description: Manager configures the cache manager process parameters
+                      (manager_files, manager_sleep, manager_threshold).
+                    properties:
+                      files:
+                        description: |-
+                          Files sets the maximum number of files that will be deleted in one iteration by the cache manager.
+                          During one iteration no more than manager_files items are deleted (by default, 100).
+                        minimum: 1
+                        type: integer
+                      sleep:
+                        description: |-
+                          Sleep sets the pause between cache manager iterations.
+                          Between iterations, a pause configured by manager_sleep (by default, 50 milliseconds) is made.
+                        pattern: ^[0-9]+[mu]?s$
+                        type: string
+                      threshold:
+                        description: |-
+                          Threshold sets the maximum duration of one cache manager iteration.
+                          The duration of one iteration is limited by manager_threshold (by default, 200 milliseconds).
+                        pattern: ^[0-9]+[mu]?s$
+                        type: string
+                    type: object
+                  maxSize:
+                    description: |-
+                      MaxSize sets the maximum cache size (max_size parameter).
+                      When the size is exceeded, the cache manager removes the least recently used data.
+                    pattern: ^[0-9]+[kmgKMG]$
+                    type: string
+                  minFree:
+                    description: |-
+                      MinFree sets the minimum amount of free space required on the file system with cache (min_free parameter).
+                      When there is not enough free space, the cache manager removes the least recently used data.
+                    pattern: ^[0-9]+[kmgKMG]$
                     type: string
                   overrideUpstreamCache:
                     default: false
@@ -188,6 +311,13 @@ spec:
                       Examples: "30s", "5m", "1h", "2d".
                     pattern: ^[0-9]+[smhd]$
                     type: string
+                  useTempPath:
+                    default: false
+                    description: |-
+                      UseTempPath controls whether temporary files and the cache are put on different file systems (use_temp_path parameter).
+                      If set to false, temporary files will be put directly in the cache directory (use_temp_path=off).
+                      Default: false (use_temp_path=off, which puts temp files directly in cache directory for better performance).
+                    type: boolean
                 required:
                 - cacheZoneName
                 - cacheZoneSize
@@ -304,12 +434,31 @@ spec:
                       server. If not set, the hostname from the ``jwksURI`` will be
                       used.
                     type: string
+                  sslVerify:
+                    default: false
+                    description: Enables verification of the JWKS server SSL certificate.
+                      Default is false.
+                    type: boolean
+                  sslVerifyDepth:
+                    default: 1
+                    description: Sets the verification depth in the JWKS server certificates
+                      chain. The default is 1.
+                    minimum: 0
+                    type: integer
                   token:
                     description: 'The token specifies a variable that contains the
                       JSON Web Token. By default the JWT is passed in the Authorization
                       header as a Bearer Token. JWT may be also passed as a cookie
                       or a part of a query string, for example: $cookie_auth_token.
                       Accepted variables are $http_, $arg_, $cookie_.'
+                    type: string
+                  trustedCertSecret:
+                    description: The name of the Kubernetes secret that stores the
+                      CA certificate for JWKS server verification. It must be in the
+                      same namespace as the Policy resource. The secret must be of
+                      the type nginx.org/ca, and the certificate must be stored in
+                      the secret under the key ca.crt.
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                     type: string
                 type: object
               oidc:
@@ -371,9 +520,28 @@ spec:
                       with a + sign, for example openid+profile+email, openid+email+userDefinedScope.
                       The default is openid.
                     type: string
+                  sslVerify:
+                    default: false
+                    description: Enables verification of the IDP server SSL certificate.
+                      Default is false.
+                    type: boolean
+                  sslVerifyDepth:
+                    default: 1
+                    description: Sets the verification depth in the IDP server certificates
+                      chain. The default is 1.
+                    minimum: 0
+                    type: integer
                   tokenEndpoint:
                     description: URL for the token endpoint provided by your OpenID
                       Connect provider.
+                    type: string
+                  trustedCertSecret:
+                    description: The name of the Kubernetes secret that stores the
+                      CA certificate for IDP server verification. It must be in the
+                      same namespace as the Policy resource. The secret must be of
+                      the type nginx.org/ca, and the certificate must be stored in
+                      the secret under the key ca.crt.
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                     type: string
                   zoneSyncLeeway:
                     description: Specifies the maximum timeout in milliseconds for
@@ -381,6 +549,9 @@ spec:
                       Controller pods. The default is 200.
                     type: integer
                 type: object
+                x-kubernetes-validations:
+                - message: trustedCertSecret can be set only if sslVerify is true
+                  rule: (self.sslVerify == true) || (self.sslVerify == false && !has(self.trustedCertSecret))
               rateLimit:
                 description: The rate limit policy controls the rate of processing
                   requests per a defined key.

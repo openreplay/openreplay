@@ -84,7 +84,7 @@ controller:
         repository: private-registry.nginx.com/nap/waf-enforcer
 
         ## The tag of the App Protect WAF v5 Enforcer image.
-        tag: "5.9.0"
+        tag: "5.10.0"
         ## The digest of the App Protect WAF v5 Enforcer image.
         ## If digest is specified it has precedence over tag and will be used instead
         # digest: "sha256:CHANGEME"
@@ -100,7 +100,7 @@ controller:
         repository: private-registry.nginx.com/nap/waf-config-mgr
 
         ## The tag of the App Protect WAF v5 Configuration Manager image.
-        tag: "5.9.0"
+        tag: "5.10.0"
         ## The digest of the App Protect WAF v5 Configuration Manager image.
         ## If digest is specified it has precedence over tag and will be used instead
         # digest: "sha256:CHANGEME"
@@ -176,7 +176,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
-    # tag: "5.2.1"
+    # tag: "5.3.1"
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
     # digest: "sha256:CHANGEME"
@@ -243,6 +243,8 @@ controller:
   autoscaling:
     ## Enables HorizontalPodAutoscaling.
     enabled: false
+    ## Create the HorizontalPodAutoscaler resource.  This can be set to false to manage the HPA externally.
+    create: true
     ## The annotations of the Ingress Controller HorizontalPodAutoscaler.
     annotations: {}
     ## Minimum number of replicas for the HPA.

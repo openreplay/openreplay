@@ -39,7 +39,8 @@ spec:
   ipFamilyPolicy: {{ .Values.controller.service.ipFamilyPolicy }}
   {{- end }}
   {{- if .Values.controller.service.ipFamilies }}
-  ipFamilies: {{ .Values.controller.service.ipFamilies }}
+  ipFamilies:
+{{ toYaml .Values.controller.service.ipFamilies | indent 4 }}
   {{- end }}
   ports:
 {{- if .Values.controller.service.customPorts }}
