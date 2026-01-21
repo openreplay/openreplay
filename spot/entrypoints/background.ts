@@ -72,7 +72,7 @@ export default defineBackground(() => {
     useHook: "",
     preview: "",
     base64data: "",
-    mtype: "video/mp4",
+    mtype: "video/webm",
     duration: 100,
     network: [],
     logs: [],
@@ -576,7 +576,7 @@ export default defineBackground(() => {
         useHook: "",
         preview: "",
         base64data: "",
-        mtype: "video/mp4",
+        mtype: "video/webm",
         duration: 100,
         network: [],
         logs: [],
@@ -888,7 +888,7 @@ export default defineBackground(() => {
                   const vPromise = fetch(videoURL, {
                     method: "PUT",
                     headers: {
-                      "Content-Type": "video/mp4",
+                      "Content-Type": "video/webm",
                     },
                     body: blob,
                   });

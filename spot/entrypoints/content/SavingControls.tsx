@@ -153,7 +153,7 @@ function SavingControls({
   });
   if (videoData() === undefined) {
     getVideoData().then(async (data: Record<string, any>) => {
-      const mime = data.mtype || 'video/mp4';
+      const mime = data.mtype || 'video/webm';
 
       const blob = base64ToBlob(data.base64data, mime);
 

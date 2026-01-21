@@ -11,7 +11,9 @@ export function safeApiUrl(url: string) {
   return str;
 }
 
-export const base64ToBlob = (base64OrParts: string | string[], mime = 'video/mp4') => {
+export const base64ToBlob = (base64OrParts: string | string[], mime = 'video/webm') => {
+  try {
+
   const parts = Array.isArray(base64OrParts) ? base64OrParts : [base64OrParts];
 
   const normalized = parts.map((p) => {
@@ -43,4 +45,9 @@ export const base64ToBlob = (base64OrParts: string | string[], mime = 'video/mp4
   }
 
   return new Blob([merged], { type: mime });
+
+  } catch (e) {
+    console.error("base64ToBlob error:", e, base64OrParts, mime);
+    throw e;
+  }
 };
