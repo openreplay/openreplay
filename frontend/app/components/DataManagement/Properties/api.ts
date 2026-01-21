@@ -3,6 +3,7 @@ import { client } from '@/mstore';
 export interface DistinctProperty {
   autoCaptured: boolean;
   count: number;
+  usersCount?: number;
   createdAt: number;
   dataType: string;
   description: string;

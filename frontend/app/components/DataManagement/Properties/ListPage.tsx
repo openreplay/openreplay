@@ -87,7 +87,10 @@ function ListPage() {
           fields: {
             displayName: { value: pickedUserProp.displayName, readonly: false },
             description: { value: pickedUserProp.description, readonly: false },
-            volume: { value: pickedUserProp.count.toString(), readonly: true },
+            volume: {
+              value: pickedUserProp.usersCount?.toString() ?? 0,
+              readonly: true,
+            },
             type: { value: pickedUserProp.type, readonly: true },
           },
         };
@@ -299,10 +302,10 @@ function UserPropsList({
     },
     {
       title: '# Users',
-      dataIndex: 'count',
-      key: 'count',
+      dataIndex: 'usersCount',
+      key: 'usersCount',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.count - b.count,
+      sorter: (a, b) => a.usersCount - b.usersCount,
       render: (text: string) => (
         <span>{numberFormatter.format(Number(text))}</span>
       ),

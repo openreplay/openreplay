@@ -41,11 +41,12 @@ function EventsListPage() {
     setPage(page);
   };
   const list = React.useMemo(() => {
+    const sortedList = data.events.sort((a, b) => b.count - a.count);
     if (shownEvent) return [];
     if (!query) {
-      return data.events.slice((page - 1) * limit, page * limit);
+      return sortedList.slice((page - 1) * limit, page * limit);
     }
-    const filtered = data.events.filter(
+    const filtered = sortedList.filter(
       (event) =>
         event.name.toLowerCase().includes(query.toLowerCase()) ||
         event.displayName.toLowerCase().includes(query.toLowerCase()) ||
