@@ -79,10 +79,15 @@ function EditableField({
   const { t } = useTranslation();
   const [inputValue, setInputValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
+  const formatter = new Intl.NumberFormat(navigator.language || 'en-US');
 
   const handleSave = () => {
     onSave({ key: rawName, value: inputValue });
     setIsEdit(false);
+  };
+
+  const formatNumbers = (text: string) => {
+    return text.replace(/\d+/g, (num) => formatter.format(Number(num)));
   };
   return (
     <div
@@ -116,7 +121,10 @@ function EditableField({
           </div>
         ) : (
           <div className={'flex items-center justify-between'}>
-            <TextEllipsis text={inputValue || 'N/A'} maxWidth={'900px'} />
+            <TextEllipsis
+              text={formatNumbers(inputValue) || 'N/A'}
+              maxWidth={'900px'}
+            />
             {readonly ? null : (
               <div
                 className={'cursor-pointer text-main'}
