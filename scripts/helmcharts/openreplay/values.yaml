@@ -68,6 +68,11 @@ ingress-nginx:
           }
         server-tokens: "false"
         server-snippets: |-
+          # Keep k8s ingress compatible health check for LB
+          location /healthz {
+            access_log off;
+            return 200 "ok";
+          }
           # Security headers
           add_header X-XSS-Protection "1; mode=block" always;
           add_header X-Content-Type-Options "nosniff" always;
