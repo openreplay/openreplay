@@ -45,7 +45,9 @@ export default function LiveStatusText({ text, concetionStatus }: Props) {
               {t('Waiting for the session to become active...')}
             </div>
             <div className="text-sm">
-              {t("If it's taking too much time, it could mean the user is simply inactive.")}
+              {t(
+                "If it's taking too much time, it could mean the user is simply inactive.",
+              )}
             </div>
           </div>
         );
@@ -63,7 +65,9 @@ export default function LiveStatusText({ text, concetionStatus }: Props) {
               {t('Waiting for the session to become active...')}
             </div>
             <div className="text-sm">
-              {t("If it's taking too much time, it could mean the user is simply inactive")}
+              {t(
+                "If it's taking too much time, it could mean the user is simply inactive",
+              )}
               .
             </div>
           </div>

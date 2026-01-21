@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from 'App/routing';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { Icon } from 'UI';
 import { getInitials } from 'App/utils';
@@ -9,18 +9,15 @@ import { useTranslation } from 'react-i18next';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
-interface Props {
-  history: any;
-}
-function UserMenu(props: Props) {
+function UserMenu() {
   const { t } = useTranslation();
-  const { history }: any = props;
+  const navigate = useNavigate();
   const { loginStore, userStore } = useStore();
   const { account } = userStore;
   const onLogoutClick = userStore.logout;
 
   const onAccountClick = () => {
-    history.push(CLIENT_PATH);
+    navigate(CLIENT_PATH);
   };
 
   const onLogout = () => {
@@ -67,4 +64,4 @@ function UserMenu(props: Props) {
   );
 }
 
-export default withRouter(observer(UserMenu));
+export default observer(UserMenu);

@@ -165,6 +165,7 @@ function ExceptionsCont() {
                     className="color-teal underline"
                     target="_blank"
                     href="https://docs.openreplay.com/deployment/upload-sourcemaps"
+                    rel="noreferrer"
                   >
                     {t('Upload Source Maps')}{' '}
                   </a>

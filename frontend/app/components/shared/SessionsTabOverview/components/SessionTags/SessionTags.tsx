@@ -100,7 +100,7 @@ const SessionTagsSelect = observer(() => {
 });
 
 function SessionTags() {
-  const isMobileDevice = mobileScreen
+  const isMobileDevice = mobileScreen;
 
   return isMobileDevice ? <SessionTagsSelect /> : <SegmentedSessionTags />;
 }

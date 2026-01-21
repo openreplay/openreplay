@@ -51,10 +51,7 @@ class CustomFieldStore {
       const response = await customFieldService.fetchList(siteId);
       clearMetaFilters();
       response.forEach((item: any) => {
-        const calls = [
-          addElementToFiltersMap,
-          addElementToLiveFiltersMap,
-        ];
+        const calls = [addElementToFiltersMap, addElementToLiveFiltersMap];
         calls.forEach((call) => {
           call(FilterCategory.METADATA, `_${item.key}`);
         });

@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { FilterKey } from 'Types/filter/filterType';
-import { Prompt, useHistory, useLocation } from 'react-router';
+import { Prompt, useHistory, useLocation } from 'App/routing';
 import {
   TIMESERIES,
   TABLE,
@@ -96,7 +96,7 @@ function WidgetView({
         };
 
         if (selectedCard.filters) {
-          const filters = []
+          const filters = [];
           for (const filter of selectedCard.filters) {
             const f = filterStore.findEvent({
               name: filter.name,

@@ -3,7 +3,7 @@ import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Icon } from 'UI';
 import { Button } from 'antd';
-import { useLocation, withRouter } from 'react-router-dom';
+import { useLocation, withRouter } from 'App/routing';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';

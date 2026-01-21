@@ -6,10 +6,7 @@ import {
 } from 'Components/Session/playerContext';
 import { useStore } from '@/mstore';
 import { Switch, Tooltip } from 'antd';
-import {
-  CaretRightOutlined,
-  PauseOutlined,
-} from '@ant-design/icons';
+import { CaretRightOutlined, PauseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 function AutoplayToggle() {

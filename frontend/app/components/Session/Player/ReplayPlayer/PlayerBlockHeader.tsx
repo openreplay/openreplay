@@ -1,6 +1,6 @@
 import { useStore } from 'App/mstore';
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { withRouter } from 'App/routing';
 import {
   sessions as sessionsRoute,
   liveSession as liveSessionRoute,

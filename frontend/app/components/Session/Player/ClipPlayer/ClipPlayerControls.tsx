@@ -4,7 +4,7 @@ import { PlayButton, PlayingState } from '@/player-ui';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { Button } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { CirclePlay } from 'lucide-react';
 import { withSiteId } from '@/routes';
 import * as routes from '@/routes';
@@ -50,7 +50,7 @@ function ClipPlayerControls({
       <Timeline range={range} />
       <Button size="small" type="primary" onClick={showFullSession}>
         {isFull ? t('Open Session') : t('Play Full Session')}
-        <CirclePlay size={16} style={{ marginLeft: '0px'}} />
+        <CirclePlay size={16} style={{ marginLeft: '0px' }} />
       </Button>
     </div>
   );

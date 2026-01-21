@@ -8,7 +8,7 @@ import {
   ILivePlayerContext,
 } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'App/routing';
 import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 import styles from 'Components/Session_/Player/Controls/controls.module.css';

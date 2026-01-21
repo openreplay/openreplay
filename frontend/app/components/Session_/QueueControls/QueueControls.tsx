@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { withSiteId, session as sessionRoute } from 'App/routes';
 import AutoplayToggle from 'Shared/AutoplayToggle/AutoplayToggle';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import cn from 'classnames';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';

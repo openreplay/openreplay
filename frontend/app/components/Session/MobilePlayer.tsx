@@ -7,7 +7,7 @@ import { useStore } from 'App/mstore';
 import MobilePlayerHeader from 'Components/Session/Player/MobilePlayer/MobilePlayerHeader';
 import { observer } from 'mobx-react-lite';
 import { Note } from 'App/services/NotesService';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'App/routing';
 import { toast } from 'react-toastify';
 import PlayerErrorBoundary from 'Components/Session/Player/PlayerErrorBoundary';
 import {

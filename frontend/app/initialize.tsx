@@ -1,27 +1,29 @@
-import './styles/index.css';
-import './styles/global.css';
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import './init';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import { DndProvider } from 'react-dnd';
-import {
-  ConfigProvider,
-  App,
-  theme as antdTheme,
-  ThemeConfig,
-  Empty,
-} from 'antd';
-import { BrowserRouter } from 'react-router-dom';
-import { Notification, MountPoint, Icon } from 'UI';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  App,
+  ConfigProvider,
+  Empty,
+  ThemeConfig,
+  theme as antdTheme,
+} from 'antd';
+import React from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { createRoot } from 'react-dom/client';
+
+import { BrowserRouter } from 'App/routing';
+import { MountPoint, Notification } from 'UI';
+
+import ENV from '../env';
+import Router from './Router';
+import { ThemeProvider, useTheme } from './ThemeContext';
 import AnimatedSVG from './components/shared/AnimatedSVG';
 import { ICONS } from './components/shared/AnimatedSVG/AnimatedSVG';
-import { StoreProvider, RootStore } from './mstore';
-import Router from './Router';
 import './i18n';
-import { ThemeProvider, useTheme } from './ThemeContext';
-import ENV from '../env';
+import './init';
+import { RootStore, StoreProvider } from './mstore';
+import './styles/global.css';
+import './styles/index.css';
 
 (window as any).env = (window as any).env ?? {};
 (window as any).env.PRODUCTION = ENV.NODE_ENV === 'production';

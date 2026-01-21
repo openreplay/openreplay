@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import SessionItem from 'Shared/SessionItem';
 import jsPDF from 'jspdf';
 import html2canvas from '@codewonders/html2canvas';
-import { replaceEmojisWithImages, waitForImages } from './pdfUtils'
+import { replaceEmojisWithImages, waitForImages } from './pdfUtils';
 
 function ChatMsg({
   siteId,

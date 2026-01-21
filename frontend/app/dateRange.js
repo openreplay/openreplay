@@ -21,7 +21,7 @@ const LONG_RANGE_LABELS = {
   LAST_3_MONTHS: 'Last 3 Months',
   LAST_YEAR: 'Last Year',
   CUSTOM_RANGE: 'Custom Range',
-}
+};
 
 const COMPARISON_DATE_RANGE_LABELS = {
   PREV_24_HOURS: 'Previous Day',
@@ -43,28 +43,28 @@ Object.keys(LONG_RANGE_LABELS).forEach((key) => {
 export { DATE_RANGE_VALUES, LONG_RANGE_LABELS };
 export const dateRangeValues = Object.keys(DATE_RANGE_VALUES);
 
-export const DATE_RANGE_OPTIONS =
-  Object.keys(DATE_RANGE_LABELS).map((key) => ({
-    label: DATE_RANGE_LABELS[key],
-    value: key,
-  }));
-export const LONG_DATE_RANGE_OPTIONS =
-  Object.keys(LONG_RANGE_LABELS).map((key) => ({
+export const DATE_RANGE_OPTIONS = Object.keys(DATE_RANGE_LABELS).map((key) => ({
+  label: DATE_RANGE_LABELS[key],
+  value: key,
+}));
+export const LONG_DATE_RANGE_OPTIONS = Object.keys(LONG_RANGE_LABELS).map(
+  (key) => ({
     label: LONG_RANGE_LABELS[key],
     value: key,
-  }));
+  }),
+);
 
-export const DATE_RANGE_COMPARISON_OPTIONS =
-  Object.keys(COMPARISON_DATE_RANGE_LABELS).map((key) => ({
-    label: COMPARISON_DATE_RANGE_LABELS[key],
-    value: key,
-  }));
+export const DATE_RANGE_COMPARISON_OPTIONS = Object.keys(
+  COMPARISON_DATE_RANGE_LABELS,
+).map((key) => ({
+  label: COMPARISON_DATE_RANGE_LABELS[key],
+  value: key,
+}));
 
 export function getDateRangeLabel(value, t) {
   const string = DATE_RANGE_LABELS[value] ?? LONG_RANGE_LABELS[value];
   return t(string);
 }
-
 
 export function getDateRangeFromValue(value) {
   const tz = JSON.parse(localStorage.getItem(TIMEZONE));
@@ -126,7 +126,10 @@ export function getDateRangeFromValue(value) {
     //   return Interval.fromDateTimes(now, now);
     case LONG_RANGE_VALUES.LAST_YEAR:
       const lastYear = now.minus({ years: 1 });
-      return Interval.fromDateTimes(lastYear.startOf('year'), lastYear.endOf('year'));
+      return Interval.fromDateTimes(
+        lastYear.startOf('year'),
+        lastYear.endOf('year'),
+      );
     case LONG_RANGE_VALUES.LAST_3_MONTHS:
       return Interval.fromDateTimes(
         now.minus({ months: 3 }).startOf('month'),

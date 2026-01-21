@@ -2,7 +2,7 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { BackLink } from 'UI';
 import { observer } from 'mobx-react-lite';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'App/routing';
 import { liveSession, assist, withSiteId, multiview } from 'App/routes';
 import AssistSessionsModal from 'App/components/Session_/Player/Controls/AssistSessionsModal';
 import { useModal } from 'App/components/Modal';

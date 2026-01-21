@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Space } from 'antd';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 import { useStore } from 'App/mstore';
 import { HEATMAP } from 'App/constants/card';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
@@ -83,7 +83,11 @@ function CreateCard(props: Props) {
           ) : null}
           <div className="text-xl leading-4 font-medium">{metric.name}</div>
         </Space>
-        <Button type="primary" id="create-card-btn" onClick={createDashboardAndAddCard}>
+        <Button
+          type="primary"
+          id="create-card-btn"
+          onClick={createDashboardAndAddCard}
+        >
           <Space>
             {t('Create')} <ArrowRight size={14} />
           </Space>

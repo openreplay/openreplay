@@ -22,7 +22,7 @@ function PlayIconLayer({
   onStop,
   onJumpForward,
   onJumpBackward,
-  }: Props) {
+}: Props) {
   const [showPlayOverlayIcon, setShowPlayOverlayIcon] = useState(false);
 
   const leftLastTap = React.useRef(0);
@@ -36,7 +36,7 @@ function PlayIconLayer({
   const togglePlayAnimated = () => {
     playAnimation();
     isPlaying ? onStop() : onPlay();
-  }
+  };
 
   const doubleLeft = () => {
     onJumpForward();
@@ -99,7 +99,11 @@ function PlayIconLayer({
           [cls.zoomIcon]: showPlayOverlayIcon,
         })}
       >
-        <Icon name={isPlaying ? 'play' : 'pause'} color="gray-medium" size={30} />
+        <Icon
+          name={isPlaying ? 'play' : 'pause'}
+          color="gray-medium"
+          size={30}
+        />
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ import {
   CATEGORIES,
   WEBVITALS,
 } from 'App/constants/card';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';

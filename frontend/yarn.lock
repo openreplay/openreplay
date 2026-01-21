@@ -1400,10 +1400,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.24.4, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
   version: 7.28.6
   resolution: "@babel/runtime@npm:7.28.6"
   checksum: 10c1/d920ce6fb33e8af98ae0439ea9e4bb9bff222c1e2bff9377176344354eeb64c6624dc2f887c6fc215277686eda4a2e831a308b64f4f0964883432b58f4a54a93
+=======
+"@babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.24.4, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
+  version: 7.28.2
+  resolution: "@babel/runtime@npm:7.28.2"
+  checksum: 10c1/de58f8dd49c21e01da8509e111dd1e8c79710a96acf69ab2bebde4d29885eddfb11912dfba7655974aab9f6e22165f39227ca09d00b1b65d1ea03adc509e5054
+>>>>>>> 233a41e0e (ui: upgrade router to latest, fix linter errors)
   languageName: node
   linkType: hard
 
@@ -4787,13 +4794,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/history@npm:^4.7.11":
-  version: 4.7.11
-  resolution: "@types/history@npm:4.7.11"
-  checksum: 10c1/c50fc0654a54a93f6e5ec229794851be38a3e1369dafab1bcd305f05360a51901316e0ba6d5f3f360226f8a3e0b5590305465f7ba158fd65e1955edb348602e2
-  languageName: node
-  linkType: hard
-
 "@types/istanbul-lib-coverage@npm:*, @types/istanbul-lib-coverage@npm:^2.0.0, @types/istanbul-lib-coverage@npm:^2.0.1, @types/istanbul-lib-coverage@npm:^2.0.6":
   version: 2.0.6
   resolution: "@types/istanbul-lib-coverage@npm:2.0.6"
@@ -4929,27 +4929,6 @@ __metadata:
   peerDependencies:
     "@types/react": ^19.2.0
   checksum: 10c1/cff22b787ae78a9d664cf24e980d15b01d88ea31704a8eab0b162d708aaf8245158d79b238402d3f700a0c98d1d2e53140bf5cc2a59fc1aa86c6b9fda717fa25
-  languageName: node
-  linkType: hard
-
-"@types/react-router-dom@npm:^5.3.3":
-  version: 5.3.3
-  resolution: "@types/react-router-dom@npm:5.3.3"
-  dependencies:
-    "@types/history": "npm:^4.7.11"
-    "@types/react": "npm:*"
-    "@types/react-router": "npm:*"
-  checksum: 10c1/b8a3e0d2b3cf8c1466e1379ef41c0a6663ac6d530989666967e310c7a3699dfeb0e5e1a5157cffb10d480c622a3ef8cd7072fa5676f0134b053aee84e7b13947
-  languageName: node
-  linkType: hard
-
-"@types/react-router@npm:*":
-  version: 5.1.20
-  resolution: "@types/react-router@npm:5.1.20"
-  dependencies:
-    "@types/history": "npm:^4.7.11"
-    "@types/react": "npm:*"
-  checksum: 10c1/aea8d9b20a8906490c3456ba66fb4b405914ace41e93f8c06ffe75aefcb4a4046dbd71089fd4ebf6e6a7f22fa6ade5837545dd220185775f1f498ace367a463c
   languageName: node
   linkType: hard
 
@@ -6762,6 +6741,13 @@ __metadata:
   version: 2.0.0
   resolution: "convert-source-map@npm:2.0.0"
   checksum: 10c1/2edb31953b0e21698762cf680707c0eaec78e04e9c0f5fa743b36dba8c724640b88173e63238e371183bb7f29c86dea9038d082d9762084acc52e52787d5d37c
+  languageName: node
+  linkType: hard
+
+"cookie@npm:^1.0.1":
+  version: 1.1.1
+  resolution: "cookie@npm:1.1.1"
+  checksum: 10c1/5e797be902be2e8be9d9d74f4a5a81359a3adf84650ce1cf3d51e76d7deb99d4c566954873f1c70aae798c571a915f53a728456c123840cc55f87b56e2acbe0b
   languageName: node
   linkType: hard
 
@@ -9269,6 +9255,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "history@npm:^4.9.0":
   version: 4.10.1
   resolution: "history@npm:4.10.1"
@@ -9284,6 +9271,16 @@ __metadata:
   linkType: hard
 
 "hoist-non-react-statics@npm:^3.1.0, hoist-non-react-statics@npm:^3.3.0, hoist-non-react-statics@npm:^3.3.1, hoist-non-react-statics@npm:^3.3.2":
+=======
+"hls.js@npm:^1.6.15":
+  version: 1.6.15
+  resolution: "hls.js@npm:1.6.15"
+  checksum: 10c1/135be300ea09e436b2ce39cac4bc244e926fdfc5747894937b2751b0f3cc26935d7a9bf72b6ecf7730122b4cc31877229e77bf9050dfd102f46e1b15883e6a76
+  languageName: node
+  linkType: hard
+
+"hoist-non-react-statics@npm:^3.3.0, hoist-non-react-statics@npm:^3.3.1, hoist-non-react-statics@npm:^3.3.2":
+>>>>>>> 233a41e0e (ui: upgrade router to latest, fix linter errors)
   version: 3.3.2
   resolution: "hoist-non-react-statics@npm:3.3.2"
   dependencies:
@@ -9970,13 +9967,6 @@ __metadata:
     call-bound: "npm:^1.0.3"
     get-intrinsic: "npm:^1.2.6"
   checksum: 10c1/8297c82a59c156c8469ce5cc6dd7c6e199a1b71134d7f3cbc12829928469034e77dcbc77a959a5015672061fa2cbf72446e3995b748740ad597ee0782ad5d9ed
-  languageName: node
-  linkType: hard
-
-"isarray@npm:0.0.1":
-  version: 0.0.1
-  resolution: "isarray@npm:0.0.1"
-  checksum: 10c1/abd2b120df9b6e06385e1d2d109dc4eabac0b950e1a02448cde7416691462d809c32d2acdd28d6c2e2ede3527e6251debc9a56f7c7c8515da4ead1993f6ba514
   languageName: node
   linkType: hard
 
@@ -11374,7 +11364,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.2.0, loose-envify@npm:^1.3.1, loose-envify@npm:^1.4.0":
+"loose-envify@npm:^1.0.0, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -12678,10 +12668,16 @@ __metadata:
     "@types/prismjs": "npm:^1.26.5"
     "@types/react": "npm:^19.2.13"
     "@types/react-confirm": "npm:^0.2.3"
+<<<<<<< HEAD
     "@types/react-dom": "npm:^19.2.3"
     "@types/react-router-dom": "npm:^5.3.3"
     "@typescript-eslint/eslint-plugin": "npm:^8.54.0"
     "@typescript-eslint/parser": "npm:^8.54.0"
+=======
+    "@types/react-dom": "npm:^19.2.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.45.0"
+    "@typescript-eslint/parser": "npm:^8.45.0"
+>>>>>>> 233a41e0e (ui: upgrade router to latest, fix linter errors)
     "@wojtekmaj/react-daterange-picker": "npm:^7.0.0"
     antd: "npm:6.2.3"
     autoprefixer: "npm:^10.4.24"
@@ -12748,8 +12744,7 @@ __metadata:
     react-i18next: "npm:^15.7.4"
     react-intersection-observer: "npm:^9.16.0"
     react-markdown: "npm:^10.1.0"
-    react-router: "npm:^5.3.4"
-    react-router-dom: "npm:^5.3.4"
+    react-router: "npm:^7.12.0"
     react-select: "npm:^5.10.2"
     react-svg-map: "npm:^2.2.0"
     react-toastify: "npm:^11.0.5"
@@ -13025,15 +13020,6 @@ __metadata:
     lru-cache: "npm:^11.0.0"
     minipass: "npm:^7.1.2"
   checksum: 10c1/9ec96c9d70bdc2b9340134d344e7266b09f5feb60fed9d3f168f3d01329c93e98efda2734f74b7dd726daea7a8b1ac72b68e551f289a5447a30d4955982d06af
-  languageName: node
-  linkType: hard
-
-"path-to-regexp@npm:^1.7.0":
-  version: 1.9.0
-  resolution: "path-to-regexp@npm:1.9.0"
-  dependencies:
-    isarray: "npm:0.0.1"
-  checksum: 10c1/79d0f8f5221b7d1a2c3de08775f7ea158ef7bd978e9ed3c6b0813a89ffcc59edb9eee435913ce73e2aad99384b7101d40d81dfe312cf2f54da53990305108695
   languageName: node
   linkType: hard
 
@@ -14012,7 +13998,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.12.0, react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.7.0":
+"react-is@npm:^16.12.0, react-is@npm:^16.13.1, react-is@npm:^16.7.0":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: 10c1/b1d8be84f510ec19f3dc7cebd9790076f708943e333e03a26dfadc225bd36b3ac6bbdc94a19e1cd72f43d366de47e21fa04396aba0e86ae0e50610fb4c7a47c8
@@ -14062,39 +14048,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^5.3.4":
-  version: 5.3.4
-  resolution: "react-router-dom@npm:5.3.4"
+"react-router@npm:^7.12.0":
+  version: 7.12.0
+  resolution: "react-router@npm:7.12.0"
   dependencies:
-    "@babel/runtime": "npm:^7.12.13"
-    history: "npm:^4.9.0"
-    loose-envify: "npm:^1.3.1"
-    prop-types: "npm:^15.6.2"
-    react-router: "npm:5.3.4"
-    tiny-invariant: "npm:^1.0.2"
-    tiny-warning: "npm:^1.0.0"
+    cookie: "npm:^1.0.1"
+    set-cookie-parser: "npm:^2.6.0"
   peerDependencies:
-    react: ">=15"
-  checksum: 10c1/1a00acf223dc8ffb7eb6c189dcc858858c4df37b51dd92b5d38aca456b9813596094e19fdcdcc8044daad054c5392de051643988c217e3a296d1df803e5106f4
-  languageName: node
-  linkType: hard
-
-"react-router@npm:5.3.4, react-router@npm:^5.3.4":
-  version: 5.3.4
-  resolution: "react-router@npm:5.3.4"
-  dependencies:
-    "@babel/runtime": "npm:^7.12.13"
-    history: "npm:^4.9.0"
-    hoist-non-react-statics: "npm:^3.1.0"
-    loose-envify: "npm:^1.3.1"
-    path-to-regexp: "npm:^1.7.0"
-    prop-types: "npm:^15.6.2"
-    react-is: "npm:^16.6.0"
-    tiny-invariant: "npm:^1.0.2"
-    tiny-warning: "npm:^1.0.0"
-  peerDependencies:
-    react: ">=15"
-  checksum: 10c1/b920516e84fc10980a108b1ad368c4ebd3b5541c4de1bb071053c91ccc6410d1a7326aed6da6101d6728ca825ec661e73b87518078502e3a4879f5be924af2d6
+    react: ">=18"
+    react-dom: ">=18"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+  checksum: 10c1/42429171cc245d073ac94d4874f6c517b99cb6719d579ab43d09e7667d2808fc69759d16b16548b4ca220be0dbd23c6de8cc0d1c8a171158854ab4aec3b9169e
   languageName: node
   linkType: hard
 
@@ -14455,13 +14421,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve-pathname@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "resolve-pathname@npm:3.0.0"
-  checksum: 10c1/7951bb47cbfc98a2cc0e4b62a099ce4191f01e42557b048cf8bf857092e0719a4d021f9765d770ec8967630656f0a78c4b656908183d09dd680649d20d56851b
-  languageName: node
-  linkType: hard
-
 "resolve-pkg-maps@npm:^1.0.0":
   version: 1.0.0
   resolution: "resolve-pkg-maps@npm:1.0.0"
@@ -14707,6 +14666,13 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 10c1/06097882912596f3e4b522cd81be83956f3c561caded95898ec8f6cf0186fba1ec5be78b582a7e3a7ea906459920c1cc67180fced3af6a903a3bf2994bf4cea7
+  languageName: node
+  linkType: hard
+
+"set-cookie-parser@npm:^2.6.0":
+  version: 2.7.2
+  resolution: "set-cookie-parser@npm:2.7.2"
+  checksum: 10c1/8cf545cac3b076da20a4cc99afc9d267f6d4e68831c8313a648b2e2e17c395c31c9f3c0adc9f49bda48dce5686b0689a65fa8031356f5cf8f82d95208bfd24e4
   languageName: node
   linkType: hard
 
@@ -15509,13 +15475,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tiny-invariant@npm:^1.0.2, tiny-invariant@npm:^1.3.1":
+"tiny-invariant@npm:^1.3.1":
   version: 1.3.3
   resolution: "tiny-invariant@npm:1.3.3"
   checksum: 10c1/e9baa182794cfa0499134b3e7a886ab8be2e2cd15e070eedb81e2ae8ff379b8ddba146cb25093242c6768d127a93e7f2ce774c7be9a8035c1b34d02c9a5b0a8c
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "tiny-warning@npm:^1.0.0":
   version: 1.0.3
   resolution: "tiny-warning@npm:1.0.3"
@@ -15526,6 +15493,11 @@ __metadata:
 "tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.13, tinyglobby@npm:^0.2.14, tinyglobby@npm:^0.2.15":
   version: 0.2.15
   resolution: "tinyglobby@npm:0.2.15"
+=======
+"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.13, tinyglobby@npm:^0.2.7":
+  version: 0.2.14
+  resolution: "tinyglobby@npm:0.2.14"
+>>>>>>> 233a41e0e (ui: upgrade router to latest, fix linter errors)
   dependencies:
     fdir: "npm:^6.5.0"
     picomatch: "npm:^4.0.3"
@@ -16260,13 +16232,6 @@ __metadata:
     "@types/istanbul-lib-coverage": "npm:^2.0.1"
     convert-source-map: "npm:^2.0.0"
   checksum: 10c1/8d2790da11f29a477437d399b1437ceb6d761ca93f6fe77bbdc13f392da93078993f9123ef82ac85dd185c21252f1293760d46e0ec3049dd321605085a9d1283
-  languageName: node
-  linkType: hard
-
-"value-equal@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "value-equal@npm:1.0.1"
-  checksum: 10c1/90eacdf332d054e39b44e190d72c4975cf3daee09084e16146eb5ae8590683b11a097d552efe9a6bbb3ea56489a06e5ea02c20acba83c1a84e20912a864d7981
   languageName: node
   linkType: hard
 

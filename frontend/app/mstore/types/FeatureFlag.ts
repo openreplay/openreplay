@@ -39,7 +39,7 @@ export class Conditions {
   }
 
   toCaptureCondition() {
-    console.log(this.filter.filters)
+    console.log(this.filter.filters);
     return {
       name: this.name,
       captureRate: this.rolloutPercentage,

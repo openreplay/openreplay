@@ -8,7 +8,7 @@ import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import { useModal } from 'App/components/Modal';
 import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import EventDetailsModal from './EventDetailsModal';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'App/routing';
 import { dataManagement, withSiteId } from 'App/routes';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -24,7 +24,6 @@ import withPermissions from 'HOCs/withPermissions';
 import { getEventIcon } from './getEventIcon';
 import NewEventsBadge from './NewEventsBadge';
 import { Icon } from 'UI';
-import { useHistory } from 'react-router';
 import withPageTitle from '@/components/hocs/withPageTitle';
 import { useTranslation } from 'react-i18next';
 

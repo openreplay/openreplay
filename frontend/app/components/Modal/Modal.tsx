@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import cn from 'classnames';
-import { useHistory } from 'react-router';
+import { useLocation, useNavigationType } from 'App/routing';
 import ModalOverlay from './ModalOverlay';
 
 const DEFAULT_WIDTH = 350;
@@ -13,17 +13,16 @@ interface Props {
   width?: number;
 }
 function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
-  const history = useHistory();
+  const location = useLocation();
+  const navigationType = useNavigationType();
 
-  useEffect(() =>
-    history.listen((location) => {
-      if (history.action === 'POP') {
-        document.querySelector('body').style.overflow = 'visible';
-      } else if (history.action === 'PUSH') {
-        hideModal?.();
-      }
-    }),
-  );
+  useEffect(() => {
+    if (navigationType === 'POP') {
+      document.querySelector('body').style.overflow = 'visible';
+    } else if (navigationType === 'PUSH') {
+      hideModal?.();
+    }
+  }, [location.pathname, location.search, location.hash, navigationType, hideModal]);
 
   return component ? (
     ReactDOM.createPortal(

@@ -8,7 +8,10 @@ function NotesRoute() {
   const { t } = useTranslation();
 
   return (
-    <div className="mb-5 w-full mx-auto" style={{ maxWidth: PANEL_SIZES.maxWidth }}>
+    <div
+      className="mb-5 w-full mx-auto"
+      style={{ maxWidth: PANEL_SIZES.maxWidth }}
+    >
       <div className="widget-wrapper">
         <div className="flex items-center px-4 py-2 justify-between w-full border-b">
           <div className="flex items-center justify-end w-full">

@@ -2,7 +2,7 @@ import { Table, Typography } from 'antd';
 import type { TableProps } from 'antd';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { RouteComponentProps, withRouter } from 'App/routing';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';

@@ -1,15 +1,17 @@
-import React, { useEffect } from 'react';
-import { PageTitle } from 'UI';
-import { Button, Popover, Space, Dropdown, MenuProps } from 'antd';
-import { PlusOutlined, DownOutlined } from '@ant-design/icons';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { DROPDOWN_OPTIONS, CATEGORIES } from 'App/constants/card';
-import MetricsSearch from '../MetricsSearch';
-import AddCardSection from '../AddCardSection/AddCardSection';
+import { DownOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Dropdown, MenuProps, Popover, Space } from 'antd';
 import { TFunction } from 'i18next';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { CATEGORIES, DROPDOWN_OPTIONS } from 'App/constants/card';
+import { useStore } from 'App/mstore';
 import { mobileScreen } from 'App/utils/isMobile';
+import { PageTitle } from 'UI';
+
+import AddCardSection from '../AddCardSection/AddCardSection';
+import MetricsSearch from '../MetricsSearch';
 
 const options = (t: TFunction) => [
   {
@@ -63,8 +65,15 @@ function MetricViewHeader() {
 
           <div className="flex items-center gap-2 w-full">
             {showHeader && (
-              <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']}>
-                <Button type="text" size="small" className="mt-1! pl-0! md:pl-unset!">
+              <Dropdown
+                menu={{ items: menuItems, onClick: handleMenuClick }}
+                trigger={['click']}
+              >
+                <Button
+                  type="text"
+                  size="small"
+                  className="mt-1! pl-0! md:pl-unset!"
+                >
                   {options(t).find((opt) => opt.key === filter.type)?.label ||
                     t('Select Type')}
                   <DownOutlined />

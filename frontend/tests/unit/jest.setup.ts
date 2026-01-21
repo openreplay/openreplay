@@ -1,3 +1,15 @@
+import { TextDecoder, TextEncoder } from 'util';
+
+if (typeof globalThis.TextEncoder === 'undefined') {
+  // @ts-expect-error - Node's util.TextEncoder is compatible for our tests
+  globalThis.TextEncoder = TextEncoder;
+}
+
+if (typeof globalThis.TextDecoder === 'undefined') {
+  // @ts-expect-error - Node's util.TextDecoder is compatible for our tests
+  globalThis.TextDecoder = TextDecoder;
+}
+
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   value: jest.fn(() => ({
     canvas: {

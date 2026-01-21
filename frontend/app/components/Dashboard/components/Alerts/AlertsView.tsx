@@ -5,7 +5,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import withPageTitle from 'HOCs/withPageTitle';
 import { withSiteId, alertCreate } from 'App/routes';
 
-import { useHistory } from 'react-router';
+import { useLocation } from 'App/routing';
 import { useStore } from 'App/mstore';
 import AlertsList from './AlertsList';
 import AlertsSearch from './AlertsSearch';
@@ -19,17 +19,14 @@ interface IAlertsView {
 
 function AlertsView({ siteId }: IAlertsView) {
   const { t } = useTranslation();
-  const history = useHistory();
+  const location = useLocation();
   const { alertsStore } = useStore();
 
   useEffect(() => {
-    const unmount = history.listen((location) => {
-      if (!location.pathname.includes('/alert')) {
-        alertsStore.updateKey('page', 1);
-      }
-    });
-    return unmount;
-  }, [history]);
+    if (!location.pathname.includes('/alert')) {
+      alertsStore.updateKey('page', 1);
+    }
+  }, [location.pathname, alertsStore]);
 
   return (
     <div

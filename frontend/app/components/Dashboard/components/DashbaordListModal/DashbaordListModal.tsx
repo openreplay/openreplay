@@ -2,15 +2,15 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { SideMenuitem, Icon } from 'UI';
 import { withSiteId, dashboardSelected } from 'App/routes';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from 'App/routing';
 import { useModal } from 'App/components/Modal';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
   siteId: string;
-  history: any;
 }
 function DashbaordListModal(props: Props) {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { dashboardStore } = useStore();
   const { hideModal } = useModal();
@@ -23,7 +23,7 @@ function DashbaordListModal(props: Props) {
       dashboardSelected(dashboard.dashboardId),
       parseInt(props.siteId),
     );
-    props.history.push(path);
+    navigate(path);
     hideModal();
   };
   return (
@@ -57,4 +57,4 @@ function DashbaordListModal(props: Props) {
   );
 }
 
-export default withRouter(DashbaordListModal);
+export default DashbaordListModal;

@@ -24,7 +24,10 @@ function PlayerContent({
   const { store } = React.useContext(PlayerContext);
 
   const { error, completed } = store.get();
-  const fullView = React.useMemo(() => new URLSearchParams(location.search).get('fullview') === 'true', []);
+  const fullView = React.useMemo(
+    () => new URLSearchParams(location.search).get('fullview') === 'true',
+    [],
+  );
 
   React.useEffect(() => {
     if (completed) {

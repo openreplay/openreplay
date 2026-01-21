@@ -1,17 +1,20 @@
-import React from 'react';
-import { Input, Table, Button, Tooltip, Switch } from 'antd';
-import { useHistory, useLocation } from 'react-router-dom';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { Album, EyeOff } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { Button, Input, Switch, Table, Tooltip } from 'antd';
+import { Album, EyeOff } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { useHistory, useLocation } from 'App/routing';
+import { TextEllipsis } from 'UI';
+
 import FullPagination from 'Shared/FullPagination';
 import Tabs from 'Shared/Tabs';
-import { fetchList } from './api';
+
 import EventPropsPage from './EventPropsPage';
 import UserPropsPage from './UserProperty';
-import { TextEllipsis } from 'UI';
+import { fetchList } from './api';
 
 const showHiddenKey = 'data-management-properties-show-hidden';
 function getShowHidden(): boolean {

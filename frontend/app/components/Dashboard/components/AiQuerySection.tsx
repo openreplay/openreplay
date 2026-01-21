@@ -22,9 +22,9 @@ export const panelSize = 900
  */
 
 function AiQuerySection() {
-  return null
+  return null;
 }
 
-export const panelSize = undefined
+export const panelSize = undefined;
 
-export default AiQuerySection
+export default AiQuerySection;

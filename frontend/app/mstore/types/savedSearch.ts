@@ -68,7 +68,7 @@ class SavedSearch implements ISavedSearch {
     this.name = name;
     this.isPublic = isPublic;
     this.isShare = isShare;
-    
+
     // Handle both new (data) and legacy (filter) structure
     if (data) {
       this.data = data;
@@ -84,7 +84,7 @@ class SavedSearch implements ISavedSearch {
         filters: [],
       };
     }
-    
+
     this.createdAt = createdAt;
     this.count = count;
   }

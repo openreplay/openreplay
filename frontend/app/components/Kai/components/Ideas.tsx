@@ -1,8 +1,9 @@
-import React from 'react';
-import cn from 'classnames';
 import { useQuery } from '@tanstack/react-query';
-import { kaiService } from 'App/services';
+import cn from 'classnames';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { kaiService } from 'App/services';
 
 function Ideas({
   onClick,
@@ -20,7 +21,7 @@ function Ideas({
   limited?: boolean;
 }) {
   const { t } = useTranslation();
-  const { data, isPending } = useQuery({
+  const { data: suggestedPromptIdeas = [], isPending } = useQuery({
     queryKey: [
       'kai',
       projectId,
@@ -32,7 +33,6 @@ function Ideas({
     queryFn: () => kaiService.getPromptSuggestions(projectId, threadId),
     staleTime: 1000 * 60,
   });
-  const suggestedPromptIdeas = data || [];
   const ideas = React.useMemo(() => {
     const defaultPromptIdeas = [
       t('Top user journeys'),

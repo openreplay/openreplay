@@ -19,7 +19,11 @@ export default React.memo((props: Props) => {
         size="small"
         options={[
           { label: t('Ascending'), value: 'asc', icon: <ArrowUpOutlined /> },
-          { label: t('Descending'), value: 'desc', icon: <ArrowDownOutlined /> },
+          {
+            label: t('Descending'),
+            value: 'desc',
+            icon: <ArrowDownOutlined />,
+          },
         ]}
         defaultValue={sortOrder}
         onChange={onChange}

@@ -68,7 +68,7 @@ function PageInsightsPanel({ setActiveTab }: Props) {
     prevInsights.current = insightsFilters;
     return () => {
       prevInsights.current = undefined;
-    }
+    };
   }, [insightsFilters]);
 
   const onPageSelect = (value: any) => {

@@ -11,7 +11,7 @@ import DateAgo from './DateAgo';
 import DistributionBar from './DistributionBar';
 import Trend from './Trend';
 import { useTranslation } from 'react-i18next';
-import i18n from 'App/i18n'
+import i18n from 'App/i18n';
 
 const MAX_PERCENTAGE = 3;
 const MIN_COUNT = 4;
@@ -23,7 +23,7 @@ function hidePredicate(percentage, index) {
 }
 
 function partitionsWrapper(partitions = [], mapCountry = false) {
-  const t = i18n.t
+  const t = i18n.t;
   const counts = partitions.map(({ count }) => count);
   const sum = counts.reduce((a, b) => parseInt(a) + parseInt(b), 0);
   if (sum === 0) {

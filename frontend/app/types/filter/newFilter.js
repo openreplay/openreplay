@@ -676,16 +676,16 @@ export const conditionalFilterKeys = [
   FilterKey.DURATION,
   FilterKey.USERID,
   FilterKey.TAGGED_ELEMENT,
-  "selector",
-  "name",
-  "label",
-  "url",
-  "url_path",
+  'selector',
+  'name',
+  'label',
+  'url',
+  'url_path',
   FilterKey.USER_BROWSER,
   FilterKey.USER_OS,
   FilterKey.USER_DEVICE,
   FilterKey.USER_COUNTRY,
-  ].map(k => k.toLocaleLowerCase())
+].map((k) => k.toLocaleLowerCase());
 export const mobileConditionalFilterKeys = [
   FilterKey.DURATION,
   FilterKey.FETCH,
@@ -701,7 +701,7 @@ export const mobileConditionalFilterKeys = [
   'logEvent',
   'clickEvent',
   'memoryUsage',
-  ].map(k => k.toLocaleLowerCase())
+].map((k) => k.toLocaleLowerCase());
 
 export const eventKeys = filters.filter((i) => i.isEvent).map((i) => i.key);
 

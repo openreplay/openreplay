@@ -51,7 +51,7 @@ export const blockValues = [
   INSPECTOR,
   OVERVIEW,
   BACKENDLOGS,
-  LONG_TASK
+  LONG_TASK,
 ] as const;
 
 const CHANGE_SKIP_INTERVAL = 'CHANGE_SKIP_INTERVAL';
@@ -68,7 +68,10 @@ export default class UiPlayerStore {
     storage: localStorage.getItem('storageHideHint') || undefined,
     stack: localStorage.getItem('stackHideHint') || undefined,
   };
-  skipInterval: 2 | 5 | 10 | 15 | 20 | 30 | 60 = parseInt(localStorage.getItem(CHANGE_SKIP_INTERVAL) || '10', 10) as (2 | 5 | 10 | 15 | 20 | 30 | 60)
+  skipInterval: 2 | 5 | 10 | 15 | 20 | 30 | 60 = parseInt(
+    localStorage.getItem(CHANGE_SKIP_INTERVAL) || '10',
+    10,
+  ) as 2 | 5 | 10 | 15 | 20 | 30 | 60;
   timelineZoom = {
     enabled: false,
     startTs: 0,
@@ -79,15 +82,15 @@ export default class UiPlayerStore {
     enabled: false,
     startTs: 0,
     endTs: 0,
-  }
+  };
   exportEventsSelection = {
     enabled: false,
     startTs: 0,
     endTs: 0,
-  }
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview'
+  };
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview';
   // @ts-ignore
-  dataSource: 'all' | 'current' = localStorage.getItem(DATA_SOURCE) ?? 'all'
+  dataSource: 'all' | 'current' = localStorage.getItem(DATA_SOURCE) ?? 'all';
 
   constructor() {
     makeAutoObservable(this);
@@ -96,7 +99,7 @@ export default class UiPlayerStore {
   changeDataSource = (source: 'all' | 'current') => {
     this.dataSource = source;
     localStorage.setItem(DATA_SOURCE, source);
-  }
+  };
 
   toggleFullscreen = (val?: boolean) => {
     this.fullscreen = val ?? !this.fullscreen;
@@ -145,7 +148,7 @@ export default class UiPlayerStore {
     this.exportEventsSelection.enabled = payload.enabled;
     this.exportEventsSelection.startTs = payload.range?.[0] ?? 0;
     this.exportEventsSelection.endTs = payload.range?.[1] ?? 0;
-  }
+  };
 
   setZoomTab = (tab: 'overview' | 'journey' | 'issues' | 'errors') => {
     this.zoomTab = tab;

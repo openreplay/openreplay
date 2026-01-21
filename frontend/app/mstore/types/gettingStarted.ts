@@ -21,7 +21,8 @@ const stepsMap: any = {
   'Invite Team Members': {
     title: '🧑‍💻 Invite Team Members',
     status: 'pending',
-    description: 'Invite team members, collaborate and start improving your app now.',
+    description:
+      'Invite team members, collaborate and start improving your app now.',
     docsLink: 'https://docs.openreplay.com/en/deployment/invite-team-members',
     url: 'team',
   },

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input, Button } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from 'App/routes';

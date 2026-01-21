@@ -79,8 +79,9 @@ function HighlightClip({
       case 'delete':
         const res = await confirm({
           header: t('Are you sure delete this Highlight?'),
-          confirmation:
-            t('Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.'),
+          confirmation: t(
+            'Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.',
+          ),
           confirmButton: t('Yes, Delete'),
         });
         if (res) {

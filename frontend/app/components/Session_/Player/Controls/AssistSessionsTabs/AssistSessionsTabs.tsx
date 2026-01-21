@@ -3,7 +3,7 @@ import cn from 'classnames';
 import { Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { multiview, liveSession, withSiteId } from 'App/routes';
 
 interface ITab {

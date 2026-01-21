@@ -158,7 +158,9 @@ function Player(props: IProps) {
           )}
           {bottomBlock === PERFORMANCE && <MobilePerformance />}
           {bottomBlock === EXCEPTIONS && <MobileExceptions />}
-          {bottomBlock === GRAPHQL && <GraphQL isMobile panelHeight={panelHeight} />}
+          {bottomBlock === GRAPHQL && (
+            <GraphQL isMobile panelHeight={panelHeight} />
+          )}
         </div>
       )}
       {!fullView ? (

@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import LivePlayer from './LivePlayer';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 import { liveSession, withSiteId } from 'App/routes';
 
 function LiveSession({

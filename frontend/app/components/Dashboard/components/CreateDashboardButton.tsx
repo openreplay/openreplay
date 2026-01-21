@@ -2,7 +2,7 @@ import React from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useStore } from 'App/mstore';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { useTranslation } from 'react-i18next';
 import { mobileScreen } from '@/utils/isMobile';
 

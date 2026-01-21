@@ -32,7 +32,7 @@ export default function ErrorBars(props: Props) {
   return isGood ? (
     <></>
   ) : (
-    <div className={"flex flex-col-reverse md:flex-col gap-1"}>
+    <div className={'flex flex-col-reverse md:flex-col gap-1'}>
       <div className="relative" style={{ width: '100px' }}>
         <div
           className="grid grid-cols-3 gap-1 absolute inset-0"

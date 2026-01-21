@@ -154,7 +154,7 @@ export function getResourceFromResourceTiming(
   msg: ResourceTiming,
   sessStart: number,
 ) {
-  const failed =msg.decodedBodySize === -111;
+  const failed = msg.decodedBodySize === -111;
   const timingDataBlocked =
     msg.duration === 0 &&
     msg.ttfb === 0 &&

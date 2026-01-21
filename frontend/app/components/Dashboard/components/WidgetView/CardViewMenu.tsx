@@ -1,4 +1,4 @@
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Button, Dropdown, MenuProps } from 'antd';

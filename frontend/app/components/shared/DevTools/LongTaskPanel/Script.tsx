@@ -52,7 +52,7 @@ function InfoEntry({
   return (
     <div className={'flex items-center gap-1 text-sm'}>
       <div className={'text-disabled-text'}>{title}</div>
-      <div className='font-mono color-gray-medium'>{value}</div>
+      <div className="font-mono color-gray-medium">{value}</div>
     </div>
   );
 }
@@ -60,7 +60,7 @@ function InfoEntry({
 function Script({ script }: { script: LongAnimationTask['scripts'][number] }) {
   return (
     <div className="flex flex-col mb-4">
-      <Tag className='w-fit font-mono text-sm font-bold flex gap-1 items-center rounded-lg'>
+      <Tag className="w-fit font-mono text-sm font-bold flex gap-1 items-center rounded-lg">
         <Code size={12} />
         <ScriptTitle script={script} />
       </Tag>

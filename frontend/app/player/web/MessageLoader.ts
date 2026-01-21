@@ -43,7 +43,7 @@ export default class MessageLoader {
     this.session = session;
   }
 
-  rawMessages: any[] = []
+  rawMessages: any[] = [];
   createNewParser(
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
@@ -70,7 +70,7 @@ export default class MessageLoader {
         while (!finished) {
           const msg = fileReader.readNext();
           if (msg) {
-            this.rawMessages.push(msg)
+            this.rawMessages.push(msg);
             msgs.push(msg);
           } else {
             finished = true;
@@ -154,7 +154,7 @@ export default class MessageLoader {
   processMessages = (msgs: PlayerMsg[], file?: string) => {
     msgs.forEach(async (msg) => {
       if (msg.tabId && file?.includes('dom')) {
-        this.allMessages.push(msg)
+        this.allMessages.push(msg);
       }
       if (msg.tp === MType.CanvasNode) {
         /**
@@ -256,7 +256,9 @@ export default class MessageLoader {
     } finally {
       this.createTabCloseEvents();
       if ('messageTabSourceManager' in this.messageManager) {
-        this.messageManager.messageTabSourceManager.processMessages(this.allMessages)
+        this.messageManager.messageTabSourceManager.processMessages(
+          this.allMessages,
+        );
       }
       this.store.update({ domLoading: false, devtoolsLoading: false });
     }

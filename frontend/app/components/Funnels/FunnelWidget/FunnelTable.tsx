@@ -62,13 +62,13 @@ function FunnelTable(props: Props) {
   React.useEffect(() => {
     const { funnel } = props.data;
     const tablePropsCopy = [...defaultTableProps];
-    const tableDataCopy: any[] = [ { ...defaultData[0] } ];
+    const tableDataCopy: any[] = [{ ...defaultData[0] }];
 
     const colsAmount = funnel.stages.length + 1;
     const colSize = Math.round(100 / colsAmount);
     funnel.stages.forEach((st: any, ind: number) => {
       const title = buildStageTitle(st);
-      const className = `w-${colSize} max-w-[500px] overflow-hidden text-ellipsis`
+      const className = `w-${colSize} max-w-[500px] overflow-hidden text-ellipsis`;
       tablePropsCopy.push({
         title: <div className={className}>{title}</div>,
         dataIndex: `st_${ind}`,

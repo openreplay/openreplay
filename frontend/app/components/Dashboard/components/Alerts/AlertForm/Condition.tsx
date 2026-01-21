@@ -43,10 +43,14 @@ function Condition({
 }: ICondition) {
   const { t, i18n } = useTranslation();
 
-  const localizedConditions = useMemo(() => conditions.map((c) => ({
-    ...c,
-    label: t(c.label),
-  })), [i18n.language]);
+  const localizedConditions = useMemo(
+    () =>
+      conditions.map((c) => ({
+        ...c,
+        label: t(c.label),
+      })),
+    [i18n.language],
+  );
 
   return (
     <div>
@@ -95,7 +99,9 @@ function Condition({
             options={localizedConditions}
             name="operator"
             value={
-              localizedConditions.find((c) => c.value === instance.query.operator) || ''
+              localizedConditions.find(
+                (c) => c.value === instance.query.operator,
+              ) || ''
             }
             onChange={({ value }) =>
               writeQueryOption(null, { name: 'operator', value: value.value })

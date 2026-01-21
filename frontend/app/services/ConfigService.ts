@@ -27,8 +27,9 @@ export default class ConfigService extends BaseService {
   }
 
   async checkElasticConnection(params: any): Promise<any> {
-    return this.client.post('/integartions/elasticsearch/test', params)
+    return this.client
+      .post('/integartions/elasticsearch/test', params)
       .then((r) => r.json())
-      .then((j) => j.data)
+      .then((j) => j.data);
   }
 }

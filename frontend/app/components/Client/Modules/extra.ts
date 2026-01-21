@@ -1,4 +1,4 @@
-const extra = (t: any) => []
+const extra = (t: any) => [];
 
 export const enum MODULES {
   ASSIST = 'assist',

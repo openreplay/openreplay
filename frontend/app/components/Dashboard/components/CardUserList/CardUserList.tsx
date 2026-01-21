@@ -1,7 +1,7 @@
 import { useModal } from 'App/components/Modal';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router';
+import { RouteComponentProps, withRouter } from 'App/routing';
 import { Loader, Pagination } from 'UI';
 import { Button } from 'antd';
 import { useStore } from 'App/mstore';

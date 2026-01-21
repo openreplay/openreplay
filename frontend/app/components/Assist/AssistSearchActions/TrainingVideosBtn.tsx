@@ -23,10 +23,11 @@ function TrainingVideosBtn() {
   const showRecords = () => {
     showModal(<Recordings />, { right: true, width: 960 });
   };
-  return (
-    isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
-       ? <Button size={'small'} onClick={showRecords}>{t('Training Videos')}</Button> : null
-  )
+  return isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS) ? (
+    <Button size={'small'} onClick={showRecords}>
+      {t('Training Videos')}
+    </Button>
+  ) : null;
 }
 
 export default observer(TrainingVideosBtn);

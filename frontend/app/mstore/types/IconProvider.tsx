@@ -141,10 +141,10 @@ class FetchIconProvider implements IconProvider {
 class ResolutionProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
     const name = obj.name ?? '';
-    const firstPart = parseInt(name.split('x')[0], 10)
+    const firstPart = parseInt(name.split('x')[0], 10);
     const size = 21;
     let icon = <Monitor size={size} />;
-    if (firstPart >=1920) {
+    if (firstPart >= 1920) {
       icon = <Monitor size={size} />;
     }
     if (firstPart >= 1280) {

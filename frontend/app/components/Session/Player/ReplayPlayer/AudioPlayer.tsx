@@ -42,7 +42,7 @@ function DropdownAudioPlayer({
         let startTs = 0;
         if (nativeTs) {
           // our sessions are below 2 hrs, so we can assume this is a unix timestamp if its like 10 hrs long
-          const isUnixTs = nativeTs > (10 * 60 * 60 * 1000);
+          const isUnixTs = nativeTs > 10 * 60 * 60 * 1000;
           startTs = isUnixTs ? nativeTs - sessionStart : nativeTs;
         } else {
           startTs = pa.timestamp - sessionStart;
@@ -56,7 +56,7 @@ function DropdownAudioPlayer({
           console.log(
             'Audio file start time is before session start, adding delta:',
             delta,
-            'seconds'
+            'seconds',
           );
         }
         return {

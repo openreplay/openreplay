@@ -40,7 +40,7 @@ function CreatePassword(props: Props & WithCaptchaProps) {
       invitation,
       pass,
       password,
-      'g-recaptcha-response': token
+      'g-recaptcha-response': token,
     })
       .then(() => {
         setUpdated(true);
@@ -56,9 +56,7 @@ function CreatePassword(props: Props & WithCaptchaProps) {
     // Validate before attempting captcha verification
     if (!validatePassword(password) || password !== passwordRepeat) {
       setValidationError(
-        password !== passwordRepeat
-          ? ERROR_DONT_MATCH(t)
-          : PASSWORD_POLICY(t)
+        password !== passwordRepeat ? ERROR_DONT_MATCH(t) : PASSWORD_POLICY(t),
       );
       return;
     }
@@ -150,7 +148,9 @@ function CreatePassword(props: Props & WithCaptchaProps) {
               htmlType="submit"
               type="primary"
               loading={loading || isVerifyingCaptcha}
-              disabled={loading || isVerifyingCaptcha || validationError !== null}
+              disabled={
+                loading || isVerifyingCaptcha || validationError !== null
+              }
               className="w-full mt-4"
             >
               {isVerifyingCaptcha

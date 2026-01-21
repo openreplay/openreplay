@@ -40,7 +40,7 @@ function Modules() {
   };
 
   useEffect(() => {
-    const moduleList = list(t)
+    const moduleList = list(t);
     moduleList.forEach((module) => {
       module.isEnabled = modules.includes(module.key);
     });

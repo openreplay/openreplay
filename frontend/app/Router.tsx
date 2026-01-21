@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useLocation, useNavigate } from 'App/routing';
 
 import IFrameRoutes from 'App/IFrameRoutes';
 import PrivateRoutes from 'App/PrivateRoutes';
@@ -21,16 +21,9 @@ import { observer } from 'mobx-react-lite';
 import * as routes from './routes';
 import Tracker from 'App/Tracker';
 
-interface RouterProps extends RouteComponentProps {
-  match: {
-    params: {
-      siteId: string;
-    };
-  };
-}
-
-const Router: React.FC<RouterProps> = (props) => {
-  const { location, history } = props;
+const Router: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const mstore = useStore();
   const {
     customFieldStore,
@@ -73,7 +66,7 @@ const Router: React.FC<RouterProps> = (props) => {
       handleSpotLogin(spotJwt);
     }
     if (urlJWT) {
-      setJwt({ jwt: urlJWT, spotJwt: spotJwt ?? null });
+      setJwt({ jwt: urlJWT, spotJwt: spotJwt ?? undefined });
     }
   };
 
@@ -135,7 +128,7 @@ const Router: React.FC<RouterProps> = (props) => {
     ) {
       const url = new URL(destinationPath, window.location.origin);
       checkParams(url.search);
-      history.push(destinationPath);
+      navigate(destinationPath);
       localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
   };
@@ -206,7 +199,7 @@ const Router: React.FC<RouterProps> = (props) => {
   const lastFetchedSiteIdRef = useRef<any>(null);
 
   function usePrevious(value: any) {
-    const ref = useRef();
+    const ref = useRef<any>(undefined);
     useEffect(() => {
       ref.current = value;
     }, [value]);
@@ -244,4 +237,4 @@ const Router: React.FC<RouterProps> = (props) => {
   );
 };
 
-export default withRouter(observer(Router));
+export default observer(Router);

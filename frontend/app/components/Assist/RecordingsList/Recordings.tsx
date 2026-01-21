@@ -7,7 +7,7 @@ import { observer } from 'mobx-react-lite';
 import RecordingsList from './RecordingsList';
 import RecordingsSearch from './RecordingsSearch';
 import { useTranslation } from 'react-i18next';
-import { PANEL_SIZES } from 'App/constants/panelSizes'
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function Recordings() {
   const { t } = useTranslation();

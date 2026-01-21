@@ -43,7 +43,7 @@ export const FilterList = observer((props: Props) => {
     readonly,
     borderless,
     excludeCategory,
-    isLive
+    isLive,
   } = props;
 
   const { filters } = filter;

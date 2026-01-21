@@ -4,7 +4,7 @@ import { TextEllipsis } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import { FilterKey } from 'App/types/filter/filterType';
 import TemplateOverlay from './TemplateOverlay';

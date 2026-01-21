@@ -4,12 +4,11 @@ import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
-import { RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps, useHistory } from 'App/routing';
 import { useModal } from 'App/components/Modal';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
-import { useHistory } from 'react-router';
 import DashboardHeader from '../DashboardHeader';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
@@ -79,7 +78,7 @@ function DashboardView(props: Props) {
       if (!res) {
         history.push(withSiteId('/dashboard', siteId));
       }
-    })
+    });
   }, [dashboardId]);
 
   useEffect(() => {

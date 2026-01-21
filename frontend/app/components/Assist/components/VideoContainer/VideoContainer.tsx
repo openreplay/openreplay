@@ -62,12 +62,7 @@ function VideoContainer({
         display: isEnabled ? 'block' : 'none',
       }}
     >
-      <video
-        autoPlay
-        ref={ref}
-        muted={muted}
-        style={{ height }}
-      />
+      <video autoPlay ref={ref} muted={muted} style={{ height }} />
     </div>
   );
 }

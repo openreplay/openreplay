@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Checkbox, Input } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { withSiteId, sessions } from 'App/routes';
 import { useStore } from 'App/mstore';
 import { useTranslation } from 'react-i18next';

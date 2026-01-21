@@ -3,7 +3,7 @@ import { createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'App/routing';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';

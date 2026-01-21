@@ -1,4 +1,4 @@
-import { IResourceRequest, IResourceTiming } from "App/player";
+import { IResourceRequest, IResourceTiming } from 'App/player';
 
 export type AnyResource = Partial<IResourceRequest | IResourceTiming>;
 export type HeadersMap = Record<string, string>;
@@ -25,10 +25,7 @@ function extractRequestInit(resource: AnyResource): {
   let method: string = (req?.method || fallbackMethod || 'GET').toUpperCase();
 
   let headers: HeadersMap = {};
-  const rawHeaders =
-    req?.headers ||
-    req?.requestHeaders ||
-    undefined;
+  const rawHeaders = req?.headers || req?.requestHeaders || undefined;
 
   if (rawHeaders) {
     if (Array.isArray(rawHeaders)) {
@@ -112,10 +109,7 @@ function shQuote(s: string): string {
 }
 
 function jsQuote(s: string): string {
-  return s
-    .replace(/\\/g, '\\\\')
-    .replace(/`/g, '\\`')
-    .replace(/'/g, "\\'")
+  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/'/g, "\\'");
 }
 
 function sortHeaders(h: HeadersMap): [string, string][] {

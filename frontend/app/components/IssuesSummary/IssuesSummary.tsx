@@ -15,7 +15,7 @@ import { X } from 'lucide-react';
 import { useModal } from '../Modal';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useRouteMatch } from 'react-router-dom';
+import { useParams } from 'App/routing';
 import { Data } from './types';
 import { getIssues, getTagLabels, hideIssue, renameIssue } from './api';
 import IssueSessions from './IssueSessionsModal';
@@ -36,8 +36,8 @@ function IssuesSummary() {
   const [showHighImpact, setShowHighImpact] = React.useState(true);
   const [titleInput, setTitleInput] = React.useState('');
   const [usedLabels, setUsedLabels] = React.useState<string[]>([]);
-  const match = useRouteMatch<{ siteId: string }>();
-  const projectId = match.params.siteId;
+  const { siteId } = useParams<{ siteId: string }>();
+  const projectId = siteId as string;
   const { showModal, hideModal } = useModal();
   const { t } = useTranslation();
   const {

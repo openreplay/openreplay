@@ -4,35 +4,35 @@ export default class BillingService {
   }
 
   fetchPlan = async () => {
-    return Promise.resolve()
-  }
+    return Promise.resolve();
+  };
 
   fetchInvoices = async (period: {
-    startTimestamp: number,
-    endTimestamp: number,
-    limit: number,
-    page: number,
+    startTimestamp: number;
+    endTimestamp: number;
+    limit: number;
+    page: number;
   }) => {
-    return Promise.resolve()
-  }
+    return Promise.resolve();
+  };
 
   upgradePlan = async (instance: any) => {
-    return Promise.resolve()
-  }
+    return Promise.resolve();
+  };
 
   updatePlan = async (instance: any) => {
-    return Promise.resolve()
-  }
+    return Promise.resolve();
+  };
 
   cancelPlan = async () => {
-    return Promise.resolve()
-  }
+    return Promise.resolve();
+  };
 
   enablePlan = async () => {
-    return Promise.resolve()
-  }
+    return Promise.resolve();
+  };
 
   getOnboard = async () => {
-    return Promise.resolve()
-  }
+    return Promise.resolve();
+  };
 }

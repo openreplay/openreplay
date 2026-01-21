@@ -1,14 +1,16 @@
+import { Button, Segmented } from 'antd';
+import { CircleHelp } from 'lucide-react';
 import React from 'react';
-import { Icon } from 'UI';
-import { OB_TABS } from 'App/routes';
+import { useTranslation } from 'react-i18next';
+
 import withPageTitle from 'App/components/hocs/withPageTitle';
-import { Segmented, Button } from 'antd';
+import { OB_TABS } from 'App/routes';
+import { Icon } from 'UI';
+
 import OnboardingTabs from '../OnboardingTabs';
 import MobileOnboardingTabs from '../OnboardingTabs/OnboardingMobileTabs';
 import ProjectFormButton from '../ProjectFormButton';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
-import { useTranslation } from 'react-i18next';
-import { CircleHelp } from 'lucide-react'
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -44,8 +46,15 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a href={"https://docs.openreplay.com/en/sdk/using-or/"} target="_blank">
-          <Button size={"small"} type={"text"} className="ml-2! flex! items-center! gap-2!">
+        <a
+          href={'https://docs.openreplay.com/en/sdk/using-or/'}
+          target="_blank"
+        >
+          <Button
+            size={'small'}
+            type={'text'}
+            className="ml-2! flex! items-center! gap-2!"
+          >
             <CircleHelp size={14} />
             <div>{t('See Documentation')}</div>
           </Button>

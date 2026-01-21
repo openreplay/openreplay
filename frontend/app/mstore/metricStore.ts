@@ -112,7 +112,7 @@ export default class MetricStore {
   // }
 
   get filteredCards() {
-    return this.metrics
+    return this.metrics;
     // .sort((a, b) =>
     //   this.sort.by === 'desc'
     //     ? b.lastModified - a.lastModified

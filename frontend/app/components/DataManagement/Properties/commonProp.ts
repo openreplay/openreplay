@@ -3,7 +3,10 @@ type Field = {
   readonly: boolean;
 };
 
-export const FieldNames = (field: string, type: 'user' | 'event' | 'distinct_event') => {
+export const FieldNames = (
+  field: string,
+  type: 'user' | 'event' | 'distinct_event',
+) => {
   switch (field) {
     case 'displayName':
       return 'Display Name';

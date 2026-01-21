@@ -1,7 +1,7 @@
 import React from 'react';
 import BackButton from 'Shared/Breadcrumb/BackButton';
 import { withSiteId } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import { PageTitle, confirm } from 'UI';
 import { Tooltip, Popover, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -82,9 +82,7 @@ function DashboardHeader(props: Props) {
             className="select-none border-b border-b-borderColor-transparent hover:border-dashed hover:border-gray-medium cursor-pointer"
           />
         </div>
-        <div
-          className="flex items-center gap-2 md:justify-end w-full md:w-auto"
-        >
+        <div className="flex items-center gap-2 md:justify-end w-full md:w-auto">
           <Popover
             trigger="click"
             open={popoverOpen}

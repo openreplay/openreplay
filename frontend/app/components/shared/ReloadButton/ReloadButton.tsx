@@ -8,7 +8,7 @@ interface Props {
   onClick: () => void;
   iconSize?: number;
   buttonSize: 'small' | 'middle' | 'large' | undefined;
-  label?: string
+  label?: string;
 }
 export default function ReloadButton(props: Props) {
   const { t } = useTranslation();

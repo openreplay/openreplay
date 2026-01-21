@@ -26,7 +26,7 @@ function ChatWindow({
 }: Props) {
   const { t } = useTranslation();
   const dragRef = React.useRef<HTMLDivElement>(null);
-  useDraggable(dragRef, { bounds: 'body', defaultPosition: { x: 50, y: 200 } })
+  useDraggable(dragRef, { bounds: 'body', defaultPosition: { x: 50, y: 200 } });
   const { player } = React.useContext(PlayerContext);
 
   const { toggleVideoLocalStream } = player.assistManager;

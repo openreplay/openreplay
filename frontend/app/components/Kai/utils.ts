@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 type DatedEntry = {
   date: string;
   entries: { datetime: string }[];
-}
+};
 
 export function splitByDate(entries: { datetime: string }[]) {
   const today = DateTime.now().startOf('day');
@@ -22,7 +22,7 @@ export function splitByDate(entries: { datetime: string }[]) {
     } else if (entryDate.toMillis() === yesterday.toMillis()) {
       result[1].entries.push(ent);
     } else {
-      const date = entryDate.toFormat('dd LLL, yyyy')
+      const date = entryDate.toFormat('dd LLL, yyyy');
       const existingEntry = result.find((r) => r.date === date);
       if (existingEntry) {
         existingEntry.entries.push(ent);

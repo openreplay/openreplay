@@ -23,14 +23,13 @@ function SessionHeader() {
   };
 
   return (
-    <div className="flex items-center px-4 py-3 justify-between w-full" data-test-id="session-list-header">
-      <div
-        className={`flex w-full flex-wrap gap-2 justify-between`}
-      >
+    <div
+      className="flex items-center px-4 py-3 justify-between w-full"
+      data-test-id="session-list-header"
+    >
+      <div className={`flex w-full flex-wrap gap-2 justify-between`}>
         <SessionTags />
-        <div
-          className={'flex items-start flex-row'}
-        >
+        <div className={'flex items-start flex-row'}>
           <SelectDateRange
             isAnt
             period={period}

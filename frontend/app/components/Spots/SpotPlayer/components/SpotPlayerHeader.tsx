@@ -21,7 +21,7 @@ import {
 import copy from 'copy-to-clipboard';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 
 import Tabs from 'App/components/Session/Tabs';
 import { useStore } from 'App/mstore';

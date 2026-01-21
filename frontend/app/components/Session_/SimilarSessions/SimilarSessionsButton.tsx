@@ -1,5 +1,5 @@
 function SimilarSessionsButton() {
-    return null
+  return null;
 }
 
 export default SimilarSessionsButton;

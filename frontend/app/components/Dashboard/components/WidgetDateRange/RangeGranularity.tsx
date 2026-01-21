@@ -35,7 +35,10 @@ function RangeGranularity({
 
   React.useEffect(() => {
     if (granularityOptions.length === 0) return;
-    const defaultOption = Math.max(granularityOptions.filter(opt => !opt.disabled).length - 2, 0);
+    const defaultOption = Math.max(
+      granularityOptions.filter((opt) => !opt.disabled).length - 2,
+      0,
+    );
     onDensityChange(granularityOptions[defaultOption].key);
   }, [period, granularityOptions.length]);
 

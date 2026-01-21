@@ -7,7 +7,7 @@ import UserPropertiesModal from './components/UserPropertiesModal';
 import Tag from './components/Tag';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { dataManagement, withSiteId } from 'App/routes';
-import { useParams, useHistory } from 'react-router';
+import { useParams, useHistory } from 'App/routing';
 import { useStore } from 'App/mstore';
 import { useQuery } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
@@ -115,10 +115,7 @@ function UserInfo({ userId }: { userId: string }) {
 
   const openList = () => {
     history.push(
-      withSiteId(
-        dataManagement.usersList(),
-        projectsStore.activeSiteId ?? '',
-      ),
+      withSiteId(dataManagement.usersList(), projectsStore.activeSiteId ?? ''),
     );
   };
   const propLength = Object.keys(user?.properties ?? {}).length + 7;

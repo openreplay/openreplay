@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { App, Button, ButtonProps } from 'antd';
+import { App, Button, ButtonProps, Tour, TourProps } from 'antd';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import {
@@ -8,7 +8,6 @@ import {
   LikeFilled,
   LikeOutlined,
 } from '@ant-design/icons';
-import { Tour, TourProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 interface Props {

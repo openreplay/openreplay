@@ -17,7 +17,7 @@ export default class FunnelStage {
   droppedCount: number = 0;
   droppedPercentage: number = 0;
   propertyOrder: string = 'and';
-  subfilters: { name: string, operator: string, value: string[] }[] = [];
+  subfilters: { name: string; operator: string; value: string[] }[] = [];
 
   constructor() {
     makeAutoObservable(this, {

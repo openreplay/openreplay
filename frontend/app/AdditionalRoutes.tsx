@@ -1,5 +1,5 @@
 import React from 'react';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'App/routing';
 
 interface Props {
   redirect: string;
@@ -7,7 +7,7 @@ interface Props {
 
 function AdditionalRoutes(props: Props) {
   const { redirect } = props;
-  return <Redirect to={redirect} />;
+  return <Navigate to={redirect} replace />;
 }
 
 export default AdditionalRoutes;

@@ -9,8 +9,8 @@ import Player from './PlayerInst';
 interface IProps {
   fullscreen?: boolean;
   activeTab: string;
-  fullView?: boolean
-  setActiveTab: (tab: string) => void
+  fullView?: boolean;
+  setActiveTab: (tab: string) => void;
 }
 
 function PlayerBlock(props: IProps) {

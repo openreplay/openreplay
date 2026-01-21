@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string */
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 

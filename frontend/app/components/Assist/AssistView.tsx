@@ -3,7 +3,7 @@ import LiveSessionList from 'Shared/LiveSessionList';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import usePageTitle from '@/hooks/usePageTitle';
 import AssistSearchActions from './AssistSearchActions';
-import { PANEL_SIZES } from 'App/constants/panelSizes'
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function AssistView() {
   usePageTitle('Co-Browse - OpenReplay');

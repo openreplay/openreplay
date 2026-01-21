@@ -6,7 +6,7 @@ import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import { WidgetCategoryItem } from 'App/components/Dashboard/components/WidgetCategoryItem';
 import { useTranslation } from 'react-i18next';
 

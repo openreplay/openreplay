@@ -11,7 +11,7 @@ export const sortValues = {
   timeAsc: 'startTs-asc',
   eventsAsc: 'eventsCount-asc',
   eventsDesc: 'eventsCount-desc',
-}
+};
 
 export const sortOptionsMap = (t: TFunction) => ({
   [sortValues.timeDesc]: t('Newest'),
