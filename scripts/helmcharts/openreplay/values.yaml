@@ -64,8 +64,6 @@ ingress-nginx:
             default "";
             "~.*-(\d+)(?:-.*|$)" $1;
           }
-          # Increase client body buffer to avoid temp file warnings for ingestion
-          client_body_buffer_size 512k;
         server-tokens: "false"
         server-snippets: |-
           # Security headers
