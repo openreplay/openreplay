@@ -14,43 +14,51 @@ logger = logging.getLogger(__name__)
 LeftToDb = {
     schemas.AlertColumn.PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
-        "formula": "COALESCE(AVG(NULLIF(dom_content_loaded_event_time ,0)),0)",
-        "eventType": "LOCATION"
+        "formula": "COALESCE(AVG(NULLIF(CAST(`$properties`.dom_content_loaded_event_time AS Float32) ,0)),0)",
+        "eventType": "LOCATION",
+        "condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__FIRST_MEANINGFUL_PAINT__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
-        "formula": "COALESCE(AVG(NULLIF(first_contentful_paint_time,0)),0)",
-        "eventType": "LOCATION"
+        "formula": "COALESCE(AVG(NULLIF(CAST(`$properties`.first_contentful_paint_time AS Float32),0)),0)",
+        "eventType": "LOCATION",
+"condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__PAGE_LOAD_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
-        "formula": "AVG(NULLIF(load_event_time ,0))",
-        "eventType": "LOCATION"
+        "formula": "AVG(NULLIF(CAST(`$properties`.load_event_time AS Float32) ,0))",
+        "eventType": "LOCATION",
+"condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__DOM_BUILD_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
-        "formula": "AVG(NULLIF(dom_building_time,0))",
-        "eventType": "LOCATION"
+        "formula": "AVG(NULLIF(CAST(`$properties`.dom_building_time AS Float32),0))",
+        "eventType": "LOCATION",
+"condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__SPEED_INDEX__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "AVG(NULLIF(speed_index,0))",
-        "eventType": "LOCATION"
+        "eventType": "LOCATION",
+"condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__PAGE_RESPONSE_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
-        "formula": "AVG(NULLIF(response_time,0))",
-        "eventType": "LOCATION"
+        "formula": "AVG(NULLIF(CAST(`$properties`.response_time AS Float32),0))",
+        "eventType": "LOCATION",
+"condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__TTFB__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
-        "formula": "AVG(NULLIF(first_contentful_paint_time,0))",
-        "eventType": "LOCATION"
+        "formula": "AVG(NULLIF(CAST(`$properties`.first_contentful_paint_time AS Float32),0))",
+        "eventType": "LOCATION",
+"condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__TIME_TO_RENDER__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
-        "formula": "AVG(NULLIF(visually_complete,0))",
-        "eventType": "LOCATION"
+        "formula": "AVG(NULLIF(CAST(`$properties`.visually_complete AS Float32),0))",
+        "eventType": "LOCATION",
+"condition": "`$auto_captured`"
     },
     schemas.AlertColumn.PERFORMANCE__CRASHES__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_sessions_table(timestamp)} AS sessions",
@@ -61,13 +69,13 @@ LeftToDb = {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS errors",
         "eventType": "ERROR",
         "formula": "COUNT(DISTINCT session_id)",
-        "condition": "source='js_exception'"
+        "condition": "source='js_exception' AND `$auto_captured`"
     },
     schemas.AlertColumn.ERRORS__BACKEND__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS errors",
         "eventType": "ERROR",
         "formula": "COUNT(DISTINCT session_id)",
-        "condition": "source!='js_exception'"
+        "condition": "source!='js_exception' AND `$auto_captured`"
     },
 }
 
