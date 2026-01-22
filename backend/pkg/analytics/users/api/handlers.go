@@ -113,6 +113,11 @@ func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error
 		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
 	}
 
+	if len(userID) > 256 {
+		h.log.Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
+		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
+	}
+
 	response, err := h.users.GetByUserID(ctx.Request.Context(), projID, userID)
 	if err != nil {
 		h.Log().Error(ctx.Request.Context(), "failed to get user %s for project %d: %v", userID, projID, err)
@@ -150,6 +155,11 @@ func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, i
 	if userID == "" {
 		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
 		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
+	}
+
+	if len(userID) > 256 {
+		h.log.Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
+		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
 	}
 
 	err = h.users.DeleteUser(ctx.Request.Context(), projID, userID)
@@ -191,6 +201,11 @@ func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, er
 	if userID == "" {
 		h.Log().Error(ctx.Request.Context(), "userID cannot be empty")
 		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
+	}
+
+	if len(userID) > 256 {
+		h.log.Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
+		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
 	}
 
 	user := &model.UserRequest{}
@@ -245,6 +260,11 @@ func (h *handlersImpl) getUserActivity(r *api.RequestContext) (*model.UserActivi
 	if userID == "" {
 		h.Log().Error(r.Request.Context(), "userID cannot be empty")
 		return nil, http.StatusBadRequest, fmt.Errorf("userID cannot be empty")
+	}
+
+	if len(userID) > 256 {
+		h.log.Error(r.Request.Context(), "userID exceeds maximum length of 256 characters")
+		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
 	}
 
 	req := &model.UserActivityRequest{}
