@@ -90,6 +90,12 @@ ALTER TABLE product_analytics.events
     ADD COLUMN "$user_id" String AFTER distinct_id;
 ALTER TABLE product_analytics.events
     MODIFY COLUMN "$device_id" String AFTER "$user_id";
+ALTER TABLE product_analytics.events
+    ADD COLUMN is_vault BOOL DEFAULT FALSE AFTER error_id;
+ALTER TABLE product_analytics.events
+    MODIFY TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00' AND NOT is_vault;
+ALTER TABLE experimental.sessions
+    ADD COLUMN is_vault BOOL DEFAULT FALSE AFTER metadata_10;
 
 
 DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv SYNC;
