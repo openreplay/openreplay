@@ -1,3 +1,7 @@
+## 17.1.6
+
+- canvas module refactoring to add batching, max concurrent requests limit, memory clearing on stop
+
 ## 17.1.5
 
 - reexport analytics in singleton impl
