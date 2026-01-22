@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"openreplay/backend/pkg/analytics/events"
@@ -100,6 +101,16 @@ func (h *handlersImpl) getEvent(r *api.RequestContext) (any, int, error) {
 	if err != nil {
 		h.log.Error(r.Request.Context(), "failed to get eventId parameter: %v", err)
 		return nil, http.StatusBadRequest, err
+	}
+
+	if eventID == "" {
+		h.log.Error(r.Request.Context(), "eventId cannot be empty")
+		return nil, http.StatusBadRequest, fmt.Errorf("eventId cannot be empty")
+	}
+
+	if len(eventID) > 256 {
+		h.log.Error(r.Request.Context(), "eventId exceeds maximum length of 256 characters")
+		return nil, http.StatusBadRequest, fmt.Errorf("eventId exceeds maximum length of 256 characters")
 	}
 
 	response, err := h.events.GetEventByID(r.Request.Context(), projID, eventID)
