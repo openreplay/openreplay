@@ -1,8 +1,8 @@
 # General utils
-pydantic==2.3.0
-requests==2.31.0
+pydantic==2.4.0
+requests==2.32.4
 python-decouple==3.8
-certifi==2023.7.22
+certifi==2024.7.4
 
 # AWS utils
 awscli==1.29.53
@@ -10,7 +10,7 @@ awscli==1.29.53
 # ML modules
 # torch==2.0.1
 fairscale==0.4.13
-sentencepiece==0.1.99
+sentencepiece==0.2.1
 
 # Serving modules
 fastapi==0.103.1
