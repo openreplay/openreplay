@@ -151,6 +151,7 @@ function ListPage() {
           </Button>
           <Input.Search
             value={query}
+            maxLength={256}
             onChange={(e) => setQuery(e.target.value)}
             size={'small'}
             placeholder={t('Name, email, ID')}

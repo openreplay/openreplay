@@ -47,6 +47,7 @@ function UsersListPage() {
             placeholder={'Name, email, ID'}
             value={query}
             allowClear
+            maxLength={256}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>

@@ -80,6 +80,7 @@ function EventsListPage() {
             placeholder={t('Event name, display name, or description')}
             value={query}
             allowClear
+            maxLength={256}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
