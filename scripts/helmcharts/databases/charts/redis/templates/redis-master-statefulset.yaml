@@ -169,21 +169,6 @@ spec:
           readinessProbe: {{- toYaml .Values.master.customReadinessProbe | nindent 12 }}
           {{- end }}
           lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/bash
-                  - -c
-                  - |
-                     # Fix AOF files if they exist
-                     if [ -f /data/appendonlydir/appendonly.aof ]; then
-                       redis-check-aof --fix /data/appendonlydir/appendonly.aof > /dev/null 2>&1
-                     fi
-                     for aof_file in /data/appendonlydir/appendonly.aof.*.incr.aof; do
-                       if [ -f "$aof_file" ]; then
-                         redis-check-aof --fix "$aof_file" > /dev/null 2>&1
-                       fi
-                     done
             preStop:
               exec:
                 command:
@@ -274,8 +259,30 @@ spec:
           resources: {{- toYaml .Values.metrics.resources | nindent 12 }}
   {{- end }}
       {{- $needsVolumePermissions := and .Values.volumePermissions.enabled .Values.master.persistence.enabled .Values.securityContext.enabled .Values.containerSecurityContext.enabled }}
-      {{- if or $needsVolumePermissions .Values.sysctlImage.enabled }}
       initContainers:
+      - name: fix-aof
+        image: {{ template "redis.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        {{- if .Values.containerSecurityContext.enabled }}
+        securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+        {{- end }}
+        command:
+          - /bin/bash
+          - -c
+          - |
+            # Fix AOF files if they exist
+            if [ -d /data/appendonlydir ]; then
+              for aof_file in /data/appendonlydir/*.aof; do
+                if [ -f "$aof_file" ]; then
+                  echo "Checking $aof_file"
+                  redis-check-aof --fix "$aof_file" < /dev/null || true
+                fi
+              done
+            fi
+        volumeMounts:
+          - name: redis-data
+            mountPath: {{ .Values.master.persistence.path }}
+            subPath: {{ .Values.master.persistence.subPath }}
       {{- if $needsVolumePermissions }}
       - name: volume-permissions
         image: "{{ template "redis.volumePermissions.image" . }}"
@@ -314,7 +321,6 @@ spec:
         securityContext:
           privileged: true
           runAsUser: 0
-      {{- end }}
       {{- end }}
       volumes:
         - name: start-scripts
