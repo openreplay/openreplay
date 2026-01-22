@@ -165,24 +165,24 @@ const (
 
 // Operators that require toString wrapper for Dynamic columns when used with multiple values
 var OperatorsRequiringToString = map[FilterOperatorType]bool{
-	FilterOperatorIn:               true,
-	FilterOperatorNotIn:            true,
-	FilterOperatorIs:               true,
-	FilterOperatorEquals:           true,
-	FilterOperatorOn:               true,
-	FilterOperatorIsNot:            true,
-	FilterOperatorNotEquals:        true,
-	FilterOperatorNot:              true,
-	FilterOperatorOff:              true,
-	FilterOperatorNotOn:            true,
-	FilterOperatorEqual:            true,
-	FilterOperatorNotEqual:         true,
-	FilterOperatorContains:         true,
-	FilterOperatorNotContains:      true,
-	FilterOperatorDoesNotContain:   true,
-	FilterOperatorStartsWith:       true,
-	FilterOperatorEndsWith:         true,
-	FilterOperatorRegex:            true,
+	FilterOperatorIn:             true,
+	FilterOperatorNotIn:          true,
+	FilterOperatorIs:             true,
+	FilterOperatorEquals:         true,
+	FilterOperatorOn:             true,
+	FilterOperatorIsNot:          true,
+	FilterOperatorNotEquals:      true,
+	FilterOperatorNot:            true,
+	FilterOperatorOff:            true,
+	FilterOperatorNotOn:          true,
+	FilterOperatorEqual:          true,
+	FilterOperatorNotEqual:       true,
+	FilterOperatorContains:       true,
+	FilterOperatorNotContains:    true,
+	FilterOperatorDoesNotContain: true,
+	FilterOperatorStartsWith:     true,
+	FilterOperatorEndsWith:       true,
+	FilterOperatorRegex:          true,
 }
 
 type PropertyOrderType string
@@ -203,14 +203,14 @@ const (
 )
 
 type Filter struct {
-	Name          string             `json:"name" validate:"required_without=Type"`
+	Name          string             `json:"name" validate:"required_without=Type,max=256"`
 	Operator      FilterOperatorType `json:"operator" validate:"required,oneof=is isAny on onAny isNot isUndefined notOn contains notContains startsWith endsWith regex selectorIs selectorIsAny selectorIsNot selectorIsUndefined selectorContains selectorNotContains selectorStartsWith selectorEndsWith = < > <= >= != true false in notIn equals notEquals not off lt gt lte gte lessThan greaterThan lessThanOrEqual greaterThanOrEqual doesNotContain before after onOrBefore onOrAfter isBlank isNotBlank between"`
 	PropertyOrder PropertyOrderType  `json:"propertyOrder" validate:"omitempty,oneof=or and"`
-	Value         []string           `json:"value" validate:"required_with=Type,max=10,dive"`
+	Value         []string           `json:"value" validate:"required_with=Type,max=10,dive,max=256"`
 	IsEvent       bool               `json:"isEvent"`
 	DataType      DataTypeType       `json:"dataType" validate:"omitempty,oneof=string number boolean integer timestamp"`
 	AutoCaptured  bool               `json:"autoCaptured"`
-	Filters       []Filter           `json:"filters,omitempty"`
+	Filters       []Filter           `json:"filters,omitempty" validate:"omitempty,dive"`
 }
 
 func ValidateFilterFields(sl validator.StructLevel) {
