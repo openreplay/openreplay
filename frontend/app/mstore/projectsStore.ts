@@ -136,7 +136,17 @@ export default class BaseProjectsStore {
     }
   };
 
-  fetchList = async (siteIdFromPath?: string) => {
+  checkStoredId = (tenantId?: string) => {
+    const existing = localStorage.getItem(SITE_ID_STORAGE_KEY);
+    if (existing) {
+      const [storedSiteId, storedTenantId] = existing.split('_$_');
+      if (tenantId && String(tenantId) === storedTenantId) {
+        return storedSiteId;
+      }
+    }
+  };
+
+  fetchList = async (siteIdFromPath?: string, tenantId?: string) => {
     this.setSitesLoading(true);
     try {
       const response = await projectsService.fetchList();
@@ -145,9 +155,12 @@ export default class BaseProjectsStore {
         const siteIds = this.list.map((site) => site.id);
         let { siteId } = this;
         const siteExists = siteId ? siteIds.includes(siteId) : false;
+        const lastStoredId = this.checkStoredId(tenantId);
 
         if (siteIdFromPath && siteIds.includes(siteIdFromPath)) {
           siteId = siteIdFromPath;
+        } else if (lastStoredId && siteIds.includes(lastStoredId)) {
+          siteId = lastStoredId;
         } else if (!siteId || !siteExists) {
           siteId = siteIds.includes(this.siteId)
             ? this.siteId

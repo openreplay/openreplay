@@ -26,7 +26,12 @@ function SubHeader() {
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
             <Link2 className="mx-2" size={16} />
             <Tooltip title={t('Open in new tab')} delay={0} placement="bottom">
-              <a href={location} target="_blank" rel="noreferrer">
+              <a
+                href={location}
+                target="_blank"
+                className="link"
+                rel="noreferrer"
+              >
                 {location}
               </a>
             </Tooltip>

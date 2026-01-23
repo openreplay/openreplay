@@ -102,7 +102,7 @@ const Router: React.FC<RouterProps> = (props) => {
     }
     const userData = await fetchUserInfo();
     const siteIdFromPath = location.pathname.split('/')[1];
-    await fetchSiteList(siteIdFromPath);
+    await fetchSiteList(siteIdFromPath, userData?.tenantId);
     mstore.initClient();
 
     if (userData?.tenantId) {

@@ -21,7 +21,7 @@ function SpotLocation() {
           <a
             href={currUrl}
             target="_blank"
-            className="truncate"
+            className="truncate link"
             rel="noreferrer"
           >
             {displayUrl}

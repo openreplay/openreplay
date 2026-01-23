@@ -15,8 +15,8 @@
     "antd": "antd/es/index.js"
   },
   "scripts": {
-    "start": "parcel app/index.html --port 3333 --open --lazy",
-    "dev": "parcel app/index.html --port 3333 --open --lazy",
+    "start": "parcel app/index.html --port 3333 --open",
+    "dev": "parcel app/index.html --port 3333 --open",
     "build": "yarn gen:icons && yarn gen:colors && rm -rf public && parcel build app/index.html --dist-dir public --no-source-maps && cp -r app/assets public/assets",
     "upload:minio": "node ./scripts/upload-minio.js",
     "deploy:minio": "yarn build:minio && yarn upload:minio",

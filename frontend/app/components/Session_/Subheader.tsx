@@ -273,7 +273,7 @@ function SubHeader(props: any) {
               <a
                 href={currentLocation}
                 target="_blank"
-                className="truncate"
+                className="truncate link"
                 rel="noreferrer"
               >
                 {locationTruncated}
