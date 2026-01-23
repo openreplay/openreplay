@@ -16,7 +16,7 @@ function Key({ label }: { label: string }) {
 
 function Cell({ shortcut, text }: any) {
   return (
-    <div className="flex items-center gap-2 justify-start rounded">
+    <div className="flex items-center gap-2 justify-start rounded-sm">
       <Key label={shortcut} />
       <span>{text}</span>
     </div>

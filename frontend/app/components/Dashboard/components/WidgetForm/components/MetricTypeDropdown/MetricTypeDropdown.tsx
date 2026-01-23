@@ -61,7 +61,7 @@ function MetricTypeDropdown(props: Props) {
           );
         },
         MenuList: ({ children, ...props }: any) => (
-          <components.MenuList {...props} className="!p-3">
+          <components.MenuList {...props} className="p-3!">
             {children}
           </components.MenuList>
         ),

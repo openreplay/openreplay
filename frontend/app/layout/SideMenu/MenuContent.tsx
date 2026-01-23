@@ -63,7 +63,7 @@ export default function MenuContent({
               ),
               style: { paddingLeft: 20 },
               className: cn(
-                '!rounded-lg hover-fill-teal',
+                'rounded-lg! hover-fill-teal',
                 active ? 'color-main' : 'color-black',
               ),
               label: it.label,
@@ -129,7 +129,7 @@ export default function MenuContent({
             ),
             style: { paddingLeft: 20 },
             className: cn(
-              '!rounded-lg hover-fill-teal',
+              'rounded-lg! hover-fill-teal',
               active ? 'color-main' : 'color-black',
             ),
             label: (

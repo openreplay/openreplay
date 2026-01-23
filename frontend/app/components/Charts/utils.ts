@@ -117,7 +117,7 @@ export function customTooltipFormatter(uuid: string) {
       ];
 
       let str = `
-        <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
+        <div class="flex flex-col gap-1 bg-white shadow-sm border rounded-sm p-2 z-50">
           <div class="flex gap-2 items-center">
             <div style="
               border-radius: 99px;
@@ -183,7 +183,7 @@ export function customTooltipFormatter(uuid: string) {
     const firstTs = isPrevious ? comparisonTimestamp : timestamp;
     const secondTs = isPrevious ? timestamp : comparisonTimestamp;
     let tooltipContent = `
-    <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
+    <div class="flex flex-col gap-1 bg-white shadow-sm border rounded-sm p-2 z-50">
       <div class="flex gap-2 items-center">
         <div style="
           border-radius: 99px;

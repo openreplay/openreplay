@@ -282,7 +282,7 @@ const AddCardSection = observer(
       handleOpenChange?.(false);
     };
     return (
-      <div className="pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-sm">
+      <div className="pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-xs">
         <div className="flex justify-between p-2">
           <div className="text-xl font-medium mb-1">
             {t('What do you want to visualize?')}

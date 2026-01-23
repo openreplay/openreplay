@@ -109,7 +109,7 @@ function UserCard({ className, width, height }) {
             <span style={{ whiteSpace: 'nowrap' }}>
               <Tooltip
                 title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
-                className="w-fit !block"
+                className="w-fit block!"
               >
                 {formatTimeOrDate(startedAt, timezone)}
               </Tooltip>
@@ -127,7 +127,7 @@ function UserCard({ className, width, height }) {
             <Popover
               open={showMore ? true : undefined}
               content={() => (
-                <div className="text-left bg-white rounded">
+                <div className="text-left bg-white rounded-sm">
                   <SessionInfoItem
                     comp={<CountryFlag country={userCountry} height={11} />}
                     label={countries[userCountry]}

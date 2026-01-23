@@ -31,7 +31,7 @@ function FunnelMenuItem({
           [stl.disabled]: disabled,
         })}
       >
-        <div className="flex items-center justify-center w-8 h-8 flex-shrink-0">
+        <div className="flex items-center justify-center w-8 h-8 shrink-0">
           <Icon
             name={iconName}
             size={16}

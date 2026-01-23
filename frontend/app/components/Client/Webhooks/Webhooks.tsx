@@ -46,7 +46,7 @@ function Webhooks() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-5">
+    <div className="bg-white rounded-lg shadow-xs border p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <Typography.Title level={4} style={{ marginBottom: 0 }}>

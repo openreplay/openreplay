@@ -37,7 +37,7 @@ function BottomButtons({
             loading={deleting}
             onClick={() => onDelete(instance)}
             id="trash-button"
-            className="!text-teal !fill-teal"
+            className="text-teal! fill-teal!"
           >
             <Icon name="trash" color="inherit" className="mr-2" size="18" />{' '}
             {t('Delete')}

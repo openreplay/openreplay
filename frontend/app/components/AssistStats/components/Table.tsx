@@ -72,7 +72,7 @@ function StatsTable({
   };
 
   return (
-    <div className="rounded bg-white border">
+    <div className="rounded-sm bg-white border">
       <div className="flex items-center p-4 gap-2">
         <Typography.Title level={5} style={{ marginBottom: 0 }}>
           {t('Assisted Sessions')}
@@ -167,7 +167,7 @@ function Row({ session }: { session: AssistStatsSession }) {
       <Cell size={2}>
         <div className="flex gap-2 flex-wrap">
           {session.teamMembers.map((member) => (
-            <div className="p-1 rounded border bg-gray-lightest w-fit">
+            <div className="p-1 rounded-sm border bg-gray-lightest w-fit">
               {member.name}
             </div>
           ))}

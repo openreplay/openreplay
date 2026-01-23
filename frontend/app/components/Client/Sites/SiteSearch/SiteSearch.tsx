@@ -27,7 +27,7 @@ function SiteSearch(props: Props) {
       <Input
         // value={query}
         name="searchQuery"
-        // className="bg-white p-2 border border-gray-light rounded w-full pl-10"
+        // className="bg-white p-2 border border-gray-light rounded-sm w-full pl-10"
         placeholder="Filter by name"
         onChange={write}
         icon="search"

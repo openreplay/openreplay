@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 
 const customTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
-  <DefaultTabBar {...props} className="!mb-0" />
+  <DefaultTabBar {...props} className="mb-0!" />
 );
 
 function ProjectTabs() {

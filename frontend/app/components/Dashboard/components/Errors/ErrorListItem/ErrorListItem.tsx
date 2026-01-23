@@ -101,7 +101,7 @@ function CustomTooltip({ active, payload, label }: any) {
       ? DateTime.fromMillis(p.timestamp).toFormat('l')
       : '';
     return (
-      <div className="rounded border bg-white p-2">
+      <div className="rounded-sm border bg-white p-2">
         <p className="label text-sm color-gray-medium">{dateStr}</p>
         <p className="text-sm">
           {t('Sessions:')}

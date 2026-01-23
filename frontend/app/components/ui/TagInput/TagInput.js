@@ -74,7 +74,7 @@ class TagInput extends React.Component {
           >
             <div
               onClick={toggleTagEditor}
-              className="flex items-center cursor-pointer rounded p-2 gray-hover"
+              className="flex items-center cursor-pointer rounded-sm p-2 gray-hover"
             >
               <Icon name="plus" color="teal" size="12" />
               <div className="ml-2 text-sm font-normal color-teal leading-none">

@@ -38,8 +38,7 @@ module.exports = ({
     // 'postcss-inline-svg': {
     //   path: path.join(__dirname, 'app/svg'),
     // },
-    'tailwindcss/nesting': {},
-    tailwindcss: {},
+    "@tailwindcss/postcss": {},
     //'postcss-preset-env': {}, //includes autoprefixer
     cssnano: false,
   }

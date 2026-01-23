@@ -125,7 +125,7 @@ function Integrations(props: Props) {
 
   return (
     <>
-      <div className="bg-white rounded-lg border shadow-sm p-5 mb-4">
+      <div className="bg-white rounded-lg border shadow-xs p-5 mb-4">
         <div className="flex gap-2 md:gap-2 mb-2 items-center flex-row">
           {!hideHeader && <PageTitle title={<div>{t('Integrations')}</div>} />}
           <SiteDropdown value={siteId} onChange={onChangeSelect} />

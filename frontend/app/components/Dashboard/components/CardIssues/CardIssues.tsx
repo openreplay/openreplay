@@ -103,7 +103,7 @@ function CardIssues() {
   };
 
   return useObserver(() => (
-    <div className="bg-white rounded-lg shadow-sm p-4 border">
+    <div className="bg-white rounded-lg shadow-xs p-4 border">
       <div className="flex justify-between">
         <div className="flex items-center">
           <h2 className="font-normal text-xl">{t('Issues')}</h2>

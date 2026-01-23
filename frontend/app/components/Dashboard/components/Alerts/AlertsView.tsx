@@ -34,7 +34,7 @@ function AlertsView({ siteId }: IAlertsView) {
   return (
     <div
       style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
-      className="bg-white rounded-lg shadow-sm py-4 border"
+      className="bg-white rounded-lg shadow-xs py-4 border"
     >
       <div className="flex items-center mb-4 justify-between px-6">
         <div className="flex items-baseline mr-3">

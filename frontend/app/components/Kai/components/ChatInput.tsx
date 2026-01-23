@@ -63,7 +63,7 @@ function ChatInput({
       <div className="relative">
         <Input.TextArea
           rows={3}
-          className="!resize-none rounded-lg shadow"
+          className="resize-none! rounded-lg shadow-sm"
           onPressEnter={submit}
           ref={inputRef}
           placeholder={placeholder}
@@ -95,7 +95,7 @@ function ChatInput({
         ref={inputRef}
         placeholder={placeholder}
         size={'large'}
-        className="rounded-lg shadow"
+        className="rounded-lg shadow-sm"
         disabled={limited}
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}

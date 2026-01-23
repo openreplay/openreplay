@@ -13,7 +13,7 @@ function FeatureItem({ label, completed = false, subText, onClick }) {
     >
       <div
         className={cn(
-          'h-6 w-6 flex-shrink-0 rounded-full flex items-center justify-center',
+          'h-6 w-6 shrink-0 rounded-full flex items-center justify-center',
           { 'bg-gray-lightest border': !completed, 'bg-teal': completed },
         )}
       >

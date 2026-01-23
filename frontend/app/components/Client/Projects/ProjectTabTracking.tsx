@@ -65,7 +65,7 @@ function WebSnippet({ project }: { project: Project }) {
         ]}
         value={isNpm}
         onChange={setIsNpm}
-        className="!align-middle text-center rounded-lg"
+        className="align-middle! text-center rounded-lg"
       />
 
       {isNpm ? (

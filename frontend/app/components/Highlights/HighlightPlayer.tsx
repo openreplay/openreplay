@@ -57,7 +57,7 @@ function HighlightPlayer({
       <div
         className={cn(
           'rounded-lg overflow-hidden',
-          'rounded shadow boarder bg-white',
+          'rounded-sm shadow-sm boarder bg-white',
         )}
         style={{ width: 960 }}
       >

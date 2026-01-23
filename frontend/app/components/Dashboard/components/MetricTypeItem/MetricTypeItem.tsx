@@ -31,7 +31,7 @@ function MetricTypeItem(props: Props) {
     <Tooltip disabled={!disabled} title={ENTERPRISE_REQUEIRED(t)} delay={0}>
       <div
         className={cn(
-          'rounded color-gray-darkest flex border border-transparent p-4 hover:bg-active-blue cursor-pointer group gap-4',
+          'rounded-sm color-gray-darkest flex border border-transparent p-4 hover:bg-active-blue cursor-pointer group gap-4',
           {
             'opacity-30 pointer-events-none': disabled,
             'flex-col items-center gap-4 text-center': !isList,

@@ -5,7 +5,7 @@ import { Icon } from 'UI';
 function SupportList() {
   const { t } = useTranslation();
   return (
-    <div className="rounded bg-white border shadow">
+    <div className="rounded-sm bg-white border shadow-sm">
       <a href="https://docs.openreplay.com" target="_blank" rel="noreferrer">
         <div className="flex items-center px-4 py-3 cursor-pointer hover:bg-active-blue">
           <Icon name="book" size={15} />

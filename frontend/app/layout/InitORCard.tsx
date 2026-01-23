@@ -8,7 +8,7 @@ function InitORCard({ onOpenModal }: { onOpenModal: () => void }) {
 
   return (
     <div
-      className="shadow-sm flex flex-col gap-4 bg-white items-center p-4 mx-auto rounded"
+      className="shadow-xs flex flex-col gap-4 bg-white items-center p-4 mx-auto rounded-sm"
       style={{ width: 236 }}
     >
       <img src="/assets/img/init-or.png" width={200} height={120} />

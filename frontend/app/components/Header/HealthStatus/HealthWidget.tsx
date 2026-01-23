@@ -61,7 +61,7 @@ function HealthWidget({
       </div>
       <div
         className={cn(
-          'gap-2 w-full font-medium flex items-center rounded',
+          'gap-2 w-full font-medium flex items-center rounded-sm',
           !isError && healthOk ? 'color-green' : 'color-red',
         )}
       >

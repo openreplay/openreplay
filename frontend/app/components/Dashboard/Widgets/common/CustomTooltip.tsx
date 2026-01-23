@@ -17,7 +17,7 @@ function TooltipLabel({ payload, unit = false }) {
 function CustomTooltip({ active, payload, label, unit }) {
   if (active && payload && payload[0]) {
     return (
-      <div className="border rounded p-2 bg-white leading-5">
+      <div className="border rounded-sm p-2 bg-white leading-5">
         <div className="text-xs color-gray-medium">{`${label}`}</div>
         {payload.map((p) => (
           <TooltipLabel payload={p} unit={unit} />

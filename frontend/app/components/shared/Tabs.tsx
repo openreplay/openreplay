@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs, TabsProps } from 'antd';
 
 const customTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
-  <DefaultTabBar {...props} className="!mb-0" />
+  <DefaultTabBar {...props} className="mb-0!" />
 );
 
 function CustomizedTabs({

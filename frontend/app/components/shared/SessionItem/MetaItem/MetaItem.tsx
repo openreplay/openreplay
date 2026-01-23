@@ -22,7 +22,7 @@ export default function MetaItem(props: Props) {
         maxWidth={'100px'}
         popupProps={{ size: 'small', disabled: true }}
       />
-      <span className="bg-gray-light inline-block w-[1px] min-h-[17px]"></span>
+      <span className="bg-gray-light inline-block w-px min-h-[17px]"></span>
       <TextEllipsis
         text={value}
         maxWidth={'175px'}

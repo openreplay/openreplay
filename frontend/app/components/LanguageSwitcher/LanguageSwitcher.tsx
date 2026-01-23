@@ -33,7 +33,7 @@ function LanguageSwitcher() {
   const menuItems: MenuProps['items'] = langs.map((lang) => ({
     key: lang.code,
     label: (
-      <div key={lang.code} className="!py-1 flex items-center gap-2">
+      <div key={lang.code} className="py-1! flex items-center gap-2">
         <Typography className="capitalize">{lang.label}</Typography>
       </div>
     ),

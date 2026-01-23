@@ -53,7 +53,7 @@ function SessionList(props) {
                 />
                 <span>{site.name}</span>
               </div>
-              <div className="bg-white p-3 rounded border">
+              <div className="bg-white p-3 rounded-sm border">
                 {site.sessions.map((session) => (
                   <div className="border-b last:border-none">
                     <SessionItem key={session.sessionId} session={session} />

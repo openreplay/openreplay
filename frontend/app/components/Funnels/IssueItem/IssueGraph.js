@@ -5,7 +5,7 @@ import { Tooltip } from 'UI';
 function IssueGraph({ issue }) {
   const { t } = useTranslation();
   return (
-    <div className="flex rounded-sm" style={{ width: '600px' }}>
+    <div className="flex rounded-xs" style={{ width: '600px' }}>
       <Tooltip title={t('Unaffected sessions')}>
         <div
           style={{ width: `${issue.unaffectedSessionsPer}%` }}

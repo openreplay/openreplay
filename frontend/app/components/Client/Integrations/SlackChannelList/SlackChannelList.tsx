@@ -40,7 +40,7 @@ function SlackChannelList(props) {
             className="border-t px-5 py-2 flex items-center justify-between cursor-pointer hover:bg-active-blue"
             onClick={() => onEdit(c)}
           >
-            <div className="flex-grow-0" style={{ maxWidth: '90%' }}>
+            <div className="grow-0" style={{ maxWidth: '90%' }}>
               <div>{c.name}</div>
               <div className="truncate test-xs color-gray-medium">
                 {c.endpoint}

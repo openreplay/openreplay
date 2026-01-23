@@ -385,7 +385,7 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
               const shadowRoot = host.attachShadow({ mode: 'open' });
               resolve(new VShadowRoot(() => shadowRoot));
             } catch (e) {
-              reject(e); // "Can not attach shadow dom"
+              reject(e); // "Can not attach shadow-sm dom"
             }
           }
         });

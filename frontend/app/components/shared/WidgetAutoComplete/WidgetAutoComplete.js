@@ -63,7 +63,7 @@ function WidgetAutoComplete(props) {
             type="text"
             className={cn(
               stl.search,
-              'absolute inset-0 w-full py-2 active:outline-none focus:outline-none mr-2',
+              'absolute inset-0 w-full py-2 active:outline-hidden focus:outline-hidden mr-2',
               { focused },
             )}
             placeholder={placeholder}
@@ -80,7 +80,7 @@ function WidgetAutoComplete(props) {
         <div
           className={cn(
             stl.menuWrapper,
-            'absolute top-10 left-0 rounded bg-white',
+            'absolute top-10 left-0 rounded-sm bg-white',
           )}
         >
           {props.options.map((opt) => (

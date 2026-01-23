@@ -50,7 +50,7 @@ function Bookmarks() {
             </div>
           }
         >
-          <div className="border-b rounded bg-white">
+          <div className="border-b rounded-sm bg-white">
             {bookmarks.list.map((session: any) => (
               <div key={session.sessionId} className="border-b">
                 <SessionItem

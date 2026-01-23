@@ -370,7 +370,7 @@ const RowColumns = ({ columns, row }: any) => {
   return columns.map(({ dataKey, render, width, label }: any) => (
     <div
       key={label.replace(' ', '') + dataKey}
-      className={cn(stl.cell, 'overflow-ellipsis overflow-hidden !py-0.5')}
+      className={cn(stl.cell, 'text-ellipsis overflow-hidden py-0.5!')}
       style={{ width: `${width}px` }}
     >
       {render

@@ -94,7 +94,7 @@ const FetchDetails = ({
             <div>
               <div className="mt-6">
                 {jsonPayload === undefined ? (
-                  <div className="ml-3 break-words my-3"> {payload} </div>
+                  <div className="ml-3 wrap-break-word my-3"> {payload} </div>
                 ) : (
                   <JSONTree
                     src={jsonPayload}
@@ -122,7 +122,7 @@ const FetchDetails = ({
             <div>
               <div className="mt-6">
                 {jsonResponse === undefined ? (
-                  <div className="ml-3 break-words my-3"> {response} </div>
+                  <div className="ml-3 wrap-break-word my-3"> {response} </div>
                 ) : (
                   <JSONTree
                     src={jsonResponse}

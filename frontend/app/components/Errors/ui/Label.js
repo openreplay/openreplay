@@ -15,7 +15,7 @@ function Label({
       className={cn(
         className,
         'flex items-center px-4',
-        horizontal ? '!pl-0' : 'flex-col',
+        horizontal ? 'pl-0!' : 'flex-col',
       )}
     >
       <div

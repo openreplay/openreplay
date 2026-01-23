@@ -52,7 +52,7 @@ function Condition({
     <div>
       {!isThreshold && (
         <div className="flex items-center my-3">
-          <label className="w-1/6 flex-shrink-0 font-normal">
+          <label className="w-1/6 shrink-0 font-normal">
             {t('Trigger when')}
           </label>
           <Select
@@ -68,7 +68,7 @@ function Condition({
       )}
 
       <div className="flex itemsx-center my-3">
-        <label className="w-1/6 flex-shrink-0 font-normal">
+        <label className="w-1/6 shrink-0 font-normal">
           {isThreshold ? t('Trigger when') : t('of')}
         </label>
         <Select
@@ -87,7 +87,7 @@ function Condition({
       </div>
 
       <div className="flex items-center my-3">
-        <label className="w-1/6 flex-shrink-0 font-normal">{t('is')}</label>
+        <label className="w-1/6 shrink-0 font-normal">{t('is')}</label>
         <div className="w-2/6 flex items-center">
           <Select
             popupMatchSelectWidth={false}
@@ -128,7 +128,7 @@ function Condition({
       </div>
 
       <div className="flex items-center my-3">
-        <label className="w-1/6 flex-shrink-0 font-normal">
+        <label className="w-1/6 shrink-0 font-normal">
           {t('over the past')}
         </label>
         <Select
@@ -144,7 +144,7 @@ function Condition({
       </div>
       {!isThreshold && (
         <div className="flex items-center my-3">
-          <label className="w-1/6 flex-shrink-0 font-normal">
+          <label className="w-1/6 shrink-0 font-normal">
             {t('compared to previous')}
           </label>
           <Select

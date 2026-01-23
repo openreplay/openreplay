@@ -64,7 +64,7 @@ export default function Pagination({
         aria-label="Previous page"
         disabled={currentPage === 1}
         onClick={() => changePage(currentPage - 1)}
-        className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-lightest disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-gray-lightest disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <ChevronLeft size={16} />
       </button>
@@ -75,7 +75,7 @@ export default function Pagination({
           onChange={(e) => setInputValue(e.target.value)}
           onPressEnter={commitInput}
           onBlur={commitInput}
-          className="w-12 text-center px-2 py-0 rounded"
+          className="w-12 text-center px-2 py-0 rounded-sm"
           size="small"
         />
         <span>/</span>
@@ -88,7 +88,7 @@ export default function Pagination({
         aria-label="Next page"
         disabled={currentPage === totalPages}
         onClick={() => changePage(currentPage + 1)}
-        className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-lightest disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-gray-lightest disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <ChevronRight size={16} />
       </button>

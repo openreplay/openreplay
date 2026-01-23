@@ -83,7 +83,7 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
   return (
     <div style={{ maxWidth: '85vw', width: 1200 }}>
       <div
-        className="border-l shadow h-screen"
+        className="border-l shadow-sm h-screen"
         style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%' }}
       >
         <div className="py-6 px-8 flex items-start justify-between">

@@ -126,7 +126,7 @@ const WarnBadge = React.memo(
     };
     const defaultContainerClass = 'lg:flex flex-col hidden';
     const defaultWarnClass =
-      'px-3 py-.5 border border-gray-lighter shadow-sm rounded bg-active-blue flex items-center justify-between';
+      'px-3 py-.5 border border-gray-lighter shadow-xs rounded-sm bg-active-blue flex items-center justify-between';
 
     const mergedContainerStyle = {
       ...defaultContainerStyle,
@@ -205,7 +205,7 @@ const WarnBadge = React.memo(
           </div>
         ) : null}
         {warnings[WARNINGS.VIRTUAL_ELS_FAIL] ? (
-          <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between">
+          <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded-sm bg-active-blue flex items-center justify-between">
             <div className="flex flex-col">
               <div>
                 {t(

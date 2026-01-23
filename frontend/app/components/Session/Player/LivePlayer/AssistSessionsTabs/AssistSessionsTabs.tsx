@@ -23,7 +23,7 @@ function Tab(props: ITab) {
     <div
       onClick={props.onClick}
       className={cn(
-        'p-1 rounded flex items-center justify-center',
+        'p-1 rounded-sm flex items-center justify-center',
         !props.isDisabled ? 'cursor-pointer' : 'cursor-not-allowed',
         props.classNames,
       )}

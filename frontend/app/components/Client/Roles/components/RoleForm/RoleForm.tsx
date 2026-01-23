@@ -257,7 +257,7 @@ export default observer(RoleForm);
 function OptionLabel(nameMap: any, p: any, onChangeOption: (e: any) => void) {
   return (
     <div
-      className="px-2 py-1 rounded bg-gray-lightest mr-2 mb-2 border flex items-center justify-between"
+      className="px-2 py-1 rounded-sm bg-gray-lightest mr-2 mb-2 border flex items-center justify-between"
       key={p.roleId}
     >
       <div>{nameMap[p]}</div>

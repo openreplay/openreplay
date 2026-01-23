@@ -69,7 +69,7 @@ function NotifyHooks({
 
       {instance.slack && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+          <label className="w-1/6 shrink-0 font-normal pt-2">
             {t('Slack')}
           </label>
           <div className="w-2/6">
@@ -87,7 +87,7 @@ function NotifyHooks({
 
       {instance.msteams && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+          <label className="w-1/6 shrink-0 font-normal pt-2">
             {t('MS Teams')}
           </label>
           <div className="w-2/6">
@@ -105,7 +105,7 @@ function NotifyHooks({
 
       {instance.email && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+          <label className="w-1/6 shrink-0 font-normal pt-2">
             {t('Email')}
           </label>
           <div className="w-2/6">
@@ -119,7 +119,7 @@ function NotifyHooks({
             />
 
             {!isSmtp && (
-              <div className={cn('mb-4 p-2 bg-amber rounded')}>
+              <div className={cn('mb-4 p-2 bg-amber rounded-sm')}>
                 {t('SMTP is not configured (see')}&nbsp;
                 <a
                   className="link"
@@ -138,7 +138,7 @@ function NotifyHooks({
 
       {instance.webhook && (
         <div className="flex items-start my-4">
-          <label className="w-1/6 flex-shrink-0 font-normal pt-2">
+          <label className="w-1/6 shrink-0 font-normal pt-2">
             {t('Webhook')}
           </label>
           <div className="w-2/6">

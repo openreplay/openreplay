@@ -218,7 +218,7 @@ function AssistStats() {
   return (
     <div className="w-full h-screen overflow-y-auto">
       <div
-        className="mx-auto p-4 bg-white rounded border"
+        className="mx-auto p-4 bg-white rounded-sm border"
         style={{ maxWidth: 1360 }}
         id="pdf-anchor"
       >
@@ -255,7 +255,7 @@ function AssistStats() {
         </div>
         <div className="w-full grid grid-cols-3 gap-2 flex-2 col-span-2">
           {Object.keys(graphs.currentPeriod).map((i: PeriodKeys) => (
-            <div className="bg-white rounded border">
+            <div className="bg-white rounded-sm border">
               <div className="pt-2 px-2">
                 <Typography.Text strong style={{ marginBottom: 0 }}>
                   {chartNames(t)[i]}

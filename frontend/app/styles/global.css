@@ -1,3 +1,5 @@
+
+
 .form-field > label {
     font-weight: 500;
     margin-bottom: 5px;
@@ -14,11 +16,14 @@ input.no-focus:focus {
 }
 
 .widget-wrapper {
-    @apply rounded-lg shadow-sm border bg-white border-gray-light;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    border: 1px solid var(--color-gray-light);
+    background-color: var(--color-white);
 }
 
 img {
-  @apply inline-block;
+  display: inline-block;
 }
 
 .lucide {

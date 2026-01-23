@@ -20,7 +20,7 @@ function ScatterChartComponent(props: Props) {
   const { dataFirst, dataSecond } = props;
   const { t } = useTranslation();
   return (
-    <div className="rounded border shadow">
+    <div className="rounded-sm border shadow-sm">
       <div className="text-lg p-3 border-b bg-gray-lightest">
         {t('Scatter Chart')}
       </div>

@@ -122,7 +122,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
               <CodeBlock code={configuration} language="swift" />
               <div className="mt-2">
                 {t('By default, all options equals')}
-                <code className="p-1 text-red rounded bg-gray-lightest">
+                <code className="p-1 text-red rounded-sm bg-gray-lightest">
                   true
                 </code>
               </div>

@@ -62,7 +62,7 @@ function LiveSessionSearch() {
     });
   };
   return (
-    <Card className="rounded-lg" classNames={{ body: '!p-4' }}>
+    <Card className="rounded-lg" classNames={{ body: 'p-4!' }}>
       <FilterListHeader
         title="Filters"
         filterSelection={

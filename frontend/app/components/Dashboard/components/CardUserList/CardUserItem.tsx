@@ -9,7 +9,7 @@ function CardUserItem(props: Props) {
   return (
     <div className="flex items-center py-2 hover:bg-active-blue cursor-pointer">
       <div className="mr-auto flex items-center">
-        <div className="flex items-center justify-center flex-shrink-0 mr-2 relative">
+        <div className="flex items-center justify-center shrink-0 mr-2 relative">
           <div className="w-8 h-8 rounded-full flex items-center bg-tealx-light justify-center">
             <Icon
               name="person-fill"

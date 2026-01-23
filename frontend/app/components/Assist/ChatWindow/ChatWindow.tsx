@@ -81,7 +81,7 @@ function ChatWindow({
           <div
             className={cn(
               'absolute bottom-0 right-0 z-50',
-              localVideoEnabled ? '' : '!hidden',
+              localVideoEnabled ? '' : 'hidden!',
             )}
           >
             <VideoContainer

@@ -7,7 +7,7 @@ export default function ChromePluginMessage({ style }) {
   const { t } = useTranslation();
   return (
     <div
-      className="border rounded text-base mb-2 flex items-center p-2 bg-active-blue"
+      className="border rounded-sm text-base mb-2 flex items-center p-2 bg-active-blue"
       style={style}
     >
       <div className="flex items-center">

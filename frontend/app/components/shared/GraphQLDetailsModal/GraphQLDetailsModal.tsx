@@ -24,7 +24,7 @@ function GraphQLDetailsModal(props: Props) {
   try {
     jsonResponse = JSON.parse(response);
   } catch (e) {}
-  const dataClass = cn('p-2 bg-gray-lightest rounded color-gray-darkest');
+  const dataClass = cn('p-2 bg-gray-lightest rounded-sm color-gray-darkest');
 
   return (
     <div

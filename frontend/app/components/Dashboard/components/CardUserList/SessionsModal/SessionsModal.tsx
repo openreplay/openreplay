@@ -85,7 +85,7 @@ function SessionsModal(props: Props) {
           </div>
         }
       >
-        <div className="border rounded m-5">
+        <div className="border rounded-sm m-5">
           <Loader loading={loading}>
             {data.sessions.map((session: any) => (
               <div

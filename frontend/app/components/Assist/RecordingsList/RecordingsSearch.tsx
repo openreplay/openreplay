@@ -32,7 +32,7 @@ function RecordingsSearch() {
       <input
         value={query}
         name="recordsSearch"
-        className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
+        className="bg-white p-2 border border-borderColor-gray-light-shade rounded-sm w-full pl-10"
         placeholder="Filter by title or description"
         onChange={write}
       />

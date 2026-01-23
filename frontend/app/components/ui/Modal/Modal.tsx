@@ -51,7 +51,7 @@ function Modal(props: Props) {
       onClick={handleClose}
     >
       <div
-        className="absolute z-10 bg-white rounded-lg shadow-sm"
+        className="absolute z-10 bg-white rounded-lg shadow-xs"
         style={style}
       >
         {children}

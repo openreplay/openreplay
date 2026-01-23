@@ -212,7 +212,7 @@ export function GridItem({
 }) {
   return (
     <div
-      className={`bg-white rounded-lg overflow-hidden shadow-sm border ${
+      className={`bg-white rounded-lg overflow-hidden shadow-xs border ${
         isSelected ? 'border-teal/30' : ''
       } transition flex flex-col items-start hover:border-teal`}
       data-test-id="spot-list-item"
@@ -269,7 +269,7 @@ export function GridItem({
               </Checkbox>
             </div>
           ) : (
-            <div className="bg-yellow/50 mx-2 mt-2 px-2 w-full rounded ">
+            <div className="bg-yellow/50 mx-2 mt-2 px-2 w-full rounded-sm ">
               <TextEllipsis text={title} className="capitalize" />
             </div>
           )}

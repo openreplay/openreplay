@@ -26,11 +26,11 @@ function SubFilterItem(props: Props) {
 
   return (
     <div className="flex items-center hover:bg-active-blue">
-      <div className="flex-shrink-0 py-1">{filter.label}</div>
+      <div className="shrink-0 py-1">{filter.label}</div>
       <FilterOperator
         options={filter.operatorOptions}
         onChange={onOperatorChange}
-        className="mx-2 flex-shrink-0 btn-filter-operator"
+        className="mx-2 shrink-0 btn-filter-operator"
         value={filter.operator}
       />
 

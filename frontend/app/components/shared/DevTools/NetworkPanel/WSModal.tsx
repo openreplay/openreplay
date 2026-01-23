@@ -21,7 +21,7 @@ const lineLength = 40;
 function WSModal({ socketMsgList }: Props) {
   const { t } = useTranslation();
   return (
-    <div className="h-screen w-full bg-white shadow">
+    <div className="h-screen w-full bg-white shadow-sm">
       <div className="grid grid-cols-12 font-semibold border-b px-4 py-2">
         <div className="col-span-9 flex items-center gap-2">{t('Data')}</div>
         <div className="col-span-1">{t('Length')}</div>

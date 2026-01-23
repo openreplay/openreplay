@@ -83,7 +83,7 @@ function BigNum({
     >
       {hideLegend ? null : (
         <div className="flex items-center gap-2 font-medium text-gray-darkest">
-          <div className="rounded w-4 h-4" style={{ background: color }} />
+          <div className="rounded-sm w-4 h-4" style={{ background: color }} />
           <div>{series}</div>
         </div>
       )}

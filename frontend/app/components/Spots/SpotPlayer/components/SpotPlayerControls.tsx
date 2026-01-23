@@ -56,7 +56,7 @@ function SpotPlayerControls() {
   return (
     <>
     <div className="absolute block bottom-4 left-1 lg:hidden">
-      <div className="px-1 bg-white rounded font-semibold flex items-center gap-1 text-sm">
+      <div className="px-1 bg-white rounded-sm font-semibold flex items-center gap-1 text-sm">
         <PlayTime isCustom time={spotPlayerStore.time * 1000} format="mm:ss" />
         <span>/</span>
         <div>{spotPlayerStore.durationString}</div>
@@ -65,14 +65,14 @@ function SpotPlayerControls() {
     <div className="hidden lg:flex w-full p-4 items-center gap-4 bg-white">
       <PlayButton togglePlay={togglePlay} state={playState} iconSize={36} />
 
-      <div className="px-2 py-1 bg-white rounded font-semibold flex items-center gap-2">
+      <div className="px-2 py-1 bg-white rounded-sm font-semibold flex items-center gap-2">
         <PlayTime isCustom time={spotPlayerStore.time * 1000} format="mm:ss" />
         <span>/</span>
         <div>{spotPlayerStore.durationString}</div>
       </div>
 
       <div
-        className="rounded ml-1 bg-white border-gray-lighter flex items-center"
+        className="rounded-sm ml-1 bg-white border-gray-lighter flex items-center"
         style={{ gap: 1 }}
       >
         <JumpBack

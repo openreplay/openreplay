@@ -215,7 +215,7 @@ function NewAlert(props: IProps) {
         ]}
       />
       <Form
-        className="relative bg-white rounded border"
+        className="relative bg-white rounded-sm border"
         onSubmit={() => onSave(instance)}
         id="alert-form"
       >
@@ -312,7 +312,7 @@ function NewAlert(props: IProps) {
         </div>
       </Form>
 
-      <div className="bg-white mt-4 border rounded mb-10">
+      <div className="bg-white mt-4 border rounded-sm mb-10">
         {instance && (
           <AlertListItem
             alert={instance}

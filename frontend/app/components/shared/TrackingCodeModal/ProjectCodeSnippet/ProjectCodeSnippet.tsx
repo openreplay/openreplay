@@ -81,7 +81,7 @@ function ProjectCodeSnippet(props) {
         </div>
       </div>
       <div
-        className={cn(styles.info, 'rounded bg-gray mt-2 mb-4', {
+        className={cn(styles.info, 'rounded-sm bg-gray mt-2 mb-4', {
           hidden: !changed,
         })}
       >

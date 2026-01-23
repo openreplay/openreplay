@@ -236,7 +236,7 @@ function renderStatus({
   return (
     <Tooltip title={tooltipTitle} placement="top">
       <div
-        className="flex items-center gap-1 overflow-hidden overflow-ellipsis"
+        className="flex items-center gap-1 overflow-hidden text-ellipsis"
         style={{ width: 90 }}
       >
         <span className="mr-1">{status}</span>

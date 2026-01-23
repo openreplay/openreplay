@@ -211,8 +211,8 @@ function FilterSeries(props: Props) {
       size="small"
       className="rounded-lg"
       classNames={{
-        body: `${expanded ? '!p-4' : '!p-0'}`,
-        header: '!px-4 !py-2',
+        body: `${expanded ? 'p-4!' : 'p-0!'}`,
+        header: 'px-4! py-2!',
       }}
       extra={
         !hideHeader && expandable ? (

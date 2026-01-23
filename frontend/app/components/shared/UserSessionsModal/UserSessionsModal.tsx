@@ -87,7 +87,7 @@ function UserSessionsModal(props: Props) {
         }
       >
         <div
-          className="border rounded m-5 mt-0 overflow-y-auto"
+          className="border rounded-sm m-5 mt-0 overflow-y-auto"
           style={{ maxHeight: 'calc(100vh - 85px)' }}
         >
           <Loader loading={loading}>

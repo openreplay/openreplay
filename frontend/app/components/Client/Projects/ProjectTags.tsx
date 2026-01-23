@@ -32,7 +32,7 @@ function ProjectTags() {
         locale={{
           emptyText: (
             <div>
-              <div className="w-fit border border-gray-100 rounded-lg overflow-hidden  bg-white shadow-sm mx-auto">
+              <div className="w-fit border border-gray-100 rounded-lg overflow-hidden  bg-white shadow-xs mx-auto">
                 <div className="w-full h-48 md:h-64 lg:h-96 flex items-center justify-center border border-gray-100  bg-white  rounded-md">
                   <img
                     src="/assets/img/img-tagging.jpg"
@@ -58,11 +58,11 @@ function ProjectTags() {
         dataSource={list}
         renderItem={(item) => (
           <List.Item
-            className="cursor-pointer group hover:bg-active-blue !px-4"
+            className="cursor-pointer group hover:bg-active-blue px-4!"
             actions={[
               <Button
                 type="link"
-                className="opacity-0 group-hover:!opacity-100"
+                className="opacity-0 group-hover:opacity-100!"
                 icon={<EditOutlined size={14} />}
               />,
             ]}

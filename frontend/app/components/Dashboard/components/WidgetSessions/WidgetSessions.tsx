@@ -313,7 +313,7 @@ function WidgetSessions({ className = '' }) {
     <div
       className={cn(
         className,
-        'bg-white p-3 pb-0 rounded-xl shadow-sm border mt-3',
+        'bg-white p-3 pb-0 rounded-xl shadow-xs border mt-3',
       )}
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between">

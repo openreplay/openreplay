@@ -9,7 +9,7 @@ function EmptyTile({ onClick }: { onClick: () => void }) {
       className="border hover:bg-active-blue hover:border-borderColor-primary flex flex-col gap-2 items-center justify-center cursor-pointer"
       onClick={onClick}
     >
-      <InactiveTab classNames="!bg-gray-bg w-12" />
+      <InactiveTab classNames="bg-gray-bg! w-12" />
       {t('Add Session')}
     </div>
   );

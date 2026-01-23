@@ -14,7 +14,7 @@ function EmptyPage() {
 
   return (
     <div>
-      <div className="flex flex-col gap-4 items-center w-full p-8 bg-white rounded-lg shadow-sm mt-2">
+      <div className="flex flex-col gap-4 items-center w-full p-8 bg-white rounded-lg shadow-xs mt-2">
         <div className="w-3/4 flex flex-col gap-3 justify-center items-center ">
           <a
             href="#"

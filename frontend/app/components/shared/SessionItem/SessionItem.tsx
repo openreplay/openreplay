@@ -289,7 +289,7 @@ function SessionItem(props: RouteComponentProps & Props) {
           noHover ? '' : stl.hoverable,
           'flex flex-col',
           slim ? 'px-4 py-2 text-sm' : 'p-4',
-          noWrap ? '!px-0 py-2' : '',
+          noWrap ? 'px-0! py-2' : '',
         )}
         id="session-item"
         onClick={(e) => e.stopPropagation()}
@@ -361,7 +361,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   // delay={0}
                   // disabled={isDisabled}
                   title={isDisabled ? '' : timeTooltipContent}
-                  className="w-fit !block"
+                  className="w-fit block!"
                 >
                   <TextEllipsis
                     text={formattedTime}

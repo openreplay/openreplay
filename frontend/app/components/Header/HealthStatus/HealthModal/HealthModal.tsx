@@ -71,7 +71,7 @@ function HealthModal({
           transform: 'translate(-50%, -50%)',
         }}
         onClick={(e) => e.stopPropagation()}
-        className="flex flex-col bg-white rounded border border-figmaColors-divider"
+        className="flex flex-col bg-white rounded-sm border border-figmaColors-divider"
       >
         <div className="flex w-full justify-between items-center p-4 border-b border-figmaColors-divider">
           <div className="text-xl font-semibold">
@@ -152,7 +152,7 @@ function ServiceStatus({ service }: { service: Record<string, any> }) {
   const { subservices } = service;
   return (
     <div className="p-4">
-      <div className="border rounded border-light-gray">
+      <div className="border rounded-sm border-light-gray">
         {Object.keys(subservices).map((subservice: string) => (
           <React.Fragment key={subservice}>
             <SubserviceHealth

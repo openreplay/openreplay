@@ -50,7 +50,7 @@ function CardUserList(props: RouteComponentProps<Props>) {
   }, [userId]);
 
   return (
-    <div className="bg-white rounded p-4 border">
+    <div className="bg-white rounded-sm p-4 border">
       <div className="flex justify-between">
         <h1 className="font-medium text-2xl">{t('Returning users between')}</h1>
         <div>

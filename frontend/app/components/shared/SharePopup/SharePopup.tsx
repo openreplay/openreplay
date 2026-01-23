@@ -245,7 +245,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                     onChange={editMessage}
                     value={comment}
                     placeholder={t('Add Message (Optional)')}
-                    className="p-4 text-figmaColors-text-primary text-base bg-white border rounded border-gray-light"
+                    className="p-4 text-figmaColors-text-primary text-base bg-white border rounded-sm border-gray-light"
                   />
                 </Form.Item>
 

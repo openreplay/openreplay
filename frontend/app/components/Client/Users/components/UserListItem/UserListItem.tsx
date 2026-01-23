@@ -11,17 +11,17 @@ function AdminPrivilegeLabel({ user }) {
   return (
     <>
       {user.isAdmin && (
-        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+        <span className="px-2 py-1 bg-gray-lightest rounded-sm border text-sm capitalize">
           {t('Admin')}
         </span>
       )}
       {user.isSuperAdmin && (
-        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+        <span className="px-2 py-1 bg-gray-lightest rounded-sm border text-sm capitalize">
           {t('Owner')}
         </span>
       )}
       {!user.isAdmin && !user.isSuperAdmin && (
-        <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+        <span className="px-2 py-1 bg-gray-lightest rounded-sm border text-sm capitalize">
           {t('Member')}
         </span>
       )}
@@ -60,7 +60,7 @@ function UserListItem(props: Props) {
         {!isEnterprise && <AdminPrivilegeLabel user={user} />}
         {isEnterprise && (
           <>
-            <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+            <span className="px-2 py-1 bg-gray-lightest rounded-sm border text-sm capitalize">
               {user.roleName}
             </span>
             {user.isSuperAdmin ||

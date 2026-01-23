@@ -8,7 +8,7 @@ function FunnelOverview({ funnel }) {
   const { t } = useTranslation();
   return (
     <div
-      className="p-4 py-5 bg-white border rounded flex flex-col justify-center"
+      className="p-4 py-5 bg-white border rounded-sm flex flex-col justify-center"
       style={{ background: '#FFFEF9' }}
     >
       <div className="uppercase flex items-center mb-4">

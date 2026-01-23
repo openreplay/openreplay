@@ -51,7 +51,7 @@ function NotesList() {
             </div>
           }
         >
-          <div className="border-b rounded bg-white">
+          <div className="border-b rounded-sm bg-white">
             {list.map((note) => (
               <React.Fragment key={note.noteId}>
                 <NoteItem note={note} />

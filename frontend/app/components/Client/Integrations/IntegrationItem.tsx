@@ -43,7 +43,7 @@ function IntegrationItem(props: Props) {
       </div>
 
       {integrated && (
-        <div className="ml-12 p-1 flex items-center justify-center color-tealx border rounded w-fit">
+        <div className="ml-12 p-1 flex items-center justify-center color-tealx border rounded-sm w-fit">
           <Icon
             name="check-circle-fill"
             size="14"

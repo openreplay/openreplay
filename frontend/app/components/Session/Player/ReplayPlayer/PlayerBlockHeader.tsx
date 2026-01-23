@@ -100,7 +100,7 @@ function PlayerBlockHeader(props: any) {
             {/* @ts-ignore TODO */}
             <BackLink label={t('Back')} className="h-full ml-2" />
             <div
-              className={'w-[1px] h-full lg:h-[50px] mx-2 bg-gray-lighter'}
+              className={'w-px h-full lg:h-[50px] mx-2 bg-gray-lighter'}
             />
           </div>
         )}

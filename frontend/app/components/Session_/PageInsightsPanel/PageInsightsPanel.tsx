@@ -81,7 +81,7 @@ function PageInsightsPanel({ setActiveTab }: Props) {
   return (
     <div className="p-2 py-4 bg-white">
       <div className="flex items-center gap-2 mb-3 overflow-hidden">
-        <div className="flex-shrink-0 font-medium">{t('Page')}</div>
+        <div className="shrink-0 font-medium">{t('Page')}</div>
         <Form.Item name="url" className="mb-0 w-[176px]">
           <Select
             showSearch

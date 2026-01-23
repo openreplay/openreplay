@@ -15,7 +15,7 @@ interface Props {
     | 'text'
     | 'text-primary'
     | 'text-red'
-    | 'outline'
+    | 'outline-solid'
     | 'green';
   loading?: boolean;
   icon?: string;
@@ -44,10 +44,10 @@ export default function (props: Props) {
     variant === 'text' || variant === 'default' ? 'gray-dark' : 'teal';
 
   const variantClasses = {
-    default: 'bg-white hover:!bg-gray-light border border-gray-light',
+    default: 'bg-white hover:bg-gray-light! border border-gray-light',
     primary: 'bg-teal color-white hover:bg-teal-dark',
     green: 'bg-green color-white hover:bg-green-dark',
-    text: 'bg-transparent text-black hover:bg-active-blue hover:!text-teal hover-fill-teal',
+    text: 'bg-transparent text-black hover:bg-active-blue hover:text-teal! hover-fill-teal',
     'text-primary':
       'bg-transparent color-teal hover:bg-teal-light hover:color-teal-dark',
     'text-red': 'bg-transparent color-red hover:bg-teal-light',
@@ -58,7 +58,7 @@ export default function (props: Props) {
     'relative flex items-center h-10 px-3 rounded-lg tracking-wide whitespace-nowrap',
     variantClasses[variant],
     { 'opacity-40 pointer-events-none': disabled },
-    { '!rounded-full h-10 w-10 justify-center': rounded },
+    { 'rounded-full! h-10 w-10 justify-center': rounded },
     className,
     'btn',
   );
@@ -86,7 +86,7 @@ export default function (props: Props) {
         />
       )}
       {loading && (
-        <div className="absolute flex items-center justify-center inset-0 z-1 rounded">
+        <div className="absolute flex items-center justify-center inset-0 z-1 rounded-sm">
           <CircularLoader />
         </div>
       )}

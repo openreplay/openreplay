@@ -62,7 +62,7 @@ function NoteItem(props: Props) {
             : `?note=${props.note.noteId}`)
         }
       >
-        <div className="flex flex-col p-2 rounded cursor-pointer justify-between">
+        <div className="flex flex-col p-2 rounded-sm cursor-pointer justify-between">
           <div className="flex py-1 text-base">
             {props.note.tag ? (
               <Tag

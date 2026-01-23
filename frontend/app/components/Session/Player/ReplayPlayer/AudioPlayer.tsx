@@ -258,7 +258,7 @@ function DropdownAudioPlayer({
           trigger="click"
           content={
             <div
-              className="flex flex-col gap-2 rounded"
+              className="flex flex-col gap-2 rounded-sm"
               style={{ height: 200 }}
             >
               <Slider vertical value={volume} onChange={onVolumeChange} />
@@ -287,7 +287,7 @@ function DropdownAudioPlayer({
 
       {isVisible ? (
         <div
-          className="absolute left-1/2 top-0 border shadow border-gray-light rounded bg-white p-4 flex flex-col gap-4 mb-4"
+          className="absolute left-1/2 top-0 border shadow-sm border-gray-light rounded-sm bg-white p-4 flex flex-col gap-4 mb-4"
           style={{
             width: 240,
             transform: 'translate(-75%, -110%)',

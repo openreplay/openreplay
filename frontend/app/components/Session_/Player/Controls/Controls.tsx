@@ -245,7 +245,7 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
     <div className={styles.controls}>
       <Timeline />
       {!fullscreen && !mobileScreen && (
-        <div className={cn(styles.buttons, '!px-2')}>
+        <div className={cn(styles.buttons, 'px-2!')}>
           <div className="flex items-center">
             <PlayerControls
               skip={skip}

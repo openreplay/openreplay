@@ -103,7 +103,7 @@ function ProjectCodeSnippet() {
         </div>
       </div>
       <div
-        className={cn(stl.info, 'rounded bg-gray mt-2 mb-4 ml-10', {
+        className={cn(stl.info, 'rounded-sm bg-gray mt-2 mb-4 ml-10', {
           hidden: !changed,
         })}
       >

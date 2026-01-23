@@ -5,7 +5,7 @@ function EventSearchInput(props) {
   return (
     <div>
       <input
-        className="border rounded p-1"
+        className="border rounded-sm p-1"
         type="text"
         placeholder="Search for an event"
       />

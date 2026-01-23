@@ -12,7 +12,7 @@ function MetricsView({ siteId }: Props) {
   return (
     <div
       style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
-      className="bg-white rounded-lg shadow-sm pt-4 border"
+      className="bg-white rounded-lg shadow-xs pt-4 border"
     >
       <MetricViewHeader siteId={siteId} />
       <div className="pt-3">

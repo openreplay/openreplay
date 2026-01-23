@@ -77,7 +77,7 @@ function SpotsList() {
   return (
     <div className="relative w-full mx-auto" style={{ maxWidth: 1360 }}>
       <InstallCTA />
-      <div className="flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b">
+      <div className="flex mx-auto p-2 px-4 bg-white rounded-lg shadow-xs w-full z-50 border-b">
         <SpotsListHeader
           onDelete={batchDelete}
           onRefresh={spotStore.fetchSpots}
@@ -98,7 +98,7 @@ function SpotsList() {
         ) : (
           <>
             <NoContent
-              className="w-full bg-white rounded-lg shadow-sm"
+              className="w-full bg-white rounded-lg shadow-xs"
               show={spotStore.spots.length === 0}
               title={
                 <div>
@@ -125,7 +125,7 @@ function SpotsList() {
                 ))}
               </div>
             </NoContent>
-            <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
+            <div className="flex items-center justify-between px-4 py-3 shadow-xs w-full bg-white rounded-lg mt-2">
               <div>
                 {t('Showing')}{' '}
                 <span className="font-medium">

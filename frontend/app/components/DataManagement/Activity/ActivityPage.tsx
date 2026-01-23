@@ -305,7 +305,7 @@ function ActivityPage() {
           Clear
         </Button>
       </div>
-      <div className={'shadow rounded-lg bg-white p-4 border'}>
+      <div className={'shadow-sm rounded-lg bg-white p-4 border'}>
         <FilterListHeader
           title="Events"
           orderProps={appliedFilter}
@@ -381,7 +381,7 @@ function ActivityPage() {
 
         <div
           className={
-            'bg-white rounded-lg shadow border flex flex-col overflow-hidden'
+            'bg-white rounded-lg shadow-sm border flex flex-col overflow-hidden'
           }
         >
           <div className={'px-4 py-2 flex items-center gap-2'}>

@@ -165,11 +165,11 @@ function Login({
         <div className="m-10 ">
           <img src="/assets/logo.svg" width={200} alt="Company Logo" />
         </div>
-        <div className="border rounded-lg bg-white shadow-sm">
+        <div className="border rounded-lg bg-white shadow-xs">
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
             {t('Login to your account')}
           </h2>
-          <div className={cn(authDetails?.enforceSSO ? '!hidden' : '')}>
+          <div className={cn(authDetails?.enforceSSO ? 'hidden!' : '')}>
             <Form
               onFinish={onSubmit}
               className={cn('flex items-center justify-center flex-col')}
@@ -209,7 +209,7 @@ function Login({
               {errors && errors.length ? (
                 <div className="px-8 my-2 w-full">
                   {errors.map((error, index) => (
-                    <div key={index} className="flex items-center bg-red-lightest rounded p-3">
+                    <div key={index} className="flex items-center bg-red-lightest rounded-sm p-3">
                       <Icon name="info" color="red" size="20" />
                       <span className="color-red ml-2">
                         {error}

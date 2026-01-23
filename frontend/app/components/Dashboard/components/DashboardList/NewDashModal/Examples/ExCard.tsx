@@ -15,7 +15,7 @@ function ExCard({
 }) {
   return (
     <div
-      className="rounded-lg overflow-hidden border border-transparent p-4 bg-white hover:shadow-sm relative hover:border-teal transition-all duration-200"
+      className="rounded-lg overflow-hidden border border-transparent p-4 bg-white hover:shadow-xs relative hover:border-teal transition-all duration-200"
       style={{ width: '100%', height: height || 286 }}
     >
       <div

@@ -72,7 +72,7 @@ const OptionItem = memo(
     <div
       onClick={() => onSelect(item)}
       className={cn(
-        'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2 relative',
+        'cursor-pointer w-full py-1 hover:bg-active-blue rounded-sm px-2 relative',
         { 'bg-active-blue-faded': isSelected },
       )}
       role="option"
@@ -95,7 +95,7 @@ const OptionItem = memo(
         </Text>
       </Space>
       <div
-        className="absolute bg-main bottom-0 left-0 rounded"
+        className="absolute bg-main bottom-0 left-0 rounded-sm"
         style={{ width: `${Math.round(item.percentage ?? 0)}%`, height: 2 }}
       />
     </div>
@@ -516,7 +516,7 @@ const ValueAutoComplete = observer(
                   </Text>
                   {initialValues.length > 1 && (
                     <>
-                      <Text type="secondary" className="flex-shrink-0">
+                      <Text type="secondary" className="shrink-0">
                         {t('or')}
                       </Text>
                       <Text
@@ -536,7 +536,7 @@ const ValueAutoComplete = observer(
                           : getDisplayLabel(initialValues[1])}
                       </Text>
                       {initialValues.length > 2 && (
-                        <Text type="secondary" className="flex-shrink-0">
+                        <Text type="secondary" className="shrink-0">
                           {`+ ${initialValues.length - 2}`}
                         </Text>
                       )}

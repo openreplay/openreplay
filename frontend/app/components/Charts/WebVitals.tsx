@@ -302,7 +302,7 @@ function WebVitalsCard({
   return (
     <div
       className={cn(
-        'flex justify-between items-start gap-2 border rounded-lg shadow-sm',
+        'flex justify-between items-start gap-2 border rounded-lg shadow-xs',
         inGrid ? 'p-2' : 'p-4',
         `bg-${bg} cursor-pointer`,
         isSelected ? 'border-main' : 'border-transparent',

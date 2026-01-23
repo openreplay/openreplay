@@ -65,7 +65,7 @@ function ConditionSetComponent({
     conditions.filter.moveFilter(draggedIdx, targetIdx);
   };
   return (
-    <div className="border bg-white rounded">
+    <div className="border bg-white rounded-sm">
       <div className="flex items-center border-b px-4 py-2 gap-2">
         {conditions.name ? (
           <div className="flex gap-2">
@@ -84,7 +84,7 @@ function ConditionSetComponent({
         ) : (
           <>
             <div>{t('Condition')}</div>
-            <div className="p-2 rounded bg-gray-lightest">
+            <div className="p-2 rounded-sm bg-gray-lightest">
               {t('Set')}
               {set}
             </div>
@@ -93,7 +93,7 @@ function ConditionSetComponent({
         {readonly ? null : (
           <div
             className={cn(
-              'p-2 px-4 cursor-pointer rounded ml-auto',
+              'p-2 px-4 cursor-pointer rounded-sm ml-auto',
               'hover:bg-teal-light',
             )}
             onClick={() => removeCondition(index)}

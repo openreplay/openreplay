@@ -76,7 +76,7 @@ function IdeaItem({
     <div
       onClick={() => (limited ? null : onClick(title))}
       className={cn(
-        'cursor-pointer text-gray-dark hover:text-black rounded-full px-4 py-2 shadow border',
+        'cursor-pointer text-gray-dark hover:text-black rounded-full px-4 py-2 shadow-sm border',
         limited ? 'bg-gray-lightest cursor-not-allowed' : 'bg-white',
       )}
     >

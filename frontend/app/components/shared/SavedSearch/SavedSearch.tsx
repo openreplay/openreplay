@@ -72,7 +72,7 @@ function SavedSearch() {
               onClick={toggleList}
               icon={<List size={16} />}
               type="text"
-              className="!px-2"
+              className="px-2!"
             />
           </Tooltip>
 
@@ -92,7 +92,7 @@ function SavedSearch() {
               disabled={isSaveDisabled}
               icon={<Save size={16} />}
               type="text"
-              className="!px-2"
+              className="px-2!"
             />
           </Tooltip>
 
@@ -103,7 +103,7 @@ function SavedSearch() {
               loading={isSharing}
               icon={<Share2 size={16} />}
               type="text"
-              className="!px-2"
+              className="px-2!"
             />
           </Tooltip>
         </Space.Compact>

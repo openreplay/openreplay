@@ -33,7 +33,7 @@ function DashboardWidgetGrid(props: Props) {
         </div>
       ) : (
         <div
-          className="pb-10 px-4 pt-2 grid gap-2 rounded grid-cols-4 items-start "
+          className="pb-10 px-4 pt-2 grid gap-2 rounded-sm grid-cols-4 items-start "
           id={props.id}
         >
           {list?.map((item: any, index: any) => (

@@ -26,7 +26,7 @@ function AccessError() {
           </Button>
         </a>
       </div>
-      <Card className="w-1/2 mx-auto rounded-b-full shadow-sm text-center flex flex-col justify-center items-center z-50 min-h-60">
+      <Card className="w-1/2 mx-auto rounded-b-full shadow-xs text-center flex flex-col justify-center items-center z-50 min-h-60">
         <div className="font-semibold text-xl">
           {t('The Spot link or your login session has expired.')}
         </div>

@@ -121,7 +121,7 @@ function AccessModal() {
             <div className="text-black/50">
               {t('Link for internal team members')}
             </div>
-            <div className="px-2 py-1 rounded-lg bg-indigo-lightest whitespace-nowrap overflow-ellipsis overflow-hidden">
+            <div className="px-2 py-1 rounded-lg bg-indigo-lightest whitespace-nowrap text-ellipsis overflow-hidden">
               {spotLink}
             </div>
           </div>
@@ -155,7 +155,7 @@ function AccessModal() {
             <div className="text-black/50">
               {t('Anyone with the following link can access this Spot')}
             </div>
-            <div className="px-2 py-1 rounded-lg bg-indigo-lightest whitespace-nowrap overflow-ellipsis overflow-hidden">
+            <div className="px-2 py-1 rounded-lg bg-indigo-lightest whitespace-nowrap text-ellipsis overflow-hidden">
               {spotLink}
             </div>
           </div>

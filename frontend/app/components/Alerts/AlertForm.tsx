@@ -133,7 +133,7 @@ function AlertForm(props) {
       <div className={cn('-mx-6 px-6 pb-12')}>
         <input
           autoFocus
-          className="text-lg border border-gray-light rounded w-full"
+          className="text-lg border border-gray-light rounded-sm w-full"
           name="name"
           style={{ fontSize: '18px', padding: '10px', fontWeight: '600' }}
           value={instance && instance.name}
@@ -184,7 +184,7 @@ function AlertForm(props) {
             <div>
               {!isThreshold && (
                 <div className="flex items-center my-3">
-                  <label className="w-2/6 flex-shrink-0 font-normal">
+                  <label className="w-2/6 shrink-0 font-normal">
                     {t('Trigger when')}
                   </label>
                   <Select
@@ -202,7 +202,7 @@ function AlertForm(props) {
               )}
 
               <div className="flex items-center my-3">
-                <label className="w-2/6 flex-shrink-0 font-normal">
+                <label className="w-2/6 shrink-0 font-normal">
                   {isThreshold ? t('Trigger when') : t('of')}
                 </label>
                 <Select
@@ -222,7 +222,7 @@ function AlertForm(props) {
               </div>
 
               <div className="flex items-center my-3">
-                <label className="w-2/6 flex-shrink-0 font-normal">
+                <label className="w-2/6 shrink-0 font-normal">
                   {t('is')}
                 </label>
                 <div className="w-4/6 flex items-center">
@@ -271,7 +271,7 @@ function AlertForm(props) {
               </div>
 
               <div className="flex items-center my-3">
-                <label className="w-2/6 flex-shrink-0 font-normal">
+                <label className="w-2/6 shrink-0 font-normal">
                   {t('over the past')}
                 </label>
                 <Select
@@ -288,7 +288,7 @@ function AlertForm(props) {
               </div>
               {!isThreshold && (
                 <div className="flex items-center my-3">
-                  <label className="w-2/6 flex-shrink-0 font-normal">
+                  <label className="w-2/6 shrink-0 font-normal">
                     {t('compared to previous')}
                   </label>
                   <Select
@@ -354,7 +354,7 @@ function AlertForm(props) {
 
               {instance.slack && (
                 <div className="flex items-start my-4">
-                  <label className="w-2/6 flex-shrink-0 font-normal pt-2">
+                  <label className="w-2/6 shrink-0 font-normal pt-2">
                     {t('Slack')}
                   </label>
                   <div className="w-4/6">
@@ -372,7 +372,7 @@ function AlertForm(props) {
               )}
               {instance.msteams && (
                 <div className="flex items-start my-4">
-                  <label className="w-2/6 flex-shrink-0 font-normal pt-2">
+                  <label className="w-2/6 shrink-0 font-normal pt-2">
                     {t('MS Teams')}
                   </label>
                   <div className="w-4/6">
@@ -391,7 +391,7 @@ function AlertForm(props) {
 
               {instance.email && (
                 <div className="flex items-start my-4">
-                  <label className="w-2/6 flex-shrink-0 font-normal pt-2">
+                  <label className="w-2/6 shrink-0 font-normal pt-2">
                     {t('Email')}
                   </label>
                   <div className="w-4/6">
@@ -410,7 +410,7 @@ function AlertForm(props) {
 
               {instance.webhook && (
                 <div className="flex items-start my-4">
-                  <label className="w-2/6 flex-shrink-0 font-normal pt-2">
+                  <label className="w-2/6 shrink-0 font-normal pt-2">
                     {t('Webhook')}
                   </label>
                   <DropdownChips

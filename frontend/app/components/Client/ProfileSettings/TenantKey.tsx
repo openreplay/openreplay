@@ -25,7 +25,7 @@ function TenantKey() {
         name="tenantKey"
         id="tenantKey"
         type="text"
-        className="!w-72"
+        className="w-72!"
         readOnly
         value={tenantKey}
         leadingButton={

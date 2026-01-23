@@ -208,7 +208,7 @@ function SpotVideoContainer({
       >
         {processingState === ProcessingState.Processing ? (
           <Alert
-            className="trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-lightest"
+            className="trimIsProcessing rounded-lg shadow-xs border-indigo-500 bg-indigo-lightest"
             message="You’re viewing the original recording. Processed Spot will be available here shortly."
             showIcon
             type="info"
@@ -216,7 +216,7 @@ function SpotVideoContainer({
           />
         ) : prevIsProcessing ? (
           <Alert
-            className="trimIsReady rounded-lg shadow-sm border-0"
+            className="trimIsReady rounded-lg shadow-xs border-0"
             message="Your processed Spot is ready!"
             showIcon
             type="success"
