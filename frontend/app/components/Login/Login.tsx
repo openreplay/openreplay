@@ -14,6 +14,7 @@ import LanguageSwitcher from '../LanguageSwitcher';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 import SSOLogin from './SSOLogin';
 import { extKey } from 'Components/Spots/SpotsList/InstallCTA';
+const companyLogo = new URL("../../assets/logo.svg", import.meta.url);
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -163,7 +164,7 @@ function Login({
     <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center">
         <div className="m-10 ">
-          <img src="/assets/logo.svg" width={200} alt="Company Logo" />
+          <img src={companyLogo} width={200} alt="Company Logo" />
         </div>
         <div className="border rounded-lg bg-white shadow-xs">
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
