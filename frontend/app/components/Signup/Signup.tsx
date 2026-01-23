@@ -13,7 +13,7 @@ import SignupForm from './SignupForm';
 const LOGIN_ROUTE = login();
 const BulletItem: React.FC<{ text: string }> = ({ text }) => (
   <div className="flex items-center mb-4">
-    <div className="mr-3 h-8 w-8 rounded-full bg-white shadow flex items-center justify-center">
+    <div className="mr-3 h-8 w-8 rounded-full bg-white shadow-sm flex items-center justify-center">
       <Icon name="check" size="26" />
     </div>
     <div>{text}</div>

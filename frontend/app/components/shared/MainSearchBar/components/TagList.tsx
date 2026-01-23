@@ -141,7 +141,7 @@ function TagRow(props: {
       </Typography.Text>
 
       <div
-        className="cursor-pointer ml-auto p-2 hover:bg-gray-light rounded"
+        className="cursor-pointer ml-auto p-2 hover:bg-gray-light rounded-sm"
         onClick={(e) => {
           e.stopPropagation();
           setIsEditing(true);
@@ -150,7 +150,7 @@ function TagRow(props: {
         <Icon name="edit" />
       </div>
       <div
-        className="cursor-pointer p-2 hover:bg-gray-light rounded"
+        className="cursor-pointer p-2 hover:bg-gray-light rounded-sm"
         onClick={(e) => {
           e.stopPropagation();
           void onDelete(tag.tagId);

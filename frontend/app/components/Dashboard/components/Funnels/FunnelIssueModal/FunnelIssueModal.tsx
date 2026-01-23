@@ -8,7 +8,7 @@ function FunnelIssueModal(props: Props) {
   const { issueId } = props;
   return (
     <div
-      className="border-r shadow p-4 h-screen"
+      className="border-r shadow-sm p-4 h-screen"
       style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%' }}
     >
       <FunnelIssueDetails issueId={issueId} />

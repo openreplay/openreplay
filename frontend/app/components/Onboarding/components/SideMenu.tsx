@@ -37,7 +37,7 @@ function SideMenu(props: Props) {
           color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray-medium'}
         />
       ),
-      className: '!rounded-lg hover-fill-teal',
+      className: 'rounded-lg! hover-fill-teal',
     },
     {
       key: OB_TABS.IDENTIFY_USERS,
@@ -49,7 +49,7 @@ function SideMenu(props: Props) {
           color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray-medium'}
         />
       ),
-      className: '!rounded-lg hover-fill-teal',
+      className: 'rounded-lg! hover-fill-teal',
     },
     {
       key: OB_TABS.MANAGE_USERS,
@@ -61,7 +61,7 @@ function SideMenu(props: Props) {
           color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray-medium'}
         />
       ),
-      className: '!rounded-lg hover-fill-teal',
+      className: 'rounded-lg! hover-fill-teal',
     },
     {
       key: OB_TABS.INTEGRATIONS,
@@ -73,7 +73,7 @@ function SideMenu(props: Props) {
           color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray-medium'}
         />
       ),
-      className: '!rounded-lg hover-fill-teal',
+      className: 'rounded-lg! hover-fill-teal',
     },
     { type: 'divider' },
     {
@@ -86,7 +86,7 @@ function SideMenu(props: Props) {
           color={activeTab === 'support' ? 'teal' : 'gray-medium'}
         />
       ),
-      className: '!rounded-lg hover-fill-teal',
+      className: 'rounded-lg! hover-fill-teal',
     },
   ];
 

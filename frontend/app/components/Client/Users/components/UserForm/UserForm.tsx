@@ -87,7 +87,7 @@ function UserForm() {
           />
         </div>
         {!isSmtp && (
-          <div className={cn('mb-4 p-2 bg-amber rounded')}>
+          <div className={cn('mb-4 p-2 bg-amber rounded-sm')}>
             {t('SMTP is not configured (see')}&nbsp;
             <a
               className="link"

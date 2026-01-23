@@ -30,7 +30,7 @@ function FunnelSearch(props) {
       <input
         value={query}
         name="metricsSearch"
-        className="bg-white p-2 border rounded w-full pl-10"
+        className="bg-white p-2 border rounded-sm w-full pl-10"
         placeholder="Filter by title, owner"
         onChange={write}
       />

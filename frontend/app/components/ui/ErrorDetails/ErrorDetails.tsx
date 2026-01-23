@@ -33,7 +33,7 @@ function ErrorDetails(props: Props) {
       {!sourcemapUploaded && (
         <div
           style={{ backgroundColor: 'rgba(204, 0, 0, 0.1)' }}
-          className="font-normal flex items-center text-sm font-regular color-red border p-2 rounded"
+          className="font-normal flex items-center text-sm font-regular color-red border p-2 rounded-sm"
         >
           <Icon name="info" size="16" color="red" />
           <div className="ml-2">

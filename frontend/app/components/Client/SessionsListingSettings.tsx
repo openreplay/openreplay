@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 function SessionsListingSettings() {
   const { t } = useTranslation();
   return (
-    <div className="bg-white rounded-lg border shadow-sm p-5">
+    <div className="bg-white rounded-lg border shadow-xs p-5">
       <PageTitle title={<div>{t('Session Settings')}</div>} />
 
       <div className="flex flex-col mt-4">

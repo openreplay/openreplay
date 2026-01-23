@@ -34,7 +34,7 @@ function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
       render={({ close }) => (
         <div
           style={{ margin: -12 }}
-          className="flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest text-left"
+          className="flex flex-col gap-2 bg-white py-2 rounded-sm color-gray-darkest text-left"
         >
           <div className="font-semibold px-4 cursor-default">
             {t('Playback Time Mode')}

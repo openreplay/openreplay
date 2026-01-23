@@ -11,7 +11,7 @@ function FunnelIssueGraph(props: Props) {
   const { issue } = props;
 
   return (
-    <div className="flex rounded-sm" style={{ width: '600px' }}>
+    <div className="flex rounded-xs" style={{ width: '600px' }}>
       <div
         style={{
           width: `${issue.unaffectedSessionsPer}%`,

@@ -56,7 +56,7 @@ function UserMenu(props: Props) {
       </div>
       <div className="p-2">
         <div
-          className="rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal"
+          className="rounded-sm border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:border-active-blue-border! hover-teal"
           onClick={onLogout}
         >
           <Icon name="door-closed" size="16" />

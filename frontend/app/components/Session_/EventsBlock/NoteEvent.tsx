@@ -80,7 +80,7 @@ function NoteEvent(props: Props) {
 
   return (
     <div
-      className="flex items-start flex-col p-2 border rounded ps-4"
+      className="flex items-start flex-col p-2 border rounded-sm ps-4"
       style={{ background: 'rgba(252, 193, 0, 0.1)' }}
     >
       <div className="flex items-center w-full relative">

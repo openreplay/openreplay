@@ -37,7 +37,7 @@ function ResultTimings({ timing }) {
       show={!timing}
       size="small"
     >
-      <div className="bg-white flex flex-col rounded m-3">
+      <div className="bg-white flex flex-col rounded-sm m-3">
         <SectionWrapper title={t('Resource Scheduling')}>
           <Barwrapper title={t('Queuing')} duration={queued}>
             <Bar

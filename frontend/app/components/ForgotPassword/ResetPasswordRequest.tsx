@@ -121,7 +121,7 @@ function ResetPasswordRequest(props: Props & WithCaptchaProps) {
                 {t('Email delivery failed due to invalid SMTP configuration. Please contact your admin.')}
                 <a
                   href="https://docs.openreplay.com/en/configuration/configure-smtp/"
-                  className="!text-neutral-900 hover:!underline flex items-center justify-center gap-1 mt-2"
+                  className="text-neutral-900! hover:underline! flex items-center justify-center gap-1 mt-2"
                   target="_blank"
                   rel="noreferrer"
                 >

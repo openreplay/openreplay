@@ -32,7 +32,7 @@ export function WidgetCategoryItem({
   );
   return (
     <div
-      className={cn('rounded p-4 border cursor-pointer hover:bg-active-blue', {
+      className={cn('rounded-sm p-4 border cursor-pointer hover:bg-active-blue', {
         'bg-active-blue border-blue': isSelected,
         'bg-white': !isSelected,
       })}

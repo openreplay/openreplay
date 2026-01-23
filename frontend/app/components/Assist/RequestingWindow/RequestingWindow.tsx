@@ -71,7 +71,7 @@ function RequestingWindow({ getWindowType }: Props) {
         zIndex: INDEXES.PLAYER_REQUEST_WINDOW,
       }}
     >
-      <div className="rounded bg-white pt-4 pb-2 px-8 flex flex-col text-lg items-center max-w-lg text-center">
+      <div className="rounded-sm bg-white pt-4 pb-2 px-8 flex flex-col text-lg items-center max-w-lg text-center">
         <Icon
           size={40}
           color={WIN_VARIANTS(t)[windowType].iconColor}

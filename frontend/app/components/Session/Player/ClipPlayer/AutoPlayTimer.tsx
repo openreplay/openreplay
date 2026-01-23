@@ -38,7 +38,7 @@ function AutoplayTimer({ history }: any) {
 
   return (
     <div className={cn(clsOv.overlay, stl.overlayBg, 'z-10')}>
-      <div className="border p-5 shadow-lg bg-white rounded">
+      <div className="border p-5 shadow-lg bg-white rounded-sm">
         <div className="mb-5">
           {t('Autoplaying next clip in')}&nbsp;
           <span className="font-medium">{counter}</span>&nbsp;{t('seconds')}

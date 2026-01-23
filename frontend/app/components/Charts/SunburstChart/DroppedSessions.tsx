@@ -56,7 +56,7 @@ function DroppedSessionsList({
             sortedDrops.map((item, index) => (
               <div
                 key={index}
-                className="py-1.5 px-2 hover:bg-gray-lightest rounded transition-colors flex justify-between gap-2 relative"
+                className="py-1.5 px-2 hover:bg-gray-lightest rounded-sm transition-colors flex justify-between gap-2 relative"
                 onMouseEnter={() => onHover(item.ids)}
                 onMouseLeave={() => onLeave()}
               >
@@ -81,7 +81,7 @@ function DroppedSessionsList({
             ? legendList.map((item) => (
                 <div
                   key={item}
-                  className="py-1.5 px-2 hover:bg-gray-lightest rounded transition-colors relative"
+                  className="py-1.5 px-2 hover:bg-gray-lightest rounded-sm transition-colors relative"
                   onMouseEnter={() => onHover(legend[item].ids)}
                   onMouseLeave={() => onLeave()}
                 >
@@ -95,7 +95,7 @@ function DroppedSessionsList({
     },
   ];
   return (
-    <div className="bg-white rounded-lg border shadow p-4 w-[260px] absolute top-0 bottom-0 my-4 right-4">
+    <div className="bg-white rounded-lg border shadow-sm p-4 w-[260px] absolute top-0 bottom-0 my-4 right-4">
       <Tabs defaultActiveKey="1" items={items} />
     </div>
   );

@@ -113,7 +113,7 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
       {inBackground ? (
         <div
           className={cn(
-            'transition-all flex items-center gap-1 bg-white border rounded px-2 py-1',
+            'transition-all flex items-center gap-1 bg-white border rounded-sm px-2 py-1',
             'opacity-100',
           )}
         >
@@ -124,7 +124,7 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
       {list.map((w) => (
         <div
           className={cn(
-            'transition-all flex items-center gap-1 bg-white border rounded px-2 py-1',
+            'transition-all flex items-center gap-1 bg-white border rounded-sm px-2 py-1',
             activeWarnings.findIndex((a) => a === w) !== -1
               ? 'opacity-100'
               : 'opacity-0',

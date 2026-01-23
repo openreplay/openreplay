@@ -228,7 +228,7 @@ function SpotPlayerHeader({
         </Button>
       ) : (
         <Tabs
-          className="!w-fit !border-b-0"
+          className="w-fit! border-b-0!"
           tabs={[
             {
               key: TABS.ACTIVITY,

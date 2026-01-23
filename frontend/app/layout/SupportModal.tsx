@@ -30,7 +30,7 @@ function SupportModal(props: Props) {
       className="bg-gray-lightest"
     >
       <div className="flex flex-col items-center gap-2">
-        <div className="p-3 bg-white flex rounded-lg shadow-sm hover:bg-indigo-lightest">
+        <div className="p-3 bg-white flex rounded-lg shadow-xs hover:bg-indigo-lightest">
           <div className="shrink-0 w-10 mt-2">
             <Icon name="bookmark" size={18} />
           </div>
@@ -62,7 +62,7 @@ function SupportModal(props: Props) {
           </div>
         </div>
 
-        <div className="p-3 bg-white flex rounded-lg shadow-sm hover:bg-indigo-lightest">
+        <div className="p-3 bg-white flex rounded-lg shadow-xs hover:bg-indigo-lightest">
           <div className="shrink-0 w-10 mt-2">
             <Icon name="slack" size={18} />
           </div>
@@ -93,7 +93,7 @@ function SupportModal(props: Props) {
           </div>
         </div>
 
-        <div className="p-3 bg-white flex rounded-lg shadow-sm hover:bg-indigo-lightest">
+        <div className="p-3 bg-white flex rounded-lg shadow-xs hover:bg-indigo-lightest">
           <div className="shrink-0 w-10 mt-2">
             <Icon name="github" size={18} />
           </div>

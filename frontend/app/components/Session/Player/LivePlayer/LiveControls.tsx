@@ -91,7 +91,7 @@ function Controls(props: any) {
       {session.liveOnly ? null : <Timeline />}
       {!noControls ? (
         <div
-          className={cn(styles.buttons, '!px-5 !pt-0')}
+          className={cn(styles.buttons, 'px-5! pt-0!')}
           data-is-live
           style={{ height: noGrid ? '40px' : '' }}
         >

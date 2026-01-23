@@ -213,7 +213,7 @@ const sampleIssues = [
     lostConversions: 0,
     affectedUsers: 1,
     conversionImpact: 11,
-    contextString: 'py-1 px-2 bg-white border border-gray-light rounded w-16',
+    contextString: 'py-1 px-2 bg-white border border-gray-light rounded-sm w-16',
     issueId: '9159e30220bb6a6a31afcaa1979a0c7d69c',
   },
   {

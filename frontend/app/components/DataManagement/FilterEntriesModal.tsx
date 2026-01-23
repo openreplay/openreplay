@@ -47,7 +47,7 @@ function FilterEntriesModal({
     <OutsideClickDetectingDiv onClickOutside={onClose}>
       <div
         className={cn(
-          'flex flex-col gap-2 shadow border rounded-lg p-4 absolute z-50 bg-white min-w-[300px]',
+          'flex flex-col gap-2 shadow-sm border rounded-lg p-4 absolute z-50 bg-white min-w-[300px]',
           left ? `left-${left ?? 0}` : 'right-0',
           topOffset,
         )}

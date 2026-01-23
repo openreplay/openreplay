@@ -18,7 +18,7 @@ function ProfileSettings() {
   const { account } = userStore;
   const { isEnterprise } = userStore;
   return (
-    <div className="bg-white rounded-lg  border shadow-sm">
+    <div className="bg-white rounded-lg  border shadow-xs">
       <PageTitle title={<div className="px-4 pt-4">{t('Account')}</div>} />
       <Section
         title={t('Profile')}

@@ -18,7 +18,7 @@ function Tab(props: ITab) {
     <div
       onClick={props.onClick}
       className={cn(
-        'p-1 rounded flex items-center justify-center cursor-pointer',
+        'p-1 rounded-sm flex items-center justify-center cursor-pointer',
         props.classNames,
       )}
       style={props.style}

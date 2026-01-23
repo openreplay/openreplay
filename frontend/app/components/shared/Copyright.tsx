@@ -8,7 +8,7 @@ const Copyright = React.memo(() => {
     <footer className="fixed bottom-0 m-auto text-center mb-6 text-gray-500">
       {`© ${currentYear} ${t('OpenReplay. All rights reserved')}. `}
       <a
-        className="underline hover:text-gray-700"
+        className="link"
         href="https://openreplay.com/legal/privacy"
         target="_blank"
         rel="noopener noreferrer"
@@ -17,7 +17,7 @@ const Copyright = React.memo(() => {
       </a>
       &nbsp;{t('and')}&nbsp;
       <a
-        className="underline hover:text-gray-700"
+        className="link"
         href="https://openreplay.com/legal/terms"
         target="_blank"
         rel="noopener noreferrer"

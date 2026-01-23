@@ -120,7 +120,7 @@ function AssistSessionsModal(props: ConnectProps) {
             <React.Fragment key={session.sessionId}>
               <div
                 className={cn(
-                  'rounded bg-white mb-2 overflow-hidden border',
+                  'rounded-sm bg-white mb-2 overflow-hidden border',
                   assistMultiviewStore.sessions.findIndex(
                     (s: Record<string, any>) =>
                       s.sessionId === session.sessionId,

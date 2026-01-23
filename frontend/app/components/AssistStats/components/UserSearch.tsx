@@ -63,7 +63,7 @@ function UserSearch({ onUserSelect }: { onUserSelect: (id: any) => void }) {
         allowClear
         placeholder="Filter by team member name"
         size="small"
-        classNames={{ input: '!border-0 focus:!border-0' }}
+        classNames={{ input: 'border-0! focus:border-0!' }}
         style={{ width: 200 }}
       />
     </AutoComplete>

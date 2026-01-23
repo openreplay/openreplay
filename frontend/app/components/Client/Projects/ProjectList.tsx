@@ -55,7 +55,7 @@ const ProjectList: React.FC = () => {
     extra: (
       <Button
         onClick={(e) => projectEditHandler(e, project)}
-        className="flex opacity-0 group-hover:!opacity-100"
+        className="flex opacity-0 group-hover:opacity-100!"
         size="small"
         type="link"
         icon={<EditOutlined size={14} />}
@@ -90,7 +90,7 @@ const ProjectList: React.FC = () => {
           mode="inline"
           onClick={onClick}
           selectedKeys={[String(projectsStore.config.pid)]}
-          className="w-full !bg-white !border-0"
+          className="w-full bg-white! border-0!"
           inlineIndent={11}
           items={menuItems}
         />

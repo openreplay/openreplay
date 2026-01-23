@@ -109,7 +109,7 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
     <Card
       className={cn(
         'relative group rounded-lg hover:border-teal transition-all duration-200 w-full',
-        { 'hover:shadow-sm': !isTemplate && isWidget },
+        { 'hover:shadow-xs': !isTemplate && isWidget },
       )}
       style={{
         userSelect: 'none',

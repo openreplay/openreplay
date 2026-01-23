@@ -34,7 +34,7 @@ export const FilterItem = React.memo(
           // style={{ width: 110 }}
           className={cn(
             disabled ? 'text-disabled-text' : 'text-neutral-500',
-            'flex items-center justify-between flex-shrink-0 mr-1 text-xs',
+            'flex items-center justify-between shrink-0 mr-1 text-xs',
           )}
         >
           <Typography.Text
@@ -49,7 +49,7 @@ export const FilterItem = React.memo(
           <ChevronRight size={14} className="ml-1 text-gray-400" />
         </div>
       )}
-      <Space className="flex-grow min-w-0 items-center">
+      <Space className="grow min-w-0 items-center">
         <span
           className={cn(
             'text-xs flex items-center',
@@ -85,7 +85,7 @@ export const CategoryList = React.memo(
           key={key}
           onClick={() => onSelect(key)}
           className={cn(
-            'rounded px-3 py-1.5 hover:bg-active-blue/10 capitalize cursor-pointer font-medium text-sm truncate',
+            'rounded-sm px-3 py-1.5 hover:bg-active-blue/10 capitalize cursor-pointer font-medium text-sm truncate',
             key === activeCategory &&
               'bg-active-blue/10 text-teal font-semibold',
           )}

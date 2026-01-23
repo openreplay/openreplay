@@ -44,7 +44,7 @@ function ReadNote(props: Props) {
           </div>
           <div
             onClick={props.onClose}
-            className="rounded py-2 px-4 mt-2 flex items-center text-blue gap-2 cursor-pointer hover:bg-active-blue"
+            className="rounded-sm py-2 px-4 mt-2 flex items-center text-blue gap-2 cursor-pointer hover:bg-active-blue"
           >
             <Icon size={20} name="play-fill" color="main" />
             <span>{t('Play Session')}</span>
@@ -66,7 +66,7 @@ function ReadNote(props: Props) {
       className="flex items-center justify-center"
     >
       <div
-        className="flex items-start !text-lg flex-col p-4 border gap-2 rounded-lg bg-amber"
+        className="flex items-start text-lg! flex-col p-4 border gap-2 rounded-lg bg-amber"
         style={{ width: 500 }}
       >
         <div className="flex items-center w-full">

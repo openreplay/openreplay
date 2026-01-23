@@ -228,7 +228,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     }))}
     value={selected}
     onChange={setSelected}
-    className="w-fit shadow-sm"
+    className="w-fit shadow-xs"
   />
 );
 

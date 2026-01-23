@@ -17,7 +17,7 @@ function AuditDetailModal(props: Props) {
       <h1 className="text-2xl p-4">{t('Audit Details')}</h1>
       <div className="p-4">
         <h5 className="mb-2">{t('URL')}</h5>
-        <div className="color-gray-darkest p-2 bg-gray-lightest rounded">
+        <div className="color-gray-darkest p-2 bg-gray-lightest rounded-sm">
           {audit.endPoint}
         </div>
 

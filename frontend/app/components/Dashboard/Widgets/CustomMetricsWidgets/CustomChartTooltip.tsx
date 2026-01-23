@@ -52,7 +52,7 @@ function CustomTooltip(props: Props) {
     (((val - prevVal) / prevVal) * 100).toFixed(2);
 
   return (
-    <div className="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
+    <div className="flex flex-col gap-1 bg-white shadow-sm border rounded-sm p-2 z-50">
       {transformedArray.map((p, index) => (
         <React.Fragment key={p.name + index}>
           <div className="flex gap-2 items-center">
@@ -107,7 +107,7 @@ export function CompareTag({
   return (
     <div
       className={cn(
-        'px-2 py-1 w-fit rounded flex items-center gap-1',
+        'px-2 py-1 w-fit rounded-sm flex items-center gap-1',
         isHigher === null
           ? 'bg-neutral-200 text-neutral-600 text-xs'
           : isHigher

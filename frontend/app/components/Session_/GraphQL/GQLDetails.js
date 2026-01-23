@@ -20,7 +20,7 @@ class GQLDetails extends React.PureComponent {
     try {
       jsonResponse = JSON.parse(response);
     } catch (e) {}
-    const dataClass = cn('p-2 bg-gray-lightest rounded color-gray-darkest');
+    const dataClass = cn('p-2 bg-gray-lightest rounded-sm color-gray-darkest');
     return (
       <div className="px-4 pb-16">
         <h5 className="mb-2">{t('Operation Name')}</h5>

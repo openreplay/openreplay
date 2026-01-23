@@ -50,7 +50,7 @@ function ExportedVideosList() {
     await recordingsStore.getRecordings();
   };
   return (
-    <div className="bg-white rounded-lg  border shadow-sm">
+    <div className="bg-white rounded-lg  border shadow-xs">
       <div className="flex items-center gap-4 p-4">
         <PageTitle title={t('Exported Videos')} />
         <ReloadButton

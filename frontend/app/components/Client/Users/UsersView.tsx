@@ -36,7 +36,7 @@ function UsersView({ isOnboarding = false }: Props) {
   }, []);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
+    <div className="bg-white rounded-lg shadow-xs border">
       <div className="flex flex-col md:flex-row gap-2 md:gap-0 md:items-center justify-between px-5 pt-5">
         <PageTitle
           title={

@@ -87,7 +87,7 @@ function FunnelIssues() {
       </div>
       <div className="my-6 flex justify-between items-center">
         <FunnelIssuesDropdown />
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <FunnelIssuesSort />
         </div>
       </div>

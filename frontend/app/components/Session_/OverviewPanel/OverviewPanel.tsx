@@ -401,7 +401,7 @@ function PanelComponent({
                         title=""
                         list={performanceList}
                         renderElement={(pointer: any) => (
-                          <div className="rounded bg-white p-1 border">
+                          <div className="rounded-sm bg-white p-1 border">
                             <TimelinePointer
                               pointer={pointer}
                               type="FRUSTRATIONS"

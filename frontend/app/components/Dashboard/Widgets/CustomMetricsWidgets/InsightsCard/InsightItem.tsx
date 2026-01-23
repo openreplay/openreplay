@@ -65,7 +65,7 @@ function ErrorItem({ item, className, onClick }: any) {
       {item.isNew ? (
         <div className="flex items-center gap-1 flex-wrap whitespace-nowrap">
           <div>{t('Users are encountering a new error called:')}</div>
-          <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+          <div className="bg-gray-100 px-2 rounded-sm">{item.name}</div>
           <div>{t('This error has occurred a total of')}</div>
           <div className="font-medium color-red">{item.value}</div>
           <div>{t('times')}</div>
@@ -75,7 +75,7 @@ function ErrorItem({ item, className, onClick }: any) {
           <div>{t('There has been an')}</div>
           <div>{item.isIncreased ? t('increase') : t('decrease')}</div>
           <div>{t('in the error')}</div>
-          <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+          <div className="bg-gray-100 px-2 rounded-sm">{item.name}</div>
           <div>{t('from')}</div>
           <div>{item.oldValue}</div>
           <div>{t('to')}</div>
@@ -101,7 +101,7 @@ function NetworkItem({ item, className, onClick }: any) {
       />
       <div className="flex items-center gap-1 flex-wrap">
         <div>{t('Network request to path')}</div>
-        <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+        <div className="bg-gray-100 px-2 rounded-sm">{item.name}</div>
         <div>
           {t('has')}
           {item.change > 0 ? t('increased') : t('decreased')}
@@ -130,7 +130,7 @@ function ResourcesItem({ item, className, onClick }: any) {
         <div>{t('There has been')}</div>
         <div>{item.change > 0 ? 'Increase' : 'Decrease'}</div>
         <div>{t('in')}</div>
-        <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+        <div className="bg-gray-100 px-2 rounded-sm">{item.name}</div>
         <div>{t('usage by')}</div>
         <Change change={item.change} isIncreased={item.isIncreased} />
       </div>
@@ -151,9 +151,9 @@ function RageItem({ item, className, onClick }: any) {
       {item.isNew ? (
         <div className="flex items-center gap-1 flex-wrap">
           <div>{t('New Click Rage detected')}</div>
-          <div className="mx-1 bg-gray-100 px-2 rounded">{item.value}</div>
+          <div className="mx-1 bg-gray-100 px-2 rounded-sm">{item.value}</div>
           <div>{t('times on')}</div>
-          <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
+          <div className="mx-1 bg-gray-100 px-2 rounded-sm">{item.name}</div>
         </div>
       ) : (
         <div className="flex items-center gap-1 flex-wrap">
@@ -161,7 +161,7 @@ function RageItem({ item, className, onClick }: any) {
           <div>
             {item.isIncreased ? 'increased' : 'decreased'}&nbsp;{t('on')}
           </div>
-          <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
+          <div className="mx-1 bg-gray-100 px-2 rounded-sm">{item.name}</div>
           <div>{t('passing from')}</div>
           <div>{item.oldValue}</div>
           <div>{t('to')}</div>

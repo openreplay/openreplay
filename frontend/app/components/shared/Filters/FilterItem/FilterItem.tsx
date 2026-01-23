@@ -197,8 +197,8 @@ function FilterItem(props: Props) {
 
   const parentShowsIndex = !hideIndex;
   const subFilterMarginLeftClass = parentShowsIndex
-    ? 'ml-[1.75rem]'
-    : 'ml-[0.75rem]';
+    ? 'ml-7'
+    : 'ml-3';
   const subFilterPaddingLeftClass = parentShowsIndex ? 'pl-11' : 'pl-7';
 
   const categoryPart = filter?.subCategory
@@ -219,12 +219,12 @@ function FilterItem(props: Props) {
           !hideIndex &&
           filterIndex !== undefined &&
           filterIndex >= 0 && (
-            <div className="flex-shrink-0 w-6 h-6 mt-[2px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium">
+            <div className="shrink-0 w-6 h-6 mt-[2px] text-xs flex items-center justify-center rounded-full bg-gray-lightest text-gray-600 font-medium">
               <span>{filterIndex + 1}</span>
             </div>
           )}
         {isSubItem && (
-          <div className="flex-shrink-0 text-right color-disabled-text">
+          <div className="shrink-0 text-right color-disabled-text">
             {subFilterIndex === 0 && (
               <Typography.Text className="text-inherit">where</Typography.Text>
             )}
@@ -245,7 +245,7 @@ function FilterItem(props: Props) {
             )}
           </div>
         )}
-        <div className="flex flex-grow flex-wrap gap-2 items-center">
+        <div className="flex grow flex-wrap gap-2 items-center">
           <FilterSelection
             filters={filterSelections}
             activeFilters={activeFilters}
@@ -266,7 +266,7 @@ function FilterItem(props: Props) {
             >
               <Space size={4} align="center">
                 {filter && (
-                  <span className="text-gray-600 flex-shrink-0">
+                  <span className="text-gray-600 shrink-0">
                     {getIconForFilter(filter)}
                   </span>
                 )}
@@ -312,7 +312,7 @@ function FilterItem(props: Props) {
               {canShowValues &&
                 (readonly ? (
                   <div
-                    className="rounded bg-gray-lightest text-gray-dark px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis border border-gray-light max-w-xs"
+                    className="rounded-sm bg-gray-lightest text-gray-dark px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis border border-gray-light max-w-xs"
                     title={filter.value?.join(', ')}
                   >
                     {filter.value
@@ -360,7 +360,7 @@ function FilterItem(props: Props) {
           )}
         </div>
         {!readonly && !hideDelete && (
-          <div className="flex flex-shrink-0 gap-1 items-center self-start">
+          <div className="flex shrink-0 gap-1 items-center self-start">
             <Tooltip
               title={isSubItem ? 'Remove filter condition' : 'Remove filter'}
               mouseEnterDelay={1}

@@ -54,7 +54,7 @@ function UserList(props: Props) {
         size="small"
         show={!loading && length === 0}
       >
-        <div className="mt-3 rounded bg-white">
+        <div className="mt-3 rounded-sm bg-white">
           <div className="grid grid-cols-12 py-3 px-5 font-medium">
             <div className="col-span-5">{t('Name')}</div>
             <div className="col-span-3">{t('Role')}</div>

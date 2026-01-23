@@ -89,7 +89,7 @@ function LiveSessionList() {
 
   return (
     <div>
-      <div className="bg-white py-3 rounded-lg border shadow-sm">
+      <div className="bg-white py-3 rounded-lg border shadow-xs">
         <div className="flex mb-4 pb-2 px-3 justify-between items-center border-b border-b-gray-lighter">
           <LiveSessionReloadButton />
           <div className="flex items-center">

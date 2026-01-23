@@ -19,7 +19,7 @@ function FunnelIssuesListItem(props: Props) {
   return (
     <div
       className={cn(
-        'flex flex-col bg-white w-full rounded border relative hover:bg-active-blue',
+        'flex flex-col bg-white w-full rounded-sm border relative hover:bg-active-blue',
         { 'cursor-pointer bg-hover': !inDetails },
       )}
       onClick={!inDetails ? onClick : () => null}
@@ -29,7 +29,7 @@ function FunnelIssuesListItem(props: Props) {
             )} */}
       <div className="flex items-center px-6 py-4 relative">
         <div className="mr-3">
-          <div className="flex items-center justify-center flex-shrink-0 mr-3 relative">
+          <div className="flex items-center justify-center shrink-0 mr-3 relative">
             <Icon
               name={issue.icon.icon}
               style={{ fill: issue.icon.color }}
@@ -59,14 +59,14 @@ function FunnelIssuesListItem(props: Props) {
           </div>
         )}
 
-        <div className="text-center text-sm ml-10 flex-shrink-0">
+        <div className="text-center text-sm ml-10 shrink-0">
           <div className="text-xl mb-2">{issue.affectedUsers}</div>
           <div className="color-gray-medium leading-none">
             {t('Affected Users')}
           </div>
         </div>
 
-        <div className="text-center text-sm ml-10 flex-shrink-0">
+        <div className="text-center text-sm ml-10 shrink-0">
           <div className="text-xl mb-2 color-red">
             {issue.conversionImpact}
             <span className="text-sm ml-1">%</span>
@@ -76,7 +76,7 @@ function FunnelIssuesListItem(props: Props) {
           </div>
         </div>
 
-        <div className="text-center text-sm ml-10 flex-shrink-0">
+        <div className="text-center text-sm ml-10 shrink-0">
           <div className="text-xl mb-2">{issue.lostConversions}</div>
           <div className="color-gray-medium leading-none">
             {t('Lost Conversions')}

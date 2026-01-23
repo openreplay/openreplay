@@ -35,7 +35,7 @@ function FooterContent({ dashboardId, selected }: any) {
   };
 
   return (
-    <div className="flex items-center rounded border bg-gray-light-shade justify-between p-3">
+    <div className="flex items-center rounded-sm border bg-gray-light-shade justify-between p-3">
       <div>
         {t('Selected')}&nbsp;
         <span className="font-medium">{selected.length}</span>&nbsp;{t('of')}

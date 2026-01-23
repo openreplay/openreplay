@@ -240,7 +240,7 @@ function EventsBlock(props: IProps) {
       <div
         className={cn(
           styles.header,
-          'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-gray-lightest h-[57px]',
+          'py-4 px-2 bg-linear-to-t from-transparent to-neutral-gray-lightest h-[57px]',
         )}
       >
         {mode === MODES.SELECT ? (

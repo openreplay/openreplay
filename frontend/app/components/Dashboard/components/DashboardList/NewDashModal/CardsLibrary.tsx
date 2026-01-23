@@ -60,7 +60,7 @@ function CardsLibrary(props: Props) {
                 onClick={(e) => onItemClick(e, metric.metricId)}
               />
               <Card
-                className="border border-transparent hover:border-indigo-lightest hover:shadow-sm rounded-lg"
+                className="border border-transparent hover:border-indigo-lightest hover:shadow-xs rounded-lg"
                 style={{
                   border: selectedList.includes(metric.metricId)
                     ? '1px solid #1890ff'

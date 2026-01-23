@@ -133,14 +133,14 @@ function FilterModal({
           </div>
         ) : (
           <div className="flex gap-2 h-full">
-            <div className="w-24 md:w-36 flex-shrink-0 border-r border-gray-200 pr-2 h-full overflow-y-auto">
+            <div className="w-24 md:w-36 shrink-0 border-r border-gray-200 pr-2 h-full overflow-y-auto">
               <CategoryList
                 categories={matchingCategories}
                 activeCategory={category}
                 onSelect={handleCategoryClick}
               />
             </div>
-            <div className="flex-grow min-w-0 h-full">
+            <div className="grow min-w-0 h-full">
               {allAdded ? (
                 <div className="h-full flex items-center flex-col justify-center text-center">
                   <AnimatedSVG name={ICONS.NO_SEARCH_RESULTS} size={30} />

@@ -92,7 +92,7 @@ function DashboardView(props: Props) {
     <Loader loading={loading}>
       <div
         style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
-        className="rounded-lg shadow-sm overflow-hidden bg-white border"
+        className="rounded-lg shadow-xs overflow-hidden bg-white border"
       >
         {/* @ts-ignore */}
         <DashboardHeader

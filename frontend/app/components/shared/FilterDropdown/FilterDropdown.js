@@ -157,7 +157,7 @@ function FilterDropdown(props) {
           <div
             className={cn(
               stl.btn,
-              'rounded flex items-center p-2 color-teal cursor-pointer hover:bg-teal',
+              'rounded-sm flex items-center p-2 color-teal cursor-pointer hover:bg-teal',
             )}
             onClick={() => setShowDropdown(true)}
             id="filter-options"
@@ -170,7 +170,7 @@ function FilterDropdown(props) {
         )}
         {showDropdown && (
           <div
-            className="absolute mt-2 bg-white rounded border z-20"
+            className="absolute mt-2 bg-white rounded-sm border z-20"
             id="filter-dropdown"
             style={{ width: '200px' }}
           >

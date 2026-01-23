@@ -115,7 +115,7 @@ function Controls(props: any) {
     <div className={styles.controls}>
       <Timeline isMobile />
       {!fullscreen && (
-        <div className={cn(styles.buttons, '!px-2')}>
+        <div className={cn(styles.buttons, 'px-2!')}>
           <div className="flex items-center">
             <PlayerControls
               skip={skip}

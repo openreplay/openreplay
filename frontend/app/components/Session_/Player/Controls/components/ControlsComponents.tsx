@@ -74,7 +74,7 @@ export function IntervalSelector({
             style={{ margin: -12 }}
             className={cn(
               'flex flex-col bg-white',
-              'text-figmaColors-text-primary rounded',
+              'text-figmaColors-text-primary rounded-sm',
             )}
           >
             <div className="font-semibold py-2 px-4 w-full text-left">
@@ -166,7 +166,7 @@ export function SpeedOptions({
       render={({ close }: any) => (
         <div
           style={{ margin: -12 }}
-          className="flex flex-col bg-white text-figmaColors-text-primary rounded"
+          className="flex flex-col bg-white text-figmaColors-text-primary rounded-sm"
         >
           <div className="font-semibold py-2 px-4 w-full text-left">
             {t('Playback speed')}

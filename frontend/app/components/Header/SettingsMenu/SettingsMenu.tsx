@@ -88,7 +88,7 @@ export default withRouter(SettingsMenu);
 function MenuItem({ onClick, label, icon }: any) {
   return (
     <div
-      className="rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal"
+      className="rounded-sm border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:border-active-blue-border! hover-teal"
       onClick={onClick}
     >
       <Icon name={icon} size="16" />

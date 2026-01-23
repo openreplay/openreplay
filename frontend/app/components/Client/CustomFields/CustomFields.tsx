@@ -83,11 +83,11 @@ function CustomFields() {
         renderItem={(field: any) => (
           <List.Item
             onClick={() => handleInit(field)}
-            className="cursor-pointer group hover:bg-active-blue !px-4"
+            className="cursor-pointer group hover:bg-active-blue px-4!"
             actions={[
               <Button
                 type="link"
-                className="opacity-0 group-hover:!opacity-100"
+                className="opacity-0 group-hover:opacity-100!"
                 icon={<EditOutlined size={14} />}
               />,
             ]}

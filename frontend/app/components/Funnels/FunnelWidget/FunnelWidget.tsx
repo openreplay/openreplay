@@ -165,7 +165,7 @@ function FunnelWidget(props: Props) {
             <Tag
               variant="filled"
               color="var(--color-gray-lightest)"
-              className="text-lg rounded-lg !text-black"
+              className="text-lg rounded-lg text-black!"
             >
               {funnel.totalConversions}
             </Tag>
@@ -181,7 +181,7 @@ function FunnelWidget(props: Props) {
             <Tag
               variant="filled"
               color="var(--color-red-lightest)"
-              className="text-lg rounded-lg !text-black"
+              className="text-lg rounded-lg text-black!"
             >
               {funnel.lostConversions}
             </Tag>

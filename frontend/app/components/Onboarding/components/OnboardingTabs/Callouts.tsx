@@ -23,7 +23,7 @@ export function ProjectKeyCard({ projectKey }: { projectKey: string }) {
   const { t } = useTranslation();
   return (
     <DocCard title={t('Project Key')}>
-      <div className="p-2 rounded bg-white flex justify-between items-center">
+      <div className="p-2 rounded-sm bg-white flex justify-between items-center">
         <div className={'font-mono'}>{projectKey}</div>
         <CopyButton content={projectKey} className={'capitalize font-medium text-neutral-400'} />
       </div>

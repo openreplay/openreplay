@@ -98,7 +98,7 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
       : children;
 
     return (
-      // <div className={cn('relative flex-shrink-0')}>
+      // <div className={cn('relative shrink-0')}>
       <Popover
         content={content}
         trigger="click"
@@ -106,7 +106,7 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
         onOpenChange={handleOpenChange}
         placement={mobileScreen ? 'bottom' : 'bottomLeft'}
         classNames={{
-          root: 'filter-selection-popover rounded-lg border border-gray-200 shadow-sm shadow-gray-200 overflow-hidden',
+          root: 'filter-selection-popover rounded-lg border border-gray-200 shadow-xs shadow-gray-200 overflow-hidden',
         }}
         destroyOnHidden={true}
         arrow={false}

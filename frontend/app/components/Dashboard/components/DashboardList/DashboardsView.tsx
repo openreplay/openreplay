@@ -8,7 +8,7 @@ function DashboardsView() {
   return (
     <div
       style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
-      className="bg-white rounded-lg py-4 border shadow-sm"
+      className="bg-white rounded-lg py-4 border shadow-xs"
     >
       <Header />
       <DashboardList />

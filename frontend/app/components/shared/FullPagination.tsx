@@ -18,7 +18,7 @@ function FullPagination({
   entity?: string;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
+    <div className="flex items-center justify-between px-4 py-3 shadow-xs w-full bg-white rounded-lg mt-2">
       <div>
         {'Showing '}
         <span className="font-medium">{listLen === 0 ? 0 : (page - 1) * limit + 1}</span>

@@ -101,7 +101,7 @@ function SavedSearchModal() {
   return (
     <div className="bg-white shadow-lg h-screen flex flex-col">
       <div className="p-6 border-b">
-        <Title level={3} className="!mb-0">
+        <Title level={3} className="mb-0!">
           {t('Saved Search')}{' '}
           <Badge
             count={searchStore.savedSearchTotal}
@@ -136,7 +136,7 @@ function SavedSearchModal() {
               actions={listActions(item)}
             >
               <List.Item.Meta
-                className="!items-center"
+                className="items-center!"
                 avatar={
                   <div
                     className={cn(
@@ -165,7 +165,7 @@ function SavedSearchModal() {
                       <Tag
                         icon={<Users size={12} />}
                         color="default"
-                        className="!text-xs !px-2 !py-0.5 !m-0 mt-1 whitespace-nowrap !inline-flex !items-center !gap-1"
+                        className="text-xs! px-2! py-0.5! m-0! mt-1 whitespace-nowrap inline-flex! items-center! gap-1!"
                       >
                         {t('Team')}
                       </Tag>
@@ -173,7 +173,7 @@ function SavedSearchModal() {
                       <Tag
                         icon={<Lock size={12} />}
                         color="blue"
-                        className="!text-xs !px-2 !py-0.5 !m-0 mt-1 whitespace-nowrap !inline-flex !items-center !gap-1"
+                        className="text-xs! px-2! py-0.5! m-0! mt-1 whitespace-nowrap inline-flex! items-center! gap-1!"
                       >
                         {t('Shared')}
                       </Tag>

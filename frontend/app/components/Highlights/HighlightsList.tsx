@@ -186,7 +186,7 @@ function HighlightsList() {
       </div>
       <div
         className={cn(
-          'flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2',
+          'flex items-center justify-between px-4 py-3 shadow-xs w-full bg-white rounded-lg mt-2',
           isEmpty ? 'hidden' : 'visible',
         )}
       >

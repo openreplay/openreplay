@@ -37,7 +37,7 @@ function WidgetPreview(props: Props) {
 
   const presetComparison = metric.compareTo;
   return (
-    <div className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}>
+    <div className={cn(className, 'bg-white rounded-xl border shadow-xs mt-0')}>
       <div className="flex items-center gap-2 px-4 py-2 border-b justify-between flex-wrap">
         <WidgetDateRange
           label=""

@@ -127,7 +127,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
       <div
         className={cn(
           stl.instructions,
-          'flex flex-col !items-start !justify-start',
+          'flex flex-col items-start! justify-start!',
         )}
       >
         <div className="font-medium flex gap-1 items-center">

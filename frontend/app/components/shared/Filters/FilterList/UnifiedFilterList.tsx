@@ -215,7 +215,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
         >
           {isDraggable && filters.length > 1 && (
             <div
-              className="cursor-grab text-neutral-500 hover:text-neutral-700 pt-[4px] flex-shrink-0" // Align handle visually
+              className="cursor-grab text-neutral-500 hover:text-neutral-700 pt-[4px] shrink-0" // Align handle visually
               style={{ cursor: draggedInd !== null ? 'grabbing' : 'grab' }}
               title="Drag to reorder"
             >
@@ -223,7 +223,7 @@ const UnifiedFilterList = (props: UnifiedFilterListProps) => {
             </div>
           )}
 
-          {!isDraggable && showIndices && <div className="w-4 flex-shrink-0" />}
+          {!isDraggable && showIndices && <div className="w-4 shrink-0" />}
 
           <FilterItem
             filterIndex={showIndices ? filterIndex : undefined}

@@ -105,13 +105,13 @@ function RecordsListItem(props: Props) {
               name="play"
               size={18}
               color="teal"
-              className="!block group-hover:!hidden"
+              className="block! group-hover:hidden!"
             />
             <Icon
               name="play-fill-new"
               size={18}
               color="teal"
-              className="!hidden group-hover:!block"
+              className="hidden! group-hover:block!"
             />
             <div>{t('Play Video')}</div>
           </div>

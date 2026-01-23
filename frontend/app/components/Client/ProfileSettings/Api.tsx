@@ -17,7 +17,7 @@ function ApiKeySettings() {
         type="text"
         readOnly
         value={apiKey}
-        className="!w-72"
+        className="w-72!"
         leadingButton={<CopyButton content={apiKey} />}
       />
     </div>

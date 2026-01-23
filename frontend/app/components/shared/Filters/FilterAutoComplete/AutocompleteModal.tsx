@@ -152,7 +152,7 @@ export function AutocompleteModal({
     >
       <div
         className={cn(
-          'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow border-gray-light z-10',
+          'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow-sm border-gray-light z-10',
         )}
         ref={modalRef}
         style={{ width: 360, minHeight: 100, top: '100%' }}
@@ -178,7 +178,7 @@ export function AutocompleteModal({
                   <div
                     key={item.value}
                     onClick={() => onSelectOption(item)}
-                    className="cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2"
+                    className="cursor-pointer w-full py-1 hover:bg-active-blue rounded-sm px-2"
                   >
                     <Checkbox checked={isSelected(item)} /> {item.label}
                   </div>
@@ -188,7 +188,7 @@ export function AutocompleteModal({
             {query.length ? (
               <div className="border-y border-y-gray-light py-2">
                 <div
-                  className="whitespace-nowrap truncate w-full rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1"
+                  className="whitespace-nowrap truncate w-full rounded-sm cursor-pointer text-teal hover:bg-active-blue px-2 py-1"
                   onClick={applyQuery}
                 >
                   {t('Apply')}&nbsp;<span className='font-semibold'>{queryStr}</span>

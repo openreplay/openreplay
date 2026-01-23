@@ -113,7 +113,7 @@ function MainSection(props: any) {
             </div>
             <div className="mt-4 flex items-center gap-3 w-full flex-wrap">
               {error.customTags.map((tag) => (
-                <div className="flex items-center rounded overflow-hidden bg-gray-lightest">
+                <div className="flex items-center rounded-sm overflow-hidden bg-gray-lightest">
                   <div className="bg-gray-light-shade py-1 px-2 text-disabled-text">
                     {Object.entries(tag)[0][0]}
                   </div>{' '}

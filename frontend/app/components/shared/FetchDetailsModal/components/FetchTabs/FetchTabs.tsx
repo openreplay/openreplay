@@ -161,7 +161,7 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
                     enableClipboard
                   />
                 ) : (
-                  <div className="ml-3 break-words my-3"> {stringRequest} </div>
+                  <div className="ml-3 wrap-break-word my-3"> {stringRequest} </div>
                 )}
               </div>
               <div className="divider" />
@@ -202,7 +202,7 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
                     enableClipboard
                   />
                 ) : (
-                  <div className="ml-3 break-words my-3" />
+                  <div className="ml-3 wrap-break-word my-3" />
                 )}
               </div>
               <div className="divider" />

@@ -43,7 +43,7 @@ export default function GuidePopup({ children, title, description }: IProps) {
       />
       <Tooltip
         offset={20}
-        className="!bg-white rounded text-center shadow !p-6"
+        className="bg-white! rounded-sm text-center shadow-sm p-6!"
         title={
           <div className="relative">
             <div className="font-bold text-figmaColors-text-primary">

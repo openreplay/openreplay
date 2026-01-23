@@ -36,7 +36,7 @@ function SessionList(props: Props) {
 
   return (
     <div
-      className="border-r shadow h-screen overflow-y-auto"
+      className="border-r shadow-sm h-screen overflow-y-auto"
       style={{
         backgroundColor: '#FAFAFA',
         zIndex: 999,

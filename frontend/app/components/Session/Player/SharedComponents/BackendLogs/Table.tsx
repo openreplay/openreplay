@@ -96,7 +96,7 @@ export function LogRow({
         </div>
       </div>
       {isExpanded ? (
-        <div className="rounded bg-gray-lightest px-4 py-2 relative mx-4 my-2">
+        <div className="rounded-sm bg-gray-lightest px-4 py-2 relative mx-4 my-2">
           {log.content.split('\n').map((line, index) => (
             <div key={index} className="flex items-start gap-2">
               <div className="border-r border-r-gray-light pr-2 select-none">

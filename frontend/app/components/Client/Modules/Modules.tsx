@@ -53,7 +53,7 @@ function Modules() {
 
   return (
     <div>
-      <div className="bg-white rounded-lg border shadow-sm p-4">
+      <div className="bg-white rounded-lg border shadow-xs p-4">
         <h3 className="text-2xl">{t('Modules')}</h3>
         <ul className="mt-3 ml-4 list-disc">
           <li>

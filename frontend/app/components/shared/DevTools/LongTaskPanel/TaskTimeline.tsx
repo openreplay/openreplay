@@ -25,7 +25,7 @@ function TaskTimeline({ task }: { task: LongAnimationTask }) {
   return (
     <div className="w-full mb-2 mt-1">
       <div className="text-gray-dark mb-1">Timeline:</div>
-      <div className="flex h-2 w-full rounded overflow-hidden">
+      <div className="flex h-2 w-full rounded-sm overflow-hidden">
         {scriptDuration > 0 && (
           <TimelineSegment
             classes={`${getSeverityClass(scriptDuration)} h-full`}

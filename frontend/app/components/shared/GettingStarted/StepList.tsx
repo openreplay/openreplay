@@ -31,7 +31,7 @@ const StepItem = React.memo(
 
     return (
       <div
-        className={cn('border rounded p-3 mb-4 flex items-start', {
+        className={cn('border rounded-sm p-3 mb-4 flex items-start', {
           'bg-gray-lightest': isCompleted,
           'hover:bg-active-blue': !isCompleted,
         })}

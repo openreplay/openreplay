@@ -123,7 +123,7 @@ function SignupForm() {
       </div>
       <Form
         onSubmit={onSubmit}
-        className="bg-white border rounded-lg shadow-sm"
+        className="bg-white border rounded-lg shadow-xs"
         style={{ maxWidth: '420px' }}
       >
         <div className="mb-8">

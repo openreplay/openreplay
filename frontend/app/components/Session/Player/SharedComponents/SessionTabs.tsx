@@ -107,7 +107,7 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
           className={cn(
             'self-end py-1 px-4 text-sm',
             'cursor-pointer bg-active-blue text-blue',
-            '!border-t-transparent !border-l-transparent !border-r-transparent',
+            'border-t-transparent! border-l-transparent! border-r-transparent!',
           )}
         >
           +{tabsArr.length - DISPLAY_LIMIT}&nbsp;{t('More')}

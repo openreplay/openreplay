@@ -50,7 +50,7 @@ const CustomNode: React.FC<CustomNodeProps> = (props) => {
           height="28"
           style={{ width: '70px', whiteSpace: 'nowrap' }}
         >
-          <div className="p-1 bg-white rounded border">{payload.name}</div>
+          <div className="p-1 bg-white rounded-sm border">{payload.name}</div>
         </foreignObject>
       )}
     </Layer>

@@ -147,7 +147,7 @@ function Sites() {
 
   return (
     <Loader loading={loading}>
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white rounded-lg shadow-xs border">
         <div className={cn(stl.tabHeader, 'px-5 pt-5')}>
           <PageTitle
             title={<div className="mr-4">{t('Projects')}</div>}

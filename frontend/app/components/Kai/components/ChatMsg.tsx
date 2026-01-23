@@ -204,7 +204,7 @@ function ChatMsg({
           className={cn(
             'markdown-body',
             isUser ? 'bg-gray-lighter px-4 rounded-full' : '',
-            isEditing ? '!bg-active-blue' : '',
+            isEditing ? 'bg-active-blue!' : '',
           )}
           data-openreplay-obscured
           ref={bodyRef}
@@ -214,7 +214,7 @@ function ChatMsg({
         {metric ? (
           <div
             ref={chartRef}
-            className="p-2 border-gray-light rounded-lg shadow bg-glassWhite mb-2"
+            className="p-2 border-gray-light rounded-lg shadow-sm bg-glassWhite mb-2"
           >
             <WidgetChart metric={metric} isPreview height={360} />
           </div>
@@ -222,7 +222,7 @@ function ChatMsg({
         {message.sessions ? (
           <div className="flex flex-col">
             {message.sessions.map((session) => (
-              <div className="shadow border rounded-2xl overflow-hidden mb-2">
+              <div className="shadow-sm border rounded-2xl overflow-hidden mb-2">
                 <SessionItem
                   disableUser
                   key={session.sessionId}

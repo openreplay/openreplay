@@ -47,7 +47,7 @@ function WidgetViewHeader({
   return (
     <div
       className={cn(
-        'flex justify-between md:items-center bg-white rounded-lg shadow-sm px-4',
+        'flex justify-between md:items-center bg-white rounded-lg shadow-xs px-4',
         "ps-2 py-2 border border-gray-lighter input-card-title flex-wrap md:flex-nowrap flex-col md:flex-row",
       )}
       onClick={onClick}

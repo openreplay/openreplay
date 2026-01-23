@@ -113,7 +113,7 @@ function AndroidInstallDocs({ site, ingestPoint }: any) {
               <CodeBlock code={configuration} language="kt" />
               <div className="mt-2">
                 {t('By default, all options equals')}&nbsp;
-                <code className="p-1 text-red rounded bg-gray-lightest">
+                <code className="p-1 text-red rounded-sm bg-gray-lightest">
                   {t('true')}
                 </code>
               </div>

@@ -27,7 +27,7 @@ function ListWithIcons({ list = [] }: Props) {
             padding: '4px 10px',
             lineHeight: '1px',
           }}
-          className={cn('rounded')} // Remove hover:bg-active-blue and cursor-pointer
+          className={cn('rounded-sm')} // Remove hover:bg-active-blue and cursor-pointer
         >
           <List.Item.Meta
             className="m-0"

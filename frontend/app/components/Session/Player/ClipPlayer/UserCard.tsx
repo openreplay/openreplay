@@ -52,7 +52,7 @@ const UserCard: React.FC<Props> = ({ session, className, width, height }) => {
             <span style={{ whiteSpace: 'nowrap' }}>
               <Tooltip
                 title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
-                className="w-fit !block"
+                className="w-fit block!"
               >
                 {formatTimeOrDate(startedAt, timezone)}
               </Tooltip>

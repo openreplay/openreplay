@@ -1,4 +1,6 @@
-@import "./reset.css";
+@layer reset, base, components, utilities;
+
+@import "./reset.css" layer(reset);
 @import "./import.css";
 @import "./main.css";
 @import "./colors-autogen.css";

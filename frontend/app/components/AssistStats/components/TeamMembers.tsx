@@ -71,7 +71,7 @@ function TeamMembers({
   };
 
   return (
-    <div className="rounded bg-white border p-2 h-full w-full flex flex-col">
+    <div className="rounded-sm bg-white border p-2 h-full w-full flex flex-col">
       <div className="flex items-center">
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
           {t('Team Members')}

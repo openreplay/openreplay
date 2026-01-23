@@ -117,7 +117,7 @@ export function sunburstTooltip(colorMap: Map<string, string>) {
         ? params.data.name.split('_OPENREPLAY_NODE_')[0]
         : 'Total';
       return `
-      <div class="flex flex-col bg-white p-2 rounded shadow border">
+      <div class="flex flex-col bg-white p-2 rounded-sm shadow-sm border">
         <div class="font-semibold text-sm flex gap-1 items-center">
         <span class="text-base" style="color:${color}; font-family: sans-serif;">&#9632;&#xFE0E;</span>
         ${clearName}

@@ -72,7 +72,7 @@ function PlayerControls(props: Props) {
       />
 
       <div
-        className="rounded ml-1 bg-white border-gray-lighter flex items-center"
+        className="rounded-sm ml-1 bg-white border-gray-lighter flex items-center"
         style={{ gap: 1 }}
       >
         <JumpBack

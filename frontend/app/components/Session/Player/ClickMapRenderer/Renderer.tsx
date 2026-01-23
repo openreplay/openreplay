@@ -23,7 +23,7 @@ function Player() {
         <Overlay isClickmap />
         <div
           data-openreplay-obscured
-          className={cn(stl.screenWrapper, stl.checkers, '!overflow-y-scroll')}
+          className={cn(stl.screenWrapper, stl.checkers, 'overflow-y-scroll!')}
           style={{ maxHeight: 800 }}
           ref={screenWrapper}
         />

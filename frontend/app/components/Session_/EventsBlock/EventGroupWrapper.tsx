@@ -156,7 +156,7 @@ function EventGroupWrapper(props) {
           <TextEllipsis>
             <div className={stl.referrer}>
               {t('Referrer:')}{' '}
-              <span className={cn(stl.url, '!font-normal')}>{safeRef}</span>
+              <span className={cn(stl.url, 'font-normal!')}>{safeRef}</span>
             </div>
           </TextEllipsis>
         )}
@@ -183,7 +183,7 @@ function TabChange({ from, to, activeUrl, onClick }) {
         <Icon name="arrow-right-short" size={18} color="gray-dark" />
         <span style={{ fontWeight: 500 }}>{to}</span>
       </div>
-      <div className="break-words mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap">
+      <div className="wrap-break-word mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap">
         {activeUrl}
       </div>
     </div>
@@ -195,13 +195,13 @@ function Incident({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className="pr-6 pl-4 py-2 relative user-select-none transition-all duration-200 cursor-pointer rounded-[3px] hover:bg-[var(--color-active-blue)] bg-[var(--color-white)]"
+      className="pr-6 pl-4 py-2 relative user-select-none transition-all duration-200 cursor-pointer rounded-[3px] hover:bg-(--color-active-blue) bg-(--color-white)"
     >
       <div className='flex items-center py-2 gap-[10.5px]'>
         <Icon name="console/warning" size={18} color="gray-dark" />
         <div className="flex flex-col">
         <span style={{ fontWeight: 500 }}>{t('Incident')}</span>
-        <span className="text-ellipsis overflow-hidden whitespace-nowrap max-w-full text-sm text-[var(--color-gray-medium)]">{label}</span>
+        <span className="text-ellipsis overflow-hidden whitespace-nowrap max-w-full text-sm text-(--color-gray-medium)">{label}</span>
         </div>
       </div>
     </div>
