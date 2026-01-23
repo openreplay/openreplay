@@ -140,7 +140,7 @@ function ListPage() {
   };
   return (
     <div
-      className="flex flex-col gap-4 rounded-lg border bg-white mx-auto"
+      className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
