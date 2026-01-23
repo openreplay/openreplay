@@ -58,10 +58,10 @@ function getRecordingSettings(qualityValue) {
   const duration = 3 * 60 * 1000; // 3 minutes
 
   const mimeTypes = [
+    'video/webm;codecs=vp9,opus',
     'video/webm;codecs=vp8,opus',
     'video/mp4',
     'video/webm',
-    'video/webm;codecs=vp9,opus',
     // faster HLS encoding backend path, breaks for some chrome configs?
     'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
     'video/mp4;codecs=avc1',
