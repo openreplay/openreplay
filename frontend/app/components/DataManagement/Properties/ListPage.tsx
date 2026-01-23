@@ -143,7 +143,7 @@ function ListPage() {
       className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
-      <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
+      <div className={'flex items-center justify-between border-b px-4'}>
         <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>

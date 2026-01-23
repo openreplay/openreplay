@@ -141,7 +141,7 @@ function SessionFilters() {
         handleMove={moveEventFilter}
       />
 
-      <Divider className="my-3" />
+      <Divider className="my-3!" />
 
       <FilterListHeader
         title="Filters"

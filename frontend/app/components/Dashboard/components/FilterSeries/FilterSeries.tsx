@@ -305,7 +305,7 @@ function FilterSeries(props: Props) {
                 }}
               />
 
-              <Divider className="my-2" />
+              <Divider className="my-3!" />
             </>
           )}
 
