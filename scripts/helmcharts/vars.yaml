@@ -101,7 +101,7 @@ ingress-nginx: &ingress-nginx
         real-ip-header: "X-Forwarded-For"
         set-real-ip-from: "0.0.0.0/0"
         ssl-redirect: "false"
-        client-max-body-size: "10m"
+        client-max-body-size: "64m"
         client-body-buffer-size: "512k"
         server-tokens: "false"
         proxy-connect-timeout: "120s"
