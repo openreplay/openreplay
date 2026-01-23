@@ -48,7 +48,7 @@ function UsersView({ isOnboarding = false }: Props) {
         />
         <div className="flex items-center">
           <AddUserButton
-            btnVariant={isOnboarding ? 'outline-solid' : 'primary'}
+            btnVariant={isOnboarding ? 'outline' : 'primary'}
             isAdmin={isAdmin}
             onClick={() => editHandler(null)}
           />

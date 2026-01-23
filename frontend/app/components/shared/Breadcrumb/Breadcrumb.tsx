@@ -47,7 +47,7 @@ function Breadcrumb(props: Props) {
                   className="mr-1 group-hover:fill-teal"
                 />
               )}
-              <span className="capitalize-first whitespace-nowrap text-black-50">{item.label}</span>
+              <span className="capitalize-first whitespace-nowrap text-black">{item.label}</span>
             </Link>
             <span className="mx-2">/</span>
           </div>

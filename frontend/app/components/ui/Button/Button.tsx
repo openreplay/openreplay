@@ -15,7 +15,7 @@ interface Props {
     | 'text'
     | 'text-primary'
     | 'text-red'
-    | 'outline-solid'
+    | 'outline'
     | 'green';
   loading?: boolean;
   icon?: string;
