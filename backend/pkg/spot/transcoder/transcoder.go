@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -263,6 +265,105 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 }
 
 func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string, error) {
+	start := time.Now()
+
+	videoPath := filepath.Join(path, "origin.webm")
+	manifestPath := filepath.Join(path, "manifest.mpd")
+
+	cmd := exec.Command(
+		"ffmpeg",
+		"-y",
+		"-i", videoPath,
+		"-c:v", "libx264",
+		"-preset", "veryfast",
+		"-crf", "23",
+		"-profile:v", "main",
+		"-pix_fmt", "yuv420p",
+		"-g", "250",
+		"-keyint_min", "250",
+		"-sc_threshold", "0",
+		"-c:a", "aac",
+		"-b:a", "96k",
+		"-ac", "2",
+		"-f", "dash",
+		"-seg_duration", "10",
+		"-use_timeline", "1",
+		"-use_template", "0",
+		"-init_seg_name", "init-stream$RepresentationID$.m4s",
+		"-media_seg_name", "chunk-stream$RepresentationID$-$Number%05d$.m4s",
+		manifestPath,
+	)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		t.log.Error(context.Background(), "Failed to execute ffmpeg: %v, stderr: %v", err, stderr.String())
+		return "", err
+	}
+
+	t.metrics.IncreaseVideosTranscoded()
+	t.metrics.RecordTranscodingDuration(time.Since(start).Seconds())
+	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start).Seconds())
+
+	uploadStart := time.Now()
+
+	// Read manifest content - stored in DB, will be modified with pre-signed URLs when serving
+	mpdBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.log.Error(context.Background(), "Error reading manifest file: %v", err)
+		return "", err
+	}
+
+	var chunks []string
+	err = filepath.WalkDir(path, func(p string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		name := filepath.Base(p)
+
+		if strings.HasPrefix(name, "init-stream") && strings.HasSuffix(name, ".m4s") ||
+			strings.HasPrefix(name, "chunk-stream") && strings.HasSuffix(name, ".m4s") {
+			chunks = append(chunks, p)
+		}
+		return nil
+	})
+	if err != nil {
+		t.log.Error(context.Background(), "Error walking output dir: %v", err)
+		return "", err
+	}
+
+	for _, chunkPath := range chunks {
+		f, err := os.Open(chunkPath)
+		if err != nil {
+			t.log.Error(context.Background(), "Error opening file %s: %v", chunkPath, err)
+			return "", err
+		}
+
+		name := filepath.Base(chunkPath)
+		key := fmt.Sprintf("%d/%s", spotID, name)
+
+		if err := t.objStorage.Upload(f, key, "video/iso.segment", objectstorage.NoContentEncoding, objectstorage.NoCompression); err != nil {
+			_ = f.Close()
+			t.log.Error(context.Background(), "Error uploading file %s (key=%s): %v", chunkPath, key, err)
+			return "", err
+		}
+		_ = f.Close()
+	}
+
+	t.metrics.RecordTranscodedVideoUploadDuration(time.Since(uploadStart).Seconds())
+	t.log.Info(context.Background(), "Uploaded %d DASH chunks for spot %d in %v", len(chunks), spotID, time.Since(uploadStart).Seconds())
+
+	return string(mpdBytes), nil
+}
+
+// ffmpeg -i origin.webm -c copy -f dash -seg_duration 10 -use_timeline 1 -use_template 1 manifest.mpd
+func (t *transcoderImpl) _transcodeSpotVideo(spotID uint64, path string) (string, error) {
 	// Transcode video tp HLS format
 	// ffmpeg -i origin.webm -c:v copy -c:a aac -b:a 128k -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
 
@@ -294,7 +395,6 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 	}
 	defer file.Close()
 
-	var originalLines []string
 	var lines []string
 	var chunks []string
 
@@ -305,7 +405,6 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 		if strings.HasPrefix(line, "index") && strings.HasSuffix(line, ".ts") {
 			chunks = append(chunks, line)
 		}
-		originalLines = append(originalLines, line)
 	}
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
