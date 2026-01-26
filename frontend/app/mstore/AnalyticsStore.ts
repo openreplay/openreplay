@@ -21,7 +21,7 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const defaultPayload = {
   sortOrder: 'desc',
   sortBy: 'created_at',
-  limit: 20,
+  limit: 10,
   startTimestamp: Date.now() - ONE_DAY_MS,
   endTimestamp: Date.now(),
   columns: [],

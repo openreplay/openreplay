@@ -42,14 +42,16 @@ function UsersListPage() {
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             Docs
           </Button>
-          <Input.Search
-            size={'small'}
-            placeholder={'Name, email, ID'}
-            value={query}
-            allowClear
-            maxLength={256}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className="w-[320px]">
+            <Input.Search
+              size={'small'}
+              placeholder={'Name, email, ID'}
+              value={query}
+              allowClear
+              maxLength={256}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
       <UsersList toUser={toUser} query={search} />

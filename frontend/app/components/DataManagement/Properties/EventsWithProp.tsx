@@ -7,8 +7,21 @@ import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import { fetchListByProp } from '../Events/api';
 import { TextEllipsis } from 'UI';
+import { useHistory } from 'react-router';
+import { dataManagement, withSiteId } from 'App/routes';
 
 function EventsWithProp({ propName }: { propName: string }) {
+  const { projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId!;
+  const history = useHistory();
+  const path = dataManagement.eventsList() + '?event=';
+  const onRow = (record: any) => {
+    return {
+      onClick: () => {
+        history.push(withSiteId(path + record.name, siteId));
+      },
+    };
+  };
   const { filterStore } = useStore();
   const limit = 10;
   const [page, setPage] = React.useState(1);
@@ -40,7 +53,6 @@ function EventsWithProp({ propName }: { propName: string }) {
       dataIndex: 'name',
       key: 'name',
       width: '15%',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
     },
     {
@@ -48,16 +60,16 @@ function EventsWithProp({ propName }: { propName: string }) {
       dataIndex: 'displayName',
       key: 'displayName',
       width: '20%',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
+      render: (text: string) => (
+        <TextEllipsis className="link" maxWidth={'185px'} text={text} />
+      ),
     },
     {
       title: t('Description'),
       dataIndex: 'description',
       key: 'description',
       width: '65%',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a: any, b: any) => a.description.localeCompare(b.description),
       render: (text: string) => <TextEllipsis text={text} maxWidth={'700px'} />,
     },
   ];
@@ -73,6 +85,8 @@ function EventsWithProp({ propName }: { propName: string }) {
         rowKey="name"
         loading={isPending}
         pagination={false}
+        onRow={onRow}
+        rowClassName={'cursor-pointer'}
       />
       <FullPagination
         page={page}

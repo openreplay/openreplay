@@ -11,6 +11,7 @@ import Tabs from 'Shared/Tabs';
 import { fetchList } from './api';
 import EventPropsPage from './EventPropsPage';
 import UserPropsPage from './UserProperty';
+import { TextEllipsis } from 'UI';
 
 function ListPage() {
   const location = useLocation();
@@ -149,13 +150,15 @@ function ListPage() {
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             {t('Docs')}
           </Button>
-          <Input.Search
-            value={query}
-            maxLength={256}
-            onChange={(e) => setQuery(e.target.value)}
-            size={'small'}
-            placeholder={t('Name, email, ID')}
-          />
+          <div className="w-[320px]">
+            <Input.Search
+              value={query}
+              maxLength={256}
+              onChange={(e) => setQuery(e.target.value)}
+              size={'small'}
+              placeholder={t('Name, email, ID')}
+            />
+          </div>
         </div>
       </div>
       {view === 'users' ? (
@@ -200,35 +203,35 @@ function EventPropsList({
   page: number;
   isLoading: boolean;
 }) {
-  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US');
+  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+  });
   const columns = [
     {
       title: 'Property',
       dataIndex: 'name',
       key: 'name',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
-      render: (text: string) => <div className="link">{text}</div>,
     },
     {
       title: 'Display Name',
       dataIndex: 'displayName',
       key: 'displayName',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
+      render: (text: string) => (
+        <TextEllipsis className="link" maxWidth={'185px'} text={text} />
+      ),
     },
     {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a: any, b: any) => a.description.localeCompare(b.description),
     },
     {
       title: '30 Day Volume',
       dataIndex: 'count',
       key: 'count',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.count - b.count,
       render: (text: string) => (
         <span>{numberFormatter.format(Number(text))}</span>
@@ -277,35 +280,35 @@ function UserPropsList({
   page: number;
   isLoading: boolean;
 }) {
-  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US');
+  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+  });
   const columns = [
     {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.name.localeCompare(b.name),
-      render: (text: string) => <div className="link">{text}</div>,
     },
     {
       title: 'Display Name',
       dataIndex: 'displayName',
       key: 'displayName',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.displayName.localeCompare(b.displayName),
+      render: (text: string) => (
+        <TextEllipsis className="link" maxWidth={'185px'} text={text} />
+      ),
     },
     {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.description.localeCompare(b.description),
     },
     {
       title: '# Users',
       dataIndex: 'usersCount',
       key: 'usersCount',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.usersCount - b.usersCount,
       render: (text: string) => (
         <span>{numberFormatter.format(Number(text))}</span>

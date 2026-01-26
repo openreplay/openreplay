@@ -4,8 +4,23 @@ import { Segmented, Table } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import FullPagination from 'Shared/FullPagination';
+import { useHistory } from 'react-router';
+import { dataManagement, withSiteId } from 'App/routes';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '@/mstore';
 
 function DistinctEventPropsList({ eventName }: { eventName: string }) {
+  const { projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId!;
+  const history = useHistory();
+  const path = dataManagement.properties() + '?view=events&property=';
+  const onRow = (record: any) => {
+    return {
+      onClick: () => {
+        history.push(withSiteId(path + record.name, siteId));
+      },
+    };
+  };
   const limit = 10;
   const [page, setPage] = React.useState(1);
   const onPageChange = (page: number) => {
@@ -35,22 +50,18 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
       title: t('Name'),
       dataIndex: 'name',
       key: 'name',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
     },
     {
       title: t('Display Name'),
       dataIndex: 'displayName',
       key: 'displayName',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
     },
     {
       title: t('Description'),
       dataIndex: 'description',
       key: 'description',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a: any, b: any) => a.description.localeCompare(b.description),
     },
   ];
   return (
@@ -60,8 +71,8 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
         <Segmented
           options={[
             { label: t('All'), value: 'all' },
+            { label: t('OpenReplay Properties'), value: 'default' },
             { label: t('Your Properties'), value: 'custom' },
-            { label: t('OpenReplay'), value: 'default' },
           ]}
           value={view}
           onChange={(value) => setView(value as 'all' | 'default' | 'custom')}
@@ -74,6 +85,8 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
         rowKey="name"
         loading={isPending}
         pagination={false}
+        onRow={onRow}
+        rowClassName={'cursor-pointer'}
       />
       <FullPagination
         page={page}
@@ -87,4 +100,4 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
   );
 }
 
-export default DistinctEventPropsList;
+export default observer(DistinctEventPropsList);

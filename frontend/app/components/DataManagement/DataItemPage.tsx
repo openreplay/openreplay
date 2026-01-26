@@ -7,18 +7,27 @@ import type { CommonProp, CommonEntry } from './Properties/commonProp';
 import { FieldNames } from './Properties/commonProp';
 import { TextEllipsis } from 'UI';
 import { useTranslation } from 'react-i18next';
+import { Triangle } from 'Components/DataManagement/Activity/EventDetailsModal';
 
 type BaseProps = {
   footer?: React.ReactNode;
   backLink: { name: string; to: string };
   onSave: (property: { key: string; value: string }) => Promise<void>;
+  openSessions?: () => void;
 };
 
 type Props =
   | (BaseProps & { type: 'distinct_event'; item: CommonEntry })
   | (BaseProps & { type: 'user' | 'event'; item: CommonProp });
 
-function DataItemPage({ footer, item, backLink, type, onSave }: Props) {
+function DataItemPage({
+  footer,
+  item,
+  backLink,
+  type,
+  onSave,
+  openSessions,
+}: Props) {
   const fields = Object.entries(item.fields).map(([key, field]) => ({
     name: FieldNames(key, type),
     raw_name: key,
@@ -37,15 +46,26 @@ function DataItemPage({ footer, item, backLink, type, onSave }: Props) {
           { label: item.name },
         ]}
       />
-      <div className={'rounded-lg border bg-white flex flex-col'}>
+      <div className={'rounded-lg border bg-white flex flex-col pb-4'}>
         <div
           className={'p-4 border-b w-full flex items-center justify-between'}
         >
           <div
-            className={'bg-gray-lighter rounded-xl px-2 font-semibold text-lg'}
+            className={
+              'bg-gray-lighter rounded-lg px-2.5 font-semibold text-base font-mono'
+            }
           >
             {item.name}
           </div>
+          {openSessions && (
+            <div
+              className={'link flex gap-1 items-center'}
+              onClick={openSessions}
+            >
+              <span>Play Sessions</span>
+              <Triangle size={10} color={'blue'} />
+            </div>
+          )}
         </div>
         {fields.map((field) => (
           <EditableField
@@ -92,21 +112,30 @@ function EditableField({
   return (
     <div
       className={cn(
-        'flex border-b last:border-b-0 items-center px-4 py-2 gap-2',
+        'flex border-b last:border-b-0 items-center px-2 mx-2 py-2 gap-2',
         isEdit ? 'bg-active-blue' : 'hover:bg-active-blue',
       )}
     >
-      <div className={'font-semibold'} style={{ flex: 1 }}>
+      <div className={'font-medium'} style={{ flex: 1 }}>
         {fieldName}
       </div>
       <div style={{ flex: 6 }}>
         {isEdit ? (
           <div className={'flex items-center gap-2'}>
-            <Input.TextArea
-              size={'small'}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-            />
+            {rawName === 'description' ? (
+              <Input.TextArea
+                size={'small'}
+                value={inputValue}
+                rows={1}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+            ) : (
+              <Input
+                size={'small'}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+            )}
             <div className={'ml-auto'} />
             <Button
               size={'small'}

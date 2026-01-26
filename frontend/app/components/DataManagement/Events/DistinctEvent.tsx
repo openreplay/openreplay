@@ -9,9 +9,11 @@ import DistinctEventPropsList from './DistinctEventPropsList';
 function DistinctEventPage({
   event,
   siteId,
+  openSessions,
 }: {
   event: DistinctEvent;
   siteId: string;
+  openSessions: (eventName: string) => void;
 }) {
   const backLink = withSiteId(dataManagement.eventsList(), siteId);
 
@@ -29,6 +31,7 @@ function DistinctEventPage({
   return (
     <DataItemPage
       onSave={onSave}
+      openSessions={() => openSessions(event.name)}
       item={{
         name: event.name,
         fields: {

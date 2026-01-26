@@ -464,7 +464,17 @@ class SearchStore {
     }
   }
 
-  addFilter(filter: any) {
+  addFilterOnce = (filter: any) => {
+    const isPresent = this.instance.filters.find(
+      (f) => f.name === filter.name && f.isEvent === filter.isEvent,
+    );
+    if (isPresent) {
+      return;
+    }
+    this.addFilter(filter);
+  };
+
+  addFilter = (filter: any) => {
     if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
       filterStore.getEventFilters(filter.id).then((props) => {
         filter.filters = props?.filter((prop) => prop.defaultProperty);

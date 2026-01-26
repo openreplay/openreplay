@@ -1,7 +1,8 @@
 import React from 'react';
 import { Table, Dropdown, Button } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
-import { Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import { useStore } from 'App/mstore';
@@ -90,7 +91,6 @@ function UsersList({
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (_: any, record: any) => {
         return (
@@ -113,7 +113,6 @@ function UsersList({
       title: 'User ID',
       dataIndex: 'userId',
       key: 'userId',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (_: any, record: any) => (
         <div className={'link'}>{record.userId ? record.userId : 'N/A'}</div>
@@ -123,7 +122,6 @@ function UsersList({
       title: 'Location',
       dataIndex: 'userLocation',
       key: 'userLocation',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (_: any, record: any) => (
         <div className={'flex items-center gap-2'}>
@@ -140,7 +138,6 @@ function UsersList({
       title: 'Last Seen',
       dataIndex: 'lastSeen',
       key: 'lastSeen',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (_: any, record: any) => diffIfRecent(record.createdAt),
     },
@@ -148,7 +145,6 @@ function UsersList({
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (_: any, record: any) => diffIfRecent(record.createdAt),
     },
@@ -211,20 +207,23 @@ function UsersList({
         {/*  ]}*/}
         {/*/>*/}
         <div>
-          <FilterSelection
-            filters={allFilterOptions}
-            activeFilters={activeFilters}
-            onFilterClick={onAddFilter}
-          >
-            <Button
-              icon={<Filter size={16} strokeWidth={1} />}
-              type="default"
-              size={'small'}
-              className="btn-add-filter"
-            >
-              Filters
-            </Button>
-          </FilterSelection>
+          <FilterListHeader
+            title="Filters"
+            filterSelection={
+              <FilterSelection
+                filters={allFilterOptions}
+                activeFilters={activeFilters}
+                onFilterClick={onAddFilter}
+              >
+                <Button type="default" size="small">
+                  <div className="flex items-center gap-1">
+                    <Plus size={16} strokeWidth={1} />
+                    <span>Add</span>
+                  </div>
+                </Button>
+              </FilterSelection>
+            }
+          />
         </div>
         <UnifiedFilterList
           title="Filters"

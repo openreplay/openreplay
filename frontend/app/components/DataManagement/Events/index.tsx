@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, Button } from 'antd';
+import { Input, Button, Checkbox } from 'antd';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -10,14 +10,22 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { fetchList } from './api';
 import DistinctEventPage from './DistinctEvent';
+import { sessions, dataManagement, withSiteId } from 'App/routes';
+
+const localKey = 'data-management-events-custom';
+function getDefaultValue() {
+  const stored = localStorage.getItem(localKey);
+  return stored ? JSON.parse(stored) : false;
+}
 
 function EventsListPage() {
+  const [showCustomOnly, setShowCustomOnly] = React.useState(getDefaultValue);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const shownEvent = searchParams.get('event');
   const { t } = useTranslation();
   const [query, setQuery] = React.useState('');
-  const { projectsStore } = useStore();
+  const { projectsStore, filterStore, searchStore } = useStore();
   const history = useHistory();
   const siteId = projectsStore.activeSiteId;
   const toEvent = (name: string) => {
@@ -41,8 +49,11 @@ function EventsListPage() {
     setPage(page);
   };
   const list = React.useMemo(() => {
-    const sortedList = data.events.sort((a, b) => b.count - a.count);
     if (shownEvent) return [];
+    const filteredByCustom = showCustomOnly
+      ? data.events.filter((e) => !e.autoCaptured)
+      : data.events;
+    const sortedList = filteredByCustom.sort((a, b) => b.count - a.count);
     if (!query) {
       return sortedList.slice((page - 1) * limit, page * limit);
     }
@@ -53,16 +64,35 @@ function EventsListPage() {
         event.description.toLowerCase().includes(query.toLowerCase()),
     );
     return filtered.slice((page - 1) * limit, page * limit);
-  }, [page, data.events, query, shownEvent]);
+  }, [page, data.events, query, shownEvent, showCustomOnly]);
 
   if (shownEvent) {
     const event = data.events.find((e) => e.name === shownEvent);
     if (event) {
-      return <DistinctEventPage event={event} siteId={siteId!} />;
+      const openSessions = () => {
+        const filter = filterStore.findEvent({ name: event.name });
+        const path = withSiteId(sessions(), siteId!);
+        if (filter) {
+          searchStore.addFilterOnce(filter);
+          history.push(path);
+        }
+      };
+      return (
+        <DistinctEventPage
+          event={event}
+          siteId={siteId!}
+          openSessions={openSessions}
+        />
+      );
     } else {
       return <div>{t('Event {{name}} not found', { name: shownEvent })}</div>;
     }
   }
+
+  const toggleCustom = (e: { target: { checked: boolean } }) => {
+    setShowCustomOnly(e.target.checked);
+    localStorage.setItem(localKey, JSON.stringify(e.target.checked));
+  };
 
   return (
     <div
@@ -70,19 +100,24 @@ function EventsListPage() {
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 py-2'}>
-        <div className={'font-semibold text-lg capitalize'}>Events</div>
+        <div className={'font-semibold text-lg capitalize'}>{t('Events')}</div>
         <div className="flex items-center gap-2">
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             {t('Docs')}
           </Button>
-          <Input.Search
-            size={'small'}
-            placeholder={t('Event name, display name, or description')}
-            value={query}
-            allowClear
-            maxLength={256}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <Checkbox checked={showCustomOnly} onChange={toggleCustom}>
+            {t('Show custom only')}
+          </Checkbox>
+          <div className="w-[320px]">
+            <Input.Search
+              size={'small'}
+              placeholder={t('Event name, display name, or description')}
+              value={query}
+              allowClear
+              maxLength={256}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
       <EventsList

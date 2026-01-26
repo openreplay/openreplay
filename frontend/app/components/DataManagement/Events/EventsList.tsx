@@ -24,37 +24,36 @@ function EventsList({
   onPageChange: (page: number) => void;
   toEvent: (name: string) => void;
 }) {
-  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US');
-
+  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+  });
   const columns = [
     {
       title: 'Event Name',
       dataIndex: 'name',
       key: 'name',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
-      render: (text: string) => <div className="link">{text}</div>,
     },
     {
       title: 'Display Name',
       dataIndex: 'displayName',
       key: 'displayName',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.displayName.localeCompare(b.displayName),
+      render: (text: string) => (
+        <TextEllipsis className="link" maxWidth={'185px'} text={text} />
+      ),
     },
     {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.description.localeCompare(b.description),
       render: (text: string) => <TextEllipsis maxWidth={'400px'} text={text} />,
     },
     {
       title: '30 Day Volume',
       dataIndex: 'count',
       key: 'count',
-      showSorterTooltip: { target: 'full-header' },
       sorter: (a: any, b: any) => a.count - b.count,
       render: (text: string) => (
         <span>{numberFormatter.format(Number(text))}</span>

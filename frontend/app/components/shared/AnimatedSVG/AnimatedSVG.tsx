@@ -82,12 +82,12 @@ const ICONS_SVGS = {
 
 interface Props {
   name: string;
-  size?: number;
+  size?: number | null;
   disableSize?: boolean;
   className?: string;
 }
 
-function AnimatedSVG(props: Props): JSX.Element | null {
+function AnimatedSVG(props: Props) {
   const { name, size = 24, disableSize, className } = props;
 
   // @ts-ignore
@@ -99,7 +99,7 @@ function AnimatedSVG(props: Props): JSX.Element | null {
   const style = disableSize
     ? {}
     : {
-        width: `${size}px`,
+        width: size === null ? undefined : `${size}px`,
         maxWidth: mobileScreen
           ? window.innerWidth - window.innerWidth / 10
           : undefined,

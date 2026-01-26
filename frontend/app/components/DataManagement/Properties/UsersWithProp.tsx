@@ -15,7 +15,7 @@ function UsersWithProp({ propName }: { propName: string }) {
   const toUser = (id: string) =>
     history.push(withSiteId(dataManagement.userPage(id), siteId!));
   return (
-    <div className="flex flex-col bg-white border rounded-lg">
+    <div className="flex flex-col bg-white rounded-lg">
       <div className="px-4 pt-4 font-semibold text-lg">
         {t('Users with this property')}
       </div>

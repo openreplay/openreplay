@@ -56,7 +56,6 @@ function ActivityPage() {
       title: 'Event Name',
       dataIndex: 'event_name',
       key: 'event_name',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (_: string, row) => (
         <div
@@ -71,7 +70,6 @@ function ActivityPage() {
       title: 'Time',
       dataIndex: 'created_at',
       key: 'created_at',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (text) => formatTimeOrDate(text, timezone),
     },
@@ -79,7 +77,6 @@ function ActivityPage() {
       title: 'Distinct ID',
       dataIndex: 'distinct_id',
       key: 'distinct_id',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
       render: (text: string, r) => {
         const clickable = r.user_id;
@@ -108,14 +105,12 @@ function ActivityPage() {
       title: 'City',
       dataIndex: 'city',
       key: 'city',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
     },
     {
       title: 'Environment',
       dataIndex: 'environment',
       key: 'environment',
-      showSorterTooltip: { target: 'full-header' },
       sorter: true,
     },
     {
@@ -337,7 +332,7 @@ function ActivityPage() {
           scope={'events'}
         />
 
-        <Divider className="my-3" />
+        <Divider className="my-3!" />
 
         <FilterListHeader
           title="Filters"

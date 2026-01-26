@@ -28,6 +28,7 @@ function FullPagination({
         <span className="font-medium">{numberWithCommas(total)}</span>
         {entity ? ` ${entity}.` : '.'}
       </div>
+      <div className="w-[200px]">
       <Pagination
         page={page}
         total={total}
@@ -35,6 +36,7 @@ function FullPagination({
         limit={limit}
         debounceRequest={500}
       />
+      </div>
     </div>
   );
 }
