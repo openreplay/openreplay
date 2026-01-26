@@ -3,7 +3,7 @@ from typing import Optional
 from chalicelib.core import roles, traces, assist_records
 from chalicelib.core.sessions import sessions
 from chalicelib.core import assist_stats
-from chalicelib.core import unlock, signals
+from chalicelib.core import unlock
 from chalicelib.utils import assist_helper
 
 unlock.check()
