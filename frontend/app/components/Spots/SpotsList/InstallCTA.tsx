@@ -47,7 +47,7 @@ function InstallCTA() {
   if (!isChromium && !extExist) {
     return (
       <Alert
-        message={t(
+        title={t(
           'Spot is designed for Chrome. Please install Chrome and navigate to this page to start using Spot.',
         )}
         type="warning"
@@ -60,7 +60,7 @@ function InstallCTA() {
     <>
       {extExist ? null : (
         <Alert
-          message={t(
+          title={t(
             'It looks like you haven’t installed the Spot extension yet.',
           )}
           type="warning"
@@ -76,8 +76,10 @@ function InstallCTA() {
                 )
               }
             >
-              {t('Get Chrome Extension')}&nbsp;
-              <ArrowUpRight />
+              <>
+                {t('Get Chrome Extension')}&nbsp;
+                <ArrowUpRight />
+              </>
             </Button>
           }
           className="w-full justify-between font-medium text-lg rounded-lg border-0 mb-4"

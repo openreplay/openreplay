@@ -60,11 +60,7 @@ function getRecordingSettings(qualityValue) {
   const mimeTypes = [
     'video/webm;codecs=vp9,opus',
     'video/webm;codecs=vp8,opus',
-    'video/mp4',
     'video/webm',
-    // faster HLS encoding backend path, breaks for some chrome configs?
-    'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
-    'video/mp4;codecs=avc1',
   ];
 
   let mimeType = mimeTypes[0];

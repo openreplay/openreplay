@@ -1,20 +1,28 @@
 import { InfoCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
-import Hls from 'hls.js';
+import { MediaPlayer, type MediaPlayerClass } from 'dashjs';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-
-import spotPlayerStore from '../spotPlayerStore';
 import { useTranslation } from 'react-i18next';
 
-const base64toblob = (str: string) => {
+import spotPlayerStore from '../spotPlayerStore';
+
+const base64ToBlob = (str: string) => {
   const byteCharacters = atob(str);
-  const byteNumbers = new Array(byteCharacters.length);
+  const byteArray = new Uint8Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
+    byteArray[i] = byteCharacters.charCodeAt(i);
   }
-  const byteArray = new Uint8Array(byteNumbers);
   return new Blob([byteArray]);
+};
+
+const isMpdFormat = (base64Str: string): boolean => {
+  try {
+    const decoded = atob(base64Str.slice(0, 100));
+    return decoded.includes('<?xml') || decoded.includes('<MPD');
+  } catch {
+    return false;
+  }
 };
 
 enum ProcessingState {
@@ -23,182 +31,161 @@ enum ProcessingState {
   Ready,
 }
 
+interface SpotVideoContainerProps {
+  videoURL: string;
+  streamFile?: string;
+  thumbnail?: string;
+  checkReady: () => Promise<boolean>;
+}
+
 function SpotVideoContainer({
   videoURL,
   streamFile,
   thumbnail,
   checkReady,
-}: {
-  videoURL: string;
-  streamFile?: string;
-  thumbnail?: string;
-  checkReady: () => Promise<boolean>;
-}) {
+}: SpotVideoContainerProps) {
   const { t } = useTranslation();
   const [prevIsProcessing, setPrevIsProcessing] = React.useState(false);
-  const [processingState, setProcessingState] = React.useState<ProcessingState>(
+  const [processingState, setProcessingState] = React.useState(
     ProcessingState.Unchecked,
   );
   const [isLoaded, setLoaded] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
-  const hlsRef = React.useRef<Hls | null>(null);
+  const dashRef = React.useRef<MediaPlayerClass | null>(null);
+  const blobUrlRef = React.useRef<string | null>(null);
 
+  // Initialize player and check processing state
   React.useEffect(() => {
-    const startPlaying = () => {
-      if (spotPlayerStore.isPlaying && videoRef.current) {
-        videoRef.current
-          .play()
-          .then(() => {
-            console.debug('playing');
-          })
-          .catch((e) => {
-            console.error(e);
-            spotPlayerStore.setIsPlaying(false);
-            const onClick = () => {
-              spotPlayerStore.setIsPlaying(true);
-              document.removeEventListener('click', onClick);
-            };
-            document.addEventListener('click', onClick);
+    const video = videoRef.current;
+    if (!video) return;
+
+    let checkInterval: ReturnType<typeof setInterval> | undefined;
+    let checkTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const onLoadedData = () => setLoaded(true);
+    const onEnded = () => spotPlayerStore.onComplete();
+
+    video.addEventListener('loadeddata', onLoadedData);
+    video.addEventListener('ended', onEnded);
+
+    const initDash = (url: string) => {
+      const dash = MediaPlayer().create();
+      dash.updateSettings({
+        streaming: {
+          scheduling: { scheduleWhilePaused: true },
+        },
+        debug: { logLevel: 3 },
+      });
+      dash.initialize(video, url, spotPlayerStore.isPlaying);
+      dashRef.current = dash;
+    };
+
+    const initializeVideo = () => {
+      if (streamFile && isMpdFormat(streamFile)) {
+        const url = URL.createObjectURL(base64ToBlob(streamFile));
+        blobUrlRef.current = url;
+        initDash(url);
+      } else if (streamFile) {
+        // Old HLS format - fall back to original videoURL (WebM)
+        video.src = videoURL;
+      } else {
+        // Poll for videoURL availability
+        const pollVideo = () => {
+          fetch(videoURL).then((r) => {
+            if (r.ok && r.status === 200) {
+              initDash(videoURL);
+            } else {
+              checkTimeout = setTimeout(pollVideo, 1000);
+            }
           });
+        };
+        pollVideo();
       }
     };
-    let intId;
+
     checkReady().then((isReady) => {
       if (!isReady) {
         setProcessingState(ProcessingState.Processing);
         setPrevIsProcessing(true);
-        let times = 0;
-        intId = setInterval(() => {
-          times += 1;
-          if (times >= 12) {
-            // after 1 min
-            clearInterval(intId);
+        let attempts = 0;
+        checkInterval = setInterval(() => {
+          attempts += 1;
+          if (attempts >= 12) {
+            clearInterval(checkInterval);
+            return;
           }
           checkReady().then((r) => {
             if (r) {
               setProcessingState(ProcessingState.Ready);
-              clearInterval(intId);
+              clearInterval(checkInterval);
             }
           });
         }, 5000);
       } else {
         setProcessingState(ProcessingState.Ready);
       }
-      const isSafari = /^((?!chrome|android).)*safari/i.test(
-        navigator.userAgent,
-      );
-      if (Hls.isSupported() && videoRef.current) {
-        if (isSafari) {
-          setLoaded(true);
-        } else {
-          videoRef.current.addEventListener('loadeddata', () => {
-            setLoaded(true);
-          });
-        }
-        if (streamFile) {
-          const hls = new Hls({
-            enableWorker: true,
-            maxBufferSize: 1000 * 1000,
-          });
-          const url = URL.createObjectURL(base64toblob(streamFile));
-          if (url && videoRef.current) {
-            hls.loadSource(url);
-            hls.attachMedia(videoRef.current);
-            startPlaying();
-            hlsRef.current = hls;
-          } else if (videoRef.current) {
-            videoRef.current.src = videoURL;
-            startPlaying();
-          }
-        } else {
-          const check = () => {
-            fetch(videoURL).then((r) => {
-              if (r.ok && r.status === 200) {
-                if (videoRef.current) {
-                  videoRef.current.src = '';
-                  setTimeout(() => {
-                    videoRef.current!.src = videoURL;
-                    startPlaying();
-                  }, 0);
-                }
-
-                return true;
-              }
-              setTimeout(() => {
-                check();
-              }, 1000);
-            });
-          };
-          check();
-        }
-      } else if (
-        streamFile &&
-        videoRef.current &&
-        videoRef.current.canPlayType('application/vnd.apple.mpegurl')
-      ) {
-        setLoaded(true);
-        videoRef.current.src = URL.createObjectURL(base64toblob(streamFile));
-        startPlaying();
-      } else if (videoRef.current) {
-        videoRef.current.addEventListener('loadeddata', () => {
-          setLoaded(true);
-        });
-        videoRef.current.src = videoURL;
-        startPlaying();
-      }
+      initializeVideo();
     });
 
     return () => {
-      hlsRef.current?.destroy();
-      clearInterval(intId);
+      video.removeEventListener('loadeddata', onLoadedData);
+      video.removeEventListener('ended', onEnded);
+      dashRef.current?.destroy();
+      clearInterval(checkInterval);
+      clearTimeout(checkTimeout);
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+      }
     };
   }, []);
 
+  // Sync play/pause state
   React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
     if (spotPlayerStore.isPlaying) {
-      videoRef.current
-        ?.play()
-        .then((r) => {
-          console.log('started', r);
-        })
-        .catch((e) => console.error(e));
+      video.play().catch(console.error);
     } else {
-      videoRef.current?.pause();
+      video.pause();
     }
   }, [spotPlayerStore.isPlaying]);
 
+  // Sync video time to store
   React.useEffect(() => {
-    const int = setInterval(() => {
-      const videoTime = videoRef.current?.currentTime ?? 0;
-      if (videoTime !== spotPlayerStore.time) {
+    const interval = setInterval(() => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const videoTime = video.currentTime;
+      if (Math.abs(videoTime - spotPlayerStore.time) > 0.05) {
         playbackTime.current = videoTime;
         spotPlayerStore.setTime(videoTime);
       }
     }, 100);
-    if (videoRef.current) {
-      videoRef.current.addEventListener('ended', () => {
-        spotPlayerStore.onComplete();
-      });
-    }
-    return () => clearInterval(int);
+
+    return () => clearInterval(interval);
   }, []);
 
+  // Handle user-initiated seeks from store
   React.useEffect(() => {
-    if (playbackTime.current !== spotPlayerStore.time && videoRef.current) {
-      videoRef.current.currentTime = spotPlayerStore.time;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const timeDiff = Math.abs(playbackTime.current - spotPlayerStore.time);
+    if (timeDiff > 0.5) {
+      video.currentTime = spotPlayerStore.time;
     }
   }, [spotPlayerStore.time]);
 
+  // Sync playback rate
   React.useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = spotPlayerStore.playbackRate;
+    const video = videoRef.current;
+    if (video) {
+      video.playbackRate = spotPlayerStore.playbackRate;
     }
   }, [spotPlayerStore.playbackRate]);
-
-  const reloadPage = () => {
-    window.location.reload();
-  };
 
   return (
     <>
@@ -208,8 +195,8 @@ function SpotVideoContainer({
       >
         {processingState === ProcessingState.Processing ? (
           <Alert
-            className="trimIsProcessing rounded-lg shadow-xs border-indigo-500 bg-indigo-lightest"
-            message="You’re viewing the original recording. Processed Spot will be available here shortly."
+            className="trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-lightest"
+            message="You're viewing the original recording. Processed Spot will be available here shortly."
             showIcon
             type="info"
             icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
@@ -225,7 +212,7 @@ function SpotVideoContainer({
                 size="small"
                 type="default"
                 icon={<PlayCircleOutlined />}
-                onClick={reloadPage}
+                onClick={() => window.location.reload()}
                 className="ml-2"
               >
                 {t('Play Now')}
