@@ -93,7 +93,7 @@ function SpotPlayerHeader({
     if (key === '1') {
       const loader = toast.loading('Retrieving Spot video...');
       const { url } = await spotStore.getVideo(spotStore.currentSpot!.spotId);
-      await downloadFile(url, `${spotStore.currentSpot!.title}.mp4`);
+      await downloadFile(url, `${spotStore.currentSpot!.title}.webm`);
       setTimeout(() => {
         toast.dismiss(loader);
       }, 0);
