@@ -26,7 +26,8 @@ export default defineBackground(() => {
     comment: string;
     useHook: string;
     preview: string;
-    base64data: string;
+    base64data: string | string[];
+    mtype: string;
     duration: number;
     network: SpotNetworkRequest[];
     logs: { level: string; msg: string; time: number }[];
@@ -70,7 +71,8 @@ export default defineBackground(() => {
     comment: "",
     useHook: "",
     preview: "",
-    base64data: "",
+    base64data: [] as string[],
+    mtype: "video/webm",
     duration: 100,
     network: [],
     logs: [],
@@ -335,6 +337,7 @@ export default defineBackground(() => {
       }
       finalVideoBase64 = "";
       const recArea = request.area;
+      finalSpotObj.base64data = [];
       finalSpotObj.startTs = Date.now();
       if (settings.networkLogs) {
         if (settings.useDebugger) {
@@ -574,7 +577,8 @@ export default defineBackground(() => {
         comment: "",
         useHook: "",
         preview: "",
-        base64data: "",
+        base64data: [],
+        mtype: "video/webm",
         duration: 100,
         network: [],
         logs: [],
@@ -685,6 +689,8 @@ export default defineBackground(() => {
     }
     if (request.type === "offscr:video-data-chunk") {
       finalSpotObj.duration = request.duration;
+      (finalSpotObj.base64data as string[]).push(request.data);
+      finalSpotObj.mtype = request.mtype;
       void sendToActiveTab({
         type: "content:video-chunk",
         data: request.data,
@@ -893,7 +899,7 @@ export default defineBackground(() => {
                   const vPromise = fetch(videoURL, {
                     method: "PUT",
                     headers: {
-                      "Content-Type": "video/mp4",
+                      "Content-Type": "video/webm",
                     },
                     body: blob,
                   });
