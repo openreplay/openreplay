@@ -1,7 +1,10 @@
 package favorite
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -9,29 +12,37 @@ import (
 )
 
 type Favorites interface {
-	DoFavorite(sessionID uint64, userID string) error
+	DoFavorite(projectID uint32, sessionID uint64, userID string) error
 }
 
 type favoritesImpl struct {
 	log        logger.Logger
 	conn       pool.Pool
+	chConn     driver.Conn
 	objStorage objectstorage.ObjectStorage
 }
 
-func New(log logger.Logger, conn pool.Pool, objStorage objectstorage.ObjectStorage) (Favorites, error) {
+func New(log logger.Logger, conn pool.Pool, chConn driver.Conn, objStorage objectstorage.ObjectStorage) (Favorites, error) {
 	return &favoritesImpl{
 		log:        log,
 		conn:       conn,
+		chConn:     chConn,
 		objStorage: objStorage,
 	}, nil
 }
 
-func (f *favoritesImpl) DoFavorite(sessionID uint64, userID string) (err error) {
+func (f *favoritesImpl) DoFavorite(projectID uint32, sessionID uint64, userID string) (err error) {
 	if f.isExist(sessionID, userID) {
 		setTags(f.objStorage, sessionID, true)
+		if err := f.updateClickHouseVault(projectID, sessionID, false); err != nil {
+			f.log.Error(context.TODO(), "failed to update ClickHouse vault status: %v", err)
+		}
 		return f.remove(sessionID, userID)
 	} else {
 		setTags(f.objStorage, sessionID, false)
+		if err := f.updateClickHouseVault(projectID, sessionID, true); err != nil {
+			f.log.Error(context.TODO(), "failed to update ClickHouse vault status: %v", err)
+		}
 		return f.add(sessionID, userID)
 	}
 }
@@ -41,7 +52,7 @@ func (f *favoritesImpl) add(sessionID uint64, userID string) error {
 	var existingSessionID uint64
 	if err := f.conn.QueryRow(sql, userID, sessionID).Scan(&existingSessionID); err != nil {
 		if err.Error() == "no rows in result set" {
-			return fmt.Errorf("failed to add favorite: session %s for user %s does not exist", sessionID, userID)
+			return fmt.Errorf("failed to add favorite: session %d for user %s does not exist", sessionID, userID)
 		}
 		return fmt.Errorf("failed to add favorite: %w", err)
 	}
@@ -55,7 +66,7 @@ func (f *favoritesImpl) isExist(sessionID uint64, userID string) bool {
 		if err.Error() == "no rows in result set" {
 			return false // session does not exist in favorites
 		}
-		f.log.Error(nil, "failed to check favorite existence: %v", err)
+		f.log.Error(context.TODO(), "failed to check favorite existence: %v", err)
 		return false // error occurred, assume session is not a favorite
 	}
 	if existingSessionID == sessionID {
@@ -69,7 +80,7 @@ func (f *favoritesImpl) remove(sessionID uint64, userID string) error {
 	var existingSessionID uint64
 	if err := f.conn.QueryRow(sql, userID, sessionID).Scan(&existingSessionID); err != nil {
 		if err.Error() == "no rows in result set" {
-			return fmt.Errorf("failed to remove favorite: session %s for user %s does not exist", sessionID, userID)
+			return fmt.Errorf("failed to remove favorite: session %d for user %s does not exist", sessionID, userID)
 		}
 		return fmt.Errorf("failed to remove favorite: %w", err)
 	}

@@ -128,7 +128,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	favService, err := favorite.New(log, pgconn, objStore)
+	favService, err := favorite.New(log, pgconn, chconn, objStore)
 	if err != nil {
 		return nil, err
 	}
