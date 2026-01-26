@@ -99,7 +99,7 @@ function EditableField({
   const { t } = useTranslation();
   const [inputValue, setInputValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
-  const formatter = new Intl.NumberFormat(navigator.language || 'en-US');
+  const formatter = new Intl.NumberFormat('en-US');
 
   const handleSave = () => {
     onSave({ key: rawName, value: inputValue });
@@ -112,7 +112,7 @@ function EditableField({
   return (
     <div
       className={cn(
-        'flex border-b last:border-b-0 items-center px-2 mx-2 py-2 gap-2',
+        'flex border-b last:border-b-0 items-center px-2 mx-2 py-3 gap-2',
         isEdit ? 'bg-active-blue' : 'hover:bg-active-blue',
       )}
     >

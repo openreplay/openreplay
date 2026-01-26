@@ -75,7 +75,7 @@ export default function Pagination({
           onChange={(e) => setInputValue(e.target.value)}
           onPressEnter={commitInput}
           onBlur={commitInput}
-          className="w-12 text-center px-2 py-0 rounded-sm"
+          className="w-14! text-center px-2 py-0 rounded-sm"
           size="small"
         />
         <span>/</span>

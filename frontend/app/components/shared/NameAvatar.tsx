@@ -6,7 +6,7 @@ function NameAvatar({ name, size }: { name: string; size?: number }) {
   const fontSize = size ? Math.floor((size / 32) * 14) : 14;
   return (
     <div
-      className="bg-tealx-light rounded-full flex items-center justify-center color-tealx"
+      className="bg-tealx-light rounded-full flex items-center justify-center color-tealx font-semibold"
       style={{ width: size ?? '32px', height: size ?? '32px', fontSize }}
     >
       {getInitials(onlyLetterName)}

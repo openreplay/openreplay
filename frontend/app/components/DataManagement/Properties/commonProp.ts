@@ -11,7 +11,7 @@ export const FieldNames = (field: string, type: 'user' | 'event' | 'distinct_eve
       return 'Description';
     case 'volume':
       if (type === 'distinct_event') {
-        return '30 Day Volume';
+        return '30-Day Volume';
       }
       return type === 'user'
         ? '# Users with property'

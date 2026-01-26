@@ -57,6 +57,8 @@ function ActivityPage() {
       dataIndex: 'event_name',
       key: 'event_name',
       sorter: true,
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
       render: (_: string, row) => (
         <div
           className={'flex items-center gap-2 code-font fill-black color-black'}
@@ -71,6 +73,8 @@ function ActivityPage() {
       dataIndex: 'created_at',
       key: 'created_at',
       sorter: true,
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
       render: (text) => formatTimeOrDate(text, timezone),
     },
     {
@@ -78,6 +82,8 @@ function ActivityPage() {
       dataIndex: 'distinct_id',
       key: 'distinct_id',
       sorter: true,
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
       render: (text: string, r) => {
         const clickable = r.user_id;
         if (clickable) {
@@ -106,12 +112,16 @@ function ActivityPage() {
       dataIndex: 'city',
       key: 'city',
       sorter: true,
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
     {
       title: 'Environment',
       dataIndex: 'environment',
       key: 'environment',
       sorter: true,
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
     {
       title: (

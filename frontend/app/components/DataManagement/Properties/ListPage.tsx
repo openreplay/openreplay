@@ -203,7 +203,7 @@ function EventPropsList({
   page: number;
   isLoading: boolean;
 }) {
-  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US', {
+  const numberFormatter = Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
   });
@@ -213,6 +213,8 @@ function EventPropsList({
       dataIndex: 'name',
       key: 'name',
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
     {
       title: 'Display Name',
@@ -222,6 +224,8 @@ function EventPropsList({
       render: (text: string) => (
         <TextEllipsis className="link" maxWidth={'185px'} text={text} />
       ),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
     {
       title: 'Description',
@@ -229,13 +233,15 @@ function EventPropsList({
       key: 'description',
     },
     {
-      title: '30 Day Volume',
+      title: '30-Day Volume',
       dataIndex: 'count',
       key: 'count',
       sorter: (a: any, b: any) => a.count - b.count,
       render: (text: string) => (
         <span>{numberFormatter.format(Number(text))}</span>
       ),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
   ];
   return (
@@ -280,7 +286,7 @@ function UserPropsList({
   page: number;
   isLoading: boolean;
 }) {
-  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US', {
+  const numberFormatter = Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
   });
@@ -290,6 +296,8 @@ function UserPropsList({
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
     {
       title: 'Display Name',
@@ -299,6 +307,8 @@ function UserPropsList({
       render: (text: string) => (
         <TextEllipsis className="link" maxWidth={'185px'} text={text} />
       ),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
     {
       title: 'Description',
@@ -313,6 +323,8 @@ function UserPropsList({
       render: (text: string) => (
         <span>{numberFormatter.format(Number(text))}</span>
       ),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
   ];
 

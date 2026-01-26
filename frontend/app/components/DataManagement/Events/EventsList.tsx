@@ -24,7 +24,7 @@ function EventsList({
   onPageChange: (page: number) => void;
   toEvent: (name: string) => void;
 }) {
-  const numberFormatter = Intl.NumberFormat(navigator.language || 'en-US', {
+  const numberFormatter = Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
   });
@@ -34,12 +34,16 @@ function EventsList({
       dataIndex: 'name',
       key: 'name',
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
     },
     {
       title: 'Display Name',
       dataIndex: 'displayName',
       key: 'displayName',
       sorter: (a, b) => a.displayName.localeCompare(b.displayName),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
       render: (text: string) => (
         <TextEllipsis className="link" maxWidth={'185px'} text={text} />
       ),
@@ -51,10 +55,12 @@ function EventsList({
       render: (text: string) => <TextEllipsis maxWidth={'400px'} text={text} />,
     },
     {
-      title: '30 Day Volume',
+      title: '30-Day Volume',
       dataIndex: 'count',
       key: 'count',
       sorter: (a: any, b: any) => a.count - b.count,
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
       render: (text: string) => (
         <span>{numberFormatter.format(Number(text))}</span>
       ),

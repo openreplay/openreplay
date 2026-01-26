@@ -12,14 +12,14 @@ import { fetchList } from './api';
 import DistinctEventPage from './DistinctEvent';
 import { sessions, dataManagement, withSiteId } from 'App/routes';
 
-const localKey = 'data-management-events-custom';
+const localKey = 'data-management-events-autocaptured';
 function getDefaultValue() {
   const stored = localStorage.getItem(localKey);
   return stored ? JSON.parse(stored) : false;
 }
 
 function EventsListPage() {
-  const [showCustomOnly, setShowCustomOnly] = React.useState(getDefaultValue);
+  const [showAutocaptured, setShowAutocaptured] = React.useState(getDefaultValue);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const shownEvent = searchParams.get('event');
@@ -50,9 +50,9 @@ function EventsListPage() {
   };
   const list = React.useMemo(() => {
     if (shownEvent) return [];
-    const filteredByCustom = showCustomOnly
-      ? data.events.filter((e) => !e.autoCaptured)
-      : data.events;
+    const filteredByCustom = showAutocaptured
+      ? data.events
+      : data.events.filter((e) => !e.autoCaptured);
     const sortedList = filteredByCustom.sort((a, b) => b.count - a.count);
     if (!query) {
       return sortedList.slice((page - 1) * limit, page * limit);
@@ -64,7 +64,7 @@ function EventsListPage() {
         event.description.toLowerCase().includes(query.toLowerCase()),
     );
     return filtered.slice((page - 1) * limit, page * limit);
-  }, [page, data.events, query, shownEvent, showCustomOnly]);
+  }, [page, data.events, query, shownEvent, showAutocaptured]);
 
   if (shownEvent) {
     const event = data.events.find((e) => e.name === shownEvent);
@@ -89,9 +89,14 @@ function EventsListPage() {
     }
   }
 
-  const toggleCustom = (e: { target: { checked: boolean } }) => {
-    setShowCustomOnly(e.target.checked);
-    localStorage.setItem(localKey, JSON.stringify(e.target.checked));
+  const toggleAutocaptured = () => {
+    setShowAutocaptured((prev) => {
+      setTimeout(
+        () => localStorage.setItem(localKey, JSON.stringify(!prev)),
+        0,
+      );
+      return !prev;
+    });
   };
 
   return (
@@ -102,12 +107,12 @@ function EventsListPage() {
       <div className={'flex items-center justify-between border-b px-4 py-2'}>
         <div className={'font-semibold text-lg capitalize'}>{t('Events')}</div>
         <div className="flex items-center gap-2">
+          <Checkbox checked={showAutocaptured} onChange={toggleAutocaptured}>
+            {t('Show autocaptured')}
+          </Checkbox>
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             {t('Docs')}
           </Button>
-          <Checkbox checked={showCustomOnly} onChange={toggleCustom}>
-            {t('Show custom only')}
-          </Checkbox>
           <div className="w-[320px]">
             <Input.Search
               size={'small'}
