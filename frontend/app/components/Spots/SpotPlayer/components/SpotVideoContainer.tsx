@@ -62,6 +62,7 @@ function SpotVideoContainer({
 
     let checkInterval: ReturnType<typeof setInterval> | undefined;
     let checkTimeout: ReturnType<typeof setTimeout> | undefined;
+    let checkAmount = 0;
 
     const onLoadedData = () => setLoaded(true);
     const onEnded = () => spotPlayerStore.onComplete();
@@ -90,13 +91,16 @@ function SpotVideoContainer({
         // Old HLS format - fall back to original videoURL (WebM)
         video.src = videoURL;
       } else {
-        // Poll for videoURL availability
         const pollVideo = () => {
           fetch(videoURL).then((r) => {
             if (r.ok && r.status === 200) {
               initDash(videoURL);
             } else {
+              if (checkAmount >= 60) {
+                return;
+              }
               checkTimeout = setTimeout(pollVideo, 1000);
+              checkAmount += 1;
             }
           });
         };
