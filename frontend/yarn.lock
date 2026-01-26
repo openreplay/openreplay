@@ -10290,13 +10290,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hls.js@npm:^1.6.15":
-  version: 1.6.15
-  resolution: "hls.js@npm:1.6.15"
-  checksum: 10c1/135be300ea09e436b2ce39cac4bc244e926fdfc5747894937b2751b0f3cc26935d7a9bf72b6ecf7730122b4cc31877229e77bf9050dfd102f46e1b15883e6a76
-  languageName: node
-  linkType: hard
-
 "hoist-non-react-statics@npm:^3.1.0, hoist-non-react-statics@npm:^3.3.0, hoist-non-react-statics@npm:^3.3.1, hoist-non-react-statics@npm:^3.3.2":
   version: 3.3.2
   resolution: "hoist-non-react-statics@npm:3.3.2"
@@ -13805,7 +13798,6 @@ __metadata:
     fflate: "npm:^0.8.2"
     fzstd: "npm:^0.1.1"
     globals: "npm:^16.4.0"
-    hls.js: "npm:^1.6.15"
     html-to-image: "npm:^1.11.13"
     i18next: "npm:^24.2.3"
     i18next-browser-languagedetector: "npm:^8.2.0"
