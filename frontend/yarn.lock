@@ -3340,10 +3340,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-arm64@npm:1.15.3":
-  version: 1.15.3
-  resolution: "@swc/core-darwin-arm64@npm:1.15.3"
-  conditions: os=darwin & cpu=arm64
+"@tanstack/query-core@npm:5.90.2":
+  version: 5.90.2
+  resolution: "@tanstack/query-core@npm:5.90.2"
+  checksum: 10c1/95c6f8d411313296b40e31eafe1f3ed4604caa0bea355eedfedaafaf0c99c5dac36c59b73a282357635377ce7ddced5cd4e766ec67dcf5325bee1fa64d13649a
   languageName: node
   linkType: hard
 
@@ -6613,10 +6613,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"country-flag-icons@npm:^1.5.21":
-  version: 1.5.21
-  resolution: "country-flag-icons@npm:1.5.21"
-  checksum: 10c1/d6d802f3fec8b3d716549816298d5eb1ac75c5f0a42f994a8e1ed9be239b7b5ea6a7d396aebee2afe23e5ae733f3ee1afdd5af6981e4c79e8116582a094d1f10
+"country-flag-icons@npm:^1.6.4":
+  version: 1.6.8
+  resolution: "country-flag-icons@npm:1.6.8"
+  checksum: 10c1/62e27a2c28868edb2a04fd4b3405614a9b84e98d532503e93f44b5ef505dd3be97bd9e58e25df2f119c5bcaf07d14afd4a201672a85d9b8a8a18aa9733b15159
   languageName: node
   linkType: hard
 
@@ -10016,6 +10016,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"immutable@npm:^4.3.7":
+  version: 4.3.7
+  resolution: "immutable@npm:4.3.7"
+  checksum: 10c1/231f1fa3ecf616a1a08e3157c2d3b5c389564f0eb125b744091b1b7757766327f2530524ab1133d1862ae8660ffdc606d0466bed0e67b2b92e6c90f4019df25c
+  languageName: node
+  linkType: hard
+
 "immutable@npm:^5.0.2":
   version: 5.1.3
   resolution: "immutable@npm:5.1.3"
@@ -11617,126 +11624,6 @@ __metadata:
   dependencies:
     immediate: "npm:~3.0.5"
   checksum: 10c1/06818c9f87f0606c2ad3e18071d20e7dfd2e38af95b84cf96ee5abd17c15f1a6ec46b13df3709110954e9f295c59e16e23061e853416bdc7e8cd5fc49ccdcb9b
-  languageName: node
-  linkType: hard
-
-"lightningcss-android-arm64@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-android-arm64@npm:1.30.2"
-  conditions: os=android & cpu=arm64
-  languageName: node
-  linkType: hard
-
-"lightningcss-darwin-arm64@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-darwin-arm64@npm:1.30.2"
-  conditions: os=darwin & cpu=arm64
-  languageName: node
-  linkType: hard
-
-"lightningcss-darwin-x64@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-darwin-x64@npm:1.30.2"
-  conditions: os=darwin & cpu=x64
-  languageName: node
-  linkType: hard
-
-"lightningcss-freebsd-x64@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-freebsd-x64@npm:1.30.2"
-  conditions: os=freebsd & cpu=x64
-  languageName: node
-  linkType: hard
-
-"lightningcss-linux-arm-gnueabihf@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-linux-arm-gnueabihf@npm:1.30.2"
-  conditions: os=linux & cpu=arm
-  languageName: node
-  linkType: hard
-
-"lightningcss-linux-arm64-gnu@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-linux-arm64-gnu@npm:1.30.2"
-  conditions: os=linux & cpu=arm64 & libc=glibc
-  languageName: node
-  linkType: hard
-
-"lightningcss-linux-arm64-musl@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-linux-arm64-musl@npm:1.30.2"
-  conditions: os=linux & cpu=arm64 & libc=musl
-  languageName: node
-  linkType: hard
-
-"lightningcss-linux-x64-gnu@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-linux-x64-gnu@npm:1.30.2"
-  conditions: os=linux & cpu=x64 & libc=glibc
-  languageName: node
-  linkType: hard
-
-"lightningcss-linux-x64-musl@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-linux-x64-musl@npm:1.30.2"
-  conditions: os=linux & cpu=x64 & libc=musl
-  languageName: node
-  linkType: hard
-
-"lightningcss-win32-arm64-msvc@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-win32-arm64-msvc@npm:1.30.2"
-  conditions: os=win32 & cpu=arm64
-  languageName: node
-  linkType: hard
-
-"lightningcss-win32-x64-msvc@npm:1.30.2":
-  version: 1.30.2
-  resolution: "lightningcss-win32-x64-msvc@npm:1.30.2"
-  conditions: os=win32 & cpu=x64
-  languageName: node
-  linkType: hard
-
-"lightningcss@npm:^1.30.1":
-  version: 1.30.2
-  resolution: "lightningcss@npm:1.30.2"
-  dependencies:
-    detect-libc: "npm:^2.0.3"
-    lightningcss-android-arm64: "npm:1.30.2"
-    lightningcss-darwin-arm64: "npm:1.30.2"
-    lightningcss-darwin-x64: "npm:1.30.2"
-    lightningcss-freebsd-x64: "npm:1.30.2"
-    lightningcss-linux-arm-gnueabihf: "npm:1.30.2"
-    lightningcss-linux-arm64-gnu: "npm:1.30.2"
-    lightningcss-linux-arm64-musl: "npm:1.30.2"
-    lightningcss-linux-x64-gnu: "npm:1.30.2"
-    lightningcss-linux-x64-musl: "npm:1.30.2"
-    lightningcss-win32-arm64-msvc: "npm:1.30.2"
-    lightningcss-win32-x64-msvc: "npm:1.30.2"
-  dependenciesMeta:
-    lightningcss-android-arm64:
-      optional: true
-    lightningcss-darwin-arm64:
-      optional: true
-    lightningcss-darwin-x64:
-      optional: true
-    lightningcss-freebsd-x64:
-      optional: true
-    lightningcss-linux-arm-gnueabihf:
-      optional: true
-    lightningcss-linux-arm64-gnu:
-      optional: true
-    lightningcss-linux-arm64-musl:
-      optional: true
-    lightningcss-linux-x64-gnu:
-      optional: true
-    lightningcss-linux-x64-musl:
-      optional: true
-    lightningcss-win32-arm64-msvc:
-      optional: true
-    lightningcss-win32-x64-msvc:
-      optional: true
-  checksum: 10c1/c5737b5d29446c7ce813607f6adfb26b8568bca4cc46c7011d225bb16492f3c7a063e6153e45878b6639ebda1cf9644a8ad7dbc39e0803f5d2c230d14bf2ce25
   languageName: node
   linkType: hard
 
@@ -13515,7 +13402,7 @@ __metadata:
     copy-to-clipboard: "npm:^3.3.3"
     copy-webpack-plugin: "npm:^12.0.2"
     country-data: "npm:0.0.31"
-    country-flag-icons: "npm:^1.5.21"
+    country-flag-icons: "npm:^1.6.4"
     css-loader: "npm:^7.1.2"
     cssnano: "npm:^7.1.1"
     cypress: "npm:13.17.0"
@@ -13815,6 +13702,23 @@ __metadata:
   dependencies:
     entities: "npm:^6.0.0"
   checksum: 10c1/4ea791ccde9f02fa1da20da0c8d45c4a9c0e390fb221e4358260b771b3a1febaeae5e75392d1605f850a54040dad48d0a7c35d7f584d062949d5c1cd3ff136df
+  languageName: node
+  linkType: hard
+
+"parseurl@npm:~1.3.2, parseurl@npm:~1.3.3":
+  version: 1.3.3
+  resolution: "parseurl@npm:1.3.3"
+  checksum: 10c1/7256a6e3ff8a851297a0ae1373834443cbfeb082e655eb123274af8d2b8806618b3ded58a14cf3eb061f610a8f73245d5fdd611b608ece758e34575d0d2d214a
+  languageName: node
+  linkType: hard
+
+"pascal-case@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "pascal-case@npm:3.1.2"
+  dependencies:
+    no-case: "npm:^3.0.4"
+    tslib: "npm:^2.0.3"
+  checksum: 10c1/52c0d76c19fc2862af50215c15b5ec53baabca2d9907ed8f80308a3fd6ec963b7aa9313fdd4914ab0a3afe511a6310a5d59016539ef822e85456869bb1d6bd49
   languageName: node
   linkType: hard
 
@@ -16395,6 +16299,13 @@ __metadata:
   version: 1.4.1
   resolution: "sax@npm:1.4.1"
   checksum: 10c1/6e6335186bf1e92b373e155447ffd8b0692bd37e6c0cea2769fe30722aa59e805de48175aa4856eb05ae7eb54a0103d0233f2cbe60d2723cc3ea489995396524
+  languageName: node
+  linkType: hard
+
+"sax@npm:^1.4.1":
+  version: 1.4.4
+  resolution: "sax@npm:1.4.4"
+  checksum: 10c1/474ea9d3256568eeb580eff4cda3b3268e399a07f176cf44f1e3df7832367446f219d502861f248d286c8b6807621ae7b1e1f055bcd9654b9c658d34e54180ba
   languageName: node
   linkType: hard
 
