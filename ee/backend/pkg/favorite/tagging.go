@@ -32,9 +32,7 @@ func setTags(objStorage objectstorage.ObjectStorage, sessionID uint64, toDelete 
 	}
 }
 
-func (f *favoritesImpl) updateClickHouseVault(projectID uint32, sessionID uint64, isVault bool) error {
-	ctx := context.Background()
-
+func (f *favoritesImpl) updateVaultStatus(ctx context.Context, projectID uint32, sessionID uint64, isVault bool) error {
 	sessionsQuery := `
 		INSERT INTO experimental.sessions (
 			session_id, project_id, tracker_version, rev_id, user_uuid, 

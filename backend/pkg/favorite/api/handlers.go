@@ -55,7 +55,7 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.favorites.DoFavorite(projID, sessID, userID); err != nil {
+	if err := h.favorites.DoFavorite(r.Context(), projID, sessID, userID); err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
