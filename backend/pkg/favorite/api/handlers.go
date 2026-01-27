@@ -35,10 +35,18 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
+	projID, err := api.GetProject(r)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
 	sessID, err := api.GetSessionID(r)
 	if err != nil {
-
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
 	}
+
 	var userID string
 	if user := api.GetUser(r); user != nil {
 		userID = user.GetIDAsString()
@@ -46,7 +54,8 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("no user id"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	if h.favorites.DoFavorite(sessID, userID) != nil {
+
+	if err := h.favorites.DoFavorite(r.Context(), projID, sessID, userID); err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
