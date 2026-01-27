@@ -46,42 +46,48 @@ class KaiStore {
   }
 
   get lastHumanMessage() {
-    let msg = null;
-    let index = null;
-    for (let i = this.messages.length - 1; i >= 0; i--) {
-      const message = this.messages[i];
-      if (message.isUser) {
-        msg = message;
-        index = i;
-        break;
+    let msg: any = null;
+    let index: null | number = null;
+    if (this.messages) {
+      for (let i = this.messages.length - 1; i >= 0; i--) {
+        const message = this.messages[i];
+        if (message.isUser) {
+          msg = message;
+          index = i;
+          break;
+        }
       }
     }
     return { msg, index };
   }
 
   get firstHumanMessage() {
-    let msg = null;
-    let index = null;
-    for (let i = 0; i < this.messages.length; i++) {
-      const message = this.messages[i];
-      if (message.isUser) {
-        msg = message;
-        index = i;
-        break;
+    let msg: any = null;
+    let index: null | number = null;
+    if (this.messages) {
+      for (let i = 0; i < this.messages.length; i++) {
+        const message = this.messages[i];
+        if (message.isUser) {
+          msg = message;
+          index = i;
+          break;
+        }
       }
     }
     return { msg, index };
   }
 
   get lastKaiMessage() {
-    let msg = null;
-    let index = null;
-    for (let i = this.messages.length - 1; i >= 0; i--) {
-      const message = this.messages[i];
-      if (!message.isUser) {
-        msg = message;
-        index = i;
-        break;
+    let msg: any = null;
+    let index: null | number = null;
+    if (this.messages) {
+      for (let i = this.messages.length - 1; i >= 0; i--) {
+        const message = this.messages[i];
+        if (!message.isUser) {
+          msg = message;
+          index = i;
+          break;
+        }
       }
     }
     return { msg, index };
@@ -131,7 +137,7 @@ class KaiStore {
   };
 
   deleteAtIndex = (indexes: number[]) => {
-    if (!indexes.length) return;
+    if (!indexes || !indexes.length) return;
     const messages = this.messages.filter((_, i) => !indexes.includes(i));
     runInAction(() => {
       this.messages = messages;
@@ -353,7 +359,7 @@ class KaiStore {
     });
     try {
       const filtersStr = await kaiService.getMsgChart(msgId, projectId);
-      if (!filtersStr.length) {
+      if (!filtersStr || !filtersStr.length) {
         throw new Error('No filters found for the message');
       }
       const filters = JSON.parse(filtersStr);
