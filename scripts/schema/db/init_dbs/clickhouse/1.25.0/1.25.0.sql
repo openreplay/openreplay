@@ -3,7 +3,6 @@ CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.25.0';
 ALTER TABLE product_analytics.all_events
     ADD COLUMN status LowCardinality(String) DEFAULT 'visible' COMMENT 'visible/hidden/dropped' AFTER description;
 
-
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_version_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_country_mv;
@@ -29,7 +28,8 @@ DROP TABLE IF EXISTS product_analytics.autocomplete_simple_metadata_9_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_metadata_10_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_mv;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_mv
+DROP TABLE IF EXISTS product_analytics.autocomplete_simple_mv;
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_sessions_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        t.3                   AS auto_captured,
@@ -76,3 +76,70 @@ ALTER TABLE product_analytics.users_distinct_id
     MODIFY TTL _deleted_at WHERE _deleted_at != '1970-01-01 00:00:00';
 
 DROP TABLE IF EXISTS experimental.autocomplete;
+
+ALTER TABLE product_analytics.autocomplete_simple
+    MODIFY COLUMN source Enum8('sessions'=0,'users'=1,'events'=2);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_events_mv
+    TO product_analytics.autocomplete_simple AS
+SELECT project_id,
+       t.3                   AS auto_captured,
+       'events'              AS source,
+       t.1                   AS name,
+       toString(t.2)         AS value,
+       sumState(toUInt16(1)) AS data_count,
+       _timestamp
+FROM product_analytics.events
+         ARRAY JOIN
+     [--(name,column,auto-captured)
+         ('user_id', "$user_id", FALSE),
+         ('sdk_edition', "$sdk_edition", TRUE),
+         ('sdk_version', "$sdk_version", TRUE),
+         ('current_url', "$current_url", TRUE),
+         ('current_path', "$current_path", TRUE),
+         ('initial_referrer', "$initial_referrer", TRUE),
+         ('referring_domain', "$referring_domain", TRUE),
+         ('country', "$country", TRUE),
+         ('state', "$state", TRUE),
+         ('city', "$city", TRUE),
+         ('or_api_endpoint', "$or_api_endpoint", TRUE)
+         ] AS t
+WHERE isNotNull(t.2)
+  AND notEmpty(toString(t.2))
+GROUP BY ALL;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_users_mv
+    TO product_analytics.autocomplete_simple AS
+SELECT project_id,
+       t.3                   AS auto_captured,
+       'users'               AS source,
+       t.1                   AS name,
+       toString(t.2)         AS value,
+       sumState(toUInt16(1)) AS data_count,
+       _timestamp
+FROM product_analytics.users
+         ARRAY JOIN
+     [--(name,column,auto-captured)
+         ('user_id', "$user_id", FALSE),
+         ('email', "$email", FALSE),
+         ('name', "$name", FALSE),
+         ('first_name', "$first_name", FALSE),
+         ('last_name', "$last_name", FALSE),
+         ('phone', "$phone", FALSE),
+         ('sdk_edition', "$sdk_edition", TRUE),
+         ('sdk_version', "$sdk_version", TRUE),
+         ('current_url', "$current_url", TRUE),
+         ('current_path', "$current_path", TRUE),
+         ('initial_referrer', "$initial_referrer", TRUE),
+         ('referring_domain', "$referring_domain", TRUE),
+         ('initial_utm_source', initial_utm_source, TRUE),
+         ('initial_utm_medium', initial_utm_medium, TRUE),
+         ('initial_utm_campaign', initial_utm_campaign, TRUE),
+         ('country', "$country", TRUE),
+         ('state', "$state", TRUE),
+         ('city', "$city", TRUE),
+         ('or_api_endpoint', "$or_api_endpoint", TRUE)
+         ] AS t
+WHERE isNotNull(t.2)
+  AND notEmpty(toString(t.2))
+GROUP BY ALL;
