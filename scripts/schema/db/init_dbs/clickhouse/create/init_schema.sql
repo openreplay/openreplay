@@ -178,8 +178,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.users
     _is_deleted          UInt8 DEFAULT 0,
     _timestamp           DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
-      PARTITION BY toYYYYMM(_timestamp)
       ORDER BY (project_id, "$user_id")
+      PARTITION BY toYYYYMM(_timestamp)
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
@@ -787,7 +787,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_simple
       PARTITION BY toYYYYMM(_timestamp)
       TTL _timestamp + INTERVAL 1 MONTH;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_mv
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_sessions_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,
        t.3                   AS auto_captured,
@@ -875,4 +875,69 @@ FROM product_analytics.users
          ARRAY JOIN JSONExtractKeysAndValues(toString(`properties`), 'String') AS a
 WHERE length(a.1) > 0
   AND isNull(toFloat64OrNull(a.1))
+GROUP BY ALL;
+
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_events_mv
+    TO product_analytics.autocomplete_simple AS
+SELECT project_id,
+       t.3                   AS auto_captured,
+       'events'              AS source,
+       t.1                   AS name,
+       toString(t.2)         AS value,
+       sumState(toUInt16(1)) AS data_count,
+       _timestamp
+FROM product_analytics.events
+         ARRAY JOIN
+     [--(name,column,auto-captured)
+         ('user_id', "$user_id", FALSE),
+         ('sdk_edition', "$sdk_edition", TRUE),
+         ('sdk_version', "$sdk_version", TRUE),
+         ('current_url', "$current_url", TRUE),
+         ('current_path', "$current_path", TRUE),
+         ('initial_referrer', "$initial_referrer", TRUE),
+         ('referring_domain', "$referring_domain", TRUE),
+         ('country', "$country", TRUE),
+         ('state', "$state", TRUE),
+         ('city', "$city", TRUE),
+         ('or_api_endpoint', "$or_api_endpoint", TRUE)
+         ] AS t
+WHERE isNotNull(t.2)
+  AND notEmpty(toString(t.2))
+GROUP BY ALL;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_users_mv
+    TO product_analytics.autocomplete_simple AS
+SELECT project_id,
+       t.3                   AS auto_captured,
+       'users'               AS source,
+       t.1                   AS name,
+       toString(t.2)         AS value,
+       sumState(toUInt16(1)) AS data_count,
+       _timestamp
+FROM product_analytics.users
+         ARRAY JOIN
+     [--(name,column,auto-captured)
+         ('user_id', "$user_id", FALSE),
+         ('email', "$email", FALSE),
+         ('name', "$name", FALSE),
+         ('first_name', "$first_name", FALSE),
+         ('last_name', "$last_name", FALSE),
+         ('phone', "$phone", FALSE),
+         ('sdk_edition', "$sdk_edition", TRUE),
+         ('sdk_version', "$sdk_version", TRUE),
+         ('current_url', "$current_url", TRUE),
+         ('current_path', "$current_path", TRUE),
+         ('initial_referrer', "$initial_referrer", TRUE),
+         ('referring_domain', "$referring_domain", TRUE),
+         ('initial_utm_source', initial_utm_source, TRUE),
+         ('initial_utm_medium', initial_utm_medium, TRUE),
+         ('initial_utm_campaign', initial_utm_campaign, TRUE),
+         ('country', "$country", TRUE),
+         ('state', "$state", TRUE),
+         ('city', "$city", TRUE),
+         ('or_api_endpoint', "$or_api_endpoint", TRUE)
+         ] AS t
+WHERE isNotNull(t.2)
+  AND notEmpty(toString(t.2))
 GROUP BY ALL;
