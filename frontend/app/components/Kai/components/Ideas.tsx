@@ -15,16 +15,24 @@ function Ideas({
   onClick: (query: string) => void;
   projectId: string;
   threadId?: string | null;
-  messageId: string | null,
+  messageId: string | null;
   inChat?: boolean;
   limited?: boolean;
 }) {
   const { t } = useTranslation();
-  const { data: suggestedPromptIdeas = [], isPending } = useQuery({
-    queryKey: ['kai', projectId, 'chats', threadId, 'prompt-suggestions', messageId],
+  const { data, isPending } = useQuery({
+    queryKey: [
+      'kai',
+      projectId,
+      'chats',
+      threadId,
+      'prompt-suggestions',
+      messageId,
+    ],
     queryFn: () => kaiService.getPromptSuggestions(projectId, threadId),
     staleTime: 1000 * 60,
   });
+  const suggestedPromptIdeas = data || [];
   const ideas = React.useMemo(() => {
     const defaultPromptIdeas = [
       t('Top user journeys'),
@@ -34,14 +42,19 @@ function Ideas({
     const result = suggestedPromptIdeas;
     const targetSize = 3;
     while (result.length < targetSize && defaultPromptIdeas.length) {
-      result.push(defaultPromptIdeas.pop());
+      const next = defaultPromptIdeas.pop();
+      if (next) {
+        result.push(next);
+      }
     }
     return result;
   }, [suggestedPromptIdeas.length]);
   return (
     <div>
       <div className={'flex items-center gap-2 mb-1 text-gray-dark'}>
-        <b>{inChat ? t('Suggested Follow-up Questions') : t('Suggested Ideas:')}</b>
+        <b>
+          {inChat ? t('Suggested Follow-up Questions') : t('Suggested Ideas:')}
+        </b>
       </div>
       {isPending ? (
         <div className="animate-pulse text-disabled-text">
