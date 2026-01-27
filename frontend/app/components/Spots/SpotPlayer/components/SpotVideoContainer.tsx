@@ -94,7 +94,7 @@ function SpotVideoContainer({
         const pollVideo = () => {
           fetch(videoURL).then((r) => {
             if (r.ok && r.status === 200) {
-              initDash(videoURL);
+              video.src = videoURL;
             } else {
               if (checkAmount >= 60) {
                 return;
