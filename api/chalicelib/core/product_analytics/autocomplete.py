@@ -78,8 +78,9 @@ def search_events_properties(project_id: int, property_name: Optional[str] = Non
 
     return helper.list_to_camel_case(rows)
 
+
 def search_users_properties(project_id: int, property_name: Optional[str] = None,
-                             user_id: Optional[str] = None, q: Optional[str] = None):
+                            user_id: Optional[str] = None, q: Optional[str] = None):
     with ClickHouseClient() as ch_client:
         full_args = {
             "project_id": project_id,
