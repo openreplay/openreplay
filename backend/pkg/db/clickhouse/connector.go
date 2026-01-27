@@ -811,8 +811,8 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
 	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
-		"request_body":     request,
-		"response_body":    response,
+		"request_body":     cropStringPtr(request),
+		"response_body":    cropStringPtr(response),
 		"status":           uint16(msg.Status),
 		"method":           url.EnsureMethod(msg.Method),
 		"success":          msg.Status < 400,
@@ -923,8 +923,8 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error {
 	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"name":             msg.OperationName,
-		"request_body":     nullableString(msg.Variables),
-		"response_body":    nullableString(msg.Response),
+		"request_body":     cropStringPtr(nullableString(msg.Variables)),
+		"response_body":    cropStringPtr(nullableString(msg.Response)),
 		"user_device":      session.UserDevice,
 		"user_device_type": session.UserDeviceType,
 		"page_title":       strings.TrimSpace(msg.PageTitle),
@@ -1275,8 +1275,8 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 	}
 	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"url":              cropString(msg.URL),
-		"request_body":     request,
-		"response_body":    response,
+		"request_body":     cropStringPtr(request),
+		"response_body":    cropStringPtr(response),
 		"status":           uint16(msg.Status),
 		"method":           url.EnsureMethod(msg.Method),
 		"duration":         uint16(msg.Duration),
@@ -1419,6 +1419,13 @@ func uint64ToBytes(num uint64) []byte {
 func cropString(s string) string {
 	if len(s) > 8000 {
 		return s[:8000]
+	}
+	return s
+}
+
+func cropStringPtr(s *string) *string {
+	if s != nil && len(*s) > 8000 {
+		*s = (*s)[:8000]
 	}
 	return s
 }
