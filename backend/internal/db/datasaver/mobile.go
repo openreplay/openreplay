@@ -11,15 +11,9 @@ func (s *saverImpl) handleMobileMessage(session *sessions.Session, msg messages.
 	case *messages.MobileSessionEnd:
 		return s.ch.InsertMobileSession(session)
 	case *messages.MobileUserID:
-		if err := s.users.Add(session, sdk.NewUser(m.ID)); err != nil {
-			return err
-		}
-		return s.ch.InsertAutocomplete(session, "USERIDMOBILE", m.ID)
+		return s.users.Add(session, sdk.NewUser(m.ID))
 	case *messages.MobileUserAnonymousID:
-		if err := s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
-			return err
-		}
-		return s.ch.InsertAutocomplete(session, "USERANONYMOUSIDMOBILE", m.ID)
+		return s.sessions.UpdateAnonymousID(session.SessionID, m.ID)
 	case *messages.MobileMetadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *messages.MobileEvent:

@@ -15,7 +15,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
 
-	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
@@ -25,13 +24,11 @@ import (
 )
 
 type Connector interface {
-	InsertDefaultAutocompleteValues(session *sessions.Session, msg *messages.SessionStart) error
 	InsertWebSession(session *sessions.Session) error
 	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
 	InsertWebJSException(session *sessions.Session, msg *messages.JSException) error
 	InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error
-	InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error
 	InsertRequest(session *sessions.Session, msg *messages.NetworkRequest, savePayload bool) error
 	InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error
 	InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error
@@ -94,7 +91,6 @@ func NewConnector(conn driver.Conn, metrics database.Database) (Connector, error
 
 var batches = map[string]string{
 	"sessions":        "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone, utm_source, utm_medium, utm_campaign, screen_width, screen_height) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
-	"autocompletes":   "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
 	"web_events":      `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", "$duration_s", error_id, issue_type, issue_id, "$screen_width", "$screen_height", "$properties", properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	"issues":          "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
 	"mobile_sessions": "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?)",
@@ -168,19 +164,6 @@ func getAutocompleteType(baseType string, platform string) string {
 	return baseType + "_" + strings.ToUpper(platform)
 }
 
-func (c *connectorImpl) InsertDefaultAutocompleteValues(session *sessions.Session, msg *messages.SessionStart) error {
-	platform := "web"
-	geoInfo := geoip.UnpackGeoRecord(msg.UserCountry)
-	c.InsertAutocomplete(session, getAutocompleteType("USEROS", platform), msg.UserOS)
-	c.InsertAutocomplete(session, getAutocompleteType("USERDEVICE", platform), msg.UserDevice)
-	c.InsertAutocomplete(session, getAutocompleteType("USERCOUNTRY", platform), geoInfo.Country)
-	c.InsertAutocomplete(session, getAutocompleteType("USERSTATE", platform), geoInfo.State)
-	c.InsertAutocomplete(session, getAutocompleteType("USERCITY", platform), geoInfo.City)
-	c.InsertAutocomplete(session, getAutocompleteType("REVID", platform), msg.RevID)
-	c.InsertAutocomplete(session, "USERBROWSER", msg.UserBrowser)
-	return nil
-}
-
 func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) {
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
@@ -233,21 +216,6 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) 
 	); err != nil {
 		c.checkError("sessions", err)
 		return fmt.Errorf("can't append to sessions batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error {
-	if len(msgValue) == 0 {
-		return nil
-	}
-	if err := c.batches["autocompletes"].Append(
-		uint16(session.ProjectID),
-		msgType,
-		msgValue,
-	); err != nil {
-		c.checkError("autocompletes", err)
-		return fmt.Errorf("can't append to autocompletes batch: %s", err)
 	}
 	return nil
 }
@@ -357,7 +325,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		c.checkError("inputs", err)
 		return fmt.Errorf("can't append to inputs batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "INPUT", msg.Label)
+	return nil
 }
 
 func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error {
@@ -598,10 +566,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		c.checkError("pages", err)
 		return fmt.Errorf("can't append to pages batch: %s", err)
 	}
-	if err := c.InsertAutocomplete(session, "LOCATION", url.DiscardURLQuery(path)); err != nil {
-		c.checkError("autocomplete", err)
-	}
-	return c.InsertAutocomplete(session, "REFERRER", url.DiscardURLQuery(msg.Referrer))
+	return nil
 }
 
 func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error {
@@ -677,7 +642,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "CLICK", msg.Label)
+	return nil
 }
 
 func (c *connectorImpl) InsertWebJSException(session *sessions.Session, msg *messages.JSException) error {
@@ -861,7 +826,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		c.checkError("requests", err)
 		return fmt.Errorf("can't append to requests batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "REQUEST", path)
+	return nil
 }
 
 func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error {
@@ -917,7 +882,7 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 		c.checkError("custom", err)
 		return fmt.Errorf("can't append to custom batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "CUSTOM", msg.Name)
+	return nil
 }
 
 func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error {
@@ -965,7 +930,7 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 		c.checkError("graphql", err)
 		return fmt.Errorf("can't append to graphql batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "GRAPHQL", msg.OperationName)
+	return nil
 }
 
 func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.Incident) error {
@@ -1157,7 +1122,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 		c.checkError("mobile_custom", err)
 		return fmt.Errorf("can't append to mobile custom batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "CUSTOMMOBILE", msg.Name)
+	return nil
 }
 
 func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messages.MobileClickEvent) error {
@@ -1191,7 +1156,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		c.checkError("mobile_clicks", err)
 		return fmt.Errorf("can't append to mobile clicks batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "CLICKMOBILE", msg.Label)
+	return nil
 }
 
 func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messages.MobileSwipeEvent) error {
@@ -1226,7 +1191,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		c.checkError("mobile_swipes", err)
 		return fmt.Errorf("can't append to mobile swipe batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "SWIPEMOBILE", msg.Label)
+	return nil
 }
 
 func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messages.MobileInputEvent) error {
@@ -1260,7 +1225,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		c.checkError("mobile_inputs", err)
 		return fmt.Errorf("can't append to mobile inputs batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "INPUTMOBILE", msg.Label)
+	return nil
 }
 
 func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *messages.MobileNetworkCall, savePayload bool) error {
@@ -1306,7 +1271,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		c.checkError("mobile_requests", err)
 		return fmt.Errorf("can't append to mobile requests batch: %s", err)
 	}
-	return c.InsertAutocomplete(session, "REQUESTMOBILE", url.DiscardURLQuery(msg.URL))
+	return nil
 }
 
 func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error {

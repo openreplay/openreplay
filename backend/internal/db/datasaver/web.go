@@ -14,7 +14,6 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		if err := s.users.Add(session, sdk.NewUser(m.UserID)); err != nil {
 			s.log.Warn(context.Background(), "error adding user to session: %s", err)
 		}
-		return s.ch.InsertDefaultAutocompleteValues(session, m)
 	case *messages.SessionEnd:
 		return s.ch.InsertWebSession(session)
 	case *messages.Metadata:
@@ -41,15 +40,9 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		}
 		return s.issues.Add(session.SessionID, ie.Type)
 	case *messages.UserID:
-		if err := s.users.Add(session, sdk.NewUser(m.ID)); err != nil {
-			return err
-		}
-		return s.ch.InsertAutocomplete(session, "USERID", m.ID)
+		return s.users.Add(session, sdk.NewUser(m.ID))
 	case *messages.UserAnonymousID:
-		if err := s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
-			return err
-		}
-		return s.ch.InsertAutocomplete(session, "USERANONYMOUSID", m.ID)
+		return s.sessions.UpdateAnonymousID(session.SessionID, m.ID)
 	case *messages.CustomEvent:
 		return s.ch.InsertCustom(session, m)
 	case *messages.MouseClick:
