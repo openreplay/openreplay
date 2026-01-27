@@ -1,9 +1,9 @@
 import React from 'react';
-import { Input, Table, Button } from 'antd';
+import { Input, Table, Button, Tooltip } from 'antd';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Album } from 'lucide-react';
+import { Album, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import FullPagination from 'Shared/FullPagination';
@@ -12,6 +12,14 @@ import { fetchList } from './api';
 import EventPropsPage from './EventPropsPage';
 import UserPropsPage from './UserProperty';
 import { TextEllipsis } from 'UI';
+
+function HiddenItem() {
+  return (
+    <Tooltip title="This property is hidden from search and analytics">
+      <EyeOff className="text-disabled-text" size={14} />
+    </Tooltip>
+  );
+}
 
 function ListPage() {
   const location = useLocation();
@@ -39,7 +47,7 @@ function ListPage() {
       ),
     },
   ];
-  const { data = { properties: [], total: 0 }, isPending } = useQuery({
+  const { data = { properties: [], total: 0 }, isPending, refetch } = useQuery({
     queryKey: ['props-list', view],
     queryFn: () => fetchList(view),
   });
@@ -85,6 +93,7 @@ function ListPage() {
       if (pickedUserProp) {
         const userWithFields = {
           name: pickedUserProp.name,
+          status: pickedUserProp.status,
           fields: {
             displayName: { value: pickedUserProp.displayName, readonly: false },
             description: { value: pickedUserProp.description, readonly: false },
@@ -92,7 +101,7 @@ function ListPage() {
               value: pickedUserProp.usersCount?.toString() ?? 0,
               readonly: true,
             },
-            type: { value: pickedUserProp.type, readonly: true },
+            type: { value: pickedUserProp.dataType, readonly: true },
           },
         };
         return (
@@ -100,6 +109,7 @@ function ListPage() {
             siteId={siteId!}
             properties={userWithFields}
             raw={pickedUserProp}
+            refetchList={refetch}
           />
         );
       }
@@ -111,6 +121,7 @@ function ListPage() {
       if (pickedEventProp) {
         const evWithFields = {
           name: pickedEventProp.name,
+          status: pickedEventProp.status,
           fields: {
             displayName: {
               value: pickedEventProp.displayName,
@@ -121,7 +132,7 @@ function ListPage() {
               readonly: false,
             },
             volume: { value: pickedEventProp.count.toString(), readonly: true },
-            type: { value: pickedEventProp.type, readonly: true },
+            type: { value: pickedEventProp.dataType, readonly: true },
           },
         };
         return (
@@ -129,6 +140,7 @@ function ListPage() {
             raw={pickedEventProp}
             siteId={siteId!}
             event={evWithFields}
+            refetchList={refetch}
           />
         );
       }
@@ -215,6 +227,12 @@ function EventPropsList({
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
       showSorterTooltip: false,
       className: 'cursor-pointer!',
+      render: (text: string, record: any) => (
+        <div className="flex items-center gap-2">
+          <div>{text}</div>
+          {record.status === 'hidden' && <HiddenItem />}
+        </div>
+      ),
     },
     {
       title: 'Display Name',
@@ -298,6 +316,12 @@ function UserPropsList({
       sorter: (a, b) => a.name.localeCompare(b.name),
       showSorterTooltip: false,
       className: 'cursor-pointer!',
+      render: (text: string, record: any) => (
+        <div className="flex items-center gap-2">
+          <div>{text}</div>
+          {record.status === 'hidden' && <HiddenItem />}
+        </div>
+      ),
     },
     {
       title: 'Display Name',

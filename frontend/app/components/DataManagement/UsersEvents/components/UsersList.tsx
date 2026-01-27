@@ -92,6 +92,7 @@ function UsersList({
       dataIndex: 'name',
       key: 'name',
       sorter: true,
+      showSorterTooltip: false,
       render: (_: any, record: any) => {
         return (
           <div className="flex items-center gap-2">
@@ -114,6 +115,7 @@ function UsersList({
       dataIndex: 'userId',
       key: 'userId',
       sorter: true,
+      showSorterTooltip: false,
       render: (_: any, record: any) => (
         <div className={'link'}>{record.userId ? record.userId : 'N/A'}</div>
       ),
@@ -123,6 +125,7 @@ function UsersList({
       dataIndex: 'userLocation',
       key: 'userLocation',
       sorter: true,
+      showSorterTooltip: false,
       render: (_: any, record: any) => (
         <div className={'flex items-center gap-2'}>
           <CountryFlag
@@ -139,6 +142,7 @@ function UsersList({
       dataIndex: 'lastSeen',
       key: 'lastSeen',
       sorter: true,
+      showSorterTooltip: false,
       render: (_: any, record: any) => diffIfRecent(record.createdAt),
     },
     {
@@ -146,6 +150,7 @@ function UsersList({
       dataIndex: 'createdAt',
       key: 'createdAt',
       sorter: true,
+      showSorterTooltip: false,
       render: (_: any, record: any) => diffIfRecent(record.createdAt),
     },
     {
@@ -197,7 +202,7 @@ function UsersList({
   };
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-2 px-4 py-2">
+      <div className="flex flex-col px-4 py-2">
         {/* 1.23 -- <span>Show by</span>*/}
         {/*<Segmented*/}
         {/*  size={'small'}*/}
@@ -206,25 +211,23 @@ function UsersList({
         {/*    { label: 'Company', value: 'company' },*/}
         {/*  ]}*/}
         {/*/>*/}
-        <div>
-          <FilterListHeader
-            title="Filters"
-            filterSelection={
-              <FilterSelection
-                filters={allFilterOptions}
-                activeFilters={activeFilters}
-                onFilterClick={onAddFilter}
-              >
-                <Button type="default" size="small">
-                  <div className="flex items-center gap-1">
-                    <Plus size={16} strokeWidth={1} />
-                    <span>Add</span>
-                  </div>
-                </Button>
-              </FilterSelection>
-            }
-          />
-        </div>
+        <FilterListHeader
+          title="Filters"
+          filterSelection={
+            <FilterSelection
+              filters={allFilterOptions}
+              activeFilters={activeFilters}
+              onFilterClick={onAddFilter}
+            >
+              <Button type="default" size="small">
+                <div className="flex items-center gap-1">
+                  <Plus size={16} strokeWidth={1} />
+                  <span>Add</span>
+                </div>
+              </Button>
+            </FilterSelection>
+          }
+        />
         <UnifiedFilterList
           title="Filters"
           filters={analyticsStore.usersPayloadFilters.filters}

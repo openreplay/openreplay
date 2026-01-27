@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input } from 'antd';
+import { Button, Input, Switch } from 'antd';
 import Breadcrumb from 'Shared/Breadcrumb';
 import cn from 'classnames';
 import { EditOutlined } from '@ant-design/icons';
@@ -28,6 +28,10 @@ function DataItemPage({
   onSave,
   openSessions,
 }: Props) {
+  const [shownStatus, setShownStatus] = React.useState(
+    'status' in item ? item.status === 'visible' : false,
+  );
+  const { t } = useTranslation();
   const fields = Object.entries(item.fields).map(([key, field]) => ({
     name: FieldNames(key, type),
     raw_name: key,
@@ -35,6 +39,14 @@ function DataItemPage({
     readonly: field.readonly,
   }));
 
+  const toggleStatus = () => {
+    if (!('status' in item)) return;
+    setShownStatus((prev) => {
+      const newStatus = prev ? 'hidden' : 'visible';
+      onSave({ key: 'status', value: newStatus });
+      return !prev;
+    });
+  };
   return (
     <div
       className={'flex flex-col gap-2 mx-auto w-full'}
@@ -76,6 +88,24 @@ function DataItemPage({
             readonly={field.readonly}
           />
         ))}
+        {'status' in item && (
+          <div className="px-2 mx-2 py-3 hover:bg-active-blue">
+            <div className="flex items-center">
+              <div className="font-medium flex-1">{t('Status')}</div>
+              <div className="flex-6 flex items-center gap-2">
+                <Switch
+                  checked={shownStatus}
+                  onChange={toggleStatus}
+                  checkedChildren={t('Visible')}
+                  unCheckedChildren={t('Hidden')}
+                />
+              </div>
+            </div>
+            <div className="text-sm text-disabled-text mt-2">
+              {`This property is ${item.status} in search and analytics.`}
+            </div>
+          </div>
+        )}
       </div>
 
       {footer}
@@ -112,7 +142,7 @@ function EditableField({
   return (
     <div
       className={cn(
-        'flex border-b last:border-b-0 items-center px-2 mx-2 py-3 gap-2',
+        'flex border-b last:border-b-0 items-center px-2 mx-2 py-3',
         isEdit ? 'bg-active-blue' : 'hover:bg-active-blue',
       )}
     >
@@ -150,10 +180,7 @@ function EditableField({
           </div>
         ) : (
           <div className={'flex items-center justify-between'}>
-            <TextEllipsis
-              text={formatNumbers(inputValue) || 'N/A'}
-              maxWidth={'900px'}
-            />
+            <TextEllipsis text={formatNumbers(inputValue)} maxWidth={'900px'} />
             {readonly ? null : (
               <div
                 className={'cursor-pointer text-main'}

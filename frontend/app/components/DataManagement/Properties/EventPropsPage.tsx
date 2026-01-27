@@ -11,10 +11,12 @@ function EventPropsPage({
   event,
   siteId,
   raw,
+  refetchList,
 }: {
   event: CommonProp;
   siteId: string;
   raw: DistinctProperty;
+  refetchList: () => void;
 }) {
   const backLink = withSiteId(dataManagement.properties(), siteId);
 
@@ -27,6 +29,8 @@ function EventPropsPage({
     } catch (error) {
       console.error(error);
       toast.error('Failed to update property');
+    } finally {
+      refetchList();
     }
   };
   return (

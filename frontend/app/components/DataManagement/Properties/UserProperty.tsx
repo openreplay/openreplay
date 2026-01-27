@@ -11,10 +11,12 @@ function UserPropsPage({
   properties,
   siteId,
   raw,
+  refetchList,
 }: {
   properties: CommonProp;
   siteId: string;
   raw: DistinctProperty;
+  refetchList: () => void;
 }) {
   const backLink = withSiteId(dataManagement.properties(), siteId);
 
@@ -27,6 +29,8 @@ function UserPropsPage({
     } catch (error) {
       console.error(error);
       toast.error('Failed to update property');
+    } finally {
+      void refetchList();
     }
   };
   return (

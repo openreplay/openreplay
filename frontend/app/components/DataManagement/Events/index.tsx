@@ -1,5 +1,6 @@
 import React from 'react';
-import { Input, Button, Checkbox } from 'antd';
+import { Input, Button, Dropdown, MenuProps } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -10,16 +11,21 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { fetchList } from './api';
 import DistinctEventPage from './DistinctEvent';
-import { sessions, dataManagement, withSiteId } from 'App/routes';
+import { sessions, withSiteId } from 'App/routes';
 
-const localKey = 'data-management-events-autocaptured';
-function getDefaultValue() {
+type EventFilter = 'all' | 'autocaptured' | 'my_events';
+
+const localKey = 'data-management-events-filter';
+function getDefaultValue(): EventFilter {
   const stored = localStorage.getItem(localKey);
-  return stored ? JSON.parse(stored) : false;
+  if (stored && ['all', 'autocaptured', 'my_events'].includes(stored)) {
+    return stored as EventFilter;
+  }
+  return 'all';
 }
 
 function EventsListPage() {
-  const [showAutocaptured, setShowAutocaptured] = React.useState(getDefaultValue);
+  const [eventFilter, setEventFilter] = React.useState<EventFilter>(getDefaultValue);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const shownEvent = searchParams.get('event');
@@ -50,10 +56,12 @@ function EventsListPage() {
   };
   const list = React.useMemo(() => {
     if (shownEvent) return [];
-    const filteredByCustom = showAutocaptured
-      ? data.events
-      : data.events.filter((e) => !e.autoCaptured);
-    const sortedList = filteredByCustom.sort((a, b) => b.count - a.count);
+    const filteredByType = data.events.filter((e) => {
+      if (eventFilter === 'all') return true;
+      if (eventFilter === 'autocaptured') return e.autoCaptured;
+      return !e.autoCaptured; // my_events
+    });
+    const sortedList = filteredByType.sort((a, b) => b.count - a.count);
     if (!query) {
       return sortedList.slice((page - 1) * limit, page * limit);
     }
@@ -64,7 +72,7 @@ function EventsListPage() {
         event.description.toLowerCase().includes(query.toLowerCase()),
     );
     return filtered.slice((page - 1) * limit, page * limit);
-  }, [page, data.events, query, shownEvent, showAutocaptured]);
+  }, [page, data.events, query, shownEvent, eventFilter]);
 
   if (shownEvent) {
     const event = data.events.find((e) => e.name === shownEvent);
@@ -89,15 +97,22 @@ function EventsListPage() {
     }
   }
 
-  const toggleAutocaptured = () => {
-    setShowAutocaptured((prev) => {
-      setTimeout(
-        () => localStorage.setItem(localKey, JSON.stringify(!prev)),
-        0,
-      );
-      return !prev;
-    });
+  const filterOptions = [
+    { key: 'all', label: t('All') },
+    { key: 'autocaptured', label: t('Autocaptured events') },
+    { key: 'my_events', label: t('My events') },
+  ];
+
+  const handleFilterChange: MenuProps['onClick'] = ({ key }) => {
+    const newFilter = key as EventFilter;
+    setEventFilter(newFilter);
+    localStorage.setItem(localKey, newFilter);
   };
+
+  const menuItems: MenuProps['items'] = filterOptions.map((option) => ({
+    key: option.key,
+    label: option.label,
+  }));
 
   return (
     <div
@@ -105,11 +120,21 @@ function EventsListPage() {
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 py-2'}>
-        <div className={'font-semibold text-lg capitalize'}>{t('Events')}</div>
         <div className="flex items-center gap-2">
-          <Checkbox checked={showAutocaptured} onChange={toggleAutocaptured}>
-            {t('Show autocaptured')}
-          </Checkbox>
+          <div className={'font-semibold text-lg capitalize'}>
+            {t('Events')}
+          </div>
+          <Dropdown
+            menu={{ items: menuItems, onClick: handleFilterChange }}
+            trigger={['click']}
+          >
+            <Button type="text" size="small">
+              {filterOptions.find((opt) => opt.key === eventFilter)?.label}
+              <DownOutlined />
+            </Button>
+          </Dropdown>
+        </div>
+        <div className="flex items-center gap-2">
           <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
             {t('Docs')}
           </Button>

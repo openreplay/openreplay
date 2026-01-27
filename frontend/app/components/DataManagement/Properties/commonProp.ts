@@ -29,6 +29,7 @@ export interface CommonEntry {
 }
 
 export interface CommonProp extends CommonEntry {
+  status: string;
   fields: {
     displayName: Field;
     description: Field;
