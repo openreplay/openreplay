@@ -20,7 +20,7 @@ public_app, app, app_apikey = get_routers()
 
 @app.get("/{projectId}/filters", tags=["product_analytics"])
 def get_all_filters(
-    projectId: int, context: schemas.CurrentContext = Depends(OR_context)
+        projectId: int, context: schemas.CurrentContext = Depends(OR_context)
 ):
     return {
         "data": {
@@ -38,9 +38,9 @@ def get_all_filters(
 
 @app.get("/{projectId}/events/names", tags=["product_analytics"])
 def get_all_events(
-    projectId: int,
-    filter_query: Annotated[schemas.PaginatedSchema, Query()],
-    context: schemas.CurrentContext = Depends(OR_context),
+        projectId: int,
+        filter_query: Annotated[schemas.PaginatedSchema, Query()],
+        context: schemas.CurrentContext = Depends(OR_context),
 ):
     return {
         "data": events.get_events(
@@ -51,10 +51,10 @@ def get_all_events(
 
 @app.get("/{projectId}/properties/search", tags=["product_analytics"])
 def get_event_properties(
-    projectId: int,
-    en: str = Query(default=None, description="event name"),
-    ac: bool = Query(description="auto captured"),
-    context: schemas.CurrentContext = Depends(OR_context),
+        projectId: int,
+        en: str = Query(default=None, description="event name"),
+        ac: bool = Query(description="auto captured"),
+        context: schemas.CurrentContext = Depends(OR_context),
 ):
     if not en or len(en) == 0:
         return {"data": []}
@@ -62,42 +62,42 @@ def get_event_properties(
         "data": properties.get_event_properties(
             project_id=projectId, event_name=en, auto_captured=ac
         )
-        + filters.get_global_filters(project_id=projectId)
+                + filters.get_global_filters(project_id=projectId)
     }
 
 
 @app.post("/{projectId}/events/search", tags=["product_analytics"])
 def search_events(
-    projectId: int,
-    data: schemas.EventsSearchPayloadSchema = Body(...),
-    context: schemas.CurrentContext = Depends(OR_context),
+        projectId: int,
+        data: schemas.EventsSearchPayloadSchema = Body(...),
+        context: schemas.CurrentContext = Depends(OR_context),
 ):
     return {"data": events.search_events(project_id=projectId, data=data)}
 
 
 @app.get("/{projectId}/lexicon/events", tags=["product_analytics", "lexicon"])
 def get_all_lexicon_events(
-    projectId: int,
-    filter_query: Annotated[schemas.PaginatedSchema, Query()],
-    context: schemas.CurrentContext = Depends(OR_context),
+        projectId: int,
+        filter_query: Annotated[schemas.PaginatedSchema, Query()],
+        context: schemas.CurrentContext = Depends(OR_context),
 ):
     return {"data": events.get_lexicon(project_id=projectId, page=filter_query)}
 
 
 @app.get("/{projectId}/lexicon/properties", tags=["product_analytics", "lexicon"])
 def get_all_lexicon_properties(
-    projectId: int,
-    filter_query: Annotated[schemas.PaginatedSchema, Query()],
-    context: schemas.CurrentContext = Depends(OR_context),
+        projectId: int,
+        filter_query: Annotated[schemas.PaginatedSchema, Query()],
+        context: schemas.CurrentContext = Depends(OR_context),
 ):
     return {"data": properties.get_lexicon(project_id=projectId, page=filter_query)}
 
 
 @app.get("/{projectId}/events/autocomplete", tags=["autocomplete"])
 def autocomplete_events(
-    projectId: int,
-    q: Optional[str] = None,
-    context: schemas.CurrentContext = Depends(OR_context),
+        projectId: int,
+        q: Optional[str] = None,
+        context: schemas.CurrentContext = Depends(OR_context),
 ):
     return {
         "data": autocomplete.search_events(
@@ -108,15 +108,15 @@ def autocomplete_events(
 
 @app.get("/{projectId}/properties/autocomplete", tags=["autocomplete"])
 def autocomplete_properties(
-    projectId: int,
-    propertyName: str,
-    eventName: Optional[str] = None,
-    userId: Optional[str] = None,
-    scope: Optional[str] = None,
-    q: Optional[str] = None,
-    ac: bool = Query(description="auto captured"),
-    live: bool = False,
-    context: schemas.CurrentContext = Depends(OR_context),
+        projectId: int,
+        propertyName: str,
+        eventName: Optional[str] = None,
+        userId: Optional[str] = None,
+        scope: Optional[str] = None,
+        q: Optional[str] = None,
+        ac: bool = Query(description="auto captured"),
+        live: bool = False,
+        context: schemas.CurrentContext = Depends(OR_context),
 ):
     if live:
         return assist.autocomplete(project_id=projectId, q=q, key=eventName)
@@ -125,7 +125,9 @@ def autocomplete_properties(
         propertyName = helper.key_to_snake_case(propertyName)
     # restrict autocomplete-simple to auto-captured properties only
     # (for the moment as we don't have other way to tell if it belongs to events or something else)
-    if scope == "sessions":
+    if scope == "sessions" \
+            or scope == "users" and propertyName in autocomplete_simple.USERS_SIMPLE_PROPERTIES \
+            or scope == "events" and propertyName in autocomplete_simple.EVENTS_SIMPLE_PROPERTIES:
         return {
             "data": autocomplete_simple.search_simple_property(
                 project_id=projectId, name=propertyName, source=scope, q=q
