@@ -128,6 +128,12 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error) {
 	usersCountColumn := "CAST(0 AS UInt64) AS users_count"
 	userJoin := ""
+	valueTypeJoin := `
+	          LEFT JOIN product_analytics.event_properties ep 
+	              ON ap.project_id = ep.project_id 
+	              AND ap.property_name = ep.property_name
+	              AND ap.auto_captured = ep.auto_captured_property`
+	valueTypeColumn := "ep.value_type"
 
 	if source != nil && *source == "users" {
 		usersCountColumn = "uniqIf(aupg.user_id, aupg.user_id IS NOT NULL AND aupg.user_id != '') AS users_count"
@@ -135,13 +141,19 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	          LEFT JOIN product_analytics.autocomplete_user_properties_grouped aupg
 	              ON ap.project_id = aupg.project_id
 	              AND ap.property_name = aupg.property_name`
+		valueTypeJoin = `
+	          LEFT JOIN product_analytics.user_properties up 
+	              ON ap.project_id = up.project_id 
+	              AND ap.property_name = up.property_name
+	              AND ap.auto_captured = up.auto_captured_property`
+		valueTypeColumn = "up.value_type"
 	}
 
 	subquery := `SELECT ap.property_name AS name,
 	                 ap.display_name,
 	                 ap.description,
 	                 ap.source,
-	                 ep.value_type,
+	                 ` + valueTypeColumn + ` AS value_type,
 	                 ap.is_event_property,
 	                 ap.auto_captured,
 	                 ap.status,
@@ -150,11 +162,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	                 ap.created_at,
 	                 ap._edited_by_user,
 	                 ` + usersCountColumn + `
-	          FROM product_analytics.all_properties ap
-	          LEFT JOIN product_analytics.event_properties ep 
-	              ON ap.project_id = ep.project_id 
-	              AND ap.property_name = ep.property_name
-	              AND ap.auto_captured = ep.auto_captured_property
+	          FROM product_analytics.all_properties ap` + valueTypeJoin + `
 	          LEFT JOIN product_analytics.autocomplete_event_properties_grouped aepg
 	              ON ap.project_id = aepg.project_id
 	              AND ap.property_name = aepg.property_name` + userJoin + `
@@ -166,13 +174,17 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		args = append(args, *source)
 	}
 	if eventName != nil {
-		subquery += ` AND ep.event_name = ?`
+		if source != nil && *source == "users" {
+			subquery += ` AND up.event_name = ?`
+		} else {
+			subquery += ` AND ep.event_name = ?`
+		}
 		args = append(args, *eventName)
 	}
 
 	subquery += `
 	          GROUP BY ap.project_id, ap.property_name, ap.display_name, ap.description, ap.source,
-	                   ep.value_type, ap.is_event_property, ap.auto_captured, ap.status,
+	                   value_type, ap.is_event_property, ap.auto_captured, ap.status,
 	                   ap.query_count, ap.created_at, ap._edited_by_user, ap._timestamp
 	          ORDER BY ap._timestamp DESC, ap.display_name
 	          LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
