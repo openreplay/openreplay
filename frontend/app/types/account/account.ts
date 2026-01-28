@@ -69,7 +69,14 @@ export default class Account {
     if (!this.settings || !this.settings.modules) {
       return false;
     }
-    return this.settings.modules?.includes('replay-export');
+    const hasModule = this.settings.modules?.includes('replay-export');
+    return hasModule;
+  }
+
+  get hasExportPermission() {
+    const hasPermission = this.permissions.includes('SESSION_EXPORT');
+    const isAdmin = this.admin || this.superAdmin;
+    return this.hasVideoExport && (hasPermission || isAdmin);
   }
 
   toData = () => ({
