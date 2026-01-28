@@ -102,7 +102,7 @@ const IssueForm: React.FC<Props> = observer(
                 <CircularLoader loading={metaLoading} />
               </>
             }
-            className="mb-15-imp"
+            className="mb-15-imp!"
           >
             <Select
               value={instance?.projectId}
@@ -116,7 +116,7 @@ const IssueForm: React.FC<Props> = observer(
               ))}
             </Select>
           </Form.Item>
-          <Form.Item label={t('Issue Type')} className="mb-15-imp">
+          <Form.Item label={t('Issue Type')} className="mb-15-imp!">
             <Select
               value={instance?.issueType}
               onChange={handleSelect('issueType')}
@@ -139,7 +139,7 @@ const IssueForm: React.FC<Props> = observer(
               ))}
             </Select>
           </Form.Item>
-          <Form.Item label={t('Assignee')} className="mb-15-imp">
+          <Form.Item label={t('Assignee')} className="mb-15-imp!">
             <Select
               value={instance?.assignee}
               onChange={handleSelect('assignee')}
@@ -152,7 +152,7 @@ const IssueForm: React.FC<Props> = observer(
               ))}
             </Select>
           </Form.Item>
-          <Form.Item label={t('Summary')} className="mb-15-imp">
+          <Form.Item label={t('Summary')} className="mb-15-imp!">
             <Input
               name="title"
               value={instance?.title}
@@ -160,7 +160,7 @@ const IssueForm: React.FC<Props> = observer(
               onChange={handleChange}
             />
           </Form.Item>
-          <Form.Item label={t('Description')} className="mb-15-imp">
+          <Form.Item label={t('Description')} className="mb-15-imp!">
             <Input.TextArea
               name="description"
               rows={2}

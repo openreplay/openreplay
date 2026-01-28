@@ -110,7 +110,7 @@ function ProjectForm(props: Props) {
         label={t('Name')}
         name="name"
         rules={[{ required: true, message: t('Please enter a name') }]}
-        className="font-medium"
+        className="font-medium!"
       >
         <Input
           placeholder={t('Ex. OpenReplay')}
@@ -121,7 +121,7 @@ function ProjectForm(props: Props) {
           className="font-normal rounded-lg"
         />
       </Form.Item>
-      <Form.Item label={t('Project Type')} className="font-medium">
+      <Form.Item label={t('Project Type')} className="font-medium!">
         <div>
           <Segmented
             options={[

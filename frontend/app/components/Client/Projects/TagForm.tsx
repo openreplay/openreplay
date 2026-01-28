@@ -49,7 +49,7 @@ function TagForm(props: Props) {
 
   return (
     <Form layout="vertical">
-      <Form.Item label={t('Name:')} className="font-medium">
+      <Form.Item label={t('Name:')} className="font-medium!">
         <label htmlFor="name">{t('Name')}</label>
         <Input
           autoFocus
@@ -61,7 +61,7 @@ function TagForm(props: Props) {
           className="font-normal rounded-lg"
         />
       </Form.Item>
-      <Form.Item label={t('Selector:')} className="font-medium">
+      <Form.Item label={t('Selector:')} className="font-medium!">
         <label htmlFor={'selector'}>Selector:</label>
         <Input value={tag.selector} disabled name={'selector'} />
       </Form.Item>

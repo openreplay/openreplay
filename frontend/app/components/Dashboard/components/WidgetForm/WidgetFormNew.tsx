@@ -253,7 +253,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   return (
     <div className="rounded-lg bg-white border">
       <div className="flex flex-col justify-start gap-2 flex-wrap">
-        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
+        <Form.Item className="mb-0! hover:bg-bg-blue/30! px-4! pb-1! pt-2!">
           <div className="flex flex-wrap gap-2 items-center justify-start">
             <span className="font-medium">{t('Journeys With')}</span>
             <div className="flex gap-2 items-center">
@@ -290,7 +290,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
         </Form.Item>
 
         {metric.startPoint && (
-          <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-2 pt-1">
+          <Form.Item className="mb-0! hover:bg-bg-blue/30! px-4! pb-2! pt-1!">
             <div className="flex flex-wrap items-start justify-start">
               <span className="font-medium mr-2">
                 {t('Start Point')}
@@ -322,7 +322,7 @@ const InsightsFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   return (
     <Card styles={{ body: { padding: '20px 20px' } }}>
-      <Form.Item className="mb-0">
+      <Form.Item className="mb-0!">
         <Space>
           <Select
             name="metricValue"
