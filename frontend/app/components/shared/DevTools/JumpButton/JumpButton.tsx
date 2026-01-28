@@ -21,13 +21,13 @@ function JumpButton(props: Props) {
       ) : null}
       <Tooltip title={tooltip}>
         <div
-          className="hidden group-hover:flex rounded-md text-xs px-1 py-0 h-5 items-center gap-2 border cursor-pointer hover:border-teal! hover:text-teal!"
+          className="hidden bg-white group-hover:flex rounded-md text-xs px-1 py-0 h-6 items-center gap-2 border cursor-pointer hover:border-teal! hover:text-teal!"
           onClick={(e: any) => {
             e.stopPropagation();
             props.onClick();
           }}
         >
-          <span>JUMP</span>
+          <span className="leading-none">JUMP</span>
           <CaretRightOutlined />
         </div>
         {props.time ? (

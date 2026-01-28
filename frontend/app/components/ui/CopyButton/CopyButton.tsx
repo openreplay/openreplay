@@ -105,16 +105,19 @@ function CopyButton({
           type={variant}
           onClick={copyHandler}
           size={size}
-          icon={
-            copied ? (
-              <Check strokeWidth={2} size={16} />
-            ) : isShare ? (
-              <Share2 strokeWidth={2} size={16} />
-            ) : (
-              <Copy strokeWidth={2} size={16} />
-            )
-          }
-        />
+          classNames={{
+            content: 'flex items-center',
+            root: 'px-1!',
+          }}
+        >
+          {copied ? (
+            <Check strokeWidth={2} size={16} />
+          ) : isShare ? (
+            <Share2 strokeWidth={2} size={16} />
+          ) : (
+            <Copy strokeWidth={2} size={16} />
+          )}
+        </Button>
       </Tooltip>
     );
   }
