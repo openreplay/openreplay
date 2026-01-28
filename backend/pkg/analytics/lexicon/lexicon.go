@@ -12,6 +12,24 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
+const (
+	StatusVisible = "visible"
+	StatusHidden  = "hidden"
+	StatusDropped = "dropped"
+
+	SourceSessions = "sessions"
+	SourceUsers    = "users"
+	SourceEvents   = "events"
+)
+
+func isValidStatus(status string) bool {
+	return status == StatusVisible || status == StatusHidden || status == StatusDropped
+}
+
+func isValidSource(source string) bool {
+	return source == SourceSessions || source == SourceUsers || source == SourceEvents
+}
+
 type HiddenEvent struct {
 	EventName    string
 	AutoCaptured bool
@@ -135,7 +153,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	              AND ap.auto_captured = ep.auto_captured_property`
 	valueTypeColumn := "ep.value_type"
 
-	if source != nil && *source == "users" {
+	if source != nil && *source == SourceUsers {
 		usersCountColumn = "uniqIf(aupg.user_id, aupg.user_id IS NOT NULL AND aupg.user_id != '') AS users_count"
 		userJoin = `
 	          LEFT JOIN product_analytics.autocomplete_user_properties_grouped aupg
@@ -174,7 +192,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		args = append(args, *source)
 	}
 	if eventName != nil {
-		if source != nil && *source == "users" {
+		if source != nil && *source == SourceUsers {
 			subquery += ` AND up.event_name = ?`
 		} else {
 			subquery += ` AND ep.event_name = ?`
@@ -249,12 +267,12 @@ func (e *lexiconImpl) GetHiddenEvents(ctx context.Context, projID uint32) ([]Hid
 	query := `
 		SELECT event_name, auto_captured
 		FROM product_analytics.all_events
-		WHERE project_id = ? AND status = 'hidden'
+		WHERE project_id = ? AND status = ?
 		ORDER BY _timestamp DESC
 		LIMIT 1 BY project_id, auto_captured, event_name
 	`
 
-	rows, err := e.chConn.Query(ctx, query, projID)
+	rows, err := e.chConn.Query(ctx, query, projID, StatusHidden)
 	if err != nil {
 		e.log.Error(ctx, "failed to query hidden events for project %d: %v", projID, err)
 		return nil, fmt.Errorf("failed to query hidden events: %w", err)
@@ -291,12 +309,12 @@ func (e *lexiconImpl) GetHiddenProperties(ctx context.Context, projID uint32) ([
 	query := `
 		SELECT property_name, auto_captured, is_event_property
 		FROM product_analytics.all_properties
-		WHERE project_id = ? AND status = 'hidden' AND source = 'events'
+		WHERE project_id = ? AND status = ? AND source = ?
 		ORDER BY _timestamp DESC
 		LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured
 	`
 
-	rows, err := e.chConn.Query(ctx, query, projID)
+	rows, err := e.chConn.Query(ctx, query, projID, StatusHidden, SourceEvents)
 	if err != nil {
 		e.log.Error(ctx, "failed to query hidden properties for project %d: %v", projID, err)
 		return nil, fmt.Errorf("failed to query hidden properties: %w", err)
@@ -333,8 +351,8 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 	if req.DisplayName != nil && *req.DisplayName == "" {
 		return fmt.Errorf("displayName cannot be empty")
 	}
-	if req.Status != nil && (*req.Status != "visible" && *req.Status != "hidden" && *req.Status != "dropped") {
-		return fmt.Errorf("status must be one of: visible, hidden, dropped")
+	if req.Status != nil && !isValidStatus(*req.Status) {
+		return fmt.Errorf("status must be one of: %s, %s, %s", StatusVisible, StatusHidden, StatusDropped)
 	}
 
 	checkQuery := `SELECT COUNT(*) 
@@ -419,11 +437,11 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 	if req.DisplayName != nil && *req.DisplayName == "" {
 		return fmt.Errorf("displayName cannot be empty")
 	}
-	if req.Status != nil && (*req.Status != "visible" && *req.Status != "hidden" && *req.Status != "dropped") {
-		return fmt.Errorf("status must be one of: visible, hidden, dropped")
+	if req.Status != nil && !isValidStatus(*req.Status) {
+		return fmt.Errorf("status must be one of: %s, %s, %s", StatusVisible, StatusHidden, StatusDropped)
 	}
-	if req.Source != "sessions" && req.Source != "users" && req.Source != "events" {
-		return fmt.Errorf("source must be one of: sessions, users, events")
+	if !isValidSource(req.Source) {
+		return fmt.Errorf("source must be one of: %s, %s, %s", SourceSessions, SourceUsers, SourceEvents)
 	}
 
 	fetchQuery := `SELECT is_event_property
