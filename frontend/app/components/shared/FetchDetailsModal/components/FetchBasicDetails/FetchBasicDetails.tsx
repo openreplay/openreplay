@@ -27,7 +27,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
           bordered={false}
           style={{ maxWidth: '300px' }}
         >
-          <div>{displayUrl}</div>
+          <div className="whitespace-normal wrap-break-word">{displayUrl}</div>
         </Tag>
       </div>
 

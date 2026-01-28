@@ -46,7 +46,7 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
       case 'resource':
         return 'resource';
       default:
-        return 'other';
+        return type;
     }
   };
 
