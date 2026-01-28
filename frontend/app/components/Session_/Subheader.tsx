@@ -194,6 +194,7 @@ function SubHeader(props: any) {
         </div>
       ),
       onClick: onExport,
+      disabled: !account.hasExportPermission,
     });
   }
 

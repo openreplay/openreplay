@@ -7,14 +7,14 @@ export default (
     requiredPermissions,
     className,
     isReplay = false,
-    andEd = true,
+    matchAll = true,
   ) =>
   (BaseComponent) => {
     function WrapperClass(props) {
       const { userStore } = useStore();
       const permissions = userStore.account.permissions ?? [];
       const { isEnterprise } = userStore;
-      const hasPermission = andEd
+      const hasPermission = matchAll
         ? requiredPermissions.every((permission) =>
             permissions.includes(permission),
           )

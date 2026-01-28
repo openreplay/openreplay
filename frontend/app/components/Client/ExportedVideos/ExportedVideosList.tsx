@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { session } from 'App/routes';
 import SiteDropdown from 'Shared/SiteDropdown';
 import ExportedVideo from './ExportedVideoRow';
+import withPermissions from '@/components/hocs/withPermissions';
 
 function ExportedVideosList() {
   const { t } = useTranslation();
@@ -93,4 +94,9 @@ function ExportedVideosList() {
   );
 }
 
-export default observer(ExportedVideosList);
+export default withPermissions(
+  ['SESSION_EXPORT'],
+  '',
+  false,
+  false,
+)(observer(ExportedVideosList));
