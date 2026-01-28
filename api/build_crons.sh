@@ -16,7 +16,7 @@ check_prereq() {
         echo "Docker not installed, please install docker."
         exit=1
     }
-    [[ exit -eq 1 ]] && exit 1
+    [[ $exit -eq 1 ]] && exit 1
 }
 
 function build_crons() {
@@ -45,9 +45,10 @@ function build_crons() {
 }
 
 check_prereq
-[[ $1 == "ee" ]] && {
+if [[ $1 == "ee" ]]; then
+    echo "building crons"
     build_crons $1
-} || {
+else
     echo -e "Crons is only for ee. Rerun the script using \n bash $0 ee"
     exit 100
-}
+fi
