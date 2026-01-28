@@ -59,7 +59,7 @@ const SpotsListHeader = observer(
           />
         </div>
         {tenantHasSpots ? (
-          <div className="flex items-center gap-2 md:gap-0 md:justify-between w-full">
+          <div className="flex items-center gap-2 md:gap-0 md:justify-between w-full md:w-fit">
             <div className="flex gap-2 items-center">
               <div className="hidden md:block ml-auto">
                 {selectedCount > 0 && (
