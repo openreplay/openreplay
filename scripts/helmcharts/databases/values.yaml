@@ -111,6 +111,7 @@ postgresql:
     registry: ghcr.io
     repository: openreplay/postgres
     tag: 17
+  enabled: true
   resources:
     limits:
       cpu: 1
@@ -226,9 +227,6 @@ clickhouse:
   image:
     tag: "25.12.3.21-alpine"
   enabled: false
-
-postgreql:
-  enabled: true
 
 # For enterpriseEdition Only
 vault:
