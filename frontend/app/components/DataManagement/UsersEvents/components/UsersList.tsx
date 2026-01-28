@@ -40,21 +40,12 @@ function UsersList({
   );
 
   React.useEffect(() => {
-    if (propName) {
-      const defaultPayload = analyticsStore.addUserPropFilter(propName, 10);
-      return () => {
-        if (propName) {
-          analyticsStore.editUsersPayload(defaultPayload);
-        }
-      };
-    }
-  }, []);
-  React.useEffect(() => {
-    analyticsStore.fetchUsers(query);
+    analyticsStore.fetchUsers(query, propName);
   }, [
     analyticsStore.usersPayloadFilters,
     analyticsStore.usersPayloadFilters.filters,
     query,
+    propName,
   ]);
 
   const dropdownItems = [

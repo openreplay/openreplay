@@ -220,7 +220,9 @@ function DashboardList() {
       <Empty
         image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />}
         imageStyle={{
-          width: mobileScreen ? window.innerWidth - (window.innerWidth/10) : imageDimensions.width,
+          width: mobileScreen
+            ? window.innerWidth - window.innerWidth / 10
+            : imageDimensions.width,
           height: imageDimensions.height,
           margin: 'auto',
           padding: mobileScreen ? 0 : '2rem 0',
@@ -244,7 +246,8 @@ function DashboardList() {
           simple: true,
           responsive: true,
           rootClassName: 'test',
-          className: 'px-2 pb-6 md:px-4 md:pr-8 md:pb-0 md:mb-0 flex-nowrap',
+          className:
+            'px-2! pb-6! md:px-4! md:pr-8! md:pb-0 md:mb-0 flex-nowrap!',
         }}
         onRow={(record) => ({
           onClick: (e) => {

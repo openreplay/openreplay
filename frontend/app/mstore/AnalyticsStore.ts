@@ -216,27 +216,20 @@ export default class AnalyticsStore {
     }
   };
 
-  addUserPropFilter = (propName: string, customLimit: number) => {
-    const defaultPayload = JSON.parse(JSON.stringify(this.usersPayloadFilters));
-    const propFilter = filterStore.findEvent({ name: propName });
-    if (propFilter) {
-      propFilter.operator = 'isAny';
-      propFilter.readonly = true;
-      // @ts-ignore
-      this.addUserFilter(propFilter);
-    }
-    this.editUsersPayload({ limit: customLimit });
-
-    return defaultPayload;
-  };
-
-  fetchUsers = async (query: string) => {
+  fetchUsers = async (query: string, propName?: string) => {
     this.setLoading(true);
     try {
-      const data: UsersResponse = await analyticsService.getUsers({
-        ...this.usersPayloadFilters,
-        query,
-      });
+      const fullFilters = { ...this.usersPayloadFilters, query };
+      if (propName) {
+        const propFilter = filterStore.findEvent({ name: propName });
+        if (propFilter) {
+          propFilter.operator = 'isAny';
+          propFilter.readonly = true;
+          // @ts-ignore
+          fullFilters.filters = [...fullFilters.filters, propFilter];
+        }
+      }
+      const data: UsersResponse = await analyticsService.getUsers(fullFilters);
       this.users = {
         total: data.total,
         users: data.users.map((user) => new User(user)),

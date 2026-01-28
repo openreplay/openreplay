@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input, Switch } from 'antd';
+import { Button, Input, Switch, Tooltip } from 'antd';
 import Breadcrumb from 'Shared/Breadcrumb';
 import cn from 'classnames';
 import { EditOutlined } from '@ant-design/icons';
@@ -91,7 +91,13 @@ function DataItemPage({
         {'status' in item && (
           <div className="px-2 mx-2 py-3 hover:bg-active-blue">
             <div className="flex items-center">
-              <div className="font-medium flex-1">{t('Status')}</div>
+              <div className="font-medium flex-1 decoration-dotted underline">
+                <Tooltip
+                  title={`This property is ${item.status} in search and analytics.`}
+                >
+                  {t('Status')}
+                </Tooltip>
+              </div>
               <div className="flex-6 flex items-center gap-2">
                 <Switch
                   checked={shownStatus}
@@ -100,9 +106,6 @@ function DataItemPage({
                   unCheckedChildren={t('Hidden')}
                 />
               </div>
-            </div>
-            <div className="text-sm text-disabled-text mt-2">
-              {`This property is ${item.status} in search and analytics.`}
             </div>
           </div>
         )}

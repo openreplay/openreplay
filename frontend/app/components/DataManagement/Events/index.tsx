@@ -98,9 +98,9 @@ function EventsListPage() {
   }
 
   const filterOptions = [
-    { key: 'all', label: t('All') },
-    { key: 'autocaptured', label: t('Autocaptured events') },
-    { key: 'my_events', label: t('My events') },
+    { key: 'all', label: t('All Events') },
+    { key: 'autocaptured', label: t('Autocaptured') },
+    { key: 'my_events', label: t('Custom') },
   ];
 
   const handleFilterChange: MenuProps['onClick'] = ({ key }) => {

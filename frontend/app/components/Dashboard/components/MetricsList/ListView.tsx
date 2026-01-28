@@ -100,12 +100,14 @@ const ListView: React.FC<Props> = ({
     <Tooltip title={<div className="capitalize">{TYPE_NAMES(t)[type]}</div>}>
       <Avatar
         src={
-          <Icon
-            name={TYPE_ICONS[type]}
-            size="16"
-            color="tealx"
-            strokeColor="tealx"
-          />
+          <div className="color-tealx">
+            <Icon
+              name={TYPE_ICONS[type]}
+              size="16"
+              color="tealx"
+              strokeColor="tealx"
+            />
+          </div>
         }
         size="default"
         className="bg-tealx-lightest text-tealx mr-2 cursor-default avatar-card-list-item"
@@ -161,7 +163,7 @@ const ListView: React.FC<Props> = ({
 
   const renderTitle = (_text: string, metric: Widget) => (
     <div
-      className="flex items-center cursor-pointer"
+      className="flex items-center cursor-pointer gap-2"
       onClick={() => onItemClick(metric)}
     >
       <MetricTypeIcon type={metric.metricType} />
@@ -297,7 +299,7 @@ const ListView: React.FC<Props> = ({
           pageSize: metricStore.pageSize,
           total: metricStore.total,
           showSizeChanger: false,
-          className: 'px-4 pb-6 md:pb-0',
+          className: 'px-4! pb-6! md:pb-0!',
           showLessItems: true,
           showTotal: () => totalMessage,
           size: 'small',
