@@ -10,6 +10,7 @@ from .transformers_validators import remove_whitespace
 
 class Permissions(str, Enum):
     SESSION_REPLAY = "SESSION_REPLAY"
+    SESSION_EXPORT = "SESSION_EXPORT"
     DEV_TOOLS = "DEV_TOOLS"
     # errors = "ERRORS"
     METRICS = "METRICS"
