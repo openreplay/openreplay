@@ -23,11 +23,11 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       <div className="flex items-start py-1">
         <div className="font-medium w-36">{t('Name')}</div>
         <Tag
-          className="text-base rounded-lg bg-indigo-lightest whitespace-normal wrap-break-word"
+          className="text-base rounded-lg bg-indigo-lightest"
           variant="filled"
           style={{ maxWidth: '300px' }}
         >
-          <div>{displayUrl}</div>
+          <div className="whitespace-normal wrap-break-word">{displayUrl}</div>
         </Tag>
       </div>
 
