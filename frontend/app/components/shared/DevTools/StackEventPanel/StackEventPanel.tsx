@@ -65,12 +65,12 @@ const WebStackEventPanelComp = observer(() => {
       const event = { ...ev, tabName, tabNum } as unknown as Event;
       if (source === 'all') {
         evList.push(event);
-      } else if (tabId === currentTab){
+      } else if (tabId === currentTab) {
         evList.push(event);
       }
-    })
+    });
     return evList;
-  }, [source, list.length])
+  }, [source, list.length]);
   const eventsListNow: EventsList = React.useMemo(() => {
     const evListNow: EventsList = [];
     listNow.forEach((ev) => {
@@ -80,12 +80,12 @@ const WebStackEventPanelComp = observer(() => {
       const event = { ...ev, tabName, tabNum } as unknown as Event;
       if (source === 'all') {
         evListNow.push(event);
-      } else if (tabId === currentTab){
+      } else if (tabId === currentTab) {
         evListNow.push(event);
       }
-    })
+    });
     return evListNow;
-  }, [source, listNow.length])
+  }, [source, listNow.length]);
   return (
     <EventsPanel
       list={eventsList}

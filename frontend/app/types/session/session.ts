@@ -456,7 +456,6 @@ export default class Session {
     resources: any[],
     userEvents: any[] = [],
     stackEvents: any[] = [],
-    userTestingEvents: any[] = [],
     incidents: any[] = [],
   ) {
     const exceptions =
@@ -493,19 +492,8 @@ export default class Session {
     }
 
     const events: InjectedEvent[] = [];
-    const uxtDoneEvents = userTestingEvents
-      .filter((e) => e.status === 'done' && e.title)
-      .map((e) => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }));
-
-    let uxtIndexNum = 0;
     if (sessionEvents.length) {
-      const eventsWithUxt = mergeEventLists(sessionEvents, uxtDoneEvents);
-      eventsWithUxt.forEach((event, k) => {
-        const isRawUxt = 'allow_typing' in event;
-        if (isRawUxt) {
-          uxtIndexNum += 1;
-          event.indexNum = uxtIndexNum;
-        }
+      sessionEvents.forEach((event, k) => {
         const time = event.timestamp - this.startedAt;
         if (event.type !== TYPES.CONSOLE && time <= this.durationSeconds) {
           const EventClass = SessionEvent({ ...event, time, key: k });

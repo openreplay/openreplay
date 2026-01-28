@@ -390,9 +390,9 @@ export default class SessionStore {
         resources = [],
         stackEvents = [],
         userEvents = [],
-        userTesting = [],
         incidents = [],
       } = eventsData;
+      console.log(userEvents, 'store')
 
       const filterEvents = filter.filters.filter((f) => f.isEvent) as Record<
         string,
@@ -434,7 +434,6 @@ export default class SessionStore {
           resources ?? [],
           userEvents ?? [],
           stackEvents ?? [],
-          userTesting ?? [],
           incidents ?? [],
         );
         this.current = session;
