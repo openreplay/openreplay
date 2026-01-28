@@ -2,6 +2,7 @@ import createNetworkProxy, { INetworkMessage } from "@openreplay/network-proxy";
 import {
   SpotNetworkRequest,
   getTopWindow,
+  getNetworkRequestType,
 } from "./networkTrackingUtils";
 
 let defaultFetch: typeof fetch | undefined;
@@ -69,7 +70,7 @@ export function createSpotNetworkRequest(
 
   return {
     method: msg.method,
-    type: msg.requestType,
+    type: getNetworkRequestType(msg.requestType, msg.url),
     body,
     responseBody,
     requestHeaders: reqHeaders,

@@ -6867,12 +6867,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"baseline-browser-mapping@npm:^2.9.17":
-  version: 2.9.17
-  resolution: "baseline-browser-mapping@npm:2.9.17"
+"baseline-browser-mapping@npm:^2.9.18":
+  version: 2.9.18
+  resolution: "baseline-browser-mapping@npm:2.9.18"
   bin:
     baseline-browser-mapping: dist/cli.js
-  checksum: 10c1/f2852750e547378e9c57665e5cc3045780690314f4e98023c3876e5c8108bed6f5baf2a46038865b7e81087772e0526f962cdce1346dc3501cfe0ce284b59bb5
+  checksum: 10c1/c93ad17f71cc302fcbba35c956973a7a7d6584f7551d8bbb150448670120976417ff2b0f8643fbb804f87cd1cf2b391b9730e78aba480b757b62dc866625d3ba
   languageName: node
   linkType: hard
 
@@ -13771,7 +13771,7 @@ __metadata:
     antd: "npm:6.2.1"
     autoprefixer: "npm:^10.4.23"
     babel-jest: "npm:^30.2.0"
-    baseline-browser-mapping: "npm:^2.9.17"
+    baseline-browser-mapping: "npm:^2.9.18"
     chroma-js: "npm:^3.1.2"
     classnames: "npm:^2.5.1"
     copy-to-clipboard: "npm:^3.3.3"

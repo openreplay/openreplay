@@ -4,6 +4,7 @@ import {
   filterHeaders,
   tryFilterUrl,
   TrackedRequest,
+  getNetworkRequestType,
 } from "./networkTrackingUtils";
 
 export const rawRequests: Array<
@@ -70,11 +71,7 @@ function createSpotNetworkRequest(
     if (!trackedRequest.statusCode || trackedRequest.statusCode < 400) return;
   }
 
-  const type = ["stylesheet", "script", "image", "media", "font"].includes(
-    trackedRequest.type,
-  )
-    ? "resource"
-    : trackedRequest.type;
+  const type = getNetworkRequestType(trackedRequest.type, trackedRequest.url);
 
   const requestHeaders = trackedRequest.requestHeaders
     ? filterHeaders(trackedRequest.requestHeaders)

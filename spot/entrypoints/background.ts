@@ -1111,7 +1111,9 @@ export default defineBackground(() => {
                 activeTabId: null,
               };
               console.log(tabId, 'activation for new')
-              attachDebuggerToTab(tabId)
+              if (settings.useDebugger && settings.networkLogs) {
+                attachDebuggerToTab(tabId)
+              }
               void sendToActiveTab(msg);
             });
           if (previousTab) {

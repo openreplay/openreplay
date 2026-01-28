@@ -125,7 +125,7 @@
     "@typescript-eslint/parser": "^8.45.0",
     "autoprefixer": "^10.4.23",
     "babel-jest": "^30.2.0",
-    "baseline-browser-mapping": "^2.9.17",
+    "baseline-browser-mapping": "^2.9.18",
     "country-data": "0.0.31",
     "cssnano": "^7.1.2",
     "cypress": "13.17.0",

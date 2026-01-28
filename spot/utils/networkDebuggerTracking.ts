@@ -1,3 +1,5 @@
+import { getNetworkRequestType } from "./networkTrackingUtils";
+
 let requestMaps = {};
 const potentialActiveTabs: Array<string | number> = [];
 
@@ -33,17 +35,6 @@ export function stopDebugger(tabId?: string | number) {
   }
 }
 
-const getType = (requestType: string) => {
-  switch (requestType.toLowerCase()) {
-    case "fetch":
-    case "xhr":
-    case "xmlhttprequest":
-      return 'xmlhttprequest'
-    default:
-      return requestType
-  }
-}
-
 function handleRequestIntercept(source, method, params) {
   if (!source.tabId) return;
   const tabId = source.tabId;
@@ -58,7 +49,7 @@ function handleRequestIntercept(source, method, params) {
         responseBodySize: 0,
         duration: 0,
         method: params.request.method,
-        type: params.type ? getType(params.type) : "resource",
+        type: params.type ? getNetworkRequestType(params.type, params.request.url) : "other",
         statusCode: 0,
         url: params.request.url,
         body: params.request.postData || "",
