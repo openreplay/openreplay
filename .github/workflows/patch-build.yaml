@@ -248,10 +248,10 @@ jobs:
 
                 # Build FOSS and EE versions (skip FOSS for assist-api)
                 if [[ $is_ee_only == false ]]; then
-                    build_service "$service" "$version" "$foss_build_args"
-                    build_service "$service" "$version" "$foss_build_args" "$BUILD_SCRIPT_NAME" "$DOCKER_REPO_ARM" "arm64"
+                    build_service "$service" "$version" "$foss_build_args" "$build_script"
+                    build_service "$service" "$version" "$foss_build_args" "$build_script" "$DOCKER_REPO_ARM" "arm64"
                 fi
-                build_service "$service" "${version}-ee" "$ee_build_args"
+                build_service "$service" "${version}-ee" "$ee_build_args" "$build_script"
 
                 # Building managed
                 case "$service" in
