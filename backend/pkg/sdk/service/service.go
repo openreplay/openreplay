@@ -85,7 +85,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
 			ds.log.Info(context.Background(), "sdk data: %s", string(data))
 			sdkDataBatch := &model.SdkDataBatch{}
-			if err = json.Unmarshal(data, sdkDataBatch); err != nil {
+			if err := json.Unmarshal(data, sdkDataBatch); err != nil {
 				ds.log.Error(context.Background(), "can't unmarshal message: %s", err)
 				return
 			}
@@ -154,7 +154,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 				customEvent.Timestamp = uint64(event.Timestamp)
 				if err = ds.ch.InsertCustom(sessInfo, customEvent); err != nil {
 					ds.log.Error(context.Background(), "can't insert custom event: %s", err)
-					return
+					continue
 				}
 			}
 		}, nil, true),
@@ -188,7 +188,7 @@ func parseHHMM(s string) (minutes int, err error) {
 
 func inWindow(now time.Time, startMin, endMin int) bool {
 	if startMin < 0 || endMin < 0 || startMin == endMin {
-		return true // TODO: change to false before merge
+		return false
 	}
 	curMin := now.Hour()*60 + now.Minute()
 
