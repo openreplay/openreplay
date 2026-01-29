@@ -61,13 +61,14 @@ func main() {
 	}
 
 	tenants := tenant.New(pgPool)
+	prefix := api.NoPrefix
 
-	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), tenants, projects, nil, nil)
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, prefix, pgPool, dbMetric, services.Handlers(), tenants, projects, nil, nil)
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}
 
-	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), middlewares.Middlewares())
+	router, err := api.NewRouter(log, &cfg.HTTP, prefix, services.Handlers(), middlewares.Middlewares())
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}

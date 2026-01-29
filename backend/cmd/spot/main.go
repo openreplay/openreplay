@@ -39,12 +39,14 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, pgPool, dbMetric, services.Handlers(), nil, nil, &cfg.JWTSpotSecret, keys)
+	prefix := api.NoPrefix
+
+	middlewares, err := middleware.NewMiddlewareBuilder(log, cfg.JWTSecret, &cfg.HTTP, &cfg.RateLimiter, prefix, pgPool, dbMetric, services.Handlers(), nil, nil, &cfg.JWTSpotSecret, keys)
 	if err != nil {
 		log.Fatal(ctx, "can't init middlewares: %s", err)
 	}
 
-	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), middlewares.Middlewares())
+	router, err := api.NewRouter(log, &cfg.HTTP, prefix, services.Handlers(), middlewares.Middlewares())
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
