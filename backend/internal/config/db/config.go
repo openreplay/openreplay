@@ -22,15 +22,16 @@ type Config struct {
 	TopicAnalytics        string        `env:"TOPIC_ANALYTICS,required"`
 	TopicRawMobile        string        `env:"TOPIC_RAW_IOS,required"`
 	TopicRawAnalytics     string        `env:"TOPIC_RAW_ANALYTICS,required"`
-	CommitBatchTimeout    time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=15s"`
+	CommitBatchTimeout    time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=60s"`
 	BatchQueueLimit       int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
 	BatchSizeLimit        int           `env:"DB_BATCH_SIZE_LIMIT,required"`
 	UseProfiler           bool          `env:"PROFILER_ENABLED,default=false"`
-	PAUpdaterStartTime    string        `env:"PA_UPDATER_START_TIME,default=01:00"`
-	PAUpdaterEndTime      string        `env:"PA_UPDATER_END_TIME,default=02:00"`
+	PAUpdaterStartTime    string        `env:"PA_UPDATER_START_TIME,default=00:00"`
+	PAUpdaterEndTime      string        `env:"PA_UPDATER_END_TIME,default=00:00"`
 	PAUpdaterTickDuration time.Duration `env:"PA_UPDATER_TICK_DURATION,default=60s"`
 	CHReadBatchSizeLimit  int           `env:"CH_READ_BATCH_SIZE_LIMIT,default=500"`
 	CHSendBatchSizeLimit  int           `env:"CH_SEND_BATCH_SIZE_LIMIT,default=5000"`
+	CHReadUsersSizeLimit  int           `env:"CH_READ_USERS_SIZE_LIMIT,default=50"`
 }
 
 func New(log logger.Logger) *Config {
