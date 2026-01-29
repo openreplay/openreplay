@@ -82,13 +82,13 @@ export default function MenuContent({
                 />
               ),
               label: isCollapsed ? null : (
-                <div className="flex items-center gap-2 hover-fill-teal">
+                <div className="flex items-center gap-1 hover-fill-teal">
                   <Text>{it.label}</Text>
                   {it.tag && (
                     <Tag
                       color={it.tag.color}
                       variant={it.tag.border ? 'outlined' : 'filled'}
-                      className="text-xs ml-auto"
+                      className="text-xs ml-0.5! mr-0!"
                     >
                       {it.tag.label}
                     </Tag>
