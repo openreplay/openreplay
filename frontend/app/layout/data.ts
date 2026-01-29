@@ -115,10 +115,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         label: t('Kai'),
         key: MENU.KAI,
         icon: 'kai-mono',
-        tag: {
-          label: t('New'),
-          color: '#394DFE',
-        },
       },
     ],
   },
@@ -155,6 +151,10 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         hidden: menuHidden.dataAnalytics,
         key: MENU.DATA_MANAGEMENT,
         icon: 'memory',
+        tag: {
+          label: t('New'),
+          color: '#394DFE',
+        },
         children: [
           { label: 'People', key: MENU.USERS },
           { label: 'Events', key: MENU.EVENTS, hidden: menuHidden.lexicon },

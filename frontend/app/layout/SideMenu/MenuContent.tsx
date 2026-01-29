@@ -81,7 +81,20 @@ export default function MenuContent({
                   className="hover-fill-teal"
                 />
               ),
-              label: isCollapsed ? null : <Text>{it.label}</Text>,
+              label: isCollapsed ? null : (
+                <div className="flex items-center gap-2 hover-fill-teal">
+                  <Text>{it.label}</Text>
+                  {it.tag && (
+                    <Tag
+                      color={it.tag.color}
+                      variant={it.tag.border ? 'outlined' : 'filled'}
+                      className="text-xs ml-auto"
+                    >
+                      {it.tag.label}
+                    </Tag>
+                  )}
+                </div>
+              ),
               children: (it.children ?? [])
                 .filter((ch: any) => !ch.hidden)
                 .map((child: any) => {
