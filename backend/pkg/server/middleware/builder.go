@@ -35,6 +35,7 @@ func NewMiddlewareBuilder(
 	jwtSecret string,
 	http *common.HTTP,
 	rtc *common.RateLimiter,
+	prefix string,
 	pgPool pool.Pool,
 	dbMetric database.Database,
 	handlers []api.Handlers,
@@ -49,7 +50,7 @@ func NewMiddlewareBuilder(
 	if err != nil {
 		return nil, fmt.Errorf("error creating auth middleware: %s", err)
 	}
-	perms, err := permissions.NewPermissions(log, handlers)
+	perms, err := permissions.NewPermissions(log, prefix, handlers)
 	if err != nil {
 		return nil, fmt.Errorf("error creating permissions middleware: %s", err)
 	}
