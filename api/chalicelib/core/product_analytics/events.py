@@ -84,12 +84,14 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
             SELECT DISTINCT
             ON(event_name,auto_captured)
                 COUNT (1) OVER () AS total,
-                event_name AS name, display_name, description,
+                event_name AS name, aec.display_name, 
+                --aec.description,
                 auto_captured
-            FROM product_analytics.all_events
+            FROM product_analytics.all_events 
+                LEFT JOIN product_analytics.all_events_customized AS aec USING (project_id, auto_captured, event_name) 
             WHERE project_id=%(project_id)s
-                {"" if include_all else "AND status = 'visible'"}
-            ORDER BY auto_captured, display_name, event_name;""",
+                {"" if include_all else "AND (aec.status = 'visible' OR isNull(aec.status))"}
+            ORDER BY auto_captured, aec.display_name, all_events.event_name;""",
             parameters={"project_id": project_id},
         )
         rows = ch_client.execute(r)
@@ -102,7 +104,7 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
                 {
                     "name": e,
                     "displayName": predefined_events[e]["displayName"],
-                    "description": predefined_events[e]["description"],
+                    # "description": predefined_events[e]["description"],
                     "autoCaptured": True,
                     "id": helper.string_to_id(f"event_{e}"),
                     "dataType": "string",
@@ -120,8 +122,12 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
     web_only_events = {"CLICK", "LOCATION", "ERROR"}
 
     filtered_rows = []
+    keys = []
     for row in rows:
         event_name = row["name"]
+        keys.append(event_name)
+        if event_name in predefined_events and row["displayName"] is None:
+            row["displayName"] = predefined_events[event_name]["displayName"]
         if is_mobile:
             if event_name not in web_only_events:
                 row["id"] = helper.string_to_id(f"event_{row['name']}")
@@ -131,19 +137,16 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
                 row["_foundInPredefinedList"] = True
                 row.pop("total")
                 filtered_rows.append(row)
-        else:
-            if event_name not in mobile_only_events:
-                row["id"] = helper.string_to_id(f"event_{row['name']}")
-                row["dataType"] = "string"
-                row["possibleTypes"] = ["string"]
-                row["isConditional"] = True
-                row["_foundInPredefinedList"] = True
-                row.pop("total")
-                filtered_rows.append(row)
+        elif event_name not in mobile_only_events:
+            row["id"] = helper.string_to_id(f"event_{row['name']}")
+            row["dataType"] = "string"
+            row["possibleTypes"] = ["string"]
+            row["isConditional"] = True
+            row["_foundInPredefinedList"] = True
+            row.pop("total")
+            filtered_rows.append(row)
 
     rows = filtered_rows
-    total = len(rows)
-    keys = [r["name"] for r in rows]
     for e in predefined_events:
         if e not in keys:
             total += 1
@@ -151,7 +154,7 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
                 {
                     "name": e,
                     "displayName": predefined_events[e]["displayName"],
-                    "description": predefined_events[e]["description"],
+                    # "description": predefined_events[e]["description"],
                     "autoCaptured": True,
                     "id": helper.string_to_id(f"event_{e}"),
                     "dataType": "string",
@@ -259,9 +262,9 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
                     )
                 if len(sub_conditions) > 0:
                     condition += (
-                        " AND ("
-                        + (" " + f.properties.operator + " ").join(sub_conditions)
-                        + ")"
+                            " AND ("
+                            + (" " + f.properties.operator + " ").join(sub_conditions)
+                            + ")"
                     )
 
                 ev_constraints.append(condition)
@@ -302,14 +305,15 @@ def search_events(project_id: int, data: schemas.EventsSearchPayloadSchema):
 def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """\
-            SELECT COUNT(1) OVER () AS total, all_events.event_name AS name,
-                   all_events.*,sumMerge(data_count)  AS row_count
+            """ \
+            SELECT COUNT(1)                OVER () AS total, all_events.event_name AS name,
+                   all_events.*,
+                   sumMerge(data_count) AS row_count
             FROM product_analytics.all_events
-                LEFT JOIN product_analytics.autocomplete_events_grouped AS aeg
-                   ON (all_events.event_name = aeg.value)
+                     LEFT JOIN product_analytics.autocomplete_events_grouped AS aeg
+                               ON (all_events.event_name = aeg.value)
             WHERE all_events.project_id = %(project_id)s
-                AND (aeg.project_id = 0 OR aeg.project_id = %(project_id)s)
+              AND (aeg.project_id = 0 OR aeg.project_id = %(project_id)s)
             GROUP BY ALL
             ORDER BY display_name
                 LIMIT %(limit)s
