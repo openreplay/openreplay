@@ -218,22 +218,24 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
             f"""\
             SELECT COUNT(1) OVER () AS total,
                  property_name AS name,
-                 display_name,
+                 apc.display_name,
                  event_properties.auto_captured_property AS auto_captured,
                  possible_types
             FROM product_analytics.all_properties
-            LEFT ANY JOIN (
-                SELECT property_name,
-                       auto_captured_property,
-                       array_agg(DISTINCT event_properties.value_type) AS possible_types
-                FROM product_analytics.event_properties
-                WHERE event_properties.project_id = %(project_id)s
-                GROUP BY ALL
-            ) AS event_properties USING (property_name)
+                LEFT JOIN product_analytics.all_properties_customized AS apc 
+                    USING (project_id, source, property_name, auto_captured)
+                LEFT ANY JOIN (
+                    SELECT property_name,
+                           auto_captured_property,
+                           array_agg(DISTINCT event_properties.value_type) AS possible_types
+                    FROM product_analytics.event_properties
+                    WHERE event_properties.project_id = %(project_id)s
+                    GROUP BY ALL
+                ) AS event_properties USING (property_name)
             WHERE project_id = %(project_id)s
-                {"" if include_all else "AND status = 'visible'"}
+                {"" if include_all else "AND (apc.status = 'visible' OR isNull(apc.status))"}
             GROUP BY ALL
-            ORDER BY display_name, property_name;""",
+            ORDER BY apc.display_name, all_properties.property_name;""",
             parameters={"project_id": project_id},
         )
         properties = ch_client.execute(r)
@@ -259,6 +261,8 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(
                     PREDEFINED_PROPERTIES[snake_case_name]["type"]
                 )
+                if p["auto_captured"] and p["display_name"] is None:
+                    p["display_name"] = PREDEFINED_PROPERTIES[snake_case_name]["display_name"]
             else:
                 p["_foundInPredefinedList"] = False
                 p["dataType"] = next(iter(p["possibleTypes"]), "string")
@@ -383,10 +387,10 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
             """ \
-            SELECT COUNT(1)                  OVER () AS total, all_properties.property_name AS name,
+            SELECT COUNT(1)                     OVER () AS total, all_properties.property_name AS name,
                    all_properties.*,
-                   possible_types.values  AS possible_types,
-                   sumMerge(aepg.data_count)    AS row_count
+                   possible_types.values     AS possible_types,
+                   sumMerge(aepg.data_count) AS row_count
             FROM product_analytics.all_properties
                      LEFT JOIN (SELECT project_id, property_name, array_agg(DISTINCT value_type) AS
                                 values
@@ -394,15 +398,15 @@ def get_lexicon(project_id: int, page: schemas.PaginatedSchema):
                                 WHERE project_id=%(project_id)s
                                 GROUP BY 1, 2) AS possible_types
                                USING (project_id, property_name)
-                LEFT JOIN product_analytics.autocomplete_event_properties_grouped AS aepg
-                   ON (all_properties.property_name = aepg.property_name)
-            WHERE all_properties.project_id = %(project_id)s 
+                     LEFT JOIN product_analytics.autocomplete_event_properties_grouped AS aepg
+                               ON (all_properties.property_name = aepg.property_name)
+            WHERE all_properties.project_id = %(project_id)s
               AND (aepg.project_id = 0 OR aepg.project_id = %(project_id)s)
             GROUP BY ALL
             ORDER BY display_name
                 LIMIT %(limit)s
             OFFSET %(offset)s;""",
-        parameters={
+            parameters={
                 "project_id": project_id,
                 "limit": page.limit,
                 "offset": (page.page - 1) * page.limit,
