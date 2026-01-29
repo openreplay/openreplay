@@ -57,12 +57,12 @@ func (p *permissionsImpl) checkPermissions(r *http.Request) error {
 	return nil
 }
 
-func NewPermissions(log logger.Logger, handlers []api.Handlers) (api.RouterMiddleware, error) {
+func NewPermissions(log logger.Logger, prefix string, handlers []api.Handlers) (api.RouterMiddleware, error) {
 	perms := make(map[string][]string)
 	for _, handlersSet := range handlers {
 		for _, handler := range handlersSet.GetAll() {
 			if handler.Permissions != nil {
-				perms[handler.Method+handler.Path] = handler.Permissions
+				perms[handler.Method+prefix+handler.Path] = handler.Permissions
 			}
 		}
 	}
