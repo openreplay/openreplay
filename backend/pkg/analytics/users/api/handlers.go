@@ -114,7 +114,7 @@ func (h *handlersImpl) getUser(ctx *api.RequestContext) (*model.User, int, error
 	}
 
 	if len(userID) > 256 {
-		h.log.Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
+		h.Log().Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
 		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
 	}
 
@@ -158,7 +158,7 @@ func (h *handlersImpl) deleteUser(ctx *api.RequestContext) (map[string]string, i
 	}
 
 	if len(userID) > 256 {
-		h.log.Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
+		h.Log().Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
 		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
 	}
 
@@ -204,7 +204,7 @@ func (h *handlersImpl) updateUser(ctx *api.RequestContext) (*model.User, int, er
 	}
 
 	if len(userID) > 256 {
-		h.log.Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
+		h.Log().Error(ctx.Request.Context(), "userID exceeds maximum length of 256 characters")
 		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
 	}
 
@@ -263,7 +263,7 @@ func (h *handlersImpl) getUserActivity(r *api.RequestContext) (*model.UserActivi
 	}
 
 	if len(userID) > 256 {
-		h.log.Error(r.Request.Context(), "userID exceeds maximum length of 256 characters")
+		h.Log().Error(r.Request.Context(), "userID exceeds maximum length of 256 characters")
 		return nil, http.StatusBadRequest, fmt.Errorf("userID exceeds maximum length of 256 characters")
 	}
 
