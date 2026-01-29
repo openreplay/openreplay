@@ -42,7 +42,6 @@ function createColorVariables(colors, darkColors) {
 const variableBasedColors = createColorVariables(colors);
 
 module.exports = {
-  important: '#app',
   mode: 'jit',
   darkMode: 'class',
   content: ['./app/**/*.tsx', './app/**/*.js'],

@@ -65,7 +65,7 @@ function ProjectDropdown(props: { location: any }) {
   const menuItems: MenuProps['items'] = sites.map((site) => ({
     key: site.id,
     label: (
-      <div key={site.id} className="py-1! flex items-center gap-2">
+      <div key={site.id} className="py-1! flex! items-center! gap-2!">
         <Icon
           name={site.platform === 'web' ? 'browser/browser' : 'mobile'}
           color={activeSite?.host === site.host ? 'main' : undefined}
