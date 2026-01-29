@@ -12,7 +12,7 @@ function AntlikeDropdown(props: {
   const { label, leftIcon, rightIcon, menuProps, useButtonStyle, className } =
     props;
   return (
-    <Dropdown menu={menuProps} className="px-2 py-1">
+    <Dropdown menu={menuProps} className="px-2! py-1!">
       {useButtonStyle ? (
         <div className="flex items-center gap-2 border border-gray-light rounded-sm cursor-pointer">
           {leftIcon}

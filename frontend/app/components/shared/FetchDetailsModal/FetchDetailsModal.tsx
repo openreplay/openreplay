@@ -93,7 +93,7 @@ function FetchDetailsModal(props: Props) {
       <div className="flex items-center gap-4 mb-4 w-full justify-between">
         <h5 className="text-2xl">{t('Network Request')}</h5>
         <Dropdown menu={{ items: copyItems, onClick: onDropdownClick }}>
-          <Space className="cursor-pointer hover:text-main">
+          <Space className="cursor-pointer! hover:text-main!">
             Copy as
             <DownOutlined />
           </Space>

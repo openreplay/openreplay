@@ -35,7 +35,7 @@ function ListWithIcons({ list = [] }: Props) {
             title={
               <div className="m-0">
                 <div className="flex justify-between m-0 p-0">
-                  <Typography.Text className="w-[95%]">
+                  <Typography.Text className="w-[95%]!">
                     {row.name}
                   </Typography.Text>
                   <Typography.Text type="secondary">

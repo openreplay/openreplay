@@ -35,7 +35,7 @@ function DashboardEditModal(props: Props) {
 
   return (
     <Modal open={show} onClose={closeHandler}>
-      <Modal.Header className="flex items-center justify-between">
+      <Modal.Header className="flex! items-center! justify-between!">
         <div>{t('Edit Dashboard')}</div>
         <Button
           type="text"
@@ -78,7 +78,7 @@ function DashboardEditModal(props: Props) {
             <div className="flex items-center">
               <Checkbox
                 name="isPublic"
-                className="font-medium mr-3"
+                className="font-medium! mr-3!"
                 type="checkbox"
                 checked={dashboard.isPublic}
                 onClick={() =>
@@ -103,7 +103,7 @@ function DashboardEditModal(props: Props) {
       </Modal.Content>
       <Modal.Footer>
         <div className="-mx-2 px-2">
-          <Button type="primary" onClick={onSave} className="float-left mr-2">
+          <Button type="primary" onClick={onSave} className="float-left! mr-2!">
             {t('Save')}
           </Button>
           <Button type="default" onClick={closeHandler}>

@@ -65,7 +65,7 @@ function Projects() {
   return (
     <Card
       style={{ height: 'calc(100vh - 130px)' }}
-      className="rounded-lg shadow-xs"
+      className="rounded-lg! shadow-xs!"
       classNames={{
         header: 'border-b! px-4!',
         body: 'p-0! border-t!',
@@ -90,17 +90,17 @@ function Projects() {
         <Layout.Sider
           width={260}
           trigger={null}
-          className="hidden md:block bg-white! border-r"
+          className="hidden! md:block! bg-white! border-r!"
         >
           <ProjectList />
         </Layout.Sider>
 
         <Layout>
-          <Layout.Header className="flex flex-col md:flex-row md:gap-0 justify-between md:items-center p-4 bg-white! border-b h-[92px] md:h-[46px]">
+          <Layout.Header className="flex! flex-col! md:flex-row! md:gap-0! justify-between! md:items-center! p-4! bg-white! border-b! h-[92px]! md:h-[46px]!">
             <div className="flex items-center gap-4">
               {mobileScreen ? (
                 <Dropdown
-                  className="w-fit"
+                  className="w-fit!"
                   menu={{
                     items: dropItems,
                   }}
@@ -132,7 +132,7 @@ function Projects() {
               padding: '1.5rem 1rem',
               height: 'calc(100vh - 260px)',
             }}
-            className="bg-white overflow-y-auto "
+            className="bg-white! overflow-y-auto!"
           >
             {project && <ProjectTabContent />}
           </Layout.Content>

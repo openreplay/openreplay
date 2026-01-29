@@ -85,7 +85,7 @@ function Webhooks() {
                 onClick={() => init(w)}
                 className="p-2! group flex justify-between items-center cursor-pointer hover:bg-active-blue transition"
               >
-                <Space direction="vertical" className="overflow-hidden w-full">
+                <Space direction="vertical" className="overflow-hidden! w-full!">
                   <Typography.Text style={{ textTransform: 'capitalize' }}>
                     {w.name}
                   </Typography.Text>

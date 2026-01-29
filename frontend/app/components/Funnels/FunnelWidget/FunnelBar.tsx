@@ -142,7 +142,7 @@ function FunnelBarData({
           </span>
         </div>
         {index && index > 1 && (
-          <Space className="items-center">
+          <Space className="items-center!">
             <Icon
               name="caret-down-fill"
               color={data.droppedCount > 0 ? 'red' : 'gray-light'}

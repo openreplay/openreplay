@@ -47,7 +47,7 @@ function IntegrationFilters(props: Props) {
         },
       }}
     >
-      <Button className="flex items-center justify-end gap-2">
+      <Button className="flex! items-center! justify-end! gap-2!">
         {segmentItems.find((item) => item.key === props.activeItem)?.label}
         <Icon name="chevron-down" />
       </Button>

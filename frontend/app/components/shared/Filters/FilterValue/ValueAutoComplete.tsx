@@ -495,7 +495,7 @@ const ValueAutoComplete = observer(
             onMouseEnter={() => !isDisabled && setHovered(true)}
             onMouseLeave={() => setHovered(false)}
           >
-            <Space size={4} className="w-full overflow-hidden">
+            <Space size={4} className="w-full! overflow-hidden!">
               {!isEmpty ? (
                 <>
                   <Text

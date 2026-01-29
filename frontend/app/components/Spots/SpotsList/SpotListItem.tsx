@@ -146,7 +146,7 @@ function SpotListItem({
       <GridItem
         modifier={
           <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
-            <Tooltip title={tooltipText} className="capitalize">
+            <Tooltip title={tooltipText} className="capitalize!">
               <div
                 className="bg-gray-dark text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 "
                 onClick={copyToClipboard}

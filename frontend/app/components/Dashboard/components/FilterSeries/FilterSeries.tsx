@@ -74,7 +74,7 @@ const FilterSeriesHeader = observer(
           hidden: props.hidden,
         })}
       >
-        <Space className="mr-auto" size={30}>
+        <Space className="mr-auto!" size={30}>
           <SeriesName
             seriesIndex={props.seriesIndex}
             name={props.series.name}

@@ -78,7 +78,7 @@ export const FilterList = observer((props: Props) => {
           excludeCategory={excludeCategory}
           isLive={isLive}
         >
-          <Button type="default" size="small" className="btn-add-filter">
+          <Button type="default" size="small" className="btn-add-filter!">
             <div className={'flex items-center gap-1'}>
               <Filter size={16} strokeWidth={1} />
               <span>{t('Add')}</span>
@@ -241,7 +241,7 @@ export const EventsList = observer((props: Props) => {
             // excludeFilterKeys={excludeFilterKeys}
             // excludeCategory={excludeCategory}
           >
-            <Button type="default" size="small" className="btn-add-event">
+            <Button type="default" size="small" className="btn-add-event!">
               <div className={'flex items-center gap-1'}>
                 <Plus size={16} strokeWidth={1} />
                 <span>{t('Add')}</span>

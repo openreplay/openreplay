@@ -80,7 +80,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
         {props.inGrid ? (
           rest > 0 ? (
             <div className="flex link pt-1">
-              <Space className="flex font-medium gap-1 text-black hover:text-main">
+              <Space className="flex! font-medium! gap-1! text-black! hover:text-main!">
                 {rest}&nbsp;{t('More')}
                 <ArrowRight size={16} />
               </Space>

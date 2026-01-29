@@ -40,7 +40,7 @@ function Issues({ sessionId }) {
     >
       <div>
         <Tooltip title={t('Create Issue')} placement="bottom">
-          <Button size="small" className="flex items-center justify-center">
+          <Button size="small" className="flex! items-center! justify-center!">
             <Icon name={`integrations/${provider ?? 'github'}`} />
           </Button>
         </Tooltip>

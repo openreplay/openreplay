@@ -186,13 +186,13 @@ function Sites() {
               <div className="col-span-2">{t('Capture Rate')}</div>
               <div className="col-span-3" />
             </div>
-            <Divider className="m-0" />
+            <Divider className="m-0!" />
 
             {sliceListPerPage(filteredSites, page - 1, pageSize).map(
               (project: Project) => (
                 <React.Fragment key={project.id}>
                   <ProjectItem project={project} />
-                  <Divider className="m-0" />
+                  <Divider className="m-0!" />
                 </React.Fragment>
               ),
             )}

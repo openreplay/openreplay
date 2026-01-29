@@ -106,7 +106,7 @@ function SessionFilters() {
   };
 
   return (
-    <Card className="rounded-lg" classNames={{ body: 'p-4!' }}>
+    <Card className="rounded-lg!" classNames={{ body: 'p-4!' }}>
       <FilterListHeader
         title="Events"
         showEventsOrder={eventFilters.length > 0}

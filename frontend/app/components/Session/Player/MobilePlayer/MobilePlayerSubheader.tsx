@@ -58,7 +58,7 @@ function SubHeader(props: Props) {
 
   return (
     <div className="w-full px-4 flex items-center border-b relative">
-      <Tag color="green" variant="filled" className="rounded-full">
+      <Tag color="green" variant="filled" className="rounded-full!">
         {isIOS ? 'iOS' : 'Android'} BETA
       </Tag>
       <div

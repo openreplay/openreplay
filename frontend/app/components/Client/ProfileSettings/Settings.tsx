@@ -44,7 +44,7 @@ function Settings() {
   };
 
   return (
-    <Form onSubmit={handleSubmit} className={'md:w-80 px-4 py-2 md:p-5'}>
+    <Form onSubmit={handleSubmit} className={'md:w-80! px-4! py-2! md:p-5!'}>
       <Form.Field>
         <label htmlFor="accountName">{t('Name')}</label>
         <Input

@@ -184,7 +184,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           maxLength={200}
           rows={6}
           value={message}
-          className="rounded-lg"
+          className="rounded-lg!"
           autoFocus
         />
         <div className="text-disabled-text text-sm">
@@ -198,12 +198,12 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           <Input
             value={startTs}
             onChange={onStartChange}
-            className="rounded-lg"
+            className="rounded-lg!"
           />
         </div>
         <div>
           <div className="font-semibold">{t('To')}</div>
-          <Input value={endTs} onChange={onEndChange} className="rounded-lg" />
+          <Input value={endTs} onChange={onEndChange} className="rounded-lg!" />
         </div>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
@@ -211,7 +211,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           <Tag
             onClick={() => addTag(tag)}
             key={tag}
-            className="cursor-pointer rounded-lg hover:bg-indigo-lightest mr-0"
+            className="cursor-pointer! rounded-lg! hover:bg-indigo-lightest! mr-0!"
             color={tagProps[tag]}
             variant="filled"
           >
@@ -228,7 +228,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
         <Checkbox
           onChange={(e) => setIsPublic(e.target.checked)}
           value={isPublic}
-          className="ms-2"
+          className="ms-2!"
         >
           {t('Visible to team members')}
         </Checkbox>
@@ -238,13 +238,13 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
           onClick={onSave}
           type="primary"
           loading={notesStore.isSaving}
-          className="font-medium"
+          className="font-medium!"
         >
           <Icon name="chat-square-quote" color="inherit" size={14} />{' '}
           {editNote ? t('Update') : t('Save')}&nbsp;
           {t('Highlight')}
         </Button>
-        <Button onClick={onClose} type="text" className="font-medium">
+        <Button onClick={onClose} type="text" className="font-medium!">
           {t('Cancel')}
         </Button>
       </div>

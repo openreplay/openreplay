@@ -94,7 +94,7 @@ const IssueForm: React.FC<Props> = observer(
 
     return (
       <Loader loading={projectsLoading} size={40}>
-        <Form onFinish={onFinish} layout="vertical" className="text-left">
+        <Form onFinish={onFinish} layout="vertical" className="text-left!">
           <Form.Item
             label={
               <>

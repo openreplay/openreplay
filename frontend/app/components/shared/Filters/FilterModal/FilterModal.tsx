@@ -127,7 +127,7 @@ function FilterModal({
             <div className="font-medium mt-4 text-neutral-600">
               {t('No results found')}
             </div>
-            <Typography.Text type="secondary" className="text-sm">
+            <Typography.Text type="secondary" className="text-sm!">
               {t('Try different keywords')}
             </Typography.Text>
           </div>

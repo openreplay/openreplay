@@ -81,7 +81,7 @@ function CardSessionsByList({
                 title={
                   <div className="m-0">
                     <div className="flex justify-between m-0 p-0">
-                      <Typography.Text ellipsis className="w-[90%]">
+                      <Typography.Text ellipsis className="w-[90%]!">
                         {row.displayName}
                       </Typography.Text>
                       <Typography.Text type="secondary">

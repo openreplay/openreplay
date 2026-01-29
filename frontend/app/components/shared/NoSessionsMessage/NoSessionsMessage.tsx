@@ -32,7 +32,7 @@ function NoSessionsMessage() {
     <>
       {showNoSessions && (
         <div className="w-full mb-5">
-          <Space direction="vertical" className="w-full">
+          <Space direction="vertical" className="w-full!">
             <Alert
               className="border-transparent rounded-lg w-full"
               message={t(

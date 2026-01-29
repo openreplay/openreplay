@@ -45,7 +45,7 @@ function InstallOpenReplayTab(props: Props) {
           </div>
         </div>
         <a href={"https://docs.openreplay.com/en/sdk/using-or/"} target="_blank">
-          <Button size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
+          <Button size={"small"} type={"text"} className="ml-2! flex! items-center! gap-2!">
             <CircleHelp size={14} />
             <div>{t('See Documentation')}</div>
           </Button>

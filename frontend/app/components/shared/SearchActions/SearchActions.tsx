@@ -38,7 +38,7 @@ function SearchActions() {
           <h2 className="text-2xl capitalize mr-4 inline">{title}</h2>
           <div className={'ml-auto flex items-center gap-1'}>
             <SavedSearch />
-            <Divider type="vertical" className="h-6" />
+            <Divider type="vertical" className="h-6!" />
             <Tooltip title="Clear Search Filters">
               <Button
                 type="text"
@@ -58,7 +58,7 @@ function SearchActions() {
         <h2 className="text-2xl capitalize mr-4">{title}</h2>
         <div className="ml-auto" />
         <SavedSearch />
-        <Divider type="vertical" className="h-6" />
+        <Divider type="vertical" className="h-6!" />
         <Tooltip title={t('Clear Search Filters')}>
           <Button
             type="text"

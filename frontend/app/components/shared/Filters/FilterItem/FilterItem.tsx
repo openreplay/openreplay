@@ -226,7 +226,7 @@ function FilterItem(props: Props) {
         {isSubItem && (
           <div className="shrink-0 text-right color-disabled-text">
             {subFilterIndex === 0 && (
-              <Typography.Text className="text-inherit">where</Typography.Text>
+              <Typography.Text className="text-inherit!">where</Typography.Text>
             )}
             {subFilterIndex !== 0 && propertyOrder && onPropertyOrderChange && (
               <Typography.Text

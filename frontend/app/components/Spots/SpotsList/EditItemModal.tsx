@@ -18,7 +18,7 @@ function EditItemModal(props: Props) {
   };
   return (
     <Modal open onClose={props.onClose}>
-      <Modal.Header className="flex items-center justify-between">
+      <Modal.Header className="flex! items-center! justify-between!">
         <div>{t('Edit Spot')}</div>
         <Button
           type="text"

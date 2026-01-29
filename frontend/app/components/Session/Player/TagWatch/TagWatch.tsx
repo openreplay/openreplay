@@ -137,7 +137,6 @@ function TagWatch() {
       <Button
         onClick={openSaveModal}
         type="primary"
-        ghost
         icon={<ZoomInOutlined />}
         disabled={selector === ''}
       >

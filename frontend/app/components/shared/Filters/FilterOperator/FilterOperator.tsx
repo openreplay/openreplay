@@ -40,7 +40,7 @@ function FilterOperator(props: Props) {
   const displayLabel = selectedOption ? (
     selectedOption.label
   ) : (
-    <Typography.Text className="text-neutral-600">
+    <Typography.Text className="text-neutral-600!">
       {placeholder}
     </Typography.Text>
   );

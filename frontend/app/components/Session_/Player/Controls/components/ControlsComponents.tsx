@@ -199,7 +199,7 @@ export function SpeedOptions({
             </div>
           }
         >
-          <Button disabled={disabled} size="small" className="font-semibold">
+          <Button disabled={disabled} size="small" className="font-semibold!">
             {`${speed}x`}
           </Button>
         </AntPopover>

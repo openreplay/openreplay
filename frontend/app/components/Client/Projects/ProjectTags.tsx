@@ -42,7 +42,7 @@ function ProjectTags() {
                 </div>
               </div>
               <div className="text-center mt-4">
-                <Typography.Text className="my-2 text-lg font-medium">
+                <Typography.Text className="my-2! text-lg! font-medium!">
                   {t('Organize and Manage Your Element Tags')}
                 </Typography.Text>
                 <div className="mb-2 text-lg text-gray-500 leading-normal">

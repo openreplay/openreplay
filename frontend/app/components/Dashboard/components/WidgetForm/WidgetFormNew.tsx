@@ -73,7 +73,7 @@ function WidgetFormNew({ layout }: { layout: string }) {
   return isPredefined ? (
     <PredefinedMessage />
   ) : (
-    <Space direction="vertical" className="w-full">
+    <Space direction="vertical" className="w-full!">
       <AdditionalFilters />
       <FilterSection
         layout={layout}

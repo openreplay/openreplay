@@ -65,7 +65,7 @@ function NoSessionPermission(props: Props) {
           )}
         </span>
       )}
-      <Button type="primary" onClick={backHandler} className="mt-6">
+      <Button type="primary" onClick={backHandler} className="mt-6!">
         {t('GO BACK')}
       </Button>
     </div>

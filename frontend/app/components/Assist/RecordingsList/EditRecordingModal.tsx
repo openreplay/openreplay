@@ -30,7 +30,7 @@ function EditRecordingModal(props: Props) {
   };
   return useObserver(() => (
     <Modal open={show} onClose={closeHandler}>
-      <Modal.Header className="flex items-center justify-between">
+      <Modal.Header className="flex! items-center! justify-between!">
         <div>{t('Rename')}</div>
         <div onClick={closeHandler}>
           <Icon color="gray-dark" size="14" name="close" />
@@ -55,10 +55,10 @@ function EditRecordingModal(props: Props) {
       </Modal.Content>
       <Modal.Footer>
         <div className="-mx-2 px-2">
-          <Button type="primary" onClick={save} className="float-left mr-2">
+          <Button type="primary" onClick={save} className="float-left! mr-2!">
             {t('Save')}
           </Button>
-          <Button className="mr-2" onClick={closeHandler}>
+          <Button className="mr-2!" onClick={closeHandler}>
             {t('Cancel')}
           </Button>
         </div>

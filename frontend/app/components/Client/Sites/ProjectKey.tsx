@@ -5,7 +5,7 @@ import { Tag } from 'antd';
 function ProjectKey({ value }: any) {
   return (
     <div className="w-fit">
-      <Tag variant="filled" className="text-base font-mono">
+      <Tag variant="filled" className="text-base! font-mono!">
         {value}
       </Tag>
     </div>

@@ -182,7 +182,7 @@ function DashboardList() {
     dashboardsSearch !== '' ? (
       <div className="text-center">
         <div>
-          <Typography.Text className="my-2 text-lg font-medium">
+          <Typography.Text className="my-2! text-lg! font-medium!">
             {t('No matching results')}
           </Typography.Text>
           <div className="mb-2 text-lg text-gray-500 my-3 leading-normal">
@@ -195,7 +195,7 @@ function DashboardList() {
     ) : (
       <div className="text-center">
         <div>
-          <Typography.Text className="my-2 text-lg font-medium">
+          <Typography.Text className="my-2! text-lg! font-medium!">
             {t('Create and organize your insights')}
           </Typography.Text>
           <div className="mb-2 text-lg text-gray-500 leading-normal">

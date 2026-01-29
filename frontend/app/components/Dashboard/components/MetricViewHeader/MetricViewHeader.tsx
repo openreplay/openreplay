@@ -64,7 +64,7 @@ function MetricViewHeader() {
           <div className="flex items-center gap-2 w-full">
             {showHeader && (
               <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']}>
-                <Button type="text" size="small" className="mt-1 pl-0! md:pl-unset">
+                <Button type="text" size="small" className="mt-1! pl-0! md:pl-unset!">
                   {options(t).find((opt) => opt.key === filter.type)?.label ||
                     t('Select Type')}
                   <DownOutlined />

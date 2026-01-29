@@ -43,7 +43,7 @@ function FooterContent({ dashboardId, selected }: any) {
         <span className="font-medium">{total}</span>
       </div>
       <div className="flex items-center">
-        <Button type="text" className="mr-2" onClick={hideModal}>
+        <Button type="text" className="mr-2!" onClick={hideModal}>
           {t('Cancel')}
         </Button>
         <Button

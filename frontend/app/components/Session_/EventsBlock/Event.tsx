@@ -160,7 +160,7 @@ const Event: React.FC<Props> = ({
                 icon
               )}
             </div>
-            <div className="ml-3" style={{ maxWidth: 'calc(100% - 20px)' }}>
+            <div className="ml-3 w-full" style={{ maxWidth: 'calc(100% - 20px)' }}>
               <div className="flex w-full items-start">
                 <div
                   className="flex flex-col justify-center items-start w-full"

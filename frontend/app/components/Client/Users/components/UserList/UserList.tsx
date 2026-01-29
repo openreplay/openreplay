@@ -64,7 +64,7 @@ function UserList(props: Props) {
             <div className="hidden md:block md:col-span-2" />
           </div>
 
-          <Divider className="m-0" />
+          <Divider className="m-0!" />
 
           {sliceListPerPage(list, userStore.page - 1, userStore.pageSize).map(
             (user: any) => (
@@ -83,7 +83,7 @@ function UserList(props: Props) {
                   isEnterprise={isEnterprise}
                   isOnboarding={isOnboarding}
                 />
-                <Divider className="m-0" />
+                <Divider className="m-0!" />
               </>
             ),
           )}

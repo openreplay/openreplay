@@ -47,7 +47,7 @@ function MetricsLibraryModal(props: Props) {
           </div>
         </div>
       </Modal.Header>
-      <Modal.Content className="p-4 pb-20">
+      <Modal.Content className="p-4! pb-20!">
         <div className="border">
           <MetricsList
             siteId={siteId}

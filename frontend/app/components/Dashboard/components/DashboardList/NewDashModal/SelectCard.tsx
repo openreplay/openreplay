@@ -148,7 +148,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
 
   return (
     <>
-      <Space className="items-center justify-between px-2">
+      <Space className="items-center! justify-between! px-2!">
         <div className="text-xl leading-4 font-medium">
           {headerText}
           {headerText === 'Select a card template to start your dashboard' && (

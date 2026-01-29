@@ -181,7 +181,7 @@ function EventDetailsModal({
           to={withSiteId(session(event?.session_id), siteId)}
           className={'ml-auto'}
         >
-          <Button className={'flex gap-2 items-center'}>
+          <Button className={'flex! gap-2! items-center!'}>
             <span>{t('Play Session')}</span>
             <Triangle size={10} color={'blue'} />
           </Button>

@@ -182,7 +182,7 @@ function IssuesSummary() {
   return (
     <>
       <Modal open={renameModal !== null} onClose={() => setRenameModal(null)}>
-        <Modal.Header className="flex items-center justify-between font-semibold">
+        <Modal.Header className="flex! items-center! justify-between! font-semibold!">
           <div>{t('Rename Issue')}</div>
           <div onClick={() => setRenameModal(null)}>
             <X size={16} />
@@ -196,7 +196,7 @@ function IssuesSummary() {
             onKeyDown={(e) => e.key === 'Enter' && onRenameSave()}
           />
         </Modal.Content>
-        <Modal.Footer className="gap-2">
+        <Modal.Footer className="gap-2!">
           <Button onClick={() => setRenameModal(null)}>{t('Close')}</Button>
           <Button type="primary" onClick={onRenameSave}>
             {t('Save')}

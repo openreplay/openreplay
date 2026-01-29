@@ -266,7 +266,7 @@ function WidgetView({
             { label: widget.name },
           ]}
         />
-        <Space direction="vertical" className="w-full" size={14}>
+        <Space direction="vertical" className="w-full!" size={14}>
           <WidgetViewHeader
             onSave={onSave}
             undoChanges={undoChanges}

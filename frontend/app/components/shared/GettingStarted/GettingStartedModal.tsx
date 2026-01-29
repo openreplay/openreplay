@@ -29,7 +29,7 @@ function GettingStartedModal(props: Props) {
         </div>
       </Modal.Header>
 
-      <Modal.Content className="p-4 pb-20">
+      <Modal.Content className="p-4! pb-20!">
         <StepList title="Pending" steps={pendingSteps} status="pending" />
         <StepList title="Completed" steps={completedSteps} status="completed" />
       </Modal.Content>

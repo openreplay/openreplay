@@ -108,7 +108,7 @@ function ProjectCaptureRate(props: Props) {
             </Tooltip>
           </Space>
 
-          <Space className="flex items-center gap-6 h-6">
+          <Space className="flex! items-center! gap-6! h-6!">
             <Switch
               checked={conditionalCapture}
               onChange={toggleRate}

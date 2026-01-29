@@ -49,7 +49,7 @@ export const FilterItem = React.memo(
           <ChevronRight size={14} className="ml-1 text-gray-400" />
         </div>
       )}
-      <Space className="grow min-w-0 items-center">
+      <Space className="grow! min-w-0! items-center!">
         <span
           className={cn(
             'text-xs flex items-center',
