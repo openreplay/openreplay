@@ -37,6 +37,27 @@ jobs:
         git config --unset http.https://github.com/.extraheader
         git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
 
+    - name: Validate tag commits are in branch
+      run: |
+        set -e
+        BRANCH_NAME=${{ github.event.inputs.branch }}
+        TAG_NAME=${{ github.event.inputs.tag }}
+        
+        # Fetch the branch to ensure we have the latest
+        git fetch origin $BRANCH_NAME
+        
+        # Check if tag has commits not in the branch using git cherry
+        UNMERGED_COMMITS=$(git cherry origin/$BRANCH_NAME $TAG_NAME | grep '^+' | wc -l)
+        
+        if [ $UNMERGED_COMMITS -gt 0 ]; then
+          echo "Error: Tag '$TAG_NAME' has commits not present in branch '$BRANCH_NAME'"
+          echo "Unmerged commits:"
+          git cherry origin/$BRANCH_NAME $TAG_NAME | grep '^+'
+          exit 1
+        fi
+        
+        echo "Validation passed: All commits in tag are present in branch"
+
     - name: Create backup tag with timestamp
       run: |
         set -e  # Exit immediately if a command exits with a non-zero status
