@@ -25,11 +25,11 @@ export const FieldNames = (field: string, type: 'user' | 'event' | 'distinct_eve
 
 export interface CommonEntry {
   name: string;
+  status?: string;
   fields: Record<string, Field>;
 }
 
 export interface CommonProp extends CommonEntry {
-  status: string;
   fields: {
     displayName: Field;
     description: Field;

@@ -34,6 +34,7 @@ function DistinctEventPage({
       openSessions={() => openSessions(event.name)}
       item={{
         name: event.name,
+        status: event.status,
         fields: {
           displayName: { value: event.displayName, readonly: false },
           description: { value: event.description, readonly: false },
