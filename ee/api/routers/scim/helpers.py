@@ -67,7 +67,7 @@ def group_name_to_role_name(group_name: str) -> str:
     if group_name is None or len(group_name) == 0:
         return group_name
 
-    prefixes = config("idp_group_prefixes", cast=lambda v: [s.strip() for s in v.split(',')], default=[])
+    prefixes = config("idp_group_prefixes", cast=lambda v: [s.strip() for s in v.split(',')], default="")
     if len(prefixes) == 0:
         prefixes = ["openreplay", "or"]
     for prefix in prefixes:
