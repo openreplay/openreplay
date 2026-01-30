@@ -16,7 +16,7 @@ COPY internal internal
 ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
-FROM alpine AS entrypoint
+FROM alpine:3.23.3 AS entrypoint
 ARG GIT_SHA
 ARG GSSAPI=false
 LABEL GIT_SHA=$GIT_SHA
