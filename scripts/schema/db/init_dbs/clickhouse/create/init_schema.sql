@@ -712,15 +712,24 @@ SELECT project_id,
        property_name,
        TRUE                                    AS is_event_property,
        auto_captured_property                  AS auto_captured,
---        Think about display name if autocaptured and not autocaptured
-       or_property_display_name(property_name) AS display_name,
-       ''                                      AS description,
-       or_property_visibility(property_name)   AS status,
        0                                       AS data_count,
        0                                       AS query_count,
        event_properties.created_at             AS created_at,
        FALSE                                   AS _edited_by_user
 FROM product_analytics.event_properties;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.users_all_properties_extractor_mv
+    TO product_analytics.all_properties AS
+SELECT project_id,
+       'users'                                 AS source,
+       property_name,
+       FALSE                                   AS is_event_property,
+       auto_captured_property                  AS auto_captured,
+       0                                       AS data_count,
+       0                                       AS query_count,
+       _timestamp                              AS created_at,
+       FALSE                                   AS _edited_by_user
+FROM product_analytics.user_properties;
 -- -------- END ---------
 
 -- Autocomplete
