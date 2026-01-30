@@ -4,13 +4,35 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
+
+type FlexUint32 uint32
+
+func (f *FlexUint32) UnmarshalJSON(data []byte) error {
+	var num float64
+	if err := json.Unmarshal(data, &num); err == nil {
+		*f = FlexUint32(num)
+		return nil
+	}
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+	n, err := strconv.ParseUint(str, 10, 32)
+	if err != nil {
+		return err
+	}
+	*f = FlexUint32(n)
+	return nil
+}
 
 type assistStatsImpl struct {
 	log         logger.Logger
@@ -61,13 +83,13 @@ func (as *assistStatsImpl) init() {
 }
 
 type AssistStatsEvent struct {
-	ProjectID  uint32 `json:"project_id"`
-	SessionID  string `json:"session_id"`
-	AgentID    string `json:"agent_id"`
-	EventID    string `json:"event_id"`
-	EventType  string `json:"event_type"`
-	EventState string `json:"event_state"`
-	Timestamp  int64  `json:"timestamp"`
+	ProjectID  FlexUint32 `json:"project_id"`
+	SessionID  string     `json:"session_id"`
+	AgentID    FlexUint32 `json:"agent_id"`
+	EventID    string     `json:"event_id"`
+	EventType  string     `json:"event_type"`
+	EventState string     `json:"event_state"`
+	Timestamp  int64      `json:"timestamp"`
 }
 
 func (as *assistStatsImpl) loadData() {
@@ -95,7 +117,7 @@ func (as *assistStatsImpl) loadData() {
 			as.log.Error(ctx, "Failed to unmarshal event: ", err)
 			continue
 		}
-		switch e.EventType {
+		switch e.EventState {
 		case "start":
 			err = as.insertEvent(e)
 		case "end":
@@ -112,7 +134,7 @@ func (as *assistStatsImpl) loadData() {
 
 func (as *assistStatsImpl) insertEvent(event *AssistStatsEvent) error {
 	insertQuery := `INSERT INTO assist_events (event_id, project_id, session_id, agent_id, event_type, timestamp) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (event_id) DO NOTHING`
-	return as.pgClient.Exec(insertQuery, event.EventID, event.ProjectID, event.SessionID, event.AgentID, event.EventType, event.Timestamp)
+	return as.pgClient.Exec(insertQuery, event.EventID, uint32(event.ProjectID), event.SessionID, int(event.AgentID), event.EventType, event.Timestamp)
 }
 
 func (as *assistStatsImpl) updateEvent(event *AssistStatsEvent) error {
