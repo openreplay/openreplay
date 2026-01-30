@@ -172,6 +172,25 @@ function AndroidInstallDocs({ site, ingestPoint }: any) {
           </div>
         </div>
       </div>
+
+      <div>
+        <div className="font-medium flex gap-2 items-center">
+          <CircleNumber text="7" />
+          <span>{t('Explore documentation')}</span>
+        </div>
+        <div className="ml-8 text-sm">
+          {t('Check out the full SDK documentation')}&nbsp;
+          <a
+            className="text-main"
+            href="https://docs.openreplay.com/en/android-sdk/init/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t('here')}
+          </a>
+          .
+        </div>
+      </div>
     </div>
   );
 }

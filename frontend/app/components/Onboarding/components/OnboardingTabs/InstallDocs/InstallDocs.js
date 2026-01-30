@@ -89,6 +89,18 @@ function InstallDocs({ site }) {
                 </div>
               </div>
             )}
+            <div className="text-sm mt-2">
+              {t('Learn more about available options')}&nbsp;
+              <a
+                className="text-main"
+                href="https://docs.openreplay.com/en/sdk/constructor/#initialization-options"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('here')}
+              </a>
+              .
+            </div>
           </div>
         </div>
       </div>
@@ -137,6 +149,25 @@ function InstallDocs({ site }) {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="font-medium mb-2 flex gap-2 items-center">
+          <CircleNumber text="4" />
+          <span>{t('Explore documentation')}</span>
+        </div>
+        <div className="ml-8 text-sm">
+          {t('Check out the full SDK documentation')}&nbsp;
+          <a
+            className="text-main"
+            href="https://docs.openreplay.com/en/sdk/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t('here')}
+          </a>
+          .
         </div>
       </div>
     </div>
