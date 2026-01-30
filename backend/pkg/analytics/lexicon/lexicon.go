@@ -66,6 +66,19 @@ func New(log logger.Logger, chConn driver.Conn) Lexicon {
 }
 
 func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string) ([]model.LexiconEvent, uint64, error) {
+	customizedEventsSubquery := `
+	          LEFT JOIN (
+	              SELECT project_id, event_name, auto_captured, display_name, description, status
+	              FROM product_analytics.all_events_customized
+	              WHERE _is_deleted = false
+	                AND project_id = ` + fmt.Sprintf("%d", projID) + `
+	              ORDER BY _timestamp DESC
+	              LIMIT 1 BY project_id, event_name, auto_captured
+	          ) aec
+	              ON aec.project_id = ae.project_id
+	              AND aec.event_name = ae.event_name
+	              AND aec.auto_captured = ae.auto_captured`
+
 	subquery := `SELECT ae.event_name AS name,
 	                 if(aec.display_name != '', aec.display_name, or_event_display_name(ae.event_name)) AS display_name,
 	                 if(aec.description != '', aec.description, or_event_description(ae.event_name)) AS description,
@@ -75,19 +88,13 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	                 ae.query_count_l30days,
 	                 ae.created_at
 	          FROM product_analytics.all_events ae
-	          LEFT JOIN product_analytics.autocomplete_events_grouped aeg
-	              ON ae.project_id = aeg.project_id
-	              AND ae.event_name = aeg.value
 	          LEFT JOIN (
-	              SELECT project_id, event_name, auto_captured, display_name, description, status
-	              FROM product_analytics.all_events_customized
-	              WHERE _is_deleted = false
-	              ORDER BY _timestamp DESC
-	              LIMIT 1 BY project_id, event_name, auto_captured
-	          ) aec
-	              ON aec.project_id = ae.project_id
-	              AND aec.event_name = ae.event_name
-	              AND aec.auto_captured = ae.auto_captured`
+	              SELECT project_id, value, data_count
+	              FROM product_analytics.autocomplete_events_grouped
+	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
+	          ) aeg
+	              ON ae.project_id = aeg.project_id
+	              AND ae.event_name = aeg.value` + customizedEventsSubquery
 
 	args := []interface{}{projID}
 
@@ -114,6 +121,8 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	          LIMIT 1 BY ae.project_id, ae.auto_captured, ae.event_name`
 
 	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
+
+	e.log.Debug(ctx, "GetDistinctEvents query: %s, args: %v", query, args)
 
 	rows, err := e.chConn.Query(ctx, query, args...)
 	if err != nil {
@@ -153,22 +162,51 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 
 func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error) {
 	usersCountColumn := "CAST(0 AS UInt64) AS users_count"
-	userJoin := ""
 	valueTypeJoin := `
-	          LEFT JOIN product_analytics.event_properties ep 
+	          LEFT JOIN (
+	              SELECT project_id, property_name, auto_captured_property, value_type, event_name
+	              FROM product_analytics.event_properties
+	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
+	          ) ep
 	              ON ap.project_id = ep.project_id 
 	              AND ap.property_name = ep.property_name
 	              AND ap.auto_captured = ep.auto_captured_property`
 	valueTypeColumn := "ep.value_type"
 
+	customizedTableSubquery := `
+	          LEFT JOIN (
+	              SELECT project_id, source, property_name, auto_captured, display_name, description, status
+	              FROM product_analytics.all_properties_customized
+	              WHERE _is_deleted = false
+	                AND project_id = ` + fmt.Sprintf("%d", projID)
+	if source != nil {
+		customizedTableSubquery += `
+	                AND source = '` + *source + `'`
+	}
+	customizedTableSubquery += `
+	              ORDER BY _timestamp DESC
+	              LIMIT 1 BY project_id, source, property_name, auto_captured
+	          ) apc
+	              ON apc.project_id = ap.project_id
+	              AND apc.source = ap.source
+	              AND apc.property_name = ap.property_name
+	              AND apc.auto_captured = ap.auto_captured`
+
 	if source != nil && *source == SourceUsers {
-		usersCountColumn = "uniqIf(aupg.user_id, aupg.user_id IS NOT NULL AND aupg.user_id != '') AS users_count"
-		userJoin = `
-	          LEFT JOIN product_analytics.autocomplete_user_properties_grouped aupg
-	              ON ap.project_id = aupg.project_id
-	              AND ap.property_name = aupg.property_name`
+		usersCountColumn = `(
+		    SELECT uniq(user_id)
+		    FROM product_analytics.autocomplete_user_properties_grouped
+		    WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
+		      AND property_name = ap.property_name
+		      AND user_id IS NOT NULL
+		      AND user_id != ''
+		) AS users_count`
 		valueTypeJoin = `
-	          LEFT JOIN product_analytics.user_properties up 
+	          LEFT JOIN (
+	              SELECT project_id, property_name, auto_captured_property, value_type
+	              FROM product_analytics.user_properties
+	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
+	          ) up
 	              ON ap.project_id = up.project_id 
 	              AND ap.property_name = up.property_name
 	              AND ap.auto_captured = up.auto_captured_property`
@@ -188,20 +226,13 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	                 ap.created_at,
 	                 ` + usersCountColumn + `
 	          FROM product_analytics.all_properties ap` + valueTypeJoin + `
-	          LEFT JOIN product_analytics.autocomplete_event_properties_grouped aepg
-	              ON ap.project_id = aepg.project_id
-	              AND ap.property_name = aepg.property_name` + userJoin + `
 	          LEFT JOIN (
-	              SELECT project_id, source, property_name, auto_captured, display_name, description, status
-	              FROM product_analytics.all_properties_customized
-	              WHERE _is_deleted = false
-	              ORDER BY _timestamp DESC
-	              LIMIT 1 BY project_id, source, property_name, auto_captured
-	          ) apc
-	              ON apc.project_id = ap.project_id
-	              AND apc.source = ap.source
-	              AND apc.property_name = ap.property_name
-	              AND apc.auto_captured = ap.auto_captured
+	              SELECT project_id, property_name, data_count
+	              FROM product_analytics.autocomplete_event_properties_grouped
+	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
+	          ) aepg
+	              ON ap.project_id = aepg.project_id
+	              AND ap.property_name = aepg.property_name` + customizedTableSubquery + `
 	          WHERE ap.project_id = ?`
 
 	args := []interface{}{projID}
@@ -210,11 +241,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		args = append(args, *source)
 	}
 	if eventName != nil {
-		if source != nil && *source == SourceUsers {
-			subquery += ` AND up.event_name = ?`
-		} else {
-			subquery += ` AND ep.event_name = ?`
-		}
+		subquery += ` AND ep.event_name = ?`
 		args = append(args, *eventName)
 	}
 
@@ -226,6 +253,8 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	          LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
 
 	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
+
+	e.log.Debug(ctx, "GetProperties query: %s, args: %v", query, args)
 
 	rows, err := e.chConn.Query(ctx, query, args...)
 	if err != nil {
@@ -384,6 +413,8 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 	                   LIMIT 1 BY project_id, auto_captured, event_name
 	               )`
 
+	e.log.Debug(ctx, "UpdateEvent check query: %s, args: [%d, %s, %v]", checkQuery, projID, req.Name, *req.AutoCaptured)
+
 	var count uint64
 	err := e.chConn.QueryRow(ctx, checkQuery, projID, req.Name, *req.AutoCaptured).Scan(&count)
 	if err != nil {
@@ -443,6 +474,8 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		created_at
 	) VALUES (?, ?, ?, ?, ?, ?, ?)`
 
+	e.log.Debug(ctx, "UpdateEvent insert query: %s, args: [%d, %s, %v, %v, %v, %v, %v]", query, projID, req.Name, *req.AutoCaptured, displayName, description, status, createdAt)
+
 	err = e.chConn.Exec(ctx, query, projID, req.Name, *req.AutoCaptured, displayName, description, status, createdAt)
 	if err != nil {
 		e.log.Error(ctx, "failed to update event %s for project %d: %v", req.Name, projID, err)
@@ -478,6 +511,8 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 	                   ORDER BY _timestamp DESC
 	                   LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured
 	               )`
+
+	e.log.Debug(ctx, "UpdateProperty check query: %s, args: [%d, %s, %s, %v]", checkQuery, projID, req.Name, req.Source, *req.AutoCaptured)
 
 	var count uint64
 	err := e.chConn.QueryRow(ctx, checkQuery, projID, req.Name, req.Source, *req.AutoCaptured).Scan(&count)
@@ -540,6 +575,8 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 		status,
 		created_at
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+	e.log.Debug(ctx, "UpdateProperty insert query: %s, args: [%d, %s, %s, %v, %v, %v, %v, %v]", query, projID, req.Source, req.Name, *req.AutoCaptured, displayName, description, status, createdAt)
 
 	err = e.chConn.Exec(ctx, query, projID, req.Source, req.Name, *req.AutoCaptured, displayName, description, status, createdAt)
 	if err != nil {
