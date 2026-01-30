@@ -80,12 +80,8 @@ h6 {
     font-weight: inherit;
 }
 
-/*
-Reset links to optimize for opt-in styling instead of opt-out.
-*/
-
 a {
-    color: inherit;
+    color: var(--color-main)!important;
     text-decoration: inherit;
 }
 
