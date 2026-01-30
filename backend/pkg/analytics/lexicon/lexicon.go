@@ -313,8 +313,8 @@ func (e *lexiconImpl) GetHiddenEvents(ctx context.Context, projID uint32) ([]Hid
 
 	query := `
 		SELECT event_name, auto_captured
-		FROM product_analytics.all_events
-		WHERE project_id = ? AND status = ?
+		FROM product_analytics.all_events_customized
+		WHERE project_id = ? AND status = ? AND _is_deleted = false
 		ORDER BY _timestamp DESC
 		LIMIT 1 BY project_id, auto_captured, event_name
 	`
@@ -354,11 +354,11 @@ func (e *lexiconImpl) GetHiddenProperties(ctx context.Context, projID uint32) ([
 	}
 
 	query := `
-		SELECT property_name, auto_captured, is_event_property
-		FROM product_analytics.all_properties
-		WHERE project_id = ? AND status = ? AND source = ?
+		SELECT property_name, auto_captured
+		FROM product_analytics.all_properties_customized
+		WHERE project_id = ? AND status = ? AND source = ? AND _is_deleted = false
 		ORDER BY _timestamp DESC
-		LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured
+		LIMIT 1 BY project_id, source, property_name, auto_captured
 	`
 
 	rows, err := e.chConn.Query(ctx, query, projID, StatusHidden, SourceEvents)
@@ -371,10 +371,11 @@ func (e *lexiconImpl) GetHiddenProperties(ctx context.Context, projID uint32) ([
 	hiddenProps := make([]HiddenProperty, 0)
 	for rows.Next() {
 		var hp HiddenProperty
-		if err := rows.Scan(&hp.PropertyName, &hp.AutoCaptured, &hp.IsEventProp); err != nil {
+		if err := rows.Scan(&hp.PropertyName, &hp.AutoCaptured); err != nil {
 			e.log.Error(ctx, "failed to scan hidden property row: %v", err)
 			continue
 		}
+		hp.IsEventProp = true
 		hiddenProps = append(hiddenProps, hp)
 	}
 
