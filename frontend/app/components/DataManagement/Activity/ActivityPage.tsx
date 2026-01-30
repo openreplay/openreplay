@@ -295,6 +295,7 @@ function ActivityPage() {
       });
     }
   };
+
   return (
     <div
       className={'flex flex-col gap-2'}
@@ -309,6 +310,7 @@ function ActivityPage() {
         >
           Clear
         </Button>
+        <Button onClick={testPushItems} type="default" size="small">debug</Button>
       </div>
       <div className={'shadow-sm rounded-lg bg-white p-4 border'}>
         <FilterListHeader

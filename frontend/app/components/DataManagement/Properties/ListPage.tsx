@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, Table, Button, Tooltip } from 'antd';
+import { Input, Table, Button, Tooltip, Switch } from 'antd';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -12,6 +12,13 @@ import { fetchList } from './api';
 import EventPropsPage from './EventPropsPage';
 import UserPropsPage from './UserProperty';
 import { TextEllipsis } from 'UI';
+
+const showHiddenKey = 'data-management-properties-show-hidden';
+function getShowHidden(): boolean {
+  const stored = localStorage.getItem(showHiddenKey);
+  if (stored === 'false') return false;
+  return true;
+}
 
 function HiddenItem() {
   return (
@@ -29,6 +36,7 @@ function ListPage() {
   const limit = 10;
   const [page, setPage] = React.useState(1);
   const [query, setQuery] = React.useState('');
+  const [showHidden, setShowHidden] = React.useState(getShowHidden);
   const { t } = useTranslation();
   const [view, setView] = React.useState<'users' | 'events'>(
     defaultView ?? 'users',
@@ -73,21 +81,24 @@ function ListPage() {
 
   const list = React.useMemo(() => {
     if (!data.properties) return [];
-    if (!query) {
-      return data.properties
-        .sort((a, b) => b.createdAt - a.createdAt)
-        .slice((page - 1) * limit, page * limit);
+    let filtered = data.properties;
+    if (!showHidden) {
+      filtered = filtered.filter((prop) => prop.status === 'visible');
     }
-    const filtered = data.properties.filter(
-      (prop) =>
-        prop.name.toLowerCase().includes(query.toLowerCase()) ||
-        prop.displayName.toLowerCase().includes(query.toLowerCase()) ||
-        prop.description.toLowerCase().includes(query.toLowerCase()),
-    );
+    if (query) {
+      const regexTest = new RegExp(query, 'i');
+      const isIncluded = (text: string) => regexTest.test(text);
+      filtered = filtered.filter(
+        (prop) =>
+          isIncluded(prop.name) ||
+          isIncluded(prop.displayName) ||
+          isIncluded(prop.description),
+      );
+    }
     return filtered
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice((page - 1) * limit, page * limit);
-  }, [page, data.properties, query]);
+  }, [page, data.properties, query, showHidden]);
 
   if (pickedItem) {
     if (view === 'users') {
@@ -159,6 +170,15 @@ function ListPage() {
       <div className={'flex items-center justify-between border-b px-4'}>
         <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
+          <Switch
+            checked={showHidden}
+            onChange={(checked) => {
+              setShowHidden(checked);
+              localStorage.setItem(showHiddenKey, String(checked));
+            }}
+            checkedChildren={t('All')}
+            unCheckedChildren={t('Visible')}
+          />
           <a
             href="https://docs.openreplay.com/en/product-analytics/data-management/"
             target="_blank"
@@ -174,7 +194,7 @@ function ListPage() {
               maxLength={256}
               onChange={(e) => setQuery(e.target.value)}
               size={'small'}
-              placeholder={t('Name, email, ID')}
+              placeholder={t('Name or description')}
             />
           </div>
         </div>

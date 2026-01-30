@@ -99,6 +99,10 @@ class UserStore {
     );
   }
 
+  get isAdmin() {
+    return this.account?.admin || this.account?.superAdmin;
+  }
+
   get isSSOSupported() {
     return (
       this.isEnterprise ||

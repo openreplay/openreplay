@@ -187,10 +187,10 @@ export default class AnalyticsStore {
         ...this.payloadFilters,
         columns: eventListColumns,
       });
-      this.events = {
-        total: data.total,
-        events: data.events.map((ev) => new Event(ev)),
-      };
+      this.setEvents(
+        data.events.map((ev) => new Event(ev)),
+        data.total,
+      );
 
       return data;
     } catch (e) {
@@ -199,6 +199,11 @@ export default class AnalyticsStore {
     } finally {
       this.setLoading(false);
     }
+  };
+
+  setEvents = (events: Event[], total: number) => {
+    this.events.events = events;
+    this.events.total = total;
   };
 
   checkLatest = async () => {

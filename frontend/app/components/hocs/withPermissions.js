@@ -14,6 +14,7 @@ export default (
       const { userStore } = useStore();
       const permissions = userStore.account.permissions ?? [];
       const { isEnterprise } = userStore;
+      const isAdmin = userStore.isAdmin;
       const hasPermission = matchAll
         ? requiredPermissions.every((permission) =>
             permissions.includes(permission),
@@ -22,7 +23,7 @@ export default (
             permissions.includes(permission),
           );
 
-      return !isEnterprise || hasPermission ? (
+      return isAdmin || !isEnterprise || hasPermission ? (
         <BaseComponent {...props} />
       ) : (
         <div className={className}>
