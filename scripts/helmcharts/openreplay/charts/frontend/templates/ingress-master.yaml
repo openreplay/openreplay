@@ -9,6 +9,8 @@ metadata:
   annotations:
     nginx.org/mergeable-ingress-type: "master"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Pass through X-Forwarded headers from upstream proxy (Cloudflare, LB, etc.)
+    nginx.org/proxy-set-headers: "X-Forwarded-Proto, X-Forwarded-Port"
 spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}" 
   tls:
