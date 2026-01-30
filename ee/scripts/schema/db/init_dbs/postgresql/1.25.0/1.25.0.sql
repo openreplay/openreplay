@@ -18,7 +18,8 @@ $fn_def$, :'next_version')
 \gexec
 
 --
-
+UPDATE public.roles
+SET permissions=array_remove(permissions, 'FEATURE_FLAGS');
 
 COMMIT;
 

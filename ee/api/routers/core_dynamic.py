@@ -590,42 +590,37 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
     return {'data': data}
 
 
-@app.post('/{project_id}/feature-flags/search', tags=["feature flags"],
-          dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
+@app.post('/{project_id}/feature-flags/search', tags=["feature flags"])
 def search_feature_flags(project_id: int,
                          data: schemas.SearchFlagsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.search_feature_flags(project_id=project_id, user_id=context.user_id, data=data)
 
 
-@app.get('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"],
-         dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
+@app.get('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
 def get_feature_flag(project_id: int, feature_flag_id: int):
     return feature_flags.get_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)
 
 
-@app.post('/{project_id}/feature-flags', tags=["feature flags"], dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
+@app.post('/{project_id}/feature-flags', tags=["feature flags"])
 def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag_data=data)
 
 
-@app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"],
-         dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
+@app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
 def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.update_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id,
                                              user_id=context.user_id, feature_flag=data)
 
 
-@app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"],
-            dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
+@app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
 def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
     return {"data": feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)}
 
 
-@app.post('/{project_id}/feature-flags/{feature_flag_id}/status', tags=["feature flags"],
-          dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
+@app.post('/{project_id}/feature-flags/{feature_flag_id}/status', tags=["feature flags"])
 def update_feature_flag_status(project_id: int, feature_flag_id: int,
                                data: schemas.FeatureFlagStatus = Body(...)):
     return {"data": feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,
