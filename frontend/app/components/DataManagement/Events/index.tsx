@@ -25,7 +25,8 @@ function getDefaultValue(): EventFilter {
 }
 
 function EventsListPage() {
-  const [eventFilter, setEventFilter] = React.useState<EventFilter>(getDefaultValue);
+  const [eventFilter, setEventFilter] =
+    React.useState<EventFilter>(getDefaultValue);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const shownEvent = searchParams.get('event');
@@ -38,11 +39,6 @@ function EventsListPage() {
     history.push({
       search: new URLSearchParams({ event: name }).toString(),
     });
-  };
-
-  const openDocs = () => {
-    const url = 'https://docs.openreplay.com/en/sdk/analytics/events/';
-    window.open(url, '_blank');
   };
 
   const limit = 10;
@@ -135,9 +131,15 @@ function EventsListPage() {
           </Dropdown>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
-            {t('Docs')}
-          </Button>
+          <a
+            href="https://docs.openreplay.com/en/product-analytics/data-management/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Button type={'text'} icon={<Album size={14} />}>
+              {t('Docs')}
+            </Button>
+          </a>
           <div className="w-[320px]">
             <Input.Search
               size={'small'}

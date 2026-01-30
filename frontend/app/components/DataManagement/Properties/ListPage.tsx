@@ -47,7 +47,11 @@ function ListPage() {
       ),
     },
   ];
-  const { data = { properties: [], total: 0 }, isPending, refetch } = useQuery({
+  const {
+    data = { properties: [], total: 0 },
+    isPending,
+    refetch,
+  } = useQuery({
     queryKey: ['props-list', view],
     queryFn: () => fetchList(view),
   });
@@ -147,10 +151,6 @@ function ListPage() {
     }
   }
 
-  const openDocs = () => {
-    const url = 'https://docs.openreplay.com/en/sdk/analytics/events/';
-    window.open(url, '_blank');
-  };
   return (
     <div
       className="flex flex-col rounded-lg border bg-white mx-auto"
@@ -159,9 +159,15 @@ function ListPage() {
       <div className={'flex items-center justify-between border-b px-4'}>
         <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
-          <Button onClick={openDocs} type={'text'} icon={<Album size={14} />}>
-            {t('Docs')}
-          </Button>
+          <a
+            href="https://docs.openreplay.com/en/product-analytics/data-management/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Button type={'text'} icon={<Album size={14} />}>
+              {t('Docs')}
+            </Button>
+          </a>
           <div className="w-[320px]">
             <Input.Search
               value={query}
