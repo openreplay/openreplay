@@ -26,9 +26,9 @@ type handlersImpl struct {
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{"/{project}/users", "POST", api.AutoRespondContextWithBody(h, h.searchUsers), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/users/{userID}", "GET", api.AutoRespondContext(h, h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/users/{userID}", "DELETE", api.AutoRespondContext(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/users/{userID}", "PUT", api.AutoRespondContextWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users/{userID}", "GET", api.AutoRespondContext(h, h.getUser), []string{"DATA_MANAGEMENT"}, "get_people_by_id"},
+		{"/{project}/users/{userID}", "DELETE", api.AutoRespondContext(h, h.deleteUser), []string{"DATA_MANAGEMENT"}, "delete_people"},
+		{"/{project}/users/{userID}", "PUT", api.AutoRespondContextWithBody(h, h.updateUser), []string{"DATA_MANAGEMENT"}, "update_people"},
 		{"/{project}/users/{userID}/activity", "POST", api.AutoRespondContextWithBody(h, h.getUserActivity), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
 	}
 }
