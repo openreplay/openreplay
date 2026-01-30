@@ -1,12 +1,13 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "tracker-family",
     },
     "tracker": {
       "name": "@openreplay/tracker",
-      "version": "17.1.3",
+      "version": "17.1.6",
       "dependencies": {
         "@openreplay/network-proxy": "^1.2.2",
         "error-stack-parser": "^2.1.4",

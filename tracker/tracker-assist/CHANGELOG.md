@@ -1,3 +1,11 @@
+## 11.0.11
+
+- security improvements and small refactoring changes
+
+## 11.0.10 & .9
+
+- small fixes related to cobrowsing and tab communication
+
 ## 11.0.8
 
 - adapt to new tracker
