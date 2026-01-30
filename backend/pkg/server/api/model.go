@@ -2,6 +2,19 @@ package api
 
 import "net/http"
 
+const (
+	SESSION_REPLAY  string = "SESSION_REPLAY"
+	SESSION_EXPORT  string = "SESSION_EXPORT"
+	DEV_TOOLS       string = "DEV_TOOLS"
+	METRICS         string = "METRICS"
+	ASSIST_LIVE     string = "ASSIST_LIVE"
+	ASSIST_CALL     string = "ASSIST_CALL"
+	FEATURE_FLAGS   string = "FEATURE_FLAGS"
+	SPOT            string = "SPOT"
+	SPOT_PUBLIC     string = "SPOT_PUBLIC"
+	DATA_MANAGEMENT string = "DATA_MANAGEMENT"
+)
+
 type Description struct {
 	Path        string
 	Method      string

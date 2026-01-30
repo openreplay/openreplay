@@ -29,8 +29,8 @@ func NewHandlers(log logger.Logger, req api.RequestHandler, events events.Events
 		events: events,
 	}
 	h.handlers = []*api.Description{
-		{"/{project}/events", "POST", req.HandleWithBody(h.eventsSearch), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/events/{eventId}", "GET", req.Handle(h.getEvent), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/events", "POST", req.HandleWithBody(h.eventsSearch), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
+		{"/{project}/events/{eventId}", "GET", req.Handle(h.getEvent), []string{api.DATA_MANAGEMENT}, "get_event_by_id"},
 	}
 	return h, nil
 }
