@@ -41,7 +41,7 @@ type SdkDataBatch struct {
 
 func NewUser(userID string) *User {
 	return &User{
-		UserID:     userID,
+		UserID:     userID[:255],
 		Properties: make(map[string]interface{}),
 	}
 }
@@ -102,6 +102,9 @@ func (u *User) SetProperty(key string, value interface{}) {
 	if !ok {
 		return
 	}
+	if key != "avatar" {
+		stringValue = stringValue[:255]
+	}
 	switch key {
 	case "email":
 		u.Email = stringValue
@@ -128,6 +131,9 @@ func (u *User) SetPropertyOnce(key string, value interface{}) {
 	stringValue, ok := value.(string)
 	if !ok {
 		return
+	}
+	if key != "avatar" {
+		stringValue = stringValue[:255]
 	}
 	switch key {
 	case "email":

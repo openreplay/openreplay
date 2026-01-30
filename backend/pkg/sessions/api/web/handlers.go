@@ -223,7 +223,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 				UserCountry:          geoInfo.Pack(),
 				UserDeviceMemorySize: req.DeviceMemory,
 				UserDeviceHeapSize:   req.JsHeapSizeLimit,
-				UserID:               req.UserID,
+				UserID:               req.UserID[:255],
 			}
 
 			// Save sessionStart to db
