@@ -753,8 +753,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_events_extractor_mv
 SELECT project_id,
        `$auto_captured` AS auto_captured,
        `$event_name`    AS event_name,
-       created_at       AS created_at,
-       FALSE            AS _edited_by_user
+       created_at       AS created_at
 FROM product_analytics.events
 GROUP BY ALL;
 
@@ -795,8 +794,7 @@ SELECT project_id,
        auto_captured_property      AS auto_captured,
        0                           AS data_count,
        0                           AS query_count,
-       event_properties.created_at AS created_at,
-       FALSE                       AS _edited_by_user
+       event_properties.created_at AS created_at
 FROM product_analytics.event_properties;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.users_all_properties_extractor_mv
@@ -808,8 +806,7 @@ SELECT project_id,
        auto_captured_property AS auto_captured,
        0                      AS data_count,
        0                      AS query_count,
-       _timestamp             AS created_at,
-       FALSE                  AS _edited_by_user
+       _timestamp             AS created_at
 FROM product_analytics.user_properties;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_events_grouped_mv
