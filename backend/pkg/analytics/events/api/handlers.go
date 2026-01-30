@@ -31,20 +31,8 @@ func NewHandlers(log logger.Logger, jsonSizeLimit int64, events events.Events, r
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{
-			Path:        "/{project}/events",
-			Method:      "POST",
-			Handler:     api.AutoRespondContextWithBody(h, h.eventsSearch),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
-		},
-		{
-			Path:        "/{project}/events/{eventId}",
-			Method:      "GET",
-			Handler:     api.AutoRespondContext(h, h.getEvent),
-			Permissions: []string{"DATA_MANAGEMENT"},
-			AuditTrail:  "",
-		},
+		{"/{project}/events", "POST", req.HandleWithBody(h.eventsSearch), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
+        {"/{project}/events/{eventId}", "GET", req.Handle(h.getEvent), []string{api.DATA_MANAGEMENT}, "get_event_by_id"},
 	}
 }
 

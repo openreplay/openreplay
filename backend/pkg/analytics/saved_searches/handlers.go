@@ -51,11 +51,11 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/{projectId}/sessions/search/save", "POST", e.saveSearch, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/sessions/search/saved", "GET", e.listSavedSearches, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/sessions/search/saved/{searchId}", "GET", e.getSavedSearch, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/sessions/search/saved/{searchId}", "PUT", e.updateSavedSearch, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/sessions/search/saved/{searchId}", "DELETE", e.deleteSavedSearch, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/sessions/search/save", "POST", e.saveSearch, []string{api.SESSION_REPLAY}, "add_saved_search"},
+		{"/{projectId}/sessions/search/saved", "GET", e.listSavedSearches, []string{api.SESSION_REPLAY}, "get_saved_searches"},
+		{"/{projectId}/sessions/search/saved/{searchId}", "GET", e.getSavedSearch, []string{api.SESSION_REPLAY}, "get_saved_search"},
+		{"/{projectId}/sessions/search/saved/{searchId}", "PUT", e.updateSavedSearch, []string{api.SESSION_REPLAY}, "update_saved_search"},
+		{"/{projectId}/sessions/search/saved/{searchId}", "DELETE", e.deleteSavedSearch, []string{api.SESSION_REPLAY}, "delete_saved_search"},
 	}
 }
 
