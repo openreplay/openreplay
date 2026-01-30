@@ -31,7 +31,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
       {icon && (
         <Icon
           name={icon}
-          className="absolute top-0 bottom-0 my-auto ml-4 z-10"
+          className="absolute! top-0! bottom-0! my-auto! ml-4! z-10!"
           size="14"
         />
       )}
@@ -42,9 +42,9 @@ const Input = React.forwardRef((props: Props, ref: any) => {
           style={{ resize: 'none' }}
           maxLength={500}
           className={cn(
-            'p-2 border border-gray-light bg-white w-full rounded-lg',
+            'p-2! border! border-gray-light! bg-white! w-full! rounded-lg!',
             className,
-            { 'pl-10': icon },
+            { 'pl-10!': icon },
           )}
           {...rest}
         />
@@ -54,9 +54,9 @@ const Input = React.forwardRef((props: Props, ref: any) => {
           type={type}
           style={{ height: `${height}px`, width: width ? `${width}px` : '' }}
           className={cn(
-            'p-2 border border-gray-light bg-white w-full rounded-lg',
+            'p-2! border! border-gray-light! bg-white! w-full! rounded-lg!',
             className,
-            { 'pl-10': icon },
+            { 'pl-10!': icon },
           )}
           {...rest}
         />
