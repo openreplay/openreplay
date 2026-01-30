@@ -67,18 +67,27 @@ func New(log logger.Logger, chConn driver.Conn) Lexicon {
 
 func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string) ([]model.LexiconEvent, uint64, error) {
 	subquery := `SELECT ae.event_name AS name,
-	                 ae.display_name,
-	                 ae.description,
-	                 ae.status,
+	                 if(aec.display_name != '', aec.display_name, or_event_display_name(ae.event_name)) AS display_name,
+	                 if(aec.description != '', aec.description, or_event_description(ae.event_name)) AS description,
+	                 aec.status AS status,
 	                 ae.auto_captured,
 	                 sumMerge(aeg.data_count) AS data_count,
 	                 ae.query_count_l30days,
-	                 ae.created_at,
-	                 ae._edited_by_user
+	                 ae.created_at
 	          FROM product_analytics.all_events ae
 	          LEFT JOIN product_analytics.autocomplete_events_grouped aeg
 	              ON ae.project_id = aeg.project_id
-	              AND ae.event_name = aeg.value`
+	              AND ae.event_name = aeg.value
+	          LEFT JOIN (
+	              SELECT project_id, event_name, auto_captured, display_name, description, status
+	              FROM product_analytics.all_events_customized
+	              WHERE _is_deleted = false
+	              ORDER BY _timestamp DESC
+	              LIMIT 1 BY project_id, event_name, auto_captured
+	          ) aec
+	              ON aec.project_id = ae.project_id
+	              AND aec.event_name = ae.event_name
+	              AND aec.auto_captured = ae.auto_captured`
 
 	args := []interface{}{projID}
 
@@ -99,9 +108,9 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	}
 
 	subquery += `
-	          GROUP BY ae.project_id, ae.event_name, ae.display_name, ae.description, ae.status, 
-	                   ae.auto_captured, ae.query_count_l30days, ae.created_at, ae._edited_by_user, ae._timestamp
-	          ORDER BY ae._timestamp DESC, ae.display_name
+	          GROUP BY ae.project_id, ae.event_name, display_name, description, status, 
+	                   ae.auto_captured, ae.query_count_l30days, ae.created_at, ae._timestamp
+	          ORDER BY ae._timestamp DESC, display_name
 	          LIMIT 1 BY ae.project_id, ae.auto_captured, ae.event_name`
 
 	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
@@ -117,11 +126,10 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	var total uint64
 	for rows.Next() {
 		var event model.LexiconEvent
-		var editedByUser bool
 		var createdAt time.Time
 		var count *uint64
 		var queryCount uint32
-		if err := rows.Scan(&total, &event.Name, &event.DisplayName, &event.Description, &event.Status, &event.AutoCaptured, &count, &queryCount, &createdAt, &editedByUser); err != nil {
+		if err := rows.Scan(&total, &event.Name, &event.DisplayName, &event.Description, &event.Status, &event.AutoCaptured, &count, &queryCount, &createdAt); err != nil {
 			e.log.Error(ctx, "failed to scan distinct event for project %d, error: %v, query: %s", projID, err, query)
 			return nil, 0, fmt.Errorf("failed to scan event row: %w", err)
 		}
@@ -168,22 +176,32 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	}
 
 	subquery := `SELECT ap.property_name AS name,
-	                 ap.display_name,
-	                 ap.description,
+	                 if(apc.display_name != '', apc.display_name, or_property_display_name(ap.property_name)) AS display_name,
+	                 apc.description AS description,
 	                 ap.source,
 	                 ` + valueTypeColumn + ` AS value_type,
 	                 ap.is_event_property,
 	                 ap.auto_captured,
-	                 ap.status,
+	                 apc.status AS status,
 	                 sumMerge(aepg.data_count) AS data_count,
 	                 ap.query_count,
 	                 ap.created_at,
-	                 ap._edited_by_user,
 	                 ` + usersCountColumn + `
 	          FROM product_analytics.all_properties ap` + valueTypeJoin + `
 	          LEFT JOIN product_analytics.autocomplete_event_properties_grouped aepg
 	              ON ap.project_id = aepg.project_id
 	              AND ap.property_name = aepg.property_name` + userJoin + `
+	          LEFT JOIN (
+	              SELECT project_id, source, property_name, auto_captured, display_name, description, status
+	              FROM product_analytics.all_properties_customized
+	              WHERE _is_deleted = false
+	              ORDER BY _timestamp DESC
+	              LIMIT 1 BY project_id, source, property_name, auto_captured
+	          ) apc
+	              ON apc.project_id = ap.project_id
+	              AND apc.source = ap.source
+	              AND apc.property_name = ap.property_name
+	              AND apc.auto_captured = ap.auto_captured
 	          WHERE ap.project_id = ?`
 
 	args := []interface{}{projID}
@@ -201,10 +219,10 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	}
 
 	subquery += `
-	          GROUP BY ap.project_id, ap.property_name, ap.display_name, ap.description, ap.source,
-	                   value_type, ap.is_event_property, ap.auto_captured, ap.status,
-	                   ap.query_count, ap.created_at, ap._edited_by_user, ap._timestamp
-	          ORDER BY ap._timestamp DESC, ap.display_name
+	          GROUP BY ap.project_id, ap.property_name, display_name, description, ap.source,
+	                   value_type, ap.is_event_property, ap.auto_captured, status,
+	                   ap.query_count, ap.created_at, ap._timestamp
+	          ORDER BY ap._timestamp DESC, display_name
 	          LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
 
 	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
@@ -222,12 +240,12 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		var property model.LexiconProperty
 		var createdAt time.Time
 		var source, valueType string
-		var isEventProperty, editedByUser bool
+		var isEventProperty bool
 		var status string
 		var dataCount *uint64
 		var queryCount uint32
 		var usersCount uint64
-		if err := rows.Scan(&total, &property.Name, &property.DisplayName, &property.Description, &source, &valueType, &isEventProperty, &property.AutoCaptured, &status, &dataCount, &queryCount, &createdAt, &editedByUser, &usersCount); err != nil {
+		if err := rows.Scan(&total, &property.Name, &property.DisplayName, &property.Description, &source, &valueType, &isEventProperty, &property.AutoCaptured, &status, &dataCount, &queryCount, &createdAt, &usersCount); err != nil {
 			e.log.Error(ctx, "failed to scan distinct property for project %d, error: %v, query: %s", projID, err, query)
 			return nil, 0, fmt.Errorf("failed to scan property row: %w", err)
 		}
@@ -377,39 +395,34 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		return fmt.Errorf("event %s with autoCaptured=%v not found for project %d", req.Name, *req.AutoCaptured, projID)
 	}
 
-	query := `INSERT INTO product_analytics.all_events (
-		project_id,
-		auto_captured,
-		event_name,
-		display_name,
-		description,
-		status,
-		event_count_l30days,
-		query_count_l30days,
-		created_at,
-		_edited_by_user,
-		_timestamp
-	)
-	SELECT 
-		project_id,
-		auto_captured,
-		event_name,
-		COALESCE(?, display_name) as display_name,
-		COALESCE(?, description) as description,
-		COALESCE(?, status) as status,
-		event_count_l30days,
-		query_count_l30days,
-		created_at,
-		true as _edited_by_user,
-		now() as _timestamp
-	FROM product_analytics.all_events
-	WHERE project_id = ?
-	  AND event_name = ?
-	  AND auto_captured = ?
-	ORDER BY _timestamp DESC
-	LIMIT 1`
+	fetchQuery := `SELECT display_name, description, status, created_at
+	               FROM product_analytics.all_events_customized
+	               WHERE project_id = ?
+	                 AND event_name = ?
+	                 AND auto_captured = ?
+	                 AND _is_deleted = false
+	               ORDER BY _timestamp DESC
+	               LIMIT 1`
 
-	var displayName, description, status interface{}
+	var existingDisplayName, existingDescription, existingStatus string
+	var existingCreatedAt time.Time
+	err = e.chConn.QueryRow(ctx, fetchQuery, projID, req.Name, *req.AutoCaptured).Scan(&existingDisplayName, &existingDescription, &existingStatus, &existingCreatedAt)
+
+	var displayName, description, status string
+	var createdAt time.Time
+
+	if err != nil {
+		createdAt = time.Now()
+		displayName = ""
+		description = ""
+		status = StatusVisible
+	} else {
+		createdAt = existingCreatedAt
+		displayName = existingDisplayName
+		description = existingDescription
+		status = existingStatus
+	}
+
 	if req.DisplayName != nil {
 		displayName = *req.DisplayName
 	}
@@ -420,7 +433,17 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		status = *req.Status
 	}
 
-	err = e.chConn.Exec(ctx, query, displayName, description, status, projID, req.Name, *req.AutoCaptured)
+	query := `INSERT INTO product_analytics.all_events_customized (
+		project_id,
+		event_name,
+		auto_captured,
+		display_name,
+		description,
+		status,
+		created_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?)`
+
+	err = e.chConn.Exec(ctx, query, projID, req.Name, *req.AutoCaptured, displayName, description, status, createdAt)
 	if err != nil {
 		e.log.Error(ctx, "failed to update event %s for project %d: %v", req.Name, projID, err)
 		return fmt.Errorf("failed to update event: %w", err)
@@ -444,62 +467,59 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 		return fmt.Errorf("source must be one of: %s, %s, %s", SourceSessions, SourceUsers, SourceEvents)
 	}
 
-	fetchQuery := `SELECT is_event_property
-	               FROM product_analytics.all_properties
-	               WHERE project_id = ?
-	                 AND property_name = ?
-	                 AND source = ?
-	                 AND auto_captured = ?
-	               ORDER BY _timestamp DESC
-	               LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured`
+	checkQuery := `SELECT COUNT(*)
+	               FROM (
+	                   SELECT 1
+	                   FROM product_analytics.all_properties
+	                   WHERE project_id = ?
+	                     AND property_name = ?
+	                     AND source = ?
+	                     AND auto_captured = ?
+	                   ORDER BY _timestamp DESC
+	                   LIMIT 1 BY project_id, source, property_name, is_event_property, auto_captured
+	               )`
 
-	var isEventProperty bool
-	err := e.chConn.QueryRow(ctx, fetchQuery, projID, req.Name, req.Source, *req.AutoCaptured).Scan(&isEventProperty)
+	var count uint64
+	err := e.chConn.QueryRow(ctx, checkQuery, projID, req.Name, req.Source, *req.AutoCaptured).Scan(&count)
 	if err != nil {
-		e.log.Error(ctx, "failed to fetch property %s for project %d: %v", req.Name, projID, err)
-		return fmt.Errorf("property %s with source=%s, autoCaptured=%v not found for project %d: %w",
-			req.Name, req.Source, *req.AutoCaptured, projID, err)
+		e.log.Error(ctx, "failed to check property existence %s for project %d: %v", req.Name, projID, err)
+		return fmt.Errorf("failed to check property existence: %w", err)
 	}
 
-	query := `INSERT INTO product_analytics.all_properties (
-		project_id,
-		source,
-		property_name,
-		is_event_property,
-		auto_captured,
-		display_name,
-		description,
-		status,
-		data_count,
-		query_count,
-		created_at,
-		_edited_by_user,
-		_timestamp
-	)
-	SELECT 
-		project_id,
-		source,
-		property_name,
-		is_event_property,
-		auto_captured,
-		COALESCE(?, display_name) as display_name,
-		COALESCE(?, description) as description,
-		COALESCE(?, status) as status,
-		data_count,
-		query_count,
-		created_at,
-		true as _edited_by_user,
-		now() as _timestamp
-	FROM product_analytics.all_properties
-	WHERE project_id = ?
-	  AND property_name = ?
-	  AND source = ?
-	  AND is_event_property = ?
-	  AND auto_captured = ?
-	ORDER BY _timestamp DESC
-	LIMIT 1`
+	if count == 0 {
+		return fmt.Errorf("property %s with source=%s, autoCaptured=%v not found for project %d",
+			req.Name, req.Source, *req.AutoCaptured, projID)
+	}
 
-	var displayName, description, status interface{}
+	fetchQuery := `SELECT display_name, description, status, created_at
+	               FROM product_analytics.all_properties_customized
+	               WHERE project_id = ?
+	                 AND source = ?
+	                 AND property_name = ?
+	                 AND auto_captured = ?
+	                 AND _is_deleted = false
+	               ORDER BY _timestamp DESC
+	               LIMIT 1`
+
+	var existingDisplayName, existingDescription, existingStatus string
+	var existingCreatedAt time.Time
+	err = e.chConn.QueryRow(ctx, fetchQuery, projID, req.Source, req.Name, *req.AutoCaptured).Scan(&existingDisplayName, &existingDescription, &existingStatus, &existingCreatedAt)
+
+	var displayName, description, status string
+	var createdAt time.Time
+
+	if err != nil {
+		createdAt = time.Now()
+		displayName = ""
+		description = ""
+		status = StatusVisible
+	} else {
+		createdAt = existingCreatedAt
+		displayName = existingDisplayName
+		description = existingDescription
+		status = existingStatus
+	}
+
 	if req.DisplayName != nil {
 		displayName = *req.DisplayName
 	}
@@ -510,7 +530,18 @@ func (e *lexiconImpl) UpdateProperty(ctx context.Context, projID uint32, req mod
 		status = *req.Status
 	}
 
-	err = e.chConn.Exec(ctx, query, displayName, description, status, projID, req.Name, req.Source, isEventProperty, *req.AutoCaptured)
+	query := `INSERT INTO product_analytics.all_properties_customized (
+		project_id,
+		source,
+		property_name,
+		auto_captured,
+		display_name,
+		description,
+		status,
+		created_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+	err = e.chConn.Exec(ctx, query, projID, req.Source, req.Name, *req.AutoCaptured, displayName, description, status, createdAt)
 	if err != nil {
 		e.log.Error(ctx, "failed to update property %s for project %d: %v", req.Name, projID, err)
 		return fmt.Errorf("failed to update property: %w", err)
