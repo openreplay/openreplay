@@ -26,10 +26,12 @@ import NewEventsBadge from './NewEventsBadge';
 import { Icon } from 'UI';
 import { useHistory } from 'react-router';
 import withPageTitle from '@/components/hocs/withPageTitle';
+import { useTranslation } from 'react-i18next';
 
 const columnOrderKey = '$__activity_columns_order__$';
 
 function ActivityPage() {
+  const { t } = useTranslation();
   const history = useHistory();
   const searchParams = new URLSearchParams(window.location.search);
   const eventId = searchParams.get('event_id');
@@ -53,7 +55,7 @@ function ActivityPage() {
 
   const columns: TableProps<Event>['columns'] = [
     {
-      title: 'Event Name',
+      title: t('Event Name'),
       dataIndex: 'event_name',
       key: 'event_name',
       sorter: true,
@@ -69,7 +71,7 @@ function ActivityPage() {
       ),
     },
     {
-      title: 'Time',
+      title: t('Time'),
       dataIndex: 'created_at',
       key: 'created_at',
       sorter: true,
@@ -78,7 +80,7 @@ function ActivityPage() {
       render: (text) => formatTimeOrDate(text, timezone),
     },
     {
-      title: 'Distinct ID',
+      title: t('Distinct ID'),
       dataIndex: 'distinct_id',
       key: 'distinct_id',
       sorter: true,
@@ -108,7 +110,7 @@ function ActivityPage() {
       },
     },
     {
-      title: 'City',
+      title: t('City'),
       dataIndex: 'city',
       key: 'city',
       sorter: true,
@@ -116,7 +118,7 @@ function ActivityPage() {
       className: 'cursor-pointer!',
     },
     {
-      title: 'Environment',
+      title: t('Environment'),
       dataIndex: 'environment',
       key: 'environment',
       sorter: true,
@@ -308,13 +310,12 @@ function ActivityPage() {
           onClick={analyticsStore.reset}
           disabled={!analyticsStore.payloadFilters.filters.length}
         >
-          Clear
+          {t('Clear')}
         </Button>
-        <Button onClick={testPushItems} type="default" size="small">debug</Button>
       </div>
       <div className={'shadow-sm rounded-lg bg-white p-4 border'}>
         <FilterListHeader
-          title="Events"
+          title={t('Events')}
           orderProps={appliedFilter}
           filterSelection={
             <FilterSelection
@@ -333,7 +334,7 @@ function ActivityPage() {
         />
 
         <UnifiedFilterList
-          title="Events"
+          title={t("Events")}
           filters={appliedEvents}
           isDraggable={true}
           showIndices={true}
@@ -347,7 +348,7 @@ function ActivityPage() {
         <Divider className="my-3!" />
 
         <FilterListHeader
-          title="Filters"
+          title={t("Filters")}
           filterSelection={
             <FilterSelection
               filters={propertyOptions}
@@ -365,7 +366,7 @@ function ActivityPage() {
         />
 
         <UnifiedFilterList
-          title="Filters"
+          title={t("Filters")}
           filters={appliedFilter.filters.filter((f) => !f.isEvent)}
           className="mt-2"
           isDraggable={false}
@@ -419,7 +420,7 @@ function ActivityPage() {
                 onClick={analyticsStore.fetchEvents}
                 icon={<Icon name={'arrow-repeat'} size={20} />}
               >
-                Refresh
+                {t('Refresh')}
               </Button>
             </div>
           ) : (
