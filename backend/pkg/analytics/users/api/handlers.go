@@ -33,11 +33,11 @@ func NewHandlers(log logger.Logger, req api.RequestHandler, users users.Users) (
 		users: users,
 	}
 	h.handlers = []*api.Description{
-		{"/{project}/users", "POST", req.HandleWithBody(h.searchUsers), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/users/{userID}", "GET", req.Handle(h.getUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/users/{userID}", "DELETE", req.Handle(h.deleteUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/users/{userID}", "PUT", req.HandleWithBody(h.updateUser), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/users/{userID}/activity", "POST", req.HandleWithBody(h.getUserActivity), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/users", "POST", req.HandleWithBody(h.searchUsers), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
+		{"/{project}/users/{userID}", "GET", req.Handle(h.getUser), []string{api.DATA_MANAGEMENT}, "get_people_by_id"},
+		{"/{project}/users/{userID}", "DELETE", req.Handle(h.deleteUser), []string{api.DATA_MANAGEMENT}, "delete_people"},
+		{"/{project}/users/{userID}", "PUT", req.HandleWithBody(h.updateUser), []string{api.DATA_MANAGEMENT}, "update_people"},
+		{"/{project}/users/{userID}/activity", "POST", req.HandleWithBody(h.getUserActivity), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
 	}
 	return h, nil
 }
