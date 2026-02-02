@@ -20,7 +20,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "ua-parser-js": "^2.0.3",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.57.0",
+    "uWebSockets.js": "https://github.com/uNetworking/uWebSockets.js.git#v20.57.0",
     "winston": "^3.17.0"
   }
 }
