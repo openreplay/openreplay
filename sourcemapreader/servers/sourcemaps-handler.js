@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const sourceMap = require('source-map');
-const AWS = require('aws-sdk');
+const {S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
 const {BlobServiceClient, StorageSharedKeyCredential} = require("@azure/storage-blob");
 const URL = require('url');
 const http = require('http');
@@ -154,7 +154,7 @@ module.exports.sourcemapReader = async event => {
                     let options = {
                         Bucket: event.bucket,
                         Key: event.key,
-                        fileSize: (data.ContentLength / 1024) / 1024,
+                        fileSize: (response.length / 1024) / 1024,
                         fileSizeUnit: 'Mb',
                         downloadTime: (getObjectEnd - getObjectStart) / 1000,
                         downloadTimeUnit: 's',
@@ -179,39 +179,38 @@ module.exports.sourcemapReader = async event => {
             // Download the file from S3
             let s3;
             if (process.env.S3_HOST) {
-                s3 = new AWS.S3({
+                s3 = new S3Client({
                     endpoint: process.env.S3_HOST,
-                    accessKeyId: process.env.S3_KEY,
-                    secretAccessKey: process.env.S3_SECRET,
-                    s3ForcePathStyle: true, // needed with minio?
-                    signatureVersion: 'v4'
+                    credentials: {
+                        accessKeyId: process.env.S3_KEY,
+                        secretAccessKey: process.env.S3_SECRET,
+                    },
+                    forcePathStyle: true, // needed with minio?
                 });
             } else if (process.env.aws_access_key_id) {
-                s3 = new AWS.S3({
-                    'AccessKeyID': process.env.aws_access_key_id,
-                    'SecretAccessKey': process.env.aws_secret_access_key,
-                    'Region': process.env.aws_region
+                s3 = new S3Client({
+                    credentials: {
+                        accessKeyId: process.env.aws_access_key_id,
+                        secretAccessKey: process.env.aws_secret_access_key,
+                    },
+                    region: process.env.aws_region,
                 });
             } else if (process.env.aws_region) {
-                s3 = new AWS.S3({
-                    'Region': process.env.aws_region
+                s3 = new S3Client({
+                    region: process.env.aws_region,
                 });
             } else {
-                s3 = new AWS.S3();
+                s3 = new S3Client();
             }
 
             let options = {
                 Bucket: event.bucket,
                 Key: event.key
             };
-            return new Promise(function (resolve, reject) {
+            return new Promise(async function (resolve, reject) {
                 const getObjectStart = Date.now();
-                s3.getObject(options, (err, data) => {
-                    if (err) {
-                        console.error("[SR] Get S3 object failed");
-                        console.error(err);
-                        return reject(err);
-                    }
+                try {
+                    const data = await s3.send(new GetObjectCommand(options));
                     const getObjectEnd = Date.now();
                     options.fileSize = (data.ContentLength / 1024) / 1024;
                     options.fileSizeUnit = 'Mb';
@@ -220,9 +219,13 @@ module.exports.sourcemapReader = async event => {
                     if (options.fileSize >= 3) {
                         console.log("[SR] large file:" + JSON.stringify(options));
                     }
-                    let sourcemap = data.Body.toString();
+                    let sourcemap = await data.Body.transformToString();
                     return parseSourcemap(sourcemap, event, options, resolve, reject);
-                });
+                } catch (err) {
+                    console.error("[SR] Get S3 object failed");
+                    console.error(err);
+                    return reject(err);
+                }
             });
         }
     }
