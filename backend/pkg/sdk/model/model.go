@@ -41,7 +41,7 @@ type SdkDataBatch struct {
 
 func NewUser(userID string) *User {
 	return &User{
-		UserID:     userID,
+		UserID:     trimString(userID, 255),
 		Properties: make(map[string]interface{}),
 	}
 }
@@ -74,7 +74,9 @@ type User struct {
 	State         string                 `ch:"$state"`
 	City          string                 `ch:"$city"`
 	OrApiEndpoint string                 `ch:"$or_api_endpoint"`
+	CreatedAt     time.Time              `ch:"$created_at"`
 	FirstEventAt  time.Time              `ch:"$first_event_at"`
+	LastSeen      time.Time              `ch:"$last_seen"`
 }
 
 var defaultUserProperties = map[string]struct{}{
@@ -99,6 +101,9 @@ func (u *User) SetProperty(key string, value interface{}) {
 	stringValue, ok := value.(string)
 	if !ok {
 		return
+	}
+	if key != "avatar" {
+		stringValue = trimString(stringValue, 255)
 	}
 	switch key {
 	case "email":
@@ -126,6 +131,9 @@ func (u *User) SetPropertyOnce(key string, value interface{}) {
 	stringValue, ok := value.(string)
 	if !ok {
 		return
+	}
+	if key != "avatar" {
+		stringValue = trimString(stringValue, 255)
 	}
 	switch key {
 	case "email":
@@ -201,4 +209,11 @@ func (u *User) PropertiesString() string {
 		return ""
 	}
 	return string(res)
+}
+
+func trimString(str string, ln int) string {
+	if len(str) < ln {
+		return str
+	}
+	return str[:ln]
 }

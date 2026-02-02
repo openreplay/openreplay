@@ -215,7 +215,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 				UserCountry:          geoInfo.Pack(),
 				UserDeviceMemorySize: req.DeviceMemory,
 				UserDeviceHeapSize:   req.JsHeapSizeLimit,
-				UserID:               req.UserID,
+				UserID:               trimString(req.UserID, 255),
 			}
 
 			// Save sessionStart to db
@@ -281,6 +281,13 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	modifyResponse(req, startResponse)
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, startResponse, startTime, r.URL.Path, bodySize)
+}
+
+func trimString(str string, ln int) string {
+	if len(str) < ln {
+		return str
+	}
+	return str[:ln]
 }
 
 func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
