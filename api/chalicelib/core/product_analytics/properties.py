@@ -320,9 +320,8 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
             """SELECT all_properties_customized.property_name                  AS name,
                       all_properties_customized.display_name,
                       event_properties.auto_captured_property                  AS auto_captured,
-                      array_agg(DISTINCT all_properties.value_type) AS possible_types
+                      array_agg(DISTINCT event_properties.value_type) AS possible_types
                FROM product_analytics.event_properties
-                        INNER JOIN product_analytics.all_properties USING (property_name)
                         LEFT JOIN product_analytics.all_properties_customized USING (property_name)
                WHERE event_properties.project_id = %(project_id)s
                  AND event_properties.event_name = %(event_name)s
