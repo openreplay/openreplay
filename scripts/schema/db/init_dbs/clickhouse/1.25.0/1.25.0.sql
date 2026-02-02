@@ -1,8 +1,5 @@
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.25.0';
 
-ALTER TABLE product_analytics.all_events
-    ADD COLUMN status LowCardinality(String) DEFAULT 'visible' COMMENT 'visible/hidden/dropped' AFTER description;
-
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_version_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_country_mv;
@@ -145,16 +142,16 @@ WHERE isNotNull(t.2)
 GROUP BY ALL;
 
 ALTER TABLE product_analytics.all_events
-    DROP COLUMN display_name,
-    DROP COLUMN description,
-    DROP COLUMN status,
-    DROP COLUMN _edited_by_user;
+    DROP COLUMN IF EXISTS display_name,
+    DROP COLUMN IF EXISTS description,
+    DROP COLUMN IF EXISTS status,
+    DROP COLUMN IF EXISTS _edited_by_user;
 
 ALTER TABLE product_analytics.all_properties
-    DROP COLUMN display_name,
-    DROP COLUMN description,
-    DROP COLUMN status,
-    DROP COLUMN _edited_by_user;
+    DROP COLUMN IF EXISTS display_name,
+    DROP COLUMN IF EXISTS description,
+    DROP COLUMN IF EXISTS status,
+    DROP COLUMN IF EXISTS _edited_by_user;
 
 CREATE TABLE IF NOT EXISTS product_analytics.all_events_customized
 (
