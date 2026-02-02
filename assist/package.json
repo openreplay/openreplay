@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
-    "@fastify/deepmerge": "^2.0.0",
+    "@fastify/deepmerge": "^3.0.0",
     "@maxmind/geoip2-node": "^4.2.0",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
