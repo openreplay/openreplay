@@ -5,10 +5,10 @@ FROM --platform=linux/$ARCH ubuntu:24.04
 LABEL Maintainer="Zavorotynskiy Alexander <zavorotynskiy@pm.me>"
 COPY --from=node /usr/local/bin/node /usr/local/bin/
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
-RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+RUN apt-get update && apt-get install -y --no-install-recommends tini git libatomic1 && rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
     ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx && \
-    npm install -g npm@latest && \
-    apt-get update && apt-get install -y --no-install-recommends tini git libatomic1 && rm -rf /var/lib/apt/lists/*
+    npm install -g npm@latest
 ARG envarg
 ENV ENTERPRISE_BUILD=${envarg} \
   MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
