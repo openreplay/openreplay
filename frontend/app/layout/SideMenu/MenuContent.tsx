@@ -12,6 +12,8 @@ interface Props {
   isCollapsed?: boolean;
 }
 
+const tagClass = 'text-xs ml-0.5! mr-0! px-1! py-0!';
+
 export default function MenuContent({
   menu,
   isMenuItemActive,
@@ -88,7 +90,7 @@ export default function MenuContent({
                     <Tag
                       color={it.tag.color}
                       variant={it.tag.border ? 'outlined' : 'filled'}
-                      className="text-xs ml-0.5! mr-0!"
+                      className={tagClass}
                     >
                       {it.tag.label}
                     </Tag>
@@ -118,7 +120,7 @@ export default function MenuContent({
                           <Tag
                             color={child.tag.color}
                             variant={child.tag.border ? 'outlined' : 'filled'}
-                            className="text-xs ml-auto"
+                            className={tagClass}
                           >
                             {child.tag.label}
                           </Tag>
@@ -152,7 +154,7 @@ export default function MenuContent({
                   <Tag
                     color={it.tag.color}
                     variant={it.tag.border ? 'outlined' : 'filled'}
-                    className="text-xs ml-2"
+                    className={tagClass}
                   >
                     {it.tag.label}
                   </Tag>
