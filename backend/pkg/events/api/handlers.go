@@ -33,8 +33,8 @@ func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, e
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/{project}/sessions/{session}/events", "GET", h.getEvents, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
-		{"/{project}/sessions/{session}/clickmaps", "POST", h.getClickmaps, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/events", "GET", h.getEvents, []string{api.SESSION_REPLAY, "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/clickmaps", "POST", h.getClickmaps, []string{api.SESSION_REPLAY, "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
 	}
 }
 

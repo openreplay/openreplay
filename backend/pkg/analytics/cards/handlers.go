@@ -41,13 +41,13 @@ type handlersImpl struct {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/{projectId}/cards", "POST", e.createCard, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/cards", "GET", e.getCardsPaginated, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/cards/{id}", "GET", e.getCard, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/cards/{id}", "PUT", e.updateCard, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/cards/{id}", "POST", e.updateCard, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/cards/{id}", "DELETE", e.deleteCard, api.NoPermissions, api.DoNotTrack},
-		{"/{projectId}/cards/{id}/sessions", "POST", e.getCardSessions, api.NoPermissions, api.DoNotTrack},
+		{"/{projectId}/cards", "POST", e.createCard, []string{api.METRICS}, "add_card_to_dashboard"},
+		{"/{projectId}/cards", "GET", e.getCardsPaginated, []string{api.METRICS}, "get_cards"},
+		{"/{projectId}/cards/{id}", "GET", e.getCard, []string{api.METRICS}, "get_card"},
+		{"/{projectId}/cards/{id}", "PUT", e.updateCard, []string{api.METRICS}, "update_card"},
+		{"/{projectId}/cards/{id}", "POST", e.updateCard, []string{api.METRICS}, "update_card"},
+		{"/{projectId}/cards/{id}", "DELETE", e.deleteCard, []string{api.METRICS}, "delete_card"},
+		{"/{projectId}/cards/{id}/sessions", "POST", e.getCardSessions, []string{api.METRICS}, "try_card_sessions"},
 	}
 }
 

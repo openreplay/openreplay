@@ -30,10 +30,10 @@ func NewHandlers(log logger.Logger, req api.RequestHandler, lexicon lexicon.Lexi
 		lexicon: lexicon,
 	}
 	h.handlers = []*api.Description{
-		{"/{project}/lexicon/events", "GET", req.Handle(h.getDistinctEvents), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/lexicon/properties", "GET", req.Handle(h.getProperties), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/lexicon/events", "PUT", req.HandleWithBody(h.updateEvent), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
-		{"/{project}/lexicon/properties", "PUT", req.HandleWithBody(h.updateProperty), []string{"DATA_MANAGEMENT"}, api.DoNotTrack},
+		{"/{project}/lexicon/events", "GET", req.Handle(h.getDistinctEvents), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
+		{"/{project}/lexicon/properties", "GET", req.Handle(h.getProperties), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
+		{"/{project}/lexicon/events", "PUT", req.HandleWithBody(h.updateEvent), []string{api.DATA_MANAGEMENT}, "update_event"},
+		{"/{project}/lexicon/properties", "PUT", req.HandleWithBody(h.updateProperty), []string{api.DATA_MANAGEMENT}, "update_property"},
 	}
 	return h, nil
 }
