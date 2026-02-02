@@ -261,8 +261,8 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(
                     PREDEFINED_PROPERTIES[snake_case_name]["type"]
                 )
-                if p["auto_captured"] and p["display_name"] is None:
-                    p["display_name"] = PREDEFINED_PROPERTIES[snake_case_name]["display_name"]
+                if p["autoCaptured"] and p["displayName"] is None:
+                    p["displayName"] = PREDEFINED_PROPERTIES[snake_case_name]["displayName"]
             else:
                 p["_foundInPredefinedList"] = False
                 p["dataType"] = next(iter(p["possibleTypes"]), "string")
