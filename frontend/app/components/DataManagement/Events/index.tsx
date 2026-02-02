@@ -52,6 +52,10 @@ function EventsListPage() {
   const onPageChange = (page: number) => {
     setPage(page);
   };
+  const onSearch = (value: string) => {
+    setQuery(value);
+    setPage(1);
+  };
   const list = React.useMemo(() => {
     if (shownEvent) return [];
     const filteredByType = data.events.filter((e) => {
@@ -149,7 +153,7 @@ function EventsListPage() {
               value={query}
               allowClear
               maxLength={256}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => onSearch(e.target.value)}
             />
           </div>
         </div>

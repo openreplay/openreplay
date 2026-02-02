@@ -41,6 +41,12 @@ function ListPage() {
   const [view, setView] = React.useState<'users' | 'events'>(
     defaultView ?? 'users',
   );
+
+  const onSearch = (value: string) => {
+    setQuery(value);
+    setPage(1);
+  };
+
   const views = [
     {
       key: 'users',
@@ -192,7 +198,7 @@ function ListPage() {
             <Input.Search
               value={query}
               maxLength={256}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => onSearch(e.target.value)}
               size={'small'}
               placeholder={t('Name or description')}
             />
