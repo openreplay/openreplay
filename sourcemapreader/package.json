@@ -18,10 +18,10 @@
   },
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
-    "@azure/storage-blob": "^12.17.0",
-    "aws-sdk": "^2.1606.0",
-    "express": "^4.21.1",
-    "source-map": "^0.7.4",
-    "winston": "^3.13.0"
+    "@aws-sdk/client-s3": "^3.980.0",
+    "@azure/storage-blob": "^12.30.0",
+    "express": "^5.2.1",
+    "source-map": "^0.7.6",
+    "winston": "^3.19.0"
   }
 }
