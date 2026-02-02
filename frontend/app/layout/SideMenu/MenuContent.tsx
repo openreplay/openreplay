@@ -12,7 +12,7 @@ interface Props {
   isCollapsed?: boolean;
 }
 
-const tagClass = 'text-xs ml-0.5! mr-0! px-1! py-0!';
+const tagClass = 'text-xs ml-2! mr-0! px-1! py-0!';
 
 export default function MenuContent({
   menu,
