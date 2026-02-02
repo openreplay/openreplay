@@ -1,17 +1,19 @@
-import React from 'react';
-import { Input, Button, Dropdown, MenuProps } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { useHistory, useLocation } from 'react-router-dom';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { Album } from 'lucide-react';
-import withPermissions from 'HOCs/withPermissions';
-import EventsList from './EventsList';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { fetchList } from './api';
-import DistinctEventPage from './DistinctEvent';
+import withPermissions from 'HOCs/withPermissions';
+import { Button, Dropdown, Input, MenuProps } from 'antd';
+import { Album } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useHistory, useLocation } from 'react-router-dom';
+
+import { useStore } from 'App/mstore';
 import { sessions, withSiteId } from 'App/routes';
+
+import DistinctEventPage from './DistinctEvent';
+import EventsList from './EventsList';
+import { fetchList } from './api';
 
 type EventFilter = 'all' | 'autocaptured' | 'my_events';
 

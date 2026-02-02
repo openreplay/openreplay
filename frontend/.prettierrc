@@ -3,6 +3,7 @@
   "useTabs": false,
   "printWidth": 80,
   "singleQuote": true,
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
   "importOrder": ["^Components|^App|^UI|^Duck", "^Shared", "^[./]"],
