@@ -163,7 +163,7 @@ function EventsListPage() {
         list={list}
         page={page}
         limit={limit}
-        total={data.total}
+        total={query ? list.length : data.total}
         listLen={list.length}
         isPending={isPending}
         onPageChange={onPageChange}

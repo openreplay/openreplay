@@ -168,6 +168,7 @@ function ListPage() {
     }
   }
 
+  const total = query ? list.length : data.total;
   return (
     <div
       className="flex flex-col rounded-lg border bg-white mx-auto"
@@ -212,14 +213,14 @@ function ListPage() {
           isLoading={isPending}
           toUserProp={openProp}
           limit={limit}
-          total={data.total}
+          total={total}
           onPageChange={(page) => setPage(page)}
         />
       ) : (
         <EventPropsList
           list={list}
           limit={limit}
-          total={data.total}
+          total={total}
           page={page}
           isLoading={isPending}
           toEventProp={openProp}
