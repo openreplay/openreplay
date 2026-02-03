@@ -68,7 +68,7 @@ diagnosticMode:
 ##
 image:
   registry: docker.io
-  repository: bitnami/kafka
+  repository: bitnamilegacy/kafka
   tag: 3.3.1-debian-11-r34
   digest: ""
   ## Specify a imagePullPolicy
@@ -761,7 +761,7 @@ externalAccess:
     ##
     image:
       registry: docker.io
-      repository: bitnami/kubectl
+      repository: bitnamilegacy/kubectl
       tag: 1.25.5-debian-11-r11
       digest: ""
       ## Specify a imagePullPolicy
@@ -1000,7 +1000,7 @@ volumePermissions:
   ##
   image:
     registry: docker.io
-    repository: bitnami/bitnami-shell
+    repository: bitnamilegacy/bitnami-shell
     tag: 11-debian-11-r71
     digest: ""
     pullPolicy: IfNotPresent
@@ -1080,7 +1080,7 @@ metrics:
     ##
     image:
       registry: docker.io
-      repository: bitnami/kafka-exporter
+      repository: bitnamilegacy/kafka-exporter
       tag: 1.6.0-debian-11-r48
       digest: ""
       ## Specify a imagePullPolicy
@@ -1316,7 +1316,7 @@ metrics:
     ##
     image:
       registry: docker.io
-      repository: bitnami/jmx-exporter
+      repository: bitnamilegacy/jmx-exporter
       tag: 0.17.2-debian-11-r37
       digest: ""
       ## Specify a imagePullPolicy

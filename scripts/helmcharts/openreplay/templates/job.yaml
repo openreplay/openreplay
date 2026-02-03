@@ -151,7 +151,7 @@ spec:
         - name: datadir
           mountPath: /mnt/efs
       - name: postgres-check
-        image: bitnami/postgresql:16.3.0
+        image: bitnamilegacy/postgresql:16.3.0
         env:
           - name: PGHOST
             value: "{{ .Values.global.postgresql.postgresqlHost }}"
@@ -283,7 +283,7 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
-        image: bitnami/postgresql:16.3.0
+        image: bitnamilegacy/postgresql:16.3.0
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
@@ -296,7 +296,7 @@ spec:
           mountPath: /opt/migrations/
       {{- if or .Values.minio.enabled .Values.minio.forceInit }}
       - name: minio
-        image: bitnami/minio:2023.11.20
+        image: bitnamilegacy/minio:2023.11.20
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
@@ -466,7 +466,7 @@ spec:
         - name: dbmigrationscript
           mountPath: /opt/migrations/
       - name: kafka
-        image: bitnami/kafka:2.6.0-debian-10-r30
+        image: bitnamilegacy/kafka:3.3 
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:

@@ -14,7 +14,7 @@ global:
 ##
 image:
   registry: docker.io
-  repository: bitnami/postgresql
+  repository: bitnamilegacy/postgresql
   tag: 11.9.0-debian-10-r48
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -50,7 +50,7 @@ volumePermissions:
   enabled: false
   image:
     registry: docker.io
-    repository: bitnami/minideb
+    repository: bitnamilegacy/minideb
     tag: buster
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -662,7 +662,7 @@ metrics:
 
   image:
     registry: docker.io
-    repository: bitnami/postgres-exporter
+    repository: bitnamilegacy/postgres-exporter
     tag: 0.8.0-debian-10-r242
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
