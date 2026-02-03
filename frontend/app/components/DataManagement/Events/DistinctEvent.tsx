@@ -1,10 +1,11 @@
-import React from 'react';
-import type { DistinctEvent } from './api';
 import { dataManagement, withSiteId } from '@/routes';
-import DataItemPage from '../DataItemPage';
+import React from 'react';
 import { toast } from 'react-toastify';
-import { updateEventProperty } from './api';
+
+import DataItemPage from '../DataItemPage';
 import DistinctEventPropsList from './DistinctEventPropsList';
+import type { DistinctEvent } from './api';
+import { updateEventProperty } from './api';
 
 function DistinctEventPage({
   event,
