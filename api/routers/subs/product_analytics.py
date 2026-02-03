@@ -111,7 +111,7 @@ def autocomplete_properties(projectId: int, propertyName: str, eventName: Option
                             live: bool = False, context: schemas.CurrentContext = Depends(OR_context),
 ):
     if live:
-        return assist.autocomplete(project_id=projectId, q=q, key=eventName)
+        return assist.autocomplete(project_id=projectId, q=q, key=propertyName)
     # Auto-captured properties should be transformed from camelCase to snake_case
     if ac:
         propertyName = helper.key_to_snake_case(propertyName)
