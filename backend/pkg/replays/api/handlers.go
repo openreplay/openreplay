@@ -22,9 +22,9 @@ type handlersImpl struct {
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/{project}/sessions/{session}/first-mob", "GET", h.getFirstMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, api.DoNotTrack},
-		{"/{project}/unprocessed/{session}/dom.mob", "GET", h.getUnprocessedMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE"}, api.DoNotTrack},
-		{"/{project}/unprocessed/{session}/devtools.mob", "GET", h.getUnprocessedDevtools, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE", "DEV_TOOLS", "SERVICE_DEV_TOOLS"}, api.DoNotTrack},
+		{"/{project}/sessions/{session}/first-mob", "GET", h.getFirstMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY"}, "get_first_mob_file"},
+		{"/{project}/unprocessed/{session}/dom.mob", "GET", h.getUnprocessedMob, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE"}, "get_unprocessed_mob_file"},
+		{"/{project}/unprocessed/{session}/devtools.mob", "GET", h.getUnprocessedDevtools, []string{"SESSION_REPLAY", "SERVICE_SESSION_REPLAY", "ASSIST_LIVE", "SERVICE_ASSIST_LIVE", "DEV_TOOLS", "SERVICE_DEV_TOOLS"}, "get_unprocessed_devtools_file"},
 	}
 }
 
