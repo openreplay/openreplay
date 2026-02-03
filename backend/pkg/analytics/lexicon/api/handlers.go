@@ -81,14 +81,16 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (any, int, error
 }
 
 // @Summary Get Properties
-// @Description Retrieve a list of properties.
+// @Description Retrieve a list of properties with pagination support.
 // @Tags Analytics - Lexicon
 // @Accept json
 // @Produce json
 // @Param project path uint true "Project ID"
 // @Param source query string false "Source filter (events, users, or sessions)"
 // @Param eventName query string false "Event name filter"
-// @Success 200 {object} []model.LexiconProperty
+// @Param limit query int false "Number of properties to return (default 500, max 500)"
+// @Param page query int false "Page number for pagination (default 1)"
+// @Success 200 {object} model.LexiconPropertiesResponse
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 413 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
@@ -115,7 +117,22 @@ func (h *handlersImpl) getProperties(r *api.RequestContext) (any, int, error) {
 		eventName = &eventNameParam
 	}
 
-	properties, total, err := h.lexicon.GetProperties(r.Request.Context(), projID, source, eventName)
+	limit := lexicon.DefaultPropertiesLimit
+	if limitParam := r.Request.URL.Query().Get("limit"); limitParam != "" {
+		if parsedLimit, err := strconv.Atoi(limitParam); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	page := 1
+	if pageParam := r.Request.URL.Query().Get("page"); pageParam != "" {
+		if parsedPage, err := strconv.Atoi(pageParam); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+	offset := filters.CalculateOffset(page, limit)
+
+	properties, total, err := h.lexicon.GetProperties(r.Request.Context(), projID, source, eventName, limit, offset)
 	if err != nil {
 		h.log.Error(r.Request.Context(), "failed to get properties for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
