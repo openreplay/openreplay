@@ -571,7 +571,7 @@ func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, val
 			}
 		}
 
-		if fieldValue != "" && strings.Contains(strings.ToLower(fieldValue), lowerValue) {
+		if lowerValue == "" || (fieldValue != "" && strings.Contains(strings.ToLower(fieldValue), lowerValue)) {
 			matches[fieldValue] = struct{}{}
 		}
 	}

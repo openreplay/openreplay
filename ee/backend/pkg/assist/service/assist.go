@@ -42,8 +42,6 @@ func (a *assistImpl) Autocomplete(projectKey string, query *Query) (interface{},
 		return nil, fmt.Errorf("query is required")
 	case query.Key == "":
 		return nil, fmt.Errorf("query key is required")
-	case query.Value == "":
-		return nil, fmt.Errorf("query value is required")
 	}
 	project, err := a.projects.GetProjectByKey(projectKey)
 	if err != nil {
