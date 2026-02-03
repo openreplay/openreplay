@@ -41,9 +41,14 @@ type HiddenProperty struct {
 	IsEventProp  bool
 }
 
+const (
+	DefaultPropertiesLimit = 500
+	MaxPropertiesLimit     = 500
+)
+
 type Lexicon interface {
 	GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string) ([]model.LexiconEvent, uint64, error)
-	GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error)
+	GetProperties(ctx context.Context, projID uint32, source *string, eventName *string, limit, offset int) ([]model.LexiconProperty, uint64, error)
 	UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error
 	UpdateProperty(ctx context.Context, projID uint32, req model.UpdatePropertyRequest, userID string) error
 	GetHiddenEvents(ctx context.Context, projID uint32) ([]HiddenEvent, error)
@@ -160,99 +165,144 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	return events, total, nil
 }
 
-func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string, eventName *string) ([]model.LexiconProperty, uint64, error) {
+func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *string, eventName *string, limit, offset int) ([]model.LexiconProperty, uint64, error) {
+	if limit <= 0 {
+		limit = DefaultPropertiesLimit
+	}
+	if limit > MaxPropertiesLimit {
+		limit = MaxPropertiesLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	projIDStr := fmt.Sprintf("%d", projID)
+
 	usersCountColumn := "CAST(0 AS UInt64) AS users_count"
+	usersCountJoin := ""
+
+	eventNameFilter := ""
+	valueTypeJoinType := "LEFT JOIN"
+	if eventName != nil {
+		eventNameFilter = ` AND event_name = '` + *eventName + `'`
+		valueTypeJoinType = "INNER JOIN"
+	}
 	valueTypeJoin := `
-	          LEFT JOIN (
-	              SELECT project_id, property_name, auto_captured_property, value_type, event_name
-	              FROM product_analytics.event_properties
-	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
-	          ) ep
-	              ON ap.project_id = ep.project_id 
-	              AND ap.property_name = ep.property_name
-	              AND ap.auto_captured = ep.auto_captured_property`
+	    ` + valueTypeJoinType + ` (
+	        SELECT project_id, property_name, auto_captured_property,
+	               anyLast(value_type) AS value_type
+	        FROM product_analytics.event_properties
+	        WHERE project_id = ` + projIDStr + eventNameFilter + `
+	        GROUP BY project_id, property_name, auto_captured_property
+	    ) ep
+	        ON ap.project_id = ep.project_id
+	        AND ap.property_name = ep.property_name
+	        AND ap.auto_captured = ep.auto_captured_property`
 	valueTypeColumn := "ep.value_type"
 
 	customizedTableSubquery := `
-	          LEFT JOIN (
-	              SELECT project_id, source, property_name, auto_captured, display_name, description, status
-	              FROM product_analytics.all_properties_customized
-	              WHERE _is_deleted = false
-	                AND project_id = ` + fmt.Sprintf("%d", projID)
+	    LEFT JOIN (
+	        SELECT project_id, source, property_name, auto_captured, display_name, description, status
+	        FROM product_analytics.all_properties_customized
+	        WHERE _is_deleted = false
+	          AND project_id = ` + projIDStr
 	if source != nil {
 		customizedTableSubquery += `
-	                AND source = '` + *source + `'`
+	          AND source = '` + *source + `'`
 	}
 	customizedTableSubquery += `
-	              ORDER BY _timestamp DESC
-	              LIMIT 1 BY project_id, source, property_name, auto_captured
-	          ) apc
-	              ON apc.project_id = ap.project_id
-	              AND apc.source = ap.source
-	              AND apc.property_name = ap.property_name
-	              AND apc.auto_captured = ap.auto_captured`
+	        ORDER BY _timestamp DESC
+	        LIMIT 1 BY project_id, source, property_name, auto_captured
+	    ) apc
+	        ON apc.project_id = ap.project_id
+	        AND apc.source = ap.source
+	        AND apc.property_name = ap.property_name
+	        AND apc.auto_captured = ap.auto_captured`
+
+	dataCountJoin := ""
+	dataCountColumn := "0 AS data_count"
 
 	if source != nil && *source == SourceUsers {
-		usersCountColumn = `(
-		    SELECT uniq(user_id)
-		    FROM product_analytics.autocomplete_user_properties_grouped
-		    WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
-		      AND property_name = ap.property_name
-		      AND user_id IS NOT NULL
-		      AND user_id != ''
-		) AS users_count`
+		usersCountColumn = "coalesce(uc.users_count, 0) AS users_count"
+		dataCountColumn = "coalesce(uc.data_count, 0) AS data_count"
+		usersCountJoin = `
+	    LEFT JOIN (
+	        SELECT project_id, property_name, 
+	               sumMerge(data_count) AS data_count,
+	               count(DISTINCT user_id) AS users_count
+	        FROM product_analytics.autocomplete_user_properties_grouped
+	        WHERE project_id = ` + projIDStr + `
+	        GROUP BY project_id, property_name
+	    ) uc
+	        ON ap.project_id = uc.project_id
+	        AND ap.property_name = uc.property_name`
+
 		valueTypeJoin = `
-	          LEFT JOIN (
-	              SELECT project_id, property_name, auto_captured_property, value_type
-	              FROM product_analytics.user_properties
-	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
-	          ) up
-	              ON ap.project_id = up.project_id 
-	              AND ap.property_name = up.property_name
-	              AND ap.auto_captured = up.auto_captured_property`
+	    LEFT JOIN (
+	        SELECT project_id, property_name, auto_captured_property,
+	               anyLast(value_type) AS value_type
+	        FROM product_analytics.user_properties
+	        WHERE project_id = ` + projIDStr + `
+	        GROUP BY project_id, property_name, auto_captured_property
+	    ) up
+	        ON ap.project_id = up.project_id
+	        AND ap.property_name = up.property_name
+	        AND ap.auto_captured = up.auto_captured_property`
 		valueTypeColumn = "up.value_type"
+	} else {
+		dataCountEventFilter := ""
+		if eventName != nil {
+			dataCountEventFilter = ` AND event_name = '` + *eventName + `'`
+		}
+		dataCountColumn = "coalesce(aepg.data_count, 0) AS data_count"
+		dataCountJoin = `
+	    LEFT JOIN (
+	        SELECT project_id, property_name, sumMerge(data_count) AS data_count
+	        FROM product_analytics.autocomplete_event_properties_grouped
+	        WHERE project_id = ` + projIDStr + dataCountEventFilter + `
+	        GROUP BY project_id, property_name
+	    ) aepg
+	        ON ap.project_id = aepg.project_id
+	        AND ap.property_name = aepg.property_name`
 	}
 
-	subquery := `SELECT ap.property_name AS name,
-	                 if(apc.display_name != '', apc.display_name, or_property_display_name(ap.property_name)) AS display_name,
-	                 apc.description AS description,
-	                 ap.source,
-	                 ` + valueTypeColumn + ` AS value_type,
-	                 ap.is_event_property,
-	                 ap.auto_captured,
-	                 coalesce(nullIf(apc.status, ''), 'visible') AS status,
-	                 sumMerge(aepg.data_count) AS data_count,
-	                 ap.query_count,
-	                 ap.created_at,
-	                 ` + usersCountColumn + `
-	          FROM product_analytics.all_properties ap` + valueTypeJoin + `
-	          LEFT JOIN (
-	              SELECT project_id, property_name, data_count
-	              FROM product_analytics.autocomplete_event_properties_grouped
-	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
-	          ) aepg
-	              ON ap.project_id = aepg.project_id
-	              AND ap.property_name = aepg.property_name` + customizedTableSubquery + `
-	          WHERE ap.project_id = ?`
+	subquery := `SELECT 
+	        ap.property_name AS name,
+	        if(apc.display_name != '', apc.display_name, or_property_display_name(ap.property_name)) AS display_name,
+	        coalesce(apc.description, '') AS description,
+	        ap.source,
+	        any(` + valueTypeColumn + `) AS value_type,
+	        ap.is_event_property,
+	        ap.auto_captured,
+	        coalesce(nullIf(apc.status, ''), 'visible') AS status,
+	        ` + dataCountColumn + `,
+	        ap.query_count,
+	        ap.created_at,
+	        ` + usersCountColumn + `
+	    FROM product_analytics.all_properties ap` + valueTypeJoin + dataCountJoin + usersCountJoin + customizedTableSubquery + `
+	    WHERE ap.project_id = ?`
 
 	args := []interface{}{projID}
 	if source != nil {
 		subquery += ` AND ap.source = ?`
 		args = append(args, *source)
 	}
-	if eventName != nil {
-		subquery += ` AND ep.event_name = ?`
-		args = append(args, *eventName)
+
+	groupByDataCount := "aepg.data_count"
+	groupByExtra := ""
+	if source != nil && *source == SourceUsers {
+		groupByDataCount = "uc.data_count"
+		groupByExtra = ", uc.users_count"
 	}
 
 	subquery += `
-	          GROUP BY ap.project_id, ap.property_name, display_name, description, ap.source,
-	                   value_type, ap.is_event_property, ap.auto_captured, status,
-	                   ap.query_count, ap.created_at, ap._timestamp
-	          ORDER BY ap._timestamp DESC, display_name
-	          LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
+	    GROUP BY ap.project_id, ap.property_name, display_name, description, ap.source,
+	             ap.is_event_property, ap.auto_captured, status,
+	             ap.query_count, ap.created_at, ` + groupByDataCount + groupByExtra + `
+	    ORDER BY ap.created_at DESC, display_name
+	    LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
 
-	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
+	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `) LIMIT ? OFFSET ?`
+	args = append(args, limit, offset)
 
 	e.log.Debug(ctx, "GetProperties query: %s, args: %v", query, args)
 
