@@ -1,19 +1,20 @@
-import React from 'react';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Input, Segmented, Select, Tag } from 'antd';
+import { Hourglass } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from 'antd';
 import { VList, VListHandle } from 'virtua';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { Icon, NoContent } from 'UI';
+
+import BottomBlock from '../BottomBlock';
 import JumpButton from '../JumpButton';
 import { useRegExListFilterMemo } from '../useListFilter';
-import BottomBlock from '../BottomBlock';
-import { NoContent, Icon } from 'UI';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Segmented, Select, Tag } from 'antd';
-import { LongAnimationTask } from './type';
 import Script from './Script';
 import TaskTimeline from './TaskTimeline';
-import { Hourglass } from 'lucide-react';
+import { LongAnimationTask } from './type';
 
 interface Row extends LongAnimationTask {
   time: number;
@@ -249,10 +250,10 @@ function TaskTitle({
         <Tag
           variant="filled"
           color="red"
-          className="font-mono rounded-lg text-xs flex gap-1 items-center color-red"
+          className="font-mono! rounded-lg! text-xs! flex! gap-1! items-center! color-red!"
         >
-          <Hourglass size={11} /> {Math.round(entry.blockingDuration!)} ms
-          blocking
+          <Hourglass size={11} /> {Math.round(entry.blockingDuration!)}
+          <div>ms blocking</div>
         </Tag>
       ) : null}
     </div>

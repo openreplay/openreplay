@@ -1,17 +1,19 @@
-import React from 'react';
-import cn from 'classnames';
-import { observer } from 'mobx-react-lite';
-import { Button, Divider, Space, Card } from 'antd';
-import { ChevronDown, ChevronUp, Trash, Plus } from 'lucide-react';
-import SeriesName from './SeriesName';
 import { useStore } from '@/mstore';
 import { Filter } from '@/mstore/types/filterConstants';
-import FilterSelection from 'Shared/Filters/FilterSelection';
+import FilterItem from '@/mstore/types/filterItem';
+import IFilterSeries from '@/mstore/types/filterSeries';
+import { Button, Card, Divider, Space } from 'antd';
+import cn from 'classnames';
+import { ChevronDown, ChevronUp, Plus, Trash } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { toast } from 'react-toastify';
+
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
-import IFilterSeries from '@/mstore/types/filterSeries';
-import FilterItem from '@/mstore/types/filterItem';
-import { toast } from 'react-toastify';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+
+import SeriesName from './SeriesName';
 
 const FilterCountLabels = observer(
   (props: { filters: any; toggleExpand: any }) => {
@@ -168,7 +170,9 @@ function FilterSeries(props: Props) {
   const actualEvents = indexedFilters.filter((f) => f.isEvent);
   const actualProperties = indexedFilters.filter((f) => !f.isEvent);
 
-  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
+  const allFilterOptions: Filter[] = filterStore.getScopedCurrentProjectFilters(
+    ['sessions'],
+  );
   const eventOptions: Filter[] = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions: Filter[] = allFilterOptions.filter((i) => !i.isEvent);
 
@@ -201,7 +205,6 @@ function FilterSeries(props: Props) {
   const disableEvents = series.maxEvents
     ? actualEvents.length >= series.maxEvents
     : false;
-
 
   const activeFilters = indexedFilters.map((f) => f.name);
 
@@ -289,6 +292,7 @@ function FilterSeries(props: Props) {
                 isDraggable={true}
                 showIndices={true}
                 className="mt-2"
+                scope={'sessions'}
                 handleRemove={
                   disableEvents
                     ? undefined
@@ -332,6 +336,7 @@ function FilterSeries(props: Props) {
           <UnifiedFilterList
             title="Filters"
             filters={actualProperties}
+            scope={'sessions'}
             isDraggable={false}
             showIndices={false}
             className="mt-2"
