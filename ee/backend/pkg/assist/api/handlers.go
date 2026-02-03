@@ -78,8 +78,8 @@ func getQuery(r *http.Request) (*service.Query, error) {
 		Key:   params.Get("key"),
 		Value: params.Get("q"),
 	}
-	if q.Key == "" || q.Value == "" {
-		return nil, fmt.Errorf("empty key or value")
+	if q.Key == "" {
+		return nil, fmt.Errorf("empty key")
 	}
 	return q, nil
 }
