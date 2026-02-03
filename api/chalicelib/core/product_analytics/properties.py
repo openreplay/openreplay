@@ -261,8 +261,8 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(
                     PREDEFINED_PROPERTIES[snake_case_name]["type"]
                 )
-                if p["auto_captured"] and p["display_name"] is None:
-                    p["display_name"] = PREDEFINED_PROPERTIES[snake_case_name]["display_name"]
+                if p["autoCaptured"] and p["displayName"] is None:
+                    p["displayName"] = PREDEFINED_PROPERTIES[snake_case_name]["displayName"]
             else:
                 p["_foundInPredefinedList"] = False
                 p["dataType"] = next(iter(p["possibleTypes"]), "string")
@@ -317,17 +317,18 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
         ]
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT all_properties.property_name                    AS name,
-                      all_properties.display_name,
-                      event_properties.auto_captured_property         AS auto_captured,
+            """SELECT all_properties_customized.property_name                  AS name,
+                      all_properties_customized.display_name,
+                      event_properties.auto_captured_property                  AS auto_captured,
                       array_agg(DISTINCT event_properties.value_type) AS possible_types
                FROM product_analytics.event_properties
-                        INNER JOIN product_analytics.all_properties USING (property_name)
+                        LEFT JOIN product_analytics.all_properties_customized USING (property_name)
                WHERE event_properties.project_id = %(project_id)s
-                 AND all_properties.project_id = %(project_id)s
                  AND event_properties.event_name = %(event_name)s
                  AND event_properties.auto_captured_property = %(auto_captured)s
-                 AND all_properties.status = 'visible'
+                 AND (isNull(all_properties_customized.project_id)
+                   OR (all_properties_customized.project_id = %(project_id)s
+                       AND all_properties_customized.status = 'visible'))
                GROUP BY ALL
                ORDER BY 1;""",
             parameters={
