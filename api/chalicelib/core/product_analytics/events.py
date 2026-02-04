@@ -90,7 +90,7 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
             FROM product_analytics.all_events 
                 LEFT JOIN product_analytics.all_events_customized AS aec USING (project_id, auto_captured, event_name) 
             WHERE project_id=%(project_id)s
-                {"" if include_all else "AND (aec.status = 'visible' OR isNull(aec.status))"}
+                {"" if include_all else "AND (aec.status = 'visible' OR aec.status='')"}
             ORDER BY auto_captured, aec.display_name, all_events.event_name;""",
             parameters={"project_id": project_id},
         )
