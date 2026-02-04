@@ -103,11 +103,9 @@ function EventsBlock(props: IProps) {
       let shouldAdd = true;
       if (zoomEnabled) {
         if ('time' in e) {
-          if (e.time >= zoomStartTs && e.time <= zoomEndTs) {
-            shouldAdd = true;
-          } else {
-            shouldAdd = false;
-          }
+          shouldAdd = e.time >= zoomStartTs && e.time <= zoomEndTs;
+        } else {
+          shouldAdd = false;
         }
       }
       if (shouldAdd && uiPlayerStore.showOnlySearchEvents) {
