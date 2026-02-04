@@ -7,12 +7,11 @@
     },
     "tracker": {
       "name": "@openreplay/tracker",
-      "version": "17.1.6",
+      "version": "17.2.0",
       "dependencies": {
         "@openreplay/network-proxy": "^1.2.2",
         "error-stack-parser": "^2.1.4",
         "error-stack-parser-es": "^0.1.5",
-        "fflate": "^0.8.2",
         "web-vitals": "^5.1.0",
       },
       "devDependencies": {

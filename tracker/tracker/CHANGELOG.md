@@ -1,3 +1,7 @@
+## 17.2.0
+
+- remove fflate in favor of native compression streams
+
 ## 17.1.6
 
 - canvas module refactoring to add batching, max concurrent requests limit, memory clearing on stop
