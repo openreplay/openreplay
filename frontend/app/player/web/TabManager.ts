@@ -446,12 +446,16 @@ export default class TabSessionManager {
     const lastLocationMsg = this.locationManager.moveGetLast(t, index, true);
     if (lastLocationMsg) {
       const { tabNames, location } = this.state.get();
+      const newTabNames = { ...tabNames };
       if (location !== lastLocationMsg.url) {
         if (lastLocationMsg.documentTitle) {
-          tabNames[this.id] = lastLocationMsg.documentTitle;
+          newTabNames[this.id] = lastLocationMsg.documentTitle;
         }
         // @ts-ignore comes from parent state
-        this.state.update({ location: lastLocationMsg.url, tabNames });
+        this.state.update({
+          location: lastLocationMsg.url,
+          tabNames: newTabNames,
+        });
       }
     }
 

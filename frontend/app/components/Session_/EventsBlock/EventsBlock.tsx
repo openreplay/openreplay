@@ -1,20 +1,22 @@
+import { CloseOutlined } from '@ant-design/icons';
 import { mergeEventLists, sortEvents } from 'Types/session';
 import { TYPES } from 'Types/session/event';
+import { Button, Tooltip } from 'antd';
 import cn from 'classnames';
+import { Search } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { VList, VListHandle } from 'virtua';
-import { Button, Tooltip } from 'antd';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
-import { Search } from 'lucide-react';
+
+import { frameworkIcons, getDefaultFramework } from '../UnitStepsModal';
 import EventGroupWrapper from './EventGroupWrapper';
 import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
-import { useTranslation } from 'react-i18next';
-import { CloseOutlined } from '@ant-design/icons';
-import { getDefaultFramework, frameworkIcons } from '../UnitStepsModal';
 
 interface IProps {
   setActiveTab: (tab?: string) => void;
@@ -92,24 +94,32 @@ function EventsBlock(props: IProps) {
       ...(notes ?? []),
     ].sort(sortEvents);
 
-    return mergeEventLists(
+    const allEvents = mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
       tabChangeEvents,
-    )
-      .filter((e) =>
-        zoomEnabled
-          ? 'time' in e
-            ? e.time >= zoomStartTs && e.time <= zoomEndTs
-            : false
-          : true,
-      )
-      .filter((e: any) =>
-        !e.noteId &&
-        e.type !== 'TABCHANGE' &&
-        uiPlayerStore.showOnlySearchEvents
-          ? e.isHighlighted
-          : true,
-      );
+    );
+    const filteredCombinedEvents: any[] = [];
+    for (const e of allEvents) {
+      let shouldAdd = true;
+      if (zoomEnabled) {
+        if ('time' in e) {
+          shouldAdd = e.time >= zoomStartTs && e.time <= zoomEndTs;
+        } else {
+          shouldAdd = false;
+        }
+      }
+      if (shouldAdd && uiPlayerStore.showOnlySearchEvents) {
+        shouldAdd = 'isHighlighted' in e ? !!e.isHighlighted : false;
+      }
+      if (shouldAdd && 'type' in e && e.type === 'TABCHANGE') {
+        shouldAdd = !!e.fromTab;
+      }
+
+      if (shouldAdd) {
+        filteredCombinedEvents.push(e);
+      }
+    }
+    return filteredCombinedEvents;
   };
 
   const usedEvents = React.useMemo(
@@ -233,8 +243,6 @@ function EventsBlock(props: IProps) {
   };
 
   const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
-  const eventsText = `${query ? t('Filtered') : ''} ${usedEvents.length} Events`;
-
   return (
     <>
       <div
