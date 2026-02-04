@@ -114,7 +114,6 @@ up to date with every new library you use.
 | html2canvas                       | MIT                | JavaScript      |
 | eget                              | MIT                | Infrastructure  |
 | @medv/finder                      | MIT                | JavaScript      |
-| fflate                            | MIT                | JavaScript      |
 | fzstd                             | MIT                | JavaScript      |
 | prom-client                       | Apache2            | JavaScript      |
 | winston                           | MIT                | JavaScript      |

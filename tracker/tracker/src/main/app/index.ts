@@ -1,5 +1,3 @@
-import { gzip } from 'fflate'
-
 import type {
   FromWorkerData,
   Options as WebworkerOptions,
@@ -355,11 +353,7 @@ export default class App {
     })
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
-        if (
-          !userID ||
-          typeof userID !== 'string' ||
-          userID.trim().length === 0
-        ) {
+        if (!userID || typeof userID !== 'string' || userID.trim().length === 0) {
           this.debug.warn('Invalid userID (must be type string), ignoring.')
           return
         }
@@ -443,10 +437,10 @@ export default class App {
           }
         }
         if (ev.data.line === proto.reset) {
-          const newToken = ev.data.token;
+          const newToken = ev.data.token
           this.debug.log('Received reset signal from another tab')
           this.session.setSessionToken(newToken, this.projectKey)
-          this.restart();
+          this.restart()
         }
       }
     }
@@ -746,7 +740,7 @@ export default class App {
         this.handleWorkerMsg(data)
       }
 
-      let closing = false;
+      let closing = false
       const alertWorker = () => {
         if (closing) {
           return
@@ -763,7 +757,12 @@ export default class App {
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
       this.attachEventListener(window, 'pagehide', alertWorker, false, false)
       // TODO: stop session after inactivity timeout (make configurable)
-      this.attachEventListener(document, 'visibilitychange', (e) => document.visibilityState === 'hidden' && alertWorker(), false)
+      this.attachEventListener(
+        document,
+        'visibilitychange',
+        (e) => document.visibilityState === 'hidden' && alertWorker(),
+        false,
+      )
     } catch (e) {
       this._debug('worker_start', e)
     }
@@ -808,14 +807,20 @@ export default class App {
       const batch = data.batch
       const batchSize = batch.byteLength
       if (batchSize > this.compressionThreshold) {
-        gzip(data.batch, { mtime: 0 }, (err, result) => {
-          if (err) {
+        const blob = new Blob([batch as BlobPart])
+        const stream = blob.stream().pipeThrough(new CompressionStream('gzip'))
+        new Response(stream)
+          .arrayBuffer()
+          .then((compressedBuffer) => {
+            this.worker?.postMessage({
+              type: 'compressed',
+              batch: new Uint8Array(compressedBuffer),
+            })
+          })
+          .catch((err) => {
             this.debug.error('Openreplay compression error:', err)
             this.worker?.postMessage({ type: 'uncompressed', batch: batch })
-          } else {
-            this.worker?.postMessage({ type: 'compressed', batch: result })
-          }
-        })
+          })
       } else {
         this.worker?.postMessage({ type: 'uncompressed', batch: batch })
       }
@@ -895,8 +900,8 @@ export default class App {
     if (!this.messages.length) {
       // Release empty batches every 30 secs (1000 * 30ms)
       if (this.emptyBatchCounter < 1000) {
-        this.emptyBatchCounter++;
-        return;
+        this.emptyBatchCounter++
+        return
       }
     }
 
@@ -1417,7 +1422,7 @@ export default class App {
       // Reset session metadata only if requested directly
       this.session.reset()
     }
-    const userId = startOpts.userID ? startOpts.userID.trim() : undefined;
+    const userId = startOpts.userID ? startOpts.userID.trim() : undefined
     this.session.assign({
       // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
       userID: userId || undefined,
