@@ -8546,15 +8546,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.2.4":
-  version: 3.2.6
-  resolution: "dompurify@npm:3.2.6"
+"dompurify@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "dompurify@npm:3.3.1"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10c1/19f97c5a9024216e5d5ccd010d156d3d5b2651e207c7e43fd2b36f7e7551c6526ad00c93ea356c5e643dd5f75a049be63c1728b3879fcc7da7b75bd3ae78f886
+  checksum: 10c1/3644ea6781fc0932a3bdeadddc900a1fe8fa7b98c7a6d5628596298defc9e83c55fc87339d9f44aad8907bcdadcc89d431e8ceafde34019907c168d89660866d
   languageName: node
   linkType: hard
 
@@ -11708,14 +11708,14 @@ __metadata:
   linkType: hard
 
 "js-yaml@npm:^3.13.1":
-  version: 3.14.1
-  resolution: "js-yaml@npm:3.14.1"
+  version: 3.14.2
+  resolution: "js-yaml@npm:3.14.2"
   dependencies:
     argparse: "npm:^1.0.7"
     esprima: "npm:^4.0.0"
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 10c1/f8a9ac7bcf567f04748ccd4ed7ef68ef63124104283ba73288d5686d8385e54fe99aaafafb4567a6f47b97c7f9d3d5f1deeeecff06182580adcd0bd188f30a5d
+  checksum: 10c1/10199e3cd1939a7afb6b78ad9da5c326dba949bccb048cbd99acb7e01d387132fc638cd128a1e635b96f3a7c904903075e7a34130ed0c16b1ef1bcc1bb0f87ac
   languageName: node
   linkType: hard
 
@@ -11895,14 +11895,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jspdf@npm:4.0.0":
-  version: 4.0.0
-  resolution: "jspdf@npm:4.0.0"
+"jspdf@npm:4.1.0":
+  version: 4.1.0
+  resolution: "jspdf@npm:4.1.0"
   dependencies:
     "@babel/runtime": "npm:^7.28.4"
     canvg: "npm:^3.0.11"
     core-js: "npm:^3.6.0"
-    dompurify: "npm:^3.2.4"
+    dompurify: "npm:^3.3.1"
     fast-png: "npm:^6.2.0"
     fflate: "npm:^0.8.1"
     html2canvas: "npm:^1.0.0-rc.5"
@@ -11915,7 +11915,7 @@ __metadata:
       optional: true
     html2canvas:
       optional: true
-  checksum: 10c1/d3fb68f7ebac04ac56bd48ca08b51f559a9c82ba2c5ed46a87b6de625fda748c65f3d8f640f439b90c60cc2c5a00c57e883907dae56080d6ac7ec0c4edd7b998
+  checksum: 10c1/0051570d8d81d7ff8d8c2e4adbbd88e5898515996dc3c0bd66d88d2df2b3592e7562435ac303f3d3e3162a0b8b0c5f83835088c88c236c59bb0d0ba63f80c59c
   languageName: node
   linkType: hard
 
@@ -12271,9 +12271,9 @@ __metadata:
   linkType: hard
 
 "lodash@npm:^4.17.21, lodash@npm:^4.17.4":
-  version: 4.17.21
-  resolution: "lodash@npm:4.17.21"
-  checksum: 10c1/6685947648ec73f930ee998f6aca9ab327c560d5421f19bece469edf188701d989f7a66782f8d20370085d5307752e625cb7f2ef3c93802723d13980621749e4
+  version: 4.17.23
+  resolution: "lodash@npm:4.17.23"
+  checksum: 10c1/c9c8ab5a4cb749f00f48d9ae6840f6e73659bcf28cee32bc78180d5c485eb31380b1df25331d6cea23f1832fa4e559df291339ad38ecd76b0627aa0e7f297943
   languageName: node
   linkType: hard
 
@@ -12622,8 +12622,8 @@ __metadata:
   linkType: hard
 
 "mdast-util-to-hast@npm:^13.0.0":
-  version: 13.2.0
-  resolution: "mdast-util-to-hast@npm:13.2.0"
+  version: 13.2.1
+  resolution: "mdast-util-to-hast@npm:13.2.1"
   dependencies:
     "@types/hast": "npm:^3.0.0"
     "@types/mdast": "npm:^4.0.0"
@@ -12634,7 +12634,7 @@ __metadata:
     unist-util-position: "npm:^5.0.0"
     unist-util-visit: "npm:^5.0.0"
     vfile: "npm:^6.0.0"
-  checksum: 10c1/c4b7a318508de9c68f66c1deafc132b4377b98aac47d2ba2ab35ef4b4026bc3991b3eb120c35a890e1768dc639d08902b0cfac4a6b8245c5b5b4d2fcc13e7e11
+  checksum: 10c1/74936cea9382e47c1027d7340a277a41b639ce6176e0282e1634e7dd1d864888b10bfe3b49a3fa70b52ed82c802e00c162a975d62d8432a71e3cf9e3ff0600de
   languageName: node
   linkType: hard
 
@@ -13804,7 +13804,7 @@ __metadata:
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     js-untar: "npm:^2.0.0"
-    jspdf: "npm:4.0.0"
+    jspdf: "npm:4.1.0"
     lucide-react: "npm:0.487.0"
     luxon: "npm:^3.7.2"
     microdiff: "npm:^1.5.0"
