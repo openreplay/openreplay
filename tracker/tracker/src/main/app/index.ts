@@ -806,7 +806,8 @@ export default class App {
     } else if (data.type === 'compress') {
       const batch = data.batch
       const batchSize = batch.byteLength
-      if (batchSize > this.compressionThreshold) {
+      const hasCompressionAPI = 'CompressionStream' in globalThis
+      if (batchSize > this.compressionThreshold && hasCompressionAPI) {
         const blob = new Blob([batch as BlobPart])
         const stream = blob.stream().pipeThrough(new CompressionStream('gzip'))
         new Response(stream)
