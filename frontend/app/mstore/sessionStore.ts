@@ -392,7 +392,6 @@ export default class SessionStore {
         userEvents = [],
         incidents = [],
       } = eventsData;
-      console.log(userEvents, 'store')
 
       const filterEvents = filter.filters.filter((f) => f.isEvent) as Record<
         string,

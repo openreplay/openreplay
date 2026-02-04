@@ -1,15 +1,16 @@
 import { TYPES } from 'Types/session/event';
-import React, { useMemo } from 'react';
+import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useStore } from 'App/mstore';
 import UxtEvent from 'Components/Session_/EventsBlock/UxtEvent';
 import { Icon, TextEllipsis } from 'UI';
 
-import cn from 'classnames';
 import Event from './Event';
 import NoteEvent from './NoteEvent';
 import stl from './eventGroupWrapper.module.css';
-import { useTranslation } from 'react-i18next';
 
 function EventGroupWrapper(props) {
   const { userStore } = useStore();
@@ -65,7 +66,7 @@ function EventGroupWrapper(props) {
           label={event.label}
           onClick={onEventClick}
         />
-      )
+      );
     }
     if (isLocation) {
       return (
@@ -122,7 +123,7 @@ function EventGroupWrapper(props) {
     }
     return 'transparent';
   }, [isSearched, props.isPrev, props.isCurrent]);
-  
+
   return (
     <>
       <div>
@@ -188,7 +189,7 @@ function TabChange({ from, to, activeUrl, onClick }) {
       </div>
     </div>
   );
-};
+}
 
 function Incident({ label, onClick }: { label: string; onClick: () => void }) {
   const { t } = useTranslation();
@@ -197,15 +198,17 @@ function Incident({ label, onClick }: { label: string; onClick: () => void }) {
       onClick={onClick}
       className="pr-6 pl-4 py-2 relative user-select-none transition-all duration-200 cursor-pointer rounded-[3px] hover:bg-(--color-active-blue) bg-(--color-white)"
     >
-      <div className='flex items-center py-2 gap-[10.5px]'>
+      <div className="flex items-center py-2 gap-[10.5px]">
         <Icon name="console/warning" size={18} color="gray-dark" />
         <div className="flex flex-col">
-        <span style={{ fontWeight: 500 }}>{t('Incident')}</span>
-        <span className="text-ellipsis overflow-hidden whitespace-nowrap max-w-full text-sm text-(--color-gray-medium)">{label}</span>
+          <span style={{ fontWeight: 500 }}>{t('Incident')}</span>
+          <span className="text-ellipsis overflow-hidden whitespace-nowrap max-w-full text-sm text-(--color-gray-medium)">
+            {label}
+          </span>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default observer(EventGroupWrapper);
