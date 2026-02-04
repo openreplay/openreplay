@@ -1,7 +1,7 @@
-import React from 'react';
 import { ChromeOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
 import { ArrowUpRight } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const extKey = '__$spot_ext_exist$__';
@@ -68,7 +68,7 @@ function InstallCTA() {
             <Button
               type="primary"
               icon={<ChromeOutlined />}
-              className="text-lg"
+              className="text-lg! flex! items-center! gap-2!"
               onClick={() =>
                 window.open(
                   'https://chromewebstore.google.com/detail/openreplay-spot-record-re/ckigbicapkkgfomcfmcbaaplllopgbid?pli=1',
@@ -76,13 +76,11 @@ function InstallCTA() {
                 )
               }
             >
-              <>
-                {t('Get Chrome Extension')}&nbsp;
-                <ArrowUpRight />
-              </>
+              <div>{t('Get Chrome Extension')}</div>
+              <ArrowUpRight />
             </Button>
           }
-          className="w-full justify-between font-medium text-lg rounded-lg border-0 mb-4"
+          className="w-full! justify-between! font-medium! text-lg! rounded-lg! border-0! mb-4!"
         />
       )}
     </>
