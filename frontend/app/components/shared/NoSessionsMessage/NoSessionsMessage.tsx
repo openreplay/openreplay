@@ -32,10 +32,10 @@ function NoSessionsMessage() {
     <>
       {showNoSessions && (
         <div className="w-full mb-5">
-          <Space direction="vertical" className="w-full!">
+          <Space orientation="vertical" className="w-full!">
             <Alert
-              className="border-transparent rounded-lg w-full"
-              message={t(
+              className="border-transparent rounded-lg w-full flex flex-col md:flex-row"
+              title={t(
                 'Your sessions will appear here soon. It may take a few minutes as sessions are optimized for efficient playback.',
               )}
               type="warning"
