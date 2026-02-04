@@ -147,29 +147,54 @@ jobs:
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
+        # Check for EE-only backend services
+        if [[ -d ee/backend/cmd ]]; then
+          ls ee/backend/cmd >> /tmp/ee_backend.txt
+        else
+          touch /tmp/ee_backend.txt
+        fi
         echo Services: "${{ github.event.inputs.services }}"
         IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
         BUILD_SCRIPT_NAME="build.sh"
         # Build FOSS
         for SERVICE in "${SERVICES[@]}"; do
-          # Check if service is backend
+          is_ee_only=false
+          foss_build_args=""
+          # Check if service is backend (FOSS)
           if grep -q $SERVICE /tmp/backend.txt; then 
             cd backend 
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
+          # Check if service is EE-only backend
+          elif grep -q $SERVICE /tmp/ee_backend.txt; then
+            cd backend
+            foss_build_args="nil $SERVICE"
+            ee_build_args="ee $SERVICE"
+            # EE-only services (not in backend/cmd) - skip FOSS build
+            # These include: assist-api, video-replays, connector
+            if ! grep -q $SERVICE /tmp/backend.txt; then
+              is_ee_only=true
+            fi
           else 
             [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
             [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
             ee_build_args="ee"
           fi  
           version=$(image_version $SERVICE)
-          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          # Build FOSS version (skip for EE-only services like assist-api)
+          if [[ "$is_ee_only" == "false" ]]; then
+            echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          fi
+          # Build EE version
           echo IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
           IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
+          # Build ARM version (skip for chalice/frontend which use managed builds, and skip FOSS for EE-only)
           if [[ "$SERVICE" != "chalice" && "$SERVICE" != "frontend" ]]; then
-            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
-            echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+            if [[ "$is_ee_only" == "false" ]]; then
+              IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+              echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+            fi
           else
             build_managed $SERVICE $version
           fi
