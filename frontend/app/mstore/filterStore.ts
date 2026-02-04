@@ -1,10 +1,12 @@
-import { makeAutoObservable, runInAction } from 'mobx';
-import { filterService, searchService } from 'App/services';
-import { Filter, COMMON_FILTERS } from './types/filterConstants';
-import { projectStore } from '@/mstore/index';
-import FilterItem from './types/filterItem';
-import { arraysIntersect, normalizeDataType } from 'App/utils';
 import { countries } from '@/constants';
+import { projectStore } from '@/mstore/index';
+import { makeAutoObservable, runInAction } from 'mobx';
+
+import { filterService, searchService } from 'App/services';
+import { arraysIntersect, normalizeDataType } from 'App/utils';
+
+import { COMMON_FILTERS, Filter } from './types/filterConstants';
+import FilterItem from './types/filterItem';
 
 const countryMap = countries as Record<string, string>;
 
@@ -14,7 +16,7 @@ interface ValueMapper {
 
 const VALUE_MAPPERS: ValueMapper = {
   userCountry: countryMap,
-  '$country': countryMap,
+  $country: countryMap,
 };
 
 export interface TopValue {
@@ -609,11 +611,25 @@ export default class FilterStore {
   };
 
   getFilterDisplayName = (filterName: string): string => {
-    const filter = this.getCurrentProjectFilters().find((f => f.name === filterName));
+    const filter = this.getCurrentProjectFilters().find(
+      (f) => f.name === filterName,
+    );
     if (!filter) {
       return filterName;
     }
     return filter.displayName || filter.name;
+  };
+
+  getIssueSubName = (subName: string): string => {
+    const issueFilter = this.getCurrentProjectFilters().find(
+      (f) => f.name === 'issue',
+    );
+    console.log(subName, issueFilter);
+    if (!issueFilter) return subName;
+    const matchingValue = issueFilter.possibleValues?.find(
+      (v) => v.value === subName,
+    );
+    return matchingValue?.label ?? subName;
   };
 
   private clearExpiredCacheEntries = (): void => {

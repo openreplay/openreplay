@@ -1,3 +1,5 @@
+import FilterStore from '@/mstore/filterStore';
+
 const default_keys = [
   'event_id',
   '$event_name',
@@ -44,7 +46,7 @@ const default_keys = [
 
 export const getSortingKey = (key: string) => {
   // this way we include $ keys
-  const ind = default_keys.findIndex(k => k.endsWith(key));
+  const ind = default_keys.findIndex((k) => k.endsWith(key));
   return ind !== -1 ? default_keys[ind] : key;
 };
 
@@ -53,6 +55,7 @@ export const listColumns = ['$city', '$os', '$auto_captured', '$user_id'];
 export default class Event {
   /** TABLE DATA */
   event_name: string;
+  sub_name: string;
   event_id: string;
   created_at: number;
   distinct_id: string;
@@ -68,7 +71,9 @@ export default class Event {
   default_properties: Record<string, any> = {};
 
   constructor(event: Record<string, any>) {
+    const isIssue = event.$event_name === 'ISSUE';
     this.event_name = event.$event_name || 'N/A';
+    this.sub_name = isIssue ? event.$properties?.issue_type : '';
     this.city = event.$city || 'N/A';
     this.environment = event.$os || 'N/A';
     this.event_id = event.event_id || 'N/A';

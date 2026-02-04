@@ -1,20 +1,22 @@
-import React from 'react';
-import { Segmented, Input, Button } from 'antd';
-import { X, List, Braces, Files, Code } from 'lucide-react';
-import copy from 'copy-to-clipboard';
-import { useQuery } from '@tanstack/react-query';
-import { analyticsService } from '@/services';
-import Event from 'App/mstore/types/Analytics/Event';
-import { session, withSiteId } from '@/routes';
-import { Link } from 'react-router-dom';
-import { Icon, TextEllipsis } from 'UI';
-import { getEventIcon } from './getEventIcon';
-import Tabs from 'Components/shared/Tabs';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from '@/components/shared/AnimatedSVG';
-import usePropertyNames from 'App/components/DataManagement/Properties/usePropertyNames';
+import { session, withSiteId } from '@/routes';
+import { analyticsService } from '@/services';
+import { useQuery } from '@tanstack/react-query';
+import { Button, Input, Segmented } from 'antd';
+import copy from 'copy-to-clipboard';
+import { Braces, Code, Files, List, X } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+
+import usePropertyNames from 'App/components/DataManagement/Properties/usePropertyNames';
+import { useStore } from 'App/mstore';
+import Event from 'App/mstore/types/Analytics/Event';
+import Tabs from 'Components/shared/Tabs';
+import { Icon, TextEllipsis } from 'UI';
+
+import { getEventIcon } from './getEventIcon';
 
 const tabs = [
   {
@@ -154,6 +156,13 @@ function EventDetailsModal({
       </div>
     );
   }
+
+  const eventName = event
+    ? filterStore.getFilterDisplayName(event.event_name)
+    : 'Event';
+  const subName = event?.sub_name
+    ? `- ${filterStore.getIssueSubName(event.sub_name)}`
+    : '';
   return (
     <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
       {header}
@@ -171,7 +180,7 @@ function EventDetailsModal({
             {event ? getEventIcon(event.isAutoCapture, event.event_name) : null}
           </div>
           <div className={'font-semibold'}>
-            {filterStore.getFilterDisplayName(event?.event_name ?? 'Event')}
+            {eventName} {subName}
           </div>
           {event?.isAutoCapture ? (
             <div>({event?.event_name ?? 'event'})</div>
