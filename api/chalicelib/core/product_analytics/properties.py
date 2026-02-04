@@ -295,7 +295,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
         }
 
 
-@cached(TTLCache(maxsize=1000, ttl=180))
+# @cached(TTLCache(maxsize=1000, ttl=180))
 def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
     if auto_captured and event_name == "TAG_TRIGGER":
         return [
@@ -317,16 +317,18 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
         ]
     with ClickHouseClient() as ch_client:
         r = ch_client.format(
-            """SELECT all_properties_customized.property_name                  AS name,
+            """SELECT event_properties.property_name                  AS name,
                       all_properties_customized.display_name,
-                      event_properties.auto_captured_property                  AS auto_captured,
+                      event_properties.auto_captured_property         AS auto_captured,
                       array_agg(DISTINCT event_properties.value_type) AS possible_types
                FROM product_analytics.event_properties
                         LEFT JOIN product_analytics.all_properties_customized USING (property_name)
                WHERE event_properties.project_id = %(project_id)s
                  AND event_properties.event_name = %(event_name)s
                  AND event_properties.auto_captured_property = %(auto_captured)s
-                 AND (isNull(all_properties_customized.project_id)
+                 AND (all_properties_customized.project_id = 0 
+                          AND or_property_visibility(property_name) = 'visible'
+                          AND event_properties.auto_captured_property
                    OR (all_properties_customized.project_id = %(project_id)s
                        AND all_properties_customized.status = 'visible'))
                GROUP BY ALL
