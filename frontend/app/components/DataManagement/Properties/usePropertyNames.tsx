@@ -1,9 +1,11 @@
-import React from 'react';
-import { fetchList } from './api';
-import { useQuery } from '@tanstack/react-query';
-import { TextEllipsis } from 'UI';
-import { Loader } from 'lucide-react';
 import { menuHidden } from '@/utils/split-utils';
+import { useQuery } from '@tanstack/react-query';
+import { Loader } from 'lucide-react';
+import React from 'react';
+
+import { TextEllipsis } from 'UI';
+
+import { fetchList } from './api';
 
 /**
  * hook that will get all properties and then return a method to grab displayname by property name
@@ -13,6 +15,9 @@ function usePropertyNames(source: 'events' | 'users') {
     queryKey: ['props-list', source],
     queryFn: () => fetchList(source),
     enabled: !menuHidden.lexicon,
+    // refetch every 20 minutes
+    staleTime: 20 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
   });
 
   const getDisplayNameStr = (propName: string) => {
