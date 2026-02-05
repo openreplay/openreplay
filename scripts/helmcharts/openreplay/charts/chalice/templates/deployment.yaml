@@ -149,6 +149,7 @@ spec:
                   optional: true
             {{- $skippedKeys := list "JWT_REFRESH_SECRET" "JWT_SPOT_REFRESH_SECRET" -}}
             {{- include "openreplay.env" (dict "ctx" . "skippedKeys" $skippedKeys) | nindent 12}}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12 }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
