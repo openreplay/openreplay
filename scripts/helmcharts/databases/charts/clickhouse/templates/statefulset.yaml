@@ -32,7 +32,14 @@ spec:
           - name: CLICKHOUSE_USER
             value: "{{ .Values.username }}"
           - name: CLICKHOUSE_PASSWORD
+            {{- if .Values.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.existingSecret }}
+                key: {{ .Values.existingSecretPasswordKey }}
+            {{- else }}
             value: "{{ .Values.password }}"
+            {{- end }}
           {{- range $key, $value := .Values.backupEnv }}
           - name: "{{ $key }}"
             value: "{{ $value }}"
@@ -54,7 +61,14 @@ spec:
           - name: CLICKHOUSE_USER
             value: "{{ .Values.username }}"
           - name: CLICKHOUSE_PASSWORD
+            {{- if .Values.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.existingSecret }}
+                key: {{ .Values.existingSecretPasswordKey }}
+            {{- else }}
             value: "{{ .Values.password }}"
+            {{- end }}
           - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
             value: "1"
           {{- range $key, $value := .Values.env }}

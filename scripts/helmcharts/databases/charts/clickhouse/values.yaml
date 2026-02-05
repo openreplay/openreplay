@@ -18,6 +18,10 @@ backupImage:
 username: default
 password: ""
 
+# Use existing secret for password instead of plain text
+existingSecret: ""
+existingSecretPasswordKey: ""
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
