@@ -261,7 +261,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(
                     PREDEFINED_PROPERTIES[snake_case_name]["type"]
                 )
-                if p["autoCaptured"] and p["displayName"] is None:
+                if p["autoCaptured"] and (p["displayName"] is None or p["displayName"] == ''):
                     p["displayName"] = PREDEFINED_PROPERTIES[snake_case_name]["displayName"]
             else:
                 p["_foundInPredefinedList"] = False
@@ -326,7 +326,7 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                WHERE event_properties.project_id = %(project_id)s
                  AND event_properties.event_name = %(event_name)s
                  AND event_properties.auto_captured_property = %(auto_captured)s
-                 AND (all_properties_customized.project_id = 0 
+                 AND (all_properties_customized.project_id = 0
                           AND or_property_visibility(property_name) = 'visible'
                           AND event_properties.auto_captured_property
                    OR (all_properties_customized.project_id = %(project_id)s
@@ -361,6 +361,8 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                 p["possibleValues"] = PREDEFINED_PROPERTIES[snake_case_name][
                     "possibleValues"
                 ]
+                if p["autoCaptured"] and (p["displayName"] is None or p["displayName"] == ''):
+                    p["displayName"] = PREDEFINED_PROPERTIES[snake_case_name]["displayName"]
             p["possibleTypes"] = list(
                 set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"]))
             )

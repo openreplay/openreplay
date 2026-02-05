@@ -126,7 +126,7 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
     for row in rows:
         event_name = row["name"]
         keys.append(event_name)
-        if event_name in predefined_events and row["displayName"] is None:
+        if event_name in predefined_events and (row["displayName"] is None or row["displayName"] == ''):
             row["displayName"] = predefined_events[event_name]["displayName"]
         if is_mobile:
             if event_name not in web_only_events:
