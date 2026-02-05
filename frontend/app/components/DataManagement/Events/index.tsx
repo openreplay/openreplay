@@ -45,7 +45,11 @@ function EventsListPage() {
 
   const limit = 10;
   const [page, setPage] = React.useState(1);
-  const { data = { events: [], total: 0 }, isPending } = useQuery({
+  const {
+    data = { events: [], total: 0 },
+    isPending,
+    refetch,
+  } = useQuery({
     queryKey: ['distinct-events-list', siteId],
     queryFn: () => fetchList(),
   });
@@ -92,6 +96,7 @@ function EventsListPage() {
           event={event}
           siteId={siteId!}
           openSessions={openSessions}
+          refetchList={refetch}
         />
       );
     } else {

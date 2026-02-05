@@ -11,10 +11,12 @@ function DistinctEventPage({
   event,
   siteId,
   openSessions,
+  refetchList,
 }: {
   event: DistinctEvent;
   siteId: string;
   openSessions: (eventName: string) => void;
+  refetchList: () => void;
 }) {
   const backLink = withSiteId(dataManagement.eventsList(), siteId);
 
@@ -23,6 +25,7 @@ function DistinctEventPage({
       const updatedEvent = { ...event };
       updatedEvent[property.key.toLocaleLowerCase()] = property.value;
       await updateEventProperty(updatedEvent);
+      refetchList();
       toast.success('Property updated successfully');
     } catch (error) {
       console.error(error);
