@@ -142,7 +142,6 @@ function AccessModal() {
             loading={spotStore.isLoading}
             onClick={generateInitial}
             type="primary"
-            ghost
             size="small"
             className="mt-1"
           >
