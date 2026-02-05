@@ -338,10 +338,11 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$tags"                     Array(String) DEFAULT [] COMMENT 'tags are used to filter events',
     "$import"                   BOOL DEFAULT FALSE,
     _deleted_at                 DateTime DEFAULT '1970-01-01 00:00:00',
+    _is_deleted                 BOOL DEFAULT FALSE,
     _timestamp                  DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
-      ORDER BY (project_id, "$event_name", created_at, session_id)
-      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00' AND NOT is_vault
+) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
+      ORDER BY (project_id, session_id, "$event_name", created_at, event_id)
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 -- The list of events that should not be ingested,
