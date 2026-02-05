@@ -85,17 +85,19 @@ CREATE TABLE IF NOT EXISTS product_analytics.users_distinct_id
 
 
 ALTER TABLE product_analytics.events
-    RENAME COLUMN "$user_id" TO "_$user_id",
-    DROP COLUMN "_$user_id",
-    ADD COLUMN "$user_id" String AFTER distinct_id;
+    RENAME COLUMN "$user_id" TO "_$user_id";
+ALTER TABLE product_analytics.events
+    ADD COLUMN IF NOT EXISTS "$user_id" String AFTER distinct_id;
+ALTER TABLE product_analytics.events
+    DROP COLUMN "_$user_id";
 ALTER TABLE product_analytics.events
     MODIFY COLUMN "$device_id" String AFTER "$user_id";
 ALTER TABLE product_analytics.events
-    ADD COLUMN is_vault BOOL DEFAULT FALSE AFTER error_id;
+    ADD COLUMN IF NOT EXISTS is_vault BOOL DEFAULT FALSE AFTER error_id;
 ALTER TABLE product_analytics.events
     MODIFY TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00' AND NOT is_vault;
 ALTER TABLE experimental.sessions
-    ADD COLUMN is_vault BOOL DEFAULT FALSE AFTER metadata_10;
+    ADD COLUMN IF NOT EXISTS is_vault BOOL DEFAULT FALSE AFTER metadata_10;
 
 
 DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv SYNC;
@@ -127,7 +129,7 @@ FROM product_analytics.events
 GROUP BY ALL;
 
 ALTER TABLE product_analytics.events
-    ADD COLUMN sample_key UInt8
+    ADD COLUMN IF NOT EXISTS sample_key UInt8
         MATERIALIZED cityHash64(event_id) % 100;
 
 DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties;
