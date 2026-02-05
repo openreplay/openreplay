@@ -69,6 +69,62 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       initContainers:
+      {{- if .Values.offlineMigration.enabled }}
+      # Offline migration: copy schema files from pre-built migration image
+      - name: migration
+        image: "{{ .Values.offlineMigration.image.registry }}/{{ .Values.offlineMigration.image.repository }}:{{ .Values.offlineMigration.image.tag | default .Chart.AppVersion }}"
+        env:
+          - name: ENTERPRISE_EDITION_LICENSE
+            value: "{{ .Values.global.enterpriseEditionLicense }}"
+          - name: PG_HOST
+            value: "{{ .Values.global.postgresql.postgresqlHost }}"
+          - name: PG_PORT
+            value: "{{ .Values.global.postgresql.postgresqlPort }}"
+          - name: CH_HOST
+            value: "{{ .Values.global.clickhouse.chHost }}"
+          - name: CH_PORT
+            value: "{{ .Values.global.clickhouse.service.webPort }}"
+        command:
+          - /bin/bash
+          - -c
+        args:
+          - |
+            set -x
+            echo "[info] Offline migration: copying schema files from migration image"
+            mkdir -p /opt/openreplay/openreplay
+            cp -rf /work/scripts /opt/openreplay/openreplay/
+            if [ -n "$ENTERPRISE_EDITION_LICENSE" ]; then
+              echo "[info] Copying enterprise schema files"
+              cp -rf /work/ee /opt/openreplay/openreplay/
+            fi
+            echo "[info] Schema files copied successfully"
+            ls -la /opt/openreplay/openreplay/scripts/
+
+            # Wait for PostgreSQL
+            exit_count=0
+            while [ $exit_count -le 20 ]; do
+              nc -zv ${PG_HOST} ${PG_PORT} -w 1 && break
+              echo "[info] PostgreSQL is not up; retrying in 5 seconds"
+              sleep 4
+              exit_count=$((exit_count+1))
+            done
+            [ $exit_count -gt 20 ] && { echo "[error] PostgreSQL is not running"; exit 100; }
+
+            # Wait for ClickHouse
+            exit_count=0
+            while [ $exit_count -le 20 ]; do
+              nc -zv ${CH_HOST} ${CH_PORT} -w 1 && break
+              echo "[info] ClickHouse is not up; retrying in 5 seconds"
+              sleep 4
+              exit_count=$((exit_count+1))
+            done
+            [ $exit_count -gt 20 ] && { echo "[error] ClickHouse is not running"; exit 100; }
+
+            echo "[info] All databases are available"
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+      {{- end }}
       - name: git
         image: alpine/git
         env:
@@ -90,9 +146,10 @@ spec:
             set -x
             mkdir -p /opt/openreplay/openreplay && cd /opt/openreplay/openreplay
 
-            # Check if offline migration scripts are available
+            # Check if offline migration scripts are already available (from migration image or mounted)
             # ## Usage:
-            # To use offline migration, mount your scripts directory to `/mnt/efs` with the following structure:
+            # Option 1: Enable offlineMigration.enabled=true to use pre-built migration image
+            # Option 2: Mount your scripts directory to `/mnt/efs` with the following structure:
             # ```
             # /mnt/efs/
             # ├── scripts/
@@ -104,7 +161,10 @@ spec:
             #
             # The job will automatically detect and use these pre-mounted scripts instead of cloning from GitHub.
 
-            if [ -d "/mnt/efs/scripts/schema" ] && [ -d "/mnt/efs/scripts/helmcharts" ]; then
+            # Check if migration init container already provided files
+            if [ -d "/opt/openreplay/openreplay/scripts/schema" ]; then
+              echo "[info] Offline migration detected. Schema files already available (from migration image)"
+            elif [ -d "/mnt/efs/scripts/schema" ] && [ -d "/mnt/efs/scripts/helmcharts" ]; then
               echo "[info] Offline migration detected. Using pre-mounted scripts from /mnt/efs"
               cp -rf /mnt/efs/scripts /opt/openreplay/openreplay/
               if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ] && [ -d "/mnt/efs/ee/scripts" ]; then
