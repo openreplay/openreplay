@@ -46,7 +46,8 @@ jobs:
 
           # Define all available images with their versions
           # Format: image:version or just image (for single version)
-          ALL_IMAGES='["kafka", "minio", "postgres:17", "postgres:18", "valkey"]'
+          # migration: DB migration scripts image, tagged with Chart.yaml AppVersion
+          ALL_IMAGES='["kafka", "minio", "postgres:17", "postgres:18", "migration", "valkey"]'
 
           if [[ "$IMAGES_INPUT" == "all" ]] || [[ -z "$IMAGES_INPUT" ]]; then
             MATRIX="$ALL_IMAGES"
@@ -86,16 +87,25 @@ jobs:
             IMAGE_NAME="${IMAGE_FULL%%:*}"
             IMAGE_VERSION="${IMAGE_FULL##*:}"
             CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}/${IMAGE_VERSION}"
+            DOCKERFILE_PATH=""
+          elif [[ "$IMAGE_FULL" == "migration" ]]; then
+            # migration requires repo root as context for COPY paths
+            IMAGE_NAME="$IMAGE_FULL"
+            IMAGE_VERSION=""
+            CONTEXT_PATH="."
+            DOCKERFILE_PATH="./scripts/dockerfiles/migration/Dockerfile"
           else
             IMAGE_NAME="$IMAGE_FULL"
             IMAGE_VERSION=""
             CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}"
+            DOCKERFILE_PATH=""
           fi
 
           echo "name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT_PATH" >> $GITHUB_OUTPUT
-          echo "Parsed: name=$IMAGE_NAME, version=$IMAGE_VERSION, context=$CONTEXT_PATH"
+          echo "dockerfile=$DOCKERFILE_PATH" >> $GITHUB_OUTPUT
+          echo "Parsed: name=$IMAGE_NAME, version=$IMAGE_VERSION, context=$CONTEXT_PATH, dockerfile=$DOCKERFILE_PATH"
 
       - name: Set up platform pair
         id: platform
@@ -127,6 +137,10 @@ jobs:
               postgres)
                 VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
                 ;;
+              migration)
+                # Extract AppVersion from Chart.yaml for migration image
+                VERSION=$(yq '.AppVersion' "./scripts/helmcharts/openreplay/Chart.yaml" | tr -d '"')
+                ;;
               valkey)
                 VERSION=$(grep -oP "valkey>=\K[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
                 ;;
@@ -146,11 +160,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
-            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
+            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && matrix.image != 'migration' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
             type=raw,value=${{ steps.app-version.outputs.major_version }},enable=${{ steps.parse.outputs.name == 'valkey' }}
-            type=schedule,pattern={{date 'YYYYMMDD'}}
-            type=sha,prefix={{date 'YYYYMMDD'}}-
+            type=schedule,pattern={{date 'YYYYMMDD'}},enable=${{ matrix.image != 'migration' }}
+            type=sha,prefix={{date 'YYYYMMDD'}}-,enable=${{ matrix.image != 'migration' }}
 
       - name: Login to GitHub Container Registry
         uses: nick-fields/retry@v3
@@ -170,6 +184,7 @@ jobs:
           project: ${{ secrets.DEPOT_PROJECT_ID }}
           token: ${{ secrets.DEPOT_TOKEN }}
           context: ${{ steps.parse.outputs.context }}
+          file: ${{ steps.parse.outputs.dockerfile || format('{0}/Dockerfile', steps.parse.outputs.context) }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }},push-by-digest=true,name-canonical=true,push=true
@@ -212,6 +227,11 @@ jobs:
             IMAGE_NAME="${IMAGE_FULL%%:*}"
             IMAGE_VERSION="${IMAGE_FULL##*:}"
             CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}/${IMAGE_VERSION}"
+          elif [[ "$IMAGE_FULL" == "migration" ]]; then
+            # migration requires repo root as context for COPY paths
+            IMAGE_NAME="$IMAGE_FULL"
+            IMAGE_VERSION=""
+            CONTEXT_PATH="."
           else
             IMAGE_NAME="$IMAGE_FULL"
             IMAGE_VERSION=""
@@ -257,6 +277,10 @@ jobs:
               postgres)
                 VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
                 ;;
+              migration)
+                # Extract AppVersion from Chart.yaml for migration image
+                VERSION=$(yq '.AppVersion' "./scripts/helmcharts/openreplay/Chart.yaml" | tr -d '"')
+                ;;
               valkey)
                 VERSION=$(grep -oP "valkey>=\K[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
                 ;;
@@ -276,11 +300,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
-            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
+            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && matrix.image != 'migration' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
             type=raw,value=${{ steps.app-version.outputs.major_version }},enable=${{ steps.parse.outputs.name == 'valkey' }}
-            type=schedule,pattern={{date 'YYYYMMDD'}}
-            type=sha,prefix={{date 'YYYYMMDD'}}-
+            type=schedule,pattern={{date 'YYYYMMDD'}},enable=${{ matrix.image != 'migration' }}
+            type=sha,prefix={{date 'YYYYMMDD'}}-,enable=${{ matrix.image != 'migration' }}
 
       - name: Login to GitHub Container Registry
         uses: nick-fields/retry@v3

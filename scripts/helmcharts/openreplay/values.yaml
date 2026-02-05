@@ -2,6 +2,16 @@ migrationJob:
   podAnnotations:
     linkerd.io/inject: disabled
 
+# Offline migration using pre-built migration image (for air-gapped environments)
+# When enabled, uses bundled schema files instead of cloning from GitHub
+offlineMigration:
+  enabled: false
+  image:
+    registry: ghcr.io/openreplay
+    repository: migration
+    # Defaults to Chart.AppVersion if not specified
+    tag: ""
+
 postgresql:
   image:
     registry: ghcr.io/openreplay
