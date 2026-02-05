@@ -68,9 +68,9 @@ Return the appropriate apiVersion for PodSecurityPolicy.
 Return the proper Redis(TM) image name
 */}}
 {{- define "redis.image" -}}
-{{- $registryName := .Values.image.registry -}}
-{{- $repositoryName := .Values.image.repository -}}
-{{- $tag := .Values.image.tag | toString -}}
+{{- $registryName := ((.Values.stock_image).enabled | default false) | ternary .Values.stock_image.registry .Values.image.registry -}}
+{{- $repositoryName := ((.Values.stock_image).enabled | default false) | ternary .Values.stock_image.repository .Values.image.repository -}}
+{{- $tag := (((.Values.stock_image).enabled | default false) | ternary .Values.stock_image.tag .Values.image.tag) | toString -}}
 {{/*
 Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
 but Helm 2.9 and 2.10 doesn't support it, so we need to implement this if-else logic.
