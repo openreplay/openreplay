@@ -508,14 +508,14 @@ const ValueAutoComplete = observer(
                         mouseEnterDelay: 0.5,
                       },
                     }}
-                    style={{ maxWidth: '8rem' }}
+                    style={{ maxWidth: '10rem' }}
                   >
                     {mapValues
                       ? mapValues(initialValues[0])
                       : getDisplayLabel(initialValues[0])}
                   </Text>
-                  {initialValues.length > 1 && (
-                    <>
+                  {initialValues.slice(1, 3).map((val, i) => (
+                    <React.Fragment key={i + 1}>
                       <Text type="secondary" className="shrink-0">
                         {t('or')}
                       </Text>
@@ -523,24 +523,22 @@ const ValueAutoComplete = observer(
                         ellipsis={{
                           tooltip: {
                             title: mapValues
-                              ? mapValues(initialValues[1])
-                              : getDisplayLabel(initialValues[1]),
+                              ? mapValues(val)
+                              : getDisplayLabel(val),
                             placement: 'topLeft',
                             mouseEnterDelay: 0.5,
                           },
                         }}
-                        style={{ maxWidth: '8rem' }}
+                        style={{ maxWidth: '10rem' }}
                       >
-                        {mapValues
-                          ? mapValues(initialValues[1])
-                          : getDisplayLabel(initialValues[1])}
+                        {mapValues ? mapValues(val) : getDisplayLabel(val)}
                       </Text>
-                      {initialValues.length > 2 && (
-                        <Text type="secondary" className="shrink-0">
-                          {`+ ${initialValues.length - 2}`}
-                        </Text>
-                      )}
-                    </>
+                    </React.Fragment>
+                  ))}
+                  {initialValues.length > 3 && (
+                    <Text type="secondary" className="shrink-0">
+                      {`+ ${initialValues.length - 3}`}
+                    </Text>
                   )}
                 </>
               ) : (
