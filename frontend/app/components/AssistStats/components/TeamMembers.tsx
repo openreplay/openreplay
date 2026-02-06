@@ -77,7 +77,7 @@ function TeamMembers({
           {t('Team Members')}
         </Typography.Title>
         <div className="ml-auto flex items-center gap-2">
-          <Dropdown menu={{ items, onClick: updateRange }}>
+          <Dropdown menu={{ items: items(t), onClick: updateRange }}>
             <Button size="small">
               <Space>
                 <Typography.Text>{dateRange}</Typography.Text>
@@ -120,7 +120,7 @@ function TeamMembers({
           {topMembers.list.map((member) => (
             <div
               key={member.name}
-              className="w-full flex items-center gap-2 border-b pt-2 pb-1"
+              className="w-full flex items-center gap-2 border-b py-2 px-1"
             >
               <div className="relative flex items-center justify-center w-10 h-10">
                 <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
