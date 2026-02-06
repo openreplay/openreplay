@@ -218,7 +218,7 @@ function AssistStats() {
   };
 
   return (
-    <div className="p-4 bg-white" id="pdf-anchor">
+    <div className="p-4 bg-white overflow-scroll h-screen" id="pdf-anchor">
       <div id="pdf-ignore" className="w-full flex items-center mb-2">
         <Typography.Title style={{ marginBottom: 0 }} level={4}>
           {t('Co-browsing Reports')}
