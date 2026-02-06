@@ -1,12 +1,17 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { FilterKey, FilterCategory, FilterType } from 'Types/filter/filterType';
-import { assist as assistRoute, isRoute } from 'App/routes';
-import { observer } from 'mobx-react-lite';
-import FilterDuration from '../FilterDuration';
-import ValueAutoComplete from 'Shared/Filters/FilterValue/ValueAutoComplete';
-import { Input, Select } from 'antd';
 import { useStore } from '@/mstore';
+import { CloseCircleFilled } from '@ant-design/icons';
+import { FilterCategory, FilterKey, FilterType } from 'Types/filter/filterType';
+import { Button, Input, Select } from 'antd';
+import { observer } from 'mobx-react-lite';
+import React, { useCallback, useMemo, useState } from 'react';
+import { assist as assistRoute, isRoute } from 'App/routes';
+
 import FilterTimestamp from 'Shared/Filters/FilterTimestamp';
+import ValueAutoComplete from 'Shared/Filters/FilterValue/ValueAutoComplete';
+
+import FilterDuration from '../FilterDuration';
+import FilterNumericalInput from '../FilterNumerical';
+
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -173,15 +178,7 @@ function FilterValue(props: Props) {
           isConditional={isConditional}
         />
       ) : (
-        <Input
-          type="number"
-          defaultValue={filter.value}
-          size="small"
-          className="rounded-lg"
-          style={{ width: '80px' }}
-          placeholder={filter.placeholder}
-          onBlur={handleNumberInputBlur}
-        />
+        <FilterNumericalInput filter={filter} onUpdate={onUpdate} />
       );
 
     case FilterType.BOOLEAN:
