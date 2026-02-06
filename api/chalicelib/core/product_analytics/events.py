@@ -34,6 +34,10 @@ PREDEFINED_EVENTS = {
         "displayName": "Issue",
         "description": 'Represents issues and errors captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "ISSUE".\n\nContains issue message,…., and timestamp.',
     },
+    "PERFORMANCE": {
+        "displayName": "Performance",
+        "description": '',
+    },
 }
 
 PREDEFINED_EVENTS_MOBILE = {
