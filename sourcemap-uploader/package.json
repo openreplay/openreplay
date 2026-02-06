@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "argparse": "^2.0.1",
-    "glob": "^8.0.3",
+    "glob": "^13.0.1",
     "glob-promise": "^6.0.7"
   }
 }
