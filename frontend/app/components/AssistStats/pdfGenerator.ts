@@ -1,13 +1,56 @@
-import { fileNameFormat } from 'App/utils';
 import html2canvas from '@codewonders/html2canvas';
 import jsPDF from 'jspdf';
+
+import { fileNameFormat } from 'App/utils';
+
+const reportHead = new URL('../../assets/img/report-head.png', import.meta.url)
+  .href;
+const headerData = new URL(
+  '../../assets/img/cobrowising-report-head.png',
+  import.meta.url,
+).href;
+
 export const getPdf2 = async () => {
-  // @ts-ignore
+  const el = document.getElementById('pdf-anchor') as HTMLElement;
+  if (!el) {
+    console.error('PDF anchor element not found');
+    return;
+  }
+
   // @ts-ignore
   window.html2canvas = html2canvas;
 
+  // Scroll to top of the element's container to ensure proper capture
+  const scrollParent = el.parentElement;
+  const originalScrollTop = scrollParent?.scrollTop ?? 0;
+  if (scrollParent) {
+    scrollParent.scrollTop = 0;
+  }
+
+  // Small delay to ensure content is fully rendered
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const canvas = await html2canvas(el, {
+    scale: 2,
+    ignoreElements: (e) => e.id.includes('pdf-ignore'),
+    useCORS: true,
+    logging: false,
+    backgroundColor: '#ffffff',
+  });
+  document.body.appendChild(canvas);
+
+  // Restore scroll position
+  if (scrollParent) {
+    scrollParent.scrollTop = originalScrollTop;
+  }
+
+  if (!canvas.width || !canvas.height) {
+    console.error('Canvas capture failed');
+    return;
+  }
+
   // @ts-ignore
-  const doc = new jsPDF('l', 'mm', 'a4');
+  const doc = new jsPDF('p', 'mm', 'a4');
   const now = new Date().toISOString();
 
   doc.addMetadata('Author', 'OpenReplay');
@@ -18,62 +61,56 @@ export const getPdf2 = async () => {
   doc.addMetadata('Producer', 'OpenReplay');
   doc.addMetadata('CreationDate', now);
 
-  const el = document.getElementById('pdf-anchor') as HTMLElement;
+  const imgData = canvas.toDataURL('image/png');
 
-  function buildPng() {
-    html2canvas(el, {
-      scale: 2,
-      ignoreElements: (e) => e.id.includes('pdf-ignore'),
-    }).then((canvas) => {
-      const imgData = canvas.toDataURL('img/png');
+  // A4 portrait dimensions in mm
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const margin = 10;
+  const headerHeight = 10;
+  const footerHeight = 10;
+  const contentWidth = pageWidth - 2 * margin;
+  const contentHeight = pageHeight - headerHeight - footerHeight - margin;
 
-      const imgWidth = 290;
-      const pageHeight = 200;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight - pageHeight;
-      let position = 0;
-      const A4Height = 295;
-      const headerW = 40;
-      const logoWidth = 55;
-      doc.addImage(imgData, 'PNG', 3, 10, imgWidth, imgHeight);
+  // Scale image to fit content width while maintaining aspect ratio
+  const aspectRatio = canvas.width / canvas.height;
+  const imgWidth = contentWidth;
+  const imgHeight = imgWidth / aspectRatio;
 
-      doc.addImage(
-        '/assets/img/cobrowising-report-head.png',
-        'png',
-        A4Height / 2 - headerW / 2,
-        2,
-        45,
-        5,
-      );
-      if (position === 0 && heightLeft === 0) {
-        doc.addImage(
-          '/assets/img/report-head.png',
-          'png',
-          imgWidth / 2 - headerW / 2,
-          pageHeight - 5,
-          logoWidth,
-          5,
-        );
-      }
+  const logoWidth = 55;
+  const headerW = 45;
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        doc.addPage();
-        doc.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight);
-        doc.addImage(
-          '/assets/img/report-head.png',
-          'png',
-          A4Height / 2 - headerW / 2,
-          pageHeight - 5,
-          logoWidth,
-          5,
-        );
-        heightLeft -= pageHeight;
-      }
+  let heightLeft = imgHeight;
+  let pageNum = 0;
 
-      doc.save(fileNameFormat(`Assist_Stats_${Date.now()}`, '.pdf'));
-    });
+  while (heightLeft > 0) {
+    if (pageNum > 0) {
+      doc.addPage();
+    }
+
+    // Calculate vertical offset for this page's portion of the image
+    const sourceY = pageNum * contentHeight;
+    const yPosition = headerHeight - sourceY;
+
+    // Add content image
+    doc.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+
+    // Add header
+    doc.addImage(headerData, 'PNG', (pageWidth - headerW) / 2, 2, headerW, 6);
+
+    // Add footer
+    doc.addImage(
+      reportHead,
+      'PNG',
+      (pageWidth - logoWidth) / 2,
+      pageHeight - footerHeight,
+      logoWidth,
+      6,
+    );
+
+    heightLeft -= contentHeight;
+    pageNum++;
   }
 
-  buildPng();
+  doc.save(fileNameFormat(`Assist_Stats_${Date.now()}`, '.pdf'));
 };
