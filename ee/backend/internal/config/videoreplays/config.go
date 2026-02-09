@@ -27,7 +27,7 @@ type Config struct {
 	VideoOutputDir          string        `env:"SESSION_VIDEO_OUTPUT_DIR,default=videos"`
 	VideoBaseURL            string        `env:"SESSION_VIDEO_BASE_URL,default=https://app.openreplay.com"`
 	BatchJobQueue           string        `env:"BATCH_JOB_QUEUE,default=replays"`
-	BatchJobDefinition      string        `env:"BATCH_JOB_DEFINITION,default=replay_exporter:4"`
+	BatchJobDefinition      string        `env:"BATCH_JOB_DEFINITION,default=replay_exporter:5"`
 	BatchJobBaseName        string        `env:"BATCH_JOB_BASE_NAME,default=replay_exporter"`
 	BatchRetryAttempts      int           `env:"BATCH_RETRY_ATTEMPTS,default=3"`
 	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
