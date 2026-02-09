@@ -44,6 +44,10 @@ const components: any = {
   PropertiesList: lazy(
     () => import('Components/DataManagement/Properties/ListPage'),
   ),
+  ActionsPage: lazy(() => import('Components/DataManagement/Actions/index')),
+  ActionPage: lazy(
+    () => import('Components/DataManagement/Actions/ActionPage'),
+  ),
 };
 
 const enhancedComponents: any = {
@@ -65,6 +69,8 @@ const enhancedComponents: any = {
   UsersPage: withSiteIdUpdater(components.UsersPage),
   EventsPage: withSiteIdUpdater(components.EventsPage),
   PropertiesList: withSiteIdUpdater(components.PropertiesList),
+  ActionsPage: withSiteIdUpdater(components.ActionsPage),
+  ActionPage: withSiteIdUpdater(components.ActionPage),
 };
 
 const { withSiteId } = routes;
@@ -338,6 +344,18 @@ function PrivateRoutes() {
           strict
           path={withSiteId(routes.dataManagement.properties(), siteIdList)}
           component={enhancedComponents.PropertiesList}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.actionPage(), siteIdList)}
+          component={enhancedComponents.ActionPage}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.actions(), siteIdList)}
+          component={enhancedComponents.ActionsPage}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
