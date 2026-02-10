@@ -1,14 +1,17 @@
-import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
-import { debounce } from 'App/utils';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
+import { observer } from 'mobx-react-lite';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
+import { debounce } from 'App/utils';
+import { getLocalHourFormat } from 'App/utils/intlUtils';
+import TimelineTracker from 'Components/Session/Player/ClipPlayer/TimelineTracker';
 import CustomDragLayer, {
   OnDragCallback,
 } from 'Components/Session_/Player/Controls/components/CustomDragLayer';
 import TooltipContainer from 'Components/Session_/Player/Controls/components/TooltipContainer';
-import TimelineTracker from 'Components/Session/Player/ClipPlayer/TimelineTracker';
+
 import stl from '../../../Session_/Player/Controls/timeline.module.css';
 
 function Timeline({ range }: any) {
@@ -71,14 +74,15 @@ function Timeline({ range }: any) {
 
     const time = getTime(e);
     if (!time) return;
+    const format = getLocalHourFormat();
     const tz = settingsStore.sessionSettings.timezone.value;
     const timeStr = DateTime.fromMillis(startedAt + time)
       .setZone(tz)
-      .toFormat('hh:mm:ss a');
+      .toFormat(format);
     const userTimeStr = timezone
       ? DateTime.fromMillis(startedAt + time)
           .setZone(timezone)
-          .toFormat('hh:mm:ss a')
+          .toFormat(format)
       : undefined;
 
     const timeLineTooltip = {
