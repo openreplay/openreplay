@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Dropdown, Space } from 'antd';
 import {
-  ArrowRightOutlined,
   ArrowLeftOutlined,
+  ArrowRightOutlined,
   DownOutlined,
 } from '@ant-design/icons';
 import { ResourceType } from 'Player';
-import { useStore } from 'App/mstore';
+import { Button, Dropdown, Space } from 'antd';
 import { DateTime } from 'luxon';
-import FetchTabs from './components/FetchTabs/FetchTabs';
-import FetchBasicDetails from './components/FetchBasicDetails';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toFetch, toCurl, AnyResource } from './utils';
+
+import { useStore } from 'App/mstore';
+import { getLocalHourFormat } from 'App/utils/intlUtils';
+
+import FetchBasicDetails from './components/FetchBasicDetails';
+import FetchTabs from './components/FetchTabs/FetchTabs';
+import { AnyResource, toCurl, toFetch } from './utils';
 
 const copyItems = [
   {
@@ -105,7 +108,7 @@ function FetchDetailsModal(props: Props) {
           resource.timestamp
             ? DateTime.fromMillis(resource.timestamp)
                 .setZone(timezone.value)
-                .toFormat('LLL dd, yyyy, hh:mm:ss a')
+                .toFormat(`LLL dd, yyyy, ${getLocalHourFormat()}`)
             : undefined
         }
       />

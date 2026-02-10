@@ -1,6 +1,8 @@
-import React from 'react';
-import { formatTs } from 'App/date';
 import { CalendarFold, ChevronRight } from 'lucide-react';
+import React from 'react';
+
+import { formatTs } from 'App/date';
+import { getLocalHourFormat } from 'App/utils/intlUtils';
 import { getEventIcon } from 'Components/DataManagement/Activity/getEventIcon';
 
 function EventsByDay({
@@ -32,7 +34,7 @@ function EventsByDay({
               }
             >
               <div className={'w-56 color-disabled-text'}>
-                {formatTs(ev.created_at, 'HH:mm:ss a')}
+                {formatTs(ev.created_at, getLocalHourFormat())}
               </div>
               <div>{getEventIcon(ev.isAutoCapture, ev.event_name)}</div>
               <div className={'font-mono'}>{getName(ev.event_name)}</div>
