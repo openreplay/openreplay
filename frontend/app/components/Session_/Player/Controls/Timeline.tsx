@@ -1,22 +1,25 @@
-import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
-import { debounce } from 'App/utils';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
-import { WebEventsList, MobEventsList } from './EventsList';
-import NotesList from './NotesList';
-import SkipIntervalsList from './SkipIntervalsList';
+import { observer } from 'mobx-react-lite';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
+import { signalService } from 'App/services';
+import { debounce } from 'App/utils';
+import { getLocalHourFormat } from 'App/utils/intlUtils';
 import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
 import {
-  ZoomDragLayer,
-  HighlightDragLayer,
   ExportEventsSelection,
+  HighlightDragLayer,
+  ZoomDragLayer,
 } from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
-import stl from './timeline.module.css';
-import TooltipContainer from './components/TooltipContainer';
+
+import { MobEventsList, WebEventsList } from './EventsList';
+import NotesList from './NotesList';
+import SkipIntervalsList from './SkipIntervalsList';
 import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
-import { signalService } from 'App/services';
+import TooltipContainer from './components/TooltipContainer';
+import stl from './timeline.module.css';
 
 function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
@@ -87,14 +90,15 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
 
     const time = getTime(e);
     if (!time) return;
+    const format = getLocalHourFormat();
     const tz = settingsStore.sessionSettings.timezone.value;
     const timeStr = DateTime.fromMillis(startedAt + time)
       .setZone(tz)
-      .toFormat('hh:mm:ss a');
+      .toFormat(format);
     const userTimeStr = timezone
       ? DateTime.fromMillis(startedAt + time)
           .setZone(timezone)
-          .toFormat('hh:mm:ss a')
+          .toFormat(format)
       : undefined;
 
     const timeLineTooltip = {
