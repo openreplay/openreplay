@@ -4,6 +4,7 @@ package messages
 const (
 	MsgTimestamp                          = 0
 	MsgSessionStart                       = 1
+	MsgCleanSession                       = 3
 	MsgSetPageLocationDeprecated          = 4
 	MsgSetViewportSize                    = 5
 	MsgSetViewportScroll                  = 6
@@ -187,6 +188,27 @@ func (msg *SessionStart) Decode() Message {
 
 func (msg *SessionStart) TypeID() int {
 	return 1
+}
+
+type CleanSession struct {
+	message
+	Timestamp uint64
+}
+
+func (msg *CleanSession) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 3
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *CleanSession) Decode() Message {
+	return msg
+}
+
+func (msg *CleanSession) TypeID() int {
+	return 3
 }
 
 type SetPageLocationDeprecated struct {

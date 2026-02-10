@@ -61,6 +61,12 @@ func main() {
 					msg.Meta().SetMeta(oldMeta)
 				}
 				sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", msg.SessionID()))
+				if msg.TypeID() == messages.MsgCleanSession {
+					if err := srv.CleanSession(sessCtx, msg.SessionID()); err != nil {
+						log.Error(sessCtx, "can't clean session: %s", err)
+					}
+					return
+				}
 				// Process session to save mob files to s3
 				sesEnd := msg.(*messages.SessionEnd)
 				if err := srv.Process(sessCtx, sesEnd); err != nil {

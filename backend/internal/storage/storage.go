@@ -113,6 +113,20 @@ func (s *Storage) Wait() {
 	s.uploaderPool.Pause()
 }
 
+func (s *Storage) CleanSession(ctx context.Context, sessionID uint64) error {
+	filePath := s.cfg.FSDir + "/" + strconv.FormatUint(sessionID, 10)
+	// Remove dom file
+	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("can't remove dom file: %s", err)
+	}
+	// Remove devtools file
+	if err := os.Remove(filePath + "devtools"); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("can't remove devtools file: %s", err)
+	}
+	s.log.Info(ctx, "cleaned storage data for session: %d", sessionID)
+	return nil
+}
+
 func (s *Storage) Process(ctx context.Context, msg *messages.SessionEnd) (err error) {
 	// Generate file path
 	sessionID := strconv.FormatUint(msg.SessionID(), 10)
