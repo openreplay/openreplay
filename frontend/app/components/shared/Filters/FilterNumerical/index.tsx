@@ -39,7 +39,6 @@ function FilterNumericalInput({
   const handleAdd = () => {
     const next = [...localValues, ''];
     setLocalValues(next);
-    onUpdate({ ...filter, value: next });
   };
 
   const handleRemove = (index: number) => {

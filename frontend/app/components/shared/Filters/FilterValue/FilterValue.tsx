@@ -1,9 +1,9 @@
 import { useStore } from '@/mstore';
-import { CloseCircleFilled } from '@ant-design/icons';
 import { FilterCategory, FilterKey, FilterType } from 'Types/filter/filterType';
-import { Button, Input, Select } from 'antd';
+import { Input, Select } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useMemo, useState } from 'react';
+
 import { assist as assistRoute, isRoute } from 'App/routes';
 
 import FilterTimestamp from 'Shared/Filters/FilterTimestamp';
@@ -11,7 +11,6 @@ import ValueAutoComplete from 'Shared/Filters/FilterValue/ValueAutoComplete';
 
 import FilterDuration from '../FilterDuration';
 import FilterNumericalInput from '../FilterNumerical';
-
 
 const ASSIST_ROUTE = assistRoute();
 
