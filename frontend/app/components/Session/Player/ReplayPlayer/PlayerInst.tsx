@@ -62,6 +62,7 @@ function Player(props: IProps) {
   const { fullscreenOff } = uiPlayerStore;
   const { bottomBlock } = uiPlayerStore;
   const { fullscreen } = uiPlayerStore;
+  const { scrollMode } = uiPlayerStore;
   const defaultHeight = getDefaultPanelHeight();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const { activeTab, fullView } = props;
@@ -85,6 +86,12 @@ function Player(props: IProps) {
   React.useEffect(() => {
     playerContext.player.scale();
   }, [bottomBlock, fullscreen, playerContext.player, activeTab, fullView]);
+
+  React.useEffect(() => {
+    if (playerContext.player) {
+      playerContext.player.toggleScrollMode(scrollMode);
+    }
+  }, [scrollMode, playerContext.player]);
 
   if (!playerContext.player) return null;
 

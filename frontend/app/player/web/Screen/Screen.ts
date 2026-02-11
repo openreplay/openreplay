@@ -65,6 +65,7 @@ export default class Screen {
   private selectionTargets: Element[];
   private readonly iframe: HTMLIFrameElement;
   private readonly screen: HTMLDivElement;
+  private scrollSpacer: HTMLDivElement | null = null;
   private parentElement: HTMLElement | null = null;
   private onUpdateHook: (w: number, h: number) => void;
 
@@ -113,6 +114,25 @@ export default class Screen {
     this.iframe?.remove?.();
     this.overlay?.remove?.();
     this.screen?.remove?.();
+    this.scrollSpacer?.remove?.();
+  }
+
+  getScaleMode(): ScaleMode {
+    return this.scaleMode;
+  }
+
+  setScaleMode(mode: ScaleMode) {
+    const prevMode = this.scaleMode;
+    this.scaleMode = mode;
+
+    // When switching back from AdjustParentHeight to Embed, clean up scroll state
+    if (prevMode === ScaleMode.AdjustParentHeight && mode === ScaleMode.Embed) {
+      if (this.parentElement) {
+        this.parentElement.style.height = '';
+        this.parentElement.scrollTop = 0;
+      }
+      this.scrollSpacer?.remove?.();
+    }
   }
 
   attach(parentElement: HTMLElement) {
@@ -252,14 +272,14 @@ export default class Screen {
       case ScaleMode.Embed:
         this.scaleRatio = Math.min(offsetWidth / width, offsetHeight / height);
         translate = 'translate(-50%, -50%)';
-        posStyles = { height: `${height}px` };
+        posStyles = { top: '50%', height: `${height}px` };
         break;
       case ScaleMode.AdjustParentHeight:
-        // we want to scale the document with true height so the clickmap will be scrollable
+        // Scale the document with true height so the full page is scrollable
+        const bodyScrollHeight = this.document?.body.scrollHeight || 0;
         const usedHeight =
-          this.document?.body.scrollHeight &&
-          this.document?.body.scrollHeight > height
-            ? this.document.body.scrollHeight + 'px'
+          bodyScrollHeight && bodyScrollHeight > height
+            ? bodyScrollHeight + 'px'
             : height + 'px';
         this.scaleRatio = offsetWidth / width;
         translate = 'translate(-50%, 0)';
@@ -274,7 +294,30 @@ export default class Screen {
     }
 
     if (this.scaleMode === ScaleMode.AdjustParentHeight) {
-      this.parentElement.style.height = `${this.scaleRatio * height}px`;
+      // Use a spacer div to create scrollable area in the parent container.
+      // The screen is position:absolute, so it doesn't contribute to scroll height.
+      // The spacer is a normal-flow element that forces the parent to be scrollable.
+      const bodyScrollHeight = this.document?.body.scrollHeight || 0;
+      const contentHeight = bodyScrollHeight > height ? bodyScrollHeight : height;
+      const scaledHeight = this.scaleRatio * contentHeight;
+
+      if (!this.scrollSpacer) {
+        this.scrollSpacer = document.createElement('div');
+        this.scrollSpacer.style.pointerEvents = 'none';
+        this.scrollSpacer.style.width = '1px';
+        this.scrollSpacer.style.visibility = 'hidden';
+      }
+      this.scrollSpacer.style.height = `${scaledHeight}px`;
+      if (this.parentElement && !this.scrollSpacer.parentElement) {
+        this.parentElement.appendChild(this.scrollSpacer);
+      }
+      // Reset explicit parent height (let spacer control scroll)
+      this.parentElement.style.height = '';
+    } else {
+      // Remove spacer when not in AdjustParentHeight mode
+      if (this.scrollSpacer?.parentElement) {
+        this.scrollSpacer.remove();
+      }
     }
 
     Object.assign(this.screen.style, posStyles, {
