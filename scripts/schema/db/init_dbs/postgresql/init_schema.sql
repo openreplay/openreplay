@@ -1220,4 +1220,24 @@ CREATE TABLE IF NOT EXISTS public.saved_searches
 
 CREATE INDEX saved_searches_project_id_idx ON public.saved_searches (project_id);
 
+CREATE TABLE public.actions
+(
+    action_id   uuid                        PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id  integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    user_id     integer                     NULL REFERENCES public.users (user_id) ON DELETE SET NULL,
+    name        varchar(255)                NOT NULL,
+    description varchar(1024)               NULL     DEFAULT NULL,
+    filters     jsonb                       NOT NULL DEFAULT '[]'::jsonb,
+    is_public   boolean                     NOT NULL DEFAULT FALSE,
+    created_at  timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at  timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX actions_project_id_idx ON public.actions (project_id);
+CREATE INDEX actions_user_id_idx ON public.actions (user_id);
+CREATE INDEX actions_project_id_user_id_idx ON public.actions (project_id, user_id);
+CREATE INDEX actions_project_id_is_public_idx ON public.actions (project_id, is_public);
+CREATE INDEX actions_name_gin_idx ON public.actions USING GIN (name gin_trgm_ops);
+CREATE UNIQUE INDEX actions_project_id_name_idx ON public.actions (project_id, name);
+
 COMMIT;
