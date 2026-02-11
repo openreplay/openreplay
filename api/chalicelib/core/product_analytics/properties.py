@@ -5,173 +5,217 @@ from chalicelib.core import tags
 from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.ch_client import ClickHouseClient
 
+
+def or_property_display_name(property_name: str) -> str:
+    return {
+        'label': 'Label',
+        'hesitation_time': 'Hesitation Time',
+        'name': 'Name',
+        'payload': 'Payload',
+        'level': 'Level',
+        'source': 'Source',
+        'duration': 'Duration',
+        'context': 'Context',
+        'url_host': 'Hostname',
+        'url_path': 'Path',
+        'url_hostpath': 'URL Host and Path',
+        'request_start': 'Request Start',
+        'response_start': 'Response Start',
+        'response_end': 'Response End',
+        'dom_content_loaded_event_start': 'DOM Content Loaded Event Start',
+        'dom_content_loaded_event_end': 'DOM Content Loaded Event End',
+        'load_event_start': 'Load Event Start',
+        'load_event_end': 'Load Event End',
+        'first_paint': 'First Paint',
+        'first_contentful_paint_time': 'First Contentful-paint Time',
+        'speed_index': 'Speed Index',
+        'visually_complete': 'Visually Complete',
+        'time_to_interactive': 'Time To Interactive',
+        'ttfb': 'Time To First Byte',
+        'ttlb': 'Time To Last Byte',
+        'response_time': 'Response Time',
+        'dom_building_time': 'DOM Building Time',
+        'dom_content_loaded_event_time': 'DOM Content Loaded Event Time',
+        'load_event_time': 'Load Event Time',
+        'min_fps': 'Minimum Frame Rate',
+        'avg_fps': 'Average Frame Rate',
+        'max_fps': 'Maximum Frame Rate',
+        'min_cpu': 'Minimum CPU',
+        'avg_cpu': 'Average CPU',
+        'max_cpu': 'Maximum CPU',
+        'min_total_js_heap_size': 'Minimum Total JS Heap Size',
+        'avg_total_js_heap_size': 'Average Total JS Heap Size',
+        'max_total_js_heap_size': 'Maximum Total JS Heap Size',
+        'min_used_js_heap_size': 'Minimum Used JS Heap Size',
+        'avg_used_js_heap_size': 'Average Used JS Heap Size',
+        'max_used_js_heap_size': 'Maximum Used JS Heap Size',
+        'success': 'Success',
+        'request_body': 'Request Body',
+        'response_body': 'Response Body',
+        'transfer_size': 'Transfer Size',
+        'selector': 'CSS Selector',
+        'normalized_x': 'Normalized X',
+        'normalized_y': 'Normalized Y',
+        'message_id': 'Message ID',
+        'cls': 'Cumulative Layout Shift',
+        'lcp': 'Largest Contentful Paint',
+        'issue_type': 'Issue Type',
+        'url': 'URL',
+        'user_device': 'Device',
+        'user_device_type': 'Platform',
+        'message': 'Error Message',
+        'method': 'HTTP Method',
+        'status': 'Status Code',
+        'userState': 'State/Province',
+        'incident': 'Incident Reported By User',
+        'page_title': 'Page Title',
+    }.get(property_name, '')
+
+
 PREDEFINED_PROPERTIES = {
     "label": {
         "type": "String",
-        "displayName": "Label",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": True,
     },
     "hesitation_time": {
         "type": "UInt32",
-        "displayName": "Hesitation Time",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "name": {
         "type": "String",
-        "displayName": "Name",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": True,
     },
     "payload": {
         "type": "String",
-        "displayName": "Payload",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "level": {
         "type": "Enum8",
-        "displayName": "Level",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "message": {
         "type": "String",
-        "displayName": "Message",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "context": {
         "type": "Enum8",
-        "displayName": "Context",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "url_host": {
         "type": "String",
-        "displayName": "Hostname",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": True,
     },
     "url_path": {
         "type": "String",
-        "displayName": "Path",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": True,
     },
     "first_contentful_paint_time": {
         "type": "UInt16",
-        "displayName": "First Contentful-paint Time",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "speed_index": {
         "type": "UInt16",
-        "displayName": "Speed Index",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "min_fps": {
         "type": "UInt8",
-        "displayName": "Minimum Frame Rate",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "max_fps": {
         "type": "UInt8",
-        "displayName": "Maximum Frame Rate",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "min_cpu": {
         "type": "UInt8",
-        "displayName": "Minimum CPU",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "max_cpu": {
         "type": "UInt8",
-        "displayName": "Maximum CPU",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "min_used_js_heap_size": {
         "type": "UInt64",
-        "displayName": "Minimum Used JS Heap Size",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "max_used_js_heap_size": {
         "type": "UInt64",
-        "displayName": "Maximum Used JS Heap Size",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "method": {
         "type": "Enum8",
-        "displayName": "Method",
         "isPredefined": True,
         "possibleValues": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTION"],
         "isConditional": True,
     },
     "status": {
         "type": "UInt16",
-        "displayName": "Status",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": True,
     },
     "success": {
         "type": "UInt8",
-        "displayName": "Success",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "request_body": {
         "type": "String",
-        "displayName": "Request Body",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "response_body": {
         "type": "String",
-        "displayName": "Response Body",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": False,
     },
     "selector": {
         "type": "String",
-        "displayName": "CSS Selector",
         "isPredefined": False,
         "possibleValues": [],
         "isConditional": True,
     },
-    "duration": {"type": "UInt16", "displayName": "Duration",
+    "duration": {"type": "UInt16",
                  "isPredefined": False, "possibleValues": [], "isConditional": True},
-    "normalized_x": {"type": "UInt16", "displayName": "Normalized X",
+    "normalized_x": {"type": "UInt16",
                      "isPredefined": False, "possibleValues": [], "isConditional": True},
-    "normalized_y": {"type": "UInt16", "displayName": "Normalized Y",
+    "normalized_y": {"type": "UInt16",
                      "isPredefined": False, "possibleValues": [], "isConditional": True},
 }
 
@@ -253,6 +297,8 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
             p["possibleTypes"] = list(
                 set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"]))
             )
+            if p["autoCaptured"] and (p["displayName"] is None or p["displayName"] == ''):
+                p["displayName"] = or_property_display_name(snake_case_name)
             if snake_case_name in PREDEFINED_PROPERTIES:
                 p["_foundInPredefinedList"] = True
                 p["isConditional"] = PREDEFINED_PROPERTIES[snake_case_name][
@@ -261,8 +307,6 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(
                     PREDEFINED_PROPERTIES[snake_case_name]["type"]
                 )
-                if p["autoCaptured"] and (p["displayName"] is None or p["displayName"] == ''):
-                    p["displayName"] = PREDEFINED_PROPERTIES[snake_case_name]["displayName"]
             else:
                 p["_foundInPredefinedList"] = False
                 p["dataType"] = next(iter(p["possibleTypes"]), "string")
@@ -271,12 +315,13 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
         keys = [helper.key_to_snake_case(p["name"]) for p in properties]
         for p in PREDEFINED_PROPERTIES.keys():
             camel_case_name = helper.key_to_camel_case(p)
+            snake_case_name = helper.key_to_snake_case(p)
             if p not in keys:
                 total += 1
                 properties.append(
                     {
                         "name": camel_case_name,
-                        "displayName": PREDEFINED_PROPERTIES[p]["displayName"],
+                        "displayName": or_property_display_name(snake_case_name),
                         "possibleTypes": [PREDEFINED_PROPERTIES[p]["type"]],
                         "id": helper.string_to_id(f'prop_{camel_case_name}'),
                         "_foundInPredefinedList": False,
@@ -350,6 +395,8 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
             p["_foundInPredefinedList"] = False
             p["isPredefined"] = False
             p["possibleValues"] = []
+            if p["autoCaptured"] and (p["displayName"] is None or p["displayName"] == ''):
+                p["displayName"] = or_property_display_name(snake_case_name)
             if snake_case_name in PREDEFINED_PROPERTIES:
                 p["dataType"] = exp_ch_helper.simplify_clickhouse_type(
                     PREDEFINED_PROPERTIES[snake_case_name]["type"]
@@ -361,8 +408,6 @@ def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
                 p["possibleValues"] = PREDEFINED_PROPERTIES[snake_case_name][
                     "possibleValues"
                 ]
-                if p["autoCaptured"] and (p["displayName"] is None or p["displayName"] == ''):
-                    p["displayName"] = PREDEFINED_PROPERTIES[snake_case_name]["displayName"]
             p["possibleTypes"] = list(
                 set(exp_ch_helper.simplify_clickhouse_types(p["possibleTypes"]))
             )
