@@ -1,9 +1,8 @@
-// @flow
-
-import { DateTime, Duration } from 'luxon'; // TODO
+import { DateTime, Duration } from 'luxon';
 import { Timezone } from 'App/mstore/types/sessionSettings';
 import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
 import { CUSTOM_RANGE } from '@/dateRange';
+import { getLocalHourFormat } from './utils/intlUtils';
 
 export function getDateFromString(
   date: string,
@@ -151,6 +150,7 @@ export function formatTimeOrDate(
   isFull = false,
 ): string {
   let date = DateTime.fromMillis(timestamp);
+  const hourFormat = getLocalHourFormat(false);
   if (timezone) {
     if (timezone.value === 'UTC') date = date.toUTC();
     date = date.setZone(timezone.value);
@@ -158,20 +158,20 @@ export function formatTimeOrDate(
 
   if (isFull) {
     const strHead = date.toFormat('LLL dd, yyyy, ');
-    const strTail = date.toFormat('hh:mma').toLowerCase();
+    const strTail = date.toFormat(hourFormat).toLowerCase();
     return strHead + strTail;
   }
 
   if (isToday(date)) {
-    return date.toFormat('hh:mma').toLowerCase();
+    return date.toFormat(hourFormat).toLowerCase();
   }
   if (isSameYear(date)) {
     const strHead = date.toFormat('LLL dd, ');
-    const strTail = date.toFormat('hh:mma').toLowerCase();
+    const strTail = date.toFormat(hourFormat).toLowerCase();
     return strHead + strTail;
   }
   const strHead = date.toFormat('LLL dd, yyyy, ');
-  const strTail = date.toFormat('hh:mma').toLowerCase();
+  const strTail = date.toFormat(hourFormat).toLowerCase();
   return strHead + strTail;
 }
 
