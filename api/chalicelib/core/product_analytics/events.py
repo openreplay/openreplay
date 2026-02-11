@@ -67,6 +67,8 @@ PREDEFINED_EVENTS_MOBILE = {
     },
 }
 
+EXCLUDED_EVENTS = ["CUSTOM"]
+
 cache = TTLCache(maxsize=1000, ttl=60)
 
 
@@ -120,6 +122,7 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
         }
     total = rows[0]["total"]
     rows = helper.list_to_camel_case(rows)
+    rows = [r for r in rows if not (r["autoCaptured"] and r["eventName"] in EXCLUDED_EVENTS)]
 
     is_mobile = __is_mobile_platform(platform)
     mobile_only_events = {"TAP", "SWIPE", "CRASH"}
