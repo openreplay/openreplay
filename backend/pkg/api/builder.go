@@ -201,7 +201,8 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	lexiconHandlers, err := lexiconAPI.NewHandlers(log, requestHandler, lexiconService)
+	actionsService := lexicon.NewActions(log, pgconn)
+	lexiconHandlers, err := lexiconAPI.NewHandlers(log, requestHandler, lexiconService, actionsService)
 	if err != nil {
 		return nil, err
 	}
