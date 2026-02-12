@@ -3,18 +3,27 @@ package lexicon
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v4"
 
 	"openreplay/backend/pkg/analytics/lexicon/model"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
 
+var (
+	ErrActionNotFound   = errors.New("action not found")
+	ErrActionDuplicate  = errors.New("action with this name already exists for this project")
+	ErrNoFieldsToUpdate = errors.New("no fields to update")
+)
+
 type Actions interface {
 	Create(ctx context.Context, projectID uint32, userID uint64, req *model.CreateActionRequest) (*model.Action, error)
-	Search(ctx context.Context, projectID uint32, userID uint64, req *model.SearchActionRequest) (*model.SearchActionsResponse, error)
+	Search(ctx context.Context, projectID uint32, req *model.SearchActionRequest) (*model.SearchActionsResponse, error)
 	Update(ctx context.Context, projectID uint32, actionID string, req *model.UpdateActionRequest) (*model.Action, error)
 	Delete(ctx context.Context, projectID uint32, actionID string) error
 }
@@ -28,28 +37,7 @@ func NewActions(log logger.Logger, conn pool.Pool) Actions {
 	return &actionsImpl{log: log, pgconn: conn}
 }
 
-func (a *actionsImpl) existsByName(ctx context.Context, projectID uint32, name string) (bool, error) {
-	const query = `
-		SELECT COUNT(*) FROM public.actions 
-		WHERE project_id = $1 AND name = $2
-	`
-	var count int
-	if err := a.pgconn.QueryRow(query, projectID, name).Scan(&count); err != nil {
-		a.log.Error(ctx, "check action existence: %v", err)
-		return false, fmt.Errorf("check action existence: %w", err)
-	}
-	return count > 0, nil
-}
-
 func (a *actionsImpl) Create(ctx context.Context, projectID uint32, userID uint64, req *model.CreateActionRequest) (*model.Action, error) {
-	exists, err := a.existsByName(ctx, projectID, req.Name)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, fmt.Errorf("action with name '%s' already exists for this project", req.Name)
-	}
-
 	filtersJSON, err := json.Marshal(req.Filters)
 	if err != nil {
 		return nil, fmt.Errorf("marshal filters: %w", err)
@@ -59,6 +47,7 @@ func (a *actionsImpl) Create(ctx context.Context, projectID uint32, userID uint6
 		INSERT INTO public.actions (
 			project_id, user_id, name, description, filters, is_public
 		) VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (project_id, name) DO NOTHING
 		RETURNING action_id, created_at, updated_at
 	`
 
@@ -71,53 +60,47 @@ func (a *actionsImpl) Create(ctx context.Context, projectID uint32, userID uint6
 		req.Name,
 		req.Description,
 		filtersJSON,
-		req.IsPublic,
+		true,
 	).Scan(&actionID, &createdAt, &updatedAt)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrActionDuplicate
+		}
 		a.log.Error(ctx, "insert action: %v", err)
 		return nil, fmt.Errorf("create action: %w", err)
 	}
 
 	return &model.Action{
 		ActionID:    actionID,
-		ProjectID:   uint(projectID),
-		UserID:      uint(userID),
+		ProjectID:   uint64(projectID),
+		UserID:      userID,
 		Name:        req.Name,
 		Description: req.Description,
 		Filters:     req.Filters,
-		IsPublic:    req.IsPublic,
+		IsPublic:    true,
 		CreatedAt:   createdAt.UnixMilli(),
 		UpdatedAt:   updatedAt.UnixMilli(),
 	}, nil
 }
 
 func (a *actionsImpl) Update(ctx context.Context, projectID uint32, actionID string, req *model.UpdateActionRequest) (*model.Action, error) {
-	// Build dynamic SET clause from non-zero fields
 	setClauses := []string{}
 	params := []interface{}{}
 	idx := 1
 
-	if req.Name != "" {
-		// Check uniqueness only if name is being changed
-		exists, err := a.existsByNameExcluding(ctx, projectID, req.Name, actionID)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			return nil, fmt.Errorf("action with name '%s' already exists for this project", req.Name)
-		}
+	if req.Name != nil {
 		setClauses = append(setClauses, fmt.Sprintf("name = $%d", idx))
-		params = append(params, req.Name)
+		params = append(params, *req.Name)
 		idx++
 	}
-	if req.Description != "" {
+	if req.Description != nil {
 		setClauses = append(setClauses, fmt.Sprintf("description = $%d", idx))
-		params = append(params, req.Description)
+		params = append(params, *req.Description)
 		idx++
 	}
 	if req.Filters != nil {
-		filtersJSON, err := json.Marshal(req.Filters)
+		filtersJSON, err := json.Marshal(*req.Filters)
 		if err != nil {
 			return nil, fmt.Errorf("marshal filters: %w", err)
 		}
@@ -125,17 +108,11 @@ func (a *actionsImpl) Update(ctx context.Context, projectID uint32, actionID str
 		params = append(params, filtersJSON)
 		idx++
 	}
-	if req.IsPublic != nil {
-		setClauses = append(setClauses, fmt.Sprintf("is_public = $%d", idx))
-		params = append(params, *req.IsPublic)
-		idx++
-	}
 
 	if len(setClauses) == 0 {
-		return nil, fmt.Errorf("no fields to update")
+		return nil, ErrNoFieldsToUpdate
 	}
 
-	// Always update the updated_at timestamp
 	setClauses = append(setClauses, "updated_at = NOW()")
 
 	query := fmt.Sprintf(`
@@ -162,6 +139,12 @@ func (a *actionsImpl) Update(ctx context.Context, projectID uint32, actionID str
 		&updatedAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrActionNotFound
+		}
+		if strings.Contains(err.Error(), "actions_project_id_name_key") || strings.Contains(err.Error(), "unique constraint") {
+			return nil, ErrActionDuplicate
+		}
 		a.log.Error(ctx, "update action %s: %v", actionID, err)
 		return nil, fmt.Errorf("update action: %w", err)
 	}
@@ -178,32 +161,24 @@ func (a *actionsImpl) Update(ctx context.Context, projectID uint32, actionID str
 	return &action, nil
 }
 
-func (a *actionsImpl) existsByNameExcluding(ctx context.Context, projectID uint32, name string, excludeActionID string) (bool, error) {
-	const query = `
-		SELECT COUNT(*) FROM public.actions
-		WHERE project_id = $1 AND name = $2 AND action_id != $3
-	`
-	var count int
-	if err := a.pgconn.QueryRow(query, projectID, name, excludeActionID).Scan(&count); err != nil {
-		a.log.Error(ctx, "check action name uniqueness: %v", err)
-		return false, fmt.Errorf("check action name uniqueness: %w", err)
-	}
-	return count > 0, nil
-}
-
 func (a *actionsImpl) Delete(ctx context.Context, projectID uint32, actionID string) error {
 	const query = `
 		DELETE FROM public.actions
 		WHERE action_id = $1 AND project_id = $2
+		RETURNING action_id
 	`
-	if err := a.pgconn.Exec(query, actionID, projectID); err != nil {
+	var deletedID string
+	err := a.pgconn.QueryRow(query, actionID, projectID).Scan(&deletedID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrActionNotFound
+		}
 		a.log.Error(ctx, "delete action %s: %v", actionID, err)
 		return fmt.Errorf("delete action: %w", err)
 	}
 	return nil
 }
 
-// sortColumnMap maps API sort field names to actual database column names.
 var sortColumnMap = map[string]string{
 	"name":      "name",
 	"createdAt": "created_at",
@@ -215,8 +190,7 @@ const (
 	defaultSearchPage  = 1
 )
 
-func (a *actionsImpl) Search(ctx context.Context, projectID uint32, userID uint64, req *model.SearchActionRequest) (*model.SearchActionsResponse, error) {
-	// Apply defaults
+func (a *actionsImpl) Search(ctx context.Context, projectID uint32, req *model.SearchActionRequest) (*model.SearchActionsResponse, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultSearchLimit
@@ -227,15 +201,9 @@ func (a *actionsImpl) Search(ctx context.Context, projectID uint32, userID uint6
 	}
 	offset := (page - 1) * limit
 
-	// Build dynamic WHERE clause
 	conds := []string{"project_id = $1"}
 	params := []interface{}{projectID}
 	idx := 2
-
-	// Visibility: show public actions + user's own private actions
-	conds = append(conds, fmt.Sprintf("(is_public = true OR user_id = $%d)", idx))
-	params = append(params, userID)
-	idx++
 
 	if req.Name != "" {
 		conds = append(conds, fmt.Sprintf("name ILIKE $%d", idx))
@@ -247,15 +215,9 @@ func (a *actionsImpl) Search(ctx context.Context, projectID uint32, userID uint6
 		params = append(params, *req.UserID)
 		idx++
 	}
-	if req.IsPublic != nil {
-		conds = append(conds, fmt.Sprintf("is_public = $%d", idx))
-		params = append(params, *req.IsPublic)
-		idx++
-	}
 
 	where := "WHERE " + strings.Join(conds, " AND ")
 
-	// Build ORDER BY
 	orderBy := "ORDER BY created_at DESC"
 	if req.SortBy != "" {
 		col, ok := sortColumnMap[req.SortBy]
@@ -269,7 +231,6 @@ func (a *actionsImpl) Search(ctx context.Context, projectID uint32, userID uint6
 		orderBy = fmt.Sprintf("ORDER BY %s %s", col, dir)
 	}
 
-	// Count query
 	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM public.actions %s`, where)
 	var total int
 	if err := a.pgconn.QueryRow(countQuery, params...).Scan(&total); err != nil {
@@ -277,7 +238,6 @@ func (a *actionsImpl) Search(ctx context.Context, projectID uint32, userID uint6
 		return nil, fmt.Errorf("count actions: %w", err)
 	}
 
-	// Data query
 	dataQuery := fmt.Sprintf(`
 		SELECT action_id, project_id, user_id, name, description, filters, is_public, created_at, updated_at
 		FROM public.actions
