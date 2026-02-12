@@ -183,34 +183,45 @@ const autocomplete = async function (req, res) {
     logger.debug("[WS]autocomplete");
     res.handlerName = 'autocomplete';
 
-    const _projectKey = extractProjectKeyFromRequest(req);
-    const filters = await extractPayloadFromRequest(req);
-    let results = [];
-    if (!hasQuery(filters)) {
-        return respond(req, res, results);
-    }
-
-    let connected_sockets = await fetchSockets();
-    if (connected_sockets.length === 0) {
-        return results;
-    }
-
-    const rooms = new Map();
-    for (let item of connected_sockets) {
-        if (rooms.has(item.handshake.query.roomId)) {
-            continue;
+    try {
+        const _projectKey = extractProjectKeyFromRequest(req);
+        const filters = await extractPayloadFromRequest(req);
+        let results = [];
+        if (!hasQuery(filters)) {
+            return respond(req, res, results);
         }
-        if (item.handshake.query.sessionInfo) {
-            if ((item.handshake.query.projectKey !== _projectKey) || (item.handshake.query.identity !== IDENTITIES.session)) {
+
+        let connected_sockets = await fetchSockets();
+        if (connected_sockets.length === 0) {
+            return respond(req, res, results);
+        }
+
+        const rooms = new Map();
+        for (let item of connected_sockets) {
+            if (rooms.has(item.handshake.query.roomId)) {
                 continue;
             }
-            // Mark this room as visited
-            rooms.set(item.handshake.query.roomId, true);
-            results.push(...getValidAttributes(item.handshake.query.sessionInfo, filters.query))
+            if (item.handshake.query.sessionInfo) {
+                if ((item.handshake.query.projectKey !== _projectKey) || (item.handshake.query.identity !== IDENTITIES.session)) {
+                    continue;
+                }
+                // Mark this room as visited
+                rooms.set(item.handshake.query.roomId, true);
+                results.push(...getValidAttributes(item.handshake.query.sessionInfo, filters.query))
+            }
+        }
+
+        return respond(req, res, uniqueAutocomplete(results));
+    } catch (e) {
+        logger.error("[WS]autocomplete failed", e);
+        // Keep behavior consistent with other handlers: log server-side, but respond with empty result
+        // so callers (API/UI) don't treat it as a hard failure.
+        try {
+            return respond(req, res, []);
+        } catch (e2) {
+            logger.error("[WS]autocomplete failed to respond", e2);
         }
     }
-
-    respond(req, res, uniqueAutocomplete(results));
 }
 
 module.exports = {
