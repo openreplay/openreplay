@@ -1,5 +1,8 @@
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.25.0';
 
+ALTER TABLE product_analytics.events
+    ADD COLUMN IF NOT EXISTS "$current_path" String MATERIALIZED path("$current_url") AFTER "$current_url";
+
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_version_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_country_mv;
