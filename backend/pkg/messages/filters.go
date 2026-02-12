@@ -2,7 +2,7 @@
 package messages
 
 func IsReplayerType(id int) bool {
-	return 1 != id && 17 != id && 23 != id && 24 != id && 27 != id && 28 != id && 29 != id && 30 != id && 31 != id && 32 != id && 33 != id && 42 != id && 56 != id && 63 != id && 64 != id && 66 != id && 78 != id && 81 != id && 82 != id && 112 != id && 115 != id && 124 != id && 125 != id && 126 != id && 127 != id && 90 != id && 91 != id && 92 != id && 94 != id && 95 != id && 97 != id && 98 != id && 107 != id && 110 != id
+	return 1 != id && 3 != id && 17 != id && 23 != id && 24 != id && 27 != id && 28 != id && 29 != id && 30 != id && 31 != id && 32 != id && 33 != id && 42 != id && 56 != id && 63 != id && 64 != id && 66 != id && 78 != id && 81 != id && 82 != id && 112 != id && 115 != id && 124 != id && 125 != id && 126 != id && 127 != id && 90 != id && 91 != id && 92 != id && 94 != id && 95 != id && 97 != id && 98 != id && 107 != id && 110 != id
 }
 
 func IsMobileType(id int) bool {

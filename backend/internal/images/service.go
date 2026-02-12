@@ -69,6 +69,19 @@ func (v *ImageStorage) Wait() {
 	v.uploaderPool.Pause()
 }
 
+func (v *ImageStorage) CleanSession(ctx context.Context, sessionID uint64) error {
+	path := v.cfg.FSDir + "/"
+	if v.cfg.ScreenshotsDir != "" {
+		path += v.cfg.ScreenshotsDir + "/"
+	}
+	path += strconv.FormatUint(sessionID, 10) + "/"
+	if err := os.RemoveAll(path); err != nil {
+		return fmt.Errorf("can't remove screenshots directory: %s", err)
+	}
+	v.log.Info(ctx, "cleaned screenshots data for session: %d", sessionID)
+	return nil
+}
+
 func (v *ImageStorage) Process(ctx context.Context, sessID uint64, data []byte) error {
 	start := time.Now()
 	images := make(map[string]*bytes.Buffer)

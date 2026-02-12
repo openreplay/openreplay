@@ -89,6 +89,15 @@ func (v *ImageStorage) Wait() {
 	v.uploaderPool.Pause()
 }
 
+func (v *ImageStorage) CleanSession(ctx context.Context, sessionID uint64) error {
+	path := fmt.Sprintf("%s%d/", v.basePath, sessionID)
+	if err := os.RemoveAll(path); err != nil {
+		return fmt.Errorf("can't remove canvas directory: %s", err)
+	}
+	v.log.Info(ctx, "cleaned canvas data for session: %d", sessionID)
+	return nil
+}
+
 func (v *ImageStorage) SaveCanvasToDisk(ctx context.Context, sessID uint64, data []byte) error {
 	type canvasData struct {
 		Name string

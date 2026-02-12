@@ -79,6 +79,21 @@ func main() {
 				customEvent := msg.(*messages.CustomEvent)
 				return customEvent.Payload, customEvent.Name, true
 			}
+			isCleanSessionEvent := func(data []byte) bool {
+				reader := messages.NewBytesReader(data)
+				msgType, err := reader.ReadUint()
+				if err != nil {
+					return false
+				}
+				if msgType != messages.MsgCleanSession {
+					return false
+				}
+				_, err = messages.ReadMessage(msgType, reader)
+				if err != nil {
+					return false
+				}
+				return true
+			}
 			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
 
 			if isSessionEnd(data) {
@@ -90,6 +105,10 @@ func main() {
 			} else if path, name, ok := isTriggerEvent(data); ok {
 				if err := srv.ProcessSessionCanvas(sessCtx, sessID, path, name); err != nil {
 					log.Error(sessCtx, "can't process session's canvas: %s", err)
+				}
+			} else if isCleanSessionEvent(data) {
+				if err := srv.CleanSession(sessCtx, sessID); err != nil {
+					log.Error(sessCtx, "can't clean session: %s", err)
 				}
 			} else {
 				if err := srv.SaveCanvasToDisk(sessCtx, sessID, data); err != nil {

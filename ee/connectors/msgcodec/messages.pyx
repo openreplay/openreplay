@@ -58,6 +58,15 @@ cdef class SessionStart(PyMessage):
         self.user_id = user_id
 
 
+cdef class CleanSession(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+
+    def __init__(self, unsigned long timestamp):
+        self.__id__ = 3
+        self.timestamp = timestamp
+
+
 cdef class SetPageLocationDeprecated(PyMessage):
     cdef public int __id__
     cdef public str url
