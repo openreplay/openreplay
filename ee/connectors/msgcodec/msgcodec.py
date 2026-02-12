@@ -118,6 +118,11 @@ class MessageCodec(Codec):
                 user_id=self.read_string(reader)
             )
 
+        if message_id == 3:
+            return CleanSession(
+                timestamp=self.read_uint(reader)
+            )
+
         if message_id == 4:
             return SetPageLocationDeprecated(
                 url=self.read_string(reader),

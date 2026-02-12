@@ -19,6 +19,9 @@ type Config struct {
 	TopicRawMobile    string        `env:"TOPIC_RAW_IOS,required"`
 	TopicCanvasImages string        `env:"TOPIC_CANVAS_IMAGES,required"`
 	TopicRawImages    string        `env:"TOPIC_RAW_IMAGES,required"`
+	TopicTrigger      string        `env:"TOPIC_TRIGGER,required"`
+	GroupCleanup      string        `env:"GROUP_CLEANUP,required"`
+	CleanupReadGap    time.Duration `env:"CLEANUP_READ_GAP,default=48h"`
 	ProducerTimeout   int           `env:"PRODUCER_TIMEOUT,default=2000"`
 	PartitionsNumber  int           `env:"PARTITIONS_NUMBER,required"`
 	UseEncryption     bool          `env:"USE_ENCRYPTION,default=false"`
