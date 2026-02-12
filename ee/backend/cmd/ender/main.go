@@ -12,6 +12,7 @@ import (
 	config "openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/ender"
 	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/cleanup"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
@@ -86,6 +87,11 @@ func main() {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
 
+	cleanupDispatcher, err := cleanup.NewDispatcher(log, cfg, producer)
+	if err != nil {
+		log.Fatal(ctx, "can't init cleanup dispatcher: %s", err)
+	}
+
 	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
 		log.Fatal(ctx, "can't init memory manager: %s", err)
@@ -106,6 +112,7 @@ func main() {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
 			consumer.Close()
+			cleanupDispatcher.Close()
 			os.Exit(0)
 		case <-tick:
 			details := newDetails()

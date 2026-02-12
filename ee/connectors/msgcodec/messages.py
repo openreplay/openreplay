@@ -35,6 +35,13 @@ class SessionStart(Message):
         self.user_id = user_id
 
 
+class CleanSession(Message):
+    __id__ = 3
+
+    def __init__(self, timestamp):
+        self.timestamp = timestamp
+
+
 class SetPageLocationDeprecated(Message):
     __id__ = 4
 

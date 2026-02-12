@@ -68,6 +68,15 @@ func DecodeSessionStart(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeCleanSession(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &CleanSession{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeSetPageLocationDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &SetPageLocationDeprecated{}
@@ -2052,6 +2061,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeTimestamp(reader)
 	case 1:
 		return DecodeSessionStart(reader)
+	case 3:
+		return DecodeCleanSession(reader)
 	case 4:
 		return DecodeSetPageLocationDeprecated(reader)
 	case 5:

@@ -22,6 +22,10 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
   string 'UserID'
 end
 
+message 3, 'CleanSession', :tracker => false, :replayer => false do
+    uint 'Timestamp'
+end
+
 # DEPRECATED since 14.0.0 -> goto 122
 message 4, 'SetPageLocationDeprecated' do
   string 'URL'
@@ -410,11 +414,6 @@ message 79, 'Zustand', :replayer => :devtools do
   string 'Mutation'
   string 'State'
 end
-
-
-# 80 -- 90 reserved
-
-# Special one for Batch Metadata. Message id could define the version
 
 # since tracker 3.6.0   TODO: for webworker only
 message 81, 'BatchMetadata', :replayer => false do

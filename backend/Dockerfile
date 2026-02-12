@@ -69,6 +69,7 @@ ENV TZ=UTC \
   GROUP_CANVAS_IMAGE=canvas-image \
   GROUP_CANVAS_VIDEO=canvas-video \
   GROUP_ANALYTICS=analytics \
+  GROUP_CLEANUP=cleaner \
   AWS_REGION_WEB=eu-central-1 \
   AWS_REGION_IOS=eu-west-1 \
   AWS_REGION_ASSETS=eu-central-1 \
