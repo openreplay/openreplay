@@ -8,61 +8,66 @@ from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.ch_client import ClickHouseClient
 from chalicelib.utils.exp_ch_helper import get_col_cast, get_sub_condition
 
+
+def or_event_display_name(event_name):
+    return {
+        'CLICK': 'Click',
+        'INPUT': 'Text Input',
+        'LOCATION': 'Page View',
+        'ERROR': 'Error',
+        'REQUEST': 'Network Request',
+        'PERFORMANCE': 'Performance',
+        'ISSUE': 'Issue',
+        'INCIDENT': 'Incident',
+        'TAG_TRIGGER': 'Tag',
+        'TAP': 'Tap',
+        'SWIPE': 'Swipe',
+        'CRASH': 'Crash',
+    }.get(event_name, '')
+
+
 logger = logging.getLogger(__name__)
 PREDEFINED_EVENTS = {
     "CLICK": {
-        "displayName": "Click",
         "description": 'Represents a user click on a webpage element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "CLICK".\n\nContains element selector, text content, …, timestamp.',
     },
     "INPUT": {
-        "displayName": "Text Input",
         "description": 'Represents text input by a user in form fields or editable elements. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "INPUT".\n\nContains the element selector, ….. and timestamp (actual text content may be masked for privacy).',
     },
     "LOCATION": {
-        "displayName": "Page View",
         "description": 'Represents a page navigation or URL change within your application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "LOCATION".\n\nContains the full URL, …. referrer information, UTM parameters and timestamp.',
     },
     "ERROR": {
-        "displayName": "Error",
         "description": 'Represents JavaScript errors and console error messages captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "error".\n\nContains error message,…., and timestamp.',
     },
     "REQUEST": {
-        "displayName": "Network Request",
         "description": 'Represents HTTP/HTTPS network activity from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "fetch".\n\nContains URL, method, status code, duration, and timestamp',
     },
     "ISSUE": {
-        "displayName": "Issue",
         "description": 'Represents issues and errors captured from the application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "ISSUE".\n\nContains issue message,…., and timestamp.',
     },
     "PERFORMANCE": {
-        "displayName": "Performance",
         "description": '',
     },
 }
 
 PREDEFINED_EVENTS_MOBILE = {
     "TAP": {
-        "displayName": "Tap",
         "description": 'Represents a user tap on a mobile element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "TAP".\n\nContains element label, …, timestamp.',
     },
     "INPUT": {
-        "displayName": "Text Input",
         "description": 'Represents text input by a user in mobile form fields or editable elements. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "INPUT".\n\nContains the element label, ….. and timestamp (actual text content may be masked for privacy).',
     },
     "SWIPE": {
-        "displayName": "Swipe",
         "description": 'Represents a swipe gesture on a mobile element. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "SWIPE".\n\nContains element label, direction, …, timestamp.',
     },
     "REQUEST": {
-        "displayName": "Network Request",
         "description": 'Represents HTTP/HTTPS network activity from the mobile application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "REQUEST".\n\nContains URL, method, status code, duration, and timestamp',
     },
     "CRASH": {
-        "displayName": "Crash",
         "description": 'Represents application crashes captured from the mobile application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "CRASH".\n\nContains crash message,…., and timestamp.',
     },
     "ISSUE": {
-        "displayName": "Issue",
         "description": 'Represents issues and errors captured from the mobile application. Tracked automatically with property $auto_captured set to TRUE and $event_name set to "ISSUE".\n\nContains issue message,…., and timestamp.',
     },
 }
@@ -109,7 +114,7 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
             "list": [
                 {
                     "name": e,
-                    "displayName": predefined_events[e]["displayName"],
+                    "displayName": or_event_display_name(e),
                     # "description": predefined_events[e]["description"],
                     "autoCaptured": True,
                     "id": helper.string_to_id(f"event_{e}"),
@@ -133,8 +138,8 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
     for row in rows:
         event_name = row["name"]
         keys.append(event_name)
-        if event_name in predefined_events and row["displayName"] is None:
-            row["displayName"] = predefined_events[event_name]["displayName"]
+        if row["autoCaptured"] and (row["displayName"] is None or row["displayName"] == ''):
+            row["displayName"] = or_event_display_name(event_name)
         if is_mobile:
             if event_name not in web_only_events:
                 row["id"] = helper.string_to_id(f"event_{row['name']}")
@@ -160,7 +165,7 @@ def get_events(project_id: int, include_all: bool = False, platform: str = "web"
             rows.append(
                 {
                     "name": e,
-                    "displayName": predefined_events[e]["displayName"],
+                    "displayName": or_event_display_name(e),
                     # "description": predefined_events[e]["description"],
                     "autoCaptured": True,
                     "id": helper.string_to_id(f"event_{e}"),
