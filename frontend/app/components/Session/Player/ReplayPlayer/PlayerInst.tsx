@@ -91,6 +91,9 @@ function Player(props: IProps) {
     if (playerContext.player) {
       playerContext.player.toggleScrollMode(scrollMode);
     }
+    if (!scrollMode && screenWrapper.current) {
+      screenWrapper.current.scrollTop = 0;
+    }
   }, [scrollMode, playerContext.player]);
 
   if (!playerContext.player) return null;

@@ -125,12 +125,7 @@ export default class Screen {
     const prevMode = this.scaleMode;
     this.scaleMode = mode;
 
-    // When switching back from AdjustParentHeight to Embed, clean up scroll state
     if (prevMode === ScaleMode.AdjustParentHeight && mode === ScaleMode.Embed) {
-      if (this.parentElement) {
-        this.parentElement.style.height = '';
-        this.parentElement.scrollTop = 0;
-      }
       this.scrollSpacer?.remove?.();
     }
   }
@@ -311,8 +306,6 @@ export default class Screen {
       if (this.parentElement && !this.scrollSpacer.parentElement) {
         this.parentElement.appendChild(this.scrollSpacer);
       }
-      // Reset explicit parent height (let spacer control scroll)
-      this.parentElement.style.height = '';
     } else {
       // Remove spacer when not in AdjustParentHeight mode
       if (this.scrollSpacer?.parentElement) {

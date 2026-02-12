@@ -17,7 +17,6 @@ import {
   LaunchPerformanceShortcut,
   LaunchStateShortcut,
   LaunchXRaShortcut,
-  LaunchScrollModeShortcut,
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import { signalService } from 'App/services';
 import {
@@ -39,7 +38,7 @@ import {
   DashboardOutlined,
   ClusterOutlined,
 } from '@ant-design/icons';
-import { ArrowDownUp, ListCollapse, Merge, Timer, ScanLine } from 'lucide-react';
+import { ArrowDownUp, ListCollapse, Merge, Timer } from 'lucide-react';
 import { ReduxTime } from 'Components/Session_/Player/Controls/Time';
 
 import ControlButton from './ControlButton';
@@ -106,7 +105,6 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
       permissions.includes('SERVICE_DEV_TOOLS')
     );
   const { fullscreen } = uiPlayerStore;
-  const { scrollMode } = uiPlayerStore;
   const { bottomBlock } = uiPlayerStore;
   const { toggleBottomBlock } = uiPlayerStore;
   const { fullscreenOn } = uiPlayerStore;
@@ -283,8 +281,6 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
               disabled={disabled}
               events={events}
               activeTab={activeTab}
-              scrollMode={scrollMode}
-              toggleScrollMode={toggleScrollMode}
             />
 
             <FullScreenButton
@@ -306,8 +302,6 @@ interface IDevtoolsButtons {
   disabled: boolean;
   events: any[];
   activeTab?: string;
-  scrollMode?: boolean;
-  toggleScrollMode?: () => void;
 }
 
 const DevtoolsButtons = observer(
@@ -318,8 +312,6 @@ const DevtoolsButtons = observer(
     disabled,
     events,
     activeTab,
-    scrollMode,
-    toggleScrollMode,
   }: IDevtoolsButtons) => {
     const { t } = useTranslation();
     const { aiSummaryStore, integrationsStore } = useStore();
@@ -519,18 +511,6 @@ const DevtoolsButtons = observer(
             shorten={showIcons}
           />
         ) : null}
-        <ControlButton
-          popover={
-            <div className="flex items-center gap-2">
-              <LaunchScrollModeShortcut />
-              <div>{t('Scroll below the fold')}</div>
-            </div>
-          }
-          customKey="scrollMode"
-          label={showIcons ? <ScanLine size={14} strokeWidth={2} /> : t('Scroll')}
-          onClick={() => toggleScrollMode?.()}
-          active={scrollMode}
-        />
         {possibleAudio.length ? (
           <DropdownAudioPlayer audioEvents={possibleAudio} />
         ) : null}

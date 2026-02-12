@@ -242,6 +242,10 @@ export default class WebPlayer extends Player {
       this.screen.getScaleMode() === ScaleMode.AdjustParentHeight;
     const shouldEnable = enabled !== undefined ? enabled : !isCurrentlyScrollMode;
 
+    if (shouldEnable) {
+      this.pause();
+    }
+
     this.screen.setScaleMode(
       shouldEnable ? ScaleMode.AdjustParentHeight : ScaleMode.Embed,
     );
