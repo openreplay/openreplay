@@ -39,6 +39,7 @@ func NewHandlers(log logger.Logger, req api.RequestHandler, lexicon lexicon.Lexi
 		{"/{project}/lexicon/properties", "PUT", req.HandleWithBody(h.updateProperty), []string{api.DATA_MANAGEMENT}, "update_property"},
 		{"/{project}/lexicon/actions/search", "POST", req.HandleWithBody(h.searchActions), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
 		{"/{project}/lexicon/actions", "POST", req.HandleWithBody(h.createAction), []string{api.DATA_MANAGEMENT}, "create_action"},
+		{"/{project}/lexicon/actions/{actionId}", "GET", req.Handle(h.getAction), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},
 		{"/{project}/lexicon/actions/{actionId}", "PUT", req.HandleWithBody(h.updateAction), []string{api.DATA_MANAGEMENT}, "update_action"},
 		{"/{project}/lexicon/actions/{actionId}", "DELETE", req.Handle(h.deleteAction), []string{api.DATA_MANAGEMENT}, "delete_action"},
 	}
@@ -237,6 +238,43 @@ func (h *handlersImpl) updateProperty(r *api.RequestContext) (any, int, error) {
 	}
 
 	return map[string]interface{}{"success": true}, 0, nil
+}
+
+// @Summary Get Action
+// @Description Get a single action by ID.
+// @Tags Analytics - Lexicon
+// @Accept json
+// @Produce json
+// @Param project path uint true "Project ID"
+// @Param actionId path string true "Action ID"
+// @Success 200 {object} model.Action "Returns the action"
+// @Failure 400 {object} api.ErrorResponse "Invalid request or missing action ID"
+// @Failure 404 {object} api.ErrorResponse "Action not found"
+// @Failure 500 {object} api.ErrorResponse "Internal server error"
+// @Router /{project}/lexicon/actions/{actionId} [get]
+func (h *handlersImpl) getAction(r *api.RequestContext) (any, int, error) {
+	projID, err := r.GetProjectID()
+	if err != nil {
+		h.log.Error(r.Request.Context(), "failed to get project ID: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	actionID, err := api.GetParam(r.Request, "actionId")
+	if err != nil {
+		h.log.Error(r.Request.Context(), "failed to get action ID: %v", err)
+		return nil, http.StatusBadRequest, err
+	}
+
+	action, err := h.actions.Get(r.Request.Context(), projID, actionID)
+	if err != nil {
+		if errors.Is(err, lexicon.ErrActionNotFound) {
+			return nil, http.StatusNotFound, err
+		}
+		h.log.Error(r.Request.Context(), "failed to get action %s for project %d: %v", actionID, projID, err)
+		return nil, http.StatusInternalServerError, err
+	}
+
+	return action, 0, nil
 }
 
 // @Summary Search Actions
