@@ -22,6 +22,7 @@ var (
 )
 
 type Actions interface {
+	Get(ctx context.Context, projectID uint32, actionID string) (*model.Action, error)
 	Create(ctx context.Context, projectID uint32, userID uint64, req *model.CreateActionRequest) (*model.Action, error)
 	Search(ctx context.Context, projectID uint32, req *model.SearchActionRequest) (*model.SearchActionsResponse, error)
 	Update(ctx context.Context, projectID uint32, actionID string, req *model.UpdateActionRequest) (*model.Action, error)
@@ -35,6 +36,48 @@ type actionsImpl struct {
 
 func NewActions(log logger.Logger, conn pool.Pool) Actions {
 	return &actionsImpl{log: log, pgconn: conn}
+}
+
+func (a *actionsImpl) Get(ctx context.Context, projectID uint32, actionID string) (*model.Action, error) {
+	const query = `
+		SELECT action_id, project_id, user_id, name, description, filters, is_public, created_at, updated_at
+		FROM public.actions
+		WHERE action_id = $1 AND project_id = $2
+	`
+
+	var action model.Action
+	var filtersJSON []byte
+	var createdAt, updatedAt time.Time
+
+	err := a.pgconn.QueryRow(query, actionID, projectID).Scan(
+		&action.ActionID,
+		&action.ProjectID,
+		&action.UserID,
+		&action.Name,
+		&action.Description,
+		&filtersJSON,
+		&action.IsPublic,
+		&createdAt,
+		&updatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrActionNotFound
+		}
+		a.log.Error(ctx, "get action %s: %v", actionID, err)
+		return nil, fmt.Errorf("get action: %w", err)
+	}
+
+	if len(filtersJSON) > 0 {
+		if err := json.Unmarshal(filtersJSON, &action.Filters); err != nil {
+			a.log.Error(ctx, "unmarshal action filters: %v", err)
+			return nil, fmt.Errorf("unmarshal action filters: %w", err)
+		}
+	}
+
+	action.CreatedAt = createdAt.UnixMilli()
+	action.UpdatedAt = updatedAt.UnixMilli()
+	return &action, nil
 }
 
 func (a *actionsImpl) Create(ctx context.Context, projectID uint32, userID uint64, req *model.CreateActionRequest) (*model.Action, error) {
