@@ -108,12 +108,20 @@ const isValidSession = function (sessionInfo, filters) {
 const getValidAttributes = function (sessionInfo, query) {
     let matches = [];
     let deduplicate = [];
+    // query.key/value can be missing (e.g. q is empty) depending on caller;
+    // keep autocomplete resilient and avoid crashing the process.
+    const queryKey = query?.key !== undefined && query?.key !== null
+        ? String(query.key).toLowerCase()
+        : undefined;
+    const queryValue = query?.value !== undefined && query?.value !== null
+        ? String(query.value).toLowerCase()
+        : "";
     for (const [skey, svalue] of Object.entries(sessionInfo)) {
         if (svalue !== undefined && svalue !== null) {
             if (typeof (svalue) === "object") {
                 matches = [...matches, ...getValidAttributes(svalue, query)]
-            } else if ((query.key === undefined || skey.toLowerCase() === query.key.toLowerCase())
-                && String(svalue).toLowerCase().indexOf(query.value.toLowerCase()) >= 0
+            } else if ((queryKey === undefined || skey.toLowerCase() === queryKey)
+                && String(svalue).toLowerCase().indexOf(queryValue) >= 0
                 && deduplicate.indexOf(skey + '_' + svalue) < 0) {
                 matches.push({"type": skey.toUpperCase(), "value": svalue});
                 deduplicate.push(skey + '_' + svalue);
@@ -167,32 +175,34 @@ const transformFilters = function (filter) {
 }
 
 const extractPayloadFromRequest = async function (req, res) {
+    const body = req?.body || {};
+    const query = req?.query || {};
     let filters = {
         "query": {}, // for autocomplete
         "filter": {}, // for sessions search
         "sort": {
-            "key": req.body.sort && req.body.sort.key ? req.body.sort.key : undefined,
-            "order": req.body.sort && req.body.sort?.order.toLowerCase() === "desc"
+            "key": body.sort && body.sort.key ? body.sort.key : undefined,
+            "order": body.sort && body.sort?.order?.toLowerCase() === "desc"
         },
         "pagination": {
-            "limit": req.body.pagination && req.body.pagination.limit ? req.body.pagination.limit : undefined,
-            "page": req.body.pagination && req.body.pagination.page ? req.body.pagination.page : undefined
+            "limit": body.pagination && body.pagination.limit ? body.pagination.limit : undefined,
+            "page": body.pagination && body.pagination.page ? body.pagination.page : undefined
         }
     };
-    if (req.query.q) {
-        logger.debug(`[WS]where q=${req.query.q}`);
-        filters.query.value = req.query.q;
+    if (query.q !== undefined) {
+        logger.debug(`[WS]where q=${query.q}`);
+        filters.query.value = query.q;
     }
-    if (req.query.key) {
-        logger.debug(`[WS]where key=${req.query.key}`);
-        filters.query.key = req.query.key;
+    if (query.key !== undefined) {
+        logger.debug(`[WS]where key=${query.key}`);
+        filters.query.key = query.key;
     }
-    if (req.query.userId) {
-        logger.debug(`[WS]where userId=${req.query.userId}`);
-        filters.filter.userID = [req.query.userId];
+    if (query.userId !== undefined) {
+        logger.debug(`[WS]where userId=${query.userId}`);
+        filters.filter.userID = [query.userId];
     }
     filters.filter = objectToObjectOfArrays(filters.filter);
-    filters.filter = {...filters.filter, ...(req.body.filter || {})};
+    filters.filter = {...filters.filter, ...(body.filter || {})};
     filters.filter = transformFilters(filters.filter);
     logger.debug("payload/filters:" + JSON.stringify(filters))
     return filters;
