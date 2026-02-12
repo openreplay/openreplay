@@ -191,6 +191,9 @@ Create the volume mount config for redis TLS certificates
 {{- end -}}
 name: {{ $secretName }}
 key: {{ $secretKey }}
+{{- if eq .key "license-key" }}
+optional: true
+{{- end }}
 {{- end}}
 
 {{- /*
