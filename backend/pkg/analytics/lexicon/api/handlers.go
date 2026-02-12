@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -267,13 +268,7 @@ func (h *handlersImpl) searchActions(r *api.RequestContext) (any, int, error) {
 		return nil, http.StatusBadRequest, err
 	}
 
-	userData := api.GetUser(r.Request)
-	var userID uint64
-	if userData != nil {
-		userID = userData.ID
-	}
-
-	response, err := h.actions.Search(r.Request.Context(), projID, userID, &req)
+	response, err := h.actions.Search(r.Request.Context(), projID, &req)
 	if err != nil {
 		h.log.Error(r.Request.Context(), "failed to search actions for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
@@ -291,6 +286,7 @@ func (h *handlersImpl) searchActions(r *api.RequestContext) (any, int, error) {
 // @Param body body model.CreateActionRequest true "Create Action Request"
 // @Success 200 {object} model.Action "Returns the created action"
 // @Failure 400 {object} api.ErrorResponse "Invalid request or missing required fields"
+// @Failure 409 {object} api.ErrorResponse "Action with this name already exists"
 // @Failure 500 {object} api.ErrorResponse "Internal server error"
 // @Router /{project}/lexicon/actions [post]
 func (h *handlersImpl) createAction(r *api.RequestContext) (any, int, error) {
@@ -319,6 +315,9 @@ func (h *handlersImpl) createAction(r *api.RequestContext) (any, int, error) {
 
 	action, err := h.actions.Create(r.Request.Context(), projID, userID, &req)
 	if err != nil {
+		if errors.Is(err, lexicon.ErrActionDuplicate) {
+			return nil, http.StatusConflict, err
+		}
 		h.log.Error(r.Request.Context(), "failed to create action for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
@@ -336,6 +335,8 @@ func (h *handlersImpl) createAction(r *api.RequestContext) (any, int, error) {
 // @Param body body model.UpdateActionRequest true "Update Action Request"
 // @Success 200 {object} model.Action "Returns the updated action"
 // @Failure 400 {object} api.ErrorResponse "Invalid request, validation error, or no fields to update"
+// @Failure 404 {object} api.ErrorResponse "Action not found"
+// @Failure 409 {object} api.ErrorResponse "Action with this name already exists"
 // @Failure 500 {object} api.ErrorResponse "Internal server error"
 // @Router /{project}/lexicon/actions/{actionId} [put]
 func (h *handlersImpl) updateAction(r *api.RequestContext) (any, int, error) {
@@ -364,6 +365,15 @@ func (h *handlersImpl) updateAction(r *api.RequestContext) (any, int, error) {
 
 	action, err := h.actions.Update(r.Request.Context(), projID, actionID, &req)
 	if err != nil {
+		if errors.Is(err, lexicon.ErrNoFieldsToUpdate) {
+			return nil, http.StatusBadRequest, err
+		}
+		if errors.Is(err, lexicon.ErrActionNotFound) {
+			return nil, http.StatusNotFound, err
+		}
+		if errors.Is(err, lexicon.ErrActionDuplicate) {
+			return nil, http.StatusConflict, err
+		}
 		h.log.Error(r.Request.Context(), "failed to update action %s for project %d: %v", actionID, projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
@@ -380,6 +390,7 @@ func (h *handlersImpl) updateAction(r *api.RequestContext) (any, int, error) {
 // @Param actionId path string true "Action ID"
 // @Success 200 {object} map[string]interface{} "Returns success: true"
 // @Failure 400 {object} api.ErrorResponse "Invalid request or missing action ID"
+// @Failure 404 {object} api.ErrorResponse "Action not found"
 // @Failure 500 {object} api.ErrorResponse "Internal server error"
 // @Router /{project}/lexicon/actions/{actionId} [delete]
 func (h *handlersImpl) deleteAction(r *api.RequestContext) (any, int, error) {
@@ -396,6 +407,9 @@ func (h *handlersImpl) deleteAction(r *api.RequestContext) (any, int, error) {
 	}
 
 	if err := h.actions.Delete(r.Request.Context(), projID, actionID); err != nil {
+		if errors.Is(err, lexicon.ErrActionNotFound) {
+			return nil, http.StatusNotFound, err
+		}
 		h.log.Error(r.Request.Context(), "failed to delete action %s for project %d: %v", actionID, projID, err)
 		return nil, http.StatusInternalServerError, err
 	}
