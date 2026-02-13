@@ -59,6 +59,7 @@ const DATA_SOURCE = '__DATA_SOURCE__';
 
 export default class UiPlayerStore {
   fullscreen = false;
+  scrollMode = false;
   showOnlySearchEvents = false;
   showSearchEventsSwitchButton = false;
 
@@ -108,6 +109,10 @@ export default class UiPlayerStore {
 
   fullscreenOn = () => {
     this.fullscreen = true;
+  };
+
+  toggleScrollMode = () => {
+    this.scrollMode = !this.scrollMode;
   };
 
   toggleBottomBlock = (block: number) => {

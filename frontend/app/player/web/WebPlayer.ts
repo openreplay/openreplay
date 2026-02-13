@@ -237,6 +237,25 @@ export default class WebPlayer extends Player {
     });
   };
 
+  toggleScrollMode = (enabled?: boolean) => {
+    const isCurrentlyScrollMode =
+      this.screen.getScaleMode() === ScaleMode.AdjustParentHeight;
+    const shouldEnable = enabled !== undefined ? enabled : !isCurrentlyScrollMode;
+
+    if (shouldEnable) {
+      this.pause();
+    }
+
+    this.screen.setScaleMode(
+      shouldEnable ? ScaleMode.AdjustParentHeight : ScaleMode.Embed,
+    );
+    this.scale();
+  };
+
+  isScrollMode = (): boolean => {
+    return this.screen?.getScaleMode() === ScaleMode.AdjustParentHeight;
+  };
+
   toggleUserName = (name?: string) => {
     this.screen.cursor.showTag(name);
   };
