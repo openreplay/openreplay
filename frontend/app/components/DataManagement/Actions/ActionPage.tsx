@@ -10,13 +10,14 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
-import { Loader, NoContent, confirm } from 'UI';
+import { NoContent, confirm } from 'UI';
 
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import Breadcrumb from 'Shared/Breadcrumb';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
+import { toast } from 'react-toastify';
 
 import {
   Action,
@@ -69,6 +70,9 @@ function ActionPage() {
       queryClient.invalidateQueries({ queryKey: ['actions-list'] });
       history.push(withSiteId(dataManagement.actionPage(created.id), siteId!));
     },
+    onError: () => {
+      toast.error(t('Failed to create action. Please try again.'));
+    },
   });
 
   const updateMutation = useMutation({
@@ -79,6 +83,9 @@ function ActionPage() {
       queryClient.invalidateQueries({ queryKey: ['action', siteId, actionId] });
       setEditing(false);
     },
+    onError: () => {
+      toast.error(t('Failed to update action. Please try again.'));
+    },
   });
 
   const deleteMutation = useMutation({
@@ -87,9 +94,15 @@ function ActionPage() {
       queryClient.invalidateQueries({ queryKey: ['actions-list'] });
       history.push(backLink);
     },
+    onError: () => {
+      toast.error(t('Failed to delete action. Please try again.'));
+    },
   });
 
+  const canSave = name.trim().length > 0 && filters.length > 0;
+
   const onSave = () => {
+    if (!canSave) return;
     const payload = {
       name,
       description,
@@ -197,6 +210,7 @@ function ActionPage() {
           {editing ? (
             <Input
               value={name}
+              maxLength={128}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('Action name')}
               className="font-semibold text-lg max-w-md"
@@ -206,13 +220,13 @@ function ActionPage() {
           )}
           <div className="flex items-center gap-2">
             {isNew ? (
-              <Button type="primary" onClick={onSave}>
+              <Button type="primary" disabled={!canSave} onClick={onSave}>
                 {t('Create')}
               </Button>
             ) : editing ? (
               <>
                 <Button onClick={onCancel}>{t('Cancel')}</Button>
-                <Button type="primary" onClick={onSave}>
+                <Button type="primary" disabled={!canSave} onClick={onSave}>
                   {t('Save')}
                 </Button>
               </>
@@ -235,6 +249,7 @@ function ActionPage() {
           {editing ? (
             <Input.TextArea
               value={description}
+              maxLength={256}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('Action description')}
               rows={3}
