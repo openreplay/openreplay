@@ -1,19 +1,21 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { Filter } from '@/mstore/types/filterConstants';
 import { analyticsService } from '@/services';
 import {
-  EventsResponse,
   EventsPayload,
+  EventsResponse,
   UserResp,
-  UsersResponse,
   UsersPayload,
+  UsersResponse,
 } from '@/services/AnalyticsService';
-import { Filter } from '@/mstore/types/filterConstants';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
+import { makeAutoObservable, runInAction } from 'mobx';
+
+import { filterStore } from 'App/mstore';
+
 import Event, {
   listColumns as eventListColumns,
 } from './types/Analytics/Event';
 import User, { listColumns as userListColumns } from './types/Analytics/User';
-import { filterStore } from 'App/mstore';
 import { checkFilterValue } from './types/filter';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -142,9 +144,17 @@ export default class AnalyticsStore {
     this.usersPayloadFilters.page = 1;
   };
 
-  updateFilter = (filterIndex: number, filter: Filter) => {
-    this.payloadFilters.filters[filterIndex] = filter;
-    this.payloadFilters.page = 1;
+  updateFilter = async (filterIndex: number, filter: Filter) => {
+    const isReplacing =
+      this.payloadFilters.filters[filterIndex].name !== filter.name;
+    if (isReplacing) {
+      const processed = await this.processFilter(filter);
+      this.payloadFilters.filters[filterIndex] = processed as unknown as Filter;
+      this.payloadFilters.page = 1;
+    } else {
+      this.payloadFilters.filters[filterIndex] = filter;
+      this.payloadFilters.page = 1;
+    }
   };
 
   removeFilter = (filterIndex: number) => {
