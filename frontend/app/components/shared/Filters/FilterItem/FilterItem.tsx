@@ -1,21 +1,24 @@
-import React, { useMemo, useCallback, useState } from 'react';
-import { Button, Space, Typography, Tooltip } from 'antd';
-import { FilterKey } from 'App/types/filter/filterType';
-import { CircleMinus, FunnelPlus } from 'lucide-react';
-import cn from 'classnames';
-import FilterOperator from '../FilterOperator';
-import FilterSelection from '../FilterSelection';
-import FilterValue from '../FilterValue';
-import FilterSource from '../FilterSource';
 import { useStore } from '@/mstore';
-import { getIconForFilter } from 'Shared/Filters/FilterModal';
 import {
   Filter,
-  getOperatorsByType,
   OPERATORS,
+  getOperatorsByType,
 } from '@/mstore/types/filterConstants';
 import { IFilter } from '@/mstore/types/filterItem';
+import { Button, Space, Tooltip, Typography } from 'antd';
+import cn from 'classnames';
+import { CircleMinus, FunnelPlus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { FilterKey } from 'App/types/filter/filterType';
+
+import { getIconForFilter } from 'Shared/Filters/FilterModal';
+
+import FilterOperator from '../FilterOperator';
+import FilterSelection from '../FilterSelection';
+import FilterSource from '../FilterSource';
+import FilterValue from '../FilterValue';
 
 interface Props {
   filterIndex?: number;
@@ -196,9 +199,7 @@ function FilterItem(props: Props) {
   );
 
   const parentShowsIndex = !hideIndex;
-  const subFilterMarginLeftClass = parentShowsIndex
-    ? 'ml-7'
-    : 'ml-3';
+  const subFilterMarginLeftClass = parentShowsIndex ? 'ml-7' : 'ml-3';
   const subFilterPaddingLeftClass = parentShowsIndex ? 'pl-11' : 'pl-7';
 
   const categoryPart = filter?.subCategory
@@ -212,6 +213,19 @@ function FilterItem(props: Props) {
   const defaultText = 'Select Filter';
 
   const activeSubFilters = filter.filters?.map((f: any) => f.name) || [];
+  const readonlyValue = React.useMemo(() => {
+    if (readonly) {
+      const maxLen = 42;
+      const str =
+        filter.value
+          ?.map(
+            (val: string) =>
+              filter.options?.find((i: any) => i.value === val)?.label ?? val,
+          )
+          .join(', ') ?? '';
+      return str?.length > maxLen ? str.slice(0, maxLen) + '...' : str;
+    }
+  }, [readonly, filter.value]);
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
       <div className="flex items-start w-full gap-x-2">
@@ -311,18 +325,9 @@ function FilterItem(props: Props) {
               />
               {canShowValues &&
                 (readonly ? (
-                  <div
-                    className="rounded-sm bg-gray-lightest text-gray-dark px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis border border-gray-light max-w-xs"
-                    title={filter.value?.join(', ')}
-                  >
-                    {filter.value
-                      ?.map(
-                        (val: string) =>
-                          filter.options?.find((i: any) => i.value === val)
-                            ?.label ?? val,
-                      )
-                      .join(', ')}
-                  </div>
+                  <Button size="small" disabled>
+                    {readonlyValue}
+                  </Button>
                 ) : (
                   <div className="inline-flex">
                     <FilterValue
