@@ -1,7 +1,15 @@
-import schemas
+import logging
 
+from cachetools import TTLCache, cached
+
+import schemas
 from chalicelib.core.issues import issues
 from chalicelib.utils import helper
+from chalicelib.utils import pg_client
+
+logger = logging.getLogger(__name__)
+
+actions_cache = TTLCache(maxsize=1000, ttl=60)
 
 COUNTRY_CODES = [
     "AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR", "AM",
@@ -313,6 +321,37 @@ def get_users_filters_identified(project_id: int):
         "displayName": "Identified User Filters",
         "scope": ["events", "users"],
         "list": filter_list
+    }
+
+
+@cached(actions_cache)
+def get_actions_filters(project_id: int):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """SELECT action_id, name, description
+               FROM public.actions
+               WHERE project_id = %(project_id)s
+               ORDER BY name;""",
+            {"project_id": project_id},
+        )
+        cur.execute(query=query)
+        rows = cur.fetchall()
+
+    results = []
+    for row in rows:
+        results.append({
+            "actionId": row["action_id"],
+            "name": row["name"],
+            "displayName": row["name"],
+            "description": row["description"],
+            "isAction": True,
+        })
+
+    return {
+        "total": len(results),
+        "displayName": "Actions",
+        "scope": ["sessions", "events"],
+        "list": results,
     }
 
 

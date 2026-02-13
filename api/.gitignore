@@ -145,12 +145,16 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.bak
 .venv/*
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Local dev script state
+.dev-pids/
 
 # Spyder project settings
 .spyderproject
