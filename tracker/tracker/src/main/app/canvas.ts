@@ -205,14 +205,21 @@ class CanvasRecorder {
 
   private uploadBatch(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
     const formData = new FormData()
+    const fileEntries: { data: Blob; name: string }[] = []
     images.forEach((snapshot) => {
       const blob = snapshot.data
       if (!blob) return
-      formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`)
+      const name = `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`
+      formData.append('snapshot', blob, name)
       if (this.options.isDebug) {
-        saveImageData(blob, `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`)
+        fileEntries.push({ data: blob, name })
       }
     })
+
+    if (this.options.isDebug) {
+      void saveArchive(fileEntries, `canvas_${canvasId}_${createdAt}`)
+      return
+    }
 
     const initRestart = () => {
       this.app.debug.log('Restarting tracker; token expired')
@@ -327,16 +334,89 @@ function captureSnapshot(
   }
 }
 
-function saveImageData(imageDataBlob: Blob, name: string) {
-  const imageDataUrl = URL.createObjectURL(imageDataBlob)
+async function saveArchive(files: { data: Blob; name: string }[], archiveName: string) {
+  const zipBlob = await createZipBlob(files)
+  const url = URL.createObjectURL(zipBlob)
   const link = document.createElement('a')
-  link.href = imageDataUrl
-  link.download = name
+  link.href = url
+  link.download = `${archiveName}.zip`
   link.style.display = 'none'
-
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+async function createZipBlob(files: { data: Blob; name: string }[]): Promise<Blob> {
+  const parts: Uint8Array[] = []
+  const centralDir: Uint8Array[] = []
+  let offset = 0
+
+  for (const file of files) {
+    const nameBytes = new TextEncoder().encode(file.name)
+    const dataBytes = new Uint8Array(await file.data.arrayBuffer())
+    const crc = crc32(dataBytes)
+
+    // Local file header (30 bytes + filename)
+    const local = new Uint8Array(30 + nameBytes.length)
+    const lv = new DataView(local.buffer)
+    lv.setUint32(0, 0x04034b50, true)
+    lv.setUint16(4, 20, true)
+    lv.setUint16(8, 0, true)
+    lv.setUint32(14, crc, true)
+    lv.setUint32(18, dataBytes.length, true)
+    lv.setUint32(22, dataBytes.length, true)
+    lv.setUint16(26, nameBytes.length, true)
+    local.set(nameBytes, 30)
+
+    // Central directory entry (46 bytes + filename)
+    const cd = new Uint8Array(46 + nameBytes.length)
+    const cv = new DataView(cd.buffer)
+    cv.setUint32(0, 0x02014b50, true)
+    cv.setUint16(4, 20, true)
+    cv.setUint16(6, 20, true)
+    cv.setUint32(16, crc, true)
+    cv.setUint32(20, dataBytes.length, true)
+    cv.setUint32(24, dataBytes.length, true)
+    cv.setUint16(28, nameBytes.length, true)
+    cv.setUint32(42, offset, true)
+    cd.set(nameBytes, 46)
+
+    parts.push(local)
+    parts.push(dataBytes)
+    centralDir.push(cd)
+    offset += local.length + dataBytes.length
+  }
+
+  const cdOffset = offset
+  let cdSize = 0
+  for (const entry of centralDir) {
+    parts.push(entry)
+    cdSize += entry.length
+  }
+
+  // End of central directory (22 bytes)
+  const eocd = new Uint8Array(22)
+  const ev = new DataView(eocd.buffer)
+  ev.setUint32(0, 0x06054b50, true)
+  ev.setUint16(8, files.length, true)
+  ev.setUint16(10, files.length, true)
+  ev.setUint32(12, cdSize, true)
+  ev.setUint32(16, cdOffset, true)
+  parts.push(eocd)
+
+  return new Blob(parts as BlobPart[], { type: 'application/zip' })
+}
+
+function crc32(data: Uint8Array): number {
+  let crc = 0xffffffff
+  for (let i = 0; i < data.length; i++) {
+    crc ^= data[i]
+    for (let j = 0; j < 8; j++) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0)
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0
 }
 
 function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
