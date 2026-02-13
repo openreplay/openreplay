@@ -333,7 +333,8 @@ export default class FilterStore {
         isEvent:
           category === 'events' ||
           category === 'auto_captured' ||
-          category === 'user_events',
+          category === 'user_events' ||
+          category === 'actions',
         value: filter.value || [],
         propertyOrder: 'and',
         operator: filter.operator || this.getDefaultFilterOperator(dataType),
@@ -415,6 +416,9 @@ export default class FilterStore {
     ) {
       return filter.autoCaptured ? 'autocapture' : 'event';
     }
+    if (category === 'actions') {
+      return 'action';
+    }
     return category;
   };
 
@@ -482,6 +486,25 @@ export default class FilterStore {
           );
           processedFilters.push(...userFilters);
         }
+      } else if (category === 'actions') {
+        // Process actions as event filters with actionId in the main body
+        const actionFilters = list.map((action: any) => ({
+          ...action,
+          id: action.actionId,
+          name: action.name,
+          displayName: action.displayName || action.name,
+          description: action.description,
+          actionId: action.actionId,
+          isEvent: true,
+          category: 'actions',
+          value: [action.actionId],
+        }));
+        const filters = this.processFilters(
+          actionFilters,
+          'actions',
+          customScope,
+        );
+        processedFilters.push(...filters);
       } else {
         const filters = this.processFilters(list, category, customScope);
         processedFilters.push(...filters);

@@ -33,6 +33,7 @@ type FilterItemKeys = keyof IFilter;
 
 export default class FilterItem implements IFilter {
   id: string = '';
+  actionId?: string = '';
   name: string = '';
   displayName?: string = '';
   description?: string = '';
@@ -106,6 +107,7 @@ export default class FilterItem implements IFilter {
 
     Object.assign(this, data);
     this.type = 'string';
+    this.actionId = data.actionId;
     this.name = data.name || '';
     this.dataType = data.dataType || '';
     this.category = data.category || '';
@@ -132,6 +134,7 @@ export default class FilterItem implements IFilter {
     }
 
     this.type = 'string';
+    this.actionId = data.actionId;
     this.category = data.category || '';
     this.subCategory = data.subCategory;
     this.operator = data.operator;
@@ -184,6 +187,7 @@ export default class FilterItem implements IFilter {
       name: this.name,
       autoCaptured: Boolean(this.autoCaptured),
       source: this.category === 'metadata' ? this.displayName : undefined,
+      actionId: this.actionId,
     };
 
     return json;

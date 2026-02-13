@@ -1,13 +1,14 @@
+import { Filter } from '@/mstore/types/filterConstants';
+import { roundToNextMinutes } from '@/utils';
+import { LAST_7_DAYS, LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import { makeAutoObservable, observable } from 'mobx';
+
 import {
   CUSTOM_RANGE,
   DATE_RANGE_VALUES,
   getDateRangeFromValue,
 } from 'App/dateRange';
 import FilterItem from 'App/mstore/types/filterItem';
-import { makeAutoObservable, observable } from 'mobx';
-import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
-import { roundToNextMinutes } from '@/utils';
-import { Filter } from '@/mstore/types/filterConstants';
 
 // @ts-ignore
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;

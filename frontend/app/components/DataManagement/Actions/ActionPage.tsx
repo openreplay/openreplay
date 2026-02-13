@@ -61,7 +61,9 @@ function ActionPage() {
   const allFilterOptions = filterStore.getScopedCurrentProjectFilters([
     'events',
   ]);
-  const eventOptions = allFilterOptions.filter((i) => i.isEvent);
+  const eventOptions = allFilterOptions.filter(
+    (i) => i.isEvent && i.category !== 'actions',
+  );
   const activeFilters = filters.map((f) => f.name);
 
   const createMutation = useMutation({
