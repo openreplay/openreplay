@@ -1,3 +1,5 @@
+import { Filter } from '@/mstore/types/filterConstants';
+import { iTag } from '@/services/NotesService';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
@@ -6,14 +8,13 @@ import {
   liveFiltersMap,
 } from 'Types/filter/newFilter';
 import { makeAutoObservable, runInAction } from 'mobx';
-import { searchService, sessionService } from 'App/services';
-import Search from 'App/mstore/types/search';
+
+import { filterStore, sessionStore, settingsStore } from 'App/mstore';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
-import { filterStore, sessionStore, settingsStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
-import { iTag } from '@/services/NotesService';
-import { Filter } from '@/mstore/types/filterConstants';
+import Search from 'App/mstore/types/search';
+import { searchService, sessionService } from 'App/services';
 
 const PER_PAGE = 10;
 
@@ -474,7 +475,18 @@ class SearchStore {
     this.addFilter(filter);
   };
 
+  getFilterDefaults = (filter: any) => {
+    if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
+      filterStore.getEventFilters(filter.id).then((props) => {
+        filter.filters = props?.filter((prop) => prop.defaultProperty);
+      });
+    }
+
+    return filter;
+  };
+
   addFilter = (filter: any) => {
+    filter = this.getFilterDefaults(filter);
     if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
       filterStore.getEventFilters(filter.id).then((props) => {
         filter.filters = props?.filter((prop) => prop.defaultProperty);
@@ -506,7 +518,7 @@ class SearchStore {
     if (filter.value && filter.value[0] && filter.value[0] !== '') {
       void this.fetchSessions();
     }
-  }
+  };
 
   moveFilter(draggedIndex: number, newPosition: number) {
     const newFilters = this.instance.filters.slice();
@@ -546,11 +558,17 @@ class SearchStore {
   };
 
   updateFilter = (index: number, search: Partial<Filter>) => {
+    search = this.getFilterDefaults(search);
+    const isReplacingFilter = this.instance.filters[index].name !== search.name;
     const newFilters = [...this.instance.filters];
-    newFilters[index] = {
-      ...newFilters[index],
-      ...search,
-    };
+
+    // @ts-ignore is not partial in such case
+    newFilters[index] = isReplacingFilter
+      ? search
+      : {
+          ...newFilters[index],
+          ...search,
+        };
 
     this.instance = new Search({
       ...this.instance.toData(),
