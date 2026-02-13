@@ -211,6 +211,7 @@ function ActionPage() {
             <Input
               value={name}
               maxLength={128}
+              required
               onChange={(e) => setName(e.target.value)}
               placeholder={t('Action name')}
               className="font-semibold text-lg max-w-md"
