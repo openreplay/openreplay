@@ -1,27 +1,37 @@
 import { Filter } from '@/mstore/types/filterConstants';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
 import { Button, Input } from 'antd';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
+import { Loader, NoContent, confirm } from 'UI';
 
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import Breadcrumb from 'Shared/Breadcrumb';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 
-import { Action, fetchAction } from './api';
+import {
+  Action,
+  createAction,
+  deleteAction,
+  fetchAction,
+  updateAction,
+} from './api';
 
 function ActionPage() {
   const { t } = useTranslation();
   const { actionId } = useParams<{ actionId: string }>();
   const isNew = actionId === 'new';
+  const history = useHistory();
+  const queryClient = useQueryClient();
   const { projectsStore, filterStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const backLink = withSiteId(dataManagement.actions(), siteId);
@@ -32,8 +42,9 @@ function ActionPage() {
     enabled: !isNew,
   });
 
-  const resolved = isNew ? new Action({}) : action;
+  const resolved = isNew ? new Action() : action;
 
+  const [editing, setEditing] = React.useState(isNew);
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [filters, setFilters] = React.useState<Filter[]>([]);
@@ -42,6 +53,7 @@ function ActionPage() {
     if (resolved) {
       setName(resolved.name ?? '');
       setDescription(resolved.description ?? '');
+      setFilters(resolved.filters as unknown as Filter[]);
     }
   }, [resolved?.id]);
 
@@ -51,15 +63,71 @@ function ActionPage() {
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const activeFilters = filters.map((f) => f.name);
 
+  const createMutation = useMutation({
+    mutationFn: createAction,
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: ['actions-list'] });
+      history.push(withSiteId(dataManagement.actionPage(created.id), siteId!));
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Pick<Action, 'name' | 'description' | 'filters'>) =>
+      updateAction(actionId!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['actions-list'] });
+      queryClient.invalidateQueries({ queryKey: ['action', siteId, actionId] });
+      setEditing(false);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteAction(actionId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['actions-list'] });
+      history.push(backLink);
+    },
+  });
+
   const onSave = () => {
-    // TODO: wire to createAction or updateAction
+    const payload = {
+      name,
+      description,
+      filters,
+    } as unknown as Pick<Action, 'name' | 'description' | 'filters'>;
+    if (isNew) {
+      createMutation.mutate(payload);
+    } else {
+      updateMutation.mutate(payload);
+    }
   };
 
-  const onDelete = () => {
-    // TODO: wire to deleteAction
+  const onCancel = () => {
+    if (resolved) {
+      setName(resolved.name ?? '');
+      setDescription(resolved.description ?? '');
+      setFilters(resolved.filters as unknown as Filter[]);
+    }
+    setEditing(false);
   };
 
-  const onAddFilter = (filter: Filter) => {
+  const onDelete = async () => {
+    const confirmed = await confirm({
+      header: t('Delete Action'),
+      confirmation: t(
+        'Are you sure you want to permanently delete this action?',
+      ),
+      confirmButton: t('Yes, Delete'),
+    } as any);
+    if (!confirmed) return;
+    deleteMutation.mutate();
+  };
+
+  const onAddFilter = async (filter: Filter) => {
+    if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
+      const props = await filterStore.getEventFilters(filter.id);
+      filter.filters = props?.filter((prop: any) => prop.defaultProperty);
+    }
     setFilters((prev) => [...prev, filter]);
   };
 
@@ -71,9 +139,44 @@ function ActionPage() {
     setFilters((prev) => prev.filter((_, i) => i !== index));
   };
 
-  if (!isNew && isPending) return null;
+  if (!isNew && isPending)
+    return (
+      <div
+        className={'flex flex-col gap-2 mx-auto w-full'}
+        style={{ maxWidth: 1360 }}
+      >
+        <Breadcrumb
+          items={[
+            { label: t('Actions'), to: backLink },
+            { label: t('Loading') },
+          ]}
+        />
+        <NoContent
+          show
+          title={<AnimatedSVG name={ICONS.LOADER} size={60} />}
+          subtext={t('Loading...')}
+        />
+      </div>
+    );
   if (!isNew && !resolved) {
-    return <div>{t('Action {{id}} not found', { id: actionId })}</div>;
+    return (
+      <div
+        className={'flex flex-col gap-2 mx-auto w-full'}
+        style={{ maxWidth: 1360 }}
+      >
+        <Breadcrumb
+          items={[
+            { label: t('Actions'), to: backLink },
+            { label: t('Not Found') },
+          ]}
+        />
+        <NoContent
+          show
+          title={<AnimatedSVG name={ICONS.NO_RESULTS} size={60} />}
+          subtext={t("Couldn't find anything")}
+        />
+      </div>
+    );
   }
 
   const title = isNew ? t('New Action') : name;
@@ -84,50 +187,61 @@ function ActionPage() {
       style={{ maxWidth: 1360 }}
     >
       <Breadcrumb
-        items={[
-          { label: t('Actions'), to: backLink },
-          { label: title },
-        ]}
+        items={[{ label: t('Actions'), to: backLink }, { label: title }]}
       />
 
       <div className={'rounded-lg border bg-white flex flex-col'}>
         <div
           className={'p-4 border-b w-full flex items-center justify-between'}
         >
-          <div className={'font-semibold text-lg'}>{title}</div>
+          {editing ? (
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('Action name')}
+              className="font-semibold text-lg max-w-md"
+            />
+          ) : (
+            <div className={'font-semibold text-xl'}>{title}</div>
+          )}
           <div className="flex items-center gap-2">
             {isNew ? (
               <Button type="primary" onClick={onSave}>
                 {t('Create')}
               </Button>
-            ) : (
+            ) : editing ? (
               <>
-                <Button onClick={onDelete}>{t('Delete')}</Button>
+                <Button onClick={onCancel}>{t('Cancel')}</Button>
                 <Button type="primary" onClick={onSave}>
                   {t('Save')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  icon={<Pencil size={14} />}
+                  onClick={() => setEditing(true)}
+                >
+                  {t('Edit')}
+                </Button>
+                <Button danger onClick={onDelete}>
+                  {t('Delete')}
                 </Button>
               </>
             )}
           </div>
         </div>
-        <div className="flex flex-col gap-3 p-4">
-          <div className="flex flex-col gap-1">
-            <label className="font-medium text-sm">{t('Name')}</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('Action name')}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="font-medium text-sm">{t('Description')}</label>
+        <div className="p-4">
+          {editing ? (
             <Input.TextArea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('Action description')}
               rows={3}
             />
-          </div>
+          ) : (
+            <div className="text-lg">{description || t('No description')}</div>
+          )}
         </div>
       </div>
 
@@ -137,11 +251,12 @@ function ActionPage() {
             title={t('Events')}
             filterSelection={
               <FilterSelection
+                disabled={!editing}
                 filters={eventOptions}
                 activeFilters={activeFilters}
                 onFilterClick={onAddFilter}
               >
-                <Button type="default" size="small">
+                <Button disabled={!editing} type="default" size="small">
                   <div className="flex items-center gap-1">
                     <Plus size={16} strokeWidth={1} />
                     <span>{t('Add')}</span>
@@ -152,6 +267,7 @@ function ActionPage() {
           />
 
           <UnifiedFilterList
+            readonly={!editing}
             title={t('Events')}
             filters={filters}
             isDraggable={true}

@@ -10,28 +10,67 @@ import { useHistory } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
 
+import { debounce } from 'App/utils';
+
 import ActionsList from './ActionsList';
 import { fetchActions } from './api';
+
+type SortBy = 'name' | 'createdAt' | 'updatedAt';
+type SortOrder = 'asc' | 'desc';
 
 function ActionsListPage() {
   const { t } = useTranslation();
   const [query, setQuery] = React.useState('');
+  const [debouncedQuery, setDebouncedQuery] = React.useState('');
   const { projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
 
   const limit = 10;
   const [page, setPage] = React.useState(1);
-  const { data = { actions: [], total: 0 }, isPending } = useQuery({
-    queryKey: ['actions-list', siteId],
-    queryFn: () => fetchActions(),
-  });
+  const [sortBy, setSortBy] = React.useState<SortBy>('updatedAt');
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
 
-  const onPageChange = (page: number) => {
-    setPage(page);
-  };
+  const applySearch = React.useMemo(
+    () =>
+      debounce((value: string) => {
+        setDebouncedQuery(value);
+        setPage(1);
+      }, 400),
+    [],
+  );
+
   const onSearch = (value: string) => {
     setQuery(value);
+    applySearch(value);
+  };
+
+  const { data = { actions: [], total: 0 }, isPending } = useQuery({
+    queryKey: [
+      'actions-list',
+      siteId,
+      page,
+      limit,
+      debouncedQuery,
+      sortBy,
+      sortOrder,
+    ],
+    queryFn: () =>
+      fetchActions({
+        limit,
+        page,
+        name: debouncedQuery || undefined,
+        sortBy,
+        sortOrder,
+      }),
+  });
+
+  const onPageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+  const onSortChange = (field: SortBy, order: SortOrder) => {
+    setSortBy(field);
+    setSortOrder(order);
     setPage(1);
   };
 
@@ -42,23 +81,6 @@ function ActionsListPage() {
   const toCreate = () => {
     history.push(withSiteId(dataManagement.actionPage('new'), siteId!));
   };
-
-  const list = React.useMemo(() => {
-    const sorted = [...data.actions].sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
-    if (!query) {
-      return sorted.slice((page - 1) * limit, page * limit);
-    }
-    const filtered = sorted.filter(
-      (action) =>
-        action.name.toLowerCase().includes(query.toLowerCase()) ||
-        action.description.toLowerCase().includes(query.toLowerCase()),
-    );
-    return filtered.slice((page - 1) * limit, page * limit);
-  }, [page, data.actions, query]);
-
-  const total = query ? list.length : data.total;
 
   return (
     <div
@@ -80,7 +102,9 @@ function ActionsListPage() {
             target="_blank"
             rel="noreferrer"
           >
-            <Button type="text" icon={<Album size={14} />}>{t('Docs')}</Button>
+            <Button type="text" icon={<Album size={14} />}>
+              {t('Docs')}
+            </Button>
           </a>
           <div className="w-[320px]">
             <Input.Search
@@ -95,13 +119,14 @@ function ActionsListPage() {
         </div>
       </div>
       <ActionsList
-        list={list}
+        list={data.actions}
         page={page}
         limit={limit}
-        total={total}
-        listLen={list.length}
+        total={data.total}
+        listLen={data.actions.length}
         isPending={isPending}
         onPageChange={onPageChange}
+        onSortChange={onSortChange}
         toAction={toAction}
       />
     </div>
