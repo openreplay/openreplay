@@ -7,6 +7,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
@@ -17,7 +18,6 @@ import Breadcrumb from 'Shared/Breadcrumb';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import { toast } from 'react-toastify';
 
 import {
   Action,
@@ -144,7 +144,14 @@ function ActionPage() {
     setFilters((prev) => [...prev, filter]);
   };
 
-  const onUpdateFilter = (index: number, filter: Filter) => {
+  const onUpdateFilter = async (index: number, filter: Filter) => {
+    const isReplacing = filters[index].name !== filter.name;
+    if (isReplacing) {
+      if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
+        const props = await filterStore.getEventFilters(filter.id);
+        filter.filters = props?.filter((prop: any) => prop.defaultProperty);
+      }
+    }
     setFilters((prev) => prev.map((f, i) => (i === index ? filter : f)));
   };
 
