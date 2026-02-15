@@ -1698,23 +1698,6 @@ class MetricFilterColumnType(str, Enum):
     EDITED_AT = "edited_at"
 
 
-class MetricListSort(BaseModel):
-    field: Optional[str] = Field(default=None)
-    order: Optional[str] = Field(default=SortOrderType.DESC)
-
-
-class MetricFilter(BaseModel):
-    type: Optional[str] = Field(default=None)
-    query: Optional[str] = Field(default=None)
-
-
-class MetricSearchSchema(_PaginatedSchema):
-    filter: Optional[MetricFilter] = Field(default=None)
-    sort: Optional[MetricListSort] = Field(default=MetricListSort())
-    shared_only: bool = Field(default=False)
-    mine_only: bool = Field(default=False)
-
-
 class _HeatMapSearchEventRaw(SessionSearchEventSchema):
     name: Literal[EventType.LOCATION, EventType.CLICK_COORDINATES] = Field(...)
 
