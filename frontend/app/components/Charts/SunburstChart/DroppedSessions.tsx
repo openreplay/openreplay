@@ -1,8 +1,9 @@
-import React from 'react';
-import cn from 'classnames';
-import { typeToNameMap } from './sunburstUtils';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Tabs } from 'antd';
+import cn from 'classnames';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import React from 'react';
+
+import { typeToNameMap } from './sunburstUtils';
 
 const MODE = {
   CLOSED: 'CLOSED',
@@ -44,6 +45,7 @@ function DroppedSessionsList({
     if (b === typeToNameMap.DROP) return -1;
     if (a === typeToNameMap.OTHER) return 1;
     if (b === typeToNameMap.OTHER) return -1;
+    return 0;
   });
 
   const items = [

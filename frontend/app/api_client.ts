@@ -62,7 +62,7 @@ export const clean = (
   forbiddenValues: any[] = [undefined, ''],
 ): any => {
   const keys = Array.isArray(obj)
-    ? new Array(obj.length).fill().map((_, i) => i)
+    ? new Array(obj.length).fill(0).map((_, i) => i)
     : Object.keys(obj);
   const retObj = Array.isArray(obj) ? [] : {};
   keys.map((key) => {

@@ -55,6 +55,7 @@ function RequestingWindow({ getWindowType }: Props) {
   const { player } = React.useContext(PlayerContext);
 
   const {
+    // @ts-ignore is in assist
     assistManager: { initiateCallEnd, releaseRemoteControl, stopRecording },
   } = player;
 

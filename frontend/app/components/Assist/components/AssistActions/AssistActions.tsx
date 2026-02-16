@@ -1,7 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from 'antd';
-import { Headset } from 'lucide-react';
-import cn from 'classnames';
 import {
   CallingState,
   ConnectionStatus,
@@ -9,19 +5,25 @@ import {
   RequestLocalStream,
 } from 'Player';
 import type { LocalStream } from 'Player';
-import {
-  PlayerContext,
-  ILivePlayerContext,
-} from 'App/components/Session/playerContext';
+import { Button } from 'antd';
+import cn from 'classnames';
+import { Headset } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { toast } from 'react-toastify';
-import { confirm, Icon, Tooltip } from 'UI';
-import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
-import { audioContextManager } from 'App/utils/screenRecorder';
-import { useStore } from 'App/mstore';
-import stl from './AassistActions.module.css';
-import ChatWindow from '../../ChatWindow';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+
+import {
+  ILivePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
+import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
+import { useStore } from 'App/mstore';
+import { audioContextManager } from 'App/utils/screenRecorder';
+import { Icon, Tooltip, confirm } from 'UI';
+
+import ChatWindow from '../../ChatWindow';
+import stl from './AassistActions.module.css';
 
 function onError(e: any) {
   console.log(e);
@@ -205,7 +207,7 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
         confirmation: `${t('Are you sure you want to call')} ${userId || t('User')}?`,
       })
     ) {
-      call(agentIds);
+      call();
     }
   };
 
@@ -262,8 +264,7 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
 
       {/* @ts-ignore */}
       <Tooltip
-        title={t('Call user to initiate remote control')}
-        disabled={livePlay}
+        title={livePlay ? '' : t('Call user to initiate remote control')}
       >
         <div
           className={cn('cursor-pointer p-2 flex items-center', {
@@ -292,11 +293,12 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
 
       <Tooltip
         title={
-          cannotCall
-            ? t("You don't have the permissions to perform this action.")
-            : `${t('Call')} ${userId || t('User')}`
+          onCall
+            ? ''
+            : cannotCall
+              ? t("You don't have the permissions to perform this action.")
+              : `${t('Call')} ${userId || t('User')}`
         }
-        disabled={onCall}
       >
         <div
           className={cn('cursor-pointer p-2 flex items-center', {

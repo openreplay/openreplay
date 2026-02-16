@@ -1,4 +1,5 @@
 import ListWalker from 'Player/common/ListWalker';
+import parseFrames, { FrameSnapshot } from 'Player/common/parseFrames';
 import unpackTar from 'Player/common/tarball';
 import unpack from 'Player/common/unpack';
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
@@ -9,6 +10,7 @@ const playMode = {
   snaps: 'snaps',
 } as const;
 
+const FRAMES_MISSING = 'FRAMES_404';
 const TAR_MISSING = 'TAR_404';
 const MP4_MISSING = 'MP4_404';
 
@@ -25,7 +27,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
 
   private playMode: string = playMode.snaps;
 
-  private snapshots: Record<number, TarFile> = {};
+  private snapshots: Record<number, TarFile | FrameSnapshot> = {};
 
   private debugCanvas: HTMLCanvasElement | undefined;
 
@@ -38,28 +40,27 @@ export default class CanvasManager extends ListWalker<Timestamp> {
      * time between node creation and session start
      */
     private readonly delta: number,
-    private readonly links: [tar?: string, mp4?: string],
+    private readonly links: [tar?: string, mp4?: string, frames?: string],
     private readonly getNode: (id: number) => VElement | undefined,
     private readonly sessionStart: number,
   ) {
     super();
-    // first we try to grab tar, then fallback to mp4
-    this.loadTar()
-      .then((fileArr) => {
-        this.mapToSnapshots(fileArr);
+    // try frames first, then tar, then mp4
+    this.loadFrames()
+      .catch((e) => {
+        if (e === FRAMES_MISSING)
+          return this.loadTar().then((fileArr) => this.mapToSnapshots(fileArr));
+        throw e;
       })
       .catch((e) => {
-        if (e === TAR_MISSING && this.links[1]) {
-          this.loadMp4().catch((e2) => {
-            if (e2 === MP4_MISSING) {
-              return console.error(
-                `both tar and mp4 recordings for canvas ${this.nodeId} not found`,
-              );
-            }
-            return console.error('Failed to load canvas recording');
-          });
+        if (e === TAR_MISSING) return this.loadMp4();
+        throw e;
+      })
+      .catch((e) => {
+        if (e === MP4_MISSING) {
+          console.error(`No canvas recording found for node ${this.nodeId}`);
         } else {
-          return console.error(
+          console.error(
             'Failed to load canvas recording for node',
             this.nodeId,
           );
@@ -115,6 +116,25 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         this.append(msg);
       });
   }
+
+  loadFrames = async () => {
+    if (!this.links[2]) {
+      return Promise.reject(FRAMES_MISSING);
+    }
+    return fetch(this.links[2])
+      .then((r) => {
+        if (r.status === 200) {
+          return r.arrayBuffer();
+        }
+        return Promise.reject(FRAMES_MISSING);
+      })
+      .then((buf) => {
+        const { snapshots, timestamps } = parseFrames(buf, this.sessionStart);
+        Object.assign(this.snapshots, snapshots);
+        this.playMode = playMode.snaps;
+        timestamps.forEach((msg) => this.append(msg));
+      });
+  };
 
   loadTar = async () => {
     if (!this.links[0]) {

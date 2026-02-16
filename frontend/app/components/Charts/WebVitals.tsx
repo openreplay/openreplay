@@ -1,7 +1,7 @@
-import React from 'react';
-import cn from 'classnames';
 import { Select } from 'antd';
+import cn from 'classnames';
 import { X } from 'lucide-react';
+import React from 'react';
 
 interface Stats {
   Min: number;
@@ -289,7 +289,17 @@ function WebVitalsCard({
   description: string;
   metricKey: string;
   status: 'good' | 'medium' | 'bad';
-  onClick: (metricName: string, status: 'good' | 'medium' | 'bad') => void;
+  onClick: (
+    metricName:
+      | 'domBuildingTime'
+      | 'ttfb'
+      | 'speedIndex'
+      | 'firstContentfulPaintTime'
+      | 'lcp'
+      | 'cls'
+      | null,
+    status: 'good' | 'medium' | 'bad',
+  ) => void;
   isSelected: boolean;
   inGrid?: boolean;
 }) {

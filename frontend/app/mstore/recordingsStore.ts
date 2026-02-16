@@ -1,7 +1,8 @@
-import { makeAutoObservable } from 'mobx';
-import { recordingsService } from 'App/services';
-import { IRecord, ExportsResponse } from 'App/services/RecordingsService';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
+import { makeAutoObservable } from 'mobx';
+
+import { recordingsService } from 'App/services';
+import { ExportsResponse, IRecord } from 'App/services/RecordingsService';
 
 export default class RecordingsStore {
   recordings: IRecord[] = [];

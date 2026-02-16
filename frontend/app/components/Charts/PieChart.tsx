@@ -26,7 +26,7 @@ interface PieChartProps {
 }
 
 function PieChart(props: PieChartProps) {
-  const { data, label, onClick = () => {}, inGrid = false } = props;
+  const { data, label, inGrid = false } = props;
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -121,7 +121,7 @@ function PieChart(props: PieChartProps) {
       chartInstance.dispose();
       obs.disconnect();
     };
-  }, [data, label, onClick, inGrid]);
+  }, [data, label, inGrid]);
 
   return (
     <div
