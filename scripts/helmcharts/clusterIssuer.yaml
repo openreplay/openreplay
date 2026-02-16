@@ -3,6 +3,8 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-prod
+  annotations:
+    nginx.org/mergeable-ingress-type: minion
 spec:
   acme:
     # The ACME server URL
