@@ -365,8 +365,8 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 		const maxRegexLen = 256
 		var parts []string
 		for _, v := range values {
-			if len(v) > maxRegexLen {
-				v = v[:maxRegexLen]
+			if runes := []rune(v); len(runes) > maxRegexLen {
+				v = string(runes[:maxRegexLen])
 			}
 			if _, err := regexp.Compile(v); err != nil {
 				continue
