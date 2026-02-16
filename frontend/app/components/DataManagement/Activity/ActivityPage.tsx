@@ -308,9 +308,8 @@ function ActivityPage() {
           onClick={analyticsStore.reset}
           disabled={!analyticsStore.payloadFilters.filters.length}
         >
-          Clear
+          {'Clear'}
         </Button>
-        <Button onClick={testPushItems} type="default" size="small">debug</Button>
       </div>
       <div className={'shadow-sm rounded-lg bg-white p-4 border'}>
         <FilterListHeader
