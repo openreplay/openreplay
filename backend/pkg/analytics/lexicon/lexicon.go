@@ -120,7 +120,7 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	}
 
 	subquery += `
-	          GROUP BY ae.project_id, ae.event_name, display_name, description, status, 
+	          GROUP BY ae.project_id, ae.event_name, display_name, description, status,
 	                   ae.auto_captured, ae.query_count_l30days, ae.created_at, ae._timestamp
 	          ORDER BY ae._timestamp DESC, display_name
 	          LIMIT 1 BY ae.project_id, ae.auto_captured, ae.event_name`
@@ -175,7 +175,11 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	if offset < 0 {
 		offset = 0
 	}
-	projIDStr := fmt.Sprintf("%d", projID)
+
+	var valueTypeJoinArgs []interface{}
+	var dataCountJoinArgs []interface{}
+	var usersCountJoinArgs []interface{}
+	var customizedSubqueryArgs []interface{}
 
 	usersCountColumn := "CAST(0 AS UInt64) AS users_count"
 	usersCountJoin := ""
@@ -183,7 +187,7 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	eventNameFilter := ""
 	valueTypeJoinType := "LEFT JOIN"
 	if eventName != nil {
-		eventNameFilter = ` AND event_name = '` + *eventName + `'`
+		eventNameFilter = ` AND event_name = ?`
 		valueTypeJoinType = "INNER JOIN"
 	}
 	valueTypeJoin := `
@@ -191,12 +195,16 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	        SELECT project_id, property_name, auto_captured_property,
 	               anyLast(value_type) AS value_type
 	        FROM product_analytics.event_properties
-	        WHERE project_id = ` + projIDStr + eventNameFilter + `
+	        WHERE project_id = ?` + eventNameFilter + `
 	        GROUP BY project_id, property_name, auto_captured_property
 	    ) ep
 	        ON ap.project_id = ep.project_id
 	        AND ap.property_name = ep.property_name
 	        AND ap.auto_captured = ep.auto_captured_property`
+	valueTypeJoinArgs = append(valueTypeJoinArgs, projID)
+	if eventName != nil {
+		valueTypeJoinArgs = append(valueTypeJoinArgs, *eventName)
+	}
 	valueTypeColumn := "ep.value_type"
 
 	customizedTableSubquery := `
@@ -204,10 +212,12 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	        SELECT project_id, source, property_name, auto_captured, display_name, description, status
 	        FROM product_analytics.all_properties_customized
 	        WHERE _is_deleted = false
-	          AND project_id = ` + projIDStr
+	          AND project_id = ?`
+	customizedSubqueryArgs = append(customizedSubqueryArgs, projID)
 	if source != nil {
 		customizedTableSubquery += `
-	          AND source = '` + *source + `'`
+	          AND source = ?`
+		customizedSubqueryArgs = append(customizedSubqueryArgs, *source)
 	}
 	customizedTableSubquery += `
 	        ORDER BY _timestamp DESC
@@ -226,46 +236,53 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 		dataCountColumn = "coalesce(uc.data_count, 0) AS data_count"
 		usersCountJoin = `
 	    LEFT JOIN (
-	        SELECT project_id, property_name, 
+	        SELECT project_id, property_name,
 	               sumMerge(data_count) AS data_count,
 	               count(DISTINCT user_id) AS users_count
 	        FROM product_analytics.autocomplete_user_properties_grouped
-	        WHERE project_id = ` + projIDStr + `
+	        WHERE project_id = ?
 	        GROUP BY project_id, property_name
 	    ) uc
 	        ON ap.project_id = uc.project_id
 	        AND ap.property_name = uc.property_name`
+		usersCountJoinArgs = append(usersCountJoinArgs, projID)
 
 		valueTypeJoin = `
 	    LEFT JOIN (
 	        SELECT project_id, property_name, auto_captured_property,
 	               anyLast(value_type) AS value_type
 	        FROM product_analytics.user_properties
-	        WHERE project_id = ` + projIDStr + `
+	        WHERE project_id = ?
 	        GROUP BY project_id, property_name, auto_captured_property
 	    ) up
 	        ON ap.project_id = up.project_id
 	        AND ap.property_name = up.property_name
 	        AND ap.auto_captured = up.auto_captured_property`
+		valueTypeJoinArgs = valueTypeJoinArgs[:0]
+		valueTypeJoinArgs = append(valueTypeJoinArgs, projID)
 		valueTypeColumn = "up.value_type"
 	} else {
 		dataCountEventFilter := ""
 		if eventName != nil {
-			dataCountEventFilter = ` AND event_name = '` + *eventName + `'`
+			dataCountEventFilter = ` AND event_name = ?`
 		}
 		dataCountColumn = "coalesce(aepg.data_count, 0) AS data_count"
 		dataCountJoin = `
 	    LEFT JOIN (
 	        SELECT project_id, property_name, sumMerge(data_count) AS data_count
 	        FROM product_analytics.autocomplete_event_properties_grouped
-	        WHERE project_id = ` + projIDStr + dataCountEventFilter + `
+	        WHERE project_id = ?` + dataCountEventFilter + `
 	        GROUP BY project_id, property_name
 	    ) aepg
 	        ON ap.project_id = aepg.project_id
 	        AND ap.property_name = aepg.property_name`
+		dataCountJoinArgs = append(dataCountJoinArgs, projID)
+		if eventName != nil {
+			dataCountJoinArgs = append(dataCountJoinArgs, *eventName)
+		}
 	}
 
-	subquery := `SELECT 
+	subquery := `SELECT
 	        ap.property_name AS name,
 	        if(apc.display_name != '', apc.display_name, or_property_display_name(ap.property_name)) AS display_name,
 	        coalesce(apc.description, '') AS description,
@@ -281,10 +298,10 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	    FROM product_analytics.all_properties ap` + valueTypeJoin + dataCountJoin + usersCountJoin + customizedTableSubquery + `
 	    WHERE ap.project_id = ?`
 
-	args := []interface{}{projID}
+	mainArgs := []interface{}{projID}
 	if source != nil {
 		subquery += ` AND ap.source = ?`
-		args = append(args, *source)
+		mainArgs = append(mainArgs, *source)
 	}
 
 	groupByDataCount := "aepg.data_count"
@@ -302,7 +319,14 @@ func (e *lexiconImpl) GetProperties(ctx context.Context, projID uint32, source *
 	    LIMIT 1 BY ap.project_id, ap.source, ap.property_name, ap.is_event_property, ap.auto_captured`
 
 	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `) LIMIT ? OFFSET ?`
-	args = append(args, limit, offset)
+	mainArgs = append(mainArgs, limit, offset)
+
+	var args []interface{}
+	args = append(args, valueTypeJoinArgs...)
+	args = append(args, dataCountJoinArgs...)
+	args = append(args, usersCountJoinArgs...)
+	args = append(args, customizedSubqueryArgs...)
+	args = append(args, mainArgs...)
 
 	e.log.Debug(ctx, "GetProperties query: %s, args: %v", query, args)
 
@@ -453,7 +477,7 @@ func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.
 		return fmt.Errorf("status must be one of: %s, %s, %s", StatusVisible, StatusHidden, StatusDropped)
 	}
 
-	checkQuery := `SELECT COUNT(*) 
+	checkQuery := `SELECT COUNT(*)
 	               FROM (
 	                   SELECT 1
 	                   FROM product_analytics.all_events
