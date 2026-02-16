@@ -3,6 +3,7 @@ from typing import Optional, List
 from pydantic import Field, field_validator
 
 from .overrides import BaseModel
+from .overrides import Enum
 
 
 class AssistStatsAverage(BaseModel):
@@ -46,7 +47,16 @@ class AssistStatsSession(BaseModel):
     # recordings: list[AssistStatsSessionRecording] = Field(default=[])
 
 
-assist_sort_options = ["timestamp", "assist_duration", "call_duration", "control_duration"]
+class AssistStatsSortOrder(str, Enum):
+    asc = "asc"
+    desc = "desc"
+
+
+class AssistSortOptions(str, Enum):
+    timestamp = "timestamp"
+    assist_duration = "assist_duration"
+    call_duration = "call_duration"
+    control_duration = "control_duration"
 
 
 class AssistStatsSessionsRequest(BaseModel):
@@ -54,16 +64,16 @@ class AssistStatsSessionsRequest(BaseModel):
     endTimestamp: int = Field(...)
     limit: Optional[int] = Field(default=10)
     page: Optional[int] = Field(default=1)
-    sort: Optional[str] = Field(default="timestamp",
-                                enum=assist_sort_options)
-    order: Optional[str] = Field(default="desc", choices=["desc", "asc"])
+    sort: Optional[AssistSortOptions] = Field(default=AssistSortOptions.timestamp.value)
+    order: Optional[AssistStatsSortOrder] = Field(default=AssistStatsSortOrder.desc.value)
     userId: Optional[int] = Field(default=None)
 
     @field_validator("sort")
     @classmethod
     def validate_sort(cls, v):
-        if v not in assist_sort_options:
-            raise ValueError(f"Invalid sort option. Allowed options: {', '.join(assist_sort_options)}")
+        if not AssistSortOptions.has_value(v):
+            raise ValueError(
+                f"Invalid sort option. Allowed options: {', '.join(AssistSortOptions.__members__.values())}")
         return v
 
     @field_validator("order")
@@ -78,3 +88,10 @@ class AssistStatsSessionsResponse(BaseModel):
     total: int = Field(...)
     page: int = Field(...)
     list: List[AssistStatsSession] = Field(default=[])
+
+
+class AssistStatsSort(str, Enum):
+    sessions_assisted = "sessionsAssisted"
+    assist_duration = "assistDuration"
+    call_duration = "callDuration"
+    control_duration = "controlDuration"
