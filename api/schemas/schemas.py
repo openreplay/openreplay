@@ -667,7 +667,7 @@ Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
 class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
     filters: List[GroupedFilterType] = Field(default_factory=list)
-    sort: str = Field(default="startTs")
+    sort: str = Field(default="startTs", pattern=r"^[a-zA-Z0-9_]+$")
     order: SortOrderType = Field(default=SortOrderType.DESC)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder.THEN)
     group_by_user: bool = Field(default=False)
