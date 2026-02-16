@@ -494,17 +494,6 @@ def delete_metadata(projectId: int, index: int, _=Body(None),
     return metadata.delete(tenant_id=context.tenant_id, project_id=projectId, index=index)
 
 
-@app.get('/{projectId}/metadata/search', tags=["metadata"])
-def search_metadata(projectId: int, q: str, key: str, context: schemas.CurrentContext = Depends(OR_context)):
-    if len(q) == 0 and len(key) == 0:
-        return {"data": []}
-    if len(q) == 0:
-        return {"errors": ["please provide a value for search"]}
-    if len(key) == 0:
-        return {"errors": ["please provide a key for search"]}
-    return metadata.search(tenant_id=context.tenant_id, project_id=projectId, value=q, key=key)
-
-
 @app.get('/{projectId}/integration/sources', tags=["integrations"])
 def search_integrations(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return log_tools.search(project_id=projectId)

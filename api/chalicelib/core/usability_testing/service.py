@@ -110,10 +110,10 @@ def get_ut_test(project_id: int, test_id: int):
     db_handler = DatabaseRequestHandler("ut_tests AS ut")
 
     tasks_sql = """
-        SELECT COALESCE(jsonb_agg(utt ORDER BY task_id), '[]'::jsonb) AS tasks
-        FROM public.ut_tests_tasks AS utt
-        WHERE utt.test_id = %(test_id)s
-    """
+                SELECT COALESCE(jsonb_agg(utt ORDER BY task_id), '[]'::jsonb) AS tasks
+                FROM public.ut_tests_tasks AS utt
+                WHERE utt.test_id = %(test_id)s \
+                """
 
     select_columns = [
         "ut.test_id",
@@ -359,30 +359,33 @@ def get_statistics(test_id: int):
     try:
         handler = DatabaseRequestHandler("ut_tests_signals sig")
         results = handler.raw_query("""
-            WITH TaskCounts AS (SELECT test_id, COUNT(*) as total_tasks
-                    FROM ut_tests_tasks
-                    GROUP BY test_id),
-             CompletedSessions AS (SELECT s.session_id, s.test_id
-                                   FROM ut_tests_signals s
-                                   WHERE s.test_id = %(test_id)s
-                                     AND s.status = 'done'
-                                     AND s.task_id IS NOT NULL
-                                   GROUP BY s.session_id, s.test_id
-                                   HAVING COUNT(DISTINCT s.task_id) = (SELECT total_tasks FROM TaskCounts
-                                    WHERE test_id = s.test_id))
-        
-        SELECT sig.test_id,
-               sum(case when sig.task_id is null then 1 else 0 end)                                as tests_attempts,
-               sum(case when sig.task_id is null and sig.status = 'skipped' then 1 else 0 end)     as tests_skipped,
-               sum(case when sig.task_id is not null and sig.status = 'done' then 1 else 0 end)    as tasks_completed,
-               sum(case when sig.task_id is not null and sig.status = 'skipped' then 1 else 0 end) as tasks_skipped,
-               (SELECT COUNT(*) FROM CompletedSessions WHERE test_id = sig.test_id)                as completed_all_tasks
-        FROM ut_tests_signals sig
-                 LEFT JOIN TaskCounts tc ON sig.test_id = tc.test_id
-        WHERE sig.status IN ('done', 'skipped')
-          AND sig.test_id = %(test_id)s
-        GROUP BY sig.test_id;
-        """, params={
+                                    WITH TaskCounts AS (SELECT test_id, COUNT(*) as total_tasks
+                                                        FROM ut_tests_tasks
+                                                        GROUP BY test_id),
+                                         CompletedSessions AS (SELECT s.session_id, s.test_id
+                                                               FROM ut_tests_signals s
+                                                               WHERE s.test_id = %(test_id)s
+                                                                 AND s.status = 'done'
+                                                                 AND s.task_id IS NOT NULL
+                                                               GROUP BY s.session_id, s.test_id
+                                                               HAVING COUNT(DISTINCT s.task_id) = (SELECT total_tasks
+                                                                                                   FROM TaskCounts
+                                                                                                   WHERE test_id = s.test_id))
+
+                                    SELECT sig.test_id,
+                                           sum(case when sig.task_id is null then 1 else 0 end)                             as tests_attempts,
+                                           sum(case when sig.task_id is null and sig.status = 'skipped' then 1 else 0 end)  as tests_skipped,
+                                           sum(case when sig.task_id is not null and sig.status = 'done' then 1 else 0 end) as tasks_completed,
+                                           sum(case
+                                                   when sig.task_id is not null and sig.status = 'skipped' then 1
+                                                   else 0 end)                                                              as tasks_skipped,
+                                           (SELECT COUNT(*) FROM CompletedSessions WHERE test_id = sig.test_id)             as completed_all_tasks
+                                    FROM ut_tests_signals sig
+                                             LEFT JOIN TaskCounts tc ON sig.test_id = tc.test_id
+                                    WHERE sig.status IN ('done', 'skipped')
+                                      AND sig.test_id = %(test_id)s
+                                    GROUP BY sig.test_id;
+                                    """, params={
             'test_id': test_id
         })
 

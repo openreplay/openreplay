@@ -73,20 +73,24 @@ class UTTestDelete(BaseModel):
     deleted_at: datetime = Field(..., description="The timestamp when the test is marked as deleted")
 
 
+class UTSortBy(str, Enum):
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+class UTSortOrder(str, Enum):
+    asc = "asc"
+    desc = "desc"
+
+
 class UTTestSearch(BaseModel):
     query: Optional[str] = Field(None, description="Search query for the UT tests")
     page: Optional[int] = Field(1, ge=1, description="Page number of the results")
     limit: Optional[int] = Field(10, ge=1, le=100, description="Number of results per page")
-    sort_by: Optional[str] = Field(description="Field to sort by", default="created_at")
-    sort_order: Optional[str] = Field("asc", description="Sort order: 'asc' or 'desc'")
+    sort_by: Optional[UTSortBy] = Field(description="Field to sort by", default=UTSortBy.created_at.value)
+    sort_order: Optional[UTSortOrder] = Field(default=UTSortOrder.asc.value, description="Sort order: 'asc' or 'desc'")
     is_active: Optional[bool] = Field(True, description="Flag to indicate if the test is active")
     user_id: Optional[int] = Field(None, description="The ID of the user who created the test")
-
-    @validator('sort_order')
-    def sort_order_must_be_valid(cls, v):
-        if v not in ['asc', 'desc']:
-            raise ValueError('Sort order must be either "asc" or "desc"')
-        return v
 
 
 class UTTestResponsesSearch(BaseModel):
