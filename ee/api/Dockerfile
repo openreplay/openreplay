@@ -1,26 +1,8 @@
-FROM python:3.11-alpine
-LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
-RUN apk add --no-cache build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec tini
+FROM public.ecr.aws/p1t3u8a3/chalice:v1.20.19-ee
 
-ARG envarg
-ENV SOURCE_MAP_VERSION=0.7.4 \
-    APP_NAME=chalice \
-    LISTEN_PORT=8000 \
-    PRIVATE_ENDPOINTS=false \
-    ENTERPRISE_BUILD=${envarg} \
-    GIT_SHA=$GIT_SHA
-
-WORKDIR /work
-COPY requirements.txt ./requirements.txt
-# Caching the source build
-RUN pip install --no-cache-dir --upgrade python3-saml==1.16.0 --no-binary=lxml
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
-
-COPY . .
-RUN mv env.default .env
-
-RUN adduser -u 1001 openreplay -D
-USER 1001
-
-ENTRYPOINT ["/sbin/tini", "--"]
-CMD ./entrypoint.sh
+COPY chalicelib/core/metadata.py /app/chalicelib/core/metadata.py
+COPY chalicelib/core/usability_testing/schema.py /app/chalicelib/core/usability_testing/schema.py
+COPY chalicelib/core/usability_testing/service.py /app/chalicelib/core/usability_testing/service.py
+COPY routers/core.py /app/routers/core.py
+COPY routers/ee.py /app/routers/ee.py
+COPY schemas/assist_stats_schema.py /app/schemas/assist_stats_schema.py
