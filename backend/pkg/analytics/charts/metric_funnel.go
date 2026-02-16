@@ -265,7 +265,7 @@ func buildTColumns(stages []string, eventConditions []string, metricFormat strin
 func formatEventNames(stages []string) string {
 	quoted := make([]string, len(stages))
 	for i, stage := range stages {
-		quoted[i] = fmt.Sprintf("'%s'", stage)
+		quoted[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(stage))
 	}
 	return fmt.Sprintf("(%s)", strings.Join(quoted, ", "))
 }
