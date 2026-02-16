@@ -56,6 +56,7 @@ export const blockValues = [
 
 const CHANGE_SKIP_INTERVAL = 'CHANGE_SKIP_INTERVAL';
 const DATA_SOURCE = '__DATA_SOURCE__';
+const SESSION_LIST_SIDEBAR = '__SESSION_LIST_SIDEBAR__';
 
 export default class UiPlayerStore {
   fullscreen = false;
@@ -88,6 +89,7 @@ export default class UiPlayerStore {
   zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview'
   // @ts-ignore
   dataSource: 'all' | 'current' = localStorage.getItem(DATA_SOURCE) ?? 'all'
+  sessionListSidebar = localStorage.getItem(SESSION_LIST_SIDEBAR) !== 'false';
 
   constructor() {
     makeAutoObservable(this);
@@ -157,5 +159,10 @@ export default class UiPlayerStore {
 
   setSearchEventsSwitchButton = (show: boolean) => {
     this.showSearchEventsSwitchButton = show;
+  };
+
+  toggleSessionListSidebar = (val?: boolean) => {
+    this.sessionListSidebar = val ?? !this.sessionListSidebar;
+    localStorage.setItem(SESSION_LIST_SIDEBAR, String(this.sessionListSidebar));
   };
 }

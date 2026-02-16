@@ -9,6 +9,7 @@ import {
   BookmarkCheck,
   Vault,
   File,
+  List,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
@@ -40,6 +41,7 @@ function SubHeader(props: any) {
     issueReportingStore,
     settingsStore,
     recordingsStore,
+    uiPlayerStore,
   } = useStore();
   const { t } = useTranslation();
   const { isEnterprise, account } = userStore;
@@ -219,6 +221,17 @@ function SubHeader(props: any) {
         onVMode={onVMode}
       />
       <div className="w-full px-4 flex items-center border-b relative">
+        {sessionStore.list.length > 0 && !uiPlayerStore.sessionListSidebar && (
+          <Tooltip title={t('Show session list')} placement="bottom">
+            <AntButton
+              size="small"
+              className="flex items-center justify-center mr-2"
+              onClick={() => uiPlayerStore.toggleSessionListSidebar(true)}
+            >
+              <List size={16} />
+            </AntButton>
+          </Tooltip>
+        )}
         <SessionTabs />
 
         {!hideTools && (

@@ -312,7 +312,7 @@ const DevtoolsButtons = observer(
     activeTab,
   }: IDevtoolsButtons) => {
     const { t } = useTranslation();
-    const { aiSummaryStore, integrationsStore } = useStore();
+    const { aiSummaryStore, integrationsStore, uiPlayerStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
     const { inspectorMode, currentTab, tabStates } = store.get();
 
@@ -349,7 +349,7 @@ const DevtoolsButtons = observer(
     const integratedServices =
       integrationsStore.integrations.backendLogIntegrations;
 
-    const showIcons = activeTab === 'EXPORT';
+    const showIcons = uiPlayerStore.sessionListSidebar || activeTab === 'EXPORT';
     const labels = {
       console: {
         icon: <CodeOutlined size={14} />,

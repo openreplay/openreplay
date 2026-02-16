@@ -76,6 +76,7 @@ interface Props {
   timestamp?: number;
   onBeforeOpen?: () => void;
   noHover?: boolean;
+  vertical?: boolean;
 }
 
 const PREFETCH_STATE = {
@@ -114,6 +115,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     noWrap,
     onBeforeOpen,
     noHover,
+    vertical,
   } = props;
 
   const {
@@ -298,7 +300,8 @@ function SessionItem(props: RouteComponentProps & Props) {
         <div className="flex items-start ">
           <div
             className={cn(
-              'flex flex-col items-start gap-2 md:gap-0 lg:flex-row lg:items-center w-full',
+              'flex flex-col items-start gap-2 md:gap-0 w-full',
+              !vertical ? 'lg:items-center lg:flex-row' : '',
             )}
           >
             {!compact && (

@@ -2,10 +2,12 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import { countDaysFrom } from 'App/date';
+import { useStore } from 'App/mstore';
 import RightBlock from 'Components/Session/RightBlock';
 import { PlayerContext } from 'Components/Session/playerContext';
 import Session from 'Types/session';
 import PlayerBlock from './PlayerBlock';
+import PlayerSessionList from './PlayerSessionList';
 import { mobileScreen } from 'App/utils/isMobile';
 
 interface IProps {
@@ -22,6 +24,8 @@ function PlayerContent({
   setActiveTab,
 }: IProps) {
   const { store } = React.useContext(PlayerContext);
+  const { sessionStore, uiPlayerStore } = useStore();
+  const showSidebar = sessionStore.list.length > 0 && uiPlayerStore.sessionListSidebar;
 
   const { error, completed } = store.get();
   const fullView = React.useMemo(() => new URLSearchParams(location.search).get('fullview') === 'true', []);
@@ -67,6 +71,9 @@ function PlayerContent({
         height: `calc(100dvh - ${mobileScreen ? '26px' : '50px'})`,
       }}
     >
+      {!fullscreen && showSidebar && (
+        <PlayerSessionList onClose={() => uiPlayerStore.toggleSessionListSidebar(false)} />
+      )}
       <div
         className="w-full h-full"
         style={
