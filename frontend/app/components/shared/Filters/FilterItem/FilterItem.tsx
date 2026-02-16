@@ -226,6 +226,9 @@ function FilterItem(props: Props) {
       return str?.length > maxLen ? str.slice(0, maxLen) + '...' : str;
     }
   }, [readonly, filter.value]);
+
+  const hasSubfilters =
+    filter.isEvent && !isSubItem && filter.category !== 'actions';
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
       <div className="flex items-start w-full gap-x-2">
@@ -345,7 +348,7 @@ function FilterItem(props: Props) {
             </>
           )}
 
-          {filter.isEvent && !isSubItem && (
+          {hasSubfilters && (
             <FilterSelection
               type="Properties"
               filters={eventFilterOptions}
