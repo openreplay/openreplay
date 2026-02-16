@@ -362,10 +362,19 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 		}
 		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
 	case "regex":
+		const maxRegexLen = 256
 		var parts []string
 		for _, v := range values {
-			// Escape the regex pattern value for SQL string literal
+			if runes := []rune(v); len(runes) > maxRegexLen {
+				v = string(runes[:maxRegexLen])
+			}
+			if _, err := regexp.Compile(v); err != nil {
+				continue
+			}
 			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, sqlStringReplacer.Replace(v)))
+		}
+		if len(parts) == 0 {
+			return ""
 		}
 		if len(parts) > 1 {
 			return "(" + strings.Join(parts, " OR ") + ")"

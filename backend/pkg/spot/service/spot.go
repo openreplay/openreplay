@@ -127,7 +127,7 @@ func (s *spotsImpl) encodeComment(comment *Comment) string {
 }
 
 func (s *spotsImpl) add(spot *Spot) error {
-	sql := `INSERT INTO spots.spots (spot_id, name, user_id, tenant_id, duration, crop, comments, created_at) 
+	sql := `INSERT INTO spots.spots (spot_id, name, user_id, tenant_id, duration, crop, comments, created_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	var comments []string
 	for _, comment := range spot.Comments {
@@ -153,8 +153,8 @@ func (s *spotsImpl) GetByID(user *user.User, spotID uint64) (*Spot, error) {
 }
 
 func (s *spotsImpl) getByID(spotID uint64, user *user.User) (*Spot, error) {
-	sql := `SELECT s.name, u.email, s.duration, s.crop, s.comments, s.created_at 
-			FROM spots.spots s 
+	sql := `SELECT s.name, u.email, s.duration, s.crop, s.comments, s.created_at
+			FROM spots.spots s
             JOIN public.users u ON s.user_id = u.user_id
             WHERE s.spot_id = $1 AND s.tenant_id = $2 AND s.deleted_at IS NULL`
 	spot := &Spot{ID: spotID}
@@ -201,7 +201,7 @@ func (s *spotsImpl) Get(user *user.User, opts *GetOpts) ([]*Spot, uint64, bool, 
 }
 
 func (s *spotsImpl) getAll(user *user.User, opts *GetOpts) ([]*Spot, uint64, bool, error) {
-	sql := `SELECT COUNT(1) OVER () AS total, s.spot_id, s.name, u.email, s.duration, s.created_at 
+	sql := `SELECT COUNT(1) OVER () AS total, s.spot_id, s.name, u.email, s.duration, s.created_at
 			FROM spots.spots s
 			JOIN public.users u ON s.user_id = u.user_id
 			WHERE s.tenant_id = $1 AND s.deleted_at IS NULL`
@@ -214,8 +214,10 @@ func (s *spotsImpl) getAll(user *user.User, opts *GetOpts) ([]*Spot, uint64, boo
 		sql += ` AND s.name ILIKE ` + fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, "%"+opts.NameFilter+"%")
 	}
-	if opts.Order != "" {
+	if opts.Order == "asc" || opts.Order == "desc" {
 		sql += ` ORDER BY s.created_at ` + opts.Order
+	} else if opts.Order != "" {
+		sql += ` ORDER BY s.created_at desc`
 	}
 	if opts.Limit != 0 {
 		sql += ` LIMIT ` + fmt.Sprintf("$%d", len(args)+1)
@@ -278,7 +280,7 @@ func (s *spotsImpl) UpdateName(user *user.User, spotID uint64, newName string) (
 
 func (s *spotsImpl) updateName(spotID uint64, newName string, user *user.User) (*Spot, error) {
 	sql := `WITH updated AS (
-		UPDATE spots.spots SET name = $1, updated_at = $2 
+		UPDATE spots.spots SET name = $1, updated_at = $2
 		WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL RETURNING *)
 		SELECT COUNT(*) FROM updated`
 	updated := 0
@@ -313,9 +315,9 @@ func (s *spotsImpl) AddComment(user *user.User, spotID uint64, comment *Comment)
 
 func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *user.User) (*Spot, error) {
 	sql := `WITH updated AS (
-		UPDATE spots.spots 
-			SET comments = array_append(comments, $1), updated_at = $2 
-			WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND COALESCE(array_length(comments, 1), 0) < $5 
+		UPDATE spots.spots
+			SET comments = array_append(comments, $1), updated_at = $2
+			WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND COALESCE(array_length(comments, 1), 0) < $5
 			RETURNING *)
 		SELECT COUNT(*) FROM updated`
 	encodedComment := s.encodeComment(newComment)
