@@ -39,7 +39,7 @@ function AssistSearchActions() {
         </Button>
       </Tooltip>
       <TrainingVideosBtn />
-      {isEnterprise && userStore.account?.admin && (
+      {isEnterprise && userStore.isAdmin && (
         <Button
           size={'small'}
           onClick={showStats}
