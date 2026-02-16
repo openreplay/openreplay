@@ -139,7 +139,7 @@ def sessions_search(projectId: int, data: schemas.GetInsightsSchema = Body(...),
     return {'data': sessions_insights.fetch_selected(data=data, project_id=projectId)}
 
 
-@public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
+@app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
 def get_assist_stats_avg(
         project_id: int,
         startTimestamp: int = None,
@@ -153,7 +153,7 @@ def get_assist_stats_avg(
         user_id=userId)
 
 
-@public_app.get(
+@app.get(
     '/{project_id}/assist-stats/top-members',
     tags=["assist-stats"],
     response_model=schemas.AssistStatsTopMembersResponse
@@ -162,9 +162,10 @@ def get_assist_stats_top_members(
         project_id: int,
         startTimestamp: int = None,
         endTimestamp: int = None,
-        sort: Optional[str] = Query(default="sessionsAssisted",
-                                    description="Sort options: " + ", ".join(assist_stats.event_type_mapping)),
-        order: str = "desc",
+        sort: Optional[schemas.AssistStatsSort] = Query(default=schemas.AssistStatsSort.sessions_assisted.value,
+                                                        description="Sort options: " \
+                                                                    + ", ".join(assist_stats.event_type_mapping)),
+        order: schemas.AssistStatsSortOrder = schemas.AssistStatsSortOrder.desc.value,
         userId: int = None,
         page: int = 0,
         limit: int = 5
@@ -181,7 +182,7 @@ def get_assist_stats_top_members(
     )
 
 
-@public_app.post(
+@app.post(
     '/{project_id}/assist-stats/sessions',
     tags=["assist-stats"],
     response_model=schemas.AssistStatsSessionsResponse

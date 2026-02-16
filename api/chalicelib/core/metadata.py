@@ -154,39 +154,6 @@ def add(tenant_id, project_id, new_name):
     return {"data": {"key": col_val, "index": index}}
 
 
-def search(tenant_id, project_id, key, value):
-    value = value + "%"
-    s_query = []
-    for f in column_names():
-        s_query.append(f"CASE WHEN {f}=%(key)s THEN TRUE ELSE FALSE END AS {f}")
-
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT {",".join(s_query)}
-                                FROM public.projects
-                                WHERE project_id = %(project_id)s 
-                                    AND deleted_at ISNULL
-                                LIMIT 1;""",
-                            {"key": key, "project_id": project_id})
-        cur.execute(query=query)
-        all_metas = cur.fetchone()
-        key = None
-        for c in all_metas:
-            if all_metas[c]:
-                key = c
-                break
-        if key is None:
-            return {"errors": ["key does not exist"]}
-        query = cur.mogrify(f"""SELECT DISTINCT "{key}" AS "{key}"
-                                FROM public.sessions
-                                {f'WHERE "{key}"::text ILIKE %(value)s' if value is not None and len(value) > 0 else ""}
-                                ORDER BY "{key}"
-                                LIMIT 20;""",
-                            {"value": value, "project_id": project_id})
-        cur.execute(query=query)
-        value = cur.fetchall()
-        return {"data": [k[key] for k in value]}
-
-
 def get_keys_by_projects(project_ids):
     if project_ids is None or len(project_ids) == 0:
         return {}
