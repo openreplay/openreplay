@@ -118,7 +118,7 @@ func (f *filesImpl) GetCanvasUrls(sessID uint64) ([]string, error) {
 	}
 	res := make([]string, 0, len(recIDs))
 	for _, recID := range recIDs {
-		url, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, fmt.Sprintf("%d/%s.tar.zst", sessID, recID))
+		url, err := f.objStore.GetPreSignedDownloadUrlFromBucket(f.cfg.BucketName, fmt.Sprintf("%d/%s.webp.frames.zst", sessID, recID))
 		if err != nil {
 			return nil, err
 		}
