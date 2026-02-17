@@ -14,7 +14,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 
 	"openreplay/backend/pkg/analytics/model"
 )
@@ -129,7 +128,10 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p 
 
 	cfg := analyticsConfig.New(t.Logger)
 
-	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
+	conn, err := orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
+	if err != nil {
+		return nil, err
+	}
 
 	// Trying to use clickhouseContext in order to keep same session for tmp tables,
 	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code

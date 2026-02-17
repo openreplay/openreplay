@@ -16,7 +16,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 )
 
 // Node represents a point in the journey diagram.
@@ -91,9 +90,9 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _conn
 	}
 	cfg := analyticsConfig.New(h.Logger)
 
-	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
-	if conn == nil {
-		return nil, fmt.Errorf("failed to establish clickhouse connection")
+	conn, err := orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
+	if err != nil {
+		return nil, err
 	}
 
 	chCtx := clickhouse.Context(ctx,

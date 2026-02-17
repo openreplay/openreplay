@@ -60,7 +60,11 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 	}
 	return conn, err
 }
-func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
+func NewSqlDBConnection(cfg common.Clickhouse) (*sqlx.DB, error) {
+	tlsConfig, err := buildTLSConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
 	opts := &clickhouse.Options{
 		Protocol: clickhouse.HTTP,
 		Addr:     []string{cfg.GetTrimmedUrlHTTP()},
@@ -78,6 +82,7 @@ func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
 		Settings: clickhouse.Settings{
 			"max_execution_time": cfg.MaxExecutionTime,
 		},
+		TLS: tlsConfig,
 	}
 	switch cfg.CompressionAlgo {
 	case "lz4":
@@ -93,9 +98,9 @@ func NewSqlDBConnection(cfg common.Clickhouse) *sqlx.DB {
 		if errors.As(err, &exception) {
 			fmt.Printf("Exception SQL-DB [%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
 		}
-		return nil
+		return nil, err
 	}
-	return sqlx.NewDb(conn, "clickhouse")
+	return sqlx.NewDb(conn, "clickhouse"), nil
 }
 
 func buildTLSConfig(cfg common.Clickhouse) (*tls.Config, error) {
