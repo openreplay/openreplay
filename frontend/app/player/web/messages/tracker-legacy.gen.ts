@@ -1,6 +1,6 @@
 // Auto-generated, do not edit
 
-import { MType } from './raw.gen'
+import { MType } from './raw.gen';
 
 export const TP_MAP = {
   0: MType.Timestamp,
@@ -82,4 +82,4 @@ export const TP_MAP = {
   106: MType.MobileSwipeEvent,
   109: MType.MobileGraphQl,
   111: MType.MobileIssueEvent,
-} as const
+} as const;

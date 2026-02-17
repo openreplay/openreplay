@@ -1,7 +1,7 @@
-import React from 'react'
-import { Tooltip } from 'antd'
-import { LongAnimationTask } from "./type";
-import cn from "classnames";
+import React from 'react';
+import { Tooltip } from 'antd';
+import { LongAnimationTask } from './type';
+import cn from 'classnames';
 
 const getSeverityClass = (duration: number) => {
   if (duration > 200) return 'bg-[#CC0000]';
@@ -11,10 +11,13 @@ const getSeverityClass = (duration: number) => {
 
 function TaskTimeline({ task }: { task: LongAnimationTask }) {
   const totalDuration = task.duration;
-  const scriptDuration = task.scripts.reduce((sum, script) => sum + script.duration, 0);
+  const scriptDuration = task.scripts.reduce(
+    (sum, script) => sum + script.duration,
+    0,
+  );
   const layoutDuration = task.scripts.reduce(
     (sum, script) => sum + (script.forcedStyleAndLayoutDuration || 0),
-    0
+    0,
   );
   const idleDuration = totalDuration - scriptDuration - layoutDuration;
 
@@ -56,7 +59,6 @@ function TaskTimeline({ task }: { task: LongAnimationTask }) {
   );
 }
 
-
 function TimelineSegment({
   name,
   classes,
@@ -68,10 +70,7 @@ function TimelineSegment({
 }) {
   return (
     <Tooltip title={name}>
-      <div
-        style={{ width: `${width}%` }}
-        className={cn(classes)}
-      />
+      <div style={{ width: `${width}%` }} className={cn(classes)} />
     </Tooltip>
   );
 }

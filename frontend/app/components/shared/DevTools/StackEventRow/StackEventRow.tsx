@@ -24,7 +24,7 @@ function StackEventRow(props: Props) {
     return {
       name: `integrations/${source}`,
       size: 18,
-      className: "mx-3",
+      className: 'mx-3',
     };
   }, [event]);
 
@@ -43,7 +43,9 @@ function StackEventRow(props: Props) {
         <TabTag tabName={event.tabName} tabNum={event.tabNum} />
         <Icon {...iconProps} />
         <div>
-          <div className="capitalize font-medium mb-1 leading-none">{event.name}</div>
+          <div className="capitalize font-medium mb-1 leading-none">
+            {event.name}
+          </div>
           <div className="code-font text-xs">{message}</div>
         </div>
       </div>

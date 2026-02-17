@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router';
+import { useNavigate, useParams } from 'App/routing';
 import { Button } from 'antd';
 import {
   OB_TABS,
@@ -22,12 +22,9 @@ const BTN_MSGS = [
   'See Recorded Sessions',
 ];
 
-function OnboardingNavButton({
-  match: {
-    params: { activeTab, siteId },
-  },
-  history,
-}) {
+function OnboardingNavButton() {
+  const navigate = useNavigate();
+  const { activeTab, siteId } = useParams();
   const { userStore } = useStore();
   const activeIndex = MENU_ITEMS.findIndex((i) => i === activeTab);
   const completed = activeIndex == MENU_ITEMS.length - 1;
@@ -35,7 +32,7 @@ function OnboardingNavButton({
   const setTab = () => {
     if (!completed) {
       const tab = MENU_ITEMS[activeIndex + 1];
-      history.push(withSiteId(onboardingRoute(tab), siteId));
+      navigate(withSiteId(onboardingRoute(tab), siteId));
     } else {
       onDone();
     }
@@ -43,7 +40,7 @@ function OnboardingNavButton({
 
   const onDone = () => {
     userStore.setOnboarding(true);
-    history.push(sessions());
+    navigate(sessions());
   };
 
   return (
@@ -66,4 +63,4 @@ function OnboardingNavButton({
   );
 }
 
-export default withRouter(OnboardingNavButton);
+export default OnboardingNavButton;

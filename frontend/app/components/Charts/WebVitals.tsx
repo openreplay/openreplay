@@ -173,7 +173,7 @@ function WebVitals({
       hasSource: true,
       sourceOperator: '',
       value: [],
-      propertyOrder: "and",
+      propertyOrder: 'and',
     };
     const filters: any[] = [];
     if (['Min', 'Max'].includes(mode)) {

@@ -3,7 +3,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import { observer } from 'mobx-react-lite';
 import MetricsList from '../MetricsList';
 import MetricViewHeader from '../MetricViewHeader';
-import { PANEL_SIZES } from 'App/constants/panelSizes'
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 interface Props {
   siteId: string;

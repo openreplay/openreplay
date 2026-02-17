@@ -202,7 +202,7 @@ function Incident({ label, onClick }: { label: string; onClick: () => void }) {
         <Icon name="console/warning" size={18} color="gray-dark" />
         <div className="flex flex-col">
           <span style={{ fontWeight: 500 }}>{t('Incident')}</span>
-          <span className="text-ellipsis overflow-hidden whitespace-nowrap max-w-full text-sm text-(--color-gray-medium)">
+          <span className="text-ellipsis overflow-hidden whitespace-nowrap max-w-full text-sm color-gray-medium">
             {label}
           </span>
         </div>

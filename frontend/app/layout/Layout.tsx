@@ -21,7 +21,7 @@ function Layout(props: Props) {
   const { settingsStore, projectsStore } = useStore();
   const [collapsed, setCollapsed] = React.useState(false);
   const { siteId } = projectsStore;
-  const mobileDevice = mobileScreen
+  const mobileDevice = mobileScreen;
 
   useEffect(() => {
     const handleResize = () => {

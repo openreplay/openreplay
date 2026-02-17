@@ -12,7 +12,9 @@ function SessionFilters() {
   const { searchStore, filterStore } = useStore();
   const searchInstance = searchStore.instance;
 
-  const allFilterOptions = filterStore.getScopedCurrentProjectFilters(['sessions']);
+  const allFilterOptions = filterStore.getScopedCurrentProjectFilters([
+    'sessions',
+  ]);
   const eventOptions = allFilterOptions.filter((i) => i.isEvent);
   const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
   const activeFilters = searchInstance.filters.map((f) => f.name);

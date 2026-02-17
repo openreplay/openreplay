@@ -15,13 +15,12 @@ import {
   EditOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
-import { RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps, useHistory } from 'App/routing';
 import { withSiteId } from 'App/routes';
 import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-import { useHistory } from 'react-router';
 import { EllipsisVertical } from 'lucide-react';
 import cn from 'classnames';
 

@@ -61,7 +61,9 @@ function PlayerContent({
             className="w-full"
             style={
               activeTab && !fullscreen
-                ? { maxWidth: `calc(100% - ${activeTab === 'EXPORT' ? '360px' : '270px'})` }
+                ? {
+                    maxWidth: `calc(100% - ${activeTab === 'EXPORT' ? '360px' : '270px'})`,
+                  }
                 : undefined
             }
           >

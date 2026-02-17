@@ -1,4 +1,4 @@
-import { LongAnimationTask } from "../messages";
+import { LongAnimationTask } from '../messages';
 
 export interface ILongAnimationTask {
   name: string;
@@ -40,13 +40,13 @@ function shortId(len = 6) {
 }
 
 export const getLongTask = (msg: LongAnimationTask): ILongAnimationTask => {
-  let scripts = []
+  let scripts = [];
   try {
-    scripts = JSON.parse(msg.scripts)
+    scripts = JSON.parse(msg.scripts);
   } catch (e) {
-    console.error('Error parsing scripts for LAT:', e, msg)
+    console.error('Error parsing scripts for LAT:', e, msg);
   }
-  return ({
+  return {
     name: msg.name,
     duration: msg.duration,
     blockingDuration: msg.blockingDuration,
@@ -56,5 +56,5 @@ export const getLongTask = (msg: LongAnimationTask): ILongAnimationTask => {
     isRed: msg.blockingDuration > 50,
     time: msg.startTime,
     key: shortId(),
-  });
-}
+  };
+};

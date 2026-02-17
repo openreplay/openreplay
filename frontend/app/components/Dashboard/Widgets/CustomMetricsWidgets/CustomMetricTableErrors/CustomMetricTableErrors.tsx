@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Pagination, NoContent, Icon } from 'UI';
 import ErrorListItem from 'App/components/Dashboard/components/Errors/ErrorListItem';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import { useModal } from 'App/components/Modal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useTranslation } from 'react-i18next';

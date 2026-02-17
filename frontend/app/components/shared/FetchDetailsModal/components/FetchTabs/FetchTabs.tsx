@@ -139,6 +139,7 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
                     href="https://docs.openreplay.com/en/sdk/network-options"
                     className="link"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     {t('Configure')}
                   </a>{' '}
@@ -180,6 +181,7 @@ function FetchTabs({ resource, isSpot, isXHR }: Props) {
                     href="https://docs.openreplay.com/en/sdk/network-options"
                     className="link"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     {t('Configure')}
                   </a>{' '}

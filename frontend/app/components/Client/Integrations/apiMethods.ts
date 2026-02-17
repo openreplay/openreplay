@@ -1,7 +1,7 @@
 import { client } from 'App/mstore';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import { integrationGoEdp } from './integrationGoEdp'
+import { integrationGoEdp } from './integrationGoEdp';
 
 export type ServiceName = 'datadog' | 'dynatrace' | 'elasticsearch' | 'sentry';
 export const serviceNames: Record<ServiceName, string> = {

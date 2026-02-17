@@ -5,7 +5,7 @@ import { ArrowRight, Info } from 'lucide-react';
 import { useStore } from 'App/mstore';
 import CardsLibrary from 'Components/Dashboard/components/DashboardList/NewDashModal/CardsLibrary';
 import { FUNNEL } from 'App/constants/card';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 import { FilterKey } from 'Types/filter/filterType';
 import FilterSeries from '@/mstore/types/filterSeries';
 import Option from './Option';

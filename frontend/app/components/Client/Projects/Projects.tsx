@@ -2,7 +2,7 @@ import React from 'react';
 import { App, Button, Card, Layout, Dropdown, Tooltip, Typography } from 'antd';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import { PlusOutlined, KeyOutlined, DownOutlined } from '@ant-design/icons';

@@ -1,6 +1,5 @@
-/* eslint-disable i18next/no-literal-string */
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'App/routing';
 import {
   sessions,
   metrics,
@@ -28,6 +27,13 @@ interface Props {
 function DefaultMenuView(props: Props) {
   const { t } = useTranslation();
   const { siteId } = props;
+  const location = useLocation();
+  const isAssistActive =
+    location.pathname.includes(ASSIST_PATH) ||
+    location.pathname.includes(RECORDINGS_PATH);
+  const isDashboardsActive =
+    location.pathname.includes(DASHBOARD_PATH) ||
+    location.pathname.includes(METRICS_PATH);
   return (
     <div className="flex items-center">
       <Survey />
@@ -43,19 +49,17 @@ function DefaultMenuView(props: Props) {
 
       <NavLink
         to={withSiteId(SESSIONS_PATH, siteId)}
-        className={styles.nav}
-        activeClassName={styles.active}
+        className={({ isActive }) =>
+          `${styles.nav} ${isActive ? styles.active : ''}`
+        }
         data-test-id="sessions"
       >
         {t('Sessions')}
       </NavLink>
       <NavLink
         to={withSiteId(ASSIST_PATH, siteId)}
-        className={styles.nav}
-        activeClassName={styles.active}
-        isActive={(_, location) =>
-          location.pathname.includes(ASSIST_PATH) ||
-          location.pathname.includes(RECORDINGS_PATH)
+        className={({ isActive }) =>
+          `${styles.nav} ${isActive || isAssistActive ? styles.active : ''}`
         }
         data-test-id="assist"
       >
@@ -63,11 +67,8 @@ function DefaultMenuView(props: Props) {
       </NavLink>
       <NavLink
         to={withSiteId(DASHBOARD_PATH, siteId)}
-        className={styles.nav}
-        activeClassName={styles.active}
-        isActive={(_, location) =>
-          location.pathname.includes(DASHBOARD_PATH) ||
-          location.pathname.includes(METRICS_PATH)
+        className={({ isActive }) =>
+          `${styles.nav} ${isActive || isDashboardsActive ? styles.active : ''}`
         }
         data-test-id="dashboards"
       >

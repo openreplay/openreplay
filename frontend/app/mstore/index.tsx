@@ -32,9 +32,9 @@ import UiPlayerStore from './uiPlayerStore';
 import userStore from './userStore';
 import WeeklyReportStore from './weeklyReportConfigStore';
 import logger from '@/logger';
-import BillingStore from "@/mstore/billingStore";
-import ClipStore from "@/mstore/clipStore";
-import AnalyticsStore from "@/mstore/AnalyticsStore";
+import BillingStore from '@/mstore/billingStore';
+import ClipStore from '@/mstore/clipStore';
+import AnalyticsStore from '@/mstore/AnalyticsStore';
 
 const projectStore = new ProjectsStore();
 const sessionStore = new SessionStore();

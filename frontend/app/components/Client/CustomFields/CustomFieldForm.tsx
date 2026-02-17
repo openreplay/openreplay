@@ -37,7 +37,8 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
   };
 
   const onSave = (field: any) => {
-    const errSize = (response) => response?.errors.size || response?.errors.length || 0;
+    const errSize = (response) =>
+      response?.errors.size || response?.errors.length || 0;
     setLoading(true);
     store
       .save(siteId, field)

@@ -15,7 +15,7 @@ function LogsButton({
 }) {
   return (
     <ControlButton
-      label={shorten ? null : "Traces"}
+      label={shorten ? null : 'Traces'}
       customKey="traces"
       customTags={
         <Avatar.Group>

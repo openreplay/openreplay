@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { withRouter } from 'App/routing';
 import {
   removeQueryParams,
   addQueryParams,

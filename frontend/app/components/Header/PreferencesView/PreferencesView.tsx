@@ -1,15 +1,13 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from 'App/routing';
 import { useTranslation } from 'react-i18next';
 
-interface Props {
-  history: any;
-}
-function PreferencesView(props: Props) {
+function PreferencesView() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const onExit = () => {
-    props.history.push('/');
+    navigate('/');
   };
   return (
     <>
@@ -31,4 +29,4 @@ function PreferencesView(props: Props) {
   );
 }
 
-export default withRouter(PreferencesView);
+export default PreferencesView;

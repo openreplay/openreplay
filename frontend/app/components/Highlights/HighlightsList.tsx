@@ -8,7 +8,7 @@ import cn from 'classnames';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import withPermissions from 'HOCs/withPermissions';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 import { highlights, withSiteId } from 'App/routes';
 import HighlightsListHeader from './HighlightsListHeader';
 import EditHlModal from './EditHlModal';

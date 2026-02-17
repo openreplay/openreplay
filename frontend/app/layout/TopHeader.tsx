@@ -13,25 +13,27 @@ import { useTranslation } from 'react-i18next';
 const { Header } = Layout;
 
 const langBannerClosedKey = '__or__langBannerClosed';
-const getLangBannerClosed = () => localStorage.getItem(langBannerClosedKey) === '1'
+const getLangBannerClosed = () =>
+  localStorage.getItem(langBannerClosedKey) === '1';
 function TopHeader() {
   const { userStore, notificationStore, projectsStore, settingsStore } =
     useStore();
   const { account } = userStore;
   const { siteId } = projectsStore;
   const { initialDataFetched } = userStore;
-  const [langBannerClosed, setLangBannerClosed] = React.useState(getLangBannerClosed);
+  const [langBannerClosed, setLangBannerClosed] =
+    React.useState(getLangBannerClosed);
   const { t } = useTranslation();
 
   React.useEffect(() => {
     const langBannerVal = localStorage.getItem(langBannerClosedKey);
     if (langBannerVal === null) {
-      localStorage.setItem(langBannerClosedKey, '0')
+      localStorage.setItem(langBannerClosedKey, '0');
     }
     if (langBannerVal === '0') {
-      localStorage.setItem(langBannerClosedKey, '1')
+      localStorage.setItem(langBannerClosedKey, '1');
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;

@@ -1,13 +1,16 @@
-import React from 'react';
-import { fetchList } from '../Properties/api';
-import { Segmented, Table } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import FullPagination from 'Shared/FullPagination';
-import { useHistory } from 'react-router';
-import { dataManagement, withSiteId } from 'App/routes';
+import { Segmented, Table } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useStore } from '@/mstore';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { dataManagement, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
+
+import FullPagination from 'Shared/FullPagination';
+
+import { fetchList } from '../Properties/api';
 
 function DistinctEventPropsList({ eventName }: { eventName: string }) {
   const { projectsStore } = useStore();

@@ -20,7 +20,9 @@ function SavedSearch() {
   const { savedSearch } = searchStore;
   const isUpdating = savedSearch.exists();
   const currentUserId = userStore.account.id;
-  const isSharedSearch = savedSearch.exists() && String(savedSearch.userId) !== String(currentUserId);
+  const isSharedSearch =
+    savedSearch.exists() &&
+    String(savedSearch.userId) !== String(currentUserId);
   const isSaveDisabled = isDisabled || isSharedSearch;
 
   const toggleModal = () => {
@@ -35,12 +37,12 @@ function SavedSearch() {
 
   const handleShare = async () => {
     if (searchStore.instance.filters.length === 0) return;
-    
+
     setIsSharing(true);
     try {
       // Save with isShare flag
       await searchStore.saveAsShare();
-      
+
       const searchId = searchStore.savedSearch.searchId;
       if (searchId) {
         const shareUrl = `${window.location.origin}${window.location.pathname}?sid=${searchId}`;
@@ -58,7 +60,9 @@ function SavedSearch() {
   return (
     <>
       <div className="inline-flex items-center gap-3">
-        <span className="text-sm font-medium text-gray-700">{t('Saved Searches')}</span>
+        <span className="text-sm font-medium text-gray-700">
+          {t('Saved Searches')}
+        </span>
         <Space.Compact>
           <Tooltip
             title={
@@ -96,7 +100,13 @@ function SavedSearch() {
             />
           </Tooltip>
 
-          <Tooltip title={isDisabled ? t('Add an event or filter to share search') : t('Share Search')}>
+          <Tooltip
+            title={
+              isDisabled
+                ? t('Add an event or filter to share search')
+                : t('Share Search')
+            }
+          >
             <Button
               onClick={handleShare}
               disabled={isDisabled}

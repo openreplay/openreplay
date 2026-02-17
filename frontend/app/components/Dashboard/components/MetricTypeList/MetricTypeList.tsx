@@ -1,7 +1,7 @@
 import { useModal } from 'App/components/Modal';
 import React from 'react';
 import { TYPES, LIBRARY, INSIGHTS } from 'App/constants/card';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import { dashboardMetricCreate, metricCreate, withSiteId } from 'App/routes';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';

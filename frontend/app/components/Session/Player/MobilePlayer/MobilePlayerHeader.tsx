@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { BackLink } from 'UI';
 import cn from 'classnames';
@@ -91,7 +91,10 @@ function PlayerBlockHeader(props: Props) {
           )}
         </div>
       </div>
-      <div className="relative border-l" style={{ minWidth: activeTab === 'EXPORT' ? '360px' : '270px' }}>
+      <div
+        className="relative border-l"
+        style={{ minWidth: activeTab === 'EXPORT' ? '360px' : '270px' }}
+      >
         <Tabs
           tabs={TABS}
           active={activeTab}

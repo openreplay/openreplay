@@ -113,7 +113,7 @@ const ValueAutoComplete = observer(
     commaQuery = false,
     isDisabled = false,
     isLive = false,
-    scope
+    scope,
   }: Props) => {
     const predefinedValues = params.isPredefined
       ? (params.possibleValues ?? []).map((v) => ({

@@ -2,7 +2,7 @@ import { CaretDownOutlined, FolderAddOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { useLocation } from 'App/routing';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
@@ -15,7 +15,7 @@ import { mobileScreen } from 'App/utils/isMobile';
 
 const { Text } = Typography;
 
-function ProjectDropdown(props: { location: any }) {
+function ProjectDropdown() {
   const mstore = useStore();
   const { t } = useTranslation();
   const {
@@ -30,7 +30,7 @@ function ProjectDropdown(props: { location: any }) {
   const { siteId } = projectsStore;
   const { setSiteId } = projectsStore;
   const { initProject } = projectsStore;
-  const { location } = props;
+  const location = useLocation();
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
   const showCurrent =
@@ -98,7 +98,7 @@ function ProjectDropdown(props: { location: any }) {
     );
   }
 
-  const mobile = mobileScreen
+  const mobile = mobileScreen;
   return (
     <Dropdown
       menu={{
@@ -146,4 +146,4 @@ function ProjectDropdown(props: { location: any }) {
   );
 }
 
-export default withRouter(observer(ProjectDropdown));
+export default observer(ProjectDropdown);

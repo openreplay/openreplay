@@ -173,7 +173,8 @@ const WarnBadge = React.memo(
           <div className={mergedTrackerWarnClassName} style={trackerWarnStyle}>
             <div className="flex gap-x-2 flex-wrap">
               <div className="font-normal">
-                {t('Tracker version')}{''}
+                {t('Tracker version')}
+                {''}
                 <span className="mx-1 font-semibold">{version}</span>
                 {t('for this recording is')}{' '}
                 {trackerVerDiff === VersionComparison.Lower

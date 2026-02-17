@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { SLACK, WEBHOOK, TEAMS } from 'App/constants/schedule';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { withSiteId, alerts } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import Alert from 'Types/alert';

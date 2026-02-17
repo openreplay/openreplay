@@ -83,10 +83,13 @@ function UserListItem(props: Props) {
       )}
 
       <div
-        className={cn('hidden md:block justify-self-end invisible group-hover:visible', {
-          'col-span-2': !isOnboarding,
-          'col-span-4': isOnboarding,
-        })}
+        className={cn(
+          'hidden md:block justify-self-end invisible group-hover:visible',
+          {
+            'col-span-2': !isOnboarding,
+            'col-span-4': isOnboarding,
+          },
+        )}
       >
         <div className="grid grid-cols-2 gap-3 items-center justify-end">
           <div>

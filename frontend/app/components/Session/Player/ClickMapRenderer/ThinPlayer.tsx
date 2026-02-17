@@ -58,7 +58,9 @@ function WebPlayer(props: any) {
             );
           });
         }
-        const existingFilter = dashboardStore.drillDownFilter.filters.findIndex(f => f.name === 'CLICK')
+        const existingFilter = dashboardStore.drillDownFilter.filters.findIndex(
+          (f) => f.name === 'CLICK',
+        );
         if (existingFilter > -1) {
           dashboardStore.drillDownFilter.removeFilter(existingFilter);
         }

@@ -7,8 +7,7 @@ import { SquareArrowOutUpRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 
-interface Props {
-}
+interface Props {}
 
 function ResetPasswordRequest(props: Props & WithCaptchaProps) {
   const { t } = useTranslation();
@@ -118,7 +117,9 @@ function ResetPasswordRequest(props: Props & WithCaptchaProps) {
             </div>
             {smtpError ? (
               <Typography.Text>
-                {t('Email delivery failed due to invalid SMTP configuration. Please contact your admin.')}
+                {t(
+                  'Email delivery failed due to invalid SMTP configuration. Please contact your admin.',
+                )}
                 <a
                   href="https://docs.openreplay.com/en/configuration/configure-smtp/"
                   className="text-neutral-900! hover:underline! flex items-center justify-center gap-1 mt-2"

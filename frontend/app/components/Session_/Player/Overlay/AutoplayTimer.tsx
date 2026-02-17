@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from 'App/routing';
 import { Link } from 'UI';
 import { Button } from 'antd';
 import { session as sessionRoute, withSiteId } from 'App/routes';
@@ -11,7 +11,8 @@ import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
 import { useTranslation } from 'react-i18next';
 
-function AutoplayTimer({ history }: any) {
+function AutoplayTimer() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   let timer: NodeJS.Timer;
   const [cancelled, setCancelled] = useState(false);
@@ -28,7 +29,7 @@ function AutoplayTimer({ history }: any) {
 
     if (counter === 0) {
       const { siteId } = projectsStore.getSiteId();
-      history.push(withSiteId(sessionRoute(nextId), siteId));
+      navigate(withSiteId(sessionRoute(nextId), siteId));
     }
 
     return () => clearTimeout(timer);
@@ -71,4 +72,4 @@ function AutoplayTimer({ history }: any) {
   );
 }
 
-export default withRouter(observer(AutoplayTimer));
+export default observer(AutoplayTimer);

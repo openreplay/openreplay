@@ -10,6 +10,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "target": "ES2017",
+    "module": "esnext",
     "lib": ["dom", "es2022", "esnext"],
     "allowJs": true,
     "isolatedModules": true,

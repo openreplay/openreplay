@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import { Loader } from 'UI';
 import { withSiteId, dashboard, metrics } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions';

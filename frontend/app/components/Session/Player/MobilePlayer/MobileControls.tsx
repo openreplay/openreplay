@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';

@@ -1,12 +1,28 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+
+import { useStore } from 'App/mstore';
 import { withSiteId } from 'App/routes';
+import { Link } from 'App/routing';
+
 import styles from './link.module.css';
 
-function OpenReplayLink({ siteId, to, className = '', dispatch, ...other }) {
+interface Props {
+  to: string;
+  className?: string;
+  siteId?: string;
+  dispatch?: any;
+  [key: string]: any;
+}
+
+function OpenReplayLink({
+  siteId,
+  to,
+  className = '',
+  dispatch,
+  ...other
+}: Props) {
   const { projectsStore } = useStore();
   const projectId = projectsStore.siteId;
   return (

@@ -27,7 +27,9 @@ function CardSessionsByList({
   const params = { density: 35 };
   const metricParams = { ...params };
   const [loading, setLoading] = React.useState(false);
-  const [data, setData] = React.useState(paginated ? metric?.data?.values : list)
+  const [data, setData] = React.useState(
+    paginated ? metric?.data?.values : list,
+  );
 
   const loadData = async (page: number) => {
     const timestamps = drillDownPeriod.toTimestamps();
@@ -45,14 +47,14 @@ function CardSessionsByList({
     );
     const result = metric.setData(data, drillDownPeriod);
     if (result.values) {
-      setData(result.values)
+      setData(result.values);
     }
     setLoading(false);
   };
 
   React.useEffect(() => {
     if (!data.length) loadData(1);
-  }, [])
+  }, []);
 
   return (
     <div className="flex flex-col h-full">

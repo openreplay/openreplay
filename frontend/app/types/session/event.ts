@@ -38,7 +38,7 @@ export type EventType =
   | typeof IOS_VIEW
   | typeof TOUCH
   | typeof SWIPE
-  | typeof INCIDENT
+  | typeof INCIDENT;
 
 interface IEvent {
   time: number;

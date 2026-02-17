@@ -41,7 +41,9 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
   const onDelete = () => {
     Modal.confirm({
       title: t('Confirm'),
-      content: t('Are you sure you want to permanently delete this Saved search?'),
+      content: t(
+        'Are you sure you want to permanently delete this Saved search?',
+      ),
       okText: t('Yes, delete'),
       cancelText: t('Cancel'),
       okButtonProps: { danger: true },
@@ -85,7 +87,9 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">{t('Title:')}</label>
+          <label className="block text-sm font-medium mb-1">
+            {t('Title:')}
+          </label>
           <Input
             autoFocus
             name="name"
@@ -98,16 +102,21 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
 
         <div
           className={cn('flex items-center gap-2', {
-            'opacity-50 pointer-events-none': savedSearch.exists() && savedSearch.userId !== userId,
+            'opacity-50 pointer-events-none':
+              savedSearch.exists() && savedSearch.userId !== userId,
           })}
         >
           <Checkbox
             checked={savedSearch.isPublic}
-            onChange={(e) => searchStore.editSavedSearch({ isPublic: e.target.checked })}
+            onChange={(e) =>
+              searchStore.editSavedSearch({ isPublic: e.target.checked })
+            }
           />
           <div
             className="flex items-center gap-2 cursor-pointer select-none"
-            onClick={() => searchStore.editSavedSearch({ isPublic: !savedSearch.isPublic })}
+            onClick={() =>
+              searchStore.editSavedSearch({ isPublic: !savedSearch.isPublic })
+            }
           >
             <Users size={16} className="text-gray-600" />
             <span>{t('Team Visible')}</span>

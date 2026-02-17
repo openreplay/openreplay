@@ -8,11 +8,11 @@ import { Braces, Code, Files, List, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 
 import usePropertyNames from 'App/components/DataManagement/Properties/usePropertyNames';
 import { useStore } from 'App/mstore';
 import Event from 'App/mstore/types/Analytics/Event';
+import { Link } from 'App/routing';
 import Tabs from 'Components/shared/Tabs';
 import { Icon, TextEllipsis } from 'UI';
 

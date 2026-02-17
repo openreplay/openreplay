@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { withRouter } from 'App/routing';
 import { withSiteId } from 'App/routes';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';

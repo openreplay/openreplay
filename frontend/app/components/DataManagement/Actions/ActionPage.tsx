@@ -6,11 +6,11 @@ import { Pencil, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
+import { useHistory, useParams } from 'App/routing';
 import { NoContent, confirm } from 'UI';
 
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';

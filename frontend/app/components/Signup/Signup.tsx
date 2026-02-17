@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from 'App/routing';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
@@ -22,9 +22,8 @@ const BulletItem: React.FC<{ text: string }> = ({ text }) => (
 
 const healthStatusCheck_key = '__or__healthStatusCheck_key';
 
-type SignupProps = RouteComponentProps;
-
-const Signup: React.FC<SignupProps> = ({ history }) => {
+const Signup: React.FC = () => {
+  const navigate = useNavigate();
   const { userStore } = useStore();
   const { authDetails } = userStore.authStore;
   const [healthModalPassed, setHealthModalPassed] = useState<boolean>(
@@ -49,7 +48,7 @@ const Signup: React.FC<SignupProps> = ({ history }) => {
     if (!authDetails) return;
     if (authDetails) {
       if (authDetails.tenants) {
-        history.push(LOGIN_ROUTE);
+        navigate(LOGIN_ROUTE);
       } else {
         void getHealth();
       }
@@ -84,6 +83,4 @@ const Signup: React.FC<SignupProps> = ({ history }) => {
   );
 };
 
-export default withRouter(
-  withPageTitle('Signup - OpenReplay')(observer(Signup)),
-);
+export default withPageTitle('Signup - OpenReplay')(observer(Signup));

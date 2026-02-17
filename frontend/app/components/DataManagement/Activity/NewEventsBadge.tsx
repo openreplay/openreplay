@@ -11,7 +11,7 @@ function NewEventsBadge() {
 
   const onReload = () => {
     analyticsStore.fetchEvents();
-  }
+  };
 
   return count > 0 ? (
     <div

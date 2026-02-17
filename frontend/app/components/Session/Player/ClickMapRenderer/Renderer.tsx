@@ -9,7 +9,7 @@ function Player() {
   const playerContext = React.useContext(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    const parentElement = screenWrapper.current
+    const parentElement = screenWrapper.current;
     if (parentElement) {
       playerContext.player.attach(parentElement);
     }

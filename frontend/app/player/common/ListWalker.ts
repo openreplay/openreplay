@@ -124,7 +124,12 @@ export default class ListWalker<T extends Timed> {
    * Assumed that the current message is already handled so
    * if pointer doesn't change <null> is returned.
    */
-  moveGetLast(t: number, index?: number, force?: boolean, debug?: boolean): T | null {
+  moveGetLast(
+    t: number,
+    index?: number,
+    force?: boolean,
+    debug?: boolean,
+  ): T | null {
     const key: string = index ? '_index' : 'time';
     const val = index ? index : t;
 
@@ -140,7 +145,7 @@ export default class ListWalker<T extends Timed> {
       changed = true;
     }
     if (debug) {
-      console.log(this.list[this.p - 1])
+      console.log(this.list[this.p - 1]);
     }
     return changed || force ? this.list[this.p - 1] : null;
   }

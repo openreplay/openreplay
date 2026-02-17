@@ -2,7 +2,7 @@ import cn from 'classnames';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useState, useCallback, useMemo } from 'react';
-import { RouteComponentProps, useHistory, withRouter } from 'react-router-dom';
+import { RouteComponentProps, useHistory, withRouter } from 'App/routing';
 
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -267,7 +267,7 @@ function SessionItem(props: RouteComponentProps & Props) {
       console.warn('cant find meta filter', meta);
       return;
     }
-    console.log(filter, meta)
+    console.log(filter, meta);
     filter.value = [meta.value];
     if (isAssist) {
       searchStoreLive.addFilter(filter);
@@ -493,8 +493,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                   query={query}
                   beforeOpen={
                     onBeforeOpen
-                    ? onBeforeOpen : slim || live || isAssist
-                      ? undefined : populateData
+                      ? onBeforeOpen
+                      : slim || live || isAssist
+                        ? undefined
+                        : populateData
                   }
                 />
               )}

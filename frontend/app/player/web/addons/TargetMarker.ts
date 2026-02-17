@@ -51,7 +51,7 @@ export default class TargetMarker {
 
   setOnCluster = (onCluster: (coords: any) => void) => {
     this.onCluster = onCluster;
-  }
+  };
 
   updateMarkedTargets() {
     const { markedTargets } = this.store.get();
@@ -172,7 +172,7 @@ export default class TargetMarker {
       );
 
       this.clickMapOverlay = overlay;
-      this.screen.addToScreen(overlay)
+      this.screen.addToScreen(overlay);
       // if we want to inject overlay inside the replay itself:
       // this.screen.document.body.appendChild(overlay);
 
@@ -205,15 +205,18 @@ export default class TargetMarker {
       }
 
       const setToNormalized = (coords: number[]) => {
-        return [`${roundToSecond((coords[0] / scrollWidth) * 100)}`, `${roundToSecond((coords[1] / scrollHeight) * 100)}`];
-      }
+        return [
+          `${roundToSecond((coords[0] / scrollWidth) * 100)}`,
+          `${roundToSecond((coords[1] / scrollHeight) * 100)}`,
+        ];
+      };
 
       const onClusterSelect = (coords: any[]) => {
         // [[x1, y1], [x2, y2]]
         const normalizedSet = coords.map(setToNormalized);
-        this.onCluster?.(normalizedSet)
-        console.log('Cluster bounds:', normalizedSet)
-      }
+        this.onCluster?.(normalizedSet);
+        console.log('Cluster bounds:', normalizedSet);
+      };
       heatmapRenderer
         .setCanvas(overlay)
         .setData(heatmapData)
@@ -221,7 +224,7 @@ export default class TargetMarker {
         .setMax(maxIntensity)
         .resize()
         .draw()
-        .enableInteractions(onClusterSelect)
+        .enableInteractions(onClusterSelect);
     } else {
       this.store.update({ markedTargets: null });
       this.clickMapOverlay?.remove();

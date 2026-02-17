@@ -8,7 +8,7 @@ import { kaiService } from 'App/services';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'App/routing';
 import ChatsModal from './components/ChatsModal';
 import { kaiStore } from './KaiStore';
 

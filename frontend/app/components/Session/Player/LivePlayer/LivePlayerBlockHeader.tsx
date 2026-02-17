@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { withSiteId, multiview } from 'App/routes';
 import { BackLink, Icon } from 'UI';
 import cn from 'classnames';

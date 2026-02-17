@@ -41,8 +41,11 @@ export function deleteRule(
 }
 
 export function replaceRule(
-  sheet: { insertRule: (rule: string, index?: number) => void, deleteRule: (index: number) => void },
-  msg: { rule: string, index: number },
+  sheet: {
+    insertRule: (rule: string, index?: number) => void;
+    deleteRule: (index: number) => void;
+  },
+  msg: { rule: string; index: number },
 ) {
   try {
     sheet.deleteRule(msg.index);

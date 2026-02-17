@@ -191,7 +191,8 @@ export function AutocompleteModal({
                   className="whitespace-nowrap truncate w-full rounded-sm cursor-pointer text-teal hover:bg-active-blue px-2 py-1"
                   onClick={applyQuery}
                 >
-                  {t('Apply')}&nbsp;<span className='font-semibold'>{queryStr}</span>
+                  {t('Apply')}&nbsp;
+                  <span className="font-semibold">{queryStr}</span>
                 </div>
               </div>
             ) : null}

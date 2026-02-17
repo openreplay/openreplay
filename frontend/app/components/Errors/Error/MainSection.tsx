@@ -3,7 +3,7 @@ import { FilterKey } from 'Types/filter/filterType';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { useNavigate } from 'App/routing';
 
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 
 function MainSection(props: any) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { errorStore, searchStore, filterStore } = useStore();
   const error = errorStore.instance;
   const trace = errorStore.instanceTrace;
@@ -38,7 +39,7 @@ function MainSection(props: any) {
       errorFilter.filters = [nameLabel];
       searchStore.addFilter(errorFilter);
     }
-    props.history.push(sessionsRoute());
+    navigate(sessionsRoute());
   };
   return (
     <div
@@ -142,4 +143,4 @@ function MainSection(props: any) {
   );
 }
 
-export default withRouter(observer(MainSection));
+export default observer(MainSection);

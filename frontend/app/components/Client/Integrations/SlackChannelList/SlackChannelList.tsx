@@ -22,7 +22,9 @@ function SlackChannelList(props) {
         title={
           <div className="p-5 mb-4">
             <div className="text-base text-left">
-              {t('Integrate Slack with OpenReplay and share insights with the rest of the team, directly from the recording page.')}
+              {t(
+                'Integrate Slack with OpenReplay and share insights with the rest of the team, directly from the recording page.',
+              )}
             </div>
             <DocLink
               className="mt-4 text-base"

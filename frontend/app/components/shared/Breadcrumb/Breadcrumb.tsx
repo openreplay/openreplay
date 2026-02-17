@@ -1,9 +1,10 @@
+import { observer } from 'mobx-react-lite';
 import React from 'react';
+
+import { useStore } from 'App/mstore';
+import { withSiteId } from 'App/routes';
+import { Link } from 'App/routing';
 import { Icon } from 'UI';
-import { Link } from 'react-router-dom';
-import { useStore } from 'App/mstore'
-import { observer } from 'mobx-react-lite'
-import { withSiteId } from "App/routes";
 
 interface Props {
   items: any;
@@ -19,7 +20,10 @@ function Breadcrumb(props: Props) {
       {items.map((item: any, index: any) => {
         if (index === items.length - 1) {
           return (
-            <span key={index} className="color-gray-medium capitalize-first whitespace-nowrap">
+            <span
+              key={index}
+              className="color-gray-medium capitalize-first whitespace-nowrap"
+            >
               {item.label}
             </span>
           );
@@ -38,8 +42,14 @@ function Breadcrumb(props: Props) {
           );
         }
         return (
-          <div key={index} className="color-gray-darkest hover:text-teal group flex items-center">
-            <Link to={item.withSiteId ? withSiteId(item.to, siteId) : item.to} className="flex items-center default-hover">
+          <div
+            key={index}
+            className="color-gray-darkest hover:text-teal group flex items-center"
+          >
+            <Link
+              to={item.withSiteId ? withSiteId(item.to, siteId) : item.to}
+              className="flex items-center default-hover"
+            >
               {index === 0 && (
                 <Icon
                   name="chevron-left"
@@ -47,7 +57,9 @@ function Breadcrumb(props: Props) {
                   className="mr-1 group-hover:fill-teal"
                 />
               )}
-              <span className="capitalize-first whitespace-nowrap text-black">{item.label}</span>
+              <span className="capitalize-first whitespace-nowrap text-black">
+                {item.label}
+              </span>
             </Link>
             <span className="mx-2">/</span>
           </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon, SideMenuitem } from 'UI';
 import cn from 'classnames';
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
-import { withRouter } from 'react-router-dom';
+import { useNavigate, useParams } from 'App/routing';
 import stl from './onboardingMenu.module.css';
 import * as routes from '../../../../routes';
 
@@ -42,16 +42,12 @@ function Item({ icon, text, completed, active, onClick }) {
 }
 
 function OnboardingMenu(props) {
-  const {
-    match: {
-      params: { activeTab, siteId },
-    },
-    history,
-  } = props;
+  const navigate = useNavigate();
+  const { activeTab, siteId } = useParams();
   const activeIndex = MENU_ITEMS.findIndex((i) => i === activeTab);
 
   const setTab = (tab) => {
-    history.push(withSiteId(onboardingRoute(tab), siteId));
+    navigate(withSiteId(onboardingRoute(tab), siteId));
   };
 
   return (
@@ -93,4 +89,4 @@ function OnboardingMenu(props) {
   );
 }
 
-export default withRouter(OnboardingMenu);
+export default OnboardingMenu;

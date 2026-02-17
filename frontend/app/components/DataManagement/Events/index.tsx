@@ -6,10 +6,10 @@ import { Album } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory, useLocation } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
 import { sessions, withSiteId } from 'App/routes';
+import { useHistory, useLocation } from 'App/routing';
 
 import DistinctEventPage from './DistinctEvent';
 import EventsList from './EventsList';

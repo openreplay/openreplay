@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { Button, Dropdown, MenuProps, message, Modal } from 'antd';
@@ -46,7 +46,10 @@ function CardMenu({ card }: any) {
 
   return (
     <div className="flex items-center justify-between">
-      <Dropdown menu={{ items, onClick }} styles={{ root: { minWidth: '120px' } }}>
+      <Dropdown
+        menu={{ items, onClick }}
+        styles={{ root: { minWidth: '120px' } }}
+      >
         <Button type="text" icon={<EllipsisVertical size={16} />} />
       </Dropdown>
     </div>

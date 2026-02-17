@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from 'antd';
-import { HelpCircle } from 'lucide-react'
+import { HelpCircle } from 'lucide-react';
 
 function FetchTimings({ timings }: { timings: Record<string, number> }) {
   const formatTime = (time: number) => {
@@ -121,7 +121,7 @@ function FetchTimings({ timings }: { timings: Record<string, number> }) {
         <div className="space-y-4">
           {timelineData.map((cat, index) => (
             <div>
-              <div className='text-neutral-500'>{cat.category}</div>
+              <div className="text-neutral-500">{cat.category}</div>
               <div>
                 {cat.children.map((phase, index) => (
                   <div

@@ -31,7 +31,11 @@ function IntroSection({
           isArea
         />
         <div className={'absolute top-full flex flex-col gap-2 mt-4'}>
-          <Ideas limited={limited} onClick={(query) => onAsk(query)} projectId={projectId} />
+          <Ideas
+            limited={limited}
+            onClick={(query) => onAsk(query)}
+            projectId={projectId}
+          />
         </div>
       </div>
     </>

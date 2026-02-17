@@ -1,22 +1,18 @@
+import { debounceCall } from '@/utils';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
-import React, { Suspense, lazy } from 'react';
-import {
-  Redirect,
-  Route,
-  Switch,
-  useLocation,
-  useHistory,
-} from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-import { useStore } from './mstore';
+import React, { Suspense, lazy } from 'react';
+
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
+import { Navigate, Route, Routes, useHistory, useLocation } from 'App/routing';
 import { Loader } from 'UI';
+
 import APIClient from './api_client';
+import { useStore } from './mstore';
 import * as routes from './routes';
-import { debounceCall } from '@/utils';
-import { hasAi } from './utils/split-utils';
 import { saasRoutes } from './saasComponents';
+import { hasAi } from './utils/split-utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -132,6 +128,30 @@ function PrivateRoutes() {
   const initialFetchDoneRef = React.useRef(false);
   const [filtersLoaded, setFiltersLoaded] = React.useState(false);
 
+  const IntegrationsRedirect: React.FC = () => {
+    const location = useLocation();
+
+    React.useEffect(() => {
+      const client = new APIClient();
+      switch (location.pathname) {
+        case '/integrations/slack':
+          client.post('integrations/slack/add', {
+            code: location.search.split('=')[1],
+            state: tenantId,
+          });
+          break;
+        case '/integrations/msteams':
+          client.post('integrations/msteams/add', {
+            code: location.search.split('=')[1],
+            state: tenantId,
+          });
+          break;
+      }
+    }, [location.pathname, location.search]);
+
+    return <Navigate to={CLIENT_PATH} replace />;
+  };
+
   React.useEffect(() => {
     if (!searchStore.urlParsed && filtersLoaded) {
       const searchParams = new URLSearchParams(location.search);
@@ -194,185 +214,163 @@ function PrivateRoutes() {
         });
     }
   }, [projectsStore.activeSiteId]);
+
+  const fallbackTo = redirectToOnboarding
+    ? withSiteId(ONBOARDING_REDIRECT_PATH, siteId)
+    : withSiteId(routes.sessions(), siteId);
+
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
-      <Switch key="content">
-        <Route path={CLIENT_PATH} component={enhancedComponents.Client} />
+      <Routes>
         <Route
-          path={withSiteId(ONBOARDING_PATH, siteIdList)}
-          component={enhancedComponents.Onboarding}
+          path={`${CLIENT_PATH}/*`}
+          element={<enhancedComponents.Client />}
         />
         <Route
-          exact
-          strict
+          path={withSiteId(`${ONBOARDING_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Onboarding />}
+        />
+        <Route
           path={SPOTS_LIST_PATH}
-          component={enhancedComponents.SpotsList}
+          element={<enhancedComponents.SpotsList />}
         />
-        <Route
-          exact
-          strict
-          path={SPOT_PATH}
-          component={enhancedComponents.Spot}
-        />
-        <Route
-          path="/integrations/"
-          render={({ location }) => {
-            const client = new APIClient();
-            switch (location.pathname) {
-              case '/integrations/slack':
-                client.post('integrations/slack/add', {
-                  code: location.search.split('=')[1],
-                  state: tenantId,
-                });
-                break;
-              case '/integrations/msteams':
-                client.post('integrations/msteams/add', {
-                  code: location.search.split('=')[1],
-                  state: tenantId,
-                });
-                break;
-            }
-            return <Redirect to={CLIENT_PATH} />;
-          }}
-        />
-        {redirectToOnboarding && (
-          <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
-        )}
+        <Route path={SPOT_PATH} element={<enhancedComponents.Spot />} />
+
+        <Route path="/integrations/*" element={<IntegrationsRedirect />} />
 
         {/* DASHBOARD and Metrics */}
         <Route
-          exact
-          strict
-          path={[
-            withSiteId(ALERTS_PATH, siteIdList),
-            withSiteId(ALERT_EDIT_PATH, siteIdList),
-            withSiteId(ALERT_CREATE_PATH, siteIdList),
-            withSiteId(METRICS_PATH, siteIdList),
-            withSiteId(METRICS_DETAILS, siteIdList),
-            withSiteId(METRICS_DETAILS_SUB, siteIdList),
-            withSiteId(DASHBOARD_PATH, siteIdList),
-            withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList),
-          ]}
-          component={enhancedComponents.Dashboard}
+          path={withSiteId(`${ALERTS_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${ALERT_EDIT_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${ALERT_CREATE_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(METRICS_PATH, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${METRICS_DETAILS}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${METRICS_DETAILS_SUB}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${DASHBOARD_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${DASHBOARD_SELECT_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${DASHBOARD_METRIC_CREATE_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
+        />
+        <Route
+          path={withSiteId(`${DASHBOARD_METRIC_DETAILS_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.Dashboard />}
         />
 
         <Route
-          exact
           path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)}
-          component={enhancedComponents.Multiview}
+          element={<enhancedComponents.Multiview />}
         />
         <Route
           path={withSiteId(MULTIVIEW_PATH, siteIdList)}
-          component={enhancedComponents.Multiview}
+          element={<enhancedComponents.Multiview />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(ASSIST_PATH, siteIdList)}
-          component={enhancedComponents.Assist}
+          element={<enhancedComponents.Assist />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(RECORDINGS_PATH, siteIdList)}
-          component={enhancedComponents.Assist}
+          element={<enhancedComponents.Assist />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(HIGHLIGHTS_PATH, siteIdList)}
-          component={enhancedComponents.Highlights}
+          element={<enhancedComponents.Highlights />}
+        />
+
+        <Route
+          path={withSiteId(`${SESSIONS_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.SessionsOverview />}
         />
         <Route
-          exact
-          strict
-          path={[
-            withSiteId(SESSIONS_PATH, siteIdList),
-            withSiteId(NOTES_PATH, siteIdList),
-            withSiteId(BOOKMARKS_PATH, siteIdList),
-          ]}
-          component={enhancedComponents.SessionsOverview}
+          path={withSiteId(NOTES_PATH, siteIdList)}
+          element={<enhancedComponents.SessionsOverview />}
         />
         <Route
-          exact
-          strict
+          path={withSiteId(`${BOOKMARKS_PATH}/*`, siteIdList)}
+          element={<enhancedComponents.SessionsOverview />}
+        />
+
+        <Route
           path={withSiteId(SESSION_PATH, siteIdList)}
-          component={enhancedComponents.Session}
+          element={<enhancedComponents.Session />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-          component={enhancedComponents.LiveSession}
+          element={<enhancedComponents.LiveSession />}
         />
         {hasAi ? (
           <Route
-            exact
-            strict
             path={withSiteId(KAI_PATH, siteIdList)}
-            component={enhancedComponents.Kai}
+            element={<enhancedComponents.Kai />}
           />
         ) : null}
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.activity(), siteIdList)}
-          component={enhancedComponents.Activity}
+          element={<enhancedComponents.Activity />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.userPage(), siteIdList)}
-          component={enhancedComponents.UserPage}
+          element={<enhancedComponents.UserPage />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.usersList(), siteIdList)}
-          component={enhancedComponents.UsersPage}
+          element={<enhancedComponents.UsersPage />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.eventsList(), siteIdList)}
-          component={enhancedComponents.EventsPage}
+          element={<enhancedComponents.EventsPage />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.properties(), siteIdList)}
-          component={enhancedComponents.PropertiesList}
+          element={<enhancedComponents.PropertiesList />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.actionPage(), siteIdList)}
-          component={enhancedComponents.ActionPage}
+          element={<enhancedComponents.ActionPage />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.actions(), siteIdList)}
-          component={enhancedComponents.ActionsPage}
+          element={<enhancedComponents.ActionsPage />}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
-          <Redirect key={fr} exact strict from={fr} to={to} />
+          <Route key={fr} path={fr} element={<Navigate to={to} replace />} />
         ))}
-        {saasRoutes.map((route) => (
-          <Route
-            key={route.path}
-            exact
-            strict
-            path={withSiteId(route.path, siteIdList)}
-            component={withSiteIdUpdater(route.component)}
-          />
-        ))}
-        <Route path={'*'}>
-          <Redirect to={withSiteId(routes.sessions(), siteId)} />
-        </Route>
-      </Switch>
+        {saasRoutes.map((route) => {
+          const Component = withSiteIdUpdater(route.component);
+          return (
+            <Route
+              key={route.path}
+              path={withSiteId(route.path, siteIdList)}
+              element={<Component />}
+            />
+          );
+        })}
+        <Route path="*" element={<Navigate to={fallbackTo} replace />} />
+      </Routes>
     </Suspense>
   );
 }

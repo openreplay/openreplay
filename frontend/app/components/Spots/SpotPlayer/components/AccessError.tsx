@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Icon } from 'UI';
-import { Link } from 'react-router-dom';
+import { Link } from 'App/routing';
 import { login } from '@/routes';
 
 function AccessError() {

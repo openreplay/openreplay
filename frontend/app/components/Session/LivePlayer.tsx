@@ -6,7 +6,7 @@ import { createLiveWebPlayer } from 'Player';
 import Session from 'App/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import APIClient from 'App/api_client';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'App/routing';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';

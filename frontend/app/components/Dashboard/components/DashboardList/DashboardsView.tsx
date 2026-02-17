@@ -2,7 +2,7 @@ import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import DashboardList from './DashboardList';
 import Header from './Header';
-import { PANEL_SIZES } from 'App/constants/panelSizes'
+import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function DashboardsView() {
   return (

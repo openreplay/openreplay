@@ -47,7 +47,7 @@ function ListingVisibility() {
             onChange={({ value }) => {
               changeSettings({ operator: value.value });
             }}
-            className='w-full'
+            className="w-full"
           />
         </div>
         <div className="col-span-2">
@@ -65,7 +65,7 @@ function ListingVisibility() {
         </div>
         <div className="col-span-3">
           <Select
-            className='w-full'
+            className="w-full"
             defaultValue={durationSettings.countType || periodOptions[0].value}
             options={periodOptions}
             onChange={({ value }) => {

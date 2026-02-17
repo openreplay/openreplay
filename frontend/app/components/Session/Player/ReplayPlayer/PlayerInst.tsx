@@ -14,8 +14,9 @@ import {
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
-  BACKENDLOGS, LONG_TASK
-} from "App/mstore/uiPlayerStore";
+  BACKENDLOGS,
+  LONG_TASK,
+} from 'App/mstore/uiPlayerStore';
 import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
@@ -31,7 +32,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { debounce } from 'App/utils';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import LongTaskPanel from "../../../shared/DevTools/LongTaskPanel/LongTaskPanel";
+import LongTaskPanel from '../../../shared/DevTools/LongTaskPanel/LongTaskPanel';
 import BackendLogsPanel from '../SharedComponents/BackendLogs/BackendLogsPanel';
 
 interface IProps {
@@ -74,7 +75,7 @@ function Player(props: IProps) {
   React.useEffect(() => {
     updateLastPlayedSession(sessionId);
     if (isReady && !isAttached.current) {
-      const parentElement = screenWrapper.current // TODO: good architecture
+      const parentElement = screenWrapper.current; // TODO: good architecture
       if (parentElement) {
         playerContext.player.attach(parentElement);
         isAttached.current = true;
@@ -88,7 +89,7 @@ function Player(props: IProps) {
 
   if (!playerContext.player) return null;
 
-  const activeTabWidth = activeTab === 'EXPORT' ? 360 : 270
+  const activeTabWidth = activeTab === 'EXPORT' ? 360 : 270;
   const maxWidth = activeTab ? `calc(100vw - ${activeTabWidth}px)` : '100vw';
 
   const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -179,7 +180,13 @@ function Player(props: IProps) {
   );
 }
 
-function BottomBlock({ panelHeight, block }: { panelHeight: number; block: number }) {
+function BottomBlock({
+  panelHeight,
+  block,
+}: {
+  panelHeight: number;
+  block: number;
+}) {
   switch (block) {
     case CONSOLE:
       return <ConsolePanel />;

@@ -40,17 +40,17 @@ function ControlButton({
         disabled={disabled}
       >
         {customTags}
-        {hasErrors && (
-          <div className="w-2 h-2 rounded-full bg-red" />
+        {hasErrors && <div className="w-2 h-2 rounded-full bg-red" />}
+        {label && (
+          <span
+            className={cn(
+              'font-semibold hover:text-main',
+              active ? 'color-main' : 'color-gray-darkest',
+            )}
+          >
+            {label}
+          </span>
         )}
-        {label && <span
-          className={cn(
-            'font-semibold hover:text-main',
-            active ? 'color-main' : 'color-gray-darkest',
-          )}
-        >
-          {label}
-        </span>}
       </Button>
     </Popover>
   );

@@ -1,34 +1,34 @@
 import withPageTitle from 'HOCs/withPageTitle';
-import cn from 'classnames';
-import React, { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import { observer } from 'mobx-react-lite';
-import { toast } from 'react-toastify';
-import { forgotPassword, signup } from 'App/routes';
-import { Icon, Link, Loader } from 'UI';
 import { Button, Form, Input } from 'antd';
-import Copyright from 'Shared/Copyright';
+import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+
 import { useStore } from 'App/mstore';
-import LanguageSwitcher from '../LanguageSwitcher';
+import { forgotPassword, signup } from 'App/routes';
+import { useHistory, useLocation } from 'App/routing';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
-import SSOLogin from './SSOLogin';
 import { extKey } from 'Components/Spots/SpotsList/InstallCTA';
-const companyLogo = new URL("../../assets/logo.svg", import.meta.url);
+import { Icon, Link, Loader } from 'UI';
+
+import Copyright from 'Shared/Copyright';
+
+import LanguageSwitcher from '../LanguageSwitcher';
+import SSOLogin from './SSOLogin';
+
+const companyLogo = new URL('../../assets/logo.svg', import.meta.url);
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
 
-interface LoginProps {
-  location: Location;
-}
-
 function Login({
-  location,
   submitWithCaptcha,
   isVerifyingCaptcha,
   resetCaptcha,
-}: LoginProps & WithCaptchaProps) {
+}: WithCaptchaProps) {
+  const location = useLocation();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,32 +42,32 @@ function Login({
   const params = new URLSearchParams(location.search);
 
   useEffect(() => {
-      let int: any;
-      const v = localStorage.getItem(extKey);
-      if (v) {
-        setExtExist(true);
-      } else {
-        int = setInterval(() => {
-          window.postMessage({ type: 'orspot:ping' }, '*');
-        });
-        const onSpotMsg = (e: any) => {
-          if (e.data.type === 'orspot:pong') {
-            setExtExist(true);
-            localStorage.setItem(extKey, '1');
-            clearInterval(int);
-            int = null;
-            window.removeEventListener('message', onSpotMsg);
-            console.log('Spot extension is installed');
-          }
-        };
-        window.addEventListener('message', onSpotMsg);
-      }
-      return () => {
-        if (int) {
+    let int: any;
+    const v = localStorage.getItem(extKey);
+    if (v) {
+      setExtExist(true);
+    } else {
+      int = setInterval(() => {
+        window.postMessage({ type: 'orspot:ping' }, '*');
+      });
+      const onSpotMsg = (e: any) => {
+        if (e.data.type === 'orspot:pong') {
+          setExtExist(true);
+          localStorage.setItem(extKey, '1');
           clearInterval(int);
+          int = null;
+          window.removeEventListener('message', onSpotMsg);
+          console.log('Spot extension is installed');
         }
       };
-    }, []);
+      window.addEventListener('message', onSpotMsg);
+    }
+    return () => {
+      if (int) {
+        clearInterval(int);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (authDetails && !authDetails.tenants) {
@@ -97,7 +97,7 @@ function Login({
       if (event.data.type === 'orspot:logged' && extExist) {
         clearInterval(int);
         window.removeEventListener('message', onSpotMsg);
-        const msg = t('You have been logged into Spot successfully')
+        const msg = t('You have been logged into Spot successfully');
         toast.success(msg);
       }
     };
@@ -210,7 +210,10 @@ function Login({
               {errors && errors.length ? (
                 <div className="px-8 my-2 w-full">
                   {errors.map((error, index) => (
-                    <div key={index} className="flex items-center bg-red-lightest rounded-sm p-3">
+                    <div
+                      key={index}
+                      className="flex items-center bg-red-lightest rounded-sm p-3"
+                    >
                       <Icon name="info" color="red" size="20" />
                       <span className="color-red ml-2">
                         {error}
@@ -266,5 +269,5 @@ function Login({
 }
 
 export default withPageTitle('Login - OpenReplay')(
-  withCaptcha(observer(Login))
+  withCaptcha(observer(Login)),
 );

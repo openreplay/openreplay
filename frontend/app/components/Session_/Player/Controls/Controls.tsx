@@ -3,7 +3,7 @@ import { Switch } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';

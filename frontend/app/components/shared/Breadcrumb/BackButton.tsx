@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { LeftOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 

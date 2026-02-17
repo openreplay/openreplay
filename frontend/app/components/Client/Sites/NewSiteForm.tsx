@@ -1,6 +1,6 @@
 import { Segmented, Button } from 'antd';
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { RouteComponentProps, withRouter } from 'App/routing';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { confirm, Form, Icon, Input } from 'UI';

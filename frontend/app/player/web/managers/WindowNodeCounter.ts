@@ -54,7 +54,7 @@ export default class WindowNodeCounter {
     this.nodes = [this.root];
   }
 
-  addNode(msg: { id: number, parentID: number, time: number }): boolean {
+  addNode(msg: { id: number; parentID: number; time: number }): boolean {
     const { id, parentID } = msg;
     if (!this.nodes[parentID]) {
       // TODO: iframe case
@@ -79,10 +79,12 @@ export default class WindowNodeCounter {
     return true;
   }
 
-  moveNode(msg: { id: number, parentID: number, time: number }) {
+  moveNode(msg: { id: number; parentID: number; time: number }) {
     const { id, parentID, time } = msg;
     if (!this.nodes[id]) {
-      console.warn(`Node Counter: Node with id ${id} (parent: ${parentID}) not found. time: ${time}`);
+      console.warn(
+        `Node Counter: Node with id ${id} (parent: ${parentID}) not found. time: ${time}`,
+      );
       return false;
     }
     if (!this.nodes[parentID]) {

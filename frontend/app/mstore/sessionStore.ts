@@ -1,5 +1,5 @@
 import { action, makeAutoObservable, observable, runInAction } from 'mobx';
-import { sessionService } from 'App/services';
+import { sessionService, metricService } from 'App/services';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
 import { InjectedEvent, Location } from 'Types/session/event';
@@ -16,7 +16,6 @@ import { filterMap } from 'App/mstore/searchStore';
 import { getDateRangeFromValue } from 'App/dateRange';
 import { searchStore, searchStoreLive } from './index';
 import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
-import { metricService } from 'App/services';
 const range = getDateRangeFromValue(LAST_7_DAYS);
 
 const defaultDateFilters = {
@@ -337,7 +336,11 @@ export default class SessionStore {
   fetchSessionInfo = async (sessionId: string, abortSignal?: AbortSignal) => {
     this.loadingSessions = true;
     try {
-      const data = await sessionService.getSessionInfo(sessionId, false, abortSignal);
+      const data = await sessionService.getSessionInfo(
+        sessionId,
+        false,
+        abortSignal,
+      );
       return data;
     } catch (e) {
       console.error(e);

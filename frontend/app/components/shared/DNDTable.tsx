@@ -64,7 +64,7 @@ const DNDTable = ({ columns: initCols, onOrderChange, ...tableProps }) => {
       setCols(updated);
       onOrderChange?.(updated);
     },
-    [cols, onOrderChange]
+    [cols, onOrderChange],
   );
 
   const components = {

@@ -18,6 +18,7 @@ function Metadata() {
           href="https://docs.openreplay.com/en/session-replay/metadata"
           target="_blank"
           className="link"
+          rel="noreferrer"
         >
           {t('how to use Metadata')}
         </a>{' '}

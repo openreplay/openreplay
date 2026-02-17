@@ -95,45 +95,46 @@ export default class WebPlayer extends Player {
 
     Object.assign(window, {
       playerJumpToTime: this.jump.bind(this),
-    })
+    });
     // @ts-ignore
     Object.assign(window.__OPENREPLAY_DEV_TOOLS__, {
       player: this,
       getNode: (nodeId: number, tabId?: string) => {
         if (tabId) {
-          console.log(this.messageManager.tabs[tabId].getNode(nodeId))
+          console.log(this.messageManager.tabs[tabId].getNode(nodeId));
         } else {
-          Object.values(this.messageManager.tabs).forEach(tab => console.log(tab.getNode(nodeId)))
+          Object.values(this.messageManager.tabs).forEach((tab) =>
+            console.log(tab.getNode(nodeId)),
+          );
         }
       },
       getNodeMessages: (nodeId: number, tabId?: string) => {
-        let messages = this.messageLoader.rawMessages
-          .filter((m) => m.id === nodeId)
+        let messages = this.messageLoader.rawMessages.filter(
+          (m) => m.id === nodeId,
+        );
         if (tabId) {
-          messages = messages.filter((m) => m.tabId === tabId)
+          messages = messages.filter((m) => m.tabId === tabId);
         }
-        console.log(
-          messages
-        )
-      }
-    })
+        console.log(messages);
+      },
+    });
   }
 
   enableVMode = () => {
     this.messageManager.setVirtualMode(true);
-  }
+  };
 
   preloadFirstFile(data: Uint8Array, fileKey?: string) {
     void this.messageLoader.preloadFirstFile(data, fileKey);
   }
 
   getMessageTab = ({ time }: { time: number }) => {
-    return this.messageManager.messageTabSourceManager.findTab(time)
-  }
+    return this.messageManager.messageTabSourceManager.findTab(time);
+  };
 
   setOnCluster = (cb: (coords: any[]) => void) => {
-    this.targetMarker.setOnCluster(cb)
-  }
+    this.targetMarker.setOnCluster(cb);
+  };
 
   reinit(session: SessionFilesInfo) {
     if (this.wpState.get().mobsFetched) return; // already initialized

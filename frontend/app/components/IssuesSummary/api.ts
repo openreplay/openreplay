@@ -1,14 +1,16 @@
 import { client } from 'App/mstore';
-import { Data } from './types'
+import { Data } from './types';
 import Session from 'App/types/session/session';
 
 export async function getTagLabels(projectId: string) {
   const response = await client.get(`/kai/${projectId}/smart_labels`);
   const json = await response.json();
-  const options = (json.data ?? { issueLabels: [] }).issueLabels.map((label: string) => ({
-    label,
-    value: label,
-  }));
+  const options = (json.data ?? { issueLabels: [] }).issueLabels.map(
+    (label: string) => ({
+      label,
+      value: label,
+    }),
+  );
   return options;
 }
 
@@ -26,7 +28,9 @@ export async function getIssues(projectId: string, usedLabels?: string[]) {
     other: [],
   };
   data.forEach((issue) => {
-    if (issue.issueLabels.find((label) => label.name.toLowerCase() === 'critical')) {
+    if (
+      issue.issueLabels.find((label) => label.name.toLowerCase() === 'critical')
+    ) {
       resp.critical.push(issue);
     } else {
       resp.other.push(issue);
@@ -36,8 +40,8 @@ export async function getIssues(projectId: string, usedLabels?: string[]) {
 }
 
 export async function getSessions(projectId: string, params: any) {
-  const sortBy = params.sortBy.includes('startTs') ? 'time' : 'events'
-  const sortDir = params.sortBy.endsWith('desc') ? 'desc' : 'asc'
+  const sortBy = params.sortBy.includes('startTs') ? 'time' : 'events';
+  const sortDir = params.sortBy.endsWith('desc') ? 'desc' : 'asc';
   const res = await client.post(`/kai/${projectId}/smart_alerts/search`, {
     issue: params.issueName,
     query: params.searchQuery || null,
@@ -53,14 +57,14 @@ export async function getSessions(projectId: string, params: any) {
   const json = await res.json();
 
   const data = json.data.map((s: any) => {
-    return ({
-        session: new Session(s),
-        issueDescription: s.description,
-        issueLabels: s.issueLabels,
-        journey: s.journey,
-        journeyLabels: s.journeyLabels,
-        issueTimestamp: s.issueTimestamp
-      })
+    return {
+      session: new Session(s),
+      issueDescription: s.description,
+      issueLabels: s.issueLabels,
+      journey: s.journey,
+      journeyLabels: s.journeyLabels,
+      issueTimestamp: s.issueTimestamp,
+    };
   });
   return data;
 }
@@ -69,20 +73,24 @@ export async function hideIssue(projectId: string, issueName: string) {
   const res = await client.put(`/kai/${projectId}/smart_alerts`, {
     issue: issueName,
     operation: {
-      hide: true
-    }
-  })
+      hide: true,
+    },
+  });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res;
 }
 
-export async function renameIssue(projectId: string, issueName: string, newName: string) {
+export async function renameIssue(
+  projectId: string,
+  issueName: string,
+  newName: string,
+) {
   const res = await client.put(`/kai/${projectId}/smart_alerts`, {
     issue: issueName,
     operation: {
-      rename: newName
-    }
-  })
+      rename: newName,
+    },
+  });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res;
 }

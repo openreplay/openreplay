@@ -1,14 +1,15 @@
-import React from 'react';
-import cn from 'classnames';
-import WidgetName from 'Components/Dashboard/components/WidgetName';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { USER_PATH } from 'App/constants/card';
 import { Button, Tooltip } from 'antd';
-import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
-import { Link2 } from 'lucide-react';
+import cn from 'classnames';
 import copy from 'copy-to-clipboard';
+import { Link2 } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { USER_PATH } from 'App/constants/card';
+import { useStore } from 'App/mstore';
+import WidgetName from 'Components/Dashboard/components/WidgetName';
+import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
 
 interface Props {
   onClick?: () => void;
@@ -48,7 +49,7 @@ function WidgetViewHeader({
     <div
       className={cn(
         'flex justify-between md:items-center bg-white rounded-lg shadow-xs px-4',
-        "ps-2 py-2 border border-gray-lighter input-card-title flex-wrap md:flex-nowrap flex-col md:flex-row",
+        'ps-2 py-2 border border-gray-lighter input-card-title flex-wrap md:flex-nowrap flex-col md:flex-row',
       )}
       onClick={onClick}
     >

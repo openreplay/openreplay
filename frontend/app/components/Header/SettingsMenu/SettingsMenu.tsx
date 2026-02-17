@@ -1,22 +1,22 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { withRouter, RouteComponentProps } from 'react-router';
+import { useNavigate } from 'App/routing';
 import { useTranslation } from 'react-i18next';
 import { pathNavigate, extraAdminItems } from './utils';
 
 interface Props {
-  history: any;
   className: string;
   account: any;
 }
 
-function SettingsMenu(props: RouteComponentProps<Props>) {
+function SettingsMenu(props: Props) {
   const { t } = useTranslation();
-  const { history, account, className }: any = props;
+  const navigate = useNavigate();
+  const { account, className }: any = props;
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = account.edition === 'ee';
   const navigateTo = (path: any) => {
-    pathNavigate(history, path);
+    pathNavigate(navigate, path);
   };
   return (
     <div>
@@ -83,7 +83,8 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
   );
 }
 
-export default withRouter(SettingsMenu);
+export default SettingsMenu;
+
 
 function MenuItem({ onClick, label, icon }: any) {
   return (

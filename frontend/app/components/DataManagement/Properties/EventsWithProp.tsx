@@ -1,14 +1,17 @@
-import React from 'react';
-import { Table } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import FullPagination from 'Shared/FullPagination';
-import { useStore } from '@/mstore';
+import { Table } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { fetchListByProp } from '../Events/api';
-import { TextEllipsis } from 'UI';
-import { useHistory } from 'react-router';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
+import { TextEllipsis } from 'UI';
+
+import FullPagination from 'Shared/FullPagination';
+
+import { fetchListByProp } from '../Events/api';
 
 function EventsWithProp({ propName }: { propName: string }) {
   const { projectsStore } = useStore();

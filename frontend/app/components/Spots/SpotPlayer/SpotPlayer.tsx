@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'App/routing';
 
 import { useStore } from 'App/mstore';
 import {

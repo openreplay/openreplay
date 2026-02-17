@@ -2,7 +2,7 @@ import React from 'react';
 import { client as settingsPath, CLIENT_TABS } from 'App/routes';
 import { Icon } from 'UI';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'App/routing';
 import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 

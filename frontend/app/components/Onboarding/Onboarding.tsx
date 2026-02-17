@@ -1,6 +1,11 @@
 import React from 'react';
-import { Redirect, Route, RouteComponentProps, Switch } from 'react-router';
-import { withRouter } from 'react-router-dom';
+import {
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+} from 'App/routing';
 import { OB_TABS, onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import IdentifyUsersTab from './components/IdentifyUsersTab';
 import InstallOpenReplayTab from './components/InstallOpenReplayTab';
@@ -11,23 +16,18 @@ import { useTranslation } from 'react-i18next';
 import { Smartphone, AppWindow } from 'lucide-react';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
 
-interface Props {
-  match: {
-    params: {
-      activeTab: string;
-      siteId: string;
-    };
-  };
-  history: RouteComponentProps['history'];
-}
-
 const platformMap = {
   ios: 'mobile',
   web: 'web',
 };
 
-function Onboarding(props: Props) {
+function Onboarding() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { activeTab = '', siteId = '' } = useParams<{
+    activeTab?: string;
+    siteId?: string;
+  }>();
   const platforms = [
     {
       label: (
@@ -49,16 +49,11 @@ function Onboarding(props: Props) {
     } as const,
   ] as const;
   const [platform, setPlatform] = React.useState(platforms[0]);
-  const {
-    match: {
-      params: { activeTab, siteId },
-    },
-  } = props;
 
   const route = (path: string) => withSiteId(onboardingRoute(path));
 
   const onMenuItemClick = (tab: string) => {
-    props.history.push(withSiteId(onboardingRoute(tab), siteId));
+    navigate(withSiteId(onboardingRoute(tab), siteId));
   };
 
   return (
@@ -69,37 +64,42 @@ function Onboarding(props: Props) {
           className="bg-white w-full rounded-lg mx-auto mb-8 border"
           style={{ maxWidth: PANEL_SIZES.maxWidth }}
         >
-          <Switch>
-            <Route exact strict path={route(OB_TABS.INSTALLING)}>
-              <InstallOpenReplayTab
-                platforms={platforms}
-                platform={platform}
-                setPlatform={setPlatform}
-                platformMap={platformMap}
-              />
-            </Route>
-            <Route exact strict path={route(OB_TABS.IDENTIFY_USERS)}>
-              <IdentifyUsersTab
-                platforms={platforms}
-                platform={platform}
-                setPlatform={setPlatform}
-                platformMap={platformMap}
-              />
-            </Route>
+          <Routes>
             <Route
-              exact
-              strict
+              path={route(OB_TABS.INSTALLING)}
+              element={
+                <InstallOpenReplayTab
+                  platforms={platforms}
+                  platform={platform}
+                  setPlatform={setPlatform}
+                  platformMap={platformMap}
+                />
+              }
+            />
+            <Route
+              path={route(OB_TABS.IDENTIFY_USERS)}
+              element={
+                <IdentifyUsersTab
+                  platforms={platforms}
+                  platform={platform}
+                  setPlatform={setPlatform}
+                  platformMap={platformMap}
+                />
+              }
+            />
+            <Route
               path={route(OB_TABS.MANAGE_USERS)}
-              component={ManageUsersTab}
+              element={<ManageUsersTab />}
             />
             <Route
-              exact
-              strict
               path={route(OB_TABS.INTEGRATIONS)}
-              component={IntegrationsTab}
+              element={<IntegrationsTab />}
             />
-            <Redirect to={route(OB_TABS.INSTALLING)} />
-          </Switch>
+            <Route
+              path="*"
+              element={<Navigate to={route(OB_TABS.INSTALLING)} replace />}
+            />
+          </Routes>
         </div>
       </div>
       {/* <div className="py-6 px-4 w-full flex items-center fixed bottom-0 bg-white border-t z-10">
@@ -111,4 +111,4 @@ function Onboarding(props: Props) {
   );
 }
 
-export default withRouter(Onboarding);
+export default Onboarding;

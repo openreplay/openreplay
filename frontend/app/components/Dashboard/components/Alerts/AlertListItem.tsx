@@ -6,7 +6,7 @@ import { withSiteId, alertEdit } from 'App/routes';
 import { numberWithCommas } from 'App/utils';
 // @ts-ignore
 import { DateTime } from 'luxon';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'App/routing';
 import cn from 'classnames';
 import Alert from 'Types/alert';
 import { observer } from 'mobx-react-lite';

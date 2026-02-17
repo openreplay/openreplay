@@ -12,7 +12,7 @@ import { Button, Checkbox, Dropdown, Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
 import { Link2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'App/routing';
 import { toast } from 'react-toastify';
 import { TextEllipsis } from 'UI';
 
@@ -80,12 +80,12 @@ function SpotListItem({
       case 'rename':
         return setIsEdit(true);
       case 'download':
-        const loader = toast.loading('Retrieving Spot video...')
+        const loader = toast.loading('Retrieving Spot video...');
         const { url } = await onVideo(spot.spotId);
         await downloadFile(url, `${spot.title}.webm`);
         setTimeout(() => {
-          toast.dismiss(loader)
-        }, 0)
+          toast.dismiss(loader);
+        }, 0);
         return;
       case 'copy':
         copy(

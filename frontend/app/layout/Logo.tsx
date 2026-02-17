@@ -1,6 +1,6 @@
 import React from 'react';
 import { sessions, withSiteId } from 'App/routes';
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'App/routing';
 import { Icon } from 'UI';
 import { useTheme } from 'App/ThemeContext';
 import { mobileScreen } from '@/utils/isMobile';

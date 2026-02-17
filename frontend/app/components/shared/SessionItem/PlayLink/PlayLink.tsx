@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 
 import {
   liveSession as liveSessionRoute,

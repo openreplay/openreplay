@@ -16,7 +16,7 @@ import { EllipsisVertical } from 'lucide-react';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
-import { useHistory } from 'react-router';
+import { useHistory } from 'App/routing';
 import { withSiteId } from 'App/routes';
 import { Icon, confirm } from 'UI';
 import cn from 'classnames';

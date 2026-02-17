@@ -4,6 +4,6 @@ export default class SignalService {
   }
 
   send(...args: any[]): Promise<any> {
-    return Promise.resolve()
+    return Promise.resolve();
   }
 }

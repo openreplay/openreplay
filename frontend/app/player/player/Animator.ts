@@ -228,5 +228,5 @@ export default class Animator {
       return this.jump(Math.min(endTime, time + interval));
     }
     return this.jump(Math.max(0, time + interval));
-  }
+  };
 }

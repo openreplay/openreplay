@@ -2,7 +2,10 @@ import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 
-import { PlayerContext, MobilePlayerContext } from 'App/components/Session/playerContext';
+import {
+  PlayerContext,
+  MobilePlayerContext,
+} from 'App/components/Session/playerContext';
 import { getRE } from 'App/utils';
 import TimeTable from 'Components/shared/DevTools/TimeTable';
 import { CloseButton, Input, NoContent, SlideModal } from 'UI';
@@ -132,7 +135,13 @@ const GraphQLComponent = ({
   );
 };
 
-function GraphQL({ panelHeight, isMobile }: { panelHeight: number, isMobile?: boolean }) {
+function GraphQL({
+  panelHeight,
+  isMobile,
+}: {
+  panelHeight: number;
+  isMobile?: boolean;
+}) {
   const context = isMobile ? MobilePlayerContext : PlayerContext;
   // @ts-ignore
   const { player, store } = React.useContext(context);
@@ -140,11 +149,15 @@ function GraphQL({ panelHeight, isMobile }: { panelHeight: number, isMobile?: bo
   let list: any[] = [];
   let listNow: any[] = [];
   if (isMobile) {
-    const { graphqlList = [], graphqlListNow = [] } = (store as unknown as IIOSPlayerStore).get();
+    const { graphqlList = [], graphqlListNow = [] } = (
+      store as unknown as IIOSPlayerStore
+    ).get();
     list = graphqlList;
     listNow = graphqlListNow;
   } else {
-    const { tabStates, currentTab } = (store as unknown as IWebPlayerStore).get();
+    const { tabStates, currentTab } = (
+      store as unknown as IWebPlayerStore
+    ).get();
     const { graphqlList = [], graphqlListNow = [] } = tabStates[currentTab];
     list = graphqlList;
     listNow = graphqlListNow;

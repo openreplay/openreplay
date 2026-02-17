@@ -1,6 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
-import { Switch, Route, Redirect } from 'react-router';
+import { Navigate, withRouter } from 'App/routing';
 import { client as clientRoute } from 'App/routes';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
@@ -19,7 +18,7 @@ import Notifications from './Notifications';
 import Roles from './Roles';
 import ExportedVideosList from './ExportedVideos/ExportedVideosList';
 
-class Client extends React.PureComponent {
+class Client extends React.PureComponent<any> {
   constructor(props) {
     super(props);
   }
@@ -28,89 +27,38 @@ class Client extends React.PureComponent {
     this.props.history.push(clientRoute(tab));
   };
 
-  renderActiveTab = () => (
-    <Switch>
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.PROFILE)}
-        component={ProfileSettings}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.SESSION_SETTINGS)}
-        component={SessionsListingSettings}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.INTEGRATIONS)}
-        component={Integrations}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.MANAGE_USERS)}
-        component={UserView}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.SITES)}
-        component={Projects}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.CUSTOM_FIELDS)}
-        component={CustomFields}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.BILLING)}
-        component={Billing}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.WEBHOOKS)}
-        component={Webhooks}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.NOTIFICATIONS)}
-        component={Notifications}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.MANAGE_ROLES)}
-        component={Roles}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.AUDIT)}
-        component={AuditView}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.MODULES)}
-        component={Modules}
-      />
-      <Route
-        exact
-        strict
-        path={clientRoute(CLIENT_TABS.VIDEOS)}
-        component={ExportedVideosList}
-      />
-      <Redirect to={clientRoute(CLIENT_TABS.PROFILE)} />
-    </Switch>
-  );
+  renderActiveTab = (activeTab) => {
+    switch (activeTab) {
+      case CLIENT_TABS.PROFILE:
+        return <ProfileSettings />;
+      case CLIENT_TABS.SESSION_SETTINGS:
+        return <SessionsListingSettings />;
+      case CLIENT_TABS.INTEGRATIONS:
+        return <Integrations />;
+      case CLIENT_TABS.MANAGE_USERS:
+        return <UserView />;
+      case CLIENT_TABS.SITES:
+        return <Projects />;
+      case CLIENT_TABS.CUSTOM_FIELDS:
+        return <CustomFields />;
+      case CLIENT_TABS.BILLING:
+        return <Billing />;
+      case CLIENT_TABS.WEBHOOKS:
+        return <Webhooks />;
+      case CLIENT_TABS.NOTIFICATIONS:
+        return <Notifications />;
+      case CLIENT_TABS.MANAGE_ROLES:
+        return <Roles />;
+      case CLIENT_TABS.AUDIT:
+        return <AuditView />;
+      case CLIENT_TABS.MODULES:
+        return <Modules />;
+      case CLIENT_TABS.VIDEOS:
+        return <ExportedVideosList />;
+      default:
+        return <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />;
+    }
+  };
 
   render() {
     const {
@@ -123,7 +71,11 @@ class Client extends React.PureComponent {
         className="w-full mx-auto mb-8"
         style={{ maxWidth: PANEL_SIZES.maxWidth }}
       >
-        {activeTab && this.renderActiveTab()}
+        {activeTab ? (
+          this.renderActiveTab(activeTab)
+        ) : (
+          <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />
+        )}
       </div>
     );
   }

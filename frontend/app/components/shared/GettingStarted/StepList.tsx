@@ -4,11 +4,11 @@ import cn from 'classnames';
 import { Step } from 'App/mstore/types/gettingStarted';
 import { useStore } from 'App/mstore';
 import { onboarding as onboardingRoute, withSiteId } from 'App/routes';
-import { RouteComponentProps, withRouter } from 'react-router';
+import { useNavigate } from 'App/routing';
 import { useModal } from 'App/components/Modal';
 import { useTranslation } from 'react-i18next';
 
-interface StepListProps extends RouteComponentProps {
+interface StepListProps {
   title: string;
   steps: Step[];
   status: 'pending' | 'completed';
@@ -75,6 +75,7 @@ const StepItem = React.memo(
 const StepList = React.memo((props: StepListProps) => {
   const { title, steps } = props;
   const { hideModal } = useModal();
+  const navigate = useNavigate();
 
   const {
     settingsStore: { gettingStarted },
@@ -91,10 +92,9 @@ const StepList = React.memo((props: StepListProps) => {
   }
 
   const onClick = (step: any) => {
-    const { history } = props;
     const siteId = projectsStore.getSiteId().siteId!;
     hideModal();
-    history.push(withSiteId(onboardingRoute(step.url), siteId));
+    navigate(withSiteId(onboardingRoute(step.url), siteId));
   };
 
   return (
@@ -114,4 +114,4 @@ const StepList = React.memo((props: StepListProps) => {
   );
 });
 
-export default withRouter(StepList);
+export default StepList;

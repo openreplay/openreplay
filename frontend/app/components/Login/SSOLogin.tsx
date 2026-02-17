@@ -22,7 +22,8 @@ const SSOLogin = ({ authDetails, enforceSSO = false }: SSOLoginProps) => {
       : `${window.location.origin}/api/sso/saml2`;
 
   const ssoLink = getSSOLink();
-  const ssoButtonText = `${t('Login with SSO')} ${authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
+  const ssoButtonText = `${t('Login with SSO')} ${
+    authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
   }`;
 
   if (enforceSSO) {
@@ -61,11 +62,7 @@ const SSOLogin = ({ authDetails, enforceSSO = false }: SSOLoginProps) => {
           placement="top"
         >
           <span className="cursor-not-allowed">
-            <Button
-              type="text"
-              htmlType="submit"
-              disabled={true}
-            >
+            <Button type="text" htmlType="submit" disabled={true}>
               {ssoButtonText}
             </Button>
           </span>

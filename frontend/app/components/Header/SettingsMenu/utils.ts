@@ -1,25 +1,25 @@
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 
-export function pathNavigate(history, path) {
+export function pathNavigate(navigate: (to: any) => void, path: string) {
   switch (path) {
     case 'sessions-listing':
-      return history.push(clientRoute(CLIENT_TABS.SESSIONS_LISTING));
+      return navigate(clientRoute(CLIENT_TABS.SESSION_SETTINGS));
     case 'projects':
-      return history.push(clientRoute(CLIENT_TABS.SITES));
+      return navigate(clientRoute(CLIENT_TABS.SITES));
     case 'team':
-      return history.push(clientRoute(CLIENT_TABS.MANAGE_USERS));
+      return navigate(clientRoute(CLIENT_TABS.MANAGE_USERS));
     case 'metadata':
-      return history.push(clientRoute(CLIENT_TABS.CUSTOM_FIELDS));
+      return navigate(clientRoute(CLIENT_TABS.CUSTOM_FIELDS));
     case 'webhooks':
-      return history.push(clientRoute(CLIENT_TABS.WEBHOOKS));
+      return navigate(clientRoute(CLIENT_TABS.WEBHOOKS));
     case 'integrations':
-      return history.push(clientRoute(CLIENT_TABS.INTEGRATIONS));
+      return navigate(clientRoute(CLIENT_TABS.INTEGRATIONS));
     case 'notifications':
-      return history.push(clientRoute(CLIENT_TABS.NOTIFICATIONS));
+      return navigate(clientRoute(CLIENT_TABS.NOTIFICATIONS));
     case 'roles':
-      return history.push(clientRoute(CLIENT_TABS.MANAGE_ROLES));
+      return navigate(clientRoute(CLIENT_TABS.MANAGE_ROLES));
     case 'audit':
-      return history.push(clientRoute(CLIENT_TABS.AUDIT));
+      return navigate(clientRoute(CLIENT_TABS.AUDIT));
   }
 }
 

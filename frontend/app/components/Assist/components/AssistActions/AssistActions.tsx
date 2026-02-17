@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from 'antd';
-import {Headset} from 'lucide-react';
+import { Headset } from 'lucide-react';
 import cn from 'classnames';
 import {
   CallingState,
@@ -82,9 +82,9 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
     { stream: MediaStream; isAgent: boolean }[] | null
   >([]);
   const [localStream, setLocalStream] = useState<LocalStream | null>(null);
-  const [callObject, setCallObject] = useState<{ end: () => void } | null | undefined>(
-    null,
-  );
+  const [callObject, setCallObject] = useState<
+    { end: () => void } | null | undefined
+  >(null);
 
   const onCall =
     calling === CallingState.OnCall || calling === CallingState.Reconnecting;
@@ -243,9 +243,11 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
             role="button"
           >
             <Button
-              icon={<Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />}
+              icon={
+                <Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />
+              }
               type={'text'}
-              size='small'
+              size="small"
               className={annotating ? 'text-red' : 'text-main'}
             >
               {t('Annotate')}
@@ -259,7 +261,10 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
       <ScreenRecorder />
 
       {/* @ts-ignore */}
-      <Tooltip title={t('Call user to initiate remote control')} disabled={livePlay}>
+      <Tooltip
+        title={t('Call user to initiate remote control')}
+        disabled={livePlay}
+      >
         <div
           className={cn('cursor-pointer p-2 flex items-center', {
             [stl.disabled]:
@@ -271,8 +276,14 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
           <Button
             type={'text'}
             className={remoteActive ? 'text-red' : 'text-teal'}
-            icon={<Icon name={remoteActive ? 'window-x' : 'remote-control'} size={16} color={remoteActive ? 'red' : 'main'} />}
-            size='small'
+            icon={
+              <Icon
+                name={remoteActive ? 'window-x' : 'remote-control'}
+                size={16}
+                color={remoteActive ? 'red' : 'main'}
+              />
+            }
+            size="small"
           >
             {t('Remote Control')}
           </Button>
@@ -297,8 +308,10 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
           <Button
             icon={<Headset size={16} />}
             type={'text'}
-            className={onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'}
-            size='small'
+            className={
+              onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'
+            }
+            size="small"
           >
             {onCall ? t('End') : isPrestart ? t('Join Call') : t('Call')}
           </Button>

@@ -46,7 +46,7 @@ export default class AlertsStore {
 
   setAlerts = (alerts: Alert[]) => {
     this.alerts = alerts;
-  }
+  };
 
   setLoading = (val: boolean) => {
     this.loading = val;

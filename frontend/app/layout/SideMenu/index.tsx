@@ -1,6 +1,6 @@
 import { Button, Drawer } from 'antd';
 import React from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useLocation, useNavigate } from 'App/routing';
 import { observer } from 'mobx-react-lite';
 
 import MenuContent from './MenuContent';
@@ -28,13 +28,14 @@ import { useTranslation } from 'react-i18next';
 import { extraRoutes } from '../menuRoutes';
 import { Menu, X } from 'lucide-react';
 
-interface Props extends RouteComponentProps {
-  siteId?: string;
+interface Props {
   isCollapsed?: boolean;
 }
 
 function SideMenu(props: Props) {
-  const { location, isCollapsed } = props;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isCollapsed } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
@@ -96,8 +97,7 @@ function SideMenu(props: Props) {
   ]);
 
   const menuRoutes: any = {
-    [MENU.EXIT]: () =>
-      props.history.push(withSiteId(routes.sessions(), siteId)),
+    [MENU.EXIT]: () => withSiteId(routes.sessions(), siteId),
     [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
@@ -119,7 +119,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
-    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
+    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(), siteId),
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
@@ -136,7 +136,7 @@ function SideMenu(props: Props) {
       return;
     }
     const handler = menuRoutes[item.key];
-    if (handler) props.history.push(handler());
+    if (handler) navigate(handler());
     // added: close drawer after nav on mobile
     if (isMobile) setMobileMenuOpen(false);
   };
@@ -202,4 +202,4 @@ function SideMenu(props: Props) {
   );
 }
 
-export default withRouter(observer(SideMenu));
+export default observer(SideMenu);
