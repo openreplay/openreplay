@@ -19,6 +19,7 @@ export interface ParsedFrames {
 export default function parseFrames(
   buffer: ArrayBuffer,
   sessionStart: number,
+  fileFormat: string,
 ): ParsedFrames {
   const view = new DataView(buffer);
   const snapshots: Record<number, FrameSnapshot> = {};
@@ -44,16 +45,12 @@ export default function parseFrames(
 
     // Keep a view into the original buffer — no copy until getBlobUrl() is called
     const dataView = new Uint8Array(buffer, offset, size);
-    let cachedUrl: string | undefined;
 
     snapshots[time] = {
       getBlobUrl() {
-        if (cachedUrl === undefined) {
-          cachedUrl = URL.createObjectURL(
-            new Blob([dataView], { type: 'image/webp' }),
-          );
-        }
-        return cachedUrl;
+        return URL.createObjectURL(
+          new Blob([dataView], { type: `image/${fileFormat}` }),
+        );
       },
     };
 

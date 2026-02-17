@@ -32,6 +32,7 @@ export default class Session {
   userNumericHash: number = 0;
   userDisplayName: string = '';
   canvasURL: string[] = [];
+  canvasFrames: string[] = [];
   domURL: string[] = [];
   devtoolsURL: string[] = [];
 

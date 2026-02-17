@@ -121,6 +121,8 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     if (!this.links[2]) {
       return Promise.reject(FRAMES_MISSING);
     }
+    // webp, jpeg, png, avif
+    const fileFormat = /\.(webp|jpeg|png|avif)$/.exec(this.links[2])?.[1] ?? 'webp';
     return fetch(this.links[2])
       .then((r) => {
         if (r.status === 200) {
@@ -128,8 +130,13 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         }
         return Promise.reject(FRAMES_MISSING);
       })
-      .then((buf) => {
-        const { snapshots, timestamps } = parseFrames(buf, this.sessionStart);
+      .then((zstdBuf) => {
+        const buf = unpack(new Uint8Array(zstdBuf)).buffer;
+        const { snapshots, timestamps } = parseFrames(
+          buf as ArrayBuffer,
+          this.sessionStart,
+          fileFormat,
+        );
         Object.assign(this.snapshots, snapshots);
         this.playMode = playMode.snaps;
         timestamps.forEach((msg) => this.append(msg));
@@ -240,12 +247,18 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     }
   };
 
+  previousBlob: string = '';
   moveReadySnap = (t: number) => {
     const msg = this.getNew(t);
     if (msg) {
       const file = this.snapshots[msg.time];
       if (file) {
-        this.snapImage.src = file.getBlobUrl();
+        const blobUrl = file.getBlobUrl();
+        this.snapImage.src = blobUrl;
+        if (this.previousBlob) {
+          URL.revokeObjectURL(this.previousBlob);
+        }
+        this.previousBlob = blobUrl;
       }
     }
   };

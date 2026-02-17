@@ -236,9 +236,10 @@ export default class TabSessionManager {
           const fileId = managerId;
           const delta = msg.timestamp - this.sessionStart;
 
-          const canvasNodeLinks = this.session.canvasURL.filter((url: string) =>
-            url.includes(fileId),
-          ) as string[];
+          const canvasNodeLinks = [
+            ...this.session.canvasURL,
+            ...this.session.canvasFrames,
+          ].filter((url: string) => url.includes(fileId)) as string[];
           const framesFile = canvasNodeLinks.find((url: string) =>
             url.includes('.frames'),
           );
