@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.25.0';
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.26.0';
 CREATE DATABASE IF NOT EXISTS experimental;
 
 CREATE TABLE IF NOT EXISTS experimental.sessions
