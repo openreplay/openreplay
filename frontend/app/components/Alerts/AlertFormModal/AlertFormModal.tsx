@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { SlideModal, confirm } from 'UI';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
+
 import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
+import { useStore } from 'App/mstore';
+import { SlideModal, confirm } from 'UI';
+
 import AlertForm from '../AlertForm';
 
 interface Select {

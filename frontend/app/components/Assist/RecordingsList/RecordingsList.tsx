@@ -1,10 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { NoContent, Pagination, Loader } from 'UI';
-import { useStore } from 'App/mstore';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import RecordsListItem from './RecordsListItem';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { Loader, NoContent, Pagination } from 'UI';
+
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
+import RecordsListItem from './RecordsListItem';
 
 function RecordingsList() {
   const { t } = useTranslation();
@@ -18,7 +21,12 @@ function RecordingsList() {
 
   React.useEffect(() => {
     recordingsStore.fetchRecordings();
-  }, [page, recordingsStore.period, recordsSearch, recordingsStore.userId]);
+  }, [
+    page,
+    recordingsStore.period,
+    recordsSearch,
+    recordingsStore.currentUser,
+  ]);
 
   const { length } = recordings;
 

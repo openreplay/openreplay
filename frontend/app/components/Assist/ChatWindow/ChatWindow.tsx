@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import cn from 'classnames';
-import Counter from 'App/components/shared/SessionItem/Counter';
 import { useDraggable } from '@neodrag/react';
 import type { LocalStream } from 'Player';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import ChatControls from '../ChatControls/ChatControls';
-import stl from './chatWindow.module.css';
-import VideoContainer from '../components/VideoContainer';
+import cn from 'classnames';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import Counter from 'App/components/shared/SessionItem/Counter';
+
+import ChatControls from '../ChatControls/ChatControls';
+import VideoContainer from '../components/VideoContainer';
+import stl from './chatWindow.module.css';
 
 export interface Props {
   incomeStream: { stream: MediaStream; isAgent: boolean }[] | null;
@@ -26,9 +28,14 @@ function ChatWindow({
 }: Props) {
   const { t } = useTranslation();
   const dragRef = React.useRef<HTMLDivElement>(null);
-  useDraggable(dragRef, { bounds: 'body', defaultPosition: { x: 50, y: 200 } });
+
+  useDraggable(dragRef as React.RefObject<HTMLDivElement>, {
+    bounds: 'body',
+    defaultPosition: { x: 50, y: 200 },
+  });
   const { player } = React.useContext(PlayerContext);
 
+  // @ts-ignore exists in chat
   const { toggleVideoLocalStream } = player.assistManager;
 
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false);

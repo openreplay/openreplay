@@ -236,23 +236,27 @@ export default class TabSessionManager {
           const fileId = managerId;
           const delta = msg.timestamp - this.sessionStart;
 
-          const canvasNodeLinks = this.session.canvasURL.filter((url: string) =>
-            url.includes(fileId),
-          ) as string[];
+          const canvasNodeLinks = [
+            ...this.session.canvasURL,
+            ...this.session.canvasFrames,
+          ].filter((url: string) => url.includes(fileId)) as string[];
+          const framesFile = canvasNodeLinks.find((url: string) =>
+            url.includes('.frames'),
+          );
           const tarball = canvasNodeLinks.find((url: string) =>
             url.includes('.tar.'),
           );
           const mp4file = canvasNodeLinks.find((url: string) =>
             url.includes('.mp4'),
           );
-          if (!tarball && !mp4file) {
+          if (!framesFile && !tarball && !mp4file) {
             console.error('no canvas recording provided');
             break;
           }
           const manager = new CanvasManager(
             msg.nodeId,
             delta,
-            [tarball, mp4file],
+            [tarball, mp4file, framesFile],
             this.getNode as (id: number) => VElement | undefined,
             this.sessionStart,
           );

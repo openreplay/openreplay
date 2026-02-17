@@ -75,11 +75,11 @@ export function convertSankeyToSunburst(data: DataNode): {
       legendMap[node.name] = { color, ids: [nodeId] };
     }
 
-    const result: SunburstChild = {
+    const result = {
       ...node,
-      dataIndex: nodeId,
       itemStyle: { color },
-    };
+      dataIndex: nodeId,
+    } as SunburstChild;
 
     if (node.children && node.children.length > 0) {
       const childNodes = node.children

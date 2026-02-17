@@ -1,13 +1,16 @@
-import React from 'react';
-import { PageTitle } from 'UI';
-import Select from 'Shared/Select';
-import { useStore } from 'App/mstore';
-import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { PANEL_SIZES } from 'App/constants/panelSizes';
+import { useStore } from 'App/mstore';
+import { PageTitle } from 'UI';
+
+import Select from 'Shared/Select';
+import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
+
 import RecordingsList from './RecordingsList';
 import RecordingsSearch from './RecordingsSearch';
-import { useTranslation } from 'react-i18next';
-import { PANEL_SIZES } from 'App/constants/panelSizes';
 
 function Recordings() {
   const { t } = useTranslation();
@@ -43,7 +46,9 @@ function Recordings() {
             plain
             right
             options={recordingsOwner}
-            onChange={({ value }) => recordingsStore.setUserId(value.value)}
+            onChange={({ value }) =>
+              recordingsStore.setCurrUser(value === userId)
+            }
             defaultValue={recordingsOwner[0].value}
           />
           <div className="w-1/4" style={{ minWidth: 300 }}>

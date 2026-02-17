@@ -1,15 +1,17 @@
 import { Duration } from 'luxon';
-import { Note } from 'App/services/NotesService';
 import { toJS } from 'mobx';
-import SessionEvent, {
-  TYPES,
-  EventData,
-  InjectedEvent,
-  Incident,
-} from './event';
-import StackEvent from './stackEvent';
+
+import { Note } from 'App/services/NotesService';
+
 import SessionError, { IError } from './error';
+import SessionEvent, {
+  EventData,
+  Incident,
+  InjectedEvent,
+  TYPES,
+} from './event';
 import Issue, { IIssue, types as issueTypes } from './issue';
+import StackEvent from './stackEvent';
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
@@ -93,6 +95,7 @@ export interface ISession {
   favorite?: boolean;
   filterId?: string;
   canvasURL?: string[];
+  canvasFrames?: string[];
   domURL?: string[];
   devtoolsURL?: string[];
   uxtVideo?: string[];
@@ -169,6 +172,7 @@ const emptyValues = {
   mobsUrl: [],
   notes: [],
   canvasURL: [],
+  canvasFrames: [],
   metadata: {},
   startedAt: 0,
   platform: 'web',
@@ -187,6 +191,8 @@ export default class Session {
   peerId: ISession['peerId'];
 
   canvasURL: ISession['canvasURL'];
+
+  canvasFrames: ISession['canvasFrames'];
 
   live: ISession['live'];
 
@@ -336,6 +342,7 @@ export default class Session {
       crashes = [],
       notes = [],
       canvasURL = [],
+      canvasFrames = [],
       uxtVideo = [],
       videoURL = [],
       incidents = [],
@@ -438,6 +445,7 @@ export default class Session {
       devtoolsURL,
       notes,
       canvasURL,
+      canvasFrames,
       videoURL: Array.isArray(videoURL) ? videoURL : [videoURL],
       mixedEventsWithIssues: mixedEventsWithIssues,
       frustrations: frustrationList,
