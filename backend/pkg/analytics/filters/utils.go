@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var ILIKEReplacer = strings.NewReplacer("%", "\\%", "_", "\\_")
+
 func ConvertTimeToMillis(t time.Time) int64 {
 	return t.UnixMilli()
 }
