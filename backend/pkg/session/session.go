@@ -71,6 +71,7 @@ type SessionReplay struct {
 	DomURL             []string               `json:"domURL"`
 	DevtoolsURL        []string               `json:"devtoolsURL"`
 	CanvasURL          []string               `json:"canvasURL"`
+	CanvasFrames       []string               `json:"canvasFrames"`
 	VideoURL           []string               `json:"videoURL"`
 	Metadata           map[string]interface{} `json:"metadata"`
 	Live               bool                   `json:"live"`
@@ -184,7 +185,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 		if err != nil {
 			return nil, err
 		}
-		si.CanvasURL, err = s.files.GetCanvasUrls(sessionID)
+		si.CanvasFrames, si.CanvasURL, err = s.files.GetCanvasUrls(sessionID)
 		if err != nil {
 			return nil, err
 		}
