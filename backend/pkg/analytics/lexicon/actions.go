@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 
+	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/lexicon/model"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -249,8 +250,8 @@ func (a *actionsImpl) Search(ctx context.Context, projectID uint32, req *model.S
 	idx := 2
 
 	if req.Name != "" {
-		conds = append(conds, fmt.Sprintf("name ILIKE $%d", idx))
-		params = append(params, "%"+req.Name+"%")
+		conds = append(conds, fmt.Sprintf("name ILIKE $%d ESCAPE '\\'", idx))
+		params = append(params, "%"+filters.ILIKEReplacer.Replace(req.Name)+"%")
 		idx++
 	}
 	if req.UserID != nil {
