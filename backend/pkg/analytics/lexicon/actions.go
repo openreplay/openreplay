@@ -118,9 +118,9 @@ func (a *actionsImpl) Create(ctx context.Context, projectID uint32, userID uint6
 	return &model.Action{
 		ActionID:    actionID,
 		ProjectID:   uint64(projectID),
-		UserID:      userID,
+		UserID:      &userID,
 		Name:        req.Name,
-		Description: req.Description,
+		Description: &req.Description,
 		Filters:     req.Filters,
 		IsPublic:    true,
 		CreatedAt:   createdAt.UnixMilli(),
