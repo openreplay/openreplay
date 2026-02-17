@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { forgotPassword, signup } from 'App/routes';
-import { useHistory } from 'App/routing';
+import { useHistory, useLocation } from 'App/routing';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 import { extKey } from 'Components/Spots/SpotsList/InstallCTA';
 import { Icon, Link, Loader } from 'UI';
@@ -23,16 +23,12 @@ const companyLogo = new URL('../../assets/logo.svg', import.meta.url);
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
 
-interface LoginProps {
-  location: Location;
-}
-
 function Login({
-  location,
   submitWithCaptcha,
   isVerifyingCaptcha,
   resetCaptcha,
-}: LoginProps & WithCaptchaProps) {
+}: WithCaptchaProps) {
+  const location = useLocation();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

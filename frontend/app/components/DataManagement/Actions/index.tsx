@@ -5,11 +5,10 @@ import { Album } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
-
+import { useHistory } from 'App/routing';
 import { debounce } from 'App/utils';
 
 import ActionsList from './ActionsList';

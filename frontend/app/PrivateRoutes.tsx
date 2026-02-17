@@ -1,16 +1,18 @@
+import { debounceCall } from '@/utils';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
-import React, { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes, useLocation, useHistory } from 'App/routing';
 import { observer } from 'mobx-react-lite';
-import { useStore } from './mstore';
+import React, { Suspense, lazy } from 'react';
+
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
+import { Navigate, Route, Routes, useHistory, useLocation } from 'App/routing';
 import { Loader } from 'UI';
+
 import APIClient from './api_client';
+import { useStore } from './mstore';
 import * as routes from './routes';
-import { debounceCall } from '@/utils';
-import { hasAi } from './utils/split-utils';
 import { saasRoutes } from './saasComponents';
+import { hasAi } from './utils/split-utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -347,16 +349,12 @@ function PrivateRoutes() {
           element={<enhancedComponents.PropertiesList />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.actionPage(), siteIdList)}
-          component={enhancedComponents.ActionPage}
+          element={<enhancedComponents.ActionPage />}
         />
         <Route
-          exact
-          strict
           path={withSiteId(routes.dataManagement.actions(), siteIdList)}
-          component={enhancedComponents.ActionsPage}
+          element={<enhancedComponents.ActionsPage />}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Route key={fr} path={fr} element={<Navigate to={to} replace />} />
