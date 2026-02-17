@@ -373,7 +373,6 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 type ScreenshotMessage struct {
 	Name string
 	Data []byte
-	Type int // 0 for old screenshots
 }
 
 func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -469,7 +468,6 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	e.log.Info(r.Context(), "uploading image, name: %s", msg.Name)
 
 	msg.Data = frames.Bytes()
-	msg.Type = 2
 	data, err := json.Marshal(&msg)
 	if err != nil {
 		e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)

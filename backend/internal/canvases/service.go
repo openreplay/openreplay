@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"strconv"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,18 +18,19 @@ import (
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/pool"
 	"openreplay/backend/pkg/queue/types"
+
+	"github.com/klauspost/compress/zstd"
 )
 
 type ImageStorage struct {
-	cfg          *config.Config
-	log          logger.Logger
-	basePath     string
-	saverPool    pool.WorkerPool
-	packerPool   pool.WorkerPool
-	uploaderPool pool.WorkerPool
-	objStorage   objectstorage.ObjectStorage
-	producer     types.Producer
-	metrics      canvas.Canvas
+	cfg        *config.Config
+	log        logger.Logger
+	basePath   string
+	saverPool  pool.WorkerPool
+	packerPool pool.WorkerPool
+	objStorage objectstorage.ObjectStorage
+	producer   types.Producer
+	metrics    canvas.Canvas
 }
 
 type saveTask struct {
@@ -45,12 +45,6 @@ type packTask struct {
 	sessionID uint64
 	path      string
 	name      string
-}
-
-type uploadTask struct {
-	ctx  context.Context
-	path string
-	name string
 }
 
 func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, producer types.Producer, metrics canvas.Canvas) (*ImageStorage, error) {
@@ -78,15 +72,14 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 		producer:   producer,
 		metrics:    metrics,
 	}
-	s.saverPool = pool.NewPool(2, 2, s.writeToDisk)
+	s.saverPool = pool.NewPool(8, 16, s.writeToDisk)
 	s.packerPool = pool.NewPool(8, 16, s.packCanvas)
-	s.uploaderPool = pool.NewPool(8, 16, s.sendToS3)
 	return s, nil
 }
 
 func (v *ImageStorage) Wait() {
 	v.saverPool.Pause()
-	v.uploaderPool.Pause()
+	v.packerPool.Pause()
 }
 
 func (v *ImageStorage) CleanSession(ctx context.Context, sessionID uint64) error {
@@ -113,26 +106,25 @@ func (v *ImageStorage) SaveCanvasToDisk(ctx context.Context, sessID uint64, data
 
 func (v *ImageStorage) writeToDisk(payload interface{}) {
 	task := payload.(*saveTask)
-	path := fmt.Sprintf("%s%d/", v.basePath, task.sessionID)
-
-	// Ensure the directory exists
-	if err := os.MkdirAll(path, 0755); err != nil {
+	dir := filepath.Join(v.basePath, fmt.Sprintf("%d", task.sessionID))
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		v.log.Fatal(task.ctx, "can't create a dir, err: %s", err)
 	}
-
-	// Write images to disk
-	outFile, err := os.Create(path + task.name)
+	path := filepath.Join(dir, task.name+".frames")
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		v.log.Fatal(task.ctx, "can't create an image: %s", err)
+		v.log.Fatal(task.ctx, "can't open frames file, err: %s", err)
 	}
-	if _, err := io.Copy(outFile, task.image); err != nil {
-		v.log.Fatal(task.ctx, "can't copy data to image: %s", err)
+	defer f.Close()
+
+	n, err := f.Write(task.image.Bytes())
+	if err != nil {
+		v.log.Fatal(task.ctx, "can't write frames to file, err: %s", err)
 	}
-	if outFile != nil {
-		if err := outFile.Close(); err != nil {
-			v.log.Warn(task.ctx, "can't close out file: %s", err)
-		}
+	if n != task.image.Len() {
+		v.log.Error(task.ctx, "can't write frames to disk, frames length mismatch")
 	}
+
 	v.metrics.RecordCanvasImageSize(float64(task.image.Len()))
 	v.metrics.IncreaseTotalSavedImages()
 
@@ -142,10 +134,9 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 
 func (v *ImageStorage) PrepareSessionCanvases(ctx context.Context, sessID uint64) error {
 	start := time.Now()
-	path := fmt.Sprintf("%s%d/", v.basePath, sessID)
+	dir := filepath.Join(v.basePath, fmt.Sprintf("%d", sessID))
 
-	// Check that the directory exists
-	files, err := os.ReadDir(path)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}
@@ -153,36 +144,22 @@ func (v *ImageStorage) PrepareSessionCanvases(ctx context.Context, sessID uint64
 		return nil
 	}
 
-	// Build the list of canvas images sets
-	names := make(map[string]int)
 	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".tar.zst") {
-			continue // Skip already created archives
-		}
-		name := strings.Split(file.Name(), ".")
-		parts := strings.Split(name[0], "_")
-		if len(name) != 2 || len(parts) != 3 {
-			v.log.Warn(ctx, "unknown file name: %s, skipping", file.Name())
+		if file.IsDir() || !strings.HasSuffix(file.Name(), ".frames") {
 			continue
 		}
-		canvasID := fmt.Sprintf("%s_%s", parts[0], parts[1])
-		names[canvasID]++
-	}
 
-	for name, number := range names {
 		msg := &messages.CustomEvent{
-			Name:    name,
-			Payload: path,
+			Name:    file.Name(),
+			Payload: dir,
 		}
 		if err := v.producer.Produce(v.cfg.TopicCanvasTrigger, sessID, msg.Encode()); err != nil {
 			v.log.Error(ctx, "can't send canvas trigger: %s", err)
 		}
-		v.metrics.RecordImagesPerCanvas(float64(number))
 	}
-	v.metrics.RecordCanvasesPerSession(float64(len(names)))
 	v.metrics.RecordPreparingDuration(time.Since(start).Seconds())
 
-	v.log.Debug(ctx, "session canvases (%d) prepared in %.3fs, session: %d", len(names), time.Since(start).Seconds(), sessID)
+	v.log.Debug(ctx, "session canvases prepared in %.3fs, session: %d", time.Since(start).Seconds(), sessID)
 	return nil
 }
 
@@ -194,41 +171,55 @@ func (v *ImageStorage) ProcessSessionCanvas(ctx context.Context, sessID uint64, 
 func (v *ImageStorage) packCanvas(payload interface{}) {
 	task := payload.(*packTask)
 	start := time.Now()
-	sessionID := strconv.FormatUint(task.sessionID, 10)
 
-	// Save to archives
-	archPath := fmt.Sprintf("%s%s.tar.zst", task.path, task.name)
-	fullCmd := fmt.Sprintf("find %s -type f -name '%s*' ! -name '*.tar.zst' | tar -cf - --files-from=- | zstd -f -o %s",
-		task.path, task.name, archPath)
-	cmd := exec.Command("sh", "-c", fullCmd)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	if err != nil {
-		v.log.Warn(task.ctx, "failed to execute command, err: %s, stderr: %v", err, stderr.String())
+	path := filepath.Join(task.path, task.name)
+	key := fmt.Sprintf("%d/%s.zst", task.sessionID, task.name)
+	if err := v.streamZstdToS3(key, path); err != nil {
+		v.log.Fatal(task.ctx, "can't upload canvas, name: %s, err: %s", task.name, err)
 		return
 	}
-	v.metrics.RecordArchivingDuration(time.Since(start).Seconds())
 	v.metrics.IncreaseTotalCreatedArchives()
+	v.metrics.RecordUploadingDuration(time.Since(start).Seconds())
 
-	v.log.Debug(task.ctx, "canvas packed successfully in %.3fs, session: %d", time.Since(start).Seconds(), task.sessionID)
-	v.uploaderPool.Submit(&uploadTask{ctx: task.ctx, path: archPath, name: sessionID + "/" + task.name + ".tar.zst"})
+	v.log.Debug(task.ctx, "canvas packed and uploaded successfully in %.3fs, session: %d", time.Since(start).Seconds(), task.sessionID)
 }
 
-func (v *ImageStorage) sendToS3(payload interface{}) {
-	task := payload.(*uploadTask)
-	start := time.Now()
-	video, err := os.ReadFile(task.path)
-	if err != nil {
-		v.log.Fatal(task.ctx, "failed to read canvas archive: %s", err)
-	}
-	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
-		v.log.Fatal(task.ctx, "failed to upload canvas to storage: %s", err)
-	}
-	v.metrics.RecordUploadingDuration(time.Since(start).Seconds())
-	v.metrics.RecordArchiveSize(float64(len(video)))
+func (v *ImageStorage) streamZstdToS3(key, srcPath string) error {
+	pr, pw := io.Pipe()
+	errCh := make(chan error, 1)
 
-	v.log.Debug(task.ctx, "replay file (size: %d) uploaded successfully in %.3fs", len(video), time.Since(start).Seconds())
+	go func() {
+		var wErr error
+		defer func() {
+			if wErr != nil {
+				pw.CloseWithError(wErr)
+			} else {
+				pw.Close()
+			}
+			errCh <- wErr
+		}()
+
+		f, err := os.Open(srcPath)
+		if err != nil {
+			wErr = err
+			return
+		}
+		defer f.Close()
+
+		zw, err := zstd.NewWriter(pw, zstd.WithEncoderLevel(zstd.SpeedFastest))
+		if err != nil {
+			wErr = err
+			return
+		}
+		defer zw.Close()
+
+		_, wErr = io.CopyBuffer(zw, f, make([]byte, 256*1024))
+	}()
+
+	if err := v.objStorage.Upload(pr, key, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
+		pr.CloseWithError(err)
+		<-errCh
+		return err
+	}
+	return <-errCh
 }
