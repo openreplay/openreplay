@@ -186,7 +186,7 @@ func (a *actionsImpl) Update(ctx context.Context, projectID uint32, actionID str
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrActionNotFound
 		}
-		if strings.Contains(err.Error(), "actions_project_id_name_key") || strings.Contains(err.Error(), "unique constraint") {
+		if strings.Contains(err.Error(), "actions_project_id_name_idx") || strings.Contains(err.Error(), "unique constraint") {
 			return nil, ErrActionDuplicate
 		}
 		a.log.Error(ctx, "update action %s: %v", actionID, err)
