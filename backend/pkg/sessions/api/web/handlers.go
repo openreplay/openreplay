@@ -464,14 +464,14 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// TODO: remove this debug log
-	e.log.Info(r.Context(), "uploading image, name: %s", msg.Name)
+	e.log.Debug(r.Context(), "uploading image, name: %s", msg.Name)
 
 	msg.Data = frames.Bytes()
 	data, err := json.Marshal(&msg)
 	if err != nil {
 		e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+		return
 	}
 	if err := e.producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
 		e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
