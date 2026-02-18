@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	config "openreplay/backend/internal/config/canvases"
@@ -31,6 +32,7 @@ type ImageStorage struct {
 	objStorage objectstorage.ObjectStorage
 	producer   types.Producer
 	metrics    canvas.Canvas
+	fileLocks  sync.Map // key: "sessionID/canvasName"
 }
 
 type saveTask struct {
@@ -104,8 +106,19 @@ func (v *ImageStorage) SaveCanvasToDisk(ctx context.Context, sessID uint64, data
 	return nil
 }
 
+func (v *ImageStorage) getFileLock(sessionID uint64, name string) *sync.Mutex {
+	key := fmt.Sprintf("%d/%s", sessionID, name)
+	val, _ := v.fileLocks.LoadOrStore(key, &sync.Mutex{})
+	return val.(*sync.Mutex)
+}
+
 func (v *ImageStorage) writeToDisk(payload interface{}) {
 	task := payload.(*saveTask)
+
+	mu := v.getFileLock(task.sessionID, task.name)
+	mu.Lock()
+	defer mu.Unlock()
+
 	dir := filepath.Join(v.basePath, fmt.Sprintf("%d", task.sessionID))
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		v.log.Fatal(task.ctx, "can't create a dir, err: %s", err)
@@ -171,6 +184,8 @@ func (v *ImageStorage) ProcessSessionCanvas(ctx context.Context, sessID uint64, 
 func (v *ImageStorage) packCanvas(payload interface{}) {
 	task := payload.(*packTask)
 	start := time.Now()
+
+	v.fileLocks.Delete(fmt.Sprintf("%d/%s", task.sessionID, strings.TrimSuffix(task.name, ".frames")))
 
 	path := filepath.Join(task.path, task.name)
 	key := fmt.Sprintf("%d/%s.zst", task.sessionID, task.name)
