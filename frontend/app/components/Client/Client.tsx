@@ -1,22 +1,23 @@
 import React from 'react';
-import { Navigate, withRouter } from 'App/routing';
-import { client as clientRoute } from 'App/routes';
-import { CLIENT_TABS } from 'App/utils/routeUtils';
-import { PANEL_SIZES } from 'App/constants/panelSizes';
 
-import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
+import { client as clientRoute } from 'App/routes';
+import { Navigate, withRouter } from 'App/routing';
+import { CLIENT_TABS } from 'App/utils/routeUtils';
 import Modules from 'Components/Client/Modules';
-import ProfileSettings from './ProfileSettings';
-import Integrations from './Integrations';
-import UserView from './Users/UsersView';
+import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
+
 import AuditView from './Audit/AuditView';
 import Billing from './Billing/Billing';
-import Projects from './Projects';
 import CustomFields from './CustomFields';
-import Webhooks from './Webhooks';
-import Notifications from './Notifications';
-import Roles from './Roles';
 import ExportedVideosList from './ExportedVideos/ExportedVideosList';
+import Integrations from './Integrations';
+import Notifications from './Notifications';
+import ProfileSettings from './ProfileSettings';
+import Projects from './Projects';
+import Roles from './Roles';
+import UserView from './Users/UsersView';
+import Webhooks from './Webhooks';
 
 class Client extends React.PureComponent<any> {
   constructor(props) {

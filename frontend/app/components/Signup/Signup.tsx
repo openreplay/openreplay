@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'App/routing';
+import withPageTitle from 'HOCs/withPageTitle';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
+
 import { useStore } from 'App/mstore';
-import { Icon } from 'UI';
+import { login } from 'App/routes';
+import { useNavigate } from 'App/routing';
 import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
 import { getHealthRequest } from 'Components/Header/HealthStatus/getHealth';
-import withPageTitle from 'HOCs/withPageTitle';
-import { login } from 'App/routes';
+import { Icon } from 'UI';
+
 import Copyright from 'Shared/Copyright';
+
 import SignupForm from './SignupForm';
 
 const LOGIN_ROUTE = login();
