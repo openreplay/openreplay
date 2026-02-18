@@ -211,17 +211,17 @@ jobs:
                 local is_ee_only=false
 
                 # Determine build configuration based on service type
-                if grep -q "$service" "$BACKEND_SERVICES_FILE"; then
+                if grep -qx "$service" "$BACKEND_SERVICES_FILE"; then
                     # Backend service (FOSS)
                     cd backend
                     foss_build_args="nil $service"
                     ee_build_args="ee $service"
-                elif grep -q "$service" "$EE_BACKEND_SERVICES_FILE"; then
+                elif grep -qx "$service" "$EE_BACKEND_SERVICES_FILE"; then
                     # EE-only backend service
                     cd backend
                     foss_build_args="nil $service"
                     ee_build_args="ee $service"
-                    # Special case: assist-api is EE-only
+                    # EE-only services: no FOSS build
                     [[ $service == "assist-api" ]] && is_ee_only=true
                 else
                     # Non-backend service
