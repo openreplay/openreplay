@@ -1,13 +1,16 @@
 package web
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -406,6 +409,9 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	frames := bytes.NewBuffer([]byte{})
+	msg := ScreenshotMessage{}
+
 	// Iterate over uploaded files
 	for _, fileHeaderList := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaderList {
@@ -425,23 +431,67 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			file.Close()
 
 			fileName := util.SafeString(fileHeader.Filename)
-
-			// Create a message to send to Kafka
-			msg := ScreenshotMessage{
-				Name: fileName,
-				Data: fileBytes,
-			}
-			data, err := json.Marshal(&msg)
+			baseName, ts, err := parseCanvasName(fileName)
 			if err != nil {
-				e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
+				e.log.Error(r.Context(), "can't parse canvas name %s: %s", fileName, err)
 				continue
 			}
-
-			// Send the message to queue
-			if err := e.producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
-				e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
+			if msg.Name == "" {
+				msg.Name = baseName
+			}
+			if err := binary.Write(frames, binary.LittleEndian, ts); err != nil {
+				e.log.Error(r.Context(), "can't write frame's ts: %s", err)
+				continue
+			}
+			if err := binary.Write(frames, binary.LittleEndian, uint32(len(fileBytes))); err != nil {
+				e.log.Error(r.Context(), "can't write frame's len: %s", err)
+				continue
+			}
+			n, err := frames.Write(fileBytes)
+			if err != nil {
+				e.log.Error(r.Context(), "can't write frame's data: %s", err)
+				continue
+			}
+			if n != len(fileBytes) {
+				e.log.Error(r.Context(), "can't write all frame's data: short write")
 			}
 		}
 	}
+
+	if frames.Len() == 0 {
+		e.log.Warn(r.Context(), "no frames in upload")
+		e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+		return
+	}
+
+	e.log.Debug(r.Context(), "uploading image, name: %s", msg.Name)
+
+	msg.Data = frames.Bytes()
+	data, err := json.Marshal(&msg)
+	if err != nil {
+		e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+		return
+	}
+	if err := e.producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+		e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
+	}
+
 	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+}
+
+func parseCanvasName(canvasName string) (baseName string, ts uint64, err error) {
+	ext := filepath.Ext(canvasName) // .webp, .png, .jpg, .avif
+	name := strings.TrimSuffix(canvasName, ext)
+	// Last segment after '_' is the timestamp
+	idx := strings.LastIndex(name, "_")
+	if idx < 0 {
+		return "", 0, fmt.Errorf("canvas name has no underscore: %s", canvasName)
+	}
+	baseName = name[:idx] + ext // for example "1771238515501_33.webp"
+	ts, err = strconv.ParseUint(name[idx+1:], 10, 64)
+	if err != nil {
+		return "", 0, fmt.Errorf("can't parse timestamp from canvas name %s: %w", canvasName, err)
+	}
+	return baseName, ts, nil
 }
