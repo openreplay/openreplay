@@ -154,7 +154,7 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	if err != nil {
 		v.log.Fatal(task.ctx, "failed to read canvas archive: %s", err)
 	}
-	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.Zstd); err != nil {
+	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
 		v.log.Fatal(task.ctx, "failed to upload canvas to storage: %s", err)
 	}
 	v.log.Info(task.ctx, "replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))

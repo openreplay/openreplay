@@ -14,8 +14,9 @@ import (
 	"strconv"
 	"time"
 
-	gzip "github.com/klauspost/pgzip"
 	config "openreplay/backend/internal/config/imagestorage"
+
+	gzip "github.com/klauspost/pgzip"
 )
 
 type saveTask struct {
@@ -159,7 +160,7 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	if err != nil {
 		v.log.Fatal(task.ctx, "failed to read replay file: %s", err)
 	}
-	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.Zstd); err != nil {
+	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
 		v.log.Fatal(task.ctx, "failed to upload replay file: %s", err)
 	}
 	v.log.Info(task.ctx, "replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))

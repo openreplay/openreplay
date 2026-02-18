@@ -249,7 +249,7 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 		metrics.RecordCroppedVideoSize(float64(fileInfo.Size()))
 	}
 
-	err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoCompression)
+	err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoContentEncoding, objectstorage.NoCompression)
 	if err != nil {
 		return fmt.Errorf("failed to upload cropped video: %v", err)
 	}
@@ -321,7 +321,7 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 		defer chunkFile.Close()
 
 		key := fmt.Sprintf("%d/%s", spotID, chunk)
-		err = t.objStorage.Upload(chunkFile, key, "video/mp2t", objectstorage.NoCompression)
+		err = t.objStorage.Upload(chunkFile, key, "video/mp2t", objectstorage.NoContentEncoding, objectstorage.NoCompression)
 		if err != nil {
 			fmt.Println("Error uploading file:", err)
 			return "", err
