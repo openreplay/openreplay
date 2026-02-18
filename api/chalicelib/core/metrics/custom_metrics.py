@@ -387,13 +387,12 @@ def search_metrics(project_id, user_id, data: schemas.MetricSearchSchema, includ
                               AND metric_series.deleted_at ISNULL 
                          ) AS metric_series ON (TRUE)"""
 
-        sort_column = data.sort.field if data.sort.field is not None and len(data.sort.field) > 0 \
-            else "created_at"
+        sort_column = "created_at"
         # change ascend to asc and descend to desc
         sort_order = data.sort.order.value if hasattr(data.sort.order, "value") else data.sort.order
         if sort_order == "ascend":
             sort_order = "asc"
-        elif sort_order == "descend":
+        else:
             sort_order = "desc"
 
         query = cur.mogrify(
