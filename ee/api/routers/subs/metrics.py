@@ -108,12 +108,6 @@ def create_card(projectId: int, data: schemas.CardSchema = Body(...),
     return custom_metrics.create_card(project=context.project, user_id=context.user_id, data=data)
 
 
-@app.post('/{projectId}/cards/search', tags=["cards"])
-def search_cards(projectId: int, data: schemas.MetricSearchSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.search_metrics(project_id=projectId, user_id=context.user_id, data=data)}
-
-
 @app.get('/{projectId}/cards/{metric_id}', tags=["cards"])
 def get_card(projectId: int, metric_id: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if metric_id.isnumeric():
@@ -153,6 +147,17 @@ def get_card_chart(projectId: int, metric_id: int, data: schemas.CardSessionsSch
                    context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.make_chart_from_card(project=context.project, user_id=context.user_id, metric_id=metric_id,
                                                data=data)
+    return {"data": data}
+
+
+@app.post("/{projectId}/dashboards/{dashboardId}/cards/{metric_id}/chart", tags=["card"])
+# @app.post("/{projectId}/dashboards/{dashboardId}/cards/{metric_id}", tags=["card"])
+def get_card_chart_for_dashboard(projectId: int, dashboardId: int, metric_id: int,
+                                 data: schemas.SavedCardSchema = Body(...),
+                                 context: schemas.CurrentContext = Depends(OR_context)):
+    data = custom_metrics.make_chart_from_card(
+        project=context.project, user_id=context.user_id, metric_id=metric_id, data=data, for_dashboard=True
+    )
     return {"data": data}
 
 
