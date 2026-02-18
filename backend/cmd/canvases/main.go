@@ -136,6 +136,9 @@ func main() {
 		case sig := <-sigchan:
 			log.Info(ctx, "caught signal %v: terminating", sig)
 			srv.Wait()
+			if err := canvasConsumer.Commit(); err != nil {
+				log.Error(ctx, "can't commit messages: %s", err)
+			}
 			canvasConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
