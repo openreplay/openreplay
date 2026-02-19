@@ -453,7 +453,7 @@ spec:
           mountPath: /opt/openreplay
       {{- end }}
       - name: kafka
-        image: bitnamilegacy/kafka:2.6.0-debian-10-r30
+        image: bitnamilegacy/kafka:3.3
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
