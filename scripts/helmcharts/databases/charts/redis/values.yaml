@@ -9,6 +9,15 @@ global:
   # storageClass: myStorageClass
   redis: {}
 
+## This is a workaround to support old version
+## with old image
+stock_image:
+  enabled: false
+  registry: ghcr.io
+  repository: openreplay/valkey
+  ## Valkey image tag (Redis-compatible)
+  ##
+  tag: 8
 ## Bitnami Redis(TM) image version
 ## ref: https://hub.docker.com/r/bitnami/redis/tags/
 ##
