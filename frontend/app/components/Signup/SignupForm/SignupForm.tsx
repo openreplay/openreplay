@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import ENV from '../../../../env';
 
 const LOGIN_ROUTE = login();
+const logo = new URL('../../../assets/logo.svg', import.meta.url);
 
 function SignupForm() {
   const { t } = useTranslation();
@@ -119,7 +120,7 @@ function SignupForm() {
   return (
     <div className="flex flex-col items-center">
       <div className="m-10 ">
-        <img src="/assets/logo.svg" width={200} alt="Logo" />
+        <img src={logo} width={200} alt="Logo" />
       </div>
       <Form
         onSubmit={onSubmit}

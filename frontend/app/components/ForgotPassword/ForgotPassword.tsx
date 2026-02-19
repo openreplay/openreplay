@@ -1,17 +1,23 @@
-import Copyright from 'Shared/Copyright';
-import React from 'react';
-import { Link } from 'UI';
 import { Button } from 'antd';
-import { login as loginRoute } from 'App/routes';
-import ResetPassword from './ResetPasswordRequest';
-import CreatePassword from './CreatePassword';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { login as loginRoute } from 'App/routes';
+import { useLocation } from 'App/routing';
+import { Link } from 'UI';
+
+import Copyright from 'Shared/Copyright';
+
+import CreatePassword from './CreatePassword';
+import ResetPassword from './ResetPasswordRequest';
+
+const logo = new URL('../../assets/logo.svg', import.meta.url);
 const LOGIN = loginRoute();
 
-function ForgotPassword(props) {
+function ForgotPassword() {
   const { t } = useTranslation();
-  const params = new URLSearchParams(props.location.search);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
   const pass = params.get('pass');
   const invitation = params.get('invitation');
   const creatingNewPassword = pass && invitation;
@@ -20,7 +26,7 @@ function ForgotPassword(props) {
     <div className="flex items-center justify-center h-screen -mt-20">
       <div className="flex flex-col items-center">
         <div className="m-10 ">
-          <img src="/assets/logo.svg" width={200} />
+          <img src={logo} width={200} />
         </div>
         <div
           className="border rounded-lg bg-white shadow-xs"
@@ -47,7 +53,9 @@ function ForgotPassword(props) {
           <div className="flex flex-col items-center justify-center">
             <div className="my-8">
               <Link to={LOGIN}>
-                <Button type="link">{t('Back to Login')}</Button>
+                <Button type="link">
+                  <div className="color-blue link">{t('Back to Login')}</div>
+                </Button>
               </Link>
             </div>
           </div>

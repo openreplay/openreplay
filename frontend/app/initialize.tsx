@@ -72,6 +72,7 @@ const ThemedApp: React.FC = () => {
       },
       Button: {
         colorPrimary: cssVar('main'),
+        textTextColor: cssVar('black'),
         defaultColor: cssVar('black'),
       },
       Select: {

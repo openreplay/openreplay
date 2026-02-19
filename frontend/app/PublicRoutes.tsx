@@ -1,11 +1,13 @@
-import React, { lazy, Suspense, useEffect } from 'react';
-import { Loader } from 'UI';
+import { observer } from 'mobx-react-lite';
+import React, { Suspense, lazy, useEffect } from 'react';
+
+import { useStore } from 'App/mstore';
+import * as routes from 'App/routes';
 import { Navigate, Route, Routes } from 'App/routing';
 import Signup from 'Components/Signup/Signup';
+import { Loader } from 'UI';
+
 import SupportCallout from 'Shared/SupportCallout';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import * as routes from 'App/routes';
 
 const LOGIN_PATH = routes.login();
 const SIGNUP_PATH = routes.signup();
