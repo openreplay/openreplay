@@ -1233,11 +1233,11 @@ CREATE TABLE public.actions
     updated_at  timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-CREATE INDEX actions_project_id_idx ON public.actions (project_id);
 CREATE INDEX actions_user_id_idx ON public.actions (user_id);
 CREATE INDEX actions_project_id_user_id_idx ON public.actions (project_id, user_id);
 CREATE INDEX actions_project_id_is_public_idx ON public.actions (project_id, is_public);
 CREATE INDEX actions_name_gin_idx ON public.actions USING GIN (name gin_trgm_ops);
 CREATE UNIQUE INDEX actions_project_id_name_idx ON public.actions (project_id, name);
+CREATE INDEX actions_project_id_created_at_idx ON public.actions (project_id, created_at DESC);
 
 COMMIT;
