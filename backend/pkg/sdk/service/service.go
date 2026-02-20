@@ -18,7 +18,6 @@ import (
 	"openreplay/backend/pkg/sdk/model"
 	"openreplay/backend/pkg/sessions"
 
-	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
 )
@@ -83,14 +82,14 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 			cfg.TopicRawAnalytics,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			ds.log.Info(context.Background(), "sdk data: %s", string(data))
+			ds.log.Debug(context.Background(), "sdk data: %s", string(data))
 			sdkDataBatch := &model.SdkDataBatch{}
 			if err := json.Unmarshal(data, sdkDataBatch); err != nil {
 				ds.log.Error(context.Background(), "can't unmarshal message: %s", err)
 				return
 			}
 
-			ds.log.Info(context.Background(), "new analytics for session: %d, user actions: %d, events: %d",
+			ds.log.Debug(context.Background(), "new analytics for session: %d, user actions: %d, events: %d",
 				sessID, len(sdkDataBatch.Data.UserActions), len(sdkDataBatch.Data.Events))
 			sessInfo, err := ds.sessions.Get(sessID)
 			if err != nil {
@@ -99,7 +98,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 			}
 
 			for _, action := range sdkDataBatch.Data.UserActions {
-				ds.log.Info(context.Background(), "userAction: %+v", action)
+				ds.log.Debug(context.Background(), "userAction: %+v", action)
 				if action.UserID == "" {
 					ds.log.Debug(context.Background(), "empty userID for session: %d", sessID)
 					continue
@@ -121,7 +120,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 					}
 					user, err := ds.users.Get(sessInfo.ProjectID, action.UserID)
 					if err != nil {
-						ds.log.Error(context.Background(), "can't get user: %s", err)
+						ds.log.Error(context.Background(), "can't get user: %s, userID: %s", err, action.UserID)
 						continue
 					}
 
@@ -342,16 +341,6 @@ func (ds *dataSaverImpl) run() {
 }
 
 func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
-	if err := ds.loadUsersBatch(ctx); err != nil {
-		return err
-	}
-
-	if len(ds.currUsersBatch) == 0 {
-		ds.log.Info(ctx, "no more users to process, marking as done for this window")
-		ds.allUsersProcessed = true
-		return nil
-	}
-
 	batch, err := clickhouse.NewBulk(ds.conn, nil, "updatedEvents", insertEventsQuery,
 		ds.cfg.CHSendBatchSizeLimit+ds.cfg.BatchSizeLimit+1)
 	if err != nil {
@@ -359,23 +348,46 @@ func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
 	}
 
 	totalEventsProcessed := 0
+	totalUsersProcessed := 0
 
-	for ds.currUserIndex < len(ds.currUsersBatch) {
-		user := &ds.currUsersBatch[ds.currUserIndex]
-		ds.log.Debug(ctx, "processing user: project_id=%d, distinct_id=%s, user_id=%s",
-			user.ProjectID, user.DistinctID, user.UserID)
-
-		eventsProcessed, err := ds.processUserEvents(ctx, batch, user)
-		if err != nil {
-			ds.log.Error(ctx, "can't process events for user %s: %s", user.UserID, err)
-			// Move to next user anyway
+	for {
+		if err := ds.loadUsersBatch(ctx); err != nil {
+			return err
 		}
-		totalEventsProcessed += eventsProcessed
-		ds.lastTs = user.Timestamp
-		ds.currUserIndex++
+
+		if len(ds.currUsersBatch) == 0 {
+			ds.log.Info(ctx, "no more users to process, marking as done for this window")
+			ds.allUsersProcessed = true
+			break
+		}
+
+		for ds.currUserIndex < len(ds.currUsersBatch) {
+			user := &ds.currUsersBatch[ds.currUserIndex]
+			ds.log.Debug(ctx, "processing user: project_id=%d, distinct_id=%s, user_id=%s",
+				user.ProjectID, user.DistinctID, user.UserID)
+
+			eventsProcessed, err := ds.processUserEvents(ctx, batch, user)
+			if err != nil {
+				ds.log.Error(ctx, "can't process events for user %s: %s", user.UserID, err)
+				// Move to next user anyway
+			}
+			totalEventsProcessed += eventsProcessed
+			totalUsersProcessed++
+			ds.lastTs = user.Timestamp
+			ds.currUserIndex++
+
+			if totalEventsProcessed >= ds.cfg.CHSendBatchSizeLimit {
+				ds.log.Debug(ctx, "reached batch limit (%d events), will continue next tick", totalEventsProcessed)
+				break
+			}
+		}
+
+		if ds.currUserIndex >= len(ds.currUsersBatch) {
+			ds.currUsersBatch = nil
+			ds.currUserIndex = 0
+		}
 
 		if totalEventsProcessed >= ds.cfg.CHSendBatchSizeLimit {
-			ds.log.Debug(ctx, "reached batch limit (%d events), will continue next tick", totalEventsProcessed)
 			break
 		}
 	}
@@ -383,13 +395,7 @@ func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
 	if err := batch.Send(); err != nil {
 		return fmt.Errorf("failed to send batch: %w", err)
 	}
-	ds.log.Info(ctx, "processed %d events for %d users", totalEventsProcessed, ds.currUserIndex)
-
-	if ds.currUserIndex >= len(ds.currUsersBatch) {
-		ds.log.Debug(ctx, "finished current users batch, will load next batch")
-		ds.currUsersBatch = nil
-		ds.currUserIndex = 0
-	}
+	ds.log.Info(ctx, "processed %d events for %d users", totalEventsProcessed, totalUsersProcessed)
 	return nil
 }
 
@@ -401,7 +407,7 @@ FROM (
     ORDER BY _timestamp DESC
     LIMIT 1 BY project_id, distinct_id) AS raw
 WHERE _timestamp < ?
-ORDER BY _timestamp ASC
+ORDER BY _timestamp DESC
 LIMIT ?;`
 
 func (ds *dataSaverImpl) loadUsersBatch(ctx context.Context) error {
@@ -506,12 +512,14 @@ type UserRecord struct {
 	Timestamp  time.Time `ch:"_timestamp"`
 }
 
-var selectEventsQuery = `SELECT *
-FROM (SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured", 
-       "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url", 
+var selectEventsQuery = `SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured",
+       "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url",
+       "$duration_s", error_id, issue_type, issue_id, toString("$properties") AS "$properties", toString(properties) AS properties, "$user_id"
+FROM (SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured",
+       "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url",
        "$duration_s", error_id, issue_type, issue_id, "$properties", properties, "$user_id"
       FROM product_analytics.events
-      WHERE project_id = ? AND "$device_id" = ? AND _timestamp > now() - INTERVAL 7 DAY AND _timestamp <= now()
+      WHERE project_id = ? AND "$device_id" = ? AND _timestamp > now() - INTERVAL 2 DAY AND _timestamp <= now()
       ORDER BY _timestamp DESC
       LIMIT 1 BY event_id, created_at)
 WHERE empty("$user_id") LIMIT ? OFFSET ?;`
@@ -523,29 +531,29 @@ var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, proje
                                       properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 type UserEvent struct {
-	SessionID    uint64     `ch:"session_id"`
-	EventID      string     `ch:"event_id"`
-	EventName    string     `ch:"$event_name"`
-	CreatedAt    time.Time  `ch:"created_at"`
-	Timestamp    uint32     `ch:"$time"`
-	DeviceID     string     `ch:"$device_id"`
-	AutoCapture  bool       `ch:"$auto_captured"`
-	Device       string     `ch:"$device"`
-	OSVersion    string     `ch:"$os_version"`
-	Os           string     `ch:"$os"`
-	Browser      string     `ch:"$browser"`
-	Referrer     *string    `ch:"$referrer"`
-	Country      string     `ch:"$country"`
-	State        string     `ch:"$state"`
-	City         string     `ch:"$city"`
-	CurrentURL   string     `ch:"$current_url"`
-	DurationS    uint16     `ch:"$duration_s"`
-	ErrorID      string     `ch:"error_id"`
-	IssueType    string     `ch:"issue_type"`
-	IssueID      string     `ch:"issue_id"`
-	ACProperties chcol.JSON `ch:"$properties"`
-	Properties   chcol.JSON `ch:"properties"`
-	UserID       *string    `ch:"$user_id"`
+	SessionID    uint64    `ch:"session_id"`
+	EventID      string    `ch:"event_id"`
+	EventName    string    `ch:"$event_name"`
+	CreatedAt    time.Time `ch:"created_at"`
+	Timestamp    uint32    `ch:"$time"`
+	DeviceID     string    `ch:"$device_id"`
+	AutoCapture  bool      `ch:"$auto_captured"`
+	Device       string    `ch:"$device"`
+	OSVersion    string    `ch:"$os_version"`
+	Os           string    `ch:"$os"`
+	Browser      string    `ch:"$browser"`
+	Referrer     *string   `ch:"$referrer"`
+	Country      string    `ch:"$country"`
+	State        string    `ch:"$state"`
+	City         string    `ch:"$city"`
+	CurrentURL   string    `ch:"$current_url"`
+	DurationS    uint16    `ch:"$duration_s"`
+	ErrorID      string    `ch:"error_id"`
+	IssueType    string    `ch:"issue_type"`
+	IssueID      string    `ch:"issue_id"`
+	ACProperties string    `ch:"$properties"`
+	Properties   string    `ch:"properties"`
+	UserID       *string   `ch:"$user_id"`
 }
 
 func (ds *dataSaverImpl) Stop() {

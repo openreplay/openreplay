@@ -73,7 +73,7 @@ func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 }
 
 func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
-	u.log.Info(context.Background(), "sess: %d,user to insert: %+v", session.SessionID, user)
+	u.log.Debug(context.Background(), "sess: %d,user to insert: %+v", session.SessionID, user)
 	if err := u.conn.Exec(context.Background(), insertQuery,
 		session.ProjectID,
 		user.UserID,
@@ -132,7 +132,7 @@ func (u *usersImpl) Get(projectID uint32, userID string) (*model.User, error) {
 }
 
 func (u *usersImpl) Update(user *model.User) error {
-	u.log.Info(context.Background(), "user to update: %+v", user)
+	u.log.Debug(context.Background(), "user to update: %+v", user)
 	if err := u.conn.Exec(context.Background(), insertQuery,
 		user.ProjectID,
 		user.UserID,
