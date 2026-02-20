@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 
+	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 )
@@ -17,21 +18,54 @@ type Charts interface {
 }
 
 type chartsImpl struct {
-	chConn driver.Conn
-	Logger logger.Logger
+	chConn  driver.Conn
+	Logger  logger.Logger
+	actions lexicon.Actions
 }
 
-func New(logger logger.Logger, chConn driver.Conn) (Charts, error) {
+func New(logger logger.Logger, chConn driver.Conn, actions lexicon.Actions) (Charts, error) {
 	return &chartsImpl{
-		chConn: chConn,
-		Logger: logger,
+		chConn:  chConn,
+		Logger:  logger,
+		actions: actions,
 	}, nil
 }
 
 // GetData def get_chart()
+func (s *chartsImpl) resolveActionFilters(ctx context.Context, projectId int, req *model.MetricPayload) error {
+	for i, series := range req.Series {
+		resolved, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), series.Filter.Filters)
+		if err != nil {
+			s.Logger.Error(ctx, "failed to resolve action filters for series %d in project %d: %v", i, projectId, err)
+			return fmt.Errorf("failed to resolve action filters for series %d: %w", i, err)
+		}
+		req.Series[i].Filter.Filters = resolved
+	}
+
+	resolved, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), req.StartPoint)
+	if err != nil {
+		s.Logger.Error(ctx, "failed to resolve action filters in startPoint for project %d: %v", projectId, err)
+		return fmt.Errorf("failed to resolve action filters in startPoint: %w", err)
+	}
+	req.StartPoint = resolved
+
+	resolved, err = lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), req.Exclude)
+	if err != nil {
+		s.Logger.Error(ctx, "failed to resolve action filters in excludes for project %d: %v", projectId, err)
+		return fmt.Errorf("failed to resolve action filters in excludes: %w", err)
+	}
+	req.Exclude = resolved
+
+	return nil
+}
+
 func (s *chartsImpl) GetData(ctx context.Context, projectId int, userID uint64, req *model.MetricPayload) (interface{}, error) {
 	if req == nil {
 		return nil, fmt.Errorf("request is empty")
+	}
+
+	if err := s.resolveActionFilters(ctx, projectId, req); err != nil {
+		return nil, err
 	}
 
 	payload := &Payload{

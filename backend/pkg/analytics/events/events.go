@@ -23,13 +23,15 @@ type eventsImpl struct {
 	log     logger.Logger
 	chConn  driver.Conn
 	lexicon lexicon.Lexicon
+	actions lexicon.Actions
 }
 
-func New(log logger.Logger, conn driver.Conn, lex lexicon.Lexicon) (Events, error) {
+func New(log logger.Logger, conn driver.Conn, lex lexicon.Lexicon, actions lexicon.Actions) (Events, error) {
 	return &eventsImpl{
 		log:     log,
 		chConn:  conn,
 		lexicon: lex,
+		actions: actions,
 	}, nil
 }
 
@@ -112,6 +114,13 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 	if req == nil {
 		return nil, fmt.Errorf("search events request cannot be nil")
 	}
+
+	resolvedFilters, err := lexicon.ResolveActionFilters(ctx, e.actions, projID, req.Filters)
+	if err != nil {
+		e.log.Error(ctx, "failed to resolve action filters for project %d: %v", projID, err)
+		return nil, fmt.Errorf("failed to resolve action filters: %w", err)
+	}
+	req.Filters = resolvedFilters
 
 	lexHiddenEvents, err := e.lexicon.GetHiddenEvents(ctx, projID)
 	if err != nil {
