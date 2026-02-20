@@ -1,13 +1,15 @@
-import React from 'react';
-import { Alert, Space, Button } from 'antd';
+import { trackerInstance } from '@/init/openreplay';
+import { Alert, Button, Space } from 'antd';
+import { SquareArrowOutUpRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useStore } from 'App/mstore';
 import { onboarding as onboardingRoute } from 'App/routes';
 import { useNavigate } from 'App/routing';
-import { SquareArrowOutUpRight } from 'lucide-react';
+
 import * as routes from '../../../routes';
-import { useTranslation } from 'react-i18next';
-import { trackerInstance } from '@/init/openreplay';
 
 const { withSiteId } = routes;
 
