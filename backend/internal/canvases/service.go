@@ -123,7 +123,10 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		v.log.Fatal(task.ctx, "can't create a dir, err: %s", err)
 	}
-	path := filepath.Join(dir, task.name+".frames")
+	if !strings.HasSuffix(task.name, ".frames") {
+		task.name = task.name + ".frames"
+	}
+	path := filepath.Join(dir, task.name)
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		v.log.Fatal(task.ctx, "can't open frames file, err: %s", err)
