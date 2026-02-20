@@ -117,7 +117,7 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 
 	resolved, err := lexicon.ResolveActionFilters(ctx, e.actions, projID, req.Filters)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve action filters: %w", err)
+		return nil, err
 	}
 	req.Filters = resolved
 

@@ -8,12 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
 
 	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/lexicon/model"
 	analyticsModel "openreplay/backend/pkg/analytics/model"
-	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
@@ -35,29 +36,16 @@ type Actions interface {
 type actionsImpl struct {
 	log    logger.Logger
 	pgconn pool.Pool
-	cache  cache.Cache
 }
 
 func NewActions(log logger.Logger, conn pool.Pool) Actions {
 	return &actionsImpl{
 		log:    log,
 		pgconn: conn,
-		cache:  cache.New(2*time.Minute, 5*time.Minute),
 	}
-}
-
-func actionCacheKey(projectID uint32, actionID string) string {
-	return fmt.Sprintf("action:%d:%s", projectID, actionID)
 }
 
 func (a *actionsImpl) Get(ctx context.Context, projectID uint32, actionID string) (*model.Action, error) {
-	cacheKey := actionCacheKey(projectID, actionID)
-	if cached, ok := a.cache.Get(cacheKey); ok {
-		if action, ok := cached.(*model.Action); ok {
-			return action, nil
-		}
-	}
-
 	const query = `
 		SELECT action_id, project_id, user_id, name, description, filters, is_public, created_at, updated_at
 		FROM public.actions
@@ -83,6 +71,10 @@ func (a *actionsImpl) Get(ctx context.Context, projectID uint32, actionID string
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrActionNotFound
 		}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.InvalidTextRepresentation {
+			return nil, ErrActionNotFound
+		}
 		a.log.Error(ctx, "get action %s: %v", actionID, err)
 		return nil, fmt.Errorf("get action: %w", err)
 	}
@@ -97,7 +89,6 @@ func (a *actionsImpl) Get(ctx context.Context, projectID uint32, actionID string
 	action.CreatedAt = createdAt.UnixMilli()
 	action.UpdatedAt = updatedAt.UnixMilli()
 
-	a.cache.Set(cacheKey, &action)
 	return &action, nil
 }
 
@@ -223,7 +214,6 @@ func (a *actionsImpl) Update(ctx context.Context, projectID uint32, actionID str
 	action.CreatedAt = createdAt.UnixMilli()
 	action.UpdatedAt = updatedAt.UnixMilli()
 
-	a.cache.Set(actionCacheKey(projectID, actionID), &action)
 	return &action, nil
 }
 
@@ -243,43 +233,64 @@ func (a *actionsImpl) Delete(ctx context.Context, projectID uint32, actionID str
 		return fmt.Errorf("delete action: %w", err)
 	}
 
-	a.cache.Set(actionCacheKey(projectID, actionID), nil)
 	return nil
 }
 
 const maxActionResolveDepth = 3
 
-var ErrActionCycle = errors.New("circular action reference detected")
-var ErrActionDepthExceeded = errors.New("action nesting depth exceeded")
-
-func ResolveActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []filters.Filter) ([]filters.Filter, error) {
-	return resolveActionFiltersRecursive(ctx, actions, projID, inputFilters, 0, make(map[string]bool))
+func hasActionFilters(inputFilters []analyticsModel.Filter) bool {
+	for i := range inputFilters {
+		if inputFilters[i].ActionId != "" {
+			return true
+		}
+	}
+	return false
 }
 
-func resolveActionFiltersRecursive(ctx context.Context, actions Actions, projID uint32, inputFilters []filters.Filter, depth int, seen map[string]bool) ([]filters.Filter, error) {
+func hasEventActionFilters(inputFilters []filters.Filter) bool {
+	for i := range inputFilters {
+		if inputFilters[i].ActionId != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func ResolveActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []filters.Filter) ([]filters.Filter, error) {
+	if !hasEventActionFilters(inputFilters) {
+		return inputFilters, nil
+	}
+	return resolveActionFilters(ctx, actions, projID, inputFilters, 0, make(map[string]bool))
+}
+
+func resolveActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []filters.Filter, depth int, seen map[string]bool) ([]filters.Filter, error) {
 	if depth > maxActionResolveDepth {
-		return nil, ErrActionDepthExceeded
+		return nil, nil
 	}
 	resolved := make([]filters.Filter, 0, len(inputFilters))
 	for _, f := range inputFilters {
-		if f.IsAction && f.ActionId != "" {
-			if seen[f.ActionId] {
-				return nil, fmt.Errorf("%w: action %s", ErrActionCycle, f.ActionId)
-			}
-			seen[f.ActionId] = true
-			action, err := actions.Get(ctx, projID, f.ActionId)
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve action %s: %w", f.ActionId, err)
-			}
-			nestedResolved, err := resolveActionFiltersRecursive(ctx, actions, projID, action.Filters, depth+1, seen)
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve nested action in %s: %w", f.ActionId, err)
-			}
-			resolved = append(resolved, nestedResolved...)
-			delete(seen, f.ActionId)
-		} else {
+		if f.ActionId == "" {
 			resolved = append(resolved, f)
+			continue
 		}
+		if seen[f.ActionId] {
+			continue
+		}
+		seen[f.ActionId] = true
+		action, err := actions.Get(ctx, projID, f.ActionId)
+		if err != nil {
+			delete(seen, f.ActionId)
+			if errors.Is(err, ErrActionNotFound) {
+				return nil, fmt.Errorf("action %s not found", f.ActionId)
+			}
+			return nil, fmt.Errorf("failed to resolve action %s: %w", f.ActionId, err)
+		}
+		nestedResolved, err := resolveActionFilters(ctx, actions, projID, action.Filters, depth+1, seen)
+		if err != nil {
+			return nil, err
+		}
+		resolved = append(resolved, nestedResolved...)
+		delete(seen, f.ActionId)
 	}
 	return resolved, nil
 }
@@ -298,43 +309,49 @@ func convertFilterToModel(f filters.Filter) analyticsModel.Filter {
 		DataType:      string(f.DataType),
 		AutoCaptured:  f.AutoCaptured,
 		Filters:       nested,
-		IsAction:      f.IsAction,
 		ActionId:      f.ActionId,
 	}
 }
 
 func ResolveModelActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []analyticsModel.Filter) ([]analyticsModel.Filter, error) {
-	return resolveModelActionFiltersRecursive(ctx, actions, projID, inputFilters, 0, make(map[string]bool))
+	if !hasActionFilters(inputFilters) {
+		return inputFilters, nil
+	}
+	return resolveModelActionFilters(ctx, actions, projID, inputFilters, 0, make(map[string]bool))
 }
 
-func resolveModelActionFiltersRecursive(ctx context.Context, actions Actions, projID uint32, inputFilters []analyticsModel.Filter, depth int, seen map[string]bool) ([]analyticsModel.Filter, error) {
+func resolveModelActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []analyticsModel.Filter, depth int, seen map[string]bool) ([]analyticsModel.Filter, error) {
 	if depth > maxActionResolveDepth {
-		return nil, ErrActionDepthExceeded
+		return nil, nil
 	}
 	resolved := make([]analyticsModel.Filter, 0, len(inputFilters))
 	for _, f := range inputFilters {
-		if f.IsAction && f.ActionId != "" {
-			if seen[f.ActionId] {
-				return nil, fmt.Errorf("%w: action %s", ErrActionCycle, f.ActionId)
-			}
-			seen[f.ActionId] = true
-			action, err := actions.Get(ctx, projID, f.ActionId)
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve action %s: %w", f.ActionId, err)
-			}
-			converted := make([]analyticsModel.Filter, 0, len(action.Filters))
-			for _, af := range action.Filters {
-				converted = append(converted, convertFilterToModel(af))
-			}
-			nestedResolved, err := resolveModelActionFiltersRecursive(ctx, actions, projID, converted, depth+1, seen)
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve nested action in %s: %w", f.ActionId, err)
-			}
-			resolved = append(resolved, nestedResolved...)
-			delete(seen, f.ActionId)
-		} else {
+		if f.ActionId == "" {
 			resolved = append(resolved, f)
+			continue
 		}
+		if seen[f.ActionId] {
+			continue
+		}
+		seen[f.ActionId] = true
+		action, err := actions.Get(ctx, projID, f.ActionId)
+		if err != nil {
+			delete(seen, f.ActionId)
+			if errors.Is(err, ErrActionNotFound) {
+				return nil, fmt.Errorf("action %s not found", f.ActionId)
+			}
+			return nil, fmt.Errorf("failed to resolve action %s: %w", f.ActionId, err)
+		}
+		converted := make([]analyticsModel.Filter, 0, len(action.Filters))
+		for _, af := range action.Filters {
+			converted = append(converted, convertFilterToModel(af))
+		}
+		nestedResolved, err := resolveModelActionFilters(ctx, actions, projID, converted, depth+1, seen)
+		if err != nil {
+			return nil, err
+		}
+		resolved = append(resolved, nestedResolved...)
+		delete(seen, f.ActionId)
 	}
 	return resolved, nil
 }
@@ -342,16 +359,15 @@ func resolveModelActionFiltersRecursive(ctx context.Context, actions Actions, pr
 func ResolveSessionSearchFilters(ctx context.Context, actions Actions, projID uint32, req *analyticsModel.SessionsSearchRequest) error {
 	resolved, err := ResolveModelActionFilters(ctx, actions, projID, req.Filters)
 	if err != nil {
-		return fmt.Errorf("failed to resolve action filters: %w", err)
+		return err
 	}
 	req.Filters = resolved
-
 	for i, series := range req.Series {
-		resolvedSeries, err := ResolveModelActionFilters(ctx, actions, projID, series.Filter.Filters)
+		resolved, err := ResolveModelActionFilters(ctx, actions, projID, series.Filter.Filters)
 		if err != nil {
-			return fmt.Errorf("failed to resolve action filters for series %d: %w", i, err)
+			return err
 		}
-		req.Series[i].Filter.Filters = resolvedSeries
+		req.Series[i].Filter.Filters = resolved
 	}
 	return nil
 }
@@ -360,23 +376,20 @@ func ResolveMetricPayloadFilters(ctx context.Context, actions Actions, projID ui
 	for i, series := range req.Series {
 		resolved, err := ResolveModelActionFilters(ctx, actions, projID, series.Filter.Filters)
 		if err != nil {
-			return fmt.Errorf("failed to resolve action filters for series %d: %w", i, err)
+			return err
 		}
 		req.Series[i].Filter.Filters = resolved
 	}
-
 	resolved, err := ResolveModelActionFilters(ctx, actions, projID, req.StartPoint)
 	if err != nil {
-		return fmt.Errorf("failed to resolve action filters in startPoint: %w", err)
+		return err
 	}
 	req.StartPoint = resolved
-
 	resolved, err = ResolveModelActionFilters(ctx, actions, projID, req.Exclude)
 	if err != nil {
-		return fmt.Errorf("failed to resolve action filters in excludes: %w", err)
+		return err
 	}
 	req.Exclude = resolved
-
 	return nil
 }
 

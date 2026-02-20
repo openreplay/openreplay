@@ -108,7 +108,6 @@ func (s *searchImpl) GetAll(ctx context.Context, projectId int, userId uint64, r
 	}
 
 	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
-		s.Logger.Error(ctx, "failed to resolve action filters for project %d: %v", projectId, err)
 		return nil, err
 	}
 
@@ -498,7 +497,6 @@ func (s *searchImpl) GetSessionIds(ctx context.Context, projectId int, userId ui
 	}
 
 	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
-		s.Logger.Error(ctx, "failed to resolve action filters for project %d: %v", projectId, err)
 		return nil, err
 	}
 
