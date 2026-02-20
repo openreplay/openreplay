@@ -211,6 +211,8 @@ type Filter struct {
 	DataType      DataTypeType       `json:"dataType" validate:"omitempty,oneof=string number boolean integer timestamp"`
 	AutoCaptured  bool               `json:"autoCaptured"`
 	Filters       []Filter           `json:"filters,omitempty" validate:"omitempty,dive"`
+	IsAction      bool               `json:"isAction"`
+	ActionId      string             `json:"actionId,omitempty" validate:"omitempty,max=36"`
 }
 
 func ValidateFilterFields(sl validator.StructLevel) {

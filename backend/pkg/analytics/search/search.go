@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/analytics/charts"
+	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/model"
 
 	"openreplay/backend/pkg/logger"
@@ -26,16 +27,18 @@ type Search interface {
 }
 
 type searchImpl struct {
-	chConn driver.Conn
-	pgConn pool.Pool
-	Logger logger.Logger
+	chConn  driver.Conn
+	pgConn  pool.Pool
+	Logger  logger.Logger
+	actions lexicon.Actions
 }
 
-func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool) (Search, error) {
+func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, actions lexicon.Actions) (Search, error) {
 	return &searchImpl{
-		chConn: chConn,
-		pgConn: pgConn,
-		Logger: logger,
+		chConn:  chConn,
+		pgConn:  pgConn,
+		Logger:  logger,
+		actions: actions,
 	}, nil
 }
 
@@ -104,12 +107,27 @@ func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSea
 		return nil, errors.New("nil request")
 	}
 
-	// Handle series requests
+	ctx := context.Background()
+	resolvedFilters, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), req.Filters)
+	if err != nil {
+		s.Logger.Error(ctx, "failed to resolve action filters for project %d: %v", projectId, err)
+		return nil, fmt.Errorf("failed to resolve action filters: %w", err)
+	}
+	req.Filters = resolvedFilters
+
+	for i, series := range req.Series {
+		resolvedSeriesFilters, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), series.Filter.Filters)
+		if err != nil {
+			s.Logger.Error(ctx, "failed to resolve action filters for series %d in project %d: %v", i, projectId, err)
+			return nil, fmt.Errorf("failed to resolve action filters for series %d: %w", i, err)
+		}
+		req.Series[i].Filter.Filters = resolvedSeriesFilters
+	}
+
 	if len(req.Series) > 0 {
 		return s.getSeriesSessions(projectId, userId, req)
 	}
 
-	// Regular single response logic
 	return s.getSingleSessions(projectId, userId, req)
 }
 
@@ -490,6 +508,14 @@ func (s *searchImpl) GetSessionIds(projectId int, userId uint64, req *model.Sess
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
+
+	ctx := context.Background()
+	resolvedFilters, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), req.Filters)
+	if err != nil {
+		s.Logger.Error(ctx, "failed to resolve action filters for project %d: %v", projectId, err)
+		return nil, fmt.Errorf("failed to resolve action filters: %w", err)
+	}
+	req.Filters = resolvedFilters
 
 	qc := s.buildSessionsQueryComponents(projectId, userId, req)
 

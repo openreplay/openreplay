@@ -10,7 +10,10 @@ import (
 
 	"github.com/jackc/pgx/v4"
 
+	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/lexicon/model"
+	analyticsModel "openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
@@ -32,13 +35,29 @@ type Actions interface {
 type actionsImpl struct {
 	log    logger.Logger
 	pgconn pool.Pool
+	cache  cache.Cache
 }
 
 func NewActions(log logger.Logger, conn pool.Pool) Actions {
-	return &actionsImpl{log: log, pgconn: conn}
+	return &actionsImpl{
+		log:    log,
+		pgconn: conn,
+		cache:  cache.New(2*time.Minute, 5*time.Minute),
+	}
+}
+
+func actionCacheKey(projectID uint32, actionID string) string {
+	return fmt.Sprintf("action:%d:%s", projectID, actionID)
 }
 
 func (a *actionsImpl) Get(ctx context.Context, projectID uint32, actionID string) (*model.Action, error) {
+	cacheKey := actionCacheKey(projectID, actionID)
+	if cached, ok := a.cache.Get(cacheKey); ok {
+		if action, ok := cached.(*model.Action); ok {
+			return action, nil
+		}
+	}
+
 	const query = `
 		SELECT action_id, project_id, user_id, name, description, filters, is_public, created_at, updated_at
 		FROM public.actions
@@ -77,6 +96,8 @@ func (a *actionsImpl) Get(ctx context.Context, projectID uint32, actionID string
 
 	action.CreatedAt = createdAt.UnixMilli()
 	action.UpdatedAt = updatedAt.UnixMilli()
+
+	a.cache.Set(cacheKey, &action)
 	return &action, nil
 }
 
@@ -201,6 +222,8 @@ func (a *actionsImpl) Update(ctx context.Context, projectID uint32, actionID str
 
 	action.CreatedAt = createdAt.UnixMilli()
 	action.UpdatedAt = updatedAt.UnixMilli()
+
+	a.cache.Set(actionCacheKey(projectID, actionID), &action)
 	return &action, nil
 }
 
@@ -219,7 +242,60 @@ func (a *actionsImpl) Delete(ctx context.Context, projectID uint32, actionID str
 		a.log.Error(ctx, "delete action %s: %v", actionID, err)
 		return fmt.Errorf("delete action: %w", err)
 	}
+
+	a.cache.Set(actionCacheKey(projectID, actionID), nil)
 	return nil
+}
+
+func ResolveActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []filters.Filter) ([]filters.Filter, error) {
+	resolved := make([]filters.Filter, 0, len(inputFilters))
+	for _, f := range inputFilters {
+		if f.IsAction && f.ActionId != "" {
+			action, err := actions.Get(ctx, projID, f.ActionId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve action %s: %w", f.ActionId, err)
+			}
+			resolved = append(resolved, action.Filters...)
+		} else {
+			resolved = append(resolved, f)
+		}
+	}
+	return resolved, nil
+}
+
+func convertFilterToModel(f filters.Filter) analyticsModel.Filter {
+	nested := make([]analyticsModel.Filter, 0, len(f.Filters))
+	for _, nf := range f.Filters {
+		nested = append(nested, convertFilterToModel(nf))
+	}
+	return analyticsModel.Filter{
+		Name:          f.Name,
+		Operator:      string(f.Operator),
+		PropertyOrder: string(f.PropertyOrder),
+		Value:         f.Value,
+		IsEvent:       f.IsEvent,
+		DataType:      string(f.DataType),
+		AutoCaptured:  f.AutoCaptured,
+		Filters:       nested,
+	}
+}
+
+func ResolveModelActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []analyticsModel.Filter) ([]analyticsModel.Filter, error) {
+	resolved := make([]analyticsModel.Filter, 0, len(inputFilters))
+	for _, f := range inputFilters {
+		if f.IsAction && f.ActionId != "" {
+			action, err := actions.Get(ctx, projID, f.ActionId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve action %s: %w", f.ActionId, err)
+			}
+			for _, af := range action.Filters {
+				resolved = append(resolved, convertFilterToModel(af))
+			}
+		} else {
+			resolved = append(resolved, f)
+		}
+	}
+	return resolved, nil
 }
 
 var sortColumnMap = map[string]string{
