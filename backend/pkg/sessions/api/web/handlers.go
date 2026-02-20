@@ -74,7 +74,6 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/v1/web/start", "POST", e.startSessionHandlerWeb, api.NoPermissions, api.DoNotTrack},
 		{"/v1/web/i", "POST", e.pushMessagesHandlerWeb, api.NoPermissions, api.DoNotTrack},
 		{"/v1/web/images", "POST", e.imagesUploaderHandlerWeb, api.NoPermissions, api.DoNotTrack},
-		{"/v1/web/frames", "POST", e.framesUploaderHandlerWeb, api.NoPermissions, api.DoNotTrack},
 	}
 }
 
@@ -381,13 +380,11 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	startTime := time.Now()
 
 	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
-	if sessionData != nil {
-		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
-	}
-	if err != nil { // Should accept expired token?
+	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 
 	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
@@ -407,6 +404,11 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	} else if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 		return
+	}
+
+	isFrames := false
+	if len(r.MultipartForm.Value["type"]) > 0 {
+		isFrames = true
 	}
 
 	frames := bytes.NewBuffer([]byte{})
@@ -431,6 +433,30 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			file.Close()
 
 			fileName := util.SafeString(fileHeader.Filename)
+
+			if isFrames {
+				if !strings.HasSuffix(fileName, ".frames") {
+					e.log.Error(r.Context(), "file name does not end with .frames: %s", fileName)
+					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+					return
+				}
+
+				data, err := json.Marshal(&ScreenshotMessage{
+					Name: fileName,
+					Data: fileBytes,
+				})
+				if err != nil {
+					e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
+					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+					return
+				}
+				if err := e.producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+					e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
+				}
+				e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+				return
+			}
+
 			baseName, ts, err := parseCanvasName(fileName)
 			if err != nil {
 				e.log.Error(r.Context(), "can't parse canvas name %s: %s", fileName, err)
@@ -494,79 +520,4 @@ func parseCanvasName(canvasName string) (baseName string, ts uint64, err error) 
 		return "", 0, fmt.Errorf("can't parse timestamp from canvas name %s: %w", canvasName, err)
 	}
 	return baseName, ts, nil
-}
-
-func (e *handlersImpl) framesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-
-	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
-		return
-	}
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
-
-	if info, err := e.sessions.Get(sessionData.ID); err == nil {
-		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
-	}
-
-	if r.Body == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
-		return
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
-	defer r.Body.Close()
-
-	err = r.ParseMultipartForm(10 << 20) // TODO: use kafka's max message size (current max upload size 10 MB)
-	if errors.Is(err, http.ErrNotMultipart) || errors.Is(err, http.ErrMissingBoundary) {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
-		return
-	} else if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
-		return
-	}
-
-	// We take the first file only
-	for _, fileHeaderList := range r.MultipartForm.File {
-		for _, fileHeader := range fileHeaderList {
-			file, err := fileHeader.Open()
-			if err != nil {
-				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
-				return
-			}
-
-			// Read the file content
-			fileBytes, err := io.ReadAll(file)
-			if err != nil {
-				file.Close()
-				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
-				return
-			}
-			file.Close()
-
-			fileName := util.SafeString(fileHeader.Filename) // for example: 1771238515501_33.webp.frames
-			if !strings.HasSuffix(fileName, ".frames") {
-				e.log.Error(r.Context(), "file name does not end with .frames: %s", fileName)
-				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
-				return
-			}
-
-			data, err := json.Marshal(&ScreenshotMessage{
-				Name: fileName,
-				Data: fileBytes,
-			})
-			if err != nil {
-				e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
-				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
-				return
-			}
-			if err := e.producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
-				e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
-			}
-			e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
-			return
-		}
-	}
-
-	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 }
