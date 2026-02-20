@@ -22,7 +22,7 @@ type UpdateActionRequest struct {
 
 type CreateActionRequest struct {
 	Name        string           `json:"name" validate:"required,min=1,max=255"`
-	Description string           `json:"description" validate:"max=1024"`
+	Description *string          `json:"description" validate:"omitempty,max=1024"`
 	Filters     []filters.Filter `json:"filters" validate:"omitempty,dive"`
 }
 
