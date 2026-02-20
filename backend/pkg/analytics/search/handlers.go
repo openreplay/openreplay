@@ -88,9 +88,9 @@ func (e *handlersImpl) getSessions(w http.ResponseWriter, r *http.Request) {
 
 	var resp interface{}
 	if req.Bookmarked {
-		resp, err = e.search.GetBookmarkedSessions(projectID, currentUser.ID, req)
+		resp, err = e.search.GetBookmarkedSessions(r.Context(), projectID, currentUser.ID, req)
 	} else {
-		resp, err = e.search.GetAll(projectID, currentUser.ID, req)
+		resp, err = e.search.GetAll(r.Context(), projectID, currentUser.ID, req)
 	}
 
 	if err != nil {
@@ -130,7 +130,7 @@ func (e *handlersImpl) getSessionIDs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.search.GetSessionIds(projectID, currentUser.ID, req)
+	resp, err := e.search.GetSessionIds(r.Context(), projectID, currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

@@ -21,9 +21,9 @@ import (
 )
 
 type Search interface {
-	GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
-	GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
-	GetSessionIds(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetAll(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetBookmarkedSessions(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetSessionIds(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 }
 
 type searchImpl struct {
@@ -102,26 +102,14 @@ LIMIT %d OFFSET %d;`
 //   - Each series uses its own events order from req.Series[i].EventsOrder
 //   - Pagination is applied to each series individually
 //   - Response includes series index, total count, and sessions for each series
-func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+func (s *searchImpl) GetAll(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
 
-	ctx := context.Background()
-	resolvedFilters, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), req.Filters)
-	if err != nil {
+	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
 		s.Logger.Error(ctx, "failed to resolve action filters for project %d: %v", projectId, err)
-		return nil, fmt.Errorf("failed to resolve action filters: %w", err)
-	}
-	req.Filters = resolvedFilters
-
-	for i, series := range req.Series {
-		resolvedSeriesFilters, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), series.Filter.Filters)
-		if err != nil {
-			s.Logger.Error(ctx, "failed to resolve action filters for series %d in project %d: %v", i, projectId, err)
-			return nil, fmt.Errorf("failed to resolve action filters for series %d: %w", i, err)
-		}
-		req.Series[i].Filter.Filters = resolvedSeriesFilters
+		return nil, err
 	}
 
 	if len(req.Series) > 0 {
@@ -383,7 +371,7 @@ WHERE project_id = $1;`, projectId)
 	return result
 }
 
-func (s *searchImpl) GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+func (s *searchImpl) GetBookmarkedSessions(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
@@ -504,18 +492,15 @@ LIMIT $3 OFFSET $4`,
 	return resp, nil
 }
 
-func (s *searchImpl) GetSessionIds(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+func (s *searchImpl) GetSessionIds(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
 
-	ctx := context.Background()
-	resolvedFilters, err := lexicon.ResolveModelActionFilters(ctx, s.actions, uint32(projectId), req.Filters)
-	if err != nil {
+	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
 		s.Logger.Error(ctx, "failed to resolve action filters for project %d: %v", projectId, err)
-		return nil, fmt.Errorf("failed to resolve action filters: %w", err)
+		return nil, err
 	}
-	req.Filters = resolvedFilters
 
 	qc := s.buildSessionsQueryComponents(projectId, userId, req)
 

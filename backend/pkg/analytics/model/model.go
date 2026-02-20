@@ -49,7 +49,7 @@ type Filter struct {
 	AutoCaptured  bool     `json:"autoCaptured"`      // Indicates if the filter is auto-captured
 	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
 	IsAction      bool     `json:"isAction"`
-	ActionId      string   `json:"actionId,omitempty"`
+	ActionId      string   `json:"actionId,omitempty" validate:"omitempty,max=36"`
 }
 
 var ViewTypeTimeseries []string = []string{"lineChart", "areaChart", "barChart", "progressChart", "pieChart", "metric", "table"}
