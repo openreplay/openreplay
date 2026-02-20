@@ -147,23 +147,33 @@ function resolveTo(
 export function useHistory(): History {
   const navigate = useNavigate();
   const location = useLocation();
+  const locationRef = React.useRef(location);
+  locationRef.current = location;
 
   return React.useMemo<History>(() => {
     return {
       push: (to) => {
-        const { to: resolvedTo, options } = resolveTo(to as any, location);
+        const { to: resolvedTo, options } = resolveTo(
+          to as any,
+          locationRef.current,
+        );
         navigate(resolvedTo, options);
       },
       replace: (to) => {
-        const { to: resolvedTo, options } = resolveTo(to as any, location);
+        const { to: resolvedTo, options } = resolveTo(
+          to as any,
+          locationRef.current,
+        );
         navigate(resolvedTo, { ...options, replace: true });
       },
       go: (delta) => navigate(delta),
       goBack: () => navigate(-1),
       goForward: () => navigate(1),
-      location,
+      get location() {
+        return locationRef.current;
+      },
     };
-  }, [navigate, location]);
+  }, [navigate]);
 }
 
 export function withRouter<P extends object>(

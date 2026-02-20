@@ -1,18 +1,22 @@
-import React from 'react';
-import { useModal } from 'App/components/Modal';
-import ChatHeader from './components/ChatHeader';
-import { PANEL_SIZES } from 'App/constants/panelSizes';
-import ChatLog from './components/ChatLog';
-import IntroSection from './components/IntroSection';
-import { kaiService } from 'App/services';
-import { toast } from 'react-toastify';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+
+import { useModal } from 'App/components/Modal';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
+import { useStore } from 'App/mstore';
 import { useHistory, useLocation } from 'App/routing';
-import ChatsModal from './components/ChatsModal';
+import { kaiService } from 'App/services';
+
 import { kaiStore } from './KaiStore';
+import ChatHeader from './components/ChatHeader';
+import ChatLog from './components/ChatLog';
+import ChatsModal from './components/ChatsModal';
+import IntroSection from './components/IntroSection';
 
 function KaiChat() {
+  const { t } = useTranslation();
   const { userStore, projectsStore } = useStore();
   const history = useHistory();
   const chatTitle = kaiStore.chatTitle;
@@ -33,7 +37,7 @@ function KaiChat() {
     setSection('intro');
     setInitialMsg(null);
     setTitle(null);
-  }, [activeSiteId, history]);
+  }, [activeSiteId]);
 
   const openChats = () => {
     showModal(
@@ -157,7 +161,7 @@ function KaiChat() {
                 'text-disabled-text absolute bottom-4 left-0 right-0 text-center text-sm'
               }
             >
-              OpenReplay AI can make mistakes. Verify its outputs.
+              {t('OpenReplay AI can make mistakes. Verify its outputs.')}
             </div>
           </>
         ) : (
