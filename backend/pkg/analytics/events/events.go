@@ -115,12 +115,11 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 		return nil, fmt.Errorf("search events request cannot be nil")
 	}
 
-	resolvedFilters, err := lexicon.ResolveActionFilters(ctx, e.actions, projID, req.Filters)
+	resolved, err := lexicon.ResolveActionFilters(ctx, e.actions, projID, req.Filters)
 	if err != nil {
-		e.log.Error(ctx, "failed to resolve action filters for project %d: %v", projID, err)
 		return nil, fmt.Errorf("failed to resolve action filters: %w", err)
 	}
-	req.Filters = resolvedFilters
+	req.Filters = resolved
 
 	lexHiddenEvents, err := e.lexicon.GetHiddenEvents(ctx, projID)
 	if err != nil {
