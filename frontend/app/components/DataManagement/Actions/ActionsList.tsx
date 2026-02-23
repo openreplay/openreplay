@@ -46,6 +46,7 @@ function ActionsList({
       sorter: true,
       showSorterTooltip: false,
       className: 'cursor-pointer!',
+      render: (text: string) => <TextEllipsis maxWidth={'200px'} text={text} className='link' />,
     },
     {
       title: 'Description',
