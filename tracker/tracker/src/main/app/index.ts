@@ -1503,6 +1503,7 @@ export default class App {
         canvasEnabled,
         canvasQuality,
         canvasFPS,
+        framesSupport,
         assistOnly: socketOnly,
       } = await r.json()
       if (
@@ -1585,6 +1586,7 @@ export default class App {
             isDebug: this.options.canvas.__save_canvas_locally,
             fixedScaling: this.options.canvas.fixedCanvasScaling,
             useAnimationFrame: this.options.canvas.useAnimationFrame,
+            framesSupport: !!framesSupport,
           })
       }
 

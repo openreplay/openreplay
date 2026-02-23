@@ -17,6 +17,8 @@ interface Options {
   isDebug?: boolean
   fixedScaling?: boolean
   useAnimationFrame?: boolean
+  framesSupport?: boolean
+  /** @deprecated webp is the default format for pipeline optimization */
   fileExt?: 'webp' | 'png' | 'jpeg' | 'avif'
 }
 
@@ -42,7 +44,7 @@ class CanvasRecorder {
     private readonly app: App,
     private readonly options: Options,
   ) {
-    this.fileExt = options.fileExt ?? 'webp'
+    this.fileExt = 'webp'
     this.interval = 1000 / options.fps
   }
 
@@ -203,22 +205,66 @@ class CanvasRecorder {
     this.isProcessingQueue = false
   }
 
-  private uploadBatch(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
-    const formData = new FormData()
-    const fileEntries: { data: Blob; name: string }[] = []
-    images.forEach((snapshot) => {
-      const blob = snapshot.data
-      if (!blob) return
-      const name = `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`
-      formData.append('snapshot', blob, name)
-      if (this.options.isDebug) {
-        fileEntries.push({ data: blob, name })
-      }
-    })
-
+  private async uploadBatch(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
     if (this.options.isDebug) {
+      const fileEntries: { data: Blob; name: string }[] = []
+      images.forEach((snapshot) => {
+        if (!snapshot.data) return
+        fileEntries.push({ data: snapshot.data, name: `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}` })
+      })
       void saveArchive(fileEntries, `canvas_${canvasId}_${createdAt}`)
       return
+    }
+
+    let formData: FormData
+
+    if (this.options.framesSupport) {
+      // Pack frames into binary format: [uint64 LE timestamp][uint32 LE size][data] per frame
+      const buffers: ArrayBuffer[] = []
+      let totalSize = 0
+      for (const snapshot of images) {
+        if (!snapshot.data) continue
+        const ab = await snapshot.data.arrayBuffer()
+        buffers.push(ab)
+        totalSize += 8 + 4 + ab.byteLength // uint64 ts + uint32 size + data
+      }
+
+      if (totalSize === 0) return
+
+      const packed = new ArrayBuffer(totalSize)
+      const view = new DataView(packed)
+      const bytes = new Uint8Array(packed)
+      let offset = 0
+
+      for (let i = 0; i < images.length; i++) {
+        if (!images[i].data) continue
+        const ab = buffers.shift()!
+        const ts = images[i].id
+        // uint64 LE as two uint32 LE writes -- timestamp
+        view.setUint32(offset, ts % 0x100000000, true)
+        view.setUint32(offset + 4, Math.floor(ts / 0x100000000), true)
+        offset += 8
+        // uint32 LE -- size
+        view.setUint32(offset, ab.byteLength, true)
+        offset += 4
+        // image data
+        bytes.set(new Uint8Array(ab), offset)
+        offset += ab.byteLength
+      }
+
+      formData = new FormData()
+      formData.append('type', 'frames');
+      const fileName = `${createdAt}_${canvasId}.${this.fileExt}.frames`
+      formData.append('frames', new Blob([packed]), fileName)
+    } else {
+      // Legacy: send individual image files
+      formData = new FormData()
+      images.forEach((snapshot) => {
+        const blob = snapshot.data
+        if (!blob) return
+        const name = `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`
+        formData.append('snapshot', blob, name)
+      })
     }
 
     const initRestart = () => {

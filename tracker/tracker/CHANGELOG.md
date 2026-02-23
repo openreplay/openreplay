@@ -1,6 +1,7 @@
 ## 17.2.0
 
 - remove fflate in favor of native compression streams
+- refactor canvas module to use custom frame format
 
 ## 17.1.6
 
