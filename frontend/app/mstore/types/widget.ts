@@ -326,6 +326,7 @@ export default class Widget {
           this.metricType === USER_PATH
             ? 4
             : 2,
+        row: this.metricType === USER_PATH ? 2 : 1,
       },
     };
 

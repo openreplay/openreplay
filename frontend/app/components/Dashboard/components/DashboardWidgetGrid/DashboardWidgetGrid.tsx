@@ -1,13 +1,15 @@
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Popover, Tooltip } from 'antd';
+import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useStore } from 'App/mstore';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
-import { observer } from 'mobx-react-lite';
-import cn from 'classnames';
-import { Button, Popover, Tooltip } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
 import { Loader } from 'UI';
+
 import AddCardSection from '../AddCardSection/AddCardSection';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   siteId: string;
@@ -33,7 +35,7 @@ function DashboardWidgetGrid(props: Props) {
         </div>
       ) : (
         <div
-          className="pb-10 px-4 pt-2 grid gap-2 rounded-sm grid-cols-4 items-start "
+          className="pb-10 px-4 pt-2 grid gap-2 rounded-sm grid-cols-4 items-start"
           id={props.id}
         >
           {list?.map((item: any, index: any) => (

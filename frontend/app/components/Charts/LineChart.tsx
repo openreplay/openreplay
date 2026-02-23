@@ -1,10 +1,11 @@
-import React from 'react';
 import { LineChart } from 'echarts/charts';
-import { echarts, defaultOptions, initWindowStorages } from './init';
+import React from 'react';
+
+import { defaultOptions, echarts, initWindowStorages } from './init';
 import {
-  customTooltipFormatter,
   buildCategories,
   buildDatasetsAndSeries,
+  customTooltipFormatter,
 } from './utils';
 import type { DataProps } from './utils';
 
@@ -87,6 +88,8 @@ function ORLineChart(props: Props) {
         ...defaultOptions.yAxis,
         type: 'value',
         minInterval: 1,
+        name: props.label ?? 'Number of Sessions',
+        nameLocation: 'middle',
       },
       tooltip: {
         ...defaultOptions.tooltip,
@@ -99,24 +102,6 @@ function ORLineChart(props: Props) {
       },
       dataset: datasets,
       series,
-      graphic: [
-        {
-          type: 'group',
-          left: 5,
-          top: 'center',
-          rotation: Math.PI / 2,
-          children: [
-            {
-              type: 'text',
-              fill: 'var(--color-black)',
-              style: {
-                text: props.label ?? 'Number of Sessions',
-                fill: 'var(--color-black)',
-              },
-            },
-          ],
-        },
-      ],
     });
     chart.on('click', (event) => {
       const index = event.dataIndex;
@@ -140,7 +125,7 @@ function ORLineChart(props: Props) {
     };
   }, [props.data, props.compData]);
 
-  return <div ref={chartRef} style={{ width: '100%', height: 240 }} />;
+  return <div ref={chartRef} style={{ width: '100%', height: 220 }} />;
 }
 
 export default ORLineChart;

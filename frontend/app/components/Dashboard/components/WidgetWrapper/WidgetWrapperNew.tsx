@@ -1,18 +1,20 @@
-import React, { useRef, lazy } from 'react';
-import cn from 'classnames';
 import { Card, Tooltip } from 'antd';
-import { useDrag, useDrop } from 'react-dnd';
+import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import { withRouter, RouteComponentProps } from 'App/routing';
-import { withSiteId, dashboardMetricDetails } from 'App/routes';
-import { FilterKey } from 'App/types/filter/filterType';
-import { TIMESERIES } from 'App/constants/card';
-import CardMenu from 'Components/Dashboard/components/WidgetWrapper/CardMenu';
-import AlertButton from 'Components/Dashboard/components/WidgetWrapper/AlertButton';
-import stl from './widgetWrapper.module.css';
-import TemplateOverlay from './TemplateOverlay';
+import React, { lazy, useRef } from 'react';
+import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
+
+import { TIMESERIES, USER_PATH } from 'App/constants/card';
+import { useStore } from 'App/mstore';
+import { dashboardMetricDetails, withSiteId } from 'App/routes';
+import { RouteComponentProps, withRouter } from 'App/routing';
+import { FilterKey } from 'App/types/filter/filterType';
+import AlertButton from 'Components/Dashboard/components/WidgetWrapper/AlertButton';
+import CardMenu from 'Components/Dashboard/components/WidgetWrapper/CardMenu';
+
+import TemplateOverlay from './TemplateOverlay';
+import stl from './widgetWrapper.module.css';
 
 const WidgetChart = lazy(
   () => import('Components/Dashboard/components/WidgetChart'),
@@ -56,6 +58,7 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
   const { t } = useTranslation();
   const { widget } = props;
   const isTimeSeries = widget.metricType === TIMESERIES;
+  const isUserPath = widget.metricType === USER_PATH;
   const isPredefined = widget.metricType === 'predefined';
   const dashboard = dashboardStore.selectedDashboard;
 
@@ -108,7 +111,7 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
   return (
     <Card
       className={cn(
-        'relative group rounded-lg hover:border-teal transition-all duration-200 w-full',
+        'relative group rounded-lg hover:border-teal transition-all duration-200 w-full h-full flex flex-col',
         { 'hover:shadow-xs': !isTemplate && isWidget },
       )}
       style={{
@@ -118,6 +121,7 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
           canDrop && isOver ? '#454545' : isPreview ? 'transparent' : '#EEEEEE',
         borderStyle: canDrop && isOver ? 'dashed' : 'solid',
         cursor: isDragging ? 'grabbing' : 'grab',
+        ...(isUserPath ? { minHeight: 600 } : {}),
       }}
       ref={dragDropRef}
       onClick={props.onClick ? props.onClick : () => null}
@@ -165,7 +169,7 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
         <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />
       )}
 
-      <div className="px-4" onClick={onChartClick}>
+      <div className="px-4 flex-1" onClick={onChartClick}>
         <WidgetChart
           isPreview={isPreview}
           metric={widget}

@@ -1,19 +1,21 @@
-import React from 'react';
-import { SankeyChart } from 'echarts/charts';
-import { NoContent } from 'App/components/ui';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  sankeyTooltip,
-  getEventPriority,
-  getNodeName,
-  SankeyNode,
-  SankeyLink,
-  getConnectedChain,
-  getIcon,
-  linkIconStyles,
-} from './sankeyUtils';
-import { echarts, defaultOptions } from './init';
 import { FilterKey } from '@/types/filter/filterType';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { SankeyChart } from 'echarts/charts';
+import React from 'react';
+
+import { NoContent } from 'App/components/ui';
+
+import { defaultOptions, echarts } from './init';
+import {
+  SankeyLink,
+  SankeyNode,
+  getConnectedChain,
+  getEventPriority,
+  getIcon,
+  getNodeName,
+  linkIconStyles,
+  sankeyTooltip,
+} from './sankeyUtils';
 
 echarts.use([SankeyChart]);
 
@@ -58,7 +60,15 @@ const EChartsSankey = (props: Props) => {
     React.useState<tHighlightedLink | null>(null);
   const [savedOriginalLinks, setOriginalLinks] = React.useState<any[]>([]);
   const [savedOriginalNodes, setOriginalNodes] = React.useState<any[]>([]);
-  const { data, height = 240, onChartClick, isUngrouped, getFilter } = props;
+  const {
+    data,
+    height: propHeight,
+    onChartClick,
+    isUngrouped,
+    getFilter,
+    inGrid,
+  } = props;
+  const height = propHeight || inGrid ? 540 : 240;
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   const [finalNodeCount, setFinalNodeCount] = React.useState(data.nodes.length);
@@ -440,7 +450,7 @@ const EChartsSankey = (props: Props) => {
         minHeight: 240,
       }}
     >
-      <div ref={chartRef} style={containerStyle} className="min-w-[600px]" />
+      <div ref={chartRef} style={containerStyle} className="min-w-150" />
     </div>
   );
 };

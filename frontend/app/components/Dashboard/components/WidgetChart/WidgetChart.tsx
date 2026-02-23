@@ -1,47 +1,48 @@
-import React, { useState, useRef, useEffect } from 'react';
-import LineChart from 'Components/Charts/LineChart';
-import BarChart from 'Components/Charts/BarChart';
-import PieChart from 'Components/Charts/PieChart';
-import SankeyChart from 'Components/Charts/SankeyChart';
-import ColumnChart from 'Components/Charts/ColumnChart';
-import WebVitalsChart from 'Components/Charts/WebVitals';
-import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
-
-import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
-import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { observer } from 'mobx-react-lite';
-import { Icon, Loader } from 'UI';
-import { useStore } from 'App/mstore';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
-import { debounce } from 'App/utils';
-import useIsMounted from 'App/hooks/useIsMounted';
 import { FilterKey } from 'Types/filter/filterType';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useInView } from 'react-intersection-observer';
+
+import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard';
+import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
+import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
+import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
+import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
+import { Styles } from 'App/components/Dashboard/Widgets/common';
+import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import {
-  TIMESERIES,
-  TABLE,
-  HEATMAP,
-  FUNNEL,
   ERRORS,
+  FUNNEL,
+  HEATMAP,
   INSIGHTS,
-  USER_PATH,
   RETENTION,
+  TABLE,
+  TIMESERIES,
+  USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import FunnelWidget from 'App/components/Funnels/FunnelWidget';
-import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
-import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
-import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard';
-import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
-import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
-import { useInView } from 'react-intersection-observer';
-import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
-import WidgetPredefinedChart from '../WidgetPredefinedChart';
-import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
-import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
-import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
-import LongLoader from './LongLoader';
-import { useTranslation } from 'react-i18next';
+import useIsMounted from 'App/hooks/useIsMounted';
+import { useStore } from 'App/mstore';
+import { debounce } from 'App/utils';
 import { hasSampling } from 'App/utils/split-utils';
+import BarChart from 'Components/Charts/BarChart';
+import ColumnChart from 'Components/Charts/ColumnChart';
+import LineChart from 'Components/Charts/LineChart';
+import PieChart from 'Components/Charts/PieChart';
+import SankeyChart from 'Components/Charts/SankeyChart';
+import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
+import WebVitalsChart from 'Components/Charts/WebVitals';
+import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
+import { Icon, Loader } from 'UI';
+
+import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
+import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
+import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
+import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
+import WidgetPredefinedChart from '../WidgetPredefinedChart';
+import LongLoader from './LongLoader';
 
 interface Props {
   metric: any;
@@ -69,7 +70,7 @@ function WidgetChart(props: Props) {
   const colors = Styles.safeColors;
   const [loading, setLoading] = useState(true);
   const [stale, setStale] = useState(false);
-  const params = { density: dashboardStore.selectedDensity };
+  const params = { density: dashboardStore.selectedDensity, rows: 5 };
   const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();

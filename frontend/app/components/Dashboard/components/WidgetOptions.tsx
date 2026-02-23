@@ -1,4 +1,28 @@
+import Widget from '@/mstore/types/widget';
+import { DownOutlined } from '@ant-design/icons';
+import { FilterKey } from 'Types/filter/filterType';
+import { Button, Dropdown, Space, Switch } from 'antd';
+import {
+  ArrowDown01,
+  ChartArea,
+  ChartBar,
+  ChartBarBig,
+  ChartColumn,
+  ChartColumnBig,
+  ChartLine,
+  ChartPie,
+  CircleDashed,
+  Hash,
+  Library,
+  Split,
+  SquareActivity,
+  Table,
+  Users,
+} from 'lucide-react';
+import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
   FUNNEL,
   HEATMAP,
@@ -6,31 +30,8 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import { Space, Dropdown, Button, Switch } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
-import { FilterKey } from 'Types/filter/filterType';
-import { observer } from 'mobx-react-lite';
-import {
-  ChartLine,
-  ChartArea,
-  ChartColumn,
-  ChartBar,
-  ChartPie,
-  Table,
-  Hash,
-  Users,
-  Library,
-  ChartColumnBig,
-  ChartBarBig,
-  ArrowDown01,
-  SquareActivity,
-  Split,
-  CircleDashed,
-} from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import Widget from '@/mstore/types/widget';
 
 interface Option {
   key: string;
@@ -88,8 +89,10 @@ function WidgetOptions() {
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              metric.update({ hideExcess: !metric.hideExcess });
-              // metric.updateKey('hasChanged', true);
+              metric.update({
+                hideExcess: !metric.hideExcess,
+                hasChanged: true,
+              });
             }}
           >
             <Space>
