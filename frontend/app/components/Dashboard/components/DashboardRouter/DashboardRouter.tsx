@@ -1,12 +1,14 @@
 import React from 'react';
+
 import { useHistory, useLocation, useParams } from 'App/routing';
-import DashboardView from '../DashboardView';
-import MetricsView from '../MetricsView';
-import WidgetView from '../WidgetView';
-import WidgetSubDetailsView from '../WidgetSubDetailsView';
-import DashboardsView from '../DashboardList';
+
 import Alerts from '../Alerts';
 import CreateAlert from '../Alerts/NewAlert';
+import DashboardsView from '../DashboardList';
+import DashboardView from '../DashboardView';
+import MetricsView from '../MetricsView';
+import WidgetSubDetailsView from '../WidgetSubDetailsView';
+import WidgetView from '../WidgetView';
 
 type RouterParams = {
   siteId?: string;
@@ -25,14 +27,11 @@ function DashboardRouter() {
 
   const section = location.pathname.split('/')[2];
 
-  const routeProps = React.useMemo(
-    () => ({
-      history,
-      location,
-      match: { params },
-    }),
-    [history, location, params],
-  );
+  const routeProps = {
+    history,
+    location,
+    match: { params },
+  };
 
   if (!siteId) return null;
 

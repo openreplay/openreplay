@@ -1,40 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { useStore } from 'App/mstore';
-import { Loader } from 'UI';
-import { observer } from 'mobx-react-lite';
-import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
-import Breadcrumb from 'Shared/Breadcrumb';
+import FilterItem from '@/mstore/types/filterItem';
+import FilterSeries from '@/mstore/types/filterSeries';
 import { FilterKey } from 'Types/filter/filterType';
-import { Prompt, useHistory, useLocation } from 'App/routing';
+import { Segmented, Space, Tooltip } from 'antd';
+import cn from 'classnames';
+import { LayoutPanelLeft, LayoutPanelTop } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
-  TIMESERIES,
-  TABLE,
-  HEATMAP,
   FUNNEL,
+  HEATMAP,
   INSIGHTS,
-  USER_PATH,
   RETENTION,
+  TABLE,
+  TIMESERIES,
+  USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
-import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
-import { Space, Segmented, Tooltip } from 'antd';
-import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
+import { PANEL_SIZES } from 'App/constants/panelSizes';
+import { useStore } from 'App/mstore';
 import Widget from 'App/mstore/types/widget';
-import { LayoutPanelTop, LayoutPanelLeft } from 'lucide-react';
-import cn from 'classnames';
+import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
+import { Prompt, useHistory, useLocation } from 'App/routing';
+import { mobileScreen } from 'App/utils/isMobile';
 import {
   CARD_LIST,
   CardType,
 } from 'Components/Dashboard/components/DashboardList/NewDashModal/ExampleCards';
-import FilterSeries from '@/mstore/types/filterSeries';
+import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
+import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
+import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
+import { Loader } from 'UI';
+
+import Breadcrumb from 'Shared/Breadcrumb';
+
 import CardUserList from '../CardUserList/CardUserList';
-import WidgetSessions from '../WidgetSessions';
 import WidgetPreview from '../WidgetPreview';
-import { useTranslation } from 'react-i18next';
-import { PANEL_SIZES } from 'App/constants/panelSizes';
-import FilterItem from '@/mstore/types/filterItem';
-import { mobileScreen } from 'App/utils/isMobile';
+import WidgetSessions from '../WidgetSessions';
 
 interface Props {
   history: any;
@@ -62,13 +65,17 @@ function WidgetView({
   const loading = metricStore.isLoading;
   const [expanded] = useState(!metricId || metricId === 'create');
   const { hasChanged } = widget;
+  const history = useHistory();
+  const location = useLocation();
+  const queryDashboardId =
+    dashboardId ||
+    new URLSearchParams(location.search).get('dashboardId') ||
+    undefined;
   const dashboard = dashboardStore.dashboards.find(
-    (d: any) => d.dashboardId == dashboardId,
+    (d: any) => d.dashboardId == queryDashboardId,
   );
   const dashboardName = dashboard ? dashboard.name : null;
   const [metricNotFound, setMetricNotFound] = useState(false);
-  const history = useHistory();
-  const location = useLocation();
   const [initialInstance, setInitialInstance] = useState();
   const isClickMap = widget.metricType === HEATMAP;
 
@@ -219,15 +226,15 @@ function WidgetView({
     const savedMetric = await metricStore.save(widget);
     setInitialInstance(widget.toJson());
     if (wasCreating) {
-      if (parseInt(dashboardId, 10) > 0) {
+      if (queryDashboardId && parseInt(queryDashboardId, 10) > 0) {
         history.replace(
           withSiteId(
-            dashboardMetricDetails(dashboardId, savedMetric.metricId),
+            dashboardMetricDetails(queryDashboardId, savedMetric.metricId),
             siteId,
           ),
         );
         void dashboardStore.addWidgetToDashboard(
-          dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
+          dashboardStore.getDashboard(parseInt(queryDashboardId, 10))!,
           [savedMetric.metricId],
         );
       } else {
@@ -259,8 +266,8 @@ function WidgetView({
           items={[
             {
               label: dashboardName || 'Cards',
-              to: dashboardId
-                ? withSiteId(`/dashboard/${dashboardId}`, siteId)
+              to: queryDashboardId
+                ? withSiteId(`/dashboard/${queryDashboardId}`, siteId)
                 : withSiteId('/metrics', siteId),
             },
             { label: widget.name },

@@ -1,39 +1,41 @@
-import React from 'react';
 import { FolderOutlined } from '@ant-design/icons';
-import { Segmented, Button } from 'antd';
+import { FilterKey } from 'Types/filter/filterType';
+import { Button, Segmented } from 'antd';
+import { TFunction } from 'i18next';
 import {
-  LineChart,
-  Filter,
-  ArrowUpDown,
-  WifiOff,
-  Turtle,
-  FileStack,
-  AppWindow,
-  Combine,
-  Users,
-  Globe,
-  MonitorSmartphone,
   Activity,
+  AppWindow,
+  ArrowUpDown,
+  Combine,
+  FileStack,
+  Filter,
+  Globe,
+  LineChart,
+  MonitorSmartphone,
   Proportions,
+  Turtle,
+  Users,
+  WifiOff,
 } from 'lucide-react';
-import { Icon } from 'UI';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
+
 import { useModal } from 'App/components/Modal';
-import { useStore } from 'App/mstore';
 import {
-  HEATMAP,
+  CATEGORIES,
   FUNNEL,
+  HEATMAP,
   TIMESERIES,
   USER_PATH,
-  CATEGORIES,
   WEBVITALS,
 } from 'App/constants/card';
-import { useHistory } from 'App/routing';
-import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
-import { FilterKey } from 'Types/filter/filterType';
-import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
+import { metricCreate, withSiteId } from 'App/routes';
+import { Icon } from 'UI';
+
 import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
 
 interface TabItem {
   icon: React.ReactNode;
@@ -200,23 +202,20 @@ function CategoryTab({
   const { t } = useTranslation();
   const items = isMobile ? mobileTabItems(t)[tab] : tabItems(t)[tab];
   const { projectsStore, dashboardStore } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleCardSelection = (card: string) => {
-    if (projectsStore.activeSiteId) {
-      if (inCards) {
-        history.push(
-          `${withSiteId(metricCreate(), projectsStore.activeSiteId)}?mk=${card}`,
-        );
-      } else if (dashboardStore.selectedDashboard) {
-        history.push(
-          `${withSiteId(
-            dashboardMetricCreate(dashboardStore.selectedDashboard.dashboardId),
-            projectsStore.activeSiteId,
-          )}?mk=${card}`,
-        );
-      }
-    }
+    if (!projectsStore.activeSiteId) return;
+    const dbId = dashboardStore.selectedDashboard?.dashboardId;
+    const search =
+      dbId && !inCards ? `?mk=${card}&dashboardId=${dbId}` : `?mk=${card}`;
+    navigate(
+      {
+        pathname: withSiteId(metricCreate(), projectsStore.activeSiteId),
+        search,
+      },
+      { relative: 'route' },
+    );
   };
   return (
     <div className="flex flex-col gap-3">
