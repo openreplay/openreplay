@@ -288,6 +288,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 		CanvasEnabled:        e.cfg.RecordCanvas,
 		CanvasImageQuality:   e.cfg.CanvasQuality,
 		CanvasFrameRate:      e.cfg.CanvasFps,
+		FramesSupport:        true,
 	}
 	modifyResponse(req, startResponse)
 
@@ -379,15 +380,12 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	startTime := time.Now()
 
 	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
-	if sessionData != nil {
-		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
-	}
-	if err != nil { // Should accept expired token?
+	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 
-	// Add sessionID and projectID to context
 	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -399,14 +397,18 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
 	defer r.Body.Close()
 
-	// Parse the multipart form
-	err = r.ParseMultipartForm(10 << 20) // Max upload size 10 MB
-	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
+	err = r.ParseMultipartForm(10 << 20) // TODO: use kafka's max message size (current max upload size 10 MB)
+	if errors.Is(err, http.ErrNotMultipart) || errors.Is(err, http.ErrMissingBoundary) {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
 	} else if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 		return
+	}
+
+	isFrames := false
+	if len(r.MultipartForm.Value["type"]) > 0 && r.MultipartForm.Value["type"][0] == "frames" {
+		isFrames = true
 	}
 
 	frames := bytes.NewBuffer([]byte{})
@@ -431,6 +433,30 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			file.Close()
 
 			fileName := util.SafeString(fileHeader.Filename)
+
+			if isFrames {
+				if !strings.HasSuffix(fileName, ".frames") {
+					e.log.Error(r.Context(), "file name does not end with .frames: %s", fileName)
+					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, errors.New("file name does not end with .frames"), startTime, r.URL.Path, 0)
+					return
+				}
+
+				data, err := json.Marshal(&ScreenshotMessage{
+					Name: fileName,
+					Data: fileBytes,
+				})
+				if err != nil {
+					e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
+					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+					return
+				}
+				if err := e.producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+					e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
+				}
+				e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+				return
+			}
+
 			baseName, ts, err := parseCanvasName(fileName)
 			if err != nil {
 				e.log.Error(r.Context(), "can't parse canvas name %s: %s", fileName, err)
