@@ -3,6 +3,7 @@ import DocCard from 'App/components/shared/DocCard';
 import { useTranslation } from 'react-i18next';
 import { Mail } from 'lucide-react';
 import { CopyButton } from 'UI';
+import ENV from '../../../../../env';
 
 export function CollabCard({ showUserModal }: { showUserModal: () => void }) {
   const { t } = useTranslation();
@@ -28,6 +29,29 @@ export function ProjectKeyCard({ projectKey }: { projectKey: string }) {
         <div className={'font-mono'}>{projectKey}</div>
         <CopyButton
           content={projectKey}
+          className={'capitalize font-medium text-neutral-400'}
+        />
+      </div>
+    </DocCard>
+  );
+}
+
+export function ProjectIngestCard() {
+  const { t } = useTranslation();
+  const saasHost = 'api.openreplay.com';
+  const urlObj = new URL(ENV.API_EDP || window.location.origin);
+  const isSaas = urlObj.hostname === saasHost;
+  const ingest = `https://${window.location.hostname}/ingest`;
+
+  if (isSaas) {
+    return null;
+  }
+  return (
+    <DocCard title={t('Project Ingest Point')}>
+      <div className="p-2 rounded-sm bg-white flex justify-between items-center">
+        <div className={'font-mono'}>{ingest}</div>
+        <CopyButton
+          content={ingest}
           className={'capitalize font-medium text-neutral-400'}
         />
       </div>

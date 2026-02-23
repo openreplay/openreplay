@@ -4,7 +4,7 @@ import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
 import AndroidInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs';
-import { CollabCard, ProjectKeyCard } from './Callouts';
+import { CollabCard, ProjectKeyCard, ProjectIngestCard } from './Callouts';
 import MobileInstallDocs from './InstallDocs/MobileInstallDocs';
 import { useTranslation } from 'react-i18next';
 
@@ -43,6 +43,7 @@ function MobileTrackingCodeModal(props: Props) {
               <CollabCard showUserModal={showUserModal} />
 
               <ProjectKeyCard projectKey={site.projectKey} />
+              <ProjectIngestCard />
             </div>
           </div>
         );
@@ -57,6 +58,7 @@ function MobileTrackingCodeModal(props: Props) {
               <CollabCard showUserModal={showUserModal} />
 
               <ProjectKeyCard projectKey={site.projectKey} />
+              <ProjectIngestCard />
             </div>
           </div>
         );

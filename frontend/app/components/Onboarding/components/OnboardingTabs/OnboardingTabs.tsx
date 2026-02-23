@@ -3,7 +3,7 @@ import { Tabs, Icon, CopyButton } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
-import { CollabCard, ProjectKeyCard } from './Callouts';
+import { CollabCard, ProjectKeyCard, ProjectIngestCard } from './Callouts';
 import InstallDocs from './InstallDocs';
 import ProjectCodeSnippet from './ProjectCodeSnippet';
 import { useTranslation } from 'react-i18next';
@@ -70,6 +70,7 @@ function TrackingCodeModal(props: Props) {
               <CollabCard showUserModal={showUserModal} />
 
               <ProjectKeyCard projectKey={site.projectKey} />
+              <ProjectIngestCard />
             </div>
           </div>
         );

@@ -61,6 +61,7 @@ function CircleProgress({
         y={radius}
         textAnchor="middle"
         dominantBaseline="middle"
+        className="text-black fill-black"
         fontSize={radius * 0.5}
       >
         {label}
