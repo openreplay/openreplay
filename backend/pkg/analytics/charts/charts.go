@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 
+	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 )
@@ -17,21 +18,26 @@ type Charts interface {
 }
 
 type chartsImpl struct {
-	chConn driver.Conn
-	Logger logger.Logger
+	chConn  driver.Conn
+	Logger  logger.Logger
+	actions lexicon.Actions
 }
 
-func New(logger logger.Logger, chConn driver.Conn) (Charts, error) {
+func New(logger logger.Logger, chConn driver.Conn, actions lexicon.Actions) (Charts, error) {
 	return &chartsImpl{
-		chConn: chConn,
-		Logger: logger,
+		chConn:  chConn,
+		Logger:  logger,
+		actions: actions,
 	}, nil
 }
 
-// GetData def get_chart()
 func (s *chartsImpl) GetData(ctx context.Context, projectId int, userID uint64, req *model.MetricPayload) (interface{}, error) {
 	if req == nil {
 		return nil, fmt.Errorf("request is empty")
+	}
+
+	if err := lexicon.ResolveMetricPayloadFilters(ctx, s.actions, uint32(projectId), req); err != nil {
+		return nil, err
 	}
 
 	payload := &Payload{

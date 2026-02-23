@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/analytics/charts"
+	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/model"
 
 	"openreplay/backend/pkg/logger"
@@ -20,22 +21,24 @@ import (
 )
 
 type Search interface {
-	GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
-	GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
-	GetSessionIds(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetAll(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetBookmarkedSessions(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetSessionIds(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 }
 
 type searchImpl struct {
-	chConn driver.Conn
-	pgConn pool.Pool
-	Logger logger.Logger
+	chConn  driver.Conn
+	pgConn  pool.Pool
+	Logger  logger.Logger
+	actions lexicon.Actions
 }
 
-func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool) (Search, error) {
+func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, actions lexicon.Actions) (Search, error) {
 	return &searchImpl{
-		chConn: chConn,
-		pgConn: pgConn,
-		Logger: logger,
+		chConn:  chConn,
+		pgConn:  pgConn,
+		Logger:  logger,
+		actions: actions,
 	}, nil
 }
 
@@ -99,17 +102,19 @@ LIMIT %d OFFSET %d;`
 //   - Each series uses its own events order from req.Series[i].EventsOrder
 //   - Pagination is applied to each series individually
 //   - Response includes series index, total count, and sessions for each series
-func (s *searchImpl) GetAll(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+func (s *searchImpl) GetAll(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
 
-	// Handle series requests
+	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
+		return nil, err
+	}
+
 	if len(req.Series) > 0 {
 		return s.getSeriesSessions(projectId, userId, req)
 	}
 
-	// Regular single response logic
 	return s.getSingleSessions(projectId, userId, req)
 }
 
@@ -365,7 +370,7 @@ WHERE project_id = $1;`, projectId)
 	return result
 }
 
-func (s *searchImpl) GetBookmarkedSessions(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+func (s *searchImpl) GetBookmarkedSessions(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
@@ -486,9 +491,13 @@ LIMIT $3 OFFSET $4`,
 	return resp, nil
 }
 
-func (s *searchImpl) GetSessionIds(projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
+func (s *searchImpl) GetSessionIds(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
+	}
+
+	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
+		return nil, err
 	}
 
 	qc := s.buildSessionsQueryComponents(projectId, userId, req)

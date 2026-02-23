@@ -32,6 +32,7 @@ def get_all_filters(
             "user": filters.get_users_filters(project_id=projectId),
             "users": filters.get_users_filters_identified(project_id=projectId),
             "metadata": metadata.get_for_filters(project_id=projectId),
+            "actions": filters.get_actions_filters(project_id=projectId),
         }
     }
 

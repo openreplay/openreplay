@@ -48,7 +48,8 @@ type Filter struct {
 	DataType      string   `json:"dataType" validate:"omitempty,oneof=string number boolean integer"`
 	AutoCaptured  bool     `json:"autoCaptured"`      // Indicates if the filter is auto-captured
 	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
-	//	With such structure, a user can send an infinite nested filter, and the API will parse it
+	IsAction      bool     `json:"isAction"`
+	ActionId      string   `json:"actionId,omitempty" validate:"omitempty,max=36"`
 }
 
 var ViewTypeTimeseries []string = []string{"lineChart", "areaChart", "barChart", "progressChart", "pieChart", "metric", "table"}
