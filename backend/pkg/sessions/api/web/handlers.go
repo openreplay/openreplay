@@ -466,21 +466,12 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 				msg.Name = baseName
 			}
 			if err := binary.Write(frames, binary.LittleEndian, ts); err != nil {
-				e.log.Error(r.Context(), "can't write frame's ts: %s", err)
-				continue
+				e.log.Error(r.Context(), "can't write frame's time for %s: %s", fileName, err)
 			}
 			if err := binary.Write(frames, binary.LittleEndian, uint32(len(fileBytes))); err != nil {
-				e.log.Error(r.Context(), "can't write frame's len: %s", err)
-				continue
+				e.log.Error(r.Context(), "can't write frame's size for %s: %s", fileName, err)
 			}
-			n, err := frames.Write(fileBytes)
-			if err != nil {
-				e.log.Error(r.Context(), "can't write frame's data: %s", err)
-				continue
-			}
-			if n != len(fileBytes) {
-				e.log.Error(r.Context(), "can't write all frame's data: short write")
-			}
+			frames.Write(fileBytes)
 		}
 	}
 

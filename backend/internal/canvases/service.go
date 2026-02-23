@@ -131,14 +131,14 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	if err != nil {
 		v.log.Fatal(task.ctx, "can't open frames file, err: %s", err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			v.log.Error(task.ctx, "can't close frames file, err: %s", err)
+		}
+	}()
 
-	n, err := f.Write(task.image.Bytes())
-	if err != nil {
-		v.log.Fatal(task.ctx, "can't write frames to file, err: %s", err)
-	}
-	if n != task.image.Len() {
-		v.log.Error(task.ctx, "can't write frames to disk, frames length mismatch")
+	if _, err := io.Copy(f, task.image); err != nil {
+		v.log.Fatal(task.ctx, "can't write frame to disk, err: %s", err)
 	}
 
 	v.metrics.RecordCanvasImageSize(float64(task.image.Len()))
