@@ -1595,6 +1595,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.28.6":
+  version: 7.28.6
+  resolution: "@babel/runtime@npm:7.28.6"
+  checksum: 10c1/d920ce6fb33e8af98ae0439ea9e4bb9bff222c1e2bff9377176344354eeb64c6624dc2f887c6fc215277686eda4a2e831a308b64f4f0964883432b58f4a54a93
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.27.2, @babel/template@npm:^7.3.3":
   version: 7.27.2
   resolution: "@babel/template@npm:7.27.2"
@@ -11895,11 +11902,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jspdf@npm:4.1.0":
-  version: 4.1.0
-  resolution: "jspdf@npm:4.1.0"
+"jspdf@npm:4.2.0":
+  version: 4.2.0
+  resolution: "jspdf@npm:4.2.0"
   dependencies:
-    "@babel/runtime": "npm:^7.28.4"
+    "@babel/runtime": "npm:^7.28.6"
     canvg: "npm:^3.0.11"
     core-js: "npm:^3.6.0"
     dompurify: "npm:^3.3.1"
@@ -11915,7 +11922,7 @@ __metadata:
       optional: true
     html2canvas:
       optional: true
-  checksum: 10c1/0051570d8d81d7ff8d8c2e4adbbd88e5898515996dc3c0bd66d88d2df2b3592e7562435ac303f3d3e3162a0b8b0c5f83835088c88c236c59bb0d0ba63f80c59c
+  checksum: 10c1/84b2d60afe1498802c187c81f9c71f771e0e8372f197e65d79599fd153beb667db12f65a77fac49950e5eaf5badba12ddd89d28262dc24a2cfb9ff2beef735a2
   languageName: node
   linkType: hard
 
@@ -13092,11 +13099,11 @@ __metadata:
   linkType: hard
 
 "minimatch@npm:^3.0.4, minimatch@npm:^3.1.1, minimatch@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "minimatch@npm:3.1.2"
+  version: 3.1.3
+  resolution: "minimatch@npm:3.1.3"
   dependencies:
     brace-expansion: "npm:^1.1.7"
-  checksum: 10c1/c21e314038dc51a54a89774fb25dea62167bb443b4c4df0dd6102bebb646c635526e8786df6975578638ca5d36ac4985b1ef50625a982a4581ea8bc540c0b697
+  checksum: 10c1/d601012cfbd109508ba3139900a9daffdb811a980ef121ba15b749c8f7c59cacbc06ebd44f831e351e1b67f8144cbb2be3e10b634392e997644591b77e770d74
   languageName: node
   linkType: hard
 
@@ -13804,7 +13811,7 @@ __metadata:
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     js-untar: "npm:^2.0.0"
-    jspdf: "npm:4.1.0"
+    jspdf: "npm:4.2.0"
     lucide-react: "npm:0.487.0"
     luxon: "npm:^3.7.2"
     microdiff: "npm:^1.5.0"
