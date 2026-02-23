@@ -56,6 +56,9 @@ export function LaunchMoreUserInfoShortcut() {
 export function LaunchOptionsMenuShortcut() {
   return <Key label="⇧ + M" />;
 }
+export function LaunchScrollModeShortcut() {
+  return <Key label="⇧ + S" />;
+}
 export function PlayNextSessionShortcut() {
   return <Key label="⇧ + >" />;
 }
@@ -84,6 +87,7 @@ export function ShortcutGrid() {
       <Cell shortcut="⇧ + F" text="Play Session in Fullscreen" />
       <Cell shortcut="Space" text="Play/Pause Session" />
       <Cell shortcut="⇧ + X" text="Launch X-Ray" />
+      <Cell shortcut="⇧ + S" text="Toggle Scroll Mode" />
       <Cell shortcut="⇧ + A" text="Launch User Actions" />
       <Cell shortcut="⇧ + I" text="Launch More User Info" />
       <Cell shortcut="⇧ + M" text="Launch Options Menu" />

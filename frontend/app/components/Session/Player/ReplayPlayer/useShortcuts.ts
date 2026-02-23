@@ -15,6 +15,7 @@ function useShortcuts({
   openPrevSession,
   setActiveTab,
   disableDevtools,
+  toggleScrollMode,
 }: {
   skipInterval: keyof typeof SKIP_INTERVALS;
   fullScreenOn: () => void;
@@ -24,6 +25,7 @@ function useShortcuts({
   openPrevSession: () => void;
   setActiveTab: (tab: string) => void;
   disableDevtools?: boolean;
+  toggleScrollMode?: () => void;
 }) {
   const { player, store } = useContext(PlayerContext);
 
@@ -84,6 +86,8 @@ function useShortcuts({
           case 'A':
             player.pause();
             return setActiveTab('EVENTS');
+          case 'S':
+            return toggleScrollMode?.();
           default:
             break;
         }

@@ -109,6 +109,7 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
   const { toggleBottomBlock } = uiPlayerStore;
   const { fullscreenOn } = uiPlayerStore;
   const { fullscreenOff } = uiPlayerStore;
+  const { toggleScrollMode } = uiPlayerStore;
   const { changeSkipInterval } = uiPlayerStore;
   const { skipInterval } = uiPlayerStore;
   const showStorageRedux = !uiPlayerStore.hiddenHints.storage;
@@ -150,6 +151,7 @@ function Controls({ setActiveTab, activeTab, fullView }: any) {
     openPrevSession: prevHandler,
     setActiveTab,
     disableDevtools,
+    toggleScrollMode,
   });
 
   React.useEffect(() => {

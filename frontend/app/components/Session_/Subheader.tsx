@@ -9,6 +9,7 @@ import {
   BookmarkCheck,
   Vault,
   File,
+  ScanLine,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
@@ -40,6 +41,7 @@ function SubHeader(props: any) {
     issueReportingStore,
     settingsStore,
     recordingsStore,
+    uiPlayerStore,
   } = useStore();
   const { t } = useTranslation();
   const { isEnterprise, account } = userStore;
@@ -182,6 +184,16 @@ function SubHeader(props: any) {
         </div>
       ),
       onClick: showKbHelp,
+    },
+    {
+      key: '6',
+      label: (
+        <div className={cn('flex items-center gap-2', uiPlayerStore.scrollMode && 'color-main')}>
+          <ScanLine size={16} strokeWidth={1} />
+          <span>{t('Scroll Mode')}</span>
+        </div>
+      ),
+      onClick: () => uiPlayerStore.toggleScrollMode(),
     },
   ];
   if (account.hasVideoExport) {
