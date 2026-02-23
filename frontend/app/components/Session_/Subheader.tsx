@@ -1,35 +1,36 @@
-import { ShareAltOutlined, MoreOutlined } from '@ant-design/icons';
-import { Button as AntButton, Tooltip, Dropdown } from 'antd';
+import { MoreOutlined, ShareAltOutlined } from '@ant-design/icons';
+import { Button as AntButton, Dropdown, Tooltip } from 'antd';
 import cn from 'classnames';
 import {
-  Link2,
-  Keyboard,
-  Bot,
-  Bookmark as BookmarkIcn,
   BookmarkCheck,
-  Vault,
+  Bookmark as BookmarkIcn,
+  Bot,
   File,
+  Keyboard,
+  Link2,
+  Vault,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { Icon } from 'UI';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { IFRAME } from 'App/constants/storageKeys';
 import { useStore } from 'App/mstore';
 import { checkParam, truncateStringToFit } from 'App/utils';
-import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
-import { ShortcutGrid } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
-import WarnBadge from 'Components/Session_/WarnBadge';
-import { toast } from 'react-toastify';
-
-import { useModal } from 'Components/ModalContext';
-import IssueForm from 'Components/Session_/Issues/IssueForm';
-import QueueControls from './QueueControls';
-import HighlightButton from './Highlight/HighlightButton';
-import ShareModal from '../shared/SharePopup/SharePopup';
-import { useTranslation } from 'react-i18next';
 // import SimilarSessionsButton from './SimilarSessions/SimilarSessionsButton';
 import { mobileScreen } from 'App/utils/isMobile';
+import { useModal } from 'Components/ModalContext';
+import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
+import IssueForm from 'Components/Session_/Issues/IssueForm';
+import { ShortcutGrid } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import WarnBadge from 'Components/Session_/WarnBadge';
+import { Icon } from 'UI';
+
+import ShareModal from '../shared/SharePopup/SharePopup';
+import HighlightButton from './Highlight/HighlightButton';
+import QueueControls from './QueueControls';
 
 function SubHeader(props: any) {
   const {

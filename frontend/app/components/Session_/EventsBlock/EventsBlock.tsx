@@ -1,7 +1,7 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { mergeEventLists, sortEvents } from 'Types/session';
 import { TYPES } from 'Types/session/event';
-import { Button, Tooltip } from 'antd';
+import { Button, Switch, Tooltip } from 'antd';
 import cn from 'classnames';
 import { Search } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -64,12 +64,6 @@ function EventsBlock(props: IProps) {
   const { setActiveTab } = props;
 
   const filteredLength = filteredEvents?.length || 0;
-  const eventListNow: any[] = [];
-  if (tabStates !== undefined) {
-    eventListNow.concat(Object.values(tabStates)[0]?.eventListNow || []);
-  } else {
-    eventListNow.concat(store.get().eventListNow);
-  }
 
   const getEvents = () => {
     if (tabStates !== undefined) {
@@ -135,29 +129,26 @@ function EventsBlock(props: IProps) {
     ],
   );
 
-  const findLastFitting = React.useCallback(
-    (time: number) => {
-      const allEvents = usedEvents.concat(incidents);
-      if (!allEvents.length) return 0;
-      let i = allEvents.length - 1;
-      if (time > endTime / 2) {
-        while (i > 0) {
-          const event = allEvents[i];
-          if ('time' in event && event.time <= time) break;
-          i--;
-        }
-        return i;
+  const findLastFitting = (time: number) => {
+    const allEvents = usedEvents.concat(incidents);
+    if (!allEvents.length) return 0;
+    let i = allEvents.length - 1;
+    if (time > endTime / 2) {
+      while (i > 0) {
+        const event = allEvents[i];
+        if ('time' in event && event.time <= time) break;
+        i--;
       }
-      let l = 0;
-      while (l < i) {
-        const event = allEvents[l];
-        if ('time' in event && event.time >= time) break;
-        l++;
-      }
-      return l;
-    },
-    [usedEvents, incidents, time, endTime],
-  );
+      return i;
+    }
+    let l = 0;
+    while (l < i) {
+      const event = allEvents[l];
+      if ('time' in event && event.time >= time) break;
+      l++;
+    }
+    return l;
+  };
 
   useEffect(() => {
     setCurrentTimeEventIndex(findLastFitting(time));
@@ -243,6 +234,10 @@ function EventsBlock(props: IProps) {
   };
 
   const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
+  const isEmptyFromSearchFilter =
+    !isEmptySearch &&
+    uiPlayerStore.showOnlySearchEvents &&
+    usedEvents.length === 0;
   return (
     <>
       <div
@@ -310,6 +305,25 @@ function EventsBlock(props: IProps) {
           <div className="flex items-center p-4">
             <Icon name="binoculars" size={18} />
             <span className="ml-2">{t('No Matching Results')}</span>
+          </div>
+        )}
+        {isEmptyFromSearchFilter && (
+          <div className="flex flex-col items-center gap-3 p-4 text-center">
+            <Icon name="binoculars" size={18} />
+            <span>{t('No matching events')}</span>
+            <div className="flex items-center gap-2">
+              <Switch
+                size="small"
+                checked={uiPlayerStore.showOnlySearchEvents}
+                onChange={uiPlayerStore.setShowOnlySearchEvents}
+                style={{
+                  background: uiPlayerStore.showOnlySearchEvents
+                    ? '#f0a930'
+                    : 'rgba(0, 0, 0, 0.25)',
+                }}
+              />
+              <span className="text-sm">{t('Search Events Only')}</span>
+            </div>
           </div>
         )}
         <VList data={usedEvents} className={styles.eventsList} ref={scroller}>

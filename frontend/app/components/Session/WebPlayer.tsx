@@ -3,10 +3,11 @@ import { createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'App/routing';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
+import { useParams } from 'App/routing';
+import { signalService } from 'App/services';
 import { Note } from 'App/services/NotesService';
 import { Loader, Modal } from 'UI';
 
@@ -18,7 +19,6 @@ import {
   PlayerContext,
   defaultContextValue,
 } from './playerContext';
-import { signalService } from 'App/services';
 
 const TABS = {
   EVENTS: 'Activity',

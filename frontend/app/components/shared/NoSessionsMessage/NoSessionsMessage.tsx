@@ -48,12 +48,14 @@ function NoSessionsMessage() {
                     size="small"
                     onClick={openTroubleshoot}
                     icon={
-                      <div className="color-black fill-black">
+                      <div className="color-black fill-black hover:color-primary hover:fill-primary">
                         <SquareArrowOutUpRight size={16} />
                       </div>
                     }
                   >
-                    <div className="text-black">{t('Troubleshoot')}</div>
+                    <div className="text-black hover:text-primary">
+                      {t('Troubleshoot')}
+                    </div>
                   </Button>
                   <Button
                     type="default"

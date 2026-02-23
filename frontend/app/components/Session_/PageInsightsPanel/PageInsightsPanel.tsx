@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Loader } from 'UI';
-import { Button, Tooltip, Select, Form } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+import { Button, Form, Select, Tooltip } from 'antd';
+import { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
 import { compareJsonObjects } from 'App/utils';
+import { Loader } from 'UI';
 
 import SelectorsList from './components/SelectorsList/SelectorsList';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
 
 const JUMP_OFFSET = 1000;
 interface Props {
@@ -26,15 +27,27 @@ function PageInsightsPanel({ setActiveTab }: Props) {
   const filters = sessionStore.insightsFilters;
   const { fetchSessionClickmap } = sessionStore;
   const { insights } = sessionStore;
+  const getPathname = (url: string) => {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
+  };
+
   const urlOptions = events.map(({ url, host }: any) => ({
-    label: url,
+    label: getPathname(url),
     value: url,
     host,
   }));
 
-  const { player: Player } = React.useContext(PlayerContext);
+  const { player: Player, store } = React.useContext(PlayerContext);
+  const { location: currentLocation } = store.get();
   const markTargets = (t: TFunction) => Player.markTargets(t);
-  const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
+  const matchedUrl = currentLocation
+    ? urlOptions.find((opt) => opt.value === currentLocation)?.value
+    : undefined;
+  const defaultValue = matchedUrl || (urlOptions[0]?.value ?? '');
   const [insightsFilters, setInsightsFilters] = useState({
     ...filters,
     url: defaultValue,
