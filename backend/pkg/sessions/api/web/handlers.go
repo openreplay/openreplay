@@ -407,7 +407,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	}
 
 	isFrames := false
-	if len(r.MultipartForm.Value["type"]) > 0 {
+	if len(r.MultipartForm.Value["type"]) > 0 && r.MultipartForm.Value["type"][0] == "frames" {
 		isFrames = true
 	}
 
