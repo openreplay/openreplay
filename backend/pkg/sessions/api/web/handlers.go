@@ -437,7 +437,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			if isFrames {
 				if !strings.HasSuffix(fileName, ".frames") {
 					e.log.Error(r.Context(), "file name does not end with .frames: %s", fileName)
-					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, errors.New("file name does not end with .frames"), startTime, r.URL.Path, 0)
 					return
 				}
 
