@@ -114,10 +114,7 @@ export default class MessageLoader {
           }
         });
 
-        const sortedMsgs = msgs
-          // .sort((m1, m2) => m1.time - m2.time)
-          .sort(brokenDomSorter)
-          .sort(sortIframes);
+        const sortedMsgs = msgs.sort(brokenDomSorter).sort(sortIframes);
 
         if (brokenMessages > 0) {
           console.warn(
@@ -394,54 +391,3 @@ function sortIframes(m1, m2) {
   }
   return 0;
 }
-
-/**
- * Search for orphan nodes in session
- */
-function findBrokenNodes(nodes: any[]) {
-  const idToNode = {};
-  const orphans: any[] = [];
-  const result = {};
-
-  // Map all nodes by id for quick access and identify potential orphans
-  nodes.forEach((node) => {
-    // @ts-ignore
-    idToNode[node.id] = { ...node, children: [] };
-  });
-
-  // Identify true orphans (nodes whose parentID does not exist)
-  nodes.forEach((node) => {
-    if (node.parentID) {
-      // @ts-ignore
-      const parentNode = idToNode[node.parentID];
-      if (parentNode) {
-        // @ts-ignore
-        parentNode.children.push(idToNode[node.id]);
-      } else {
-        orphans.push(node.id); // parentID does not exist
-      }
-    }
-  });
-
-  // Recursively collect all descendants of a node
-  function collectDescendants(nodeId) {
-    // @ts-ignore
-    const node = idToNode[nodeId];
-    node.children.forEach((child) => {
-      collectDescendants(child.id);
-    });
-    return node;
-  }
-
-  // Build trees for each orphan
-  orphans.forEach((orId: number) => {
-    // @ts-ignore
-    result[orId] = collectDescendants(orId);
-  });
-
-  return result;
-}
-
-// @ts-ignore
-window.searchOrphans = (msgs) =>
-  findBrokenNodes(msgs.filter((m) => [8, 9, 10, 70].includes(m.tp)));
