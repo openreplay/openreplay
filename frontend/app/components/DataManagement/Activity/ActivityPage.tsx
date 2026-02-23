@@ -1,31 +1,34 @@
-import React from 'react';
-import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
-import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
-import FilterSelection from 'Shared/Filters/FilterSelection';
-import { Dropdown, Button, Divider, Tooltip, TableProps } from 'antd';
-import { MoreOutlined } from '@ant-design/icons';
-import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
-import { useModal } from 'App/components/Modal';
-import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import EventDetailsModal from './EventDetailsModal';
-import { Link, useHistory } from 'App/routing';
-import { dataManagement, withSiteId } from 'App/routes';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import FullPagination from 'Shared/FullPagination';
-import AnimatedSVG from 'Shared/AnimatedSVG';
-import DndTable from 'Shared/DNDTable';
-import { Plus } from 'lucide-react';
-import { Filter } from '@/mstore/types/filterConstants';
-import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
-import { formatTimeOrDate } from 'App/date';
-import Event, { getSortingKey } from '@/mstore/types/Analytics/Event';
-import withPermissions from 'HOCs/withPermissions';
-import { getEventIcon } from './getEventIcon';
-import NewEventsBadge from './NewEventsBadge';
-import { Icon } from 'UI';
 import withPageTitle from '@/components/hocs/withPageTitle';
+import Event, { getSortingKey } from '@/mstore/types/Analytics/Event';
+import { Filter } from '@/mstore/types/filterConstants';
+import { MoreOutlined } from '@ant-design/icons';
+import withPermissions from 'HOCs/withPermissions';
+import { Button, Divider, Dropdown, TableProps, Tooltip } from 'antd';
+import { Plus } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'App/components/Modal';
+import { formatTimeOrDate } from 'App/date';
+import { useStore } from 'App/mstore';
+import { dataManagement, withSiteId } from 'App/routes';
+import { Link, useHistory } from 'App/routing';
+import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
+import { Icon } from 'UI';
+
+import AnimatedSVG from 'Shared/AnimatedSVG';
+import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import DndTable from 'Shared/DNDTable';
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import FullPagination from 'Shared/FullPagination';
+import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
+
+import EventDetailsModal from './EventDetailsModal';
+import NewEventsBadge from './NewEventsBadge';
+import { getEventIcon } from './getEventIcon';
 
 const columnOrderKey = '$__activity_columns_order__$';
 
@@ -37,6 +40,7 @@ function ActivityPage() {
   const { projectsStore, filterStore, analyticsStore, settingsStore } =
     useStore();
   const { timezone } = settingsStore.sessionSettings;
+  const prevSiteId = React.useRef(projectsStore.activeSiteId);
 
   const siteId = projectsStore.activeSiteId;
   const allFilterOptions = filterStore.getScopedCurrentProjectFilters([
@@ -128,7 +132,7 @@ function ActivityPage() {
       title: (
         <Dropdown
           menu={{ items: dropdownItems }}
-          trigger={'click'}
+          trigger={['click']}
           placement={'bottomRight'}
         >
           <div className={'cursor-pointer'}>
@@ -153,6 +157,7 @@ function ActivityPage() {
   const appliedFilter = analyticsStore.payloadFilters;
   const appliedEvents = appliedFilter.filters.filter((f) => f.isEvent);
   const activeFilters = appliedFilter.filters.map((f) => f.name);
+
   const eventFiltersWithIndices = appliedFilter.filters
     .map((filter, originalIndex) => ({ filter, originalIndex }))
     .filter(({ filter }) => filter.isEvent);
@@ -223,8 +228,13 @@ function ActivityPage() {
   React.useEffect(() => {
     analyticsStore.fetchEvents();
   }, [analyticsStore.payloadFilters, analyticsStore.payloadFilters.filters]);
+
   React.useEffect(() => {
-    analyticsStore.reset();
+    if (prevSiteId.current !== projectsStore.activeSiteId) {
+      prevSiteId.current = projectsStore.activeSiteId;
+      console.log('resetting filters');
+      analyticsStore.reset();
+    }
   }, [projectsStore.activeSiteId]);
 
   React.useEffect(() => {
@@ -333,7 +343,7 @@ function ActivityPage() {
         />
 
         <UnifiedFilterList
-          title={t("Events")}
+          title={t('Events')}
           filters={appliedEvents}
           isDraggable={true}
           showIndices={true}
@@ -347,7 +357,7 @@ function ActivityPage() {
         <Divider className="my-3!" />
 
         <FilterListHeader
-          title={t("Filters")}
+          title={t('Filters')}
           filterSelection={
             <FilterSelection
               filters={propertyOptions}
@@ -365,7 +375,7 @@ function ActivityPage() {
         />
 
         <UnifiedFilterList
-          title={t("Filters")}
+          title={t('Filters')}
           filters={appliedFilter.filters.filter((f) => !f.isEvent)}
           className="mt-2"
           isDraggable={false}
