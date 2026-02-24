@@ -22,6 +22,14 @@ $fn_def$, :'next_version')
 ALTER TABLE public.dashboard_widgets
 ALTER COLUMN user_id DROP NOT NULL ;
 
+UPDATE public.metrics
+SET metric_format = 'sessionCount'
+WHERE metric_format IS NULL;
+
+ALTER TABLE public.metrics
+    ALTER COLUMN metric_format SET DEFAULT 'sessionCount',
+    ALTER COLUMN metric_format SET NOT NULL;
+
 CREATE TABLE IF NOT EXISTS public.actions
 (
     action_id   uuid                        PRIMARY KEY DEFAULT gen_random_uuid(),
