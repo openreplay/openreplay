@@ -212,8 +212,5 @@ func (u *User) PropertiesString() string {
 }
 
 func trimString(str string, ln int) string {
-	if len(str) < ln {
-		return str
-	}
-	return str[:ln]
+	return str[:min(len(str), ln)]
 }
