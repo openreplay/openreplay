@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "16.4.10",
+  "version": "16.4.11-beta.0",
   "keywords": [
     "logging",
     "replay"
@@ -47,7 +47,7 @@
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
     "postversion": "bun run build",
-    "prepublishOnly": "bun run test && bun run build"
+    "prepublishOnly123": "bun run test && bun run build"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
