@@ -42,6 +42,11 @@ CREATE INDEX IF NOT EXISTS actions_name_gin_idx ON public.actions USING GIN (nam
 CREATE UNIQUE INDEX IF NOT EXISTS actions_project_id_name_idx ON public.actions (project_id, name);
 CREATE INDEX IF NOT EXISTS actions_project_id_created_at_idx ON public.actions (project_id, created_at DESC);
 
+-- Backfill NULL metric_format with default value
+UPDATE public.metrics SET metric_format = 'sessionCount' WHERE metric_format IS NULL;
+ALTER TABLE public.metrics ALTER COLUMN metric_format SET DEFAULT 'sessionCount';
+ALTER TABLE public.metrics ALTER COLUMN metric_format SET NOT NULL;
+
 COMMIT;
 
 \elif :is_next
