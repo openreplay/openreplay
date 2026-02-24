@@ -292,10 +292,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 }
 
 func trimString(str string, ln int) string {
-	if len(str) < ln {
-		return str
-	}
-	return str[:ln]
+	return str[:min(len(str), ln)]
 }
 
 func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
