@@ -57,11 +57,11 @@ func BuildJSONExtractColumn(alias, propertiesCol, dataType string) string {
 	dtType := DataTypeType(dataType)
 	switch dtType {
 	case DataTypeNumber, DataTypeInteger:
-		return fmt.Sprintf("toFloat64OrNull(getSubcolumn(%s%s, ?))", alias, propertiesCol)
+		return fmt.Sprintf("toFloat64OrNull(toString(getSubcolumn(%s%s, ?)))", alias, propertiesCol)
 	case DataTypeBoolean:
 		return fmt.Sprintf("toBool(getSubcolumn(%s%s, ?))", alias, propertiesCol)
 	case DataTypeTimestamp:
-		return fmt.Sprintf("toDateTime(toInt64OrNull(getSubcolumn(%s%s, ?)))", alias, propertiesCol)
+		return fmt.Sprintf("toDateTime(toInt64OrNull(toString(getSubcolumn(%s%s, ?))))", alias, propertiesCol)
 	default:
 		return fmt.Sprintf("getSubcolumn(%s%s, ?)", alias, propertiesCol)
 	}
