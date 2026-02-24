@@ -1,5 +1,6 @@
 
 # vim: ft=yaml
+version: '3'
 
 services:
 
@@ -13,7 +14,7 @@ services:
         aliases:
           - postgresql.db.svc.cluster.local
     environment:
-      POSTGRES_PASSWORD: "${COMMON_PG_PASSWORD}"
+      POSTGRESQL_PASSWORD: "${COMMON_PG_PASSWORD}"
 
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
@@ -33,7 +34,7 @@ services:
     image: ghcr.io/openreplay/valkey:${REDIS_VERSION}
     container_name: redis
     volumes:
-      - redisdata:/bitnami/redis/data
+      - redisdata:/data
     networks:
       openreplay-net:
         aliases:
@@ -73,7 +74,7 @@ services:
     restart: on-failure
 
   minio-migration:
-    image: bitnamilegacy/minio:2023.11.20
+    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
     container_name: minio-migration
     profiles:
       - "migration"
@@ -102,7 +103,7 @@ services:
           bash /tmp/minio.sh init || exit 100
 
   db-migration:
-    image: bitnamilegacy/postgresql:14.5.0
+    image: ghcr.io/openreplay/postgres:${POSTGRES_VERSION}
     container_name: db-migration
     profiles:
       - "migration"
