@@ -71,6 +71,7 @@ function MetricSearch({ onChange }: any) {
     <div className="relative">
       <Input.Search
         name="dashboardsSearch"
+        size="small"
         placeholder={t('Filter by title or owner')}
         onChange={onChange}
         className="rounded-lg"

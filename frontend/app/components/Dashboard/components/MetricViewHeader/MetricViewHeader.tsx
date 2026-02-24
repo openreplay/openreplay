@@ -91,6 +91,7 @@ function MetricViewHeader() {
                 >
                   <Button
                     type="primary"
+                    size="small"
                     icon={<PlusOutlined />}
                     className="btn-create-card"
                   >

@@ -1,13 +1,16 @@
-import React from 'react';
-import { Button, Input, Switch, Tooltip } from 'antd';
-import Breadcrumb from 'Shared/Breadcrumb';
-import cn from 'classnames';
 import { EditOutlined } from '@ant-design/icons';
-import type { CommonProp, CommonEntry } from './Properties/commonProp';
-import { FieldNames } from './Properties/commonProp';
-import { TextEllipsis } from 'UI';
+import { Button, Input, Switch, Tooltip } from 'antd';
+import cn from 'classnames';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { Triangle } from 'Components/DataManagement/Activity/EventDetailsModal';
+import { TextEllipsis } from 'UI';
+
+import Breadcrumb from 'Shared/Breadcrumb';
+
+import type { CommonEntry, CommonProp } from './Properties/commonProp';
+import { FieldNames } from './Properties/commonProp';
 
 type BaseProps = {
   footer?: React.ReactNode;
@@ -79,6 +82,7 @@ function DataItemPage({
             </div>
           )}
         </div>
+        <div className="w-full mt-2" />
         {fields.map((field) => (
           <EditableField
             onSave={onSave}
@@ -132,6 +136,10 @@ function EditableField({
   const { t } = useTranslation();
   const [inputValue, setInputValue] = React.useState(value);
   const [isEdit, setIsEdit] = React.useState(false);
+
+  React.useEffect(() => {
+    setInputValue(value);
+  }, [value]);
   const formatter = new Intl.NumberFormat('en-US');
 
   const handleSave = () => {
@@ -200,3 +208,4 @@ function EditableField({
 }
 
 export default DataItemPage;
+export { EditableField };

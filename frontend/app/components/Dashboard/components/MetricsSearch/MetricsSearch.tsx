@@ -35,6 +35,7 @@ function MetricsSearch() {
         className="w-full input-search-card"
         placeholder={t('Filter by title or owner')}
         onChange={write}
+        size="small"
       />
     </div>
   );

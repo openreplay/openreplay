@@ -1,9 +1,10 @@
-import React, { ReactNode } from 'react';
 import { Space, Typography } from 'antd';
+import React, { ReactNode } from 'react';
+
 import EventsOrder from 'Shared/Filters/FilterList/EventsOrder';
 
 interface FilterListHeaderProps {
-  title: string;
+  title: React.ReactNode;
   filterSelection?: ReactNode;
   showEventsOrder?: boolean;
   orderProps?: any;

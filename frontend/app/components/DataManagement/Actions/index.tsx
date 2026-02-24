@@ -1,3 +1,4 @@
+import { PlusOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
 import { Button, Input } from 'antd';
@@ -91,9 +92,6 @@ function ActionsListPage() {
           <div className={'font-semibold text-lg capitalize'}>
             {t('Actions')}
           </div>
-          <Button type="primary" size="small" onClick={toCreate}>
-            {t('Create')}
-          </Button>
         </div>
         <div className="flex items-center gap-2">
           <a
@@ -105,6 +103,14 @@ function ActionsListPage() {
               {t('Docs')}
             </Button>
           </a>
+          <Button
+            icon={<PlusOutlined />}
+            type="primary"
+            size="small"
+            onClick={toCreate}
+          >
+            {t('Create')}
+          </Button>
           <div className="w-[320px]">
             <Input.Search
               size={'small'}

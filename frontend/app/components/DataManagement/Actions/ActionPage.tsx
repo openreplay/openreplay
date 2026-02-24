@@ -1,8 +1,8 @@
 import { Filter } from '@/mstore/types/filterConstants';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Input } from 'antd';
-import { Pencil, Plus } from 'lucide-react';
+import { Button } from 'antd';
+import { Plus, Trash } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
 import { useHistory, useParams } from 'App/routing';
+import { EditableField } from 'Components/DataManagement/DataItemPage';
 import { NoContent, confirm } from 'UI';
 
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -39,13 +40,12 @@ function ActionPage() {
 
   const { data: action, isPending } = useQuery({
     queryKey: ['action', siteId, actionId],
-    queryFn: () => fetchAction(actionId),
-    enabled: !isNew,
+    queryFn: () => fetchAction(actionId!),
+    enabled: !isNew || !!actionId,
   });
 
   const resolved = isNew ? new Action() : action;
 
-  const [editing, setEditing] = React.useState(isNew);
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [filters, setFilters] = React.useState<Filter[]>([]);
@@ -56,7 +56,7 @@ function ActionPage() {
       setDescription(resolved.description ?? '');
       setFilters(resolved.filters as unknown as Filter[]);
     }
-  }, [resolved?.id]);
+  }, [resolved]);
 
   const allFilterOptions = filterStore.getScopedCurrentProjectFilters([
     'events',
@@ -83,7 +83,6 @@ function ActionPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['actions-list'] });
       queryClient.invalidateQueries({ queryKey: ['action', siteId, actionId] });
-      setEditing(false);
     },
     onError: () => {
       toast.error(t('Failed to update action. Please try again.'));
@@ -103,27 +102,25 @@ function ActionPage() {
 
   const canSave = name.trim().length > 0 && filters.length > 0;
 
-  const onSave = () => {
+  const onCreate = () => {
     if (!canSave) return;
-    const payload = {
+    createMutation.mutate({
       name,
       description,
       filters,
-    } as unknown as Pick<Action, 'name' | 'description' | 'filters'>;
-    if (isNew) {
-      createMutation.mutate(payload);
-    } else {
-      updateMutation.mutate(payload);
-    }
+    } as unknown as Pick<Action, 'name' | 'description' | 'filters'>);
   };
 
-  const onCancel = () => {
-    if (resolved) {
-      setName(resolved.name ?? '');
-      setDescription(resolved.description ?? '');
-      setFilters(resolved.filters as unknown as Filter[]);
+  const onSaveField = ({ key, value }: { key: string; value: string }) => {
+    if (key === 'name') setName(value);
+    else if (key === 'description') setDescription(value);
+    if (!isNew) {
+      updateMutation.mutate({
+        name: key === 'name' ? value : name,
+        description: key === 'description' ? value : description,
+        filters,
+      } as unknown as Pick<Action, 'name' | 'description' | 'filters'>);
     }
-    setEditing(false);
   };
 
   const onDelete = async () => {
@@ -212,76 +209,52 @@ function ActionPage() {
         items={[{ label: t('Actions'), to: backLink }, { label: title }]}
       />
 
-      <div className={'rounded-lg border bg-white flex flex-col'}>
+      <div className={'rounded-lg border bg-white'}>
         <div
           className={'p-4 border-b w-full flex items-center justify-between'}
         >
-          {editing ? (
-            <Input
-              value={name}
-              maxLength={128}
-              required
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('Action name')}
-              className="font-semibold text-lg max-w-md"
-            />
-          ) : (
-            <div className={'font-semibold text-xl'}>{title}</div>
-          )}
+          <div className={'font-semibold text-xl'}>{t('Action')}</div>
           <div className="flex items-center gap-2">
             {isNew ? (
-              <Button type="primary" disabled={!canSave} onClick={onSave}>
+              <Button type="primary" disabled={!canSave} onClick={onCreate}>
                 {t('Create')}
               </Button>
-            ) : editing ? (
-              <>
-                <Button onClick={onCancel}>{t('Cancel')}</Button>
-                <Button type="primary" disabled={!canSave} onClick={onSave}>
-                  {t('Save')}
-                </Button>
-              </>
             ) : (
-              <>
-                <Button
-                  icon={<Pencil size={14} />}
-                  onClick={() => setEditing(true)}
-                >
-                  {t('Edit')}
-                </Button>
-                <Button danger onClick={onDelete}>
-                  {t('Delete')}
-                </Button>
-              </>
+              <Button size="small" type="text" danger onClick={onDelete}>
+                <Trash size={14} />
+              </Button>
             )}
           </div>
         </div>
-        <div className="p-4">
-          {editing ? (
-            <Input.TextArea
-              value={description}
-              maxLength={256}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('Action description')}
-              rows={3}
-            />
-          ) : (
-            <div className="text-lg">{description || t('No description')}</div>
-          )}
+        <div className="flex flex-col py-2">
+          <EditableField
+            key={`name-${resolved?.id}`}
+            onSave={onSaveField}
+            fieldName={t('Name')}
+            rawName="name"
+            value={name}
+          />
+          <EditableField
+            key={`desc-${resolved?.id}`}
+            onSave={onSaveField}
+            fieldName={t('Description')}
+            rawName="description"
+            value={description}
+          />
         </div>
       </div>
 
       <div className={'rounded-lg border bg-white flex flex-col'}>
         <div className={'p-4'}>
           <FilterListHeader
-            title={t('Events')}
+            title={<div className="font-semibold text-lg">{t('Events')}</div>}
             filterSelection={
               <FilterSelection
-                disabled={!editing}
                 filters={eventOptions}
                 activeFilters={activeFilters}
                 onFilterClick={onAddFilter}
               >
-                <Button disabled={!editing} type="default" size="small">
+                <Button type="default" size="small">
                   <div className="flex items-center gap-1">
                     <Plus size={16} strokeWidth={1} />
                     <span>{t('Add')}</span>
@@ -292,7 +265,7 @@ function ActionPage() {
           />
 
           <UnifiedFilterList
-            readonly={!editing}
+            readonly={false}
             title={t('Events')}
             filters={filters}
             isDraggable={true}

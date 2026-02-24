@@ -37,6 +37,7 @@ function CreateDashboardButton({ disabled }: Props) {
       disabled={disabled}
       type="primary"
       onClick={createNewDashboard}
+      size="small"
     >
       {mobileScreen ? undefined : t('Create Dashboard')}
     </Button>

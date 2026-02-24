@@ -32,6 +32,7 @@ function DashboardSearch() {
     <Input.Search
       value={query}
       allowClear
+      size="small"
       name="dashboardsSearch"
       className="w-full btn-search-dashboard"
       placeholder={t('Filter by dashboard title')}
