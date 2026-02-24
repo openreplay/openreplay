@@ -240,7 +240,7 @@ function ActivityPage() {
   React.useEffect(() => {
     const onModalClose = () => {
       hideModal();
-      history.replace({ search: undefined });
+      history.replace({ search: '' });
     };
     if (eventId) {
       showModal(
@@ -253,7 +253,7 @@ function ActivityPage() {
           width: 620,
           right: true,
         },
-        () => history.replace({ search: undefined }),
+        () => history.replace({ search: '' }),
       );
     } else {
       hideModal();

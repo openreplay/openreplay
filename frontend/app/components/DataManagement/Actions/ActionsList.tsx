@@ -1,3 +1,5 @@
+import withPageTitle from '@/components/hocs/withPageTitle';
+import withPermissions from 'HOCs/withPermissions';
 import { Table, type TableProps } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import { observer } from 'mobx-react-lite';
@@ -46,7 +48,9 @@ function ActionsList({
       sorter: true,
       showSorterTooltip: false,
       className: 'cursor-pointer!',
-      render: (text: string) => <TextEllipsis maxWidth={'200px'} text={text} className='link' />,
+      render: (text: string) => (
+        <TextEllipsis maxWidth={'200px'} text={text} className="link" />
+      ),
     },
     {
       title: 'Description',
@@ -109,4 +113,6 @@ function ActionsList({
   );
 }
 
-export default observer(ActionsList);
+export default withPageTitle('Actions')(
+  withPermissions(['DATA_MANAGEMENT'], '', false, false)(observer(ActionsList)),
+);

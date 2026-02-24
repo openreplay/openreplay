@@ -1,4 +1,6 @@
+import withPageTitle from '@/components/hocs/withPageTitle';
 import { useQuery } from '@tanstack/react-query';
+import withPermissions from 'HOCs/withPermissions';
 import { Button, Input, Switch, Table, Tooltip } from 'antd';
 import { Album, EyeOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -415,4 +417,6 @@ function UserPropsList({
   );
 }
 
-export default observer(ListPage);
+export default withPageTitle('Properties')(
+  withPermissions(['DATA_MANAGEMENT'], '', false, false)(observer(ListPage)),
+);

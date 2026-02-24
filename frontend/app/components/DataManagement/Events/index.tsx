@@ -1,3 +1,4 @@
+import withPageTitle from '@/components/hocs/withPageTitle';
 import { DownOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
@@ -177,9 +178,11 @@ function EventsListPage() {
   );
 }
 
-export default withPermissions(
-  ['DATA_MANAGEMENT'],
-  '',
-  false,
-  false,
-)(observer(EventsListPage));
+export default withPageTitle('Events')(
+  withPermissions(
+    ['DATA_MANAGEMENT'],
+    '',
+    false,
+    false,
+  )(observer(EventsListPage)),
+);
