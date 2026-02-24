@@ -149,3 +149,5 @@ SELECT project_id,
        created_at       AS created_at
 FROM product_analytics.events
 GROUP BY ALL;
+
+DROP TABLE IF EXISTS product_analytics.actions;

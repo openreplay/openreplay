@@ -367,25 +367,6 @@ CREATE TABLE IF NOT EXISTS product_analytics.tags
       ORDER BY (project_id, tag_name, created_at);
 
 
--- A  group of events related with an OR condition
-CREATE TABLE IF NOT EXISTS product_analytics.actions
-(
-    project_id      UInt16,
-    action_id       UUID     DEFAULT generateUUIDv4(),
-    name            String,
-    created_at      DateTime DEFAULT now(),
-    created_by      UInt16 COMMENT 'the OpenReplay user who created this action',
-    visibility      String   DEFAULT 'no' COMMENT 'no/read-only/read-write',
-    last_queried_by UInt16 COMMENT 'the OpenReplay user who last queried this action',
-    -- definition is the list of filter to use in this action, should have the form:
-    -- {event_name String, filter JSON COMMENT 'the filter to apply to the selected event_name'}
-    definition      Array(JSON),
-    _sign           Int8     DEFAULT 1,
-    _timestamp      DateTime DEFAULT now()
-) ENGINE = CollapsingMergeTree(_sign)
-      ORDER BY (project_id, action_id)
-      SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
-
 -- A cohort is a group of events-properties during a specific time period,
 -- related with an AND condition to identify users
 CREATE TABLE IF NOT EXISTS product_analytics.cohorts
