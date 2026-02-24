@@ -792,7 +792,7 @@ CREATE TABLE public.metrics
     view_type      text      NOT NULL DEFAULT 'lineChart',
     metric_of      text      NOT NULL DEFAULT 'sessionCount',
     metric_value   text[]    NOT NULL DEFAULT '{}'::text[],
-    metric_format  text,
+    metric_format  text      NOT NULL DEFAULT 'sessionCount',
     thumbnail      text,
     is_pinned      boolean   NOT NULL DEFAULT FALSE,
     default_config jsonb     NOT NULL DEFAULT '{
