@@ -5,7 +5,7 @@ version: '3'
 services:
 
   postgresql:
-    image: bitnamilegacy/postgresql:${POSTGRES_VERSION}
+    image: ghcr.io/openreplay/postgres:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
       - pgdata:/bitnami/postgresql
@@ -31,10 +31,10 @@ services:
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
 
   redis:
-    image: bitnamilegacy/redis:${REDIS_VERSION}
+    image: ghcr.io/openreplay/valkey:${REDIS_VERSION}
     container_name: redis
     volumes:
-      - redisdata:/bitnami/redis/data
+      - redisdata:/data
     networks:
       openreplay-net:
         aliases:
@@ -43,7 +43,7 @@ services:
       ALLOW_EMPTY_PASSWORD: "yes"
 
   minio:
-    image: bitnamilegacy/minio:${MINIO_VERSION}
+    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
     container_name: minio
     volumes:
       - miniodata:/bitnami/minio/data
@@ -74,7 +74,7 @@ services:
     restart: on-failure
 
   minio-migration:
-    image: bitnamilegacy/minio:2023.11.20
+    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
     container_name: minio-migration
     profiles:
       - "migration"
@@ -103,7 +103,7 @@ services:
           bash /tmp/minio.sh init || exit 100
 
   db-migration:
-    image: bitnamilegacy/postgresql:14.5.0
+    image: ghcr.io/openreplay/postgres:${POSTGRES_VERSION}
     container_name: db-migration
     profiles:
       - "migration"
