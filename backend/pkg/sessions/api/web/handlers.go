@@ -371,7 +371,7 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
-type ScreenshotMessage struct {
+type ImagesMessage struct {
 	Name string
 	Data []byte
 }
@@ -412,7 +412,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	}
 
 	frames := bytes.NewBuffer([]byte{})
-	msg := ScreenshotMessage{}
+	msg := ImagesMessage{}
 
 	// Iterate over uploaded files
 	for _, fileHeaderList := range r.MultipartForm.File {
@@ -441,7 +441,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 					return
 				}
 
-				data, err := json.Marshal(&ScreenshotMessage{
+				data, err := json.Marshal(&ImagesMessage{
 					Name: fileName,
 					Data: fileBytes,
 				})
@@ -457,7 +457,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 				return
 			}
 
-			baseName, ts, err := parseCanvasName(fileName)
+			baseName, ts, err := parseImageName(fileName)
 			if err != nil {
 				e.log.Error(r.Context(), "can't parse canvas name %s: %s", fileName, err)
 				continue
@@ -476,7 +476,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	}
 
 	if frames.Len() == 0 {
-		e.log.Warn(r.Context(), "no frames in upload")
+		e.log.Warn(r.Context(), "no frames to upload")
 		e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
 		return
 	}
@@ -497,7 +497,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
 }
 
-func parseCanvasName(canvasName string) (baseName string, ts uint64, err error) {
+func parseImageName(canvasName string) (baseName string, ts uint64, err error) {
 	ext := filepath.Ext(canvasName) // .webp, .png, .jpg, .avif
 	name := strings.TrimSuffix(canvasName, ext)
 	// Last segment after '_' is the timestamp

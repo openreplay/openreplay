@@ -28,4 +28,5 @@ type StartMobileSessionResponse struct {
 	ImageQuality    string   `json:"quality"`
 	FrameRate       int      `json:"fps"`
 	ProjectID       string   `json:"projectID"`
+	FramesSupport   bool     `json:"framesSupport"` // true by default from v1.26.0
 }
