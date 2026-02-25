@@ -73,6 +73,7 @@ type SessionReplay struct {
 	CanvasURL          []string               `json:"canvasURL"`
 	CanvasFrames       []string               `json:"canvasFrames"`
 	VideoURL           []string               `json:"videoURL"`
+	FramesURL          []string               `json:"mobileFrames"`
 	Metadata           map[string]interface{} `json:"metadata"`
 	Live               bool                   `json:"live"`
 	FileKey            *string                `json:"fileKey"`
@@ -179,7 +180,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 	}
 	si.DomURL = urls
 	if si.Platform == "ios" || si.Platform == "android" || si.Platform == "mobile" {
-		si.VideoURL, err = s.files.GetMobileReplayUrls(sessionID)
+		si.FramesURL, si.VideoURL, err = s.files.GetMobileReplayUrls(sessionID)
 	} else {
 		si.DevtoolsURL, err = s.files.GetDevtoolsUrls(sessionID)
 		if err != nil {

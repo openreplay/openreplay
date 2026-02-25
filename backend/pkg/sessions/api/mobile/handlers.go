@@ -1,13 +1,17 @@
 package mobile
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -236,6 +240,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 		ImageQuality:    e.cfg.MobileQuality,
 		FrameRate:       e.cfg.MobileFps,
 		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
+		FramesSupport:   true,
 	}, startTime, r.URL.Path, 0)
 }
 
@@ -274,19 +279,21 @@ func (e *handlersImpl) pushMobileLateMessagesHandler(w http.ResponseWriter, r *h
 	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawMobile)
 }
 
+type ImagesMessage struct {
+	Name string
+	Data []byte
+}
+
 func (e *handlersImpl) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
-	if sessionData != nil {
-		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
-	}
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 
-	// Add sessionID and projectID to context
 	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -298,30 +305,26 @@ func (e *handlersImpl) mobileImagesUploadHandler(w http.ResponseWriter, r *http.
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
 	defer r.Body.Close()
 
-	err = r.ParseMultipartForm(5 * 1e6) // ~5Mb
-	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
+	err = r.ParseMultipartForm(10 << 20)
+	if errors.Is(err, http.ErrNotMultipart) || errors.Is(err, http.ErrMissingBoundary) {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
 	} else if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 		return
 	}
 
-	if r.MultipartForm == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("multipart not parsed"), startTime, r.URL.Path, 0)
-		return
-	}
-
-	if len(r.MultipartForm.Value["projectKey"]) == 0 {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("projectKey parameter missing"), startTime, r.URL.Path, 0) // status for missing/wrong parameter?
-		return
+	isFrames := false
+	if len(r.MultipartForm.Value["type"]) > 0 && r.MultipartForm.Value["type"][0] == "frames" {
+		isFrames = true
 	}
 
 	for _, fileHeaderList := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaderList {
 			file, err := fileHeader.Open()
 			if err != nil {
-				continue
+				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+				return
 			}
 
 			data, err := io.ReadAll(file)
@@ -332,12 +335,98 @@ func (e *handlersImpl) mobileImagesUploadHandler(w http.ResponseWriter, r *http.
 			}
 			file.Close()
 
-			if err := e.producer.Produce(e.cfg.TopicRawImages, sessionData.ID, data); err != nil {
+			uncompressedStream, err := gzip.NewReader(bytes.NewReader(data))
+			if err != nil {
+				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, fmt.Errorf("can't unpack gzip: %s", err), startTime, r.URL.Path, 0)
+				return
+			}
+			defer uncompressedStream.Close()
+
+			frames := bytes.NewBuffer([]byte{})
+			var fileName string
+
+			if isFrames {
+				if _, err = frames.ReadFrom(uncompressedStream); err != nil {
+					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+					return
+				}
+			} else {
+				tarReader := tar.NewReader(uncompressedStream)
+				for {
+					header, err := tarReader.Next()
+					if err != nil {
+						if err == io.EOF {
+							break
+						}
+						e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, fmt.Errorf("can't read tar header: %s", err), startTime, r.URL.Path, 0)
+						return
+					}
+
+					if header.Typeflag != tar.TypeReg {
+						e.log.Error(r.Context(), "ExtractTarGz: unknown type: %d in %s", header.Typeflag, header.Name)
+						continue
+					}
+					name, ts, err := parseImageName(header.Name)
+					if err != nil {
+						e.log.Error(r.Context(), "ExtractTarGz: can't parse time for %s: %s", header.Name, err)
+						continue
+					}
+					if fileName == "" {
+						fileName = name
+					}
+					prevLen := frames.Len()
+					if err := binary.Write(frames, binary.LittleEndian, ts); err != nil {
+						e.log.Error(r.Context(), "can't write frame's time for %s: %s", header.Name, err)
+						frames.Truncate(prevLen)
+						continue
+					}
+					if err := binary.Write(frames, binary.LittleEndian, uint32(header.Size)); err != nil {
+						e.log.Error(r.Context(), "can't write frame's size for %s: %s", header.Name, err)
+						frames.Truncate(prevLen)
+						continue
+					}
+					if _, err := frames.ReadFrom(tarReader); err != nil {
+						e.log.Error(r.Context(), "can't read frame for %s: %s", header.Name, err)
+						frames.Truncate(prevLen)
+						continue
+					}
+				}
+			}
+
+			packedMessage, err := json.Marshal(&ImagesMessage{
+				Name: fileName,
+				Data: frames.Bytes(),
+			})
+			if err != nil {
+				e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
+				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+				return
+			}
+			if err := e.producer.Produce(e.cfg.TopicRawImages, sessionData.ID, packedMessage); err != nil {
 				e.log.Warn(r.Context(), "failed to send image to queue: %s", err)
 			}
+			e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+			return
 		}
 	}
+	e.log.Warn(r.Context(), "no images to upload")
 	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+}
+
+func parseImageName(imageName string) (baseName string, ts uint64, err error) {
+	ext := filepath.Ext(imageName) // .jpeg
+	name := strings.TrimSuffix(imageName, ext)
+	// Last segment after '_' is the timestamp
+	idx := strings.LastIndex(name, "_")
+	if idx < 0 {
+		return "", 0, fmt.Errorf("image name has no underscore: %s", imageName)
+	}
+	baseName = name[:idx] + ext // for example "1771238515501_33.jpeg"
+	ts, err = strconv.ParseUint(name[idx+1:], 10, 64)
+	if err != nil {
+		return "", 0, fmt.Errorf("can't parse timestamp from canvas name %s: %w", imageName, err)
+	}
+	return baseName, ts, nil
 }
 
 func (e *handlersImpl) pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {

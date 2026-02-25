@@ -26,6 +26,7 @@ func NewFile(path string, bufSize int) (*File, error) {
 
 func (f *File) Write(data []byte) error {
 	f.updated = true
+	f.buffer.Write(data)
 	if len(data) > f.buffer.Available()+f.buffer.Size() {
 		// Flush buffer to file
 		for i := 0; i < 3; i++ {
