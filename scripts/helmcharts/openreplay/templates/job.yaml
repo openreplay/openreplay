@@ -333,7 +333,7 @@ spec:
           - |
             lowVersion=25.1
             highVersion=25
-            [[ "${CH_PASSWORD}" == "" ]] || {
+            [[ "${CH_PASSWORD}" != "" ]] && {
               CH_PASSWORD="--password $CH_PASSWORD"
             }
             ch_client=`echo clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT}`
