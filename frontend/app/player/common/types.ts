@@ -52,6 +52,7 @@ export interface SessionFilesInfo {
   errors: Record<string, any>[];
   agentInfo?: { email: string; name: string };
   canvasURL?: string[];
+  mobileFrames?: string;
 }
 
 export type PlayerMsg = Message & { tabId: string };

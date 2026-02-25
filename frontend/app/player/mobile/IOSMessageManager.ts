@@ -1,5 +1,6 @@
 import logger from 'App/logger';
 import { TarFile } from 'js-untar';
+import { FrameSnapshot } from 'Player/common/parseFrames';
 import { getResourceFromNetworkRequest } from 'Player';
 
 import type { Store } from 'Player';
@@ -75,7 +76,7 @@ export interface State extends ScreenState, ListsState {
   messagesProcessed: boolean;
   eventCount: number;
   updateWarnings: number;
-  currentSnapshot: TarFile | null;
+  currentSnapshot: TarFile | FrameSnapshot | null;
   inBackground: boolean;
   orientation: 'portrait' | 'landscapeLeft' | 'landscapeRight';
 }

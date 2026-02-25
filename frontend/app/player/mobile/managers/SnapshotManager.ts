@@ -1,8 +1,10 @@
-import { TarFile } from 'js-untar';
 import ListWalker from 'Player/common/ListWalker';
+import parseFrames, { FrameSnapshot } from 'Player/common/parseFrames';
+import unpack from 'Player/common/unpack';
+import { TarFile } from 'js-untar';
 
 interface Snapshots {
-  [timestamp: number]: TarFile;
+  [timestamp: number]: TarFile | FrameSnapshot;
 }
 
 type Timestamp = { time: number };
@@ -22,6 +24,23 @@ export default class SnapshotManager extends ListWalker<Timestamp> {
       this.snapshots[messageTime] = file;
       this.append({ time: messageTime });
     });
+  }
+
+  public async loadFrames(url: string, sessionStart: number) {
+    const fileFormat = /\.(webp|jpeg|png|avif)$/.exec(url)?.[1] ?? 'webp';
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch frames: ${res.status}`);
+    }
+    const zstdBuf = await res.arrayBuffer();
+    const buf = unpack(new Uint8Array(zstdBuf)).buffer as ArrayBuffer;
+    const { snapshots, timestamps } = parseFrames(
+      buf,
+      sessionStart,
+      fileFormat,
+    );
+    Object.assign(this.snapshots, snapshots);
+    timestamps.forEach((msg: Timestamp) => this.append(msg));
   }
 
   public moveReady(t: number) {

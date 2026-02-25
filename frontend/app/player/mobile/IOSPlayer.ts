@@ -53,18 +53,21 @@ export default class IOSPlayer extends Player {
     this.messageManager = messageManager;
     this.messageLoader = messageLoader;
 
-    if (hasTar) {
-      messageLoader
-        .loadTarball(session.videoURL.find((url) => url.includes('.tar.'))!)
-        .then((files) => {
-          if (files) {
-            this.wpState.update({ mode: PlayerMode.SNAPS });
-            this.messageManager.snapshotManager.mapToSnapshots(files);
-          }
+    if (session.mobileFrames) {
+      this.messageManager.snapshotManager
+        .loadFrames(session.mobileFrames, session.startedAt)
+        .then(() => {
+          this.wpState.update({ mode: PlayerMode.SNAPS });
         })
         .catch((e) => {
-          this.wpState.update({ mode: PlayerMode.VIDEO });
+          console.warn('Failed to load mobile frames, falling back to tar', e);
+          if (hasTar) {
+            return this.loadTar(session, messageLoader);
+          }
+          this.wpState.update({ mode: PlayerMode.SNAPS });
         });
+    } else if (hasTar) {
+      this.loadTar(session, messageLoader);
     }
     void messageLoader.loadFiles();
     const endTime = session.duration?.valueOf() || 0;
@@ -73,6 +76,20 @@ export default class IOSPlayer extends Player {
       session,
       endTime,
     });
+  }
+
+  private loadTar(session: SessionFilesInfo, messageLoader: MessageLoader) {
+    messageLoader
+      .loadTarball(session.videoURL.find((url) => url.includes('.tar.'))!)
+      .then((files) => {
+        if (files) {
+          this.wpState.update({ mode: PlayerMode.SNAPS });
+          this.messageManager.snapshotManager.mapToSnapshots(files);
+        }
+      })
+      .catch(() => {
+        this.wpState.update({ mode: PlayerMode.VIDEO });
+      });
   }
 
   attach = (parent: HTMLElement) => {
