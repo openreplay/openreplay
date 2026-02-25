@@ -133,10 +133,13 @@ class Batcher {
         body: JSON.stringify(sentBatch),
       })
         .then((response) => {
-          if (response.status === 403) {
-            this.init().then(() => {
-              send()
-            })
+          if ([403, 401].includes(response.status)) {
+            if (attempts < this.retryLimit) {
+              return this.init().then(() => {
+                send()
+              })
+            }
+            return
           }
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
@@ -152,6 +155,9 @@ class Batcher {
   }
 
   startAutosend() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId)
+    }
     this.intervalId = setInterval(() => {
       this.flush()
     }, this.autosendInterval)

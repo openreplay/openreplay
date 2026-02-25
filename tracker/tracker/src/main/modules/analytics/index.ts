@@ -82,8 +82,9 @@ export default class Analytics {
   _getToken = () => {
     if (this.standalone) {
       return this.token
+    } else {
+      return this.getToken();
     }
-    return this.getToken()
   }
 
   _getTimestamp = () => {

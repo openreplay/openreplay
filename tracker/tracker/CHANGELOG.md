@@ -1,3 +1,7 @@
+## 17.2.2
+
+- improve unauth detection for sdk
+
 ## 17.2.0
 
 - remove fflate in favor of native compression streams
