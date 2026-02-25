@@ -73,7 +73,8 @@ def auth_required(token: str = Depends(required_oauth2_scheme)):
     """Dependency to check Authorization header."""
     if config("SCIM_AUTH_TYPE") == "OAuth2":
         payload = verify_access_token(token)
-    return payload["tenant_id"]
+        return payload["tenant_id"]
+    return None
 
 
 optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)

@@ -3,7 +3,7 @@ from chalicelib.utils import pg_client
 from scim2_models import Schema, Resource, ResourceType
 import os
 import json
-from decouple import config
+from decouple import config, Csv
 
 
 def safe_mogrify_array(
@@ -62,15 +62,17 @@ def set_scim_available():
     global __SCIM_USED
     __SCIM_USED = True
 
+PREFIXES = config("idp_group_prefixes", cast=Csv(), default="")
+if len(PREFIXES) == 0:
+    PREFIXES = ["openreplay", "or"]
+else:
+    PREFIXES = [p.lower() for p in PREFIXES]
 
 def group_name_to_role_name(group_name: str) -> str:
     if group_name is None or len(group_name) == 0:
         return group_name
 
-    prefixes = config("idp_group_prefixes", cast=lambda v: [s.strip() for s in v.split(',')], default="")
-    if len(prefixes) == 0:
-        prefixes = ["openreplay", "or"]
-    for prefix in prefixes:
+    for prefix in PREFIXES:
         if group_name.lower().startswith(prefix):
             group_name = group_name[len(prefix):]
             break
