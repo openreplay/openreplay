@@ -226,7 +226,7 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 	res := make([]interface{}, 0, len(sessEvents))
 	for _, sessEvent := range sessEvents {
 		switch sessEvent.Type {
-		case "CLICK":
+		case "CLICK", "TAP":
 			if toSkip > 0 {
 				toSkip--
 				continue
@@ -482,7 +482,7 @@ func (e *eventsImpl) GetIncidentsBySessionID(projectID uint32, sessID uint64) []
 					"$properties".start_time AS start_time
 			FROM product_analytics.events
 			WHERE session_id = ? AND project_id = ?
-			  	AND issue_type = 'incident' 
+			  	AND issue_type = 'incident'
 			  	AND "$event_name" = 'ISSUE'
 				AND "$auto_captured"
 			ORDER BY created_at;`
@@ -501,18 +501,18 @@ func (e *eventsImpl) GetIncidentsBySessionID(projectID uint32, sessID uint64) []
 
 func (e *eventsImpl) GetMobileBySessionID(projID uint32, sessID uint64) []interface{} {
 	query := `SELECT created_at,
-              	toString(` + "`$properties`" + `) AS p_properties,
-              	` + "`$event_name`" + ` AS type,
-              	` + "`$duration_s`" + ` AS duration,
-              	` + "`$current_url`" + ` AS url,
-              	` + "`$referrer`" + ` AS referrer
+					"$properties" AS props,
+					"$event_name" AS type,
+					"$duration_s" AS duration,
+					"$current_url" AS url,
+					"$referrer" AS referrer
               FROM product_analytics.events
-              WHERE session_id = ?
-              	AND ` + "`$event_name`" + ` IN ('CLICK', 'INPUT', 'LOCATION', 'TAP')
-				AND ` + "`$auto_captured`" + `
+              WHERE project_id = ? AND session_id = ?
+              	AND "$event_name" IN ('INPUT', 'LOCATION', 'TAP')
+				AND "$auto_captured"
 			  ORDER BY created_at;`
 	sessEvents := make([]event, 0)
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, projID, sessID); err != nil {
 		e.log.Error(context.Background(), "Error querying mobile events: %v", err)
 		return nil
 	}
