@@ -138,8 +138,9 @@ function PrivateRoutes() {
 
   const applyUrlFilters = React.useCallback(
     (searchParams: URLSearchParams) => {
-      const scopedFilters =
-        filterStore.getScopedCurrentProjectFilters(['sessions']);
+      const scopedFilters = filterStore.getScopedCurrentProjectFilters([
+        'sessions',
+      ]);
       const urlFilters = getFiltersFromQueryParams(searchParams, scopedFilters);
 
       if (urlFilters.length === 0) {
