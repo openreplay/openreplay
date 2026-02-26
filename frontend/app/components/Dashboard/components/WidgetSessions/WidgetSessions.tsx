@@ -1,39 +1,47 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from 'react';
-import { NoContent, Loader, Pagination } from 'UI';
-import { Button, Tag, Tooltip, Dropdown } from 'antd';
-import { UndoOutlined, DownOutlined } from '@ant-design/icons';
-import cn from 'classnames';
-import { useStore } from 'App/mstore';
-import SessionItem from 'Shared/SessionItem';
-import { observer } from 'mobx-react-lite';
-import { DateTime } from 'luxon';
-import { debounce, numberWithCommas } from 'App/utils';
-import useIsMounted from 'App/hooks/useIsMounted';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { HEATMAP, USER_PATH, FUNNEL, TABLE } from 'App/constants/card';
-import { useTranslation } from 'react-i18next';
-import Session from 'App/types/session/session';
-import { toast } from 'react-toastify';
-import { checkIsSingleSeries } from '../WidgetForm/WidgetFormNew';
+import { DownOutlined, UndoOutlined } from '@ant-design/icons';
 import { FilterKey } from 'Types/filter/filterType';
+import { Button, Dropdown, Tag, Tooltip } from 'antd';
+import cn from 'classnames';
+import { DateTime } from 'luxon';
+import { observer } from 'mobx-react-lite';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+
+import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
+import useIsMounted from 'App/hooks/useIsMounted';
+import { useStore } from 'App/mstore';
+import Session from 'App/types/session/session';
+import { debounce, numberWithCommas } from 'App/utils';
+import { Loader, NoContent, Pagination } from 'UI';
+
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import SessionItem from 'Shared/SessionItem';
+
+import { checkIsSingleSeries } from '../WidgetForm/WidgetFormNew';
 
 const getListSessionsBySeries = (
-  data: { sessions: Session[]; total: number; seriesId: string }[],
+  data: {
+    sessions: Session[];
+    total: number;
+    seriesId: string;
+    seriesName: string;
+  }[],
   seriesId: string,
 ) => {
   const result = data.reduce(
-    (acc, { sessions, total, seriesId: id }) => {
+    (acc, { sessions, total, seriesId: id, seriesName }) => {
       const ids = new Set(acc.sessions.map((s) => s.sessionId));
       const newSessions = sessions.filter((s) => !ids.has(s.sessionId));
-      if (seriesId === 'all' || id === seriesId) {
+      if (seriesId === 'all' || [seriesName, id].includes(seriesId)) {
         acc.sessions.push(...newSessions);
-        if (id === seriesId)
+        if ([seriesName, id].includes(seriesId))
           acc.total = total - (sessions.length - newSessions.length);
       }
       return acc;
@@ -285,11 +293,15 @@ function WidgetSessions({ className = '' }) {
     );
   }, [activeSeries, metricStore, seriesOptions]);
   useEffect(() => {
-    setActiveSeries(
-      focused
-        ? (seriesOptions.find((o) => o.label === focused)?.value ?? 'all')
-        : 'all',
-    );
+    if (!focused) {
+      setActiveSeries('all');
+    } else {
+      setActiveSeries(
+        focused
+          ? (seriesOptions.find((o) => o.label === focused)?.value ?? 'all')
+          : 'all',
+      );
+    }
   }, [focused, seriesOptions]);
 
   const clearFilters = () => {
