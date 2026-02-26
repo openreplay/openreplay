@@ -15,6 +15,10 @@ import { Loader } from 'UI';
 import APIClient from './api_client';
 import * as routes from './routes';
 import { debounceCall } from '@/utils';
+import {
+  getFiltersFromQueryParams,
+  mergeFiltersWithUrlFilters,
+} from '@/utils/sessionFiltersFromUrl';
 import { hasAi } from './utils/split-utils';
 import { saasRoutes } from './saasComponents';
 
@@ -126,6 +130,33 @@ function PrivateRoutes() {
   const initialFetchDoneRef = React.useRef(false);
   const [filtersLoaded, setFiltersLoaded] = React.useState(false);
 
+  const markInitialFetchDone = React.useCallback(() => {
+    setTimeout(() => {
+      initialFetchDoneRef.current = true;
+    }, 500);
+  }, []);
+
+  const applyUrlFilters = React.useCallback(
+    (searchParams: URLSearchParams) => {
+      const scopedFilters =
+        filterStore.getScopedCurrentProjectFilters(['sessions']);
+      const urlFilters = getFiltersFromQueryParams(searchParams, scopedFilters);
+
+      if (urlFilters.length === 0) {
+        return false;
+      }
+
+      const mergedFilters = mergeFiltersWithUrlFilters(
+        searchStore.instance.filters,
+        urlFilters,
+      );
+
+      searchStore.edit({ filters: mergedFilters as any });
+      return true;
+    },
+    [filterStore, searchStore],
+  );
+
   React.useEffect(() => {
     if (!searchStore.urlParsed && filtersLoaded) {
       const searchParams = new URLSearchParams(location.search);
@@ -135,31 +166,42 @@ function PrivateRoutes() {
         searchStore
           .loadSharedSearch(searchId)
           .then(() => {
+            const hasUrlFilters = applyUrlFilters(searchParams);
             searchParams.delete('sid');
             const newSearch = searchParams.toString();
             const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
             history.replace(newUrl);
             searchStore.setUrlParsed();
-            setTimeout(() => {
-              initialFetchDoneRef.current = true;
-            }, 500);
+
+            if (hasUrlFilters) {
+              void searchStore.fetchSessions(true);
+            }
+            markInitialFetchDone();
           })
           .catch((error) => {
             console.error('Failed to load shared search:', error);
+            applyUrlFilters(searchParams);
             searchStore.setUrlParsed();
-            setTimeout(() => {
-              initialFetchDoneRef.current = true;
-            }, 500);
+            void searchStore.fetchSessions(true);
+            markInitialFetchDone();
           });
       } else {
+        applyUrlFilters(searchParams);
         searchStore.setUrlParsed();
         void searchStore.fetchSessions(true);
-        setTimeout(() => {
-          initialFetchDoneRef.current = true;
-        }, 500);
+        markInitialFetchDone();
       }
     }
-  }, [filtersLoaded, searchStore.urlParsed, location.search]);
+  }, [
+    applyUrlFilters,
+    filtersLoaded,
+    history,
+    location.pathname,
+    location.search,
+    markInitialFetchDone,
+    searchStore,
+    searchStore.urlParsed,
+  ]);
 
   const debouncedSearchCall = React.useMemo(
     () => debounceCall(() => searchStore.fetchSessions(true), 250),
