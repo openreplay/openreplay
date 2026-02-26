@@ -6,6 +6,10 @@ cd /tmp
 
 buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data" "records" "spots")
 
+ENABLE_MINIO_LIFECYCLE=${ENABLE_MINIO_LIFECYCLE:-false}
+MOB_RETENTION_DAYS=${MOB_RETENTION_DAYS:-180}
+TAGGED_DELETE_DAYS=${TAGGED_DELETE_DAYS:-30}
+
 mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 
 function init() {
@@ -16,20 +20,20 @@ function init() {
   "Rules": [
     {
       "Expiration": {
-        "Days": 180
+        "Days": ${MOB_RETENTION_DAYS}
       },
       "ID": "Delete old mob files",
       "Status": "Enabled"
     },
     {
       "Expiration": {
-        "Days": 30
+        "Days": ${TAGGED_DELETE_DAYS}
       },
-      "ID": "Delete flagged mob files after 30 days",
+      "ID": "Delete flagged mob files after configured days",
       "Filter": {
         "Tag": {
           "Key": "to_delete_in_days",
-          "Value": "30"
+          "Value": "${TAGGED_DELETE_DAYS}"
         }
       },
       "Status": "Enabled"
@@ -41,8 +45,9 @@ EOF
     for bucket in ${buckets[*]}; do
         mc mb minio/${bucket} || true
     done
-    # eg: How to setup the lifecycle policy
-    # mc ilm import minio/mobs </tmp/lifecycle.json || true
+    if [[ "$ENABLE_MINIO_LIFECYCLE" == "true" ]]; then
+        mc ilm import minio/mobs </tmp/lifecycle.json || true
+    fi
 
     #####################################################
     # Creating public bucket; Do not change this block!

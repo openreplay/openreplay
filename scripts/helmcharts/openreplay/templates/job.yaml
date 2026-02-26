@@ -558,7 +558,7 @@ spec:
             value: '{{ $val }}'
           {{- end }}
           - name: RETENTION_TIME
-            value: "{{ .Values.global.kafka.retentionTime }}"
+            value: "{{ default "345600000" .Values.global.kafka.retentionTime }}"
           - name: KAFKA_HOST
             value: "{{ .Values.global.kafka.kafkaHost }}"
           - name: KAFKA_PORT

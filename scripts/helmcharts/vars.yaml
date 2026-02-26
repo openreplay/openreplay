@@ -36,6 +36,9 @@ quickwit: &quickwit
 kafka: &kafka
   # For enterpriseEdition
   # enabled: true
+  # EE topic-level retention in milliseconds.
+  # Used by migration job when configuring topic `retention.ms`.
+  # retentionTime: "345600000"
   kafkaHost: "kafka.db.svc.cluster.local"
   # For now, clickhouse doesn't support zookeeper tls intgration.
   # So we need http endpoint
@@ -174,6 +177,18 @@ global:
   #   existingSecret: "my-license-secret"
   #   existingSecretKey: "license-key"
   domainName: ""
+  # Global env var overrides passed to OpenReplay services.
+  # Uncomment and adjust for retention tuning:
+  # env:
+  #   SCH_DELETE_DAYS: "30"             # API tag-for-deletion window in days
+  #   RETENTION: "default"              # Default object tag for EE uploads
+  #   RETENTION_D_VALUE: "default"      # Tag when session leaves vault
+  #   RETENTION_L_VALUE: "vault"        # Tag when session is in vault
+  #   USE_S3_TAGS: "true"               # Enable object tagging on backend uploads
+  #   ENABLE_MINIO_LIFECYCLE: "true"    # Apply lifecycle policy to `mobs` bucket
+  #   MOB_RETENTION_DAYS: "180"         # Lifecycle expiration for all `mobs` objects
+  #   TAGGED_DELETE_DAYS: "30"          # Lifecycle expiration for tagged deletions
+  #   CLEANUP_READ_GAP: "48h"           # Ender cleanup read-back window
 
 # chalice:
   # env:
@@ -206,4 +221,3 @@ global:
 #     requests:
 #       cpu: 512m
 #       memory: 2056Mi
-
