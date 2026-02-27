@@ -46,6 +46,7 @@ function ActionPage() {
 
   const resolved = isNew ? new Action() : action;
 
+  const [isEditing, setIsEditing] = React.useState(false);
   const [parsed, setParsed] = React.useState(false);
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
@@ -71,6 +72,7 @@ function ActionPage() {
   const createMutation = useMutation({
     mutationFn: createAction,
     onSuccess: (created) => {
+      toast.success(`Action ${created.name} created successfully`);
       queryClient.invalidateQueries({ queryKey: ['actions-list'] });
       history.push(withSiteId(dataManagement.actionPage(created.id), siteId!));
     },
@@ -83,6 +85,7 @@ function ActionPage() {
     mutationFn: (payload: Pick<Action, 'name' | 'description' | 'filters'>) =>
       updateAction(actionId!, payload),
     onSuccess: () => {
+      toast.success(t('Action updated successfully'));
       queryClient.invalidateQueries({ queryKey: ['actions-list'] });
       queryClient.invalidateQueries({ queryKey: ['action', siteId, actionId] });
     },
@@ -123,6 +126,23 @@ function ActionPage() {
         filters,
       } as unknown as Pick<Action, 'name' | 'description' | 'filters'>);
     }
+  };
+
+  const onSave = () => {
+    if (!canSave) return;
+    updateMutation.mutate({
+      name,
+      description,
+      filters,
+    } as unknown as Pick<Action, 'name' | 'description' | 'filters'>);
+    setIsEditing(false);
+  };
+
+  const onCancel = () => {
+    setName(resolved?.name ?? '');
+    setDescription(resolved?.description ?? '');
+    setFilters((resolved?.filters as unknown as Filter[]) ?? []);
+    setIsEditing(false);
   };
 
   const onDelete = async () => {
@@ -249,11 +269,28 @@ function ActionPage() {
         <div className={'p-4'}>
           <FilterListHeader
             title={<div className="font-semibold text-lg">{t('Events')}</div>}
+            extra={
+              isNew ? null : isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Button size="small" onClick={onSave}>
+                    {t('Save')}
+                  </Button>
+                  <Button size="small" type="text" onClick={onCancel}>
+                    {t('Cancel')}
+                  </Button>
+                </div>
+              ) : (
+                <Button size="small" onClick={() => setIsEditing(true)}>
+                  {t('Edit')}
+                </Button>
+              )
+            }
             filterSelection={
               <FilterSelection
                 filters={eventOptions}
                 activeFilters={activeFilters}
                 onFilterClick={onAddFilter}
+                disabled={!isEditing && !isNew}
               >
                 <Button type="default" size="small">
                   <div className="flex items-center gap-1">
@@ -266,7 +303,7 @@ function ActionPage() {
           />
 
           <UnifiedFilterList
-            readonly={false}
+            readonly={!isEditing && !isNew}
             title={t('Events')}
             filters={filters}
             isDraggable={true}

@@ -10,6 +10,7 @@ interface FilterListHeaderProps {
   orderProps?: any;
   onChangeOrder?: (e: any, data: any) => void;
   actions?: ReactNode[];
+  extra?: ReactNode;
 }
 
 const FilterListHeader = ({
@@ -19,6 +20,7 @@ const FilterListHeader = ({
   orderProps = {},
   onChangeOrder,
   actions = [],
+  extra,
 }: FilterListHeaderProps) => {
   return (
     <div className="flex items-center gap-2">
@@ -27,6 +29,7 @@ const FilterListHeader = ({
         <Typography.Text>{filterSelection}</Typography.Text>
       </Space>
       <div className="ml-auto flex items-center gap-2">
+        {extra && <div>{extra}</div>}
         {showEventsOrder && onChangeOrder && (
           <EventsOrder orderProps={orderProps} onChange={onChangeOrder} />
         )}
