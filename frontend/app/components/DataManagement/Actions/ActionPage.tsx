@@ -41,22 +41,24 @@ function ActionPage() {
   const { data: action, isPending } = useQuery({
     queryKey: ['action', siteId, actionId],
     queryFn: () => fetchAction(actionId!),
-    enabled: !isNew || !!actionId,
+    enabled: !isNew && !!actionId,
   });
 
   const resolved = isNew ? new Action() : action;
 
+  const [parsed, setParsed] = React.useState(false);
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [filters, setFilters] = React.useState<Filter[]>([]);
 
   React.useEffect(() => {
-    if (resolved) {
+    if (resolved && !parsed) {
       setName(resolved.name ?? '');
       setDescription(resolved.description ?? '');
       setFilters(resolved.filters as unknown as Filter[]);
+      setParsed(true);
     }
-  }, [resolved]);
+  }, [resolved, parsed]);
 
   const allFilterOptions = filterStore.getScopedCurrentProjectFilters([
     'events',
@@ -199,7 +201,6 @@ function ActionPage() {
   }
 
   const title = isNew ? t('New Action') : name;
-
   return (
     <div
       className={'flex flex-col gap-2 mx-auto w-full'}
