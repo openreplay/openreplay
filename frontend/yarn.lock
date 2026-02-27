@@ -1400,7 +1400,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.24.4, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
+"@babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.24.4, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.28.6, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
   version: 7.28.6
   resolution: "@babel/runtime@npm:7.28.6"
   checksum: 10c1/d920ce6fb33e8af98ae0439ea9e4bb9bff222c1e2bff9377176344354eeb64c6624dc2f887c6fc215277686eda4a2e831a308b64f4f0964883432b58f4a54a93
@@ -8623,13 +8623,13 @@ __metadata:
   linkType: hard
 
 "fast-xml-parser@npm:^4.2.2":
-  version: 4.5.3
-  resolution: "fast-xml-parser@npm:4.5.3"
+  version: 4.5.4
+  resolution: "fast-xml-parser@npm:4.5.4"
   dependencies:
-    strnum: "npm:^1.1.1"
+    strnum: "npm:^1.0.5"
   bin:
     fxparser: src/cli/cli.js
-  checksum: 10c1/d157e7ef4acc7cb14561590feabcf58117a65914309ece9230911f23d278bf75e52e6e85465520175d57931965d811f4e43603dbbe9f6d438e6995fe58a027b2
+  checksum: 10c1/724869357f92c9f8d86ce8b00d8d77428d10b55fd8c4a084e87f30b3c4d70ed7e797e8e0c3fed4f3c9b40ec6ee4d2f1aaa7065e2c407d4bed107a74974a2e86d
   languageName: node
   linkType: hard
 
@@ -10854,11 +10854,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jspdf@npm:4.1.0":
-  version: 4.1.0
-  resolution: "jspdf@npm:4.1.0"
+"jspdf@npm:4.2.0":
+  version: 4.2.0
+  resolution: "jspdf@npm:4.2.0"
   dependencies:
-    "@babel/runtime": "npm:^7.28.4"
+    "@babel/runtime": "npm:^7.28.6"
     canvg: "npm:^3.0.11"
     core-js: "npm:^3.6.0"
     dompurify: "npm:^3.3.1"
@@ -10874,7 +10874,7 @@ __metadata:
       optional: true
     html2canvas:
       optional: true
-  checksum: 10c1/0051570d8d81d7ff8d8c2e4adbbd88e5898515996dc3c0bd66d88d2df2b3592e7562435ac303f3d3e3162a0b8b0c5f83835088c88c236c59bb0d0ba63f80c59c
+  checksum: 10c1/84b2d60afe1498802c187c81f9c71f771e0e8372f197e65d79599fd153beb667db12f65a77fac49950e5eaf5badba12ddd89d28262dc24a2cfb9ff2beef735a2
   languageName: node
   linkType: hard
 
@@ -12142,11 +12142,11 @@ __metadata:
   linkType: hard
 
 "minimatch@npm:^3.0.4, minimatch@npm:^3.1.1, minimatch@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "minimatch@npm:3.1.2"
+  version: 3.1.5
+  resolution: "minimatch@npm:3.1.5"
   dependencies:
     brace-expansion: "npm:^1.1.7"
-  checksum: 10c1/c21e314038dc51a54a89774fb25dea62167bb443b4c4df0dd6102bebb646c635526e8786df6975578638ca5d36ac4985b1ef50625a982a4581ea8bc540c0b697
+  checksum: 10c1/69768a3f70cf7332cb0716044343bc0778c33be4f0afa2f3e9a7742554a77217c188e375a5e724a84dcc8c84a6c3e29906fc672b608730de15ded2dad5c58050
   languageName: node
   linkType: hard
 
@@ -12742,7 +12742,7 @@ __metadata:
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     js-untar: "npm:^2.0.0"
-    jspdf: "npm:4.1.0"
+    jspdf: "npm:4.2.0"
     lucide-react: "npm:0.487.0"
     luxon: "npm:^3.7.2"
     microdiff: "npm:^1.5.0"
@@ -15249,7 +15249,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strnum@npm:^1.1.1":
+"strnum@npm:^1.0.5":
   version: 1.1.2
   resolution: "strnum@npm:1.1.2"
   checksum: 10c1/e63cd5379e06167478f2d8b5729c3c9960a706a91c9e10135dd7349f2254dadf4733f920846144c1c420086815dffd029c01894f8d29dcfd80337b7e38dbee63
