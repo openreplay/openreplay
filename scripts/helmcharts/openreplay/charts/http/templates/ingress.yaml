@@ -75,13 +75,6 @@ spec:
                 name: minio
                 port:
                   number: 9000
-            path: /minio
-          - pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  number: 9000
             path: /mobs
           - pathType: Prefix
             backend:
@@ -90,13 +83,6 @@ spec:
                 port:
                   number: 9000
             path: /sessions-assets
-          - pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  number: 9000
-            path: /frontend
           - pathType: Prefix
             backend:
               service:
@@ -117,21 +103,7 @@ spec:
                 name: minio
                 port:
                   number: 9000
-            path: /ios-images
-          - pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  number: 9000
             path: /records
-          - pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  number: 9000
-            path: /uxtesting-records
           - pathType: Prefix
             backend:
               service:
