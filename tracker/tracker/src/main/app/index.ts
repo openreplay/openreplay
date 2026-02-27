@@ -378,9 +378,6 @@ export default class App {
       window.addEventListener('message', this.parentCrossDomainFrameListener)
       window.addEventListener('message', this.crossDomainIframeListener)
       setInterval(() => {
-        if (document.hidden) {
-          return
-        }
         window.parent.postMessage(
           {
             line: proto.polling,
