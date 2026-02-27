@@ -119,7 +119,7 @@ function SpotPlayerHeader({
           </Button>
         ) : (
           <a
-            href="https://openreplay.com/spot"
+            href="https://openreplay.com/platform/spot/"
             target="_blank"
             rel="noreferrer"
           >

@@ -1,3 +1,7 @@
+## 11.0.12
+
+- fixes for answer icon
+
 ## 11.0.11
 
 - security improvements and small refactoring changes
