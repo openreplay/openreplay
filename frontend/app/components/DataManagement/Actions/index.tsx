@@ -87,7 +87,7 @@ function ActionsListPage() {
       className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
-      <div className={'flex items-center justify-between border-b px-4 py-2'}>
+      <div className={'flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4 py-2'}>
         <div className="flex items-center gap-2">
           <div className={'font-semibold text-lg capitalize'}>
             {t('Actions')}
@@ -111,10 +111,10 @@ function ActionsListPage() {
           >
             {t('Create')}
           </Button>
-          <div className="w-[320px]">
+          <div className="min-w-50 md:w-1/4 md:min-w-75">
             <Input.Search
               size={'small'}
-              placeholder={t('Search by name or description')}
+              placeholder={t('Filter by name or description')}
               value={query}
               allowClear
               maxLength={256}

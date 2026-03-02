@@ -179,7 +179,7 @@ function ListPage() {
       className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
-      <div className={'flex items-center justify-between border-b px-4'}>
+      <div className={'flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4'}>
         <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
           <Switch
@@ -200,13 +200,13 @@ function ListPage() {
               {t('Docs')}
             </Button>
           </a>
-          <div className="w-[320px]">
+          <div className="min-w-50 md:w-1/4 md:min-w-75">
             <Input.Search
               value={query}
               maxLength={256}
               onChange={(e) => onSearch(e.target.value)}
               size={'small'}
-              placeholder={t('Name or description')}
+              placeholder={t('Filter by name or description')}
             />
           </div>
         </div>
@@ -306,6 +306,7 @@ function EventPropsList({
         columns={columns}
         dataSource={list}
         pagination={false}
+        scroll={{ x: 'max-content' }}
         onRow={(record) => ({
           onClick: () => toEventProp(record.name),
         })}
@@ -400,6 +401,7 @@ function UserPropsList({
           rowHoverable
           rowClassName={'cursor-pointer'}
           pagination={false}
+          scroll={{ x: 'max-content' }}
           dataSource={list}
           columns={columns}
           loading={isLoading}

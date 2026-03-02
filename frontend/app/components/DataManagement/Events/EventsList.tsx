@@ -72,6 +72,7 @@ function EventsList({
         columns={columns}
         dataSource={list}
         pagination={false}
+        scroll={{ x: 'max-content' }}
         onRow={(record) => ({
           onClick: () => toEvent(record.name),
         })}

@@ -82,7 +82,7 @@ function MetricViewHeader() {
             )}
 
             {showHeader && (
-              <div className="flex items-center gap-3 md:ml-auto">
+              <div className="flex items-center gap-2 md:ml-auto">
                 <Popover
                   arrow={false}
                   overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
@@ -98,9 +98,7 @@ function MetricViewHeader() {
                     {mobileScreen ? undefined : t('Create Card')}
                   </Button>
                 </Popover>
-                <Space>
-                  <MetricsSearch />
-                </Space>
+                <MetricsSearch />
               </div>
             )}
           </div>

@@ -92,6 +92,7 @@ function ActionsList({
         columns={columns}
         dataSource={list}
         pagination={false}
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         onRow={(record) => ({
           onClick: () => toAction(record.id),

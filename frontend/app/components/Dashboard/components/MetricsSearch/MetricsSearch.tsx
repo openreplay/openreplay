@@ -27,7 +27,7 @@ function MetricsSearch() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-w-50 md:w-1/4 md:min-w-75">
       <Input.Search
         value={query}
         allowClear

@@ -88,6 +88,7 @@ function EventsWithProp({ propName }: { propName: string }) {
         rowKey="name"
         loading={isPending}
         pagination={false}
+        scroll={{ x: 'max-content' }}
         onRow={onRow}
         rowClassName={'cursor-pointer'}
       />

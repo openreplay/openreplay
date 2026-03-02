@@ -248,6 +248,7 @@ function UsersList({
           })}
           loading={analyticsStore.loading}
           pagination={false}
+          scroll={{ x: 'max-content' }}
           rowClassName={'cursor-pointer'}
           dataSource={users}
           columns={shownCols}

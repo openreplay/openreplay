@@ -23,7 +23,7 @@ function NotesList() {
 
   return (
     <div className="widget-wrapper">
-      <div className="flex items-center px-4 py-1 justify-between w-full">
+      <div className="flex items-center px-4 py-2 justify-between w-full">
         <h2 className="text-2xl capitalize mr-4">{t('Notes')}</h2>
 
         <div className="flex items-center justify-end w-full">

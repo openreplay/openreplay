@@ -104,7 +104,7 @@ function HighlightsListHeader({
             current={ownOnly ? t('Personal') : t('Team')}
           />
         </div>
-        <div className="w-56">
+        <div className="min-w-50 md:w-1/4 md:min-w-75">
           <Input.Search
             defaultValue={query}
             allowClear

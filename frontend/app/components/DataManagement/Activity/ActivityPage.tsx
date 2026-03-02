@@ -443,6 +443,7 @@ function ActivityPage() {
                 rowClassName={'cursor-pointer'}
                 dataSource={list}
                 pagination={false}
+                scroll={{ x: 'max-content' }}
                 columns={cols}
                 onOrderChange={onOrderChange}
                 onChange={(a1, a2, sorter) => {

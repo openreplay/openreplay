@@ -33,7 +33,7 @@ function Bookmarks() {
 
   return (
     <div className="widget-wrapper">
-      <div className="flex items-center px-4 py-1 justify-between w-full">
+      <div className="flex items-center px-4 py-2 justify-between w-full">
         <h2 className="text-2xl capitalize mr-4">{t('Bookmarks')}</h2>
       </div>
       <div className="border-b" />
