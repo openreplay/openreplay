@@ -19,10 +19,9 @@ function Header() {
         <PageTitle title={t('Dashboards')} />
       </div>
       {showSearch && (
-        <div className="ml-auto flex items-center">
+        <div className="ml-auto flex items-center gap-2">
           <CreateDashboardButton />
-          <div className="mx-2" />
-          <div className="w-full md:w-1/4 min-w-[160px] md:min-w-[300px]">
+          <div className="w-full min-w-50 md:w-1/4 md:min-w-75">
             <DashboardSearch />
           </div>
         </div>

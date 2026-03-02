@@ -94,7 +94,7 @@ const SpotsListHeader = observer(
                 size="small"
               />
 
-              <div className="w-42 md:w-56">
+              <div className="min-w-50 md:w-1/4 md:min-w-75">
                 <Input.Search
                   value={spotStore.query}
                   allowClear

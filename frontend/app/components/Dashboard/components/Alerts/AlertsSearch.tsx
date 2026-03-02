@@ -29,15 +29,11 @@ function AlertsSearch() {
 
   return (
     <div className="relative">
-      <Icon
-        name="search"
-        className="absolute top-0 bottom-0 ml-2 m-auto"
-        size="16"
-      />
       <Input.Search
         value={inputValue}
         allowClear
         name="alertsSearch"
+        size="small"
         className="w-full"
         placeholder={t('Filter by alert title')}
         onChange={write}

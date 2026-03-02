@@ -241,7 +241,7 @@ function ActionPage() {
                 {t('Create')}
               </Button>
             ) : (
-              <Button size="small" type="text" danger onClick={onDelete}>
+              <Button size="small" type="text" onClick={onDelete}>
                 <Trash size={14} />
               </Button>
             )}

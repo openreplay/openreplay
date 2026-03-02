@@ -68,13 +68,13 @@ export default observer(MetricsLibraryModal);
 function MetricSearch({ onChange }: any) {
   const { t } = useTranslation();
   return (
-    <div className="relative">
+    <div className="relative min-w-50 md:w-1/4 md:min-w-75">
       <Input.Search
         name="dashboardsSearch"
         size="small"
         placeholder={t('Filter by title or owner')}
         onChange={onChange}
-        className="rounded-lg"
+        className="rounded-lg w-full"
       />
     </div>
   );
