@@ -1,7 +1,8 @@
 import { Filter } from '@/mstore/types/filterConstants';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
-import { Button } from 'antd';
+import { Button, Input, Tooltip } from 'antd';
+import cn from 'classnames';
 import { Plus, Trash } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -49,8 +50,16 @@ function ActionPage() {
   const [isEditing, setIsEditing] = React.useState(false);
   const [parsed, setParsed] = React.useState(false);
   const [name, setName] = React.useState('');
+  const [nameEditing, setNameEditing] = React.useState(isNew);
+  const nameInputRef = React.useRef<any>(null);
   const [description, setDescription] = React.useState('');
   const [filters, setFilters] = React.useState<Filter[]>([]);
+
+  React.useEffect(() => {
+    if (nameEditing && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [nameEditing]);
 
   React.useEffect(() => {
     if (resolved && !parsed) {
@@ -125,6 +134,26 @@ function ActionPage() {
         description: key === 'description' ? value : description,
         filters,
       } as unknown as Pick<Action, 'name' | 'description' | 'filters'>);
+    }
+  };
+
+  const onNameBlur = () => {
+    setNameEditing(false);
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setName(resolved?.name || t('New Action'));
+    } else if (!isNew) {
+      onSaveField({ key: 'name', value: trimmed });
+    }
+  };
+
+  const onNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onNameBlur();
+    }
+    if (e.key === 'Escape') {
+      setName(resolved?.name ?? '');
+      setNameEditing(false);
     }
   };
 
@@ -234,7 +263,31 @@ function ActionPage() {
         <div
           className={'p-4 border-b w-full flex items-center justify-between'}
         >
-          <div className={'font-semibold text-xl'}>{t('Action')}</div>
+          {nameEditing ? (
+            <Input
+              ref={nameInputRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={onNameBlur}
+              onKeyDown={onNameKeyDown}
+              maxLength={40}
+              className="bg-white text-xl font-semibold ps-2 rounded-lg h-8"
+              placeholder={t('Action Name')}
+            />
+          ) : (
+            // @ts-ignore
+            <Tooltip mouseEnterDelay={1} title={t('Click to edit')}>
+              <div
+                onClick={() => setNameEditing(true)}
+                className={cn(
+                  'text-xl font-semibold h-8 flex items-center p-2 rounded-lg',
+                  'cursor-pointer select-none ps-2 hover:bg-teal/10',
+                )}
+              >
+                {name || t('New Action')}
+              </div>
+            </Tooltip>
+          )}
           <div className="flex items-center gap-2">
             {isNew ? (
               <Button type="primary" disabled={!canSave} onClick={onCreate}>
@@ -248,13 +301,6 @@ function ActionPage() {
           </div>
         </div>
         <div className="flex flex-col py-2">
-          <EditableField
-            key={`name-${resolved?.id}`}
-            onSave={onSaveField}
-            fieldName={t('Name')}
-            rawName="name"
-            value={name}
-          />
           <EditableField
             key={`desc-${resolved?.id}`}
             onSave={onSaveField}
