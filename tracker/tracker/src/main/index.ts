@@ -69,6 +69,7 @@ export type Options = Partial<
   resetTabOnWindowOpen?: boolean
   network?: Partial<NetworkOptions>
   mouse?: Partial<MouseHandlerOptions>
+  customAttributes?: string[]
   // dev only
   __DISABLE_SECURE_MODE?: boolean
   css: CssRulesOptions
@@ -233,7 +234,7 @@ export default class API {
       // no tabs in iframes yet
       Tabs(app)
     }
-    Mouse(app, options.mouse)
+    Mouse(app, { ...options.mouse, customAttributes: options.customAttributes })
     // inside iframe, we ignore viewport scroll
     Scroll(app, this.crossdomainMode)
     CSSRules(app, options.css)

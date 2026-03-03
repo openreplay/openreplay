@@ -1,38 +1,33 @@
+import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'App/routing';
 
 import IFrameRoutes from 'App/IFrameRoutes';
 import PrivateRoutes from 'App/PrivateRoutes';
 import PublicRoutes from 'App/PublicRoutes';
+import Tracker from 'App/Tracker';
 import {
   GLOBAL_DESTINATION_PATH,
   IFRAME,
   JWT_PARAM,
-  SPOT_ONBOARDING,
   SITE_ID_STORAGE_KEY,
+  SPOT_ONBOARDING,
 } from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
 import { useStore } from 'App/mstore';
+import { useLocation, useNavigate } from 'App/routing';
 import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 import { Loader } from 'UI';
-import { observer } from 'mobx-react-lite';
+
 import * as routes from './routes';
-import Tracker from 'App/Tracker';
 
 const Router: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const mstore = useStore();
-  const {
-    customFieldStore,
-    projectsStore,
-    sessionStore,
-    searchStore,
-    userStore,
-    settingsStore,
-  } = mstore;
+  const { projectsStore, sessionStore, searchStore, userStore, settingsStore } =
+    mstore;
   const { jwt } = userStore;
   const { changePassword } = userStore.account;
   const userInfoLoading = userStore.fetchInfoRequest.loading;
@@ -58,6 +53,16 @@ const Router: React.FC = () => {
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
 
+  console.log(
+    'render test',
+    isLoggedIn,
+    jwt,
+    changePassword,
+    userInfoLoading,
+    localSpotJwt,
+    siteId,
+    sitesLoading,
+  );
   const handleJwtFromUrl = () => {
     const params = new URLSearchParams(location.search);
     const urlJWT = params.get('jwt');
