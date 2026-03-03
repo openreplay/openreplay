@@ -61,8 +61,6 @@ spec:
               value: "9000"
             - name: CACHE_REFRESH_INTERVAL_SECONDS
               value: '5'
-            - name: debug
-              value: '0'
             {{- end}}
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
           ports:
