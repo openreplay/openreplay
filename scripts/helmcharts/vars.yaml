@@ -28,8 +28,8 @@ clickhouse: &clickhouse
   password: ""
   use_tls: false
   service:
-    webPort: 9000
-    dataPort: 8123
+    webPort: 8123
+    dataPort: 9000
 
 # Kept for backward compatibility. Will remove in future release
 quickwit: &quickwit

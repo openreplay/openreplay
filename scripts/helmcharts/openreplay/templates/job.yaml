@@ -83,7 +83,7 @@ spec:
           - name: CH_HOST
             value: "{{ .Values.global.clickhouse.chHost }}"
           - name: CH_PORT
-            value: "{{ .Values.global.clickhouse.service.webPort }}"
+            value: "{{ .Values.global.clickhouse.service.dataPort }}"
         command:
           - /bin/bash
           - -c
@@ -236,7 +236,7 @@ spec:
             error_connection=1
 
             while [ $exit_count -le 20 ];do
-              nc -zv {{.Values.global.clickhouse.chHost}} {{.Values.global.clickhouse.service.webPort}} -w 1
+              nc -zv {{.Values.global.clickhouse.chHost}} {{.Values.global.clickhouse.service.dataPort}} -w 1
               if [ $? -ne 0 ]; then
                 echo "[info] clickhouse is not up; retrying in 5 seconds"
                 sleep 4
@@ -318,9 +318,9 @@ spec:
           - name: CH_HOST
             value: "{{.Values.global.clickhouse.chHost}}"
           - name: CH_PORT
-            value: "{{.Values.global.clickhouse.service.webPort}}"
-          - name: CH_PORT_HTTP
             value: "{{.Values.global.clickhouse.service.dataPort}}"
+          - name: CH_PORT_HTTP
+            value: "{{.Values.global.clickhouse.service.webPort}}"
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
@@ -611,9 +611,9 @@ spec:
           - name: CH_HOST
             value: "{{.Values.global.clickhouse.chHost}}"
           - name: CH_PORT
-            value: "{{.Values.global.clickhouse.service.webPort}}"
-          - name: CH_PORT_HTTP
             value: "{{.Values.global.clickhouse.service.dataPort}}"
+          - name: CH_PORT_HTTP
+            value: "{{.Values.global.clickhouse.service.webPort}}"
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
