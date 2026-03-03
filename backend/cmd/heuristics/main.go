@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"openreplay/backend/pkg/heuristics"
 
 	config "openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/pkg/handlers"
 	"openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/handlers/mobile"
 	"openreplay/backend/pkg/handlers/web"
+	"openreplay/backend/pkg/health"
+	"openreplay/backend/pkg/heuristics"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
@@ -23,6 +24,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
+
+	h := health.New()
 
 	heuristicsMetric := heuristicsMetrics.New("heuristics")
 	metrics.New(log, heuristicsMetric.List())
@@ -45,6 +48,9 @@ func main() {
 
 	events := heuristics.NewEvents(log, handlersFabric)
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	h.Register("producer", func(ctx context.Context) error {
+		return producer.Ping(ctx)
+	})
 	consumer, err := queue.NewConsumer(
 		log,
 		cfg.GroupHeuristics,
@@ -61,6 +67,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
+	h.Register("consumer", func(ctx context.Context) error {
+		return consumer.Ping(ctx)
+	})
 
 	// Init memory manager
 	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)

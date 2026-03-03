@@ -41,6 +41,10 @@ func (c *consumerImpl) ConsumeNext() error {
 	panic("implement me")
 }
 
+func (c *consumerImpl) Ping(ctx context.Context) error {
+	return c.client.Redis.Ping(ctx).Err()
+}
+
 func (c *consumerImpl) Close() {
 	//TODO implement me
 	panic("implement me")

@@ -432,6 +432,11 @@ func (c *consumerImpl) shouldResume() {
 	}
 }
 
+func (c *consumerImpl) Ping(ctx context.Context) error {
+	_, err := c.consumer.Assignment()
+	return err
+}
+
 func (c *consumerImpl) Close() {
 	if c.commitTicker != nil {
 		c.commitTicker.Stop()

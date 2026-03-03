@@ -43,6 +43,13 @@ func New(cfg *config.Redis) (*Client, error) {
 	}, nil
 }
 
+func (c *Client) Ping(ctx context.Context) error {
+	if c == nil || c.Redis == nil {
+		return nil
+	}
+	return c.Redis.Ping(ctx).Err()
+}
+
 func (c *Client) Close() error {
 	return c.Redis.Close()
 }

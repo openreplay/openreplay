@@ -12,6 +12,7 @@ import (
 	"openreplay/backend/pkg/canvases/service"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -30,6 +31,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
+
+	h := health.New()
 
 	canvasMetrics := canvasesMetrics.New("canvases")
 	webMetrics := web.New("canvases")
@@ -55,6 +58,9 @@ func main() {
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
+	h.Register("producer", func(ctx context.Context) error {
+		return producer.Ping(ctx)
+	})
 
 	srv, err := service.New(cfg, log, objStore, producer, canvasMetrics)
 	if err != nil {
@@ -77,6 +83,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init canvases service: %s", err)
 	}
+	h.Register("consumer", func(ctx context.Context) error {
+		return canvasConsumer.Ping(ctx)
+	})
 
 	services, err := canvasService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, producer, pgConn, redisConn)
 

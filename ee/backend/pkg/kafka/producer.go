@@ -1,11 +1,12 @@
 package kafka
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
-        "github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"openreplay/backend/pkg/env"
 )
 
@@ -82,6 +83,11 @@ func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value
 		Value:          value,
 	}
 	return nil
+}
+
+func (p *Producer) Ping(_ context.Context) error {
+	_, err := p.producer.GetMetadata(nil, true, 5000)
+	return err
 }
 
 func (p *Producer) Close(timeoutMs int) {
