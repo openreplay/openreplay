@@ -70,10 +70,9 @@ backupEnv:
 # S3_DISABLE_SSL="true"
 # S3_DEBUG="true"
 
-
 service:
-  webPort: 9000
-  dataPort: 8123
+  webPort: 8123
+  dataPort: 9000
 
 resources:
   requests: {}

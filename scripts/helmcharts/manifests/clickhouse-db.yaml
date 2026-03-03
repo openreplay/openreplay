@@ -25,11 +25,11 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 9000
+    - port: 8123
       targetPort: web
       protocol: TCP
       name: web
-    - port: 8123
+    - port: 9000
       targetPort: data
       protocol: TCP
       name: data
@@ -108,9 +108,9 @@ spec:
           image: "clickhouse/clickhouse-server:25.1-alpine"
           imagePullPolicy: IfNotPresent
           ports:
-          - containerPort: 9000
-            name: web
           - containerPort: 8123
+            name: web
+          - containerPort: 9000
             name: data
           volumeMounts:
           - name: default-chi-openreplay-clickhouse-replicated-0-0-0 

@@ -145,8 +145,8 @@ services:
       - ../schema/db/init_dbs/clickhouse/create/init_schema.sql:/tmp/init_schema.sql
     environment:
       CH_HOST: "{{.Values.global.clickhouse.chHost}}"
-      CH_PORT: "{{.Values.global.clickhouse.service.webPort}}"
-      CH_PORT_HTTP: "{{.Values.global.clickhouse.service.dataPort}}"
+      CH_PORT: "{{.Values.global.clickhouse.service.dataPort}}"
+      CH_PORT_HTTP: "{{.Values.global.clickhouse.service.webPort}}"
       CH_USERNAME: "{{.Values.global.clickhouse.username}}"
       CH_PASSWORD: "{{.Values.global.clickhouse.password}}"
     entrypoint:
@@ -155,13 +155,13 @@ services:
       - |
           # Checking variable is empty. Shell independant method.
           # Wait for Minio to be ready
-          until nc -z -v -w30 {{.Values.global.clickhouse.chHost}} {{.Values.global.clickhouse.service.webPort}}; do
+          until nc -z -v -w30 {{.Values.global.clickhouse.chHost}} {{.Values.global.clickhouse.service.dataPort}}; do
               echo "Waiting for Minio server to be ready..."
               sleep 1
           done
 
           echo "clickhouse is up - executing command"
-          clickhouse-client -h {{.Values.global.clickhouse.chHost}} --user {{.Values.global.clickhouse.username}} --port {{.Values.global.clickhouse.service.webPort}} --multiquery < /tmp/init_schema.sql || true
+          clickhouse-client -h {{.Values.global.clickhouse.chHost}} --user {{.Values.global.clickhouse.username}} --port {{.Values.global.clickhouse.service.dataPort}} --multiquery < /tmp/init_schema.sql || true
 
   {{- define "service" -}}
   {{- $service_name := . }}

@@ -80,9 +80,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-          - containerPort: 9000
-            name: web
           - containerPort: 8123
+            name: web
+          - containerPort: 9000
             name: data
           volumeMounts:
           - name: default-chi-openreplay-clickhouse-replicated-0-0-0 
