@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Route, Routes } from 'App/routing';
+import { Route, StableRoutes } from 'App/routing';
 import { Loader } from 'UI';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 
@@ -46,7 +46,7 @@ function IFrameRoutes(props: Props) {
           <Loader loading={!!loading} className="flex-1">
             <Tracker />
             <Suspense fallback={<Loader loading className="flex-1" />}>
-              <Routes>
+              <StableRoutes>
                 <Route
                   path={withSiteId(SESSION_PATH, siteIdList)}
                   element={<enhancedComponents.Session />}
@@ -56,7 +56,7 @@ function IFrameRoutes(props: Props) {
                   element={<enhancedComponents.LiveSession />}
                 />
                 <Route path="*" element={<NotFoundPage />} />
-              </Routes>
+              </StableRoutes>
             </Suspense>
           </Loader>
         </Layout>

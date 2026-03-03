@@ -5,7 +5,13 @@ import React, { Suspense, lazy } from 'react';
 
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
-import { Navigate, Route, Routes, useHistory, useLocation } from 'App/routing';
+import {
+  Navigate,
+  Route,
+  StableRoutes,
+  useHistory,
+  useLocation,
+} from 'App/routing';
 import { Loader } from 'UI';
 
 import APIClient from './api_client';
@@ -221,7 +227,7 @@ function PrivateRoutes() {
 
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
-      <Routes>
+      <StableRoutes>
         <Route
           path={`${CLIENT_PATH}/*`}
           element={<enhancedComponents.Client />}
@@ -370,7 +376,7 @@ function PrivateRoutes() {
           );
         })}
         <Route path="*" element={<Navigate to={fallbackTo} replace />} />
-      </Routes>
+      </StableRoutes>
     </Suspense>
   );
 }
