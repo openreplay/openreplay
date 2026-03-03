@@ -49,7 +49,7 @@ func (h *Health) handler(w http.ResponseWriter, r *http.Request) {
 	copy(checkers, h.checkers)
 	h.mu.RUnlock()
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
 	resp := healthResponse{
