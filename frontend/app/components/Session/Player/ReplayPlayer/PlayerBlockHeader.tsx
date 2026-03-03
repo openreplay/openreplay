@@ -3,7 +3,7 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'App/routing';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { IFRAME } from 'App/constants/storageKeys';
