@@ -15,6 +15,7 @@ topics=(
     "mobile-trigger"
     "cache"
     "analytics"
+    "raw-analytics"
     "storage-failover"
     "quickwit"
     "video-replays"
