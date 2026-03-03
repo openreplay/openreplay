@@ -148,7 +148,10 @@ export default class TopObserver extends Observer {
           this.app.debug.info('doc already observed for', id)
           return
         }
-        const observer = new IFrameObserver(this.app, false, {})
+        const observer = new IFrameObserver(this.app, false, {
+          disableSprites: this.options.disableSprites,
+          ...getInlineOptions(this.options.inlineCss, console.warn),
+        })
         this.iframeObservers.set(iframe, observer)
         this.docObservers.set(currentDoc, observer)
         this.iframeObserversArr.push(observer)
@@ -176,7 +179,10 @@ export default class TopObserver extends Observer {
 
   private shadowRootObservers: WeakMap<ShadowRoot, ShadowRootObserver> = new WeakMap()
   private handleShadowRoot(shRoot: ShadowRoot) {
-    const observer = new ShadowRootObserver(this.app)
+    const observer = new ShadowRootObserver(this.app, false, {
+      disableSprites: this.options.disableSprites,
+      ...getInlineOptions(this.options.inlineCss, console.warn),
+    })
     this.shadowRootObservers.set(shRoot, observer)
     observer.observe(shRoot.host)
   }
@@ -219,7 +225,10 @@ export default class TopObserver extends Observer {
     }
     this.app.nodes.clear()
     this.app.nodes.crossdomainMode(frameLevel, frameOder)
-    const iframeObserver = new IFrameObserver(this.app)
+    const iframeObserver = new IFrameObserver(this.app, false, {
+      disableSprites: this.options.disableSprites,
+      ...getInlineOptions(this.options.inlineCss, console.warn),
+    })
     this.iframeObservers.set(window.document, iframeObserver)
     iframeObserver.syntheticObserve(rootNodeId, window.document)
   }
