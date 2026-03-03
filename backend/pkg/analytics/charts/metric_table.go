@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	analyticsConfig "openreplay/backend/internal/config/api"
-	orClickhouse "openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/logger"
 	"slices"
 	"strings"
@@ -88,7 +86,7 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 	}
 
 	if p.MetricOf == "screenResolution" {
-		return t.executeForTableOfResolutions(ctx, p)
+		return t.executeForTableOfResolutions(ctx, p, conn)
 	}
 
 	query, err := t.buildQuery(p)
@@ -117,7 +115,7 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 
 	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
 }
-func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p *Payload) (interface{}, error) {
+func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	queries, params, err := t.buildTableOfResolutionsQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building screenResolution queries: %w", err)
@@ -126,29 +124,16 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p 
 		return nil, fmt.Errorf("No queries to execute for table of resolutions")
 	}
 
-	cfg := analyticsConfig.New(t.Logger)
-
-	conn, err := orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
-	if err != nil {
-		return nil, err
-	}
-
-	// Trying to use clickhouseContext in order to keep same session for tmp tables,
-	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
-	chCtx := clickhouse.Context(ctx,
-		clickhouse.WithSettings(clickhouse.Settings{
-			"session_id":      uuid.NewString(),
-			"session_timeout": 60, // seconds
-		}))
+	chCtx := clickhouse.Context(context.Background(), clickhouse.WithQueryID(uuid.NewString()))
 
 	queryParams := convertParams(params)
-	_, err = conn.ExecContext(chCtx, queries[0], queryParams...)
+	err = conn.Exec(chCtx, queries[0], queryParams...)
 	if err != nil {
 		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[0])
 		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
 	}
 	var rawValues []ResolutionTableValue = make([]ResolutionTableValue, 0)
-	if err = conn.SelectContext(chCtx, &rawValues, queries[1], queryParams...); err != nil {
+	if err = conn.Select(chCtx, &rawValues, queries[1], queryParams...); err != nil {
 		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[0])
 		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[1])
 		t.Logger.Error(ctx, "Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])
