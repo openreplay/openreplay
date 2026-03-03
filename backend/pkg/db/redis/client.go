@@ -19,6 +19,9 @@ func New(cfg *config.Redis) (*Client, error) {
 }
 
 func (c *Client) Ping(ctx context.Context) error {
+	if c == nil || c.Redis == nil {
+		return nil
+	}
 	return c.Redis.Ping(ctx).Err()
 }
 
