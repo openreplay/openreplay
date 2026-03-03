@@ -14,6 +14,9 @@ type producerImpl struct {
 }
 
 func (c *producerImpl) Ping(ctx context.Context) error {
+	if c.client == nil || c.client.Redis == nil {
+		return nil
+	}
 	return c.client.Redis.Ping(ctx).Err()
 }
 
