@@ -28,10 +28,11 @@ _CH_CONFIG = {
 
 USE_TLS = config("CLICKHOUSE_USE_TLS", cast=bool, default=False)
 if USE_TLS:
-    _CH_CONFIG["secure"] = True
+    _CH_CONFIG["secure"] = config("CLICKHOUSE_SECURE", cast=bool, default=False)
     _CH_CONFIG["verify"] = (
-        not config("CLICKHOUSE_TLS_SKIP_VERIFY", cast=bool, default=False)
-    )
+        config("CLICKHOUSE_VERIFY", cast=bool, default=True) if config("CLICKHOUSE_TLS_SKIP_VERIFY",
+                                                                       default=None) is None
+        else not config("CLICKHOUSE_TLS_SKIP_VERIFY", cast=bool))
     _tls_cert = config("CLICKHOUSE_TLS_CERT_PATH", default=None)
     _tls_ca = config("CLICKHOUSE_TLS_CA_PATH", default=None)
     _tls_key = config("CLICKHOUSE_TLS_KEY_PATH", default=None)
