@@ -1,7 +1,6 @@
 import logging
 import threading
 import time
-from email.policy import default
 from functools import wraps
 from queue import Queue, Empty
 from typing import Optional
@@ -25,24 +24,24 @@ _CH_CONFIG = {
     "client_name": config("APP_NAME", default="PY"),
     "database": (config("CLICKHOUSE_DATABASE", default="default") if config("ch_database", default=None) is None
                  else config("ch_database")),
-    "secure": config("CLICKHOUSE_SECURE", cast=bool, default=False),
-    "verify": (
-        config("CLICKHOUSE_VERIFY", cast=bool, default=True) if config("CLICKHOUSE_TLS_SKIP_VERIFY",
-                                                                       default=None) is None
-        else not config("CLICKHOUSE_TLS_SKIP_VERIFY", cast=bool)),
 }
 
-# Optional mTLS / custom CA paths — only added to config when set
-_ch_client_cert = (config("CLICKHOUSE_TLS_CERT_PATH", default=None) or config("CLICKHOUSE_TLS_CA_PATH", default=None))
-_ch_client_cert_key = config("CLICKHOUSE_TLS_KEY_PATH", default=None)
-_ch_server_host_name = config("CLICKHOUSE_SERVER_HOST_NAME", default=None)
-
-if _ch_client_cert:
-    _CH_CONFIG["client_cert"] = _ch_client_cert
-if _ch_client_cert_key:
-    _CH_CONFIG["client_cert_key"] = _ch_client_cert_key
-if _ch_server_host_name:
-    _CH_CONFIG["server_host_name"] = _ch_server_host_name
+USE_TLS = config("CLICKHOUSE_USE_TLS", cast=bool, default=False)
+if USE_TLS:
+    _CH_CONFIG["secure"] = True
+    _CH_CONFIG["verify"] = (
+        not config("CLICKHOUSE_TLS_SKIP_VERIFY", cast=bool, default=False)
+    )
+    _tls_cert = config("CLICKHOUSE_TLS_CERT_PATH", default=None)
+    _tls_ca = config("CLICKHOUSE_TLS_CA_PATH", default=None)
+    _tls_key = config("CLICKHOUSE_TLS_KEY_PATH", default=None)
+    _tls_server_host = config("CLICKHOUSE_SERVER_HOST_NAME", default=None)
+    if _tls_cert or _tls_ca:
+        _CH_CONFIG["client_cert"] = _tls_cert or _tls_ca
+    if _tls_key:
+        _CH_CONFIG["client_cert_key"] = _tls_key
+    if _tls_server_host:
+        _CH_CONFIG["server_host_name"] = _tls_server_host
 
 CH_CONFIG = dict(_CH_CONFIG)
 _SETTINGS = {
