@@ -1,4 +1,4 @@
-package canvases
+package service
 
 import (
 	"bytes"
