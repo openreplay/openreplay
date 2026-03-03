@@ -1,3 +1,7 @@
+## 17.2.3
+
+- allow `customAttributes` option to define a list of custom html attributes for tracking in click and input events
+
 ## 17.2.2
 
 - improve unauth detection for sdk

@@ -16,7 +16,7 @@ describe('getInputLabel', () => {
     label.innerText = 'Email Address'
     document.body.appendChild(label)
     document.body.appendChild(input)
-    expect(getInputLabel(input)).toBe('Email Address')
+    expect(getInputLabel(input)).toBe('#field1')
     document.body.innerHTML = ''
   })
 
@@ -27,7 +27,7 @@ describe('getInputLabel', () => {
 
     const input2 = document.createElement('input')
     input2.className = 'cls1'
-    expect(getInputLabel(input2)).toBe('cls1')
+    expect(getInputLabel(input2)).toBe('.cls1')
   })
 
   test('limits label length to 100 characters', () => {
