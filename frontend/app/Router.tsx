@@ -53,16 +53,6 @@ const Router: React.FC = () => {
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
 
-  console.log(
-    'render test',
-    isLoggedIn,
-    jwt,
-    changePassword,
-    userInfoLoading,
-    localSpotJwt,
-    siteId,
-    sitesLoading,
-  );
   const handleJwtFromUrl = () => {
     const params = new URLSearchParams(location.search);
     const urlJWT = params.get('jwt');
