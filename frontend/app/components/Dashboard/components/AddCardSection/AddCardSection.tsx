@@ -20,7 +20,7 @@ import {
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'App/routing';
 
 import { useModal } from 'App/components/Modal';
 import {

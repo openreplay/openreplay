@@ -3,8 +3,8 @@ export {
   Route,
   Navigate,
   Outlet,
-  useNavigate,
-  useLocation,
+  useLocation as useRouterLocation,
+  useNavigate as useRouterNavigate,
   useNavigationType,
   useParams,
   useMatch,
@@ -20,3 +20,11 @@ export type { LinkProps, NavLinkProps } from 'react-router';
 
 export { Prompt, useHistory, withRouter } from './v5-compat';
 export type { History, RouteComponentProps } from './v5-compat';
+
+// Stable hooks that bypass React Router v7 + React 19 excessive re-renders
+export {
+  LocationSync,
+  StableRoutes,
+  useStableLocation as useLocation,
+  useStableNavigate as useNavigate,
+} from './StableLocationProvider';

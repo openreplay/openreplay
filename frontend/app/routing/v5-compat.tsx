@@ -1,13 +1,15 @@
 import * as React from 'react';
 import {
-  useLocation,
-  useNavigate,
   useParams,
   UNSAFE_NavigationContext,
   type Location,
   type NavigateOptions,
   type To,
 } from 'react-router';
+import {
+  useStableLocation as useLocation,
+  useStableNavigate,
+} from './StableLocationProvider';
 
 export type History = {
   push: (
@@ -145,7 +147,7 @@ function resolveTo(
 }
 
 export function useHistory(): History {
-  const navigate = useNavigate();
+  const navigate = useStableNavigate();
   const location = useLocation();
   const locationRef = React.useRef(location);
   locationRef.current = location;

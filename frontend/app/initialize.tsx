@@ -11,7 +11,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { createRoot } from 'react-dom/client';
 
-import { BrowserRouter } from 'App/routing';
+import { BrowserRouter, LocationSync } from 'App/routing';
 import { MountPoint, Notification } from 'UI';
 
 import ENV from '../env';
@@ -208,6 +208,7 @@ const ThemedApp: React.FC = () => {
         <StoreProvider store={new RootStore()}>
           <DndProvider backend={HTML5Backend}>
             <BrowserRouter>
+              <LocationSync />
               <Notification />
               <Router />
             </BrowserRouter>
