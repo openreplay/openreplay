@@ -326,6 +326,8 @@ spec:
           - name: CH_PASSWORD
             valueFrom:
               secretKeyRef: {{- include "openreplay.secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 16 }}
+          - name: CH_USE_TLS
+            value: "{{.Values.global.clickhouse.use_tls}}"
         command:
           - /bin/bash
           - -c
@@ -336,7 +338,8 @@ spec:
             [[ "${CH_PASSWORD}" != "" ]] && {
               CH_PASSWORD="--password $CH_PASSWORD"
             }
-            ch_client=`echo clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT}`
+            [[ "${CH_USE_TLS}" == "true" ]] && CH_TLS_FLAGS="--secure --accept-invalid-certificate" || CH_TLS_FLAGS=""
+            ch_client=`echo clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT} ${CH_TLS_FLAGS}`
             echo $ch_client
             ch_version=`$ch_client -q "SELECT version()"`
             echo $ch_version |\
@@ -616,6 +619,8 @@ spec:
           - name: CH_PASSWORD
             valueFrom:
               secretKeyRef: {{- include "openreplay.secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 16 }}
+          - name: CH_USE_TLS
+            value: "{{.Values.global.clickhouse.use_tls}}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh

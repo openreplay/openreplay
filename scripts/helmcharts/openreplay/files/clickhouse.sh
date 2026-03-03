@@ -8,6 +8,8 @@ clickhousedir=/opt/openreplay/openreplay/scripts/schema/db/init_dbs/clickhouse
   CH_PASSWORD="--password $CH_PASSWORD"
 }
 
+[[ "${CH_USE_TLS}" == "true" ]] && CH_TLS_FLAGS="--secure --accept-invalid-certificate" || CH_TLS_FLAGS=""
+
 function migrate() {
     echo "Starting clickhouse migration"
     IFS=',' read -r -a migration_versions <<< "$1"
@@ -15,7 +17,7 @@ function migrate() {
         echo "Migrating clickhouse version $version"
         # For now, we can ignore the clickhouse db inject errors.
         # TODO: Better error handling in script
-        clickhouse-client -h ${CH_HOST} --port ${CH_PORT} --user ${CH_USERNAME} ${CH_PASSWORD} --multiquery < ${clickhousedir}/${version}/${version}.sql || true
+        clickhouse-client -h ${CH_HOST} --port ${CH_PORT} --user ${CH_USERNAME} ${CH_PASSWORD} ${CH_TLS_FLAGS} --multiquery < ${clickhousedir}/${version}/${version}.sql || true
     done
 }
 
@@ -23,7 +25,7 @@ function init() {
     echo "Initializing clickhouse"
     for file in `ls ${clickhousedir}/create/*.sql`; do
         echo "Injecting $file"
-        clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT} --multiquery < $file || true
+        clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT} ${CH_TLS_FLAGS} --multiquery < $file || true
     done
 }
 

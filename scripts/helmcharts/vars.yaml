@@ -26,6 +26,7 @@ clickhouse: &clickhouse
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
   username: default
   password: ""
+  use_tls: false
   service:
     webPort: 9000
     dataPort: 8123
@@ -168,11 +169,11 @@ global:
   # Only for ee
   ee-components:
     enabled: false
-  enterpriseEditionLicense: ""
+  enterpriseEditionLicense: "dummy"
   # Optional: Use external secret for license key
-  # license:
-  #   existingSecret: "my-license-secret"
-  #   existingSecretKey: "license-key"
+  license:
+    existingSecret: "license-key"
+    existingSecretKey: "or-license-key"
   domainName: ""
 
 # chalice:
