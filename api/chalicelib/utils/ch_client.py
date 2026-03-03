@@ -1,6 +1,7 @@
 import logging
 import threading
 import time
+from email.policy import default
 from functools import wraps
 from queue import Queue, Empty
 from typing import Optional
@@ -12,34 +13,110 @@ from decouple import config
 
 logger = logging.getLogger(__name__)
 
-_CH_CONFIG = {"host": config("ch_host"),
-              "user": config("ch_user", default="default"),
-              "password": config("ch_password", default=""),
-              "port": config("ch_port_http", cast=int),
-              "client_name": config("APP_NAME", default="PY"),
-              "database": config("ch_database", default="default")}
+_CH_CONFIG = {
+    "host": (config("CLICKHOUSE_HOST") if config("ch_host", default=None) is None
+             else config("ch_host")),
+    "user": (config("CLICKHOUSE_USER", default="default") if config("ch_user", default=None) is None
+             else config("ch_user")),
+    "password": (config("CLICKHOUSE_PASSWORD", default="") if config("ch_password", default=None) is None
+                 else config("ch_password")),
+    "port": (config("CLICKHOUSE_PORT", cast=int) if config("ch_port_http", default=None) is None
+             else config("ch_port_http", cast=int)),
+    "client_name": config("APP_NAME", default="PY"),
+    "database": (config("CLICKHOUSE_DATABASE", default="default") if config("ch_database", default=None) is None
+                 else config("ch_database")),
+    "secure": config("CLICKHOUSE_SECURE", cast=bool, default=False),
+    "verify": (
+        config("CLICKHOUSE_VERIFY", cast=bool, default=True) if config("CLICKHOUSE_TLS_SKIP_VERIFY",
+                                                                       default=None) is None
+        else not config("CLICKHOUSE_TLS_SKIP_VERIFY", cast=bool)),
+}
+
+# Optional mTLS / custom CA paths — only added to config when set
+_ch_client_cert = (config("CLICKHOUSE_TLS_CERT_PATH", default=None) or config("CLICKHOUSE_TLS_CA_PATH", default=None))
+_ch_client_cert_key = config("CLICKHOUSE_TLS_KEY_PATH", default=None)
+_ch_server_host_name = config("CLICKHOUSE_SERVER_HOST_NAME", default=None)
+
+if _ch_client_cert:
+    _CH_CONFIG["client_cert"] = _ch_client_cert
+if _ch_client_cert_key:
+    _CH_CONFIG["client_cert_key"] = _ch_client_cert_key
+if _ch_server_host_name:
+    _CH_CONFIG["server_host_name"] = _ch_server_host_name
+
 CH_CONFIG = dict(_CH_CONFIG)
+_SETTINGS = {
+    "max_execution_time": (
+        config("CLICKHOUSE_MAX_EXECUTION_TIME", cast=int, default=-1) if config('ch_timeout', default=None) is None
+        else config('ch_timeout', cast=int)
+    ),
+    "receive_timeout": (
+        config('CLICKHOUSE_RECEIVE_TIMEOUT', cast=int, default=-1) if config('ch_receive_timeout', default=None) is None
+        else config('ch_receive_timeout', cast=int)
+    ),
+    "enable_compression": (
+        config("CLICKHOUSE_ENABLE_COMPRESSION", cast=bool, default=True) if config("CH_COMPRESSION",
+                                                                                   default=None) is None
+        else config("CH_COMPRESSION", cast=bool)
+    ),
+    "compression_algorithm": config("CLICKHOUSE_COMPRESSION_ALGORITHM", default="lz4"),
+    "query_limit": (
+        config("CLICKHOUSE_QUERY_LIMIT", cast=int, default=0) if config("CH_MAX_ROWS_TO_READ", default=None) is None
+        else config("CH_MAX_ROWS_TO_READ", cast=int)
+    ),
+    "query_retries": (
+        config("CLICKHOUSE_QUERY_RETRIES", cast=int, default=0) if config("CH_QUERY_RETRIES", default=None) is None
+        else config("CH_QUERY_RETRIES", cast=int)
+    ),
+    "enable_connection_pool": (
+        config('CLICKHOUSE_USE_CONNECTION_POOL', cast=bool, default=True) if config('CH_POOL', default=None) is None
+        else config('CH_POOL', cast=bool)
+    ),
+    "pool_min_connections": (
+        config("CLICKHOUSE_POOL_MIN_CONNECTIONS", cast=int, default=4) if config("CH_MINCONN", default=None) is None
+        else config("CH_MINCONN", cast=int)
+    ),
+    "pool_max_connections": (
+        config("CLICKHOUSE_POOL_MAX_CONNECTIONS", cast=int, default=8) if config("CH_MAXCONN", default=None) is None
+        else config("CH_MAXCONN", cast=int)
+    ),
+    "pool_get_timeout": (
+        config("CLICKHOUSE_GET_CNX_POOL_TIMEOUT_S", cast=int, default=10) if config("CH_WAIT_FOR_CNX_POOL_S",
+                                                                                    default=None) is None
+        else config("CH_WAIT_FOR_CNX_POOL_S", cast=int)
+    ),
+    "pool_creation_max_retries": (
+        config("CLICKHOUSE_POOL_CREATE_MAX_RETRIES", cast=int, default=10) if config("CH_RETRY_MAX",
+                                                                                     default=None) is None
+        else config("CH_RETRY_MAX", cast=int)
+    ),
+    "pool_creation_retries_interval": (
+        config("CLICKHOUSE_POOL_CREATION_RETRIES_INTERVAL_S", cast=int, default=2) if config("CH_RETRY_INTERVAL",
+                                                                                             default=None) is None
+        else config("CH_RETRY_INTERVAL", cast=int, default=2)
+    )
 
+}
 settings = {}
-if config('ch_timeout', cast=int, default=-1) > 0:
-    logging.info(f"CH-max_execution_time set to {config('ch_timeout')}s")
-    settings = {**settings, "max_execution_time": config('ch_timeout', cast=int)}
+if _SETTINGS["max_execution_time"] > 0:
+    logging.info(f"CH-max_execution_time set to {_SETTINGS["max_execution_time"]}s")
+    settings = {**settings, "max_execution_time": _SETTINGS["max_execution_time"]}
 
-if config('ch_receive_timeout', cast=int, default=-1) > 0:
-    logging.info(f"CH-receive_timeout set to {config('ch_receive_timeout')}s")
-    settings = {**settings, "receive_timeout": config('ch_receive_timeout', cast=int)}
+if _SETTINGS["receive_timeout"] > 0:
+    logging.info(f"CH-receive_timeout set to {_SETTINGS["receive_timeout"]}s")
+    settings = {**settings, "receive_timeout": _SETTINGS["receive_timeout"]}
 
 extra_args = {}
-if config("CH_COMPRESSION", cast=bool, default=True):
-    extra_args["compression"] = "lz4"
+if _SETTINGS["enable_compression"]:
+    extra_args["compression"] = _SETTINGS["compression_algorithm"]
 
-if config("CH_MAX_ROWS_TO_READ", cast=int, default=0) > 0:
-    extra_args["query_limit"] = config("CH_MAX_ROWS_TO_READ", cast=int)
+if _SETTINGS["query_limit"] > 0:
+    extra_args["query_limit"] = _SETTINGS["query_limit"]
 
-if config("CH_QUERY_RETRIES", cast=int, default=0) > 0:
-    extra_args["query_retries"] = config("CH_QUERY_RETRIES", cast=int)
+if _SETTINGS["query_retries"] > 0:
+    extra_args["query_retries"] = _SETTINGS["query_retries"]
 
-USE_POOL = config('CH_POOL', cast=bool, default=True)
+USE_POOL = _SETTINGS["enable_connection_pool"]
 
 
 def transform_result(self, original_function):
@@ -99,7 +176,7 @@ class ClickHouseConnectionPool:
                     # If max_size reached, wait until a connection is available
                     logger.info("Total connections exceeded, waiting for a new connection in the pool")
                     try:
-                        client = self.pool.get(timeout=config("CH_WAIT_FOR_CNX_POOL_S", cast=int, default=10))
+                        client = self.pool.get(timeout=_SETTINGS["pool_get_timeout"])
                     except Empty as exc:
                         logger.error("Pool wait timeout exceeded, no connections left")
                         raise exc
@@ -132,16 +209,14 @@ class ClickHouseConnectionPool:
 CH_pool: Optional[ClickHouseConnectionPool] = None
 _pool_lock = threading.Lock()
 
-RETRY_MAX = config("CH_RETRY_MAX", cast=int, default=20)
-RETRY_INTERVAL = config("CH_RETRY_INTERVAL", cast=int, default=2)
-RETRY = 0
+RETRY_MAX = _SETTINGS["pool_creation_max_retries"]
+RETRY_INTERVAL = _SETTINGS["pool_creation_retries_interval"]
 
 
 def make_pool():
     if not USE_POOL:
         return
     global CH_pool
-    global RETRY
     with _pool_lock:
         if CH_pool is not None:
             try:
@@ -153,8 +228,8 @@ def make_pool():
         while True:
             attempts += 1
             try:
-                CH_pool = ClickHouseConnectionPool(min_size=config("CH_MINCONN", cast=int, default=4),
-                                                   max_size=config("CH_MAXCONN", cast=int, default=8))
+                CH_pool = ClickHouseConnectionPool(min_size=_SETTINGS["pool_min_connections"],
+                                                   max_size=_SETTINGS["pool_max_connections"])
                 logger.info("ClickHouse connection pool created successfully")
                 return
             except Exception as error:
@@ -162,7 +237,7 @@ def make_pool():
                 if attempts >= RETRY_MAX:
                     logger.error("Failed to create ClickHouse pool after %d attempts", attempts)
                     raise
-                logger.info(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
+                logger.info(f"waiting for {RETRY_INTERVAL}s before retry n°{attempts}")
                 time.sleep(RETRY_INTERVAL)
 
 
