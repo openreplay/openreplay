@@ -1,6 +1,7 @@
-import React from 'react';
-import { Link, Icon } from 'UI';
 import cn from 'classnames';
+import React from 'react';
+import { Icon, Link } from 'UI';
+
 import cls from './backLink.module.css';
 
 export default function BackLink({
