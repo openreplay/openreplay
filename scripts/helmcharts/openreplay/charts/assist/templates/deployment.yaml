@@ -63,6 +63,7 @@ spec:
               value: '5'
             {{- end}}
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

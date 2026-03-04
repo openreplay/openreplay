@@ -45,6 +45,7 @@ spec:
           {{- end}}
           env:
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
             - name: S3_HOST
               value: {{ .Values.global.s3.endpoint }}
             - name: S3_KEY

@@ -58,6 +58,7 @@ spec:
               value: {{ include "openreplay.pg_connection_string" .}}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

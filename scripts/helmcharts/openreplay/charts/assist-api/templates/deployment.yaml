@@ -59,6 +59,7 @@ spec:
               value: {{ if .Values.global.enterpriseEditionLicense }}"true"{{ else }}"false"{{ end }}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
