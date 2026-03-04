@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -49,7 +50,7 @@ func (h *Health) handler(w http.ResponseWriter, r *http.Request) {
 	copy(checkers, h.checkers)
 	h.mu.RUnlock()
 
-ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
 	resp := healthResponse{
@@ -108,7 +109,9 @@ ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/health+json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Printf("health: failed to encode response: %v", err)
+	}
 }
 
 func truncate(s string, maxLen int) string {
