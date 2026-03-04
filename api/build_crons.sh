@@ -14,9 +14,9 @@ source ../scripts/lib/_docker.sh
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
-        exit=1
+        exit 1
     }
-    [[ $exit -eq 1 ]] && exit 1
+    return
 }
 
 function build_crons() {
