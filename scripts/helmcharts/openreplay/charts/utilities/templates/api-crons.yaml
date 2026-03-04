@@ -47,10 +47,8 @@ spec:
             image: "{{ tpl $job.image.registry . }}/{{ $job.image.repository }}:{{ $job.image.tag | default .Chart.AppVersion }}-ee"
             imagePullPolicy: "{{ $job.image.pullPolicy}}"
             env:
-              {{- range $key, $val := .Values.global.env }}
-              - name: {{ $key }}
-                value: '{{ $val }}'
-              {{- end }}
+              {{- include "openreplay.env" (dict "ctx" .) | nindent 14 }}
+              {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 14 }}
               - name: LICENSE_KEY
                 valueFrom:
                   secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 20 }}
