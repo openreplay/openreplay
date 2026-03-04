@@ -47,6 +47,7 @@ type StartSessionResponse struct {
 	CanvasEnabled        bool   `json:"canvasEnabled"` // false default
 	CanvasImageQuality   string `json:"canvasQuality"` // low | medium | high
 	CanvasFrameRate      int    `json:"canvasFPS"`     // 2 default
+	FramesSupport        bool   `json:"framesSupport"` // true by default from v1.26.0
 	AssistOnly           bool   `json:"assistOnly"`
 }
 
