@@ -71,6 +71,7 @@ spec:
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

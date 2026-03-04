@@ -99,6 +99,7 @@ spec:
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

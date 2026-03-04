@@ -45,6 +45,7 @@ spec:
           {{- end}}
           env:
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
