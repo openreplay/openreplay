@@ -28,7 +28,7 @@ _CH_CONFIG = {
 
 USE_TLS = config("CLICKHOUSE_USE_TLS", cast=bool, default=False)
 if USE_TLS:
-    _CH_CONFIG["secure"] = config("CLICKHOUSE_SECURE", cast=bool, default=False)
+    _CH_CONFIG["secure"] = config("CLICKHOUSE_SECURE", cast=bool, default=True)
     _CH_CONFIG["verify"] = (
         config("CLICKHOUSE_VERIFY", cast=bool, default=True) if config("CLICKHOUSE_TLS_SKIP_VERIFY",
                                                                        default=None) is None
