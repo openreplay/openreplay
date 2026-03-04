@@ -47,7 +47,7 @@ spec:
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             - name: KAFKA_SERVERS
               value: "{{ .Values.global.kafka.kafkaHost }}"
-            - name: ch_username
+            - name: ch_user
               value: "{{ .Values.global.clickhouse.username }}"
             - name: ch_password
               valueFrom:
