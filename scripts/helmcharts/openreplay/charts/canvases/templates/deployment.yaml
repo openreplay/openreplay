@@ -63,6 +63,9 @@ spec:
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "token-secret" "ctx" .) | nindent 18 }}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
             {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
