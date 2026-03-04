@@ -46,7 +46,7 @@ podSecurityContext:
 service:
   type: ClusterIP
   ports:
-    http: 9000 
+    http: 8080
     metrics: 8888
 
 serviceMonitor:
