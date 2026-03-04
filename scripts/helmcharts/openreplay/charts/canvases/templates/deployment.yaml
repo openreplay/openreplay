@@ -66,6 +66,11 @@ spec:
             - name: TOKEN_SECRET
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "token-secret" "ctx" .) | nindent 18 }}
+            - name: pg_password
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
+            - name: POSTGRES_STRING
+              value: {{ include "openreplay.pg_connection_string" .}}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
             {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
