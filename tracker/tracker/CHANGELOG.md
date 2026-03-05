@@ -1,3 +1,7 @@
+## 17.2.4
+
+- fixes for sdk batcher to prevent empty fetches (or token resets)
+
 ## 17.2.3
 
 - allow `customAttributes` option to define a list of custom html attributes for tracking in click and input events
