@@ -26,16 +26,23 @@ class Batcher {
     [categories.events]: [] as Event[],
   }
   private intervalId: any = null
+  private stopped = false
 
   constructor(
     private readonly backendUrl: string,
     private readonly getToken: () => string | null,
     private readonly init: () => Promise<void>,
+    private readonly standalone: boolean,
   ) {}
 
   getBatches() {
     this.batch[categories.people] = this.dedupePeopleEvents()
-    const finalData = { data: this.batch }
+    const finalData = {
+      data: {
+        [categories.people]: [...this.batch[categories.people]],
+        [categories.events]: [...this.batch[categories.events]],
+      },
+    }
     return finalData
   }
 
@@ -116,6 +123,9 @@ class Batcher {
   }
 
   private sendBatch(batch: Record<string, any>) {
+    if (this.stopped) {
+      return
+    }
     const sentBatch = batch
     let attempts = 0
     const send = () => {
@@ -132,8 +142,21 @@ class Batcher {
         },
         body: JSON.stringify(sentBatch),
       })
-        .then((response) => {
-          if ([403, 401].includes(response.status)) {
+        .then(async (response) => {
+          if (response.status === 401) {
+            const body = await response.json().catch(() => null)
+            if (!this.standalone && body?.error === 'token expired') {
+              this.stop()
+              return
+            }
+            if (attempts < this.retryLimit) {
+              return this.init().then(() => {
+                send()
+              })
+            }
+            return
+          }
+          if (response.status === 403) {
             if (attempts < this.retryLimit) {
               return this.init().then(() => {
                 send()
@@ -154,12 +177,22 @@ class Batcher {
     void send()
   }
 
+  private paused = false
+
+  private onVisibilityChange = () => {
+    this.paused = document.hidden
+  }
+
   startAutosend() {
     if (this.intervalId) {
       clearInterval(this.intervalId)
     }
+    this.paused = document.hidden
+    document.addEventListener('visibilitychange', this.onVisibilityChange)
     this.intervalId = setInterval(() => {
-      this.flush()
+      if (!this.paused) {
+        this.flush()
+      }
     }, this.autosendInterval)
   }
 
@@ -182,6 +215,13 @@ class Batcher {
       clearInterval(this.intervalId)
       this.intervalId = null
     }
+    document.removeEventListener('visibilitychange', this.onVisibilityChange)
+    this.stopped = true
+  }
+
+  restart() {
+    this.stopped = false
+    this.startAutosend()
   }
 }
 

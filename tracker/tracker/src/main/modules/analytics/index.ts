@@ -65,7 +65,7 @@ export default class Analytics {
 
     this.token = this.sessionStorage.getItem(STORAGEKEY)
     this.constantProperties = new ConstantProperties(this.localStorage, this.sessionStorage)
-    this.batcher = new Batcher(this.backendUrl, this._getToken, this.init)
+    this.batcher = new Batcher(this.backendUrl, this._getToken, this.init, this.standalone)
     this.events = new Events(this.constantProperties, this._getTimestamp, this.batcher)
     this.people = new People(
       this.constantProperties,
@@ -119,6 +119,20 @@ export default class Analytics {
       } else {
         throw new Error('No token received from server')
       }
+    }
+  }
+
+  /**
+   * Used by tracker when running in blundled mode
+   */
+  onStart = () => {
+    if (!this.standalone) {
+      this.batcher.restart()
+    }
+  }
+  onStop = () => {
+    if (!this.standalone) {
+      this.batcher.stop()
     }
   }
 

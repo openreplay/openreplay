@@ -223,6 +223,12 @@ export default class API {
           : (options.analytics?.ingestPoint ?? options.ingestPoint ?? defaultEdp),
         projectKey: options.projectKey,
       })
+      app.attachStartCallback(() => {
+        this.analytics?.onStart()
+      })
+      app.attachStopCallback(() => {
+        this.analytics?.onStop()
+      })
     }
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
