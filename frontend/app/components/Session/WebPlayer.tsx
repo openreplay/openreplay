@@ -219,7 +219,15 @@ function WebPlayer(props: any) {
       console.debug('cleaning up player after', params.sessionId);
       toggleFullscreen(false);
       closeBottomBlock();
-      playerInst?.clean();
+
+      // Pause immediately (stops animation loop), but defer the heavy
+      // teardown (iframe removal, store resets) so it doesn't block
+      // React from mounting the next page.
+      playerInst?.pause();
+      const inst = playerInst;
+      if (inst) {
+        setTimeout(() => inst.clean(), 0);
+      }
       // @ts-ignore
       setContextValue(defaultContextValue);
     },

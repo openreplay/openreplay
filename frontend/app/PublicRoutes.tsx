@@ -3,7 +3,7 @@ import React, { Suspense, lazy, useEffect } from 'react';
 
 import { useStore } from 'App/mstore';
 import * as routes from 'App/routes';
-import { Navigate, Route, Routes } from 'App/routing';
+import { Navigate, Route, StableRoutes } from 'App/routing';
 import Signup from 'Components/Signup/Signup';
 import { Loader } from 'UI';
 
@@ -41,13 +41,13 @@ function PublicRoutes() {
   return (
     <Loader loading={loading} className="flex-1">
       <Suspense fallback={<Loader loading className="flex-1" />}>
-        <Routes>
+        <StableRoutes>
           <Route path={SPOT_PATH} element={<Spot />} />
           <Route path={FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={LOGIN_PATH} element={<Login />} />
           <Route path={SIGNUP_PATH} element={<Signup />} />
           <Route path="*" element={<Navigate to={LOGIN_PATH} replace />} />
-        </Routes>
+        </StableRoutes>
         {!hideSupport && <SupportCallout />}
       </Suspense>
     </Loader>

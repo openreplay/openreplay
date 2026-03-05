@@ -1,22 +1,25 @@
-import { useStore } from 'App/mstore';
+import { Switch } from 'antd';
+import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { withRouter } from 'App/routing';
+import { useTranslation } from 'react-i18next';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { IFRAME } from 'App/constants/storageKeys';
+import { useStore } from 'App/mstore';
 import {
-  sessions as sessionsRoute,
   liveSession as liveSessionRoute,
+  sessions as sessionsRoute,
   withSiteId,
 } from 'App/routes';
-import { BackLink, Link } from 'UI';
-import cn from 'classnames';
-import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
+import { withRouter } from 'App/routing';
 import Tabs from 'Components/Session/Tabs';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { IFRAME } from 'App/constants/storageKeys';
-import stl from './playerBlockHeader.module.css';
+import { BackLink, Link } from 'UI';
+
+import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
+
 import UserCard from './EventsBlock/UserCard';
-import { useTranslation } from 'react-i18next';
-import { Switch } from 'antd';
+import stl from './playerBlockHeader.module.css';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -99,9 +102,7 @@ function PlayerBlockHeader(props: any) {
           >
             {/* @ts-ignore TODO */}
             <BackLink label={t('Back')} className="h-full ml-2" />
-            <div
-              className={'w-px h-full lg:h-[50px] mx-2 bg-gray-lighter'}
-            />
+            <div className={'w-px h-full lg:h-[50px] mx-2 bg-gray-lighter'} />
           </div>
         )}
         <UserCard width={width} height={height} />
