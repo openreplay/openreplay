@@ -5,6 +5,10 @@ type imagesIteratorImpl struct {
 	handler      ImageMessageHandler
 }
 
+const DoAutoDecode = true
+
+var NoFilter []int = nil
+
 type ImageMessageHandler func(data []byte, sessID uint64)
 
 func NewImagesMessageIterator(messageHandler ImageMessageHandler, messageFilter []int, autoDecode bool) MessageIterator {

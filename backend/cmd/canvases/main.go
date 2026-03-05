@@ -4,19 +4,26 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
-	"openreplay/backend/internal/canvases"
 	config "openreplay/backend/internal/config/canvases"
+	canvasService "openreplay/backend/pkg/canvases"
+	"openreplay/backend/pkg/canvases/service"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	canvasesMetrics "openreplay/backend/pkg/metrics/canvas"
+	"openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/server"
+	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/middleware"
 )
 
 func main() {
@@ -25,7 +32,21 @@ func main() {
 	cfg := config.New(log)
 
 	canvasMetrics := canvasesMetrics.New("canvases")
-	metrics.New(log, canvasMetrics.List())
+	webMetrics := web.New("canvases")
+	dbMetric := database.New("canvases")
+	metrics.New(log, append(canvasMetrics.List(), append(webMetrics.List(), dbMetric.List()...)...))
+
+	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
+	if err != nil {
+		log.Fatal(ctx, "can't init postgres connection: %s", err)
+	}
+	defer pgConn.Close()
+
+	redisConn, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Warn(ctx, "can't init redis connection: %s", err)
+	}
+	defer redisConn.Close()
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -35,7 +56,7 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	srv, err := canvases.New(cfg, log, objStore, producer, canvasMetrics)
+	srv, err := service.New(cfg, log, objStore, producer, canvasMetrics)
 	if err != nil {
 		log.Fatal(ctx, "can't init canvases service: %s", err)
 	}
@@ -47,88 +68,34 @@ func main() {
 			cfg.TopicCanvasImages,
 			cfg.TopicCanvasTrigger,
 		},
-		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			isSessionEnd := func(data []byte) bool {
-				reader := messages.NewBytesReader(data)
-				msgType, err := reader.ReadUint()
-				if err != nil {
-					return false
-				}
-				if msgType != messages.MsgSessionEnd {
-					return false
-				}
-				_, err = messages.ReadMessage(msgType, reader)
-				if err != nil {
-					return false
-				}
-				return true
-			}
-			isTriggerEvent := func(data []byte) (string, string, bool) {
-				reader := messages.NewBytesReader(data)
-				msgType, err := reader.ReadUint()
-				if err != nil {
-					return "", "", false
-				}
-				if msgType != messages.MsgCustomEvent {
-					return "", "", false
-				}
-				msg, err := messages.ReadMessage(msgType, reader)
-				if err != nil {
-					return "", "", false
-				}
-				customEvent := msg.(*messages.CustomEvent)
-				return customEvent.Payload, customEvent.Name, true
-			}
-			isCleanSessionEvent := func(data []byte) bool {
-				reader := messages.NewBytesReader(data)
-				msgType, err := reader.ReadUint()
-				if err != nil {
-					return false
-				}
-				if msgType != messages.MsgCleanSession {
-					return false
-				}
-				_, err = messages.ReadMessage(msgType, reader)
-				if err != nil {
-					return false
-				}
-				return true
-			}
-			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
-
-			if isSessionEnd(data) {
-				if err := srv.PrepareSessionCanvases(sessCtx, sessID); err != nil {
-					if !strings.Contains(err.Error(), "no such file or directory") {
-						log.Error(sessCtx, "can't pack session's canvases: %s", err)
-					}
-				}
-			} else if path, name, ok := isTriggerEvent(data); ok {
-				if err := srv.ProcessSessionCanvas(sessCtx, sessID, path, name); err != nil {
-					log.Error(sessCtx, "can't process session's canvas: %s", err)
-				}
-			} else if isCleanSessionEvent(data) {
-				if err := srv.CleanSession(sessCtx, sessID); err != nil {
-					log.Error(sessCtx, "can't clean session: %s", err)
-				}
-			} else {
-				if err := srv.SaveCanvasToDisk(sessCtx, sessID, data); err != nil {
-					log.Error(sessCtx, "can't process canvas image: %s", err)
-				}
-			}
-		}, nil, true),
-		false,
+		messages.NewImagesMessageIterator(srv.MessageIterator, messages.NoFilter, messages.DoAutoDecode),
+		queue.DoNotAutoCommit,
 		cfg.MessageSizeLimit,
-		nil,
+		queue.WithoutRebalanceHandler,
 		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init canvases service: %s", err)
 	}
 
-	log.Info(ctx, "canvases service started")
+	services, err := canvasService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, producer, pgConn, redisConn)
+
+	middlewares, err := middleware.NewMinimalMiddlewareBuilder(&cfg.HTTP)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating minimal http middleware: %s", err)
+	}
+
+	router, err := api.NewRouter(log, &cfg.HTTP, api.NoPrefix, services.Handlers(), middlewares.Middlewares())
+	if err != nil {
+		log.Fatal(ctx, "failed while creating router: %s", err)
+	}
+
+	go server.Run(ctx, log, &cfg.HTTP, router)
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+
+	log.Info(ctx, "canvases service started")
 
 	counterTick := time.Tick(time.Second * 30)
 	for {
@@ -153,4 +120,5 @@ func main() {
 			}
 		}
 	}
+
 }

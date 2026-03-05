@@ -10,6 +10,10 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
+const DoNotAutoCommit = false
+
+var WithoutRebalanceHandler types.RebalanceHandler = nil
+
 func NewConsumer(log logger.Logger, group string, topics []string, iterator messages.MessageIterator, autoCommit bool, messageSizeLimit int, rebalanceHandler types.RebalanceHandler, readBackGap time.Duration) (types.Consumer, error) {
 	license.CheckLicense()
 	return kafka.NewConsumer(log, group, topics, iterator, autoCommit, messageSizeLimit, rebalanceHandler, readBackGap)
