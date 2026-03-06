@@ -258,7 +258,9 @@ spec:
               cp -rf ee/scripts/* scripts/
             fi
             echo "Changing RWX to proper permission"
-            chown 1001:1001 /mnt/efs
+            if [ "$SKIP_PERMISSION_CHANGE" != "true" ]; then
+              chown 1001:1001 /mnt/efs
+            fi
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
