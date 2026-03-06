@@ -40,7 +40,7 @@ import { Icon, Loader } from 'UI';
 import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
-import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
+import BreakdownDatatable from '../WidgetDatatable/BreakdownDatatable';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import LongLoader from './LongLoader';
 
@@ -675,14 +675,42 @@ function WidgetChart(props: Props) {
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
           {showTable ? (
-            <WidgetDatatable
-              compData={compData}
+            <BreakdownDatatable
+              data={{
+                'Sessions Count': {
+                  US: {
+                    'New York': { 'Jan 1': 1200, 'Jan 2': 1350, 'Jan 3': 980, 'Jan 4': 1100, 'Jan 5': 1450, 'Jan 6': 1600, 'Jan 7': 1200 },
+                    'Los Angeles': { 'Jan 1': 800, 'Jan 2': 750, 'Jan 3': 620, 'Jan 4': 900, 'Jan 5': 1020, 'Jan 6': 1100, 'Jan 7': 950 },
+                    Chicago: { 'Jan 1': 400, 'Jan 2': 380, 'Jan 3': 350, 'Jan 4': 410, 'Jan 5': 500, 'Jan 6': 520, 'Jan 7': 460 },
+                  },
+                  UK: {
+                    London: { 'Jan 1': 600, 'Jan 2': 650, 'Jan 3': 580, 'Jan 4': 620, 'Jan 5': 700, 'Jan 6': 720, 'Jan 7': 680 },
+                    Manchester: { 'Jan 1': 200, 'Jan 2': 180, 'Jan 3': 210, 'Jan 4': 190, 'Jan 5': 250, 'Jan 6': 230, 'Jan 7': 220 },
+                  },
+                  Germany: {
+                    Berlin: { 'Jan 1': 350, 'Jan 2': 370, 'Jan 3': 310, 'Jan 4': 340, 'Jan 5': 400, 'Jan 6': 420, 'Jan 7': 380 },
+                    Munich: { 'Jan 1': 150, 'Jan 2': 160, 'Jan 3': 140, 'Jan 4': 170, 'Jan 5': 200, 'Jan 6': 190, 'Jan 7': 180 },
+                  },
+                },
+                'Error Count': {
+                  US: {
+                    'New York': { 'Jan 1': 45, 'Jan 2': 52, 'Jan 3': 38, 'Jan 4': 41, 'Jan 5': 60, 'Jan 6': 55, 'Jan 7': 48 },
+                    'Los Angeles': { 'Jan 1': 30, 'Jan 2': 28, 'Jan 3': 22, 'Jan 4': 35, 'Jan 5': 40, 'Jan 6': 38, 'Jan 7': 33 },
+                    Chicago: { 'Jan 1': 15, 'Jan 2': 12, 'Jan 3': 10, 'Jan 4': 18, 'Jan 5': 20, 'Jan 6': 17, 'Jan 7': 14 },
+                  },
+                  UK: {
+                    London: { 'Jan 1': 22, 'Jan 2': 25, 'Jan 3': 20, 'Jan 4': 23, 'Jan 5': 28, 'Jan 6': 26, 'Jan 7': 24 },
+                    Manchester: { 'Jan 1': 8, 'Jan 2': 7, 'Jan 3': 9, 'Jan 4': 6, 'Jan 5': 10, 'Jan 6': 11, 'Jan 7': 8 },
+                  },
+                  Germany: {
+                    Berlin: { 'Jan 1': 12, 'Jan 2': 14, 'Jan 3': 11, 'Jan 4': 13, 'Jan 5': 16, 'Jan 6': 15, 'Jan 7': 13 },
+                    Munich: { 'Jan 1': 5, 'Jan 2': 6, 'Jan 3': 4, 'Jan 4': 7, 'Jan 5': 8, 'Jan 6': 7, 'Jan 7': 6 },
+                  },
+                },
+              }}
+              breakdownLabels={['Country', 'City']}
               inBuilder={props.isPreview}
               defaultOpen
-              data={data}
-              tableMode={tableMode}
-              enabledRows={enabledRows}
-              setEnabledRows={setEnabledRows}
               metric={_metric}
             />
           ) : null}
