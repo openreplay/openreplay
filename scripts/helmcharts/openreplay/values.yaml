@@ -25,7 +25,8 @@ kafka:
     tag: 3
 
 migration:
-  env: {}
+  env:
+    SKIP_PERMISSION_CHANGE: "false"
 
 deployment:
   argo: false
