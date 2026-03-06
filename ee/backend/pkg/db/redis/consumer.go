@@ -41,6 +41,13 @@ func (c *consumerImpl) ConsumeNext() error {
 	panic("implement me")
 }
 
+func (c *consumerImpl) Ping(ctx context.Context) error {
+	if c.client == nil || c.client.Redis == nil {
+		return errors.New("redis client is not initialized")
+	}
+	return c.client.Redis.Ping(ctx).Err()
+}
+
 func (c *consumerImpl) Close() {
 	//TODO implement me
 	panic("implement me")

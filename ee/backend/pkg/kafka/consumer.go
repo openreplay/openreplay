@@ -432,6 +432,17 @@ func (c *consumerImpl) shouldResume() {
 	}
 }
 
+func (c *consumerImpl) Ping(ctx context.Context) error {
+	timeoutMs := 5000
+	if deadline, ok := ctx.Deadline(); ok {
+		if ms := int(time.Until(deadline).Milliseconds()); ms > 0 {
+			timeoutMs = ms
+		}
+	}
+	_, err := c.consumer.GetMetadata(nil, true, timeoutMs)
+	return err
+}
+
 func (c *consumerImpl) Close() {
 	if c.commitTicker != nil {
 		c.commitTicker.Stop()

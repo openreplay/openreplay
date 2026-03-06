@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/internal/assets"
 	"openreplay/backend/internal/assets/cacher"
 	config "openreplay/backend/internal/config/assets"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -23,6 +24,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
+
+	h := health.New()
 
 	assetMetrics := assetsMetrics.New("assets")
 	metrics.New(log, assetMetrics.List())
@@ -66,6 +69,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
+	h.Register("consumer", func(ctx context.Context) error {
+		return msgConsumer.Ping(ctx)
+	})
 
 	log.Info(ctx, "Cacher service started")
 

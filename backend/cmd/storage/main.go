@@ -11,6 +11,7 @@ import (
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/failover"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -24,6 +25,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
+
+	h := health.New()
 
 	storageMetric := storageMetrics.New("storage")
 	metrics.New(log, storageMetric.List())
@@ -87,6 +90,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
+	h.Register("consumer", func(ctx context.Context) error {
+		return consumer.Ping(ctx)
+	})
 
 	log.Info(ctx, "Storage service started")
 
