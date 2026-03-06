@@ -150,7 +150,7 @@ export default class TopObserver extends Observer {
         }
         const observer = new IFrameObserver(this.app, false, {
           disableSprites: this.options.disableSprites,
-          ...getInlineOptions(this.options.inlineCss, console.warn),
+          ...getInlineOptions(this.options.inlineCss),
         })
         this.iframeObservers.set(iframe, observer)
         this.docObservers.set(currentDoc, observer)
@@ -181,7 +181,7 @@ export default class TopObserver extends Observer {
   private handleShadowRoot(shRoot: ShadowRoot) {
     const observer = new ShadowRootObserver(this.app, false, {
       disableSprites: this.options.disableSprites,
-      ...getInlineOptions(this.options.inlineCss, console.warn),
+      ...getInlineOptions(this.options.inlineCss),
     })
     this.shadowRootObservers.set(shRoot, observer)
     observer.observe(shRoot.host)
@@ -227,7 +227,7 @@ export default class TopObserver extends Observer {
     this.app.nodes.crossdomainMode(frameLevel, frameOder)
     const iframeObserver = new IFrameObserver(this.app, false, {
       disableSprites: this.options.disableSprites,
-      ...getInlineOptions(this.options.inlineCss, console.warn),
+      ...getInlineOptions(this.options.inlineCss),
     })
     this.iframeObservers.set(window.document, iframeObserver)
     iframeObserver.syntheticObserve(rootNodeId, window.document)
