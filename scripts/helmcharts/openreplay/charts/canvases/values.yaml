@@ -127,3 +127,21 @@ tolerations: []
 affinity: {}
 
 hostAliases: []
+
+healthCheck:
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8888
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8888
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3

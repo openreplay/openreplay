@@ -21,6 +21,7 @@ type Pool interface {
 	Exec(sql string, arguments ...interface{}) error
 	SendBatch(b *pgx.Batch) pgx.BatchResults
 	Begin() (*Tx, error)
+	Ping(ctx context.Context) error
 	Close()
 }
 
@@ -102,6 +103,10 @@ func (p *poolImpl) Begin() (*Tx, error) {
 		origTx:  tx,
 		metrics: p.metrics,
 	}, err
+}
+
+func (p *poolImpl) Ping(ctx context.Context) error {
+	return p.conn.Ping(ctx)
 }
 
 func (p *poolImpl) Close() {

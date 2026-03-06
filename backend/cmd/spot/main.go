@@ -5,6 +5,7 @@ import (
 
 	spotConfig "openreplay/backend/internal/config/spot"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
@@ -22,6 +23,8 @@ func main() {
 	log := logger.New()
 	cfg := spotConfig.New(log)
 
+	h := health.New()
+
 	webMetrics := web.New("spot")
 	spotMetric := spotMetrics.New("spot")
 	dbMetric := databaseMetrics.New("spot")
@@ -32,6 +35,9 @@ func main() {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgPool.Close()
+	h.Register("postgres", func(ctx context.Context) error {
+		return pgPool.Ping(ctx)
+	})
 
 	keys := keys.NewKeys(log, pgPool)
 	services, err := spot.NewServiceBuilder(log, cfg, webMetrics, spotMetric, pgPool, keys)

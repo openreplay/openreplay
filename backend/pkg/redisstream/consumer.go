@@ -159,6 +159,10 @@ func (c *consumerImpl) CommitBack(gap int64) error {
 	return nil
 }
 
+func (c *consumerImpl) Ping(ctx context.Context) error {
+	return c.redis.Ping(ctx).Err()
+}
+
 func (c *consumerImpl) Close() {
 	// noop
 }

@@ -13,6 +13,7 @@ import (
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/internal/sink/sessionwriter"
 	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -27,6 +28,8 @@ func main() {
 	log := logger.New()
 	cfg := config.New(log)
 
+	h := health.New()
+
 	sinkMetrics := sink.New("sink")
 	metrics.New(log, sinkMetrics.List())
 
@@ -38,6 +41,9 @@ func main() {
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
+	h.Register("producer", func(ctx context.Context) error {
+		return producer.Ping(ctx)
+	})
 	rewriter, err := assets.NewRewriter(cfg.AssetsOrigin)
 	if err != nil {
 		log.Fatal(ctx, "can't init rewriter: %s", err)
@@ -208,6 +214,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
+	h.Register("consumer", func(ctx context.Context) error {
+		return consumer.Ping(ctx)
+	})
 
 	log.Info(ctx, "sink service started")
 

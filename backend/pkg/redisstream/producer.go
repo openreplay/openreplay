@@ -67,6 +67,10 @@ func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value
 	return nil
 }
 
+func (p *Producer) Ping(ctx context.Context) error {
+	return p.redis.Ping(ctx).Err()
+}
+
 func (p *Producer) Close(_ int) {
 	// noop
 }
