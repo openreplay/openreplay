@@ -1,12 +1,12 @@
 /* eslint-disable i18next/no-literal-string */
-import { Button, Table, Divider } from 'antd';
+import { Button, Divider, Table } from 'antd';
 import type { TableProps } from 'antd';
-
-import { Eye, EyeOff } from 'lucide-react';
 import cn from 'classnames';
+import { Eye, EyeOff } from 'lucide-react';
 import React, { useState } from 'react';
-import { TableExporter } from 'Components/Funnels/FunnelWidget/FunnelTable';
 import { useTranslation } from 'react-i18next';
+
+import { TableExporter } from 'Components/Funnels/FunnelWidget/FunnelTable';
 
 const initTableProps = [
   {
