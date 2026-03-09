@@ -59,6 +59,8 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/{projectId}/cards/try", "POST", e.getCardChartData, []string{api.METRICS}, api.DoNotTrack},
 		{"/{projectId}/cards/{id}/chart", "POST", e.getSavedCardChartData, []string{api.METRICS}, api.DoNotTrack},
 		{"/{projectId}/cards/{id}/try", "POST", e.getCardChartData, []string{api.METRICS}, api.DoNotTrack},
+		{"/{projectId}/cards/try-seed", "POST", e.getCardSeedData, []string{api.METRICS}, api.DoNotTrack},
+		{"/{projectId}/cards/{id}/try-seed", "POST", e.getCardSeedData, []string{api.METRICS}, api.DoNotTrack},
 	}
 }
 
@@ -142,6 +144,27 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+}
+
+func (e *handlersImpl) getCardSeedData(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	req := &model.MetricPayload{}
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	resp := GetSeedData(req)
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
