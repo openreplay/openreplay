@@ -9,10 +9,11 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned, description) 
-                        VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s, %(description)s)
+        pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned, description, config)
+                        VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s, %(description)s, %(config)s::jsonb)
                         RETURNING *"""
         params = {"userId": user_id, "projectId": project_id, **data.model_dump()}
+        params["config"] = json.dumps(data.config.model_dump(by_alias=True))
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                          INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
@@ -118,22 +119,28 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
         offset = row["count"]
+        params["config"] = (
+            json.dumps(data.config.model_dump(by_alias=True))
+            if data.config is not None
+            else None
+        )
         pg_query = f"""UPDATE dashboards
                        SET name = %(name)s,
                           description= %(description)s
+                            {", config = %(config)s::jsonb" if data.config is not None else ""}
                             {", is_public = %(is_public)s" if data.is_public is not None else ""}
                             {", is_pinned = %(is_pinned)s" if data.is_pinned is not None else ""}
                        WHERE dashboards.project_id = %(projectId)s
                           AND dashboard_id = %(dashboard_id)s
                           AND (dashboards.user_id = %(userId)s OR is_public)
-                       RETURNING dashboard_id,name,description,is_public,created_at"""
+                       RETURNING dashboard_id,name,description,is_public,config,created_at"""
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                            INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
                            VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id_{i})s)||%(config_{i})s)" for i in range(len(data.metrics))])}
                            RETURNING (SELECT dashboard_id FROM dash),(SELECT name FROM dash),
                                      (SELECT description FROM dash),(SELECT is_public FROM dash),
-                                     (SELECT created_at FROM dash);"""
+                                     (SELECT config FROM dash),(SELECT created_at FROM dash);"""
             for i, m in enumerate(data.metrics):
                 params[f"metric_id_{i}"] = m
                 # params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \

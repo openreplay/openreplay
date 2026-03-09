@@ -10,6 +10,7 @@ import { calculateGranularities } from '@/components/Dashboard/components/Widget
 import { HEATMAP } from '@/constants/card';
 import { sessionStore } from 'App/mstore';
 import { CUSTOM_RANGE } from '@/dateRange';
+import { getDashboardDefaultPeriod } from './types/dashboardPeriod';
 
 interface DashboardFilter {
   query?: string;
@@ -267,10 +268,14 @@ export default class DashboardStore {
       description: string;
       isPublic: boolean;
       createdAt: number;
+      config?: any;
     },
   ) {
     if (this.selectedDashboard !== null) {
       this.selectedDashboard.updateInfo(info);
+      if (this.selectedDashboard.dashboardId === id) {
+        this.setPeriod(getDashboardDefaultPeriod(this.selectedDashboard.config));
+      }
     }
     const index = this.dashboards.findIndex((d) => d.dashboardId === id);
     this.dashboards[index].updateInfo(info);
@@ -366,6 +371,7 @@ export default class DashboardStore {
     this.selectedDashboard =
       this.dashboards.find((d) => d.dashboardId == dashboardId) ||
       new Dashboard();
+    this.setPeriod(getDashboardDefaultPeriod(this.selectedDashboard.config));
   };
 
   getDashboardById = async (dashboardId: string) => {
@@ -390,6 +396,7 @@ export default class DashboardStore {
 
     if (dashboard) {
       this.selectedDashboard = dashboard;
+      this.setPeriod(getDashboardDefaultPeriod(dashboard.config));
       return true;
     }
     this.selectedDashboard = null;
@@ -470,6 +477,10 @@ export default class DashboardStore {
   }
 
   resetPeriod = () => {
+    if (this.selectedDashboard?.config?.defaultPeriod?.rangeName) {
+      this.setPeriod(getDashboardDefaultPeriod(this.selectedDashboard.config));
+      return;
+    }
     if (this.period) {
       const range = this.period.rangeName;
       if (range !== CUSTOM_RANGE) {

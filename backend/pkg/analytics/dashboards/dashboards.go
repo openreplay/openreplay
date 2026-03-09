@@ -35,13 +35,19 @@ func New(log logger.Logger, conn pool.Pool) (Dashboards, error) {
 }
 
 func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error) {
+	configJSON, err := json.Marshal(req.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal dashboard config: %w", err)
+	}
+
 	sql := `
-		INSERT INTO dashboards (project_id, user_id, name, description, is_public, is_pinned)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
+		INSERT INTO dashboards (project_id, user_id, name, description, is_public, is_pinned, config)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, config, created_at`
 
 	dashboard := &GetDashboardResponse{}
-	err := s.pgconn.QueryRow(sql, projectId, userID, req.Name, req.Description, req.IsPublic, req.IsPinned).Scan(
+	var rawConfig []byte
+	err = s.pgconn.QueryRow(sql, projectId, userID, req.Name, req.Description, req.IsPublic, req.IsPinned, configJSON).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.UserID,
@@ -49,10 +55,14 @@ func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboa
 		&dashboard.Description,
 		&dashboard.IsPublic,
 		&dashboard.IsPinned,
+		&rawConfig,
 		&dashboard.CreatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dashboard: %w", err)
+	}
+	if err := json.Unmarshal(rawConfig, &dashboard.Config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal dashboard config: %w", err)
 	}
 	return dashboard, nil
 }
@@ -79,6 +89,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 			d.description,
 			d.is_public,
 			d.is_pinned,
+			d.config,
 			d.user_id,
 			d.created_at,
 			COALESCE(json_agg(
@@ -101,10 +112,11 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		LEFT JOIN metrics m ON dw.metric_id = m.metric_id
 		LEFT JOIN series_agg s ON m.metric_id = s.metric_id
 		WHERE d.dashboard_id = $1 AND d.project_id = $2 AND d.deleted_at IS NULL
-		GROUP BY d.dashboard_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.user_id, d.created_at`
+		GROUP BY d.dashboard_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.config, d.user_id, d.created_at`
 
 	dashboard := &GetDashboardResponse{}
 	var ownerID int
+	var rawConfig []byte
 	var metricsJSON []byte
 
 	err := s.pgconn.QueryRow(sql, dashboardID, projectId).Scan(
@@ -114,6 +126,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		&dashboard.Description,
 		&dashboard.IsPublic,
 		&dashboard.IsPinned,
+		&rawConfig,
 		&ownerID,
 		&dashboard.CreatedAt,
 		&metricsJSON,
@@ -126,6 +139,9 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		return nil, fmt.Errorf("error fetching dashboard: %w", err)
 	}
 
+	if err := json.Unmarshal(rawConfig, &dashboard.Config); err != nil {
+		return nil, fmt.Errorf("error unmarshalling config: %w", err)
+	}
 	if err := json.Unmarshal(metricsJSON, &dashboard.Metrics); err != nil {
 		return nil, fmt.Errorf("error unmarshalling metrics: %w", err)
 	}
@@ -139,7 +155,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 
 func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsResponse, error) {
 	sql := `
-		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, u.email AS owner_email, u.name AS owner_name, d.created_at
+		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.config, u.email AS owner_email, u.name AS owner_name, d.created_at
 		FROM dashboards d
 		LEFT JOIN users u ON d.user_id = u.user_id
 		WHERE (d.is_public = true OR d.user_id = $1) AND d.user_id IS NOT NULL AND d.deleted_at IS NULL AND d.project_id = $2
@@ -153,10 +169,14 @@ func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsRes
 	var dashboards []Dashboard
 	for rows.Next() {
 		var dashboard Dashboard
+		var rawConfig []byte
 
-		err := rows.Scan(&dashboard.DashboardID, &dashboard.UserID, &dashboard.ProjectID, &dashboard.Name, &dashboard.Description, &dashboard.IsPublic, &dashboard.IsPinned, &dashboard.OwnerEmail, &dashboard.OwnerName, &dashboard.CreatedAt)
+		err := rows.Scan(&dashboard.DashboardID, &dashboard.UserID, &dashboard.ProjectID, &dashboard.Name, &dashboard.Description, &dashboard.IsPublic, &dashboard.IsPinned, &rawConfig, &dashboard.OwnerEmail, &dashboard.OwnerName, &dashboard.CreatedAt)
 		if err != nil {
 			return nil, err
+		}
+		if err := json.Unmarshal(rawConfig, &dashboard.Config); err != nil {
+			return nil, fmt.Errorf("error unmarshalling dashboard config: %w", err)
 		}
 
 		dashboards = append(dashboards, dashboard)
@@ -196,6 +216,7 @@ func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetD
 	var dashboards []Dashboard
 	for rows.Next() {
 		var dashboard Dashboard
+		var rawConfig []byte
 		err := rows.Scan(
 			&dashboard.DashboardID,
 			&dashboard.UserID,
@@ -204,12 +225,16 @@ func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetD
 			&dashboard.Description,
 			&dashboard.IsPublic,
 			&dashboard.IsPinned,
+			&rawConfig,
 			&dashboard.OwnerEmail,
 			&dashboard.OwnerName,
 			&dashboard.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning dashboard: %w", err)
+		}
+		if err := json.Unmarshal(rawConfig, &dashboard.Config); err != nil {
+			return nil, fmt.Errorf("error unmarshalling dashboard config: %w", err)
 		}
 		dashboards = append(dashboards, dashboard)
 	}
@@ -227,14 +252,37 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 		return nil, fmt.Errorf("failed to get dashboard: %w", err)
 	}
 
+	config := DashboardConfig{}
+	if req.Config != nil {
+		config = *req.Config
+	}
+
+	configJSON, err := json.Marshal(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal dashboard config: %w", err)
+	}
+
 	sql := `
 		UPDATE dashboards
-		SET name = $1, description = $2, is_public = $3, is_pinned = $4
+		SET name = $1, description = $2, is_public = $3, is_pinned = $4`
+	args := []interface{}{req.Name, req.Description, req.IsPublic, req.IsPinned}
+
+	if req.Config != nil {
+		sql += `, config = $5`
+		args = append(args, configJSON, dashboardID, projectId)
+		sql += `
+		WHERE dashboard_id = $6 AND project_id = $7 AND deleted_at IS NULL
+		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, config, created_at`
+	} else {
+		args = append(args, dashboardID, projectId)
+		sql += `
 		WHERE dashboard_id = $5 AND project_id = $6 AND deleted_at IS NULL
-		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
+		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, config, created_at`
+	}
 
 	dashboard := &GetDashboardResponse{}
-	err = s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId).Scan(
+	var rawConfig []byte
+	err = s.pgconn.QueryRow(sql, args...).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.UserID,
@@ -242,10 +290,14 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 		&dashboard.Description,
 		&dashboard.IsPublic,
 		&dashboard.IsPinned,
+		&rawConfig,
 		&dashboard.CreatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error updating dashboard: %w", err)
+	}
+	if err := json.Unmarshal(rawConfig, &dashboard.Config); err != nil {
+		return nil, fmt.Errorf("error unmarshalling dashboard config: %w", err)
 	}
 	return dashboard, nil
 }
@@ -288,7 +340,7 @@ func buildBaseQuery(projectId int, userID uint64, req *GetDashboardsRequest) (st
 	whereClause := "WHERE " + fmt.Sprint(conditions)
 
 	baseSQL := fmt.Sprintf(`
-		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned,
+		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.config,
 		       u.email AS owner_email, u.name AS owner_name, d.created_at
 		FROM dashboards d
 		LEFT JOIN users u ON d.user_id = u.user_id

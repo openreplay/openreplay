@@ -61,6 +61,7 @@ export default class Dashboard {
       this.name = data.name || this.name;
       this.description = data.description || this.description;
       this.isPublic = data.isPublic;
+      this.config = data.config || this.config;
     });
   }
 
@@ -71,6 +72,7 @@ export default class Dashboard {
       isPublic: this.isPublic,
       metrics: this.metrics,
       description: this.description,
+      config: this.config,
     };
   }
 
@@ -80,6 +82,7 @@ export default class Dashboard {
       this.name = json.name;
       this.description = json.description;
       this.isPublic = json.isPublic;
+      this.config = json.config || {};
       this.key = json.dashboardId;
       this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime());
       this.owner = json.ownerName;
