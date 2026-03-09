@@ -15,6 +15,12 @@ services:
           - postgresql.db.svc.cluster.local
     environment:
       POSTGRESQL_PASSWORD: "${COMMON_PG_PASSWORD}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
@@ -184,6 +190,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/api:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: api
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -191,6 +200,8 @@ services:
           - api-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/api.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -201,6 +212,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: http
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -208,6 +222,8 @@ services:
           - http-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/http.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -235,6 +251,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: integrations
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -242,6 +261,8 @@ services:
           - integrations-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/integrations.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -252,6 +273,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: sink
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -259,6 +283,8 @@ services:
           - sink-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/sink.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -286,6 +312,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/spot:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: spot
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -293,6 +322,8 @@ services:
           - spot-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/spot.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -303,6 +334,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: storage
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -310,6 +344,8 @@ services:
           - storage-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/storage.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -354,6 +390,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/canvases:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: canvases
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -361,6 +400,8 @@ services:
           - canvases-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/canvases.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -388,6 +429,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: db
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -395,6 +439,8 @@ services:
           - db-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/db.env
     environment: {}  # Fallback empty environment if env_file is missing
@@ -405,6 +451,9 @@ services:
     image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: ender
+    depends_on:
+      postgresql:
+        condition: service_healthy
     networks:
       openreplay-net:
         aliases:
@@ -412,6 +461,8 @@ services:
           - ender-openreplay.app.svc.cluster.local
     volumes:
       - shared-volume:/mnt/efs
+      - ./wait-for-pg.sh:/scripts/wait-for-pg.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-pg.sh"]
     env_file:
       - docker-envs/ender.env
     environment: {}  # Fallback empty environment if env_file is missing
