@@ -169,7 +169,7 @@ global:
   # Only for ee
   ee-components:
     enabled: false
-  enterpriseEditionLicense: "dummy"
+  enterpriseEditionLicense: ""
   # Optional: Use external secret for license key
   license:
     existingSecret: "license-key"
