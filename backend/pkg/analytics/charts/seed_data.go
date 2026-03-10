@@ -7,19 +7,9 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 )
 
-// generateTimeseriesSeedData returns fake timeseries data in the new format:
-//
-//	{
-//	  "series": {
-//	    "<SeriesName>": {
-//	      "$overall": { "<date>": count, ... },
-//	      "<breakdown1>": { "<date>": count, ... },
-//	      ...
-//	    }
-//	  }
-//	}
 func generateTimeseriesSeedData(req *model.MetricPayload) map[string]interface{} {
 	dates := generateDateRange(req.StartTimestamp, req.EndTimestamp, req.Density)
+	hasBreakdowns := len(req.Breakdowns) > 0
 
 	seriesMap := make(map[string]interface{})
 	for _, s := range req.Series {
@@ -29,36 +19,36 @@ func generateTimeseriesSeedData(req *model.MetricPayload) map[string]interface{}
 		}
 
 		overallData := make(map[string]int)
-		russiaData := make(map[string]int)
-		switzerlandData := make(map[string]int)
-		turkeyData := make(map[string]int)
-
 		for i, d := range dates {
-			overallBase := 260 + i*1200
-			overallData[d] = overallBase + (i*i*50)%3000
-			russiaData[d] = 10 + i*40 + (i*i*3)%200
-			switzerlandData[d] = 1 + i*8 + (i*i*2)%50
-			turkeyData[d] = 1 + i*10 + (i*i)%60
+			overallData[d] = 260 + i*1200 + (i*i*50)%3000
 		}
 
-		seriesMap[name] = map[string]interface{}{
-			"$overall":    overallData,
-			"Russia":      russiaData,
-			"Switzerland": switzerlandData,
-			"Turkey":      turkeyData,
+		if !hasBreakdowns {
+			seriesMap[name] = overallData
+		} else {
+			russiaData := make(map[string]int)
+			switzerlandData := make(map[string]int)
+			turkeyData := make(map[string]int)
+			for i, d := range dates {
+				russiaData[d] = 10 + i*40 + (i*i*3)%200
+				switzerlandData[d] = 1 + i*8 + (i*i*2)%50
+				turkeyData[d] = 1 + i*10 + (i*i)%60
+			}
+			seriesMap[name] = map[string]interface{}{
+				"$overall":    overallData,
+				"Russia":      russiaData,
+				"Switzerland": switzerlandData,
+				"Turkey":      turkeyData,
+			}
 		}
 	}
 
 	if len(seriesMap) == 0 {
-		// Fallback if no series provided
-		dates := generateDateRange(req.StartTimestamp, req.EndTimestamp, req.Density)
 		overallData := make(map[string]int)
 		for i, d := range dates {
 			overallData[d] = 260 + i*1200
 		}
-		seriesMap["Sessions"] = map[string]interface{}{
-			"$overall": overallData,
-		}
+		seriesMap["Sessions"] = overallData
 	}
 
 	return map[string]interface{}{
@@ -68,116 +58,67 @@ func generateTimeseriesSeedData(req *model.MetricPayload) map[string]interface{}
 	}
 }
 
-// generateFunnelSeedData returns fake funnel data in the new format with
-// steps, conversion ratios, avg_time, p_value, etc.
 func generateFunnelSeedData(req *model.MetricPayload) map[string]interface{} {
-	// Extract step names from event filters
-	var stepNames []string
+	var stepFilters []model.Filter
 	if len(req.Series) > 0 {
 		for _, f := range req.Series[0].Filter.Filters {
 			if f.IsEvent {
-				stepNames = append(stepNames, f.Name)
+				stepFilters = append(stepFilters, f)
 			}
 		}
 	}
-	if len(stepNames) == 0 {
-		stepNames = []string{"Step 1", "Step 2", "Step 3"}
+	if len(stepFilters) == 0 {
+		stepFilters = []model.Filter{
+			{Name: "Page Visit", Operator: "is", Value: []string{"/home"}, IsEvent: true, PropertyOrder: "or"},
+			{Name: "Click", Operator: "is", Value: []string{"Sign Up"}, IsEvent: true, PropertyOrder: "or"},
+			{Name: "Page Visit", Operator: "is", Value: []string{"/dashboard"}, IsEvent: true, PropertyOrder: "or"},
+		}
 	}
 
-	// Number steps
-	numberedSteps := make([]string, len(stepNames))
-	for i, name := range stepNames {
-		numberedSteps[i] = fmt.Sprintf("%d. %s", i+1, name)
+	seriesKey := req.Name
+	if seriesKey == "" {
+		seriesKey = "Funnel"
 	}
 
-	cardName := req.Name
-	if cardName == "" {
-		cardName = "Conversion Rate"
-	}
-	seriesKey := fmt.Sprintf("Conversion Rate of %s - All Steps", cardName)
+	hasBreakdowns := len(req.Breakdowns) > 0
 
-	// Build overall breakdown
-	overall := buildFunnelBreakdown(numberedSteps, 39658, 0.35, 113922)
+	overallStages := buildSeedFunnelStages(stepFilters, 39658)
 
-	// Build country breakdowns
-	us := buildFunnelBreakdown(numberedSteps, 36855, 0.32, 141385)
-	germany := buildFunnelBreakdown(numberedSteps, 1580, 0.41, 98500)
-	uk := buildFunnelBreakdown(numberedSteps, 890, 0.38, 105200)
-
-	seriesMap := map[string]interface{}{
-		seriesKey: map[string]interface{}{
-			"$overall":       overall,
-			"United States":  us,
-			"Germany":        germany,
-			"United Kingdom": uk,
-		},
+	if !hasBreakdowns {
+		return map[string]interface{}{
+			"data": map[string]interface{}{
+				"series": map[string]interface{}{
+					seriesKey: FunnelResponse{Stages: overallStages},
+				},
+			},
+		}
 	}
 
 	return map[string]interface{}{
 		"data": map[string]interface{}{
-			"series": seriesMap,
+			"series": map[string]interface{}{
+				seriesKey: map[string]interface{}{
+					"$overall":       FunnelResponse{Stages: overallStages},
+					"United States":  FunnelResponse{Stages: buildSeedFunnelStages(stepFilters, 36855)},
+					"Germany":        FunnelResponse{Stages: buildSeedFunnelStages(stepFilters, 1580)},
+					"United Kingdom": FunnelResponse{Stages: buildSeedFunnelStages(stepFilters, 890)},
+				},
+			},
 		},
 	}
 }
 
-func buildFunnelBreakdown(steps []string, initialCount int, convRate float64, avgTime int) map[string]interface{} {
-	propertySumMap := make(map[string]interface{})
-	stepConvRatioMap := make(map[string]interface{})
-	avgTimeFromStartMap := make(map[string]interface{})
-	overallConvRatioMap := make(map[string]interface{})
-	countMap := make(map[string]interface{})
-	avgTimeMap := make(map[string]interface{})
-	pValueMap := make(map[string]interface{})
-
-	currentCount := initialCount
-	for i, step := range steps {
-		propertySumMap[step] = map[string]interface{}{"all": nil}
-
-		if i == 0 {
-			stepConvRatioMap[step] = map[string]interface{}{"all": 1.0}
-			overallConvRatioMap[step] = map[string]interface{}{"all": 1.0}
-			avgTimeFromStartMap[step] = map[string]interface{}{"all": nil}
-			avgTimeMap[step] = map[string]interface{}{"all": nil}
-			countMap[step] = map[string]interface{}{"all": currentCount}
-		} else {
-			prevCount := currentCount
-			// Apply a decreasing conversion at each step
-			stepRate := convRate + float64(i-1)*(-0.05)
-			if stepRate < 0.1 {
-				stepRate = 0.1
-			}
-			currentCount = int(float64(prevCount) * stepRate)
-
-			stepConvRatio := float64(currentCount) / float64(prevCount)
-			overallConvRatio := float64(currentCount) / float64(initialCount)
-			stepAvgTime := avgTime * (i + 1) / len(steps)
-
-			stepConvRatioMap[step] = map[string]interface{}{"all": roundTo6(stepConvRatio)}
-			overallConvRatioMap[step] = map[string]interface{}{"all": roundTo6(overallConvRatio)}
-			avgTimeFromStartMap[step] = map[string]interface{}{"all": stepAvgTime}
-			avgTimeMap[step] = map[string]interface{}{"all": stepAvgTime}
-			countMap[step] = map[string]interface{}{"all": currentCount}
-
-			pValueMap[step] = map[string]interface{}{
-				"all": map[string]interface{}{
-					"insufficient_samples": false,
-					"p":                    1.0,
-					"confidence":           0.0,
-					"is_interesting":       false,
-				},
-			}
+func buildSeedFunnelStages(stepFilters []model.Filter, initialCount uint64) []FunnelStageResult {
+	counts := make([]uint64, len(stepFilters))
+	counts[0] = initialCount
+	for i := 1; i < len(counts); i++ {
+		rate := 0.35 - float64(i-1)*0.05
+		if rate < 0.1 {
+			rate = 0.1
 		}
+		counts[i] = uint64(float64(counts[i-1]) * rate)
 	}
-
-	return map[string]interface{}{
-		"property_sum":        propertySumMap,
-		"step_conv_ratio":     stepConvRatioMap,
-		"avg_time_from_start": avgTimeFromStartMap,
-		"overall_conv_ratio":  overallConvRatioMap,
-		"count":               countMap,
-		"avg_time":            avgTimeMap,
-		"p_value":             pValueMap,
-	}
+	return buildFunnelStages(counts, stepFilters)
 }
 
 // generateTableSeedData returns fake table data in the existing format
@@ -534,8 +475,4 @@ func generateDateRange(startTs, endTs uint64, density int) []string {
 		dates = append(dates, start.Format(time.RFC3339))
 	}
 	return dates
-}
-
-func roundTo6(f float64) float64 {
-	return float64(int(f*1000000)) / 1000000
 }

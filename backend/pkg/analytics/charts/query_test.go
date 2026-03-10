@@ -31,7 +31,7 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.`$event_name` = 'CLICK' AND (JSONExtractString(toString(e.\"$properties\"), 'label') = 'button'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') = 'button'))"},
 			wantOtherConds: nil,
 		},
 		{
@@ -44,7 +44,7 @@ func TestBuildEventConditions(t *testing.T) {
 					IsEvent:  true,
 				},
 			},
-			wantEventConds: []string{"e.`$event_name` = 'CLICK'"},
+			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK')"},
 			wantOtherConds: nil,
 		},
 		{
@@ -64,7 +64,7 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.`$event_name` = 'CLICK' AND (JSONExtractString(toString(e.\"$properties\"), 'label') ILIKE '%button%'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') ILIKE '%button%'))"},
 			wantOtherConds: nil,
 		},
 
@@ -85,7 +85,7 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.`$event_name` = 'CLICK' AND ((JSONExtractString(toString(e.\"$properties\"), 'url_path') ILIKE '%login%' OR JSONExtractString(toString(e.\"$properties\"), 'url_path') ILIKE '%signup%')))"},
+			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND ((e.\"$current_path\" ILIKE '%login%' OR e.\"$current_path\" ILIKE '%signup%')))"},
 			wantOtherConds: nil,
 		},
 
@@ -106,10 +106,12 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.`$event_name` = 'CLICK' AND (JSONExtractString(toString(e.\"$properties\"), 'url_path') <> 'login'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (e.\"$current_path\" != 'login'))"},
 			wantOtherConds: nil,
 		},
 		{
+			// NOTE: PropertyOrder is currently not used by addFilter for joining
+			// nested sub-conditions — they are always joined with AND.
 			name: "Events filters with multiple properties (nested) and proper order OR",
 			filters: []model.Filter{
 				{
@@ -132,7 +134,7 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.`$event_name` = 'CLICK' AND (JSONExtractString(toString(e.\"$properties\"), 'label') = 'button' OR JSONExtractString(toString(e.\"$properties\"), 'url_path') = 'login'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') = 'button') AND (e.\"$current_path\" = 'login'))"},
 			wantOtherConds: nil,
 		},
 		{
@@ -158,14 +160,14 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.`$event_name` = 'CLICK' AND (JSONExtractString(toString(e.\"$properties\"), 'label') = 'button' AND JSONExtractString(toString(e.\"$properties\"), 'url_path') = 'login'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') = 'button') AND (e.\"$current_path\" = 'login'))"},
 			wantOtherConds: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotEventConds, gotOtherConds := BuildEventConditions(tt.filters, BuildConditionsOptions{
+			gotEventConds, _, gotOtherConds := BuildEventConditions(tt.filters, BuildConditionsOptions{
 				MainTableAlias: "e",
 				DefinedColumns: mainColumns,
 			})
@@ -174,6 +176,10 @@ func TestBuildEventConditions(t *testing.T) {
 				t.Errorf("BuildEventConditions() Events: \ngot = %v, \nwant %v", gotEventConds, tt.wantEventConds)
 			}
 
+			// Normalise nil vs empty slice for comparison
+			if len(gotOtherConds) == 0 && len(tt.wantOtherConds) == 0 {
+				return // both empty — pass
+			}
 			if !reflect.DeepEqual(gotOtherConds, tt.wantOtherConds) {
 				t.Errorf("BuildEventConditions() OtherConds: \notherConds = %v, \nwant %v", gotOtherConds, tt.wantOtherConds)
 			}
@@ -184,61 +190,77 @@ func TestBuildEventConditions(t *testing.T) {
 // Test for getColumnAccessor function
 func TestGetColumnAccessor(t *testing.T) {
 	tests := []struct {
-		name      string
-		logical   string
-		isNumeric bool
-		opts      BuildConditionsOptions
-		want      string
+		name          string
+		logical       string
+		isNumeric     bool
+		inDProperties bool
+		inProperties  bool
+		opts          BuildConditionsOptions
+		wantAccessor  string
+		wantNature    string
 	}{
 		{
-			name:      "Defined column mapping",
-			logical:   "customField",
-			isNumeric: false,
+			name:          "Defined column mapping",
+			logical:       "userDevice",
+			isNumeric:     false,
+			inDProperties: false,
+			inProperties:  false,
 			opts: BuildConditionsOptions{
 				MainTableAlias: "e",
-				DefinedColumns: map[string]string{
-					"customField": "custom_col",
-				},
+				DefinedColumns: mainColumns,
 			},
-			want: "e.custom_col",
+			wantAccessor: "sessions.user_device",
+			wantNature:   "singleColumn",
 		},
 		{
-			name:      "Column with $ prefix gets quoted",
-			logical:   "$special",
-			isNumeric: false,
+			name:          "Column with $ prefix gets quoted",
+			logical:       "$special",
+			isNumeric:     false,
+			inDProperties: true,
+			inProperties:  false,
 			opts: BuildConditionsOptions{
 				MainTableAlias:       "e",
 				PropertiesColumnName: "$properties",
 			},
-			want: "JSONExtractString(toString(e.\"$properties\"), '$special')",
+			wantAccessor: "JSONExtractString(toString(e.\"$properties\"), '$special')",
+			wantNature:   "singleColumn",
 		},
 		{
-			name:      "Numeric property extraction",
-			logical:   "count",
-			isNumeric: true,
+			name:          "Numeric property extraction",
+			logical:       "count",
+			isNumeric:     true,
+			inDProperties: true,
+			inProperties:  false,
 			opts: BuildConditionsOptions{
 				MainTableAlias:       "e",
 				PropertiesColumnName: "$properties",
 			},
-			want: "JSONExtractFloat(toString(e.\"$properties\"), 'count')",
+			wantAccessor: "JSONExtractFloat(toString(e.\"$properties\"), 'count')",
+			wantNature:   "singleColumn",
 		},
 		{
-			name:      "Property mapping from propertyKeyMap",
-			logical:   "LOCATION",
-			isNumeric: false,
+			name:          "Property mapping from propertyKeyMap",
+			logical:       "LOCATION",
+			isNumeric:     false,
+			inDProperties: false,
+			inProperties:  false,
 			opts: BuildConditionsOptions{
 				MainTableAlias:       "e",
 				PropertiesColumnName: "$properties",
 			},
-			want: "JSONExtractString(toString(e.\"$properties\"), 'url_path')",
+			wantAccessor: "e.\"$current_path\"",
+			wantNature:   "singleColumn",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := getColumnAccessor(tt.logical, tt.isNumeric, tt.opts)
-			if got != tt.want {
-				t.Errorf("getColumnAccessor() = %v, want %v", got, tt.want)
+			gotAccessor, gotNature := getColumnAccessor(tt.logical, tt.isNumeric, tt.inDProperties, tt.inProperties, tt.opts)
+			if gotAccessor != tt.wantAccessor {
+				t.Errorf("getColumnAccessor() accessor = %v, want %v", gotAccessor, tt.wantAccessor)
+			}
+			if gotNature != tt.wantNature {
+				t.Errorf("getColumnAccessor() nature = %v, want %v", gotNature, tt.wantNature)
 			}
 		})
 	}

@@ -87,6 +87,7 @@ type MetricPayload struct {
 	StartType        string     `json:"startType" validate:"omitempty,oneof=start end"`
 	HideExcess       bool       `json:"hideExcess" default:"true"`
 	SampleRate       int        `json:"sampleRate,omitempty" validate:"omitempty,min=0,max=100"`
+	Breakdowns       []string   `json:"breakdowns" validate:"omitempty,max=3,unique,dive,oneof=userCountry userCity userState userBrowser userDevice userOs referrer userId platform"`
 }
 
 func ValidateMetricFields(sl validator.StructLevel) {
