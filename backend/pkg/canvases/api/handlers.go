@@ -1,14 +1,13 @@
 package api
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"openreplay/backend/pkg/canvases/service"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,28 +23,30 @@ import (
 )
 
 type handlersImpl struct {
-	log       logger.Logger
-	cfg       *config.Config
-	responser api.Responser
-	tokenizer *token.Tokenizer
-	sessions  sessions.Sessions
-	producer  types.Producer
+	log        logger.Logger
+	cfg        *config.Config
+	responser  api.Responser
+	tokenizer  *token.Tokenizer
+	sessions   sessions.Sessions
+	producer   types.Producer
+	imgStorage *service.ImageStorage
 }
 
-func NewHandlers(cfg *config.Config, log logger.Logger, responser api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, producer types.Producer) (api.Handlers, error) {
+func NewHandlers(cfg *config.Config, log logger.Logger, responser api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, producer types.Producer, imgStorage *service.ImageStorage) (api.Handlers, error) {
 	return &handlersImpl{
-		log:       log,
-		cfg:       cfg,
-		responser: responser,
-		tokenizer: tokenizer,
-		sessions:  sessions,
-		producer:  producer,
+		log:        log,
+		cfg:        cfg,
+		responser:  responser,
+		tokenizer:  tokenizer,
+		sessions:   sessions,
+		producer:   producer,
+		imgStorage: imgStorage,
 	}, nil
 }
 
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/images", "POST", h.imagesUploaderHandlerWeb, api.NoPermissions, api.DoNotTrack},
+		{"/v1/web/images", "POST", h.imagesUploaderHandler, api.NoPermissions, api.DoNotTrack},
 	}
 }
 
@@ -54,7 +55,7 @@ type ImagesMessage struct {
 	Data []byte
 }
 
-func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
+func (h *handlersImpl) imagesUploaderHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	sessionData, err := h.tokenizer.ParseFromHTTPRequest(r)
@@ -62,19 +63,25 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+
 	if info, err := h.sessions.Get(sessionData.ID); err == nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
+	} else {
+		h.log.Error(r.Context(), "can't get session info: %s", err)
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		return
 	}
 
-	//if r.Body == nil {
-	//	h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
-	//	return
-	//}
-	//r.Body = http.MaxBytesReader(w, r.Body, h.cfg.FileSizeLimit)
-	//defer r.Body.Close()
+	// Limit the body/multipart size
+	if r.Body == nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, h.cfg.FileSizeLimit)
+	defer r.Body.Close()
 
-	err = r.ParseMultipartForm(h.cfg.FileSizeLimit)
+	err = r.ParseMultipartForm(10 << 20)
 	if errors.Is(err, http.ErrNotMultipart) || errors.Is(err, http.ErrMissingBoundary) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
@@ -87,9 +94,6 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	if len(r.MultipartForm.Value["type"]) > 0 && r.MultipartForm.Value["type"][0] == "frames" {
 		isFrames = true
 	}
-
-	frames := bytes.NewBuffer([]byte{})
-	msg := ImagesMessage{}
 
 	// Iterate over uploaded files
 	for _, fileHeaderList := range r.MultipartForm.File {
@@ -118,17 +122,21 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 					return
 				}
 
-				data, err := json.Marshal(&ImagesMessage{
-					Name: fileName,
-					Data: fileBytes,
-				})
-				if err != nil {
-					h.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
-					h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
-					return
-				}
-				if err := h.producer.Produce(h.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
-					h.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
+				if err := h.imgStorage.SaveFramesContainer(r.Context(), sessionData.ID, fileName, fileBytes); err != nil {
+					h.log.Warn(r.Context(), "can't save frames container to disk, err: %s", err)
+
+					data, err := json.Marshal(&ImagesMessage{
+						Name: fileName,
+						Data: fileBytes,
+					})
+					if err != nil {
+						h.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
+						h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+						return
+					}
+					if err := h.producer.Produce(h.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+						h.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
+					}
 				}
 				h.responser.ResponseOK(h.log, r.Context(), w, startTime, r.URL.Path, 0)
 				return
@@ -139,36 +147,24 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 				h.log.Error(r.Context(), "can't parse canvas name %s: %s", fileName, err)
 				continue
 			}
-			if msg.Name == "" {
-				msg.Name = baseName
+			if err := h.imgStorage.SaveFrame(r.Context(), sessionData.ID, baseName, ts, fileBytes); err != nil {
+				h.log.Warn(r.Context(), "can't save frame to disk, err: %s", err)
+
+				data, err := json.Marshal(&ImagesMessage{
+					Name: fileName,
+					Data: fileBytes,
+				})
+				if err != nil {
+					h.log.Warn(r.Context(), "can't marshal frame message, err: %s", err)
+					h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+					return
+				}
+				if err := h.producer.Produce(h.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+					h.log.Warn(r.Context(), "can't send frame message to queue, err: %s", err)
+				}
+				continue
 			}
-			if err := binary.Write(frames, binary.LittleEndian, ts); err != nil {
-				h.log.Error(r.Context(), "can't write frame's time for %s: %s", fileName, err)
-			}
-			if err := binary.Write(frames, binary.LittleEndian, uint32(len(fileBytes))); err != nil {
-				h.log.Error(r.Context(), "can't write frame's size for %s: %s", fileName, err)
-			}
-			frames.Write(fileBytes)
 		}
-	}
-
-	if frames.Len() == 0 {
-		h.log.Warn(r.Context(), "no frames to upload")
-		h.responser.ResponseOK(h.log, r.Context(), w, startTime, r.URL.Path, 0)
-		return
-	}
-
-	h.log.Debug(r.Context(), "uploading image, name: %s", msg.Name)
-
-	msg.Data = frames.Bytes()
-	data, err := json.Marshal(&msg)
-	if err != nil {
-		h.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
-		return
-	}
-	if err := h.producer.Produce(h.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
-		h.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
 	}
 
 	h.responser.ResponseOK(h.log, r.Context(), w, startTime, r.URL.Path, 0)

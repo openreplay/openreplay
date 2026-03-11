@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -84,6 +85,60 @@ func (v *ImageStorage) Wait() {
 	v.packerPool.Pause()
 }
 
+func (v *ImageStorage) SaveFramesContainer(ctx context.Context, sessID uint64, fileName string, data []byte) error {
+	dir := filepath.Join(v.basePath, fmt.Sprintf("%d", sessID))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("can't create canvas dir: %w", err)
+	}
+
+	mu := v.getFileLock(sessID, fileName)
+	mu.Lock()
+	defer mu.Unlock()
+
+	path := filepath.Join(dir, fileName)
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("can't write frames container: %w", err)
+	}
+	v.log.Debug(ctx, "frames container saved, session: %d, file: %s, size: %d", sessID, fileName, len(data))
+	return nil
+}
+
+func (v *ImageStorage) SaveFrame(ctx context.Context, sessID uint64, baseName string, ts uint64, data []byte) error {
+	dir := filepath.Join(v.basePath, fmt.Sprintf("%d", sessID))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("can't create canvas dir: %w", err)
+	}
+
+	framesName := baseName + ".frames"
+	mu := v.getFileLock(sessID, framesName)
+	mu.Lock()
+	defer mu.Unlock()
+
+	path := filepath.Join(dir, framesName)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("can't open frames file: %w", err)
+	}
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			v.log.Error(ctx, "can't close frames file %s: %s", framesName, closeErr)
+		}
+	}()
+
+	if err := binary.Write(f, binary.LittleEndian, ts); err != nil {
+		return fmt.Errorf("can't write frame timestamp: %w", err)
+	}
+	if err := binary.Write(f, binary.LittleEndian, uint32(len(data))); err != nil {
+		return fmt.Errorf("can't write frame size: %w", err)
+	}
+	if _, err := f.Write(data); err != nil {
+		return fmt.Errorf("can't write frame data: %w", err)
+	}
+
+	v.log.Debug(ctx, "frame saved, session: %d, file: %s, ts: %d, size: %d", sessID, framesName, ts, len(data))
+	return nil
+}
+
 func (v *ImageStorage) CleanSession(ctx context.Context, sessionID uint64) error {
 	path := fmt.Sprintf("%s%d/", v.basePath, sessionID)
 	if err := os.RemoveAll(path); err != nil {
@@ -115,6 +170,11 @@ func (v *ImageStorage) getFileLock(sessionID uint64, name string) *sync.Mutex {
 func (v *ImageStorage) writeToDisk(payload interface{}) {
 	task := payload.(*saveTask)
 
+	// Normalize name before acquiring lock so the key is consistent with SaveFrame/SaveFramesContainer
+	if !strings.HasSuffix(task.name, ".frames") {
+		task.name = task.name + ".frames"
+	}
+
 	mu := v.getFileLock(task.sessionID, task.name)
 	mu.Lock()
 	defer mu.Unlock()
@@ -122,9 +182,6 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	dir := filepath.Join(v.basePath, fmt.Sprintf("%d", task.sessionID))
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		v.log.Fatal(task.ctx, "can't create a dir, err: %s", err)
-	}
-	if !strings.HasSuffix(task.name, ".frames") {
-		task.name = task.name + ".frames"
 	}
 	path := filepath.Join(dir, task.name)
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -137,15 +194,15 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 		}
 	}()
 
+	size := task.image.Len()
 	if _, err := io.Copy(f, task.image); err != nil {
 		v.log.Fatal(task.ctx, "can't write frame to disk, err: %s", err)
 	}
 
-	v.metrics.RecordCanvasImageSize(float64(task.image.Len()))
+	v.metrics.RecordCanvasImageSize(float64(size))
 	v.metrics.IncreaseTotalSavedImages()
 
-	v.log.Debug(task.ctx, "canvas image saved, name: %s, size: %3.3f mb", task.name, float64(task.image.Len())/1024.0/1024.0)
-	return
+	v.log.Debug(task.ctx, "canvas image saved, name: %s, size: %3.3f mb", task.name, float64(size)/1024.0/1024.0)
 }
 
 func (v *ImageStorage) PrepareSessionCanvases(ctx context.Context, sessID uint64) error {
@@ -188,7 +245,8 @@ func (v *ImageStorage) packCanvas(payload interface{}) {
 	task := payload.(*packTask)
 	start := time.Now()
 
-	v.fileLocks.Delete(fmt.Sprintf("%d/%s", task.sessionID, strings.TrimSuffix(task.name, ".frames")))
+	// task.name already has .frames suffix; the lock key matches SaveFrame/SaveFramesContainer/writeToDisk
+	v.fileLocks.Delete(fmt.Sprintf("%d/%s", task.sessionID, task.name))
 
 	path := filepath.Join(task.path, task.name)
 	key := fmt.Sprintf("%d/%s.zst", task.sessionID, task.name)

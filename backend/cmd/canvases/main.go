@@ -87,7 +87,10 @@ func main() {
 		return canvasConsumer.Ping(ctx)
 	})
 
-	services, err := canvasService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, producer, pgConn, redisConn)
+	services, err := canvasService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, producer, pgConn, redisConn, srv)
+	if err != nil {
+		log.Fatal(ctx, "can't build canvases services: %s", err)
+	}
 
 	middlewares, err := middleware.NewMinimalMiddlewareBuilder(&cfg.HTTP)
 	if err != nil {
