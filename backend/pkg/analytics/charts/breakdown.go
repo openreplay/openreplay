@@ -66,10 +66,18 @@ func AppendBreakdownProjection(projection string, breakdowns []string, tableAlia
 }
 
 func AppendBreakdownRefs(projection string, breakdowns []string, subqueryAlias string) string {
-	for _, bdName := range breakdowns {
-		projection += fmt.Sprintf(", %s.%s", subqueryAlias, bdName)
+	if len(breakdowns) == 0 {
+		return projection
 	}
-	return projection
+	var sb strings.Builder
+	sb.WriteString(projection)
+	for _, bdName := range breakdowns {
+		sb.WriteString(", ")
+		sb.WriteString(subqueryAlias)
+		sb.WriteByte('.')
+		sb.WriteString(bdName)
+	}
+	return sb.String()
 }
 
 func BuildSessionsFilterConditions(sessionFilters []model.Filter) []string {
@@ -94,6 +102,14 @@ func BuildSessionsFilterConditions(sessionFilters []model.Filter) []string {
 	}
 
 	return whereParts
+}
+
+func GetTableBreakdownProjection(breakdowns []string) []string {
+	parts := make([]string, len(breakdowns))
+	for i, b := range breakdowns {
+		parts[i] = fmt.Sprintf(`%s AS break%d`, breakdownColumnMap[b], i+1)
+	}
+	return parts
 }
 
 func GetFunnelBreakdownProjection(breakdowns []string) []string {
@@ -144,18 +160,18 @@ func newBreakdownKey(timestamp uint64, bdVals []string) breakdownKey {
 }
 
 func ScanBreakdownRows(rows driver.Rows, numBreakdowns int, seriesName string, data map[breakdownKey]map[string]uint64) error {
+	var timestamp uint64
+	var count uint64
+	bdVals := make([]string, numBreakdowns)
+
+	scanArgs := make([]interface{}, 0, 2+numBreakdowns)
+	scanArgs = append(scanArgs, &timestamp)
+	for i := range bdVals {
+		scanArgs = append(scanArgs, &bdVals[i])
+	}
+	scanArgs = append(scanArgs, &count)
+
 	for rows.Next() {
-		var timestamp uint64
-		var count uint64
-		bdVals := make([]string, numBreakdowns)
-
-		scanArgs := make([]interface{}, 0, 2+numBreakdowns)
-		scanArgs = append(scanArgs, &timestamp)
-		for i := range bdVals {
-			scanArgs = append(scanArgs, &bdVals[i])
-		}
-		scanArgs = append(scanArgs, &count)
-
 		if err := rows.Scan(scanArgs...); err != nil {
 			return fmt.Errorf("scan: %w", err)
 		}

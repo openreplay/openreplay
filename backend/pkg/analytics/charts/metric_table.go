@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"openreplay/backend/pkg/logger"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -85,8 +86,19 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 		return nil, fmt.Errorf("invalid MetricOf value: %s", p.MetricOf)
 	}
 
+	if err := ValidateBreakdowns(p.Breakdowns); err != nil {
+		return nil, err
+	}
+
 	if p.MetricOf == "screenResolution" {
+		if len(p.Breakdowns) > 0 {
+			return nil, fmt.Errorf("breakdowns are not supported for screenResolution metric")
+		}
 		return t.executeForTableOfResolutions(ctx, p, conn)
+	}
+
+	if len(p.Breakdowns) > 0 {
+		return t.executeWithBreakdowns(ctx, p, conn)
 	}
 
 	query, err := t.buildQuery(p)
@@ -157,11 +169,11 @@ var extraConditions map[string]model.Filter = map[string]model.Filter{
 }
 
 func uniqueSliceOfStrings(slice []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
+	seen := make(map[string]struct{}, len(slice))
+	list := make([]string, 0, len(slice))
 	for _, entry := range slice {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
+		if _, exists := seen[entry]; !exists {
+			seen[entry] = struct{}{}
 			list = append(list, entry)
 		}
 	}
@@ -231,7 +243,12 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
 	// Build the final query with proper string formatting
 	var query string
 
+	numBreakdowns := len(r.Breakdowns)
+
 	var sessionsSelect []string = []string{"session_id", "user_id", "events_count"}
+	if numBreakdowns > 0 {
+		sessionsSelect = append(sessionsSelect, GetTableBreakdownProjection(r.Breakdowns)...)
+	}
 
 	var eventsSelect []string = []string{
 		"main.session_id",
@@ -301,7 +318,7 @@ WHERE %s) AS extra`,
 	}
 
 	var fromSessions string
-	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount {
+	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount || numBreakdowns > 0 {
 		var limitBy []string = []string{"session_id"}
 		if !isFromEvents {
 			limitBy = append(limitBy, "metric_value")
@@ -345,21 +362,29 @@ WHERE %s) AS extra`,
 		countFunction = "sum"
 	}
 
-	// Construct the complete query
+	breakdownOuterCols := ""
+	groupByClause := "GROUP BY metric_value"
+	if numBreakdowns > 0 {
+		breakdownOuterCols = strings.Join(GetFunnelBreakdownOuterColumns(numBreakdowns), ", ") + ",\n       "
+		groupByClause = "GROUP BY ALL"
+	}
+
 	query = fmt.Sprintf(`
 SELECT metric_value AS metric_name,
-       %s(%s) AS metric_count,
+       %s%s(%s) AS metric_count,
        count(DISTINCT metric_value) OVER () AS number_of_metrics,
        sum(metric_count) OVER () AS all_count
 FROM %s %s %s
-GROUP BY metric_value
+%s
 ORDER BY metric_count DESC
 LIMIT %d OFFSET %d;`,
+		breakdownOuterCols,
 		countFunction,
 		distinctColumn,
 		fromSessions,
 		fromEvents,
 		fromExtra,
+		groupByClause,
 		pagination.Limit,
 		pagination.Offset,
 	)
@@ -634,5 +659,161 @@ func (t *TableQueryBuilder) calculatePagination(page, limit int) model.Paginatio
 	return model.PaginationParams{
 		Limit:  limit,
 		Offset: (page - 1) * limit,
+	}
+}
+
+type tableNode struct {
+	counts   map[string]uint64
+	children map[string]*tableNode
+	isLeaf   bool
+}
+
+func tableSeriesKey(p *Payload) string {
+	if p.Name != "" {
+		return p.Name
+	}
+	return p.MetricOf
+}
+
+func wrapTableSeries(seriesKey string, value interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"series": map[string]interface{}{seriesKey: value},
+	}
+}
+
+func (t *TableQueryBuilder) executeWithBreakdowns(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
+	numBreakdowns := len(p.Breakdowns)
+
+	query, err := t.buildQuery(p)
+	if err != nil {
+		return nil, fmt.Errorf("error building query: %w", err)
+	}
+
+	_start := time.Now()
+	t.Logger.Debug(ctx, "Executing query: %s", query)
+
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		t.Logger.Error(ctx, "Error executing query: %s\nQuery: %s", err, query)
+		return nil, err
+	}
+	defer rows.Close()
+
+	if time.Since(_start) > 2*time.Second {
+		t.Logger.Warn(ctx, "Query execution took longer than 2s: %s", query)
+	}
+
+	root := &tableNode{
+		counts:   make(map[string]uint64),
+		children: make(map[string]*tableNode),
+	}
+
+	var metricName string
+	bdVals := make([]string, numBreakdowns)
+	var metricCount, numberOfMetrics, allCount uint64
+
+	scanArgs := make([]interface{}, 0, 3+numBreakdowns+1)
+	scanArgs = append(scanArgs, &metricName)
+	for i := range bdVals {
+		scanArgs = append(scanArgs, &bdVals[i])
+	}
+	scanArgs = append(scanArgs, &metricCount, &numberOfMetrics, &allCount)
+
+	for rows.Next() {
+		if err := rows.Scan(scanArgs...); err != nil {
+			return nil, err
+		}
+
+		root.counts[metricName] += metricCount
+
+		current := root
+		for depth := 0; depth < numBreakdowns; depth++ {
+			bdVal := bdVals[depth]
+			if bdVal == "" {
+				bdVal = "(empty)"
+			}
+			child, exists := current.children[bdVal]
+			if !exists {
+				child = &tableNode{
+					counts:   make(map[string]uint64),
+					children: make(map[string]*tableNode),
+					isLeaf:   depth == numBreakdowns-1,
+				}
+				current.children[bdVal] = child
+			}
+			child.counts[metricName] += metricCount
+			current = child
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	seriesKey := tableSeriesKey(p)
+	limit := p.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+
+	if len(root.counts) == 0 {
+		return wrapTableSeries(seriesKey, map[string]interface{}{
+			"$overall": &TableResponse{Total: 0, Count: 0, Values: []TableValue{}},
+		}), nil
+	}
+
+	return wrapTableSeries(seriesKey, tableNodeToMap(root, limit)), nil
+}
+
+func tableNodeToMap(node *tableNode, limit int) map[string]interface{} {
+	result := map[string]interface{}{
+		"$overall": nodeToTableResponse(node, limit),
+	}
+	for key, child := range node.children {
+		if child.isLeaf {
+			result[key] = nodeToTableResponse(child, limit)
+		} else {
+			result[key] = tableNodeToMap(child, limit)
+		}
+	}
+	return result
+}
+
+func nodeToTableResponse(node *tableNode, limit int) *TableResponse {
+	type kv struct {
+		name  string
+		count uint64
+	}
+	pairs := make([]kv, 0, len(node.counts))
+	var sumCount uint64
+	for name, count := range node.counts {
+		pairs = append(pairs, kv{name, count})
+		sumCount += count
+	}
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i].count != pairs[j].count {
+			return pairs[i].count > pairs[j].count
+		}
+		return pairs[i].name < pairs[j].name
+	})
+
+	total := uint64(len(pairs))
+
+	if limit > 0 && len(pairs) > limit {
+		pairs = pairs[:limit]
+	}
+
+	values := make([]TableValue, len(pairs))
+	for i, p := range pairs {
+		values[i] = TableValue{
+			MetricName:  p.name,
+			MetricCount: p.count,
+		}
+	}
+
+	return &TableResponse{
+		Total:  total,
+		Count:  sumCount,
+		Values: values,
 	}
 }

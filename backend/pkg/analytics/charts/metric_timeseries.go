@@ -61,11 +61,11 @@ func (t *TimeSeriesQueryBuilder) Execute(ctx context.Context, p *Payload, conn d
 				t.Logger.Error(ctx, "Query timeseries %s error: %v", series.Name, qErr)
 				return nil, fmt.Errorf("series %s: %v", series.Name, qErr)
 			}
-			if err = ScanBreakdownRows(rows, numBreakdowns, series.Name, data); err != nil {
-				rows.Close()
+			err = ScanBreakdownRows(rows, numBreakdowns, series.Name, data)
+			rows.Close()
+			if err != nil {
 				return nil, fmt.Errorf("series %s: %v", series.Name, err)
 			}
-			rows.Close()
 		}
 
 		if time.Since(_start) > 2*time.Second {

@@ -108,18 +108,17 @@ func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn drive
 
 	root := &funnelNode{counts: make([]uint64, stageCount), children: map[string]*funnelNode{}}
 
+	bdVals := make([]string, numBreakdowns)
+	stageCounts := make([]uint64, stageCount)
+	scanArgs := make([]interface{}, 0, numBreakdowns+stageCount)
+	for i := range bdVals {
+		scanArgs = append(scanArgs, &bdVals[i])
+	}
+	for i := range stageCounts {
+		scanArgs = append(scanArgs, &stageCounts[i])
+	}
+
 	for rows.Next() {
-		bdVals := make([]string, numBreakdowns)
-		stageCounts := make([]uint64, stageCount)
-
-		scanArgs := make([]interface{}, 0, numBreakdowns+stageCount)
-		for i := range bdVals {
-			scanArgs = append(scanArgs, &bdVals[i])
-		}
-		for i := range stageCounts {
-			scanArgs = append(scanArgs, &stageCounts[i])
-		}
-
 		if err := rows.Scan(scanArgs...); err != nil {
 			return nil, err
 		}

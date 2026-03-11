@@ -214,6 +214,44 @@ func generateTableSeedData(req *model.MetricPayload) map[string]interface{} {
 		}
 	}
 
+	if len(req.Breakdowns) > 0 && req.MetricOf != "screenResolution" {
+		overallResp := &TableResponse{Total: count, Count: total, Values: values}
+
+		seriesKey := req.Name
+		if seriesKey == "" {
+			seriesKey = req.MetricOf
+		}
+
+		seedTableBreakdownValues := func(fraction float64) *TableResponse {
+			switch v := values.(type) {
+			case []TableValue:
+				bdValues := make([]TableValue, len(v))
+				var bdTotal uint64
+				for i, item := range v {
+					c := uint64(float64(item.MetricCount) * fraction)
+					bdValues[i] = TableValue{MetricName: item.MetricName, MetricCount: c}
+					bdTotal += c
+				}
+				return &TableResponse{Total: uint64(len(bdValues)), Count: bdTotal, Values: bdValues}
+			default:
+				return overallResp
+			}
+		}
+
+		return map[string]interface{}{
+			"data": map[string]interface{}{
+				"series": map[string]interface{}{
+					seriesKey: map[string]interface{}{
+						"$overall":       overallResp,
+						"United States":  seedTableBreakdownValues(0.45),
+						"Germany":        seedTableBreakdownValues(0.20),
+						"United Kingdom": seedTableBreakdownValues(0.15),
+					},
+				},
+			},
+		}
+	}
+
 	return map[string]interface{}{
 		"data": &TableResponse{
 			Total:  count,
