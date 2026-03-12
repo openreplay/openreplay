@@ -205,17 +205,30 @@ func BuildSessionsFilterConditions(sessionFilters []model.Filter) []string {
 }
 
 func GetTableBreakdownProjection(breakdowns []string) []string {
-	parts := make([]string, len(breakdowns))
+	parts := make([]string, 0, len(breakdowns))
 	for i, b := range breakdowns {
-		parts[i] = fmt.Sprintf(`%s AS break%d`, breakdownDimensions[b].SessionColumn, i+1)
+		dim, ok := breakdownDimensions[b]
+		if !ok {
+			// Note: ValidateBreakdowns is always called before this function,
+			// so invalid keys should not appear in practice. This guard
+			// prevents panics if the call order ever changes.
+			continue
+		}
+		// Uses loop index i+1 (not len(parts)+1) to keep alias numbering
+		// aligned with the input slice position, matching downstream expectations.
+		parts = append(parts, fmt.Sprintf(`%s AS break%d`, dim.SessionColumn, i+1))
 	}
 	return parts
 }
 
 func GetFunnelBreakdownProjection(breakdowns []string) []string {
-	parts := make([]string, len(breakdowns))
+	parts := make([]string, 0, len(breakdowns))
 	for i, b := range breakdowns {
-		parts[i] = fmt.Sprintf(`%s AS break%d`, breakdownDimensions[b].EventColumn, i+1)
+		dim, ok := breakdownDimensions[b]
+		if !ok {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf(`%s AS break%d`, dim.EventColumn, i+1))
 	}
 	return parts
 }
