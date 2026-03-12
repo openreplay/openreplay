@@ -131,9 +131,9 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         return Promise.reject(FRAMES_MISSING);
       })
       .then((zstdBuf) => {
-        const buf = unpack(new Uint8Array(zstdBuf)).buffer;
+        const buf = unpack(new Uint8Array(zstdBuf));
         const { snapshots, timestamps } = parseFrames(
-          buf as ArrayBuffer,
+          buf,
           this.sessionStart,
           fileFormat,
         );
