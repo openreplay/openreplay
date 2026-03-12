@@ -17,10 +17,22 @@ export interface ParsedFrames {
  * upfront allocation for frames that may never be displayed.
  */
 export default function parseFrames(
-  buffer: ArrayBuffer,
+  input: ArrayBuffer | Uint8Array,
   sessionStart: number,
   fileFormat: string,
 ): ParsedFrames {
+  // Uint8Arrays from decompressors (fzstd/fflate) can be views into a larger
+  // ArrayBuffer with a non-zero byteOffset. Using .buffer directly would read
+  // from the wrong position, producing corrupt ts reading (i.e huge negative ts)
+  let buffer: ArrayBuffer;
+  if (input instanceof Uint8Array) {
+    buffer = input.buffer.slice(
+      input.byteOffset,
+      input.byteOffset + input.byteLength,
+    ) as ArrayBuffer;
+  } else {
+    buffer = input;
+  }
   const view = new DataView(buffer);
   const snapshots: Record<number, FrameSnapshot> = {};
   const timestamps: Timestamp[] = [];
