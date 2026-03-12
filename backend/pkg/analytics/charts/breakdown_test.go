@@ -287,6 +287,169 @@ func TestBuildTimeseriesSeriesMap_NoBreakdowns(t *testing.T) {
 	}
 }
 
+// --- Tests for new Tier 1 breakdown dimensions ---
+
+func TestValidateBreakdowns_NewDimensions(t *testing.T) {
+	newDims := []string{"utmSource", "utmMedium", "utmCampaign", "userDeviceType"}
+	for _, dim := range newDims {
+		t.Run(dim, func(t *testing.T) {
+			if err := ValidateBreakdowns([]string{dim}); err != nil {
+				t.Errorf("ValidateBreakdowns(%q) unexpected error: %v", dim, err)
+			}
+		})
+	}
+}
+
+func TestGetTableBreakdownProjection_NewDimensions(t *testing.T) {
+	tests := []struct {
+		dim  string
+		want string
+	}{
+		{"utmSource", "utm_source AS break1"},
+		{"utmMedium", "utm_medium AS break1"},
+		{"utmCampaign", "utm_campaign AS break1"},
+		{"userDeviceType", "user_device_type AS break1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.dim, func(t *testing.T) {
+			got := GetTableBreakdownProjection([]string{tt.dim})
+			if len(got) != 1 {
+				t.Fatalf("expected 1 part, got %d", len(got))
+			}
+			if got[0] != tt.want {
+				t.Errorf("got %q, want %q", got[0], tt.want)
+			}
+		})
+	}
+}
+
+func TestGetFunnelBreakdownProjection_NewDimensions(t *testing.T) {
+	tests := []struct {
+		dim  string
+		want string
+	}{
+		{"utmSource", "e.utm_source AS break1"},
+		{"utmMedium", "e.utm_medium AS break1"},
+		{"utmCampaign", "e.utm_campaign AS break1"},
+		{"userDeviceType", `e."$device" AS break1`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.dim, func(t *testing.T) {
+			got := GetFunnelBreakdownProjection([]string{tt.dim})
+			if len(got) != 1 {
+				t.Fatalf("expected 1 part, got %d", len(got))
+			}
+			if got[0] != tt.want {
+				t.Errorf("got %q, want %q", got[0], tt.want)
+			}
+		})
+	}
+}
+
+func TestFunnelBreakdownNeedsSessions_NewDimensions(t *testing.T) {
+	// All new Tier 1 dimensions use event-level columns (e. prefix), so none need sessions
+	noSessionDims := []string{"utmSource", "utmMedium", "utmCampaign", "userDeviceType"}
+	for _, dim := range noSessionDims {
+		t.Run(dim, func(t *testing.T) {
+			if FunnelBreakdownNeedsSessions([]string{dim}) {
+				t.Errorf("FunnelBreakdownNeedsSessions(%q) = true, want false", dim)
+			}
+		})
+	}
+}
+
+func TestGetBreakdownProjection_NewDimensions(t *testing.T) {
+	got := GetBreakdownProjection([]string{"utmSource", "userDeviceType"}, "s")
+	want := "s.utm_source AS utmSource, s.user_device_type AS userDeviceType"
+	if got != want {
+		t.Errorf("GetBreakdownProjection() =\n  %q\nwant\n  %q", got, want)
+	}
+}
+
+// --- Tests for revId and issueType breakdown dimensions ---
+
+func TestValidateBreakdowns_RevIdAndIssueType(t *testing.T) {
+	for _, dim := range []string{"revId", "issueType"} {
+		t.Run(dim, func(t *testing.T) {
+			if err := ValidateBreakdowns([]string{dim}); err != nil {
+				t.Errorf("ValidateBreakdowns(%q) unexpected error: %v", dim, err)
+			}
+		})
+	}
+}
+
+func TestGetTableBreakdownProjection_RevId(t *testing.T) {
+	got := GetTableBreakdownProjection([]string{"revId"})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 part, got %d", len(got))
+	}
+	if got[0] != "rev_id AS break1" {
+		t.Errorf("got %q, want %q", got[0], "rev_id AS break1")
+	}
+}
+
+func TestGetTableBreakdownProjection_IssueType(t *testing.T) {
+	got := GetTableBreakdownProjection([]string{"issueType"})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 part, got %d", len(got))
+	}
+	if got[0] != "arrayJoin(issue_types) AS break1" {
+		t.Errorf("got %q, want %q", got[0], "arrayJoin(issue_types) AS break1")
+	}
+}
+
+func TestGetFunnelBreakdownProjection_RevId(t *testing.T) {
+	got := GetFunnelBreakdownProjection([]string{"revId"})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 part, got %d", len(got))
+	}
+	// revId EventColumn is "s.rev_id" (sessions join)
+	if got[0] != "s.rev_id AS break1" {
+		t.Errorf("got %q, want %q", got[0], "s.rev_id AS break1")
+	}
+}
+
+func TestGetFunnelBreakdownProjection_IssueType(t *testing.T) {
+	got := GetFunnelBreakdownProjection([]string{"issueType"})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 part, got %d", len(got))
+	}
+	if got[0] != "e.issue_type AS break1" {
+		t.Errorf("got %q, want %q", got[0], "e.issue_type AS break1")
+	}
+}
+
+func TestFunnelBreakdownNeedsSessions_RevId(t *testing.T) {
+	// revId uses s.rev_id in events context, needs sessions join
+	if !FunnelBreakdownNeedsSessions([]string{"revId"}) {
+		t.Error("FunnelBreakdownNeedsSessions(revId) = false, want true")
+	}
+}
+
+func TestFunnelBreakdownNeedsSessions_IssueType(t *testing.T) {
+	// issueType uses e.issue_type, no sessions join needed
+	if FunnelBreakdownNeedsSessions([]string{"issueType"}) {
+		t.Error("FunnelBreakdownNeedsSessions(issueType) = true, want false")
+	}
+}
+
+func TestGetBreakdownProjection_IssueTypeNoPrefix(t *testing.T) {
+	// arrayJoin(issue_types) contains "(" so should NOT get table alias prefix
+	got := GetBreakdownProjection([]string{"issueType"}, "s")
+	want := "arrayJoin(issue_types) AS issueType"
+	if got != want {
+		t.Errorf("GetBreakdownProjection(issueType) =\n  %q\nwant\n  %q", got, want)
+	}
+}
+
+func TestGetBreakdownProjection_RevIdGetsPrefix(t *testing.T) {
+	got := GetBreakdownProjection([]string{"revId"}, "s")
+	want := "s.rev_id AS revId"
+	if got != want {
+		t.Errorf("GetBreakdownProjection(revId) =\n  %q\nwant\n  %q", got, want)
+	}
+}
+
 func TestBuildTimeseriesSeriesMap_WithBreakdowns(t *testing.T) {
 	data := map[breakdownKey]map[string]uint64{
 		{Timestamp: 1000, Values: [3]string{"US", "", ""}}: {"sessions": 8},

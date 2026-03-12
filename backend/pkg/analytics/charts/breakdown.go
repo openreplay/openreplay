@@ -15,15 +15,21 @@ type BreakdownDimension struct {
 }
 
 var breakdownDimensions = map[string]BreakdownDimension{
-	"userCountry": {SessionColumn: "user_country", EventColumn: `e."$country"`},
-	"userCity":    {SessionColumn: "user_city", EventColumn: `e."$city"`},
-	"userState":   {SessionColumn: "user_state", EventColumn: `e."$state"`},
-	"userBrowser": {SessionColumn: "user_browser", EventColumn: `e."$browser"`},
-	"userDevice":  {SessionColumn: "user_device", EventColumn: "s.user_device"},
-	"userOs":      {SessionColumn: "user_os", EventColumn: `e."$os"`},
-	"referrer":    {SessionColumn: "referrer", EventColumn: `e."$referrer"`},
-	"userId":      {SessionColumn: "user_id", EventColumn: "s.user_id"},
-	"platform":    {SessionColumn: "platform", EventColumn: "s.platform"},
+	"userCountry":    {SessionColumn: "user_country", EventColumn: `e."$country"`},
+	"userCity":       {SessionColumn: "user_city", EventColumn: `e."$city"`},
+	"userState":      {SessionColumn: "user_state", EventColumn: `e."$state"`},
+	"userBrowser":    {SessionColumn: "user_browser", EventColumn: `e."$browser"`},
+	"userDevice":     {SessionColumn: "user_device", EventColumn: "s.user_device"},
+	"userOs":         {SessionColumn: "user_os", EventColumn: `e."$os"`},
+	"referrer":       {SessionColumn: "referrer", EventColumn: `e."$referrer"`},
+	"userId":         {SessionColumn: "user_id", EventColumn: "s.user_id"},
+	"platform":       {SessionColumn: "platform", EventColumn: "s.platform"},
+	"utmSource":      {SessionColumn: "utm_source", EventColumn: `e.utm_source`},
+	"utmMedium":      {SessionColumn: "utm_medium", EventColumn: `e.utm_medium`},
+	"utmCampaign":    {SessionColumn: "utm_campaign", EventColumn: `e.utm_campaign`},
+	"userDeviceType": {SessionColumn: "user_device_type", EventColumn: `e."$device"`},
+	"revId":          {SessionColumn: "rev_id", EventColumn: "s.rev_id"},
+	"issueType":      {SessionColumn: "arrayJoin(issue_types)", EventColumn: "e.issue_type"},
 }
 
 func NormalizeBreakdownValue(s string) string {
@@ -125,7 +131,14 @@ func GetBreakdownProjection(breakdowns []string, tableAlias string) string {
 	parts := make([]string, 0, len(breakdowns))
 	for _, b := range breakdowns {
 		if dim, ok := breakdownDimensions[b]; ok {
-			parts = append(parts, fmt.Sprintf("%s.%s AS %s", tableAlias, dim.SessionColumn, b))
+			col := dim.SessionColumn
+			// If the column already contains a function call or is fully qualified,
+			// don't prefix with the table alias.
+			if strings.Contains(col, "(") || strings.Contains(col, ".") {
+				parts = append(parts, fmt.Sprintf("%s AS %s", col, b))
+			} else {
+				parts = append(parts, fmt.Sprintf("%s.%s AS %s", tableAlias, col, b))
+			}
 		}
 	}
 	if len(parts) == 0 {
