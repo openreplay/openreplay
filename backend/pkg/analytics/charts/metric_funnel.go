@@ -47,14 +47,15 @@ func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn drive
 		return WrapInSeries(seriesKey, FunnelResponse{Stages: []FunnelStageResult{}}), nil
 	}
 
-	q, err := f.buildQuery(p)
+	q, params, err := f.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
 
 	_start := time.Now()
 	f.Logger.Debug(ctx, "Executing funnel query: %s", q)
-	rows, err := conn.Query(ctx, q)
+	chParams := convertParams(params)
+	rows, err := conn.Query(ctx, q, chParams...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +152,7 @@ func extractStepFilters(filters []model.Filter) []model.Filter {
 	return stepFilters
 }
 
-func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
+func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, error) {
 	allFilters := p.MetricPayload.Series[0].Filter.Filters
 	numBreakdowns := len(p.Breakdowns)
 
@@ -216,14 +217,14 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	innerParts = append(innerParts, tColumns...)
 
 	baseWhere := []string{
-		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-		fmt.Sprintf("e.created_at < toDateTime(%d)", (p.MetricPayload.EndTimestamp)/1000),
-		fmt.Sprintf("e.project_id = %d", p.ProjectId),
+		"e.created_at >= toDateTime(@startTimestamp/1000)",
+		"e.created_at < toDateTime(@endTimestamp/1000)",
+		"e.project_id = @project_id",
 		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages)),
 	}
 
 	if p.SampleRate > 0 && p.SampleRate < 100 {
-		baseWhere = append(baseWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+		baseWhere = append(baseWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate)) // safe: validated integer from struct
 	}
 
 	if p.MetricFormat == MetricFormatUserCount {
@@ -243,9 +244,9 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if needsSessionsJoin {
 		mainTables = fmt.Sprintf("%s AS s INNER JOIN %s USING(session_id)", getMainSessionsTable(p.StartTimestamp), mainTables)
 		baseWhere = append(baseWhere, []string{
-			fmt.Sprintf("s.project_id = %d", p.ProjectId),
-			fmt.Sprintf("s.datetime >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-			fmt.Sprintf("s.datetime < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000)}...)
+			"s.project_id = @project_id",
+			"s.datetime >= toDateTime(@startTimestamp/1000)",
+			"s.datetime < toDateTime(@endTimestamp/1000)"}...)
 		if len(sessionConditions) > 0 {
 			baseWhere = append(baseWhere, strings.Join(sessionConditions, " AND "))
 		}
@@ -292,7 +293,13 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		subQuery,
 		outerGroupBy)
 
-	return q, nil
+	params := map[string]any{
+		"startTimestamp": p.MetricPayload.StartTimestamp,
+		"endTimestamp":   p.MetricPayload.EndTimestamp,
+		"project_id":     p.ProjectId,
+	}
+
+	return q, params, nil
 }
 
 func buildTColumns(stages []string, eventConditions []string, metricFormat string) []string {
