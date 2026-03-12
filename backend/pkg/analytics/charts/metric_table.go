@@ -662,25 +662,6 @@ func (t *TableQueryBuilder) calculatePagination(page, limit int) model.Paginatio
 	}
 }
 
-type tableNode struct {
-	counts   map[string]uint64
-	children map[string]*tableNode
-	isLeaf   bool
-}
-
-func tableSeriesKey(p *Payload) string {
-	if p.Name != "" {
-		return p.Name
-	}
-	return p.MetricOf
-}
-
-func wrapTableSeries(seriesKey string, value interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"series": map[string]interface{}{seriesKey: value},
-	}
-}
-
 func (t *TableQueryBuilder) executeWithBreakdowns(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	numBreakdowns := len(p.Breakdowns)
 
@@ -703,90 +684,58 @@ func (t *TableQueryBuilder) executeWithBreakdowns(ctx context.Context, p *Payloa
 		t.Logger.Warn(ctx, "Query execution took longer than 2s: %s", query)
 	}
 
-	root := &tableNode{
-		counts:   make(map[string]uint64),
-		children: make(map[string]*tableNode),
-	}
+	tree := NewBreakdownTree(make(map[string]uint64))
 
 	var metricName string
 	bdVals := make([]string, numBreakdowns)
 	var metricCount, numberOfMetrics, allCount uint64
 
-	scanArgs := make([]interface{}, 0, 3+numBreakdowns+1)
-	scanArgs = append(scanArgs, &metricName)
-	for i := range bdVals {
-		scanArgs = append(scanArgs, &bdVals[i])
-	}
-	scanArgs = append(scanArgs, &metricCount, &numberOfMetrics, &allCount)
+	scanArgs := BuildScanArgs(
+		[]interface{}{&metricName},
+		bdVals,
+		[]interface{}{&metricCount, &numberOfMetrics, &allCount},
+	)
+
+	newZero := func() map[string]uint64 { return make(map[string]uint64) }
+	accumulate := func(v *map[string]uint64) { (*v)[metricName] += metricCount }
 
 	for rows.Next() {
 		if err := rows.Scan(scanArgs...); err != nil {
 			return nil, err
 		}
-
-		root.counts[metricName] += metricCount
-
-		current := root
-		for depth := 0; depth < numBreakdowns; depth++ {
-			bdVal := bdVals[depth]
-			if bdVal == "" {
-				bdVal = "(empty)"
-			}
-			child, exists := current.children[bdVal]
-			if !exists {
-				child = &tableNode{
-					counts:   make(map[string]uint64),
-					children: make(map[string]*tableNode),
-					isLeaf:   depth == numBreakdowns-1,
-				}
-				current.children[bdVal] = child
-			}
-			child.counts[metricName] += metricCount
-			current = child
-		}
+		tree.Insert(bdVals, numBreakdowns, newZero, accumulate)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	seriesKey := tableSeriesKey(p)
+	seriesKey := SeriesKey(p.Name, p.MetricOf)
 	limit := p.Limit
 	if limit <= 0 {
 		limit = 20
 	}
 
-	if len(root.counts) == 0 {
-		return wrapTableSeries(seriesKey, map[string]interface{}{
+	if len(tree.Value) == 0 {
+		return WrapInSeries(seriesKey, map[string]interface{}{
 			"$overall": &TableResponse{Total: 0, Count: 0, Values: []TableValue{}},
 		}), nil
 	}
 
-	return wrapTableSeries(seriesKey, tableNodeToMap(root, limit)), nil
+	render := func(counts map[string]uint64) interface{} {
+		return countsToTableResponse(counts, limit)
+	}
+	return WrapInSeries(seriesKey, tree.ToMap(render)), nil
 }
 
-func tableNodeToMap(node *tableNode, limit int) map[string]interface{} {
-	result := map[string]interface{}{
-		"$overall": nodeToTableResponse(node, limit),
-	}
-	for key, child := range node.children {
-		if child.isLeaf {
-			result[key] = nodeToTableResponse(child, limit)
-		} else {
-			result[key] = tableNodeToMap(child, limit)
-		}
-	}
-	return result
-}
-
-func nodeToTableResponse(node *tableNode, limit int) *TableResponse {
+func countsToTableResponse(counts map[string]uint64, limit int) *TableResponse {
 	type kv struct {
 		name  string
 		count uint64
 	}
-	pairs := make([]kv, 0, len(node.counts))
+	pairs := make([]kv, 0, len(counts))
 	var sumCount uint64
-	for name, count := range node.counts {
+	for name, count := range counts {
 		pairs = append(pairs, kv{name, count})
 		sumCount += count
 	}

@@ -36,38 +36,15 @@ type FunnelQueryBuilder struct {
 	Logger logger.Logger
 }
 
-type funnelNode struct {
-	counts   []uint64
-	children map[string]*funnelNode
-	isLeaf   bool
-}
-
-func funnelSeriesKey(p *Payload) string {
-	if p.Name != "" {
-		return p.Name
-	}
-	return "Funnel"
-}
-
-func wrapFunnelSeries(seriesKey string, value interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"series": map[string]interface{}{seriesKey: value},
-	}
-}
-
-func emptyFunnelResponse(seriesKey string) map[string]interface{} {
-	return wrapFunnelSeries(seriesKey, FunnelResponse{Stages: make([]FunnelStageResult, 0)})
-}
-
 func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	if err := ValidateBreakdowns(p.Breakdowns); err != nil {
 		return nil, err
 	}
 
-	seriesKey := funnelSeriesKey(p)
+	seriesKey := SeriesKey(p.Name, "Funnel")
 
 	if !hasEventFilter(p.MetricPayload.Series[0].Filter.Filters) {
-		return emptyFunnelResponse(seriesKey), nil
+		return WrapInSeries(seriesKey, FunnelResponse{Stages: []FunnelStageResult{}}), nil
 	}
 
 	q, err := f.buildQuery(p)
@@ -93,7 +70,7 @@ func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn drive
 
 	if numBreakdowns == 0 {
 		if !rows.Next() {
-			return emptyFunnelResponse(seriesKey), nil
+			return WrapInSeries(seriesKey, FunnelResponse{Stages: []FunnelStageResult{}}), nil
 		}
 		counts := make([]uint64, stageCount)
 		scanArgs := make([]interface{}, stageCount)
@@ -103,71 +80,41 @@ func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn drive
 		if err := rows.Scan(scanArgs...); err != nil {
 			return nil, err
 		}
-		return wrapFunnelSeries(seriesKey, FunnelResponse{Stages: buildFunnelStages(counts, stepFilters)}), nil
+		return WrapInSeries(seriesKey, FunnelResponse{Stages: buildFunnelStages(counts, stepFilters)}), nil
 	}
 
-	root := &funnelNode{counts: make([]uint64, stageCount), children: map[string]*funnelNode{}}
+	tree := NewBreakdownTree(make([]uint64, stageCount))
 
 	bdVals := make([]string, numBreakdowns)
 	stageCounts := make([]uint64, stageCount)
-	scanArgs := make([]interface{}, 0, numBreakdowns+stageCount)
-	for i := range bdVals {
-		scanArgs = append(scanArgs, &bdVals[i])
-	}
+	stageArgs := make([]interface{}, stageCount)
 	for i := range stageCounts {
-		scanArgs = append(scanArgs, &stageCounts[i])
+		stageArgs[i] = &stageCounts[i]
+	}
+	scanArgs := BuildScanArgs(nil, bdVals, stageArgs)
+
+	newZero := func() []uint64 { return make([]uint64, stageCount) }
+	accumulate := func(v *[]uint64) {
+		for i, c := range stageCounts {
+			(*v)[i] += c
+		}
 	}
 
 	for rows.Next() {
 		if err := rows.Scan(scanArgs...); err != nil {
 			return nil, err
 		}
-
-		for i, c := range stageCounts {
-			root.counts[i] += c
-		}
-
-		current := root
-		for depth := 0; depth < numBreakdowns; depth++ {
-			bdVal := bdVals[depth]
-			if bdVal == "" {
-				bdVal = "(empty)"
-			}
-			child, exists := current.children[bdVal]
-			if !exists {
-				child = &funnelNode{
-					counts:   make([]uint64, stageCount),
-					children: map[string]*funnelNode{},
-					isLeaf:   depth == numBreakdowns-1,
-				}
-				current.children[bdVal] = child
-			}
-			for i, c := range stageCounts {
-				child.counts[i] += c
-			}
-			current = child
-		}
+		tree.Insert(bdVals, numBreakdowns, newZero, accumulate)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return wrapFunnelSeries(seriesKey, funnelNodeToMap(root, stepFilters)), nil
-}
-
-func funnelNodeToMap(node *funnelNode, stepFilters []model.Filter) map[string]interface{} {
-	result := map[string]interface{}{
-		"$overall": FunnelResponse{Stages: buildFunnelStages(node.counts, stepFilters)},
+	render := func(counts []uint64) interface{} {
+		return FunnelResponse{Stages: buildFunnelStages(counts, stepFilters)}
 	}
-	for key, child := range node.children {
-		if child.isLeaf {
-			result[key] = FunnelResponse{Stages: buildFunnelStages(child.counts, stepFilters)}
-		} else {
-			result[key] = funnelNodeToMap(child, stepFilters)
-		}
-	}
-	return result
+	return WrapInSeries(seriesKey, tree.ToMap(render)), nil
 }
 
 func buildFunnelStages(counts []uint64, stepFilters []model.Filter) []FunnelStageResult {

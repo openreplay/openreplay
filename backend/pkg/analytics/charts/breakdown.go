@@ -9,13 +9,113 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 )
 
+type BreakdownDimension struct {
+	SessionColumn string
+	EventColumn   string
+}
+
+var breakdownDimensions = map[string]BreakdownDimension{
+	"userCountry": {SessionColumn: "user_country", EventColumn: `e."$country"`},
+	"userCity":    {SessionColumn: "user_city", EventColumn: `e."$city"`},
+	"userState":   {SessionColumn: "user_state", EventColumn: `e."$state"`},
+	"userBrowser": {SessionColumn: "user_browser", EventColumn: `e."$browser"`},
+	"userDevice":  {SessionColumn: "user_device", EventColumn: "s.user_device"},
+	"userOs":      {SessionColumn: "user_os", EventColumn: `e."$os"`},
+	"referrer":    {SessionColumn: "referrer", EventColumn: `e."$referrer"`},
+	"userId":      {SessionColumn: "user_id", EventColumn: "s.user_id"},
+	"platform":    {SessionColumn: "platform", EventColumn: "s.platform"},
+}
+
+func NormalizeBreakdownValue(s string) string {
+	if s == "" {
+		return "(empty)"
+	}
+	return s
+}
+
 func ValidateBreakdowns(breakdowns []string) error {
 	for _, b := range breakdowns {
-		if _, ok := breakdownColumnMap[b]; !ok {
+		if _, ok := breakdownDimensions[b]; !ok {
 			return fmt.Errorf("unsupported breakdown %q", b)
 		}
 	}
 	return nil
+}
+
+func SeriesKey(name, fallback string) string {
+	if name != "" {
+		return name
+	}
+	return fallback
+}
+
+func WrapInSeries(key string, value interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"series": map[string]interface{}{key: value},
+	}
+}
+
+func BuildScanArgs(before []interface{}, bdVals []string, after []interface{}) []interface{} {
+	args := make([]interface{}, 0, len(before)+len(bdVals)+len(after))
+	args = append(args, before...)
+	for i := range bdVals {
+		args = append(args, &bdVals[i])
+	}
+	args = append(args, after...)
+	return args
+}
+
+type BreakdownTree[T any] struct {
+	Value    T
+	Children map[string]*BreakdownTree[T]
+	IsLeaf   bool
+}
+
+func NewBreakdownTree[T any](zero T) *BreakdownTree[T] {
+	return &BreakdownTree[T]{
+		Value:    zero,
+		Children: make(map[string]*BreakdownTree[T]),
+	}
+}
+
+func (t *BreakdownTree[T]) Insert(bdVals []string, numBreakdowns int, newZero func() T, accumulate func(*T)) {
+	accumulate(&t.Value)
+	current := t
+	for depth := 0; depth < numBreakdowns; depth++ {
+		bdVal := NormalizeBreakdownValue(bdVals[depth])
+		child, exists := current.Children[bdVal]
+		if !exists {
+			child = &BreakdownTree[T]{
+				Value:    newZero(),
+				Children: make(map[string]*BreakdownTree[T]),
+				IsLeaf:   depth == numBreakdowns-1,
+			}
+			current.Children[bdVal] = child
+		}
+		accumulate(&child.Value)
+		current = child
+	}
+}
+
+func (t *BreakdownTree[T]) ToMap(render func(T) interface{}) map[string]interface{} {
+	result := map[string]interface{}{
+		"$overall": render(t.Value),
+	}
+	for key, child := range t.Children {
+		if child.IsLeaf {
+			result[key] = render(child.Value)
+		} else {
+			result[key] = child.ToMap(render)
+		}
+	}
+	return result
+}
+
+func WalkTree[T any](node *BreakdownTree[T], fn func(*T)) {
+	fn(&node.Value)
+	for _, child := range node.Children {
+		WalkTree(child, fn)
+	}
 }
 
 func GetBreakdownProjection(breakdowns []string, tableAlias string) string {
@@ -24,8 +124,8 @@ func GetBreakdownProjection(breakdowns []string, tableAlias string) string {
 	}
 	parts := make([]string, 0, len(breakdowns))
 	for _, b := range breakdowns {
-		if col, ok := breakdownColumnMap[b]; ok {
-			parts = append(parts, fmt.Sprintf("%s.%s AS %s", tableAlias, col, b))
+		if dim, ok := breakdownDimensions[b]; ok {
+			parts = append(parts, fmt.Sprintf("%s.%s AS %s", tableAlias, dim.SessionColumn, b))
 		}
 	}
 	if len(parts) == 0 {
@@ -41,7 +141,7 @@ func GetBreakdownSelectColumns(breakdowns []string, tableAlias ...string) []stri
 	}
 	cols := make([]string, 0, len(breakdowns))
 	for _, b := range breakdowns {
-		if _, ok := breakdownColumnMap[b]; ok {
+		if _, ok := breakdownDimensions[b]; ok {
 			cols = append(cols, prefix+b)
 		}
 	}
@@ -107,7 +207,7 @@ func BuildSessionsFilterConditions(sessionFilters []model.Filter) []string {
 func GetTableBreakdownProjection(breakdowns []string) []string {
 	parts := make([]string, len(breakdowns))
 	for i, b := range breakdowns {
-		parts[i] = fmt.Sprintf(`%s AS break%d`, breakdownColumnMap[b], i+1)
+		parts[i] = fmt.Sprintf(`%s AS break%d`, breakdownDimensions[b].SessionColumn, i+1)
 	}
 	return parts
 }
@@ -115,7 +215,7 @@ func GetTableBreakdownProjection(breakdowns []string) []string {
 func GetFunnelBreakdownProjection(breakdowns []string) []string {
 	parts := make([]string, len(breakdowns))
 	for i, b := range breakdowns {
-		parts[i] = fmt.Sprintf(`%s AS break%d`, breakdownFunnelColumnMap[b], i+1)
+		parts[i] = fmt.Sprintf(`%s AS break%d`, breakdownDimensions[b].EventColumn, i+1)
 	}
 	return parts
 }
@@ -130,7 +230,7 @@ func GetFunnelBreakdownOuterColumns(n int) []string {
 
 func FunnelBreakdownNeedsSessions(breakdowns []string) bool {
 	for _, b := range breakdowns {
-		if col := breakdownFunnelColumnMap[b]; strings.HasPrefix(col, "s.") {
+		if strings.HasPrefix(breakdownDimensions[b].EventColumn, "s.") {
 			return true
 		}
 	}
@@ -164,12 +264,11 @@ func ScanBreakdownRows(rows driver.Rows, numBreakdowns int, seriesName string, d
 	var count uint64
 	bdVals := make([]string, numBreakdowns)
 
-	scanArgs := make([]interface{}, 0, 2+numBreakdowns)
-	scanArgs = append(scanArgs, &timestamp)
-	for i := range bdVals {
-		scanArgs = append(scanArgs, &bdVals[i])
-	}
-	scanArgs = append(scanArgs, &count)
+	scanArgs := BuildScanArgs(
+		[]interface{}{&timestamp},
+		bdVals,
+		[]interface{}{&count},
+	)
 
 	for rows.Next() {
 		if err := rows.Scan(scanArgs...); err != nil {
@@ -192,84 +291,39 @@ func BuildTimeseriesSeriesMap(data map[breakdownKey]map[string]uint64, breakdown
 	seriesMap := make(map[string]interface{}, len(seriesNames))
 
 	for _, seriesName := range seriesNames {
-		rootOverall := make(tsCountMap)
-
 		if numBreakdowns == 0 {
+			flat := make(tsCountMap)
 			for key, counts := range data {
-				rootOverall[key.Timestamp] += counts[seriesName]
+				flat[key.Timestamp] += counts[seriesName]
 			}
-			seriesMap[seriesName] = rootOverall
+			seriesMap[seriesName] = flat
 			continue
 		}
 
-		root := make(map[string]interface{})
+		tree := NewBreakdownTree(make(tsCountMap))
+		newZero := func() tsCountMap { return make(tsCountMap) }
+		var ts uint64
+		var count uint64
+		accumulate := func(v *tsCountMap) { (*v)[ts] += count }
 
 		for key, counts := range data {
-			count := counts[seriesName]
-			rootOverall[key.Timestamp] += count
-
-			current := root
-			for depth := 0; depth < numBreakdowns; depth++ {
-				bdVal := key.Values[depth]
-				if bdVal == "" {
-					bdVal = "(empty)"
-				}
-
-				isLast := depth == numBreakdowns-1
-
-				if isLast {
-					var leaf tsCountMap
-					if existing, ok := current[bdVal]; ok {
-						leaf = existing.(tsCountMap)
-					} else {
-						leaf = make(tsCountMap)
-						current[bdVal] = leaf
-					}
-					leaf[key.Timestamp] = count
-				} else {
-					var branch map[string]interface{}
-					if existing, ok := current[bdVal]; ok {
-						branch = existing.(map[string]interface{})
-					} else {
-						branch = make(map[string]interface{})
-						current[bdVal] = branch
-					}
-
-					var branchOverall tsCountMap
-					if existing, ok := branch["$overall"]; ok {
-						branchOverall = existing.(tsCountMap)
-					} else {
-						branchOverall = make(tsCountMap)
-						branch["$overall"] = branchOverall
-					}
-					branchOverall[key.Timestamp] += count
-
-					current = branch
-				}
-			}
+			count = counts[seriesName]
+			ts = key.Timestamp
+			tree.Insert(key.Values[:numBreakdowns], numBreakdowns, newZero, accumulate)
 		}
 
-		root["$overall"] = rootOverall
-		zeroFillTree(root, rootOverall)
-		seriesMap[seriesName] = root
+		WalkTree(tree, func(v *tsCountMap) {
+			for ts := range tree.Value {
+				if _, exists := (*v)[ts]; !exists {
+					(*v)[ts] = 0
+				}
+			}
+		})
+
+		seriesMap[seriesName] = tree.ToMap(func(v tsCountMap) interface{} { return v })
 	}
 
 	return map[string]interface{}{
 		"series": seriesMap,
-	}
-}
-
-func zeroFillTree(node map[string]interface{}, allTimestamps map[uint64]uint64) {
-	for _, v := range node {
-		switch child := v.(type) {
-		case map[uint64]uint64:
-			for ts := range allTimestamps {
-				if _, exists := child[ts]; !exists {
-					child[ts] = 0
-				}
-			}
-		case map[string]interface{}:
-			zeroFillTree(child, allTimestamps)
-		}
 	}
 }

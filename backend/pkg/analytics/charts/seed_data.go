@@ -75,10 +75,7 @@ func generateFunnelSeedData(req *model.MetricPayload) map[string]interface{} {
 		}
 	}
 
-	seriesKey := req.Name
-	if seriesKey == "" {
-		seriesKey = "Funnel"
-	}
+	seriesKey := SeriesKey(req.Name, "Funnel")
 
 	hasBreakdowns := len(req.Breakdowns) > 0
 
@@ -217,10 +214,7 @@ func generateTableSeedData(req *model.MetricPayload) map[string]interface{} {
 	if len(req.Breakdowns) > 0 && req.MetricOf != "screenResolution" {
 		overallResp := &TableResponse{Total: count, Count: total, Values: values}
 
-		seriesKey := req.Name
-		if seriesKey == "" {
-			seriesKey = req.MetricOf
-		}
+		seriesKey := SeriesKey(req.Name, req.MetricOf)
 
 		seedTableBreakdownValues := func(fraction float64) *TableResponse {
 			switch v := values.(type) {

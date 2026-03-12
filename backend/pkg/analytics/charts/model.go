@@ -55,30 +55,6 @@ type breakdownKey struct {
 	Values    [3]string
 }
 
-var breakdownColumnMap = map[string]string{
-	"userCountry": "user_country",
-	"userCity":    "user_city",
-	"userState":   "user_state",
-	"userBrowser": "user_browser",
-	"userDevice":  "user_device",
-	"userOs":      "user_os",
-	"referrer":    "referrer",
-	"userId":      "user_id",
-	"platform":    "platform",
-}
-
-var breakdownFunnelColumnMap = map[string]string{
-	"userCountry": `e."$country"`,
-	"userCity":    `e."$city"`,
-	"userState":   `e."$state"`,
-	"userBrowser": `e."$browser"`,
-	"userOs":      `e."$os"`,
-	"referrer":    `e."$referrer"`,
-	"userDevice":  "s.user_device",
-	"userId":      "s.user_id",
-	"platform":    "s.platform",
-}
-
 var mainColumns = map[string][]string{
 	"userDevice":         {"sessions.user_device", "singleColumn"},
 	"referrer":           {"$referrer", "singleColumn"},
