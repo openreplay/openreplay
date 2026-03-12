@@ -187,6 +187,25 @@ func TestBuildEventConditions(t *testing.T) {
 	}
 }
 
+func TestGetColumnAccessor_DoesNotMutateSharedMap(t *testing.T) {
+	// Snapshot the original value
+	original := mainColumns["userCountry"][0]
+
+	opts := BuildConditionsOptions{
+		MainTableAlias: "e",
+		DefinedColumns: mainColumns,
+	}
+
+	// Call twice — the bug causes progressive mutation
+	getColumnAccessor("userCountry", false, false, false, opts)
+	getColumnAccessor("userCountry", false, false, false, opts)
+
+	if mainColumns["userCountry"][0] != original {
+		t.Errorf("getColumnAccessor mutated shared map: got %q, want %q",
+			mainColumns["userCountry"][0], original)
+	}
+}
+
 // Test for getColumnAccessor function
 func TestGetColumnAccessor(t *testing.T) {
 	tests := []struct {

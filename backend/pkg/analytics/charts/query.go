@@ -114,14 +114,14 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperti
 	}
 	// explicit column mapping
 	if col, ok := opts.DefinedColumns[logical]; ok {
-		col[0] = quote(col[0])
+		quoted := quote(col[0])
 		if opts.MainTableAlias != "" {
-			if strings.Contains(col[0], ".") {
-				return fmt.Sprintf("%s", col[0]), col[1]
+			if strings.Contains(quoted, ".") {
+				return quoted, col[1]
 			}
-			return fmt.Sprintf("%s.%s", opts.MainTableAlias, col[0]), col[1]
+			return fmt.Sprintf("%s.%s", opts.MainTableAlias, quoted), col[1]
 		}
-		return col[0], col[1]
+		return quoted, col[1]
 	}
 
 	// determine property key
