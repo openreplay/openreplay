@@ -60,7 +60,6 @@ export default function parseFrames(
 
     snapshots[time] = {
       getBlobUrl() {
-        console.log(`Creating blob URL for frame at ${time}ms (size: ${size} bytes)`);
         return URL.createObjectURL(
           new Blob([dataView], { type: `image/${fileFormat}` }),
         );
