@@ -109,7 +109,8 @@ ENV TZ=UTC \
   BUCKET_NAME="spots" \
   IS_FEATURE_FLAG_ENABLED=false \
   IS_USABILITY_TEST_ENABLED=false \
-  REDIS_STREAMS_TTL_SEC=7200
+  # We'll default to max length based trimming than, time based, because its deterministic
+  REDIS_STREAMS_TTL_SEC=0
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
