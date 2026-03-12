@@ -229,6 +229,22 @@ func TestCamelToSnake(t *testing.T) {
 	}
 }
 
+func TestBuildCond_IsUndefined(t *testing.T) {
+	got := buildCond("s.user_country", nil, "isUndefined", false, "singleColumn")
+	want := "(isNull(s.user_country) OR s.user_country = '')"
+	if got != want {
+		t.Errorf("buildCond isUndefined:\ngot  = %q\nwant = %q", got, want)
+	}
+}
+
+func TestBuildCond_IsUndefined_ArrayColumn(t *testing.T) {
+	got := buildCond("s.issue_types", nil, "isUndefined", false, "arrayColumn")
+	want := "empty(s.issue_types)"
+	if got != want {
+		t.Errorf("buildCond isUndefined array:\ngot  = %q\nwant = %q", got, want)
+	}
+}
+
 // Test for getColumnAccessor function
 func TestGetColumnAccessor(t *testing.T) {
 	tests := []struct {

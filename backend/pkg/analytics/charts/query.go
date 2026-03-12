@@ -313,7 +313,7 @@ var compOpsArrays = map[string]string{
 }
 
 func buildCond(expr string, values []string, operator string, isNumeric bool, nature string) string {
-	if len(values) == 0 && operator != "isAny" {
+	if len(values) == 0 && operator != "isAny" && operator != "isUndefined" {
 		return ""
 	}
 	switch operator {
@@ -322,6 +322,11 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 			return fmt.Sprintf("notEmpty(%s)", expr)
 		}
 		return fmt.Sprintf("isNotNull(%s)", expr)
+	case "isUndefined":
+		if nature == "arrayColumn" {
+			return fmt.Sprintf("empty(%s)", expr)
+		}
+		return fmt.Sprintf("(isNull(%s) OR %s = '')", expr, expr)
 	case "isNot", "not":
 		//TODO: find how to process array column
 		if len(values) == 1 {
