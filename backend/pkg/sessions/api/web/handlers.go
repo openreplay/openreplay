@@ -286,10 +286,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	}
 	modifyResponse(req, startResponse)
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, startResponse, startTime, r.URL.Path, bodySize)
-}
-
-func trimString(str string, ln int) string {
+	return str[:min(len(str), ln)(str string, ln int) string {
 	if len(str) < ln {
 		return str
 	}
