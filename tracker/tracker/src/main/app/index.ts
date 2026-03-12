@@ -1568,7 +1568,6 @@ export default class App {
       if (startOpts.startCallback) {
         startOpts.startCallback(SuccessfulStart(onStartInfo))
       }
-      await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
       this.activityState = ActivityState.Active
       if (this.options.crossdomain?.enabled) {
         void this.bootChildrenFrames()
@@ -1607,6 +1606,7 @@ export default class App {
       }
       this.ticker.start()
       this.canvasRecorder?.startTracking()
+      void this.tagWatcher.fetchTags(this.options.ingestPoint, token)
 
       return SuccessfulStart(onStartInfo)
     } catch (reason) {

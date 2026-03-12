@@ -33,7 +33,7 @@ export default class SnapshotManager extends ListWalker<Timestamp> {
       throw new Error(`Failed to fetch frames: ${res.status}`);
     }
     const zstdBuf = await res.arrayBuffer();
-    const buf = unpack(new Uint8Array(zstdBuf)).buffer as ArrayBuffer;
+    const buf = unpack(new Uint8Array(zstdBuf));
     const { snapshots, timestamps } = parseFrames(
       buf,
       sessionStart,

@@ -1,5 +1,5 @@
-import * as fzstd from 'fzstd';
 import { gunzipSync } from 'fflate';
+import * as fzstd from 'fzstd';
 
 const unpack = (b: Uint8Array): Uint8Array => {
   // zstd magical numbers 40 181 47 253
