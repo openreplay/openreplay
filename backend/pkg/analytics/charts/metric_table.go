@@ -126,7 +126,8 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 		valuesCount = rawValues[0].NumberOfMetrics
 	}
 
-	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
+	seriesKey := SeriesKey(p.Name, p.MetricOf)
+	return WrapInSeries(seriesKey, &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}), nil
 }
 func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	queries, params, err := t.buildTableOfResolutionsQuery(p)
@@ -161,7 +162,8 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p 
 		overallTotal = rawValues[i].FullCount
 		i++
 	}
-	return &TableResponse{Total: overallTotal, Count: overallCount, Values: rawValues}, nil
+	seriesKey := SeriesKey(p.Name, p.MetricOf)
+	return WrapInSeries(seriesKey, &TableResponse{Total: overallTotal, Count: overallCount, Values: rawValues}), nil
 }
 
 var extraConditions map[string]model.Filter = map[string]model.Filter{

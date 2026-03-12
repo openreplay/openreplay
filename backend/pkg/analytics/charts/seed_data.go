@@ -246,12 +246,13 @@ func generateTableSeedData(req *model.MetricPayload) map[string]interface{} {
 		}
 	}
 
+	seriesKey := SeriesKey(req.Name, req.MetricOf)
 	return map[string]interface{}{
-		"data": &TableResponse{
+		"data": WrapInSeries(seriesKey, &TableResponse{
 			Total:  count,
 			Count:  total,
 			Values: values,
-		},
+		}),
 	}
 }
 
