@@ -96,7 +96,16 @@ func (v *ImageStorage) SaveFramesContainer(ctx context.Context, sessID uint64, f
 	defer mu.Unlock()
 
 	path := filepath.Join(dir, fileName)
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("can't open frames container: %w", err)
+	}
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			v.log.Error(ctx, "can't close frames container %s: %s", fileName, closeErr)
+		}
+	}()
+	if _, err := f.Write(data); err != nil {
 		return fmt.Errorf("can't write frames container: %w", err)
 	}
 	v.log.Debug(ctx, "frames container saved, session: %d, file: %s, size: %d", sessID, fileName, len(data))
