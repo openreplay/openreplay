@@ -206,6 +206,29 @@ func TestGetColumnAccessor_DoesNotMutateSharedMap(t *testing.T) {
 	}
 }
 
+func TestCamelToSnake(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"userCountry", "user_country"},
+		{"userBrowser", "user_browser"},
+		{"userOs", "user_os"},
+		{"userId", "user_id"},
+		{"alreadysnake", "alreadysnake"},
+		{"ABCDef", "abcdef"},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := CamelToSnake(tt.input)
+			if got != tt.want {
+				t.Errorf("CamelToSnake(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 // Test for getColumnAccessor function
 func TestGetColumnAccessor(t *testing.T) {
 	tests := []struct {
