@@ -3,29 +3,60 @@ import { Button, Divider, Table } from 'antd';
 import type { TableProps } from 'antd';
 import cn from 'classnames';
 import { Download, Eye, EyeOff } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { formatIsoForColumn } from 'App/date';
+import { useStore } from 'App/mstore';
 import { exportAntCsv } from 'App/utils';
+import {
+  type NestedData,
+  collectTimestamps,
+  getDepth,
+  isLeaf,
+  sumAll,
+} from 'App/utils/breakdownTree';
+import TopNButton from '../BreakdownFilter/TopNButton';
+
+type TopNLimit = 3 | 10 | 0; // 0 = all
 
 /**
- * Data format example:
- * {
- *   "Series A": {
- *     "US": {
- *       "New York": { "2024-01-01": 100, "2024-01-02": 200 },
- *       "LA":       { "2024-01-01": 50,  "2024-01-02": 80 }
- *     },
- *     "UK": {
- *       "London": { "2024-01-01": 30, "2024-01-02": 40 }
- *     }
- *   }
- * }
- *
- * breakdownLabels: ["Country", "City"]  — labels for each nesting level
+ * Trim the data tree so that at the deepest breakdown level of each branch,
+ * only the top N entries (by sumAll) are kept.
+ * E.g. Country→City with topN=3 keeps only top 3 cities per country.
  */
+function trimTopN(
+  obj: NestedData,
+  topN: TopNLimit,
+): NestedData {
+  if (topN === 0) return obj;
+  if (isLeaf(obj)) return obj;
 
-type NestedData = Record<string, number> | Record<string, NestedData>;
+  const entries = Object.entries(obj);
+  const firstChild = entries[0]?.[1];
+  if (firstChild == null) return obj;
+
+  // Check if children are leaves — this is the deepest level to trim
+  if (isLeaf(firstChild as NestedData)) {
+    const sorted = entries
+      .map(([key, child]) => ({ key, child, total: sumAll(child as NestedData) }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, topN);
+    const result: Record<string, NestedData> = {};
+    sorted.forEach(({ key, child }) => {
+      result[key] = child as NestedData;
+    });
+    return result;
+  }
+
+  // Non-leaf children — recurse deeper
+  const result: Record<string, NestedData> = {};
+  entries.forEach(([key, child]) => {
+    result[key] = trimTopN(child as NestedData, topN);
+  });
+  return result;
+}
 
 interface Props {
   data: Record<string, NestedData>;
@@ -41,36 +72,6 @@ interface FlatRow {
   seriesRowSpan: number;
   levels: { label: string; total: number; pct: string; rowSpan: number }[];
   [timestampKey: string]: any;
-}
-
-function getDepth(obj: NestedData): number {
-  const firstVal = Object.values(obj)[0];
-  if (firstVal == null || typeof firstVal === 'number') return 0;
-  return 1 + getDepth(firstVal as NestedData);
-}
-
-function collectTimestamps(obj: NestedData, set: Set<string>): void {
-  const firstVal = Object.values(obj)[0];
-  if (firstVal == null) return;
-  if (typeof firstVal === 'number') {
-    Object.keys(obj).forEach((k) => set.add(k));
-  } else {
-    Object.values(obj).forEach((child) =>
-      collectTimestamps(child as NestedData, set),
-    );
-  }
-}
-
-function sumAll(obj: NestedData): number {
-  const firstVal = Object.values(obj)[0];
-  if (firstVal == null) return 0;
-  if (typeof firstVal === 'number') {
-    return Object.values(obj).reduce((s: number, v) => s + (v as number), 0);
-  }
-  return Object.values(obj).reduce(
-    (s, child) => s + sumAll(child as NestedData),
-    0,
-  );
 }
 
 function flattenNode(
@@ -91,9 +92,11 @@ function flattenNode(
     return [{ levels: [], tsValues }];
   }
 
-  // Non-leaf level
+  // Non-leaf level — sort children by total descending
   const rows: { levels: { label: string; total: number; pct: string; rowSpan: number }[]; tsValues: Record<string, number> }[] = [];
-  const entries = Object.entries(obj);
+  const entries = Object.entries(obj).sort(
+    ([, a], [, b]) => sumAll(b as NestedData) - sumAll(a as NestedData),
+  );
   entries.forEach(([label, child]) => {
     const childData = child as NestedData;
     const childTotal = sumAll(childData);
@@ -125,7 +128,7 @@ function buildTableData(
 
   const tsSet = new Set<string>();
   Object.values(data).forEach((seriesData) => collectTimestamps(seriesData, tsSet));
-  const timestamps = Array.from(tsSet).sort();
+  const timestamps = Array.from(tsSet).sort((a, b) => Number(a) - Number(b));
 
   // compute max depth across all series so columns cover every level
   const depth = Math.max(
@@ -195,12 +198,35 @@ function buildTableData(
 
 function BreakdownDatatable(props: Props) {
   const { t } = useTranslation();
+  const { metricStore } = useStore();
   const [showTable, setShowTable] = useState(props.defaultOpen);
+  const topN = metricStore.breakdownTopN as TopNLimit;
 
-  const { rows, timestamps, depth, columns } = useMemo(() => {
-    const { rows, timestamps, depth } = buildTableData(props.data);
+  const hasBreakdowns = useMemo(
+    () => Object.values(props.data).some((d) => getDepth(d) > 0),
+    [props.data],
+  );
 
-    const cols: TableProps['columns'] = [
+  const totalBreakdownValues = useMemo(() => {
+    if (!hasBreakdowns) return 0;
+    const allKeys = new Set<string>();
+    Object.values(props.data).forEach((d) => {
+      if (getDepth(d) > 0) {
+        Object.keys(d).forEach((k) => allKeys.add(k));
+      }
+    });
+    return allKeys.size;
+  }, [props.data, hasBreakdowns]);
+
+  const { rows, columns } = useMemo(() => {
+    const trimmed = hasBreakdowns
+      ? Object.fromEntries(
+          Object.entries(props.data).map(([k, v]) => [k, trimTopN(v, topN)]),
+        )
+      : props.data;
+    const { rows, timestamps, depth } = buildTableData(trimmed);
+
+    const cols: NonNullable<TableProps['columns']> = [
       {
         title: <span className="font-medium">Series</span>,
         dataIndex: 'seriesName',
@@ -242,18 +268,19 @@ function BreakdownDatatable(props: Props) {
       });
     }
 
-    timestamps.forEach((ts, i) => {
+    timestamps.forEach((ts) => {
+      const label = formatIsoForColumn(Number(ts));
       cols.push({
-        title: <span className="font-medium">{ts}</span>,
+        title: <span className="font-medium">{label}</span>,
         dataIndex: `ts_${ts}`,
         key: `ts_${ts}`,
         // @ts-ignore
-        _pureTitle: ts,
+        _pureTitle: label,
       });
     });
 
     return { rows, timestamps, depth, columns: cols };
-  }, [props.data, props.breakdownLabels]);
+  }, [props.data, props.breakdownLabels, topN, hasBreakdowns]);
 
   const isTableOnlyMode = props.metric.viewType === 'table';
 
@@ -286,7 +313,21 @@ function BreakdownDatatable(props: Props) {
       )}
 
       {showTable || isTableOnlyMode ? (
-        <div className="relative pb-2">
+        <div className="relative">
+          <div className="flex items-center mb-2">
+            {hasBreakdowns && props.inBuilder && (
+              <TopNButton totalValues={totalBreakdownValues} />
+            )}
+            <Button
+              icon={<Download size={14} />}
+              size="small"
+              type="default"
+              className="ml-auto"
+              onClick={() => exportAntCsv(columns, rows, props.metric.name)}
+            >
+              {t('Export as CSV')}
+            </Button>
+          </div>
           <Table
             columns={columns}
             dataSource={rows}
@@ -295,20 +336,10 @@ function BreakdownDatatable(props: Props) {
             scroll={{ x: 'max-content' }}
             bordered
           />
-          <div className="flex justify-end mt-2">
-            <Button
-              icon={<Download size={14} />}
-              size="small"
-              type="default"
-              onClick={() => exportAntCsv(columns, rows, props.metric.name)}
-            >
-              {t('Export as CSV')}
-            </Button>
-          </div>
         </div>
       ) : null}
     </div>
   );
 }
 
-export default BreakdownDatatable;
+export default observer(BreakdownDatatable);

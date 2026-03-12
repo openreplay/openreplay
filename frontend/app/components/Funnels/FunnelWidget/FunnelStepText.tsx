@@ -24,8 +24,8 @@ function FunnelStepText(props: Props) {
 
   return (
     <div
-      className="color-gray-medium flex items-center gap-1"
-      style={additionalStyle}
+      className="color-gray-medium truncate flex items-center gap-1"
+      style={{ maxWidth: '100%', ...additionalStyle }}
     >
       <span className="color-gray-darkest">{filter.label}</span>
 

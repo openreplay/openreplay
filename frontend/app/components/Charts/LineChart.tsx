@@ -74,7 +74,6 @@ function ORLineChart(props: Props) {
       },
       legend: {
         ...defaultOptions.legend,
-        // Only show legend for “current” series
         data: series
           .filter((s: any) => !s._hideInLegend)
           .map((s: any) => s.name),

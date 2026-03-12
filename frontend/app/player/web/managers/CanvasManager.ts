@@ -122,7 +122,8 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       return Promise.reject(FRAMES_MISSING);
     }
     // webp, jpeg, png, avif
-    const fileFormat = /\.(webp|jpeg|png|avif)$/.exec(this.links[2])?.[1] ?? 'webp';
+    const fileFormat =
+      /\.(webp|jpeg|png|avif)$/.exec(this.links[2])?.[1] ?? 'webp';
     return fetch(this.links[2])
       .then((r) => {
         if (r.status === 200) {

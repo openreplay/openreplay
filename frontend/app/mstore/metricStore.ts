@@ -1,19 +1,21 @@
+import { FilterKey } from 'Types/filter/filterType';
 import { makeAutoObservable, runInAction } from 'mobx';
-import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
+
 import {
-  TIMESERIES,
-  TABLE,
-  FUNNEL,
-  ERRORS,
-  INSIGHTS,
-  HEATMAP,
-  USER_PATH,
-  RETENTION,
   CATEGORIES,
+  ERRORS,
+  FUNNEL,
+  HEATMAP,
+  INSIGHTS,
+  RETENTION,
+  TABLE,
+  TIMESERIES,
+  USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import { FilterKey } from 'Types/filter/filterType';
+import { errorService, metricService } from 'App/services';
+
 import { ErrorInfo } from './types/error';
 import Widget from './types/widget';
 
@@ -98,6 +100,7 @@ export default class MetricStore {
   focusedSeriesName: string | null = null;
   disabledSeries: string[] = [];
   drillDown = false;
+  breakdownTopN: number = 3;
 
   constructor() {
     makeAutoObservable(this);
@@ -139,6 +142,10 @@ export default class MetricStore {
 
   setDisabledSeries(series: string[]) {
     this.disabledSeries = series;
+  }
+
+  setBreakdownTopN(n: number) {
+    this.breakdownTopN = n;
   }
 
   setCardCategory(category: string) {
