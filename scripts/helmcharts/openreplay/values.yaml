@@ -113,7 +113,7 @@ clickhouse: &clickhouse
   image:
     registry: docker.io
     repository: clickhouse/clickhouse-server
-    tag: 25.9-alpine
+    tag: 25.12-alpine
 
 global:
   clickhouse: *clickhouse
