@@ -101,7 +101,7 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 		return t.executeWithBreakdowns(ctx, p, conn)
 	}
 
-	query, err := t.buildQuery(p)
+	query, params, err := t.buildQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
@@ -109,8 +109,9 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 	_start := time.Now()
 	t.Logger.Debug(ctx, "Executing query: %s", query)
 
+	chParams := convertParams(params)
 	var rawValues []TableValue = make([]TableValue, 0)
-	if err = conn.Select(ctx, &rawValues, query); err != nil {
+	if err = conn.Select(ctx, &rawValues, query, chParams...); err != nil {
 		t.Logger.Error(ctx, "Error executing query: %s\nQuery: %s", err, query)
 		return nil, err
 	}
@@ -180,14 +181,14 @@ func uniqueSliceOfStrings(slice []string) []string {
 	return list
 }
 
-func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
+func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, error) {
 	if r == nil {
-		return "", errors.New("payload is nil")
+		return "", nil, errors.New("payload is nil")
 	}
 
 	s := r.Series[0]
 	if r.MetricOf == "screenResolution" {
-		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
+		return "", nil, fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
 	}
 	var eventsTable = getMainEventsTable(r.StartTimestamp)
 	var sessionsTable = getMainSessionsTable(r.StartTimestamp)
@@ -217,7 +218,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
 	sessionConditions := t.buildSessionConditions(r, r.MetricFormat, durConds)
 	eventsHaving, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	eventsConditions = append(eventsConditions, whereClause...)
 	if len(nameConditions) > 0 {
@@ -391,7 +392,12 @@ LIMIT %d OFFSET %d;`,
 
 	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
 
-	return query, nil
+	params := map[string]any{
+		"projectId":      r.ProjectId,
+		"startTimestamp": r.StartTimestamp,
+		"endTimestamp":   r.EndTimestamp,
+	}
+	return query, params, nil
 }
 
 func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, map[string]any, error) {
@@ -555,7 +561,7 @@ func (t *TableQueryBuilder) buildPrewhereConditions(r *Payload, eventsOrder mode
 	}
 
 	// Add core conditions
-	prewhereParts = append(prewhereParts, t.buildTimeRangeConditions("main", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
+	prewhereParts = append(prewhereParts, t.buildTimeRangeConditions("main")...)
 
 	// Add additional conditions
 	if len(otherConds) > 0 {
@@ -600,7 +606,7 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 	var sessionConditions []string = make([]string, 0)
 
 	// Add core session conditions
-	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
+	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s")...)
 	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
 
 	// Add duration conditions
@@ -637,9 +643,9 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 	return sessionConditions
 }
 
-func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectId int, startTimestamp, endTimestamp uint64) []string {
+func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string) []string {
 	conditions := []string{
-		fmt.Sprintf("%s.project_id = %d", tableAlias, projectId),
+		fmt.Sprintf("%s.project_id = @projectId", tableAlias),
 	}
 
 	timestampColumn := "created_at"
@@ -648,8 +654,8 @@ func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectI
 	}
 
 	conditions = append(conditions,
-		fmt.Sprintf("%s.%s >= toDateTime(%d/1000)", tableAlias, timestampColumn, startTimestamp),
-		fmt.Sprintf("%s.%s <= toDateTime(%d/1000)", tableAlias, timestampColumn, endTimestamp),
+		fmt.Sprintf("%s.%s >= toDateTime(@startTimestamp/1000)", tableAlias, timestampColumn),
+		fmt.Sprintf("%s.%s <= toDateTime(@endTimestamp/1000)", tableAlias, timestampColumn),
 	)
 
 	return conditions
@@ -665,7 +671,7 @@ func (t *TableQueryBuilder) calculatePagination(page, limit int) model.Paginatio
 func (t *TableQueryBuilder) executeWithBreakdowns(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	numBreakdowns := len(p.Breakdowns)
 
-	query, err := t.buildQuery(p)
+	query, params, err := t.buildQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
@@ -673,7 +679,8 @@ func (t *TableQueryBuilder) executeWithBreakdowns(ctx context.Context, p *Payloa
 	_start := time.Now()
 	t.Logger.Debug(ctx, "Executing query: %s", query)
 
-	rows, err := conn.Query(ctx, query)
+	chParams := convertParams(params)
+	rows, err := conn.Query(ctx, query, chParams...)
 	if err != nil {
 		t.Logger.Error(ctx, "Error executing query: %s\nQuery: %s", err, query)
 		return nil, err
