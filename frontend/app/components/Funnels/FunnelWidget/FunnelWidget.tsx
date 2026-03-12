@@ -1,30 +1,33 @@
-import React, { useEffect } from 'react';
-import Widget from 'App/mstore/types/widget';
-import Funnel from 'App/mstore/types/funnel';
-import cn from 'classnames';
-import { observer } from 'mobx-react-lite';
-import { NoContent, Icon } from 'UI';
-import { Tag, Tooltip } from 'antd';
-import { useModal } from 'App/components/Modal';
 import { useStore } from '@/mstore';
 import Filter from '@/mstore/types/filter';
-import stl from './FunnelWidget.module.css';
-import Funnelbar, { UxTFunnelBar } from './FunnelBar';
+import { Tag, Tooltip } from 'antd';
+import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import TopNButton from 'App/components/Dashboard/components/BreakdownFilter/TopNButton';
+import { useModal } from 'App/components/Modal';
+import Funnel from 'App/mstore/types/funnel';
+import Widget from 'App/mstore/types/widget';
+import { Icon, NoContent } from 'UI';
+
+import Funnelbar, { UxTFunnelBar } from './FunnelBar';
+import stl from './FunnelWidget.module.css';
 
 interface Props {
   metric?: Widget;
   isWidget?: boolean;
-  data: { funnel: Funnel };
-  compData: { funnel: Funnel };
+  data: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  compData: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
 }
 
 function FunnelWidget(props: Props) {
   const { t } = useTranslation();
-  const { dashboardStore } = useStore();
+  const { dashboardStore, metricStore } = useStore();
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
   const { isWidget = false, data, metric, compData } = props;
-  const funnel = data.funnel || { stages: [] };
+  const funnel = data?.funnel || { stages: [] };
   const totalSteps = funnel.stages.length;
   const stages = isWidget
     ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]]
@@ -85,27 +88,57 @@ function FunnelWidget(props: Props) {
     applyDrillDown(focusedFilter === index ? -1 : index, isComp);
   };
 
+  const topN = metricStore.breakdownTopN;
+  const funnelBreakdown = data?.funnelBreakdown;
+  const compBreakdown = compData?.funnelBreakdown;
+  const allBreakdownKeys = funnelBreakdown ? Object.keys(funnelBreakdown) : [];
+  const breakdownKeys =
+    topN > 0 ? allBreakdownKeys.slice(0, topN) : allBreakdownKeys;
+
   const shownStages = React.useMemo(() => {
     const stages: {
       data: Funnel['stages'][0];
       compData?: Funnel['stages'][0];
+      breakdownStages?: {
+        key: string;
+        stage: Funnel['stages'][0];
+        compStage?: Funnel['stages'][0];
+      }[];
     }[] = [];
     for (let i = 0; i < funnel.stages.length; i++) {
       const stage: any = { data: funnel.stages[i], compData: undefined };
-      const compStage = compData?.funnel.stages[i];
+      const compStage = compData?.funnel?.stages?.[i];
       if (compStage) {
         stage.compData = compStage;
+      }
+      if (funnelBreakdown) {
+        stage.breakdownStages = breakdownKeys
+          .map((key) => ({
+            key,
+            stage: funnelBreakdown[key]?.stages?.[i],
+            compStage: compBreakdown?.[key]?.stages?.[i],
+          }))
+          .filter((b) => b.stage);
       }
       stages.push(stage);
     }
 
     return stages;
-  }, [data, compData]);
+  }, [data, compData, breakdownKeys]);
 
   const viewType = metric?.viewType;
   const isHorizontal = viewType === 'columnChart';
   const noEvents = metric.series[0].filter.filters.length === 0;
   const isUsers = metric?.metricFormat === 'userCount';
+
+  const compLabel = React.useMemo(() => {
+    if (!comparisonPeriod) return '';
+    const ts = comparisonPeriod.toTimestamps?.() ?? comparisonPeriod;
+    if (!ts.startTimestamp || !ts.endTimestamp) return t('Previous period');
+    const start = new Date(ts.startTimestamp).toLocaleDateString();
+    const end = new Date(ts.endTimestamp).toLocaleDateString();
+    return `${start} – ${end}`;
+  }, [comparisonPeriod]);
   return (
     <NoContent
       style={{ minHeight: 220 }}
@@ -136,9 +169,15 @@ function FunnelWidget(props: Props) {
               isWidget={isWidget}
               stage={stage.data}
               compData={stage.compData}
+              breakdownStages={stage.breakdownStages}
               focusStage={focusStage}
               focusedFilter={focusedFilter}
               metricLabel={metricLabel}
+              compLabel={
+                stage.compData
+                  ? `${t('Previous Step')} ${index + 1}${compLabel ? ` (${compLabel})` : ''}`
+                  : undefined
+              }
             />
           ))}
 
@@ -165,7 +204,7 @@ function FunnelWidget(props: Props) {
             <Tag
               variant="filled"
               color="var(--color-gray-lightest)"
-              className="text-lg rounded-lg text-black!"
+              className="rounded-lg! text-gray-lightest!"
             >
               {funnel.totalConversions}
             </Tag>
@@ -181,7 +220,7 @@ function FunnelWidget(props: Props) {
             <Tag
               variant="filled"
               color="var(--color-red-lightest)"
-              className="text-lg rounded-lg text-black!"
+              className="rounded-lg! text-red-lightest!"
             >
               {funnel.lostConversions}
             </Tag>
@@ -195,6 +234,11 @@ function FunnelWidget(props: Props) {
             {funnel.totalDropDueToIssues}&nbsp;
             {t('sessions dropped due to issues.')}
           </span>
+        </div>
+      )}
+      {allBreakdownKeys.length > 0 && (
+        <div className="flex items-center">
+          <TopNButton totalValues={allBreakdownKeys.length} />
         </div>
       )}
     </NoContent>
@@ -228,6 +272,8 @@ export const Stage = observer(
     focusedFilter,
     compData,
     isHorizontal,
+    breakdownStages,
+    compLabel,
   }: any) =>
     stage ? (
       <div
@@ -245,6 +291,8 @@ export const Stage = observer(
             filter={stage}
             focusStage={focusStage}
             focusedFilter={focusedFilter}
+            breakdownStages={breakdownStages}
+            compLabel={compLabel}
           />
         ) : (
           <UxTFunnelBar filter={stage} />

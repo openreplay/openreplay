@@ -1,7 +1,9 @@
-import { DateTime, Duration } from 'luxon';
-import { Timezone } from 'App/mstore/types/sessionSettings';
-import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
 import { CUSTOM_RANGE } from '@/dateRange';
+import { LAST_7_DAYS, LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import { DateTime, Duration } from 'luxon';
+
+import { Timezone } from 'App/mstore/types/sessionSettings';
+
 import { getLocalHourFormat } from './utils/intlUtils';
 
 export function getDateFromString(
@@ -263,6 +265,30 @@ export const getDateRangeUTC = (
     endDate,
   };
 };
+
+/**
+ * Format a timestamp (ms) or ISO date string for table column headers.
+ * Same day as today: show time only (e.g. "2:45 pm")
+ * Otherwise: show short weekday + date (e.g. "Mon, Mar 9")
+ */
+export function formatIsoForColumn(input: string | number): string {
+  const date =
+    typeof input === 'number'
+      ? DateTime.fromMillis(input)
+      : DateTime.fromISO(input);
+  if (!date.isValid) return String(input);
+  const hourFormat = getLocalHourFormat(false);
+
+  if (isToday(date)) {
+    return date.toFormat(hourFormat).toLowerCase();
+  }
+
+  const isUSLocale = navigator.language?.startsWith('en-US');
+  const dateStr = isUSLocale
+    ? date.toFormat('MM/dd')
+    : date.toFormat('dd/MM');
+  return `${date.toFormat('ccc')}, ${dateStr}`;
+}
 
 export const diffIfRecent = (ts: number): string => {
   const now = Date.now();

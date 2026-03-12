@@ -1,14 +1,15 @@
-import * as echarts from 'echarts/core';
 import {
   DatasetComponent,
-  TitleComponent,
-  TooltipComponent,
+  GraphicComponent,
   GridComponent,
   LegendComponent,
+  TitleComponent,
   ToolboxComponent,
-  GraphicComponent,
+  TooltipComponent,
 } from 'echarts/components';
+import * as echarts from 'echarts/core';
 import { SVGRenderer } from 'echarts/renderers';
+
 import { mobileScreen } from 'App/utils/isMobile';
 
 echarts.use([
@@ -60,7 +61,7 @@ const defaultOptions = {
     },
   },
   legend: {
-    type: 'plain',
+    type: 'scroll',
     show: true,
     top: 0,
     icon: 'pin',

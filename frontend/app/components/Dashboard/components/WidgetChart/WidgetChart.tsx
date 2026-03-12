@@ -26,6 +26,7 @@ import {
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
+import { collectTimestamps, remapTimestamps } from 'App/utils/breakdownTree';
 import { hasSampling } from 'App/utils/split-utils';
 import BarChart from 'Components/Charts/BarChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
@@ -35,6 +36,7 @@ import SankeyChart from 'Components/Charts/SankeyChart';
 import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
 import WebVitalsChart from 'Components/Charts/WebVitals';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
+import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
 import { Icon, Loader } from 'UI';
 
 import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
@@ -98,17 +100,18 @@ function WidgetChart(props: Props) {
     }
   }, [enabledRows]);
 
+  const chartData = data?.chart;
   useEffect(() => {
-    if (!data.chart) return;
-    const series = data.chart[0]
-      ? Object.keys(data.chart[0]).filter(
+    if (!chartData) return;
+    const series = chartData[0]
+      ? Object.keys(chartData[0]).filter(
           (key) => key !== 'time' && key !== 'timestamp',
         )
       : [];
     if (series.length) {
       setEnabledRows(series);
     }
-  }, [data.chart]);
+  }, [chartData]);
 
   const onChartClick = (event: any) => {
     metricStore.setDrillDown(true);
@@ -269,6 +272,7 @@ function WidgetChart(props: Props) {
     depsString,
     dashboardStore.selectedDensity,
     _metric.metricOf,
+    _metric.breakdowns,
   ]);
   useEffect(() => {
     setCompData(null);
@@ -290,6 +294,7 @@ function WidgetChart(props: Props) {
     _metric.rows,
     _metric.stepsBefore,
     _metric.stepsAfter,
+    _metric.breakdowns,
     inView,
   ]);
   useEffect(loadPage, [_metric.page]);
@@ -371,13 +376,28 @@ function WidgetChart(props: Props) {
         eventCount: t('Number of Events'),
         userCount: t('Number of Users'),
       };
+      const topN = metricStore.breakdownTopN;
       const chartData = { ...data };
       chartData.namesMap = Array.isArray(chartData.namesMap)
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : chartData.namesMap;
+
+      // data is already sorted during mapping in widget.ts
+      if (topN > 0 && Array.isArray(chartData.namesMap)) {
+        let kept = 0;
+        chartData.namesMap = chartData.namesMap.map((n) => {
+          if (n == null) return null;
+          kept++;
+          return kept <= topN ? n : null;
+        });
+      }
+
       const compDataCopy = { ...compData };
       compDataCopy.namesMap = Array.isArray(compDataCopy.namesMap)
-        ? compDataCopy.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
+        ? compDataCopy.namesMap.map((n) => {
+            const baseName = n?.replace(/^Previous\s+/, '');
+            return chartData.namesMap?.includes(baseName) ? n : null;
+          })
         : compDataCopy.namesMap;
 
       if (viewType === 'lineChart') {
@@ -539,11 +559,20 @@ function WidgetChart(props: Props) {
         );
       }
       if (viewType === TABLE) {
+        if (data.hasBreakdown) {
+          return (
+            <SessionsByWithBreakdown
+              metric={_metric}
+              data={data}
+              onClick={onChartClick}
+              isTemplate={isTemplate}
+            />
+          );
+        }
         return (
           <SessionsBy
             metric={_metric}
             data={data}
-            height={height}
             onClick={onChartClick}
             isTemplate={isTemplate}
           />
@@ -654,14 +683,45 @@ function WidgetChart(props: Props) {
       );
     }
     console.log('Unknown metric type', metricType);
-    return <div>{t('Unknown metric type')}</div>;
-  }, [data, compData, enabledRows, _metric, data]);
+    return (
+      <div>
+        {t('Unknown metric type')} {metricType}
+      </div>
+    );
+  }, [data, compData, enabledRows, _metric, data, metricStore.breakdownTopN]);
 
   const showTable =
     _metric.metricType === TIMESERIES &&
     (props.isPreview || _metric.viewType === TABLE);
-  const tableMode =
-    _metric.viewType === 'table' && _metric.metricType === TIMESERIES;
+
+  const mergedBreakdownData = React.useMemo(() => {
+    if (!data?.breakdownData) return null;
+    if (!compData?.breakdownData) return data.breakdownData;
+
+    const curTs = new Set<string>();
+    Object.values(data.breakdownData).forEach((d) =>
+      collectTimestamps(d, curTs),
+    );
+    const compTs = new Set<string>();
+    Object.values(compData.breakdownData).forEach((d) =>
+      collectTimestamps(d, compTs),
+    );
+
+    const curArr = Array.from(curTs).sort((a, b) => Number(a) - Number(b));
+    const compArr = Array.from(compTs).sort((a, b) => Number(a) - Number(b));
+    const tsMap: Record<string, string> = {};
+    compArr.forEach((ts, i) => {
+      if (curArr[i]) tsMap[ts] = curArr[i];
+    });
+
+    const remapped = Object.fromEntries(
+      Object.entries(compData.breakdownData).map(([k, v]) => [
+        `Previous ${k}`,
+        remapTimestamps(v, tsMap),
+      ]),
+    );
+    return { ...data.breakdownData, ...remapped };
+  }, [data?.breakdownData, compData?.breakdownData]);
 
   return (
     <div ref={ref}>
@@ -674,41 +734,11 @@ function WidgetChart(props: Props) {
       ) : (
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
-          {showTable ? (
+          {showTable &&
+          mergedBreakdownData &&
+          Object.keys(mergedBreakdownData).length > 0 ? (
             <BreakdownDatatable
-              data={{
-                'Sessions Count': {
-                  US: {
-                    'New York': { 'Jan 1': 1200, 'Jan 2': 1350, 'Jan 3': 980, 'Jan 4': 1100, 'Jan 5': 1450, 'Jan 6': 1600, 'Jan 7': 1200 },
-                    'Los Angeles': { 'Jan 1': 800, 'Jan 2': 750, 'Jan 3': 620, 'Jan 4': 900, 'Jan 5': 1020, 'Jan 6': 1100, 'Jan 7': 950 },
-                    Chicago: { 'Jan 1': 400, 'Jan 2': 380, 'Jan 3': 350, 'Jan 4': 410, 'Jan 5': 500, 'Jan 6': 520, 'Jan 7': 460 },
-                  },
-                  UK: {
-                    London: { 'Jan 1': 600, 'Jan 2': 650, 'Jan 3': 580, 'Jan 4': 620, 'Jan 5': 700, 'Jan 6': 720, 'Jan 7': 680 },
-                    Manchester: { 'Jan 1': 200, 'Jan 2': 180, 'Jan 3': 210, 'Jan 4': 190, 'Jan 5': 250, 'Jan 6': 230, 'Jan 7': 220 },
-                  },
-                  Germany: {
-                    Berlin: { 'Jan 1': 350, 'Jan 2': 370, 'Jan 3': 310, 'Jan 4': 340, 'Jan 5': 400, 'Jan 6': 420, 'Jan 7': 380 },
-                    Munich: { 'Jan 1': 150, 'Jan 2': 160, 'Jan 3': 140, 'Jan 4': 170, 'Jan 5': 200, 'Jan 6': 190, 'Jan 7': 180 },
-                  },
-                },
-                'Error Count': {
-                  US: {
-                    'New York': { 'Jan 1': 45, 'Jan 2': 52, 'Jan 3': 38, 'Jan 4': 41, 'Jan 5': 60, 'Jan 6': 55, 'Jan 7': 48 },
-                    'Los Angeles': { 'Jan 1': 30, 'Jan 2': 28, 'Jan 3': 22, 'Jan 4': 35, 'Jan 5': 40, 'Jan 6': 38, 'Jan 7': 33 },
-                    Chicago: { 'Jan 1': 15, 'Jan 2': 12, 'Jan 3': 10, 'Jan 4': 18, 'Jan 5': 20, 'Jan 6': 17, 'Jan 7': 14 },
-                  },
-                  UK: {
-                    London: { 'Jan 1': 22, 'Jan 2': 25, 'Jan 3': 20, 'Jan 4': 23, 'Jan 5': 28, 'Jan 6': 26, 'Jan 7': 24 },
-                    Manchester: { 'Jan 1': 8, 'Jan 2': 7, 'Jan 3': 9, 'Jan 4': 6, 'Jan 5': 10, 'Jan 6': 11, 'Jan 7': 8 },
-                  },
-                  Germany: {
-                    Berlin: { 'Jan 1': 12, 'Jan 2': 14, 'Jan 3': 11, 'Jan 4': 13, 'Jan 5': 16, 'Jan 6': 15, 'Jan 7': 13 },
-                    Munich: { 'Jan 1': 5, 'Jan 2': 6, 'Jan 3': 4, 'Jan 4': 7, 'Jan 5': 8, 'Jan 6': 7, 'Jan 7': 6 },
-                  },
-                },
-              }}
-              breakdownLabels={['Country', 'City']}
+              data={mergedBreakdownData}
               inBuilder={props.isPreview}
               defaultOpen
               metric={_metric}
