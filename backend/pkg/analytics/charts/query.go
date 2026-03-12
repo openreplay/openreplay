@@ -250,6 +250,10 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 			parts = append(parts, fmt.Sprintf("%s\"$auto_captured\"", alias))
 		}
 
+		// TODO(analytics): Nested sub-filters are always joined with AND.
+		// The parent filter's PropertyOrder ("or"/"and") is not applied here.
+		// To fix: when PropertyOrder == "or", join subConds with " OR " instead of " AND ".
+		// See: query_test.go TestBuildEventConditions "Events filters with multiple properties"
 		for _, sub := range f.Filters {
 			subConds, _ := addFilter(sub, opts, true)
 			if len(subConds) > 0 {
