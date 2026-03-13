@@ -1,8 +1,6 @@
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.24.0';
 
 
-DROP TABLE IF EXISTS experimental.events;
-
 DROP TABLE IF EXISTS product_analytics.users;
 CREATE TABLE IF NOT EXISTS product_analytics.users
 (
