@@ -1,7 +1,8 @@
 from fastapi import Depends, Body
 
 import schemas
-from chalicelib.core import events, jobs, projects
+from chalicelib.core import jobs, projects
+from chalicelib.core.events import events
 from chalicelib.core.sessions import sessions
 from or_dependencies import OR_context
 from routers.base import get_routers
