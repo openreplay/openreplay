@@ -64,6 +64,7 @@ func (s *cardsImpl) scanCard(r rowScanner) (*CardGetResponse, error) {
 		c.StepsAfter = info.StepsAfter
 		c.StartPoint = info.StartPoint
 		c.Excludes = info.Excludes
+		c.Breakdowns = info.Breakdowns
 	}
 	return c, nil
 }
@@ -135,6 +136,7 @@ func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest)
 		StepsAfter:  req.StepsAfter,
 		StartPoint:  req.StartPoint,
 		Excludes:    req.Excludes,
+		Breakdowns:  req.Breakdowns,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal card info: %w", err)
@@ -334,6 +336,7 @@ func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *Card
 		StepsAfter:  req.StepsAfter,
 		StartPoint:  req.StartPoint,
 		Excludes:    req.Excludes,
+		Breakdowns:  req.Breakdowns,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal card info: %w", err)

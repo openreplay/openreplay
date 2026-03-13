@@ -33,6 +33,7 @@ type CardInfo struct {
 	StepsAfter  *int64         `json:"stepsAfter"`
 	StartPoint  []model.Filter `json:"startPoint"`
 	Excludes    []model.Filter `json:"excludes"`
+	Breakdowns  []string       `json:"breakdowns" validate:"omitempty,max=3,unique,dive,oneof=userCountry userCity userState userBrowser userDevice userOs referrer userId platform utmSource utmMedium utmCampaign userDeviceType revId issueType currentPath referringDomain searchEngine httpMethod statusCode urlHost"`
 }
 
 // Card Fields specific to database operations

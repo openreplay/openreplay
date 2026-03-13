@@ -120,6 +120,7 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		Series:         card.Series,
 		StartPoint:     card.StartPoint,
 		Exclude:        card.Excludes,
+		Breakdowns:     card.Breakdowns,
 		StartTimestamp: params.StartTimestamp,
 		EndTimestamp:   params.EndTimestamp,
 		Density:        params.Density,
@@ -127,9 +128,8 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		Limit:          params.Limit,
 		SortBy:         params.SortBy,
 		SortOrder:      params.SortOrder,
-		// These values will allow dashboard previews to have less data points (especially for user journeys)
-		HideExcess: true,
-		Rows:       5,
+		HideExcess:     true,
+		Rows:           5,
 	}
 
 	if err = e.validator.Struct(req); err != nil {
