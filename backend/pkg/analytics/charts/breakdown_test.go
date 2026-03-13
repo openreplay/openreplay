@@ -567,6 +567,87 @@ func TestFunnelBreakdownNeedsSessions_EventOnlyDims(t *testing.T) {
 	}
 }
 
+// --- Tests for JSON property breakdown dimensions (httpMethod, statusCode, urlHost) ---
+
+func TestValidateBreakdowns_JSONPropertyDimensions(t *testing.T) {
+	for _, dim := range []string{"httpMethod", "statusCode", "urlHost"} {
+		t.Run(dim, func(t *testing.T) {
+			if err := ValidateBreakdowns([]string{dim}); err != nil {
+				t.Errorf("ValidateBreakdowns(%q) unexpected error: %v", dim, err)
+			}
+		})
+	}
+}
+
+func TestHasEventOnlyBreakdowns_JSONProps(t *testing.T) {
+	if !HasEventOnlyBreakdowns([]string{"httpMethod"}) {
+		t.Error("httpMethod should be event-only")
+	}
+	if !HasEventOnlyBreakdowns([]string{"statusCode"}) {
+		t.Error("statusCode should be event-only")
+	}
+	if !HasEventOnlyBreakdowns([]string{"urlHost"}) {
+		t.Error("urlHost should be event-only")
+	}
+}
+
+func TestGetEventOnlyBreakdownProjection_JSONProps(t *testing.T) {
+	tests := []struct {
+		dim  string
+		want string
+	}{
+		{"httpMethod", `toString(main."$properties"."method") AS break1`},
+		{"statusCode", `toString(main."$properties"."status") AS break1`},
+		{"urlHost", `toString(main."$properties"."url_host") AS break1`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.dim, func(t *testing.T) {
+			got := GetEventOnlyBreakdownProjection([]string{tt.dim}, "main")
+			if len(got) != 1 {
+				t.Fatalf("expected 1 part, got %d: %v", len(got), got)
+			}
+			if got[0] != tt.want {
+				t.Errorf("got %q, want %q", got[0], tt.want)
+			}
+		})
+	}
+}
+
+func TestGetFunnelBreakdownProjection_JSONProps(t *testing.T) {
+	tests := []struct {
+		dim  string
+		want string
+	}{
+		{"httpMethod", `toString(e."$properties"."method") AS break1`},
+		{"statusCode", `toString(e."$properties"."status") AS break1`},
+		{"urlHost", `toString(e."$properties"."url_host") AS break1`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.dim, func(t *testing.T) {
+			got := GetFunnelBreakdownProjection([]string{tt.dim})
+			if len(got) != 1 {
+				t.Fatalf("expected 1 part, got %d: %v", len(got), got)
+			}
+			if got[0] != tt.want {
+				t.Errorf("got %q, want %q", got[0], tt.want)
+			}
+		})
+	}
+}
+
+func TestGetEventOnlyBreakdownNamedProjection_JSONProps(t *testing.T) {
+	got := GetEventOnlyBreakdownNamedProjection([]string{"httpMethod", "urlHost"}, "main")
+	if len(got) != 2 {
+		t.Fatalf("expected 2 parts, got %d: %v", len(got), got)
+	}
+	if got[0] != `toString(main."$properties"."method") AS httpMethod` {
+		t.Errorf("got[0] = %q", got[0])
+	}
+	if got[1] != `toString(main."$properties"."url_host") AS urlHost` {
+		t.Errorf("got[1] = %q", got[1])
+	}
+}
+
 func TestBuildTimeseriesSeriesMap_WithBreakdowns(t *testing.T) {
 	data := map[breakdownKey]map[string]uint64{
 		{Timestamp: 1000, Values: [3]string{"US", "", ""}}: {"sessions": 8},

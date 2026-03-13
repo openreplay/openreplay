@@ -13,6 +13,7 @@ type BreakdownDimension struct {
 	SessionColumn string
 	EventColumn   string
 	EventOnly     bool
+	CastToString  bool
 }
 
 var breakdownDimensions = map[string]BreakdownDimension{
@@ -34,6 +35,9 @@ var breakdownDimensions = map[string]BreakdownDimension{
 	"currentPath":     {EventColumn: `"$current_path"`, EventOnly: true},
 	"referringDomain": {EventColumn: `"$referring_domain"`, EventOnly: true},
 	"searchEngine":    {EventColumn: `"$search_engine"`, EventOnly: true},
+	"httpMethod":      {EventColumn: `"$properties"."method"`, EventOnly: true, CastToString: true},
+	"statusCode":      {EventColumn: `"$properties"."status"`, EventOnly: true, CastToString: true},
+	"urlHost":         {EventColumn: `"$properties"."url_host"`, EventOnly: true, CastToString: true},
 }
 
 func NormalizeBreakdownValue(s string) string {
@@ -65,6 +69,14 @@ func SplitBreakdowns(breakdowns []string) (session []string, eventOnly []string)
 	return
 }
 
+func prefixedColumn(dim BreakdownDimension, tableAlias string) string {
+	col := fmt.Sprintf(`%s.%s`, tableAlias, dim.EventColumn)
+	if dim.CastToString {
+		return fmt.Sprintf(`toString(%s)`, col)
+	}
+	return col
+}
+
 func GetEventOnlyBreakdownProjection(breakdowns []string, tableAlias string) []string {
 	parts := make([]string, 0)
 	for i, b := range breakdowns {
@@ -72,7 +84,7 @@ func GetEventOnlyBreakdownProjection(breakdowns []string, tableAlias string) []s
 		if !ok || !dim.EventOnly {
 			continue
 		}
-		parts = append(parts, fmt.Sprintf(`%s.%s AS break%d`, tableAlias, dim.EventColumn, i+1))
+		parts = append(parts, fmt.Sprintf(`%s AS break%d`, prefixedColumn(dim, tableAlias), i+1))
 	}
 	return parts
 }
@@ -84,7 +96,7 @@ func GetEventOnlyBreakdownNamedProjection(breakdowns []string, tableAlias string
 		if !ok || !dim.EventOnly {
 			continue
 		}
-		parts = append(parts, fmt.Sprintf(`%s.%s AS %s`, tableAlias, dim.EventColumn, b))
+		parts = append(parts, fmt.Sprintf(`%s AS %s`, prefixedColumn(dim, tableAlias), b))
 	}
 	return parts
 }
@@ -297,9 +309,11 @@ func GetFunnelBreakdownProjection(breakdowns []string) []string {
 		if !ok {
 			continue
 		}
-		col := dim.EventColumn
+		var col string
 		if dim.EventOnly {
-			col = "e." + col
+			col = prefixedColumn(dim, "e")
+		} else {
+			col = dim.EventColumn
 		}
 		parts = append(parts, fmt.Sprintf(`%s AS break%d`, col, i+1))
 	}
