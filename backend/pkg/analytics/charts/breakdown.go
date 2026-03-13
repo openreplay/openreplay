@@ -12,24 +12,28 @@ import (
 type BreakdownDimension struct {
 	SessionColumn string
 	EventColumn   string
+	EventOnly     bool
 }
 
 var breakdownDimensions = map[string]BreakdownDimension{
-	"userCountry":    {SessionColumn: "user_country", EventColumn: `e."$country"`},
-	"userCity":       {SessionColumn: "user_city", EventColumn: `e."$city"`},
-	"userState":      {SessionColumn: "user_state", EventColumn: `e."$state"`},
-	"userBrowser":    {SessionColumn: "user_browser", EventColumn: `e."$browser"`},
-	"userDevice":     {SessionColumn: "user_device", EventColumn: "s.user_device"},
-	"userOs":         {SessionColumn: "user_os", EventColumn: `e."$os"`},
-	"referrer":       {SessionColumn: "referrer", EventColumn: `e."$referrer"`},
-	"userId":         {SessionColumn: "user_id", EventColumn: "s.user_id"},
-	"platform":       {SessionColumn: "platform", EventColumn: "s.platform"},
-	"utmSource":      {SessionColumn: "utm_source", EventColumn: `e.utm_source`},
-	"utmMedium":      {SessionColumn: "utm_medium", EventColumn: `e.utm_medium`},
-	"utmCampaign":    {SessionColumn: "utm_campaign", EventColumn: `e.utm_campaign`},
-	"userDeviceType": {SessionColumn: "user_device_type", EventColumn: `e."$device"`},
-	"revId":          {SessionColumn: "rev_id", EventColumn: "s.rev_id"},
-	"issueType":      {SessionColumn: "arrayJoin(issue_types)", EventColumn: "e.issue_type"},
+	"userCountry":     {SessionColumn: "user_country", EventColumn: `e."$country"`},
+	"userCity":        {SessionColumn: "user_city", EventColumn: `e."$city"`},
+	"userState":       {SessionColumn: "user_state", EventColumn: `e."$state"`},
+	"userBrowser":     {SessionColumn: "user_browser", EventColumn: `e."$browser"`},
+	"userDevice":      {SessionColumn: "user_device", EventColumn: "s.user_device"},
+	"userOs":          {SessionColumn: "user_os", EventColumn: `e."$os"`},
+	"referrer":        {SessionColumn: "referrer", EventColumn: `e."$referrer"`},
+	"userId":          {SessionColumn: "user_id", EventColumn: "s.user_id"},
+	"platform":        {SessionColumn: "platform", EventColumn: "s.platform"},
+	"utmSource":       {SessionColumn: "utm_source", EventColumn: `e.utm_source`},
+	"utmMedium":       {SessionColumn: "utm_medium", EventColumn: `e.utm_medium`},
+	"utmCampaign":     {SessionColumn: "utm_campaign", EventColumn: `e.utm_campaign`},
+	"userDeviceType":  {SessionColumn: "user_device_type", EventColumn: `e."$device"`},
+	"revId":           {SessionColumn: "rev_id", EventColumn: "s.rev_id"},
+	"issueType":       {SessionColumn: "arrayJoin(issue_types)", EventColumn: "e.issue_type"},
+	"currentPath":     {EventColumn: `"$current_path"`, EventOnly: true},
+	"referringDomain": {EventColumn: `"$referring_domain"`, EventOnly: true},
+	"searchEngine":    {EventColumn: `"$search_engine"`, EventOnly: true},
 }
 
 func NormalizeBreakdownValue(s string) string {
@@ -37,6 +41,52 @@ func NormalizeBreakdownValue(s string) string {
 		return "(empty)"
 	}
 	return s
+}
+
+func HasEventOnlyBreakdowns(breakdowns []string) bool {
+	for _, b := range breakdowns {
+		if dim, ok := breakdownDimensions[b]; ok && dim.EventOnly {
+			return true
+		}
+	}
+	return false
+}
+
+func SplitBreakdowns(breakdowns []string) (session []string, eventOnly []string) {
+	for _, b := range breakdowns {
+		if dim, ok := breakdownDimensions[b]; ok {
+			if dim.EventOnly {
+				eventOnly = append(eventOnly, b)
+			} else {
+				session = append(session, b)
+			}
+		}
+	}
+	return
+}
+
+func GetEventOnlyBreakdownProjection(breakdowns []string, tableAlias string) []string {
+	parts := make([]string, 0)
+	for i, b := range breakdowns {
+		dim, ok := breakdownDimensions[b]
+		if !ok || !dim.EventOnly {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf(`%s.%s AS break%d`, tableAlias, dim.EventColumn, i+1))
+	}
+	return parts
+}
+
+func GetEventOnlyBreakdownNamedProjection(breakdowns []string, tableAlias string) []string {
+	parts := make([]string, 0)
+	for _, b := range breakdowns {
+		dim, ok := breakdownDimensions[b]
+		if !ok || !dim.EventOnly {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf(`%s.%s AS %s`, tableAlias, dim.EventColumn, b))
+	}
+	return parts
 }
 
 func ValidateBreakdowns(breakdowns []string) error {
@@ -131,6 +181,9 @@ func GetBreakdownProjection(breakdowns []string, tableAlias string) string {
 	parts := make([]string, 0, len(breakdowns))
 	for _, b := range breakdowns {
 		if dim, ok := breakdownDimensions[b]; ok {
+			if dim.EventOnly {
+				continue
+			}
 			col := dim.SessionColumn
 			// If the column already contains a function call or is fully qualified,
 			// don't prefix with the table alias.
@@ -227,6 +280,9 @@ func GetTableBreakdownProjection(breakdowns []string) []string {
 			// prevents panics if the call order ever changes.
 			continue
 		}
+		if dim.EventOnly {
+			continue
+		}
 		// Uses loop index i+1 (not len(parts)+1) to keep alias numbering
 		// aligned with the input slice position, matching downstream expectations.
 		parts = append(parts, fmt.Sprintf(`%s AS break%d`, dim.SessionColumn, i+1))
@@ -241,7 +297,11 @@ func GetFunnelBreakdownProjection(breakdowns []string) []string {
 		if !ok {
 			continue
 		}
-		parts = append(parts, fmt.Sprintf(`%s AS break%d`, dim.EventColumn, i+1))
+		col := dim.EventColumn
+		if dim.EventOnly {
+			col = "e." + col
+		}
+		parts = append(parts, fmt.Sprintf(`%s AS break%d`, col, i+1))
 	}
 	return parts
 }

@@ -159,7 +159,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 		}
 	}
 
-	requiresEventsTable := len(eventFilters) > 0 || metric == MetricEventCount
+	requiresEventsTable := len(eventFilters) > 0 || metric == MetricEventCount || HasEventOnlyBreakdowns(p.Breakdowns)
 
 	if requiresEventsTable {
 		return t.buildEventsBasedSubQuery(p, s, metric, eventFilters, sessionFilters)
@@ -200,16 +200,26 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 	var mainEventsTable = getMainEventsTable(p.StartTimestamp)
 
+	evtSelectCols := []string{
+		"main.session_id",
+		"MIN(main.created_at) AS first_event_ts",
+		"MAX(main.created_at) AS last_event_ts",
+	}
+	eventOnlyBdProj := GetEventOnlyBreakdownNamedProjection(p.Breakdowns, "main")
+	evtSelectCols = append(evtSelectCols, eventOnlyBdProj...)
+
+	groupByCols := "main.session_id"
+	if len(eventOnlyBdProj) > 0 {
+		groupByCols = "ALL"
+	}
+
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(
-		`SELECT main.session_id,
-					   MIN(main.created_at) AS first_event_ts,
-					   MAX(main.created_at) AS last_event_ts
-				FROM %s AS main
-				WHERE %s
-				GROUP BY main.session_id`,
+		"SELECT %s\n\t\t\t\tFROM %s AS main\n\t\t\t\tWHERE %s\n\t\t\t\tGROUP BY %s",
+		strings.Join(evtSelectCols, ",\n\t\t\t\t\t   "),
 		mainEventsTable,
 		strings.Join(whereParts, " AND "),
+		groupByCols,
 	))
 
 	if joinClause != "" {
@@ -220,7 +230,18 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	subQuery := sb.String()
 	sessionsQuery := BuildSessionsSubQuery(sessionFilters, p.StartTimestamp, p.Breakdowns)
 	projection, joinEvents := t.getProjectionAndJoin(metric, p)
-	projection = AppendBreakdownRefs(projection, p.Breakdowns, "s")
+
+	for _, bdName := range p.Breakdowns {
+		dim, ok := breakdownDimensions[bdName]
+		if !ok {
+			continue
+		}
+		if dim.EventOnly {
+			projection += ", evt." + bdName
+		} else {
+			projection += ", s." + bdName
+		}
+	}
 
 	return fmt.Sprintf(
 		`SELECT %s

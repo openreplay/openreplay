@@ -450,6 +450,123 @@ func TestGetBreakdownProjection_RevIdGetsPrefix(t *testing.T) {
 	}
 }
 
+func TestValidateBreakdowns_EventOnlyDimensions(t *testing.T) {
+	eventOnlyDims := []string{"currentPath", "referringDomain", "searchEngine"}
+	for _, dim := range eventOnlyDims {
+		t.Run(dim, func(t *testing.T) {
+			if err := ValidateBreakdowns([]string{dim}); err != nil {
+				t.Errorf("ValidateBreakdowns(%q) unexpected error: %v", dim, err)
+			}
+		})
+	}
+}
+
+func TestHasEventOnlyBreakdowns(t *testing.T) {
+	tests := []struct {
+		name       string
+		breakdowns []string
+		want       bool
+	}{
+		{"empty", nil, false},
+		{"session-only", []string{"userCountry", "userBrowser"}, false},
+		{"event-only", []string{"currentPath"}, true},
+		{"mixed", []string{"userCountry", "currentPath"}, true},
+		{"all event-only", []string{"currentPath", "referringDomain", "searchEngine"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := HasEventOnlyBreakdowns(tt.breakdowns)
+			if got != tt.want {
+				t.Errorf("HasEventOnlyBreakdowns(%v) = %v, want %v", tt.breakdowns, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSplitBreakdowns(t *testing.T) {
+	session, eventOnly := SplitBreakdowns([]string{"userCountry", "currentPath", "userBrowser", "searchEngine"})
+	if len(session) != 2 || session[0] != "userCountry" || session[1] != "userBrowser" {
+		t.Errorf("session breakdowns = %v, want [userCountry userBrowser]", session)
+	}
+	if len(eventOnly) != 2 || eventOnly[0] != "currentPath" || eventOnly[1] != "searchEngine" {
+		t.Errorf("eventOnly breakdowns = %v, want [currentPath searchEngine]", eventOnly)
+	}
+}
+
+func TestGetTableBreakdownProjection_SkipsEventOnly(t *testing.T) {
+	got := GetTableBreakdownProjection([]string{"currentPath"})
+	if len(got) != 0 {
+		t.Errorf("expected empty result for event-only dim, got %v", got)
+	}
+}
+
+func TestGetTableBreakdownProjection_MixedDims(t *testing.T) {
+	got := GetTableBreakdownProjection([]string{"userCountry", "currentPath", "userBrowser"})
+	if len(got) != 2 {
+		t.Fatalf("expected 2 parts (skipping event-only), got %d: %v", len(got), got)
+	}
+	if got[0] != "user_country AS break1" {
+		t.Errorf("got[0] = %q, want %q", got[0], "user_country AS break1")
+	}
+	if got[1] != "user_browser AS break3" {
+		t.Errorf("got[1] = %q, want %q", got[1], "user_browser AS break3")
+	}
+}
+
+func TestGetEventOnlyBreakdownProjection(t *testing.T) {
+	got := GetEventOnlyBreakdownProjection([]string{"userCountry", "currentPath", "userBrowser"}, "main")
+	if len(got) != 1 {
+		t.Fatalf("expected 1 event-only part, got %d: %v", len(got), got)
+	}
+	want := `main."$current_path" AS break2`
+	if got[0] != want {
+		t.Errorf("got %q, want %q", got[0], want)
+	}
+}
+
+func TestGetEventOnlyBreakdownNamedProjection(t *testing.T) {
+	got := GetEventOnlyBreakdownNamedProjection([]string{"userCountry", "searchEngine"}, "main")
+	if len(got) != 1 {
+		t.Fatalf("expected 1 part, got %d: %v", len(got), got)
+	}
+	want := `main."$search_engine" AS searchEngine`
+	if got[0] != want {
+		t.Errorf("got %q, want %q", got[0], want)
+	}
+}
+
+func TestGetBreakdownProjection_SkipsEventOnly(t *testing.T) {
+	got := GetBreakdownProjection([]string{"currentPath", "referringDomain"}, "s")
+	if got != "" {
+		t.Errorf("expected empty for event-only dims, got %q", got)
+	}
+}
+
+func TestGetBreakdownProjection_MixedDims(t *testing.T) {
+	got := GetBreakdownProjection([]string{"userCountry", "currentPath"}, "s")
+	want := "s.user_country AS userCountry"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestGetFunnelBreakdownProjection_EventOnlyDims(t *testing.T) {
+	got := GetFunnelBreakdownProjection([]string{"currentPath"})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 part, got %d", len(got))
+	}
+	want := `e."$current_path" AS break1`
+	if got[0] != want {
+		t.Errorf("got %q, want %q", got[0], want)
+	}
+}
+
+func TestFunnelBreakdownNeedsSessions_EventOnlyDims(t *testing.T) {
+	if FunnelBreakdownNeedsSessions([]string{"currentPath", "searchEngine"}) {
+		t.Error("FunnelBreakdownNeedsSessions(event-only) = true, want false")
+	}
+}
+
 func TestBuildTimeseriesSeriesMap_WithBreakdowns(t *testing.T) {
 	data := map[breakdownKey]map[string]uint64{
 		{Timestamp: 1000, Values: [3]string{"US", "", ""}}: {"sessions": 8},

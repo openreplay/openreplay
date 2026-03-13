@@ -209,12 +209,11 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 		EventsOrder:    string(s.Filter.EventsOrder),
 	})
 
-	// Check if we should skip events table
 	skipEventsTable := slices.Contains([]string{
 		string(MetricOfTableUserId), string(MetricOfTableCountry),
 		string(MetricOfTableDevice), string(MetricOfTableBrowser),
 		string(MetricOfTableReferrer),
-	}, r.MetricOf) && len(eventConditions) == 0
+	}, r.MetricOf) && len(eventConditions) == 0 && !HasEventOnlyBreakdowns(r.Breakdowns)
 
 	eventsConditions := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, []string{})
 	sessionConditions := t.buildSessionConditions(r, r.MetricFormat, durConds)
@@ -253,8 +252,14 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 		sessionsSelect = append(sessionsSelect, GetTableBreakdownProjection(r.Breakdowns)...)
 	}
 
+	eventOnlyBdProj := GetEventOnlyBreakdownProjection(r.Breakdowns, "main")
+	hasEventOnlyBd := len(eventOnlyBdProj) > 0
+
 	var eventsSelect []string = []string{
 		"main.session_id",
+	}
+	if hasEventOnlyBd {
+		eventsSelect = append(eventsSelect, eventOnlyBdProj...)
 	}
 
 	var fromExtra string
@@ -299,7 +304,7 @@ WHERE %s) AS extra`,
 	}
 
 	var fromEvents string
-	if !skipEventsTable || hasExtraCondition {
+	if !skipEventsTable || hasExtraCondition || hasEventOnlyBd {
 		var eventsGroupping string = "GROUP BY ALL"
 		if r.MetricFormat == MetricFormatEventCount {
 			eventsGroupping = ""
