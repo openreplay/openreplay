@@ -143,7 +143,9 @@ function UnitStepsModal({ onClose }: Props) {
         if (userEventTypes.includes(ev.type)) {
           if (mode === 'test') finalScript += '    ';
           if (ev.type === TYPES.INPUT) {
-            const resolved = valuesMap.get(`${ev.time}_${ev.label}`);
+            const resolved = valuesMap
+              .get(`${ev.time}_${ev.label}`)
+              ?.replace(/'/g, "\\'");
             finalScript += usedCollection[ev.type](ev, resolved);
           } else {
             finalScript += usedCollection[ev.type](ev);
@@ -169,7 +171,10 @@ function UnitStepsModal({ onClose }: Props) {
     const selectorInputs = events.filter((ev): ev is InputEvent =>
       isInputEvent(ev),
     );
-    if (!selectorInputs.length) return;
+    if (!selectorInputs.length) {
+      player.unfreeze(false);
+      return;
+    }
 
     uiPlayerStore.setResolvingInputs(true);
 
