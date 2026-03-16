@@ -7,7 +7,6 @@ import { observer } from 'mobx-react-lite';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 
 import BreakdownFilterItem from './BreakdownFilterItem';
@@ -44,7 +43,7 @@ const supportedOptions = [
 function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
   const { t } = useTranslation();
   const { filterStore } = useStore();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(metric.breakdowns?.length > 0);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [hoverPos, setHoverPos] = useState<'top' | 'bottom' | null>(null);
@@ -113,6 +112,7 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
   const onAddFilter = (filter: Filter) => {
     metric.addBreakdown(filter);
     observeChanges();
+    setExpanded(true);
   };
 
   const onReplaceFilter = (index: number) => (filter: Filter) => {
@@ -134,18 +134,25 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
         header: 'px-4! py-2!',
       }}
       title={
-        <div className="flex items-center">
-          <span className="font-medium mr-auto">{t('Breakdown')}</span>
-          <Space>
-            {!expanded && breakdownFilters.length > 0 && (
-              <Button
-                type="text"
-                size="small"
-                onClick={() => setExpanded(true)}
-              >
-                {`${breakdownFilters.length} ${breakdownFilters.length === 1 ? 'Property' : 'Properties'}`}
+        <div className="flex gap-2 items-center">
+          <span className="font-medium">{t('Breakdown')}</span>
+          {canAddMore && (
+            <FilterSelection
+              type="Filters"
+              disabled={!canAddMore}
+              filters={propertyOptions}
+              onFilterClick={onAddFilter}
+              activeFilters={activeFilterNames}
+            >
+              <Button type="text" size="small">
+                <div className="flex items-center gap-1">
+                  <Plus size={16} strokeWidth={1} />
+                  <span>{t('Add')}</span>
+                </div>
               </Button>
-            )}
+            </FilterSelection>
+          )}
+          <Space className="ml-auto">
             <Button
               onClick={() => setExpanded(!expanded)}
               size="small"
@@ -160,26 +167,6 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
     >
       {expanded && (
         <>
-          <FilterListHeader
-            title="Properties"
-            filterSelection={
-              <FilterSelection
-                type="Filters"
-                disabled={!canAddMore}
-                filters={propertyOptions}
-                onFilterClick={onAddFilter}
-                activeFilters={activeFilterNames}
-              >
-                <Button type="default" size="small" disabled={!canAddMore}>
-                  <div className="flex items-center gap-1">
-                    <Plus size={16} strokeWidth={1} />
-                    <span>{t('Add')}</span>
-                  </div>
-                </Button>
-              </FilterSelection>
-            }
-          />
-
           {breakdownFilters.length > 0 ? (
             <div className="flex flex-col gap-1 mt-2">
               {breakdownFilters.map((filter: any, index: number) => (

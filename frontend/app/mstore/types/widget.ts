@@ -566,16 +566,22 @@ export default class Widget {
 
       const bdEntries = Object.entries(seriesContent)
         .filter(
-          ([key, val]: [string, any]) => key !== '$overall' && val?.stages,
+          ([key, val]: [string, any]) =>
+            key !== '$overall' && (val?.stages || val?.$overall?.stages),
         )
         .sort(([, a]: any, [, b]: any) => {
-          return (b.stages?.[0]?.count ?? 0) - (a.stages?.[0]?.count ?? 0);
+          const aStages = a.stages ?? a.$overall?.stages;
+          const bStages = b.stages ?? b.$overall?.stages;
+          return (bStages?.[0]?.count ?? 0) - (aStages?.[0]?.count ?? 0);
         });
 
       if (bdEntries.length > 0) {
         const funnelBreakdown: Record<string, Funnel> = {};
         for (const [key, val] of bdEntries) {
-          funnelBreakdown[key] = new Funnel().fromJSON(val);
+          const valAny = val as any;
+          funnelBreakdown[key] = new Funnel().fromJSON(
+            valAny.stages ? valAny : valAny.$overall,
+          );
         }
         return { funnel, funnelBreakdown };
       }

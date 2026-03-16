@@ -27,6 +27,7 @@ function FunnelWidget(props: Props) {
   const { dashboardStore, metricStore } = useStore();
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
   const { isWidget = false, data, metric, compData } = props;
+  console.log(data)
   const funnel = data?.funnel || { stages: [] };
   const totalSteps = funnel.stages.length;
   const stages = isWidget
