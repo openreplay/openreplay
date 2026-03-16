@@ -9,7 +9,6 @@ import (
 	"time"
 
 	config "openreplay/backend/internal/config/storage"
-	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/failover"
 	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
@@ -19,6 +18,7 @@ import (
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/storage"
 )
 
 func main() {
@@ -65,16 +65,16 @@ func main() {
 				}
 				sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", msg.SessionID()))
 				if msg.TypeID() == messages.MsgCleanSession {
-					if err := srv.CleanSession(sessCtx, msg.SessionID()); err != nil {
+					if err := srv.Clean(sessCtx, msg.SessionID()); err != nil {
 						log.Error(sessCtx, "can't clean session: %s", err)
 					}
 					return
 				}
 				// Process session to save mob files to s3
-				sesEnd := msg.(*messages.SessionEnd)
-				if err := srv.Process(sessCtx, sesEnd); err != nil {
+				sessEnd := msg.(*messages.SessionEnd)
+				if err := srv.Upload(sessCtx, sessEnd.SessionID(), sessEnd.EncryptionKey); err != nil {
 					log.Error(sessCtx, "process session err: %s", err)
-					sessionFinder.Find(msg.SessionID(), sesEnd.Timestamp)
+					sessionFinder.Find(msg.SessionID(), sessEnd.Timestamp)
 				}
 				// Log timestamp of last processed session
 				counter.Update(msg.SessionID(), time.UnixMilli(msg.Meta().Batch().Timestamp()))
