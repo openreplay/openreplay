@@ -63,6 +63,11 @@ func (u *uploaderImpl) Upload(ctx context.Context, sessionID uint64, encryptionK
 	return nil
 }
 
+const (
+	DOM string = "/dom.mob"
+	DEV string = "/devtools.mob"
+)
+
 func (u *uploaderImpl) uploadSession(payload interface{}) {
 	task := payload.(*uploadTask)
 	ctx := task.ctx
@@ -81,7 +86,7 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := uploadFn(sid+"devtools", filePath+"devtools"); err != nil && !os.IsNotExist(err) {
+		if err := uploadFn(sid+DEV, filePath+"devtools"); err != nil && !os.IsNotExist(err) {
 			u.log.Error(ctx, "failed to upload devtools for session %d: %s", task.sessionID, err)
 		}
 	}()
@@ -91,13 +96,13 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
-			if err := uploadFn(sid+"s", filePath+"s"); err != nil && !os.IsNotExist(err) {
+			if err := uploadFn(sid+DOM+"s", filePath+"s"); err != nil && !os.IsNotExist(err) {
 				u.log.Error(ctx, "failed to upload dom start for session %d: %s", task.sessionID, err)
 			}
 		}()
 		go func() {
 			defer wg.Done()
-			if err := uploadFn(sid+"e", filePath+"e"); err != nil && !os.IsNotExist(err) {
+			if err := uploadFn(sid+DOM+"e", filePath+"e"); err != nil && !os.IsNotExist(err) {
 				u.log.Error(ctx, "failed to upload dom end for session %d: %s", task.sessionID, err)
 			}
 		}()
@@ -105,7 +110,7 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := uploadFn(sid+"s", filePath); err != nil && !os.IsNotExist(err) {
+			if err := uploadFn(sid+DOM+"s", filePath); err != nil && !os.IsNotExist(err) {
 				u.log.Error(ctx, "failed to upload dom for session %d: %s", task.sessionID, err)
 			}
 		}()
