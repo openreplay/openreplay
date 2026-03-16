@@ -7,7 +7,7 @@ psycopg[pool,binary]==3.3.2
 clickhouse-connect==0.11.0
 elasticsearch==9.3.0
 jira==3.10.5
-cachetools==7.0.1
+cachetools==7.0.5
 
 fastapi==0.129.0
 uvicorn[standard]==0.41.0
