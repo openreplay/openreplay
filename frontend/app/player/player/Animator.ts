@@ -1,5 +1,5 @@
+import type { Interval, Store } from 'Player';
 import { Message } from 'Player/web/messages';
-import type { Store, Interval } from 'Player';
 
 const fps = 60;
 const performance: { now: () => number } = window.performance || {
@@ -161,9 +161,10 @@ export default class Animator {
     this.animationFrameRequestId = requestAnimationFrame(frameHandler);
   }
 
-  play() {
-    if (this.store.get().freeze) return this.pause();
-    if (this.store.get().ready) {
+  play = () => {
+    const { freeze, ready } = this.store.get();
+    if (freeze) return this.pause();
+    if (ready) {
       cancelAnimationFrame(this.animationFrameRequestId);
       this.store.update({ playing: true });
       this.startAnimation();
@@ -172,27 +173,34 @@ export default class Animator {
         this.play();
       }, 250);
     }
-  }
+  };
 
-  pause() {
+  pause = () => {
     cancelAnimationFrame(this.animationFrameRequestId);
     this.store.update({ playing: false });
-  }
+  };
 
-  freeze() {
+  freeze = () => {
     return new Promise<void>((res) => {
       if (this.store.get().ready) {
         // making sure that replay is displayed completely
         setTimeout(() => {
-          this.store.update({ freeze: true });
-          this.pause();
+          cancelAnimationFrame(this.animationFrameRequestId);
+          this.store.update({ freeze: true, playing: false });
           res();
         }, 250);
       } else {
-        setTimeout(() => res(this.freeze()), 500);
+        setTimeout(() => res(this.freeze()), 250);
       }
     });
-  }
+  };
+
+  unfreeze = (shouldPlay: boolean = true) => {
+    this.store.update({ freeze: false });
+    if (shouldPlay) {
+      this.play();
+    }
+  };
 
   togglePlay = () => {
     const { playing, completed } = this.store.get();

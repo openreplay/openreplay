@@ -1,11 +1,13 @@
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
+import copy from 'copy-to-clipboard';
+import { Link2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { Link2 } from 'lucide-react';
-import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
 import {
   CONSOLE,
   NETWORK,
@@ -15,7 +17,6 @@ import {
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 
-import { useStore } from 'App/mstore';
 import { useModal } from '../../Modal';
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import ElementsMarker from './Overlay/ElementsMarker';
@@ -102,6 +103,7 @@ function Overlay({ nextId, isClickmap }: Props) {
     ({ cssLoading }) => cssLoading,
   );
   const loading = messagesLoading || cssLoading;
+  const { resolvingInputs } = uiPlayerStore;
 
   const showAutoplayTimer = completed && autoplay && nextId;
   const showPlayIconLayer =
@@ -156,7 +158,14 @@ function Overlay({ nextId, isClickmap }: Props) {
   return (
     <>
       {showAutoplayTimer && <AutoplayTimer />}
-      {loading ? <Loader /> : null}
+      {loading || resolvingInputs ? (
+        <div
+          className="absolute z-50 top-0 left-0 bottom-0 right-0"
+          style={{ background: 'rgba(0,0,0, 0.4)' }}
+        >
+          <Loader />
+        </div>
+      ) : null}
       <Dropdown menu={{ items: menuItems, onClick }} trigger={['contextMenu']}>
         <div>
           {showPlayIconLayer && (
