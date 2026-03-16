@@ -306,4 +306,20 @@ export default class Screen {
     this.selectionTargets?.forEach((el) => el.remove());
     this.selectionTargets = [];
   }
+
+  private highlightedElement: HTMLElement | null = null;
+  private highlightPrevOutline: string = '';
+
+  public highlightElement(node: HTMLElement | null) {
+    if (this.highlightedElement) {
+      this.highlightedElement.style.outline = this.highlightPrevOutline;
+      this.highlightedElement = null;
+      this.highlightPrevOutline = '';
+    }
+    if (node) {
+      this.highlightPrevOutline = node.style.outline;
+      node.style.outline = '3px solid #394EFF';
+      this.highlightedElement = node;
+    }
+  }
 }

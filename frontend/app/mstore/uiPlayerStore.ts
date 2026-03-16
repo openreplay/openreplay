@@ -61,6 +61,7 @@ export default class UiPlayerStore {
   fullscreen = false;
   showOnlySearchEvents = false;
   showSearchEventsSwitchButton = false;
+  resolvingInputs = false;
 
   bottomBlock = 0;
 
@@ -160,5 +161,9 @@ export default class UiPlayerStore {
 
   setSearchEventsSwitchButton = (show: boolean) => {
     this.showSearchEventsSwitchButton = show;
+  };
+
+  setResolvingInputs = (val: boolean) => {
+    this.resolvingInputs = val;
   };
 }

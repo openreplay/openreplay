@@ -6,8 +6,8 @@ export const puppeteerEvents = {
     `await page.locator('${
       event.selector?.length ? event.selector : event.label
     }').click()`,
-  [TYPES.INPUT]: (event: Input) =>
-    `await page.locator('${event.label}').type('Test Input')`,
+  [TYPES.INPUT]: (event: Input, resolvedValue?: string) =>
+    `await page.locator('${event.label}').type('${resolvedValue ?? 'Test Input'}')`,
   screen: (width: number, height: number) =>
     `await page.setViewport({width: ${width}, height: ${height})`,
   testIntro: (pageTitle: string, firstUrl: string) =>
@@ -18,8 +18,8 @@ export const cypressEvents = {
   [TYPES.LOCATION]: (event: Location) => `cy.visit('${event.url}')`,
   [TYPES.CLICK]: (event: Click) =>
     `cy.get('${event.selector?.length ? event.selector : event.label}').click()`,
-  [TYPES.INPUT]: (event: Input) =>
-    `cy.get('${event.label}').type('Test Input')`,
+  [TYPES.INPUT]: (event: Input, resolvedValue?: string) =>
+    `cy.get('${event.label}').type('${resolvedValue ?? 'Test Input'}')`,
   screen: (width: number, height: number) => `cy.viewport(${width}, ${height})`,
   testIntro: (pageTitle: string, firstUrl: string) =>
     `describe('${pageTitle}', () => {\n  it('Navigates through ${firstUrl}', () => {`,
@@ -31,8 +31,8 @@ export const playWrightEvents = {
     event.selector?.length
       ? `await page.locator('${event.selector}').click()`
       : `await page.getByText('${event.label}').click()`,
-  [TYPES.INPUT]: (event: Input) =>
-    `await page.getByLabel('${event.label}').fill('Test Input')`,
+  [TYPES.INPUT]: (event: Input, resolvedValue?: string) =>
+    `await page.getByLabel('${event.label}').fill('${resolvedValue ?? 'Test Input'}')`,
   screen: (width: number, height: number) =>
     `await page.setViewport({width: ${width}, height: ${height})`,
   testIntro: (pageTitle: string, firstUrl: string) =>
