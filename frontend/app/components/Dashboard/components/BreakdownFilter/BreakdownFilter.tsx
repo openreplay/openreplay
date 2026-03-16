@@ -25,7 +25,20 @@ const supportedOptions = [
   'userDevice',
   'userOs',
   'referrer',
+  'userId',
   'platform',
+  'utmSource',
+  'utmMedium',
+  'utmCampaign',
+  'userDeviceType',
+  'revId',
+  'issueType',
+  'currentPath',
+  'referringDomain',
+  'searchEngine',
+  'httpMethod',
+  'statusCode',
+  'urlHost',
 ];
 
 function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
