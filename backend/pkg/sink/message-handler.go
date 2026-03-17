@@ -47,6 +47,7 @@ func New(cfg *config.Config, log logger.Logger, writer *sessionwriter.SessionWri
 		producer:            producer,
 		assetMessageHandler: assetMessageHandler,
 		sinkMetrics:         metrics,
+		counter:             counter,
 		messageIndex:        make([]byte, 8),
 		domBuffer:           bytes.NewBuffer(make([]byte, 1024)),
 		devBuffer:           bytes.NewBuffer(make([]byte, 1024)),
