@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type logCounter struct {
+type LogCounter struct {
 	mu         sync.Mutex
 	counter    int
 	timestamp  time.Time
@@ -14,20 +14,20 @@ type logCounter struct {
 	lastSessID uint64
 }
 
-func NewLogCounter() *logCounter {
-	nlc := &logCounter{}
+func NewLogCounter() *LogCounter {
+	nlc := &LogCounter{}
 	nlc.init()
 	return nlc
 }
 
-func (c *logCounter) init() {
+func (c *LogCounter) init() {
 	c.mu.Lock()
 	c.counter = 0
 	c.timestamp = time.Now()
 	c.mu.Unlock()
 }
 
-func (c *logCounter) Update(sessID uint64, ts time.Time) {
+func (c *LogCounter) Update(sessID uint64, ts time.Time) {
 	c.mu.Lock()
 	c.counter++
 	c.lastTS = ts
@@ -35,7 +35,7 @@ func (c *logCounter) Update(sessID uint64, ts time.Time) {
 	c.mu.Unlock()
 }
 
-func (c *logCounter) Log() string {
+func (c *LogCounter) Log() string {
 	c.mu.Lock()
 	res := fmt.Sprintf("count: %d, dur: %ds, msgTS: %s, sessID: %d, part: %d",
 		c.counter,
