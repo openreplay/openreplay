@@ -26,7 +26,14 @@ import {
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
-import { collectTimestamps, remapTimestamps } from 'App/utils/breakdownTree';
+import {
+  buildLevelTree,
+  collectTimestamps,
+  computeSelectionFromTopN,
+  getDepth,
+  remapTimestamps,
+  type NestedData,
+} from 'App/utils/breakdownTree';
 import { hasSampling } from 'App/utils/split-utils';
 import BarChart from 'Components/Charts/BarChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
@@ -382,10 +389,43 @@ function WidgetChart(props: Props) {
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : chartData.namesMap;
 
-      // data is already sorted during mapping in widget.ts
-      if (topN > 0 && Array.isArray(chartData.namesMap)) {
+      // Filter chart lines by breakdown selection (or fall back to topN)
+      const breakdownSel = metricStore.breakdownSelection;
+      if (
+        Object.keys(breakdownSel).length > 0 &&
+        Array.isArray(chartData.namesMap)
+      ) {
+        const seriesNames: string[] = _metric.series.map((s: any) => s.name);
+        chartData.namesMap = chartData.namesMap.map((n: string | null) => {
+          if (n == null) return null;
+          const isPrevious = n.startsWith('Previous ');
+          const baseName = isPrevious ? n.slice(9) : n;
+          let breakdownPath = baseName;
+          for (const sName of seriesNames) {
+            if (baseName === sName) {
+              breakdownPath = '';
+              break;
+            }
+            if (baseName.startsWith(sName + ' / ')) {
+              breakdownPath = baseName.slice(sName.length + 3);
+              break;
+            }
+          }
+          if (!breakdownPath) return n;
+          const levels = breakdownPath.split(' / ');
+          for (let i = 0; i < levels.length; i++) {
+            const parentPath = levels.slice(0, i).join(' / ');
+            const sel = breakdownSel[parentPath];
+            if (sel !== undefined && sel !== null && !sel.includes(levels[i])) {
+              return null;
+            }
+          }
+          return n;
+        });
+      } else if (topN > 0 && Array.isArray(chartData.namesMap)) {
+        // Fallback to topN if selection not yet initialised
         let kept = 0;
-        chartData.namesMap = chartData.namesMap.map((n) => {
+        chartData.namesMap = chartData.namesMap.map((n: string | null) => {
           if (n == null) return null;
           kept++;
           return kept <= topN ? n : null;
@@ -688,7 +728,14 @@ function WidgetChart(props: Props) {
         {t('Unknown metric type')} {metricType}
       </div>
     );
-  }, [data, compData, enabledRows, _metric, data, metricStore.breakdownTopN]);
+  }, [
+    data,
+    compData,
+    enabledRows,
+    _metric,
+    metricStore.breakdownTopN,
+    metricStore.breakdownSelection,
+  ]);
 
   const showTable =
     _metric.metricType === TIMESERIES &&
@@ -723,6 +770,36 @@ function WidgetChart(props: Props) {
     return { ...data.breakdownData, ...remapped };
   }, [data?.breakdownData, compData?.breakdownData]);
 
+  const breakdownInitialized = React.useRef(false);
+
+  // Reset selection when breakdown configuration changes
+  React.useEffect(() => {
+    breakdownInitialized.current = false;
+    metricStore.clearBreakdownSelection();
+  }, [_metric.breakdowns]);
+
+  // Initialise breakdown selection when data first loads
+  React.useEffect(() => {
+    if (mergedBreakdownData && !breakdownInitialized.current) {
+      const depth = Math.max(
+        0,
+        ...Object.values(mergedBreakdownData).map((d) =>
+          getDepth(d as NestedData),
+        ),
+      );
+      if (depth > 0) {
+        breakdownInitialized.current = true;
+        const tree = buildLevelTree(mergedBreakdownData);
+        const selection = computeSelectionFromTopN(
+          tree,
+          metricStore.breakdownLevelTopN,
+          depth,
+        );
+        metricStore.setBreakdownSelection(selection);
+      }
+    }
+  }, [mergedBreakdownData]);
+
   return (
     <div ref={ref}>
       {loading ? (
@@ -739,6 +816,7 @@ function WidgetChart(props: Props) {
           Object.keys(mergedBreakdownData).length > 0 ? (
             <BreakdownDatatable
               data={mergedBreakdownData}
+              breakdownLabels={_metric.breakdownLabels}
               inBuilder={props.isPreview}
               defaultOpen
               metric={_metric}

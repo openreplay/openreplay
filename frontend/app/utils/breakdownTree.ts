@@ -150,3 +150,68 @@ export function collectChartLines(
 
   return lines;
 }
+
+/**
+ * Build a tree mapping parentPath → sorted children with totals.
+ * Root path is '' (empty string) whose children are the level-0 breakdown values.
+ * Deeper paths use ' / ' separator matching the namesMap format.
+ */
+export function buildLevelTree(
+  data: Record<string, NestedData>,
+): Map<string, { key: string; total: number }[]> {
+  const raw = new Map<string, Map<string, number>>();
+
+  function addChildren(node: NestedData, parentPath: string) {
+    if (isLeaf(node)) return;
+    if (!raw.has(parentPath)) raw.set(parentPath, new Map());
+    const childMap = raw.get(parentPath)!;
+    Object.entries(node as Record<string, NestedData>).forEach(([key, child]) => {
+      childMap.set(key, (childMap.get(key) ?? 0) + sumAll(child as NestedData));
+      const childPath = parentPath ? `${parentPath} / ${key}` : key;
+      addChildren(child as NestedData, childPath);
+    });
+  }
+
+  Object.values(data).forEach((seriesData) => {
+    addChildren(seriesData as NestedData, '');
+  });
+
+  const result = new Map<string, { key: string; total: number }[]>();
+  raw.forEach((childMap, parentPath) => {
+    result.set(
+      parentPath,
+      Array.from(childMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([key, total]) => ({ key, total })),
+    );
+  });
+  return result;
+}
+
+/**
+ * Compute a full selection Record from per-level topN settings.
+ * Each key is a parentPath, value is null (all selected) or string[] (selected children).
+ */
+export function computeSelectionFromTopN(
+  levelTree: Map<string, { key: string; total: number }[]>,
+  topNPerLevel: number[],
+  depth: number,
+): Record<string, string[] | null> {
+  const selection: Record<string, string[] | null> = {};
+
+  function processPath(parentPath: string, levelIdx: number) {
+    if (levelIdx >= depth) return;
+    const children = levelTree.get(parentPath) ?? [];
+    const n = topNPerLevel[levelIdx] ?? 0;
+    const selected = n > 0 ? children.slice(0, n).map((c) => c.key) : null;
+    selection[parentPath] = selected;
+    const toProcess = selected ?? children.map((c) => c.key);
+    toProcess.forEach((key) => {
+      const childPath = parentPath ? `${parentPath} / ${key}` : key;
+      processPath(childPath, levelIdx + 1);
+    });
+  }
+
+  processPath('', 0);
+  return selection;
+}

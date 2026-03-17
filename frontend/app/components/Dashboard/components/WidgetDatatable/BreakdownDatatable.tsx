@@ -1,10 +1,10 @@
 /* eslint-disable i18next/no-literal-string */
-import { Button, Divider, Table } from 'antd';
+import { Button, Checkbox, Divider, Table } from 'antd';
 import type { TableProps } from 'antd';
 import cn from 'classnames';
 import { Download, Eye, EyeOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatIsoForColumn } from 'App/date';
@@ -12,51 +12,13 @@ import { useStore } from 'App/mstore';
 import { exportAntCsv } from 'App/utils';
 import {
   type NestedData,
+  buildLevelTree,
   collectTimestamps,
   getDepth,
-  isLeaf,
   sumAll,
 } from 'App/utils/breakdownTree';
-import TopNButton from '../BreakdownFilter/TopNButton';
 
-type TopNLimit = 3 | 10 | 0; // 0 = all
-
-/**
- * Trim the data tree so that at the deepest breakdown level of each branch,
- * only the top N entries (by sumAll) are kept.
- * E.g. Country→City with topN=3 keeps only top 3 cities per country.
- */
-function trimTopN(
-  obj: NestedData,
-  topN: TopNLimit,
-): NestedData {
-  if (topN === 0) return obj;
-  if (isLeaf(obj)) return obj;
-
-  const entries = Object.entries(obj);
-  const firstChild = entries[0]?.[1];
-  if (firstChild == null) return obj;
-
-  // Check if children are leaves — this is the deepest level to trim
-  if (isLeaf(firstChild as NestedData)) {
-    const sorted = entries
-      .map(([key, child]) => ({ key, child, total: sumAll(child as NestedData) }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, topN);
-    const result: Record<string, NestedData> = {};
-    sorted.forEach(({ key, child }) => {
-      result[key] = child as NestedData;
-    });
-    return result;
-  }
-
-  // Non-leaf children — recurse deeper
-  const result: Record<string, NestedData> = {};
-  entries.forEach(([key, child]) => {
-    result[key] = trimTopN(child as NestedData, topN);
-  });
-  return result;
-}
+import BreakdownSelectionPanel from '../BreakdownFilter/BreakdownSelectionPanel';
 
 interface Props {
   data: Record<string, NestedData>;
@@ -79,11 +41,13 @@ function flattenNode(
   seriesTotal: number,
   timestamps: string[],
   parentKey: string,
-): { levels: { label: string; total: number; pct: string; rowSpan: number }[]; tsValues: Record<string, number> }[] {
+): {
+  levels: { label: string; total: number; pct: string; rowSpan: number }[];
+  tsValues: Record<string, number>;
+}[] {
   const firstVal = Object.values(obj)[0];
   if (firstVal == null) return [];
 
-  // Leaf level — obj is Record<string, number>
   if (typeof firstVal === 'number') {
     const tsValues: Record<string, number> = {};
     timestamps.forEach((ts) => {
@@ -92,18 +56,25 @@ function flattenNode(
     return [{ levels: [], tsValues }];
   }
 
-  // Non-leaf level — sort children by total descending
-  const rows: { levels: { label: string; total: number; pct: string; rowSpan: number }[]; tsValues: Record<string, number> }[] = [];
+  const rows: {
+    levels: { label: string; total: number; pct: string; rowSpan: number }[];
+    tsValues: Record<string, number>;
+  }[] = [];
   const entries = Object.entries(obj).sort(
     ([, a], [, b]) => sumAll(b as NestedData) - sumAll(a as NestedData),
   );
   entries.forEach(([label, child]) => {
     const childData = child as NestedData;
     const childTotal = sumAll(childData);
-    const pct = seriesTotal > 0 ? ((childTotal / seriesTotal) * 100).toFixed(1) : '0.0';
-    const childRows = flattenNode(childData, seriesTotal, timestamps, `${parentKey}_${label}`);
+    const pct =
+      seriesTotal > 0 ? ((childTotal / seriesTotal) * 100).toFixed(1) : '0.0';
+    const childRows = flattenNode(
+      childData,
+      seriesTotal,
+      timestamps,
+      `${parentKey}_${label}`,
+    );
     const leafCount = childRows.length;
-
     childRows.forEach((row, i) => {
       row.levels.unshift({
         label,
@@ -112,25 +83,26 @@ function flattenNode(
         rowSpan: i === 0 ? leafCount : 0,
       });
     });
-
     rows.push(...childRows);
   });
-
   return rows;
 }
 
-function buildTableData(
-  data: Record<string, NestedData>,
-): { rows: FlatRow[]; timestamps: string[]; depth: number } {
+function buildTableData(data: Record<string, NestedData>): {
+  rows: FlatRow[];
+  timestamps: string[];
+  depth: number;
+} {
   if (!data || Object.keys(data).length === 0) {
     return { rows: [], timestamps: [], depth: 0 };
   }
 
   const tsSet = new Set<string>();
-  Object.values(data).forEach((seriesData) => collectTimestamps(seriesData, tsSet));
+  Object.values(data).forEach((seriesData) =>
+    collectTimestamps(seriesData, tsSet),
+  );
   const timestamps = Array.from(tsSet).sort((a, b) => Number(a) - Number(b));
 
-  // compute max depth across all series so columns cover every level
   const depth = Math.max(
     ...Object.values(data).map((seriesData) => getDepth(seriesData)),
   );
@@ -143,12 +115,10 @@ function buildTableData(
     const seriesTotal = sumAll(seriesData);
 
     if (seriesDepth === 0) {
-      // No breakdowns — just series with timestamp values
       const tsValues: Record<string, any> = {};
       timestamps.forEach((ts) => {
         tsValues[`ts_${ts}`] = (seriesData as Record<string, number>)[ts] ?? 0;
       });
-      // pad levels so this row has empty cells for all breakdown columns
       const emptyLevels: FlatRow['levels'] = [];
       for (let i = 0; i < depth; i++) {
         emptyLevels.push({ label: '', total: 0, pct: '', rowSpan: 1 });
@@ -167,11 +137,15 @@ function buildTableData(
       return;
     }
 
-    const flatRows = flattenNode(seriesData, seriesTotal, timestamps, seriesName);
+    const flatRows = flattenNode(
+      seriesData,
+      seriesTotal,
+      timestamps,
+      seriesName,
+    );
     const leafCount = flatRows.length;
 
     flatRows.forEach((fr, i) => {
-      // pad levels if this series has fewer breakdown levels than the max
       while (fr.levels.length < depth) {
         fr.levels.push({ label: '', total: 0, pct: '', rowSpan: 1 });
       }
@@ -200,31 +174,66 @@ function BreakdownDatatable(props: Props) {
   const { t } = useTranslation();
   const { metricStore } = useStore();
   const [showTable, setShowTable] = useState(props.defaultOpen);
-  const topN = metricStore.breakdownTopN as TopNLimit;
 
   const hasBreakdowns = useMemo(
     () => Object.values(props.data).some((d) => getDepth(d) > 0),
     [props.data],
   );
 
-  const totalBreakdownValues = useMemo(() => {
-    if (!hasBreakdowns) return 0;
-    const allKeys = new Set<string>();
-    Object.values(props.data).forEach((d) => {
-      if (getDepth(d) > 0) {
-        Object.keys(d).forEach((k) => allKeys.add(k));
+  // Stable tree of all breakdown values with totals
+  const levelTree = useMemo(
+    () => (hasBreakdowns ? buildLevelTree(props.data) : new Map()),
+    [props.data, hasBreakdowns],
+  );
+
+  const handleToggle = useCallback(
+    (parentPath: string, value: string, levelIdx: number) => {
+      const currentSelection = { ...metricStore.breakdownSelection };
+      const currentSel = currentSelection[parentPath];
+      const allSiblings =
+        levelTree
+          .get(parentPath)
+          ?.map((c: { key: string; total: number }) => c.key) ?? [];
+      const isSelected =
+        currentSel === undefined ||
+        currentSel === null ||
+        currentSel.includes(value);
+
+      if (isSelected) {
+        // Uncheck: remove from selection (don't allow empty)
+        const current =
+          currentSel === null ? [...allSiblings] : [...currentSel];
+        const newSel = current.filter((k) => k !== value);
+        if (newSel.length === 0) return;
+        currentSelection[parentPath] = newSel;
+      } else {
+        // Check: add back and initialize children
+        const current =
+          currentSel === null ? [...allSiblings] : [...currentSel];
+        if (!current.includes(value)) current.push(value);
+        currentSelection[parentPath] =
+          current.length === allSiblings.length ? null : current;
+
+        // Initialize children for the newly-checked value if not already set
+        const childPath = parentPath ? `${parentPath} / ${value}` : value;
+        if (!(childPath in currentSelection)) {
+          const childTopN = metricStore.breakdownLevelTopN[levelIdx + 1] ?? 0;
+          const childKeys = levelTree.get(childPath)?.map((c) => c.key) ?? [];
+          if (childKeys.length > 0) {
+            currentSelection[childPath] =
+              childTopN > 0 ? childKeys.slice(0, childTopN) : null;
+          }
+        }
       }
-    });
-    return allKeys.size;
-  }, [props.data, hasBreakdowns]);
+
+      metricStore.setBreakdownSelection(currentSelection);
+    },
+    [levelTree, metricStore],
+  );
 
   const { rows, columns } = useMemo(() => {
-    const trimmed = hasBreakdowns
-      ? Object.fromEntries(
-          Object.entries(props.data).map(([k, v]) => [k, trimTopN(v, topN)]),
-        )
-      : props.data;
-    const { rows, timestamps, depth } = buildTableData(trimmed);
+    // Always build from full unfiltered data
+    const { rows, timestamps, depth } = buildTableData(props.data);
 
     const cols: NonNullable<TableProps['columns']> = [
       {
@@ -252,12 +261,85 @@ function BreakdownDatatable(props: Props) {
         _pureTitle: levelLabel,
         render: (_: any, record: FlatRow) => {
           const level = record.levels[lvl];
-          if (!level) return null;
+          if (!level || level.rowSpan === 0) return null;
+
+          if (!level.label || !hasBreakdowns) {
+            return (
+              <div>
+                <div>{level.label}</div>
+                <div className="text-xs text-gray-500">
+                  {level.total > 0
+                    ? `${level.total.toLocaleString()} (${level.pct})`
+                    : ''}
+                </div>
+              </div>
+            );
+          }
+
+          const parentPath = record.levels
+            .slice(0, lvl)
+            .map((l) => l.label)
+            .filter(Boolean)
+            .join(' / ');
+
+          const value = level.label;
+          const sel = metricStore.breakdownSelection[parentPath];
+          const isSelected =
+            sel === undefined || sel === null || sel.includes(value);
+
+          // Check if every ancestor is selected (for dimming and disabling)
+          let isParentSelected = true;
+          for (let i = 0; i < lvl; i++) {
+            const ancestorParentPath = record.levels
+              .slice(0, i)
+              .map((l) => l.label)
+              .filter(Boolean)
+              .join(' / ');
+            const ancestorSel =
+              metricStore.breakdownSelection[ancestorParentPath];
+            if (
+              ancestorSel !== undefined &&
+              ancestorSel !== null &&
+              !ancestorSel.includes(record.levels[i].label)
+            ) {
+              isParentSelected = false;
+              break;
+            }
+          }
+
+          // Indeterminate: selected but some children are deselected
+          const childPath = parentPath ? `${parentPath} / ${value}` : value;
+          const childSel = metricStore.breakdownSelection[childPath];
+          const childKeys = levelTree.get(childPath)?.map((c) => c.key) ?? [];
+          const isIndeterminate =
+            isSelected &&
+            isParentSelected &&
+            childKeys.length > 0 &&
+            childSel !== null &&
+            childSel !== undefined &&
+            childSel.length < childKeys.length;
+
+          const effectiveChecked = isSelected && isParentSelected;
+
           return (
-            <div>
-              <div>{level.label}</div>
-              <div className="text-xs text-gray-500">
-                {level.total.toLocaleString()} ({level.pct})
+            <div
+              className={cn(
+                'flex items-start gap-2',
+                !isParentSelected && 'opacity-40',
+              )}
+            >
+              <Checkbox
+                checked={effectiveChecked}
+                indeterminate={isIndeterminate}
+                disabled={!isParentSelected}
+                onChange={() => handleToggle(parentPath, value, lvl)}
+                className="mt-0.5 shrink-0"
+              />
+              <div>
+                <div>{value}</div>
+                <div className="text-xs text-gray-500">
+                  {level.total.toLocaleString()} ({level.pct})
+                </div>
               </div>
             </div>
           );
@@ -280,7 +362,35 @@ function BreakdownDatatable(props: Props) {
     });
 
     return { rows, timestamps, depth, columns: cols };
-  }, [props.data, props.breakdownLabels, topN, hasBreakdowns]);
+  }, [
+    props.data,
+    props.breakdownLabels,
+    hasBreakdowns,
+    levelTree,
+    metricStore.breakdownSelection,
+    handleToggle,
+  ]);
+
+  // Dim rows where any breakdown level is deselected in the chart
+  const rowClassName = useCallback(
+    (record: FlatRow) => {
+      if (!hasBreakdowns) return '';
+      for (let i = 0; i < record.levels.length; i++) {
+        const lvl = record.levels[i];
+        if (!lvl.label) continue;
+        const parentPath = record.levels
+          .slice(0, i)
+          .map((l) => l.label)
+          .filter(Boolean)
+          .join(' / ');
+        if (!metricStore.isBreakdownValueSelected(parentPath, lvl.label)) {
+          return 'opacity-50';
+        }
+      }
+      return '';
+    },
+    [hasBreakdowns, metricStore],
+  );
 
   const isTableOnlyMode = props.metric.viewType === 'table';
 
@@ -289,7 +399,7 @@ function BreakdownDatatable(props: Props) {
   }
 
   return (
-    <div className={cn('relative -mx-4 px-2', showTable ? '' : '')}>
+    <div className={cn('relative -mx-4 px-2')}>
       {!isTableOnlyMode && (
         <div className="flex gap-2">
           <Divider
@@ -314,9 +424,12 @@ function BreakdownDatatable(props: Props) {
 
       {showTable || isTableOnlyMode ? (
         <div className="relative">
-          <div className="flex items-center mb-2">
-            {hasBreakdowns && props.inBuilder && (
-              <TopNButton totalValues={totalBreakdownValues} />
+          <div className="flex items-center mb-2 gap-2">
+            {hasBreakdowns && (
+              <BreakdownSelectionPanel
+                data={props.data}
+                breakdownLabels={props.breakdownLabels}
+              />
             )}
             <Button
               icon={<Download size={14} />}
@@ -335,6 +448,7 @@ function BreakdownDatatable(props: Props) {
             size="small"
             scroll={{ x: 'max-content' }}
             bordered
+            rowClassName={rowClassName}
           />
         </div>
       ) : null}

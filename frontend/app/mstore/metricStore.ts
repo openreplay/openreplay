@@ -101,6 +101,8 @@ export default class MetricStore {
   disabledSeries: string[] = [];
   drillDown = false;
   breakdownTopN: number = 3;
+  breakdownSelection: Record<string, string[] | null> = {};
+  breakdownLevelTopN: number[] = [3];
 
   constructor() {
     makeAutoObservable(this);
@@ -146,6 +148,26 @@ export default class MetricStore {
 
   setBreakdownTopN(n: number) {
     this.breakdownTopN = n;
+  }
+
+  isBreakdownValueSelected(parentPath: string, value: string): boolean {
+    const sel = this.breakdownSelection[parentPath];
+    return sel === undefined || sel === null || sel.includes(value);
+  }
+
+  setBreakdownSelection(selection: Record<string, string[] | null>) {
+    this.breakdownSelection = selection;
+  }
+
+  setBreakdownLevelTopN(level: number, n: number) {
+    const arr = [...this.breakdownLevelTopN];
+    while (arr.length <= level) arr.push(0);
+    arr[level] = n;
+    this.breakdownLevelTopN = arr;
+  }
+
+  clearBreakdownSelection() {
+    this.breakdownSelection = {};
   }
 
   setCardCategory(category: string) {

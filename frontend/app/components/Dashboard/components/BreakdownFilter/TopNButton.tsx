@@ -8,28 +8,36 @@ import { useStore } from 'App/mstore';
 
 interface Props {
   totalValues?: number;
+  /** When provided, drives local state instead of the metric store */
+  onApply?: (n: number) => void;
+  /** Current number of shown values (for label when onApply is used) */
+  value?: number;
 }
 
-function TopNButton({ totalValues }: Props) {
+function TopNButton({ totalValues, onApply, value }: Props) {
   const { t } = useTranslation();
   const { metricStore } = useStore();
-  const topN = metricStore.breakdownTopN;
+  const topN = onApply ? (value ?? 0) : metricStore.breakdownTopN;
   const [open, setOpen] = React.useState(false);
-  const [draft, setDraft] = React.useState(topN);
+  const [draft, setDraft] = React.useState(topN || 3);
 
   React.useEffect(() => {
-    setDraft(topN);
+    if (!onApply) setDraft(topN);
   }, [topN]);
 
   const apply = (n: number) => {
-    metricStore.setBreakdownTopN(n);
+    if (onApply) {
+      onApply(n);
+    } else {
+      metricStore.setBreakdownTopN(n);
+    }
     setOpen(false);
   };
 
-  const label =
-    topN === 0
-      ? t('Showing all values')
-      : `${t('Showing top')} ${topN} ${t('values')}`;
+  const isShowingAll = onApply ? value == null || value === totalValues : topN === 0;
+  const label = isShowingAll
+    ? t('Showing all values')
+    : `${t('Showing top')} ${topN} ${t('values')}`;
 
   return (
     <Popover
