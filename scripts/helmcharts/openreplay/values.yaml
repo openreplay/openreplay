@@ -36,6 +36,7 @@ migration:
 deployment:
   argo: false
 forceMigration: false
+forceKafkaMigration: false
 skipMigration: false
 
 redis: &redis
