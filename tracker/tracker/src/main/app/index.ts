@@ -8,6 +8,7 @@ import ConditionsManager from '../modules/conditionsManager.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
 import TagWatcher from '../modules/tagWatcher.js'
+import type TagMatcher from '../modules/tagMatcher.js'
 import {
   adjustTimeOrigin,
   createEventListener,
@@ -259,6 +260,10 @@ export default class App {
   private canvasRecorder: CanvasRecorder | null = null
   private conditionsManager: ConditionsManager | null = null
   private readonly tagWatcher: TagWatcher
+
+  get tagMatcher(): TagMatcher {
+    return this.tagWatcher.matcher
+  }
 
   private canStart = false
   private rootId: number | null = null

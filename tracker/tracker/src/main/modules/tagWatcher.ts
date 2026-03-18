@@ -1,8 +1,11 @@
+import TagMatcher from './tagMatcher.js'
+
 export const WATCHED_TAGS_KEY = '__or__watched_tags__'
 
 class TagWatcher {
   interval: ReturnType<typeof setInterval> | null = null
   tags: { id: number; selector: string }[] = []
+  readonly matcher: TagMatcher = new TagMatcher()
   observer: IntersectionObserver
   private readonly sessionStorage: Storage
   private readonly errLog: (args: any[]) => void
@@ -57,6 +60,7 @@ class TagWatcher {
 
   setTags(tags: { id: number; selector: string }[]) {
     this.tags = tags
+    this.matcher.setTags(tags)
     if (this.interval) {
       clearInterval(this.interval)
       this.interval = null
@@ -83,6 +87,7 @@ class TagWatcher {
 
   clear() {
     this.tags = []
+    this.matcher.clear()
     if (this.interval) {
       clearInterval(this.interval)
       this.interval = null

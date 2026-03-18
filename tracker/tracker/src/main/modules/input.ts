@@ -132,6 +132,19 @@ export default function (app: App, opts: Partial<Options>): void {
     opts,
   )
 
+  const tagSelectorMap: Map<number, string> = new Map()
+
+  function getTagSelector(id: number, node: Element): string | null {
+    const cached = tagSelectorMap.get(id)
+    if (cached !== undefined) return cached
+    const tagMatch = app.tagMatcher.match(node)
+    if (tagMatch) {
+      tagSelectorMap.set(id, tagMatch.selector)
+      return tagMatch.selector
+    }
+    return null
+  }
+
   function getInputValue(id: number, node: TextFieldElement | HTMLSelectElement) {
     let value = node.value
     let inputMode: InputModeT = options.defaultInputMode
@@ -173,6 +186,7 @@ export default function (app: App, opts: Partial<Options>): void {
   app.attachStopCallback(() => {
     inputValues.clear()
     checkboxValues.clear()
+    tagSelectorMap.clear()
   })
 
   function trackInputValue(id: number, node: TextFieldElement) {
@@ -212,7 +226,7 @@ export default function (app: App, opts: Partial<Options>): void {
     inputTime: number,
   ) {
     const { value, mask } = getInputValue(id, node)
-    let label = getInputLabel(node, options.customAttributes)
+    let label = getTagSelector(id, node) || getInputLabel(node, options.customAttributes)
     if (app.sanitizer.privateMode) {
       label = label.replaceAll(/./g, '*')
     }

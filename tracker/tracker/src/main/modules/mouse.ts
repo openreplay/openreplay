@@ -164,7 +164,12 @@ export default function (app: App, options?: MouseHandlerOptions): void {
 
   const patchDocument = (document: Document, topframe = false) => {
     function getSelector(id: number, target: Element): string {
-      return (selectorMap[id] = selectorMap[id] || _getSelector(target))
+      if (selectorMap[id]) return selectorMap[id]
+      const tagMatch = app.tagMatcher.match(target)
+      if (tagMatch) {
+        return (selectorMap[id] = tagMatch.selector)
+      }
+      return (selectorMap[id] = _getSelector(target))
     }
 
     const attachListener = topframe
