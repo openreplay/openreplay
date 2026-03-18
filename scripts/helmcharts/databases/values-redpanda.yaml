@@ -17,8 +17,6 @@ kafka:
   args:
     - redpanda
     - start
-    - "--smp=1"
-    - "--memory=1G"
     - "--overprovisioned"
     - "--default-log-level=info"
     - "--kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092"
@@ -27,6 +25,9 @@ kafka:
     - "--advertise-pandaproxy-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:8082,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:18082"
     - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
     - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
+
+  # Inject --smp and --memory from resources.limits automatically
+  seastarFlags: true
 
   # Clear Kafka-specific extraEnvVars from base values
   extraEnvVars: []

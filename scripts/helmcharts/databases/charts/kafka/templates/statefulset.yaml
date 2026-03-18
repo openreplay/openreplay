@@ -81,10 +81,28 @@ spec:
           {{- if .Values.command }}
           command:
             {{- toYaml .Values.command | nindent 12 }}
-          {{- if .Values.args }}
           args:
+            {{- if .Values.args }}
             {{- toYaml .Values.args | nindent 12 }}
-          {{- end }}
+            {{- end }}
+            {{- if .Values.seastarFlags }}
+            {{- if .Values.resources }}
+            {{- if .Values.resources.limits }}
+            {{- if .Values.resources.limits.cpu }}
+            {{- $cpu := .Values.resources.limits.cpu | toString }}
+            {{- if hasSuffix "m" $cpu }}
+            {{- $smp := max 1 (div (trimSuffix "m" $cpu | int) 1000) }}
+            - "--smp={{ $smp }}"
+            {{- else }}
+            - "--smp={{ max 1 ($cpu | int) }}"
+            {{- end }}
+            {{- end }}
+            {{- if .Values.resources.limits.memory }}
+            - "--memory={{ .Values.resources.limits.memory }}"
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
           env:
             - name: MY_POD_NAME
               valueFrom:
