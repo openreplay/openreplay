@@ -816,7 +816,7 @@ function WidgetChart(props: Props) {
           Object.keys(mergedBreakdownData).length > 0 ? (
             <BreakdownDatatable
               data={mergedBreakdownData}
-              breakdownLabels={_metric.breakdownLabels}
+              breakdownLabels={_metric.breakdowns}
               inBuilder={props.isPreview}
               defaultOpen
               metric={_metric}

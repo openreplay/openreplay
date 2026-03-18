@@ -201,15 +201,13 @@ function BreakdownDatatable(props: Props) {
 
       if (isSelected) {
         // Uncheck: remove from selection (don't allow empty)
-        const current =
-          currentSel === null ? [...allSiblings] : [...currentSel];
+        const current = !currentSel ? [...allSiblings] : [...currentSel];
         const newSel = current.filter((k) => k !== value);
         if (newSel.length === 0) return;
         currentSelection[parentPath] = newSel;
       } else {
         // Check: add back and initialize children
-        const current =
-          currentSel === null ? [...allSiblings] : [...currentSel];
+        const current = !currentSel ? [...allSiblings] : [...currentSel];
         if (!current.includes(value)) current.push(value);
         currentSelection[parentPath] =
           current.length === allSiblings.length ? null : current;
