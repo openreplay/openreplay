@@ -36,7 +36,7 @@ quickwit: &quickwit
 
 kafka: &kafka
   # For enterpriseEdition
-  # enabled: true
+  enabled: false
   kafkaHost: "kafka.db.svc.cluster.local"
   # For now, clickhouse doesn't support zookeeper tls intgration.
   # So we need http endpoint
@@ -44,6 +44,7 @@ kafka: &kafka
   zookeeperNonTLSPort: 2181
   kafkaPort: "9092"
   kafkaUseSsl: "false"
+  replicationFactor: "2"
   maxMessageBytes: _3145728
   # deleteTopicEnable: true
   extraEnvVars:
