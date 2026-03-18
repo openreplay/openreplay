@@ -142,51 +142,65 @@ minio:
     size: 5Gi
 
 kafka:
-  enabled: false
+  enabled: true
   fullnameOverride: kafka
-  replicaCount: 2
+  replicaCount: 1
   image:
-    repository: ghcr.io/openreplay/kafka
+    repository: docker.redpanda.com/redpandadata/redpanda
     pullPolicy: IfNotPresent
-    tag: "3"
-  
-  kraft:
-    enabled: true
-    clusterId: "Sjg_Rr1iQbO9xpahgDbYpQ"
-    processRoles: "broker,controller"
-    controllerListenerNames: "INTERNAL"
-  
+    tag: "latest"
+
+  # Override startup: use redpanda start instead of Kafka env vars
+  command:
+    - redpanda
+    - start
+  args:
+    - "--smp=1"
+    - "--memory=1G"
+    - "--overprovisioned"
+    - "--default-log-level=info"
+    - "--kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092"
+    - "--advertise-kafka-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:9092,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:19092"
+    - "--pandaproxy-addr=internal://0.0.0.0:8082,external://0.0.0.0:18082"
+    - "--advertise-pandaproxy-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:8082,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:18082"
+    - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
+    - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
+
+  extraEnvVars:
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+
+  # Redpanda runs as UID 101 (redpanda user) by default
+  podSecurityContext:
+    fsGroup: 101
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 101
+
   listeners:
     client:
       enabled: true
       port: 9092
       protocol: PLAINTEXT
     internal:
-      enabled: true
-      port: 9093
-      protocol: PLAINTEXT
+      enabled: false
     ssl:
       enabled: false
-      port: 9094
-      protocol: SSL
-  
-  tls:
-    enabled: false
-    secretName: kafka-tls-certs
-    clientAuth: "required"
-    endpointIdentificationAlgorithm: ""
-  
+
   service:
     type: ClusterIP
     client:
       port: 9092
     ssl:
       port: 9094
-  
+
   persistence:
     enabled: true
     size: 100Gi
-  
+
   resources:
     requests:
       cpu: 500m
@@ -194,32 +208,6 @@ kafka:
     limits:
       cpu: 2000m
       memory: 2Gi
-  
-  # Kafka configuration
-  kafka:
-    messageMaxBytes: "3145728"
-    replicaFetchMaxBytes: "3145728"
-    logRetentionHours: "168"
-    logRetentionBytes: "1073741824"
-    logSegmentBytes: "1073741824"
-    logFlushIntervalMessages: "10000"
-    logFlushIntervalMs: "1000"
-    logRetentionCheckIntervalMs: "300000"
-    defaultReplicationFactor: "1"
-    offsetsTopicReplicationFactor: "1"
-    transactionStateLogReplicationFactor: "1"
-    transactionStateLogMinIsr: "1"
-    numIoThreads: "8"
-    numNetworkThreads: "3"
-    numPartitions: "1"
-    numRecoveryThreadsPerDataDir: "1"
-    socketReceiveBufferBytes: "102400"
-    socketRequestMaxBytes: "104857600"
-    socketSendBufferBytes: "102400"
-    autoCreateTopicsEnable: "true"
-    deleteTopicEnable: "false"
-    allowEveryoneIfNoAclFound: "true"
-    superUsers: "User:admin"
 
 
 # Enterprise dbs
