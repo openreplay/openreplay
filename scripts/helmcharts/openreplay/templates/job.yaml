@@ -548,7 +548,7 @@ spec:
       {{- end}}
       {{- if or .Values.global.enterpriseEditionLicense .Values.forceKafkaMigration }}
       - name: kafka
-        image: "{{.Values.kafka.image.registry}}/{{.Values.kafka.image.repository}}:{{.Values.kafka.image.tag}}"
+        image: "{{.Values.kafkaMigration.image.registry}}/{{.Values.kafkaMigration.image.repository}}:{{.Values.kafkaMigration.image.tag}}"
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
