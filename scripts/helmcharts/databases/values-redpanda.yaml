@@ -8,7 +8,7 @@ kafka:
   image:
     repository: docker.redpanda.com/redpandadata/redpanda
     pullPolicy: IfNotPresent
-    tag: "latest"
+    tag: "v25.3.6"
 
   # Override startup: use 'rpk redpanda start' instead of Kafka env vars.
   # --kafka-addr etc. are rpk flags (not redpanda binary flags).
@@ -21,8 +21,6 @@ kafka:
     - "--default-log-level=info"
     - "--kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092"
     - "--advertise-kafka-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:9092,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:19092"
-    - "--pandaproxy-addr=internal://0.0.0.0:8082,external://0.0.0.0:18082"
-    - "--advertise-pandaproxy-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:8082,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:18082"
     - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
     - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
 
