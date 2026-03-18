@@ -81,25 +81,20 @@ spec:
           {{- if .Values.command }}
           command:
             {{- toYaml .Values.command | nindent 12 }}
+          {{- if or .Values.args (and .Values.redpanda .Values.resources .Values.resources.limits .Values.resources.limits.cpu) }}
           args:
             {{- if .Values.args }}
             {{- toYaml .Values.args | nindent 12 }}
             {{- end }}
-            {{- if .Values.redpanda }}
-            {{- if .Values.resources }}
-            {{- if .Values.resources.limits }}
-            {{- if .Values.resources.limits.cpu }}
+            {{- if and .Values.redpanda .Values.resources .Values.resources.limits .Values.resources.limits.cpu }}
             {{- $cpu := .Values.resources.limits.cpu | toString }}
             {{- if hasSuffix "m" $cpu }}
-            {{- $smp := max 1 (div (trimSuffix "m" $cpu | int) 1000) }}
-            - "--smp={{ $smp }}"
+            - "--smp={{ max 1 (div (trimSuffix "m" $cpu | int) 1000) }}"
             {{- else }}
             - "--smp={{ max 1 ($cpu | int) }}"
             {{- end }}
             {{- end }}
-            {{- end }}
-            {{- end }}
-            {{- end }}
+          {{- end }}
           env:
             - name: MY_POD_NAME
               valueFrom:
