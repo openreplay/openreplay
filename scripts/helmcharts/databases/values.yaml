@@ -221,40 +221,8 @@ kafka:
     allowEveryoneIfNoAclFound: "true"
     superUsers: "User:admin"
 
-  ## To use Redpanda instead of Kafka, override with:
-  # image:
-  #   repository: docker.redpanda.com/redpandadata/redpanda
-  #   tag: "latest"
-  # replicaCount: 1
-  # command:
-  #   - redpanda
-  #   - start
-  # args:
-  #   - "--smp=1"
-  #   - "--memory=1G"
-  #   - "--overprovisioned"
-  #   - "--default-log-level=info"
-  #   - "--kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092"
-  #   - "--advertise-kafka-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:9092,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:19092"
-  #   - "--pandaproxy-addr=internal://0.0.0.0:8082,external://0.0.0.0:18082"
-  #   - "--advertise-pandaproxy-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:8082,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:18082"
-  #   - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
-  #   - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
-  # podSecurityContext:
-  #   fsGroup: 101
-  # securityContext:
-  #   allowPrivilegeEscalation: false
-  #   runAsNonRoot: true
-  #   runAsUser: 101
-  # listeners:
-  #   client:
-  #     enabled: true
-  #     port: 9092
-  #     protocol: PLAINTEXT
-  #   internal:
-  #     enabled: false
-  #   ssl:
-  #     enabled: false
+  ## To use Redpanda instead of Kafka, see values-redpanda.yaml overlay:
+  ##   helm install ... -f values.yaml -f values-redpanda.yaml
 
 
 # Enterprise dbs

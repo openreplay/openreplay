@@ -10,11 +10,13 @@ kafka:
     pullPolicy: IfNotPresent
     tag: "latest"
 
-  # Override startup: use 'redpanda start' instead of Kafka env vars
+  # Override startup: use 'rpk redpanda start' instead of Kafka env vars.
+  # --kafka-addr etc. are rpk flags (not redpanda binary flags).
   command:
+    - rpk
+  args:
     - redpanda
     - start
-  args:
     - "--smp=1"
     - "--memory=1G"
     - "--overprovisioned"
