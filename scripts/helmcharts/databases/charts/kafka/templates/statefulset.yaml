@@ -85,7 +85,7 @@ spec:
             {{- if .Values.args }}
             {{- toYaml .Values.args | nindent 12 }}
             {{- end }}
-            {{- if .Values.seastarFlags }}
+            {{- if .Values.redpanda }}
             {{- if .Values.resources }}
             {{- if .Values.resources.limits }}
             {{- if .Values.resources.limits.cpu }}
@@ -96,9 +96,6 @@ spec:
             {{- else }}
             - "--smp={{ max 1 ($cpu | int) }}"
             {{- end }}
-            {{- end }}
-            {{- if .Values.resources.limits.memory }}
-            - "--memory={{ .Values.resources.limits.memory }}"
             {{- end }}
             {{- end }}
             {{- end }}

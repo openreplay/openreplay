@@ -26,8 +26,8 @@ kafka:
     - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
     - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
 
-  # Inject --smp and --memory from resources.limits automatically
-  seastarFlags: true
+  # Inject --smp from resources.limits.cpu automatically
+  redpanda: true
 
   # Clear Kafka-specific extraEnvVars from base values
   extraEnvVars: []
