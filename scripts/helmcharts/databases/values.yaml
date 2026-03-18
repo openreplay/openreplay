@@ -240,11 +240,6 @@ kafka:
   #   - "--advertise-pandaproxy-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:8082,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:18082"
   #   - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
   #   - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
-  # extraEnvVars:
-  #   - name: POD_NAMESPACE
-  #     valueFrom:
-  #       fieldRef:
-  #         fieldPath: metadata.namespace
   # podSecurityContext:
   #   fsGroup: 101
   # securityContext:

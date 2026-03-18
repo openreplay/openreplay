@@ -26,11 +26,8 @@ kafka:
     - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
     - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
 
-  extraEnvVars:
-    - name: POD_NAMESPACE
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.namespace
+  # Clear Kafka-specific extraEnvVars from base values
+  extraEnvVars: []
 
   # Redpanda runs as UID 101 (redpanda user)
   podSecurityContext:
