@@ -798,7 +798,7 @@ function WidgetChart(props: Props) {
         metricStore.setBreakdownSelection(selection);
       }
     }
-  }, [mergedBreakdownData]);
+  }, [mergedBreakdownData, metricStore.breakdownLevelTopN]);
 
   return (
     <div ref={ref}>

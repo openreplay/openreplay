@@ -96,10 +96,9 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
     ['sessions'],
   );
   const breakdownLabels: any[] = metric.breakdowns || [];
-  const breakdownFilters: Filter[] = breakdownLabels.map((label: string) => {
-    const found = allFilterOptions.find((f) => f.name === label);
-    return found!;
-  });
+  const breakdownFilters: Filter[] = breakdownLabels
+    .map((label: string) => allFilterOptions.find((f) => f.name === label))
+    .filter((f): f is Filter => f !== undefined);
   const activeFilterNames = breakdownFilters.map((f: any) => f.name);
   const propertyOptions: Filter[] = allFilterOptions.filter(
     (i) =>
@@ -136,22 +135,20 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
       title={
         <div className="flex gap-2 items-center">
           <span className="font-medium">{t('Breakdown')}</span>
-          {canAddMore && (
-            <FilterSelection
-              type="Filters"
-              disabled={!canAddMore}
-              filters={propertyOptions}
-              onFilterClick={onAddFilter}
-              activeFilters={activeFilterNames}
-            >
-              <Button type="text" size="small">
-                <div className="flex items-center gap-1">
-                  <Plus size={16} strokeWidth={1} />
-                  <span>{t('Add')}</span>
-                </div>
-              </Button>
-            </FilterSelection>
-          )}
+          <FilterSelection
+            type="Filters"
+            disabled={!canAddMore}
+            filters={propertyOptions}
+            onFilterClick={onAddFilter}
+            activeFilters={activeFilterNames}
+          >
+            <Button type="text" size="small" disabled={!canAddMore}>
+              <div className="flex items-center gap-1">
+                <Plus size={16} strokeWidth={1} />
+                <span>{t('Add')}</span>
+              </div>
+            </Button>
+          </FilterSelection>
           <Space className="ml-auto">
             <Button
               onClick={() => setExpanded(!expanded)}
