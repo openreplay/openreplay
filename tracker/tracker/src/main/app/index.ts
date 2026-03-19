@@ -814,6 +814,7 @@ export default class App {
       this._debug('worker_failed', data.reason)
     } else if (data.type === 'compress') {
       const batch = data.batch
+      const dataType = data.dataType
       const batchSize = batch.byteLength
       const hasCompressionAPI = 'CompressionStream' in globalThis
       if (batchSize > this.compressionThreshold && hasCompressionAPI) {
@@ -825,14 +826,15 @@ export default class App {
             this.worker?.postMessage({
               type: 'compressed',
               batch: new Uint8Array(compressedBuffer),
+              dataType,
             })
           })
           .catch((err) => {
             this.debug.error('Openreplay compression error:', err)
-            this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+            this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType })
           })
       } else {
-        this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+        this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType })
       }
     } else if (data.type === 'queue_empty') {
       this.onSessionSent()

@@ -1,4 +1,5 @@
 import Message from './messages.gen.js'
+export type DataType = 'player' | 'assets' | 'devtools' | 'analytics'
 export interface Options {
   connAttemptCount?: number
   connAttemptGap?: number
@@ -25,10 +26,12 @@ export type ToWorkerData =
   | {
       type: 'compressed'
       batch: Uint8Array
+      dataType: DataType
     }
   | {
       type: 'uncompressed'
       batch: Uint8Array
+      dataType: DataType
     }
   | 'urgentFlushBatch'
   | 'forceFlushBatch'
@@ -49,6 +52,7 @@ export type FromWorkerData =
   | {
       type: 'compress'
       batch: Uint8Array
+      dataType: DataType
     }
   | QEmpty
 export {}

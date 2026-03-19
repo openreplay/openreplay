@@ -76,6 +76,16 @@ export default class PrimitiveReader {
     return !!this.buf[this.p++];
   }
 
+  readSize(): number | null {
+    if (this.p + 3 > this.buf.length) return null;
+    let size = 0;
+    for (let i = 0; i < 3; i++) {
+      size += this.buf[this.p + i] << (i * 8);
+    }
+    this.p += 3;
+    return size;
+  }
+
   skip(n: number) {
     this.p += n;
   }

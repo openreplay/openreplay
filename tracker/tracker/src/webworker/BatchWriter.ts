@@ -1,5 +1,7 @@
 import type Message from '../common/messages.gen.js'
 import * as Messages from '../common/messages.gen.js'
+import { ASSET_MESSAGES } from '../common/messages.gen.js'
+import type { DataType } from '../common/interaction.js'
 import MessageEncoder from './MessageEncoder.gen.js'
 
 const SIZE_BYTES = 3
@@ -12,12 +14,16 @@ export default class BatchWriter {
   private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private isEmpty = true
   private checkpoints: number[] = []
+  private assetMessages: Message[] = []
+  private batchFirstIndex = 0
+  private batchHeaderTimestamp = 0
+  private batchHeaderUrl = ''
 
   constructor(
     private readonly pageNo: number,
     private timestamp: number,
     private url: string,
-    private readonly onBatch: (batch: Uint8Array, skipCompression?: boolean) => void,
+    private readonly onBatch: (batch: Uint8Array, skipCompression?: boolean, dataType?: DataType) => void,
     private tabId: string,
     private readonly onOfflineEnd: () => void,
   ) {
@@ -44,11 +50,14 @@ export default class BatchWriter {
     }
 
     this.checkpoints.length = 0
+    this.batchFirstIndex = this.nextIndex
+    this.batchHeaderTimestamp = this.timestamp
+    this.batchHeaderUrl = this.url
 
     // MBTODO: move service-messages creation methods to webworker
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
-      1,
+      2,
       this.pageNo,
       this.nextIndex,
       this.timestamp,
@@ -109,6 +118,11 @@ export default class BatchWriter {
     if (message[0] === Messages.Type.SetPageLocation) {
       this.url = message[1] // .url
     }
+    if (ASSET_MESSAGES.has(message[0])) {
+      this.assetMessages.push(message)
+      this.nextIndex++
+      return
+    }
     if (this.writeWithSize(message)) {
       return
     }
@@ -131,17 +145,75 @@ export default class BatchWriter {
   }
 
   finaliseBatch(skipCompression = false) {
-    if (this.isEmpty) {
+    const hasRegular = !this.isEmpty
+    const hasAssets = this.assetMessages.length > 0
+
+    if (!hasRegular && !hasAssets) {
       return
     }
-    const batch = this.encoder.flush()
-    this.onBatch(batch, skipCompression)
+
+    if (hasRegular) {
+      const batch = this.encoder.flush()
+      this.onBatch(batch, skipCompression, 'player')
+    } else {
+      this.encoder.reset()
+    }
+
+    if (hasAssets) {
+      const assetBatch = this.buildAssetBatch()
+      this.onBatch(assetBatch, skipCompression, 'assets')
+      this.assetMessages.length = 0
+    }
+
     this.prepare()
   }
 
 
+  private buildAssetBatch(): Uint8Array {
+    const encoder = new MessageEncoder(this.beaconSizeLimit)
+    const sizeBuffer = new Uint8Array(SIZE_BYTES)
+
+    const writeWithSize = (msg: Message): void => {
+      encoder.uint(msg[0])
+      encoder.skip(SIZE_BYTES)
+      const startOffset = encoder.getCurrentOffset()
+      encoder.encode(msg)
+      const endOffset = encoder.getCurrentOffset()
+      const size = endOffset - startOffset
+      for (let i = 0; i < SIZE_BYTES; i++) {
+        sizeBuffer[i] = size >> (i * 8)
+      }
+      encoder.set(sizeBuffer, startOffset - SIZE_BYTES)
+      encoder.checkpoint()
+    }
+
+    // BatchMetadata with version=3 (no size prefix)
+    const batchMetadata: Messages.BatchMetadata = [
+      Messages.Type.BatchMetadata,
+      3,
+      this.pageNo,
+      this.batchFirstIndex,
+      this.batchHeaderTimestamp,
+      this.batchHeaderUrl,
+    ]
+    encoder.uint(batchMetadata[0])
+    encoder.encode(batchMetadata as Message)
+
+    // Timestamp + TabData header (with size prefix)
+    writeWithSize([Messages.Type.Timestamp, this.batchHeaderTimestamp] as Message)
+    writeWithSize([Messages.Type.TabData, this.tabId] as Message)
+
+    // Asset messages (preserving original order)
+    for (const msg of this.assetMessages) {
+      writeWithSize(msg)
+    }
+
+    return encoder.flush()
+  }
+
   clean() {
     this.encoder.reset()
     this.checkpoints.length = 0
+    this.assetMessages.length = 0
   }
 }

@@ -12,5 +12,9 @@ export type <%= msg.name %> = [
 ]
 <% end %>
 
+export const ASSET_MESSAGES: ReadonlySet<number> = new Set([
+  <%= $messages.select { |msg| msg.pipeline == 'a' }.map { |msg| "#{msg.id}," }.join "\n  " %>
+])
+
 type Message =  <%= $messages.select { |msg| msg.tracker }.map { |msg| "#{msg.name}" }.join " | " %>
 export default Message

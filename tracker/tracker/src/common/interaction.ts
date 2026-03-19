@@ -1,5 +1,7 @@
 import Message from './messages.gen.js'
 
+export type DataType = 'player' | 'assets' | 'devtools' | 'analytics'
+
 export interface Options {
   connAttemptCount?: number
   connAttemptGap?: number
@@ -26,8 +28,8 @@ export type ToWorkerData =
   | Start
   | Auth
   | Array<Message>
-  | { type: 'compressed'; batch: Uint8Array }
-  | { type: 'uncompressed'; batch: Uint8Array }
+  | { type: 'compressed'; batch: Uint8Array; dataType: DataType }
+  | { type: 'uncompressed'; batch: Uint8Array; dataType: DataType }
   | 'forceFlushBatch'
   | 'closing'
   | 'check_queue'
@@ -46,5 +48,5 @@ export type FromWorkerData =
   | 'a_start'
   | Failure
   | 'not_init'
-  | { type: 'compress'; batch: Uint8Array }
+  | { type: 'compress'; batch: Uint8Array; dataType: DataType }
   | QEmpty
