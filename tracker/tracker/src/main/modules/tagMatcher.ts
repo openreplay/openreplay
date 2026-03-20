@@ -1,4 +1,4 @@
-type Tag = { id: number; selector: string }
+export type Tag = { id: number; selector: string; location?: string }
 
 /**
  * Two-tier tag matching:
@@ -68,7 +68,7 @@ class TagMatcher {
   private matchExact(el: Element): Tag | null {
     if (el.id && this.byId.has(el.id)) {
       const tag = this.byId.get(el.id)!
-      if (safeMatches(el, tag.selector)) return tag
+      if (safeMatches(el, tag.selector) && matchesLocation(tag)) return tag
     }
 
     if (this.byDataAttr.size > 0) {
@@ -79,7 +79,7 @@ class TagMatcher {
           const key = `[${attr.name}="${attr.value}"]`
           if (this.byDataAttr.has(key)) {
             const tag = this.byDataAttr.get(key)!
-            if (safeMatches(el, tag.selector)) return tag
+            if (safeMatches(el, tag.selector) && matchesLocation(tag)) return tag
           }
         }
       }
@@ -90,13 +90,13 @@ class TagMatcher {
         const cls = el.classList[i]
         if (this.byClass.has(cls)) {
           const tag = this.byClass.get(cls)!
-          if (safeMatches(el, tag.selector)) return tag
+          if (safeMatches(el, tag.selector) && matchesLocation(tag)) return tag
         }
       }
     }
 
     for (const tag of this.fallback) {
-      if (safeMatches(el, tag.selector)) return tag
+      if (safeMatches(el, tag.selector) && matchesLocation(tag)) return tag
     }
 
     return null
@@ -131,6 +131,19 @@ function safeMatches(el: Element, selector: string): boolean {
     return el.matches(selector)
   } catch {
     return false
+  }
+}
+
+export function matchesLocation(tag: { location?: string }): boolean {
+  if (!tag.location) return true
+  try {
+    const loc = tag.location
+    if (loc.startsWith('/')) {
+      return window.location.pathname === loc
+    }
+    return window.location.href === loc
+  } catch {
+    return true
   }
 }
 

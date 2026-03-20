@@ -1,7 +1,8 @@
+import { projectStore } from '@/mstore';
 import { makeAutoObservable } from 'mobx';
+
 import { tagWatchService } from 'App/services';
 import { CreateTag, Tag } from 'App/services/TagWatchService';
-import { projectStore } from '@/mstore';
 
 export default class TagWatchStore {
   tags: Tag[] = [];

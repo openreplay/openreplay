@@ -1,10 +1,10 @@
-import TagMatcher from './tagMatcher.js'
+import TagMatcher, { type Tag, matchesLocation } from './tagMatcher.js'
 
 export const WATCHED_TAGS_KEY = '__or__watched_tags__'
 
 class TagWatcher {
   interval: ReturnType<typeof setInterval> | null = null
-  tags: { id: number; selector: string }[] = []
+  tags: Tag[] = []
   readonly matcher: TagMatcher = new TagMatcher()
   observer: IntersectionObserver
   private readonly sessionStorage: Storage
@@ -20,7 +20,7 @@ class TagWatcher {
     this.errLog = params.errLog
     this.onTag = params.onTag
     // @ts-ignore
-    const tags: { id: number; selector: string }[] = JSON.parse(
+    const tags: Tag[] = JSON.parse(
       params.sessionStorage.getItem(WATCHED_TAGS_KEY) ?? '[]',
     )
     this.setTags(tags)
@@ -48,7 +48,7 @@ class TagWatcher {
       },
     })
       .then((r) => r.json())
-      .then(({ tags }: { tags: { id: number; selector: string }[] }) => {
+      .then(({ tags }: { tags: Tag[] }) => {
         if (tags && tags.length) {
           this.setTags(tags)
           const tagString = JSON.stringify(tags)
@@ -58,7 +58,7 @@ class TagWatcher {
       .catch((e) => this.errLog(e))
   }
 
-  setTags(tags: { id: number; selector: string }[]) {
+  setTags(tags: Tag[]) {
     this.tags = tags
     this.matcher.setTags(tags)
     if (this.interval) {
@@ -67,6 +67,7 @@ class TagWatcher {
     }
     this.interval = setInterval(() => {
       this.tags.forEach((tag) => {
+        if (!matchesLocation(tag)) return
         const possibleEls = document.querySelectorAll(tag.selector)
         if (possibleEls.length > 0) {
           const el = possibleEls[0]
@@ -79,8 +80,10 @@ class TagWatcher {
   }
 
   onTagRendered(tagId: number) {
-    if (this.tags.findIndex(t => t.id === tagId)) {
-      this.tags = this.tags.filter((tag) => tag.id !== tagId)
+    const tag = this.tags.find(t => t.id === tagId)
+    if (tag) {
+      this.tags = this.tags.filter((t) => t.id !== tagId)
+      if (!matchesLocation(tag)) return
     }
     this.onTag(tagId)
   }

@@ -1,14 +1,17 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
-import React, { useEffect } from 'react';
 import { useStore } from '@/mstore';
-import { List, Button, Typography } from 'antd';
-import { observer } from 'mobx-react-lite';
-import { ScanSearch } from 'lucide-react';
 import { EditOutlined } from '@ant-design/icons';
-import { useModal } from 'Components/ModalContext';
-import TagForm from './TagForm';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { Button, List, Typography } from 'antd';
+import { ScanSearch } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'Components/ModalContext';
+
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
+import TagForm from './TagForm';
 
 function TagsPage() {
   const { t } = useTranslation();
@@ -84,12 +87,10 @@ function TagsPage() {
               title={item.name}
               description={
                 <span>
-                  {item.selector}
                   {item.location ? (
-                    <span className="ml-2 text-gray-400">
-                      {item.location}
-                    </span>
+                    <span className="mr-2 text-gray-medium">{item.location}</span>
                   ) : null}
+                  {item.selector}
                 </span>
               }
               avatar={<ScanSearch size={20} />}
