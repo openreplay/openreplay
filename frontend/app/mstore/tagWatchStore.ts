@@ -57,14 +57,20 @@ export default class TagWatchStore {
     }
   };
 
-  updateTagName = async (id: number, name: string, projectId?: number) => {
+  updateTag = async (
+    id: number,
+    data: { name: string; location?: string },
+    projectId?: number,
+  ) => {
     try {
       const pid = projectId || projectStore.active?.projectId;
-      await tagWatchService.updateTagName(pid!, id, name);
+      await tagWatchService.updateTag(pid!, id, data);
       const updatedTag = this.tags.find((t) => t.tagId === id);
       if (updatedTag) {
         this.setTags(
-          this.tags.map((t) => (t.tagId === id ? { ...updatedTag, name } : t)),
+          this.tags.map((t) =>
+            t.tagId === id ? { ...updatedTag, ...data } : t,
+          ),
         );
       }
     } catch (e) {

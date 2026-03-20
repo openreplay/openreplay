@@ -67,17 +67,16 @@ const TagListModal = observer(
     const { t } = useTranslation();
 
     const updateTagName = (id: number, name: string) => {
-      void tagWatchStore.updateTagName(id, name);
-      // very annoying
+      void tagWatchStore.updateTag(id, { name });
       // @ts-ignore
-      toast.success('Tag name updated');
+      toast.success(t('Feature updated'));
     };
     const onRemove = async (id: number) => {
       if (
         await confirm({
-          header: t('Remove Tag'),
+          header: t('Remove Feature'),
           confirmButton: t('Remove'),
-          confirmation: t('Are you sure you want to remove this tag?'),
+          confirmation: t('Are you sure you want to remove this feature?'),
         })
       ) {
         void tagWatchStore.deleteTag(id);

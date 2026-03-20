@@ -29,7 +29,6 @@ function ProjectTabs() {
       label: t('Metadata'),
       content: <div>{t('Metadata Content')}</div>,
     },
-    { key: 'tags', label: t('Tags'), content: <div>{t('Tags Content')}</div> },
     // { key: 'groupKeys', label: 'Group Keys', content: <div>Group Keys Content</div> }
   ];
 

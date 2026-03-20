@@ -15,19 +15,20 @@ function TagForm(props: Props) {
   const { tag, projectId } = props;
   const { tagWatchStore } = useStore();
   const [name, setName] = React.useState(tag.name);
+  const [location, setLocation] = React.useState(tag.location || '');
   const [loading, setLoading] = React.useState(false);
   const { closeModal } = useModal();
 
-  const write = ({ target: { value, name } }: any) => {
-    setName(value);
-  };
+  const hasChanges =
+    (name !== tag.name || location !== (tag.location || '')) &&
+    name.length > 0;
 
   const onDelete = async () => {
     if (
       await confirm({
-        header: t('Remove Tag'),
+        header: t('Remove Feature'),
         confirmButton: t('Remove'),
-        confirmation: t('Are you sure you want to remove this tag?'),
+        confirmation: t('Are you sure you want to remove this feature?'),
       })
     ) {
       await tagWatchStore.deleteTag(tag.tagId, projectId);
@@ -38,7 +39,11 @@ function TagForm(props: Props) {
   const onSave = async () => {
     setLoading(true);
     tagWatchStore
-      .updateTagName(tag.tagId, name, projectId)
+      .updateTag(
+        tag.tagId,
+        { name, location: location || undefined },
+        projectId,
+      )
       .then(() => {
         closeModal();
       })
@@ -55,7 +60,7 @@ function TagForm(props: Props) {
           autoFocus
           name="name"
           value={name}
-          onChange={write}
+          onChange={(e) => setName(e.target.value)}
           placeholder={t('Name')}
           maxLength={50}
           className="font-normal rounded-lg"
@@ -65,12 +70,22 @@ function TagForm(props: Props) {
         <label htmlFor={'selector'}>Selector:</label>
         <Input value={tag.selector} disabled name={'selector'} />
       </Form.Item>
+      <Form.Item label={t('Location:')} className="font-medium!">
+        <label htmlFor="location">{t('Location')}</label>
+        <Input
+          name="location"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          placeholder={t('E.g. /checkout')}
+          className="font-normal rounded-lg"
+        />
+      </Form.Item>
 
       <div className="flex justify-between">
         <Space>
           <Button
             onClick={onSave}
-            disabled={name.length === 0 || name === tag.name || loading}
+            disabled={!hasChanges || loading}
             loading={loading}
             type="primary"
             className="float-left mr-1"

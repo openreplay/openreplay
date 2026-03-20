@@ -3,7 +3,6 @@ import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import ProjectTabTracking from 'Components/Client/Projects/ProjectTabTracking';
 import CustomFields from 'Components/Client/CustomFields';
-import ProjectTags from 'Components/Client/Projects/ProjectTags';
 import ProjectCaptureRate from 'Components/Client/Projects/ProjectCaptureRate';
 import { Empty } from 'antd';
 
@@ -25,7 +24,6 @@ const ProjectTabContent: React.FC = () => {
       installation: <ProjectTabTracking project={project} />,
       captureRate: <ProjectCaptureRate project={project} />,
       metadata: <CustomFields />,
-      tags: <ProjectTags />,
     }),
     [project],
   );

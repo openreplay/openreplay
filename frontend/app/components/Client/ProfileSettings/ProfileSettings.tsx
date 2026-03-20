@@ -1,16 +1,19 @@
-import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
-import { PageTitle } from 'UI';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import LanguageSwitcher from 'App/components/LanguageSwitcher';
-import Settings from './Settings';
-import ChangePassword from './ChangePassword';
-import Api from './Api';
-import TenantKey from './TenantKey';
-import OptOut from './OptOut';
-import Licenses from './Licenses';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import LanguageSwitcher from 'App/components/LanguageSwitcher';
+import { useStore } from 'App/mstore';
+import { PageTitle } from 'UI';
+
+import Api from './Api';
+import ChangePassword from './ChangePassword';
+import Dangerzone from './Dangerzone';
+import Licenses from './Licenses';
+import OptOut from './OptOut';
+import Settings from './Settings';
+import TenantKey from './TenantKey';
 
 function ProfileSettings() {
   const { t } = useTranslation();
@@ -49,6 +52,8 @@ function ProfileSettings() {
         description={t('Select the language in which OpenReplay will appear.')}
         children={<LanguageSwitcher />}
       />
+
+      <div className="border-b my-10" />
 
       <Section
         title={t('Organization API Key')}
@@ -92,6 +97,8 @@ function ProfileSettings() {
           />
         </>
       )}
+
+      <Dangerzone />
     </div>
   );
 }

@@ -171,6 +171,7 @@ export const dataManagement = {
   actions: () => '/data-management/list/actions',
   actionPage: (id = ':actionId', hash?: string | number) =>
     hashed(`/data-management/list/actions/${id}`, hash),
+  tags: () => '/data-management/list/tags',
 };
 
 const REQUIRED_SITE_ID_ROUTES = [
@@ -216,6 +217,7 @@ const REQUIRED_SITE_ID_ROUTES = [
   dataManagement.properties(),
   dataManagement.actions(),
   dataManagement.actionPage(''),
+  dataManagement.tags(),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));

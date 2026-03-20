@@ -127,6 +127,7 @@ function SideMenu(props: Props) {
     [MENU.EVENTS]: () => withSiteId(routes.dataManagement.eventsList(), siteId),
     [MENU.PROPS]: () => withSiteId(routes.dataManagement.properties(), siteId),
     [MENU.ACTIONS]: () => withSiteId(routes.dataManagement.actions(), siteId),
+    [MENU.TAGS]: () => withSiteId(routes.dataManagement.tags(), siteId),
     ...extraRoutes(siteId),
   };
 

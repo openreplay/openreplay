@@ -33,7 +33,7 @@ const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({
         className="rounded-lg font-mono text-sm  placeholder:font-sans placeholder:text-base placeholder:text-gray-400"
         rows={4}
         style={{ paddingRight: '40px' }}
-        placeholder={t('Enter selector to tag elements. E.g. .btn-primary')}
+        placeholder={t('Enter selector to tag a feature. E.g. .btn-primary')}
       />
       <Tooltip title={t('Copy')}>
         <Button
@@ -59,7 +59,16 @@ function TagWatch() {
   const { store, player } = React.useContext(PlayerContext);
   const { showModal, hideModal } = useModal();
 
-  const { tagSelector } = store.get();
+  const { tagSelector, location: rawLocation } = store.get();
+
+  const currentLocation = React.useMemo(() => {
+    if (!rawLocation) return undefined;
+    try {
+      return new URL(rawLocation).pathname;
+    } catch {
+      return rawLocation;
+    }
+  }, [rawLocation]);
 
   React.useEffect(() => {
     player.pause();
@@ -88,6 +97,7 @@ function TagWatch() {
     name: string,
     ignoreClRage: boolean,
     ignoreDeadCl: boolean,
+    location?: string,
   ) => {
     try {
       const tag = await tagWatchStore.createTag({
@@ -95,6 +105,7 @@ function TagWatch() {
         selector,
         ignoreClickRage: ignoreClRage,
         ignoreDeadClick: ignoreDeadCl,
+        location,
       });
       const tags = await tagWatchStore.getTags();
       if (tags) {
@@ -103,12 +114,12 @@ function TagWatch() {
           tags.map((tag) => ({ label: tag.name, value: tag.tagId.toString() })),
         );
       }
-      toast.success('Tag created');
+      toast.success(t('Feature created'));
       setSelector('');
       return tag;
     } catch (e) {
       console.error(e);
-      toast.error('Failed to create tag');
+      toast.error(t('Failed to create feature'));
     }
   };
 
@@ -116,7 +127,7 @@ function TagWatch() {
     if (selector === '') {
       return;
     }
-    showModal(<SaveModal onSave={onSave} hideModal={hideModal} />, {
+    showModal(<SaveModal onSave={onSave} hideModal={hideModal} currentLocation={currentLocation} />, {
       right: true,
       width: 400,
     });
@@ -127,7 +138,7 @@ function TagWatch() {
       <div className="flex flex-col items-center justify-between">
         <p>
           {t(
-            'Select elements in the session play area to tag by class selector and filter sessions to verify their rendering.',
+            'Select elements in the session play area to tag as a feature and be able to find sessions where users interact with it.',
           )}
         </p>
       </div>
@@ -140,7 +151,7 @@ function TagWatch() {
         icon={<ZoomInOutlined />}
         disabled={selector === ''}
       >
-        {t('Tag Element')}
+        {t('Tag Feature')}
       </Button>
     </div>
   );

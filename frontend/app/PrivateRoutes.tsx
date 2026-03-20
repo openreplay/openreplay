@@ -50,6 +50,7 @@ const components: any = {
   ActionPage: lazy(
     () => import('Components/DataManagement/Actions/ActionPage'),
   ),
+  TagsPage: lazy(() => import('Components/DataManagement/Tags/index')),
 };
 
 const enhancedComponents: any = {
@@ -73,6 +74,7 @@ const enhancedComponents: any = {
   PropertiesList: withSiteIdUpdater(components.PropertiesList),
   ActionsPage: withSiteIdUpdater(components.ActionsPage),
   ActionPage: withSiteIdUpdater(components.ActionPage),
+  TagsPage: withSiteIdUpdater(components.TagsPage),
 };
 
 const { withSiteId } = routes;
@@ -361,6 +363,10 @@ function PrivateRoutes() {
         <Route
           path={withSiteId(routes.dataManagement.actions(), siteIdList)}
           element={<enhancedComponents.ActionsPage />}
+        />
+        <Route
+          path={withSiteId(routes.dataManagement.tags(), siteIdList)}
+          element={<enhancedComponents.TagsPage />}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Route key={fr} path={fr} element={<Navigate to={to} replace />} />
