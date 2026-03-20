@@ -1,7 +1,9 @@
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.26.0';
 
 ALTER TABLE product_analytics.events
-    ADD COLUMN IF NOT EXISTS "$current_path" String MATERIALIZED path("$current_url") AFTER "$current_url";
+    ADD COLUMN IF NOT EXISTS "$current_path" String MATERIALIZED path("$current_url") AFTER "$current_url"
+    SETTINGS max_execution_time = 0;
+
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_events_mv
     TO product_analytics.autocomplete_simple AS
@@ -72,13 +74,15 @@ ALTER TABLE product_analytics.all_events
     DROP COLUMN IF EXISTS display_name,
     DROP COLUMN IF EXISTS description,
     DROP COLUMN IF EXISTS status,
-    DROP COLUMN IF EXISTS _edited_by_user;
+    DROP COLUMN IF EXISTS _edited_by_user
+    SETTINGS max_execution_time = 0;
 
 ALTER TABLE product_analytics.all_properties
     DROP COLUMN IF EXISTS display_name,
     DROP COLUMN IF EXISTS description,
     DROP COLUMN IF EXISTS status,
-    DROP COLUMN IF EXISTS _edited_by_user;
+    DROP COLUMN IF EXISTS _edited_by_user
+    SETTINGS max_execution_time = 0;
 
 CREATE TABLE IF NOT EXISTS product_analytics.all_events_customized
 (
