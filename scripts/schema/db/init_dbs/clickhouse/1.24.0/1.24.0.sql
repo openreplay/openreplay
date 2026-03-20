@@ -85,7 +85,9 @@ CREATE TABLE IF NOT EXISTS product_analytics.users_distinct_id
 ALTER TABLE product_analytics.events
     RENAME COLUMN "$user_id" TO "_$user_id",
     DROP COLUMN "_$user_id",
-    ADD COLUMN "$user_id" String AFTER distinct_id;
+    ADD COLUMN "$user_id" String AFTER distinct_id
+    SETTINGS max_execution_time = 0;
+
 ALTER TABLE product_analytics.events
     MODIFY COLUMN "$device_id" String AFTER "$user_id";
 
@@ -119,8 +121,9 @@ FROM product_analytics.events
 GROUP BY ALL;
 
 ALTER TABLE product_analytics.events
-    ADD COLUMN sample_key UInt8
-        MATERIALIZED cityHash64(event_id) % 100;
+    ADD COLUMN IF NOT EXISTS sample_key UInt8
+        MATERIALIZED cityHash64(event_id) % 100
+    SETTINGS max_execution_time = 0;;
 
 DROP TABLE IF EXISTS product_analytics.autocomplete_event_properties;
 DROP TABLE IF EXISTS product_analytics.autocomplete_events;
