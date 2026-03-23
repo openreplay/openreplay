@@ -334,7 +334,8 @@ export default class FilterStore {
           category === 'events' ||
           category === 'auto_captured' ||
           category === 'user_events' ||
-          category === 'actions',
+          category === 'actions' ||
+          category === 'features',
         value: filter.value || [],
         propertyOrder: 'and',
         operator: filter.operator || this.getDefaultFilterOperator(dataType),
@@ -486,6 +487,22 @@ export default class FilterStore {
           );
           processedFilters.push(...userFilters);
         }
+      } else if (category === 'features') {
+        const featureFilters = list.map((feature: any) => ({
+          ...feature,
+          id: feature.tagId,
+          name: 'TAG_TRIGGER',
+          displayName: feature.displayName || feature.name,
+          isEvent: true,
+          category: 'features',
+          value: [feature.tagId],
+        }));
+        const filters = this.processFilters(
+          featureFilters,
+          'features',
+          customScope,
+        );
+        processedFilters.push(...filters);
       } else if (category === 'actions') {
         // Process actions as event filters with actionId in the main body
         const actionFilters = list.map((action: any) => ({

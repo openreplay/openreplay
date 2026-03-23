@@ -491,7 +491,17 @@ class SearchStore {
 
   addFilter = (filter: any) => {
     filter = this.getFilterDefaults(filter);
-    if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
+    if (filter.category === 'features') {
+      filter.filters = [
+        {
+          name: 'tagId',
+          value: filter.value,
+          operator: 'is',
+          dataType: 'string',
+          isEvent: false,
+        },
+      ];
+    } else if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
       filterStore.getEventFilters(filter.id).then((props) => {
         filter.filters = props?.filter((prop) => prop.defaultProperty);
       });

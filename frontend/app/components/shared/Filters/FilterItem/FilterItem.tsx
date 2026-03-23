@@ -172,15 +172,17 @@ function FilterItem(props: Props) {
 
   const filteredSubFilters = useMemo(
     () =>
-      filter.filters
-        ? filter.filters.filter(
-            (i: any) =>
-              (i.key !== FilterKey.FETCH_REQUEST_BODY &&
-                i.key !== FilterKey.FETCH_RESPONSE_BODY) ||
-              saveRequestPayloads,
-          )
-        : [],
-    [filter.filters, saveRequestPayloads],
+      filter.category === 'features'
+        ? []
+        : filter.filters
+          ? filter.filters.filter(
+              (i: any) =>
+                (i.key !== FilterKey.FETCH_REQUEST_BODY &&
+                  i.key !== FilterKey.FETCH_RESPONSE_BODY) ||
+                saveRequestPayloads,
+            )
+          : [],
+    [filter.filters, filter.category, saveRequestPayloads],
   );
 
   const addSubFilter = useCallback(
@@ -228,7 +230,10 @@ function FilterItem(props: Props) {
   }, [readonly, filter.value]);
 
   const hasSubfilters =
-    filter.isEvent && !isSubItem && filter.category !== 'actions';
+    filter.isEvent &&
+    !isSubItem &&
+    filter.category !== 'actions' &&
+    filter.category !== 'features';
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
       <div className="flex items-start w-full gap-x-2">
