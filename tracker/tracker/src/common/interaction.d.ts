@@ -11,6 +11,7 @@ type Start = {
   timestamp: number
   url: string
   tabId: string
+  localDebug?: boolean
 } & Options
 type Auth = {
   type: 'auth'
@@ -55,4 +56,9 @@ export type FromWorkerData =
       dataType: DataType
     }
   | QEmpty
+  | {
+      type: 'local_save'
+      name: string
+      batch: Uint8Array
+    }
 export {}

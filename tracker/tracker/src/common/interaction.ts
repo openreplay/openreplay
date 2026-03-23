@@ -14,6 +14,7 @@ type Start = {
   timestamp: number
   url: string
   tabId: string
+  localDebug?: boolean
 } & Options
 
 type Auth = {
@@ -43,6 +44,12 @@ type QEmpty = {
   type: 'queue_empty'
 }
 
+type LocalSave = {
+  type: 'local_save'
+  name: string
+  batch: Uint8Array
+}
+
 export type FromWorkerData =
   | 'a_stop'
   | 'a_start'
@@ -50,3 +57,4 @@ export type FromWorkerData =
   | 'not_init'
   | { type: 'compress'; batch: Uint8Array; dataType: DataType }
   | QEmpty
+  | LocalSave

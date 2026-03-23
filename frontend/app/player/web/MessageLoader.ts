@@ -7,6 +7,7 @@ import { MType } from 'Player/web/messages';
 
 import logger from 'App/logger';
 
+import DebugBatchReader from './messages/DebugBatchReader';
 import MFileReader from './messages/MFileReader';
 import { decryptSessionBytes } from './network/crypto';
 import {
@@ -340,6 +341,54 @@ export default class MessageLoader {
     this.messageManager.onFileReadFinally();
     this.messageManager.onFileReadSuccess();
   };
+
+  /**
+   * Load raw tracker debug batches from a list of URLs.
+   * Files named *-mob are version=2 (player), assets-* are version=3 (assets).
+   * Parses all batches, merges messages, sorts by time, and feeds into the
+   * existing distribution pipeline.
+   */
+  async loadDebugBatches(batchUrls: string[]) {
+    this.messageManager.startLoading();
+    this.store.update({ domLoading: true });
+
+    const reader = new DebugBatchReader(this.session.startedAt);
+    const allPlayer: PlayerMsg[] = [];
+    const allAssets: PlayerMsg[] = [];
+
+    for (const url of batchUrls) {
+      try {
+        const resp = await window.fetch(url);
+        if (!resp.ok) {
+          console.warn(`DebugBatch: failed to fetch ${url}: ${resp.status}`);
+          continue;
+        }
+        const buf = new Uint8Array(await resp.arrayBuffer());
+        const data = unpack(buf);
+        const { kind, messages } = reader.readBatch(data);
+
+        if (kind === 'assets') {
+          allAssets.push(...messages);
+        } else {
+          allPlayer.push(...messages);
+        }
+      } catch (e) {
+        console.error(`DebugBatch: error processing ${url}:`, e);
+      }
+    }
+
+    // Merge and sort
+    const merged = [...allPlayer, ...allAssets];
+    const sorted = merged.sort(brokenDomSorter).sort(sortIframes);
+
+    logger.info('DebugBatch: loaded', sorted.length, 'messages from', batchUrls.length, 'batches');
+    this.processMessages(sorted, 'debug');
+
+    this.messageManager.onFileReadFinally();
+    this.messageManager.onFileReadSuccess();
+    this.createTabCloseEvents();
+    this.store.update({ domLoading: false });
+  }
 
   clean() {
     this.store.update(MessageLoader.INITIAL_STATE);

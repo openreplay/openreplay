@@ -26,6 +26,8 @@ export default class BatchWriter {
     private readonly onBatch: (batch: Uint8Array, skipCompression?: boolean, dataType?: DataType) => void,
     private tabId: string,
     private readonly onOfflineEnd: () => void,
+    private readonly localDebug = false,
+    private readonly onLocalSave?: (name: string, batch: Uint8Array) => void,
   ) {
     this.prepare()
   }
@@ -57,7 +59,8 @@ export default class BatchWriter {
     // MBTODO: move service-messages creation methods to webworker
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
-      2,
+      // 2,
+      1,
       this.pageNo,
       this.nextIndex,
       this.timestamp,
@@ -154,6 +157,9 @@ export default class BatchWriter {
 
     if (hasRegular) {
       const batch = this.encoder.flush()
+      if (this.localDebug && this.onLocalSave) {
+        this.onLocalSave(`${Date.now()}-mob`, batch.slice())
+      }
       this.onBatch(batch, skipCompression, 'player')
     } else {
       this.encoder.reset()
@@ -161,6 +167,9 @@ export default class BatchWriter {
 
     if (hasAssets) {
       const assetBatch = this.buildAssetBatch()
+      if (this.localDebug && this.onLocalSave) {
+        this.onLocalSave(`assets-${Date.now()}`, assetBatch.slice())
+      }
       this.onBatch(assetBatch, skipCompression, 'assets')
       this.assetMessages.length = 0
     }
@@ -190,7 +199,8 @@ export default class BatchWriter {
     // BatchMetadata with version=3 (no size prefix)
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
-      3,
+      1,
+      // 3
       this.pageNo,
       this.batchFirstIndex,
       this.batchHeaderTimestamp,

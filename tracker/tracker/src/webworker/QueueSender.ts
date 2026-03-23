@@ -97,7 +97,7 @@ export default class QueueSender {
 
     const headers = {
       Authorization: `Bearer ${this.token as string}`,
-      'DataType': dataType,
+      // 'DataType': dataType,
     } as Record<string, string>
 
     if (isCompressed) {

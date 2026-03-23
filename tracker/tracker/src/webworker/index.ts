@@ -172,6 +172,10 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       },
       data.tabId,
       () => postMessage({ type: 'queue_empty' }),
+      data.localDebug ?? false,
+      (name, batch) => {
+        postMessage({ type: 'local_save', name, batch }, [batch.buffer])
+      },
     )
     if (sendIntervalID === null) {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)

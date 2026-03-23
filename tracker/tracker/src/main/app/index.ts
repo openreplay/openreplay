@@ -130,6 +130,7 @@ type AppOptions = {
   __is_snippet: boolean
   __debug_report_edp: string | null
   __debug__?: ILogLevel
+  __local_debug?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
@@ -297,6 +298,7 @@ export default class App {
       __is_snippet: false,
       __debug_report_edp: null,
       __debug__: LogLevel.Silent,
+      __local_debug: false,
       localStorage: null,
       sessionStorage: null,
       forceSingleTab: false,
@@ -836,6 +838,14 @@ export default class App {
       } else {
         this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType })
       }
+    } else if (data.type === 'local_save') {
+      const blob = new Blob([data.batch as BlobPart], { type: 'application/octet-stream' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = data.name
+      a.click()
+      URL.revokeObjectURL(url)
     } else if (data.type === 'queue_empty') {
       this.onSessionSent()
     }
@@ -1346,6 +1356,7 @@ export default class App {
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       tabId: this.session.getTabId(),
+      localDebug: this.options.__local_debug,
     })
     const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
@@ -1451,6 +1462,7 @@ export default class App {
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       tabId: this.session.getTabId(),
+      localDebug: this.options.__local_debug,
     })
 
     const sessionToken = this.session.getSessionToken(this.projectKey)
