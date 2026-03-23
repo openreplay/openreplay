@@ -44,7 +44,8 @@ export default class InspectorController {
     this.marker = new Marker(this.screen.overlay, this.screen);
     this.inspector = new Inspector(this.screen, this.marker);
     this.inspector.addClickListener(() => {
-      this.store.update({ tagSelector: this.marker?.lastSelector ?? '' });
+      const selector = this.marker?.computeSelector() ?? '';
+      this.store.update({ tagSelector: selector });
     });
 
     this.inspector?.enable();

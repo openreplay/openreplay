@@ -43,6 +43,8 @@ export default class Marker {
 
   private marker: HTMLDivElement;
 
+  private readonly selectorCache = new WeakMap<Element, string>();
+
   constructor(
     private readonly overlay: HTMLElement,
     private readonly screen: Screen,
@@ -125,17 +127,47 @@ export default class Marker {
 
   lastSelector = '';
 
-  private getTagString(el: Element) {
+  private getSimpleDescription(el: Element): string {
+    const tag = el.tagName.toLowerCase();
+    if (el.id) return `${tag}#${el.id}`;
+    if (el.className && typeof el.className === 'string') {
+      const classes = el.className.trim().split(/\s+/).join('.');
+      if (classes) return `${tag}.${classes}`;
+    }
+    return tag;
+  }
+
+  private computeFinderSelector(el: Element): string {
+    const cached = this.selectorCache.get(el);
+    if (cached) {
+      this.lastSelector = cached;
+      return cached;
+    }
     if (!this.screen.document) return '';
-    const selector = finder(el, {
-      root: this.screen.document.body,
-      seedMinLength: 3,
-      optimizedMinLength: 2,
-      threshold: 1000,
-      maxNumberOfTries: 10_000,
-    });
-    this.lastSelector = selector;
-    return selector;
+    try {
+      const selector = finder(el, {
+        root: this.screen.document.body,
+        seedMinLength: 3,
+        optimizedMinLength: 2,
+        threshold: 1000,
+        maxNumberOfTries: 10_000,
+      });
+      this.selectorCache.set(el, selector);
+      this.lastSelector = selector;
+      return selector;
+    } catch (e) {
+      console.warn('finder failed, using fallback selector', e);
+      const fallback = this.getSimpleDescription(el);
+      this.lastSelector = fallback;
+      return fallback;
+    }
+  }
+
+  computeSelector(): string {
+    if (this._target) {
+      return this.computeFinderSelector(this._target);
+    }
+    return this.lastSelector;
   }
 
   redraw() {
@@ -159,7 +191,9 @@ export default class Marker {
       const yShift = ((1 - replayScale) / 2) * 100;
       this.tooltip.style.transform = `scale(${upscale}) translateY(-${yShift + 0.5}%)`;
     }
-    this.tooltipSelector.textContent = this.getTagString(this._target);
+    this.tooltipSelector.textContent = this.selector
+      ? this.selector
+      : this.getSimpleDescription(this._target);
   }
 
   clean() {

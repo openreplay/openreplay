@@ -1,15 +1,16 @@
-import { useStore } from 'App/mstore';
-import SaveModal from 'Components/Session/Player/TagWatch/SaveModal';
-import React from 'react';
-import { PlayerContext } from 'Components/Session/playerContext';
-import { Button, Input, Tooltip } from 'antd';
-import { CopyOutlined, ZoomInOutlined } from '@ant-design/icons';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button, Checkbox, Input, Segmented, Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useModal } from 'App/components/Modal';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
+
+import { useStore } from 'App/mstore';
+import { sessions, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 import { FilterKey } from 'App/types/filter/filterType';
 import { addOptionsToFilter } from 'App/types/filter/newFilter';
-import { useTranslation } from 'react-i18next';
+import { PlayerContext } from 'Components/Session/playerContext';
 
 interface CopyableTextAreaProps {
   selector: string;
@@ -31,7 +32,7 @@ const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({
         value={selector}
         onChange={(e) => setSelector(e.target.value)}
         className="rounded-lg font-mono text-sm  placeholder:font-sans placeholder:text-base placeholder:text-gray-400"
-        rows={4}
+        rows={3}
         style={{ paddingRight: '40px' }}
         placeholder={t('Enter selector to tag a feature. E.g. .btn-primary')}
       />
@@ -54,10 +55,15 @@ const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({
 
 function TagWatch() {
   const { t } = useTranslation();
-  const { tagWatchStore, searchStore } = useStore();
+  const { tagWatchStore, searchStore, projectsStore } = useStore();
   const [selector, setSelector] = React.useState('');
   const { store, player } = React.useContext(PlayerContext);
-  const { showModal, hideModal } = useModal();
+  const history = useHistory();
+
+  const [name, setName] = React.useState('');
+  const [ignoreClRage, setIgnoreClRage] = React.useState(false);
+  const [ignoreDeadCl, setIgnoreDeadCl] = React.useState(false);
+  const [scope, setScope] = React.useState<'entire' | 'location'>('entire');
 
   const { tagSelector, location: rawLocation } = store.get();
 
@@ -93,19 +99,17 @@ function TagWatch() {
     }
   }, [selector]);
 
-  const onSave = async (
-    name: string,
-    ignoreClRage: boolean,
-    ignoreDeadCl: boolean,
-    location?: string,
-  ) => {
+  const locationValue = scope === 'location' ? currentLocation : undefined;
+
+  const onSave = async () => {
+    if (!name || !selector) return;
     try {
       const tag = await tagWatchStore.createTag({
         name,
         selector,
         ignoreClickRage: ignoreClRage,
         ignoreDeadClick: ignoreDeadCl,
-        location,
+        location: locationValue,
       });
       const tags = await tagWatchStore.getTags();
       if (tags) {
@@ -116,6 +120,10 @@ function TagWatch() {
       }
       toast.success(t('Feature created'));
       setSelector('');
+      setName('');
+      setIgnoreClRage(false);
+      setIgnoreDeadCl(false);
+      setScope('entire');
       return tag;
     } catch (e) {
       console.error(e);
@@ -123,36 +131,80 @@ function TagWatch() {
     }
   };
 
-  const openSaveModal = () => {
-    if (selector === '') {
-      return;
-    }
-    showModal(<SaveModal onSave={onSave} hideModal={hideModal} currentLocation={currentLocation} />, {
-      right: true,
-      width: 400,
+  const saveAndOpen = () => {
+    onSave().then((tagId) => {
+      if (!tagId) return;
+      const siteId = projectsStore.getSiteId() as unknown as string;
+      searchStore.addFilterByKeyAndValue('tag', tagId.toString());
+      history.push(withSiteId(sessions(), siteId));
     });
   };
 
+  const canSave = name !== '' && selector !== '';
+
   return (
-    <div className="w-full h-full p-4 flex flex-col gap-2">
-      <div className="flex flex-col items-center justify-between">
-        <p>
-          {t(
-            'Select elements in the session play area to tag as a feature and be able to find sessions where users interact with it.',
-          )}
-        </p>
+    <div className="w-full h-full p-4 flex flex-col gap-3 overflow-y-auto">
+      <div>
+        <div className="font-semibold text-sm mb-1">{t('Name')}</div>
+        <Input
+          placeholder="E.g Buy Now Button"
+          className="w-full"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
       </div>
+      <p className="text-sm">
+        {t(
+          'Select elements in the session play area to tag as a feature and be able to find sessions where users interact with it.',
+        )}
+      </p>
 
       <CopyableTextArea selector={selector} setSelector={setSelector} />
 
-      <Button
-        onClick={openSaveModal}
-        type="primary"
-        icon={<ZoomInOutlined />}
-        disabled={selector === ''}
-      >
-        {t('Tag Feature')}
-      </Button>
+
+      <div>
+        <div className="font-semibold text-sm mb-1">
+          {t('Ignore following actions on this element')}
+        </div>
+        <div className="flex gap-2">
+          <Checkbox
+            checked={ignoreClRage}
+            onChange={(e) => setIgnoreClRage(e.target.checked)}
+          >
+            {t('Click Rage')}
+          </Checkbox>
+          <Checkbox
+            checked={ignoreDeadCl}
+            onChange={(e) => setIgnoreDeadCl(e.target.checked)}
+          >
+            {t('Dead Click')}
+          </Checkbox>
+        </div>
+      </div>
+
+      {currentLocation ? (
+        <div>
+          <div className="font-semibold text-sm mb-1">{t('Scope')}</div>
+          <Segmented
+            size="small"
+            value={scope}
+            onChange={(val) => setScope(val as 'entire' | 'location')}
+            options={[
+              { label: t('Entire app'), value: 'entire' },
+              { label: t('Use current location'), value: 'location' },
+            ]}
+          />
+          {scope === 'location' && (
+            <Input className="mt-2!" value={currentLocation} disabled />
+          )}
+        </div>
+      ) : null}
+
+      <div className="flex gap-2 mt-1">
+        <Button type="primary" disabled={!canSave} onClick={onSave}>
+          {t('Save Feature')}
+        </Button>
+      </div>
     </div>
   );
 }

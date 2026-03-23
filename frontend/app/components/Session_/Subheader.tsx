@@ -214,7 +214,7 @@ function SubHeader(props: any) {
         }}
         trackerWarnStyle={{
           backgroundColor: 'var(--color-yellow)',
-          color: 'black',
+          color: 'var(--color-gray-darkest)',
         }}
         virtualElsFailed={showVModeBadge}
         onVMode={onVMode}

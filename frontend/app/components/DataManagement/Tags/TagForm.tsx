@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Form, Input, Space } from 'antd';
+import { Button, Form, Input, Segmented, Space } from 'antd';
 import { Trash } from 'UI/Icons';
 import { useStore } from '@/mstore';
 import { useModal } from 'Components/ModalContext';
@@ -15,12 +15,14 @@ function TagForm(props: Props) {
   const { tag, projectId } = props;
   const { tagWatchStore } = useStore();
   const [name, setName] = React.useState(tag.name);
+  const [scope, setScope] = React.useState<'entire' | 'location'>(tag.location ? 'location' : 'entire');
   const [location, setLocation] = React.useState(tag.location || '');
   const [loading, setLoading] = React.useState(false);
   const { closeModal } = useModal();
 
+  const effectiveLocation = scope === 'location' ? location : '';
   const hasChanges =
-    (name !== tag.name || location !== (tag.location || '')) &&
+    (name !== tag.name || effectiveLocation !== (tag.location || '')) &&
     name.length > 0;
 
   const onDelete = async () => {
@@ -41,7 +43,7 @@ function TagForm(props: Props) {
     tagWatchStore
       .updateTag(
         tag.tagId,
-        { name, location: location || undefined },
+        { name, location: effectiveLocation || undefined },
         projectId,
       )
       .then(() => {
@@ -70,15 +72,26 @@ function TagForm(props: Props) {
         <label htmlFor={'selector'}>Selector:</label>
         <Input value={tag.selector} disabled name={'selector'} />
       </Form.Item>
-      <Form.Item label={t('Location:')} className="font-medium!">
-        <label htmlFor="location">{t('Location')}</label>
-        <Input
-          name="location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder={t('E.g. /checkout')}
-          className="font-normal rounded-lg"
+      <Form.Item className="font-medium!">
+        <div className="font-semibold text-sm mb-1">{t('Scope')}</div>
+        <Segmented
+          size="small"
+          value={scope}
+          onChange={(val) => setScope(val as 'entire' | 'location')}
+          options={[
+            { label: t('Entire app'), value: 'entire' },
+            { label: t('Specific page'), value: 'location' },
+          ]}
         />
+        {scope === 'location' && (
+          <Input
+            className="mt-2!"
+            name="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder={t('E.g. /checkout')}
+          />
+        )}
       </Form.Item>
 
       <div className="flex justify-between">
