@@ -566,6 +566,22 @@ export default class FilterStore {
     });
   };
 
+  checkDefaultSubfilters = (filter: any): boolean => {
+    if (filter.category === 'features') {
+      filter.filters = [
+        {
+          name: 'tagId',
+          value: filter.value,
+          operator: 'is',
+          dataType: 'string',
+          isEvent: false,
+        },
+      ];
+      return true;
+    }
+    return false;
+  };
+
   getEventFilters = async (eventId: string): Promise<Filter[]> => {
     const event = this.findFilterById(eventId);
     if (!event) throw new Error(`Event with ID ${eventId} not found`);

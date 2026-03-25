@@ -96,7 +96,11 @@ export default class AnalyticsStore {
   };
 
   processFilter = async (filter: Filter) => {
-    if (filter.isEvent && (!filter.filters || filter.filters.length === 0)) {
+    if (
+      !filterStore.checkDefaultSubfilters(filter) &&
+      filter.isEvent &&
+      (!filter.filters || filter.filters.length === 0)
+    ) {
       const props = await filterStore.getEventFilters(filter.id);
       filter.filters = props?.filter((prop) => prop.defaultProperty);
     }

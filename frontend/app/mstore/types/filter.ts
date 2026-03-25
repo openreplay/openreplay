@@ -1,9 +1,10 @@
-import { makeAutoObservable, runInAction } from 'mobx';
-import { filtersMap } from 'Types/filter/newFilter';
-import { FilterKey } from 'Types/filter/filterType';
-import FilterItem from './filterItem';
-import { JsonData } from '@/mstore/types/filterConstants';
 import { filterStore } from '@/mstore/index';
+import { JsonData } from '@/mstore/types/filterConstants';
+import { FilterKey } from 'Types/filter/filterType';
+import { filtersMap } from 'Types/filter/newFilter';
+import { makeAutoObservable, runInAction } from 'mobx';
+
+import FilterItem from './filterItem';
 
 type FilterData = Partial<FilterItem> & {
   key?: FilterKey | string;
@@ -170,7 +171,14 @@ export default class FilterStore implements IFilterStore {
     console.debug('Adding widget fitler:', data);
     const filter = this.createFilterItemFromData(data);
 
-    if (filter.isEvent && filter.filters) {
+    const hasDefaults = filterStore.checkDefaultSubfilters(filter);
+    if (hasDefaults && Array.isArray(filter.filters)) {
+      filter.filters = filter.filters.map((sf: any) =>
+        this.createFilterItemFromData(sf),
+      );
+    }
+
+    if (!hasDefaults && filter.isEvent && filter.filters) {
       filterStore.getEventFilters(filter.id).then((props) => {
         filter.filters = props
           ?.filter((prop) => prop.defaultProperty)
