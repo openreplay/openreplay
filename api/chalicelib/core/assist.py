@@ -41,11 +41,11 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
         "sort": {"key": body.sort, "order": body.order}
     }
     for f in body.filters:
-        if f.type == schemas.LiveFilterType.METADATA:
+        if f.name == schemas.LiveFilterType.METADATA:
             data["filter"][f.source] = {"values": f.value, "operator": f.operator}
 
         else:
-            data["filter"][f.type] = {"values": f.value, "operator": f.operator}
+            data["filter"][f.name] = {"values": f.value, "operator": f.operator}
     return __get_live_sessions_ws(project_id=project_id, data=data)
 
 
