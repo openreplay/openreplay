@@ -240,7 +240,15 @@ export default class MessageLoader {
     }
 
     try {
-      await this.loadMobs();
+      // await this.loadMobs();
+      await this.loadDebugBatches([
+        new URL('../../assets/mocks/1774283913759-mob', import.meta.url),
+        new URL('../../assets/mocks/1774283912361-mob', import.meta.url),
+        new URL('../../assets/mocks/1774283911357-mob', import.meta.url),
+        new URL('../../assets/mocks/1774283901788-mob', import.meta.url),
+        new URL('../../assets/mocks/1774283898689-mob', import.meta.url),
+        new URL('../../assets/mocks/1774283894797-mob', import.meta.url),
+      ]);
     } catch (sessionLoadError) {
       console.info('!', sessionLoadError);
       try {
@@ -381,7 +389,13 @@ export default class MessageLoader {
     const merged = [...allPlayer, ...allAssets];
     const sorted = merged.sort(brokenDomSorter).sort(sortIframes);
 
-    logger.info('DebugBatch: loaded', sorted.length, 'messages from', batchUrls.length, 'batches');
+    logger.info(
+      'DebugBatch: loaded',
+      sorted.length,
+      'messages from',
+      batchUrls.length,
+      'batches',
+    );
     this.processMessages(sorted, 'debug');
 
     this.messageManager.onFileReadFinally();
