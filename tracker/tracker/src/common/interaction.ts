@@ -21,6 +21,7 @@ type Auth = {
   type: 'auth'
   token: string
   beaconSizeLimit?: number
+  protocolVersion?: number
 }
 
 export type ToWorkerData =

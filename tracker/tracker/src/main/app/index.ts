@@ -1385,11 +1385,13 @@ export default class App {
       userState,
       beaconSizeLimit,
       projectID,
+      protocolVersion: offlineProtocolVersion,
     } = await r.json()
     this.worker?.postMessage({
       type: 'auth',
       token,
       beaconSizeLimit,
+      protocolVersion: offlineProtocolVersion,
     })
     this.session.assign({ projectID })
     this.session.setUserInfo({
@@ -1528,6 +1530,7 @@ export default class App {
         canvasFPS,
         framesSupport,
         assistOnly: socketOnly,
+        protocolVersion,
       } = await r.json()
       if (
         typeof token !== 'string' ||
@@ -1572,6 +1575,7 @@ export default class App {
           type: 'auth',
           token,
           beaconSizeLimit,
+          protocolVersion,
         })
       }
 

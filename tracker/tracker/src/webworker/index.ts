@@ -198,6 +198,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
 
     sender.authorise(data.token)
     data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
+    data.protocolVersion && writer.setProtocolVersion(data.protocolVersion)
     return
   }
 }

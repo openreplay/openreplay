@@ -18,6 +18,7 @@ export default class BatchWriter {
   private batchFirstIndex = 0
   private batchHeaderTimestamp = 0
   private batchHeaderUrl = ''
+  private protocolVersion = 1
 
   constructor(
     private readonly pageNo: number,
@@ -59,8 +60,7 @@ export default class BatchWriter {
     // MBTODO: move service-messages creation methods to webworker
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
-      // 2,
-      1,
+      this.protocolVersion === 2 ? 2 : 1,
       this.pageNo,
       this.nextIndex,
       this.timestamp,
@@ -109,6 +109,10 @@ export default class BatchWriter {
     this.beaconSizeLimit = limit
   }
 
+  setProtocolVersion(version: number) {
+    this.protocolVersion = version
+  }
+
   writeMessage(message: Message) {
     // @ts-ignore
     if (message[0] === -1) {
@@ -121,7 +125,7 @@ export default class BatchWriter {
     if (message[0] === Messages.Type.SetPageLocation) {
       this.url = message[1] // .url
     }
-    if (ASSET_MESSAGES.has(message[0])) {
+    if (this.protocolVersion === 2 && ASSET_MESSAGES.has(message[0])) {
       this.assetMessages.push(message)
       this.nextIndex++
       return
@@ -196,11 +200,10 @@ export default class BatchWriter {
       encoder.checkpoint()
     }
 
-    // BatchMetadata with version=3 (no size prefix)
+    // BatchMetadata with version=3 for asset batches (no size prefix)
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
-      1,
-      // 3
+      3,
       this.pageNo,
       this.batchFirstIndex,
       this.batchHeaderTimestamp,
