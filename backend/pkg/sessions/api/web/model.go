@@ -37,10 +37,11 @@ type StartSessionResponse struct {
 	ProjectID            string `json:"projectID"`
 	BeaconSizeLimit      int64  `json:"beaconSizeLimit"`
 	CompressionThreshold int64  `json:"compressionThreshold"`
-	CanvasEnabled        bool   `json:"canvasEnabled"` // false default
-	CanvasImageQuality   string `json:"canvasQuality"` // low | medium | high
-	CanvasFrameRate      int    `json:"canvasFPS"`     // 2 default
-	FramesSupport        bool   `json:"framesSupport"` // true by default from v1.26.0
+	CanvasEnabled        bool   `json:"canvasEnabled"`   // false default
+	CanvasImageQuality   string `json:"canvasQuality"`   // low | medium | high
+	CanvasFrameRate      int    `json:"canvasFPS"`       // 2 default
+	FramesSupport        bool   `json:"framesSupport"`   // true by default from v1.26.0
+	ProtocolVersion      int    `json:"protocolVersion"` // 2 by default from v1.27.0
 }
 
 func recordSession(req *StartSessionRequest) bool {

@@ -283,6 +283,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 		CanvasImageQuality:   e.cfg.CanvasQuality,
 		CanvasFrameRate:      e.cfg.CanvasFps,
 		FramesSupport:        true,
+		ProtocolVersion:      2,
 	}
 	modifyResponse(req, startResponse)
 
