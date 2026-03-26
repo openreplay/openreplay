@@ -7,7 +7,9 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { Tag } from 'App/services/TagWatchService';
 import { useModal } from 'Components/ModalContext';
+import { Pagination } from 'UI';
 
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
@@ -23,6 +25,10 @@ function TagsPage() {
   useEffect(() => {
     void tagWatchStore.getTags(Number(siteId));
   }, [siteId]);
+
+  const onPageChange = (page: number) => {
+    void tagWatchStore.getTags(Number(siteId), page);
+  };
 
   const handleEdit = (tag?: any) => {
     openModal(<TagForm tag={tag} projectId={Number(siteId)} />, {
@@ -71,16 +77,9 @@ function TagsPage() {
         }}
         loading={tagWatchStore.isLoading}
         dataSource={list}
-        renderItem={(item) => (
+        renderItem={(item: Tag) => (
           <List.Item
             className="cursor-pointer group hover:bg-active-blue px-4!"
-            actions={[
-              <Button
-                type="link"
-                className="opacity-0 group-hover:opacity-100! text-black!"
-                icon={<EditOutlined size={14} />}
-              />,
-            ]}
             onClick={() => handleEdit(item)}
           >
             <List.Item.Meta
@@ -88,16 +87,45 @@ function TagsPage() {
               description={
                 <span>
                   {item.location ? (
-                    <span className="mr-2 text-gray-medium">{item.location}</span>
+                    <span className="mr-2 text-gray-medium">
+                      {item.location}
+                    </span>
                   ) : null}
                   {item.selector}
                 </span>
               }
               avatar={<ScanSearch size={20} />}
             />
+            <div className="ml-auto flex items-center">
+              <div className="flex flex-col text-xs text-gray-500 text-right group-hover:hidden">
+                <span>
+                  {item.users ?? 0} {t('users')}
+                </span>
+                <span>
+                  {item.volume ?? 0} {t('interactions')}
+                </span>
+              </div>
+              <Button
+                type="link"
+                className="hidden group-hover:flex! text-black!"
+                icon={<EditOutlined size={14} />}
+              />
+            </div>
           </List.Item>
         )}
       />
+      <div className="flex items-center justify-between mt-4">
+        <Typography.Text type="secondary">
+          {t('Showing')} <span className="font-medium">{list.length === 0 ? 0 : (tagWatchStore.page - 1) * tagWatchStore.limit + 1}</span> {t('to')} <span className="font-medium">{(tagWatchStore.page - 1) * tagWatchStore.limit + list.length}</span> {t('of')} <span className="font-medium">{tagWatchStore.total}</span>
+        </Typography.Text>
+        <Pagination
+          page={tagWatchStore.page}
+          total={tagWatchStore.total}
+          onPageChange={onPageChange}
+          limit={tagWatchStore.limit}
+          debounceRequest={500}
+        />
+      </div>
     </div>
   );
 }

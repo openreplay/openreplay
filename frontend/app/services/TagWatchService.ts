@@ -8,8 +8,24 @@ export interface CreateTag {
   location?: string;
 }
 
+interface TagResponse {
+  tags: {
+    tagId: number;
+    name: string;
+    selector: string;
+    ignoreClickRage: boolean;
+    ignoreDeadClick: boolean;
+    location: string | null;
+    volume: number;
+    users: number;
+  }[];
+  total: number;
+}
+
 export interface Tag extends CreateTag {
   tagId: number;
+  volume: number;
+  users: number;
 }
 
 export default class TagWatchService extends BaseService {
@@ -19,8 +35,8 @@ export default class TagWatchService extends BaseService {
     return response.data || {};
   }
 
-  async getTags(projectId: number) {
-    const r = await this.client.get(`/${projectId}/tags`);
+  async getTags(projectId: number, page = 1, limit = 10): Promise<TagResponse> {
+    const r = await this.client.get(`/${projectId}/tags?page=${page}&limit=${limit}`);
     const response = await r.json();
     return response.data || {};
   }

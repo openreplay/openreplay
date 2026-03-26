@@ -6,6 +6,9 @@ import { CreateTag, Tag } from 'App/services/TagWatchService';
 
 export default class TagWatchStore {
   tags: Tag[] = [];
+  total = 0;
+  page = 1;
+  limit = 10;
 
   isLoading = false;
 
@@ -21,16 +24,20 @@ export default class TagWatchStore {
     this.isLoading = loading;
   };
 
-  getTags = async (projectId?: number) => {
+  getTags = async (projectId?: number, page?: number) => {
     if (this.isLoading) {
       return;
+    }
+    if (page !== undefined) {
+      this.page = page;
     }
     this.setLoading(true);
     try {
       const pid = projectId || projectStore.active?.projectId;
-      const tags: Tag[] = await tagWatchService.getTags(pid!);
-      this.setTags(tags);
-      return tags;
+      const resp = await tagWatchService.getTags(pid!, this.page, this.limit);
+      this.setTags(resp.tags || []);
+      this.total = resp.total || 0;
+      return resp.tags;
     } catch (e) {
       console.error(e);
     } finally {

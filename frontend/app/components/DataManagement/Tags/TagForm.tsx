@@ -1,10 +1,12 @@
-import React from 'react';
-import { Button, Form, Input, Segmented, Space } from 'antd';
-import { Trash } from 'UI/Icons';
 import { useStore } from '@/mstore';
-import { useModal } from 'Components/ModalContext';
+import { Button, Form, Input, Segmented, Space } from 'antd';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'Components/ModalContext';
 import { confirm } from 'UI';
+import { Trash } from 'UI/Icons';
+
 interface Props {
   tag: any;
   projectId: number;
@@ -15,7 +17,9 @@ function TagForm(props: Props) {
   const { tag, projectId } = props;
   const { tagWatchStore } = useStore();
   const [name, setName] = React.useState(tag.name);
-  const [scope, setScope] = React.useState<'entire' | 'location'>(tag.location ? 'location' : 'entire');
+  const [scope, setScope] = React.useState<'entire' | 'location'>(
+    tag.location ? 'location' : 'entire',
+  );
   const [location, setLocation] = React.useState(tag.location || '');
   const [loading, setLoading] = React.useState(false);
   const { closeModal } = useModal();
@@ -93,6 +97,18 @@ function TagForm(props: Props) {
           />
         )}
       </Form.Item>
+
+      {tag.tagId && (
+        <div className="mb-4 text-sm text-gray-500">
+          <div>
+            {t('Unique users')}: {tag.users ?? 0}
+          </div>
+          <div>
+            {t('Total interactions')}: {tag.volume ?? 0}
+          </div>
+          <div className="italic mb-1">{t('(last 24 hours)')}</div>
+        </div>
+      )}
 
       <div className="flex justify-between">
         <Space>
