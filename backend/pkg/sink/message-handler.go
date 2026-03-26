@@ -136,51 +136,18 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 	// Encode message index
 	binary.LittleEndian.PutUint64(h.messageIndex, msg.Meta().Index)
 
-	var (
-		n   int
-		err error
-	)
-
 	// Add message to dom buffer
 	if messages.IsDOMType(msg.TypeID()) {
-		// Write message index
-		n, err = h.domBuffer.Write(h.messageIndex)
-		if err != nil {
-			h.log.Error(sessCtx, "domBuffer index write err: %s", err)
-		}
-		if n != len(h.messageIndex) {
-			h.log.Error(sessCtx, "domBuffer index not full write: %d/%d", n, len(h.messageIndex))
-		}
-		// Write message body
-		n, err = h.domBuffer.Write(msg.Encode())
-		if err != nil {
-			h.log.Error(sessCtx, "domBuffer message write err: %s", err)
-		}
-		if n != len(msg.Encode()) {
-			h.log.Error(sessCtx, "domBuffer message not full write: %d/%d", n, len(h.messageIndex))
-		}
+		h.domBuffer.Write(h.messageIndex)
+		h.domBuffer.Write(data)
 	}
 
 	// Add message to dev buffer
 	if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp || msg.TypeID() == messages.MsgTabData {
-		// Write message index
-		n, err = h.devBuffer.Write(h.messageIndex)
-		if err != nil {
-			h.log.Error(sessCtx, "devBuffer index write err: %s", err)
-		}
-		if n != len(h.messageIndex) {
-			h.log.Error(sessCtx, "devBuffer index not full write: %d/%d", n, len(h.messageIndex))
-		}
-		// Write message body
-		n, err = h.devBuffer.Write(msg.Encode())
-		if err != nil {
-			h.log.Error(sessCtx, "devBuffer message write err: %s", err)
-		}
-		if n != len(msg.Encode()) {
-			h.log.Error(sessCtx, "devBuffer message not full write: %d/%d", n, len(h.messageIndex))
-		}
+		h.devBuffer.Write(h.messageIndex)
+		h.devBuffer.Write(data)
 	}
 
 	h.sinkMetrics.IncreaseWrittenMessages()
-	h.sinkMetrics.RecordMessageSize(float64(len(msg.Encode())))
+	h.sinkMetrics.RecordMessageSize(float64(len(data)))
 }

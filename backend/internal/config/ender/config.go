@@ -21,7 +21,7 @@ type Config struct {
 	TopicRawImages    string        `env:"TOPIC_RAW_IMAGES,required"`
 	TopicTrigger      string        `env:"TOPIC_TRIGGER,required"`
 	GroupCleanup      string        `env:"GROUP_CLEANUP,required"`
-	CleanupReadGap    time.Duration `env:"CLEANUP_READ_GAP,default=48h"`
+	CleanupReadGap    time.Duration `env:"CLEANUP_READ_GAP,default=96h"`
 	ProducerTimeout   int           `env:"PRODUCER_TIMEOUT,default=2000"`
 	PartitionsNumber  int           `env:"PARTITIONS_NUMBER,required"`
 	UseEncryption     bool          `env:"USE_ENCRYPTION,default=false"`

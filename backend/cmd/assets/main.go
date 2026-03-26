@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"os/signal"
@@ -10,14 +11,17 @@ import (
 	"openreplay/backend/internal/assets"
 	"openreplay/backend/internal/assets/cacher"
 	config "openreplay/backend/internal/config/assets"
+	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	assetsMetrics "openreplay/backend/pkg/metrics/assets"
+	sinkMetrics "openreplay/backend/pkg/metrics/sink"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	urlAssets "openreplay/backend/pkg/url/assets"
 )
 
 func main() {
@@ -28,7 +32,21 @@ func main() {
 	h := health.New()
 
 	assetMetrics := assetsMetrics.New("assets")
-	metrics.New(log, assetMetrics.List())
+	assetCacheMetrics := sinkMetrics.New("assets_cache")
+	metrics.New(log, append(assetMetrics.List(), assetCacheMetrics.List()...))
+
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	defer producer.Close(cfg.ProducerCloseTimeout)
+	h.Register("producer", func(ctx context.Context) error {
+		return producer.Ping(ctx)
+	})
+
+	rewriter, err := urlAssets.NewRewriter(cfg.AssetsOrigin)
+	if err != nil {
+		log.Fatal(ctx, "can't init rewriter: %s", err)
+	}
+
+	assetMessageHandler := assetscache.New(log, &cfg.Cache, rewriter, producer, assetCacheMetrics)
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -37,6 +55,50 @@ func main() {
 	cacher, err := cacher.NewCacher(cfg, objStore, assetMetrics)
 	if err != nil {
 		log.Fatal(ctx, "can't init cacher: %s", err)
+	}
+
+	isAssetType := func(id int) bool {
+		return id == messages.MsgSetNodeAttributeURLBased ||
+			id == messages.MsgSetCSSDataURLBased ||
+			id == messages.MsgAdoptedSSReplaceURLBased ||
+			id == messages.MsgAdoptedSSInsertRuleURLBased
+	}
+
+	batchHandler := func(batchData []byte, info *messages.BatchInfo) {
+		sessCtx := context.WithValue(ctx, "sessionID", info.SessionID())
+
+		reader := messages.NewMessageReader(batchData)
+		if err := reader.Parse(); err != nil {
+			log.Error(sessCtx, "assets batch parse err: %s, info: %s", err, info.Info())
+			return
+		}
+
+		var buf bytes.Buffer
+		for reader.Next() {
+			msg := reader.Message()
+
+			if isAssetType(msg.TypeID()) {
+				decoded := msg.Decode()
+				if decoded == nil {
+					log.Error(sessCtx, "assets decode err, type: %d, info: %s", msg.TypeID(), info.Info())
+					continue
+				}
+				msg = assetMessageHandler.ParseAssets(decoded)
+			}
+
+			data := msg.Encode()
+			if data != nil {
+				buf.Write(data)
+			}
+		}
+
+		if buf.Len() == 0 {
+			return
+		}
+
+		if err := producer.Produce(cfg.TopicRawWeb, info.SessionID(), buf.Bytes()); err != nil {
+			log.Error(sessCtx, "can't send rewritten batch to raw topic: %s", err)
+		}
 	}
 
 	msgHandler := func(msg messages.Message) {
@@ -56,11 +118,20 @@ func main() {
 		}
 	}
 
+	batchIterator := messages.NewBatchIterator(
+		log,
+		batchHandler,
+		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
+	)
+
 	msgConsumer, err := queue.NewConsumer(
 		log,
 		cfg.GroupCache,
-		[]string{cfg.TopicCache},
-		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
+		[]string{
+			cfg.TopicCache,
+			cfg.TopicRawAssets,
+		},
+		batchIterator,
 		true,
 		cfg.MessageSizeLimit,
 		nil,
@@ -84,6 +155,7 @@ func main() {
 		case sig := <-sigchan:
 			log.Error(ctx, "Caught signal %v: terminating", sig)
 			cacher.Stop()
+			producer.Close(cfg.ProducerCloseTimeout)
 			msgConsumer.Close()
 			os.Exit(0)
 		case err := <-cacher.Errors:

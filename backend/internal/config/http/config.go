@@ -19,7 +19,7 @@ type Config struct {
 	TopicRawWeb          string        `env:"TOPIC_RAW_WEB,required"`
 	TopicRawMobile       string        `env:"TOPIC_RAW_IOS,required"`
 	TopicRawImages       string        `env:"TOPIC_RAW_IMAGES,required"`
-	TopicCanvasImages    string        `env:"TOPIC_CANVAS_IMAGES,required"`
+	TopicRawAssets       string        `env:"TOPIC_RAW_ASSETS,required"`
 	TopicRawAnalytics    string        `env:"TOPIC_RAW_ANALYTICS,required"`
 	BeaconSizeLimit      int64         `env:"BEACON_SIZE_LIMIT,required"`
 	CompressionThreshold int64         `env:"COMPRESSION_THRESHOLD,default=20000"`

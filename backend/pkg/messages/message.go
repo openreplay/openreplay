@@ -46,6 +46,10 @@ func (b *BatchInfo) Timestamp() int64 {
 	return b.timestamp
 }
 
+func (b *BatchInfo) Version() uint64 {
+	return b.version
+}
+
 func (b *BatchInfo) Info() string {
 	return fmt.Sprintf("session: %d, partition: %d, offset: %d, ver: %d", b.sessionID, b.partition, b.id, b.version)
 }

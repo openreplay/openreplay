@@ -63,7 +63,6 @@ func (m *messageReaderImpl) Parse() (err error) {
 			}
 
 			// Try to avoid EOF error
-
 			curr := m.reader.Pointer()
 			if len(m.data)-int(curr) < int(m.msgSize) {
 				return fmt.Errorf("can't read message body")

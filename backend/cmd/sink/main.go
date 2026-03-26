@@ -42,10 +42,24 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init rewriter: %s", err)
 	}
-	assetMessageHandler := assetscache.New(log, cfg, rewriter, producer, sinkMetrics)
+	assetMessageHandler := assetscache.New(log, &cfg.Cache, rewriter, producer, sinkMetrics)
 	writer := sessionwriter.NewWriter(log, cfg.FsUlimit, cfg.FsDir, cfg.FileBuffer, cfg.SyncTimeout)
 	counter := storage.NewLogCounter()
 	msgHandler := handler.New(cfg, log, writer, producer, assetMessageHandler, sinkMetrics, counter)
+	mobWriter := sessionwriter.NewMobWriter(log, cfg.FsDir, cfg.FileBuffer, cfg.FileSplitTime, cfg.MaxFileSize, int(cfg.FsUlimit)/2)
+
+	wrappedHandle := func(msg messages.Message) {
+		msgHandler.Handle(msg)
+		if msg != nil && (msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd) {
+			mobWriter.Close(msg.SessionID())
+		}
+	}
+
+	batchIterator := messages.NewBatchIterator(
+		log,
+		mobWriter.HandleBatch,
+		messages.NewSinkMessageIterator(log, wrappedHandle, nil, false, sinkMetrics),
+	)
 
 	consumer, err := queue.NewConsumer(
 		log,
@@ -54,12 +68,13 @@ func main() {
 			cfg.TopicRawWeb,
 			cfg.TopicRawMobile,
 		},
-		messages.NewSinkMessageIterator(log, msgHandler.Handle, nil, false, sinkMetrics),
+		batchIterator,
 		false,
 		cfg.MessageSizeLimit,
 		func(t types.RebalanceType, partitions []uint64) {
 			s := time.Now()
-			writer.Sync() // sync all opened files
+			writer.Sync()    // sync all opened files
+			mobWriter.Sync() // sync all opened mob files
 			log.Info(ctx, "manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		},
 		types.NoReadBackGap,
@@ -83,8 +98,9 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Info(ctx, "Caught signal %v: terminating", sig)
-			// Sync and stop writer
+			// Sync and stop writers
 			writer.Stop()
+			mobWriter.Stop()
 			// Commit and stop consumer
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)

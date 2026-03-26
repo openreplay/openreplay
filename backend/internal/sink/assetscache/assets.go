@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"openreplay/backend/internal/config/sink"
+	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	sinkMetrics "openreplay/backend/pkg/metrics/sink"
@@ -25,7 +25,7 @@ type CachedAsset struct {
 type AssetsCache struct {
 	log       logger.Logger
 	mutex     sync.RWMutex
-	cfg       *sink.Config
+	cfg       *config.Cache
 	rewriter  *assets.Rewriter
 	producer  types.Producer
 	cache     map[string]*CachedAsset
@@ -33,7 +33,7 @@ type AssetsCache struct {
 	metrics   sinkMetrics.Sink
 }
 
-func New(log logger.Logger, cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer, metrics sinkMetrics.Sink) *AssetsCache {
+func New(log logger.Logger, cfg *config.Cache, rewriter *assets.Rewriter, producer types.Producer, metrics sinkMetrics.Sink) *AssetsCache {
 	assetsCache := &AssetsCache{
 		log:       log,
 		cfg:       cfg,

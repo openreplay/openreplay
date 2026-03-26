@@ -63,6 +63,7 @@ ENV TZ=UTC \
   TOPIC_CANVAS_IMAGES=canvas-images \
   TOPIC_CANVAS_TRIGGER=canvas-trigger \
   TOPIC_RAW_ANALYTICS=raw-analytics \
+  TOPIC_RAW_ASSETS=raw-assets \
   GROUP_SINK=sink \
   GROUP_STORAGE=storage \
   GROUP_DB=db \

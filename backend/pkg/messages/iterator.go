@@ -194,5 +194,5 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 }
 
 func messageHasSize(msgType uint64) bool {
-	return !(msgType == 80 || msgType == 81 || msgType == 82)
+	return msgType != 81
 }
