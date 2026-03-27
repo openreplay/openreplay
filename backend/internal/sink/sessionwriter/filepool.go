@@ -2,7 +2,6 @@ package sessionwriter
 
 import (
 	"bufio"
-	"io"
 	"math"
 	"os"
 	"sync"
@@ -20,16 +19,8 @@ type fileEntry struct {
 
 func (e *fileEntry) write(data []byte) error {
 	e.updated = true
-	if len(data) > e.buffer.Available()+e.buffer.Size() {
-		// Flush buffer before writing large data directly to file
-		for i := 0; i < 3; i++ {
-			if err := e.buffer.Flush(); err == nil {
-				break
-			}
-		}
-		return writeAll(e.file, data)
-	}
-	return writeAll(e.buffer, data)
+	_, err := e.buffer.Write(data)
+	return err
 }
 
 func (e *fileEntry) sync() error {
@@ -50,17 +41,6 @@ func (e *fileEntry) close() error {
 	_ = e.buffer.Flush()
 	_ = e.file.Sync()
 	return e.file.Close()
-}
-
-func writeAll(w io.Writer, data []byte) error {
-	for len(data) > 0 {
-		n, err := w.Write(data)
-		if err != nil {
-			return err
-		}
-		data = data[n:]
-	}
-	return nil
 }
 
 type FilePool struct {
