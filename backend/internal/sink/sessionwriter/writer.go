@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
-	"time"
 
 	"openreplay/backend/pkg/logger"
 )
@@ -19,20 +18,14 @@ type SessionWriter struct {
 	workingDir string
 	pool       *FilePool
 	sessions   sync.Map
-	done       chan struct{}
-	stopped    chan struct{}
 }
 
-func NewWriter(log logger.Logger, filePool *FilePool, workingDir string, syncTimeout int) *SessionWriter {
-	w := &SessionWriter{
+func NewWriter(log logger.Logger, filePool *FilePool, workingDir string) *SessionWriter {
+	return &SessionWriter{
 		log:        log,
 		workingDir: workingDir + "/",
 		pool:       filePool,
-		done:       make(chan struct{}),
-		stopped:    make(chan struct{}),
 	}
-	go w.synchronizer(time.Duration(syncTimeout) * time.Second)
-	return w
 }
 
 func (w *SessionWriter) Write(sid uint64, domBuffer, devBuffer []byte) error {
@@ -80,32 +73,15 @@ func (w *SessionWriter) Sync() {
 }
 
 func (w *SessionWriter) Stop() {
-	w.done <- struct{}{}
-	<-w.stopped
+	w.sessions.Range(func(key, value any) bool {
+		paths := value.(*sessionPaths)
+		w.pool.CloseFile(paths.dom)
+		w.pool.CloseFile(paths.dev)
+		w.sessions.Delete(key)
+		return true
+	})
 }
 
 func (w *SessionWriter) Info() string {
 	return fmt.Sprintf("open FDs: %d/%d", w.pool.OpenCount(), w.pool.limit)
-}
-
-func (w *SessionWriter) synchronizer(syncTimeout time.Duration) {
-	ticker := time.NewTicker(syncTimeout)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			w.pool.Sync()
-		case <-w.done:
-			w.sessions.Range(func(key, value any) bool {
-				paths := value.(*sessionPaths)
-				w.pool.CloseFile(paths.dom)
-				w.pool.CloseFile(paths.dev)
-				w.sessions.Delete(key)
-				return true
-			})
-			w.pool.Stop()
-			w.stopped <- struct{}{}
-			return
-		}
-	}
 }

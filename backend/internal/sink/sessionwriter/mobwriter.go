@@ -31,22 +31,16 @@ type MobWriter struct {
 	maxFileSize   int64
 	pool          *FilePool
 	sessions      sync.Map
-	done          chan struct{}
-	stopped       chan struct{}
 }
 
 func NewMobWriter(log logger.Logger, filePool *FilePool, workingDir string, fileSplitTime time.Duration, maxFileSize int64) *MobWriter {
-	w := &MobWriter{
+	return &MobWriter{
 		log:           log,
 		workingDir:    workingDir + "/",
 		fileSplitTime: fileSplitTime,
 		maxFileSize:   maxFileSize,
 		pool:          filePool,
-		done:          make(chan struct{}),
-		stopped:       make(chan struct{}),
 	}
-	go w.synchronizer()
-	return w
 }
 
 func (w *MobWriter) getOrCreateSession(sid uint64) *mobSession {
@@ -118,34 +112,16 @@ func (w *MobWriter) Sync() {
 }
 
 func (w *MobWriter) Stop() {
-	w.done <- struct{}{}
-	<-w.stopped
+	w.sessions.Range(func(key, value any) bool {
+		sess := value.(*mobSession)
+		for _, p := range sess.paths {
+			w.pool.CloseFile(p)
+		}
+		w.sessions.Delete(key)
+		return true
+	})
 }
 
 func (w *MobWriter) Info() string {
 	return fmt.Sprintf("open FDs: %d/%d", w.pool.OpenCount(), w.pool.limit)
-}
-
-func (w *MobWriter) synchronizer() {
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			w.pool.Sync()
-		case <-w.done:
-			// Close all remaining sessions
-			w.sessions.Range(func(key, value any) bool {
-				sess := value.(*mobSession)
-				for _, p := range sess.paths {
-					w.pool.CloseFile(p)
-				}
-				w.sessions.Delete(key)
-				return true
-			})
-			w.pool.Stop()
-			w.stopped <- struct{}{}
-			return
-		}
-	}
 }

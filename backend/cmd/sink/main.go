@@ -44,7 +44,7 @@ func main() {
 	}
 
 	filePool := sessionwriter.NewFilePool(log, int(cfg.FsUlimit), cfg.FileBuffer)
-	msgWriter := sessionwriter.NewWriter(log, filePool, cfg.FsDir, cfg.SyncTimeout)
+	msgWriter := sessionwriter.NewWriter(log, filePool, cfg.FsDir)
 	batchWriter := sessionwriter.NewMobWriter(log, filePool, cfg.FsDir, cfg.FileSplitTime, cfg.MaxFileSize)
 
 	counter := storage.NewLogCounter()
@@ -104,6 +104,7 @@ func main() {
 			// Sync and stop writers
 			msgWriter.Stop()
 			batchWriter.Stop()
+			filePool.Stop()
 			// Commit and stop consumer
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
