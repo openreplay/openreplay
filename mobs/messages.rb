@@ -322,14 +322,14 @@ end
 message 58, 'SetNodeFocus' do
   int 'ID'
 end
-message 60, 'SetNodeAttributeURLBased' do
+message 60, 'SetNodeAttributeURLBased', :pipeline => 'a' do
   uint 'ID'
   string 'Name'
   string 'Value'
   string 'BaseURL'
 end
 # Might replace SetCSSData (although BaseURL is useless after rewriting)
-message 61, 'SetCSSDataURLBased' do
+message 61, 'SetCSSDataURLBased', :pipeline => 'a' do
   uint 'ID'
   string 'Data'
   string 'BaseURL'
@@ -372,7 +372,7 @@ end
 
 #Since 4.0.0 AdoptedStyleSheets etc
 # TODO: rename to StyleSheets...
-message 71, 'AdoptedSSReplaceURLBased' do
+message 71, 'AdoptedSSReplaceURLBased', :pipeline => 'a' do
   uint 'SheetID'
   string 'Text'
   string 'BaseURL'
@@ -381,7 +381,7 @@ message 72, 'AdoptedSSReplace', :tracker => false do
   uint 'SheetID'
   string 'Text'
 end
-message 73, 'AdoptedSSInsertRuleURLBased' do
+message 73, 'AdoptedSSInsertRuleURLBased', :pipeline => 'a' do
   uint 'SheetID'
   string 'Rule'
   uint 'Index'
