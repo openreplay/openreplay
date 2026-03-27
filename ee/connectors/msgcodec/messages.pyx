@@ -1024,17 +1024,6 @@ cdef class BatchMetadata(PyMessage):
         self.location = location
 
 
-cdef class PartitionedMessage(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long part_no
-    cdef public unsigned long part_total
-
-    def __init__(self, unsigned long part_no, unsigned long part_total):
-        self.__id__ = 82
-        self.part_no = part_no
-        self.part_total = part_total
-
-
 cdef class NetworkRequest(PyMessage):
     cdef public int __id__
     cdef public str type

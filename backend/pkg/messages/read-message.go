@@ -1200,18 +1200,6 @@ func DecodeBatchMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePartitionedMessage(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &PartitionedMessage{}
-	if msg.PartNo, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.PartTotal, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeNetworkRequest(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &NetworkRequest{}
@@ -2201,8 +2189,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeZustand(reader)
 	case 81:
 		return DecodeBatchMetadata(reader)
-	case 82:
-		return DecodePartitionedMessage(reader)
 	case 83:
 		return DecodeNetworkRequest(reader)
 	case 84:

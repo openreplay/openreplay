@@ -791,17 +791,6 @@ export function BatchMetadata(
   ]
 }
 
-export function PartitionedMessage(
-  partNo: number,
-  partTotal: number,
-): Messages.PartitionedMessage {
-  return [
-    Messages.Type.PartitionedMessage,
-    partNo,
-    partTotal,
-  ]
-}
-
 export function NetworkRequest(
   type: string,
   method: string,

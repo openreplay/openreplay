@@ -415,19 +415,13 @@ message 79, 'Zustand', :replayer => :devtools do
   string 'State'
 end
 
-# since tracker 3.6.0   TODO: for webworker only
+# since tracker 3.6.0
 message 81, 'BatchMetadata', :replayer => false do
   uint 'Version'
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
   string 'Location'
-end
-
-# since tracker 3.6.0
-message 82, 'PartitionedMessage', :replayer => false do
-  uint 'PartNo'
-  uint 'PartTotal'
 end
 
 message 83, 'NetworkRequest', :replayer => :devtools do

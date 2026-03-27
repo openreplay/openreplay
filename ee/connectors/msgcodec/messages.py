@@ -693,14 +693,6 @@ class BatchMetadata(Message):
         self.location = location
 
 
-class PartitionedMessage(Message):
-    __id__ = 82
-
-    def __init__(self, part_no, part_total):
-        self.part_no = part_no
-        self.part_total = part_total
-
-
 class NetworkRequest(Message):
     __id__ = 83
 

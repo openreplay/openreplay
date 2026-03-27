@@ -74,7 +74,6 @@ const (
 	MsgJSException                        = 78
 	MsgZustand                            = 79
 	MsgBatchMetadata                      = 81
-	MsgPartitionedMessage                 = 82
 	MsgNetworkRequest                     = 83
 	MsgWSChannel                          = 84
 	MsgResourceTiming                     = 85
@@ -1993,29 +1992,6 @@ func (msg *BatchMetadata) Decode() Message {
 
 func (msg *BatchMetadata) TypeID() int {
 	return 81
-}
-
-type PartitionedMessage struct {
-	message
-	PartNo    uint64
-	PartTotal uint64
-}
-
-func (msg *PartitionedMessage) Encode() []byte {
-	buf := make([]byte, 21)
-	buf[0] = 82
-	p := 1
-	p = WriteUint(msg.PartNo, buf, p)
-	p = WriteUint(msg.PartTotal, buf, p)
-	return buf[:p]
-}
-
-func (msg *PartitionedMessage) Decode() Message {
-	return msg
-}
-
-func (msg *PartitionedMessage) TypeID() int {
-	return 82
 }
 
 type NetworkRequest struct {

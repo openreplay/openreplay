@@ -258,10 +258,6 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.int(msg[4]) && this.string(msg[5])
     break
 
-    case Messages.Type.PartitionedMessage:
-      return  this.uint(msg[1]) && this.uint(msg[2])
-    break
-
     case Messages.Type.NetworkRequest:
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.string(msg[5]) && this.uint(msg[6]) && this.uint(msg[7]) && this.uint(msg[8]) && this.uint(msg[9])
     break

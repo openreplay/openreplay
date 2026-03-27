@@ -636,12 +636,6 @@ class MessageCodec(Codec):
                 location=self.read_string(reader)
             )
 
-        if message_id == 82:
-            return PartitionedMessage(
-                part_no=self.read_uint(reader),
-                part_total=self.read_uint(reader)
-            )
-
         if message_id == 83:
             return NetworkRequest(
                 type=self.read_string(reader),
