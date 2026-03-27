@@ -35,13 +35,13 @@ type MobWriter struct {
 	stopped       chan struct{}
 }
 
-func NewMobWriter(log logger.Logger, workingDir string, fileBuffer int, fileSplitTime time.Duration, maxFileSize int64, fdLimit int) *MobWriter {
+func NewMobWriter(log logger.Logger, filePool *FilePool, workingDir string, fileSplitTime time.Duration, maxFileSize int64) *MobWriter {
 	w := &MobWriter{
 		log:           log,
 		workingDir:    workingDir + "/",
 		fileSplitTime: fileSplitTime,
 		maxFileSize:   maxFileSize,
-		pool:          NewFilePool(log, fdLimit, fileBuffer),
+		pool:          filePool,
 		done:          make(chan struct{}),
 		stopped:       make(chan struct{}),
 	}

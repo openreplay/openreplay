@@ -1,91 +1,82 @@
 package sessionwriter
 
 import (
-	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
 	"openreplay/backend/pkg/logger"
 )
 
-type SessionWriter struct {
-	log         logger.Logger
-	filesLimit  int
-	workingDir  string
-	fileBuffer  int
-	syncTimeout time.Duration
-	meta        *Meta
-	sessions    *sync.Map
-	done        chan struct{}
-	stopped     chan struct{}
+type sessionPaths struct {
+	dom string
+	dev string
 }
 
-func NewWriter(log logger.Logger, filesLimit uint16, workingDir string, fileBuffer int, syncTimeout int) *SessionWriter {
+type SessionWriter struct {
+	log        logger.Logger
+	workingDir string
+	pool       *FilePool
+	sessions   sync.Map
+	done       chan struct{}
+	stopped    chan struct{}
+}
+
+func NewWriter(log logger.Logger, filePool *FilePool, workingDir string, syncTimeout int) *SessionWriter {
 	w := &SessionWriter{
-		log:         log,
-		filesLimit:  int(filesLimit) / 2, // should divide by 2 because each session has 2 files
-		workingDir:  workingDir + "/",
-		fileBuffer:  fileBuffer,
-		syncTimeout: time.Duration(syncTimeout) * time.Second,
-		meta:        NewMeta(int(filesLimit)),
-		sessions:    &sync.Map{},
-		done:        make(chan struct{}),
-		stopped:     make(chan struct{}),
+		log:        log,
+		workingDir: workingDir + "/",
+		pool:       filePool,
+		done:       make(chan struct{}),
+		stopped:    make(chan struct{}),
 	}
-	go w.synchronizer()
+	go w.synchronizer(time.Duration(syncTimeout) * time.Second)
 	return w
 }
 
-func (w *SessionWriter) Write(sid uint64, domBuffer, devBuffer []byte) (err error) {
-	var sess *Session
+func (w *SessionWriter) Write(sid uint64, domBuffer, devBuffer []byte) error {
+	paths := w.getOrCreatePaths(sid)
 
-	// Load session
-	sessObj, ok := w.sessions.Load(sid)
-	if !ok {
-		// Create new session
-		sess, err = NewSession(sid, w.workingDir, w.fileBuffer)
-		if err != nil {
-			return fmt.Errorf("can't create session: %d, err: %s", sid, err)
+	if len(domBuffer) > 0 {
+		if err := w.pool.Write(paths.dom, domBuffer); err != nil {
+			return fmt.Errorf("dom write error for session %d: %w", sid, err)
 		}
-
-		// Check opened sessions limit and close extra session if you need to
-		if extraSessID := w.meta.GetExtra(); extraSessID != 0 {
-			if err := w.Close(extraSessID); err != nil {
-				ctx := context.WithValue(context.Background(), "sessionID", extraSessID)
-				w.log.Error(ctx, "can't close session: %s", err)
-			}
-		}
-
-		// Add created session
-		w.sessions.Store(sid, sess)
-		w.meta.Add(sid)
-	} else {
-		sess = sessObj.(*Session)
 	}
-
-	// Write data to session
-	return sess.Write(domBuffer, devBuffer)
+	if len(devBuffer) > 0 {
+		if err := w.pool.Write(paths.dev, devBuffer); err != nil {
+			return fmt.Errorf("dev write error for session %d: %w", sid, err)
+		}
+	}
+	return nil
 }
 
-func (w *SessionWriter) sync(sid uint64) error {
-	sessObj, ok := w.sessions.Load(sid)
-	if !ok {
-		return fmt.Errorf("session: %d not found", sid)
+func (w *SessionWriter) getOrCreatePaths(sid uint64) *sessionPaths {
+	if obj, ok := w.sessions.Load(sid); ok {
+		return obj.(*sessionPaths)
 	}
-	sess := sessObj.(*Session)
-	return sess.Sync()
+	base := w.workingDir + strconv.FormatUint(sid, 10)
+	paths := &sessionPaths{
+		dom: base,
+		dev: base + "devtools",
+	}
+	actual, _ := w.sessions.LoadOrStore(sid, paths)
+	return actual.(*sessionPaths)
 }
 
 func (w *SessionWriter) Close(sid uint64) error {
-	sessObj, ok := w.sessions.LoadAndDelete(sid)
+	obj, ok := w.sessions.LoadAndDelete(sid)
 	if !ok {
 		return fmt.Errorf("session: %d not found", sid)
 	}
-	sess := sessObj.(*Session)
-	err := sess.Close()
-	w.meta.Delete(sid)
-	return err
+	paths := obj.(*sessionPaths)
+	w.pool.CloseFile(paths.dom)
+	w.pool.CloseFile(paths.dev)
+	return nil
+}
+
+func (w *SessionWriter) Sync() {
+	w.pool.Sync()
 }
 
 func (w *SessionWriter) Stop() {
@@ -94,33 +85,25 @@ func (w *SessionWriter) Stop() {
 }
 
 func (w *SessionWriter) Info() string {
-	return fmt.Sprintf("%d sessions", w.meta.Count())
+	return fmt.Sprintf("open FDs: %d/%d", w.pool.OpenCount(), w.pool.limit)
 }
 
-func (w *SessionWriter) Sync() {
-	w.sessions.Range(func(sid, lockObj any) bool {
-		if err := w.sync(sid.(uint64)); err != nil {
-			ctx := context.WithValue(context.Background(), "sessionID", sid)
-			w.log.Error(ctx, "can't sync session: %s", err)
-		}
-		return true
-	})
-}
-
-func (w *SessionWriter) synchronizer() {
-	tick := time.Tick(w.syncTimeout)
+func (w *SessionWriter) synchronizer(syncTimeout time.Duration) {
+	ticker := time.NewTicker(syncTimeout)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-tick:
-			w.Sync()
+		case <-ticker.C:
+			w.pool.Sync()
 		case <-w.done:
-			w.sessions.Range(func(sid, lockObj any) bool {
-				if err := w.Close(sid.(uint64)); err != nil {
-					ctx := context.WithValue(context.Background(), "sessionID", sid)
-					w.log.Error(ctx, "can't close session: %s", err)
-				}
+			w.sessions.Range(func(key, value any) bool {
+				paths := value.(*sessionPaths)
+				w.pool.CloseFile(paths.dom)
+				w.pool.CloseFile(paths.dev)
+				w.sessions.Delete(key)
 				return true
 			})
+			w.pool.Stop()
 			w.stopped <- struct{}{}
 			return
 		}

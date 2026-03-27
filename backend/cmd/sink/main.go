@@ -42,22 +42,25 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init rewriter: %s", err)
 	}
-	assetMessageHandler := assetscache.New(log, &cfg.Cache, rewriter, producer, sinkMetrics)
-	writer := sessionwriter.NewWriter(log, cfg.FsUlimit, cfg.FsDir, cfg.FileBuffer, cfg.SyncTimeout)
+
+	filePool := sessionwriter.NewFilePool(log, int(cfg.FsUlimit), cfg.FileBuffer)
+	msgWriter := sessionwriter.NewWriter(log, filePool, cfg.FsDir, cfg.SyncTimeout)
+	batchWriter := sessionwriter.NewMobWriter(log, filePool, cfg.FsDir, cfg.FileSplitTime, cfg.MaxFileSize)
+
 	counter := storage.NewLogCounter()
-	msgHandler := handler.New(cfg, log, writer, producer, assetMessageHandler, sinkMetrics, counter)
-	mobWriter := sessionwriter.NewMobWriter(log, cfg.FsDir, cfg.FileBuffer, cfg.FileSplitTime, cfg.MaxFileSize, int(cfg.FsUlimit)/2)
+	assetMessageHandler := assetscache.New(log, &cfg.Cache, rewriter, producer, sinkMetrics)
+	msgHandler := handler.New(cfg, log, msgWriter, producer, assetMessageHandler, sinkMetrics, counter)
 
 	wrappedHandle := func(msg messages.Message) {
 		msgHandler.Handle(msg)
 		if msg != nil && (msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd) {
-			mobWriter.Close(msg.SessionID())
+			batchWriter.Close(msg.SessionID())
 		}
 	}
 
 	batchIterator := messages.NewBatchIterator(
 		log,
-		mobWriter.HandleBatch,
+		batchWriter.HandleBatch,
 		messages.NewSinkMessageIterator(log, wrappedHandle, nil, false, sinkMetrics),
 	)
 
@@ -73,8 +76,8 @@ func main() {
 		cfg.MessageSizeLimit,
 		func(t types.RebalanceType, partitions []uint64) {
 			s := time.Now()
-			writer.Sync()    // sync all opened files
-			mobWriter.Sync() // sync all opened mob files
+			msgWriter.Sync()
+			batchWriter.Sync()
 			log.Info(ctx, "manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		},
 		types.NoReadBackGap,
@@ -99,8 +102,8 @@ func main() {
 		case sig := <-sigchan:
 			log.Info(ctx, "Caught signal %v: terminating", sig)
 			// Sync and stop writers
-			writer.Stop()
-			mobWriter.Stop()
+			msgWriter.Stop()
+			batchWriter.Stop()
 			// Commit and stop consumer
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
@@ -113,7 +116,7 @@ func main() {
 			}
 		case <-tickInfo:
 			log.Info(ctx, "%s", counter.Log())
-			log.Info(ctx, "writer: %s", writer.Info())
+			log.Info(ctx, "writer: %s", msgWriter.Info())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
