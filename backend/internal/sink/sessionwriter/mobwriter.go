@@ -14,12 +14,11 @@ import (
 const (
 	idxDomS     = 0
 	idxDomE     = 1
-	idxAssets   = 2
-	idxDevtools = 3
+	idxDevtools = 2
 )
 
 type mobSession struct {
-	paths       [4]string // [domS, domE, assets, devtools]
+	paths       [3]string // [domS, domE, devtools]
 	startTime   time.Time
 	domESize    int64
 	domEStopped bool
@@ -56,7 +55,7 @@ func (w *MobWriter) getOrCreateSession(sid uint64) *mobSession {
 	}
 	base := w.workingDir + strconv.FormatUint(sid, 10)
 	sess := &mobSession{
-		paths:     [4]string{base + "s", base + "e", base + "assets", base + "devtools"},
+		paths:     [3]string{base + "s", base + "e", base + "devtools"},
 		startTime: time.Now(),
 	}
 	actual, _ := w.sessions.LoadOrStore(sid, sess)
@@ -75,7 +74,7 @@ func (w *MobWriter) HandleBatch(data []byte, info *messages.BatchInfo) {
 	sess := w.getOrCreateSession(info.SessionID())
 
 	switch messages.BatchType(version) {
-	case messages.PlayerBatch:
+	case messages.PlayerBatch, messages.AssetsBatch:
 		if time.Since(sess.startTime) <= w.fileSplitTime {
 			if err := w.pool.Write(sess.paths[idxDomS], data); err != nil {
 				w.log.Error(ctx, "domS write error: %s", err)
@@ -96,18 +95,10 @@ func (w *MobWriter) HandleBatch(data []byte, info *messages.BatchInfo) {
 			sess.domESize += int64(len(data))
 		}
 
-	case messages.AssetsBatch:
-		if err := w.pool.Write(sess.paths[idxAssets], data); err != nil {
-			w.log.Error(ctx, "assets write error: %s", err)
-		}
-
 	case messages.DevtoolsBatch:
 		if err := w.pool.Write(sess.paths[idxDevtools], data); err != nil {
 			w.log.Error(ctx, "devtools write error: %s", err)
 		}
-
-	default:
-		w.log.Info(ctx, "unknown batch type: %d", version)
 	}
 }
 
@@ -136,10 +127,11 @@ func (w *MobWriter) Info() string {
 }
 
 func (w *MobWriter) synchronizer() {
-	tick := time.Tick(5 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-tick:
+		case <-ticker.C:
 			w.pool.Sync()
 		case <-w.done:
 			// Close all remaining sessions
