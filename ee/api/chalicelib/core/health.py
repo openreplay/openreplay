@@ -38,6 +38,7 @@ HEALTH_ENDPOINTS = {
 
 
 def __check_database_pg(*_):
+    logger.info("__check_database_pg: start")
     fail_response = {
         "health": False,
         "details": {"errors": ["Postgres health-check failed"]},
@@ -49,6 +50,7 @@ def __check_database_pg(*_):
         except Exception as e:
             logger.error("!! health failed: postgres not responding")
             logger.exception(e)
+            logger.info("__check_database_pg: end --failed")
             return fail_response
         try:
             cur.execute("SELECT openreplay_version() AS version;")
@@ -56,7 +58,9 @@ def __check_database_pg(*_):
         except Exception as e:
             logger.error("!! health failed: openreplay_version not defined")
             logger.exception(e)
+            logger.info("__check_database_pg: end --failed")
             return fail_response
+    logger.info("__check_database_pg: end")
     return {
         "health": True,
         "details": {
@@ -72,6 +76,7 @@ def __always_healthy(*_):
 
 def __check_be_service(service_name):
     def fn(*_):
+        logger.info("__check_be_service(%s): start", service_name)
         fail_response = {
             "health": False,
             "details": {"errors": ["server health-check failed"]},
@@ -84,10 +89,12 @@ def __check_be_service(service_name):
                 )
                 logger.error(results.text)
                 # fail_response["details"]["errors"].append(results.text)
+                logger.info("__check_be_service(%s): end", service_name)
                 return fail_response
         except requests.exceptions.Timeout:
             logger.error(f"!! Timeout getting {service_name}-health")
             # fail_response["details"]["errors"].append("timeout")
+            logger.info("__check_be_service(%s): end --failed", service_name)
             return fail_response
         except Exception as e:
             logger.error(f"!! Issue getting {service_name}-health response")
@@ -98,19 +105,23 @@ def __check_be_service(service_name):
             except Exception:
                 logger.error("couldn't get response")
                 # fail_response["details"]["errors"].append(str(e))
+            logger.info("__check_be_service(%s): end --failed", service_name)
             return fail_response
+        logger.info("__check_be_service(%s): end", service_name)
         return {"health": True, "details": {}}
 
     return fn
 
 
 def __check_redis(*_):
+    logger.info("__check_redis: start")
     fail_response = {
         "health": False,
         "details": {"errors": ["server health-check failed"]},
     }
     if config("REDIS_STRING", default=None) is None:
         # fail_response["details"]["errors"].append("REDIS_STRING not defined in env-vars")
+        logger.info("__check_redis: end --failed")
         return fail_response
 
     try:
@@ -120,8 +131,10 @@ def __check_redis(*_):
         logger.error("!! Issue getting redis-health response")
         logger.exception(e)
         # fail_response["details"]["errors"].append(str(e))
+        logger.info("__check_redis: end --failed")
         return fail_response
 
+    logger.info("__check_redis: end")
     return {
         "health": True,
         "details": {
@@ -131,20 +144,25 @@ def __check_redis(*_):
 
 
 def __check_SSL(*_):
+    logger.info("__check_SSL: start")
     fail_response = {
         "health": False,
         "details": {"errors": ["SSL Certificate health-check failed"]},
     }
     try:
-        requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
+        timeout = config("SSL_VERIFICATION_TIMEOUT_S", cast=int, default=10)
+        requests.get(config("SITE_URL"), verify=True, allow_redirects=True, timeout=timeout)
     except Exception as e:
         logger.error("!! health failed: SSL Certificate")
         logger.exception(e)
+        logger.info("__check_SSL: end --failed")
         return fail_response
+    logger.info("__check_SSL: end")
     return {"health": True, "details": {}}
 
 
 def __get_sessions_stats(tenant_id, *_):
+    logger.info("__get_sessions_stats: start")
     with pg_client.PostgresClient() as cur:
         constraints = ["projects.deleted_at IS NULL"]
         if tenant_id:
@@ -159,10 +177,12 @@ def __get_sessions_stats(tenant_id, *_):
         )
         cur.execute(query)
         row = cur.fetchone()
+    logger.info("__get_sessions_stats: end")
     return {"numberOfSessionsCaptured": row["s_c"], "numberOfEventCaptured": row["e_c"]}
 
 
 def get_health(tenant_id=None):
+    logger.info("get_health: start")
     health_map = {
         "databases": {
             "postgres": __check_database_pg,
@@ -197,10 +217,13 @@ def get_health(tenant_id=None):
         "details": __get_sessions_stats,
         "ssl": __check_SSL,
     }
-    return __process_health(tenant_id=tenant_id, health_map=health_map)
+    result = __process_health(tenant_id=tenant_id, health_map=health_map)
+    logger.info("get_health: end")
+    return result
 
 
 def __process_health(tenant_id, health_map):
+    logger.info("__process_health: start")
     response = dict(health_map)
     for parent_key in health_map.keys():
         if config(f"SKIP_H_{parent_key.upper()}", cast=bool, default=False):
@@ -219,10 +242,12 @@ def __process_health(tenant_id, health_map):
                     ](tenant_id)
         else:
             response[parent_key] = health_map[parent_key](tenant_id)
+    logger.info("__process_health: end")
     return response
 
 
 def cron():
+    logger.info("cron: start")
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT projects.project_id,
@@ -295,10 +320,12 @@ def cron():
                     params,
                 )
             cur.execute(query)
+    logger.info("cron: end")
 
 
 # this cron is used to correct the sessions&events count every week
 def weekly_cron():
+    logger.info("weekly_cron: start")
     with pg_client.PostgresClient(long_query=True) as cur:
         query = cur.mogrify(
             """SELECT project_id,
@@ -345,9 +372,11 @@ def weekly_cron():
                 params,
             )
             cur.execute(query)
+    logger.info("weekly_cron: end")
 
 
 def __check_database_ch(*_):
+    logger.info("__check_database_ch: start")
     fail_response = {
         "health": False,
         "details": {"errors": ["server health-check failed"]},
@@ -358,6 +387,7 @@ def __check_database_ch(*_):
         except Exception as e:
             logger.error("!! health failed: clickhouse not responding")
             logger.exception(e)
+            logger.info("__check_database_ch: end --failed")
             return fail_response
 
         schema_version = ch.execute(
@@ -372,7 +402,9 @@ def __check_database_ch(*_):
             logger.error("!! health failed: clickhouse schema is outdated")
             schema_version = "unknown"
             # fail_response["details"]["errors"].append("clickhouse schema is outdated")
+            logger.info("__check_database_ch: end --failed")
             return fail_response
+    logger.info("__check_database_ch: end")
     return {
         "health": True,
         "details": {
