@@ -6172,12 +6172,12 @@ __metadata:
   linkType: hard
 
 "brace-expansion@npm:^1.1.7":
-  version: 1.1.12
-  resolution: "brace-expansion@npm:1.1.12"
+  version: 1.1.13
+  resolution: "brace-expansion@npm:1.1.13"
   dependencies:
     balanced-match: "npm:^1.0.0"
     concat-map: "npm:0.0.1"
-  checksum: 10c1/345ced3319a5ce36bf0dcda03b5577a6a3fc164a7ed8a61726eb56c79aa26af2ff8e5b28f7a5ff2b116c00a5f1651f72d2daf7bb8c89b3367ffc803c15c96eb4
+  checksum: 10c1/2e03527902107a74efd6038e01f5381edf35f6e6128d704a69df0803de5413142e9d0505854fcb3451782f59389a9eb0532ad5f9b7f4af7324a8dd517ed5ead3
   languageName: node
   linkType: hard
 
@@ -7653,14 +7653,14 @@ __metadata:
   linkType: hard
 
 "dompurify@npm:^3.3.1":
-  version: 3.3.1
-  resolution: "dompurify@npm:3.3.1"
+  version: 3.3.3
+  resolution: "dompurify@npm:3.3.3"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10c1/3644ea6781fc0932a3bdeadddc900a1fe8fa7b98c7a6d5628596298defc9e83c55fc87339d9f44aad8907bcdadcc89d431e8ceafde34019907c168d89660866d
+  checksum: 10c1/a60150cddb6491101e648537b83aba06601d3a814ee900ec53696fb6dcc193e35ce88f7b3e84515f3fcecbf56d21ec9236d774fce8ac64f384956161b10afd19
   languageName: node
   linkType: hard
 
@@ -9170,8 +9170,8 @@ __metadata:
   linkType: hard
 
 "handlebars@npm:^4.7.8":
-  version: 4.7.8
-  resolution: "handlebars@npm:4.7.8"
+  version: 4.7.9
+  resolution: "handlebars@npm:4.7.9"
   dependencies:
     minimist: "npm:^1.2.5"
     neo-async: "npm:^2.6.2"
@@ -9183,7 +9183,7 @@ __metadata:
       optional: true
   bin:
     handlebars: bin/handlebars
-  checksum: 10c1/46d0172437a29156782626da4be31c25d600506d9836ae20c9ad3458071caa164109be0ed1634e1bc59a5358d8667c79d26e35d51ec6b89309e20125554c5df6
+  checksum: 10c1/527bdbaa7c7b4ad306d4a07c0eac7ed9c2c96feab127df24382b5b268a6caf726fee536766812134205b98a5f5be0e254c43b09ed8da80eeb5a704eb9fa9de58
   languageName: node
   linkType: hard
 
@@ -13079,9 +13079,9 @@ __metadata:
   linkType: hard
 
 "picomatch@npm:^2.0.4, picomatch@npm:^2.2.3, picomatch@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "picomatch@npm:2.3.1"
-  checksum: 10c1/5853a8a63399a8af0f943e5b524aa3647c952bb5a940d3aeea6f8f74feef6ea9b18796db6dbc93ae2dba7a72efce45800ca8b2adadaccba03fcae0c0c228222d
+  version: 2.3.2
+  resolution: "picomatch@npm:2.3.2"
+  checksum: 10c1/13210fbee547553de57fb3783ac26dc51e793f6c48131da006a3a75876701e11ba2fd71fc941aa27cd14b1fb33933442bb9f66dff9bcf825e26e5df4e0769693
   languageName: node
   linkType: hard
 
