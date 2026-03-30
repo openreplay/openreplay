@@ -156,22 +156,15 @@ function WidgetSessions({ className = '' }) {
       }
 
       setLoading(true);
-      const params = { ...flt, filters: [] };
+      const params = { ...flt, filters: [...(flt.filters || [])] };
       if (widget.metricType === TABLE && widget.metricOf === 'REQUEST') {
         const reqFilter = filterStore.findEvent({ name: FilterKey.REQUEST });
         if (reqFilter) {
           params.filters.push(reqFilter);
         }
       }
-      if (flt.filters?.length && params.series?.[0]?.filter) {
-        if (widget.metricType === FUNNEL) {
-          params.series[0].filter.filters = [...flt.filters];
-        } else {
-          params.series[0].filter.filters = [
-            ...(flt.series[0].filter.filters || []),
-            ...flt.filters,
-          ];
-        }
+      if (!params.series?.length) {
+        params.series = widget.series.map((s) => s.toJson());
       }
 
       widget
@@ -238,7 +231,9 @@ function WidgetSessions({ className = '' }) {
       });
     } else {
       const baseSeries = focused
-        ? widget.series.filter((s) => s.name === focused)
+        ? widget.series.filter(
+            (s) => s.name === focused || focused.startsWith(s.name + ' / '),
+          )
         : widget.series;
       const active = metricStore.disabledSeries.length
         ? baseSeries.filter((s) => !metricStore.disabledSeries.includes(s.name))
@@ -298,7 +293,9 @@ function WidgetSessions({ className = '' }) {
     } else {
       setActiveSeries(
         focused
-          ? (seriesOptions.find((o) => o.label === focused)?.value ?? 'all')
+          ? (seriesOptions.find(
+              (o) => o.label === focused || focused.startsWith(o.label + ' / '),
+            )?.value ?? 'all')
           : 'all',
       );
     }

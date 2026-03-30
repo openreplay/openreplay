@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM golang:1.25-alpine AS build
 RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5;
 WORKDIR /root
@@ -5,7 +6,8 @@ WORKDIR /root
 # Load code dependencies
 COPY go.mod .
 COPY go.sum .
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+  go mod download
 
 # Copy code itself
 COPY cmd cmd
@@ -14,7 +16,9 @@ COPY internal internal
 
 # Build service
 ARG SERVICE_NAME
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
+RUN --mount=type=cache,target=/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
 FROM alpine AS entrypoint
 ARG GIT_SHA

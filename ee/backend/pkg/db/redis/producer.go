@@ -13,6 +13,13 @@ type producerImpl struct {
 	client *Client
 }
 
+func (c *producerImpl) Ping(ctx context.Context) error {
+	if c.client == nil || c.client.Redis == nil {
+		return nil
+	}
+	return c.client.Redis.Ping(ctx).Err()
+}
+
 func (c *producerImpl) Close(timeout int) {
 	log.Printf("Redis producer close")
 }

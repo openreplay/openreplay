@@ -2,14 +2,14 @@ import {
   NativeModules,
   Platform,
   requireNativeComponent,
+  TurboModuleRegistry,
   type TextInputProps,
   UIManager,
   type ViewProps,
 } from 'react-native';
+import type { TurboModule } from 'react-native';
 import network from './network';
 import type { Options as NetworkOptions } from './network';
-
-const { ORTrackerConnector } = NativeModules;
 
 const LINKING_ERROR =
   `The package '@openreplay/react-native' doesn't seem to be linked. Make sure: \n\n` +
@@ -24,9 +24,14 @@ interface Options {
   logs?: boolean;
   screen?: boolean;
   debugLogs?: boolean;
+  debugImages?: boolean;
+  wifiOnly?: boolean;
+  fps?: number;
+  screenshotFrequency?: 'low' | 'standard' | 'high';
+  screenshotQuality?: 'low' | 'standard' | 'high';
 }
 
-interface IORTrackerConnector {
+interface IORTrackerConnector extends TurboModule {
   startSession: (
     projectKey: string,
     optionsDict: Options,
@@ -53,6 +58,11 @@ interface IORTrackerConnector {
   ) => void;
 }
 
+// Use TurboModules when available (new architecture), fall back to NativeModules (old architecture)
+const ORTrackerConnector: IORTrackerConnector =
+  TurboModuleRegistry.get<IORTrackerConnector>('ORTrackerConnector') ??
+  NativeModules.ORTrackerConnector;
+
 const RnTrackerTouchTrackingView =
   UIManager.getViewManagerConfig('RnTrackerTouchView') != null
     ? requireNativeComponent<ViewProps>('RnTrackerTouchView')
@@ -60,9 +70,13 @@ const RnTrackerTouchTrackingView =
         throw new Error('RnTrackerTouchView; ' + LINKING_ERROR);
       };
 
+interface ORTrackedInputProps extends TextInputProps {
+  trackingLabel?: string;
+}
+
 const ORTrackedInput =
   UIManager.getViewManagerConfig('RnTrackedInput') != null
-    ? requireNativeComponent<TextInputProps>('RnTrackedInput')
+    ? requireNativeComponent<ORTrackedInputProps>('RnTrackedInput')
     : () => {
         throw new Error('RnTrackedInput; ' + LINKING_ERROR);
       };
@@ -72,6 +86,18 @@ const ORSanitizedView =
     ? requireNativeComponent<ViewProps>('RnSanitizedView')
     : () => {
         throw new Error('RnSanitizedView; ' + LINKING_ERROR);
+      };
+
+interface ORTrackedViewProps extends ViewProps {
+  screenName: string;
+  viewName: string;
+}
+
+const ORTrackedView =
+  UIManager.getViewManagerConfig('RnTrackerView') != null
+    ? requireNativeComponent<ORTrackedViewProps>('RnTrackerView')
+    : () => {
+        throw new Error('RnTrackerView; ' + LINKING_ERROR);
       };
 
 export function setMetadata(key: string, value: string) {
@@ -105,15 +131,20 @@ export function sendMessage(type: string, msg: string) {
   ORTrackerConnector.sendMessage(type, msg);
 }
 
-
 let patched = false;
 const patchNetwork = (
   ctx = global,
   isServiceUrl = () => false,
-  opts: Partial<NetworkOptions>
+  opts: Partial<NetworkOptions> = {}
 ) => {
   if (!patched) {
-    network(ctx, ORTrackerConnector.networkRequest, isServiceUrl, opts);
+    const rnOpts: Partial<NetworkOptions> = { mode: 'all', ...opts };
+    network(
+      ctx,
+      ORTrackerConnector.networkRequest as any,
+      isServiceUrl,
+      rnOpts
+    );
     patched = true;
   }
 };
@@ -125,4 +156,5 @@ export default {
   ORTouchTrackingView: RnTrackerTouchTrackingView,
   ORTrackedInput: ORTrackedInput,
   ORSanitizedView: ORSanitizedView,
+  ORTrackedView: ORTrackedView,
 };

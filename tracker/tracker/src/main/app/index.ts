@@ -454,6 +454,9 @@ export default class App {
     if (data.line === proto.startIframe) {
       if (this.active()) return
       try {
+        if (data.token) {
+          this.session.setSessionToken(data.token as string, this.projectKey)
+        }
         this.allowAppStart()
         void this.start()
       } catch (e) {
@@ -598,8 +601,12 @@ export default class App {
         this.pollingQueue[nextCommand] = this.pollingQueue[nextCommand].filter(
           (c: string) => c !== data.context,
         )
+        const message: Record<string, any> = { line: nextCommand }
+        if (nextCommand === proto.startIframe) {
+          message.token = this.session.getSessionToken(this.projectKey)
+        }
         // @ts-ignore
-        event.source?.postMessage({ line: nextCommand }, '*')
+        event.source?.postMessage(message, '*')
         if (this.pollingQueue[nextCommand].length === 0) {
           this.pollingQueue.order.shift()
         }

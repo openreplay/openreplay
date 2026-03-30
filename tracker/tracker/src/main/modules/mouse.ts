@@ -1,6 +1,6 @@
 import type App from '../app/index.js'
 import { hasTag, isSVGElement, isDocument } from '../app/guards.js'
-import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, now } from '../utils.js'
+import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, getCustomAttributeLabel, getClassSelector, now } from '../utils.js'
 import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 
@@ -78,10 +78,11 @@ export interface MouseHandlerOptions {
    * default 7 = 210ms
    * */
   trackingOffset?: number
+  customAttributes?: string[]
 }
 
 export default function (app: App, options?: MouseHandlerOptions): void {
-  const { disableClickmaps = false } = options || {}
+  const { disableClickmaps = false, customAttributes } = options || {}
 
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target)
@@ -89,14 +90,18 @@ export default function (app: App, options?: MouseHandlerOptions): void {
       return dl
     }
     if (hasTag(target, 'input')) {
-      return getInputLabel(target)
+      return getInputLabel(target, customAttributes)
     }
+    const customAttributeLabel = getCustomAttributeLabel(target, customAttributes)
+    if (customAttributeLabel) return customAttributeLabel
+    if (target.id) return `#${target.id}`
+    const classLabel = getClassSelector(target)
+    if (classLabel) return classLabel
     if (isClickable(target)) {
       let label = ''
       if (target instanceof HTMLElement) {
         label = app.sanitizer.getInnerTextSecure(target)
       }
-      label = label || target.id || target.className
       return normSpaces(label).slice(0, 100)
     }
     return ''
@@ -271,11 +276,15 @@ function wordLike(name: string): boolean {
     return false
 }
 
-export function getCSSPath(el) {
+export function getCSSPath(el: any) {
     if (!el || el.nodeType !== 1) return false;
 
     if (el.id) return `#${cssEscape(el.id)}`;
-
+    // if has data attributes - use them as they are more likely to be stable and unique
+    const dataAttr = (Array.from(el.attributes) as Attr[]).find(attr => attr.name.startsWith('data-'));
+    if (dataAttr) {
+        return `[${dataAttr.name}="${cssEscape(dataAttr.value)}"]`;
+    }
     const parts: string[] = [];
 
     while (el && el.nodeType === 1 && el !== el.ownerDocument) {

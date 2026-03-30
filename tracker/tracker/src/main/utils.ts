@@ -54,6 +54,23 @@ export function deprecationWarn(nameOfFeature: string, useInstead: string, docsP
   warnedFeatures[nameOfFeature] = true
 }
 
+export function getCustomAttributeLabel(e: Element, customAttributes?: string[]): string {
+  if (!customAttributes || customAttributes.length === 0) return ''
+  const parts: string[] = []
+  for (const attr of customAttributes) {
+    const value = e.getAttribute(attr)
+    if (value !== null) {
+      parts.push(`[${attr}=${value}]`)
+    }
+  }
+  return parts.join('')
+}
+
+export function getClassSelector(e: Element): string {
+  if (!e.classList || e.classList.length === 0) return ''
+  return '.' + Array.from(e.classList).join('.')
+}
+
 export function getLabelAttribute(e: Element): string | null {
   let value = e.getAttribute('data-openreplay-label')
   if (value !== null) {

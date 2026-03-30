@@ -3,21 +3,19 @@ package charts
 import (
 	"context"
 	"fmt"
-	"openreplay/backend/pkg/analytics/model"
-	"openreplay/backend/pkg/logger"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
+	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/logger"
 )
 
 type TimeSeriesQueryBuilder struct {
-	//conn   *clickhouse.Conn
 	Logger logger.Logger
 }
 
-// Supported metrics for time series queries
 const (
 	MetricSessionCount = "sessionCount"
 	MetricUserCount    = "userCount"
@@ -25,7 +23,13 @@ const (
 )
 
 func (t *TimeSeriesQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
-	data := make(map[uint64]map[string]uint64)
+	numBreakdowns := len(p.Breakdowns)
+
+	if err := ValidateBreakdowns(p.Breakdowns); err != nil {
+		return nil, err
+	}
+
+	data := make(map[breakdownKey]map[string]uint64)
 
 	for _, series := range p.Series {
 		query, params, err := t.buildQuery(p, series)
@@ -35,42 +39,45 @@ func (t *TimeSeriesQueryBuilder) Execute(ctx context.Context, p *Payload, conn d
 		}
 		_start := time.Now()
 		t.Logger.Debug(ctx, "Executing query: %s", query)
-		var pts []DataPoint
-		if err = conn.Select(ctx, &pts, query, convertParams(params)...); err != nil {
-			t.Logger.Error(ctx, "Select timeseries %s error: %v", series.Name, err)
-			return nil, fmt.Errorf("series %s: %v", series.Name, err)
+
+		chParams := convertParams(params)
+
+		if numBreakdowns == 0 {
+			var pts []DataPoint
+			if err = conn.Select(ctx, &pts, query, chParams...); err != nil {
+				t.Logger.Error(ctx, "Select timeseries %s error: %v", series.Name, err)
+				return nil, fmt.Errorf("series %s: %v", series.Name, err)
+			}
+			for _, dp := range pts {
+				key := breakdownKey{Timestamp: dp.Timestamp}
+				if data[key] == nil {
+					data[key] = map[string]uint64{}
+				}
+				data[key][series.Name] = dp.Count
+			}
+		} else {
+			rows, qErr := conn.Query(ctx, query, chParams...)
+			if qErr != nil {
+				t.Logger.Error(ctx, "Query timeseries %s error: %v", series.Name, qErr)
+				return nil, fmt.Errorf("series %s: %v", series.Name, qErr)
+			}
+			defer rows.Close()
+			err = ScanBreakdownRows(rows, numBreakdowns, series.Name, data)
+			if err != nil {
+				return nil, fmt.Errorf("series %s: %v", series.Name, err)
+			}
 		}
+
 		if time.Since(_start) > 2*time.Second {
 			t.Logger.Warn(ctx, "Query execution took longer than 2s: %s", query)
 		}
-
-		for _, dp := range pts {
-			if data[dp.Timestamp] == nil {
-				data[dp.Timestamp] = map[string]uint64{}
-			}
-			data[dp.Timestamp][series.Name] = dp.Count
-		}
 	}
 
-	var timestamps []uint64
-	for ts := range data {
-		timestamps = append(timestamps, ts)
+	seriesNames := make([]string, len(p.Series))
+	for i, s := range p.Series {
+		seriesNames[i] = s.Name
 	}
-
-	// Sort timestamps to ensure consistent ordering
-	sort.Slice(timestamps, func(i, j int) bool {
-		return timestamps[i] < timestamps[j]
-	})
-
-	var result []map[string]interface{} = make([]map[string]interface{}, 0)
-	for _, ts := range timestamps {
-		row := map[string]interface{}{"timestamp": ts}
-		for _, series := range p.Series {
-			row[series.Name] = data[ts][series.Name]
-		}
-		result = append(result, row)
-	}
-	return result, nil
+	return BuildTimeseriesSeriesMap(data, p.Breakdowns, seriesNames), nil
 }
 
 func (t *TimeSeriesQueryBuilder) buildQuery(p *Payload, s model.Series) (string, map[string]any, error) {
@@ -107,17 +114,26 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series
 		return "", nil, fmt.Errorf("buildSubQuery: %w", err)
 	}
 	step := getStepSize(p.StartTimestamp, p.EndTimestamp, p.Density, 1)
-	query := fmt.Sprintf(`SELECT gs.generate_series AS timestamp, COALESCE(COUNT(DISTINCT ps.%s),0) AS count
+
+	selectParts := []string{"gs.generate_series AS timestamp"}
+	selectParts = append(selectParts, GetBreakdownSelectColumns(p.Breakdowns, "ps")...)
+	selectParts = append(selectParts, fmt.Sprintf("COALESCE(COUNT(DISTINCT ps.%s),0) AS count", idField))
+
+	groupByClause := BuildBreakdownGroupBy([]string{"timestamp"}, p.Breakdowns)
+
+	query := fmt.Sprintf(`SELECT %s
 					FROM generate_series(@startTimestamp,@endTimestamp,@step) AS gs
-							LEFT JOIN (%s) AS ps ON TRUE
-					WHERE ps.datetime >= toDateTime(timestamp/1000)
-						AND ps.datetime < toDateTime((timestamp+@step)/1000)
-					GROUP BY timestamp ORDER BY timestamp;`, idField, sub)
+							INNER JOIN (%s) AS ps
+							ON ps.datetime >= toDateTime(gs.generate_series/1000)
+							AND ps.datetime < toDateTime((gs.generate_series+@step)/1000)
+					%s ORDER BY timestamp;`,
+		strings.Join(selectParts, ", "), sub, groupByClause)
+
 	params := map[string]any{
 		"startTimestamp": p.StartTimestamp,
 		"endTimestamp":   p.EndTimestamp,
 		"step":           step,
-		"project_id":     p.ProjectId,
+		"projectId":      p.ProjectId,
 	}
 
 	logQuery(fmt.Sprintf("TimeSeriesQueryBuilder.buildQuery: %s", query))
@@ -143,9 +159,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 		}
 	}
 
-	// Determine query strategy based on filters and metric type
-	// Use events table when we have event-specific filters or need event-level data
-	requiresEventsTable := len(eventFilters) > 0 || metric == MetricEventCount
+	requiresEventsTable := len(eventFilters) > 0 || metric == MetricEventCount || HasEventOnlyBreakdowns(p.Breakdowns)
 
 	if requiresEventsTable {
 		return t.buildEventsBasedSubQuery(p, s, metric, eventFilters, sessionFilters)
@@ -186,16 +200,26 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 	var mainEventsTable = getMainEventsTable(p.StartTimestamp)
 
+	evtSelectCols := []string{
+		"main.session_id",
+		"MIN(main.created_at) AS first_event_ts",
+		"MAX(main.created_at) AS last_event_ts",
+	}
+	eventOnlyBdProj := GetEventOnlyBreakdownNamedProjection(p.Breakdowns, "main")
+	evtSelectCols = append(evtSelectCols, eventOnlyBdProj...)
+
+	groupByCols := "main.session_id"
+	if len(eventOnlyBdProj) > 0 {
+		groupByCols = "ALL"
+	}
+
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(
-		`SELECT main.session_id,
-					   MIN(main.created_at) AS first_event_ts,
-					   MAX(main.created_at) AS last_event_ts
-				FROM %s AS main
-				WHERE %s
-				GROUP BY main.session_id`,
+		"SELECT %s\n\t\t\t\tFROM %s AS main\n\t\t\t\tWHERE %s\n\t\t\t\tGROUP BY %s",
+		strings.Join(evtSelectCols, ",\n\t\t\t\t\t   "),
 		mainEventsTable,
 		strings.Join(whereParts, " AND "),
+		groupByCols,
 	))
 
 	if joinClause != "" {
@@ -204,8 +228,20 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 
 	subQuery := sb.String()
-	sessionsQuery := t.buildSessionsFilterQuery(sessionFilters, p.StartTimestamp)
+	sessionsQuery := BuildSessionsSubQuery(sessionFilters, p.StartTimestamp, p.Breakdowns)
 	projection, joinEvents := t.getProjectionAndJoin(metric, p)
+
+	for _, bdName := range p.Breakdowns {
+		dim, ok := breakdownDimensions[bdName]
+		if !ok {
+			continue
+		}
+		if dim.EventOnly {
+			projection += ", evt." + bdName
+		} else {
+			projection += ", s." + bdName
+		}
+	}
 
 	return fmt.Sprintf(
 		`SELECT %s
@@ -216,8 +252,9 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 }
 
 func (t *TimeSeriesQueryBuilder) buildSessionsOnlySubQuery(p *Payload, s model.Series, metric string, sessionFilters []model.Filter) (string, error) {
-	whereParts := t.buildSessionsFilterConditions(sessionFilters)
+	whereParts := BuildSessionsFilterConditions(sessionFilters)
 	projection := t.getSessionsOnlyProjection(metric)
+	projection = AppendBreakdownProjection(projection, p.Breakdowns, "s")
 
 	return fmt.Sprintf(
 		`SELECT %s
@@ -227,64 +264,17 @@ func (t *TimeSeriesQueryBuilder) buildSessionsOnlySubQuery(p *Payload, s model.S
 	), nil
 }
 
-// buildSessionsFilterQuery builds a complete sessions query with filters applied
-func (t *TimeSeriesQueryBuilder) buildSessionsFilterQuery(sessionFilters []model.Filter, startTimestamp uint64) string {
-	whereParts := t.buildSessionsFilterConditions(sessionFilters)
-	var mainSessionsTable = getMainSessionsTable(startTimestamp)
-	return fmt.Sprintf(`
-SELECT
-	session_id,
-	datetime,
-	user_id,
-	user_uuid,
-	user_anonymous_id
-FROM %s AS s
-WHERE %s`, mainSessionsTable, strings.Join(whereParts, " AND "))
-}
-
-// buildSessionsFilterConditions builds WHERE conditions for sessions table queries
-func (t *TimeSeriesQueryBuilder) buildSessionsFilterConditions(sessionFilters []model.Filter) []string {
-	_, _, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
-		DefinedColumns: SessionColumns,
-		MainTableAlias: "s",
-	})
-
-	durConds, _ := BuildDurationWhere(sessionFilters, "s")
-
-	whereParts := []string{
-		"s.project_id = @project_id",
-		"s.datetime >= toDateTime(@startTimestamp/1000)",
-		"s.datetime <= toDateTime(@endTimestamp/1000)",
-	}
-
-	if len(sessionConditions) > 0 {
-		whereParts = append(whereParts, strings.Join(sessionConditions, " AND "))
-	}
-
-	if durConds != nil {
-		whereParts = append(whereParts, durConds...)
-	}
-
-	return whereParts
-}
-
 func (t *TimeSeriesQueryBuilder) getSessionsOnlyProjection(metric string) string {
 	switch metric {
-	case MetricSessionCount:
-		return "s.session_id AS session_id, s.datetime AS datetime"
 	case MetricUserCount:
 		return "s.user_id AS user_id, s.datetime AS datetime"
 	default:
-		// Fallback to session_id for unknown metrics
 		return "s.session_id AS session_id, s.datetime AS datetime"
 	}
 }
 
 func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string, p *Payload) (string, string) {
 	switch metric {
-	case MetricSessionCount:
-		return "evt.session_id AS session_id, s.datetime AS datetime", ""
-
 	case MetricUserCount:
 		return "s.user_id AS user_id, s.datetime AS datetime", ""
 
@@ -293,14 +283,13 @@ func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string, p *Payload)
 		joinEvents := `
 		LEFT JOIN product_analytics.events AS e
 		  ON e.session_id = evt.session_id
-		 AND e.project_id = @project_id`
+		 AND e.project_id = @projectId`
 		if p.SampleRate > 0 && p.SampleRate < 100 {
 			joinEvents += fmt.Sprintf(" AND e.sample_key < %d", p.SampleRate)
 		}
 		return projection, joinEvents
 
 	default:
-		// Fallback to session_id for unknown metrics
 		return "evt.session_id AS session_id, s.datetime AS datetime", ""
 	}
 }

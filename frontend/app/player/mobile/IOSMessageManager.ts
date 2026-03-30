@@ -1,34 +1,31 @@
-import logger from 'App/logger';
-import { TarFile } from 'js-untar';
-import { FrameSnapshot } from 'Player/common/parseFrames';
 import { getResourceFromNetworkRequest } from 'Player';
-
 import type { Store } from 'Player';
-import { IMessageManager } from 'Player/player/Animator';
-
-import TouchManager from 'Player/mobile/managers/TouchManager';
+import { FrameSnapshot } from 'Player/common/parseFrames';
 import IOSPerformanceTrackManager, {
   PerformanceChartPoint,
 } from 'Player/mobile/managers/IOSPerformanceTrackManager';
 import SnapshotManager from 'Player/mobile/managers/SnapshotManager';
+import TouchManager from 'Player/mobile/managers/TouchManager';
+import { IMessageManager } from 'Player/player/Animator';
+import { TarFile } from 'js-untar';
+
+import logger from 'App/logger';
+
+import ListWalker from '../common/ListWalker';
+import Screen, {
+  INITIAL_STATE as SCREEN_INITIAL_STATE,
+  State as ScreenState,
+} from '../web/Screen/Screen';
 import ActivityManager from '../web/managers/ActivityManager';
+import type { SkipInterval } from '../web/managers/ActivityManager';
+import { MType } from '../web/messages';
+import type { Message } from '../web/messages';
 import Lists, {
   InitialLists,
   INITIAL_STATE as LISTS_INITIAL_STATE,
   State as ListsState,
 } from './IOSLists';
-import ListWalker from '../common/ListWalker';
-import { MType } from '../web/messages';
-import type { Message } from '../web/messages';
-
-import Screen, {
-  INITIAL_STATE as SCREEN_INITIAL_STATE,
-  State as ScreenState,
-} from '../web/Screen/Screen';
-
 import { Log } from './types/log';
-
-import type { SkipInterval } from '../web/managers/ActivityManager';
 
 export const performanceWarnings = [
   'thermalState',
@@ -263,6 +260,7 @@ export default class IOSMessageManager implements IMessageManager {
   }
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
+    if (msg.tp === 9999) return;
     const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
     this.lastMessageTime = lastMessageTime;
     this.state.update({ lastMessageTime });
@@ -322,7 +320,7 @@ export default class IOSMessageManager implements IMessageManager {
         this.lists.lists.graphql.insert(msg);
         break;
       default:
-        console.log(msg);
+        console.log('unrecognized', msg);
         // stuff
         break;
     }

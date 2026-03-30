@@ -90,7 +90,10 @@ function ORBarChart(props: BarChartProps) {
       const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[
         index
       ];
-      props.onClick?.({ activePayload: [{ payload: { timestamp } }] });
+      props.onClick?.({
+        activePayload: [{ payload: { timestamp } }],
+        seriesName: event.seriesName,
+      });
       setTimeout(() => {
         props.onSeriesFocus?.(event.seriesName);
       }, 0);

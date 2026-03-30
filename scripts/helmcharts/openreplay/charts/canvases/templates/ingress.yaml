@@ -1,57 +1,54 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "canvases.fullname" . -}}
 {{- $svcPort := .Values.service.ports.http -}}
-{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1
-{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
-apiVersion: networking.k8s.io/v1beta1
-{{- else -}}
-apiVersion: extensions/v1beta1
-{{- end }}
 kind: Ingress
 metadata:
   name: {{ $fullName }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "canvases.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
-  ingressClassName: {{ .Values.ingress.className }}
-  {{- end }}
-  {{- if .Values.ingress.tls }}
-  tls:
-    {{- range .Values.ingress.tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/lb-method: "hash $http_x_forwarded_for consistent"
+    nginx.org/location-snippets: |
+      {{- if .Values.ingress.cors }}
+      # CORS configuration
+      add_header 'Access-Control-Allow-Origin' '{{ tpl .Values.ingress.cors.allowOrigin . }}' always;
+      add_header 'Access-Control-Allow-Methods' '{{ tpl .Values.ingress.cors.allowMethods . }}' always;
+      add_header 'Access-Control-Allow-Headers' '{{ tpl .Values.ingress.cors.allowHeaders . }}' always;
+      add_header 'Access-Control-Expose-Headers' '{{ tpl .Values.ingress.cors.exposeHeaders . }}' always;
+
+      # Handle preflight
+      if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '{{ tpl .Values.ingress.cors.allowOrigin . }}' always;
+        add_header 'Access-Control-Allow-Methods' '{{ tpl .Values.ingress.cors.allowMethods . }}' always;
+        add_header 'Access-Control-Allow-Headers' '{{ tpl .Values.ingress.cors.allowHeaders . }}' always;
+        add_header 'Access-Control-Max-Age' '{{ tpl .Values.ingress.cors.maxAge . }}';
+        add_header 'Content-Type' 'text/plain charset=UTF-8';
+        add_header 'Content-Length' 0;
+        return 204;
+      }
+      {{- end }}
+
+      # Strip /ingest prefix
+      rewrite ^/ingest/(.*)$ /$1 break;
+    {{- with .Values.ingress.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ tpl $value $ | quote }}
     {{- end }}
-  {{- end }}
+    {{- end }}
+spec:
+  ingressClassName: {{ tpl .Values.ingress.className . }}
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ .Values.global.domainName }}
       http:
         paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            {{- if and .pathType (semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion) }}
-            pathType: {{ .pathType }}
-            {{- end }}
+          - pathType: Prefix
             backend:
-              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
               service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-              {{- else }}
-              serviceName: {{ $fullName }}
-              servicePort: {{ $svcPort }}
-              {{- end }}
-          {{- end }}
-    {{- end }}
+            path: /ingest/v1/web/images
 {{- end }}

@@ -129,7 +129,7 @@ jobs:
             fi
         }
 
-        # Build managed services
+        # Build managed/dedicated services via the msaas repo
         build_managed() {
             local service=$1
             local version=$2
@@ -138,17 +138,23 @@ jobs:
             echo "Building managed service: $service"
             clone_msaas
 
-            if [[ $service == 'chalice' ]]; then
+            if grep -qx "$service" "$BACKEND_SERVICES_FILE"; then
+                # Backend service: use dedicated build script (Kafka queue from ee, no license)
+                cp "$MSAAS_REPO_FOLDER/hacks/dedicated-backend-build/build_dedicated.sh" \
+                   "$MSAAS_REPO_FOLDER/openreplay/backend/build.sh"
+                cd "$MSAAS_REPO_FOLDER/openreplay/backend"
+                local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$arch DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh nil $service"
+            elif [[ $service == 'chalice' ]]; then
                 cd "$MSAAS_REPO_FOLDER/openreplay/api"
+                local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$arch DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh"
             else
                 cd "$MSAAS_REPO_FOLDER/openreplay/$service"
+                local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$arch DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh"
             fi
-
-            local build_cmd="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$arch DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh"
 
             echo "Executing: $build_cmd"
             if ! eval "$build_cmd" 2>&1; then
-                echo "Build failed for $service"
+                echo "Managed build failed for $service"
                 exit 1
             fi
         }
@@ -253,10 +259,15 @@ jobs:
                 fi
                 build_service "$service" "${version}-ee" "$ee_build_args" "$build_script"
 
-                # Building managed
+                # Build managed/dedicated images
                 case "$service" in
                 chalice | frontend)
                     build_managed "$service" "$version"
+                    ;;
+                *)
+                    if grep -qx "$service" "$BACKEND_SERVICES_FILE"; then
+                        build_managed "$service" "$version"
+                    fi
                     ;;
                 esac
                 # Update chart and commit

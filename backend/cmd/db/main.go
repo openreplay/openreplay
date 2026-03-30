@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/issues"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
@@ -30,6 +31,8 @@ func main() {
 	log := logger.New()
 	cfg := config.New(log)
 
+	h := health.New()
+
 	dbMetric := database.New("db")
 	metrics.New(log, dbMetric.List())
 
@@ -38,17 +41,26 @@ func main() {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
+	h.Register("postgres", func(ctx context.Context) error {
+		return pgConn.Ping(ctx)
+	})
 
 	chConn, err := clickhouse.NewConnection(cfg.Clickhouse)
 	if err != nil {
 		log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 	}
+	h.Register("clickhouse", func(ctx context.Context) error {
+		return chConn.Ping(ctx)
+	})
 
 	redisConn, err := redis.New(&cfg.Redis)
 	if err != nil {
 		log.Warn(ctx, "can't init redis connection: %s", err)
 	}
 	defer redisConn.Close()
+	h.Register("redis", func(ctx context.Context) error {
+		return redisConn.Ping(ctx)
+	})
 
 	issuesManager, err := issues.New(log, redisConn)
 	if err != nil {
@@ -112,6 +124,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
+	h.Register("consumer", func(ctx context.Context) error {
+		return consumer.Ping(ctx)
+	})
 
 	sdkSaver, err := sdk.New(cfg, log, chConnector, sessManager, users, chConn, redisConn)
 	if err != nil {

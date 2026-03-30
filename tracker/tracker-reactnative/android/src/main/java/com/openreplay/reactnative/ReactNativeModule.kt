@@ -1,11 +1,11 @@
 package com.openreplay.reactnative
 
 import android.app.Activity
-import android.content.Intent
-import com.facebook.common.activitylistener.BaseActivityListener
 import com.facebook.react.bridge.*
 import com.openreplay.tracker.OpenReplay
 import com.openreplay.tracker.models.OROptions
+import com.openreplay.tracker.models.RecordingFrequency
+import com.openreplay.tracker.models.RecordingQuality
 
 class ReactNativeModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
@@ -18,18 +18,32 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     const val NAME = "ORTrackerConnector"
   }
 
-  data class Options(
-    val crashes: Boolean = true,
-    val analytics: Boolean = true,
-    val performances: Boolean = true,
-    val logs: Boolean = true,
-    val screen: Boolean = true,
-    val debugLogs: Boolean = false,
-    val wifiOnly: Boolean = true
-  )
-
   private fun getBooleanOrDefault(map: ReadableMap, key: String, default: Boolean): Boolean {
     return if (map.hasKey(key)) map.getBoolean(key) else default
+  }
+
+  private fun getIntOrDefault(map: ReadableMap, key: String, default: Int): Int {
+    return if (map.hasKey(key)) map.getInt(key) else default
+  }
+
+  private fun getStringOrDefault(map: ReadableMap, key: String, default: String): String {
+    return if (map.hasKey(key)) map.getString(key) ?: default else default
+  }
+
+  private fun parseRecordingFrequency(value: String): RecordingFrequency {
+    return when (value.lowercase()) {
+      "standard" -> RecordingFrequency.Standard
+      "high" -> RecordingFrequency.High
+      else -> RecordingFrequency.Low
+    }
+  }
+
+  private fun parseRecordingQuality(value: String): RecordingQuality {
+    return when (value.lowercase()) {
+      "standard" -> RecordingQuality.Standard
+      "high" -> RecordingQuality.High
+      else -> RecordingQuality.Low
+    }
   }
 
   private fun safeGetCurrentActivity(): Activity? {
@@ -51,7 +65,11 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
       logs = getBooleanOrDefault(optionsMap, "logs", false),
       screen = getBooleanOrDefault(optionsMap, "screen", true),
       debugLogs = getBooleanOrDefault(optionsMap, "debugLogs", false),
+      debugImages = getBooleanOrDefault(optionsMap, "debugImages", false),
       wifiOnly = getBooleanOrDefault(optionsMap, "wifiOnly", true),
+      fps = getIntOrDefault(optionsMap, "fps", 1),
+      screenshotFrequency = parseRecordingFrequency(getStringOrDefault(optionsMap, "screenshotFrequency", "low")),
+      screenshotQuality = parseRecordingQuality(getStringOrDefault(optionsMap, "screenshotQuality", "low")),
     )
 
     val activity = safeGetCurrentActivity()
@@ -63,8 +81,9 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     OpenReplay.serverURL = serverURL
 
     OpenReplay.start(activity, projectKey, options, onStarted = {
-      println("OpenReplay started")
-      promise.resolve("OpenReplay Started")
+      reactApplicationContext.runOnNativeModulesQueueThread {
+        promise.resolve("OpenReplay Started")
+      }
     })
   }
 
@@ -113,8 +132,7 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     status: Int,
     duration: Double
   ) {
-    // val durationLong: Long = duration.toLong()
-    val durationULong: ULong = duration.toLong().toULong()
+    val durationULong: ULong = maxOf(0L, duration.toLong()).toULong()
 
     OpenReplay.networkRequest(
       url = url,

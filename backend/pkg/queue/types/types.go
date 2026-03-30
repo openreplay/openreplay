@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type RebalanceType int
 
@@ -25,6 +28,7 @@ type Consumer interface {
 	ConsumeNext() error
 	CommitBack(gap int64) error
 	Commit() error
+	Ping(ctx context.Context) error
 	Close()
 }
 
@@ -32,6 +36,7 @@ type Consumer interface {
 type Producer interface {
 	Produce(topic string, key uint64, value []byte) error
 	ProduceToPartition(topic string, partition, key uint64, value []byte) error
+	Ping(ctx context.Context) error
 	Flush(timeout int)
 	Close(timeout int)
 }

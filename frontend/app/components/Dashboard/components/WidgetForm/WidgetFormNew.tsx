@@ -1,27 +1,35 @@
-import React, { useMemo } from 'react';
-import { Card, Space, Button, Alert, Form, Select, Tooltip } from 'antd';
-import { projectStore, useStore } from 'App/mstore';
+import { FilterCategory } from 'Types/filter/filterType';
 import { eventKeys } from 'Types/filter/newFilter';
+import { Alert, Button, Card, Form, Select, Space, Tooltip } from 'antd';
+import { ChevronUp, PlusIcon } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
-  HEATMAP,
   ERRORS,
   FUNNEL,
+  HEATMAP,
   INSIGHTS,
   RETENTION,
   TABLE,
+  TIMESERIES,
   USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
 import { issueCategories } from 'App/constants/filterOptions';
-import { PlusIcon, ChevronUp } from 'lucide-react';
-import { observer } from 'mobx-react-lite';
+import { projectStore, useStore } from 'App/mstore';
+import BreakdownFilter from 'Components/Dashboard/components/BreakdownFilter/BreakdownFilter';
+import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
+
 import FilterItem from 'Shared/Filters/FilterItem';
-import { FilterCategory } from 'Types/filter/filterType';
-import { useTranslation } from 'react-i18next';
+
 import ExcludeFilters from '../FilterSeries/ExcludeFilters';
 
-export function checkIsSingleSeries(metric: any) {
+const supportsBreakdown = (metric: { metricType: string }) =>
+  [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
+
+export function checkIsSingleSeries(metric: { metricType: string }) {
   const isTable = metric.metricType === TABLE;
   const isHeatMap = metric.metricType === HEATMAP;
   const isFunnel = metric.metricType === FUNNEL;
@@ -137,6 +145,7 @@ const FilterSection = observer(
     };
 
     const allCollapsed = Object.values(seriesCollapseState).every((v) => v);
+    const showBreakdown = supportsBreakdown(metric);
     return (
       <>
         {isPathAnalysis && <ExcludeFilters metric={metric} />}
@@ -219,6 +228,15 @@ const FilterSection = observer(
             </Button>
           </div>
         )}
+
+        {showBreakdown ? (
+          <div className="mt-2">
+            <BreakdownFilter
+              metric={metric}
+              observeChanges={() => metric.updateKey('hasChanged', true)}
+            />
+          </div>
+        ) : null}
       </>
     );
   },

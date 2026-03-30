@@ -1,3 +1,15 @@
+## 17.2.5
+
+- check elements to be connected to tree in webAnimation listener
+
+## 17.2.4
+
+- fixes for sdk batcher to prevent empty fetches (or token resets)
+
+## 17.2.3
+
+- allow `customAttributes` option to define a list of custom html attributes for tracking in click and input events
+
 ## 17.2.2
 
 - improve unauth detection for sdk

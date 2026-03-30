@@ -4,11 +4,15 @@ import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
 	"openreplay/backend/internal/config/objectstorage"
+	"openreplay/backend/internal/config/redis"
 	"openreplay/backend/pkg/logger"
 )
 
 type Config struct {
 	common.Config
+	common.HTTP
+	redis.Redis
+	common.Postgres
 	objectstorage.ObjectsConfig
 	FSDir              string `env:"FS_DIR,required"`
 	CanvasDir          string `env:"CANVAS_DIR,default=canvas"`

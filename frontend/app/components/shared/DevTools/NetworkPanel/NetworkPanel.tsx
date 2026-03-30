@@ -1,16 +1,17 @@
+import { WsChannel } from '@/player/web/messages';
+import { Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   MobilePlayerContext,
   PlayerContext,
 } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
-import { Tooltip } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { NetworkPanelComp } from './NetworkPanelComp';
 import { IResourceRequest, IResourceTiming } from 'App/player';
-import { WsChannel } from '@/player/web/messages';
+
+import { NetworkPanelComp } from './NetworkPanelComp';
 
 // Constants remain the same
 const ALL = 'ALL';

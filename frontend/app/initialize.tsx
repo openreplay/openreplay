@@ -28,7 +28,8 @@ import './styles/index.css';
 (window as any).env = (window as any).env ?? {};
 (window as any).env.PRODUCTION = ENV.NODE_ENV === 'production';
 // @ts-ignore
-window.getCommitHash = () => console.log(ENV.COMMIT_HASH);
+window.getCommitHash = () =>
+  console.log(`Version: ${ENV.VERSION}, Commit: ${ENV.COMMIT_HASH}`);
 
 const queryClient = new QueryClient();
 

@@ -9,6 +9,10 @@ import (
 	"openreplay/backend/pkg/redisstream"
 )
 
+const DoNotAutoCommit = false
+
+var WithoutRebalanceHandler types.RebalanceHandler = nil
+
 func NewConsumer(log logger.Logger, group string, topics []string, iterator messages.MessageIterator, _ bool, _ int, _ types.RebalanceHandler, _ time.Duration) (types.Consumer, error) {
 	return redisstream.NewConsumer(group, topics, iterator)
 }

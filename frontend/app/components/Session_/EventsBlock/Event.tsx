@@ -1,4 +1,5 @@
 import { TYPES } from 'Types/session/event';
+import { Dropdown } from 'antd';
 import cn from 'classnames';
 import copy from 'copy-to-clipboard';
 import {
@@ -10,15 +11,14 @@ import {
   TextCursorInput,
 } from 'lucide-react';
 import React from 'react';
-import { Dropdown } from 'antd';
+import { useTranslation } from 'react-i18next';
 
-import { prorata, numberWithCommas } from 'App/utils';
+import { numberWithCommas, prorata } from 'App/utils';
 import withOverlay from 'Components/hocs/withOverlay';
 import { Icon, TextEllipsis, Tooltip } from 'UI';
 
 import LoadInfo from './LoadInfo';
 import cls from './event.module.css';
-import { useTranslation } from 'react-i18next';
 
 type Props = {
   event: any;
@@ -69,8 +69,8 @@ const Event: React.FC<Props> = ({
   const renderBody = () => {
     let title = event.type;
     let body;
-    let icon = null;
-    let iconName = null;
+    let icon: React.ReactNode | null = null;
+    let iconName: string | null = null;
     const isFrustration = isFrustrationEvent(event);
     const tooltip = { disabled: true, text: '' };
 
@@ -109,7 +109,7 @@ const Event: React.FC<Props> = ({
         break;
       case TYPES.INPUT:
         title = 'Input';
-        body = event.value;
+        body = event.label;
         icon = isFrustration ? (
           <MessageCircleQuestion size={16} strokeWidth={1} />
         ) : (
@@ -143,11 +143,11 @@ const Event: React.FC<Props> = ({
 
     return (
       <Tooltip
-        title={tooltip.text}
-        disabled={tooltip.disabled}
+        title={tooltip.disabled ? undefined : tooltip.text}
         placement="left"
-        anchorClassName="w-full"
-        containerClassName="w-full"
+        classNames={{
+          container: 'w-full',
+        }}
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div
@@ -160,7 +160,10 @@ const Event: React.FC<Props> = ({
                 icon
               )}
             </div>
-            <div className="ml-3 w-full" style={{ maxWidth: 'calc(100% - 20px)' }}>
+            <div
+              className="ml-3 w-full"
+              style={{ maxWidth: 'calc(100% - 20px)' }}
+            >
               <div className="flex w-full items-start">
                 <div
                   className="flex flex-col justify-center items-start w-full"

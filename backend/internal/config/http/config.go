@@ -23,8 +23,6 @@ type Config struct {
 	TopicRawAnalytics    string        `env:"TOPIC_RAW_ANALYTICS,required"`
 	BeaconSizeLimit      int64         `env:"BEACON_SIZE_LIMIT,required"`
 	CompressionThreshold int64         `env:"COMPRESSION_THRESHOLD,default=20000"`
-	FileSizeLimit        int64         `env:"FILE_SIZE_LIMIT,default=10000000"`
-	TokenSecret          string        `env:"TOKEN_SECRET,required"`
 	UAParserFile         string        `env:"UAPARSER_FILE,required"`
 	MaxMinDBFile         string        `env:"MAXMINDDB_FILE,required"`
 	UseProfiler          bool          `env:"PROFILER_ENABLED,default=false"`

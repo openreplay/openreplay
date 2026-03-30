@@ -14,6 +14,7 @@ import (
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
@@ -31,6 +32,8 @@ func main() {
 	log := logger.New()
 	cfg := config.New(log)
 
+	h := health.New()
+
 	dbMetric := database.New("ender")
 	enderMetric := enderMetrics.New("ender")
 	metrics.New(log, append(enderMetric.List(), dbMetric.List()...))
@@ -40,12 +43,18 @@ func main() {
 		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
+	h.Register("postgres", func(ctx context.Context) error {
+		return pgConn.Ping(ctx)
+	})
 
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
 		log.Warn(ctx, "can't init redis connection: %s", err)
 	}
 	defer redisClient.Close()
+	h.Register("redis", func(ctx context.Context) error {
+		return redisClient.Ping(ctx)
+	})
 
 	projManager := projects.New(log, pgConn, redisClient, dbMetric)
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
@@ -58,6 +67,9 @@ func main() {
 	mobileMessages := []int{90, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 110, 111}
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	h.Register("producer", func(ctx context.Context) error {
+		return producer.Ping(ctx)
+	})
 	consumer, err := queue.NewConsumer(
 		log,
 		cfg.GroupEnder,
@@ -85,6 +97,9 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
 	}
+	h.Register("consumer", func(ctx context.Context) error {
+		return consumer.Ping(ctx)
+	})
 
 	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {

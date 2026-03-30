@@ -8,7 +8,7 @@ buildscript {
   }
 
   dependencies {
-    classpath "com.android.tools.build:gradle:8.2.2"
+    classpath "com.android.tools.build:gradle:8.6.1"
     // noinspection DifferentKotlinGradleVersion
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
@@ -19,7 +19,7 @@ def isNewArchitectureEnabled() {
 }
 
 apply plugin: "com.android.library"
-apply plugin: "kotlin-android"
+apply plugin: "org.jetbrains.kotlin.android"
 
 if (isNewArchitectureEnabled()) {
   apply plugin: "com.facebook.react"
@@ -66,7 +66,7 @@ android {
     }
   }
 
-  lintOptions {
+  lint {
     disable "GradleCompatible"
   }
 

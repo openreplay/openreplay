@@ -136,14 +136,21 @@ jobs:
         function build_managed() {
           local service=$1
           local version=$2
-          echo building managed
+          echo "Building managed: $service"
           clone_msaas
-          if [[ $service == 'chalice' ]]; then
+          if grep -qx $service /tmp/backend.txt; then
+            # Backend service: use dedicated build script
+            cp "$MSAAS_REPO_FOLDER/hacks/dedicated-backend-build/build_dedicated.sh" \
+               "$MSAAS_REPO_FOLDER/openreplay/backend/build.sh"
+            cd "$MSAAS_REPO_FOLDER/openreplay/backend"
+            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh nil $service
+          elif [[ $service == 'chalice' ]]; then
             cd $MSAAS_REPO_FOLDER/openreplay/api
+            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
           else
             cd $MSAAS_REPO_FOLDER/openreplay/$service
+            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
           fi
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
@@ -196,6 +203,10 @@ jobs:
               echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
             fi
           else
+            build_managed $SERVICE $version
+          fi
+          # Build managed/dedicated for backend services
+          if grep -qx $SERVICE /tmp/backend.txt; then
             build_managed $SERVICE $version
           fi
           cd $working_dir

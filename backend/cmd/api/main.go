@@ -8,6 +8,7 @@ import (
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/database"
@@ -25,6 +26,8 @@ func main() {
 	log := logger.New()
 	cfg := sessionConfig.New(log)
 
+	h := health.New()
+
 	webMetrics := web.New("api")
 	dbMetric := database.New("api")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
@@ -35,10 +38,17 @@ func main() {
 	}
 	defer pgPool.Close()
 
+	h.Register("postgres", func(ctx context.Context) error {
+		return pgPool.Ping(ctx)
+	})
+
 	chConnection, err := clickhouse.NewConnection(cfg.Clickhouse)
 	if err != nil {
 		log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 	}
+	h.Register("clickhouse", func(ctx context.Context) error {
+		return chConnection.Ping(ctx)
+	})
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {

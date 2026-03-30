@@ -1,18 +1,9 @@
-import { makeAutoObservable, runInAction, observable } from 'mobx';
-import FilterSeries from './filterSeries';
-import { DateTime } from 'luxon';
-import Session from 'App/mstore/types/session';
-import Funnelissue from 'App/mstore/types/funnelIssue';
-import {
-  issueOptions,
-  issueCategories,
-  issueCategoriesMap,
-  pathAnalysisEvents,
-} from 'App/constants/filterOptions';
-import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
-import Funnel from '../types/funnel';
-import { metricService } from 'App/services';
+import { getChartFormatter } from 'Types/dashboard/helper';
+import { FilterKey } from 'Types/filter/filterType';
+import { DateTime } from 'luxon';
+import { makeAutoObservable, observable, runInAction } from 'mobx';
+
 import {
   FUNNEL,
   HEATMAP,
@@ -22,14 +13,32 @@ import {
   USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import { ErrorInfo } from '../types/error';
-import { getChartFormatter } from 'Types/dashboard/helper';
-import FilterItem from './filterItem';
-import Filter from './filter';
-import Issue from '../types/issue';
+import {
+  issueCategories,
+  issueCategoriesMap,
+  issueOptions,
+  pathAnalysisEvents,
+} from 'App/constants/filterOptions';
 import { durationFormatted } from 'App/date';
-import { SessionsByRow } from './sessionsCardData';
 import { filterStore } from 'App/mstore';
+import Funnelissue from 'App/mstore/types/funnelIssue';
+import Session from 'App/mstore/types/session';
+import { metricService } from 'App/services';
+import {
+  collectChartLines,
+  collectTimestamps,
+  isLeaf,
+  sortByTotal,
+  stripOverall,
+} from 'App/utils/breakdownTree';
+
+import { ErrorInfo } from '../types/error';
+import Funnel from '../types/funnel';
+import Issue from '../types/issue';
+import Filter from './filter';
+import FilterItem from './filterItem';
+import FilterSeries from './filterSeries';
+import { SessionsByRow } from './sessionsCardData';
 
 export class InsightIssue {
   icon: string;
@@ -112,6 +121,7 @@ export default class Widget {
   sortBy?: string = '';
   sortOrder?: string = 'desc';
   includeClickRage?: boolean = false;
+  breakdowns: string[] = [];
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
@@ -170,6 +180,33 @@ export default class Widget {
     this.series.push(series);
   }
 
+  addBreakdown(filter: any) {
+    this.breakdowns = [...this.breakdowns, filter.name];
+    this.hasChanged = true;
+  }
+
+  updateBreakdown(index: number, filter: any) {
+    const next = [...this.breakdowns];
+    next[index] = filter.name;
+    this.breakdowns = next;
+    this.hasChanged = true;
+  }
+
+  removeBreakdown(index: number) {
+    this.breakdowns = this.breakdowns.filter(
+      (_: any, i: number) => i !== index,
+    );
+    this.hasChanged = true;
+  }
+
+  moveBreakdown(fromIndex: number, toIndex: number) {
+    const next = [...this.breakdowns];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    this.breakdowns = next;
+    this.hasChanged = true;
+  }
+
   createSeries(filters: Record<string, any>) {
     const series = new FilterSeries().fromData({
       filter: { filters },
@@ -216,6 +253,7 @@ export default class Widget {
       this.isPublic = json.isPublic;
       this.sortBy = json.sortBy || '';
       this.sortOrder = json.sortOrder || 'desc';
+      this.breakdowns = json.breakdowns || [];
 
       if (this.metricType === FUNNEL) {
         this.series[0].filter.eventsOrder = 'then';
@@ -314,6 +352,7 @@ export default class Widget {
       compareTo: this.compareTo,
       sortBy: this.sortBy,
       sortOrder: this.sortOrder,
+      breakdowns: this.breakdowns,
       config: {
         ...this.config,
         col:
@@ -427,16 +466,277 @@ export default class Widget {
     this.page = page;
   }
 
+  /**
+   * Detect whether `data` uses the new series-based format:
+   * { series: { seriesName: { "$overall": { timestamp: value }, breakdownKey: { timestamp: value } } } }
+   */
+  private isNewSeriesFormat(data: any): boolean {
+    return (
+      data &&
+      typeof data === 'object' &&
+      data.series &&
+      typeof data.series === 'object'
+    );
+  }
+
+  private transformNewSeriesFormat(
+    seriesObj: Record<string, any>,
+    isComparison: boolean,
+  ): {
+    chart: Record<string, any>[];
+    namesMap: string[];
+    breakdownData: Record<string, any> | null;
+  } {
+    const seriesNames = Object.keys(seriesObj);
+    const tsSet = new Set<string>();
+    const allLines: { name: string; data: Record<string, number> }[] = [];
+
+    seriesNames.forEach((seriesName) => {
+      const seriesContent = seriesObj[seriesName];
+      collectTimestamps(seriesContent, tsSet);
+      const lines = collectChartLines(seriesContent, seriesName);
+      allLines.push(...lines);
+    });
+
+    const timestamps = Array.from(tsSet).sort((a, b) => Number(a) - Number(b));
+
+    // its easier to sort now for "show top X" functionality + readability in table
+    allLines.sort((a, b) => {
+      const sumA = Object.values(a.data).reduce((s, v) => s + v, 0);
+      const sumB = Object.values(b.data).reduce((s, v) => s + v, 0);
+      return sumB - sumA;
+    });
+
+    const namesMap = allLines.map((l) =>
+      isComparison ? `Previous ${l.name}` : l.name,
+    );
+
+    const chart = timestamps.map((ts) => {
+      const point: Record<string, any> = { timestamp: Number(ts) };
+      allLines.forEach((line) => {
+        const finalName = isComparison ? `Previous ${line.name}` : line.name;
+        point[finalName] = line.data[ts] ?? 0;
+      });
+      return point;
+    });
+
+    // no breakdown: { seriesName: { ts: value } }
+    // with breakdown: { seriesName: { key: { ... } } } (stripped of $overall)
+    const breakdownData: Record<string, any> = {};
+    seriesNames.forEach((seriesName) => {
+      const seriesContent = seriesObj[seriesName];
+
+      if (isLeaf(seriesContent)) {
+        breakdownData[seriesName] = seriesContent;
+        return;
+      }
+
+      // use $overall as flat series data, overlay with stripped breakdown
+      const sorted = sortByTotal(seriesContent);
+      const stripped = stripOverall(sorted);
+      breakdownData[seriesName] = stripped ?? seriesContent.$overall ?? {};
+    });
+
+    return {
+      chart,
+      namesMap,
+      breakdownData,
+    };
+  }
+
+  private transformFunnelSeriesFormat(seriesObj: Record<string, any>): {
+    funnel: Funnel;
+    funnelBreakdown?: Record<string, Funnel>;
+  } {
+    const seriesKeys = Object.keys(seriesObj);
+    if (seriesKeys.length === 0) {
+      return { funnel: new Funnel() };
+    }
+
+    const seriesContent = seriesObj[seriesKeys[0]];
+
+    // No breakdown — stages directly on the series
+    if (seriesContent?.stages) {
+      return { funnel: new Funnel().fromJSON(seriesContent) };
+    }
+
+    // With breakdown — $overall is the main funnel
+    if (seriesContent?.$overall?.stages) {
+      const funnel = new Funnel().fromJSON(seriesContent.$overall);
+
+      const bdEntries = Object.entries(seriesContent)
+        .filter(
+          ([key, val]: [string, any]) =>
+            key !== '$overall' && (val?.stages || val?.$overall?.stages),
+        )
+        .sort(([, a]: any, [, b]: any) => {
+          const aStages = a.stages ?? a.$overall?.stages;
+          const bStages = b.stages ?? b.$overall?.stages;
+          return (bStages?.[0]?.count ?? 0) - (aStages?.[0]?.count ?? 0);
+        });
+
+      if (bdEntries.length > 0) {
+        const funnelBreakdown: Record<string, Funnel> = {};
+        for (const [key, val] of bdEntries) {
+          const valAny = val as any;
+          funnelBreakdown[key] = new Funnel().fromJSON(
+            valAny.stages ? valAny : valAny.$overall,
+          );
+        }
+        return { funnel, funnelBreakdown };
+      }
+
+      return { funnel };
+    }
+
+    return { funnel: new Funnel() };
+  }
+
+  /**
+   * Recursively collect breakdown sub-rows for a given value name.
+   * Each node may have $overall + nested breakdown keys, or be a leaf
+   * with { total, count, values }.
+   */
+  private collectBreakdownRows(
+    node: Record<string, any>,
+    valueName: string,
+  ): { key: string; total: number; children: any[] }[] {
+    const rows: { key: string; total: number; children: any[] }[] = [];
+    for (const [key, child] of Object.entries(node)) {
+      if (key === '$overall') continue;
+      const childObj = child as any;
+
+      if (childObj?.$overall?.values) {
+        // Nested breakdown level
+        const match = childObj.$overall.values.find(
+          (v: any) => v.name === valueName,
+        );
+        const total = match?.total ?? 0;
+        const children = this.collectBreakdownRows(childObj, valueName);
+        rows.push({ key, total, children });
+      } else if (childObj?.values) {
+        // Leaf level
+        const match = childObj.values.find(
+          (v: any) => v.name === valueName,
+        );
+        const total = match?.total ?? 0;
+        rows.push({ key, total, children: [] });
+      }
+    }
+    rows.sort((a, b) => b.total - a.total);
+    return rows;
+  }
+
+  private transformTableSeriesFormat(seriesObj: Record<string, any>): {
+    values: any[];
+    total: number;
+    count: number;
+    hasBreakdown: boolean;
+  } {
+    const seriesKeys = Object.keys(seriesObj);
+    if (seriesKeys.length === 0) {
+      return { values: [], total: 0, count: 0, hasBreakdown: false };
+    }
+
+    const seriesContent = seriesObj[seriesKeys[0]];
+
+    // Has breakdown ($overall + breakdown keys)
+    if (seriesContent?.$overall?.values) {
+      const overall = seriesContent.$overall;
+      const count = overall.count ?? 0;
+      const breakdownKeys = Object.keys(seriesContent).filter(
+        (k) => k !== '$overall',
+      );
+
+      const values = (overall.values || []).map((s: any) => {
+        const row = new SessionsByRow().fromJson(s, count, this.metricOf);
+        (row as any).breakdownRows = this.collectBreakdownRows(
+          seriesContent,
+          s.name,
+        );
+        return row;
+      });
+
+      return {
+        values,
+        total: overall.total ?? 0,
+        count,
+        hasBreakdown: breakdownKeys.length > 0,
+      };
+    }
+
+    // No breakdown — flat { total, count, values }
+    if (seriesContent?.values) {
+      const count = seriesContent.count ?? 0;
+      const values = seriesContent.values.map((s: any) =>
+        new SessionsByRow().fromJson(s, count, this.metricOf),
+      );
+      return {
+        values,
+        total: seriesContent.total ?? 0,
+        count,
+        hasBreakdown: false,
+      };
+    }
+
+    return { values: [], total: 0, count: 0, hasBreakdown: false };
+  }
+
   setData(
-    data:
-      | { timestamp: number; [seriesName: string]: number }[]
-      | Record<string, any>,
+    data: any,
     period: any,
     isComparison: boolean = false,
     density?: number,
   ) {
     if (!data) return;
     const _data: any = {};
+
+    // 3.0 format with possible breakdown
+    if (
+      this.isNewSeriesFormat(data) &&
+      (this.metricType === TIMESERIES ||
+        this.metricType === FUNNEL ||
+        this.metricType === TABLE)
+    ) {
+      // Funnels have stages arrays (not NestedData), so skip transformNewSeriesFormat
+      // which would crash on sortByTotal/isLeaf/sumAll with non-timestamp data.
+      if (this.metricType === FUNNEL) {
+        const result = this.transformFunnelSeriesFormat(data.series);
+        _data.funnel = result.funnel;
+        if (result.funnelBreakdown) {
+          _data.funnelBreakdown = result.funnelBreakdown;
+        }
+        if (!isComparison) {
+          this.setDataValue(_data);
+        }
+        return _data;
+      }
+
+      if (this.metricType === TABLE) {
+        const tableResult = this.transformTableSeriesFormat(data.series);
+        _data['values'] = tableResult.values;
+        _data['total'] = tableResult.total;
+        _data['hasBreakdown'] = tableResult.hasBreakdown;
+      } else {
+        const { chart, namesMap, breakdownData } =
+          this.transformNewSeriesFormat(data.series, isComparison);
+
+        _data['chart'] = (getChartFormatter(period, density) as any)(chart);
+        _data['namesMap'] = namesMap;
+        _data['value'] = data.value;
+        _data['unit'] = data.unit;
+        if (breakdownData) {
+          _data['breakdownData'] = breakdownData;
+        }
+      }
+
+      if (!isComparison) {
+        this.setDataValue(_data);
+      }
+      return _data;
+    }
+
+    // Legacy format
     if (isComparison && this.metricType === TIMESERIES) {
       data.forEach((point, i) => {
         Object.keys(point).forEach((key) => {

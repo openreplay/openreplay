@@ -78,6 +78,36 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if .Values.command }}
+          command:
+            {{- toYaml .Values.command | nindent 12 }}
+          {{- if or .Values.args (and .Values.redpanda .Values.resources .Values.resources.limits .Values.resources.limits.cpu) }}
+          args:
+            {{- if .Values.args }}
+            {{- toYaml .Values.args | nindent 12 }}
+            {{- end }}
+            {{- if and .Values.redpanda .Values.resources .Values.resources.limits .Values.resources.limits.cpu }}
+            {{- $cpu := .Values.resources.limits.cpu | toString }}
+            {{- if hasSuffix "m" $cpu }}
+            - "--smp={{ max 1 (div (trimSuffix "m" $cpu | int) 1000) }}"
+            {{- else }}
+            - "--smp={{ max 1 ($cpu | int) }}"
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- with .Values.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- else }}
           env:
             - name: MY_POD_IP
               valueFrom:
@@ -174,6 +204,7 @@ spec:
             {{- with .Values.extraEnvVars }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- end }}
           ports:
             {{- if .Values.listeners.client.enabled }}
             - name: kafka-client

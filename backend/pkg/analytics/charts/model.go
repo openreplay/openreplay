@@ -39,6 +39,7 @@ const (
 	FilterUserOs          model.FilterType = "userOs"
 	FilterUserBrowser     model.FilterType = "userBrowser"
 	FilterUserDevice      model.FilterType = "userDevice"
+	FilterUserDeviceType  model.FilterType = "userDeviceType"
 	FilterPlatform        model.FilterType = "platform"
 	FilterRevId           model.FilterType = "revId"
 	FilterIssue           model.FilterType = "issue"
@@ -48,6 +49,15 @@ const (
 type DataPoint struct {
 	Timestamp uint64 `json:"timestamp" ch:"timestamp"`
 	Count     uint64 `json:"count" ch:"count"`
+}
+
+const MaxBreakdowns = 3
+
+const MaxBreakdownCardinality = 1000
+
+type breakdownKey struct {
+	Timestamp uint64
+	Values    [MaxBreakdowns]string
 }
 
 var mainColumns = map[string][]string{
@@ -66,6 +76,10 @@ var mainColumns = map[string][]string{
 	"issue_type":         {"issue_types", "arrayColumn"},
 	"url":                {"$current_url", "singleColumn"},
 	"urlPath":            {"$current_path", "singleColumn"},
+	"utmSource":          {"utm_source", "singleColumn"},
+	"utmMedium":          {"utm_medium", "singleColumn"},
+	"utmCampaign":        {"utm_campaign", "singleColumn"},
+	"userDeviceType":     {"$device", "singleColumn"},
 }
 
 var mainSessionsColumns = map[string][]string{
@@ -83,4 +97,8 @@ var mainSessionsColumns = map[string][]string{
 	"issue_type":           {"issue_types", "arrayColumn"},
 	"user_id":              {"user_id", "singleColumn"},
 	"user_anonymous_id":    {"user_anonymous_id", "singleColumn"},
+	"utm_source":           {"utm_source", "singleColumn"},
+	"utm_medium":           {"utm_medium", "singleColumn"},
+	"utm_campaign":         {"utm_campaign", "singleColumn"},
+	"user_device_type":     {"user_device_type", "singleColumn"},
 }

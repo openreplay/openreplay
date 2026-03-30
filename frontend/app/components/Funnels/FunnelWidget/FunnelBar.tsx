@@ -1,11 +1,13 @@
-import { durationFormatted } from 'App/date';
-import React from 'react';
-import { Icon } from 'UI';
-import { Space } from 'antd';
-import { Styles } from 'Components/Dashboard/Widgets/common';
+import { Space, Tooltip } from 'antd';
 import cn from 'classnames';
-import FunnelStepText from './FunnelStepText';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { durationFormatted } from 'App/date';
+import { Styles } from 'Components/Dashboard/Widgets/common';
+import { Icon } from 'UI';
+
+import FunnelStepText from './FunnelStepText';
 
 interface Props {
   filter: any;
@@ -15,35 +17,135 @@ interface Props {
   focusedFilter?: number | null;
   metricLabel?: string;
   isHorizontal?: boolean;
+  breakdownStages?: { key: string; stage: any; compStage?: any }[];
+  compLabel?: string;
+}
+
+function BreakdownRow({
+  stages,
+  field,
+  opacity = 1,
+  stepIndex,
+}: {
+  stages: Props['breakdownStages'];
+  field: 'stage' | 'compStage';
+  opacity?: number;
+  stepIndex: number;
+}) {
+  if (!stages || stages.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-0.5 mt-1" style={{ opacity }}>
+      {stages.map((b, i) => {
+        const stageData = b[field];
+        if (!stageData) return null;
+        const pct = stageData.completedPercentageTotal ?? 0;
+        const count = stageData.count ?? 0;
+        const color = Styles.safeColors[i % Styles.safeColors.length];
+        return (
+          <div key={b.key}>
+            <div className="text-xs color-gray-medium truncate">
+              Step {stepIndex} · {b.key}
+            </div>
+            <div
+              className="flex rounded"
+              style={{
+                height: 12,
+                width: '100%',
+                backgroundColor: '#f5f5f5',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                className="flex items-center justify-end pr-1 rounded-l"
+                style={{
+                  width: `${Math.max(pct, 2)}%`,
+                  height: '100%',
+                  backgroundColor: color,
+                }}
+              >
+                {pct >= 15 && (
+                  <span
+                    className="text-white leading-none"
+                    style={{ fontSize: 9 }}
+                  >
+                    {pct}%
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="text-xs color-gray-medium">
+              {count} · {pct}%
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function FunnelBar(props: Props) {
-  const { filter, index, focusStage, focusedFilter, compData, isHorizontal } =
-    props;
+  const {
+    filter,
+    index,
+    focusStage,
+    focusedFilter,
+    compData,
+    isHorizontal,
+    breakdownStages,
+  } = props;
 
   const isFocused =
     focusedFilter && index ? focusedFilter === index - 1 : false;
+  const hasBreakdown = breakdownStages && breakdownStages.length > 0;
+
   return (
     <div className="w-full mb-2">
       <FunnelStepText filter={filter} isHorizontal={isHorizontal} />
-      <div className={isHorizontal ? 'flex gap-1' : 'flex flex-col'}>
-        <FunnelBarData
-          data={props.filter}
-          isHorizontal={isHorizontal}
-          isComp={false}
-          index={index}
-          isFocused={isFocused}
-          focusStage={focusStage}
-        />
-        {compData ? (
+      <div className={isHorizontal ? 'flex gap-1' : 'flex flex-col gap-1'}>
+        {/* Current bar + its breakdown */}
+        <div>
           <FunnelBarData
-            data={props.compData}
+            data={props.filter}
             isHorizontal={isHorizontal}
-            isComp
+            isComp={false}
             index={index}
             isFocused={isFocused}
             focusStage={focusStage}
           />
+          {hasBreakdown && (
+            <BreakdownRow
+              stages={breakdownStages}
+              field="stage"
+              stepIndex={index}
+            />
+          )}
+        </div>
+
+        {compData ? (
+          <div>
+            {props.compLabel && (
+              <div className="text-xs color-gray-medium mb-1 mt-1">
+                {props.compLabel}
+              </div>
+            )}
+            <FunnelBarData
+              data={props.compData}
+              isHorizontal={isHorizontal}
+              isComp
+              index={index}
+              isFocused={isFocused}
+              focusStage={focusStage}
+            />
+            {hasBreakdown && (
+              <BreakdownRow
+                stages={breakdownStages}
+                field="compStage"
+                opacity={0.5}
+                stepIndex={index}
+              />
+            )}
+          </div>
         ) : null}
       </div>
     </div>
@@ -129,7 +231,7 @@ function FunnelBarData({
         </div>
         <div
           style={emptyBarStyle}
-          onClick={() => focusStage?.(index! - 1, isComp)}
+          onClick={() => focusStage?.(index! - 1, !!isComp)}
           className="hover:opacity-70"
         />
       </div>

@@ -24,8 +24,9 @@ const (
 )
 
 var (
-	sqlStringReplacer      = strings.NewReplacer(`'`, `''`, `@`, `' || char(64) || '`)
+	sqlStringReplacer      = strings.NewReplacer(`\`, `\\`, `'`, `''`, `@`, `' || char(64) || '`)
 	sqlLikePatternReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `'`, `''`, `@`, `' || char(64) || '`)
+	camelToSnakeRe         = regexp.MustCompile("([a-z0-9])([A-Z])")
 )
 
 type Payload struct {
@@ -114,14 +115,14 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperti
 	}
 	// explicit column mapping
 	if col, ok := opts.DefinedColumns[logical]; ok {
-		col[0] = quote(col[0])
+		quoted := quote(col[0])
 		if opts.MainTableAlias != "" {
-			if strings.Contains(col[0], ".") {
-				return fmt.Sprintf("%s", col[0]), col[1]
+			if strings.Contains(quoted, ".") {
+				return quoted, col[1]
 			}
-			return fmt.Sprintf("%s.%s", opts.MainTableAlias, col[0]), col[1]
+			return fmt.Sprintf("%s.%s", opts.MainTableAlias, quoted), col[1]
 		}
-		return col[0], col[1]
+		return quoted, col[1]
 	}
 
 	// determine property key
@@ -249,6 +250,10 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 			parts = append(parts, fmt.Sprintf("%s\"$auto_captured\"", alias))
 		}
 
+		// TODO(analytics): Nested sub-filters are always joined with AND.
+		// The parent filter's PropertyOrder ("or"/"and") is not applied here.
+		// To fix: when PropertyOrder == "or", join subConds with " OR " instead of " AND ".
+		// See: query_test.go TestBuildEventConditions "Events filters with multiple properties"
 		for _, sub := range f.Filters {
 			subConds, _ := addFilter(sub, opts, true)
 			if len(subConds) > 0 {
@@ -312,7 +317,7 @@ var compOpsArrays = map[string]string{
 }
 
 func buildCond(expr string, values []string, operator string, isNumeric bool, nature string) string {
-	if len(values) == 0 && operator != "isAny" {
+	if len(values) == 0 && operator != "isAny" && operator != "isUndefined" {
 		return ""
 	}
 	switch operator {
@@ -321,6 +326,11 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 			return fmt.Sprintf("notEmpty(%s)", expr)
 		}
 		return fmt.Sprintf("isNotNull(%s)", expr)
+	case "isUndefined":
+		if nature == "arrayColumn" {
+			return fmt.Sprintf("empty(%s)", expr)
+		}
+		return fmt.Sprintf("(isNull(%s) OR %s = '')", expr, expr)
 	case "isNot", "not":
 		//TODO: find how to process array column
 		if len(values) == 1 {
@@ -462,9 +472,9 @@ func buildInClause(values []string) string {
 
 func buildStaticEventWhere(p *Payload) string {
 	conditions := []string{
-		fmt.Sprintf("main.project_id = %d", p.ProjectId),
-		fmt.Sprintf("main.created_at >= toDateTime(%d / 1000)", p.StartTimestamp),
-		fmt.Sprintf("main.created_at <= toDateTime(%d / 1000)", p.EndTimestamp),
+		"main.project_id = @projectId",
+		"main.created_at >= toDateTime(@startTimestamp / 1000)",
+		"main.created_at <= toDateTime(@endTimestamp / 1000)",
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
 		conditions = append(conditions, fmt.Sprintf("main.sample_key < %d", p.SampleRate))
@@ -478,8 +488,8 @@ func BuildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []st
 		col = timeColumn[0]
 	}
 	conditions := []string{
-		fmt.Sprintf("%s.project_id = %d", tableAlias, p.ProjectId),
-		fmt.Sprintf("%s.%s BETWEEN toDateTime(%d) AND toDateTime(%d)", tableAlias, col, p.StartTimestamp/1000, p.EndTimestamp/1000),
+		fmt.Sprintf("%s.project_id = @projectId", tableAlias),
+		fmt.Sprintf("%s.%s BETWEEN toDateTime(@startTimestamp/1000) AND toDateTime(@endTimestamp/1000)", tableAlias, col),
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
 		conditions = append(conditions, fmt.Sprintf("%s.sample_key < %d", tableAlias, p.SampleRate))
@@ -814,6 +824,7 @@ var SessionColumns = map[string][]string{
 	"user_browser":          {"user_browser", "singleColumn"},
 	"user_browser_version":  {"user_browser_version", "singleColumn"},
 	"user_device":           {"user_device", "singleColumn"},
+	"user_device_type":      {"user_device_type", "singleColumn"},
 	"platform":              {"platform", "singleColumn"},
 	"user_id":               {"user_id", "singleColumn"},
 	"user_anonymous_id":     {"user_anonymous_id", "singleColumn"},
@@ -863,7 +874,6 @@ func hasEventFilter(filters []model.Filter) bool {
 }
 
 func CamelToSnake(s string) string {
-	re := regexp.MustCompile("([a-z0-9])([A-Z])")
-	snake := re.ReplaceAllString(s, "${1}_${2}")
+	snake := camelToSnakeRe.ReplaceAllString(s, "${1}_${2}")
 	return strings.ToLower(snake)
 }

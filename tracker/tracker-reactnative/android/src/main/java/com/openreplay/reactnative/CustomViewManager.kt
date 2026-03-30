@@ -2,7 +2,6 @@ package com.openreplay.reactnative
 
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.Toast
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewGroupManager
 
@@ -10,10 +9,7 @@ class CustomViewManager : ViewGroupManager<FrameLayout>() {
   override fun getName(): String = "RnCustomView"
 
   override fun createViewInstance(reactContext: ThemedReactContext): FrameLayout {
-    return FrameLayout(reactContext).apply {
-      isClickable = true
-      setOnClickListener { Toast.makeText(reactContext, "Tap detected", Toast.LENGTH_SHORT).show() }
-    }
+    return FrameLayout(reactContext)
   }
 
   override fun addView(parent: FrameLayout, child: View, index: Int) {

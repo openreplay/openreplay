@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { durationFromMs } from 'App/date';
 import { useStore } from 'App/mstore';
 import { Input as InputEvent, TYPES } from 'App/types/session/event';
 import { PlayerContext } from 'Components/Session/playerContext';
@@ -393,6 +394,11 @@ function UnitStepsModal({ onClose }: Props) {
     setActiveFramework(framework);
   };
 
+  const jumpToMs = (ms: number) => {
+    player.jump(ms, true);
+    player.pause();
+  };
+
   return (
     <div
       className={'bg-white h-screen w-full flex flex-col items-start gap-2 p-4'}
@@ -503,9 +509,16 @@ function UnitStepsModal({ onClose }: Props) {
                 const picked = pickedInputs.get(key) ?? 0;
                 return (
                   <div key={key}>
-                    <div className={'font-mono text-disabled-text mb-1'}>
+                    <div
+                      onClick={() => jumpToMs(entry.time)}
+                      className={
+                        'font-mono text-disabled-text mb-1 cursor-pointer hover:text-black'
+                      }
+                    >
                       {entry.selector}{' '}
-                      <span className={'text-gray-400'}>@{entry.time}ms</span>
+                      <span className={'text-gray-400'}>
+                        @{durationFromMs(entry.time)}
+                      </span>
                     </div>
                     <div className={'flex flex-col gap-0.5 pl-2'}>
                       {entry.elements.map((el) => (

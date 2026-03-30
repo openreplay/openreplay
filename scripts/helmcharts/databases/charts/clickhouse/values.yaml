@@ -92,16 +92,37 @@ configOverride:
     00-server-override.xml: |-
       <clickhouse>
         <logger>
-            <level>information</level>
-            <console>true</console>
-        <log remove="1"></log>
+          <level>information</level>
+          <console>true</console>
+          <log remove="1"></log>
+          <errorlog remove="1"></errorlog>
+        </logger>
         <merge_tree>
           <escape_variant_subcolumn_filenames>0</escape_variant_subcolumn_filenames>
         </merge_tree>
-        <errorlog remove="1"></errorlog>
-        </logger>
         <listen_host>0.0.0.0</listen_host>
         <keep_alive_timeout>100</keep_alive_timeout>
+        <trace_log>
+          <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </trace_log>
+        <text_log>
+          <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </text_log>
+        <part_log>
+          <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </part_log>
+        <metric_log>
+          <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </metric_log>
+        <asynchronous_metric_log>
+          <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </asynchronous_metric_log>
+        <error_log>
+          <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </error_log>
+        <query_log>
+          <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </query_log>
       </clickhouse>
     # another-config.xml: |-
     #   <clickhouse>

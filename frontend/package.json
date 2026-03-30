@@ -15,9 +15,10 @@
     "antd": "antd/es/index.js"
   },
   "scripts": {
+    "writeCommitHash": "node ./scripts/getCommitHash/getHash.js",
     "start": "parcel app/index.html --port 3333 --open",
     "dev": "parcel app/index.html --port 3333 --open",
-    "build": "yarn gen:icons && yarn gen:colors && rm -rf public && parcel build app/index.html --dist-dir public --no-source-maps && cp -r app/assets public/assets",
+    "build": "yarn gen:icons && yarn gen:colors && rm -rf public && parcel build app/index.html --dist-dir public --no-source-maps && cp -r app/assets public/assets && yarn writeCommitHash",
     "upload:minio": "node ./scripts/upload-minio.js",
     "deploy:minio": "yarn build:minio && yarn upload:minio",
     "lint": "eslint --fix app; exit 0",

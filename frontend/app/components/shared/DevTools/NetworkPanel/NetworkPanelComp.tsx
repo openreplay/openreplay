@@ -48,6 +48,7 @@ const GRAPHQL = 'graphql';
 const TYPE_TO_TAB = {
   [ResourceType.XHR]: XHR,
   [ResourceType.FETCH]: XHR,
+  [ResourceType.IOS]: XHR,
   [ResourceType.SCRIPT]: JS,
   [ResourceType.CSS]: CSS,
   [ResourceType.IMG]: IMG,

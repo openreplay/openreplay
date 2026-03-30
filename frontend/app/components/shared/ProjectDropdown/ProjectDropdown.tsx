@@ -1,17 +1,18 @@
+import Project from '@/mstore/types/project';
 import { CaretDownOutlined, FolderAddOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
 import cn from 'classnames';
-import React from 'react';
-import { useLocation } from 'App/routing';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { hasSiteId, siteChangeAvailable } from 'App/routes';
-import { Icon } from 'UI';
-import { useModal } from 'Components/ModalContext';
-import ProjectForm from 'Components/Client/Projects/ProjectForm';
-import Project from '@/mstore/types/project';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { hasSiteId, siteChangeAvailable } from 'App/routes';
+import { useLocation } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
+import ProjectForm from 'Components/Client/Projects/ProjectForm';
+import { useModal } from 'Components/ModalContext';
+import { Icon } from 'UI';
 
 const { Text } = Typography;
 

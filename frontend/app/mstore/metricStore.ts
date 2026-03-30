@@ -1,19 +1,21 @@
+import { FilterKey } from 'Types/filter/filterType';
 import { makeAutoObservable, runInAction } from 'mobx';
-import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
+
 import {
-  TIMESERIES,
-  TABLE,
-  FUNNEL,
-  ERRORS,
-  INSIGHTS,
-  HEATMAP,
-  USER_PATH,
-  RETENTION,
   CATEGORIES,
+  ERRORS,
+  FUNNEL,
+  HEATMAP,
+  INSIGHTS,
+  RETENTION,
+  TABLE,
+  TIMESERIES,
+  USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import { FilterKey } from 'Types/filter/filterType';
+import { errorService, metricService } from 'App/services';
+
 import { ErrorInfo } from './types/error';
 import Widget from './types/widget';
 
@@ -98,6 +100,9 @@ export default class MetricStore {
   focusedSeriesName: string | null = null;
   disabledSeries: string[] = [];
   drillDown = false;
+  breakdownTopN: number = 3;
+  breakdownSelection: Record<string, string[] | null> = {};
+  breakdownLevelTopN: number[] = [3];
 
   constructor() {
     makeAutoObservable(this);
@@ -139,6 +144,30 @@ export default class MetricStore {
 
   setDisabledSeries(series: string[]) {
     this.disabledSeries = series;
+  }
+
+  setBreakdownTopN(n: number) {
+    this.breakdownTopN = n;
+  }
+
+  isBreakdownValueSelected(parentPath: string, value: string): boolean {
+    const sel = this.breakdownSelection[parentPath];
+    return sel === undefined || sel === null || sel.includes(value);
+  }
+
+  setBreakdownSelection(selection: Record<string, string[] | null>) {
+    this.breakdownSelection = selection;
+  }
+
+  setBreakdownLevelTopN(level: number, n: number) {
+    const arr = [...this.breakdownLevelTopN];
+    while (arr.length <= level) arr.push(0);
+    arr[level] = n;
+    this.breakdownLevelTopN = arr;
+  }
+
+  clearBreakdownSelection() {
+    this.breakdownSelection = {};
   }
 
   setCardCategory(category: string) {

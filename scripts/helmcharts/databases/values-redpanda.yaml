@@ -1,0 +1,49 @@
+# Redpanda override for the kafka chart.
+# Use with: helm install ... -f values.yaml -f values-redpanda.yaml
+# Redpanda is Kafka API-compatible on port 9092 — no application changes needed.
+
+kafka:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: docker.redpanda.com/redpandadata/redpanda
+    pullPolicy: IfNotPresent
+    tag: "v25.3.6"
+
+  # Override startup: use 'rpk redpanda start' instead of Kafka env vars.
+  # --kafka-addr etc. are rpk flags (not redpanda binary flags).
+  command:
+    - rpk
+  args:
+    - redpanda
+    - start
+    - "--overprovisioned"
+    - "--default-log-level=info"
+    - "--kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092"
+    - "--advertise-kafka-addr=internal://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:9092,external://$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:19092"
+    - "--rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
+    - "--advertise-rpc-addr=$(MY_POD_NAME).kafka-headless.$(POD_NAMESPACE).svc.cluster.local:33145"
+
+  # Inject --smp from resources.limits.cpu automatically
+  redpanda: true
+
+  # Clear Kafka-specific extraEnvVars from base values
+  extraEnvVars: []
+
+  # Redpanda runs as UID 101 (redpanda user)
+  podSecurityContext:
+    fsGroup: 101
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 101
+
+  listeners:
+    client:
+      enabled: true
+      port: 9092
+      protocol: PLAINTEXT
+    internal:
+      enabled: false
+    ssl:
+      enabled: false

@@ -449,3 +449,7 @@ svg {
 .ant-tooltip {
     max-width: 640px;
 }
+
+.ant-select-input:focus {
+    border:none!important;
+}

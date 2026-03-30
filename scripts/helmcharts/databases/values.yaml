@@ -149,13 +149,13 @@ kafka:
     repository: ghcr.io/openreplay/kafka
     pullPolicy: IfNotPresent
     tag: "3"
-  
+
   kraft:
     enabled: true
     clusterId: "Sjg_Rr1iQbO9xpahgDbYpQ"
     processRoles: "broker,controller"
     controllerListenerNames: "INTERNAL"
-  
+
   listeners:
     client:
       enabled: true
@@ -169,24 +169,24 @@ kafka:
       enabled: false
       port: 9094
       protocol: SSL
-  
+
   tls:
     enabled: false
     secretName: kafka-tls-certs
     clientAuth: "required"
     endpointIdentificationAlgorithm: ""
-  
+
   service:
     type: ClusterIP
     client:
       port: 9092
     ssl:
       port: 9094
-  
+
   persistence:
     enabled: true
     size: 100Gi
-  
+
   resources:
     requests:
       cpu: 500m
@@ -194,7 +194,7 @@ kafka:
     limits:
       cpu: 2000m
       memory: 2Gi
-  
+
   # Kafka configuration
   kafka:
     messageMaxBytes: "3145728"
@@ -220,6 +220,9 @@ kafka:
     deleteTopicEnable: "false"
     allowEveryoneIfNoAclFound: "true"
     superUsers: "User:admin"
+
+  ## To use Redpanda instead of Kafka, see values-redpanda.yaml overlay:
+  ##   helm install ... -f values.yaml -f values-redpanda.yaml
 
 
 # Enterprise dbs

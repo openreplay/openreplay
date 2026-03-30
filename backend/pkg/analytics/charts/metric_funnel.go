@@ -37,17 +37,25 @@ type FunnelQueryBuilder struct {
 }
 
 func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
-	if !hasEventFilter(p.MetricPayload.Series[0].Filter.Filters) {
-		return FunnelResponse{Stages: make([]FunnelStageResult, 0)}, nil
+	if err := ValidateBreakdowns(p.Breakdowns); err != nil {
+		return nil, err
 	}
-	q, err := f.buildQuery(p)
+
+	seriesKey := SeriesKey(p.Name, "Funnel")
+
+	if !hasEventFilter(p.MetricPayload.Series[0].Filter.Filters) {
+		return WrapInSeries(seriesKey, FunnelResponse{Stages: []FunnelStageResult{}}), nil
+	}
+
+	q, params, err := f.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
 
-	_start := time.Now() // Start timing
+	_start := time.Now()
 	f.Logger.Debug(ctx, "Executing funnel query: %s", q)
-	rows, err := conn.Query(ctx, q)
+	chParams := convertParams(params)
+	rows, err := conn.Query(ctx, q, chParams...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,77 +65,100 @@ func (f *FunnelQueryBuilder) Execute(ctx context.Context, p *Payload, conn drive
 		f.Logger.Warn(ctx, "Funnel query took more than 2s: %s", q)
 	}
 
-	s := p.MetricPayload.Series[0]
-	var stepFilters []model.Filter
-	for _, flt := range s.Filter.Filters {
-		if flt.IsEvent {
-			stepFilters = append(stepFilters, flt)
+	stepFilters := extractStepFilters(p.MetricPayload.Series[0].Filter.Filters)
+	stageCount := len(stepFilters)
+	numBreakdowns := len(p.Breakdowns)
+
+	if numBreakdowns == 0 {
+		if !rows.Next() {
+			return WrapInSeries(seriesKey, FunnelResponse{Stages: []FunnelStageResult{}}), nil
 		}
-	}
-
-	var stages []FunnelStageResult
-
-	if rows.Next() {
-		stageCount := len(stepFilters)
-
-		scanValues := make([]interface{}, stageCount)
-		stageCountPointers := make([]*uint64, stageCount)
-
-		for i := 0; i < stageCount; i++ {
-			var count uint64
-			stageCountPointers[i] = &count
-			scanValues[i] = stageCountPointers[i]
+		counts := make([]uint64, stageCount)
+		scanArgs := make([]interface{}, stageCount)
+		for i := range counts {
+			scanArgs[i] = &counts[i]
 		}
-
-		if err := rows.Scan(scanValues...); err != nil {
+		if err := rows.Scan(scanArgs...); err != nil {
 			return nil, err
 		}
+		return WrapInSeries(seriesKey, FunnelResponse{Stages: buildFunnelStages(counts, stepFilters)}), nil
+	}
 
-		for i := 0; i < stageCount; i++ {
-			count := *stageCountPointers[i]
+	tree := NewBreakdownTree(make([]uint64, stageCount))
 
-			stage := FunnelStageResult{
-				Type:          stepFilters[i].Name,
-				Count:         count,
-				Value:         []string{},
-				Operator:      stepFilters[i].Operator,
-				PropertyOrder: stepFilters[i].PropertyOrder,
-				Filters:       convertToFilterDetails(stepFilters[i].Filters), // Include nested filters
-			}
+	bdVals := make([]string, numBreakdowns)
+	stageCounts := make([]uint64, stageCount)
+	stageArgs := make([]interface{}, stageCount)
+	for i := range stageCounts {
+		stageArgs[i] = &stageCounts[i]
+	}
+	scanArgs := BuildScanArgs(nil, bdVals, stageArgs)
 
-			if len(stepFilters[i].Value) > 0 {
-				stage.Value = stepFilters[i].Value
-			}
-
-			stages = append(stages, stage)
+	newZero := func() []uint64 { return make([]uint64, stageCount) }
+	accumulate := func(v *[]uint64) {
+		for i, c := range stageCounts {
+			(*v)[i] += c
 		}
 	}
 
-	if len(stages) > 0 {
-		stages[0].DropPct = nil // First stage has no drop percentage
-
-		for i := 1; i < len(stages); i++ {
-			prevCount := stages[i-1].Count
-			currCount := stages[i].Count
-
-			if prevCount > 0 {
-				dropPct := (float64(prevCount-currCount) / float64(prevCount)) * 100
-				stages[i].DropPct = &dropPct
-			} else {
-				stages[i].DropPct = nil
-			}
+	for rows.Next() {
+		if err := rows.Scan(scanArgs...); err != nil {
+			return nil, err
 		}
+		tree.Insert(bdVals, numBreakdowns, newZero, accumulate)
 	}
 
-	return FunnelResponse{Stages: stages}, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	render := func(counts []uint64) interface{} {
+		return FunnelResponse{Stages: buildFunnelStages(counts, stepFilters)}
+	}
+	return WrapInSeries(seriesKey, tree.ToMap(render)), nil
 }
 
-func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
+func buildFunnelStages(counts []uint64, stepFilters []model.Filter) []FunnelStageResult {
+	stages := make([]FunnelStageResult, len(counts))
+	for i, count := range counts {
+		stages[i] = FunnelStageResult{
+			Type:          stepFilters[i].Name,
+			Count:         count,
+			Value:         stepFilters[i].Value,
+			Operator:      stepFilters[i].Operator,
+			PropertyOrder: stepFilters[i].PropertyOrder,
+			Filters:       convertToFilterDetails(stepFilters[i].Filters),
+		}
+		if len(stages[i].Value) == 0 {
+			stages[i].Value = []string{}
+		}
+	}
+	for i := 1; i < len(stages); i++ {
+		if stages[i-1].Count > 0 {
+			dropPct := (float64(stages[i-1].Count-stages[i].Count) / float64(stages[i-1].Count)) * 100
+			stages[i].DropPct = &dropPct
+		}
+	}
+	return stages
+}
+
+func extractStepFilters(filters []model.Filter) []model.Filter {
+	var stepFilters []model.Filter
+	for _, f := range filters {
+		if f.IsEvent {
+			stepFilters = append(stepFilters, f)
+		}
+	}
+	return stepFilters
+}
+
+func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, error) {
 	allFilters := p.MetricPayload.Series[0].Filter.Filters
+	numBreakdowns := len(p.Breakdowns)
 
 	var (
 		eventFilters         []model.Filter
-		namelessEventFilters []model.Filter // $properties filters that are sent by UI without an event-name (global properties filters)
+		namelessEventFilters []model.Filter
 		sessionFilters       []model.Filter
 		stages               []string
 	)
@@ -158,7 +189,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	})
-	//TODO: optmize eventsConditions by extracting common conditions alone (needs to re-write BuildEventConditions)
+
 	var sessionConditions []string = make([]string, 0)
 	if len(sessionFilters) > 0 {
 		_, _, sessionConditions = BuildEventConditions(sessionFilters, BuildConditionsOptions{
@@ -172,26 +203,32 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 		sessionConditions = append(sessionConditions, durConds...)
 	}
 
-	stageColumns := make([]string, len(stages))
-	for i := range stages {
-		stageColumns[i] = fmt.Sprintf("coalesce(SUM(S%d), 0) AS stage%d", i+1, i+1)
-	}
-
 	tColumns := buildTColumns(stages, eventConditions, p.MetricFormat)
 
+	var innerParts []string
+	if numBreakdowns > 0 {
+		if p.MetricFormat == MetricFormatUserCount {
+			innerParts = append(innerParts, "s.user_id")
+		} else {
+			innerParts = append(innerParts, "e.session_id")
+		}
+		innerParts = append(innerParts, GetFunnelBreakdownProjection(p.Breakdowns)...)
+	}
+	innerParts = append(innerParts, tColumns...)
+
 	baseWhere := []string{
-		fmt.Sprintf("e.created_at >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-		fmt.Sprintf("e.created_at < toDateTime(%d)", (p.MetricPayload.EndTimestamp)/1000),
-		fmt.Sprintf("e.project_id = %d", p.ProjectId),
+		"e.created_at >= toDateTime(@startTimestamp/1000)",
+		"e.created_at < toDateTime(@endTimestamp/1000)",
+		"e.project_id = @projectId",
 		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages)),
 	}
 
 	if p.SampleRate > 0 && p.SampleRate < 100 {
-		baseWhere = append(baseWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+		baseWhere = append(baseWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate)) // safe: validated integer from struct
 	}
 
 	if p.MetricFormat == MetricFormatUserCount {
-		baseWhere = append(baseWhere, fmt.Sprintf("isNotNull(s.user_id)"))
+		baseWhere = append(baseWhere, "isNotNull(s.user_id)")
 	}
 
 	if len(otherConditions) > 0 {
@@ -200,15 +237,18 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if len(namelessEventConditions) > 0 {
 		baseWhere = append(baseWhere, strings.Join(namelessEventConditions, " AND "))
 	}
+
 	var mainTables string = fmt.Sprintf("%s AS e", getMainEventsTable(p.StartTimestamp))
-	if len(sessionConditions) > 0 || p.MetricFormat == MetricFormatUserCount {
+	needsSessionsJoin := len(sessionConditions) > 0 || p.MetricFormat == MetricFormatUserCount ||
+		(numBreakdowns > 0 && FunnelBreakdownNeedsSessions(p.Breakdowns))
+	if needsSessionsJoin {
 		mainTables = fmt.Sprintf("%s AS s INNER JOIN %s USING(session_id)", getMainSessionsTable(p.StartTimestamp), mainTables)
 		baseWhere = append(baseWhere, []string{
-			fmt.Sprintf("s.project_id = %d", p.ProjectId),
-			fmt.Sprintf("s.datetime >= toDateTime(%d)", p.MetricPayload.StartTimestamp/1000),
-			fmt.Sprintf("s.datetime < toDateTime(%d)", p.MetricPayload.EndTimestamp/1000)}...)
+			"s.project_id = @projectId",
+			"s.datetime >= toDateTime(@startTimestamp/1000)",
+			"s.datetime < toDateTime(@endTimestamp/1000)"}...)
 		if len(sessionConditions) > 0 {
-			baseWhere = append(baseWhere, fmt.Sprintf("%s", strings.Join(sessionConditions, " AND ")))
+			baseWhere = append(baseWhere, strings.Join(sessionConditions, " AND "))
 		}
 	}
 
@@ -216,23 +256,50 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if p.MetricFormat == MetricFormatUserCount {
 		groupColumn = "GROUP BY s.user_id"
 	}
+	if numBreakdowns > 0 {
+		groupColumn = "GROUP BY ALL"
+	}
+
 	subQuery := fmt.Sprintf(`
         SELECT %s
         FROM %s
         WHERE %s
         %s`,
-		strings.Join(tColumns, ", "),
+		strings.Join(innerParts, ", "),
 		mainTables,
 		strings.Join(baseWhere, " AND "),
 		groupColumn)
 
+	stageColumns := make([]string, len(stages))
+	for i := range stages {
+		stageColumns[i] = fmt.Sprintf("coalesce(SUM(S%d), 0) AS stage%d", i+1, i+1)
+	}
+
+	var outerParts []string
+	if numBreakdowns > 0 {
+		outerParts = append(outerParts, GetFunnelBreakdownOuterColumns(numBreakdowns)...)
+	}
+	outerParts = append(outerParts, stageColumns...)
+
+	outerGroupBy := ""
+	if numBreakdowns > 0 {
+		outerGroupBy = "\nGROUP BY ALL"
+	}
+
 	q := fmt.Sprintf(`
         SELECT %s
-        FROM (%s) AS raw`,
-		strings.Join(stageColumns, ", "),
-		subQuery)
+        FROM (%s) AS raw%s`,
+		strings.Join(outerParts, ", "),
+		subQuery,
+		outerGroupBy)
 
-	return q, nil
+	params := map[string]any{
+		"startTimestamp": p.MetricPayload.StartTimestamp,
+		"endTimestamp":   p.MetricPayload.EndTimestamp,
+		"projectId":      p.ProjectId,
+	}
+
+	return q, params, nil
 }
 
 func buildTColumns(stages []string, eventConditions []string, metricFormat string) []string {

@@ -26,6 +26,14 @@ import {
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
+import {
+  buildLevelTree,
+  collectTimestamps,
+  computeSelectionFromTopN,
+  getDepth,
+  remapTimestamps,
+  type NestedData,
+} from 'App/utils/breakdownTree';
 import { hasSampling } from 'App/utils/split-utils';
 import BarChart from 'Components/Charts/BarChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
@@ -35,12 +43,13 @@ import SankeyChart from 'Components/Charts/SankeyChart';
 import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
 import WebVitalsChart from 'Components/Charts/WebVitals';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
+import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
 import { Icon, Loader } from 'UI';
 
 import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
-import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
+import BreakdownDatatable from '../WidgetDatatable/BreakdownDatatable';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import LongLoader from './LongLoader';
 
@@ -98,17 +107,18 @@ function WidgetChart(props: Props) {
     }
   }, [enabledRows]);
 
+  const chartData = data?.chart;
   useEffect(() => {
-    if (!data.chart) return;
-    const series = data.chart[0]
-      ? Object.keys(data.chart[0]).filter(
+    if (!chartData) return;
+    const series = chartData[0]
+      ? Object.keys(chartData[0]).filter(
           (key) => key !== 'time' && key !== 'timestamp',
         )
       : [];
     if (series.length) {
       setEnabledRows(series);
     }
-  }, [data.chart]);
+  }, [chartData]);
 
   const onChartClick = (event: any) => {
     metricStore.setDrillDown(true);
@@ -132,10 +142,42 @@ function WidgetChart(props: Props) {
           params.density,
         );
 
-        drillDownFilter.merge({
+        // Parse breakdown filters from the clicked series name
+        const breakdownFilters: any[] = [];
+        const breakdowns = _metric.breakdowns;
+        const seriesName: string | undefined = event.seriesName;
+        if (seriesName && breakdowns && breakdowns.length > 0) {
+          const baseName = seriesName.startsWith('Previous ')
+            ? seriesName.slice(9)
+            : seriesName;
+          const seriesNames: string[] = _metric.series.map((s: any) => s.name);
+          let breakdownPath = '';
+          for (const sName of seriesNames) {
+            if (baseName.startsWith(sName + ' / ')) {
+              breakdownPath = baseName.slice(sName.length + 3);
+              break;
+            }
+          }
+          if (breakdownPath) {
+            const levels = breakdownPath.split(' / ');
+            for (let i = 0; i < levels.length && i < breakdowns.length; i++) {
+              const filterItem = filterStore.findEvent({ name: breakdowns[i] });
+              if (filterItem) {
+                filterItem.value = [levels[i]];
+                breakdownFilters.push(filterItem);
+              }
+            }
+          }
+        }
+
+        const mergeData: Record<string, any> = {
           startTimestamp: periodTimestamps.startTimestamp,
           endTimestamp: periodTimestamps.endTimestamp,
-        });
+        };
+        if (breakdownFilters.length > 0) {
+          mergeData.filters = breakdownFilters;
+        }
+        drillDownFilter.merge(mergeData);
       }
     }
   };
@@ -269,6 +311,7 @@ function WidgetChart(props: Props) {
     depsString,
     dashboardStore.selectedDensity,
     _metric.metricOf,
+    _metric.breakdowns,
   ]);
   useEffect(() => {
     setCompData(null);
@@ -290,6 +333,7 @@ function WidgetChart(props: Props) {
     _metric.rows,
     _metric.stepsBefore,
     _metric.stepsAfter,
+    _metric.breakdowns,
     inView,
   ]);
   useEffect(loadPage, [_metric.page]);
@@ -371,13 +415,61 @@ function WidgetChart(props: Props) {
         eventCount: t('Number of Events'),
         userCount: t('Number of Users'),
       };
+      const topN = metricStore.breakdownTopN;
       const chartData = { ...data };
       chartData.namesMap = Array.isArray(chartData.namesMap)
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : chartData.namesMap;
+
+      // Filter chart lines by breakdown selection (or fall back to topN)
+      const breakdownSel = metricStore.breakdownSelection;
+      if (
+        Object.keys(breakdownSel).length > 0 &&
+        Array.isArray(chartData.namesMap)
+      ) {
+        const seriesNames: string[] = _metric.series.map((s: any) => s.name);
+        chartData.namesMap = chartData.namesMap.map((n: string | null) => {
+          if (n == null) return null;
+          const isPrevious = n.startsWith('Previous ');
+          const baseName = isPrevious ? n.slice(9) : n;
+          let breakdownPath = baseName;
+          for (const sName of seriesNames) {
+            if (baseName === sName) {
+              breakdownPath = '';
+              break;
+            }
+            if (baseName.startsWith(sName + ' / ')) {
+              breakdownPath = baseName.slice(sName.length + 3);
+              break;
+            }
+          }
+          if (!breakdownPath) return n;
+          const levels = breakdownPath.split(' / ');
+          for (let i = 0; i < levels.length; i++) {
+            const parentPath = levels.slice(0, i).join(' / ');
+            const sel = breakdownSel[parentPath];
+            if (sel !== undefined && sel !== null && !sel.includes(levels[i])) {
+              return null;
+            }
+          }
+          return n;
+        });
+      } else if (topN > 0 && Array.isArray(chartData.namesMap)) {
+        // Fallback to topN if selection not yet initialised
+        let kept = 0;
+        chartData.namesMap = chartData.namesMap.map((n: string | null) => {
+          if (n == null) return null;
+          kept++;
+          return kept <= topN ? n : null;
+        });
+      }
+
       const compDataCopy = { ...compData };
       compDataCopy.namesMap = Array.isArray(compDataCopy.namesMap)
-        ? compDataCopy.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
+        ? compDataCopy.namesMap.map((n) => {
+            const baseName = n?.replace(/^Previous\s+/, '');
+            return chartData.namesMap?.includes(baseName) ? n : null;
+          })
         : compDataCopy.namesMap;
 
       if (viewType === 'lineChart') {
@@ -539,11 +631,20 @@ function WidgetChart(props: Props) {
         );
       }
       if (viewType === TABLE) {
+        if (data.hasBreakdown) {
+          return (
+            <SessionsByWithBreakdown
+              metric={_metric}
+              data={data}
+              onClick={onChartClick}
+              isTemplate={isTemplate}
+            />
+          );
+        }
         return (
           <SessionsBy
             metric={_metric}
             data={data}
-            height={height}
             onClick={onChartClick}
             isTemplate={isTemplate}
           />
@@ -654,14 +755,82 @@ function WidgetChart(props: Props) {
       );
     }
     console.log('Unknown metric type', metricType);
-    return <div>{t('Unknown metric type')}</div>;
-  }, [data, compData, enabledRows, _metric, data]);
+    return (
+      <div>
+        {t('Unknown metric type')} {metricType}
+      </div>
+    );
+  }, [
+    data,
+    compData,
+    enabledRows,
+    _metric,
+    metricStore.breakdownTopN,
+    metricStore.breakdownSelection,
+  ]);
 
   const showTable =
     _metric.metricType === TIMESERIES &&
     (props.isPreview || _metric.viewType === TABLE);
-  const tableMode =
-    _metric.viewType === 'table' && _metric.metricType === TIMESERIES;
+
+  const mergedBreakdownData = React.useMemo(() => {
+    if (!data?.breakdownData) return null;
+    if (!compData?.breakdownData) return data.breakdownData;
+
+    const curTs = new Set<string>();
+    Object.values(data.breakdownData).forEach((d) =>
+      collectTimestamps(d, curTs),
+    );
+    const compTs = new Set<string>();
+    Object.values(compData.breakdownData).forEach((d) =>
+      collectTimestamps(d, compTs),
+    );
+
+    const curArr = Array.from(curTs).sort((a, b) => Number(a) - Number(b));
+    const compArr = Array.from(compTs).sort((a, b) => Number(a) - Number(b));
+    const tsMap: Record<string, string> = {};
+    compArr.forEach((ts, i) => {
+      if (curArr[i]) tsMap[ts] = curArr[i];
+    });
+
+    const remapped = Object.fromEntries(
+      Object.entries(compData.breakdownData).map(([k, v]) => [
+        `Previous ${k}`,
+        remapTimestamps(v, tsMap),
+      ]),
+    );
+    return { ...data.breakdownData, ...remapped };
+  }, [data?.breakdownData, compData?.breakdownData]);
+
+  const breakdownInitialized = React.useRef(false);
+
+  // Reset selection when breakdown configuration changes
+  React.useEffect(() => {
+    breakdownInitialized.current = false;
+    metricStore.clearBreakdownSelection();
+  }, [_metric.breakdowns]);
+
+  // Initialise breakdown selection when data first loads
+  React.useEffect(() => {
+    if (mergedBreakdownData && !breakdownInitialized.current) {
+      const depth = Math.max(
+        0,
+        ...Object.values(mergedBreakdownData).map((d) =>
+          getDepth(d as NestedData),
+        ),
+      );
+      if (depth > 0) {
+        breakdownInitialized.current = true;
+        const tree = buildLevelTree(mergedBreakdownData);
+        const selection = computeSelectionFromTopN(
+          tree,
+          metricStore.breakdownLevelTopN,
+          depth,
+        );
+        metricStore.setBreakdownSelection(selection);
+      }
+    }
+  }, [mergedBreakdownData, metricStore.breakdownLevelTopN]);
 
   return (
     <div ref={ref}>
@@ -674,15 +843,14 @@ function WidgetChart(props: Props) {
       ) : (
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
-          {showTable ? (
-            <WidgetDatatable
-              compData={compData}
+          {showTable &&
+          mergedBreakdownData &&
+          Object.keys(mergedBreakdownData).length > 0 ? (
+            <BreakdownDatatable
+              data={mergedBreakdownData}
+              breakdownLabels={_metric.breakdowns}
               inBuilder={props.isPreview}
               defaultOpen
-              data={data}
-              tableMode={tableMode}
-              enabledRows={enabledRows}
-              setEnabledRows={setEnabledRows}
               metric={_metric}
             />
           ) : null}

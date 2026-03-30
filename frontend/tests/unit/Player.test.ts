@@ -107,11 +107,7 @@ describe('Player state toggles', () => {
   });
 
   it('auto plays on init when autoplay true', () => {
-    const playSpy = jest
-      .spyOn(Player.prototype, 'play')
-      .mockImplementation(() => {});
-    createPlayer({ autoplay: true });
-    expect(playSpy).toHaveBeenCalled();
-    playSpy.mockRestore();
+    const { state } = createPlayer({ autoplay: true });
+    expect(state.get().playing).toBe(true);
   });
 });

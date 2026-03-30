@@ -48,15 +48,13 @@ class TrackingFrameLayout(context: Context) : FrameLayout(context) {
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
-    if (viewName != null && screenName != null) {
-      Analytics.addObservedView(this, screenName!!, viewName!!)
-    }
+    val sn = screenName ?: return
+    val vn = viewName ?: return
+    Analytics.addObservedView(this, sn, vn)
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
-//    if (viewName != null && screenName != null) {
-//      Analytics.removeObservedView(this)
-//    }
+    Analytics.cleanupDeadReferences()
   }
 }

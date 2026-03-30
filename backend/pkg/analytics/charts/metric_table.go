@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"openreplay/backend/pkg/logger"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -85,11 +86,22 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 		return nil, fmt.Errorf("invalid MetricOf value: %s", p.MetricOf)
 	}
 
+	if err := ValidateBreakdowns(p.Breakdowns); err != nil {
+		return nil, err
+	}
+
 	if p.MetricOf == "screenResolution" {
+		if len(p.Breakdowns) > 0 {
+			return nil, fmt.Errorf("breakdowns are not supported for screenResolution metric")
+		}
 		return t.executeForTableOfResolutions(ctx, p, conn)
 	}
 
-	query, err := t.buildQuery(p)
+	if len(p.Breakdowns) > 0 {
+		return t.executeWithBreakdowns(ctx, p, conn)
+	}
+
+	query, params, err := t.buildQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building query: %w", err)
 	}
@@ -97,8 +109,9 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 	_start := time.Now()
 	t.Logger.Debug(ctx, "Executing query: %s", query)
 
+	chParams := convertParams(params)
 	var rawValues []TableValue = make([]TableValue, 0)
-	if err = conn.Select(ctx, &rawValues, query); err != nil {
+	if err = conn.Select(ctx, &rawValues, query, chParams...); err != nil {
 		t.Logger.Error(ctx, "Error executing query: %s\nQuery: %s", err, query)
 		return nil, err
 	}
@@ -113,7 +126,8 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 		valuesCount = rawValues[0].NumberOfMetrics
 	}
 
-	return &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}, nil
+	seriesKey := SeriesKey(p.Name, p.MetricOf)
+	return WrapInSeries(seriesKey, &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}), nil
 }
 func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	queries, params, err := t.buildTableOfResolutionsQuery(p)
@@ -148,7 +162,8 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p 
 		overallTotal = rawValues[i].FullCount
 		i++
 	}
-	return &TableResponse{Total: overallTotal, Count: overallCount, Values: rawValues}, nil
+	seriesKey := SeriesKey(p.Name, p.MetricOf)
+	return WrapInSeries(seriesKey, &TableResponse{Total: overallTotal, Count: overallCount, Values: rawValues}), nil
 }
 
 var extraConditions map[string]model.Filter = map[string]model.Filter{
@@ -157,25 +172,25 @@ var extraConditions map[string]model.Filter = map[string]model.Filter{
 }
 
 func uniqueSliceOfStrings(slice []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
+	seen := make(map[string]struct{}, len(slice))
+	list := make([]string, 0, len(slice))
 	for _, entry := range slice {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
+		if _, exists := seen[entry]; !exists {
+			seen[entry] = struct{}{}
 			list = append(list, entry)
 		}
 	}
 	return list
 }
 
-func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
+func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, error) {
 	if r == nil {
-		return "", errors.New("payload is nil")
+		return "", nil, errors.New("payload is nil")
 	}
 
 	s := r.Series[0]
 	if r.MetricOf == "screenResolution" {
-		return "", fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
+		return "", nil, fmt.Errorf("Should call buildTableOfResolutionsQuery instead of buildQuery for screenResolution metric")
 	}
 	var eventsTable = getMainEventsTable(r.StartTimestamp)
 	var sessionsTable = getMainSessionsTable(r.StartTimestamp)
@@ -194,18 +209,17 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
 		EventsOrder:    string(s.Filter.EventsOrder),
 	})
 
-	// Check if we should skip events table
 	skipEventsTable := slices.Contains([]string{
 		string(MetricOfTableUserId), string(MetricOfTableCountry),
 		string(MetricOfTableDevice), string(MetricOfTableBrowser),
 		string(MetricOfTableReferrer),
-	}, r.MetricOf) && len(eventConditions) == 0
+	}, r.MetricOf) && len(eventConditions) == 0 && !HasEventOnlyBreakdowns(r.Breakdowns)
 
 	eventsConditions := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, []string{})
 	sessionConditions := t.buildSessionConditions(r, r.MetricFormat, durConds)
 	eventsHaving, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	eventsConditions = append(eventsConditions, whereClause...)
 	if len(nameConditions) > 0 {
@@ -231,10 +245,21 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, error) {
 	// Build the final query with proper string formatting
 	var query string
 
+	numBreakdowns := len(r.Breakdowns)
+
 	var sessionsSelect []string = []string{"session_id", "user_id", "events_count"}
+	if numBreakdowns > 0 {
+		sessionsSelect = append(sessionsSelect, GetTableBreakdownProjection(r.Breakdowns)...)
+	}
+
+	eventOnlyBdProj := GetEventOnlyBreakdownProjection(r.Breakdowns, "main")
+	hasEventOnlyBd := len(eventOnlyBdProj) > 0
 
 	var eventsSelect []string = []string{
 		"main.session_id",
+	}
+	if hasEventOnlyBd {
+		eventsSelect = append(eventsSelect, eventOnlyBdProj...)
 	}
 
 	var fromExtra string
@@ -279,7 +304,7 @@ WHERE %s) AS extra`,
 	}
 
 	var fromEvents string
-	if !skipEventsTable || hasExtraCondition {
+	if !skipEventsTable || hasExtraCondition || hasEventOnlyBd {
 		var eventsGroupping string = "GROUP BY ALL"
 		if r.MetricFormat == MetricFormatEventCount {
 			eventsGroupping = ""
@@ -301,7 +326,7 @@ WHERE %s) AS extra`,
 	}
 
 	var fromSessions string
-	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount {
+	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount || numBreakdowns > 0 {
 		var limitBy []string = []string{"session_id"}
 		if !isFromEvents {
 			limitBy = append(limitBy, "metric_value")
@@ -345,8 +370,27 @@ WHERE %s) AS extra`,
 		countFunction = "sum"
 	}
 
-	// Construct the complete query
-	query = fmt.Sprintf(`
+	if numBreakdowns > 0 {
+		breakdownOuterCols := strings.Join(GetFunnelBreakdownOuterColumns(numBreakdowns), ", ")
+		query = fmt.Sprintf(`
+SELECT metric_value AS metric_name,
+       %s,
+       %s(%s) AS metric_count
+FROM %s %s %s
+GROUP BY ALL
+ORDER BY metric_count DESC
+LIMIT %d OFFSET %d;`,
+			breakdownOuterCols,
+			countFunction,
+			distinctColumn,
+			fromSessions,
+			fromEvents,
+			fromExtra,
+			pagination.Limit,
+			pagination.Offset,
+		)
+	} else {
+		query = fmt.Sprintf(`
 SELECT metric_value AS metric_name,
        %s(%s) AS metric_count,
        count(DISTINCT metric_value) OVER () AS number_of_metrics,
@@ -355,18 +399,24 @@ FROM %s %s %s
 GROUP BY metric_value
 ORDER BY metric_count DESC
 LIMIT %d OFFSET %d;`,
-		countFunction,
-		distinctColumn,
-		fromSessions,
-		fromEvents,
-		fromExtra,
-		pagination.Limit,
-		pagination.Offset,
-	)
+			countFunction,
+			distinctColumn,
+			fromSessions,
+			fromEvents,
+			fromExtra,
+			pagination.Limit,
+			pagination.Offset,
+		)
+	}
 
 	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
 
-	return query, nil
+	params := map[string]any{
+		"projectId":      r.ProjectId,
+		"startTimestamp": r.StartTimestamp,
+		"endTimestamp":   r.EndTimestamp,
+	}
+	return query, params, nil
 }
 
 func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, map[string]any, error) {
@@ -530,7 +580,7 @@ func (t *TableQueryBuilder) buildPrewhereConditions(r *Payload, eventsOrder mode
 	}
 
 	// Add core conditions
-	prewhereParts = append(prewhereParts, t.buildTimeRangeConditions("main", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
+	prewhereParts = append(prewhereParts, t.buildTimeRangeConditions("main")...)
 
 	// Add additional conditions
 	if len(otherConds) > 0 {
@@ -575,7 +625,7 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 	var sessionConditions []string = make([]string, 0)
 
 	// Add core session conditions
-	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s", r.ProjectId, r.StartTimestamp, r.EndTimestamp)...)
+	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s")...)
 	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
 
 	// Add duration conditions
@@ -612,9 +662,9 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 	return sessionConditions
 }
 
-func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectId int, startTimestamp, endTimestamp uint64) []string {
+func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string) []string {
 	conditions := []string{
-		fmt.Sprintf("%s.project_id = %d", tableAlias, projectId),
+		fmt.Sprintf("%s.project_id = @projectId", tableAlias),
 	}
 
 	timestampColumn := "created_at"
@@ -623,8 +673,8 @@ func (t *TableQueryBuilder) buildTimeRangeConditions(tableAlias string, projectI
 	}
 
 	conditions = append(conditions,
-		fmt.Sprintf("%s.%s >= toDateTime(%d/1000)", tableAlias, timestampColumn, startTimestamp),
-		fmt.Sprintf("%s.%s <= toDateTime(%d/1000)", tableAlias, timestampColumn, endTimestamp),
+		fmt.Sprintf("%s.%s >= toDateTime(@startTimestamp/1000)", tableAlias, timestampColumn),
+		fmt.Sprintf("%s.%s <= toDateTime(@endTimestamp/1000)", tableAlias, timestampColumn),
 	)
 
 	return conditions
@@ -634,5 +684,111 @@ func (t *TableQueryBuilder) calculatePagination(page, limit int) model.Paginatio
 	return model.PaginationParams{
 		Limit:  limit,
 		Offset: (page - 1) * limit,
+	}
+}
+
+func (t *TableQueryBuilder) executeWithBreakdowns(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
+	numBreakdowns := len(p.Breakdowns)
+
+	query, params, err := t.buildQuery(p)
+	if err != nil {
+		return nil, fmt.Errorf("error building query: %w", err)
+	}
+
+	_start := time.Now()
+	t.Logger.Debug(ctx, "Executing query: %s", query)
+
+	chParams := convertParams(params)
+	rows, err := conn.Query(ctx, query, chParams...)
+	if err != nil {
+		t.Logger.Error(ctx, "Error executing query: %s\nQuery: %s", err, query)
+		return nil, err
+	}
+	defer rows.Close()
+
+	if time.Since(_start) > 2*time.Second {
+		t.Logger.Warn(ctx, "Query execution took longer than 2s: %s", query)
+	}
+
+	tree := NewBreakdownTree(make(map[string]uint64))
+
+	var metricName string
+	bdVals := make([]string, numBreakdowns)
+	var metricCount uint64
+
+	scanArgs := BuildScanArgs(
+		[]interface{}{&metricName},
+		bdVals,
+		[]interface{}{&metricCount},
+	)
+
+	newZero := func() map[string]uint64 { return make(map[string]uint64) }
+	accumulate := func(v *map[string]uint64) { (*v)[metricName] += metricCount }
+
+	for rows.Next() {
+		if err := rows.Scan(scanArgs...); err != nil {
+			return nil, err
+		}
+		tree.Insert(bdVals, numBreakdowns, newZero, accumulate)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	seriesKey := SeriesKey(p.Name, p.MetricOf)
+	limit := p.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+
+	if len(tree.Value) == 0 {
+		return WrapInSeries(seriesKey, map[string]interface{}{
+			"$overall": &TableResponse{Total: 0, Count: 0, Values: []TableValue{}},
+		}), nil
+	}
+
+	render := func(counts map[string]uint64) interface{} {
+		return countsToTableResponse(counts, limit)
+	}
+	return WrapInSeries(seriesKey, tree.ToMap(render)), nil
+}
+
+func countsToTableResponse(counts map[string]uint64, limit int) *TableResponse {
+	type kv struct {
+		name  string
+		count uint64
+	}
+	pairs := make([]kv, 0, len(counts))
+	var sumCount uint64
+	for name, count := range counts {
+		pairs = append(pairs, kv{name, count})
+		sumCount += count
+	}
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i].count != pairs[j].count {
+			return pairs[i].count > pairs[j].count
+		}
+		return pairs[i].name < pairs[j].name
+	})
+
+	total := uint64(len(pairs))
+
+	if limit > 0 && len(pairs) > limit {
+		pairs = pairs[:limit]
+	}
+
+	values := make([]TableValue, len(pairs))
+	for i, p := range pairs {
+		values[i] = TableValue{
+			MetricName:  p.name,
+			MetricCount: p.count,
+		}
+	}
+
+	return &TableResponse{
+		Total:  total,
+		Count:  sumCount,
+		Values: values,
 	}
 }

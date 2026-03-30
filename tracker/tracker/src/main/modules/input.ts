@@ -1,5 +1,12 @@
 import type App from '../app/index.js'
-import { normSpaces, IN_BROWSER, getLabelAttribute, now } from '../utils.js'
+import {
+  normSpaces,
+  IN_BROWSER,
+  getLabelAttribute,
+  getCustomAttributeLabel,
+  getClassSelector,
+  now,
+} from '../utils.js'
 import { hasTag } from '../app/guards.js'
 import { InputChange, SetInputValue, SetInputChecked } from '../app/messages.gen.js'
 
@@ -67,19 +74,18 @@ const labelElementFor: (element: TextFieldElement) => HTMLLabelElement | undefin
         }
       }
 
-export function getInputLabel(node: TextFieldElement): string {
-  let label = getLabelAttribute(node)
-  if (label === null) {
-    const labelElement = labelElementFor(node)
-    label =
-      (labelElement && labelElement.innerText) ||
-      node.placeholder ||
-      node.name ||
-      node.id ||
-      node.className ||
-      node.type
-  }
-  return normSpaces(label).slice(0, 100)
+export function getInputLabel(node: TextFieldElement, customAttributes?: string[]): string {
+  const openreplayLabel = getLabelAttribute(node)
+  if (openreplayLabel !== null) return normSpaces(openreplayLabel).slice(0, 100)
+  const customAttributeLabel = getCustomAttributeLabel(node, customAttributes)
+  if (customAttributeLabel) return customAttributeLabel
+  if (node.id) return `#${node.id}`
+  const classLabel = getClassSelector(node)
+  if (classLabel) return classLabel
+  const labelElement = labelElementFor(node)
+  const label =
+    node.name || node.placeholder || (labelElement && labelElement.innerText) || node.type
+  return normSpaces(label || '').slice(0, 100)
 }
 
 export const InputMode = {
@@ -112,6 +118,7 @@ export interface Options {
    * will override other settings.
    * */
   defaultInputMode: InputModeT
+  customAttributes?: string[]
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -205,7 +212,7 @@ export default function (app: App, opts: Partial<Options>): void {
     inputTime: number,
   ) {
     const { value, mask } = getInputValue(id, node)
-    let label = getInputLabel(node)
+    let label = getInputLabel(node, options.customAttributes)
     if (app.sanitizer.privateMode) {
       label = label.replaceAll(/./g, '*')
     }
