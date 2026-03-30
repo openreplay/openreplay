@@ -32,15 +32,21 @@ function QueueControls(props: Props) {
     },
   } = props;
 
-  const { currentPage, nextPage } = searchStore;
+  const { currentPage } = searchStore;
 
   useEffect(() => {
     setAutoplayValues();
     const totalPages = Math.ceil(total / PER_PAGE);
     const index = sessionIds.indexOf(sessionId);
 
+    // sync the page number and refetch list when user navigates into next-page sessions
+    const sessionPage = Math.floor(index / PER_PAGE) + 1;
+    if (sessionPage > 1 && currentPage < sessionPage) {
+      searchStore.updateCurrentPage(currentPage + sessionPage - 1);
+    }
+
     if (currentPage !== totalPages && index === sessionIds.length - 1) {
-      sessionStore.fetchAutoplayList(nextPage()).then(setAutoplayValues);
+      sessionStore.fetchAutoplayList(currentPage + 1).then(setAutoplayValues);
     }
   }, []);
 

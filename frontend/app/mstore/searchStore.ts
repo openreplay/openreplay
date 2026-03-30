@@ -253,6 +253,10 @@ class SearchStore {
     void this.fetchSessions(force);
   }
 
+  setPage(page: number) {
+    this.currentPage = page;
+  }
+
   nextPage = () => {
     this.currentPage += 1;
     return this.currentPage;
