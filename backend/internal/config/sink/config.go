@@ -4,6 +4,7 @@ import (
 	"openreplay/backend/internal/config/assets"
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"openreplay/backend/internal/config/redis"
 	"openreplay/backend/pkg/logger"
 	"time"
 )
@@ -11,6 +12,8 @@ import (
 type Config struct {
 	common.Config
 	assets.Cache
+	common.Postgres
+	redis.Redis
 	FsDir                string        `env:"FS_DIR,required"`
 	FsUlimit             uint16        `env:"FS_ULIMIT,required"`
 	FileBuffer           int           `env:"FILE_BUFFER,default=16384"`

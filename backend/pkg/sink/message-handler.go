@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"os"
-	"time"
-
 	config "openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/internal/sink/sessionwriter"
@@ -15,28 +12,29 @@ import (
 	"openreplay/backend/pkg/metrics/sink"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/storage"
+	"os"
 )
 
 type handlerImpl struct {
 	cfg                 *config.Config
 	log                 logger.Logger
-	writer              *sessionwriter.SessionWriter
+	writer              *sessionwriter.MobWriter
 	producer            types.Producer
 	assetMessageHandler *assetscache.AssetsCache
 	sinkMetrics         sink.Sink
 	counter             *storage.LogCounter
-	// Session related vars (TODO: should be reconsidered)
-	sessionID    uint64
-	messageIndex []byte
-	domBuffer    *bytes.Buffer
-	devBuffer    *bytes.Buffer
+	batchTs             int64
+	sessionID           uint64
+	messageIndex        []byte
+	domBuffer           *bytes.Buffer
+	devBuffer           *bytes.Buffer
 }
 
 type Handler interface {
 	Handle(msg messages.Message)
 }
 
-func New(cfg *config.Config, log logger.Logger, writer *sessionwriter.SessionWriter, producer types.Producer, assetMessageHandler *assetscache.AssetsCache, metrics sink.Sink, counter *storage.LogCounter) Handler {
+func New(cfg *config.Config, log logger.Logger, writer *sessionwriter.MobWriter, producer types.Producer, assetMessageHandler *assetscache.AssetsCache, metrics sink.Sink, counter *storage.LogCounter) Handler {
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
 		log.Fatal(context.Background(), "%v doesn't exist. %v", cfg.FsDir, err)
 	}
@@ -57,23 +55,21 @@ func New(cfg *config.Config, log logger.Logger, writer *sessionwriter.SessionWri
 func (h *handlerImpl) Handle(msg messages.Message) {
 	// Check batchEnd signal (nil message)
 	if msg == nil {
-		// Skip empty buffers
 		if h.domBuffer.Len() <= 0 && h.devBuffer.Len() <= 0 {
 			return
 		}
 		h.sinkMetrics.RecordWrittenBytes(float64(h.domBuffer.Len()), "dom")
 		h.sinkMetrics.RecordWrittenBytes(float64(h.devBuffer.Len()), "devtools")
 
-		// Write buffered batches to the session
-		if err := h.writer.Write(h.sessionID, h.domBuffer.Bytes(), h.devBuffer.Bytes()); err != nil {
-			sessCtx := context.WithValue(context.Background(), "sessionID", h.sessionID)
-			h.log.Error(sessCtx, "writer error: %s", err)
-		}
+		batchInfo := messages.NewBatchInfo(h.sessionID, "", 0, 0, h.batchTs)
+		h.writer.HandleBatch(h.domBuffer.Bytes(), batchInfo)
+		h.writer.HandleBatch(h.devBuffer.Bytes(), batchInfo)
 
 		// Prepare buffer for the next batch
 		h.domBuffer.Reset()
 		h.devBuffer.Reset()
 		h.sessionID = 0
+		h.batchTs = 0
 		return
 	}
 
@@ -113,13 +109,8 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 		return
 	}
 
-	// If message timestamp is empty, use at least ts of session start
-	ts := msg.Meta().Timestamp
-	if ts == 0 {
-		h.log.Warn(sessCtx, "zero ts in msgType: %d", msg.TypeID())
-	} else {
-		// Log ts of last processed message
-		h.counter.Update(msg.SessionID(), time.UnixMilli(int64(ts)))
+	if h.batchTs == 0 {
+		h.batchTs = int64(msg.Meta().Timestamp)
 	}
 
 	// Try to encode message to avoid null data inserts

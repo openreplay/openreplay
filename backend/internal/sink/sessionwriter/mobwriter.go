@@ -3,6 +3,7 @@ package sessionwriter
 import (
 	"context"
 	"fmt"
+	"openreplay/backend/pkg/sessions"
 	"strconv"
 	"sync"
 	"time"
@@ -19,7 +20,7 @@ const (
 
 type mobSession struct {
 	paths       [3]string // [domS, domE, devtools]
-	startTime   time.Time
+	startTime   int64
 	domESize    int64
 	domEStopped bool
 }
@@ -31,15 +32,17 @@ type MobWriter struct {
 	maxFileSize   int64
 	pool          *FilePool
 	sessions      sync.Map
+	sessManager   sessions.Sessions
 }
 
-func NewMobWriter(log logger.Logger, filePool *FilePool, workingDir string, fileSplitTime time.Duration, maxFileSize int64) *MobWriter {
+func NewMobWriter(log logger.Logger, sessions sessions.Sessions, filePool *FilePool, workingDir string, fileSplitTime time.Duration, maxFileSize int64) *MobWriter {
 	return &MobWriter{
 		log:           log,
 		workingDir:    workingDir + "/",
 		fileSplitTime: fileSplitTime,
 		maxFileSize:   maxFileSize,
 		pool:          filePool,
+		sessManager:   sessions,
 	}
 }
 
@@ -48,9 +51,16 @@ func (w *MobWriter) getOrCreateSession(sid uint64) *mobSession {
 		return sessObj.(*mobSession)
 	}
 	base := w.workingDir + strconv.FormatUint(sid, 10)
+	sessInfo, err := w.sessManager.Get(sid)
+	if err != nil {
+		w.log.Error(context.Background(), "can't get sessionInfo: %s", err)
+	}
 	sess := &mobSession{
 		paths:     [3]string{base + "s", base + "e", base + "devtools"},
-		startTime: time.Now(),
+		startTime: time.Now().UnixMilli(),
+	}
+	if sessInfo != nil {
+		sess.startTime = int64(sessInfo.Timestamp)
 	}
 	actual, _ := w.sessions.LoadOrStore(sid, sess)
 	return actual.(*mobSession)
@@ -58,18 +68,11 @@ func (w *MobWriter) getOrCreateSession(sid uint64) *mobSession {
 
 func (w *MobWriter) HandleBatch(data []byte, info *messages.BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", info.SessionID())
-	version := info.Version()
-
-	// Only handle player (2), assets (3), devtools (4); ignore old batches (1) and analytics (5+)
-	if version < uint64(messages.PlayerBatch) || version > uint64(messages.DevtoolsBatch) {
-		return
-	}
-
 	sess := w.getOrCreateSession(info.SessionID())
 
-	switch messages.BatchType(version) {
-	case messages.PlayerBatch, messages.AssetsBatch:
-		if time.Since(sess.startTime) <= w.fileSplitTime {
+	switch messages.BatchType(info.Version()) {
+	case messages.FullBatch, messages.PlayerBatch, messages.AssetsBatch:
+		if info.Timestamp()-sess.startTime <= w.fileSplitTime.Milliseconds() {
 			if err := w.pool.Write(sess.paths[idxDomS], data); err != nil {
 				w.log.Error(ctx, "domS write error: %s", err)
 			}
@@ -88,11 +91,13 @@ func (w *MobWriter) HandleBatch(data []byte, info *messages.BatchInfo) {
 			}
 			sess.domESize += int64(len(data))
 		}
-
 	case messages.DevtoolsBatch:
 		if err := w.pool.Write(sess.paths[idxDevtools], data); err != nil {
 			w.log.Error(ctx, "devtools write error: %s", err)
 		}
+	default:
+		// TODO: change to Debug level
+		w.log.Warn(ctx, "unknown batch type: %s", messages.BatchType(info.Version()))
 	}
 }
 

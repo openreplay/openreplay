@@ -43,6 +43,9 @@ func (e *fileEntry) close() error {
 	return e.file.Close()
 }
 
+var headerV1 = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+var headerV2 = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe}
+
 type FilePool struct {
 	mu      sync.Mutex
 	log     logger.Logger
@@ -63,27 +66,41 @@ func NewFilePool(log logger.Logger, limit, bufSize int) *FilePool {
 }
 
 func (p *FilePool) Write(path string, data []byte) error {
+	return p.writeWithHeader(path, nil, data)
+}
+
+func (p *FilePool) writeWithHeader(path string, header, data []byte) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	entry, err := p.ensureOpen(path)
+	entry, isNew, err := p.ensureOpen(path)
 	if err != nil {
 		return err
 	}
 	p.lastUse[path] = time.Now().UnixNano()
+	if isNew && header != nil {
+		if err := entry.write(header); err != nil {
+			return err
+		}
+	}
 	return entry.write(data)
 }
 
-func (p *FilePool) ensureOpen(path string) (*fileEntry, error) {
+func (p *FilePool) ensureOpen(path string) (*fileEntry, bool, error) {
 	if entry, ok := p.entries[path]; ok {
-		return entry, nil
+		return entry, false, nil
 	}
 	if len(p.entries) >= p.limit {
 		p.evictOne()
 	}
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		return nil, err
+		return nil, false, err
+	}
+	info, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, false, err
 	}
 	entry := &fileEntry{
 		path:   path,
@@ -91,7 +108,7 @@ func (p *FilePool) ensureOpen(path string) (*fileEntry, error) {
 		buffer: bufio.NewWriterSize(f, p.bufSize),
 	}
 	p.entries[path] = entry
-	return entry, nil
+	return entry, info.Size() == 0, nil
 }
 
 func (p *FilePool) evictOne() {

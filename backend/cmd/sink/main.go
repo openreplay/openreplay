@@ -10,13 +10,18 @@ import (
 	config "openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/internal/sink/sessionwriter"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/sink"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/sessions"
 	handler "openreplay/backend/pkg/sink"
 	"openreplay/backend/pkg/storage"
 	"openreplay/backend/pkg/url/assets"
@@ -29,6 +34,7 @@ func main() {
 
 	h := health.New()
 
+	dbMetric := database.New("sink")
 	sinkMetrics := sink.New("sink")
 	metrics.New(log, sinkMetrics.List())
 
@@ -43,24 +49,44 @@ func main() {
 		log.Fatal(ctx, "can't init rewriter: %s", err)
 	}
 
+	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
+	if err != nil {
+		log.Fatal(ctx, "can't init postgres connection: %s", err)
+	}
+	defer pgConn.Close()
+	h.Register("postgres", func(ctx context.Context) error {
+		return pgConn.Ping(ctx)
+	})
+
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Warn(ctx, "can't init redis connection: %s", err)
+	}
+	defer redisClient.Close()
+	h.Register("redis", func(ctx context.Context) error {
+		return redisClient.Ping(ctx)
+	})
+
+	projManager := projects.New(log, pgConn, redisClient, dbMetric)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
+
 	filePool := sessionwriter.NewFilePool(log, int(cfg.FsUlimit), cfg.FileBuffer)
-	msgWriter := sessionwriter.NewWriter(log, filePool, cfg.FsDir)
-	batchWriter := sessionwriter.NewMobWriter(log, filePool, cfg.FsDir, cfg.FileSplitTime, cfg.MaxFileSize)
+	mobWriter := sessionwriter.NewMobWriter(log, sessManager, filePool, cfg.FsDir, cfg.FileSplitTime, cfg.MaxFileSize)
 
 	counter := storage.NewLogCounter()
 	assetMessageHandler := assetscache.New(log, &cfg.Cache, rewriter, producer, sinkMetrics)
-	msgHandler := handler.New(cfg, log, msgWriter, producer, assetMessageHandler, sinkMetrics, counter)
+	msgHandler := handler.New(cfg, log, mobWriter, producer, assetMessageHandler, sinkMetrics, counter)
 
 	wrappedHandle := func(msg messages.Message) {
 		msgHandler.Handle(msg)
 		if msg != nil && (msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd) {
-			batchWriter.Close(msg.SessionID())
+			mobWriter.Close(msg.SessionID())
 		}
 	}
 
 	batchIterator := messages.NewBatchIterator(
 		log,
-		batchWriter.HandleBatch,
+		mobWriter.HandleBatch,
 		messages.NewSinkMessageIterator(log, wrappedHandle, nil, false, sinkMetrics),
 	)
 
@@ -76,8 +102,7 @@ func main() {
 		cfg.MessageSizeLimit,
 		func(t types.RebalanceType, partitions []uint64) {
 			s := time.Now()
-			msgWriter.Sync()
-			batchWriter.Sync()
+			mobWriter.Sync()
 			log.Info(ctx, "manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		},
 		types.NoReadBackGap,
@@ -94,7 +119,6 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(10 * time.Second)
 	tickInfo := time.Tick(30 * time.Second)
 
 	for {
@@ -102,8 +126,7 @@ func main() {
 		case sig := <-sigchan:
 			log.Info(ctx, "Caught signal %v: terminating", sig)
 			// Sync and stop writers
-			msgWriter.Stop()
-			batchWriter.Stop()
+			mobWriter.Stop()
 			filePool.Stop()
 			// Commit and stop consumer
 			if err := consumer.Commit(); err != nil {
@@ -111,13 +134,13 @@ func main() {
 			}
 			consumer.Close()
 			os.Exit(0)
-		case <-tick:
+		case <-tickInfo:
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}
-		case <-tickInfo:
+			mobWriter.Sync()
 			log.Info(ctx, "%s", counter.Log())
-			log.Info(ctx, "writer: %s", msgWriter.Info())
+			log.Info(ctx, "writer: %s", mobWriter.Info())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
