@@ -21,11 +21,11 @@
   "dependencies": {},
   "peerDependencies": {
     "@openreplay/tracker": ">=3.6.0",
-    "axios": "0.x"
+    "axios": "<=0.30.3"
   },
   "devDependencies": {
     "@openreplay/tracker": "file:../tracker",
-    "axios": "^0.26.0",
+    "axios": "0.30.3",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^4.6.0-dev.20211126"
