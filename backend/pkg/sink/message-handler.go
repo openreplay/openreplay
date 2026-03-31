@@ -23,7 +23,7 @@ type handlerImpl struct {
 	assetMessageHandler *assetscache.AssetsCache
 	sinkMetrics         sink.Sink
 	counter             *storage.LogCounter
-	batchTs             int64
+	batchInfo           *messages.BatchInfo
 	sessionID           uint64
 	messageIndex        []byte
 	domBuffer           *bytes.Buffer
@@ -61,15 +61,14 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 		h.sinkMetrics.RecordWrittenBytes(float64(h.domBuffer.Len()), "dom")
 		h.sinkMetrics.RecordWrittenBytes(float64(h.devBuffer.Len()), "devtools")
 
-		batchInfo := messages.NewBatchInfo(h.sessionID, "", 0, 0, h.batchTs)
-		h.writer.HandleBatch(h.domBuffer.Bytes(), batchInfo)
-		h.writer.HandleBatch(h.devBuffer.Bytes(), batchInfo)
+		h.writer.HandleBatch(h.domBuffer.Bytes(), h.batchInfo)
+		h.writer.HandleBatch(h.devBuffer.Bytes(), h.batchInfo)
 
 		// Prepare buffer for the next batch
 		h.domBuffer.Reset()
 		h.devBuffer.Reset()
 		h.sessionID = 0
-		h.batchTs = 0
+		h.batchInfo = nil
 		return
 	}
 
@@ -109,8 +108,8 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 		return
 	}
 
-	if h.batchTs == 0 {
-		h.batchTs = int64(msg.Meta().Timestamp)
+	if h.batchInfo == nil {
+		h.batchInfo = msg.Meta().Batch()
 	}
 
 	// Try to encode message to avoid null data inserts
