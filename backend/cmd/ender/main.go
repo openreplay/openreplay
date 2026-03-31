@@ -11,7 +11,6 @@ import (
 
 	config "openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/ender"
-	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/health"
@@ -25,6 +24,7 @@ import (
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/storage"
 )
 
 func main() {
