@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"strconv"
 	"time"
 	"unicode"
 
@@ -59,12 +60,63 @@ func getString(event *event, name string) *string {
 	return &val
 }
 
+func toInt64(v any) (int64, bool) {
+	switch val := v.(type) {
+	case int:
+		return int64(val), true
+	case int8:
+		return int64(val), true
+	case int16:
+		return int64(val), true
+	case int32:
+		return int64(val), true
+	case int64:
+		return val, true
+	case uint:
+		return int64(val), true
+	case uint8:
+		return int64(val), true
+	case uint16:
+		return int64(val), true
+	case uint32:
+		return int64(val), true
+	case uint64:
+		return int64(val), true
+	case float32:
+		return int64(val), true
+	case float64:
+		return int64(val), true
+	case json.Number:
+		if i, err := val.Int64(); err == nil {
+			return i, true
+		}
+		if f, err := val.Float64(); err == nil {
+			return int64(f), true
+		}
+	case string:
+		if i, err := strconv.ParseInt(val, 10, 64); err == nil {
+			return i, true
+		}
+		if f, err := strconv.ParseFloat(val, 64); err == nil {
+			return int64(f), true
+		}
+	}
+	return 0, false
+}
+
 func getInt64(event *event, name string) *int64 {
-	if event == nil || event.Properties == nil || event.Properties[name] == nil {
+	if event == nil || event.Properties == nil {
 		return nil
 	}
-	val := event.Properties[name].(int64)
-	return &val
+	raw, ok := event.Properties[name]
+	if !ok || raw == nil {
+		return nil
+	}
+	result, ok := toInt64(raw)
+	if !ok {
+		return nil
+	}
+	return &result
 }
 
 func getDiffInt64(event *event, start, end string) *int64 {
