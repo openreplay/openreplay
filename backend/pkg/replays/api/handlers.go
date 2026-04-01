@@ -103,7 +103,12 @@ func (h *handlersImpl) getUnprocessedMob(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// TODO: check in assist
-	path, err := h.files.GetUnprocessedMob(sessID)
+	var path string
+	if r.URL.Query().Has("end") {
+		path, err = h.files.GetUnprocessedMobE(sessID)
+	} else {
+		path, err = h.files.GetUnprocessedMob(sessID)
+	}
 	if err != nil {
 		h.responser.ResponseWithJSON(h.log, r.Context(), w, notFoundResponse, startTime, r.URL.Path, bodySize)
 		return

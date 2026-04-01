@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 
 	config "openreplay/backend/internal/config/api"
-	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/storage"
 )
 
 type Files interface {
@@ -22,6 +22,7 @@ type Files interface {
 	GetCanvasUrls(sessID uint64) ([]string, []string, error)
 	GetMobileReplayUrls(sessID uint64) ([]string, []string, error)
 	GetUnprocessedMob(sessID uint64) (string, error)
+	GetUnprocessedMobE(sessID uint64) (string, error)
 	GetUnprocessedDevtools(sessID uint64) (string, error)
 }
 
@@ -148,7 +149,16 @@ func (f *filesImpl) GetMobileReplayUrls(sessID uint64) ([]string, []string, erro
 }
 
 func (f *filesImpl) GetUnprocessedMob(sessID uint64) (string, error) {
-	return GetRawMobByID(f.cfg.FSDir, fmt.Sprintf("%d", sessID))
+	sid := fmt.Sprintf("%d", sessID)
+	pathS, err := GetRawMobByID(f.cfg.FSDir, sid+"s")
+	if err != nil {
+		return GetRawMobByID(f.cfg.FSDir, sid)
+	}
+	return pathS, nil
+}
+
+func (f *filesImpl) GetUnprocessedMobE(sessID uint64) (string, error) {
+	return GetRawMobByID(f.cfg.FSDir, fmt.Sprintf("%de", sessID))
 }
 
 func (f *filesImpl) GetUnprocessedDevtools(sessID uint64) (string, error) {
