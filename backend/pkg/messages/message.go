@@ -56,6 +56,10 @@ func (b *BatchInfo) Version() uint64 {
 	return b.version
 }
 
+func (b *BatchInfo) SetType(t BatchType) {
+	b.version = uint64(t)
+}
+
 func (b *BatchInfo) Type() BatchType {
 	return BatchType(b.version)
 }

@@ -62,6 +62,7 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 		h.sinkMetrics.RecordWrittenBytes(float64(h.devBuffer.Len()), "devtools")
 
 		h.writer.HandleBatch(h.domBuffer.Bytes(), h.batchInfo)
+		h.batchInfo.SetType(messages.DevtoolsBatch)
 		h.writer.HandleBatch(h.devBuffer.Bytes(), h.batchInfo)
 
 		// Prepare buffer for the next batch
