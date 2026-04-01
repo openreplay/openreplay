@@ -47,8 +47,8 @@ func New(cfg *config.Config, log logger.Logger, writer *sessionwriter.MobWriter,
 		sinkMetrics:         metrics,
 		counter:             counter,
 		messageIndex:        make([]byte, 8),
-		domBuffer:           bytes.NewBuffer(make([]byte, 1024)),
-		devBuffer:           bytes.NewBuffer(make([]byte, 1024)),
+		domBuffer:           bytes.NewBuffer(make([]byte, 0, 1024)),
+		devBuffer:           bytes.NewBuffer(make([]byte, 0, 1024)),
 	}
 }
 
