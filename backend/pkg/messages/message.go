@@ -4,15 +4,16 @@ import (
 	"fmt"
 )
 
-type Message interface {
-	Encode() []byte
-	Decode() Message
-	TypeID() int
-	Meta() *message
-	SessionID() uint64
-	MsgID() uint64
-	Time() uint64
-}
+type BatchType uint64
+
+const (
+	RawData BatchType = iota
+	FullBatch
+	PlayerBatch
+	AssetsBatch
+	DevtoolsBatch
+	AnalyticsBatch
+)
 
 // BatchInfo represents common information for all messages inside data batch
 type BatchInfo struct {
@@ -22,6 +23,7 @@ type BatchInfo struct {
 	partition uint64
 	timestamp int64
 	version   uint64
+	dataTs    int64
 }
 
 func NewBatchInfo(sessID uint64, topic string, id, partition uint64, ts int64) *BatchInfo {
@@ -46,12 +48,30 @@ func (b *BatchInfo) Timestamp() int64 {
 	return b.timestamp
 }
 
+func (b *BatchInfo) DataTimestamp() int64 {
+	return b.dataTs
+}
+
 func (b *BatchInfo) Version() uint64 {
 	return b.version
 }
 
+func (b *BatchInfo) Type() BatchType {
+	return BatchType(b.version)
+}
+
 func (b *BatchInfo) Info() string {
 	return fmt.Sprintf("session: %d, partition: %d, offset: %d, ver: %d", b.sessionID, b.partition, b.id, b.version)
+}
+
+type Message interface {
+	Encode() []byte
+	Decode() Message
+	TypeID() int
+	Meta() *message
+	SessionID() uint64
+	MsgID() uint64
+	Time() uint64
 }
 
 type message struct {

@@ -8,17 +8,6 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
-type BatchType uint64
-
-const (
-	RawData BatchType = iota
-	FullBatch
-	PlayerBatch
-	AssetsBatch
-	DevtoolsBatch
-	AnalyticsBatch
-)
-
 type BatchHandler func([]byte, *BatchInfo)
 
 type batchIteratorImpl struct {
@@ -39,42 +28,43 @@ func NewBatchIterator(log logger.Logger, batchHandler BatchHandler, messageItera
 	}
 }
 
-func (b *batchIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
-	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.sessionID)
+func (b *batchIteratorImpl) Iterate(batchData []byte, batch *BatchInfo) {
+	ctx := context.WithValue(context.Background(), "sessionID", batch.sessionID)
 
-	batchType, err := getBatchType(batchData)
+	batchType, batchTimestamp, err := getBatchType(batchData)
 	if err != nil {
 		b.log.Error(ctx, "failed to read batch meta: %s", err)
 		return
 	}
+	batch.version = batchType
+	batch.dataTs = batchTimestamp
 
-	switch batchType {
+	switch batch.Type() {
 	case RawData, FullBatch:
-		b.messageIterator.Iterate(batchData, batchInfo)
+		b.messageIterator.Iterate(batchData, batch)
 	case PlayerBatch, AssetsBatch, DevtoolsBatch, AnalyticsBatch:
-		batchInfo.version = uint64(batchType)
-		b.batchHandler(batchData, batchInfo)
+		b.batchHandler(batchData, batch)
 	default:
-		b.log.Error(ctx, "unknown batch type: %d, info: %s", batchType,
-			batchInfo.Info())
+		b.log.Error(ctx, "unknown batch type: %d, info: %s", batchType, batch)
 	}
 }
 
-func getBatchType(data []byte) (BatchType, error) {
+func getBatchType(data []byte) (uint64, int64, error) {
 	if len(data) == 0 {
-		return 0, errors.New("empty batch meta")
+		return 0, 0, errors.New("empty batch meta")
 	}
 	reader := NewBytesReader(data)
 	msgType, err := reader.ReadUint()
 	if err != nil {
-		return 0, fmt.Errorf("failed to read message type: %w", err)
+		return 0, 0, fmt.Errorf("failed to read message type: %w", err)
 	}
 	if msgType != MsgBatchMetadata {
-		return RawData, nil
+		return uint64(RawData), 0, nil
 	}
 	msg, err := DecodeBatchMetadata(reader)
 	if err != nil {
-		return 0, fmt.Errorf("failed to decode batch metadata: %w", err)
+		return 0, 0, fmt.Errorf("failed to decode batch metadata: %w", err)
 	}
-	return BatchType(msg.(*BatchMetadata).Version), nil
+	metadata := msg.(*BatchMetadata)
+	return metadata.Version, metadata.Timestamp, nil
 }

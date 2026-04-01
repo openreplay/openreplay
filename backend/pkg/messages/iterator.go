@@ -150,6 +150,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.messageInfo.Url = m.Location
 		i.version = m.Version
 		i.batchInfo.version = m.Version
+		i.batchInfo.dataTs = m.Timestamp
 
 	case *Timestamp:
 		i.messageInfo.Timestamp = m.Timestamp

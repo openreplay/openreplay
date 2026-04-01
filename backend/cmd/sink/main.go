@@ -70,24 +70,17 @@ func main() {
 	projManager := projects.New(log, pgConn, redisClient, dbMetric)
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
 
-	filePool := sessionwriter.NewFilePool(log, int(cfg.FsUlimit), cfg.FileBuffer)
-	mobWriter := sessionwriter.NewMobWriter(log, sessManager, filePool, cfg.FsDir, cfg.FileSplitTime, cfg.MaxFileSize)
+	filePool := sessionwriter.NewFilePool(log, int(cfg.FsUlimit), cfg.FileBuffer, cfg.MaxFileSize)
+	mobWriter := sessionwriter.NewMobWriter(log, sessManager, filePool, cfg.FsDir, cfg.FileSplitTime)
 
 	counter := storage.NewLogCounter()
 	assetMessageHandler := assetscache.New(log, &cfg.Cache, rewriter, producer, sinkMetrics)
 	msgHandler := handler.New(cfg, log, mobWriter, producer, assetMessageHandler, sinkMetrics, counter)
 
-	wrappedHandle := func(msg messages.Message) {
-		msgHandler.Handle(msg)
-		if msg != nil && (msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd) {
-			mobWriter.Close(msg.SessionID())
-		}
-	}
-
 	batchIterator := messages.NewBatchIterator(
 		log,
 		mobWriter.HandleBatch,
-		messages.NewSinkMessageIterator(log, wrappedHandle, nil, false, sinkMetrics),
+		messages.NewSinkMessageIterator(log, msgHandler.Handle, nil, false, sinkMetrics),
 	)
 
 	consumer, err := queue.NewConsumer(

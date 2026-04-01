@@ -2,6 +2,7 @@ package sessionwriter
 
 import (
 	"bufio"
+	"errors"
 	"math"
 	"os"
 	"sync"
@@ -10,15 +11,19 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
+var ErrSizeLimitExceeded = errors.New("file size limit exceeded")
+
 type fileEntry struct {
 	path    string
 	file    *os.File
 	buffer  *bufio.Writer
 	updated bool
+	size    int64
 }
 
 func (e *fileEntry) write(data []byte) error {
 	e.updated = true
+	e.size += int64(len(data))
 	_, err := e.buffer.Write(data)
 	return err
 }
@@ -43,33 +48,28 @@ func (e *fileEntry) close() error {
 	return e.file.Close()
 }
 
-var headerV1 = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
-var headerV2 = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe}
-
 type FilePool struct {
-	mu      sync.Mutex
-	log     logger.Logger
-	limit   int
-	bufSize int
-	entries map[string]*fileEntry
-	lastUse map[string]int64
+	mu          sync.Mutex
+	log         logger.Logger
+	limit       int
+	bufSize     int
+	entries     map[string]*fileEntry
+	lastUse     map[string]int64
+	maxFileSize int64
 }
 
-func NewFilePool(log logger.Logger, limit, bufSize int) *FilePool {
+func NewFilePool(log logger.Logger, limit, bufSize int, maxFileSize int64) *FilePool {
 	return &FilePool{
-		log:     log,
-		limit:   limit,
-		bufSize: bufSize,
-		entries: make(map[string]*fileEntry, limit),
-		lastUse: make(map[string]int64, limit),
+		log:         log,
+		limit:       limit,
+		bufSize:     bufSize,
+		entries:     make(map[string]*fileEntry, limit),
+		lastUse:     make(map[string]int64, limit),
+		maxFileSize: maxFileSize,
 	}
 }
 
-func (p *FilePool) Write(path string, data []byte) error {
-	return p.writeWithHeader(path, nil, data)
-}
-
-func (p *FilePool) writeWithHeader(path string, header, data []byte) error {
+func (p *FilePool) Write(path string, header, data []byte) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -78,11 +78,17 @@ func (p *FilePool) writeWithHeader(path string, header, data []byte) error {
 		return err
 	}
 	p.lastUse[path] = time.Now().UnixNano()
-	if isNew && header != nil {
+
+	if p.maxFileSize > 0 && entry.size >= p.maxFileSize {
+		return ErrSizeLimitExceeded
+	}
+
+	if isNew && header != nil && len(header) > 0 {
 		if err := entry.write(header); err != nil {
 			return err
 		}
 	}
+
 	return entry.write(data)
 }
 
@@ -99,13 +105,14 @@ func (p *FilePool) ensureOpen(path string) (*fileEntry, bool, error) {
 	}
 	info, err := f.Stat()
 	if err != nil {
-		f.Close()
+		_ = f.Close()
 		return nil, false, err
 	}
 	entry := &fileEntry{
 		path:   path,
 		file:   f,
 		buffer: bufio.NewWriterSize(f, p.bufSize),
+		size:   info.Size(),
 	}
 	p.entries[path] = entry
 	return entry, info.Size() == 0, nil
