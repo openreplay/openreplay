@@ -62,6 +62,11 @@ spec:
             # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
             - name: ASSETS_ORIGIN
               value: {{ include "openreplay.assets_origin" . }}
+            - name: pg_password
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
+            - name: POSTGRES_STRING
+              value: {{ include "openreplay.pg_connection_string" .}}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
