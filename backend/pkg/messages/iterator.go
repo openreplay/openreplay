@@ -139,7 +139,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMetadata found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
-		if m.Version > 1 {
+		if m.Version > 5 {
 			return fmt.Errorf("incorrect batch version: %d, skip current batch, info: %s", i.version, i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
