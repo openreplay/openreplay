@@ -76,6 +76,7 @@ func main() {
 		var buf bytes.Buffer
 		for reader.Next() {
 			msg := reader.Message()
+			msg.Meta().SetBatchInfo(info)
 
 			if isAssetType(msg.TypeID()) {
 				decoded := msg.Decode()

@@ -120,3 +120,7 @@ func (m *message) SetSessionID(sessID uint64) {
 	}
 	m.batch.sessionID = sessID
 }
+
+func (m *message) SetBatchInfo(batch *BatchInfo) {
+	m.batch = batch
+}
