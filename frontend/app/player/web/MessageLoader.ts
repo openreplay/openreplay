@@ -53,6 +53,7 @@ export default class MessageLoader {
     const isV2 =
       binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
 
+    console.debug(binary.slice(0, 8));
     return isV2 ? 2 : 1;
   };
 
