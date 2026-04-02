@@ -46,21 +46,25 @@ export default class MessageLoader {
 
   /**
    * Detect protocol format from the 8-byte header.
-   * V1 = all 0xff (legacy mob format)
+   * V1 = all 0xff (legacy mob format, with or without indexes depending on version)
    * V2 = 7x 0xff + 0xfe (tracker batch format)
+   * V3 = 7x 0xff + 0xfd (new or old tracker without indexes)
    */
   checkProtoFormat = (binary: Uint8Array) => {
     const isV2 =
       binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
-
-    return isV2 ? 2 : 1;
+    if (isV2) return 2;
+    const isV3 =
+      binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfd;
+    if (isV3) return 3;
+    return 1;
   };
 
-  /** Strip the 8-byte format header (v1: 8x 0xff, v2: 7x 0xff + 0xfe) if present */
+  /** Strip the 8-byte format header (v1: 0xff, v2: 0xfe, v3: 0xfd) if present */
   private stripHeader(data: Uint8Array): Uint8Array {
     const hasHeader =
       data.slice(0, 7).every((b) => b === 0xff) &&
-      (data[7] === 0xff || data[7] === 0xfe);
+      (data[7] === 0xff || data[7] === 0xfe || data[7] === 0xfd);
     return hasHeader ? data.slice(8) : data;
   }
 
@@ -74,6 +78,7 @@ export default class MessageLoader {
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
     file?: string,
+    noIndexes = false,
   ) {
     const decrypt =
       shouldDecrypt && this.session.fileKey
@@ -83,6 +88,7 @@ export default class MessageLoader {
     const fileReader = new MFileReader(
       new Uint8Array(),
       this.session.startedAt,
+      noIndexes,
     );
     let fileNum = 0;
     return async (b: Uint8Array) => {
@@ -233,6 +239,7 @@ export default class MessageLoader {
           shouldDecrypt,
           onMessagesDone,
           file,
+          version === 3,
         );
       }
 

@@ -16,6 +16,7 @@ export default class MFileReader extends RawMessageReader {
   constructor(
     data: Uint8Array,
     private startTime?: number,
+    private noIndexes = false,
     private logger = console,
   ) {
     super(data);
@@ -49,7 +50,7 @@ export default class MFileReader extends RawMessageReader {
    * */
   private readRawMessage(): RawMessage | null {
     try {
-      if (!this.tryReadIndex()) return null;
+      if (!this.noIndexes && !this.tryReadIndex()) return null;
       return super.readMessage();
     } catch (e) {
       this.logger.error('Read message error:', e);
