@@ -7,8 +7,8 @@ import { MType } from 'Player/web/messages';
 
 import logger from 'App/logger';
 
-import DebugBatchReader from './messages/DebugBatchReader';
 import MFileReader from './messages/MFileReader';
+import TrackerReader from './messages/TrackerReader';
 import { decryptSessionBytes } from './network/crypto';
 import {
   loadFiles,
@@ -44,8 +44,25 @@ export default class MessageLoader {
     this.session = session;
   }
 
+  /**
+   * Detect protocol format from the 8-byte header.
+   * V1 = all 0xff (legacy mob format)
+   * V2 = 7x 0xff + 0xfe (tracker batch format)
+   */
+  checkProtoFormat = (binary: Uint8Array) => {
+    const isV2 =
+      binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
+
+    return isV2 ? 2 : 1;
+  };
+
   rawMessages: any[] = [];
-  createNewParser(
+
+  /**
+   * Create a parser for the legacy v1 mob format.
+   * Used as the default parser and as fallback when format is v1.
+   */
+  createV1Parser(
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
     file?: string,
@@ -54,6 +71,7 @@ export default class MessageLoader {
       shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
         : (b: Uint8Array) => Promise.resolve(b);
+
     const fileReader = new MFileReader(
       new Uint8Array(),
       this.session.startedAt,
@@ -130,6 +148,90 @@ export default class MessageLoader {
         console.error(e);
         this.uiErrorHandler?.error(`Error parsing file: ${e.message}`);
       }
+    };
+  }
+
+  /**
+   * Create a parser for the v2 tracker batch format.
+   * Uses TrackerReader to handle BatchMetadata, size-prefixed messages, and asset separation.
+   */
+  createV2Parser(
+    shouldDecrypt = true,
+    onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
+    file?: string,
+  ) {
+    const decrypt =
+      shouldDecrypt && this.session.fileKey
+        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
+        : (b: Uint8Array) => Promise.resolve(b);
+
+    const reader = new TrackerReader(this.session.startedAt);
+    let fileNum = 0;
+
+    return async (b: Uint8Array) => {
+      try {
+        fileNum += 1;
+        const mobBytes = await decrypt(b);
+        const data = unpack(mobBytes);
+
+        // Skip the 8-byte v2 header
+        const batchData = data.slice(8);
+        const { messages } = reader.readBatch(batchData);
+
+        messages.forEach((msg) => this.rawMessages.push(msg));
+
+        const sortedMsgs = messages.sort(brokenDomSorter).sort(sortIframes);
+        onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
+      } catch (e) {
+        console.error(e);
+        this.uiErrorHandler?.error(`Error parsing file: ${e.message}`);
+      }
+    };
+  }
+
+  /**
+   * Create a format-detecting parser that checks the 8-byte header
+   * and dispatches to v1 or v2 parser accordingly.
+   * Once the format is determined from the first file, subsequent files use the same parser.
+   */
+  createNewParser(
+    shouldDecrypt = true,
+    onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
+    file?: string,
+  ) {
+    const decrypt =
+      shouldDecrypt && this.session.fileKey
+        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
+        : (b: Uint8Array) => Promise.resolve(b);
+
+    let resolvedParser: ((b: Uint8Array) => Promise<void>) | null = null;
+
+    return async (b: Uint8Array) => {
+      if (resolvedParser) {
+        return resolvedParser(b);
+      }
+
+      // Detect format from first file's raw bytes (before decrypt/unpack, header is prepended)
+      const mobBytes = await decrypt(b);
+      const data = unpack(mobBytes);
+      const version = this.checkProtoFormat(data);
+
+      if (version === 2) {
+        resolvedParser = this.createV2Parser(
+          shouldDecrypt,
+          onMessagesDone,
+          file,
+        );
+      } else {
+        resolvedParser = this.createV1Parser(
+          shouldDecrypt,
+          onMessagesDone,
+          file,
+        );
+      }
+
+      // Re-feed the original bytes so the resolved parser processes this file
+      return resolvedParser(b);
     };
   }
 
@@ -240,15 +342,7 @@ export default class MessageLoader {
     }
 
     try {
-      // await this.loadMobs();
-      await this.loadDebugBatches([
-        new URL('../../assets/mocks/1774283913759-mob', import.meta.url),
-        new URL('../../assets/mocks/1774283912361-mob', import.meta.url),
-        new URL('../../assets/mocks/1774283911357-mob', import.meta.url),
-        new URL('../../assets/mocks/1774283901788-mob', import.meta.url),
-        new URL('../../assets/mocks/1774283898689-mob', import.meta.url),
-        new URL('../../assets/mocks/1774283894797-mob', import.meta.url),
-      ]);
+      await this.loadMobs();
     } catch (sessionLoadError) {
       console.info('!', sessionLoadError);
       try {
@@ -351,8 +445,8 @@ export default class MessageLoader {
   };
 
   /**
-   * Load raw tracker debug batches from a list of URLs.
-   * Files named *-mob are version=2 (player), assets-* are version=3 (assets).
+   * Load raw tracker batches from a list of URLs.
+   * These are unprocessed tracker output (no 8-byte header, raw batch format).
    * Parses all batches, merges messages, sorts by time, and feeds into the
    * existing distribution pipeline.
    */
@@ -360,7 +454,7 @@ export default class MessageLoader {
     this.messageManager.startLoading();
     this.store.update({ domLoading: true });
 
-    const reader = new DebugBatchReader(this.session.startedAt);
+    const reader = new TrackerReader(this.session.startedAt);
     const allPlayer: PlayerMsg[] = [];
     const allAssets: PlayerMsg[] = [];
 
@@ -368,7 +462,7 @@ export default class MessageLoader {
       try {
         const resp = await window.fetch(url);
         if (!resp.ok) {
-          console.warn(`DebugBatch: failed to fetch ${url}: ${resp.status}`);
+          console.warn(`TrackerReader: failed to fetch ${url}: ${resp.status}`);
           continue;
         }
         const buf = new Uint8Array(await resp.arrayBuffer());
@@ -381,7 +475,7 @@ export default class MessageLoader {
           allPlayer.push(...messages);
         }
       } catch (e) {
-        console.error(`DebugBatch: error processing ${url}:`, e);
+        console.error(`TrackerReader: error processing ${url}:`, e);
       }
     }
 
@@ -390,7 +484,7 @@ export default class MessageLoader {
     const sorted = merged.sort(brokenDomSorter).sort(sortIframes);
 
     logger.info(
-      'DebugBatch: loaded',
+      'TrackerReader: loaded',
       sorted.length,
       'messages from',
       batchUrls.length,

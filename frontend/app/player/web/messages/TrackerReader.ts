@@ -1,5 +1,4 @@
 import type { PlayerMsg } from 'Player';
-import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
 import TrackerBinaryReader from './TrackerBinaryReader.gen';
 import rewriteMessage from './rewriter/rewriteMessage';
@@ -7,31 +6,30 @@ import rewriteMessage from './rewriter/rewriteMessage';
 export type BatchKind = 'player' | 'assets';
 
 /**
- * Reads raw tracker batches (as saved by BatchWriter localDebug)
- * and produces PlayerMsg arrays ready for MessageManager.distributeMessage.
+ * Reads raw tracker batches (v2 protocol format) and produces
+ * PlayerMsg arrays ready for MessageManager.distributeMessage.
  *
- * Each batch file is a complete batch: BatchMetadata header + Timestamp + TabData + messages.
- * TrackerBinaryReader already handles BatchMetadata by skipping it,
- * but we need the version to classify batches, so we peek at it first.
+ * Each batch is: BatchMetadata header + Timestamp + TabData + messages.
+ * TrackerBinaryReader handles BatchMetadata by skipping it,
+ * but we peek at the version first to classify batch kind.
+ *
+ * Used for both live v2 session files and local debug batches.
  */
-export default class DebugBatchReader {
+export default class TrackerReader {
   private currentTime = 0;
-  private currentTab = 'debug';
+  private currentTab = '';
 
   constructor(private startTime: number) {}
 
   /**
-   * Parse a single raw batch file into PlayerMsg[].
-   * Returns { kind, messages } so the caller knows whether these are
-   * player (version=2) or assets (version=3) messages.
+   * Parse a single raw batch into PlayerMsg[].
+   * Returns { kind, messages } — 'player' (version=2) or 'assets' (version=3).
    */
   readBatch(
     data: Uint8Array,
   ): { kind: BatchKind; messages: PlayerMsg[] } {
     const reader = new TrackerBinaryReader(data);
 
-    // Peek at version from BatchMetadata before TrackerBinaryReader skips it.
-    // BatchMetadata is type 81, encoded as varint. We read the same way PrimitiveReader does.
     const version = this.peekBatchVersion(data);
     const kind: BatchKind = version === 3 ? 'assets' : 'player';
 
@@ -69,7 +67,6 @@ export default class DebugBatchReader {
    */
   private peekBatchVersion(data: Uint8Array): number {
     let p = 0;
-    // Skip the type varint (81 = 0x51, fits in one byte)
     let tp = 0;
     let shift = 0;
     while (p < data.length) {
@@ -78,10 +75,8 @@ export default class DebugBatchReader {
       if ((b & 0x80) === 0) break;
       shift += 7;
     }
-    // tp should be 81 (BatchMetadata). If not, default to version 2.
     if (tp !== 81) return 2;
 
-    // Read version varint
     let version = 0;
     shift = 0;
     while (p < data.length) {

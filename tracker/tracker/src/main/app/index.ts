@@ -915,22 +915,33 @@ export default class App {
       return
     }
 
-    if (this.worker === undefined || !this.messages.length) {
+    if (this.worker === undefined) {
       return
     }
 
     if (!this.messages.length) {
-      // Release empty batches every 30 secs (1000 * 30ms)
+      // Send a keepalive batch every ~30s (1000 * 30ms) to keep the session active
       if (this.emptyBatchCounter < 1000) {
         this.emptyBatchCounter++
         return
       }
+      // Keepalive: send just Timestamp + TabData so the session stays alive
+      this.emptyBatchCounter = 0
+      try {
+        this.worker?.postMessage([Timestamp(this.timestamp()), TabData(this.session.getTabId())])
+      } catch (e) {
+        this._debug('worker_keepalive', e)
+      }
+      return
     }
 
     this.emptyBatchCounter = 0
 
     try {
       requestIdleCb(() => {
+        if (!this.messages.length) {
+          return
+        }
         this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))

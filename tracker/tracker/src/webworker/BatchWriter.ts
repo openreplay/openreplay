@@ -13,11 +13,10 @@ export default class BatchWriter {
   private encoder = new MessageEncoder(this.beaconSize)
   private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private isEmpty = true
+  private prepared = false
   private checkpoints: number[] = []
   private assetMessages: Message[] = []
-  private batchFirstIndex = 0
-  private batchHeaderTimestamp = 0
-  private batchHeaderUrl = ''
+  private firstAssetIndex = 0
   private protocolVersion = 1
 
   constructor(
@@ -29,9 +28,7 @@ export default class BatchWriter {
     private readonly onOfflineEnd: () => void,
     private readonly localDebug = false,
     private readonly onLocalSave?: (name: string, batch: Uint8Array) => void,
-  ) {
-    this.prepare()
-  }
+  ) {}
 
   private writeType(m: Message): boolean {
     return this.encoder.uint(m[0])
@@ -40,24 +37,23 @@ export default class BatchWriter {
     return this.encoder.encode(m)
   }
   private writeSizeAt(size: number, offset: number): void {
-    //boolean?
     for (let i = 0; i < SIZE_BYTES; i++) {
-      this.sizeBuffer[i] = size >> (i * 8) // BigEndian
+      this.sizeBuffer[i] = size >> (i * 8)
     }
     this.encoder.set(this.sizeBuffer, offset)
   }
 
+  /** Write BatchMetadata header into encoder.
+   *  Called lazily — only when the first real message needs to be written.
+   *  Timestamp + TabData come from _nCommit with each commit, not from here. */
   private prepare(): void {
-    if (!this.encoder.isEmpty) {
+    if (this.prepared) {
       return
     }
+    this.prepared = true
 
     this.checkpoints.length = 0
-    this.batchFirstIndex = this.nextIndex
-    this.batchHeaderTimestamp = this.timestamp
-    this.batchHeaderUrl = this.url
 
-    // MBTODO: move service-messages creation methods to webworker
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
       this.protocolVersion === 2 ? 2 : 1,
@@ -67,21 +63,14 @@ export default class BatchWriter {
       this.url,
     ]
 
-    const timestamp: Messages.Timestamp = [Messages.Type.Timestamp, this.timestamp]
-
-    const tabData: Messages.TabData = [Messages.Type.TabData, this.tabId]
-
     this.writeType(batchMetadata)
     this.writeFields(batchMetadata)
-    this.writeWithSize(timestamp as Message)
-    this.writeWithSize(tabData as Message)
     this.isEmpty = true
   }
 
   private writeWithSize(message: Message): boolean {
     const e = this.encoder
     if (!this.writeType(message) || !e.skip(SIZE_BYTES)) {
-      // app.debug.log
       return false
     }
     const startOffset = e.getCurrentOffset()
@@ -100,7 +89,6 @@ export default class BatchWriter {
       this.isEmpty = this.isEmpty && message[0] === Messages.Type.Timestamp
       this.nextIndex++
     }
-    // app.debug.log
     return wasWritten
   }
 
@@ -120,21 +108,27 @@ export default class BatchWriter {
       return this.onOfflineEnd()
     }
     if (message[0] === Messages.Type.Timestamp) {
-      this.timestamp = message[1] // .timestamp
+      this.timestamp = message[1]
     }
     if (message[0] === Messages.Type.SetPageLocation) {
-      this.url = message[1] // .url
+      this.url = message[1]
     }
     if (this.protocolVersion === 2 && ASSET_MESSAGES.has(message[0])) {
+      if (this.assetMessages.length === 0) {
+        this.firstAssetIndex = this.nextIndex
+      }
       this.assetMessages.push(message)
       this.nextIndex++
       return
     }
+    // Lazily write batch header on first real message
+    this.prepare()
     if (this.writeWithSize(message)) {
       return
     }
     // buffer overflow, send already written data first then try again
     this.finaliseBatch()
+    this.prepare()
     if (this.writeWithSize(message)) {
       return
     }
@@ -148,16 +142,20 @@ export default class BatchWriter {
     }
     // reset encoder to normal size
     this.encoder = new MessageEncoder(this.beaconSize)
-    this.prepare()
   }
 
   finaliseBatch(skipCompression = false) {
-    const hasRegular = !this.isEmpty
+    const hasRegular = this.prepared && !this.isEmpty
     const hasAssets = this.assetMessages.length > 0
 
     if (!hasRegular && !hasAssets) {
       return
     }
+
+    // Capture header info for asset batch before flushing
+    const assetHeaderTimestamp = this.timestamp
+    const assetHeaderUrl = this.url
+    const assetFirstIndex = this.firstAssetIndex
 
     if (hasRegular) {
       const batch = this.encoder.flush()
@@ -170,7 +168,7 @@ export default class BatchWriter {
     }
 
     if (hasAssets) {
-      const assetBatch = this.buildAssetBatch()
+      const assetBatch = this.buildAssetBatch(assetFirstIndex, assetHeaderTimestamp, assetHeaderUrl)
       if (this.localDebug && this.onLocalSave) {
         this.onLocalSave(`assets-${Date.now()}`, assetBatch.slice())
       }
@@ -178,11 +176,11 @@ export default class BatchWriter {
       this.assetMessages.length = 0
     }
 
-    this.prepare()
+    this.prepared = false
   }
 
 
-  private buildAssetBatch(): Uint8Array {
+  private buildAssetBatch(firstIndex: number, headerTimestamp: number, headerUrl: string): Uint8Array {
     const encoder = new MessageEncoder(this.beaconSizeLimit)
     const sizeBuffer = new Uint8Array(SIZE_BYTES)
 
@@ -205,15 +203,15 @@ export default class BatchWriter {
       Messages.Type.BatchMetadata,
       3,
       this.pageNo,
-      this.batchFirstIndex,
-      this.batchHeaderTimestamp,
-      this.batchHeaderUrl,
+      firstIndex,
+      headerTimestamp,
+      headerUrl,
     ]
     encoder.uint(batchMetadata[0])
     encoder.encode(batchMetadata as Message)
 
     // Timestamp + TabData header (with size prefix)
-    writeWithSize([Messages.Type.Timestamp, this.batchHeaderTimestamp] as Message)
+    writeWithSize([Messages.Type.Timestamp, headerTimestamp] as Message)
     writeWithSize([Messages.Type.TabData, this.tabId] as Message)
 
     // Asset messages (preserving original order)
@@ -228,5 +226,6 @@ export default class BatchWriter {
     this.encoder.reset()
     this.checkpoints.length = 0
     this.assetMessages.length = 0
+    this.prepared = false
   }
 }

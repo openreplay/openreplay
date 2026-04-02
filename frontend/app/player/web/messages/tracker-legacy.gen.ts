@@ -56,6 +56,7 @@ export const TP_MAP = {
   76: MType.AdoptedSsAddOwner,
   77: MType.AdoptedSsRemoveOwner,
   79: MType.Zustand,
+  81: MType.BatchMetadata,
   83: MType.NetworkRequest,
   84: MType.WsChannel,
   85: MType.ResourceTiming,

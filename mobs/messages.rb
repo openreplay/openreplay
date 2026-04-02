@@ -415,8 +415,8 @@ message 79, 'Zustand', :replayer => :devtools do
   string 'State'
 end
 
-# since tracker 3.6.0
-message 81, 'BatchMetadata', :replayer => false do
+# since tracker 3.6.0   TODO: for webworker only
+message 81, 'BatchMetadata' do
   uint 'Version'
   uint 'PageNo'
   uint 'FirstIndex'
