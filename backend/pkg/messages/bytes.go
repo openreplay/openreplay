@@ -74,10 +74,10 @@ func (m *bytesReaderImpl) ReadUint() (uint64, error) {
 
 func (m *bytesReaderImpl) ReadInt() (int64, error) {
 	ux, err := m.ReadUint()
-	if err != nil {
-		return 0, err
-	}
 	x := int64(ux >> 1)
+	if err != nil {
+		return x, err
+	}
 	if ux&1 != 0 {
 		x = ^x
 	}
@@ -126,9 +126,5 @@ func (m *bytesReaderImpl) Pointer() int64 {
 }
 
 func (m *bytesReaderImpl) SetPointer(p int64) {
-	if p >= 0 && p < int64(len(m.data)) {
-		m.curr = p
-		return
-	}
-	m.curr = 0 // reset a pointer to prevent a panic
+	m.curr = p
 }
