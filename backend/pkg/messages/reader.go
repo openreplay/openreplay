@@ -96,7 +96,7 @@ func (m *messageReaderImpl) Parse() (err error) {
 				case *BatchMetadata:
 					m.version = int(message.Version)
 				}
-				if m.version != 1 {
+				if m.version < 1 || m.version > 5 {
 					// Unsupported tracker version, reset reader
 					m.list = m.list[:0]
 					m.reader.SetPointer(0)
