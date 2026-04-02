@@ -1,17 +1,15 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import { useStore } from '@/mstore';
-import { EditOutlined } from '@ant-design/icons';
-import { Button, List, Typography } from 'antd';
-import { ScanSearch } from 'lucide-react';
+import { Input, Table } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Tag } from 'App/services/TagWatchService';
 import { useModal } from 'Components/ModalContext';
-import { Pagination } from 'UI';
+import { TextEllipsis } from 'UI';
 
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import FullPagination from 'Shared/FullPagination';
 
 import TagForm from './TagForm';
 
@@ -36,96 +34,100 @@ function TagsPage() {
     });
   };
 
-  return (
-    <div className="bg-white rounded-lg border p-6">
-      <div className="mb-4">
-        <Typography.Title level={4} className="mb-1!">
-          {t('Features')}
-        </Typography.Title>
-        <Typography.Text type="secondary">
-          {t(
-            'Tag features during session playback and use them in OmniSearch to find relevant sessions.',
-          )}
-        </Typography.Text>
-      </div>
+  const numberFormatter = Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+  });
 
-      <List
-        locale={{
-          emptyText: (
-            <div>
-              <div className="w-fit border border-gray-100 rounded-lg overflow-hidden bg-white shadow-xs mx-auto">
-                <div className="w-full h-48 md:h-64 lg:h-96 flex items-center justify-center border border-gray-100 bg-white rounded-md">
-                  <img
-                    src="/assets/img/img-tagging.jpg"
-                    alt="Features"
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-              </div>
-              <div className="text-center mt-4">
-                <Typography.Text className="my-2! text-lg! font-medium!">
-                  {t('Organize and Manage Your Features')}
-                </Typography.Text>
-                <div className="mb-2 text-lg text-gray-500 leading-normal">
-                  {t(
-                    'Tag features during session playback and use them in OmniSearch to find relevant sessions.',
-                  )}
-                </div>
-              </div>
-            </div>
-          ),
-        }}
-        loading={tagWatchStore.isLoading}
-        dataSource={list}
-        renderItem={(item: Tag) => (
-          <List.Item
-            className="cursor-pointer group hover:bg-active-blue px-4!"
-            onClick={() => handleEdit(item)}
-          >
-            <List.Item.Meta
-              title={item.name}
-              description={
-                <span>
-                  {item.location ? (
-                    <span className="mr-2 text-gray-medium">
-                      {item.location}
-                    </span>
-                  ) : null}
-                  {item.selector}
-                </span>
-              }
-              avatar={<ScanSearch size={20} />}
+  const columns = [
+    {
+      title: t('Name'),
+      dataIndex: 'name',
+      key: 'name',
+      sorter: (a: Tag, b: Tag) => a.name.localeCompare(b.name),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
+      render: (text: string) => (
+        <TextEllipsis maxWidth={'200px'} text={text} className="link" />
+      ),
+    },
+    {
+      title: t('Location'),
+      dataIndex: 'location',
+      key: 'location',
+      render: (text: string | null) =>
+        text ? (
+          <TextEllipsis maxWidth={'250px'} text={text} />
+        ) : (
+          <span className="text-disabled-text">—</span>
+        ),
+    },
+    {
+      title: t('Selector'),
+      dataIndex: 'selector',
+      key: 'selector',
+      render: (text: string) => <TextEllipsis maxWidth={'300px'} text={text} />,
+    },
+    {
+      title: t('Users'),
+      dataIndex: 'users',
+      key: 'users',
+      sorter: (a: Tag, b: Tag) => (a.users ?? 0) - (b.users ?? 0),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
+      render: (val: number) => <span>{numberFormatter.format(val ?? 0)}</span>,
+    },
+    {
+      title: t('Interactions'),
+      dataIndex: 'volume',
+      key: 'volume',
+      sorter: (a: Tag, b: Tag) => (a.volume ?? 0) - (b.volume ?? 0),
+      showSorterTooltip: false,
+      className: 'cursor-pointer!',
+      render: (val: number) => <span>{numberFormatter.format(val ?? 0)}</span>,
+    },
+  ];
+
+  return (
+    <div
+      className="flex flex-col rounded-lg border bg-white mx-auto"
+      style={{ maxWidth: 1360 }}
+    >
+      <div className="flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4 py-2">
+        <div className="font-semibold text-lg capitalize">{t('Features')}</div>
+        <div className="flex items-center gap-2">
+          {/* <div className="min-w-50 md:w-1/4 md:min-w-75">
+            <Input.Search
+              size="small"
+              placeholder={t('Filter by name')}
+              allowClear
+              maxLength={256}
+              disabled
             />
-            <div className="ml-auto flex items-center">
-              <div className="flex flex-col text-xs text-gray-500 text-right group-hover:hidden">
-                <span>
-                  {item.users ?? 0} {t('users')}
-                </span>
-                <span>
-                  {item.volume ?? 0} {t('interactions')}
-                </span>
-              </div>
-              <Button
-                type="link"
-                className="hidden group-hover:flex! text-black!"
-                icon={<EditOutlined size={14} />}
-              />
-            </div>
-          </List.Item>
-        )}
-      />
-      <div className="flex items-center justify-between mt-4">
-        <Typography.Text type="secondary">
-          {t('Showing')} <span className="font-medium">{list.length === 0 ? 0 : (tagWatchStore.page - 1) * tagWatchStore.limit + 1}</span> {t('to')} <span className="font-medium">{(tagWatchStore.page - 1) * tagWatchStore.limit + list.length}</span> {t('of')} <span className="font-medium">{tagWatchStore.total}</span>
-        </Typography.Text>
-        <Pagination
-          page={tagWatchStore.page}
-          total={tagWatchStore.total}
-          onPageChange={onPageChange}
-          limit={tagWatchStore.limit}
-          debounceRequest={500}
-        />
+          </div> */}
+        </div>
       </div>
+      <Table
+        columns={columns}
+        dataSource={list}
+        pagination={false}
+        scroll={{ x: 'max-content' }}
+        onRow={(record) => ({
+          onClick: () => handleEdit(record),
+        })}
+        rowHoverable
+        rowClassName="cursor-pointer"
+        loading={tagWatchStore.isLoading}
+        rowKey="tagId"
+      />
+      <FullPagination
+        page={tagWatchStore.page}
+        limit={tagWatchStore.limit}
+        total={tagWatchStore.total}
+        listLen={list.length}
+        onPageChange={onPageChange}
+        entity="features"
+      />
     </div>
   );
 }
