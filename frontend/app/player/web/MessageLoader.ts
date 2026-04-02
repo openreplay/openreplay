@@ -53,9 +53,16 @@ export default class MessageLoader {
     const isV2 =
       binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
 
-    console.debug(binary.slice(0, 8));
     return isV2 ? 2 : 1;
   };
+
+  /** Strip the 8-byte format header (v1: 8x 0xff, v2: 7x 0xff + 0xfe) if present */
+  private stripHeader(data: Uint8Array): Uint8Array {
+    const hasHeader =
+      data.slice(0, 7).every((b) => b === 0xff) &&
+      (data[7] === 0xff || data[7] === 0xfe);
+    return hasHeader ? data.slice(8) : data;
+  }
 
   rawMessages: any[] = [];
 
@@ -82,9 +89,8 @@ export default class MessageLoader {
       try {
         fileNum += 1;
         const mobBytes = await decrypt(b);
-        const data = unpack(mobBytes);
+        const data = this.stripHeader(unpack(mobBytes));
         fileReader.append(data);
-        fileReader.checkForIndexes();
         const msgs: Array<PlayerMsg> = [];
         let finished = false;
         while (!finished) {
@@ -175,8 +181,7 @@ export default class MessageLoader {
         const mobBytes = await decrypt(b);
         const data = unpack(mobBytes);
 
-        // Skip the 8-byte v2 header
-        const batchData = data.slice(8);
+        const batchData = this.stripHeader(data);
         const { messages } = reader.readBatch(batchData);
 
         messages.forEach((msg) => this.rawMessages.push(msg));

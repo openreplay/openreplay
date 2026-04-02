@@ -1,20 +1,17 @@
-import Logger from 'App/logger';
+import RawMessageReader from './RawMessageReader.gen';
 import type { Message } from './message.gen';
 import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
-import RawMessageReader from './RawMessageReader.gen';
 import rewriteMessage from './rewriter/rewriteMessage';
 
 // TODO: composition instead of inheritance
 // needSkipMessage() and next() methods here use buf and p protected properties,
 export default class MFileReader extends RawMessageReader {
-  private pLastMessageID: number = 0;
-
-  private currentTime: number;
+  private currentTime: number = 0;
 
   public error: boolean = false;
 
-  private noIndexes: boolean = false;
+  public lastIndex: number = 0;
 
   constructor(
     data: Uint8Array,
@@ -24,34 +21,23 @@ export default class MFileReader extends RawMessageReader {
     super(data);
   }
 
-  public checkForIndexes() {
-    // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes
-    const skipIndexes = this.buf.slice(0, 8).every((b) => b === 0xff);
-
-    if (skipIndexes) {
-      if (!this.noIndexes) {
-        this.skip(8);
-      }
-      this.noIndexes = true;
-    }
-  }
-
-  private needSkipMessage(): boolean {
-    if (this.p === 0) return false;
-    for (let i = 7; i >= 0; i--) {
-      if (this.buf[this.p + i] !== this.buf[this.pLastMessageID + i]) {
-        return this.buf[this.p + i] < this.buf[this.pLastMessageID + i];
-      }
-    }
-    return false;
-  }
-
-  private getLastMessageID(): number {
+  /**
+   * typically index is uint64 and is incrementing in file
+   * if not = bad
+   * */
+  private tryReadIndex(): boolean {
+    if (this.p + 8 > this.buf.length) return false;
     let id = 0;
     for (let i = 0; i < 8; i++) {
       id += this.buf[this.p + i] * 2 ** (8 * i);
     }
-    return id;
+    if (id > this.lastIndex) {
+      this.lastIndex = id;
+      this.p += 8;
+      return true;
+    }
+    this.lastIndex++;
+    return true;
   }
 
   /**
@@ -63,9 +49,7 @@ export default class MFileReader extends RawMessageReader {
    * */
   private readRawMessage(): RawMessage | null {
     try {
-      if (!this.noIndexes) {
-        this.skip(8);
-      }
+      if (!this.tryReadIndex()) return null;
       return super.readMessage();
     } catch (e) {
       this.logger.error('Read message error:', e);
@@ -80,15 +64,6 @@ export default class MFileReader extends RawMessageReader {
     if (this.error || !this.hasNextByte()) {
       return null;
     }
-
-    while (!this.noIndexes && this.needSkipMessage()) {
-      const skippedMessage = this.readRawMessage();
-      if (!skippedMessage) {
-        return null;
-      }
-      Logger.group('Openreplay: Skipping messages ', skippedMessage);
-    }
-    this.pLastMessageID = this.noIndexes ? 0 : this.p;
 
     const rMsg = this.readRawMessage();
     if (!rMsg) {
@@ -111,7 +86,6 @@ export default class MFileReader extends RawMessageReader {
       };
     }
 
-    const index = this.noIndexes ? 0 : this.getLastMessageID();
     const msg = Object.assign(
       rewriteMessage(rMsg),
       {
@@ -119,7 +93,7 @@ export default class MFileReader extends RawMessageReader {
         time: this.currentTime ?? rMsg.timestamp - this.startTime!,
         tabId: this.currentTab,
       },
-      !this.noIndexes ? { _index: index } : {},
+      { _index: this.lastIndex },
     );
 
     return msg;

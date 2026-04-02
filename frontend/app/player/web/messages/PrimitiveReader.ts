@@ -15,6 +15,11 @@ export default class PrimitiveReader {
     return this.p < this.buf.length;
   }
 
+  readUint8(): number | null {
+    if (this.p >= this.buf.length) return null;
+    return this.buf[this.p++];
+  }
+
   readUint(): number | null {
     let { p } = this;
     let r = 0;
