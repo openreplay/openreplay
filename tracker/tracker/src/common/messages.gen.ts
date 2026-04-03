@@ -671,5 +671,45 @@ export const ASSET_MESSAGES: ReadonlySet<number> = new Set([
   73,
 ])
 
+export const DEVTOOLS_MESSAGES: ReadonlySet<number> = new Set([
+  21,
+  22,
+  40,
+  41,
+  44,
+  45,
+  46,
+  47,
+  48,
+  79,
+  83,
+  84,
+  85,
+  87,
+  89,
+  116,
+  120,
+  121,
+  123,
+])
+
+export const ANALYTICS_MESSAGES: ReadonlySet<number> = new Set([
+  17,
+  23,
+  24,
+  27,
+  28,
+  29,
+  30,
+  42,
+  63,
+  64,
+  78,
+  82,
+  112,
+  115,
+  124,
+])
+
 type Message =  Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | StringDictGlobal | SetNodeAttributeDictGlobal | NodeAnimationResult | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecatedDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | SetNodeSlot | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | NetworkRequest | WSChannel | ResourceTiming | Incident | LongAnimationTask | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTimingDeprecated | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals
 export default Message

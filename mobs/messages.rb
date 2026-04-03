@@ -85,7 +85,7 @@ message 16, 'SetNodeScroll' do
   int 'X'
   int 'Y'
 end
-message 17, 'SetInputTarget', :replayer => false do
+message 17, 'SetInputTarget', :replayer => false, :pipeline => 'b' do
   uint 'ID'
   string 'Label'
 end
@@ -103,7 +103,7 @@ message 20, 'MouseMove' do
   uint 'Y'
 end
 # to remove in 2025
-message 21, 'NetworkRequestDeprecated', :replayer => :devtools do
+message 21, 'NetworkRequestDeprecated', :replayer => :devtools, :pipeline => 'd' do
   string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
   string 'Method'
   string 'URL'
@@ -113,11 +113,11 @@ message 21, 'NetworkRequestDeprecated', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
 end
-message 22, 'ConsoleLog', :replayer => :devtools do
+message 22, 'ConsoleLog', :replayer => :devtools, :pipeline => 'd' do
   string 'Level'
   string 'Value'
 end
-message 23, 'PageLoadTiming', :replayer => false do
+message 23, 'PageLoadTiming', :replayer => false, :pipeline => 'b' do
   uint 'RequestStart'
   uint 'ResponseStart'
   uint 'ResponseEnd'
@@ -128,22 +128,22 @@ message 23, 'PageLoadTiming', :replayer => false do
   uint 'FirstPaint'
   uint 'FirstContentfulPaint'
 end
-message 24, 'PageRenderTiming', :replayer => false do
+message 24, 'PageRenderTiming', :replayer => false, :pipeline => 'b' do
   uint 'SpeedIndex'
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
-message 27, 'CustomEvent', :replayer => false do
+message 27, 'CustomEvent', :replayer => false, :pipeline => 'b' do
   string 'Name'
   string 'Payload'
 end
-message 28, 'UserID', :replayer => false do
+message 28, 'UserID', :replayer => false, :pipeline => 'b' do
   string 'ID'
 end
-message 29, 'UserAnonymousID', :replayer => false do
+message 29, 'UserAnonymousID', :replayer => false, :pipeline => 'b' do
   string 'ID'
 end
-message 30, 'Metadata', :replayer => false do
+message 30, 'Metadata', :replayer => false, :pipeline => 'b' do
   string 'Key'
   string 'Value'
 end
@@ -209,39 +209,39 @@ message 36, 'NodeAnimationResult' do
   uint 'ID'
   string 'Styles'
 end
-message 40, 'Profiler', :replayer => :devtools do
+message 40, 'Profiler', :replayer => :devtools, :pipeline => 'd' do
   string 'Name'
   uint   'Duration'
   string 'Args'
   string 'Result'
 end
-message 41, 'OTable', :replayer => :devtools do
+message 41, 'OTable', :replayer => :devtools, :pipeline => 'd' do
   string 'Key'
   string 'Value'
 end
-message 42, 'StateAction', :replayer => false do
+message 42, 'StateAction', :replayer => false, :pipeline => 'b' do
   string 'Type'
 end
 
-message 44, 'ReduxDeprecated', :replayer => :devtools do
+message 44, 'ReduxDeprecated', :replayer => :devtools, :pipeline => 'd' do
   string 'Action'
   string 'State'
   uint 'Duration'
 end
-message 45, 'Vuex', :replayer => :devtools do
+message 45, 'Vuex', :replayer => :devtools, :pipeline => 'd' do
   string 'Mutation'
   string 'State'
 end
-message 46, 'MobX', :replayer => :devtools do
+message 46, 'MobX', :replayer => :devtools, :pipeline => 'd' do
   string 'Type'
   string 'Payload'
 end
-message 47, 'NgRx', :replayer => :devtools do
+message 47, 'NgRx', :replayer => :devtools, :pipeline => 'd' do
   string 'Action'
   string 'State'
   uint 'Duration'
 end
-message 48, 'GraphQLDeprecated', :replayer => :devtools do
+message 48, 'GraphQLDeprecated', :replayer => :devtools, :pipeline => 'd' do
   string 'OperationKind'
   string 'OperationName'
   string 'Variables'
@@ -334,11 +334,11 @@ message 61, 'SetCSSDataURLBased', :pipeline => 'a' do
   string 'Data'
   string 'BaseURL'
 end
-message 63, 'TechnicalInfo', :replayer => false do
+message 63, 'TechnicalInfo', :replayer => false, :pipeline => 'b' do
   string 'Type'
   string 'Value'
 end
-message 64, 'CustomIssue', :replayer => false do
+message 64, 'CustomIssue', :replayer => false, :pipeline => 'b' do
   string 'Name'
   string 'Payload'
 end
@@ -404,13 +404,13 @@ message 77, 'AdoptedSSRemoveOwner' do
   uint 'SheetID'
   uint 'ID'
 end
-message 78, 'JSException', :replayer => false do
+message 78, 'JSException', :replayer => false, :pipeline => 'b' do
   string 'Name'
   string 'Message'
   string 'Payload'
   string 'Metadata'
 end
-message 79, 'Zustand', :replayer => :devtools do
+message 79, 'Zustand', :replayer => :devtools, :pipeline => 'd' do
   string 'Mutation'
   string 'State'
 end
@@ -424,7 +424,13 @@ message 81, 'BatchMetadata' do
   string 'Location'
 end
 
-message 83, 'NetworkRequest', :replayer => :devtools do
+# since tracker 3.6.0
+message 82, 'PartitionedMessage', :replayer => false, :pipeline => 'b' do
+  uint 'PartNo'
+  uint 'PartTotal'
+end
+
+message 83, 'NetworkRequest', :replayer => :devtools, :pipeline => 'd' do
   string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
   string 'Method'
   string 'URL'
@@ -436,7 +442,7 @@ message 83, 'NetworkRequest', :replayer => :devtools do
   uint 'TransferredBodySize'
 end
 
-message 84, 'WSChannel', :replayer => :devtools do
+message 84, 'WSChannel', :replayer => :devtools, :pipeline => 'd' do
     string 'ChType'
     string 'ChannelName'
     string 'Data'
@@ -445,7 +451,7 @@ message 84, 'WSChannel', :replayer => :devtools do
     string 'MessageType'
 end
 
-message 85, 'ResourceTiming', :replayer => :devtools do
+message 85, 'ResourceTiming', :replayer => :devtools, :pipeline => 'd' do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
@@ -465,13 +471,13 @@ message 85, 'ResourceTiming', :replayer => :devtools do
   uint 'Stalled'
 end
 
-message 87, 'Incident', :replayer => :devtools do
+message 87, 'Incident', :replayer => :devtools, :pipeline => 'd' do
   string 'Label'
   int 'StartTime'
   int 'EndTime'
 end
 
-message 89, 'LongAnimationTask', :replayer => :devtools do
+message 89, 'LongAnimationTask', :replayer => :devtools, :pipeline => 'd' do
     string 'Name'
     int 'Duration'
     int 'BlockingDuration'
@@ -482,7 +488,7 @@ end
 
 # 90-111 reserved iOS
 
-message 112, 'InputChange', :replayer => false do
+message 112, 'InputChange', :replayer => false, :pipeline => 'b' do
     uint 'ID'
     string 'Value'
     boolean 'ValueMasked'
@@ -501,12 +507,12 @@ message 114, 'MouseThrashing' do
     uint 'Timestamp'
 end
 
-message 115, 'UnbindNodes', :replayer => false do
+message 115, 'UnbindNodes', :replayer => false, :pipeline => 'b' do
     uint 'TotalRemovedPercent'
 end
 
 #deprecated during 1.23.0 release
-message 116, 'ResourceTimingDeprecated', :replayer => :devtools do
+message 116, 'ResourceTimingDeprecated', :replayer => :devtools, :pipeline => 'd' do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
@@ -532,11 +538,11 @@ message 119, 'CanvasNode' do
     uint 'Timestamp'
 end
 
-message 120, 'TagTrigger', :replayer => :devtools do
+message 120, 'TagTrigger', :replayer => :devtools, :pipeline => 'd' do
     int 'TagId'
 end
 
-message 121, 'Redux', :replayer => :devtools do
+message 121, 'Redux', :replayer => :devtools, :pipeline => 'd' do
   string 'Action'
   string 'State'
   uint 'Duration'
@@ -550,7 +556,7 @@ message 122, 'SetPageLocation' do
   string 'DocumentTitle'
 end
 
-message 123, 'GraphQL', :replayer => :devtools do
+message 123, 'GraphQL', :replayer => :devtools, :pipeline => 'd' do
   string 'OperationKind'
   string 'OperationName'
   string 'Variables'
@@ -558,7 +564,7 @@ message 123, 'GraphQL', :replayer => :devtools do
   uint 'Duration'
 end
 
-message 124, 'WebVitals', :replayer => false do
+message 124, 'WebVitals', :replayer => false, :pipeline => 'b' do
     string 'Name'
     string 'Value'
 end

@@ -3,7 +3,7 @@ import { MType } from './raw.gen';
 import TrackerBinaryReader from './TrackerBinaryReader.gen';
 import rewriteMessage from './rewriter/rewriteMessage';
 
-export type BatchKind = 'player' | 'assets';
+export type BatchKind = 'player' | 'assets' | 'devtools' | 'analytics';
 
 /**
  * Reads raw tracker batches (v2 protocol format) and produces
@@ -31,7 +31,8 @@ export default class TrackerReader {
     const reader = new TrackerBinaryReader(data);
 
     const version = this.peekBatchVersion(data);
-    const kind: BatchKind = version === 3 ? 'assets' : 'player';
+    const kindMap: Record<number, BatchKind> = { 3: 'assets', 4: 'devtools', 5: 'analytics' };
+    const kind: BatchKind = kindMap[version] ?? 'player';
 
     const messages: PlayerMsg[] = [];
 

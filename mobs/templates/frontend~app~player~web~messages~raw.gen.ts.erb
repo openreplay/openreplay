@@ -18,3 +18,5 @@ export interface Raw<%= msg.name.snake_case.pascal_case %> {
 export type RawMessage = <%= $messages.select { |msg| msg.replayer != false  }.map { |msg| "Raw#{msg.name.snake_case.pascal_case}" }.join " | " %>;
 
 export const MAX_KNOWN_TP = <%= $messages.select { |msg| msg.replayer != false }.map(&:id).max %>;
+
+export const VALID_TP_SET: ReadonlySet<number> = new Set([<%= $messages.select { |msg| msg.replayer != false }.map(&:id).join(', ') %>]);

@@ -1,6 +1,6 @@
 import type Message from '../common/messages.gen.js'
 import * as Messages from '../common/messages.gen.js'
-import { ASSET_MESSAGES } from '../common/messages.gen.js'
+import { ASSET_MESSAGES, DEVTOOLS_MESSAGES, ANALYTICS_MESSAGES } from '../common/messages.gen.js'
 import type { DataType } from '../common/interaction.js'
 import MessageEncoder from './MessageEncoder.gen.js'
 
@@ -16,7 +16,11 @@ export default class BatchWriter {
   private prepared = false
   private checkpoints: number[] = []
   private assetMessages: Message[] = []
+  private devtoolsMessages: Message[] = []
+  private analyticsMessages: Message[] = []
   private firstAssetIndex = 0
+  private firstDevtoolsIndex = 0
+  private firstAnalyticsIndex = 0
   private protocolVersion = 1
 
   constructor(
@@ -113,13 +117,25 @@ export default class BatchWriter {
     if (message[0] === Messages.Type.SetPageLocation) {
       this.url = message[1]
     }
-    if (this.protocolVersion === 2 && ASSET_MESSAGES.has(message[0])) {
-      if (this.assetMessages.length === 0) {
-        this.firstAssetIndex = this.nextIndex
+    if (this.protocolVersion === 2) {
+      if (ASSET_MESSAGES.has(message[0])) {
+        if (this.assetMessages.length === 0) this.firstAssetIndex = this.nextIndex
+        this.assetMessages.push(message)
+        this.nextIndex++
+        return
       }
-      this.assetMessages.push(message)
-      this.nextIndex++
-      return
+      if (DEVTOOLS_MESSAGES.has(message[0])) {
+        if (this.devtoolsMessages.length === 0) this.firstDevtoolsIndex = this.nextIndex
+        this.devtoolsMessages.push(message)
+        this.nextIndex++
+        return
+      }
+      if (ANALYTICS_MESSAGES.has(message[0])) {
+        if (this.analyticsMessages.length === 0) this.firstAnalyticsIndex = this.nextIndex
+        this.analyticsMessages.push(message)
+        this.nextIndex++
+        return
+      }
     }
     // Lazily write batch header on first real message
     this.prepare()
@@ -147,15 +163,16 @@ export default class BatchWriter {
   finaliseBatch(skipCompression = false) {
     const hasRegular = this.prepared && !this.isEmpty
     const hasAssets = this.assetMessages.length > 0
+    const hasDevtools = this.devtoolsMessages.length > 0
+    const hasAnalytics = this.analyticsMessages.length > 0
 
-    if (!hasRegular && !hasAssets) {
+    if (!hasRegular && !hasAssets && !hasDevtools && !hasAnalytics) {
       return
     }
 
-    // Capture header info for asset batch before flushing
-    const assetHeaderTimestamp = this.timestamp
-    const assetHeaderUrl = this.url
-    const assetFirstIndex = this.firstAssetIndex
+    // Capture header info before flushing
+    const headerTimestamp = this.timestamp
+    const headerUrl = this.url
 
     if (hasRegular) {
       const batch = this.encoder.flush()
@@ -168,7 +185,7 @@ export default class BatchWriter {
     }
 
     if (hasAssets) {
-      const assetBatch = this.buildAssetBatch(assetFirstIndex, assetHeaderTimestamp, assetHeaderUrl)
+      const assetBatch = this.buildSeparateBatch(3, this.firstAssetIndex, headerTimestamp, headerUrl, this.assetMessages)
       if (this.localDebug && this.onLocalSave) {
         this.onLocalSave(`assets-${Date.now()}`, assetBatch.slice())
       }
@@ -176,11 +193,29 @@ export default class BatchWriter {
       this.assetMessages.length = 0
     }
 
+    if (hasDevtools) {
+      const devtoolsBatch = this.buildSeparateBatch(4, this.firstDevtoolsIndex, headerTimestamp, headerUrl, this.devtoolsMessages)
+      if (this.localDebug && this.onLocalSave) {
+        this.onLocalSave(`devtools-${Date.now()}`, devtoolsBatch.slice())
+      }
+      this.onBatch(devtoolsBatch, skipCompression, 'devtools')
+      this.devtoolsMessages.length = 0
+    }
+
+    if (hasAnalytics) {
+      const analyticsBatch = this.buildSeparateBatch(5, this.firstAnalyticsIndex, headerTimestamp, headerUrl, this.analyticsMessages)
+      if (this.localDebug && this.onLocalSave) {
+        this.onLocalSave(`analytics-${Date.now()}`, analyticsBatch.slice())
+      }
+      this.onBatch(analyticsBatch, skipCompression, 'analytics')
+      this.analyticsMessages.length = 0
+    }
+
     this.prepared = false
   }
 
 
-  private buildAssetBatch(firstIndex: number, headerTimestamp: number, headerUrl: string): Uint8Array {
+  private buildSeparateBatch(version: number, firstIndex: number, headerTimestamp: number, headerUrl: string, messages: Message[]): Uint8Array {
     const encoder = new MessageEncoder(this.beaconSizeLimit)
     const sizeBuffer = new Uint8Array(SIZE_BYTES)
 
@@ -198,10 +233,9 @@ export default class BatchWriter {
       encoder.checkpoint()
     }
 
-    // BatchMetadata with version=3 for asset batches (no size prefix)
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
-      3,
+      version,
       this.pageNo,
       firstIndex,
       headerTimestamp,
@@ -210,12 +244,10 @@ export default class BatchWriter {
     encoder.uint(batchMetadata[0])
     encoder.encode(batchMetadata as Message)
 
-    // Timestamp + TabData header (with size prefix)
     writeWithSize([Messages.Type.Timestamp, headerTimestamp] as Message)
     writeWithSize([Messages.Type.TabData, this.tabId] as Message)
 
-    // Asset messages (preserving original order)
-    for (const msg of this.assetMessages) {
+    for (const msg of messages) {
       writeWithSize(msg)
     }
 
@@ -226,6 +258,8 @@ export default class BatchWriter {
     this.encoder.reset()
     this.checkpoints.length = 0
     this.assetMessages.length = 0
+    this.devtoolsMessages.length = 0
+    this.analyticsMessages.length = 0
     this.prepared = false
   }
 }

@@ -1,7 +1,7 @@
 import RawMessageReader from './RawMessageReader.gen';
 import type { Message } from './message.gen';
 import type { RawMessage } from './raw.gen';
-import { MType, MAX_KNOWN_TP } from './raw.gen';
+import { MType, VALID_TP_SET } from './raw.gen';
 import rewriteMessage from './rewriter/rewriteMessage';
 
 // TODO: composition instead of inheritance
@@ -13,6 +13,8 @@ export default class MFileReader extends RawMessageReader {
 
   public lastIndex: number = 0;
 
+  private hasIndexes: boolean | null = null;
+
   constructor(
     data: Uint8Array,
     private startTime?: number,
@@ -23,23 +25,38 @@ export default class MFileReader extends RawMessageReader {
   }
 
   /**
-   * Try to detect and consume an 8-byte LE index before the next message.
-   * Peek ahead: if skipping 8 bytes lands on a valid message type byte,
-   * those 8 bytes are an index. Otherwise, no index is present.
+   * Detect once whether the data has 8-byte LE indexes before each message.
+   * Check: if buf[0] is NOT a valid tp but buf[8] IS, we have indexes.
+   * If buf[0] IS a valid tp, no indexes.
    */
-  private tryReadIndex(): boolean {
-    if (this.p + 9 > this.buf.length) return false;
-    const tpAfterIndex = this.buf[this.p + 8];
-    if (tpAfterIndex <= MAX_KNOWN_TP) {
+  private detectIndexes(): boolean {
+    if (this.buf.length < 9) return false;
+    const firstByte = this.buf[this.p];
+    const byteAfterIndex = this.buf[this.p + 8];
+    // If current byte is not a valid tp, the data must start with an index
+    if (!VALID_TP_SET.has(firstByte)) return true;
+    // If current byte IS a valid tp but byte[8] is also valid,
+    // disambiguate: a real index would be a large LE uint64 (> MAX_KNOWN_TP)
+    if (VALID_TP_SET.has(byteAfterIndex)) {
       let id = 0;
       for (let i = 0; i < 8; i++) {
         id += this.buf[this.p + i] * 2 ** (8 * i);
       }
-      this.lastIndex = id;
-      this.p += 8;
-    } else {
-      this.lastIndex++;
+      // Real indexes are large (typically > 2^32); a small value means
+      // buf[0] is the tp and the "index" was just message payload
+      return id > 123;
     }
+    return false;
+  }
+
+  private readIndex(): boolean {
+    if (this.p + 8 > this.buf.length) return false;
+    let id = 0;
+    for (let i = 0; i < 8; i++) {
+      id += this.buf[this.p + i] * 2 ** (8 * i);
+    }
+    this.lastIndex = id;
+    this.p += 8;
     return true;
   }
 
@@ -52,7 +69,12 @@ export default class MFileReader extends RawMessageReader {
    * */
   private readRawMessage(): RawMessage | null {
     try {
-      if (!this.noIndexes && !this.tryReadIndex()) return null;
+      if (!this.noIndexes) {
+        if (this.hasIndexes === null) {
+          this.hasIndexes = this.detectIndexes();
+        }
+        if (this.hasIndexes && !this.readIndex()) return null;
+      }
       return super.readMessage();
     } catch (e) {
       this.logger.error('Read message error:', e);
