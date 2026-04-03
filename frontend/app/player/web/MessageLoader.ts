@@ -51,6 +51,7 @@ export default class MessageLoader {
    * V3 = 7x 0xff + 0xfd (new or old tracker without indexes)
    */
   checkProtoFormat = (binary: Uint8Array) => {
+    console.debug('Checking protocol format from header', binary.slice(0, 24).join(' '));
     const isV2 =
       binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
     if (isV2) return 2;

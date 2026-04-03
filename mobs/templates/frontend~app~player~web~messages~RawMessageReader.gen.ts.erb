@@ -30,6 +30,11 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 <% end %>
     default:
+      console.debug(
+        `Unrecognized tp=${tp}, msg started at ${p}, pointer now at ${this.p}, buf length ${this.buf.length}`,
+        '\n250 bytes before msg start:\n', this.buf.slice(Math.max(0, p - 250), p).join(' '),
+        '\n250 bytes from msg start:\n', this.buf.slice(p, p + 250).join(' '),
+      )
       throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
     }
   }

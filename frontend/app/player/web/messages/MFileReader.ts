@@ -1,7 +1,7 @@
 import RawMessageReader from './RawMessageReader.gen';
 import type { Message } from './message.gen';
 import type { RawMessage } from './raw.gen';
-import { MType } from './raw.gen';
+import { MType, MAX_KNOWN_TP } from './raw.gen';
 import rewriteMessage from './rewriter/rewriteMessage';
 
 // TODO: composition instead of inheritance
@@ -23,21 +23,23 @@ export default class MFileReader extends RawMessageReader {
   }
 
   /**
-   * typically index is uint64 and is incrementing in file
-   * if not = bad
-   * */
+   * Try to detect and consume an 8-byte LE index before the next message.
+   * Peek ahead: if skipping 8 bytes lands on a valid message type byte,
+   * those 8 bytes are an index. Otherwise, no index is present.
+   */
   private tryReadIndex(): boolean {
-    if (this.p + 8 > this.buf.length) return false;
-    let id = 0;
-    for (let i = 0; i < 8; i++) {
-      id += this.buf[this.p + i] * 2 ** (8 * i);
-    }
-    if (id > this.lastIndex) {
+    if (this.p + 9 > this.buf.length) return false;
+    const tpAfterIndex = this.buf[this.p + 8];
+    if (tpAfterIndex <= MAX_KNOWN_TP) {
+      let id = 0;
+      for (let i = 0; i < 8; i++) {
+        id += this.buf[this.p + i] * 2 ** (8 * i);
+      }
       this.lastIndex = id;
       this.p += 8;
-      return true;
+    } else {
+      this.lastIndex++;
     }
-    this.lastIndex++;
     return true;
   }
 
