@@ -209,7 +209,8 @@ const Router: React.FC = () => {
     location.pathname.includes('/assist/') ||
     location.pathname.includes('multiview') ||
     location.pathname.includes('/view-spot/') ||
-    location.pathname.includes('/spots/');
+    location.pathname.includes('/spots/') ||
+    location.pathname.includes('/mcp/authorize');
   if (isIframe) {
     return (
       <IFrameRoutes isJwt={isJwt} isLoggedIn={isLoggedIn} loading={loading} />

@@ -49,6 +49,7 @@ const components: any = {
     () => import('Components/DataManagement/Segments/SegmentPage'),
   ),
   TagsPage: lazy(() => import('Components/DataManagement/Tags/index')),
+  McpAuthorize: lazy(() => import('Components/McpAuthorize/McpAuthorize')),
 };
 
 const enhancedComponents: any = {
@@ -272,6 +273,10 @@ function PrivateRoutes() {
         <Route path={SPOT_PATH} element={<enhancedComponents.Spot />} />
 
         <Route path="/integrations/*" element={<IntegrationsRedirect />} />
+        <Route
+          path={routes.mcpAuthorize()}
+          element={<components.McpAuthorize />}
+        />
 
         {/* DASHBOARD and Metrics */}
         <Route
