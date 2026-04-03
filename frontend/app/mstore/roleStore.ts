@@ -58,10 +58,10 @@ export default class UserStore {
     return this.createRole(role);
   };
 
-  deleteRole = async (role: Role): Promise<void> => {
+  deleteRole = async (roleId: number): Promise<void> => {
     this.toggleLoading(true);
     try {
-      const { data } = await userService.deleteRole(role.roleId);
+      const { data } = await userService.deleteRole(String(roleId));
       this.setRoles(data.map((role: any) => new Role().fromJson(role)));
     } catch (e) {
       console.error(e);
