@@ -1214,7 +1214,7 @@ export function registerInternalTools(server: McpServer) {
       }
 
       const authCode = generateAuthCode();
-      const authorizeUrl = `${backendUrl}/v1/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
+      const authorizeUrl = `${backendUrl}/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
 
       console.error(`[SERVER] login_browser: opening browser at ${authorizeUrl}`);
 
