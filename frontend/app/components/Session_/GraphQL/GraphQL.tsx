@@ -13,7 +13,7 @@ import { CloseButton, Input, NoContent, SlideModal } from 'UI';
 import BottomBlock from '../BottomBlock';
 import GQLDetails from './GQLDetails';
 import { useTranslation } from 'react-i18next';
-import { IWebPlayerStore, IIOSPlayerStore } from 'App/player/create';
+import { IWebPlayerStore, IIOSPlayerStore } from 'Player/create';
 
 export function renderStart(r) {
   return (

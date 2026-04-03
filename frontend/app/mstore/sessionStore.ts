@@ -10,7 +10,7 @@ import {
   getSessionFilter,
   setSessionFilter,
 } from 'App/utils';
-import { loadFile } from 'App/player/web/network/loadFiles';
+import { loadFile } from 'Player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { filterMap } from 'App/mstore/searchStore';
 import { getDateRangeFromValue } from 'App/dateRange';

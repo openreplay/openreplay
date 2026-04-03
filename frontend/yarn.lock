@@ -2405,6 +2405,40 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@npmcli/agent@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "@npmcli/agent@npm:4.0.0"
+  dependencies:
+    agent-base: "npm:^7.1.0"
+    http-proxy-agent: "npm:^7.0.0"
+    https-proxy-agent: "npm:^7.0.1"
+    lru-cache: "npm:^11.2.1"
+    socks-proxy-agent: "npm:^8.0.3"
+  checksum: 10c1/2ffaf5aae7c802ab802ba6428e8a0c7066c63bcda37d8881d0442aedca2c4f463aaad274745bf16bc342de816cb8bafaa1cdc61dc8c612d85604d255501b2add
+  languageName: node
+  linkType: hard
+
+"@npmcli/fs@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@npmcli/fs@npm:5.0.0"
+  dependencies:
+    semver: "npm:^7.3.5"
+  checksum: 10c1/f6f8140e1eb9f204018d13745369ac039e7c41f6d9d59c3889bfe67d132b2105aa12fb16fcb367c670a96d8bd23da0f7faca626619f4ad83df91eca34262e46f
+  languageName: node
+  linkType: hard
+
+"@openreplay/player@portal:../player::locator=openreplay%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@openreplay/player@portal:../player::locator=openreplay%40workspace%3A."
+  dependencies:
+    fflate: "npm:^0.8.2"
+    fzstd: "npm:^0.1.1"
+    js-untar: "npm:^2.0.0"
+    socket.io-client: "npm:^4.8.3"
+    syncod: "npm:^0.0.1"
+  languageName: node
+  linkType: soft
+
 "@openreplay/sourcemap-uploader@npm:^3.0.13":
   version: 3.0.13
   resolution: "@openreplay/sourcemap-uploader@npm:3.0.13"
@@ -12458,6 +12492,7 @@ __metadata:
     "@jest/globals": "npm:^29.7.0"
     "@medv/finder": "npm:^4.0.2"
     "@neodrag/react": "npm:^2.3.1"
+    "@openreplay/player": "portal:../player"
     "@openreplay/sourcemap-uploader": "npm:^3.0.13"
     "@parcel/optimizer-svgo": "npm:^2.16.4"
     "@parcel/transformer-inline-string": "npm:2.16.4"

@@ -1,0 +1,17 @@
+{
+  "name": "@openreplay/player",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "fzstd": "^0.1.1",
+    "js-untar": "^2.0.0",
+    "socket.io-client": "^4.8.3",
+    "syncod": "^0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

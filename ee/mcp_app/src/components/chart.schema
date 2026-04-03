@@ -1,0 +1,297 @@
+OpenReplay Cards API Reference
+================================
+
+All chart/analytics requests use the same endpoint:
+  POST /v2/api/{siteId}/cards/try
+
+Filters endpoint:
+  GET /api/pa/{siteId}/filters
+
+
+================================================================================
+COMMON PAYLOAD STRUCTURE
+================================================================================
+
+Every /cards/try request shares this base shape:
+
+{
+  "startTimestamp": <epoch_ms>,
+  "endTimestamp": <epoch_ms>,
+  "density": 24,
+  "metricOf": "<varies>",
+  "metricValue": [],
+  "metricType": "<varies>",
+  "metricFormat": "sessionCount",
+  "viewType": "<varies>",
+  "name": "<chart name>",
+  "series": [{
+    "name": "Series 1",
+    "filter": {
+      "filters": [<filter_objects>],
+      "excludes": [],
+      "eventsOrder": "then" | "and",
+      "startTimestamp": 0,
+      "endTimestamp": 0,
+      "page": 1,
+      "limit": 10
+    }
+  }],
+  "page": 1,
+  "limit": 20,
+  "sortOrder": "desc"
+}
+
+Key fields:
+- metricType: "timeseries" | "pathAnalysis" | "webVital" | "table" | "funnel"
+- viewType: "lineChart" | "chart" | "table"
+- eventsOrder: "then" for timeseries/journey, "and" for table queries
+- filters: array of filter objects (see FILTER STRUCTURE below)
+
+
+================================================================================
+1. TIMESERIES (session count over time)
+================================================================================
+
+metricType: "timeseries"
+metricOf:   "sessionCount"
+viewType:   "lineChart"
+
+Payload (unique fields):
+  eventsOrder: "then"
+  filters: []  (or with event/filter objects)
+
+Response:
+{
+  "data": [
+    { "Series 1": 16, "timestamp": 1771335000000 },
+    { "Series 1": 21, "timestamp": 1771338600000 },
+    ...
+  ]
+}
+
+Each entry: { "<series_name>": <count>, "timestamp": <epoch_ms> }
+
+
+================================================================================
+2. TIMESERIES WITH FILTERS (e.g. sessions with 4xx/5xx requests)
+================================================================================
+
+Same as timeseries, but with event filters in series[0].filter.filters.
+
+Example — sessions with HTTP status >= 400:
+  filters: [{
+    "value": [], "operator": "is", "dataType": "string",
+    "propertyOrder": "and", "isEvent": true,
+    "name": "REQUEST", "autoCaptured": true,
+    "filters": [{
+      "value": ["400"], "operator": ">=", "dataType": "number",
+      "propertyOrder": "and", "filters": [],
+      "isEvent": false, "name": "status", "autoCaptured": true
+    }]
+  }]
+
+Response: same as timeseries
+
+
+================================================================================
+3. PATH ANALYSIS (user journey / Sankey)
+================================================================================
+
+metricType: "pathAnalysis"
+metricOf:   "sessionCount"
+viewType:   "lineChart"
+
+Extra fields:
+  "stepsAfter": 5,
+  "hideExcess": true,
+  "startType": "start",
+  "startPoint": [{
+    "value": [], "operator": "is", "dataType": "string",
+    "propertyOrder": "and", "filters": [],
+    "isEvent": true, "name": "LOCATION", "autoCaptured": true
+  }],
+  "excludes": []
+
+Response:
+{
+  "data": {
+    "nodes": [
+      { "depth": 0, "name": "/page/path/", "eventType": "LOCATION", "id": 0, "startingNode": true },
+      { "depth": 1, "name": "", "eventType": "DROP", "id": 1, "startingNode": false },
+      { "depth": 1, "name": "", "eventType": "OTHER", "id": 2, "startingNode": false },
+      { "depth": 1, "name": "/next/page/", "eventType": "LOCATION", "id": 3, "startingNode": false },
+      ...
+    ],
+    "links": [
+      { "eventType": "LOCATION", "sessionsCount": 26696, "value": 99, "source": 0, "target": 1 },
+      { "eventType": "LOCATION", "sessionsCount": 7, "value": 0, "source": 0, "target": 3 },
+      ...
+    ]
+  }
+}
+
+Node eventTypes: "LOCATION" (page), "DROP" (user left), "OTHER" (grouped minor paths)
+Links: source/target are node IDs, value is percentage
+
+
+================================================================================
+4. WEB VITALS
+================================================================================
+
+metricType: "webVital"
+metricOf:   "webVitalUrl"
+viewType:   "chart"
+
+REQUIRED: must include LOCATION event filter in series[0].filter.filters:
+  {
+    "value": [], "operator": "is", "dataType": "string",
+    "propertyOrder": "and", "filters": [],
+    "isEvent": true, "name": "LOCATION", "autoCaptured": true
+  }
+
+Response:
+{
+  "data": {
+    "domBuildingTime": <Stats>,
+    "ttfb": <Stats>,
+    "speedIndex": <Stats>,
+    "firstContentfulPaintTime": <Stats>,
+    "lcp": <Stats>,
+    "cls": <Stats>
+  }
+}
+
+Stats shape:
+{
+  "Min": 15, "MinStatus": "good",
+  "Avg": 761.4, "AvgStatus": "bad",
+  "Max": 29058, "MaxStatus": "bad",
+  "P50": 250.5, "P50Status": "good",
+  "P75": 549, "P75Status": "medium",
+  "P90": 1337.7, "P90Status": "bad",
+  "good": [0, 300],
+  "medium": [301, 600],
+  "bad": [601]
+}
+
+Status values: "good" | "medium" | "bad"
+Units: milliseconds (except CLS which is unitless, typically < 1)
+
+
+================================================================================
+5. TABLE DATA (top pages, browsers, countries, requests, OS, devices)
+================================================================================
+
+metricType: "table"
+viewType:   "table"
+eventsOrder: "and"
+
+metricOf values:
+  "LOCATION"     — top visited pages
+  "REQUEST"      — top network requests
+  "userBrowser"  — top browsers
+  "userCountry"  — top countries (ISO 2-letter codes)
+  "userOs"       — top operating systems
+  "userDevice"   — top devices
+
+Response:
+{
+  "data": {
+    "total": 136,       // unique items count
+    "count": 764,       // total sessions
+    "values": [
+      { "name": "/en/home/", "total": 57 },
+      { "name": "/en/deployment/", "total": 53 },
+      ...
+    ]
+  }
+}
+
+
+================================================================================
+6. FUNNEL (step-by-step conversion)
+================================================================================
+
+metricType: "funnel"
+metricOf:   "sessionCount"
+viewType:   "chart"
+eventsOrder: "then"
+
+Steps are defined as LOCATION event filters in series[0].filter.filters[]:
+  Each step: {
+    "value": ["/path"], "operator": "is", "dataType": "string",
+    "propertyOrder": "and", "filters": [],
+    "isEvent": true, "name": "LOCATION", "autoCaptured": true
+  }
+
+Additional user filters are appended after the step filters.
+
+Response:
+{
+  "data": {
+    "stages": [
+      {
+        "value": ["/pricing"],
+        "type": "LOCATION",
+        "operator": "is",
+        "dropPct": null,
+        "count": 364,
+        "propertyOrder": "and"
+      },
+      {
+        "value": ["/checkout"],
+        "type": "LOCATION",
+        "operator": "is",
+        "dropPct": 85.2,
+        "count": 54,
+        "propertyOrder": "and"
+      }
+    ]
+  }
+}
+
+- dropPct: null for first step, percentage dropped from previous step for subsequent steps
+- count: number of sessions that reached this step
+- Minimum 2 steps required
+
+
+================================================================================
+FILTER STRUCTURE
+================================================================================
+
+GET /api/pa/{siteId}/filters returns available filters:
+{
+  "data": {
+    "<categoryName>": {
+      "displayName": "Category Name",
+      "total": <number>,
+      "list": [<Filter>, ...]
+    }
+  }
+}
+
+Filter shape:
+{
+  "name": "string",
+  "displayName": "string",
+  "autoCaptured": boolean,
+  "possibleTypes": ["string"],
+  "possibleValues": ["string"],
+  "id": "string",
+  "dataType": "string"
+}
+
+Filter object used in series[0].filter.filters:
+{
+  "name": "<filter_name>",
+  "value": ["<values>"],
+  "operator": "is" | "isNot" | "contains" | ">=" | ...,
+  "dataType": "string" | "number",
+  "propertyOrder": "and",
+  "filters": [<sub_filters>],
+  "isEvent": true | false,
+  "autoCaptured": true | false
+}
+
+Event filters (isEvent: true): LOCATION, REQUEST, CLICK, INPUT, CUSTOM, ERROR
+User attribute filters (isEvent: false): userBrowser, userCountry, userOs, userDevice, userId, etc.

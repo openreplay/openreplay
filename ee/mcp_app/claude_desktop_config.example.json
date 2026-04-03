@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "openreplay": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/openreplay-mcp-app/node_modules/.bin/tsx",
+        "/ABSOLUTE/PATH/TO/openreplay-mcp-app/server.ts"
+      ],
+      "env": {
+        "OPENREPLAY_BACKEND_URL": "https://your-openreplay-instance.com"
+      }
+    }
+  }
+}

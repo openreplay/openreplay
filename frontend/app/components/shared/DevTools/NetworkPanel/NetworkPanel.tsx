@@ -1,4 +1,5 @@
-import { WsChannel } from '@/player/web/messages';
+import { IResourceRequest, IResourceTiming } from 'Player';
+import { WsChannel } from 'Player/web/messages';
 import { Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -9,7 +10,6 @@ import {
   PlayerContext,
 } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
-import { IResourceRequest, IResourceTiming } from 'App/player';
 
 import { NetworkPanelComp } from './NetworkPanelComp';
 

@@ -1,0 +1,41 @@
+{
+  "name": "openreplay-mcp-app",
+  "version": "1.0.0",
+  "description": "OpenReplay MCP App - View charts and session replays from your OpenReplay instance",
+  "main": "server.ts",
+  "scripts": {
+    "build": "vite build",
+    "serve": "tsx server.ts",
+    "dev": "npm run build && npm run serve"
+  },
+  "keywords": [
+    "mcp",
+    "openreplay",
+    "charts",
+    "session-replay"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.3.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "echarts": "^6.0.0",
+    "fflate": "^0.8.2",
+    "fzstd": "^0.1.1",
+    "zod": "^4.3.6",
+    "@openreplay/player": "file:../../player"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}

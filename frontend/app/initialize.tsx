@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { configurePlayer } from 'Player/config';
 import {
   App,
   ConfigProvider,
@@ -11,6 +12,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { createRoot } from 'react-dom/client';
 
+import logger from 'App/logger';
 import { BrowserRouter, LocationSync } from 'App/routing';
 import { MountPoint, Notification } from 'UI';
 
@@ -21,9 +23,16 @@ import AnimatedSVG from './components/shared/AnimatedSVG';
 import { ICONS } from './components/shared/AnimatedSVG/AnimatedSVG';
 import './i18n';
 import './init';
-import { RootStore, StoreProvider } from './mstore';
+import { RootStore, StoreProvider, client, userStore } from './mstore';
 import './styles/global.css';
 import './styles/index.css';
+
+configurePlayer({
+  logger,
+  efsClient: client,
+  getUserName: () => userStore.account?.name ?? 'Agent',
+  getApiEndpoint: () => (ENV as any).API_EDP || window.location.origin,
+});
 
 (window as any).env = (window as any).env ?? {};
 (window as any).env.PRODUCTION = ENV.NODE_ENV === 'production';
