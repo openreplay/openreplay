@@ -158,6 +158,7 @@ export const spot = (id = ':spotId', hash?: string | number): string =>
 
 export const highlights = (): string => '/highlights';
 
+export const mcpAuthorize = (): string => '/mcp/authorize';
 export const dataManagement = {
   activity: () => '/data-management/activity',
   userPage: (id = ':userId', hash?: string | number) =>
