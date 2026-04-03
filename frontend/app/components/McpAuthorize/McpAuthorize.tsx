@@ -4,8 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
-import APIClient from 'App/api_client';
-import { useStore } from 'App/mstore';
+import { client, useStore } from 'App/mstore';
 import { sessions, withSiteId } from 'App/routes';
 import { useLocation, useNavigate } from 'App/routing';
 
@@ -26,7 +25,6 @@ function McpAuthorize() {
   };
   const handleAuthorize = async () => {
     try {
-      const client = new APIClient();
       const response = await client.post('/v1/mcp/authorize', {
         state,
         clientId,
