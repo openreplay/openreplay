@@ -22,7 +22,7 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "@openreplay/player/*": ["../player/src/*"]
+      "@openreplay/player/*": ["../../player/src/*"]
     }
   },
   "include": ["src", "server.ts", "../player/src"],
