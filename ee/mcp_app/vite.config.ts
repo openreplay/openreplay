@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), viteSingleFile()],
   resolve: {
     alias: {
-      '@openreplay/player': path.resolve(__dirname, '../player/src'),
+      '@openreplay/player': path.resolve(__dirname, '../../player/src'),
     },
   },
   build: {
