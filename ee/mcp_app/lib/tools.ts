@@ -1,12 +1,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
+import { exec } from "node:child_process";
 import { z } from "zod";
-import { state, savePersistedState, clearPersistedState } from "./state.js";
-import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties } from "./api.js";
+import { state, savePersistedState, clearPersistedState, generateAuthCode } from "./state.js";
+import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties, pollForAuth } from "./api.js";
 import {
   ConfigureBackendSchema,
   LoginSchema,
   LoginJwtSchema,
+  LoginBrowserSchema,
   FetchChartDataSchema,
   GetSessionReplaySchema,
   GetProjectIdSchema,
@@ -1189,6 +1191,78 @@ export function registerInternalTools(server: McpServer) {
     }
   );
   console.error("[SERVER] login_jwt tool registered");
+
+  // Login via browser (OAuth-style)
+  console.error("[SERVER] Registering login_browser tool...");
+  server.registerTool(
+    "login_browser",
+    {
+      description:
+        "Authenticate by opening a URL in the user's browser. " +
+        "Use this when the user wants to log in without pasting a JWT. " +
+        "Returns a URL the user must open. The tool then waits for approval (up to 5 minutes).",
+      inputSchema: {
+        backendUrl: z.string().optional().describe("OpenReplay backend URL (optional, uses current if already configured)"),
+      },
+    },
+    async (args) => {
+      const parsed = LoginBrowserSchema.parse(args);
+      const backendUrl = parsed.backendUrl || state.backendUrl;
+
+      if (parsed.backendUrl) {
+        state.backendUrl = parsed.backendUrl;
+      }
+
+      const authCode = generateAuthCode();
+      const authorizeUrl = `${backendUrl}/v1/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
+
+      console.error(`[SERVER] login_browser: opening browser at ${authorizeUrl}`);
+
+      // Open the URL in the user's default browser
+      const openCmd = process.platform === "darwin"
+        ? "open"
+        : process.platform === "win32"
+          ? "start"
+          : "xdg-open";
+      exec(`${openCmd} "${authorizeUrl}"`);
+
+      // Poll until the user approves or the request expires
+      const jwt = await pollForAuth(backendUrl, authCode, state.clientId!);
+
+      if (!jwt) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                type: "error",
+                error: "Browser login timed out or was denied. Please try again.",
+                authorizeUrl,
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      state.jwt = jwt;
+      state.userData = { authenticated: true };
+      await savePersistedState();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              type: "auth_success",
+              message: "Successfully authenticated via browser.",
+            }),
+          },
+        ],
+      };
+    }
+  );
+  console.error("[SERVER] login_browser tool registered");
 
   // Fetch chart data
   console.error("[SERVER] Registering fetch_chart_data tool...");

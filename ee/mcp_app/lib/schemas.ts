@@ -13,6 +13,10 @@ export const LoginJwtSchema = z.object({
   jwt: z.string().describe("JWT token for authentication"),
 });
 
+export const LoginBrowserSchema = z.object({
+  backendUrl: z.string().optional().describe("OpenReplay backend URL (optional, uses current if already configured)"),
+});
+
 export const FetchChartDataSchema = z.object({
   endpoint: z.string().describe("API endpoint to fetch chart data from"),
   params: z.looseRecord(z.string(), z.any()).optional().describe("Query parameters"),
