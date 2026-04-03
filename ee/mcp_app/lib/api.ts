@@ -589,6 +589,43 @@ export async function fetchEventProperties(siteId: string) {
   return { events, attributes };
 }
 
+// Poll the backend for browser-based auth approval
+export async function pollForAuth(
+  backendUrl: string,
+  authCode: string,
+  clientId: string,
+  timeoutMs: number = 300_000,
+  intervalMs: number = 3_000,
+): Promise<string | null> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(`${backendUrl}/v1/mcp/auth-status?state=${authCode}&client_id=${clientId}`);
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        console.error(`[SERVER] auth-status returned ${res.status}:`, errorData?.error || res.statusText);
+        return null;
+      }
+
+      const data = await res.json();
+
+      if (data.jwt) {
+        console.error("[SERVER] Browser auth approved");
+        return data.jwt;
+      }
+    } catch (err) {
+      console.error("[SERVER] Poll request failed, retrying...", err);
+    }
+
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  console.error("[SERVER] Browser auth timed out");
+  return null;
+}
+
 // Helper function to resolve project name to ID
 export function getProjectIdByName(projectName: string): string | null {
   const project = state.projects.find(
