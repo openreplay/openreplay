@@ -1,0 +1,470 @@
+/* Shared view component styles */
+
+/* View header — used by all data views */
+.view-header {
+  margin-bottom: 4px;
+}
+
+.view-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--or-text-primary);
+}
+
+.view-title-date {
+  font-size: 0.813rem;
+  font-weight: 400;
+  margin-left: 8px;
+  color: var(--or-text-secondary);
+}
+
+.view-subtitle {
+  font-size: 0.813rem;
+  color: var(--or-text-secondary);
+  margin-bottom: 12px;
+}
+
+/* Bordered card container — wraps charts, tables, grids */
+.view-container {
+  background: var(--or-white);
+  border: 1px solid var(--or-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Chart container styles */
+.chart-container {
+  margin-bottom: 24px;
+  background: var(--or-white);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--or-border);
+}
+
+.chart-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--or-text-primary);
+}
+
+/* Sankey / User Journey styles */
+.sankey-container {
+  background: var(--or-white);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--or-border);
+  max-height: 620px;
+  overflow: auto;
+  min-width: 600px;
+}
+
+.sankey-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--or-text-secondary);
+  text-align: center;
+  padding: 24px;
+}
+
+/* Web Vitals grid */
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.vitals-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.vitals-card--good {
+  background: var(--or-status-good-bg);
+  border-color: color-mix(in srgb, var(--or-status-good) 20%, transparent);
+}
+
+.vitals-card--warning {
+  background: var(--or-status-warning-bg);
+  border-color: color-mix(in srgb, var(--or-status-warning) 20%, transparent);
+}
+
+.vitals-card--bad {
+  background: var(--or-status-bad-bg);
+  border-color: color-mix(in srgb, var(--or-status-bad) 20%, transparent);
+}
+
+.vitals-card-label {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.vitals-card-name {
+  font-size: 0.75rem;
+  color: var(--or-text-secondary);
+}
+
+.vitals-card-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+/* Percentiles detail table */
+.vitals-detail {
+  margin-top: 16px;
+}
+
+.vitals-detail summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--or-text-primary);
+  margin-bottom: 8px;
+}
+
+.vitals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.813rem;
+}
+
+.vitals-table th,
+.vitals-table td {
+  padding: 6px 8px;
+}
+
+.vitals-table th {
+  text-align: right;
+  font-weight: 600;
+  border-bottom: 2px solid var(--or-border);
+  color: var(--or-text-primary);
+}
+
+.vitals-table th:first-child {
+  text-align: left;
+}
+
+.vitals-table td {
+  text-align: right;
+  border-bottom: 1px solid var(--or-border);
+}
+
+.vitals-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: var(--or-text-primary);
+}
+
+/* Table chart / SessionsBy list */
+.table-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background 0.15s;
+}
+
+.table-row:hover {
+  background: rgba(57, 78, 255, 0.04);
+}
+
+[data-theme="dark"] .table-row:hover {
+  background: rgba(81, 162, 255, 0.08);
+}
+
+.table-row-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--or-gray-lightest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.table-row-icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.table-row-initial {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--or-text-secondary);
+}
+
+.table-row-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.table-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.table-row-name {
+  font-size: 0.813rem;
+  font-weight: 500;
+  color: var(--or-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.table-row-count {
+  font-size: 0.813rem;
+  color: var(--or-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.table-row-bar-track {
+  height: 3px;
+  background: var(--or-gray-lightest);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.table-row-bar-fill {
+  height: 100%;
+  background: #394EFF;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.table-chart-footer {
+  font-size: 0.813rem;
+  color: var(--or-text-secondary);
+  margin-top: 8px;
+  padding: 4px 10px;
+}
+
+/* Empty state */
+.view-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: var(--or-text-secondary);
+  text-align: center;
+  padding: 24px;
+}
+
+.view-empty-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--or-text-primary);
+  margin-bottom: 4px;
+}
+
+.view-empty-text {
+  font-size: 0.875rem;
+  color: var(--or-text-secondary);
+}
+
+/* Debug/raw data section */
+.view-debug {
+  margin-top: 20px;
+}
+
+.view-debug summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--or-text-primary);
+  margin-bottom: 8px;
+}
+
+.view-debug pre {
+  background: var(--or-gray-lightest);
+  padding: 16px;
+  border-radius: 8px;
+  overflow: auto;
+  font-size: 0.813rem;
+  color: var(--or-text-primary);
+  border: 1px solid var(--or-border);
+}
+
+/* ── Funnel view (mirrors FunnelWidget/FunnelBar) ── */
+
+.funnel-stages {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Each stage row: index badge + bar section */
+.funnel-stage {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+}
+
+/* Circular step number badge */
+.funnel-index {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--or-border);
+  background: var(--or-gray-lightest);
+  color: var(--or-text-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+  margin-top: 1px;
+}
+
+/* Bar section to the right of the badge */
+.funnel-bar-section {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 6px;
+}
+
+/* Step label text */
+.funnel-label {
+  font-size: 0.813rem;
+  color: var(--or-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+/* Main bar: filled + empty (hatched) side by side */
+.funnel-bar {
+  display: flex;
+  height: 21px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.funnel-bar-filled {
+  height: 100%;
+  background: #394EFF;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  transition: width 0.3s ease;
+  min-width: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+.funnel-bar-pct {
+  font-size: 0.688rem;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.funnel-bar-empty {
+  height: 100%;
+  background: repeating-linear-gradient(
+    325deg,
+    lightgray,
+    lightgray 1px,
+    #FFF1F0 1px,
+    #FFF1F0 6px
+  );
+}
+
+/* Below-bar stats row */
+.funnel-bar-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: var(--or-text-secondary);
+}
+
+.funnel-bar-completed {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.funnel-bar-dropped {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #cc0000;
+}
+
+.funnel-bar-dropped.no-drop {
+  color: var(--or-gray-medium);
+}
+
+/* Summary row */
+.funnel-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--or-border);
+}
+
+.funnel-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.funnel-summary-label {
+  font-weight: 500;
+  color: var(--or-text-primary);
+}
+
+.funnel-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.funnel-tag-good {
+  background: var(--or-status-good-bg, rgba(0, 180, 90, 0.1));
+  color: var(--or-status-good);
+}
+
+.funnel-tag-bad {
+  background: var(--or-status-bad-bg, rgba(204, 0, 0, 0.08));
+  color: var(--or-status-bad);
+}
+
+.funnel-summary-pct {
+  font-size: 0.75rem;
+  color: var(--or-text-secondary);
+}

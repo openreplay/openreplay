@@ -27,8 +27,8 @@
       "UI/*": ["./app/components/ui/*"],
       "UI": ["./app/components/ui"],
       "Shared/*": ["./app/components/shared/*"],
-      "Player/*": ["./app/player/*"],
-      "Player": ["./app/player"],
+      "Player/*": ["../player/src/*"],
+      "Player": ["../player/src"],
       "HOCs": ["./app/components/hocs"],
       "HOCs/*": ["./app/components/hocs/*"],
       "ENV": ["./env.ts"]
@@ -40,6 +40,8 @@
     "app/**/*.tsx",
     "app/**/*.js",
     "app/**/*.jsx",
+    "../player/src",
+    "../player/src/**/*.ts",
     "window.d.ts",
     "cypress/snapshots/sessionStore.test.ts",
     "tests/unit/create.test.ts"
