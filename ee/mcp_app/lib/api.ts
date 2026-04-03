@@ -1,9 +1,24 @@
 import { state } from "./state.js";
 import { resolveCountryValue } from "./countries.js";
 
+function resolveBaseUrl(backendUrl: string): { base: string; isSaas: boolean } {
+  try {
+    const urlObj = new URL(backendUrl);
+    if (urlObj.hostname === 'app.openreplay.com') {
+      urlObj.hostname = 'api.openreplay.com';
+    }
+    const isSaas = urlObj.hostname === 'api.openreplay.com';
+    // Remove trailing slash
+    return { base: urlObj.origin, isSaas };
+  } catch {
+    return { base: backendUrl.replace(/\/$/, ''), isSaas: false };
+  }
+}
+
 // Helper function to make authenticated API requests
 export async function makeApiRequest(endpoint: string, options: RequestInit = {}) {
-  const url = `${state.backendUrl}${endpoint}`;
+  const { base, isSaas } = resolveBaseUrl(state.backendUrl);
+  const url = isSaas ? `${base}${endpoint.replace(/^\/api/, '').replace(/^\/v2\/api/, '/v2')}` : `${base}${endpoint}`;
   const headers = {
     "Accept": "application/json",
     "Content-Type": "application/json",
