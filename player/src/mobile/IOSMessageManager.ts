@@ -2,7 +2,7 @@ import logger from '../logger';
 import { TarFile } from 'js-untar';
 import { FrameSnapshot } from '../common/parseFrames';
 import { getResourceFromNetworkRequest } from '../';
-
+import ListWalker from '../common/ListWalker'
 import type { Store } from '../index';
 import { IMessageManager } from '../player/Animator';
 
@@ -20,6 +20,11 @@ import Lists, {
   INITIAL_STATE as LISTS_INITIAL_STATE,
   State as ListsState,
 } from './IOSLists';
+
+import Screen, {
+  INITIAL_STATE as SCREEN_INITIAL_STATE,
+  State as ScreenState,
+} from '../web/Screen/Screen';
 import { Log } from './types/log';
 
 export const performanceWarnings = [
