@@ -1,0 +1,47 @@
+/* Base styles and resets */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Roboto', 'ArialMT', 'Arial', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-background-primary, var(--background-primary, var(--or-white)));
+  color: var(--color-text-primary, var(--text-primary, var(--or-text-primary)));
+}
+
+code {
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 13px;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Roboto', 'ArialMT', 'Arial', sans-serif;
+  font-weight: 500;
+}
+
+.app-container {
+  width: 100%;
+  min-width: 600px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-primary, var(--background-primary, var(--or-white)));
+}
+
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  background: var(--color-background-primary, var(--background-primary, var(--or-white)));
+}

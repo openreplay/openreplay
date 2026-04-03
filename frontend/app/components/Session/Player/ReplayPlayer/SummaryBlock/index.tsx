@@ -4,8 +4,8 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 
-import { IResourceRequest, IResourceTiming } from 'App/player';
-import { WsChannel } from 'App/player/web/messages';
+import { IResourceRequest, IResourceTiming } from 'Player';
+import { WsChannel } from 'Player/web/messages';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import MDRenderer from 'Shared/MDRenderer/MDRenderer';
 

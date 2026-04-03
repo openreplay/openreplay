@@ -16,7 +16,9 @@
   },
   "scripts": {
     "writeCommitHash": "node ./scripts/getCommitHash/getHash.js",
+    "prestart": "rm -rf .parcel-cache",
     "start": "parcel app/index.html --port 3333 --open",
+    "predev": "rm -rf .parcel-cache",
     "dev": "parcel app/index.html --port 3333 --open",
     "build": "yarn gen:icons && yarn gen:colors && rm -rf public && parcel build app/index.html --dist-dir public --no-source-maps && cp -r app/assets public/assets && yarn writeCommitHash",
     "lint": "eslint --fix app; exit 0",
@@ -40,6 +42,7 @@
     "@medv/finder": "^4.0.2",
     "@neodrag/react": "^2.3.1",
     "@playwright/test": "^1.60.0",
+    "@openreplay/player": "portal:../player",
     "@sentry/browser": "^9.47.1",
     "@svg-maps/world": "^1.0.1",
     "@tanstack/react-query": "^5.100.11",

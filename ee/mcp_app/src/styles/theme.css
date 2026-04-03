@@ -1,0 +1,63 @@
+/* OpenReplay theme variables */
+
+/* Light mode (default) */
+:root {
+  --or-main: rgb(21, 93, 252);
+  --or-teal: #394EFF;
+  --or-teal-dark: #2331A8;
+  --or-teal-light: rgba(57, 78, 255, 0.1);
+  --or-gray-lightest: #f6f6f6;
+  --or-gray-lighter: #f1f1f1;
+  --or-gray-light: #ddd;
+  --or-gray-medium: #888;
+  --or-gray-dark: #666;
+  --or-gray-darkest: #333;
+  --or-white: #fff;
+  --or-black: black;
+  --or-green: #42AE5E;
+  --or-red: #cc0000;
+  --or-red-light: rgb(255, 226, 226);
+  --or-border: #DDDDDD;
+  --or-text-primary: rgba(0,0,0, 0.87);
+  --or-text-secondary: rgba(0,0,0, 0.6);
+  --or-text-disabled: rgba(0,0,0, 0.38);
+
+  /* Status colors */
+  --or-status-good: #22c55e;
+  --or-status-good-bg: rgba(34, 197, 94, 0.1);
+  --or-status-warning: #f59e0b;
+  --or-status-warning-bg: rgba(245, 158, 11, 0.1);
+  --or-status-bad: #ef4444;
+  --or-status-bad-bg: rgba(239, 68, 68, 0.1);
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --or-main: rgb(81, 162, 255);
+  --or-teal: rgb(81, 162, 255);
+  --or-teal-dark: rgb(49, 113, 255);
+  --or-teal-light: rgba(81, 162, 255, 0.1);
+  --or-gray-lightest: rgb(38, 38, 38);
+  --or-gray-lighter: rgb(45, 45, 45);
+  --or-gray-light: rgb(64, 64, 64);
+  --or-gray-medium: rgb(153, 161, 175);
+  --or-gray-dark: rgb(212, 212, 212);
+  --or-gray-darkest: rgb(245, 245, 245);
+  --or-white: rgb(23, 23, 23);
+  --or-black: #fff;
+  --or-green: #42AE5E;
+  --or-red: #ef4444;
+  --or-red-light: rgb(130, 24, 26);
+  --or-border: rgb(64, 64, 64);
+  --or-text-primary: rgb(245, 245, 245);
+  --or-text-secondary: rgb(153, 161, 175);
+  --or-text-disabled: rgba(255, 255, 255, 0.38);
+
+  /* Status colors */
+  --or-status-good: #4ade80;
+  --or-status-good-bg: rgba(74, 222, 128, 0.12);
+  --or-status-warning: #fbbf24;
+  --or-status-warning-bg: rgba(251, 191, 36, 0.12);
+  --or-status-bad: #f87171;
+  --or-status-bad-bg: rgba(248, 113, 113, 0.12);
+}

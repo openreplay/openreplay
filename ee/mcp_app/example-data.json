@@ -1,0 +1,259 @@
+{
+  "description": "Example chart data formats for OpenReplay MCP App",
+  "examples": {
+    "simple_chart": {
+      "description": "Basic chart with multiple series",
+      "data": {
+        "chart": [
+          {
+            "time": "Mon 12:00",
+            "timestamp": 1707652800000,
+            "Sessions": 120,
+            "Users": 85,
+            "Page Views": 450
+          },
+          {
+            "time": "Mon 13:00",
+            "timestamp": 1707656400000,
+            "Sessions": 150,
+            "Users": 105,
+            "Page Views": 520
+          },
+          {
+            "time": "Mon 14:00",
+            "timestamp": 1707660000000,
+            "Sessions": 180,
+            "Users": 125,
+            "Page Views": 610
+          },
+          {
+            "time": "Mon 15:00",
+            "timestamp": 1707663600000,
+            "Sessions": 200,
+            "Users": 145,
+            "Page Views": 720
+          },
+          {
+            "time": "Mon 16:00",
+            "timestamp": 1707667200000,
+            "Sessions": 165,
+            "Users": 115,
+            "Page Views": 590
+          }
+        ],
+        "namesMap": ["Sessions", "Users", "Page Views"]
+      }
+    },
+    "comparison_chart": {
+      "description": "Chart with current vs previous period comparison",
+      "data": {
+        "chart": [
+          {
+            "time": "Mon",
+            "timestamp": 1707609600000,
+            "Sessions": 1200,
+            "Errors": 15
+          },
+          {
+            "time": "Tue",
+            "timestamp": 1707696000000,
+            "Sessions": 1350,
+            "Errors": 12
+          },
+          {
+            "time": "Wed",
+            "timestamp": 1707782400000,
+            "Sessions": 1400,
+            "Errors": 10
+          },
+          {
+            "time": "Thu",
+            "timestamp": 1707868800000,
+            "Sessions": 1500,
+            "Errors": 8
+          },
+          {
+            "time": "Fri",
+            "timestamp": 1707955200000,
+            "Sessions": 1600,
+            "Errors": 5
+          }
+        ],
+        "namesMap": ["Sessions", "Errors"],
+        "compData": {
+          "chart": [
+            {
+              "time": "Mon",
+              "timestamp": 1707004800000,
+              "Previous Sessions": 1100,
+              "Previous Errors": 18
+            },
+            {
+              "time": "Tue",
+              "timestamp": 1707091200000,
+              "Previous Sessions": 1250,
+              "Previous Errors": 16
+            },
+            {
+              "time": "Wed",
+              "timestamp": 1707177600000,
+              "Previous Sessions": 1300,
+              "Previous Errors": 14
+            },
+            {
+              "time": "Thu",
+              "timestamp": 1707264000000,
+              "Previous Sessions": 1400,
+              "Previous Errors": 12
+            },
+            {
+              "time": "Fri",
+              "timestamp": 1707350400000,
+              "Previous Sessions": 1450,
+              "Previous Errors": 10
+            }
+          ],
+          "namesMap": ["Previous Sessions", "Previous Errors"]
+        }
+      }
+    },
+    "performance_metrics": {
+      "description": "Performance metrics over time",
+      "data": {
+        "chart": [
+          {
+            "time": "00:00",
+            "timestamp": 1707609600000,
+            "Load Time (ms)": 1200,
+            "FCP (ms)": 800,
+            "LCP (ms)": 2500
+          },
+          {
+            "time": "04:00",
+            "timestamp": 1707624000000,
+            "Load Time (ms)": 1100,
+            "FCP (ms)": 750,
+            "LCP (ms)": 2300
+          },
+          {
+            "time": "08:00",
+            "timestamp": 1707638400000,
+            "Load Time (ms)": 1300,
+            "FCP (ms)": 850,
+            "LCP (ms)": 2600
+          },
+          {
+            "time": "12:00",
+            "timestamp": 1707652800000,
+            "Load Time (ms)": 1400,
+            "FCP (ms)": 900,
+            "LCP (ms)": 2800
+          },
+          {
+            "time": "16:00",
+            "timestamp": 1707667200000,
+            "Load Time (ms)": 1250,
+            "FCP (ms)": 820,
+            "LCP (ms)": 2550
+          },
+          {
+            "time": "20:00",
+            "timestamp": 1707681600000,
+            "Load Time (ms)": 1150,
+            "FCP (ms)": 780,
+            "LCP (ms)": 2400
+          }
+        ],
+        "namesMap": ["Load Time (ms)", "FCP (ms)", "LCP (ms)"]
+      }
+    },
+    "error_tracking": {
+      "description": "Error rates by category",
+      "data": {
+        "chart": [
+          {
+            "time": "Mon",
+            "timestamp": 1707609600000,
+            "JavaScript Errors": 25,
+            "Network Errors": 15,
+            "Resource Errors": 8,
+            "Console Errors": 12
+          },
+          {
+            "time": "Tue",
+            "timestamp": 1707696000000,
+            "JavaScript Errors": 22,
+            "Network Errors": 12,
+            "Resource Errors": 6,
+            "Console Errors": 10
+          },
+          {
+            "time": "Wed",
+            "timestamp": 1707782400000,
+            "JavaScript Errors": 18,
+            "Network Errors": 10,
+            "Resource Errors": 5,
+            "Console Errors": 8
+          },
+          {
+            "time": "Thu",
+            "timestamp": 1707868800000,
+            "JavaScript Errors": 15,
+            "Network Errors": 8,
+            "Resource Errors": 4,
+            "Console Errors": 6
+          },
+          {
+            "time": "Fri",
+            "timestamp": 1707955200000,
+            "JavaScript Errors": 12,
+            "Network Errors": 6,
+            "Resource Errors": 3,
+            "Console Errors": 5
+          }
+        ],
+        "namesMap": ["JavaScript Errors", "Network Errors", "Resource Errors", "Console Errors"]
+      }
+    },
+    "user_engagement": {
+      "description": "User engagement metrics",
+      "data": {
+        "chart": [
+          {
+            "time": "Week 1",
+            "timestamp": 1707004800000,
+            "Active Users": 450,
+            "New Users": 120,
+            "Returning Users": 330,
+            "Avg Session Duration (min)": 8.5
+          },
+          {
+            "time": "Week 2",
+            "timestamp": 1707609600000,
+            "Active Users": 520,
+            "New Users": 150,
+            "Returning Users": 370,
+            "Avg Session Duration (min)": 9.2
+          },
+          {
+            "time": "Week 3",
+            "timestamp": 1708214400000,
+            "Active Users": 580,
+            "New Users": 180,
+            "Returning Users": 400,
+            "Avg Session Duration (min)": 9.8
+          },
+          {
+            "time": "Week 4",
+            "timestamp": 1708819200000,
+            "Active Users": 620,
+            "New Users": 200,
+            "Returning Users": 420,
+            "Avg Session Duration (min)": 10.5
+          }
+        ],
+        "namesMap": ["Active Users", "New Users", "Returning Users", "Avg Session Duration (min)"]
+      }
+    }
+  }
+}
