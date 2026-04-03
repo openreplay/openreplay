@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import crypto from "node:crypto";
 
 const CONFIG_DIR = path.join(os.homedir(), ".openreplay-mcp");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
@@ -17,6 +18,7 @@ export const replayStore = new Map<string, any[]>();
 
 // In-memory state for configuration and authentication
 export const state = {
+  clientId: null as string | null,
   backendUrl: process.env.OPENREPLAY_BACKEND_URL || "https://foss.openreplay.com",
   jwt: null as string | null,
   userData: null as any,
@@ -29,6 +31,7 @@ export async function loadPersistedState() {
   try {
     const data = await fs.readFile(CONFIG_FILE, "utf-8");
     const config = JSON.parse(data);
+    state.clientId = config.clientId || null;
     if (config.jwt) {
       state.jwt = config.jwt;
       state.backendUrl = config.backendUrl || state.backendUrl;
@@ -39,6 +42,13 @@ export async function loadPersistedState() {
     // File doesn't exist or is invalid - that's fine
     console.error("[SERVER] No persisted state found (first run or token expired)");
   }
+
+  // Generate and persist a client_id if one doesn't exist yet
+  if (!state.clientId) {
+    state.clientId = crypto.randomUUID();
+    await savePersistedState();
+    console.error(`[SERVER] Generated new client_id: ${state.clientId}`);
+  }
 }
 
 // Save state to disk
@@ -48,6 +58,7 @@ export async function savePersistedState() {
     await fs.writeFile(
       CONFIG_FILE,
       JSON.stringify({
+        clientId: state.clientId,
         jwt: state.jwt,
         backendUrl: state.backendUrl,
         userData: state.userData,
@@ -57,6 +68,11 @@ export async function savePersistedState() {
   } catch (err) {
     console.error("[SERVER] Failed to save state:", err);
   }
+}
+
+// Generate a random auth code for browser-based login
+export function generateAuthCode(): string {
+  return crypto.randomBytes(32).toString("hex");
 }
 
 // Clear persisted state

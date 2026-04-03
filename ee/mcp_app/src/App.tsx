@@ -122,6 +122,56 @@ function App() {
     }
   };
 
+  const handleBrowserLogin = async (browserBackendUrl: string) => {
+    try {
+      if (!app) throw new Error('App not initialized');
+
+      await logger.info('Starting browser login...');
+
+      // Configure backend URL first
+      await app.callServerTool({
+        name: 'configure_backend',
+        arguments: { backendUrl: browserBackendUrl },
+      });
+
+      // Call login_browser — this will block while polling for approval
+      const result = await app.callServerTool({
+        name: 'login_browser',
+        arguments: { backendUrl: browserBackendUrl },
+      });
+
+      // Check if the result indicates success
+      const firstContent = result?.content?.[0];
+      if (firstContent && 'text' in firstContent) {
+        const parsed = JSON.parse(firstContent.text);
+        if (parsed.type === 'error') {
+          throw new Error(parsed.error);
+        }
+      }
+
+      await logger.info('Browser login successful');
+
+      setState(prev => ({
+        ...prev,
+        showAuthOverlay: false,
+        authError: null,
+      }));
+
+      // Retry the last failed request if there was one
+      if (state.lastFailedRequest) {
+        await state.lastFailedRequest();
+        setState(prev => ({ ...prev, lastFailedRequest: null }));
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Browser login failed';
+      await logger.error(`Browser login failed: ${errorMsg}`);
+      setState(prev => ({
+        ...prev,
+        authError: errorMsg,
+      }));
+    }
+  };
+
   // Error state
   if (error || appError) {
     return (
@@ -171,6 +221,7 @@ function App() {
           backendUrl={backendUrl}
           setBackendUrl={setBackendUrl}
           onSubmit={handleLogin}
+          onBrowserLogin={handleBrowserLogin}
         />
       )}
 
