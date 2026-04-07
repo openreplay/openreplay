@@ -194,6 +194,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 	return nil
 }
 
-func messageHasSize(msgType uint64) bool {
+func MessageHasSize(msgType uint64) bool {
 	return msgType != 81
 }
