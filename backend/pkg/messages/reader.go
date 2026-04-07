@@ -55,7 +55,7 @@ func (m *messageReaderImpl) Parse() (err error) {
 		}
 
 		// Read message body (and decode if protocol version less than 1)
-		if m.version > 0 && messageHasSize(m.msgType) {
+		if m.version > 0 && MessageHasSize(m.msgType) {
 			// Read message size if it is a new protocol version
 			m.msgSize, err = m.reader.ReadSize()
 			if err != nil {

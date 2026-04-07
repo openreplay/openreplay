@@ -40,9 +40,9 @@ func (b *batchIteratorImpl) Iterate(batchData []byte, batch *BatchInfo) {
 	batch.dataTs = batchTimestamp
 
 	switch batch.Type() {
-	case RawData, FullBatch:
+	case RawData, FullBatch, AssetsBatch:
 		b.messageIterator.Iterate(batchData, batch)
-	case PlayerBatch, AssetsBatch, DevtoolsBatch, AnalyticsBatch:
+	case PlayerBatch, DevtoolsBatch, AnalyticsBatch:
 		b.batchHandler(batchData, batch)
 	default:
 		b.log.Error(ctx, "unknown batch type: %d, info: %s", batchType, batch)

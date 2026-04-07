@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -77,6 +78,7 @@ func main() {
 		for reader.Next() {
 			msg := reader.Message()
 			msg.Meta().SetBatchInfo(info)
+			oldType := msg.TypeID()
 
 			if isAssetType(msg.TypeID()) {
 				decoded := msg.Decode()
@@ -88,8 +90,21 @@ func main() {
 			}
 
 			data := msg.Encode()
-			if data != nil {
-				buf.Write(data)
+			if data != nil && len(data) > 0 {
+				if !messages.MessageHasSize(uint64(msg.TypeID())) {
+					log.Info(sessCtx, "old type: %d, new type: %d, no size", oldType, msg.TypeID())
+					buf.Write(data)
+				} else {
+					encodedSize, err := MsgSize(uint64(len(data) - 1))
+					if err != nil {
+						log.Error(sessCtx, "assets msg size err: %s, info: %s", err, info.Info())
+						continue
+					}
+					log.Info(sessCtx, "old type: %d, new type: %d, size: %d", oldType, msg.TypeID(), len(data)-1)
+					buf.Write(data[0:1])   // message type
+					buf.Write(encodedSize) // message size
+					buf.Write(data[1:])    // message's data
+				}
 			}
 		}
 
@@ -119,7 +134,7 @@ func main() {
 		}
 	}
 
-	batchIterator := messages.NewBatchIterator(
+	batchIterator := messages.NewAssetsBatchIterator(
 		log,
 		batchHandler,
 		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
@@ -172,4 +187,16 @@ func main() {
 			}
 		}
 	}
+}
+
+func MsgSize(size uint64) ([]byte, error) {
+	if size > 0xFFFFFF {
+		return nil, fmt.Errorf("size too large")
+	}
+
+	buf := make([]byte, 3)
+	for i := 0; i < 3; i++ {
+		buf[i] = byte(size >> (8 * i))
+	}
+	return buf, nil
 }
