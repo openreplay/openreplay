@@ -7,7 +7,6 @@ import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName,
 import {
   ConfigureBackendSchema,
   LoginSchema,
-  LoginJwtSchema,
   LoginBrowserSchema,
   FetchChartDataSchema,
   GetSessionReplaySchema,
@@ -1129,7 +1128,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "login",
     {
-      description: "Authenticate with OpenReplay using email and password",
+      description: "Authenticate with OpenReplay using email and password. Only use this if the user explicitly provides email and password. Otherwise prefer login_browser.",
       inputSchema: {
         email: z.string().describe("Email address"),
         password: z.string().describe("Password"),
@@ -1161,46 +1160,15 @@ export function registerInternalTools(server: McpServer) {
   );
   console.error("[SERVER] login tool registered");
 
-  // Login with JWT
-  console.error("[SERVER] Registering login_jwt tool...");
-  server.registerTool(
-    "login_jwt",
-    {
-      description: "Authenticate with OpenReplay using a JWT token (for testing)",
-      inputSchema: {
-        jwt: z.string().describe("JWT token for authentication"),
-      },
-    },
-    async (args) => {
-      console.error("[SERVER] login_jwt called");
-      const parsed = LoginJwtSchema.parse(args);
-      state.jwt = parsed.jwt;
-      state.userData = { authenticated: true };
-
-      // Persist token to disk
-      await savePersistedState();
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Successfully authenticated with JWT token",
-          },
-        ],
-      };
-    }
-  );
-  console.error("[SERVER] login_jwt tool registered");
-
   // Login via browser (OAuth-style)
   console.error("[SERVER] Registering login_browser tool...");
   server.registerTool(
     "login_browser",
     {
       description:
-        "Authenticate by opening a URL in the user's browser. " +
-        "Use this when the user wants to log in without pasting a JWT. " +
-        "Returns a URL the user must open. The tool then waits for approval (up to 5 minutes).",
+        "PREFERRED login method. Authenticate by opening a URL in the user's browser. " +
+        "Always use this tool when the user needs to log in, unless they explicitly ask for email/password login. " +
+        "Opens a browser tab for the user to approve access, then waits for approval (up to 5 minutes).",
       inputSchema: {
         backendUrl: z.string().optional().describe("OpenReplay backend URL (optional, uses current if already configured)"),
       },
@@ -1208,15 +1176,26 @@ export function registerInternalTools(server: McpServer) {
     async (args) => {
       const parsed = LoginBrowserSchema.parse(args);
       const backendUrl = parsed.backendUrl || state.backendUrl;
+      const frontendUrl = parsed.frontendUrl || state.frontendUrl;
 
       if (parsed.backendUrl) {
         state.backendUrl = parsed.backendUrl;
       }
 
+      if (parsed.frontendUrl) {
+        state.frontendUrl = parsed.frontendUrl;
+      }
+
       const authCode = generateAuthCode();
-      const authorizeUrl = `${backendUrl}/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
+      const authorizeUrl = `${frontendUrl}/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
 
       console.error(`[SERVER] login_browser: opening browser at ${authorizeUrl}`);
+
+      // Send the URL as a log notification so the model can show it immediately
+      server.server.sendLoggingMessage({
+        level: "info",
+        data: `Browser login started. If the browser didn't open automatically, visit this URL:\n${authorizeUrl}`,
+      });
 
       // Open the URL in the user's default browser
       const openCmd = process.platform === "darwin"
@@ -1230,14 +1209,18 @@ export function registerInternalTools(server: McpServer) {
       const jwt = await pollForAuth(backendUrl, authCode, state.clientId!);
 
       if (!jwt) {
+        // Generate a fresh auth code so the user can try manually
+        const retryAuthCode = generateAuthCode();
+        const retryUrl = `${frontendUrl}/mcp/authorize?state=${retryAuthCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
+
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
                 type: "error",
-                error: "Browser login timed out or was denied. Please try again.",
-                authorizeUrl,
+                error: "Browser login timed out or was denied. You can try again by opening this URL manually:",
+                authorizeUrl: retryUrl,
               }),
             },
           ],
@@ -1256,6 +1239,7 @@ export function registerInternalTools(server: McpServer) {
             text: JSON.stringify({
               type: "auth_success",
               message: "Successfully authenticated via browser.",
+              authorizeUrl,
             }),
           },
         ],
