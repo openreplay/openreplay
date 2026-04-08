@@ -78,7 +78,6 @@ func main() {
 		for reader.Next() {
 			msg := reader.Message()
 			msg.Meta().SetBatchInfo(info)
-			oldType := msg.TypeID()
 
 			if isAssetType(msg.TypeID()) {
 				decoded := msg.Decode()
@@ -92,7 +91,6 @@ func main() {
 			data := msg.Encode()
 			if data != nil && len(data) > 0 {
 				if !messages.MessageHasSize(uint64(msg.TypeID())) {
-					log.Info(sessCtx, "old type: %d, new type: %d, no size", oldType, msg.TypeID())
 					buf.Write(data)
 				} else {
 					encodedSize, err := MsgSize(uint64(len(data) - 1))
