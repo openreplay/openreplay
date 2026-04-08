@@ -305,6 +305,11 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	if batch := r.URL.Query().Get("batch"); batch != "" {
 		r = r.WithContext(context.WithValue(r.Context(), "batch", batch))
 	}
+	batchType := r.Header.Get("DataType")
+	if batchType == "" {
+		batchType = "all"
+	}
+	r = r.WithContext(context.WithValue(r.Context(), "batchType", batchType))
 
 	// Check authorization
 	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
@@ -348,7 +353,7 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	bodySize = len(bodyBytes)
 
 	topic := e.cfg.TopicRawWeb
-	switch r.Header.Get("DataType") {
+	switch batchType {
 	case "assets":
 		topic = e.cfg.TopicRawAssets
 	default: // "analytics", "devtools", "replay"

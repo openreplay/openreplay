@@ -3,9 +3,10 @@ package logger
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 type Logger interface {
@@ -61,6 +62,9 @@ func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logge
 	}
 	if batch, ok := ctx.Value("batch").(string); ok {
 		logger = logger.With(zap.String("batch", batch))
+	}
+	if batchType, ok := ctx.Value("batchType").(string); ok {
+		logger = logger.With(zap.String("type", batchType))
 	}
 	return logger
 }
