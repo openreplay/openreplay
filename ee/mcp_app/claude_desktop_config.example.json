@@ -7,7 +7,9 @@
         "/ABSOLUTE/PATH/TO/openreplay-mcp-app/server.ts"
       ],
       "env": {
-        "OPENREPLAY_BACKEND_URL": "https://your-openreplay-instance.com"
+        "OPENREPLAY_BACKEND_URL": "https://your-openreplay-instance.com",
+        "OPENREPLAY_URL": "https://your-openreplay-instance.com",
+        "API_PATH": "/api"
       }
     }
   }
