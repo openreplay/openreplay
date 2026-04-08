@@ -16,10 +16,30 @@ export interface Project {
 // Messages are stored here after parsing and fetched by the UI via _get_replay_data
 export const replayStore = new Map<string, any[]>();
 
+// Abort controller for cancelling in-flight polls on shutdown
+export let pollAbortController: AbortController | null = null;
+
+export function createPollAbortController(): AbortController {
+  // Abort any existing poll before starting a new one
+  if (pollAbortController) {
+    pollAbortController.abort();
+  }
+  pollAbortController = new AbortController();
+  return pollAbortController;
+}
+
+export function abortAllPolls() {
+  if (pollAbortController) {
+    pollAbortController.abort();
+    pollAbortController = null;
+  }
+}
+
 // In-memory state for configuration and authentication
 export const state = {
   clientId: null as string | null,
   backendUrl: process.env.OPENREPLAY_BACKEND_URL || "https://foss.openreplay.com",
+  frontendUrl: process.env.OPENREPLAY_URL || process.env.OPENREPLAY_BACKEND_URL || "https://foss.openreplay.com",
   jwt: null as string | null,
   userData: null as any,
   projects: [] as Project[],
@@ -35,6 +55,7 @@ export async function loadPersistedState() {
     if (config.jwt) {
       state.jwt = config.jwt;
       state.backendUrl = config.backendUrl || state.backendUrl;
+      state.frontendUrl = config.frontendUrl || state.frontendUrl;
       state.userData = config.userData || null;
       console.error("[SERVER] Loaded persisted authentication from disk");
     }
@@ -61,6 +82,7 @@ export async function savePersistedState() {
         clientId: state.clientId,
         jwt: state.jwt,
         backendUrl: state.backendUrl,
+        frontendUrl: state.frontendUrl,
         userData: state.userData,
       }, null, 2)
     );
