@@ -1126,7 +1126,7 @@ export function registerInternalTools(server: McpServer) {
   // Login with email/password
   console.error("[SERVER] Registering login tool...");
   server.registerTool(
-    "login",
+    "login_email_password",
     {
       description: "Authenticate with OpenReplay using email and password. Only use this if the user explicitly provides email and password. Otherwise prefer login_browser.",
       inputSchema: {
@@ -1158,7 +1158,7 @@ export function registerInternalTools(server: McpServer) {
       };
     }
   );
-  console.error("[SERVER] login tool registered");
+  console.error("[SERVER] login_email_password tool registered");
 
   // Login via browser (OAuth-style)
   console.error("[SERVER] Registering login_browser tool...");
@@ -1171,6 +1171,7 @@ export function registerInternalTools(server: McpServer) {
         "Opens a browser tab for the user to approve access, then waits for approval (up to 5 minutes).",
       inputSchema: {
         backendUrl: z.string().optional().describe("OpenReplay backend URL (optional, uses current if already configured)"),
+        frontendUrl: z.string().optional().describe("OpenReplay URL (optional, uses current if already configured)"),
       },
     },
     async (args) => {

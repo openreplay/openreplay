@@ -168,7 +168,7 @@ export async function fetchProjects() {
 
     // Store projects in state
     state.projects = data.map((project: any) => ({
-        projectId: String(project.projectId || project.id),
+        projectId: String(project.projectId),
         name: project.name,
     }));
 
