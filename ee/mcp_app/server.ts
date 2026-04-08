@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { loadPersistedState } from "./lib/state.js";
+import { loadPersistedState, abortAllPolls } from "./lib/state.js";
 import { registerUITools, registerInternalTools } from "./lib/tools.js";
 
 const __dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
@@ -81,6 +81,20 @@ async function main() {
   console.error(`[SERVER] Resource: ${resourceUri}`);
   console.error("[SERVER] ==========================================");
 }
+
+// Abort any in-flight polls and exit on shutdown
+// Claude Desktop doesn't send SIGINT/SIGTERM — it just closes stdin
+function shutdown() {
+  console.error("[SERVER] Shutting down, aborting polls...");
+  abortAllPolls();
+  process.exit(0);
+}
+
+process.stdin.on("end", shutdown);
+process.stdin.on("close", shutdown);
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+process.on("exit", () => abortAllPolls());
 
 main().catch((error) => {
   console.error("Fatal error:", error);
