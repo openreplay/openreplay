@@ -100,7 +100,6 @@ func main() {
 						log.Error(sessCtx, "assets msg size err: %s, info: %s", err, info.Info())
 						continue
 					}
-					log.Info(sessCtx, "old type: %d, new type: %d, size: %d", oldType, msg.TypeID(), len(data)-1)
 					buf.Write(data[0:1])   // message type
 					buf.Write(encodedSize) // message size
 					buf.Write(data[1:])    // message's data
