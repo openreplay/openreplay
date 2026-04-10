@@ -651,7 +651,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       description:
         "PREFERRED tool for showing ranked table/bar chart for 'top X' analytics. " +
         "Use this when the user asks for top, most popular, distribution, or breakdown of any dimension. " +
-        "Supported metricOf values: 'LOCATION' (top pages), 'REQUEST' (top network requests), " +
+        "Supported metricOf values: 'LOCATION' (top pages), 'REQUEST' (top network requests), 'userId' (top users), " +
         "'userBrowser' (top browsers), 'userCountry' (top countries), 'userOs' (top OS), 'userDevice' (top devices). " +
         "Examples: 'what are the top pages', 'show browser distribution', 'most popular countries'. " +
         "You MUST convert time references to ISO date strings. " +
@@ -675,6 +675,14 @@ export function registerUITools(server: McpServer, resourceUri: string) {
             connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
           },
         },
+        examples: [
+          { description: "What are the top visited pages this week", input: { startDate: "2026-04-07", endDate: "2026-04-10", metricOf: "LOCATION", projectName: "MyApp" } },
+          { description: "Show browser distribution this month", input: { startDate: "2026-04-01", endDate: "2026-04-10", metricOf: "userBrowser", projectName: "MyApp" } },
+          { description: "Most popular countries last 30 days", input: { startDate: "2026-03-11", endDate: "2026-04-10", metricOf: "userCountry", projectName: "MyApp" } },
+          { description: "Top 5 network requests today", input: { startDate: "2026-04-10", endDate: "2026-04-10", metricOf: "REQUEST", projectName: "MyApp", limit: 5 } },
+          { description: "Top OS for mobile users", input: { startDate: "2026-04-01", endDate: "2026-04-10", metricOf: "userOs", projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
+          { description: "Device breakdown for Chrome users in the US", input: { startDate: "2026-04-01", endDate: "2026-04-10", metricOf: "userDevice", siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["United States"], operator: "is" }] } },
+        ],
       },
     },
     async (args: any) => {
