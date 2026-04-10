@@ -32,7 +32,7 @@ export const GetProjectIdSchema = z.object({
 export const FilterItemSchema = z.object({
     name: z.string().describe("Filter name (e.g. 'userCountry', 'userBrowser', 'userOs', 'userDevice')"),
     value: z.array(z.string()).describe("Filter values. For countries use full name like 'France'."),
-    operator: z.string().optional().default("is").describe("Operator: 'is', 'isNot', 'contains', etc."),
+    operator: z.string().optional().default("is").describe("Operator: 'is', 'isNot', 'contains', 'notContains', 'startsWith', 'endsWith', 'regex'; for numeric values: '=', '!=', '<', '<=', '>', '>='")
 });
 
 export const ViewSessionsChartSchema = z.object({
