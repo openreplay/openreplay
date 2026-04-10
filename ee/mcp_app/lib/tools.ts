@@ -1499,6 +1499,19 @@ export function registerInternalTools(server: McpServer) {
         limit: z.number().optional().default(10).describe("Number of sessions to fetch (default 10, max 50)"),
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
       },
+      _meta: {
+        examples: [
+          { description: "Fetch 20 sessions for project MyApp", input: { projectName: "MyApp", limit: 20 } },
+          { description: "Get sessions from Chrome users in France or Tunisia", input: { siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["France", "Tunisia"], operator: "is" }] } },
+          { description: "Fetch sessions with JS errors", input: { projectName: "MyApp", filters: [{ name: "issueType", value: ["js_exception"], operator: "is" }] } },
+          { description: "Get sessions of a specific user", input: { filters: [{ name: "userId", value: ["tahay@asayer.io"] }] } },
+          { description: "Sessions where user visited the signup page", input: { filters: [{ name: "LOCATION", properties: [{ name: "path", value: ["signup"], operator: "contains" }] }] } },
+          { description: "Sessions where user clicked on subscribe", input: { filters: [{ name: "CLICK", properties: [{ name: "label", value: ["subscribe"], operator: "is" }] }] } },
+          { description: "Sessions longer than 20s", input: { filters: [{ name: "duration", value: [20] }] } },
+          { description: "Sessions shorter than 20s", input: { filters: [{ name: "duration", value: [0, 20] }] } },
+          { description: "Sessions with failed requests to /api/users", input: { filters: [{ name: "REQUEST", properties: [{ name: "path", value: ["/api/users"], operator: "is" }, { name: "status", value: [400], operator: ">" }] }] } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] fetch_sessions called:", args);
