@@ -530,6 +530,13 @@ export function registerUITools(server: McpServer, resourceUri: string) {
             connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
           },
         },
+        examples: [
+          { description: "Show me web vitals for this week", input: { startDate: "2026-04-03", endDate: "2026-04-10", projectName: "MyApp" } },
+          { description: "How is my site performance past month", input: { startDate: "2026-03-10", endDate: "2026-04-10", projectName: "MyApp" } },
+          { description: "Core web vitals for mobile users", input: { startDate: "2026-04-01", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
+          { description: "Web vitals for Safari users in Germany or France last 30 days", input: { startDate: "2026-03-11", endDate: "2026-04-10", siteId: "1", filters: [{ name: "userBrowser", value: ["Safari"], operator: "is" }, { name: "userCountry", value: ["Germany","France"], operator: "is" }] } },
+          { description: "Performance metrics for Chrome on Windows of the user tahay@asyer.io", input: { startDate: "2026-04-01", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userOs", value: ["Windows"], operator: "is" }, { name: "userId", value: ["tahay@asayer.io"], operator: "is" }] } },
+        ],
       },
     },
     async (args: any) => {
