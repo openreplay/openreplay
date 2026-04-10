@@ -173,6 +173,13 @@ export function registerUITools(server: McpServer, resourceUri: string) {
             connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
           },
         },
+        examples: [
+          { description: "Show me sessions chart for last week", input: { startDate: "2026-04-03", endDate: "2026-04-11", projectName: "MyApp" } },
+          { description: "How many sessions today on chrome or edge today", input: { startDate: "2026-04-10", endDate: "2026-04-11", projectName: "MyApp", filters:[{name: "userBrowser", value:["chrome","edge"], operator: "is"}] } },
+          { description: "Session trend for the past 30 days from France", input: { startDate: "2026-03-11", endDate: "2026-04-10", projectName: "MyApp", filters:[{name: "userCountry", value:["France"], operator: "is"}] } },
+          { description: "Chart of sessions from mobile users this month", input: { startDate: "2026-03-10", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
+          { description: "Timeseries of people who visited signup page last week", input: { startDate: "2026-04-03", endDate: "2026-04-10", siteId: "1", filters: [{ name: "LOCATION", properties:[{name:"path", value: ["signup"], operator: "contains"}]}] } },
+        ],
       },
     },
     async (args: any) => {
