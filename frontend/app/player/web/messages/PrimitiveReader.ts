@@ -66,8 +66,8 @@ export default class PrimitiveReader {
     return u;
   }
 
-  readString(): string | null {
-    const l = this.readUint();
+  readString(custom?: number): string | null {
+    const l = custom ?? this.readUint();
     if (l === null || this.p + l > this.buf.length) {
       return null;
     }

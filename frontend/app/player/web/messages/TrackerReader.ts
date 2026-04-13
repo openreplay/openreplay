@@ -1,44 +1,36 @@
 import type { PlayerMsg } from 'Player';
-import { MType } from './raw.gen';
+
 import TrackerBinaryReader from './TrackerBinaryReader.gen';
+import { MType } from './raw.gen';
 import rewriteMessage from './rewriter/rewriteMessage';
 
 export type BatchKind = 'player' | 'assets' | 'devtools' | 'analytics';
 
-/**
- * Reads raw tracker batches (v2 protocol format) and produces
- * PlayerMsg arrays ready for MessageManager.distributeMessage.
- *
- * Each batch is: BatchMetadata header + Timestamp + TabData + messages.
- * TrackerBinaryReader handles BatchMetadata by skipping it,
- * but we peek at the version first to classify batch kind.
- *
- * Used for both live v2 session files and local debug batches.
- */
 export default class TrackerReader {
   private currentTime = 0;
   private currentTab = '';
+  private reader = new TrackerBinaryReader();
 
   constructor(private startTime: number) {}
 
+  append = (data: Uint8Array) => {
+    this.reader.append(data);
+  };
+
   /**
-   * Parse a single raw batch into PlayerMsg[].
+   * Append new data and parse all complete messages available so far.
    * Returns { kind, messages } — 'player' (version=2) or 'assets' (version=3).
    */
-  readBatch(
-    data: Uint8Array,
-  ): { kind: BatchKind; messages: PlayerMsg[] } {
-    const reader = new TrackerBinaryReader(data);
-
-    const version = this.peekBatchVersion(data);
-    const kindMap: Record<number, BatchKind> = { 3: 'assets', 4: 'devtools', 5: 'analytics' };
-    const kind: BatchKind = kindMap[version] ?? 'player';
-
+  readBatch(): PlayerMsg[] {
     const messages: PlayerMsg[] = [];
 
-    while (reader.hasNextByte()) {
-      const raw = reader.readMessage();
+    let lastTp = -1;
+    let msgNum = 0;
+    while (this.reader.hasNextByte()) {
+      const raw = this.reader.readMessage();
       if (!raw) break;
+      lastTp = raw.tp;
+      msgNum++;
 
       if (raw.tp === MType.Timestamp) {
         const ts = (raw as { tp: number; timestamp: number }).timestamp;
@@ -59,33 +51,6 @@ export default class TrackerReader {
       messages.push(msg);
     }
 
-    return { kind, messages };
-  }
-
-  /**
-   * Read batch version from the BatchMetadata header at the start of the buffer.
-   * BatchMetadata wire format: varint(81) + varint(version) + ...
-   */
-  private peekBatchVersion(data: Uint8Array): number {
-    let p = 0;
-    let tp = 0;
-    let shift = 0;
-    while (p < data.length) {
-      const b = data[p++];
-      tp |= (b & 0x7f) << shift;
-      if ((b & 0x80) === 0) break;
-      shift += 7;
-    }
-    if (tp !== 81) return 2;
-
-    let version = 0;
-    shift = 0;
-    while (p < data.length) {
-      const b = data[p++];
-      version |= (b & 0x7f) << shift;
-      if ((b & 0x80) === 0) break;
-      shift += 7;
-    }
-    return version;
+    return messages;
   }
 }

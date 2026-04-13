@@ -189,7 +189,8 @@ export default class MessageLoader {
         const data = unpack(mobBytes);
 
         const batchData = this.stripHeader(data);
-        const { messages } = reader.readBatch(batchData);
+        reader.append(batchData);
+        const messages = reader.readBatch();
 
         messages.forEach((msg) => this.rawMessages.push(msg));
 
