@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -55,13 +56,33 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 	return s, nil
 }
 
+var ErrSessionNotFound = errors.New("session files not found locally")
+
 func (u *uploaderImpl) Upload(ctx context.Context, sessionID uint64, encryptionKey string) error {
+	filePath := u.cfg.FSDir + "/" + strconv.FormatUint(sessionID, 10)
+	if err := checkMobFilePresence(filePath); err != nil {
+		return err
+	}
 	u.uploaderPool.Submit(&uploadTask{
 		ctx:           ctx,
 		sessionID:     sessionID,
 		encryptionKey: encryptionKey,
 	})
 	return nil
+}
+
+func checkMobFilePresence(filePath string) error {
+	if _, err := os.Stat(filePath + "s"); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	if _, err := os.Stat(filePath); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	return ErrSessionNotFound
 }
 
 const (
