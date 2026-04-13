@@ -66,7 +66,7 @@ func main() {
 				sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", msg.SessionID()))
 				if msg.TypeID() == messages.MsgCleanSession {
 					if err := srv.Clean(sessCtx, msg.SessionID()); err != nil {
-						log.Error(sessCtx, "can't clean session: %s", err)
+						log.Debug(sessCtx, "can't clean session: %s", err)
 					}
 					return
 				}

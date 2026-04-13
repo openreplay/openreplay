@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	config "openreplay/backend/internal/config/storage"
@@ -121,13 +122,23 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 
 func (u *uploaderImpl) Clean(ctx context.Context, sessionID uint64) (err error) {
 	filePath := u.cfg.FSDir + "/" + strconv.FormatUint(sessionID, 10)
+	errors := make([]string, 0, 4)
 	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("can't remove dom file: %s", err)
+		errors = append(errors, err.Error())
+	}
+	if err := os.Remove(filePath + "s"); err != nil && !os.IsNotExist(err) {
+		errors = append(errors, err.Error())
+	}
+	if err := os.Remove(filePath + "e"); err != nil && !os.IsNotExist(err) {
+		errors = append(errors, err.Error())
 	}
 	if err := os.Remove(filePath + "devtools"); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("can't remove devtools file: %s", err)
+		errors = append(errors, err.Error())
 	}
 	u.log.Debug(ctx, "cleaned storage data for session: %d", sessionID)
+	if len(errors) > 0 {
+		return fmt.Errorf("can't delete some files, err: %s", strings.Join(errors, ";"))
+	}
 	return nil
 }
 
