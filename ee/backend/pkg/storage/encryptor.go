@@ -11,10 +11,19 @@ import (
 	"openreplay/backend/pkg/objectstorage"
 )
 
+// keyLen is the AES-256 key size in bytes.
+const keyLen = 32
+
+func GenerateEncryptionKey() []byte {
+	key := make([]byte, keyLen)
+	crand.Read(key)
+	return key
+}
+
 func (u *uploaderImpl) streamEncryptionToS3(name, key, srcPath string) error {
 	keyBytes := []byte(key)
-	if len(keyBytes) != 32 {
-		return fmt.Errorf("invalid encryption key length: %d, expected 32", len(keyBytes))
+	if len(keyBytes) != keyLen {
+		return fmt.Errorf("invalid encryption key length: %d, expected %d", len(keyBytes), keyLen)
 	}
 	block, err := aes.NewCipher(keyBytes)
 	if err != nil {
