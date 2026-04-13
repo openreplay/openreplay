@@ -19,8 +19,11 @@ export default class BatchWriter {
   private devtoolsMessages: Message[] = []
   private analyticsMessages: Message[] = []
   private firstAssetIndex = 0
+  private firstAssetTimestamp = 0
   private firstDevtoolsIndex = 0
+  private firstDevtoolsTimestamp = 0
   private firstAnalyticsIndex = 0
+  private firstAnalyticsTimestamp = 0
   private protocolVersion = 1
 
   constructor(
@@ -119,19 +122,28 @@ export default class BatchWriter {
     }
     if (this.protocolVersion === 2) {
       if (ASSET_MESSAGES.has(message[0])) {
-        if (this.assetMessages.length === 0) this.firstAssetIndex = this.nextIndex
+        if (this.assetMessages.length === 0) {
+          this.firstAssetIndex = this.nextIndex
+          this.firstAssetTimestamp = this.timestamp
+        }
         this.assetMessages.push(message)
         this.nextIndex++
         return
       }
       if (DEVTOOLS_MESSAGES.has(message[0])) {
-        if (this.devtoolsMessages.length === 0) this.firstDevtoolsIndex = this.nextIndex
+        if (this.devtoolsMessages.length === 0) {
+          this.firstDevtoolsIndex = this.nextIndex
+          this.firstDevtoolsTimestamp = this.timestamp
+        }
         this.devtoolsMessages.push(message)
         this.nextIndex++
         return
       }
       if (ANALYTICS_MESSAGES.has(message[0])) {
-        if (this.analyticsMessages.length === 0) this.firstAnalyticsIndex = this.nextIndex
+        if (this.analyticsMessages.length === 0) {
+          this.firstAnalyticsIndex = this.nextIndex
+          this.firstAnalyticsTimestamp = this.timestamp
+        }
         this.analyticsMessages.push(message)
         this.nextIndex++
         return
@@ -170,8 +182,6 @@ export default class BatchWriter {
       return
     }
 
-    // Capture header info before flushing
-    const headerTimestamp = this.timestamp
     const headerUrl = this.url
 
     if (hasRegular) {
@@ -185,7 +195,7 @@ export default class BatchWriter {
     }
 
     if (hasAssets) {
-      const assetBatch = this.buildSeparateBatch(3, this.firstAssetIndex, headerTimestamp, headerUrl, this.assetMessages)
+      const assetBatch = this.buildSeparateBatch(3, this.firstAssetIndex, this.firstAssetTimestamp, headerUrl, this.assetMessages)
       if (this.localDebug && this.onLocalSave) {
         this.onLocalSave(`assets-${Date.now()}`, assetBatch.slice())
       }
@@ -194,7 +204,7 @@ export default class BatchWriter {
     }
 
     if (hasDevtools) {
-      const devtoolsBatch = this.buildSeparateBatch(4, this.firstDevtoolsIndex, headerTimestamp, headerUrl, this.devtoolsMessages)
+      const devtoolsBatch = this.buildSeparateBatch(4, this.firstDevtoolsIndex, this.firstDevtoolsTimestamp, headerUrl, this.devtoolsMessages)
       if (this.localDebug && this.onLocalSave) {
         this.onLocalSave(`devtools-${Date.now()}`, devtoolsBatch.slice())
       }
@@ -203,7 +213,7 @@ export default class BatchWriter {
     }
 
     if (hasAnalytics) {
-      const analyticsBatch = this.buildSeparateBatch(5, this.firstAnalyticsIndex, headerTimestamp, headerUrl, this.analyticsMessages)
+      const analyticsBatch = this.buildSeparateBatch(5, this.firstAnalyticsIndex, this.firstAnalyticsTimestamp, headerUrl, this.analyticsMessages)
       if (this.localDebug && this.onLocalSave) {
         this.onLocalSave(`analytics-${Date.now()}`, analyticsBatch.slice())
       }
