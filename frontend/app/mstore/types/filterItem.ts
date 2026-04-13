@@ -55,6 +55,8 @@ export default class FilterItem implements IFilter {
   autoOpen?: boolean = false;
   defaultProperty?: boolean = false;
   isConditional?: boolean = false;
+  isPredefined?: boolean = false;
+  possibleValues?: Array<{ value: string; label: string }> = [];
   scope?: string[];
   readonly?: boolean = false;
 
