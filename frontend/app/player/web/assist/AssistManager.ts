@@ -169,8 +169,8 @@ export default class AssistManager {
   }
 
   connect(agentToken: string, agentId: number, projectId: number) {
-    const jmr = new JSONRawMessageReader();
-    const reader = new MStreamReader(jmr, this.session.startedAt);
+    let jmr = new JSONRawMessageReader();
+    let reader = new MStreamReader(jmr, this.session.startedAt);
     let waitingForMessages = true;
 
     const now = new Date().getTime();
@@ -264,6 +264,10 @@ export default class AssistManager {
     socket.on('SESSION_RECONNECTED', () => {
       this.clearDisconnectTimeout();
       this.clearInactiveTimeout();
+      jmr = new JSONRawMessageReader();
+      reader = new MStreamReader(jmr, this.session.startedAt);
+      waitingForMessages = true;
+      this.store.update({ currentTab: undefined });
       this.setStatus(ConnectionStatus.Connected);
     });
 

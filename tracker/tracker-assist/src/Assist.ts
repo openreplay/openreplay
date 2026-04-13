@@ -440,7 +440,7 @@ export default class Assist {
       };
       if (this.app.active()) {
         this.assistDemandedRestart = true;
-        this.app.stop();
+        this.app.stop(false);
         this.app.clearBuffers();
         this.app.waitStatus(0).then(() => {
           this.app.allowAppStart();
@@ -453,8 +453,10 @@ export default class Assist {
               .then(() => {
                 this.remoteControl?.reconnect([id]);
               })
-              .catch((e) => app.debug.error(e));
-            // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+              .catch((e) => {
+                this.assistDemandedRestart = false;
+                app.debug.error(e);
+              });
           }, 100);
         });
       }
@@ -471,7 +473,7 @@ export default class Assist {
       });
       if (this.app.active()) {
         this.assistDemandedRestart = true;
-        this.app.stop();
+        this.app.stop(false);
         this.app.clearBuffers();
         this.app.waitStatus(0).then(() => {
           this.app.allowAppStart();
@@ -484,7 +486,10 @@ export default class Assist {
               .then(() => {
                 this.remoteControl?.reconnect(Object.keys(this.agents));
               })
-              .catch((e) => app.debug.error(e));
+              .catch((e) => {
+                this.assistDemandedRestart = false;
+                app.debug.error(e);
+              });
           }, 100);
         });
       }
