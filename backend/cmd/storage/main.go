@@ -9,7 +9,6 @@ import (
 	"time"
 
 	config "openreplay/backend/internal/config/storage"
-	"openreplay/backend/pkg/failover"
 	"openreplay/backend/pkg/health"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
@@ -39,12 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init storage service: %s", err)
 	}
-
 	counter := storage.NewLogCounter()
-	sessionFinder, err := failover.NewSessionFinder(log, cfg, srv)
-	if err != nil {
-		log.Fatal(ctx, "can't init sessionFinder module: %s", err)
-	}
 
 	consumer, err := queue.NewConsumer(
 		log,
@@ -74,7 +68,6 @@ func main() {
 				sessEnd := msg.(*messages.SessionEnd)
 				if err := srv.Upload(sessCtx, sessEnd.SessionID(), sessEnd.EncryptionKey); err != nil {
 					log.Error(sessCtx, "process session err: %s", err)
-					sessionFinder.Find(msg.SessionID(), sessEnd.Timestamp)
 				}
 				// Log timestamp of last processed session
 				counter.Update(msg.SessionID(), time.UnixMilli(msg.Meta().Batch().Timestamp()))
@@ -104,7 +97,6 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Info(ctx, "caught signal %v: terminating", sig)
-			sessionFinder.Stop()
 			srv.Wait()
 			consumer.Close()
 			os.Exit(0)
