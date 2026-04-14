@@ -55,15 +55,15 @@ func New(cfg *config.Config, log logger.Logger, writer *sessionwriter.MobWriter,
 func (h *handlerImpl) Handle(msg messages.Message) {
 	// Check batchEnd signal (nil message)
 	if msg == nil {
-		if h.domBuffer.Len() <= 0 && h.devBuffer.Len() <= 0 {
-			return
+		if h.domBuffer.Len() > 0 {
+			h.sinkMetrics.RecordWrittenBytes(float64(h.domBuffer.Len()), "dom")
+			h.writer.HandleBatch(h.domBuffer.Bytes(), h.batchInfo)
 		}
-		h.sinkMetrics.RecordWrittenBytes(float64(h.domBuffer.Len()), "dom")
-		h.sinkMetrics.RecordWrittenBytes(float64(h.devBuffer.Len()), "devtools")
-
-		h.writer.HandleBatch(h.domBuffer.Bytes(), h.batchInfo)
-		h.batchInfo.SetType(messages.DevtoolsBatch)
-		h.writer.HandleBatch(h.devBuffer.Bytes(), h.batchInfo)
+		if h.devBuffer.Len() > 0 {
+			h.sinkMetrics.RecordWrittenBytes(float64(h.devBuffer.Len()), "devtools")
+			h.batchInfo.SetType(messages.DevtoolsBatch)
+			h.writer.HandleBatch(h.devBuffer.Bytes(), h.batchInfo)
+		}
 
 		// Prepare buffer for the next batch
 		h.domBuffer.Reset()
