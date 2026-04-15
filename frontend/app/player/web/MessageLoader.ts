@@ -232,7 +232,7 @@ export default class MessageLoader {
       const data = unpack(mobBytes);
       const version = this.checkProtoFormat(data);
 
-      if (version === 2) {
+      if (version === 2 || version === 3) {
         resolvedParser = this.createV2Parser(
           shouldDecrypt,
           onMessagesDone,
