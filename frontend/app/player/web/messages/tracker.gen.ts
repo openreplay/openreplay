@@ -1031,17 +1031,6 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
-    case 81: {
-      return {
-        tp: MType.BatchMetadata,
-        version: tMsg[1],
-        pageNo: tMsg[2],
-        firstIndex: tMsg[3],
-        timestamp: tMsg[4],
-        location: tMsg[5],
-      }
-    }
-    
     case 83: {
       return {
         tp: MType.NetworkRequest,

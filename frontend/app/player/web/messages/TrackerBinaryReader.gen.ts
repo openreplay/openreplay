@@ -669,22 +669,6 @@ export default class TrackerBinaryReader extends PrimitiveReader {
       };
     }
 
-    case 81: {
-      const version = this.readUint(); if (version === null) { return resetPointer() }
-      const pageNo = this.readUint(); if (pageNo === null) { return resetPointer() }
-      const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
-      const timestamp = this.readInt(); if (timestamp === null) { return resetPointer() }
-      const location = this.readString(); if (location === null) { return resetPointer() }
-      return {
-        tp: MType.BatchMetadata,
-        version,
-        pageNo,
-        firstIndex,
-        timestamp,
-        location,
-      };
-    }
-
     case 83: {
       const type = this.readString(); if (type === null) { return resetPointer() }
       const method = this.readString(); if (method === null) { return resetPointer() }
@@ -1103,10 +1087,16 @@ export default class TrackerBinaryReader extends PrimitiveReader {
       };
     }
 
-    default:
-      // Skip unknown message type using size field
-      this.p = bodyStart + size
+    default: {
+      // Skip unknown message type using its size prefix
+      const skipTo = bodyStart + size
+      if (skipTo > this.buf.length) {
+        this.p = this.buf.length
+        return null
+      }
+      this.p = skipTo
       return this.readMessage()
+    }
     }
   }
 }

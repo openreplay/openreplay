@@ -416,7 +416,7 @@ message 79, 'Zustand', :replayer => :devtools, :pipeline => 'd' do
 end
 
 # since tracker 3.6.0   TODO: for webworker only
-message 81, 'BatchMetadata' do
+message 81, 'BatchMetadata', :replayer => false do
   uint 'Version'
   uint 'PageNo'
   uint 'FirstIndex'

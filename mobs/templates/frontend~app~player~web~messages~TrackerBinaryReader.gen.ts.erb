@@ -63,10 +63,16 @@ export default class TrackerBinaryReader extends PrimitiveReader {
       };
     }
 <% end %>
-    default:
-      // Skip unknown message type using size field
-      this.p = bodyStart + size
+    default: {
+      // Skip unknown message type using its size prefix
+      const skipTo = bodyStart + size
+      if (skipTo > this.buf.length) {
+        this.p = this.buf.length
+        return null
+      }
+      this.p = skipTo
       return this.readMessage()
+    }
     }
   }
 }

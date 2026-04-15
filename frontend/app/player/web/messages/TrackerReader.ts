@@ -24,13 +24,9 @@ export default class TrackerReader {
   readBatch(): PlayerMsg[] {
     const messages: PlayerMsg[] = [];
 
-    let lastTp = -1;
-    let msgNum = 0;
     while (this.reader.hasNextByte()) {
       const raw = this.reader.readMessage();
       if (!raw) break;
-      lastTp = raw.tp;
-      msgNum++;
 
       if (raw.tp === MType.Timestamp) {
         const ts = (raw as { tp: number; timestamp: number }).timestamp;

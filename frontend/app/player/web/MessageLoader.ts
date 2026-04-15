@@ -82,7 +82,6 @@ export default class MessageLoader {
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
     file?: string,
-    noIndexes = false,
   ) {
     const decrypt =
       shouldDecrypt && this.session.fileKey
@@ -92,15 +91,15 @@ export default class MessageLoader {
     const fileReader = new MFileReader(
       new Uint8Array(),
       this.session.startedAt,
-      noIndexes,
     );
     let fileNum = 0;
     return async (b: Uint8Array) => {
       try {
         fileNum += 1;
         const mobBytes = await decrypt(b);
-        const data = this.stripHeader(unpack(mobBytes));
+        const data = unpack(mobBytes);
         fileReader.append(data);
+        fileReader.checkForIndexes();
         const msgs: Array<PlayerMsg> = [];
         let finished = false;
         while (!finished) {
@@ -244,7 +243,6 @@ export default class MessageLoader {
           shouldDecrypt,
           onMessagesDone,
           file,
-          version === 3,
         );
       }
 

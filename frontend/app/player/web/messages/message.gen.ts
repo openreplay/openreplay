@@ -57,7 +57,6 @@ import type {
   RawAdoptedSsAddOwner,
   RawAdoptedSsRemoveOwner,
   RawZustand,
-  RawBatchMetadata,
   RawNetworkRequest,
   RawWsChannel,
   RawResourceTiming,
@@ -194,8 +193,6 @@ export type AdoptedSsAddOwner = RawAdoptedSsAddOwner & Timed
 export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
 export type Zustand = RawZustand & Timed
-
-export type BatchMetadata = RawBatchMetadata & Timed
 
 export type NetworkRequest = RawNetworkRequest & Timed
 
