@@ -424,12 +424,6 @@ message 81, 'BatchMetadata' do
   string 'Location'
 end
 
-# since tracker 3.6.0
-message 82, 'PartitionedMessage', :replayer => false, :pipeline => 'b' do
-  uint 'PartNo'
-  uint 'PartTotal'
-end
-
 message 83, 'NetworkRequest', :replayer => :devtools, :pipeline => 'd' do
   string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
   string 'Method'

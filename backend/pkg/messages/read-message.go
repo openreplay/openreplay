@@ -117,17 +117,10 @@ func DecodeSetViewportScroll(reader BytesReader) (Message, error) {
 }
 
 func DecodeCreateDocument(reader BytesReader) (Message, error) {
-<<<<<<< HEAD
-    var err error = nil
-    msg := &CreateDocument{}
-
-        return msg, err
-=======
 	var err error = nil
 	msg := &CreateDocument{}
 
 	return msg, err
->>>>>>> 8e2dfff7d (ui: fixes for raw format support, make meta included in player mob)
 }
 
 func DecodeCreateElementNode(reader BytesReader) (Message, error) {
@@ -1207,21 +1200,6 @@ func DecodeBatchMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-<<<<<<< HEAD
-=======
-func DecodePartitionedMessage(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &PartitionedMessage{}
-	if msg.PartNo, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.PartTotal, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
->>>>>>> 8e2dfff7d (ui: fixes for raw format support, make meta included in player mob)
 func DecodeNetworkRequest(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &NetworkRequest{}
