@@ -51,7 +51,10 @@ export default class MessageLoader {
    * V3 = 7x 0xff + 0xfd (new or old tracker without indexes)
    */
   checkProtoFormat = (binary: Uint8Array) => {
-    console.debug('Checking protocol format from header', binary.slice(0, 24).join(' '));
+    console.debug(
+      'Checking protocol format from header',
+      binary.slice(0, 24).join(' '),
+    );
     const isV2 =
       binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
     if (isV2) return 2;
@@ -194,7 +197,7 @@ export default class MessageLoader {
 
         messages.forEach((msg) => this.rawMessages.push(msg));
 
-        const sortedMsgs = messages.sort(brokenDomSorter).sort(sortIframes);
+        const sortedMsgs = fixMessageOrder(messages).sort(sortIframes);
         onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
       } catch (e) {
         console.error(e);
@@ -496,7 +499,7 @@ export default class MessageLoader {
 
     // Merge and sort
     const merged = [...allPlayer, ...allAssets];
-    const sorted = merged.sort(brokenDomSorter).sort(sortIframes);
+    const sorted = fixMessageOrder(merged).sort(sortIframes);
 
     logger.info(
       'TrackerReader: loaded',
@@ -569,7 +572,11 @@ export function getMsgPriority(tp: number): number {
 
 const BUCKET_COUNT = 9;
 
-export function needsSorting(msgs: PlayerMsg[], start: number, end: number): boolean {
+export function needsSorting(
+  msgs: PlayerMsg[],
+  start: number,
+  end: number,
+): boolean {
   let maxPriority = -1;
   for (let i = start; i < end; i++) {
     const p = getMsgPriority(msgs[i].tp);

@@ -81,7 +81,7 @@ export default class PrimitiveReader {
     return !!this.buf[this.p++];
   }
 
-  readSize(): number | null {
+  readSize = (): number | null => {
     if (this.p + 3 > this.buf.length) return null;
     let size = 0;
     for (let i = 0; i < 3; i++) {
