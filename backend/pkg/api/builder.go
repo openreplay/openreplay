@@ -201,7 +201,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	savedSearchesService := saved_searches.New(log, pgconn)
+	savedSearchesService := saved_searches.New(log, pgconn, searchService)
 	savedSearchesHandlers, err := saved_searches.NewHandlers(log, cfg, responser, savedSearchesService, reqValidator)
 	if err != nil {
 		return nil, err

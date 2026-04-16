@@ -24,6 +24,7 @@ type Search interface {
 	GetAll(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 	GetBookmarkedSessions(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
 	GetSessionIds(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error)
+	GetCounts(ctx context.Context, projectId int, req *model.SessionsSearchRequest) (sessions, users int64, err error)
 }
 
 type searchImpl struct {
@@ -489,6 +490,94 @@ LIMIT $3 OFFSET $4`,
 	processSessionsMetadata(resp.Sessions, metasMap)
 
 	return resp, nil
+}
+
+func (s *searchImpl) GetCounts(ctx context.Context, projectId int, req *model.SessionsSearchRequest) (int64, int64, error) {
+	if req == nil {
+		return 0, 0, errors.New("nil request")
+	}
+	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
+		return 0, 0, err
+	}
+
+	startSec := req.StartDate / 1000
+	endSec := req.EndDate / 1000
+
+	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
+	sessionsWhere = append([]string{
+		fmt.Sprintf("s.project_id = %d", projectId),
+		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+	}, sessionsWhere...)
+
+	hasEventFilters := len(eventsWhere) > 0 || len(filtersWhere) > 0
+
+	var distinctIdJoin string
+	if hasEventFilters {
+		conds := []string{
+			fmt.Sprintf("e.project_id = %d", projectId),
+			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+		}
+		conds = append(conds, filtersWhere...)
+		if len(eventsWhere) == 1 {
+			conds = append(conds, eventsWhere[0])
+		}
+		groupBy := charts.BuildJoinClause(req.EventsOrder, eventsWhere)
+		if groupBy == "" {
+			groupBy = "GROUP BY session_id"
+		}
+		distinctIdJoin = fmt.Sprintf(`ANY INNER JOIN (
+		SELECT session_id, any(distinct_id) AS distinct_id
+		FROM product_analytics.events AS e
+		WHERE %s
+		%s
+	) AS fs USING (session_id)`,
+			strings.Join(conds, " AND \n"), groupBy)
+	} else {
+		distinctIdJoin = fmt.Sprintf(`ANY LEFT JOIN (
+		SELECT session_id, any(distinct_id) AS distinct_id
+		FROM product_analytics.events
+		WHERE project_id = %d
+		  AND created_at BETWEEN toDateTime(%d) AND toDateTime(%d)
+		GROUP BY session_id
+	) AS fs USING (session_id)`, projectId, startSec, endSec)
+	}
+
+	var leftAntiJoin string
+	if len(negativeEventsWhere) > 0 {
+		negConds := []string{
+			fmt.Sprintf("e.project_id = %d", projectId),
+			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+		}
+		negConds = append(negConds, negativeEventsWhere...)
+		leftAntiJoin = fmt.Sprintf(`LEFT ANTI JOIN (
+		SELECT DISTINCT session_id
+		FROM product_analytics.events AS e
+		WHERE %s
+	) AS negative_sessions USING (session_id)`, strings.Join(negConds, " AND \n"))
+	}
+
+	query := fmt.Sprintf(`
+SELECT countDistinct(s.session_id) AS sessions_count,
+       countDistinctIf(fs.distinct_id, fs.distinct_id != '') AS users_count
+FROM experimental.sessions AS s
+	%s
+	%s
+WHERE %s;`,
+		distinctIdJoin,
+		leftAntiJoin,
+		strings.Join(sessionsWhere, " AND "),
+	)
+
+	var sessionsCount, usersCount uint64
+	_start := time.Now()
+	if err := s.chConn.QueryRow(ctx, query).Scan(&sessionsCount, &usersCount); err != nil {
+		if time.Since(_start) > 2*time.Second {
+			s.Logger.Warn(ctx, "Slow GetCounts query: %s", query)
+		}
+		s.Logger.Warn(ctx, "Error executing GetCounts query: %s\nQuery: %s", err, query)
+		return 0, 0, err
+	}
+	return int64(sessionsCount), int64(usersCount), nil
 }
 
 func (s *searchImpl) GetSessionIds(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (interface{}, error) {

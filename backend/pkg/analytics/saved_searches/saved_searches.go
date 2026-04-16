@@ -7,27 +7,47 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/analytics/search"
+	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
 
-const expiryMonths = 1
+const (
+	expiryMonths         = 1
+	statsWindowDays      = 7
+	statsFreshnessWindow = 30 * time.Minute
+	statsQueryTimeout    = 10 * time.Second
+)
 
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Get(projectID int, searchID string) (*model.SavedSearch, error)
-	List(projectID int, userID uint64, limit, offset int) ([]*model.SavedSearch, int, error)
+	List(ctx context.Context, projectID int, userID uint64, limit, offset int) ([]*model.SavedSearch, int, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
 }
 
 type savedSearchesImpl struct {
-	log    logger.Logger
-	pgconn pool.Pool
+	log        logger.Logger
+	pgconn     pool.Pool
+	search     search.Search
+	statsCache cache.Cache
 }
 
-func New(log logger.Logger, conn pool.Pool) SavedSearches {
-	return &savedSearchesImpl{log: log, pgconn: conn}
+type searchStats struct {
+	SessionsCount int64
+	UsersCount    int64
+	ComputedAt    time.Time
+}
+
+func New(log logger.Logger, conn pool.Pool, search search.Search) SavedSearches {
+	return &savedSearchesImpl{
+		log:        log,
+		pgconn:     conn,
+		search:     search,
+		statsCache: cache.New(time.Minute*30, time.Hour),
+	}
 }
 
 func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error) {
@@ -132,9 +152,7 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 	return &savedSearch, nil
 }
 
-func (s *savedSearchesImpl) List(projectID int, userID uint64, limit, offset int) ([]*model.SavedSearch, int, error) {
-	ctx := context.Background()
-
+func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int) ([]*model.SavedSearch, int, error) {
 	const selectQuery = `
 		SELECT 
 			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share, 
@@ -195,7 +213,59 @@ func (s *savedSearchesImpl) List(projectID int, userID uint64, limit, offset int
 		return nil, 0, fmt.Errorf("rows error: %w", err)
 	}
 
+	for _, ss := range searches {
+		if ctx.Err() != nil {
+			break
+		}
+		stats := s.getSearchStats(ctx, projectID, &ss.Data)
+		ss.SessionsCount = stats.SessionsCount
+		ss.UsersCount = stats.UsersCount
+	}
+
 	return searches, total, nil
+}
+
+func (s *savedSearchesImpl) getSearchStats(ctx context.Context, projectID int, data *model.SavedSearchData) searchStats {
+	if s.search == nil {
+		return searchStats{}
+	}
+
+	filtersJSON, err := json.Marshal(data.Filters)
+	if err != nil {
+		return searchStats{}
+	}
+	cacheKey := fmt.Sprintf("saved_search_stats:%d:%s:%s", projectID, data.EventsOrder, filtersJSON)
+
+	if cached, ok := s.statsCache.GetAndRefresh(cacheKey); ok {
+		if v, ok := cached.(searchStats); ok && time.Since(v.ComputedAt) < statsFreshnessWindow {
+			return v
+		}
+	}
+
+	now := time.Now()
+	req := &model.SessionsSearchRequest{
+		Filters:     append([]model.Filter(nil), data.Filters...),
+		EventsOrder: data.EventsOrder,
+		StartDate:   now.AddDate(0, 0, -statsWindowDays).UnixMilli(),
+		EndDate:     now.UnixMilli(),
+	}
+
+	qctx, cancel := context.WithTimeout(ctx, statsQueryTimeout)
+	defer cancel()
+
+	sessionsCount, usersCount, err := s.search.GetCounts(qctx, projectID, req)
+	if err != nil {
+		s.log.Warn(ctx, "saved search counts: %.200s", err)
+		return searchStats{}
+	}
+
+	stats := searchStats{
+		SessionsCount: sessionsCount,
+		UsersCount:    usersCount,
+		ComputedAt:    time.Now(),
+	}
+	s.statsCache.Set(cacheKey, stats)
+	return stats
 }
 
 func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error) {

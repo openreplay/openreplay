@@ -159,7 +159,7 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	searches, total, err := e.savedSearches.List(projectID, currentUser.ID, limit, offset)
+	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
