@@ -58,6 +58,7 @@ export default class DOMManager extends ListWalker<Message> {
    */
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map();
   private pendingStyleRules: Map<number, Message[]> = new Map();
+  private pendingCssData: Map<number, string> = new Map();
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> =
@@ -302,6 +303,7 @@ export default class DOMManager extends ListWalker<Message> {
         this.vTexts.clear();
         this.olStyleSheets.clear();
         this.pendingStyleRules.clear();
+        this.pendingCssData.clear();
         this.stylesManager.reset();
         return;
       }
@@ -309,6 +311,11 @@ export default class DOMManager extends ListWalker<Message> {
         const vText = new VText();
         this.vTexts.set(msg.id, vText);
         this.insertNode(msg);
+        const pendingCss = this.pendingCssData.get(msg.id);
+        if (pendingCss) {
+          vText.setData(pendingCss);
+          this.pendingCssData.delete(msg.id);
+        }
         return;
       }
       case MType.CreateElementNode: {
@@ -457,11 +464,19 @@ export default class DOMManager extends ListWalker<Message> {
         (vElem.node as HTMLInputElement).checked = msg.checked; // Maybe make special VCheckableElement type for lazy checking
         return;
       }
-      case MType.SetNodeData:
       case MType.SetCssData: {
         const vText = this.vTexts.get(msg.id);
         if (!vText) {
-          logger.error('SetNodeData/SetCssData: Node not found', msg);
+          this.pendingCssData.set(msg.id, msg.data);
+          return;
+        }
+        vText.setData(msg.data);
+        return;
+      }
+      case MType.SetNodeData: {
+        const vText = this.vTexts.get(msg.id);
+        if (!vText) {
+          logger.error('SetNodeData: Node not found', msg);
           return;
         }
         vText.setData(msg.data);

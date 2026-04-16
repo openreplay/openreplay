@@ -63,7 +63,11 @@ export function inlineRemoteCss(
         try {
           const cssText = stringifyStylesheet(loadedSheet);
           if (cssText) {
-            processCssText(cssText);
+            if (sendPlain && onPlain) {
+              onPlain(cssText, fakeIdHolder++);
+            } else {
+              processCssText(cssText);
+            }
             return;
           }
         } catch (e) {
