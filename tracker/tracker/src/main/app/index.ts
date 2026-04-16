@@ -462,6 +462,9 @@ export default class App {
         if (data.token) {
           this.session.setSessionToken(data.token as string, this.projectKey)
         }
+        if (data.id !== undefined) {
+          this.rootId = data.id
+        }
         this.allowAppStart()
         void this.start()
       } catch (e) {
@@ -609,6 +612,14 @@ export default class App {
         const message: Record<string, any> = { line: nextCommand }
         if (nextCommand === proto.startIframe) {
           message.token = this.session.getSessionToken(this.projectKey)
+          const targetFrame = this.pageFrames.find((f) => f.contentWindow === event.source)
+            || Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
+          if (targetFrame) {
+            const nodeId = (targetFrame as any)[this.options.node_id]
+            if (nodeId !== undefined) {
+              message.id = nodeId
+            }
+          }
         }
         // @ts-ignore
         event.source?.postMessage(message, '*')

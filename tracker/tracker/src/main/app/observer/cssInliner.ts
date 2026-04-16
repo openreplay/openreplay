@@ -49,7 +49,36 @@ export function inlineRemoteCss(
       })
       .catch(error => {
         console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
+        // Fetch failed (likely CORS) — retry via load event + sheet access
+        retryViaLoadEvent();
       });
+  } else {
+    retryViaLoadEvent();
+  }
+
+  function retryViaLoadEvent() {
+    const trySheet = () => {
+      const loadedSheet = node.sheet;
+      if (loadedSheet) {
+        try {
+          const cssText = stringifyStylesheet(loadedSheet);
+          if (cssText) {
+            processCssText(cssText);
+            return;
+          }
+        } catch (e) {
+          // cross-origin sheet — nothing more we can do
+        }
+      }
+    };
+    if (node.sheet) {
+      trySheet();
+    } else {
+      node.addEventListener('load', function onLoad() {
+        node.removeEventListener('load', onLoad);
+        trySheet();
+      });
+    }
   }
 
   function processCssText(cssText: string) {

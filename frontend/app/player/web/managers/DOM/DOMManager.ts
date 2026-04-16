@@ -57,6 +57,7 @@ export default class DOMManager extends ListWalker<Message> {
    * as well as <style> tag owned StyleSheets
    */
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map();
+  private pendingStyleRules: Map<number, Message[]> = new Map();
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> =
@@ -254,6 +255,27 @@ export default class DOMManager extends ListWalker<Message> {
     this.removeBodyScroll(msg.id, vn);
   }
 
+  private flushPendingStyleRules(
+    sheetID: number,
+    olStyleSheet: OnloadStyleSheet,
+  ) {
+    const pending = this.pendingStyleRules.get(sheetID);
+    if (!pending) return;
+    for (const pendingMsg of pending) {
+      if (pendingMsg.tp === MType.AdoptedSsInsertRule) {
+        olStyleSheet.insertRule(pendingMsg.rule, pendingMsg.index);
+      } else if (pendingMsg.tp === MType.AdoptedSsDeleteRule) {
+        olStyleSheet.deleteRule(pendingMsg.index);
+      } else if (pendingMsg.tp === MType.AdoptedSsReplace) {
+        olStyleSheet.whenReady((s) => {
+          // @ts-ignore
+          s.replaceSync(pendingMsg.text);
+        });
+      }
+    }
+    this.pendingStyleRules.delete(sheetID);
+  }
+
   private applyMessage = (msg: Message): Promise<any> | undefined => {
     switch (msg.tp) {
       case MType.CreateDocument: {
@@ -278,6 +300,8 @@ export default class DOMManager extends ListWalker<Message> {
         // this is done for the AdoptedCSS logic
         // Maybetodo: start Document as 0-node in tracker
         this.vTexts.clear();
+        this.olStyleSheets.clear();
+        this.pendingStyleRules.clear();
         this.stylesManager.reset();
         return;
       }
@@ -478,11 +502,12 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.AdoptedSsInsertRule: {
         const styleSheet = this.olStyleSheets.get(msg.sheetID);
         if (!styleSheet) {
-          logger.warn(
-            'No stylesheet was created for ',
-            msg,
-            this.olStyleSheets,
-          );
+          let pending = this.pendingStyleRules.get(msg.sheetID);
+          if (!pending) {
+            pending = [];
+            this.pendingStyleRules.set(msg.sheetID, pending);
+          }
+          pending.push(msg);
           return;
         }
         insertRule(styleSheet, msg);
@@ -491,7 +516,12 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.AdoptedSsDeleteRule: {
         const styleSheet = this.olStyleSheets.get(msg.sheetID);
         if (!styleSheet) {
-          logger.warn('No stylesheet was created for ', msg);
+          let pending = this.pendingStyleRules.get(msg.sheetID);
+          if (!pending) {
+            pending = [];
+            this.pendingStyleRules.set(msg.sheetID, pending);
+          }
+          pending.push(msg);
           return;
         }
         deleteRule(styleSheet, msg);
@@ -500,7 +530,12 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.AdoptedSsReplace: {
         const styleSheet = this.olStyleSheets.get(msg.sheetID);
         if (!styleSheet) {
-          logger.warn('No stylesheet was created for ', msg);
+          let pending = this.pendingStyleRules.get(msg.sheetID);
+          if (!pending) {
+            pending = [];
+            this.pendingStyleRules.set(msg.sheetID, pending);
+          }
+          pending.push(msg);
           return;
         }
         // @ts-ignore (configure ts with recent WebAPI)
@@ -520,10 +555,9 @@ export default class DOMManager extends ListWalker<Message> {
             logger.error('Non-style owner', msg);
             return;
           }
-          this.olStyleSheets.set(
-            msg.sheetID,
-            OnloadStyleSheet.fromStyleElement(vElem.node),
-          );
+          const olSheet = OnloadStyleSheet.fromStyleElement(vElem.node);
+          this.olStyleSheets.set(msg.sheetID, olSheet);
+          this.flushPendingStyleRules(msg.sheetID, olSheet);
           return;
         }
         /* Constructed StyleSheet case */
@@ -532,6 +566,7 @@ export default class DOMManager extends ListWalker<Message> {
           olStyleSheet = OnloadStyleSheet.fromVRootContext(vRoot);
           this.olStyleSheets.set(msg.sheetID, olStyleSheet);
         }
+        this.flushPendingStyleRules(msg.sheetID, olStyleSheet);
         olStyleSheet.whenReady((styleSheet) => {
           vRoot.onNode((node) => {
             const anyNode = node as any;
