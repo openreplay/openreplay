@@ -34,7 +34,6 @@ export default function (app: App | null) {
     return
   }
 
-  const styleSheetIDMap: Map<CSSStyleSheet, number> = new Map()
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
 
   const sendAdoptedStyleSheetsUpdate = (root: StyleSheetOwner) =>
