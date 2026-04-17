@@ -1,3 +1,7 @@
+## 17.2.9
+
+- dedupe order q for child iframes array
+
 ## 17.2.8
 
 - improvements for adopted stylesheets api tracking (e.g MUI, emotion-js etc)
