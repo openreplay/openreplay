@@ -668,6 +668,12 @@ export default class App {
   }
   private readonly addCommand = (cmd: string) => {
     this.pruneStaleFrames()
+    if (this.pollingQueue[cmd]) {
+      this.pollingQueue[cmd] = Array.from(
+        new Set([...this.pollingQueue[cmd], ...this.trackedFrames]),
+      )
+      return
+    }
     this.pollingQueue.order.push(cmd)
     this.pollingQueue[cmd] = [...this.trackedFrames]
   }
