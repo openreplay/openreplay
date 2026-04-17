@@ -219,6 +219,12 @@ export default abstract class Observer {
   private readonly inlineRemoteCss: boolean = false
   private readonly inlinerOptions: Options['inlinerOptions'] = undefined
   private readonly domParser = new DOMParser()
+  /**
+   * Bumped on every disconnect(). Stale async CSS-inlining callbacks from a
+   * previous session (e.g. agent reload → tracker restart) compare against
+   * this and bail instead of sending messages that reference vanished node ids.
+   */
+  private generation = 0
   constructor(
     protected readonly app: App,
     protected readonly isTopContext: boolean = false,
@@ -387,6 +393,7 @@ export default abstract class Observer {
     }
     if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
       if ('rel' in node && node.rel === 'stylesheet' && this.inlineRemoteCss) {
+        const gen = this.generation
         setTimeout(() => {
           inlineRemoteCss(
             // @ts-ignore
@@ -395,14 +402,17 @@ export default abstract class Observer {
             this.app.getBaseHref(),
             nextID,
             (id: number, cssText: string, index: number, baseHref: string) => {
+              if (this.generation !== gen) return
               this.app.send(AdoptedSSInsertRuleURLBased(id, cssText, index, baseHref))
             },
             (sheetId: number, ownerId: number) => {
+              if (this.generation !== gen) return
               this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
             },
             this.inlinerOptions?.forceFetch,
             this.inlinerOptions?.forcePlain,
             (cssText: string, fakeTextId: number) => {
+              if (this.generation !== gen) return
               this.app.send(CreateTextNode(fakeTextId, id, 0))
               this.app.send(SetCSSDataURLBased(fakeTextId, cssText, this.app.getBaseHref()))
             },
@@ -697,5 +707,6 @@ export default abstract class Observer {
     this.observer.disconnect()
     this.clear()
     this.throttledSetNodeData.clear()
+    this.generation++
   }
 }

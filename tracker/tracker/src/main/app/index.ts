@@ -457,8 +457,12 @@ export default class App {
     const { data } = event
     if (!data || event.source === window) return
     if (data.line === proto.startIframe) {
-      if (this.active()) return
+      // Avoid corrupting an in-flight start; let it complete.
+      if (this.activityState === ActivityState.Starting) return
       try {
+        if (this.active()) {
+          this.stop()
+        }
         if (data.token) {
           this.session.setSessionToken(data.token as string, this.projectKey)
         }
@@ -490,15 +494,28 @@ export default class App {
     }
   }
 
-  /**
-   * context ids for iframes,
-   * order is not so important as long as its consistent
-   * */
   trackedFrames: string[] = []
+  private frameLastSeen: Map<string, number> = new Map()
+  private readonly FRAME_STALE_MS = 1500
+  private pruneStaleFrames() {
+    const staleAfter = Date.now() - this.FRAME_STALE_MS
+    this.trackedFrames = this.trackedFrames.filter((ctx) => {
+      const last = this.frameLastSeen.get(ctx)
+      if (last !== undefined && last >= staleAfter) return true
+      this.frameLastSeen.delete(ctx)
+      return false
+    })
+  }
   crossDomainIframeListener = (event: MessageEvent) => {
-    if (!this.active() || event.source === window) return
+    if (event.source === window) return
     const { data } = event
     if (!data) return
+    // Record liveness regardless of our own active state so the queue can prune
+    // stale contexts reliably once we resume dispatching commands after a cycle.
+    if ((data.line === proto.polling || data.line === proto.iframeSignal) && data.context) {
+      this.frameLastSeen.set(data.context, Date.now())
+    }
+    if (!this.active()) return
     if (data.line === proto.iframeSignal) {
       // @ts-ignore
       event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
@@ -600,11 +617,22 @@ export default class App {
       if (!this.pollingQueue.order.length) {
         return
       }
-      const nextCommand = this.pollingQueue.order[0]
-      if (nextCommand && this.pollingQueue[nextCommand].length === 0) {
-        this.pollingQueue.order = this.pollingQueue.order.filter((c: any) => c !== nextCommand)
+      this.pruneStaleFrames()
+      const liveSet = new Set(this.trackedFrames)
+      while (this.pollingQueue.order.length > 0) {
+        const head = this.pollingQueue.order[0]
+        this.pollingQueue[head] = this.pollingQueue[head].filter((ctx: string) => liveSet.has(ctx))
+        if (this.pollingQueue[head].length === 0) {
+          delete this.pollingQueue[head]
+          this.pollingQueue.order.shift()
+        } else {
+          break
+        }
+      }
+      if (!this.pollingQueue.order.length) {
         return
       }
+      const nextCommand = this.pollingQueue.order[0]
       if (this.pollingQueue[nextCommand].includes(data.context)) {
         this.pollingQueue[nextCommand] = this.pollingQueue[nextCommand].filter(
           (c: string) => c !== data.context,
@@ -624,6 +652,7 @@ export default class App {
         // @ts-ignore
         event.source?.postMessage(message, '*')
         if (this.pollingQueue[nextCommand].length === 0) {
+          delete this.pollingQueue[nextCommand]
           this.pollingQueue.order.shift()
         }
       }
@@ -638,6 +667,7 @@ export default class App {
     order: [],
   }
   private readonly addCommand = (cmd: string) => {
+    this.pruneStaleFrames()
     this.pollingQueue.order.push(cmd)
     this.pollingQueue[cmd] = [...this.trackedFrames]
   }
@@ -1406,6 +1436,7 @@ export default class App {
   }
 
   prevOpts: StartOptions = {}
+  private userStartCallback?: NonNullable<StartOptions['startCallback']>
   private async _start(
     startOpts: StartOptions = {},
     resetByWorker = false,
@@ -1413,6 +1444,9 @@ export default class App {
   ): Promise<StartPromiseReturn> {
     if (Object.keys(startOpts).length !== 0) {
       this.prevOpts = startOpts
+    }
+    if (startOpts.startCallback) {
+      this.userStartCallback = startOpts.startCallback
     }
     const isColdStart = this.activityState === ActivityState.ColdStart
     if (isColdStart && this.coldInterval) {
@@ -1588,8 +1622,8 @@ export default class App {
       // TODO: start as early as possible (before receiving the token)
       /** after start */
       this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-      if (startOpts.startCallback) {
-        startOpts.startCallback(SuccessfulStart(onStartInfo))
+      if (this.userStartCallback) {
+        this.userStartCallback(SuccessfulStart(onStartInfo))
       }
       this.activityState = ActivityState.Active
       if (this.options.crossdomain?.enabled) {
@@ -1802,6 +1836,7 @@ export default class App {
         this.canvasRecorder?.clear()
         this.messages.length = 0
         this.parentActive = false
+        this.pageFrames = []
       } finally {
         this.activityState = ActivityState.NotActive
         this.debug.log('OpenReplay tracking stopped.')
