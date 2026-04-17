@@ -17,7 +17,7 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 	kafkaConfig := &kafka.ConfigMap{
 		"enable.idempotence":                    true,
 		"bootstrap.servers":                     env.String("KAFKA_SERVERS"),
-		"go.delivery.reports":                   true,
+		"go.delivery.reports":                   env.Bool("KAFKA_DELIVERY_REPORTS"),
 		"security.protocol":                     "plaintext",
 		"go.batch.producer":                     useBatch,
 		"message.max.bytes":                     messageSizeLimit, // should be synced with broker config
