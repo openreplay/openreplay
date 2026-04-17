@@ -1,3 +1,8 @@
+## 17.2.8
+
+- improvements for adopted stylesheets api tracking (e.g MUI, emotion-js etc)
+- improvements for css inlining mode
+
 ## 17.2.6
 
 - improvements for crossdomain iframe communication and token reassignment
