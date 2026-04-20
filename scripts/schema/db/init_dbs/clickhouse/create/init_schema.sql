@@ -952,3 +952,4 @@ FROM product_analytics.users
 WHERE isNotNull(t.2)
   AND notEmpty(toString(t.2))
 GROUP BY ALL;
+CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> -1;
