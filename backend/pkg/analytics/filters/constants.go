@@ -213,6 +213,8 @@ type Filter struct {
 	Filters       []Filter           `json:"filters,omitempty" validate:"omitempty,dive"`
 	IsAction      bool               `json:"isAction"`
 	ActionId      string             `json:"actionId,omitempty" validate:"omitempty,max=36"`
+	IsSegment     bool               `json:"isSegment"`
+	SearchId      string             `json:"searchId,omitempty" validate:"omitempty,max=36"`
 }
 
 func ValidateFilterFields(sl validator.StructLevel) {

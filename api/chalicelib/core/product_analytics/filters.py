@@ -392,6 +392,38 @@ def get_features_filters(project_id: int):
     }
 
 
+def get_segments_filters(project_id: int, user_id: int):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """SELECT search_id, name, is_public
+               FROM public.searches
+               WHERE project_id = %(project_id)s
+                 AND deleted_at IS NULL
+                 AND (user_id = %(user_id)s OR is_public)
+               ORDER BY name;""",
+            {"project_id": project_id, "user_id": user_id},
+        )
+        cur.execute(query=query)
+        rows = cur.fetchall()
+
+    results = []
+    for row in rows:
+        results.append({
+            "searchId": row["search_id"],
+            "name": row["name"],
+            "displayName": row["name"],
+            "isPublic": row["is_public"],
+            "isSegment": True,
+        })
+
+    return {
+        "total": len(results),
+        "displayName": "Segments",
+        "scope": ["sessions", "events"],
+        "list": results,
+    }
+
+
 def get_global_filters(project_id: int):
     r = get_sessions_filters(project_id)
     r = r["list"]

@@ -50,6 +50,8 @@ type Filter struct {
 	Filters       []Filter `json:"filters,omitempty"` // Nested filters for complex conditions
 	IsAction      bool     `json:"isAction"`
 	ActionId      string   `json:"actionId,omitempty" validate:"omitempty,max=36"`
+	IsSegment     bool     `json:"isSegment"`
+	SearchId      string   `json:"searchId,omitempty" validate:"omitempty,max=36"`
 }
 
 var ViewTypeTimeseries []string = []string{"lineChart", "areaChart", "barChart", "progressChart", "pieChart", "metric", "table"}

@@ -28,18 +28,21 @@ type Search interface {
 }
 
 type searchImpl struct {
-	chConn  driver.Conn
-	pgConn  pool.Pool
-	Logger  logger.Logger
-	actions lexicon.Actions
+	chConn     driver.Conn
+	pgConn     pool.Pool
+	Logger     logger.Logger
+	filterRefs []lexicon.FilterRef
 }
 
-func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, actions lexicon.Actions) (Search, error) {
+func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, actions lexicon.Actions, segments lexicon.Segments) (Search, error) {
 	return &searchImpl{
-		chConn:  chConn,
-		pgConn:  pgConn,
-		Logger:  logger,
-		actions: actions,
+		chConn: chConn,
+		pgConn: pgConn,
+		Logger: logger,
+		filterRefs: []lexicon.FilterRef{
+			lexicon.NewSegmentFilterRef(segments),
+			lexicon.NewActionFilterRef(actions),
+		},
 	}, nil
 }
 
@@ -108,7 +111,7 @@ func (s *searchImpl) GetAll(ctx context.Context, projectId int, userId uint64, r
 		return nil, errors.New("nil request")
 	}
 
-	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
+	if err := lexicon.ResolveSessionSearch(ctx, s.filterRefs, uint32(projectId), req); err != nil {
 		return nil, err
 	}
 
@@ -496,7 +499,7 @@ func (s *searchImpl) GetCounts(ctx context.Context, projectId int, req *model.Se
 	if req == nil {
 		return 0, 0, errors.New("nil request")
 	}
-	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
+	if err := lexicon.ResolveSessionSearch(ctx, s.filterRefs, uint32(projectId), req); err != nil {
 		return 0, 0, err
 	}
 
@@ -585,7 +588,7 @@ func (s *searchImpl) GetSessionIds(ctx context.Context, projectId int, userId ui
 		return nil, errors.New("nil request")
 	}
 
-	if err := lexicon.ResolveSessionSearchFilters(ctx, s.actions, uint32(projectId), req); err != nil {
+	if err := lexicon.ResolveSessionSearch(ctx, s.filterRefs, uint32(projectId), req); err != nil {
 		return nil, err
 	}
 

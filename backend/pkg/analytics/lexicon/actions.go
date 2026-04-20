@@ -238,15 +238,6 @@ func (a *actionsImpl) Delete(ctx context.Context, projectID uint32, actionID str
 
 const maxActionResolveDepth = 3
 
-func hasActionFilters(inputFilters []analyticsModel.Filter) bool {
-	for i := range inputFilters {
-		if inputFilters[i].ActionId != "" {
-			return true
-		}
-	}
-	return false
-}
-
 func hasEventActionFilters(inputFilters []filters.Filter) bool {
 	for i := range inputFilters {
 		if inputFilters[i].ActionId != "" {
@@ -311,86 +302,6 @@ func convertFilterToModel(f filters.Filter) analyticsModel.Filter {
 		Filters:       nested,
 		ActionId:      f.ActionId,
 	}
-}
-
-func ResolveModelActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []analyticsModel.Filter) ([]analyticsModel.Filter, error) {
-	if !hasActionFilters(inputFilters) {
-		return inputFilters, nil
-	}
-	return resolveModelActionFilters(ctx, actions, projID, inputFilters, 0, make(map[string]bool))
-}
-
-func resolveModelActionFilters(ctx context.Context, actions Actions, projID uint32, inputFilters []analyticsModel.Filter, depth int, seen map[string]bool) ([]analyticsModel.Filter, error) {
-	if depth > maxActionResolveDepth {
-		return nil, nil
-	}
-	resolved := make([]analyticsModel.Filter, 0, len(inputFilters))
-	for _, f := range inputFilters {
-		if f.ActionId == "" {
-			resolved = append(resolved, f)
-			continue
-		}
-		if seen[f.ActionId] {
-			continue
-		}
-		seen[f.ActionId] = true
-		action, err := actions.Get(ctx, projID, f.ActionId)
-		if err != nil {
-			delete(seen, f.ActionId)
-			if errors.Is(err, ErrActionNotFound) {
-				return nil, fmt.Errorf("action %s not found", f.ActionId)
-			}
-			return nil, fmt.Errorf("failed to resolve action %s: %w", f.ActionId, err)
-		}
-		converted := make([]analyticsModel.Filter, 0, len(action.Filters))
-		for _, af := range action.Filters {
-			converted = append(converted, convertFilterToModel(af))
-		}
-		nestedResolved, err := resolveModelActionFilters(ctx, actions, projID, converted, depth+1, seen)
-		if err != nil {
-			return nil, err
-		}
-		resolved = append(resolved, nestedResolved...)
-		delete(seen, f.ActionId)
-	}
-	return resolved, nil
-}
-
-func ResolveSessionSearchFilters(ctx context.Context, actions Actions, projID uint32, req *analyticsModel.SessionsSearchRequest) error {
-	resolved, err := ResolveModelActionFilters(ctx, actions, projID, req.Filters)
-	if err != nil {
-		return err
-	}
-	req.Filters = resolved
-	for i, series := range req.Series {
-		resolved, err := ResolveModelActionFilters(ctx, actions, projID, series.Filter.Filters)
-		if err != nil {
-			return err
-		}
-		req.Series[i].Filter.Filters = resolved
-	}
-	return nil
-}
-
-func ResolveMetricPayloadFilters(ctx context.Context, actions Actions, projID uint32, req *analyticsModel.MetricPayload) error {
-	for i, series := range req.Series {
-		resolved, err := ResolveModelActionFilters(ctx, actions, projID, series.Filter.Filters)
-		if err != nil {
-			return err
-		}
-		req.Series[i].Filter.Filters = resolved
-	}
-	resolved, err := ResolveModelActionFilters(ctx, actions, projID, req.StartPoint)
-	if err != nil {
-		return err
-	}
-	req.StartPoint = resolved
-	resolved, err = ResolveModelActionFilters(ctx, actions, projID, req.Exclude)
-	if err != nil {
-		return err
-	}
-	req.Exclude = resolved
-	return nil
 }
 
 var sortColumnMap = map[string]string{

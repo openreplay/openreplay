@@ -23,7 +23,7 @@ const (
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Get(projectID int, searchID string) (*model.SavedSearch, error)
-	List(ctx context.Context, projectID int, userID uint64, limit, offset int) ([]*model.SavedSearch, int, error)
+	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
 }
@@ -152,20 +152,35 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 	return &savedSearch, nil
 }
 
-func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int) ([]*model.SavedSearch, int, error) {
-	const selectQuery = `
-		SELECT 
-			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share, 
+var sortColumns = map[string]string{
+	"name":      "ss.name",
+	"createdAt": "ss.created_at",
+	"userName":  "u.name",
+}
+
+func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error) {
+	column, ok := sortColumns[sort]
+	if !ok {
+		column = sortColumns["createdAt"]
+	}
+	direction := "DESC"
+	if order == "asc" {
+		direction = "ASC"
+	}
+
+	selectQuery := fmt.Sprintf(`
+		SELECT
+			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share,
 			ss.search_data, ss.created_at, ss.expires_at, ss.deleted_at,
 			COUNT(*) OVER() AS total_count
 		FROM public.saved_searches ss
 		LEFT JOIN public.users u ON ss.user_id = u.user_id
-		WHERE ss.project_id=$1 AND ss.deleted_at IS NULL 
+		WHERE ss.project_id=$1 AND ss.deleted_at IS NULL
 			AND ss.is_share=false
 			AND (ss.user_id=$2 OR ss.is_public=true)
-		ORDER BY ss.created_at DESC
+		ORDER BY %s %s NULLS LAST, ss.search_id %s
 		LIMIT $3 OFFSET $4
-	`
+	`, column, direction, direction)
 
 	rows, err := s.pgconn.Query(selectQuery, projectID, userID, limit, offset)
 	if err != nil {

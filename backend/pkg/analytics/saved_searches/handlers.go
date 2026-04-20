@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -159,7 +160,27 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset)
+	sort := "createdAt"
+	if s := r.URL.Query().Get("sort"); s != "" {
+		switch s {
+		case "name", "createdAt", "userName":
+			sort = s
+		default:
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid sort key: %s (allowed: name, createdAt, userName)", s), startTime, r.URL.Path, bodySize)
+			return
+		}
+	}
+
+	order := "desc"
+	if o := strings.ToLower(r.URL.Query().Get("order")); o != "" {
+		if o != "asc" && o != "desc" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid order: %s (allowed: asc, desc)", o), startTime, r.URL.Path, bodySize)
+			return
+		}
+		order = o
+	}
+
+	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset, sort, order)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

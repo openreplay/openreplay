@@ -113,6 +113,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 
 	lexiconService := lexicon.New(log, chconn)
 	actionsService := lexicon.NewActions(log, pgconn)
+	segmentsService := lexicon.NewSegments(log, pgconn)
 
 	analyticsEventsService, err := analyticsEvents.New(log, chconn, lexiconService, actionsService)
 	if err != nil {
@@ -168,7 +169,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	searchService, err := search.New(log, chconn, pgconn, actionsService)
+	searchService, err := search.New(log, chconn, pgconn, actionsService, segmentsService)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +193,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	chartsService, err := charts.New(log, chconn, actionsService)
+	chartsService, err := charts.New(log, chconn, actionsService, segmentsService)
 	if err != nil {
 		return nil, err
 	}
