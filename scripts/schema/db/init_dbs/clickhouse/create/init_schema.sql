@@ -1207,3 +1207,4 @@ FROM experimental.sessions
 WHERE isNotNull(metadata_10)
   AND notEmpty(metadata_10)
 GROUP BY ALL;
+CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> -1;
