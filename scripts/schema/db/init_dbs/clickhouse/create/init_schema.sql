@@ -1170,3 +1170,4 @@ FROM product_analytics.users
 WHERE length(a.1) > 0
   AND isNull(toFloat64OrNull(a.1))
 GROUP BY ALL;
+CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> -1;
