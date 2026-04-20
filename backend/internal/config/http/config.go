@@ -34,6 +34,7 @@ type Config struct {
 	CanvasFps            int           `env:"CANVAS_FPS,default=1"`
 	MobileQuality        string        `env:"MOBILE_QUALITY,default=low"` // (low, standard, high)
 	MobileFps            int           `env:"MOBILE_FPS,default=1"`
+	BatchMessages        bool          `env:"BATCH_MESSAGES,default=true"`
 	WorkerID             uint16
 }
 

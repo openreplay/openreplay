@@ -26,7 +26,7 @@ func main() {
 	dbMetric := database.New("http")
 	metrics.New(log, append(webMetrics.List(), dbMetric.List()...))
 
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	producer := queue.NewProducer(cfg.MessageSizeLimit, cfg.BatchMessages)
 	defer producer.Close(15000)
 
 	pgConn, err := pool.New(dbMetric, cfg.Postgres.String())
