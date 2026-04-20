@@ -43,16 +43,16 @@ function FunnelWidget(props: Props) {
   const metricFilters = metric?.series[0]?.filter.filters || [];
 
   const applyDrillDown = (index: number, isComp?: boolean) => {
-    const filter = new Filter().fromData({
+    const filter = {
       filters: metricFilters.slice(0, index + 1),
-    });
+    };
     const periodTimestamps =
       isComp && index > -1
         ? comparisonPeriod.toTimestamps()
         : drillDownPeriod.toTimestamps();
 
     drillDownFilter.merge({
-      filters: filter.toJson().filters,
+      filters: filter.filters,
       startTimestamp: periodTimestamps.startTimestamp,
       endTimestamp: periodTimestamps.endTimestamp,
     });

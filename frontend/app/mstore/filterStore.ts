@@ -180,7 +180,7 @@ export default class FilterStore {
     );
 
     if (!filter) {
-      console.error('Filter not found');
+      console.error('Filter not found', data);
       return new FilterItem({
         name: data.name,
         isEvent: data.isEvent,

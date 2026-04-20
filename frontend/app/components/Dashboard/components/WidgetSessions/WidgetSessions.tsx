@@ -147,31 +147,29 @@ function WidgetSessions({ className = '' }) {
   const fetchSessions = useCallback(
     (metricId, flt) => {
       if (!isMounted()) return;
+      const isDrilldown = !!flt.isDrilldown;
       if (
+        !isDrilldown &&
         widget.metricType === FUNNEL &&
-        flt.series[0].filter.filters.length === 0
+        flt.series?.[0]?.filter?.filters?.length === 0
       ) {
         setLoading(false);
         return setData([]);
       }
 
       setLoading(true);
-      const params = { ...flt, filters: [] };
+      const { isDrilldown: _omit, ...rest } = flt;
+      const params = { ...rest, filters: [...(flt.filters || [])] };
       if (widget.metricType === TABLE && widget.metricOf === 'REQUEST') {
         const reqFilter = filterStore.findEvent({ name: FilterKey.REQUEST });
         if (reqFilter) {
           params.filters.push(reqFilter);
         }
       }
-      if (flt.filters?.length && params.series?.[0]?.filter) {
-        if (widget.metricType === FUNNEL) {
-          params.series[0].filter.filters = [...flt.filters];
-        } else {
-          params.series[0].filter.filters = [
-            ...(flt.series[0].filter.filters || []),
-            ...flt.filters,
-          ];
-        }
+      if (isDrilldown) {
+        delete params.series;
+      } else if (!params.series?.length) {
+        params.series = widget.series.map((s) => s.toJson());
       }
 
       widget
@@ -256,9 +254,41 @@ function WidgetSessions({ className = '' }) {
         }
       }
 
+      const hasDrilldown = filter.filters.length > 0;
+      const isFunnel = widget.metricType === FUNNEL;
+
+      let finalFilters = filter.filters;
+      let finalSeries: any[] = seriesJson;
+      let isDrilldownRequest = false;
+
+      if (hasDrilldown) {
+        if (isFunnel && seriesJson.length > 0) {
+          finalSeries = [
+            {
+              ...seriesJson[0],
+              filter: {
+                ...seriesJson[0].filter,
+                filters: filter.filters.map((f) => ({ ...f })),
+                eventsOrder: 'then',
+              },
+            },
+          ];
+          finalFilters = [];
+        } else {
+          const seriesFilters = seriesJson.flatMap(
+            (s) => s.filter?.filters || [],
+          );
+          finalFilters = [...filter.filters, ...seriesFilters];
+          finalSeries = [];
+          isDrilldownRequest = true;
+        }
+      }
+
       debounceSessions(widget.metricId, {
         ...filter,
-        series: seriesJson,
+        filters: finalFilters,
+        series: finalSeries,
+        isDrilldown: isDrilldownRequest,
         metricType: widget.metricType,
         metricOf: widget.metricOf,
         page: metricStore.sessionsPage,

@@ -46,7 +46,7 @@ const nodeToFilter = {
 const subFilters = {
   INPUT: 'label',
   CLICK: 'label',
-  LOCATION: 'url_path',
+  LOCATION: 'urlPath',
   ISSUE: 'issue_type',
   TAG_TRIGGER: 'tag_id',
 };
