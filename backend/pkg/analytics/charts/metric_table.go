@@ -561,6 +561,8 @@ var sessionProperties = map[string]string{
 	"utm_source":           "utm_source",
 	"utm_medium":           "utm_medium",
 	"utm_campaign":         "utm_campaign",
+	"screen_width":         "screen_width",
+	"screen_height":        "screen_height",
 	//	IOS
 	"user_os_ios":           "user_os",
 	"user_device_ios":       "user_device",
