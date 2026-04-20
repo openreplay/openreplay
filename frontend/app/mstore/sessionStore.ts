@@ -251,8 +251,8 @@ export default class SessionStore {
     const nextEntryNum =
       keys.length > 0
         ? Math.max(
-            ...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0),
-          ) + 1
+          ...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0),
+        ) + 1
         : 0;
     this.prefetchedMobUrls[sessionId] = {
       data: fileData,
@@ -354,100 +354,111 @@ export default class SessionStore {
 
   fetchSessionData = async (sessionId: string, isLive = false) => {
     try {
-      const filter = isLive ? searchStoreLive.instance : searchStore.instance;
       const data = await sessionService.getSessionInfo(sessionId, isLive);
-      const eventsData: Record<string, any[]> = {};
-      try {
-        const evData = isLive
-          ? {
-              errors: [],
-              events: [],
-              issues: [],
-              crashes: [],
-              resources: [],
-              stackEvents: [],
-              userEvents: [],
-              userTesting: [],
-              incidents: [],
-            }
-          : await sessionService.getSessionEvents(sessionId);
 
-        Object.assign(eventsData, {
-          ...evData,
-          events: evData.events.map((e) => ({
-            ...e,
-            isHighlighted: searchStore.instance.filters.length
-              ? checkEventWithFilters(e, searchStore.instance.filters)
-              : false,
-          })),
-        });
-      } catch (e) {
-        console.error('Failed to fetch events', e);
-      }
-
-      const {
-        errors = [],
-        events = [],
-        issues = [],
-        crashes = [],
-        resources = [],
-        stackEvents = [],
-        userEvents = [],
-        incidents = [],
-      } = eventsData;
-
-      const filterEvents = filter.filters.filter((f) => f.isEvent) as Record<
-        string,
-        any
-      >[];
-      const matching: number[] = [];
-
-      const visitedEvents: Location[] = [];
-      const tmpMap = new Set();
-
-      events.forEach((event) => {
-        if (event.type === 'LOCATION' && !tmpMap.has(event.url)) {
-          tmpMap.add(event.url);
-          visitedEvents.push(event as Location);
-        }
-      });
-
-      filterEvents.forEach(({ key, operator, value }) => {
-        events.forEach((e, index) => {
-          if (key === e.type) {
-            const val = e.type === 'LOCATION' ? e.url : e.value;
-            if (operator === 'is' && value === val) {
-              matching.push(index);
-            }
-            if (operator === 'contains' && val.includes(value)) {
-              matching.push(index);
-            }
-          }
+      const session = new Session(data);
+      this.current = session;
+      this.addSessionEvents(data, isLive).then((sessionWithEvents) => {
+        runInAction(() => {
+          this.current = sessionWithEvents;
         });
       });
-
-      runInAction(() => {
-        const session = new Session(data);
-        session.addEvents(
-          events ?? [],
-          crashes ?? [],
-          errors ?? [],
-          issues ?? [],
-          resources ?? [],
-          userEvents ?? [],
-          stackEvents ?? [],
-          incidents ?? [],
-        );
-        this.current = session;
-        this.eventsIndex = matching;
-        this.visitedEvents = visitedEvents;
-        this.host = visitedEvents[0]?.host || '';
-        this.prefetched = false;
-      });
+      this.prefetched = false;
     } catch (e) {
       console.error(e);
       this.fetchFailed = true;
     }
+  };
+
+  addSessionEvents = async (sessionData, isLive = false) => {
+    const session = new Session(sessionData);
+    const filter = isLive ? searchStoreLive.instance : searchStore.instance;
+
+    const eventsData: Record<string, any[]> = {};
+    try {
+      const evData = isLive
+        ? {
+            errors: [],
+            events: [],
+            issues: [],
+            crashes: [],
+            resources: [],
+            stackEvents: [],
+            userEvents: [],
+            userTesting: [],
+            incidents: [],
+          }
+        : await sessionService.getSessionEvents(session.sessionId);
+
+      Object.assign(eventsData, {
+        ...evData,
+        events: evData.events.map((e) => ({
+          ...e,
+          isHighlighted: searchStore.instance.filters.length
+            ? checkEventWithFilters(e, searchStore.instance.filters)
+            : false,
+        })),
+      });
+    } catch (e) {
+      console.error('Failed to fetch events', e);
+    }
+
+    const {
+      errors = [],
+      events = [],
+      issues = [],
+      crashes = [],
+      resources = [],
+      stackEvents = [],
+      userEvents = [],
+      incidents = [],
+    } = eventsData;
+
+    const filterEvents = filter.filters.filter((f) => f.isEvent) as Record<
+      string,
+      any
+    >[];
+    const matching: number[] = [];
+
+    const visitedEvents: Location[] = [];
+    const tmpMap = new Set();
+
+    events.forEach((event) => {
+      if (event.type === 'LOCATION' && !tmpMap.has(event.url)) {
+        tmpMap.add(event.url);
+        visitedEvents.push(event as Location);
+      }
+    });
+
+    filterEvents.forEach(({ key, operator, value }) => {
+      events.forEach((e, index) => {
+        if (key === e.type) {
+          const val = e.type === 'LOCATION' ? e.url : e.value;
+          if (operator === 'is' && value === val) {
+            matching.push(index);
+          }
+          if (operator === 'contains' && val.includes(value)) {
+            matching.push(index);
+          }
+        }
+      });
+    });
+
+    const newSess = session.addEvents(
+      events ?? [],
+      crashes ?? [],
+      errors ?? [],
+      issues ?? [],
+      resources ?? [],
+      userEvents ?? [],
+      stackEvents ?? [],
+      incidents ?? [],
+    );
+    this.eventsIndex = matching;
+    this.visitedEvents = visitedEvents;
+    this.host = visitedEvents[0]?.host || '';
+
+    return newSess;
   };
 
   fetchNotes = async (sessionId: string) => {
@@ -494,13 +505,13 @@ export default class SessionStore {
 
     const filteredEvents = query
       ? events.filter(
-          (e) =>
-            searchRe.test(e.url) ||
-            searchRe.test(e.value) ||
-            searchRe.test(e.label) ||
-            searchRe.test(e.type) ||
-            (e.type === 'LOCATION' && searchRe.test('visited')),
-        )
+        (e) =>
+          searchRe.test(e.url) ||
+          searchRe.test(e.value) ||
+          searchRe.test(e.label) ||
+          searchRe.test(e.type) ||
+          (e.type === 'LOCATION' && searchRe.test('visited')),
+      )
       : null;
 
     this.filteredEvents = filteredEvents;

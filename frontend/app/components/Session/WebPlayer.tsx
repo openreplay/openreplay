@@ -163,9 +163,9 @@ function WebPlayer(props: any) {
   React.useEffect(() => {
     if (
       messagesProcessed &&
-      (session.events.length > 0 ||
-        session.errors.length > 0 ||
-        session.stackEvents.length > 0 ||
+      (session.events?.length ||
+        session.errors?.length ||
+        session.stackEvents?.length ||
         session.addedEvents)
     ) {
       contextValue.player?.updateLists?.(session);

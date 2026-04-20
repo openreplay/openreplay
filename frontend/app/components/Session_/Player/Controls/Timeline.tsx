@@ -35,6 +35,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
   const { playing, ready, endTime, devtoolsLoading, domLoading } = store.get();
   const sessionId = sessionStore.current.sessionId;
+  const loadingEvents = !sessionStore.current.addedEvents;
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -141,6 +142,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     return Math.max(Math.round(p * targetTime), 0);
   };
 
+  const showLoaderStripes = devtoolsLoading || domLoading || !ready || loadingEvents
   return (
     <div
       className="flex items-center absolute w-full"
@@ -170,9 +172,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
         <CustomDragLayer onDrag={onDrag} minX={0} maxX={maxWidth} />
 
         <div className={stl.timeline} ref={timelineRef}>
-          {devtoolsLoading || domLoading || !ready ? (
-            <div className={stl.stripes} />
-          ) : null}
+          {showLoaderStripes ? <div className={stl.stripes} /> : null}
         </div>
 
         {isMobile ? <MobEventsList /> : <WebEventsList />}
