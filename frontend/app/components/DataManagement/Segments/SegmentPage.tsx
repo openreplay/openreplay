@@ -1,5 +1,6 @@
 import { Filter } from '@/mstore/types/filterConstants';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import ENV from 'ENV';
 import withPermissions from 'HOCs/withPermissions';
 import { Button, Input, Segmented, Tooltip } from 'antd';
 import cn from 'classnames';
@@ -19,8 +20,6 @@ import Breadcrumb from 'Shared/Breadcrumb';
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
 import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-
-import ENV from '../../../../env';
 
 import {
   Segment,
@@ -85,7 +84,9 @@ function SegmentPage() {
   const createMutation = useMutation({
     mutationFn: createSegment,
     onSuccess: (created) => {
-      toast.success(t('Segment {{name}} created successfully', { name: created.name }));
+      toast.success(
+        t('Segment {{name}} created successfully', { name: created.name }),
+      );
       queryClient.invalidateQueries({ queryKey: ['segments-list'] });
       history.push(withSiteId(dataManagement.segmentPage(created.id), siteId!));
     },
@@ -100,7 +101,9 @@ function SegmentPage() {
     onSuccess: () => {
       toast.success(t('Segment updated successfully'));
       queryClient.invalidateQueries({ queryKey: ['segments-list'] });
-      queryClient.invalidateQueries({ queryKey: ['segment', siteId, segmentId] });
+      queryClient.invalidateQueries({
+        queryKey: ['segment', siteId, segmentId],
+      });
     },
     onError: () => {
       toast.error(t('Failed to update segment. Please try again.'));
@@ -415,7 +418,9 @@ function SegmentPage() {
             isDraggable={true}
             showIndices={true}
             className="mt-2"
-            handleRemove={(i) => onRemoveFilter(filters.indexOf(eventFilters[i]))}
+            handleRemove={(i) =>
+              onRemoveFilter(filters.indexOf(eventFilters[i]))
+            }
             handleUpdate={(i, f) =>
               onUpdateFilter(filters.indexOf(eventFilters[i]), f)
             }

@@ -18,4 +18,5 @@ module.exports = {
     'Shared/*': path.resolve(__dirname, 'app/components/shared/*'),
     Player: path.resolve(__dirname, 'app/player'),
     'Player/*': path.resolve(__dirname, 'app/player/*'),
+    'ENV': path.resolve(__dirname, 'env.ts'),
 };

@@ -30,7 +30,8 @@
       "Player/*": ["./app/player/*"],
       "Player": ["./app/player"],
       "HOCs": ["./app/components/hocs"],
-      "HOCs/*": ["./app/components/hocs/*"]
+      "HOCs/*": ["./app/components/hocs/*"],
+      "ENV": ["./env.ts"]
     }
   },
   "include": [
