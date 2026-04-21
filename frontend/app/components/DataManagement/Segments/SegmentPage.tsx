@@ -57,6 +57,11 @@ function SegmentPage() {
   const [filters, setFilters] = React.useState<Filter[]>([]);
 
   React.useEffect(() => {
+    setParsed(false);
+    setIsEditing(false);
+  }, [segmentId]);
+
+  React.useEffect(() => {
     if (nameEditing && nameInputRef.current) {
       nameInputRef.current.focus();
     }
@@ -136,7 +141,7 @@ function SegmentPage() {
     const trimmed = name.trim();
     if (!trimmed) {
       setName(resolved?.name || t('New Segment'));
-    } else if (!isNew) {
+    } else if (!isNew && trimmed !== resolved?.name) {
       updateMutation.mutate({
         name: trimmed,
         isPublic,
