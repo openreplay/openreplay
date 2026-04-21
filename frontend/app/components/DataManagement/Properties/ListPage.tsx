@@ -1,7 +1,7 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Input, Switch, Table, Tooltip } from 'antd';
+import { Button, Empty, Input, Switch, Table, Tooltip } from 'antd';
 import { Album, EyeOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -179,7 +179,11 @@ function ListPage() {
       className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
-      <div className={'flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4'}>
+      <div
+        className={
+          'flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4'
+        }
+      >
         <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
         <div className="flex items-center gap-2">
           <Switch
@@ -253,10 +257,24 @@ function EventPropsList({
   page: number;
   isLoading: boolean;
 }) {
+  const { t } = useTranslation();
   const numberFormatter = Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
   });
+  const emptyState = (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <div className="text-base font-medium">{t('No properties')}</div>
+          <div className="text-disabled-text max-w-md">
+            {t('Properties are captured automatically from your events.')}
+          </div>
+        </div>
+      }
+    />
+  );
   const columns = [
     {
       title: 'Property',
@@ -313,6 +331,7 @@ function EventPropsList({
         rowHoverable
         rowClassName={'cursor-pointer'}
         loading={isLoading}
+        locale={{ emptyText: isLoading ? null : emptyState }}
       />
       <FullPagination
         page={page}
@@ -343,10 +362,26 @@ function UserPropsList({
   page: number;
   isLoading: boolean;
 }) {
+  const { t } = useTranslation();
   const numberFormatter = Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
   });
+  const emptyState = (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <div className="text-base font-medium">{t('No properties')}</div>
+          <div className="text-disabled-text max-w-md">
+            {t(
+              'User properties are captured from tracked sessions via OpenReplay SDK.',
+            )}
+          </div>
+        </div>
+      }
+    />
+  );
   const columns = [
     {
       title: 'Name',
@@ -405,6 +440,7 @@ function UserPropsList({
           dataSource={list}
           columns={columns}
           loading={isLoading}
+          locale={{ emptyText: isLoading ? null : emptyState }}
         />
       </div>
       <FullPagination

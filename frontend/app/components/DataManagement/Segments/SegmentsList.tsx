@@ -1,6 +1,7 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
+import { PlusOutlined } from '@ant-design/icons';
 import withPermissions from 'HOCs/withPermissions';
-import { Table, type TableProps, Tag, Tooltip } from 'antd';
+import { Button, Empty, Table, type TableProps, Tag, Tooltip } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import { Lock, Star, Users } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -32,6 +33,7 @@ function SegmentsList({
   onSortChange,
   limit,
   toSegment,
+  toCreate,
   isPending,
   total,
   listLen,
@@ -45,6 +47,7 @@ function SegmentsList({
   onPageChange: (page: number) => void;
   onSortChange: (field: SortBy, order: SortOrder) => void;
   toSegment: (id: string) => void;
+  toCreate: () => void;
 }) {
   const { t } = useTranslation();
   const { projectsStore, userStore } = useStore();
@@ -151,6 +154,30 @@ function SegmentsList({
     onSortChange(field, order);
   };
 
+  const emptyState = (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <div className="text-base font-medium">{t('No segments')}</div>
+          <div className="text-disabled-text max-w-md">
+            {t(
+              'Segments are a reusable collection of events and filters that you can save and apply later to search for sessions.',
+            )}
+          </div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={toCreate}
+            className="mt-1"
+          >
+            {t('Create Segment')}
+          </Button>
+        </div>
+      }
+    />
+  );
+
   return (
     <>
       <Table
@@ -166,6 +193,7 @@ function SegmentsList({
         rowClassName={'cursor-pointer'}
         loading={isPending}
         onChange={handleTableChange}
+        locale={{ emptyText: isPending ? null : emptyState }}
       />
       <FullPagination
         page={page}

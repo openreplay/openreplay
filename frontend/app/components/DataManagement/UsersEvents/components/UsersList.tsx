@@ -1,19 +1,22 @@
-import React from 'react';
-import { Table, Dropdown, Button } from 'antd';
-import { MoreOutlined } from '@ant-design/icons';
-import { Plus } from 'lucide-react';
-import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
-import FilterSelection from 'Shared/Filters/FilterSelection';
-import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
-import FullPagination from 'Shared/FullPagination';
-import { diffIfRecent } from 'App/date';
-import { getSortingName } from '@/mstore/types/Analytics/User';
-import { CountryFlag } from 'UI';
-import NameAvatar from 'Shared/NameAvatar';
 import withPageTitle from '@/components/hocs/withPageTitle';
+import { getSortingName } from '@/mstore/types/Analytics/User';
+import { MoreOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Empty, Table } from 'antd';
+import { Plus } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { diffIfRecent } from 'App/date';
+import { useStore } from 'App/mstore';
+import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
+import { CountryFlag } from 'UI';
+
+import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
+import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import FullPagination from 'Shared/FullPagination';
+import NameAvatar from 'Shared/NameAvatar';
 
 function UsersList({
   toUser,
@@ -24,6 +27,7 @@ function UsersList({
   query: string;
   propName?: string;
 }) {
+  const { t } = useTranslation();
   const { analyticsStore, filterStore } = useStore();
   const [editCols, setEditCols] = React.useState(false);
   const [hiddenCols, setHiddenCols] = React.useState<any[]>([]);
@@ -31,6 +35,22 @@ function UsersList({
   const limit = analyticsStore.usersPayloadFilters.limit;
   const total = analyticsStore.users.total;
   const users = analyticsStore.users.users;
+
+  const emptyState = (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <div className="text-base font-medium">{t('No users')}</div>
+          <div className="text-disabled-text max-w-md">
+            {t(
+              'Users are identified from tracked sessions via tracker or OpenReplay SDK methods.',
+            )}
+          </div>
+        </div>
+      }
+    />
+  );
 
   const allFilterOptions = filterStore
     .getScopedCurrentProjectFilters(['users'])
@@ -64,7 +84,7 @@ function UsersList({
         }
       | undefined,
   ) => {
-    if (!sorter.field) {
+    if (!sorter || !sorter.field) {
       analyticsStore.editUsersPayload({
         sortOrder: 'desc',
         sortBy: '$created_at',
@@ -256,6 +276,9 @@ function UsersList({
             onColumnSort(sorter);
           }}
           rowKey={(record) => record.userId}
+          locale={{
+            emptyText: analyticsStore.loading ? null : emptyState,
+          }}
         />
       </div>
       <FullPagination

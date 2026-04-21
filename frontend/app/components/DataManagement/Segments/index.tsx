@@ -133,6 +133,7 @@ function SegmentsListPage() {
         onPageChange={onPageChange}
         onSortChange={onSortChange}
         toSegment={toSegment}
+        toCreate={toCreate}
       />
     </div>
   );

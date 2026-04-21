@@ -1,10 +1,12 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import { useStore } from '@/mstore';
-import { Input, Table } from 'antd';
+import { Button, Empty, Input, Table } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { sessions, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 import type { Tag } from 'App/services/TagWatchService';
 import { useModal } from 'Components/ModalContext';
 import { TextEllipsis } from 'UI';
@@ -19,6 +21,30 @@ function TagsPage() {
   const list = tagWatchStore.tags;
   const { openModal } = useModal();
   const siteId = projectsStore.siteId;
+  const history = useHistory();
+
+  const emptyState = (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <div className="text-base font-medium">{t('No features')}</div>
+          <div className="text-disabled-text max-w-md">
+            {t(
+              'From Sessions, select a recording and tag your first element to start watching it.',
+            )}
+          </div>
+          <Button
+            type="primary"
+            onClick={() => history.push(withSiteId(sessions(), siteId!))}
+            className="mt-1"
+          >
+            {t('Go to Sessions')}
+          </Button>
+        </div>
+      }
+    />
+  );
 
   useEffect(() => {
     void tagWatchStore.getTags(Number(siteId));
@@ -119,6 +145,7 @@ function TagsPage() {
         rowClassName="cursor-pointer"
         loading={tagWatchStore.isLoading}
         rowKey="tagId"
+        locale={{ emptyText: tagWatchStore.isLoading ? null : emptyState }}
       />
       <FullPagination
         page={tagWatchStore.page}

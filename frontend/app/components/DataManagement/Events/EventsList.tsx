@@ -1,8 +1,12 @@
-import React from 'react';
-import { Table } from 'antd';
+import { Empty, Table } from 'antd';
 import { observer } from 'mobx-react-lite';
-import FullPagination from 'Shared/FullPagination';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { TextEllipsis } from 'UI';
+
+import FullPagination from 'Shared/FullPagination';
+
 import type { DistinctEvent } from './api';
 
 function EventsList({
@@ -24,10 +28,26 @@ function EventsList({
   onPageChange: (page: number) => void;
   toEvent: (name: string) => void;
 }) {
+  const { t } = useTranslation();
   const numberFormatter = Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
   });
+  const emptyState = (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <div className="text-base font-medium">{t('No events')}</div>
+          <div className="text-disabled-text max-w-md">
+            {t(
+              'Events are captured automatically as your users interact with your app. Once sessions start coming in, they will appear here.',
+            )}
+          </div>
+        </div>
+      }
+    />
+  );
   const columns = [
     {
       title: 'Event Name',
@@ -79,6 +99,7 @@ function EventsList({
         rowHoverable
         rowClassName={'cursor-pointer'}
         loading={isPending}
+        locale={{ emptyText: isPending ? null : emptyState }}
       />
       <FullPagination
         page={page}
