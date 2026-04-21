@@ -43,6 +43,7 @@ def generate_new_api_key(tenant_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants
                                 SET api_key=generate_api_key(20)
+                                WHERE tenant_id = %(tenant_id)s
                                 RETURNING api_key;""",
                             {"tenant_id": tenant_id})
         cur.execute(query=query)

@@ -1,3 +1,4 @@
+import logging
 from typing import Union, Optional
 
 from decouple import config
@@ -22,6 +23,8 @@ from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
+
+logger = logging.getLogger(__name__)
 
 
 @app.get('/{projectId}/autocomplete', tags=["autocomplete"])
@@ -626,8 +629,9 @@ def delete_project(projectId: int, _=Body(None), context: schemas.CurrentContext
     return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
 
 
-@app.get('/client/new_api_key', tags=['client'])
+@app.post('/client/new_api_key', tags=['client'], dependencies=[OR_role("owner", "admin")])
 def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_context)):
+    logger.info(f"tenant api_key rotated tenant_id={context.tenant_id} user_id={context.user_id}")
     return {
         'data': tenants.generate_new_api_key(context.tenant_id)
     }
