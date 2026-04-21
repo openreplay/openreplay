@@ -34,14 +34,13 @@ type searchImpl struct {
 	filterRefs []lexicon.FilterRef
 }
 
-func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, actions lexicon.Actions, segments lexicon.Segments) (Search, error) {
+func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, segments lexicon.Segments) (Search, error) {
 	return &searchImpl{
 		chConn: chConn,
 		pgConn: pgConn,
 		Logger: logger,
 		filterRefs: []lexicon.FilterRef{
 			lexicon.NewSegmentFilterRef(segments),
-			lexicon.NewActionFilterRef(actions),
 		},
 	}, nil
 }

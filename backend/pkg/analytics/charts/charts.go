@@ -23,13 +23,12 @@ type chartsImpl struct {
 	filterRefs []lexicon.FilterRef
 }
 
-func New(logger logger.Logger, chConn driver.Conn, actions lexicon.Actions, segments lexicon.Segments) (Charts, error) {
+func New(logger logger.Logger, chConn driver.Conn, segments lexicon.Segments) (Charts, error) {
 	return &chartsImpl{
 		chConn: chConn,
 		Logger: logger,
 		filterRefs: []lexicon.FilterRef{
 			lexicon.NewSegmentFilterRef(segments),
-			lexicon.NewActionFilterRef(actions),
 		},
 	}, nil
 }

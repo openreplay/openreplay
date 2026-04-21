@@ -126,27 +126,6 @@ func ResolveMetricPayload(ctx context.Context, refs []FilterRef, projID uint32, 
 
 // --- adapters ---
 
-type actionFilterRef struct{ actions Actions }
-
-// NewActionFilterRef adapts an Actions provider to the FilterRef interface.
-func NewActionFilterRef(a Actions) FilterRef { return &actionFilterRef{actions: a} }
-
-func (a *actionFilterRef) RefID(f analyticsModel.Filter) string { return f.ActionId }
-func (a *actionFilterRef) NotFound() error                      { return ErrActionNotFound }
-func (a *actionFilterRef) Kind() string                         { return "action" }
-
-func (a *actionFilterRef) Expand(ctx context.Context, projID uint32, refID string) ([]analyticsModel.Filter, error) {
-	action, err := a.actions.Get(ctx, projID, refID)
-	if err != nil {
-		return nil, err
-	}
-	converted := make([]analyticsModel.Filter, 0, len(action.Filters))
-	for _, af := range action.Filters {
-		converted = append(converted, convertFilterToModel(af))
-	}
-	return converted, nil
-}
-
 type segmentFilterRef struct{ segments Segments }
 
 // NewSegmentFilterRef adapts a Segments provider to the FilterRef interface.
