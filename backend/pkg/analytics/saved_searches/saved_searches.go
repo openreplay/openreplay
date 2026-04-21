@@ -3,14 +3,22 @@ package saved_searches
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v4"
 
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/analytics/search"
 	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+)
+
+var (
+	ErrSavedSearchNotFound  = errors.New("saved search not found")
+	ErrSavedSearchForbidden = errors.New("not allowed to modify this saved search")
 )
 
 const (
@@ -141,6 +149,9 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrSavedSearchNotFound
+		}
 		s.log.Error(ctx, "get saved search: %v", err)
 		return nil, fmt.Errorf("get saved search: %w", err)
 	}
@@ -286,6 +297,10 @@ func (s *savedSearchesImpl) getSearchStats(ctx context.Context, projectID int, d
 func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error) {
 	ctx := context.Background()
 
+	if err := s.checkOwnership(ctx, projectID, userID, searchID, "update saved search"); err != nil {
+		return nil, err
+	}
+
 	searchDataJSON, err := json.Marshal(req.Data)
 	if err != nil {
 		return nil, fmt.Errorf("marshal search data: %w", err)
@@ -297,9 +312,9 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 	}
 
 	const updateQuery = `
-		UPDATE public.saved_searches 
+		UPDATE public.saved_searches
 		SET name=$1, is_public=$2, search_data=$3
-		WHERE search_id=$4 AND project_id=$5 AND user_id=$6 AND deleted_at IS NULL
+		WHERE search_id=$4 AND project_id=$5 AND deleted_at IS NULL
 		RETURNING is_share, created_at
 	`
 
@@ -312,10 +327,12 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 		searchDataJSON,
 		searchID,
 		projectID,
-		userID,
 	).Scan(&isShare, &createdAt)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrSavedSearchNotFound
+		}
 		s.log.Error(ctx, "update saved search: %v", err)
 		return nil, fmt.Errorf("update saved search: %w", err)
 	}
@@ -333,19 +350,46 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 func (s *savedSearchesImpl) Delete(projectID int, userID uint64, searchID string) error {
 	ctx := context.Background()
 
+	if err := s.checkOwnership(ctx, projectID, userID, searchID, "delete saved search"); err != nil {
+		return err
+	}
+
 	const deleteQuery = `
-		UPDATE public.saved_searches 
+		UPDATE public.saved_searches
 		SET deleted_at = NOW()
-		WHERE search_id=$1 AND project_id=$2 AND user_id=$3 AND deleted_at IS NULL
+		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
 		RETURNING search_id
 	`
 
 	var deletedID string
-	err := s.pgconn.QueryRow(deleteQuery, searchID, projectID, userID).Scan(&deletedID)
+	err := s.pgconn.QueryRow(deleteQuery, searchID, projectID).Scan(&deletedID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrSavedSearchNotFound
+		}
 		s.log.Error(ctx, "delete saved search: %v", err)
 		return fmt.Errorf("delete saved search: %w", err)
 	}
 
+	return nil
+}
+
+func (s *savedSearchesImpl) checkOwnership(ctx context.Context, projectID int, userID uint64, searchID, op string) error {
+	const q = `
+		SELECT user_id FROM public.saved_searches
+		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
+	`
+	var ownerID uint64
+	err := s.pgconn.QueryRow(q, searchID, projectID).Scan(&ownerID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrSavedSearchNotFound
+		}
+		s.log.Error(ctx, "%s (ownership check): %v", op, err)
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	if ownerID != userID {
+		return ErrSavedSearchForbidden
+	}
 	return nil
 }

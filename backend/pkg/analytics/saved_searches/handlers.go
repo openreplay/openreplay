@@ -2,6 +2,7 @@ package saved_searches
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -126,7 +127,11 @@ func (e *handlersImpl) getSavedSearch(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := e.savedSearches.Get(projectID, searchID)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		if errors.Is(err, ErrSavedSearchNotFound) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+			return
+		}
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -231,6 +236,14 @@ func (e *handlersImpl) updateSavedSearch(w http.ResponseWriter, r *http.Request)
 	currentUser := r.Context().Value("userData").(*user.User)
 	resp, err := e.savedSearches.Update(projectID, currentUser.ID, searchID, req)
 	if err != nil {
+		if errors.Is(err, ErrSavedSearchNotFound) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+			return
+		}
+		if errors.Is(err, ErrSavedSearchForbidden) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			return
+		}
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -257,7 +270,15 @@ func (e *handlersImpl) deleteSavedSearch(w http.ResponseWriter, r *http.Request)
 	currentUser := r.Context().Value("userData").(*user.User)
 	err = e.savedSearches.Delete(projectID, currentUser.ID, searchID)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		if errors.Is(err, ErrSavedSearchNotFound) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+			return
+		}
+		if errors.Is(err, ErrSavedSearchForbidden) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+			return
+		}
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
