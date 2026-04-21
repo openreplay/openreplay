@@ -364,9 +364,10 @@ def get_segments_filters(project_id: int, user_id: int):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT search_id, name, is_public
-               FROM public.searches
+               FROM public.saved_searches
                WHERE project_id = %(project_id)s
                  AND deleted_at IS NULL
+                 AND is_share = FALSE
                  AND (user_id = %(user_id)s OR is_public)
                ORDER BY name;""",
             {"project_id": project_id, "user_id": user_id},
@@ -377,7 +378,7 @@ def get_segments_filters(project_id: int, user_id: int):
     results = []
     for row in rows:
         results.append({
-            "searchId": row["search_id"],
+            "searchId": str(row["search_id"]),
             "name": row["name"],
             "displayName": row["name"],
             "isPublic": row["is_public"],
