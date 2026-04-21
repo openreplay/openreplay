@@ -42,7 +42,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
     Modal.confirm({
       title: t('Confirm'),
       content: t(
-        'Are you sure you want to permanently delete this Saved search?',
+        'Are you sure you want to permanently delete this Saved segment?',
       ),
       okText: t('Yes, delete'),
       cancelText: t('Cancel'),
@@ -57,7 +57,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
 
   return (
     <Modal
-      title={savedSearch.exists() ? t('Update Search') : t('Save Search')}
+      title={savedSearch.exists() ? t('Update Segment') : t('Save Segment')}
       open={show}
       onCancel={closeHandler}
       width={480}

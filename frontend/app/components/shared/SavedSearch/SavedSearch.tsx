@@ -51,7 +51,7 @@ function SavedSearch() {
       }
     } catch (error) {
       console.error('Failed to share search:', error);
-      message.error(t('Failed to share search'));
+      message.error(t('Failed to share segment'));
     } finally {
       setIsSharing(false);
     }
@@ -61,14 +61,14 @@ function SavedSearch() {
     <>
       <div className="inline-flex items-center gap-3">
         <span className="text-sm font-medium text-gray-700">
-          {t('Saved Searches')}
+          {t('Saved Segments')}
         </span>
         <Space.Compact>
           <Tooltip
             title={
               searchStore.list.length === 0
-                ? t('You have not saved any searches')
-                : t('View Saved Searches')
+                ? t('You have not saved any segments')
+                : t('View Saved Segments')
             }
           >
             <Button
@@ -83,12 +83,12 @@ function SavedSearch() {
           <Tooltip
             title={
               isSharedSearch
-                ? t('Cannot modify shared search')
+                ? t('Cannot modify shared segment')
                 : isDisabled
-                  ? t('Add an event or filter to save search')
+                  ? t('Add an event or filter to save segment')
                   : isUpdating
                     ? t('Update')
-                    : t('Save Search')
+                    : t('Save Segment')
             }
           >
             <Button
@@ -103,8 +103,8 @@ function SavedSearch() {
           <Tooltip
             title={
               isDisabled
-                ? t('Add an event or filter to share search')
-                : t('Share Search')
+                ? t('Add an event or filter to share segment')
+                : t('Share Segment')
             }
           >
             <Button

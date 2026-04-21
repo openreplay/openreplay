@@ -232,7 +232,7 @@ function FilterItem(props: Props) {
   const hasSubfilters =
     filter.isEvent &&
     !isSubItem &&
-    filter.category !== 'actions' &&
+    filter.category !== 'segments' &&
     filter.category !== 'features';
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>

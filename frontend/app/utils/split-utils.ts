@@ -16,5 +16,5 @@ export const menuHidden = {
   videoExport: false,
   dataAnalytics: false,
   lexicon: false,
-  actions: false,
+  segments: false,
 };

@@ -61,7 +61,7 @@ export const enum MENU {
   EVENTS = 'data-events',
   PROPS = 'data-properties',
   DATA_MANAGEMENT = 'data-management',
-  ACTIONS = 'data-actions',
+  SEGMENTS = 'data-segments',
   TAGS = 'data-tags',
 }
 
@@ -161,7 +161,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
           { label: 'People', key: MENU.USERS },
           { label: 'Events', key: MENU.EVENTS, hidden: menuHidden.lexicon },
           { label: 'Properties', key: MENU.PROPS, hidden: menuHidden.lexicon },
-          { label: 'Actions', key: MENU.ACTIONS, hidden: menuHidden.actions },
+          { label: 'Segments', key: MENU.SEGMENTS, hidden: menuHidden.segments },
           { label: 'Features', key: MENU.TAGS },
         ],
       },

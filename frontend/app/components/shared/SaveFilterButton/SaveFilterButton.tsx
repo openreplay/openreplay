@@ -16,7 +16,7 @@ function SaveFilterButton({ disabled }: { disabled?: boolean }) {
         disabled={disabled}
         onClick={() => setShowModal(true)}
       >
-        {savedSearch.exists() ? 'Update Search' : 'Save Search'}
+        {savedSearch.exists() ? 'Update Segment' : 'Save Segment'}
       </Button>
       {showModal && (
         <SaveSearchModal

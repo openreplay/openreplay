@@ -42,7 +42,7 @@ function SavedSearchModal() {
     e.stopPropagation();
     Modal.confirm({
       title: t('Confirm'),
-      content: t('Are you sure you want to permanently delete this search?'),
+      content: t('Are you sure you want to permanently delete this segment?'),
       okText: t('Yes, delete'),
       cancelText: t('Cancel'),
       okButtonProps: { danger: true },
@@ -102,7 +102,7 @@ function SavedSearchModal() {
     <div className="bg-white shadow-lg h-screen flex flex-col">
       <div className="p-6 border-b">
         <Title level={3} className="mb-0!">
-          {t('Saved Search')}{' '}
+          {t('Saved Segments')}{' '}
           <Badge
             count={searchStore.savedSearchTotal}
             showZero

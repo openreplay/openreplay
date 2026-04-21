@@ -334,7 +334,7 @@ export default class FilterStore {
           category === 'events' ||
           category === 'auto_captured' ||
           category === 'user_events' ||
-          category === 'actions' ||
+          category === 'segments' ||
           category === 'features',
         value: filter.value || [],
         propertyOrder: 'and',
@@ -417,8 +417,8 @@ export default class FilterStore {
     ) {
       return filter.autoCaptured ? 'autocapture' : 'event';
     }
-    if (category === 'actions') {
-      return 'action';
+    if (category === 'segments') {
+      return 'segment';
     }
     return category;
   };
@@ -503,22 +503,21 @@ export default class FilterStore {
           customScope,
         );
         processedFilters.push(...filters);
-      } else if (category === 'actions') {
-        // Process actions as event filters with actionId in the main body
-        const actionFilters = list.map((action: any) => ({
-          ...action,
-          id: action.actionId,
-          name: action.name,
-          displayName: action.displayName || action.name,
-          description: action.description,
-          actionId: action.actionId,
+      } else if (category === 'segments') {
+        const segmentFilters = list.map((segment: any) => ({
+          ...segment,
+          id: segment.searchId,
+          name: segment.name,
+          displayName: segment.displayName || segment.name,
+          searchId: segment.searchId,
+          isSegment: true,
           isEvent: true,
-          category: 'actions',
-          value: [action.actionId],
+          category: 'segments',
+          value: [segment.searchId],
         }));
         const filters = this.processFilters(
-          actionFilters,
-          'actions',
+          segmentFilters,
+          'segments',
           customScope,
         );
         processedFilters.push(...filters);

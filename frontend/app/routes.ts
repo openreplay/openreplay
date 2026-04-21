@@ -168,9 +168,9 @@ export const dataManagement = {
   usersList: () => `/data-management/list/users`,
   eventsList: () => `/data-management/list/events`,
   properties: () => '/data-management/list/properties',
-  actions: () => '/data-management/list/actions',
-  actionPage: (id = ':actionId', hash?: string | number) =>
-    hashed(`/data-management/list/actions/${id}`, hash),
+  segments: () => '/data-management/list/segments',
+  segmentPage: (id = ':segmentId', hash?: string | number) =>
+    hashed(`/data-management/list/segments/${id}`, hash),
   tags: () => '/data-management/list/tags',
 };
 
@@ -215,8 +215,8 @@ const REQUIRED_SITE_ID_ROUTES = [
   dataManagement.eventPage(''),
   dataManagement.eventsList(),
   dataManagement.properties(),
-  dataManagement.actions(),
-  dataManagement.actionPage(''),
+  dataManagement.segments(),
+  dataManagement.segmentPage(''),
   dataManagement.tags(),
 ];
 const routeNeedsSiteId = (path: string): boolean =>

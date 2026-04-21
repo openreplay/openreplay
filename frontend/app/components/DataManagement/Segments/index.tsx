@@ -12,13 +12,13 @@ import { dataManagement, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import { debounce } from 'App/utils';
 
-import ActionsList from './ActionsList';
-import { fetchActions } from './api';
+import SegmentsList from './SegmentsList';
+import { fetchSegments } from './api';
 
 type SortBy = 'name' | 'createdAt' | 'updatedAt';
 type SortOrder = 'asc' | 'desc';
 
-function ActionsListPage() {
+function SegmentsListPage() {
   const { t } = useTranslation();
   const [query, setQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState('');
@@ -45,9 +45,9 @@ function ActionsListPage() {
     applySearch(value);
   };
 
-  const { data = { actions: [], total: 0 }, isPending } = useQuery({
+  const { data = { segments: [], total: 0 }, isPending } = useQuery({
     queryKey: [
-      'actions-list',
+      'segments-list',
       siteId,
       page,
       limit,
@@ -56,7 +56,7 @@ function ActionsListPage() {
       sortOrder,
     ],
     queryFn: () =>
-      fetchActions({
+      fetchSegments({
         limit,
         page,
         name: debouncedQuery || undefined,
@@ -74,12 +74,12 @@ function ActionsListPage() {
     setPage(1);
   };
 
-  const toAction = (id: string) => {
-    history.push(withSiteId(dataManagement.actionPage(id), siteId!));
+  const toSegment = (id: string) => {
+    history.push(withSiteId(dataManagement.segmentPage(id), siteId!));
   };
 
   const toCreate = () => {
-    history.push(withSiteId(dataManagement.actionPage('new'), siteId!));
+    history.push(withSiteId(dataManagement.segmentPage('new'), siteId!));
   };
 
   return (
@@ -90,7 +90,7 @@ function ActionsListPage() {
       <div className={'flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4 py-2'}>
         <div className="flex items-center gap-2">
           <div className={'font-semibold text-lg capitalize'}>
-            {t('Actions')}
+            {t('Segments')}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ function ActionsListPage() {
           <div className="min-w-50 md:w-1/4 md:min-w-75">
             <Input.Search
               size={'small'}
-              placeholder={t('Filter by name or description')}
+              placeholder={t('Filter by name')}
               value={query}
               allowClear
               maxLength={256}
@@ -123,16 +123,16 @@ function ActionsListPage() {
           </div>
         </div>
       </div>
-      <ActionsList
-        list={data.actions}
+      <SegmentsList
+        list={data.segments}
         page={page}
         limit={limit}
         total={data.total}
-        listLen={data.actions.length}
+        listLen={data.segments.length}
         isPending={isPending}
         onPageChange={onPageChange}
         onSortChange={onSortChange}
-        toAction={toAction}
+        toSegment={toSegment}
       />
     </div>
   );
@@ -143,4 +143,4 @@ export default withPermissions(
   '',
   false,
   false,
-)(observer(ActionsListPage));
+)(observer(SegmentsListPage));

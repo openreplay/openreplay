@@ -46,9 +46,9 @@ const components: any = {
   PropertiesList: lazy(
     () => import('Components/DataManagement/Properties/ListPage'),
   ),
-  ActionsPage: lazy(() => import('Components/DataManagement/Actions/index')),
-  ActionPage: lazy(
-    () => import('Components/DataManagement/Actions/ActionPage'),
+  SegmentsPage: lazy(() => import('Components/DataManagement/Segments/index')),
+  SegmentPage: lazy(
+    () => import('Components/DataManagement/Segments/SegmentPage'),
   ),
   TagsPage: lazy(() => import('Components/DataManagement/Tags/index')),
 };
@@ -72,8 +72,8 @@ const enhancedComponents: any = {
   UsersPage: withSiteIdUpdater(components.UsersPage),
   EventsPage: withSiteIdUpdater(components.EventsPage),
   PropertiesList: withSiteIdUpdater(components.PropertiesList),
-  ActionsPage: withSiteIdUpdater(components.ActionsPage),
-  ActionPage: withSiteIdUpdater(components.ActionPage),
+  SegmentsPage: withSiteIdUpdater(components.SegmentsPage),
+  SegmentPage: withSiteIdUpdater(components.SegmentPage),
   TagsPage: withSiteIdUpdater(components.TagsPage),
 };
 
@@ -357,12 +357,12 @@ function PrivateRoutes() {
           element={<enhancedComponents.PropertiesList />}
         />
         <Route
-          path={withSiteId(routes.dataManagement.actionPage(), siteIdList)}
-          element={<enhancedComponents.ActionPage />}
+          path={withSiteId(routes.dataManagement.segmentPage(), siteIdList)}
+          element={<enhancedComponents.SegmentPage />}
         />
         <Route
-          path={withSiteId(routes.dataManagement.actions(), siteIdList)}
-          element={<enhancedComponents.ActionsPage />}
+          path={withSiteId(routes.dataManagement.segments(), siteIdList)}
+          element={<enhancedComponents.SegmentsPage />}
         />
         <Route
           path={withSiteId(routes.dataManagement.tags(), siteIdList)}
