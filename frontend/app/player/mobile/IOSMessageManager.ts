@@ -1,34 +1,31 @@
-import logger from 'App/logger';
-import { TarFile } from 'js-untar';
-import { FrameSnapshot } from 'Player/common/parseFrames';
 import { getResourceFromNetworkRequest } from 'Player';
-
 import type { Store } from 'Player';
-import { IMessageManager } from 'Player/player/Animator';
-
-import TouchManager from 'Player/mobile/managers/TouchManager';
+import { FrameSnapshot } from 'Player/common/parseFrames';
 import IOSPerformanceTrackManager, {
   PerformanceChartPoint,
 } from 'Player/mobile/managers/IOSPerformanceTrackManager';
 import SnapshotManager from 'Player/mobile/managers/SnapshotManager';
+import TouchManager from 'Player/mobile/managers/TouchManager';
+import { IMessageManager } from 'Player/player/Animator';
+import { TarFile } from 'js-untar';
+
+import logger from 'App/logger';
+
+import ListWalker from '../common/ListWalker';
+import Screen, {
+  INITIAL_STATE as SCREEN_INITIAL_STATE,
+  State as ScreenState,
+} from '../web/Screen/Screen';
 import ActivityManager from '../web/managers/ActivityManager';
+import type { SkipInterval } from '../web/managers/ActivityManager';
+import { MType } from '../web/messages';
+import type { Message } from '../web/messages';
 import Lists, {
   InitialLists,
   INITIAL_STATE as LISTS_INITIAL_STATE,
   State as ListsState,
 } from './IOSLists';
-import ListWalker from '../common/ListWalker';
-import { MType } from '../web/messages';
-import type { Message } from '../web/messages';
-
-import Screen, {
-  INITIAL_STATE as SCREEN_INITIAL_STATE,
-  State as ScreenState,
-} from '../web/Screen/Screen';
-
 import { Log } from './types/log';
-
-import type { SkipInterval } from '../web/managers/ActivityManager';
 
 export const performanceWarnings = [
   'thermalState',
@@ -226,7 +223,6 @@ export default class IOSMessageManager implements IMessageManager {
       });
     }
     if (lastAppFocusMessage) {
-      console.log(lastAppFocusMessage);
       Object.assign(stateToUpdate, {
         inBackground: lastAppFocusMessage.value === 1,
       });
@@ -262,7 +258,16 @@ export default class IOSMessageManager implements IMessageManager {
     Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
   }
 
-  distributeMessage = (msg: Message & { tabId: string }): void => {
+  distributeMessage = (
+    msg: Message & { tabId: string; timestamp?: number },
+  ): void => {
+    if (msg.tp === 9999) return;
+    // @ts-ignore
+    const fixedTime =
+      msg.time === 0 && msg.timestamp
+        ? msg.timestamp - this.sessionStart
+        : msg.time;
+    msg.time = fixedTime;
     const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
     this.lastMessageTime = lastMessageTime;
     this.state.update({ lastMessageTime });

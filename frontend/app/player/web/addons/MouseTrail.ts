@@ -6,6 +6,12 @@ const LINE_DURATION = 3.5;
 const LINE_DURATION_MOBILE = 5;
 const LINE_WIDTH_START = 5;
 
+const TOUCH_PULSE_FRAMES = 60;
+const TOUCH_PULSE_BASE_RADIUS = 8;
+const TOUCH_PULSE_PEAK_RADIUS = 22;
+const TOUCH_PULSE_ALPHA = 0.35;
+const TOUCH_PULSE_Y_OFFSET = TOUCH_PULSE_PEAK_RADIUS;
+
 export type SwipeEvent = {
   x: number;
   y: number;
@@ -22,6 +28,8 @@ export default class MouseTrail {
   private readonly lineDuration: number;
 
   private points: Point[] = [];
+
+  private touchPulses: TouchPulse[] = [];
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -122,13 +130,47 @@ export default class MouseTrail {
       this.context.stroke();
       this.context.closePath();
     }
+
+    this.drawTouchPulses();
   };
 
   addPoint = (x: number, y: number) => {
     const point = new Point(x, y, 0);
     this.points.push(point);
   };
+
+  addTouch = (x: number, y: number) => {
+    this.touchPulses.push({ x, y: y + TOUCH_PULSE_Y_OFFSET, lifetime: 0 });
+  };
+
+  private drawTouchPulses = () => {
+    const pulses = this.touchPulses;
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const pulse = pulses[i]!;
+      pulse.lifetime += 1;
+
+      if (pulse.lifetime > TOUCH_PULSE_FRAMES) {
+        pulses.splice(i, 1);
+        continue;
+      }
+
+      const t = pulse.lifetime / TOUCH_PULSE_FRAMES;
+      const wave = Math.sin(Math.PI * t);
+      const radius =
+        TOUCH_PULSE_BASE_RADIUS +
+        (TOUCH_PULSE_PEAK_RADIUS - TOUCH_PULSE_BASE_RADIUS) * wave;
+      const alpha = TOUCH_PULSE_ALPHA * wave;
+
+      this.context.beginPath();
+      this.context.arc(pulse.x, pulse.y, radius, 0, Math.PI * 2);
+      this.context.fillStyle = `rgba(128, 128, 128, ${alpha})`;
+      this.context.fill();
+      this.context.closePath();
+    }
+  };
 }
+
+type TouchPulse = { x: number; y: number; lifetime: number };
 
 type Coords = { x: number; y: number };
 

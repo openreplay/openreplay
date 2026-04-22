@@ -1,12 +1,13 @@
-import { MOUSE_TRAIL } from 'App/constants/storageKeys';
 import ListWalker from 'Player/common/ListWalker';
-import MouseTrail, { SwipeEvent } from 'Player/web/addons/MouseTrail';
-import type { IosClickEvent, IosSwipeEvent } from 'Player/web/messages';
-import { MType } from 'Player/web/messages';
 import type Screen from 'Player/web/Screen/Screen';
+import MouseTrail from 'Player/web/addons/MouseTrail';
+import type { MobileClickEvent, MobileSwipeEvent } from 'Player/web/messages';
+import { MType } from 'Player/web/messages';
+
+import { MOUSE_TRAIL } from 'App/constants/storageKeys';
 
 export default class TouchManager extends ListWalker<
-  IosClickEvent | IosSwipeEvent
+  MobileClickEvent | MobileSwipeEvent
 > {
   private touchTrail: MouseTrail | undefined;
 
@@ -48,8 +49,9 @@ export default class TouchManager extends ListWalker<
         //   direction: lastTouch.direction
         // } as SwipeEvent)
       } else {
-        this.screen.cursor.move(lastTouch);
-        this.screen.cursor.mobileClick();
+        this.touchTrail?.addTouch(lastTouch.x, lastTouch.y);
+        // this.screen.cursor.move(lastTouch);
+        // this.screen.cursor.mobileClick();
       }
     }
   }
