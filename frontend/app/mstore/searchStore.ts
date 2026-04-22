@@ -186,6 +186,8 @@ class SearchStore {
           sort: searchData?.sort || this.instance.sort,
           order: searchData?.order || this.instance.order,
           eventsOrder: searchData?.eventsOrder || this.instance.eventsOrder,
+          rangeName: 'CUSTOM_RANGE',
+          rangeValue: 'CUSTOM_RANGE',
         });
 
         this.currentPage = 1;

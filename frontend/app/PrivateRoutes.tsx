@@ -162,6 +162,14 @@ function PrivateRoutes() {
     if (!searchStore.urlParsed && filtersLoaded) {
       const searchParams = new URLSearchParams(location.search);
       const searchId = searchParams.get('sid');
+      const supportedFilters = [
+        'userId',
+        'distinct_id',
+        'userCountry',
+        'userCity',
+        'meta_',
+      ];
+      const parsedFilters = supportedFilters.filter((f) => searchParams.has(f));
 
       if (searchId) {
         searchStore
@@ -183,6 +191,29 @@ function PrivateRoutes() {
               initialFetchDoneRef.current = true;
             }, 500);
           });
+      } else if (parsedFilters.length > 0) {
+        const start = searchParams.get('st_ts');
+        const end = searchParams.get('end_ts');
+        const filters: any[] = [];
+        parsedFilters.forEach((f, i) => {
+          const value = searchParams.get(f) as string;
+          const isMeta = f.startsWith('meta_');
+          const filterName = isMeta ? f.replace('meta_', '') : f;
+          const filter = filterStore.findEvent({ name: filterName });
+          if (filter) {
+            filter.value = [value];
+          }
+          filters.push(filter);
+        });
+        searchStore.edit({
+          filters,
+          startDate: start ? parseInt(start) : undefined,
+          endDate: end ? parseInt(end) : undefined,
+          rangeName: 'CUSTOM_RANGE',
+          rangeValue: 'CUSTOM_RANGE',
+        });
+        searchStore.setUrlParsed();
+        void searchStore.fetchSessions(true);
       } else {
         searchStore.setUrlParsed();
         void searchStore.fetchSessions(true);
