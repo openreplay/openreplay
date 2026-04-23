@@ -1,3 +1,5 @@
+import hmac
+
 from fastapi import HTTPException, Depends, status, Security
 from fastapi.security import OAuth2PasswordBearer
 from decouple import config
@@ -15,7 +17,9 @@ class AuthHandler:
         self.api_key = config("ACCESS_TOKEN", default=None)
 
     def verify_api_key(self, api_key: str):
-        return api_key == self.api_key
+        if not api_key or not self.api_key:
+            return False
+        return hmac.compare_digest(api_key, self.api_key)
 
 
 auth_handler = AuthHandler()
