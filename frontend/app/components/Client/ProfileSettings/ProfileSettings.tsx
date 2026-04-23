@@ -50,7 +50,11 @@ function ProfileSettings() {
       <Section
         title={t('Interface Language')}
         description={t('Select the language in which OpenReplay will appear.')}
-        children={<LanguageSwitcher />}
+        children={
+          <div className="px-5">
+            <LanguageSwitcher />
+          </div>
+        }
       />
 
       <div className="border-b my-10" />
