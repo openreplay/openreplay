@@ -5,6 +5,11 @@ import { Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import { useTranslation } from 'react-i18next';
+import SelectDateRange from 'Shared/SelectDateRange';
+import {
+  getDashboardDefaultPeriod,
+  getSerializedDashboardPeriod,
+} from 'App/mstore/types/dashboardPeriod';
 
 interface Props {
   show: boolean;
@@ -32,6 +37,13 @@ function DashboardEditModal(props: Props) {
 
   const write = ({ target: { value, name } }) =>
     dashboard.update({ [name]: value });
+  const writePeriod = (period: any) =>
+    dashboard.update({
+      config: {
+        ...dashboard.config,
+        defaultPeriod: getSerializedDashboardPeriod(period),
+      },
+    });
 
   return (
     <Modal open={show} onClose={closeHandler}>
@@ -98,6 +110,16 @@ function DashboardEditModal(props: Props) {
                 </span>
               </div>
             </div>
+          </Form.Field>
+
+          <Form.Field>
+            <label>{t('Default Time Range:')}</label>
+            <SelectDateRange
+              period={getDashboardDefaultPeriod(dashboard.config)}
+              onChange={writePeriod}
+              isAnt
+              useButtonStyle
+            />
           </Form.Field>
         </Form>
       </Modal.Content>

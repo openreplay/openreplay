@@ -13,10 +13,21 @@ type Dashboard struct {
 	Description string           `json:"description"`
 	IsPublic    bool             `json:"isPublic"`
 	IsPinned    bool             `json:"isPinned"`
+	Config      DashboardConfig  `json:"config"`
 	OwnerEmail  string           `json:"ownerEmail"`
 	OwnerName   string           `json:"ownerName"`
 	CreatedAt   time.Time        `json:"createdAt"`
 	Metrics     []cards.CardBase `json:"widgets"`
+}
+
+type DashboardConfig struct {
+	DefaultPeriod *DashboardPeriod `json:"defaultPeriod,omitempty"`
+}
+
+type DashboardPeriod struct {
+	RangeName string `json:"rangeName"`
+	Start     *int64 `json:"start,omitempty"`
+	End       *int64 `json:"end,omitempty"`
 }
 
 type CreateDashboardResponse struct {
@@ -39,11 +50,12 @@ type GetDashboardsResponse struct {
 // REQUESTS
 
 type CreateDashboardRequest struct {
-	Name        string `json:"name" validate:"required,min=3,max=150"`
-	Description string `json:"description" validate:"max=500"`
-	IsPublic    bool   `json:"isPublic"`
-	IsPinned    bool   `json:"isPinned"`
-	Metrics     []int  `json:"metrics"`
+	Name        string          `json:"name" validate:"required,min=3,max=150"`
+	Description string          `json:"description" validate:"max=500"`
+	IsPublic    bool            `json:"isPublic"`
+	IsPinned    bool            `json:"isPinned"`
+	Config      DashboardConfig `json:"config"`
+	Metrics     []int           `json:"metrics"`
 }
 
 type GetDashboardsRequest struct {
@@ -56,11 +68,12 @@ type GetDashboardsRequest struct {
 }
 
 type UpdateDashboardRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	IsPublic    bool   `json:"isPublic"`
-	IsPinned    bool   `json:"isPinned"`
-	Metrics     []int  `json:"metrics"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	IsPublic    bool             `json:"isPublic"`
+	IsPinned    bool             `json:"isPinned"`
+	Config      *DashboardConfig `json:"config,omitempty"`
+	Metrics     []int            `json:"metrics"`
 }
 
 type PinDashboardRequest struct {

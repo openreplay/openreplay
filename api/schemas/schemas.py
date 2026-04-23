@@ -1509,17 +1509,30 @@ class ProjectSettings(BaseModel):
     conditions: List[ProjectConditions] = Field(default_factory=list)
 
 
+class DashboardPeriodSchema(BaseModel):
+    range_name: str = Field(...)
+    start: Optional[int] = Field(default=None)
+    end: Optional[int] = Field(default=None)
+
+
+class DashboardConfigSchema(BaseModel):
+    default_period: Optional[DashboardPeriodSchema] = Field(default=None)
+
+
 class CreateDashboardSchema(BaseModel):
+
     name: str = Field(..., min_length=1)
     description: Optional[str] = Field(default="")
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
     metrics: Optional[List[int]] = Field(default_factory=list)
+    config: DashboardConfigSchema = Field(default_factory=DashboardConfigSchema)
 
 
 class EditDashboardSchema(CreateDashboardSchema):
     is_public: Optional[bool] = Field(default=None)
     is_pinned: Optional[bool] = Field(default=None)
+    config: Optional[DashboardConfigSchema] = Field(default=None)
 
 
 class UpdateWidgetPayloadSchema(BaseModel):
