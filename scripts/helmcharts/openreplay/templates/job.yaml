@@ -46,8 +46,10 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
     "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
-  backoffLimit: 0 # Don't restart failing containers
+  backoffLimit: 1 # One retry; resume logic picks up from last successful step
+  activeDeadlineSeconds: {{ .Values.migrationJob.activeDeadlineSeconds | default 3600 }}
   template:
     metadata:
       name: postgresqlMigrate
