@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 12, 'Previous step is not done') AS check;
 DROP TABLE IF EXISTS product_analytics.autocomplete_events_mv;
 
 -- changes for sample-values:

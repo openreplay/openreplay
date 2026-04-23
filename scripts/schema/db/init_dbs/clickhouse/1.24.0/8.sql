@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 7, 'Previous step is not done') AS check;
 DROP TABLE IF EXISTS product_analytics.event_dproperties_extractor_mv SYNC;
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.event_dproperties_extractor_mv
     TO product_analytics.event_properties AS

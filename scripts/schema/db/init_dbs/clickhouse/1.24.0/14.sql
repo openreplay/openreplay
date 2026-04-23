@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 13, 'Previous step is not done') AS check;
 -- changes for simple-autocomplete
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_old;
 RENAME TABLE product_analytics.autocomplete_simple TO product_analytics.autocomplete_simple_old;

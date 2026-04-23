@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 17, 'Previous step is not done') AS check;
 CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_user_properties_grouped
 (
     project_id    UInt16,
