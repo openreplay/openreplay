@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 1, 'Previous step is not done') AS check;
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_simple_events_mv
     TO product_analytics.autocomplete_simple AS
 SELECT project_id,

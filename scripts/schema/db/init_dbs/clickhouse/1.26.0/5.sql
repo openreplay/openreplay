@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 4, 'Previous step is not done') AS check;
 CREATE TABLE IF NOT EXISTS product_analytics.all_events_customized
 (
     project_id    UInt16,

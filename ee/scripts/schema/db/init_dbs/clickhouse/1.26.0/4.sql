@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 3, 'Previous step is not done') AS check;
 ALTER TABLE product_analytics.all_properties
     DROP COLUMN IF EXISTS display_name,
     DROP COLUMN IF EXISTS description,
