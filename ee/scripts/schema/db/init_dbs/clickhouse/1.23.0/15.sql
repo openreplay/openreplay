@@ -48,5 +48,4 @@ ALTER TABLE experimental.sessions_l7d_mv
                    AND isNotNull(duration)
                    AND duration > 0;
 
-CREATE OR REPLACE FUNCTION openreplay_migration_state AS() ->
-    -1;
+CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> -1;
