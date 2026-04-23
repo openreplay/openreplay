@@ -1,4 +1,4 @@
-\set or_version 'v1.26.0-ee'
+\set or_version 'v1.27.0-ee'
 SET client_min_messages TO NOTICE;
 \set ON_ERROR_STOP true
 SELECT EXISTS (SELECT 1
