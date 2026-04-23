@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 1, 'Previous step is not done') AS check;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_version_mv;
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_country_mv;

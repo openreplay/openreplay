@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 8, 'Previous step is not done') AS check;
 CREATE TABLE IF NOT EXISTS product_analytics.all_events_customized
 (
     project_id    UInt16,
@@ -66,4 +67,4 @@ SELECT project_id,
        created_at       AS created_at
 FROM product_analytics.events
 GROUP BY ALL;
-CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> 9;
+CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> -1;

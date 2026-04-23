@@ -1,3 +1,4 @@
+SELECT throwIf((SELECT openreplay_migration_state()) != 4, 'Previous step is not done') AS check;
 DROP TABLE IF EXISTS experimental.autocomplete;
 
 ALTER TABLE product_analytics.autocomplete_simple
