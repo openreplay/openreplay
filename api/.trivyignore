@@ -1,3 +1,13 @@
 # Accept the risk until
 # python setup tools recently fixed. Not yet available in distros.
 CVE-2023-5363 exp:2023-12-31
+
+# --- 2026-04-24 -----------------------------------------------------------
+# lxml XXE via iterparse() / ETCompatXMLParser() default settings.
+# The chalice image pulls lxml through nixpkgs (shell.nix -> python3Packages.lxml),
+# which currently ships 6.0.2; the fix landed in 6.1.0. Upgrade path is either
+# pinning a newer nixpkgs revision or overriding the package in shell.nix.
+# This CVE is only exploitable if the app parses attacker-controlled XML with
+# default parser settings — audit the SAML assertion parsing paths before
+# assuming it's not reachable in-context.
+CVE-2026-41066
