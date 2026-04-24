@@ -1,10 +1,11 @@
-import React from 'react';
-import { Modal, Button, Input, Checkbox, message } from 'antd';
-import { Trash2, Users } from 'lucide-react';
+import { Button, Checkbox, Input, Modal, message } from 'antd';
 import cn from 'classnames';
-import { useStore } from 'App/mstore';
+import { Trash2, Users } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
 
 interface Props {
   show: boolean;
@@ -18,17 +19,17 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
   const userId = userStore.account.id;
   const { savedSearch } = searchStore;
   const loading = searchStore.isSaving;
-
+  const existing = React.useRef(savedSearch.exists()).current;
   const onNameChange = ({ target: { value } }: any) => {
     searchStore.editSavedSearch({ name: value });
   };
 
   const onSave = () => {
     searchStore
-      .save(savedSearch.exists() ? savedSearch.searchId : null, rename)
+      .save(existing ? savedSearch.searchId : null, rename)
       .then(() => {
         message.success(
-          `${savedSearch.exists() ? t('Updated') : t('Saved')} ${t('Successfully')}`,
+          `${existing ? t('Updated') : t('Saved')} ${t('Successfully')}`,
         );
         closeHandler();
       })
@@ -57,7 +58,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
 
   return (
     <Modal
-      title={savedSearch.exists() ? t('Update Segment') : t('Save Segment')}
+      title={existing ? t('Update Segment') : t('Save Segment')}
       open={show}
       onCancel={closeHandler}
       width={480}
@@ -70,11 +71,11 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
               loading={loading}
               disabled={!savedSearch.name || savedSearch.name.trim() === ''}
             >
-              {savedSearch.exists() ? t('Update') : t('Save')}
+              {existing ? t('Update') : t('Save')}
             </Button>
             <Button onClick={closeHandler}>{t('Cancel')}</Button>
           </div>
-          {savedSearch.exists() && (
+          {existing && (
             <Button
               type="text"
               danger
@@ -103,7 +104,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
         <div
           className={cn('flex items-center gap-2', {
             'opacity-50 pointer-events-none':
-              savedSearch.exists() && savedSearch.userId !== userId,
+              existing && savedSearch.userId !== userId,
           })}
         >
           <Checkbox

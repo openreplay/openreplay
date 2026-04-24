@@ -119,7 +119,7 @@ function TagsPage() {
       className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
-      <div className="flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4 py-2">
+      <div className="flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4 py-3">
         <div className="font-semibold text-lg capitalize">{t('Features')}</div>
         <div className="flex items-center gap-2">
           {/* <div className="min-w-50 md:w-1/4 md:min-w-75">
