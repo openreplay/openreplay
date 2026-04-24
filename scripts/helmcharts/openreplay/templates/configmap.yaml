@@ -1,3 +1,22 @@
+{{/*
+  Downgrade guard.
+  If the cluster has an openreplay-version ConfigMap with a version strictly
+  newer than .Chart.AppVersion, abort the helm operation immediately.
+  This catches the case where someone runs `helm upgrade` directly with an
+  older chart (bypassing openreplay-cli), which would otherwise deploy older
+  images and silently rewind the installation.
+
+  Override with --set allowDowngrade=true if this is intentional.
+*/}}
+{{- $existing := lookup "v1" "ConfigMap" .Release.Namespace "openreplay-version" }}
+{{- $existingVersion := "" }}
+{{- if $existing }}
+  {{- $existingVersion = index $existing.data "version" | default "" }}
+{{- end }}
+{{- $newVersion := .Chart.AppVersion }}
+{{- if and $existingVersion (not .Values.allowDowngrade) (semverCompare (printf ">%s" (trimPrefix "v" $newVersion)) (trimPrefix "v" $existingVersion)) }}
+  {{- fail (printf "\n\n  [DOWNGRADE BLOCKED]\n  Installed version (ConfigMap openreplay-version) : %s\n  Chart.AppVersion being applied                   : %s\n\n  Applying an older chart would roll back images and corrupt migration state.\n  If this is intentional, rerun with --set allowDowngrade=true.\n" $existingVersion $newVersion) }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,7 +26,8 @@ metadata:
     "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
 data:
-  version: {{ .Chart.AppVersion }}
+  version: {{ $newVersion }}
+  chartAppVersion: {{ .Chart.AppVersion }}  # actual chart deployed, for audit
 ---
 # If some jobs or crons are doing db operations, or using credentias,
 # it should fetch them from this secret.
