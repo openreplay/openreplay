@@ -18,6 +18,10 @@ export default class QueueSender {
   // eslint-disable-next-line
   private isCompressing
   private lastBatchNum = 0
+  // Running total of bytes held by in-flight fetches that set keepalive: true.
+  // Browsers cap this at 64 KB per fetch group; exceeding it makes fetch() throw
+  // synchronously, so we track it here and fall back to keepalive: false.
+  private inflightKeepaliveBytes = 0
 
   constructor(
     ingestBaseURL: string,
@@ -93,6 +97,12 @@ export default class QueueSender {
 
   // would be nice to use Beacon API, but it is not available in WebWorker
   private sendBatch(batch: Uint8Array, isCompressed?: boolean, batchNum?: string | number, dataType: DataType = 'player'): void {
+    if (batch.length === 0) {
+      console.error('OpenReplay: refusing to send 0-byte batch.', { batchNum, dataType, isCompressed, batch })
+      this.attemptsCount = 0
+      this.sendNext()
+      return
+    }
     const batchNumStr = batchNum?.toString().replace(/^([^_]+)_([^_]+).*/, '$1_$2_$3')
     this.busy = true
 
@@ -115,14 +125,28 @@ export default class QueueSender {
       return
     }
 
+    const useKeepalive =
+      batch.length < KEEPALIVE_SIZE_LIMIT &&
+      this.inflightKeepaliveBytes + batch.length <= KEEPALIVE_SIZE_LIMIT
+    if (useKeepalive) {
+      this.inflightKeepaliveBytes += batch.length
+    }
+    const releaseKeepalive = () => {
+      if (useKeepalive) {
+        this.inflightKeepaliveBytes -= batch.length
+      }
+    }
+
     fetch(`${this.ingestURL}?batch=${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}`, {
       // @ts-ignore
       body: batch,
       method: 'POST',
       headers,
-      keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,
+      keepalive: useKeepalive,
     })
       .then((r: Record<string, any>) => {
+        releaseKeepalive()
+        r.body?.cancel().catch(() => {})
         if (r.status === 401) {
           // TODO: continuous session ?
           this.busy = false
@@ -138,6 +162,7 @@ export default class QueueSender {
         this.sendNext()
       })
       .catch((e: Error) => {
+        releaseKeepalive()
         console.warn('OpenReplay:', e)
         this.retry(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_reject:${e.message}`, dataType)
       })
