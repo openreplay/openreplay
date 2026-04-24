@@ -123,27 +123,27 @@ def delete_record(projectId: int, recordId: int, _=Body(None),
     return {"data": result}
 
 
-@app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
+@app.get('/{projectId}/assist-stats/avg', tags=["assist-stats"])
 def get_assist_stats_avg(
-        project_id: int,
+        projectId: int,
         startTimestamp: int = None,
         endTimestamp: int = None,
         userId: str = None
 ):
     return assist_stats.get_averages(
-        project_id=project_id,
+        project_id=projectId,
         start_timestamp=startTimestamp,
         end_timestamp=endTimestamp,
         user_id=userId)
 
 
 @app.get(
-    '/{project_id}/assist-stats/top-members',
+    '/{projectId}/assist-stats/top-members',
     tags=["assist-stats"],
     response_model=schemas.AssistStatsTopMembersResponse
 )
 def get_assist_stats_top_members(
-        project_id: int,
+        projectId: int,
         startTimestamp: int = None,
         endTimestamp: int = None,
         sort: Optional[schemas.AssistStatsSort] = Query(default=schemas.AssistStatsSort.sessions_assisted.value,
@@ -155,7 +155,7 @@ def get_assist_stats_top_members(
         limit: int = 5
 ):
     return assist_stats.get_top_members(
-        project_id=project_id,
+        project_id=projectId,
         start_timestamp=startTimestamp,
         end_timestamp=endTimestamp,
         sort_by=sort,
@@ -167,15 +167,15 @@ def get_assist_stats_top_members(
 
 
 @app.post(
-    '/{project_id}/assist-stats/sessions',
+    '/{projectId}/assist-stats/sessions',
     tags=["assist-stats"],
     response_model=schemas.AssistStatsSessionsResponse
 )
 def get_assist_stats_sessions(
-        project_id: int,
+        projectId: int,
         data: schemas.AssistStatsSessionsRequest = Body(...),
 ):
     return assist_stats.get_sessions(
-        project_id=project_id,
+        project_id=projectId,
         data=data
     )
