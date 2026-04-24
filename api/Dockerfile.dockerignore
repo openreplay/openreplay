@@ -9,3 +9,21 @@ Dockerfile*
 app_alerts.py
 requirements-alerts.txt
 entrypoint_alerts.sh
+
+# dev / local artifacts — must not ship in the image
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.dev/
+.dev-pids/
+.env
+.idea/
+.vscode/
