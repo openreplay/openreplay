@@ -530,6 +530,21 @@ function upgrade() {
 
     or_version="$(yq eval '.fromVersion' /var/lib/openreplay/vars.yaml)"
 
+    # Reconcile vars.yaml fromVersion against the in-cluster openreplay-version ConfigMap.
+    # If they disagree, bail out. Cluster ConfigMap (written by post-upgrade hook) is source of truth;
+    # proceeding with a stale fromVersion would clone the wrong tag and silently skip migrations.
+    cluster_version="$(kubectl get configmap -n "${APP_NS}" openreplay-version -o jsonpath='{.data.version}' 2>/dev/null || true)"
+    stripped_or_version="${or_version//\"/}"
+    if [[ -n "$cluster_version" && "$cluster_version" != "$stripped_or_version" ]]; then
+        log err "Version drift detected.
+          vars.yaml fromVersion : ${BWHITE}${stripped_or_version}${RED}
+          cluster ConfigMap     : ${BWHITE}${cluster_version}${RED}
+
+          Fix ${BWHITE}${OR_DIR}/vars.yaml${RED} so fromVersion matches the cluster, then rerun.
+            ${BWHITE}sudo yq -i '.fromVersion = "${cluster_version}"' ${OR_DIR}/vars.yaml${RED}
+        "
+    fi
+
     # If release upgrade, then check for version specific instructions
     [[ $RELEASE_UPGRADE -eq 1 ]] && version_specific_checks "$or_version"
     # Unless it's upgrade release, always checkout same tag.
