@@ -160,6 +160,10 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 		return nil, fmt.Errorf("unmarshal search data: %w", err)
 	}
 
+	stats := s.getSearchStats(ctx, projectID, &savedSearch.Data)
+	savedSearch.SessionsCount = stats.SessionsCount
+	savedSearch.UsersCount = stats.UsersCount
+
 	return &savedSearch, nil
 }
 
