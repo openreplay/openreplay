@@ -138,6 +138,7 @@ export default class WebPlayer extends Player {
 
   reinit(session: SessionFilesInfo) {
     if (this.wpState.get().mobsFetched) return; // already initialized
+    this.wpState.update({ mobsFetched: true });
     this.messageLoader.setSession(session);
     this.messageManager.setSession(session);
     void this.messageLoader.loadFiles();
