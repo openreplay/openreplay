@@ -35,7 +35,6 @@ interface Props {
   generateInvite?: any;
   copyInviteCode?: any;
   isEnterprise?: boolean;
-  onMakeOwner?: (userId: string) => void;
   currentUserId?: string;
 }
 function UserListItem(props: Props) {
@@ -46,34 +45,9 @@ function UserListItem(props: Props) {
     copyInviteCode = () => {},
     isEnterprise = false,
     isOnboarding = false,
-    onMakeOwner,
     currentUserId,
   } = props;
   const { t } = useTranslation();
-
-  const canMakeOwner = user.isJoined && user.userId !== currentUserId;
-
-  const makeOwnerTooltip = !user.isJoined
-    ? t('User has not accepted the invitation yet')
-    : user.userId === currentUserId
-      ? t('Cannot transfer ownership to yourself')
-      : t('Make Owner');
-
-  const handleMakeOwner = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (
-      await confirm({
-        header: t('Transfer Ownership'),
-        confirmButton: t('Yes, transfer'),
-        confirmation: t(
-          'There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.',
-          { name: user.name },
-        ),
-      })
-    ) {
-      onMakeOwner?.(user.userId);
-    }
-  };
 
   return (
     <div
@@ -136,17 +110,6 @@ function UserListItem(props: Props) {
                 icon={<Icon name="link-45deg" />}
                 variant="text"
                 onClick={generateInvite}
-              />
-            </Tooltip>
-          )}
-
-          {!user.isSuperAdmin && onMakeOwner && (
-            <Tooltip title={makeOwnerTooltip}>
-              <Button
-                type="text"
-                icon={<Icon name="user-switch" />}
-                onClick={handleMakeOwner}
-                disabled={!canMakeOwner}
               />
             </Tooltip>
           )}

@@ -1,16 +1,26 @@
+import { Button, Tooltip } from 'antd';
 import cn from 'classnames';
-import { useObserver, observer } from 'mobx-react-lite';
+import { observer, useObserver } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { confirm, CopyButton, Form, Icon, Input } from 'UI';
-import { Button } from 'antd';
+import { CopyButton, Form, Icon, Input, confirm } from 'UI';
 
 import Select from 'Shared/Select';
-import { useTranslation } from 'react-i18next';
 
-function UserForm() {
+function UserForm({
+  showMakeOwnerButton,
+  canMakeOwner,
+  makeOwnerTooltip,
+  handleMakeOwner,
+}: {
+  showMakeOwnerButton: boolean;
+  canMakeOwner: boolean;
+  makeOwnerTooltip: string | undefined;
+  handleMakeOwner: (e: React.MouseEvent) => void;
+}) {
   const { t } = useTranslation();
   const { hideModal } = useModal();
   const { userStore, roleStore } = useStore();
@@ -120,6 +130,22 @@ function UserForm() {
             </div>
           </label>
         </Form.Field>
+        {user.exists() && showMakeOwnerButton && (
+          <div className="mb-4">
+            <Tooltip title={makeOwnerTooltip}>
+              <div
+                className={cn(
+                  'flex gap-2 items-center w-fit',
+                  canMakeOwner ? 'link cursor-pointer' : 'text-disabled-text',
+                )}
+                onClick={handleMakeOwner}
+              >
+                <Icon name="user-switch" />
+                <span>{t('Make Owner')}</span>
+              </div>
+            </Tooltip>
+          </div>
+        )}
 
         {isEnterprise && (
           <Form.Field>

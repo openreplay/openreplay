@@ -1,13 +1,16 @@
-import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { sliceListPerPage, getRE, filterList } from 'App/utils';
-import { Pagination, NoContent, Loader, Divider } from 'UI';
+import { useTranslation } from 'react-i18next';
+
 import { useModal } from 'App/components/Modal';
+import { useStore } from 'App/mstore';
+import { filterList, sliceListPerPage } from 'App/utils';
+import { Divider, Loader, NoContent, Pagination, confirm } from 'UI';
+
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
 import UserForm from '../UserForm';
 import UserListItem from '../UserListItem';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   isOnboarding?: boolean;
@@ -22,7 +25,7 @@ function UserList(props: Props) {
   const searchQuery = useObserver(() => userStore.searchQuery);
   const isOwner = useObserver(() => userStore.account.superAdmin);
   const currentUserId = useObserver(() => userStore.account.id);
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
 
   const getList = (list: any) =>
     filterList(list, searchQuery, ['email', 'roleName', 'name']);
@@ -39,8 +42,42 @@ function UserList(props: Props) {
   }, []);
 
   const editHandler = (user: any) => {
+    const showMakeOwnerButton = isOwner;
+    const canMakeOwner = user.isJoined && user.userId !== currentUserId;
+    const makeOwnerTooltip = !user.isJoined
+      ? t('User has not accepted the invitation yet')
+      : user.userId === currentUserId
+        ? t('Cannot transfer ownership to yourself')
+        : undefined;
+
+    const handleMakeOwner = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (
+        await confirm({
+          header: t('Transfer Ownership'),
+          confirmButton: t('Yes, transfer'),
+          confirmation: t(
+            'There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.',
+            { name: user.name },
+          ),
+        })
+      ) {
+        await userStore.makeOwner(user.userId);
+        await userStore.fetchUsers();
+        hideModal();
+      }
+    };
+
     userStore.initUser(user).then(() => {
-      showModal(<UserForm />, { right: true });
+      showModal(
+        <UserForm
+          showMakeOwnerButton={showMakeOwnerButton}
+          canMakeOwner={canMakeOwner}
+          makeOwnerTooltip={makeOwnerTooltip}
+          handleMakeOwner={handleMakeOwner}
+        />,
+        { right: true },
+      );
     });
   };
 
@@ -82,13 +119,6 @@ function UserList(props: Props) {
                     e.stopPropagation();
                     userStore.copyInviteCode(user.userId);
                   }}
-                  onMakeOwner={
-                    isOwner
-                      ? (userId) => {
-                          userStore.makeOwner(userId);
-                        }
-                      : undefined
-                  }
                   currentUserId={currentUserId}
                   isEnterprise={isEnterprise}
                   isOnboarding={isOnboarding}
