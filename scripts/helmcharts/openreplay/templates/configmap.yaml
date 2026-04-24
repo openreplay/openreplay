@@ -26,8 +26,8 @@ metadata:
     "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
 data:
-  version: {{ $newVersion }}
-  chartAppVersion: {{ .Chart.AppVersion }}  # actual chart deployed, for audit
+  version: {{ $newVersion | quote }}
+  chartAppVersion: {{ .Chart.AppVersion | quote }}  # actual chart deployed, for audit
 ---
 # If some jobs or crons are doing db operations, or using credentias,
 # it should fetch them from this secret.

@@ -2,6 +2,11 @@ migrationJob:
   podAnnotations:
     linkerd.io/inject: disabled
 
+# Safety guard: the openreplay-version ConfigMap template aborts helm at
+# render time if the cluster already has a newer version than Chart.AppVersion.
+# Set to true to allow intentional rollbacks / downgrades.
+allowDowngrade: false
+
 # Offline migration using pre-built migration image (for air-gapped environments)
 # When enabled, uses bundled schema files instead of cloning from GitHub
 offlineMigration:
