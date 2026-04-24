@@ -1,13 +1,14 @@
-import { Log, LogLevel, SessionFilesInfo } from 'App/player';
-
-import type { Store } from 'App/player';
 import { Message } from 'Player/web/messages';
+
+import { Log, LogLevel, SessionFilesInfo } from 'App/player';
+import type { Store } from 'App/player';
+
 import Player from '../player/Player';
-import MessageManager from './MessageManager';
 import MessageLoader from './MessageLoader';
+import MessageManager from './MessageManager';
+import Screen, { ScaleMode } from './Screen/Screen';
 import InspectorController from './addons/InspectorController';
 import TargetMarker from './addons/TargetMarker';
-import Screen, { ScaleMode } from './Screen/Screen';
 
 export default class WebPlayer extends Player {
   static readonly INITIAL_STATE = {
@@ -117,6 +118,18 @@ export default class WebPlayer extends Player {
         }
         console.log(messages);
       },
+      getDebugData: () => ({
+        trackerVersion: session?.trackerVersion,
+        sessionData: session,
+        messageMetadata: this.messageLoader.rawMessages.map((m) => ({
+          tp: m.tp,
+          time: m.time,
+          tabId: m.tabId,
+          tag: m.tag,
+          id: m.id,
+          parentID: m.parentID,
+        })),
+      }),
     });
   }
 

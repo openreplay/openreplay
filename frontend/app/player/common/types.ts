@@ -53,6 +53,7 @@ export interface SessionFilesInfo {
   agentInfo?: { email: string; name: string };
   canvasURL?: string[];
   mobileFrames?: string;
+  trackerVersion: string;
 }
 
 export type PlayerMsg = Message & { tabId: string };
