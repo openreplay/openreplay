@@ -72,7 +72,7 @@ SELECT DISTINCT ON (session_id)
 	s.user_state,
 	s.screen_width,
 	s.screen_height,
-	s.events_count,
+	greatest(s.events_count,1) AS events_count,
 	viewed_sessions.session_id>0 AS viewed,
 	count(DISTINCT session_id) OVER() AS total_number_of_sessions
 	%s
