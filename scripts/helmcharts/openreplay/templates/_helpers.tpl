@@ -148,7 +148,12 @@ Create the volume mount config for redis TLS certificates
 {{- if .Values.global.assetsOrigin }}
 {{- .Values.global.assetsOrigin | trimSuffix "/" }}
 {{- else }}
-{{- include "openreplay.s3Endpoint" . | trimSuffix "/" }}/{{.Values.global.s3.assetsBucket}}
+{{- $ep := include "openreplay.s3Endpoint" . | trimSuffix "/" }}
+{{- if $ep }}
+{{- $ep }}/{{.Values.global.s3.assetsBucket}}
+{{- else }}
+{{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region | trimSuffix "/" }}/{{.Values.global.s3.assetsBucket}}
+{{- end }}
 {{- end }}
 {{- end }}
 
