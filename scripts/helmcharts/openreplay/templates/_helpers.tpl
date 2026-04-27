@@ -39,7 +39,7 @@ ingress-nginx: &ingress-nginx
 {{- else if and .Values.global.s3.accessKey .Values.global.s3.secretKey -}}
   {{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region -}}
 {{- else -}}
-  {{- .Values.global.s3.endpoint -}}
+  {{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region -}}
 {{- end -}}
 {{- end -}}
 
