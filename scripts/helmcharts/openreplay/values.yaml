@@ -79,12 +79,18 @@ ingress-nginx:
       name: openreplay
       create: true
       setAsDefaultIngress: false
+    resources:
+      requests:
+        cpu: "2"
+        memory: 4Gi
+      limits:
+        memory: 4Gi
     pod:
       extraLabels:
         app.kubernetes.io/component: controller
     config:
       entries:
-        worker-connections: "1024"
+        worker-connections: "4096"
         http-snippets: |-
           proxy_headers_hash_max_size 1024;
           proxy_headers_hash_bucket_size 128;
@@ -109,6 +115,13 @@ ingress-nginx:
         proxy-max-temp-file-size: "2048m"
         # Client body buffer configuration for large POST requests (ingestion data)
         client-body-buffer-size: "512k"
+        client-max-body-size: "100m"
+        # Timeout configuration for long-running requests (session recordings)
+        proxy-connect-timeout: "60s"
+        proxy-read-timeout: "300s"
+        proxy-send-timeout: "300s"
+        # Upstream keepalive connections
+        keepalive: "64"
 
 assist-api:
   enabled: false
