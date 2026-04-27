@@ -16,14 +16,23 @@ function run_numbered_migration() {
     local version=$1
     local version_dir="${clickhousedir}/${version}"
 
-    # Safe-init the state function (no-op if it already exists)
+    # Safe-init state + version functions (no-op if they already exist)
     $ch_client -q "CREATE FUNCTION IF NOT EXISTS openreplay_migration_state AS() -> -1;"
+    $ch_client -q "CREATE FUNCTION IF NOT EXISTS openreplay_version AS() -> 'v0.0.0';"
 
-    # Read current state and determine where to start
-    local state
+    # Read current state and version
+    local state current_version
     state=$($ch_client -q "SELECT openreplay_migration_state()" | tr -d '[:space:]')
+    current_version=$($ch_client -q "SELECT openreplay_version()" | tr -d '[:space:]')
+
+    # Skip if this version is already fully applied (version matches and no migration in progress)
+    if [[ "$current_version" == "v$version" && "$state" == "-1" ]]; then
+        echo "Version $version already applied (current=$current_version, state=-1). Skipping."
+        return 0
+    fi
+
     local start_from=$((state + 1))
-    echo "Migration state for version $version: state=$state, starting from step $start_from"
+    echo "Migration state for version $version: state=$state, current_version=$current_version, starting from step $start_from"
 
     # Execute numbered files in version-sorted order (sort -V handles 10 > 2 correctly)
     for file in $(ls "${version_dir}"/*.sql | sort -V); do
