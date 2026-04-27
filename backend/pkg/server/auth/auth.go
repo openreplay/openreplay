@@ -25,7 +25,7 @@ type authImpl struct {
 	publicEndpoints map[string]struct{} // with PublicKeyPermission
 }
 
-func NewAuth(log logger.Logger, jwtSecret string, users user.Users, tenants tenant.Tenants, projects projects.Projects, extensionSecret *string, keys keys.Keys, handlers []api.Handlers) (api.RouterMiddleware, error) {
+func NewAuth(log logger.Logger, jwtSecret string, users user.Users, tenants tenant.Tenants, projects projects.Projects, extensionSecret *string, keys keys.Keys, prefix string, handlers []api.Handlers) (api.RouterMiddleware, error) {
 	res := &authImpl{
 		log:             log,
 		secret:          jwtSecret,
@@ -35,11 +35,11 @@ func NewAuth(log logger.Logger, jwtSecret string, users user.Users, tenants tena
 		extensionSecret: defaultString(extensionSecret),
 		keys:            keys,
 	}
-	res.parsePublicEndpoints(handlers)
+	res.parsePublicEndpoints(prefix, handlers)
 	return res, nil
 }
 
-func (a *authImpl) parsePublicEndpoints(handlers []api.Handlers) {
+func (a *authImpl) parsePublicEndpoints(prefix string, handlers []api.Handlers) {
 	if len(handlers) == 0 {
 		return
 	}
@@ -49,6 +49,9 @@ func (a *authImpl) parsePublicEndpoints(handlers []api.Handlers) {
 			for _, perm := range handler.Permissions {
 				if perm == api.PublicKeyPermission {
 					a.publicEndpoints[handler.Path] = struct{}{}
+					if prefix != "" {
+						a.publicEndpoints[prefix+handler.Path] = struct{}{}
+					}
 					continue
 				}
 			}

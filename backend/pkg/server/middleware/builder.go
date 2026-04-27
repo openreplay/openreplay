@@ -46,7 +46,7 @@ func NewMiddlewareBuilder(
 ) (api.MiddlewareBuilder, error) {
 	healthCheck := NewHealthCheck()
 	corsCheck := NewCors(http.UseAccessControlHeaders)
-	authenticator, err := auth.NewAuth(log, jwtSecret, user.New(pgPool), tenants, projects, extensionSecret, keys, handlers)
+	authenticator, err := auth.NewAuth(log, jwtSecret, user.New(pgPool), tenants, projects, extensionSecret, keys, prefix, handlers)
 	if err != nil {
 		return nil, fmt.Errorf("error creating auth middleware: %s", err)
 	}
