@@ -23,4 +23,3 @@ cypress.env.json
 cypress/videos/
 coverage
 dist
-.parcel-cache/
