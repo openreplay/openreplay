@@ -37,6 +37,32 @@ function formatChartTimestamp(ts: number, rangeHours: number): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// In-memory cache for the OpenReplay docs index (llms-full.txt).
+// File is small (~40 KB) and updates infrequently, so a 12h TTL is plenty.
+const DOCS_INDEX_URL = "https://docs.openreplay.com/llms-full.txt";
+const DOCS_CACHE_TTL_MS = 60 * 60 * 12 * 1000;
+let docsCache: { content: string; fetchedAt: number } | null = null;
+
+async function getOpenReplayDocsIndex(): Promise<string> {
+  const now = Date.now();
+  if (docsCache && now - docsCache.fetchedAt < DOCS_CACHE_TTL_MS) {
+    return docsCache.content;
+  }
+  const response = await fetch(DOCS_INDEX_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch OpenReplay docs index: HTTP ${response.status}`);
+  }
+  const content = await response.text();
+  docsCache = { content, fetchedAt: now };
+  return content;
+}
+
+// Stop-words that produce noisy matches when queries are phrased as questions.
+const DOCS_STOP_WORDS = new Set([
+  "the", "and", "for", "what", "how", "are", "can", "with", "from", "this",
+  "that", "does", "openreplay", "open", "replay", "use", "using", "you", "your",
+]);
+
 // Register UI tools
 export function registerUITools(server: McpServer, resourceUri: string) {
   // Tool 1: View Recent Sessions
@@ -369,6 +395,13 @@ export function registerUITools(server: McpServer, resourceUri: string) {
             connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
           },
         },
+        examples: [
+          { description: "Where do users drop off after the pricing page last week", input: { startDate: "2026-04-21", endDate: "2026-04-28", projectName: "MyApp", startPoint: "/pricing" } },
+          { description: "Show me user journeys this month", input: { startDate: "2026-04-01", endDate: "2026-04-28", projectName: "MyApp" } },
+          { description: "What pages do users visit after /signup", input: { startDate: "2026-04-21", endDate: "2026-04-28", projectName: "MyApp", startPoint: "/signup" } },
+          { description: "Navigation paths for mobile users from France this week", input: { startDate: "2026-04-21", endDate: "2026-04-28", siteId: "1", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }, { name: "userCountry", value: ["France"], operator: "is" }] } },
+          { description: "User flow from /home for Chrome users last 30 days", input: { startDate: "2026-03-29", endDate: "2026-04-28", projectName: "MyApp", startPoint: "/home", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }] } },
+        ],
       },
     },
     async (args: any) => {
@@ -827,6 +860,13 @@ export function registerUITools(server: McpServer, resourceUri: string) {
             connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
           },
         },
+        examples: [
+          { description: "Show me the checkout funnel last week", input: { startDate: "2026-04-21", endDate: "2026-04-28", steps: ["/cart", "/checkout", "/confirm"], projectName: "MyApp" } },
+          { description: "Conversion from /pricing to /signup", input: { startDate: "2026-04-21", endDate: "2026-04-28", steps: ["/pricing", "/signup"], projectName: "MyApp" } },
+          { description: "Onboarding funnel for mobile users this month", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/welcome", "/profile", "/setup", "/dashboard"], projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
+          { description: "Signup funnel for Chrome users in the US", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/", "/signup", "/verify-email", "/dashboard"], siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["United States"], operator: "is" }] } },
+          { description: "Purchase funnel from product page last 30 days", input: { startDate: "2026-03-29", endDate: "2026-04-28", steps: ["/products", "/cart", "/checkout", "/order-complete"], projectName: "MyApp" } },
+        ],
       },
     },
     async (args: any) => {
@@ -958,6 +998,11 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resourceUri,
           visibility: ["model"],
         },
+        examples: [
+          { description: "Replay a session by ID in MyApp", input: { sessionId: "7891234567890", projectName: "MyApp" } },
+          { description: "Show me the replay of the second session (use sessionId from previous list)", input: { sessionId: "7891234567890", siteId: "1" } },
+          { description: "Watch the last session shown in the list", input: { sessionId: "7891234567890", siteId: "1" } },
+        ],
       },
     },
     async (args: any) => {
@@ -1142,6 +1187,12 @@ export function registerInternalTools(server: McpServer) {
       inputSchema: {
         backendUrl: z.string().describe("OpenReplay backend API URL"),
       },
+      _meta: {
+        examples: [
+          { description: "Use the SaaS instance", input: { backendUrl: "https://api.openreplay.com" } },
+          { description: "Use a self-hosted instance", input: { backendUrl: "https://openreplay.mycompany.com/api" } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] configure_backend called:", args);
@@ -1208,6 +1259,12 @@ export function registerInternalTools(server: McpServer) {
       inputSchema: {
         backendUrl: z.string().optional().describe("OpenReplay backend URL (optional, uses current if already configured)"),
         frontendUrl: z.string().optional().describe("OpenReplay URL (optional, uses current if already configured)"),
+      },
+      _meta: {
+        examples: [
+          { description: "Log me in (use already-configured backend)", input: {} },
+          { description: "Log in to a self-hosted OpenReplay", input: { backendUrl: "https://openreplay.mycompany.com/api", frontendUrl: "https://openreplay.mycompany.com" } },
+        ],
       },
     },
     async (args) => {
@@ -1338,6 +1395,11 @@ export function registerInternalTools(server: McpServer) {
         sessionId: z.string().describe("Session ID to get replay URL for"),
         siteId: z.string().optional().describe("Site ID (project ID)"),
       },
+      _meta: {
+        examples: [
+          { description: "Get replay URL for a session", input: { sessionId: "7891234567890", siteId: "1" } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] get_session_replay called:", args);
@@ -1452,6 +1514,11 @@ export function registerInternalTools(server: McpServer) {
       description: "Get the project ID for a given project name. Must call list_projects first to populate the project cache.",
       inputSchema: {
         projectName: z.string().describe("Project name to look up"),
+      },
+      _meta: {
+        examples: [
+          { description: "What is the project ID for MyApp", input: { projectName: "MyApp" } },
+        ],
       },
     },
     async (args) => {
@@ -1607,6 +1674,13 @@ export function registerInternalTools(server: McpServer) {
         siteId: z.string().optional().describe("Site ID (project ID). Use the siteId from the earlier session list if available."),
         projectName: z.string().optional().describe("Project name to look up. Will be resolved to project ID automatically."),
       },
+      _meta: {
+        examples: [
+          { description: "Tell me about this session ID in MyApp", input: { sessionId: "7891234567890", projectName: "MyApp" } },
+          { description: "Details on the second session from previous list (use sessionId from list)", input: { sessionId: "7891234567890", siteId: "1" } },
+          { description: "What happened in the last session", input: { sessionId: "7891234567890", siteId: "1" } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] get_session_details called:", args);
@@ -1712,6 +1786,12 @@ export function registerInternalTools(server: McpServer) {
         siteId: z.string().optional().describe("Site ID (project ID)."),
         projectName: z.string().optional().describe("Project name to look up."),
       },
+      _meta: {
+        examples: [
+          { description: "What filters are available for MyApp", input: { projectName: "MyApp" } },
+          { description: "List filters for project 1", input: { siteId: "1" } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] get_available_filters called:", args);
@@ -1808,6 +1888,14 @@ export function registerInternalTools(server: McpServer) {
         limit: z.number().optional().default(50).describe("Number of events to fetch (default 50, max 200)."),
         page: z.number().optional().default(1).describe("Page number for pagination."),
       },
+      _meta: {
+        examples: [
+          { description: "Recent events for MyApp (last 24h, default)", input: { projectName: "MyApp" } },
+          { description: "Events from yesterday", input: { projectName: "MyApp", startDate: "2026-04-27", endDate: "2026-04-28" } },
+          { description: "Last 100 events this week", input: { projectName: "MyApp", startDate: "2026-04-21", endDate: "2026-04-28", limit: 100 } },
+          { description: "Page 2 of recent events", input: { projectName: "MyApp", page: 2 } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] fetch_events called:", args);
@@ -1878,6 +1966,14 @@ export function registerInternalTools(server: McpServer) {
         limit: z.number().optional().default(50).describe("Number of users to fetch (default 50, max 200)."),
         page: z.number().optional().default(1).describe("Page number for pagination."),
       },
+      _meta: {
+        examples: [
+          { description: "List recent users for MyApp", input: { projectName: "MyApp" } },
+          { description: "Find users with email containing 'tahay'", input: { projectName: "MyApp", query: "tahay" } },
+          { description: "Users active in the last 30 days", input: { projectName: "MyApp", startDate: "2026-03-29", endDate: "2026-04-28" } },
+          { description: "Search for users named John, 100 per page", input: { projectName: "MyApp", query: "John", limit: 100 } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] fetch_users called:", args);
@@ -1944,6 +2040,12 @@ export function registerInternalTools(server: McpServer) {
         siteId: z.string().optional().describe("Site ID (project ID)."),
         projectName: z.string().optional().describe("Project name to look up."),
       },
+      _meta: {
+        examples: [
+          { description: "What events are tracked in MyApp", input: { projectName: "MyApp" } },
+          { description: "Show me the tracking schema for project 1", input: { siteId: "1" } },
+        ],
+      },
     },
     async (args) => {
       console.error("[SERVER] fetch_event_definitions called:", args);
@@ -1998,4 +2100,101 @@ export function registerInternalTools(server: McpServer) {
     }
   );
   console.error("[SERVER] fetch_event_definitions tool registered");
+
+  // Search OpenReplay documentation
+  console.error("[SERVER] Registering search_docs tool...");
+  server.registerTool(
+    "search_docs",
+    {
+      description:
+        "ALWAYS use this tool when the user asks any question about OpenReplay itself — " +
+        "how features work, SDK setup and methods, deployment, integrations, plugins, configuration, " +
+        "data sanitization/privacy, troubleshooting, plans/pricing, billing, or anything else covered by " +
+        "the public OpenReplay documentation. Examples: 'how do I install the React SDK', " +
+        "'what's the difference between cloud and self-hosted', 'how do I redact sensitive data', " +
+        "'how do I deploy on Kubernetes', 'how do funnels work'. " +
+        "Pass the user's question or relevant keywords as `query`. Returns matching sections from the " +
+        "OpenReplay docs (sourced from llms-full.txt), each containing a description and a link to the " +
+        "corresponding page on docs.openreplay.com that you can cite to the user.",
+      inputSchema: {
+        query: z.string().optional().describe("Search query — keywords or the user's question. Returns matching sections from the OpenReplay docs. Omit to get the full docs index."),
+      },
+      _meta: {
+        examples: [
+          { description: "How do I install the React SDK", input: { query: "react sdk install" } },
+          { description: "How do I deploy on AWS", input: { query: "deploy aws ec2" } },
+          { description: "How to redact sensitive data", input: { query: "data sanitization privacy redact" } },
+          { description: "What is the difference between cloud and self-hosted", input: { query: "cloud self-hosted difference" } },
+          { description: "How do funnels work in product analytics", input: { query: "funnels conversion product analytics" } },
+        ],
+      },
+    },
+    async (args: any) => {
+      console.error("[SERVER] search_docs called:", args);
+      const query: string | undefined = args.query;
+
+      let indexContent: string;
+      try {
+        indexContent = await getOpenReplayDocsIndex();
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: err.message || "Failed to fetch docs index" }) }],
+          isError: true,
+        };
+      }
+
+      if (!query) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              type: "docs_index",
+              hint: "Pass a `query` to filter to relevant sections.",
+              content: indexContent,
+            }),
+          }],
+        };
+      }
+
+      // Split into sections by `## ` heading (lookahead keeps the heading attached)
+      const sections = indexContent.split(/(?=^## )/m).filter(s => s.trim().length > 0);
+      const queryTerms = query
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(t => t.length > 2 && !DOCS_STOP_WORDS.has(t));
+      const allTerms = queryTerms.length > 0 ? queryTerms : [query.toLowerCase()];
+
+      const scored = sections
+        .map(section => {
+          const lower = section.toLowerCase();
+          let score = 0;
+          for (const term of allTerms) {
+            score += lower.split(term).length - 1;
+          }
+          return { section, score };
+        })
+        .filter(x => x.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      const top = scored.slice(0, 6).map(x => x.section);
+      const result = top.length > 0 ? top.join("\n\n") : indexContent;
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            type: "docs_search",
+            query,
+            matchedSections: scored.length,
+            returnedSections: top.length,
+            hint: top.length === 0
+              ? "No section matched the query; returning the full docs index. Try a more specific query or cite the index links directly."
+              : "Each section includes a docs.openreplay.com link you can cite to the user.",
+            content: result.slice(0, 40000),
+          }),
+        }],
+      };
+    }
+  );
+  console.error("[SERVER] search_docs tool registered");
 }
