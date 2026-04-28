@@ -547,8 +547,10 @@ spec:
         - name: shared
           mountPath: /opt/openreplay
       {{- end }}
+      {{- end}}
+      {{- if or .Values.global.enterpriseEditionLicense .Values.forceKafkaMigration }}
       - name: kafka
-        image: "{{.Values.kafka.image.registry}}/{{.Values.kafka.image.repository}}:{{.Values.kafka.image.tag}}"
+        image: "{{.Values.kafkaMigration.image.registry}}/{{.Values.kafkaMigration.image.repository}}:{{.Values.kafkaMigration.image.tag}}"
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
@@ -572,6 +574,8 @@ spec:
             value: "{{ .Values.global.kafka.kafkaPort }}"
           - name: KAFKA_SSL
             value: "{{ .Values.global.kafka.kafkaUseSsl }}"
+          - name: REPLICATION_FACTOR
+            value: "{{ .Values.global.kafka.replicationFactor | default 2 }}"
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
@@ -588,7 +592,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
-        {{- end}}
+      {{- end}}
       - name: clickhouse
         image: "{{.Values.clickhouse.image.registry}}/{{.Values.clickhouse.image.repository}}:{{.Values.clickhouse.image.tag}}"
         env:

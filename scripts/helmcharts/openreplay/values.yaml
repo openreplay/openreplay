@@ -23,7 +23,12 @@ postgresql:
     repository: postgres
     tag: 17
 
-kafka:
+kafka: {}
+
+# Kafka CLI image for migration job (topic creation).
+# Kept separate from kafka chart image so broker overrides (e.g. Redpanda)
+# don't break the migration job which needs kafka-topics.sh.
+kafkaMigration:
   image:
     registry: ghcr.io/openreplay
     repository: kafka
@@ -36,6 +41,7 @@ migration:
 deployment:
   argo: false
 forceMigration: false
+forceKafkaMigration: false
 skipMigration: false
 
 redis: &redis

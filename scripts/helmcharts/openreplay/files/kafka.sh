@@ -4,6 +4,7 @@ set -e
 
 # Default to 4 days.
 RETENTION_TIME=${RETENTION_TIME:-345600000}
+REPLICATION_FACTOR=${REPLICATION_FACTOR:-2}
 
 topics=(
     "raw"
@@ -32,7 +33,7 @@ function init() {
     for topic in "${topics[@]}"; do
         echo "Creating topic: $topic"
         # TODO: Have to check an idempotent way of creating topics.
-        kafka-topics.sh --create --bootstrap-server ${KAFKA_HOST}:${KAFKA_PORT} --replication-factor 2 --partitions 16 --topic ${topic} --command-config /tmp/config.txt || true
+        kafka-topics.sh --create --bootstrap-server ${KAFKA_HOST}:${KAFKA_PORT} --replication-factor ${REPLICATION_FACTOR} --partitions 16 --topic ${topic} --command-config /tmp/config.txt || true
         kafka-configs.sh --bootstrap-server ${KAFKA_HOST}:${KAFKA_PORT} --entity-type topics --alter --add-config retention.ms=${RETENTION_TIME} --entity-name=${topic} --command-config /tmp/config.txt || true
     done
 }
