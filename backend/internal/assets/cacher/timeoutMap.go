@@ -7,39 +7,59 @@ import (
 
 const MAX_STORAGE_TIME = 24 * time.Hour
 
-// If problem with cache contention (>=4 core) look at sync.Map
+const inFlightStaleAfter = 1 * time.Hour
 
 type timeoutMap struct {
-	mx sync.RWMutex
-	m  map[string]time.Time
+	mx        sync.Mutex
+	completed map[string]time.Time
+	inFlight  map[string]time.Time
 }
 
 func newTimeoutMap() *timeoutMap {
 	return &timeoutMap{
-		m: make(map[string]time.Time),
+		completed: make(map[string]time.Time),
+		inFlight:  make(map[string]time.Time),
 	}
 }
 
-func (tm *timeoutMap) add(key string) {
+func (tm *timeoutMap) reserve(key string) bool {
 	tm.mx.Lock()
 	defer tm.mx.Unlock()
-	tm.m[key] = time.Now()
+	if _, ok := tm.inFlight[key]; ok {
+		return false
+	}
+	if _, ok := tm.completed[key]; ok {
+		return false
+	}
+	tm.inFlight[key] = time.Now()
+	return true
 }
 
-func (tm *timeoutMap) contains(key string) bool {
-	tm.mx.RLock()
-	defer tm.mx.RUnlock()
-	_, ok := tm.m[key]
-	return ok
+func (tm *timeoutMap) markCompleted(key string) {
+	tm.mx.Lock()
+	defer tm.mx.Unlock()
+	delete(tm.inFlight, key)
+	tm.completed[key] = time.Now()
+}
+
+func (tm *timeoutMap) markFailed(key string) {
+	tm.mx.Lock()
+	defer tm.mx.Unlock()
+	delete(tm.inFlight, key)
 }
 
 func (tm *timeoutMap) deleteOutdated() {
 	now := time.Now()
 	tm.mx.Lock()
 	defer tm.mx.Unlock()
-	for key, t := range tm.m {
+	for key, t := range tm.completed {
 		if now.Sub(t) > MAX_STORAGE_TIME {
-			delete(tm.m, key)
+			delete(tm.completed, key)
+		}
+	}
+	for key, t := range tm.inFlight {
+		if now.Sub(t) > inFlightStaleAfter {
+			delete(tm.inFlight, key)
 		}
 	}
 }

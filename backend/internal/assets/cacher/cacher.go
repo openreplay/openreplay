@@ -1,14 +1,17 @@
 package cacher
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io"
+	"math/rand"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +22,37 @@ import (
 
 	"github.com/pkg/errors"
 )
+
+const (
+	errChanBuffer  = 512
+	retryBaseDelay = 200 * time.Millisecond
+	retryMaxDelay  = 10 * time.Second
+	retryAfterCap  = 30 * time.Second
+)
+
+func isRetriableStatus(code int) bool {
+	switch code {
+	case 403, 408, 429, 500, 502, 503, 504:
+		return true
+	}
+	return false
+}
+
+func parseRetryAfter(h string) (time.Duration, bool) {
+	h = strings.TrimSpace(h)
+	if h == "" {
+		return 0, false
+	}
+	if seconds, err := strconv.Atoi(h); err == nil && seconds >= 0 {
+		return time.Duration(seconds) * time.Second, true
+	}
+	if t, err := http.ParseTime(h); err == nil {
+		if d := time.Until(t); d > 0 {
+			return d, true
+		}
+	}
+	return 0, false
+}
 
 const MAX_CACHE_DEPTH = 5
 
@@ -32,6 +66,8 @@ type cacher struct {
 	sizeLimit      int
 	requestHeaders map[string]string
 	workers        *WorkerPool
+	ctx            context.Context
+	cancel         context.CancelFunc
 }
 
 func (c *cacher) CanCache() bool {
@@ -73,13 +109,13 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics me
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			Certificates:       []tls.Certificate{cert},
-			RootCAs:            caCertPool,
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      caCertPool,
 		}
 
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	c := &cacher{
 		timeoutMap: newTimeoutMap(),
 		objStorage: store,
@@ -91,13 +127,51 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics me
 			},
 		},
 		rewriter:       rewriter,
-		Errors:         make(chan error),
+		Errors:         make(chan error, errChanBuffer),
 		sizeLimit:      cfg.AssetsSizeLimit,
 		requestHeaders: cfg.AssetsRequestHeaders,
 		metrics:        metrics,
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 	c.workers = NewPool(64, c.CacheFile)
 	return c, nil
+}
+
+func (c *cacher) reportErr(err error) {
+	select {
+	case c.Errors <- err:
+	default:
+	}
+}
+
+func backoffDelay(attempt int) time.Duration {
+	if attempt < 1 {
+		attempt = 1
+	}
+	d := retryBaseDelay
+	for i := 1; i < attempt; i++ {
+		d *= 2
+		if d >= retryMaxDelay {
+			d = retryMaxDelay
+			break
+		}
+	}
+	half := d / 2
+	return half + time.Duration(rand.Int63n(int64(half)+1))
+}
+
+func (c *cacher) scheduleRetryAfter(t *Task, delay time.Duration) {
+	time.AfterFunc(delay, func() {
+		if c.ctx.Err() != nil {
+			return
+		}
+		c.workers.AddTask(t)
+	})
+}
+
+func (c *cacher) scheduleRetry(t *Task) {
+	c.scheduleRetryAfter(t, backoffDelay(setRetries()-t.retries))
 }
 
 func (c *cacher) CacheFile(task *Task) {
@@ -107,37 +181,44 @@ func (c *cacher) CacheFile(task *Task) {
 func (c *cacher) cacheURL(t *Task) {
 	t.retries--
 	start := time.Now()
-	req, _ := http.NewRequest("GET", t.requestURL, nil)
+	req, _ := http.NewRequestWithContext(c.ctx, "GET", t.requestURL, nil)
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0")
 	for k, v := range c.requestHeaders {
 		req.Header.Set(k, v)
 	}
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		c.Errors <- errors.Wrap(err, t.urlContext)
+		c.timeoutMap.markFailed(t.cachePath)
+		c.reportErr(errors.Wrap(err, t.urlContext))
 		return
 	}
 	c.metrics.RecordDownloadDuration(float64(time.Now().Sub(start).Milliseconds()), res.StatusCode)
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
-		printErr := true
-		// Retry 403/503 errors
-		if (res.StatusCode == 403 || res.StatusCode == 503) && t.retries > 0 {
-			c.workers.AddTask(t)
-			printErr = false
+		if isRetriableStatus(res.StatusCode) && t.retries > 0 {
+			delay := backoffDelay(setRetries() - t.retries)
+			if ra, ok := parseRetryAfter(res.Header.Get("Retry-After")); ok {
+				if ra > retryAfterCap {
+					ra = retryAfterCap
+				}
+				delay = ra
+			}
+			c.scheduleRetryAfter(t, delay)
+			return
 		}
-		if printErr {
-			c.Errors <- errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), t.urlContext)
-		}
+		c.timeoutMap.markFailed(t.cachePath)
+		c.reportErr(errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), t.urlContext))
 		return
 	}
 	data, err := io.ReadAll(io.LimitReader(res.Body, int64(c.sizeLimit+1)))
 	if err != nil {
-		c.Errors <- errors.Wrap(err, t.urlContext)
+		c.timeoutMap.markFailed(t.cachePath)
+		c.reportErr(errors.Wrap(err, t.urlContext))
 		return
 	}
 	if len(data) > c.sizeLimit {
-		c.Errors <- errors.Wrap(errors.New("Maximum size exceeded"), t.urlContext)
+		c.timeoutMap.markCompleted(t.cachePath)
+		c.reportErr(errors.Wrap(errors.New("Maximum size exceeded"), t.urlContext))
 		return
 	}
 
@@ -149,15 +230,17 @@ func (c *cacher) cacheURL(t *Task) {
 
 	// Skip html file (usually it's a CDN mock for 404 error)
 	if strings.HasPrefix(contentType, "text/html") {
-		c.Errors <- errors.Wrap(fmt.Errorf("context type is text/html, sessID: %d", t.sessionID), t.urlContext)
+		c.timeoutMap.markFailed(t.cachePath)
+		c.reportErr(errors.Wrap(fmt.Errorf("context type is text/html, sessID: %d", t.sessionID), t.urlContext))
 		return
 	}
 
 	isCSS := strings.HasPrefix(contentType, "text/css")
 
 	strData := string(data)
+	var extracted []string
 	if isCSS {
-		strData = c.rewriter.RewriteCSS(t.sessionID, t.requestURL, strData) // TODO: one method for rewrite and return list
+		strData, extracted = c.rewriter.RewriteAndExtractCSS(t.sessionID, t.requestURL, strData)
 	}
 
 	// TODO: implement in streams
@@ -165,36 +248,33 @@ func (c *cacher) cacheURL(t *Task) {
 	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression)
 	if err != nil {
 		c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
-		c.Errors <- errors.Wrap(err, t.urlContext)
+		c.timeoutMap.markFailed(t.cachePath)
+		c.reportErr(errors.Wrap(err, t.urlContext))
 		return
 	}
 	c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), false)
 	c.metrics.IncreaseSavedSessions()
+	c.timeoutMap.markCompleted(t.cachePath)
 
-	if isCSS {
-		if t.depth > 0 {
-			for _, extractedURL := range assets.ExtractURLsFromCSS(string(data)) {
-				if fullURL, cachable := assets.GetFullCachableURL(t.requestURL, extractedURL); cachable {
-					c.checkTask(&Task{
-						requestURL: fullURL,
-						sessionID:  t.sessionID,
-						depth:      t.depth - 1,
-						urlContext: t.urlContext + "\n  -> " + fullURL,
-						isJS:       false,
-						retries:    setRetries(),
-					})
-				}
-			}
-			if err != nil {
-				c.Errors <- errors.Wrap(err, t.urlContext)
-				return
-			}
-		} else {
-			c.Errors <- errors.Wrap(errors.New("Maximum recursion cache depth exceeded"), t.urlContext)
-			return
+	if !isCSS || len(extracted) == 0 {
+		return
+	}
+	if t.depth == 0 {
+		c.reportErr(errors.Wrap(errors.New("Maximum recursion cache depth exceeded"), t.urlContext))
+		return
+	}
+	for _, extractedURL := range extracted {
+		if fullURL, cachable := assets.GetFullCachableURL(t.requestURL, extractedURL); cachable {
+			c.checkTask(&Task{
+				requestURL: fullURL,
+				sessionID:  t.sessionID,
+				depth:      t.depth - 1,
+				urlContext: t.urlContext + "\n  -> " + fullURL,
+				isJS:       false,
+				retries:    setRetries(),
+			})
 		}
 	}
-	return
 }
 
 func (c *cacher) checkTask(newTask *Task) {
@@ -205,12 +285,12 @@ func (c *cacher) checkTask(newTask *Task) {
 	} else {
 		cachePath = assets.GetCachePathForAssets(newTask.sessionID, newTask.requestURL)
 	}
-	if c.timeoutMap.contains(cachePath) {
+	if !c.timeoutMap.reserve(cachePath) {
 		return
 	}
-	c.timeoutMap.add(cachePath)
 	crTime := c.objStorage.GetCreationTime(cachePath)
 	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) {
+		c.timeoutMap.markCompleted(cachePath)
 		return
 	}
 	// add new file in queue to download
@@ -245,6 +325,7 @@ func (c *cacher) UpdateTimeouts() {
 }
 
 func (c *cacher) Stop() {
+	c.cancel()
 	c.workers.Stop()
 }
 

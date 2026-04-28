@@ -172,10 +172,15 @@ func (e *AssetsCache) sendAssetForCache(sessionID uint64, baseURL string, relati
 	}
 }
 
-func (e *AssetsCache) sendAssetsForCacheFromCSS(sessionID uint64, baseURL string, css string) {
-	for _, u := range assets.ExtractURLsFromCSS(css) { // TODO: in one shot with rewriting
+func (e *AssetsCache) processCSS(sessionID uint64, baseURL string, css string) string {
+	if !e.cfg.CacheAssets {
+		return assets.ResolveCSS(baseURL, css)
+	}
+	rewritten, extracted := e.rewriter.RewriteAndExtractCSS(sessionID, baseURL, css)
+	for _, u := range extracted {
 		e.sendAssetForCache(sessionID, baseURL, u)
 	}
+	return rewritten
 }
 
 func (e *AssetsCache) handleURL(sessionID uint64, baseURL string, urlVal string) string {
@@ -204,10 +209,7 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	if err != nil {
 		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
 		e.log.Error(ctx, "can't parse url: %s, err: %s", baseURL, err)
-		if e.cfg.CacheAssets {
-			e.sendAssetsForCacheFromCSS(sessionID, baseURL, css)
-		}
-		return e.getRewrittenCSS(sessionID, baseURL, css)
+		return e.processCSS(sessionID, baseURL, css)
 	}
 	// Calculate hash sum of url + css
 	io.WriteString(h, justUrl)
@@ -223,13 +225,9 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 			return cachedAsset.msg
 		}
 	}
-	// Send asset to download in assets service
-	if e.cfg.CacheAssets {
-		e.sendAssetsForCacheFromCSS(sessionID, baseURL, css)
-	}
-	// Rewrite asset
+	// Process: rewrite CSS and dispatch referenced assets in one pass.
 	start := time.Now()
-	res := e.getRewrittenCSS(sessionID, baseURL, css)
+	res := e.processCSS(sessionID, baseURL, css)
 	duration := time.Now().Sub(start).Milliseconds()
 	e.metrics.RecordAssetSize(float64(len(res)))
 	e.metrics.RecordProcessAssetDuration(float64(duration))
@@ -245,12 +243,4 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	}
 	// Return rewritten asset
 	return res
-}
-
-func (e *AssetsCache) getRewrittenCSS(sessionID uint64, url, css string) string {
-	if e.cfg.CacheAssets {
-		return e.rewriter.RewriteCSS(sessionID, url, css)
-	} else {
-		return assets.ResolveCSS(url, css)
-	}
 }

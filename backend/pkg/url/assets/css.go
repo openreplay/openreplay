@@ -38,19 +38,6 @@ func unquote(str string) (string, string) {
 	return str, ""
 }
 
-func ExtractURLsFromCSS(css string) []string {
-	indexes := cssUrlsIndex(css)
-	urls := make([]string, len(indexes))
-	for _, idx := range indexes {
-
-		f := idx[0]
-		t := idx[1]
-		rawurl, _ := unquote(css[f:t])
-		urls = append(urls, rawurl)
-	}
-	return urls
-}
-
 func rewriteLinks(css string, rewrite func(rawurl string) string) string {
 	for _, idx := range cssUrlsIndex(css) {
 		f := idx[0]
@@ -74,6 +61,15 @@ func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) stri
 		return r.RewriteURL(sessionID, baseurl, rawurl)
 	})
 	return rewritePseudoclasses(css)
+}
+
+func (r *Rewriter) RewriteAndExtractCSS(sessionID uint64, baseurl string, css string) (string, []string) {
+	var urls []string
+	css = rewriteLinks(css, func(rawurl string) string {
+		urls = append(urls, rawurl)
+		return r.RewriteURL(sessionID, baseurl, rawurl)
+	})
+	return rewritePseudoclasses(css), urls
 }
 
 func rewritePseudoclasses(css string) string {
