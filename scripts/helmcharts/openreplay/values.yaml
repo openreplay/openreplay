@@ -64,7 +64,7 @@ ingress-nginx:
   enabled: true
   controller:
     image:
-      tag: 5.3.1-alpine
+      tag: 5.4-alpine
     enableSnippets: true
     # Keep k8s ingress compatible health check for LB
     healthStatus: true
