@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
+    "@medv/finder": "^4.0.2",
     "fflate": "^0.8.2",
     "fzstd": "^0.1.1",
     "js-untar": "^2.0.0",
