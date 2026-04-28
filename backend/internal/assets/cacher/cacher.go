@@ -170,10 +170,6 @@ func (c *cacher) scheduleRetryAfter(t *Task, delay time.Duration) {
 	})
 }
 
-func (c *cacher) scheduleRetry(t *Task) {
-	c.scheduleRetryAfter(t, backoffDelay(setRetries()-t.retries))
-}
-
 func (c *cacher) CacheFile(task *Task) {
 	c.cacheURL(task)
 }
