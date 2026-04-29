@@ -88,7 +88,7 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics me
 	}
 
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: cfg.InsecureSkipVerify,
 	}
 
 	if cfg.ClientCertFilePath != "" && cfg.ClientKeyFilePath != "" && cfg.CaCertFilePath != "" {

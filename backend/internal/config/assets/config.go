@@ -30,6 +30,7 @@ type Config struct {
 	ClientKeyFilePath    string            `env:"CLIENT_KEY_FILE_PATH"`
 	CaCertFilePath       string            `env:"CA_CERT_FILE_PATH"`
 	ClientCertFilePath   string            `env:"CLIENT_CERT_FILE_PATH"`
+	InsecureSkipVerify   bool              `env:"ASSETS_INSECURE_SKIP_VERIFY,default=false"`
 }
 
 func New(log logger.Logger) *Config {
