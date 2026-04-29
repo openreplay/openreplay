@@ -1,6 +1,7 @@
 {{- if .Values.global.enterpriseEditionLicense }}
 {{- $context := . }}
 {{- range $key, $job := .Values.apiCrons }}
+{{- if $job.enabled }}
 {{- with $context }}
 ---
 {{- $kubeTargetVersion := .Capabilities.KubeVersion.GitVersion }}
@@ -109,6 +110,7 @@ spec:
               - name: {{ $key }}
                 value: '{{ $val }}'
               {{- end}}
+{{- end}}
 {{- end}}
 {{- end}}
 {{- end}}

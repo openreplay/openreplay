@@ -128,7 +128,7 @@ spec:
           mountPath: /opt/openreplay
       {{- end }}
       - name: git
-        image: alpine/git
+        image: alpine/git:2.52.0
         env:
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}

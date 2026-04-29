@@ -31,6 +31,7 @@ telemetry:
 
 apiCrons: 
   assiststats:
+    enabled: true
     # https://crontab.guru/#5_12_*_*_*
     # Midnight 12.05
     cron: "0 * * * *"
@@ -43,6 +44,7 @@ apiCrons:
     env:
       ACTION: "ASSIST_STATS"
   report:
+    enabled: true
     # https://crontab.guru/#0_5_*_*_1
     # Monday morning 5am
     cron: "0 5 * * 1"
@@ -55,6 +57,7 @@ apiCrons:
     env:
       ACTION: "REPORT"
   sessionsCleaner:
+    enabled: true
     # https://crontab.guru/#5_1_*_*_*
     # Midnight 1.05
     cron: "5 1 * * *"
@@ -67,6 +70,7 @@ apiCrons:
     env:
       ACTION: "JOB"
   projectsStats:
+    enabled: true
     # https://crontab.guru/#*/18_*_*_*_*
     # Every 18 min
     cron: "*/18 * * * *"
@@ -79,6 +83,7 @@ apiCrons:
     env:
       ACTION: "PROJECTS_STATS"
   fixProjectsStats:
+    enabled: true
     # https://crontab.guru/#0_5_*_*_0
     # Sunday at 5am
     cron: "0 5 * * 0"
