@@ -99,9 +99,10 @@ function build_api() {
     }
     for image in $(ls cmd); do
         [[ $image == "video-replays" ]] && continue
-        [[ $DEDICATED == 1 ]] && image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$image | xargs | awk '{print $2}')"
+        [[ $image == "connector" ]] && continue
         build_service "$image"
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${image_tag}"
+        [[ $PATCH -eq 1 ]] && update_helm_release $image
     done
     cd ../backend
     rm -rf ../${destination}

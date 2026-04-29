@@ -44,6 +44,30 @@ else
 fi
 
 [[ $(awk '/enterpriseEditionLicense/{print $2}' <"/var/lib/openreplay/vars.yaml") != "" ]] && EE=true
+# ── Airgap mode detection (design.md §13) ─────────────────────────────────────
+# Priority: AIRGAP=1 env-var  >  /var/lib/openreplay/.airgap marker  >  online.
+# All internet-bound commands (-i/-u/-U/-p) are hard-blocked in airgap mode.
+_AIRGAP=0
+if [[ "${AIRGAP:-0}" == "1" ]]; then
+    _AIRGAP=1
+elif [[ -f "$OR_DIR/.airgap" ]] && grep -q '^mode: airgap' "$OR_DIR/.airgap" 2>/dev/null; then
+    _AIRGAP=1
+fi
+
+_airgap_block() {
+    # Hard-fail at command entry for internet-bound subcommands when airgap mode.
+    local flag="$1"
+    log err "openreplay $flag is not available in airgap mode.
+  This command requires internet access. Use bundle scripts instead:
+    openreplay -i  →  sudo ./airgap-installer.sh   (from bundle dir)
+    openreplay -u  →  sudo ./airgap-upgrader.sh    (from new bundle dir)
+    openreplay -p  →  tools are pre-staged; no reinstall needed
+
+  Bundle location: $(grep -E '^installer_path:' "$OR_DIR/.airgap" 2>/dev/null | awk '{print $2}' || echo 'see $OR_DIR/.airgap')"
+    exit 100
+}
+# ──────────────────────────────────────────────────────────────────────────────
+
 
 tools=(
     zyedidia/eget
@@ -198,6 +222,12 @@ EOF
 }
 
 function status() {
+    # Airgap mode banner
+    if [[ "$_AIRGAP" -eq 1 && -f "$OR_DIR/.airgap" ]]; then
+        log info "Airgap Mode"
+        grep -E '^(bundle_version|openreplay_version|installed_at|edition|installer_path):' "$OR_DIR/.airgap" || true
+        echo
+    fi
     log info OpenReplay Version
     yq eval '.config.version // .fromVersion' /var/lib/openreplay/vars.yaml
     log info Disk
@@ -381,6 +411,19 @@ function cleanup() {
     cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000;"
     [[ $EE ]] && cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000 AND session_id NOT IN (SELECT session_id FROM user_favorite_sessions);"
     kubectl delete po -n "${APP_NS}" pg-cleanup &>/dev/null || true
+    # Read postgres image from vars.yaml so airgap containerd resolves digest-pinned image.
+    # Fallback to bitnami/postgresql for non-airgap installs that haven't set the field.
+    local pg_reg pg_repo pg_tag pg_image
+    pg_reg=$(yq 'explode(.) | .postgresql.image.registry // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
+    pg_repo=$(yq 'explode(.) | .postgresql.image.repository // "bitnami/postgresql"' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "bitnami/postgresql")
+    pg_tag=$(yq 'explode(.) | .postgresql.image.tag // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
+    if [[ -n "$pg_reg" && "$pg_reg" != "null" ]]; then
+        pg_image="${pg_reg}/${pg_repo}${pg_tag:+:${pg_tag}}"
+    elif [[ -n "$pg_tag" && "$pg_tag" != "null" ]]; then
+        pg_image="${pg_repo}:${pg_tag}"
+    else
+        pg_image="${pg_repo:-bitnami/postgresql}"
+    fi
     kubectl run pg-cleanup -n "${APP_NS}" \
         --restart=Never \
         --env PGHOST="$pghost" \
@@ -388,11 +431,23 @@ function cleanup() {
         --env PGDATABASE="$pgdatabase" \
         --env PGPASSWORD="$pgpassword" \
         --env PGPORT="$pgport" \
-        --image bitnami/postgresql -- psql -c "$cleanup_query"
+        --image "$pg_image" -- psql -c "$cleanup_query"
     # Run minio cleanup
     MINIO_ACCESS_KEY=$(yq 'explode(.) | .global.s3.accessKey' ${OR_DIR}/vars.yaml)
     MINIO_SECRET_KEY=$(yq 'explode(.) | .global.s3.secretKey' ${OR_DIR}/vars.yaml)
     MINIO_HOST=$(yq 'explode(.) | .global.s3.endpoint' ${OR_DIR}/vars.yaml)
+    # Read minio image from vars.yaml so airgap containerd resolves digest-pinned image.
+    local minio_reg minio_repo minio_tag minio_image
+    minio_reg=$(yq 'explode(.) | .minio.image.registry // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
+    minio_repo=$(yq 'explode(.) | .minio.image.repository // "minio"' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "minio")
+    minio_tag=$(yq 'explode(.) | .minio.image.tag // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
+    if [[ -n "$minio_reg" && "$minio_reg" != "null" ]]; then
+        minio_image="${minio_reg}/${minio_repo}${minio_tag:+:${minio_tag}}"
+    elif [[ -n "$minio_tag" && "$minio_tag" != "null" ]]; then
+        minio_image="${minio_repo}:${minio_tag}"
+    else
+        minio_image="ghcr.io/openreplay/minio"
+    fi
     kubectl delete po -n "${APP_NS}" minio-cleanup &>/dev/null || true
     cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -404,7 +459,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: minio-cleanup
-    image: ghcr.io/openreplay/minio
+    image: $minio_image
     command: ["/bin/bash"]
     args:
       - -c
@@ -546,7 +601,7 @@ function upgrade() {
     fi
 
     # If release upgrade, then check for version specific instructions
-    [[ $RELEASE_UPGRADE -eq 1 ]] && version_specific_checks "$or_version"
+    [[ $RELEASE_UPGRADE -eq 1 && "$_AIRGAP" -eq 0 ]] && version_specific_checks "$or_version"
     # Unless it's upgrade release, always checkout same tag.
     [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=${OR_VERSION:-$or_version}
 
@@ -555,7 +610,7 @@ function upgrade() {
     [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rf "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"/}_${time_now}"
 
     # Check if CLI has changed for release upgrades (before cloning)
-    if [[ $RELEASE_UPGRADE -eq 1 ]]; then
+    if [[ $RELEASE_UPGRADE -eq 1 && "$_AIRGAP" -eq 0 ]]; then
         log info "Checking for CLI updates..."
         ref="${OR_VERSION:-main}"
         cli_url="https://raw.githubusercontent.com/openreplay/openreplay/${ref}/scripts/helmcharts/openreplay-cli"
@@ -638,10 +693,17 @@ function clean_tmp_dir() {
     [[ -z $SKIP_DELETE_TMP_DIR ]] && rm -rf "${tmp_dir}"
 }
 
-[[ -f $OR_DIR/packages.lock ]] || {
+if [[ -f $OR_DIR/packages.lock ]]; then
+    : # tools already staged (bundle or prior install)
+elif [[ "$_AIRGAP" -eq 1 ]]; then
+    # Airgap mode: tools must be pre-staged by create-bundle.sh.
+    # packages.lock missing = bundle is incomplete or someone deleted it.
+    log err "Airgap mode: tools not staged (packages.lock missing in $OR_DIR). Re-extract bundle."
+    exit 1
+else
     log title Installing packages "${NC}"
     install_packages
-}
+fi
 
 PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U:c: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade:,cleanup:,force -- "$@")
 VALID_ARGUMENTS=$?
@@ -665,18 +727,21 @@ while :; do
         exit 0
         ;;
     -i | --install)
+        [[ "$_AIRGAP" -eq 1 ]] && _airgap_block "-i"
         log title "Installing OpenReplay"
         install "$2"
         clean_tmp_dir
         exit 0
         ;;
     -p | --install-packages)
+        [[ "$_AIRGAP" -eq 1 ]] && _airgap_block "-p"
         log title "Updating/Installing dependency packages"
         install_packages
         clean_tmp_dir
         exit 0
         ;;
     -u | --upgrade)
+        [[ "$_AIRGAP" -eq 1 ]] && _airgap_block "-u"
         if [[ $RELEASE_UPGRADE -eq 1 ]]; then
             log title "Upgrading OpenReplay to Latest Release"
             CLEANUP_TOOLING=1
@@ -689,6 +754,7 @@ while :; do
         exit 0
         ;;
     -U | --deprecated-upgrade)
+        [[ "$_AIRGAP" -eq 1 ]] && _airgap_block "-U"
         log title "[Deprected] Upgrading OpenReplay"
         upgrade_old "$2"
         clean_tmp_dir
@@ -723,7 +789,7 @@ while :; do
             exit 100
         }
         busybox md5sum /var/lib/openreplay/vars.yaml >"${tmp_dir}/var.yaml.md5"
-        sudo vim -n ${OR_DIR}/vars.yaml
+        sudo ${EDITOR:-vim} ${OR_DIR}/vars.yaml
         /var/lib/openreplay/yq 'true' /var/lib/openreplay/vars.yaml &>/dev/null || {
             log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} and fix the issue in config file."
             clean_tmp_dir

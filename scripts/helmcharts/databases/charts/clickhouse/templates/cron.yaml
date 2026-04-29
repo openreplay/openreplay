@@ -20,7 +20,7 @@ spec:
         spec:
           containers:
           - name: clickhouse-backup
-            image: alpine/curl
+            image: alpine/curl:8.17.0
             command:
               - /bin/sh
               - -c

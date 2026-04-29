@@ -1,11 +1,17 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
+  # CVE-2026-41066 (lxml iterparse/ETCompatXMLParser XXE) does NOT affect us:
+  # - python3-saml uses fromstring() with forbid_dtd=True, forbid_entities=True
+  # - Our code never calls iterparse() or ETCompatXMLParser()
+  # - Using stock nixpkgs lxml for binary cache compatibility
+  # TODO: Remove this comment once nixpkgs bumps lxml to >=6.1.0
+
   # Create a Python environment with Nix-provided packages
   # Only system-level packages that need C library compatibility
   pythonEnv = pkgs.python313.withPackages (ps: with ps; [
     # System packages requiring C library compatibility
-    lxml        # python3.13-lxml (currently 6.0.1 in nixpkgs)
+    lxml        # python3.13-lxml (from nixpkgs binary cache)
     xmlsec      # python3.13-xmlsec (currently 1.3.16 in nixpkgs)
     
     # Tools
