@@ -28,12 +28,20 @@ const (
 	statsQueryTimeout    = 10 * time.Second
 )
 
+// SegmentsListItem is a lightweight projection used by the filters catalog.
+type SegmentsListItem struct {
+	SearchID string
+	Name     string
+	IsPublic bool
+}
+
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Get(projectID int, searchID string) (*model.SavedSearch, error)
 	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
+	ListForFilters(projectID, userID int) ([]SegmentsListItem, error)
 }
 
 type savedSearchesImpl struct {
@@ -376,6 +384,31 @@ func (s *savedSearchesImpl) Delete(projectID int, userID uint64, searchID string
 	}
 
 	return nil
+}
+
+func (s *savedSearchesImpl) ListForFilters(projectID, userID int) ([]SegmentsListItem, error) {
+	const q = `
+        SELECT search_id, name, is_public
+        FROM public.saved_searches
+        WHERE project_id = $1
+          AND deleted_at IS NULL
+          AND is_share = FALSE
+          AND (user_id = $2 OR is_public)
+        ORDER BY name`
+	rows, err := s.pgconn.Query(q, projectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []SegmentsListItem
+	for rows.Next() {
+		var item SegmentsListItem
+		if err := rows.Scan(&item.SearchID, &item.Name, &item.IsPublic); err != nil {
+			return nil, err
+		}
+		out = append(out, item)
+	}
+	return out, rows.Err()
 }
 
 func (s *savedSearchesImpl) checkOwnership(ctx context.Context, projectID int, userID uint64, searchID, op string) error {
