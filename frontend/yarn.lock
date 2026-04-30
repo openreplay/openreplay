@@ -12405,7 +12405,7 @@ __metadata:
     parcel: "npm:^2.16.4"
     parcel-reporter-static-files-copy: "npm:^1.5.3"
     playwright: "npm:^1.58.1"
-    postcss: "npm:^8.5.10"
+    postcss: "npm:^8.5.12"
     postcss-import: "npm:^16.1.1"
     postcss-loader: "npm:^8.2.1"
     postcss-mixins: "npm:^12.1.2"
@@ -13232,7 +13232,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.5.10, postcss@npm:^8.5.6":
+"postcss@npm:^8.5.12":
+  version: 8.5.12
+  resolution: "postcss@npm:8.5.12"
+  dependencies:
+    nanoid: "npm:^3.3.11"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c1/7dccd2c82219796cfa2bb15f1859f13d980316d7d0ca2d157cd1afcf1c4b421070eee1d03c90be564c0179048ba6b65457e2f7fcd73850bea3d41ac3e843415c
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.5.6":
   version: 8.5.10
   resolution: "postcss@npm:8.5.10"
   dependencies:

@@ -139,7 +139,7 @@
     "minio": "^7.1.3",
     "parcel": "^2.16.4",
     "parcel-reporter-static-files-copy": "^1.5.3",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.12",
     "postcss-import": "^16.1.1",
     "postcss-loader": "^8.2.1",
     "postcss-mixins": "^12.1.2",
