@@ -202,7 +202,7 @@ optional: true
 {{- define "openreplay.env" -}}
 {{- $ctx := .ctx -}}
 {{- $skippedKeys := .skippedKeys | default list -}}
-{{- $mergedEnv := merge $ctx.Values.env $ctx.Values.global.env -}}
+{{- $mergedEnv := merge ($ctx.Values.env | default dict) ($ctx.Values.global.env | default dict) -}}
 {{- range $key, $val := $mergedEnv }}
 {{- if not (has $key $skippedKeys) }}
 - name: {{ $key }}

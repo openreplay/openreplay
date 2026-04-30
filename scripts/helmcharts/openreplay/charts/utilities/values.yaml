@@ -4,6 +4,8 @@
 
 replicaCount: 1
 
+env: {}
+
 efsCleaner:
   retention: 1
   # This value is the new convention, and has priority.
