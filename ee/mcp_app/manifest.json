@@ -20,11 +20,27 @@
       }
     }
   },
+  "homepage": "https://openreplay.com",
+  "support": "https://openreplay.slack.com/",
+  "repository": {"type": "git", "url": "https://github.com/openreplay/openreplay/"},
+  "icon": "logo.png",
+  "icons": [
+    {
+      "src": "favicon-32x32.png",
+      "size": "32x32",
+      "theme": "light"
+    },
+    {
+      "src": "favicon-32x32.png",
+      "size": "32x32",
+      "theme": "dark"
+    }
+  ],
   "user_config": {
     "app_url": {
       "type": "string",
       "title": "OpenReplay URL",
-      "description": "Your OpenReplay instance URL — the address you visit in your browser. The API host is derived automatically (api.openreplay.com for OpenReplay Cloud, otherwise <your-host>/api).",
+      "description": "Your OpenReplay instance URL — the address you visit in your browser.",
       "default": "https://app.openreplay.com",
       "required": false
     }
