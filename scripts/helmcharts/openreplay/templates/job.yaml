@@ -338,7 +338,7 @@ spec:
         args:
           - |
             lowVersion=25.1
-            highVersion=25
+            highVersion=26
             [[ "${CH_PASSWORD}" != "" ]] && {
               CH_PASSWORD="--password $CH_PASSWORD"
             }
