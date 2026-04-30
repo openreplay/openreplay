@@ -3,11 +3,12 @@ import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { exec } from "node:child_process";
 import { z } from "zod";
 import { state, savePersistedState, clearPersistedState, generateAuthCode } from "./state.js";
-import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties, pollForAuth } from "./api.js";
+import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, resolveFunnelSteps, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties, pollForAuth } from "./api.js";
 import {
   ConfigureBackendSchema,
   LoginSchema,
   LoginBrowserSchema,
+  CompleteLoginSchema,
   FetchChartDataSchema,
   GetSessionReplaySchema,
   GetProjectIdSchema,
@@ -19,6 +20,7 @@ import {
   ViewFunnelSchema,
   ViewSessionReplaySchema,
   FilterItemSchema,
+  FunnelStepSchema,
 } from "./schemas.js";
 
 // Format timestamp for chart x-axis labels based on time range
@@ -94,16 +96,16 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         },
         examples: [
           { description: "Show 20 sessions for project MyApp", input: { projectName: "MyApp", limit: 20 } },
-          { description: "Sessions from Chrome users in France or Tunisia in project 1", input: { siteId: 1, filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["France","Tunisia"], operator: "is" }] } },
-          { description: "Show me sessions with errors", input: { projectName: "MyApp", filters: [{ name: "issueType", value: ["js_exception"], operator: "is" }] } },
+          { description: "Sessions from Chrome users in France or Tunisia in project 1", input: { siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["France","Tunisia"], operator: "is" }] } },
+          { description: "Show me sessions with errors", input: { projectName: "MyApp", filters: [{ name: "issue", value: ["js_exception"], operator: "is" }] } },
           { description: "Last 5 sessions on serverless", input: { projectName: "serverless", limit: 5 } },
           { description: "Show me recent sessions of project serverless", input: { projectName: "serverless" } },
           { description: "Sessions of user tahay@asayer.io", input: {filters: [{name: "userId", value:["tahay@asayer.io"]}] } },
-          { description: "Sessions where the user visited the signup page", input: { filters: [{name: "LOCATION", properties: [{name:"path",value: ["signup"], operator:"contains"}]}] } },
+          { description: "Sessions where the user visited the signup page", input: { filters: [{name: "LOCATION", properties: [{name:"urlPath",value: ["signup"], operator:"contains"}]}] } },
           { description: "Sessions where the user clicked on subscribe", input: { filters: [{name: "CLICK", properties: [{name:"label",value: ["subscribe"], operator:"is"}]}] } },
-          { description: "Sessions longer than 20s", input: { filters: [{name: "duration", value: [20]}] } },
-          { description: "Sessions shorter than 20s", input: { filters: [{name: "duration", value: [0,20]}] } },
-          { description: "Sessions with failed requests to /api/users", input: { filters: [{name: "REQUEST", properties: [{name:"path",value: ["/api/users"], operator:"is"}, {name:"status",value: [400], operator:">"}]}] } },
+          { description: "Sessions longer than 20 minutes", input: { filters: [{name: "duration", value: [20]}] } },
+          { description: "Sessions shorter than 20 minutes", input: { filters: [{name: "duration", value: [0,20]}] } },
+          { description: "Sessions with failed requests to /api/users", input: { filters: [{name: "REQUEST", properties: [{name:"urlPath",value: ["/api/users"], operator:"is"}, {name:"status",value: [400], operator:">="}]}] } },
           { description: "Sessions with metadata plan is free", input: { filters: [{name: "metadata_1", value:["free"], operator:"is"}]  }},
         ],
       },
@@ -202,10 +204,10 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         },
         examples: [
           { description: "Show me sessions chart for last week", input: { startDate: "2026-04-03", endDate: "2026-04-11", projectName: "MyApp" } },
-          { description: "How many sessions today on chrome or edge today", input: { startDate: "2026-04-10", endDate: "2026-04-11", projectName: "MyApp", filters:[{name: "userBrowser", value:["chrome","edge"], operator: "is"}] } },
+          { description: "How many sessions today on chrome or edge today", input: { startDate: "2026-04-10", endDate: "2026-04-11", projectName: "MyApp", filters:[{name: "userBrowser", value:["Chrome","Edge"], operator: "is"}] } },
           { description: "Session trend for the past 30 days from France", input: { startDate: "2026-03-11", endDate: "2026-04-10", projectName: "MyApp", filters:[{name: "userCountry", value:["France"], operator: "is"}] } },
-          { description: "Chart of sessions from mobile users this month", input: { startDate: "2026-03-10", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
-          { description: "Timeseries of people who visited signup page last week", input: { startDate: "2026-04-03", endDate: "2026-04-10", siteId: "1", filters: [{ name: "LOCATION", properties:[{name:"path", value: ["signup"], operator: "contains"}]}] } },
+          { description: "Chart of sessions from mobile users this month", input: { startDate: "2026-03-10", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userDeviceType", value: ["mobile"], operator: "is" }] } },
+          { description: "Timeseries of people who visited signup page last week", input: { startDate: "2026-04-03", endDate: "2026-04-10", siteId: "1", filters: [{ name: "LOCATION", properties:[{name:"urlPath", value: ["signup"], operator: "contains"}]}] } },
         ],
       },
     },
@@ -399,7 +401,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           { description: "Where do users drop off after the pricing page last week", input: { startDate: "2026-04-21", endDate: "2026-04-28", projectName: "MyApp", startPoint: "/pricing" } },
           { description: "Show me user journeys this month", input: { startDate: "2026-04-01", endDate: "2026-04-28", projectName: "MyApp" } },
           { description: "What pages do users visit after /signup", input: { startDate: "2026-04-21", endDate: "2026-04-28", projectName: "MyApp", startPoint: "/signup" } },
-          { description: "Navigation paths for mobile users from France this week", input: { startDate: "2026-04-21", endDate: "2026-04-28", siteId: "1", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }, { name: "userCountry", value: ["France"], operator: "is" }] } },
+          { description: "Navigation paths for mobile users from France this week", input: { startDate: "2026-04-21", endDate: "2026-04-28", siteId: "1", filters: [{ name: "userDeviceType", value: ["mobile"], operator: "is" }, { name: "userCountry", value: ["France"], operator: "is" }] } },
           { description: "User flow from /home for Chrome users last 30 days", input: { startDate: "2026-03-29", endDate: "2026-04-28", projectName: "MyApp", startPoint: "/home", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }] } },
         ],
       },
@@ -567,7 +569,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         examples: [
           { description: "Show me web vitals for this week", input: { startDate: "2026-04-03", endDate: "2026-04-10", projectName: "MyApp" } },
           { description: "How is my site performance past month", input: { startDate: "2026-03-10", endDate: "2026-04-10", projectName: "MyApp" } },
-          { description: "Core web vitals for mobile users", input: { startDate: "2026-04-01", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
+          { description: "Core web vitals for mobile users", input: { startDate: "2026-04-01", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userDeviceType", value: ["mobile"], operator: "is" }] } },
           { description: "Web vitals for Safari users in Germany or France last 30 days", input: { startDate: "2026-03-11", endDate: "2026-04-10", siteId: "1", filters: [{ name: "userBrowser", value: ["Safari"], operator: "is" }, { name: "userCountry", value: ["Germany","France"], operator: "is" }] } },
           { description: "Performance metrics for Chrome on Windows of the user tahay@asyer.io", input: { startDate: "2026-04-01", endDate: "2026-04-10", projectName: "MyApp", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userOs", value: ["Windows"], operator: "is" }, { name: "userId", value: ["tahay@asayer.io"], operator: "is" }] } },
         ],
@@ -714,7 +716,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           { description: "Show browser distribution this month", input: { startDate: "2026-04-01", endDate: "2026-04-10", metricOf: "userBrowser", projectName: "MyApp" } },
           { description: "Most popular countries last 30 days", input: { startDate: "2026-03-11", endDate: "2026-04-10", metricOf: "userCountry", projectName: "MyApp" } },
           { description: "Top 5 network requests today", input: { startDate: "2026-04-10", endDate: "2026-04-10", metricOf: "REQUEST", projectName: "MyApp", limit: 5 } },
-          { description: "Top OS for mobile users", input: { startDate: "2026-04-01", endDate: "2026-04-10", metricOf: "userOs", projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
+          { description: "Top OS for mobile users", input: { startDate: "2026-04-01", endDate: "2026-04-10", metricOf: "userOs", projectName: "MyApp", filters: [{ name: "userDeviceType", value: ["mobile"], operator: "is" }] } },
           { description: "Device breakdown for Chrome users in the US", input: { startDate: "2026-04-01", endDate: "2026-04-10", metricOf: "userDevice", siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["United States"], operator: "is" }] } },
         ],
       },
@@ -833,20 +835,23 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       title: "OpenReplay Funnel Analysis",
       description:
         "PREFERRED tool for showing step-by-step conversion funnels. " +
-        "Use this when the user asks about conversion rates, drop-off between pages, " +
-        "funnel analysis, or how many users complete a multi-step flow. Examples: " +
-        "'show me the checkout funnel', 'what is the conversion from /pricing to /signup', " +
-        "'how many users complete the onboarding flow'. " +
-        "Provide an ordered list of URL paths as 'steps' (minimum 2). " +
+        "Use this when the user asks about conversion rates, drop-off, funnel analysis, " +
+        "or how many users complete a multi-step flow. " +
+        "Steps can be URL paths (shorthand for LOCATION page-views), or any event from the project's events list — " +
+        "built-in autoCaptured events: LOCATION (page view), CLICK, INPUT (text input), ISSUE; or custom events (autoCaptured=false). " +
+        "For LOCATION the value is matched against urlPath; for CLICK/INPUT against label; for ISSUE against issue type id. " +
+        "Custom events are matched by event name only — no value needed. " +
+        "Discover available events via get_available_filters. Minimum 2 steps. " +
         "You MUST convert time references to ISO date strings. " +
-        "Supports filtering by user attributes. " +
         "TIP: Combine with view_user_journey to see where users actually go instead. " +
         "Use view_recent_sessions with the same filters to drill into related sessions.",
       inputSchema: {
         startDate: z.string().describe("Start date as ISO 8601 string. Convert relative time references to actual dates."),
         endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
-        steps: z.array(z.string()).min(2).describe(
-          "Ordered list of URL paths defining the funnel, e.g. ['/pricing', '/checkout', '/confirm']. Minimum 2 steps."
+        steps: z.array(FunnelStepSchema).min(2).describe(
+          "Ordered funnel steps (min 2). A string is shorthand for a LOCATION page-view. " +
+          "An object {type, value?, operator?} selects an event by name (LOCATION/CLICK/INPUT/ISSUE or a custom event from get_available_filters). " +
+          "Mix freely, e.g. ['/pricing', { type: 'CLICK', value: 'Subscribe' }, { type: 'purchase_completed' }]."
         ),
         siteId: z.string().optional().describe("Site ID (project ID). If not provided, will use projectName."),
         projectName: z.string().optional().describe("Project name to look up."),
@@ -863,9 +868,11 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         examples: [
           { description: "Show me the checkout funnel last week", input: { startDate: "2026-04-21", endDate: "2026-04-28", steps: ["/cart", "/checkout", "/confirm"], projectName: "MyApp" } },
           { description: "Conversion from /pricing to /signup", input: { startDate: "2026-04-21", endDate: "2026-04-28", steps: ["/pricing", "/signup"], projectName: "MyApp" } },
-          { description: "Onboarding funnel for mobile users this month", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/welcome", "/profile", "/setup", "/dashboard"], projectName: "MyApp", filters: [{ name: "userDevice", value: ["mobile"], operator: "is" }] } },
-          { description: "Signup funnel for Chrome users in the US", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/", "/signup", "/verify-email", "/dashboard"], siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["United States"], operator: "is" }] } },
-          { description: "Purchase funnel from product page last 30 days", input: { startDate: "2026-03-29", endDate: "2026-04-28", steps: ["/products", "/cart", "/checkout", "/order-complete"], projectName: "MyApp" } },
+          { description: "Onboarding funnel for mobile users this month", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/welcome", "/profile", "/setup", "/dashboard"], projectName: "MyApp", filters: [{ name: "userDeviceType", value: ["mobile"], operator: "is" }] } },
+          { description: "Visited /pricing then clicked Subscribe", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/pricing", { type: "CLICK", value: "Subscribe" }], projectName: "MyApp" } },
+          { description: "Sign-up flow ending in custom 'dashboard_list_viewed' event", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/sessions", { type: "dashboard_list_viewed" }], projectName: "MyApp" } },
+          { description: "Search input then click Result", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: [{ type: "INPUT", value: "Search", operator: "contains" }, { type: "CLICK", value: "Result" }], projectName: "MyApp" } },
+          { description: "Page view followed by JS exception", input: { startDate: "2026-04-01", endDate: "2026-04-28", steps: ["/checkout", { type: "ISSUE", value: "js_exception" }], projectName: "MyApp" } },
         ],
       },
     },
@@ -911,7 +918,8 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resolvedFilters = await resolveFilters(siteId, parsed.filters);
         }
 
-        let data = await fetchFunnel(siteId, startTs, endTs, parsed.steps, resolvedFilters);
+        const stepFilters = await resolveFunnelSteps(siteId, parsed.steps);
+        let data = await fetchFunnel(siteId, startTs, endTs, stepFilters, resolvedFilters);
 
         // Unwrap new series format: { series: { "Series 1": { stages: [...] } } }
         if (data?.series && typeof data.series === "object" && !Array.isArray(data.series)) {
@@ -923,11 +931,17 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           }
         }
 
+        // Render a step descriptor as a short label for the summary line.
+        const stepLabel = (s: typeof parsed.steps[number]): string => {
+          if (typeof s === "string") return s;
+          return s.value ? `${s.type} "${s.value}"` : s.type;
+        };
+
         // Build textual summary from stages
         const stages = data?.stages || [];
         const firstCount = stages[0]?.count || 0;
         const summaryLines = stages.map((stage: any, i: number) => {
-          const label = stage.value?.[0] || parsed.steps[i] || `Step ${i + 1}`;
+          const label = stage.value?.[0] || stepLabel(parsed.steps[i]) || `Step ${i + 1}`;
           const pctOfFirst = firstCount > 0 ? ((stage.count / firstCount) * 100).toFixed(1) : "0";
           const dropInfo = stage.dropPct != null ? ` (${stage.dropPct.toFixed(1)}% dropped)` : '';
           return `Step ${i + 1} "${label}": ${stage.count} sessions (${pctOfFirst}% of start)${dropInfo}`;
@@ -1178,31 +1192,31 @@ export function registerInternalTools(server: McpServer) {
     }
   );
 
-  // Configure backend
+  // Configure the OpenReplay instance URL (one URL — UI host; API host is derived).
   console.error("[SERVER] Registering configure_backend tool...");
   server.registerTool(
     "configure_backend",
     {
-      description: "Configure the OpenReplay backend URL (for self-hosted instances)",
+      description: "Configure the OpenReplay instance URL. Pass the URL the user types into their browser; the API host is derived automatically (api.openreplay.com for SaaS, <host>/api otherwise).",
       inputSchema: {
-        backendUrl: z.string().describe("OpenReplay backend API URL"),
+        appUrl: z.string().describe("OpenReplay instance URL (e.g. https://app.openreplay.com or https://openreplay.your-company.com)"),
       },
       _meta: {
         examples: [
-          { description: "Use the SaaS instance", input: { backendUrl: "https://api.openreplay.com" } },
-          { description: "Use a self-hosted instance", input: { backendUrl: "https://openreplay.mycompany.com/api" } },
+          { description: "Use OpenReplay Cloud", input: { appUrl: "https://app.openreplay.com" } },
+          { description: "Use a self-hosted instance", input: { appUrl: "https://openreplay.mycompany.com" } },
         ],
       },
     },
     async (args) => {
       console.error("[SERVER] configure_backend called:", args);
       const parsed = ConfigureBackendSchema.parse(args);
-      state.backendUrl = parsed.backendUrl;
+      state.appUrl = parsed.appUrl;
       return {
         content: [
           {
             type: "text",
-            text: `Backend URL configured: ${state.backendUrl}`,
+            text: `OpenReplay URL configured: ${state.appUrl}`,
           },
         ],
       };
@@ -1247,51 +1261,41 @@ export function registerInternalTools(server: McpServer) {
   );
   console.error("[SERVER] login_email_password tool registered");
 
-  // Login via browser (OAuth-style)
+  // Login via browser (OAuth-style) — returns the URL immediately. The model
+  // should show the URL to the user and then call complete_login.
   console.error("[SERVER] Registering login_browser tool...");
   server.registerTool(
     "login_browser",
     {
       description:
-        "PREFERRED login method. Authenticate by opening a URL in the user's browser. " +
-        "Always use this tool when the user needs to log in, unless they explicitly ask for email/password login. " +
-        "Opens a browser tab for the user to approve access, then waits for approval (up to 5 minutes).",
+        "PREFERRED login method. Opens a browser tab for the user to approve access. " +
+        "RETURNS IMMEDIATELY with the authorize URL — show the URL to the user, ask them to click 'Authorize' " +
+        "in the OpenReplay tab, and then call complete_login to finish the flow. " +
+        "Use this whenever the user needs to log in, unless they explicitly ask for email/password login.",
       inputSchema: {
-        backendUrl: z.string().optional().describe("OpenReplay backend URL (optional, uses current if already configured)"),
-        frontendUrl: z.string().optional().describe("OpenReplay URL (optional, uses current if already configured)"),
+        appUrl: z.string().optional().describe("OpenReplay instance URL (optional, uses current if already configured)"),
       },
       _meta: {
         examples: [
-          { description: "Log me in (use already-configured backend)", input: {} },
-          { description: "Log in to a self-hosted OpenReplay", input: { backendUrl: "https://openreplay.mycompany.com/api", frontendUrl: "https://openreplay.mycompany.com" } },
+          { description: "Log me in (use already-configured instance)", input: {} },
+          { description: "Log in to a self-hosted OpenReplay", input: { appUrl: "https://openreplay.mycompany.com" } },
         ],
       },
     },
     async (args) => {
       const parsed = LoginBrowserSchema.parse(args);
-      const backendUrl = parsed.backendUrl || state.backendUrl;
-      const frontendUrl = parsed.frontendUrl || state.frontendUrl;
-
-      if (parsed.backendUrl) {
-        state.backendUrl = parsed.backendUrl;
+      if (parsed.appUrl) {
+        state.appUrl = parsed.appUrl;
       }
-
-      if (parsed.frontendUrl) {
-        state.frontendUrl = parsed.frontendUrl;
-      }
+      const appUrl = state.appUrl.replace(/\/+$/, '');
 
       const authCode = generateAuthCode();
-      const authorizeUrl = `${frontendUrl}/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
+      state.pendingAuthCode = authCode;
+      const authorizeUrl = `${appUrl}/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
 
       console.error(`[SERVER] login_browser: opening browser at ${authorizeUrl}`);
 
-      // Send the URL as a log notification so the model can show it immediately
-      server.server.sendLoggingMessage({
-        level: "info",
-        data: `Browser login started. If the browser didn't open automatically, visit this URL:\n${authorizeUrl}`,
-      });
-
-      // Open the URL in the user's default browser
+      // Open the URL in the user's default browser (best-effort — model also gets the URL)
       const openCmd = process.platform === "darwin"
         ? "open"
         : process.platform === "win32"
@@ -1299,22 +1303,52 @@ export function registerInternalTools(server: McpServer) {
           : "xdg-open";
       exec(`${openCmd} "${authorizeUrl}"`);
 
-      // Poll until the user approves or the request expires
-      const jwt = await pollForAuth(backendUrl, authCode, state.clientId!);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              type: "auth_pending",
+              authorizeUrl,
+              state: authCode,
+              appUrl,
+              message:
+                "Browser opened to OpenReplay's authorize page. Tell the user to click 'Authorize', " +
+                "then call complete_login to finish. If the browser didn't open, share the authorizeUrl with the user.",
+            }),
+          },
+        ],
+      };
+    }
+  );
+  console.error("[SERVER] login_browser tool registered");
 
-      if (!jwt) {
-        // Generate a fresh auth code so the user can try manually
-        const retryAuthCode = generateAuthCode();
-        const retryUrl = `${frontendUrl}/mcp/authorize?state=${retryAuthCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
+  // Complete the browser-based login by polling auth-status
+  console.error("[SERVER] Registering complete_login tool...");
+  server.registerTool(
+    "complete_login",
+    {
+      description:
+        "Finalize browser-based login started by login_browser. Polls OpenReplay for approval. " +
+        "Call this AFTER the user confirms they clicked 'Authorize' in the browser. " +
+        "Returns auth_success on approval, or auth_pending if not yet approved (call again to keep waiting).",
+      inputSchema: {
+        state: z.string().optional().describe("Auth state code from login_browser. Defaults to the most recent pending code."),
+        timeoutMs: z.number().optional().describe("How long to poll before returning still-pending. Default 60000."),
+      },
+    },
+    async (args) => {
+      const parsed = CompleteLoginSchema.parse(args);
+      const authCode = parsed.state || state.pendingAuthCode;
 
+      if (!authCode) {
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
                 type: "error",
-                error: "Browser login timed out or was denied. You can try again by opening this URL manually:",
-                authorizeUrl: retryUrl,
+                error: "No pending login. Call login_browser first to start the flow.",
               }),
             },
           ],
@@ -1322,8 +1356,37 @@ export function registerInternalTools(server: McpServer) {
         };
       }
 
-      state.jwt = jwt;
+      const timeoutMs = parsed.timeoutMs ?? 60_000;
+      console.error(`[SERVER] complete_login: polling for state=${authCode} timeoutMs=${timeoutMs}`);
+
+      const result = await pollForAuth(state.appUrl, authCode, state.clientId!, timeoutMs);
+
+      if (!result.jwt) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                type: "auth_pending",
+                state: authCode,
+                statusUrl: result.statusUrl,
+                durationMs: result.durationMs,
+                aborted: result.aborted,
+                timedOut: result.timedOut,
+                summary: result.summary,
+                message:
+                  "Still waiting for approval. summary.statusCounts shows the HTTP statuses observed across all polls. " +
+                  "If every attempt is 4xx/5xx, the backend isn't storing the authorization — check the OpenReplay UI's " +
+                  "network tab when clicking 'Authorize'. Otherwise call complete_login again to keep waiting.",
+              }),
+            },
+          ],
+        };
+      }
+
+      state.jwt = result.jwt;
       state.userData = { authenticated: true };
+      state.pendingAuthCode = null;
       await savePersistedState();
 
       return {
@@ -1333,14 +1396,15 @@ export function registerInternalTools(server: McpServer) {
             text: JSON.stringify({
               type: "auth_success",
               message: "Successfully authenticated via browser.",
-              authorizeUrl,
+              attempts: result.summary.totalAttempts,
+              durationMs: result.durationMs,
             }),
           },
         ],
       };
     }
   );
-  console.error("[SERVER] login_browser tool registered");
+  console.error("[SERVER] complete_login tool registered");
 
   // Fetch chart data
   console.error("[SERVER] Registering fetch_chart_data tool...");
@@ -1405,7 +1469,7 @@ export function registerInternalTools(server: McpServer) {
       console.error("[SERVER] get_session_replay called:", args);
       const parsed = GetSessionReplaySchema.parse(args);
 
-      const baseUrl = state.backendUrl.replace("/api", "").replace("//api.", "//app.");
+      const baseUrl = state.appUrl.replace(/\/+$/, '');
       const replayUrl = `${baseUrl}/session/${parsed.sessionId}`;
 
       return {
@@ -1435,7 +1499,7 @@ export function registerInternalTools(server: McpServer) {
             type: "text",
             text: JSON.stringify({
               authenticated: !!state.jwt,
-              backendUrl: state.backendUrl,
+              appUrl: state.appUrl,
               user: state.userData,
             }, null, 2),
           },
@@ -1571,13 +1635,13 @@ export function registerInternalTools(server: McpServer) {
         examples: [
           { description: "Fetch 20 sessions for project MyApp", input: { projectName: "MyApp", limit: 20 } },
           { description: "Get sessions from Chrome users in France or Tunisia", input: { siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["France", "Tunisia"], operator: "is" }] } },
-          { description: "Fetch sessions with JS errors", input: { projectName: "MyApp", filters: [{ name: "issueType", value: ["js_exception"], operator: "is" }] } },
+          { description: "Fetch sessions with JS errors", input: { projectName: "MyApp", filters: [{ name: "issue", value: ["js_exception"], operator: "is" }] } },
           { description: "Get sessions of a specific user", input: { filters: [{ name: "userId", value: ["tahay@asayer.io"] }] } },
-          { description: "Sessions where user visited the signup page", input: { filters: [{ name: "LOCATION", properties: [{ name: "path", value: ["signup"], operator: "contains" }] }] } },
+          { description: "Sessions where user visited the signup page", input: { filters: [{ name: "LOCATION", properties: [{ name: "urlPath", value: ["signup"], operator: "contains" }] }] } },
           { description: "Sessions where user clicked on subscribe", input: { filters: [{ name: "CLICK", properties: [{ name: "label", value: ["subscribe"], operator: "is" }] }] } },
-          { description: "Sessions longer than 20s", input: { filters: [{ name: "duration", value: [20] }] } },
-          { description: "Sessions shorter than 20s", input: { filters: [{ name: "duration", value: [0, 20] }] } },
-          { description: "Sessions with failed requests to /api/users", input: { filters: [{ name: "REQUEST", properties: [{ name: "path", value: ["/api/users"], operator: "is" }, { name: "status", value: [400], operator: ">" }] }] } },
+          { description: "Sessions longer than 20 minutes", input: { filters: [{ name: "duration", value: [20] }] } },
+          { description: "Sessions shorter than 20 minutes", input: { filters: [{ name: "duration", value: [0, 20] }] } },
+          { description: "Sessions with failed requests to /api/users", input: { filters: [{ name: "REQUEST", properties: [{ name: "urlPath", value: ["/api/users"], operator: "is" }, { name: "status", value: [400], operator: ">=" }] }] } },
             { description: "Sessions with metadata plan is free ", input: { filters: [{name: "metadata_1", value:["free"], operator:"is"}]  }},
         ],
       },
@@ -1733,8 +1797,8 @@ export function registerInternalTools(server: McpServer) {
         userEvents: Array.isArray(events.userEvents) ? events.userEvents.length : 0,
       };
 
-      // Construct replay URL
-      const baseUrl = state.backendUrl.replace("/api", "").replace("//api.", "//app.");
+      // Construct replay URL — use the UI URL directly.
+      const baseUrl = state.appUrl.replace(/\/+$/, '');
       const replayUrl = `${baseUrl}/${siteId}/session/${parsed.sessionId}?jwt=${encodeURIComponent(state.jwt!)}`;
 
       // Structure response with summary first (for large data pattern)
@@ -1781,7 +1845,10 @@ export function registerInternalTools(server: McpServer) {
       description:
         "Get the list of available filters for a project. Call this before applying filters to data tools " +
         "(view_recent_sessions, view_chart, view_user_journey, fetch_sessions) to discover valid filter names " +
-        "and their possible values. Returns filter names, display names, data types, and sample values.",
+        "and their possible values. Returns filter names, display names, data types, and sample values. " +
+        "Filters are split into: 'events' (e.g. CLICK, LOCATION, REQUEST — these accept 'properties' sub-filters), " +
+        "'eventProperties' (valid 'name' values inside an event filter's 'properties' array, e.g. urlPath, label, status), " +
+        "and 'attributes' (flat session/user filters like userCountry, userBrowser).",
       inputSchema: {
         siteId: z.string().optional().describe("Site ID (project ID)."),
         projectName: z.string().optional().describe("Project name to look up."),
@@ -1833,26 +1900,43 @@ export function registerInternalTools(server: McpServer) {
         throw new Error("Failed to fetch filters for this project");
       }
 
-      // Flatten into a simple list for the model
-      const filterList: any[] = [];
+      // Group by role: events (accept properties), eventProperties (sub-filter names),
+      // and flat attributes (session/user filters). This shape mirrors how the
+      // filters get used: top-level `name` comes from events+attributes, while
+      // `properties[].name` inside an event must come from eventProperties.
+      const events: any[] = [];
+      const eventProperties: any[] = [];
+      const attributes: any[] = [];
+
+      const buildEntry = (filter: any, categoryDisplayName: string) => {
+        const entry: any = {
+          name: filter.name,
+          displayName: filter.displayName || filter.name,
+          category: categoryDisplayName,
+          dataType: filter.dataType,
+        };
+        if (filter.possibleValues?.length) {
+          entry.possibleValues = filter.possibleValues.slice(0, 20);
+          if (filter.possibleValues.length > 20) {
+            entry.totalValues = filter.possibleValues.length;
+          }
+        }
+        return entry;
+      };
+
       for (const [categoryName, category] of Object.entries(filterData) as [string, any][]) {
         if (!category?.list) continue;
+        const categoryDisplayName = category.displayName || categoryName;
+        const bucket =
+          categoryName === "events" ? events :
+          categoryName === "event" ? eventProperties :
+          attributes;
         for (const filter of category.list) {
-          const entry: any = {
-            name: filter.name,
-            displayName: filter.displayName || filter.name,
-            category: category.displayName || categoryName,
-            dataType: filter.dataType,
-          };
-          if (filter.possibleValues?.length) {
-            entry.possibleValues = filter.possibleValues.slice(0, 20);
-            if (filter.possibleValues.length > 20) {
-              entry.totalValues = filter.possibleValues.length;
-            }
-          }
-          filterList.push(entry);
+          bucket.push(buildEntry(filter, categoryDisplayName));
         }
       }
+
+      const totalCount = events.length + eventProperties.length + attributes.length;
 
       return {
         content: [
@@ -1860,8 +1944,11 @@ export function registerInternalTools(server: McpServer) {
             type: "text",
             text: JSON.stringify({
               siteId,
-              filtersCount: filterList.length,
-              filters: filterList,
+              totalCount,
+              usage: "Use 'events' names as top-level filter `name` (with optional `properties` sub-filters drawn from 'eventProperties'). Use 'attributes' names as flat filters with a `value` array.",
+              events,
+              eventProperties,
+              attributes,
             }, null, 2),
           },
         ],

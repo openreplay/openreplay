@@ -4,18 +4,18 @@ interface AuthOverlayProps {
   authError: string | null;
   jwt: string;
   setJwt: (jwt: string) => void;
-  backendUrl: string;
-  setBackendUrl: (url: string) => void;
+  appUrl: string;
+  setAppUrl: (url: string) => void;
   onSubmit: (e: React.FormEvent) => void;
-  onBrowserLogin: (backendUrl: string) => Promise<void>;
+  onBrowserLogin: (appUrl: string) => Promise<void>;
 }
 
 function AuthOverlay({
   authError,
   jwt,
   setJwt,
-  backendUrl,
-  setBackendUrl,
+  appUrl,
+  setAppUrl,
   onSubmit,
   onBrowserLogin,
 }: AuthOverlayProps) {
@@ -25,7 +25,7 @@ function AuthOverlay({
   const handleBrowserLogin = async () => {
     setBrowserLoginPending(true);
     try {
-      await onBrowserLogin(backendUrl);
+      await onBrowserLogin(appUrl);
     } finally {
       setBrowserLoginPending(false);
     }
@@ -67,13 +67,13 @@ function AuthOverlay({
         )}
 
         <div className="form-group" style={{ marginBottom: '16px' }}>
-          <label htmlFor="backendUrl">OpenReplay API URL</label>
+          <label htmlFor="appUrl">OpenReplay URL</label>
           <input
-            id="backendUrl"
+            id="appUrl"
             type="url"
-            value={backendUrl}
-            onChange={(e) => setBackendUrl(e.target.value)}
-            placeholder="https://api.openreplay.com"
+            value={appUrl}
+            onChange={(e) => setAppUrl(e.target.value)}
+            placeholder="https://app.openreplay.com"
             required
             style={{ width: '100%' }}
           />
