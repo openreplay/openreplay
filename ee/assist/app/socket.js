@@ -235,12 +235,13 @@ async function onAny(socket, eventName, ...args) {
         return
     }
     args[0] = updateSessionData(socket, args[0])
+    const messageSize = JSON.stringify(args[0] ?? '').length;
     if (socket.handshake.query.identity === IDENTITIES.session) {
-        logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to room:${socket.handshake.query.roomId}`);
+        logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to room:${socket.handshake.query.roomId}, size:${messageSize}`);
         sendFrom(socket, socket.handshake.query.roomId, eventName, args[0]);
     } else {
         handleEvent(eventName, socket, args[0]);
-        logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to session of room:${socket.handshake.query.roomId}`);
+        logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to session of room:${socket.handshake.query.roomId}, size:${messageSize}`);
         let socketId = await findSessionSocketId(socket.handshake.query.roomId, args[0]?.meta?.tabId);
         if (socketId === null) {
             logger.debug(`session not found for:${socket.handshake.query.roomId}`);
