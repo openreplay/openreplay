@@ -20,7 +20,8 @@ from scim2_models import (
     PatchOp,
 )
 from scim2_server import provider
-from scim2_server.utils import SCIMException, merge_resources
+from scim2_models import SCIMException
+from scim2_server.utils import merge_resources
 from werkzeug import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, PreconditionFailed
 from werkzeug.routing.exceptions import RequestRedirect

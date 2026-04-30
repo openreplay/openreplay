@@ -3,8 +3,7 @@ from datetime import datetime
 from typing import Any
 
 from psycopg2.extensions import AsIs
-from scim2_models import Error, Resource
-from scim2_server.utils import SCIMException
+from scim2_models import Error, Resource, SCIMException
 
 import schemas
 from chalicelib.utils import pg_client

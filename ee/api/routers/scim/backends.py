@@ -11,7 +11,7 @@ from scim2_models import (
 from scim2_server import backend
 from scim2_server.filter import evaluate_filter
 from scim2_server.operators import ResolveSortOperator
-from scim2_server.utils import SCIMException
+from scim2_models import SCIMException
 
 from routers.scim import groups
 from routers.scim.postgres_resource import PostgresResource
