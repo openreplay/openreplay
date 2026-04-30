@@ -1,0 +1,32 @@
+{
+  "manifest_version": "0.3",
+  "name": "openreplay",
+  "display_name": "OpenReplay MCP",
+  "version": "1.0.0",
+  "description": "View OpenReplay sessions, charts, and replays from Claude.",
+  "author": {
+    "name": "OpenReplay"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist-server/server.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist-server/server.mjs"
+      ],
+      "env": {
+        "OPENREPLAY_URL": "${user_config.app_url}"
+      }
+    }
+  },
+  "user_config": {
+    "app_url": {
+      "type": "string",
+      "title": "OpenReplay URL",
+      "description": "Your OpenReplay instance URL — the address you visit in your browser. The API host is derived automatically (api.openreplay.com for OpenReplay Cloud, otherwise <your-host>/api).",
+      "default": "https://app.openreplay.com",
+      "required": false
+    }
+  }
+}

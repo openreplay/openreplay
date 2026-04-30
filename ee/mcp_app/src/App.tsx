@@ -17,7 +17,7 @@ function App() {
   const [appReady, setAppReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [jwt, setJwt] = useState('');
-  const [backendUrl, setBackendUrl] = useState('https://api.openreplay.com');
+  const [appUrl, setAppUrl] = useState('https://app.openreplay.com');
 
   const { app, isConnected, error: appError } = useApp({
     appInfo: {
@@ -86,10 +86,10 @@ function App() {
 
       await logger.info('Attempting login...');
 
-      // Update backend URL
+      // Update OpenReplay URL
       await app.callServerTool({
         name: 'configure_backend',
-        arguments: { backendUrl },
+        arguments: { appUrl },
       });
 
       // Login with JWT
@@ -122,46 +122,76 @@ function App() {
     }
   };
 
-  const handleBrowserLogin = async (browserBackendUrl: string) => {
+  const parseToolResult = (result: any): any => {
+    const firstContent = result?.content?.[0];
+    if (firstContent && 'text' in firstContent) {
+      try {
+        return JSON.parse(firstContent.text);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const handleBrowserLogin = async (browserAppUrl: string) => {
     try {
       if (!app) throw new Error('App not initialized');
 
       await logger.info('Starting browser login...');
 
-      // Configure backend URL first
       await app.callServerTool({
         name: 'configure_backend',
-        arguments: { backendUrl: browserBackendUrl },
+        arguments: { appUrl: browserAppUrl },
       });
 
-      // Call login_browser — this will block while polling for approval
-      const result = await app.callServerTool({
+      // Step 1 — start the flow. login_browser opens the browser and returns immediately.
+      const startResult = await app.callServerTool({
         name: 'login_browser',
-        arguments: { backendUrl: browserBackendUrl },
+        arguments: { appUrl: browserAppUrl },
       });
 
-      // Check if the result indicates success
-      const firstContent = result?.content?.[0];
-      if (firstContent && 'text' in firstContent) {
-        const parsed = JSON.parse(firstContent.text);
-        if (parsed.type === 'error') {
-          throw new Error(parsed.error);
+      const startData = parseToolResult(startResult);
+      if (!startData || startData.type === 'error') {
+        throw new Error(startData?.error || 'login_browser did not return a valid response');
+      }
+
+      await logger.info(`Browser opened. Polling for approval...`);
+
+      // Step 2 — poll complete_login. Each call waits up to 60s on the server.
+      // Loop here in case the user is slow to confirm; pollForAuth is short-lived
+      // so we re-issue rather than blocking for 5 minutes inside one tool call.
+      const overallDeadline = Date.now() + 5 * 60_000;
+      while (Date.now() < overallDeadline) {
+        const completeResult = await app.callServerTool({
+          name: 'complete_login',
+          arguments: { state: startData.state },
+        });
+
+        const completeData = parseToolResult(completeResult);
+        if (completeData?.type === 'auth_success') {
+          await logger.info('Browser login successful');
+
+          setState(prev => ({
+            ...prev,
+            showAuthOverlay: false,
+            authError: null,
+          }));
+
+          if (state.lastFailedRequest) {
+            await state.lastFailedRequest();
+            setState(prev => ({ ...prev, lastFailedRequest: null }));
+          }
+          return;
         }
+
+        if (completeData?.type === 'error') {
+          throw new Error(completeData.error);
+        }
+        // auth_pending — loop and poll again
       }
 
-      await logger.info('Browser login successful');
-
-      setState(prev => ({
-        ...prev,
-        showAuthOverlay: false,
-        authError: null,
-      }));
-
-      // Retry the last failed request if there was one
-      if (state.lastFailedRequest) {
-        await state.lastFailedRequest();
-        setState(prev => ({ ...prev, lastFailedRequest: null }));
-      }
+      throw new Error('Browser login timed out after 5 minutes');
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Browser login failed';
       await logger.error(`Browser login failed: ${errorMsg}`);
@@ -218,8 +248,8 @@ function App() {
           authError={state.authError}
           jwt={jwt}
           setJwt={setJwt}
-          backendUrl={backendUrl}
-          setBackendUrl={setBackendUrl}
+          appUrl={appUrl}
+          setAppUrl={setAppUrl}
           onSubmit={handleLogin}
           onBrowserLogin={handleBrowserLogin}
         />

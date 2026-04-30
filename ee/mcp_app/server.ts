@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerAppResource, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,7 +10,9 @@ import { loadPersistedState, abortAllPolls } from "./lib/state.js";
 import { registerUITools, registerInternalTools } from "./lib/tools.js";
 
 const __dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
-const DIST_DIR = path.join(__dirname, "dist");
+const DIST_DIR = existsSync(path.join(__dirname, "dist", "index.html"))
+  ? path.join(__dirname, "dist")
+  : path.join(__dirname, "..", "dist");
 const resourceUri = "ui://openreplay/app";
 
 // Create MCP server

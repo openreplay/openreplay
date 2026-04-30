@@ -1,4 +1,4 @@
-import type { PlayerMsg } from 'Player';
+import type { PlayerMsg } from '../../common/types';
 
 import TrackerBinaryReader from './TrackerBinaryReader.gen';
 import { MType } from './raw.gen';

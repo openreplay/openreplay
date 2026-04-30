@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+*.mcpb
+dist-server/server.mjs
 
 # Logs
 *.log

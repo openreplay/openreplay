@@ -2,21 +2,21 @@ import React, { useState } from 'react';
 
 interface ConfigPanelProps {
   authenticated: boolean;
-  backendUrl: string;
+  appUrl: string;
   onLogin: (jwt: string) => Promise<void>;
-  onConfigureBackend: (backendUrl: string) => Promise<void>;
+  onConfigureBackend: (appUrl: string) => Promise<void>;
   onFetchChartData: (endpoint: string, params?: Record<string, any>) => Promise<void>;
 }
 
 function ConfigPanel({
   authenticated,
-  backendUrl,
+  appUrl,
   onLogin,
   onConfigureBackend,
   onFetchChartData,
 }: ConfigPanelProps) {
   const [jwt, setJwt] = useState('');
-  const [newBackendUrl, setNewBackendUrl] = useState(backendUrl);
+  const [newBackendUrl, setNewBackendUrl] = useState(appUrl);
   const [endpoint, setEndpoint] = useState('/api/v1/dashboard/chart');
   const [siteId, setSiteId] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -88,9 +88,9 @@ function ConfigPanel({
         </h3>
         <form onSubmit={handleConfigureBackend}>
           <div className="form-group">
-            <label htmlFor="backendUrl">OpenReplay API URL</label>
+            <label htmlFor="appUrl">OpenReplay API URL</label>
             <input
-              id="backendUrl"
+              id="appUrl"
               type="url"
               value={newBackendUrl}
               onChange={(e) => setNewBackendUrl(e.target.value)}
@@ -104,7 +104,7 @@ function ConfigPanel({
           <button
             type="submit"
             className="button button-primary"
-            disabled={loading || newBackendUrl === backendUrl}
+            disabled={loading || newBackendUrl === appUrl}
           >
             {loading ? 'Updating...' : 'Update Backend URL'}
           </button>

@@ -1,5 +1,5 @@
-import unpack from '@openreplay/player/common/unpack';
-import MFileReader from '@openreplay/player/web/messages/MFileReader';
+import MobFileParser from '@openreplay/player/web/messages/MobFileParser';
+import { fixMessageOrder, sortIframes } from '@openreplay/player/web/messages/messageOrder';
 
 type CallServerTool = (req: { name: string; arguments: Record<string, unknown> }) => Promise<any>;
 
@@ -21,8 +21,10 @@ export async function fetchAndParseMobFiles(
   const allMessages: any[] = [];
   let successCount = 0;
 
-  // Single reader across all files — first file sets index mode, continuation files inherit it
-  const reader = new MFileReader(new Uint8Array(0), startTs);
+  // Single parser instance across all batches — format detected from the
+  // first file, reader state shared across continuation files (dom.mobs +
+  // dom.mobe). Mirrors MessageLoader's per-session parser pipeline.
+  const parser = new MobFileParser(startTs);
 
   for (let i = 0; i < fileUrls.length; i++) {
     const url = fileUrls[i];
@@ -40,20 +42,11 @@ export async function fetchAndParseMobFiles(
       }
 
       const data = base64ToUint8Array(text);
-
-      const unpacked = unpack(data);
-
-      reader.append(unpacked);
-      reader.checkForIndexes();
-
-      let msg;
-      while ((msg = reader.readNext()) !== null) {
+      const batch = parser.feed(data);
+      for (const msg of batch) {
         if ((msg.tp as number) === 9999) continue;
         allMessages.push(msg);
       }
-
-      // Reset error flag so next file can still be attempted
-      reader.error = false;
 
       successCount++;
     } catch (err) {
@@ -70,6 +63,8 @@ export async function fetchAndParseMobFiles(
     };
   }
 
-  allMessages.sort((a, b) => a.time - b.time);
-  return { messages: allMessages };
+  // Cross-batch ordering: re-run the same sort the player uses per file
+  // so message-time invariants hold across the dom.mobs/dom.mobe boundary.
+  const sorted = fixMessageOrder(allMessages).sort(sortIframes);
+  return { messages: sorted };
 }
