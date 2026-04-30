@@ -7,7 +7,6 @@ import (
 
 	"openreplay/backend/pkg/analytics/filters_catalog/model"
 	savedSearches "openreplay/backend/pkg/analytics/saved_searches"
-	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
 	tagAdmin "openreplay/backend/pkg/tags/admin"
@@ -23,15 +22,14 @@ type FiltersCatalog interface {
 type filtersCatalogImpl struct {
 	log      logger.Logger
 	ch       driver.Conn
-	pg       pool.Pool
 	projects projects.Projects
 	segments savedSearches.SavedSearches
 	features tagAdmin.TagService
 }
 
-func New(log logger.Logger, ch driver.Conn, pg pool.Pool, p projects.Projects, segments savedSearches.SavedSearches, features tagAdmin.TagService) FiltersCatalog {
+func New(log logger.Logger, ch driver.Conn, p projects.Projects, segments savedSearches.SavedSearches, features tagAdmin.TagService) FiltersCatalog {
 	return &filtersCatalogImpl{
-		log: log, ch: ch, pg: pg,
+		log: log, ch: ch,
 		projects: p, segments: segments, features: features,
 	}
 }

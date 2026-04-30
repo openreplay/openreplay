@@ -223,7 +223,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	filtersCatalogService := filtersCatalog.New(log, chconn, pgconn, projects, savedSearchesService, tagAdminService)
+	filtersCatalogService := filtersCatalog.New(log, chconn, projects, savedSearchesService, tagAdminService)
 	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects)
 	if err != nil {
 		return nil, err
