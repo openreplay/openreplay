@@ -60,7 +60,7 @@ function UserCard({ className, width, height }) {
 
   React.useEffect(() => {
     const handler = (e) => {
-      if (e.shiftKey) {
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
         if (
           e.target instanceof HTMLInputElement ||
           e.target instanceof HTMLTextAreaElement
