@@ -45,7 +45,10 @@ const io = new Server({
 
 io.use(async (socket, next) => await authorizer.check(socket, next));
 io.on('connection', (socket) => onConnect(socket));
-io.attachApp(app);
+io.attachApp(app, {
+    maxBackpressure: process.env.MAX_BACKPRESSURE_KB
+    ? parseInt(process.env.MAX_BACKPRESSURE_KB) * 1024 : 256 * 1024 }
+);
 setSocketIOServer(io);
 
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';

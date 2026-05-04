@@ -103,6 +103,9 @@ env:
   debug: 0
   redis: false
   CLEAR_SOCKET_TIME: 720
+  # Max bytes (in KB) uWebSockets.js will buffer per WebSocket before silently
+  # skipping outgoing messages. uWS default is 64 KB
+  MAX_BACKPRESSURE_KB: 128
   # Raise Node.js max HTTP header size from 16KB to 64KB.
   # WebSocket upgrade requests to /ws-assist carry a long URL (session metadata)
   # plus browser cookies and proxy headers that easily exceed the 16KB default,
