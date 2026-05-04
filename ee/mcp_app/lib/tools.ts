@@ -7,6 +7,7 @@ import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName,
 import {
   ConfigureBackendSchema,
   LoginSchema,
+  LoginJwtSchema,
   LoginBrowserSchema,
   CompleteLoginSchema,
   FetchChartDataSchema,
@@ -1238,7 +1239,7 @@ export function registerInternalTools(server: McpServer) {
     async (args) => {
       const parsed = LoginSchema.parse(args);
       console.error("[SERVER] login called:", parsed.email);
-      const response = await makeApiRequest("/api/v1/login", {
+      const response = await makeApiRequest("/api/login", {
         method: "POST",
         body: JSON.stringify({
           email: parsed.email,
@@ -1247,7 +1248,7 @@ export function registerInternalTools(server: McpServer) {
       });
 
       state.jwt = response.jwt || response.data?.jwt;
-      state.userData = response.data || response;
+      state.userData = response.data
 
       return {
         content: [
@@ -1260,6 +1261,36 @@ export function registerInternalTools(server: McpServer) {
     }
   );
   console.error("[SERVER] login_email_password tool registered");
+
+  // Login with a raw JWT (testing / service-account flow)
+  console.error("[SERVER] Registering login_jwt tool...");
+  server.registerTool(
+    "login_jwt",
+    {
+      description: "Authenticate with OpenReplay using a JWT token (for testing).",
+      inputSchema: {
+        jwt: z.string().describe("JWT token for authentication"),
+      },
+    },
+    async (args) => {
+      console.error("[SERVER] login_jwt called");
+      const parsed = LoginJwtSchema.parse(args);
+      state.jwt = parsed.jwt;
+      state.userData = { authenticated: true };
+
+      await savePersistedState();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Successfully authenticated with JWT token",
+          },
+        ],
+      };
+    }
+  );
+  console.error("[SERVER] login_jwt tool registered");
 
   // Login via browser (OAuth-style) — returns the URL immediately. The model
   // should show the URL to the user and then call complete_login.
