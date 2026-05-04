@@ -53,7 +53,7 @@ function useShortcuts({
       ) {
         return false;
       }
-      if (e.shiftKey) {
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         player.toggleInspectorMode(false);
         switch (e.key) {
