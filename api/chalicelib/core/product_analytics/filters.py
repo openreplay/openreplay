@@ -205,7 +205,7 @@ def get_sessions_filters(project_id: int):
                 "autoCaptured": True,
                 "isPredefined": True,
                 "possibleValues": [{"id": i["type"], "name": i["name"], "autoCaptured": i["autoCaptured"]}
-                                   for i in issues.get_all_types()],
+                                   for i in issues.get_all_types().values()],
                 "isConditional": False
             },
             {
@@ -301,7 +301,7 @@ def get_users_filters_identified(project_id: int):
         ("$first_event_at", "First Event At", "timestamp", False, []),
         ("$last_seen", "Last Seen", "timestamp", False, []),
     ]
-    
+
     filter_list = []
     for name, display_name, data_type, is_conditional, possible_values in filters_config:
         filter_list.append({
@@ -315,7 +315,7 @@ def get_users_filters_identified(project_id: int):
             "possibleValues": possible_values,
             "isConditional": is_conditional
         })
-    
+
     return {
         "total": len(filter_list),
         "displayName": "Identified User Filters",
@@ -330,7 +330,8 @@ def get_features_filters(project_id: int):
         query = cur.mogrify(
             """SELECT tag_id, name, selector, ignore_click_rage, ignore_dead_click, location
                FROM public.tags
-               WHERE project_id = %(project_id)s AND deleted_at IS NULL
+               WHERE project_id = %(project_id)s
+                 AND deleted_at IS NULL
                ORDER BY name;""",
             {"project_id": project_id},
         )

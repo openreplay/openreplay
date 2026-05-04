@@ -27,6 +27,9 @@ def is_spot_token(token: str) -> bool:
 def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
     if scheme.lower() != "bearer" or len(token) < 5:
         return None
+    if not token or token.count(".") != 2:
+        logger.debug("! JWT Malformed token")
+        return None
     try:
         payload = jwt.decode(jwt=token,
                              key=config("JWT_SECRET") if not is_spot_token(token) else config("JWT_SPOT_SECRET"),
@@ -47,6 +50,10 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
 
 def jwt_refresh_authorizer(scheme: str, token: str):
     if scheme.lower() != "bearer":
+        return None
+    if not token or token.count(".") != 2:
+        logger.debug("! JWT-refresh Malformed token")
+        logger.debug(token)
         return None
     try:
         payload = jwt.decode(jwt=token,

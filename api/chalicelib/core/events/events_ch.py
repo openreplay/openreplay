@@ -96,7 +96,7 @@ def extract_required_values(rows):
                 if _numeric_property_available(props, "load_event_end") \
                 else None
             row["domContentLoadedTime"] = int(props["dom_content_loaded_event_end"]) \
-                                          - int(props["dom_content_loaded_event_start"]) \
+                                          - int(props.get("dom_content_loaded_event_start", 0)) \
                 if "dom_content_loaded_event_end" in props and \
                    (isinstance(props["dom_content_loaded_event_end"], str) \
                     and props["dom_content_loaded_event_end"].isnumeric() \

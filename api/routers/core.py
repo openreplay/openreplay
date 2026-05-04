@@ -7,18 +7,16 @@ from fastapi import Depends, Body, BackgroundTasks
 import schemas
 from chalicelib.core import projects, metadata, reset_password, log_tools, \
     announcements, weekly_report, assist, mobile, tenants, boarding, notifications, webhook, users, saved_search, tags
-from chalicelib.core.events import events
-from chalicelib.core.issues import issues
-from chalicelib.core.sourcemaps import sourcemaps
-from chalicelib.core.metrics import custom_metrics
 from chalicelib.core.alerts import alerts
+from chalicelib.core.collaborations.collaboration_msteams import MSTeams
+from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
     jira_cloud
 from chalicelib.core.log_tools import datadog, newrelic, stackdriver, elasticsearch, \
     sentry, bugsnag, cloudwatch, sumologic, rollbar
+from chalicelib.core.metrics import custom_metrics
 from chalicelib.core.sessions import sessions_assignments, sessions
-from chalicelib.core.collaborations.collaboration_msteams import MSTeams
-from chalicelib.core.collaborations.collaboration_slack import Slack
+from chalicelib.core.sourcemaps import sourcemaps
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 
@@ -572,16 +570,6 @@ def get_weekly_report_config(context: schemas.CurrentContext = Depends(OR_contex
 def edit_weekly_report_config(data: schemas.WeeklyReportConfigSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": weekly_report.edit_config(user_id=context.user_id, weekly_report=data.weekly_report)}
-
-
-@app.get('/{projectId}/issue_types', tags=["issues"])
-def issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": issues.get_all_types()}
-
-
-@app.get('/issue_types', tags=["issues"])
-def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": issues.get_all_types()}
 
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
