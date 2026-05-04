@@ -1,13 +1,13 @@
 urllib3==2.6.3
 requests==2.33.1
-boto3==1.43.0
+boto3==1.43.2
 pyjwt==2.12.1
 psycopg2-binary==2.9.12
-psycopg[pool,binary]==3.3.3
+psycopg[pool,binary]==3.3.4
 clickhouse-connect==0.15.1
 elasticsearch==9.3.0
 jira==3.10.5
-cachetools==7.0.6
+cachetools==7.1.1
 
 fastapi==0.136.1
 uvicorn[standard]==0.46.0

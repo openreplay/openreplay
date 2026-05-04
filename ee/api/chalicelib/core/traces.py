@@ -17,6 +17,7 @@ from schemas import CurrentContext
 
 IGNORE_ROUTES = [
     {"method": ["*"], "path": "/notifications"},
+    {"method": ["GET"], "path": "/notifications/count"},
     {"method": ["*"], "path": "/announcements"},
     {"method": ["*"], "path": "/client"},
     {"method": ["*"], "path": "/account"},
@@ -44,6 +45,9 @@ IGNORE_ROUTES = [
     {"method": ["*"], "path": re.compile("^/{projectId}/dashboard/.*")},
     {"method": ["*"], "path": re.compile("^/{projectId}/funnels$")},
     {"method": ["*"], "path": re.compile("^/{projectId}/funnels/.*")},
+    {"method": ["GET"], "path": "/{projectId}/check-recording-status"},
+    {"method": ["GET"], "path": "/{projectId}/tags"},
+    {"method": ["GET"], "path": "/limits"},
 ]
 IGNORE_IN_PAYLOAD = ["token", "password", "authorizationToken", "authHeader", "xQueryKey", "awsSecretAccessKey",
                      "serviceAccountCredentials", "accessKey", "applicationKey", "apiKey"]

@@ -19,6 +19,9 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
     if user is None:
         logger.warning("User not found.")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")
+    if user.get("roleId") is None:
+        logger.warning("No assigned role to the user.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No assigned role to the user.")
     request.state.authorizer_identity = "jwt"
     request.state.currentContext = schemas.CurrentContext(tenantId=jwt_payload.get("tenantId", -1),
                                                           userId=jwt_payload.get("userId", -1),

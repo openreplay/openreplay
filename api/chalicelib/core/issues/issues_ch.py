@@ -65,68 +65,68 @@ def reduce_issues(issues_list):
 
 
 def get_all_types():
-    return [
-        {
+    return {
+        "js_exception": {
             "type": "js_exception",
             "visible": True,
             "order": 0,
             "name": "Errors",
             "autoCaptured": True
         },
-        {
+        "bad_request": {
             "type": "bad_request",
             "visible": True,
             "order": 1,
             "name": "Bad Requests",
             "autoCaptured": True
         },
-        {
+        "missing_resource": {
             "type": "missing_resource",
             "visible": True,
             "order": 2,
             "name": "Missing Images",
             "autoCaptured": True
         },
-        {
+        "click_rage": {
             "type": "click_rage",
             "visible": True,
             "order": 3,
             "name": "Click Rage",
             "autoCaptured": True
         },
-        {
+        "dead_click": {
             "type": "dead_click",
             "visible": True,
             "order": 4,
             "name": "Dead Clicks",
             "autoCaptured": True
         },
-        {
+        "memory": {
             "type": "memory",
             "visible": True,
             "order": 5,
             "name": "High Memory",
             "autoCaptured": True
         },
-        {
+        "cpu": {
             "type": "cpu",
             "visible": True,
             "order": 6,
             "name": "High CPU",
             "autoCaptured": True
         },
-        {
+        "crash": {
             "type": "crash",
             "visible": True,
             "order": 7,
             "name": "Crashes",
             "autoCaptured": True
         },
-        {
+        "incident": {
             "type": "incident",
             "visible": True,
             "order": 8,
             "name": "Incident",
             "autoCaptured": False
         }
-    ]
+    }
