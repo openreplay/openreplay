@@ -17,6 +17,7 @@ from schemas import CurrentContext
 
 IGNORE_ROUTES = [
     {"method": ["*"], "path": "/notifications"},
+    {"method": ["GET"], "path": "/notifications/count"},
     {"method": ["*"], "path": "/announcements"},
     {"method": ["*"], "path": "/client"},
     {"method": ["*"], "path": "/account"},
