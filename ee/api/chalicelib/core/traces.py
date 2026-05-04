@@ -44,6 +44,7 @@ IGNORE_ROUTES = [
     {"method": ["*"], "path": re.compile("^/{projectId}/dashboard/.*")},
     {"method": ["*"], "path": re.compile("^/{projectId}/funnels$")},
     {"method": ["*"], "path": re.compile("^/{projectId}/funnels/.*")},
+    {"method": ["GET"], "path": "/limits"},
 ]
 IGNORE_IN_PAYLOAD = ["token", "password", "authorizationToken", "authHeader", "xQueryKey", "awsSecretAccessKey",
                      "serviceAccountCredentials", "accessKey", "applicationKey", "apiKey"]
