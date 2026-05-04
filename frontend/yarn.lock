@@ -4528,9 +4528,9 @@ __metadata:
   linkType: hard
 
 "@tootallnate/once@npm:2":
-  version: 2.0.0
-  resolution: "@tootallnate/once@npm:2.0.0"
-  checksum: 10c1/6313b513177bbc37f776dfeee8d06bee71e79ad67d225a676e5dfd9246d4b99b03b97c393a2059fa83b7d50d8e5570499919d37f85fa55cee094c4398b717bb5
+  version: 2.0.1
+  resolution: "@tootallnate/once@npm:2.0.1"
+  checksum: 10c1/92d6c1597955385fa7b28b340522eae8846780bcf385c07fcc8e4172a9abb15d807323c37a3e3276254f226d3bb378306220d21ea3ff38f79910ea9c402ed2e0
   languageName: node
   linkType: hard
 
@@ -12405,7 +12405,7 @@ __metadata:
     parcel: "npm:^2.16.4"
     parcel-reporter-static-files-copy: "npm:^1.5.3"
     playwright: "npm:^1.58.1"
-    postcss: "npm:^8.5.10"
+    postcss: "npm:^8.5.13"
     postcss-import: "npm:^16.1.1"
     postcss-loader: "npm:^8.2.1"
     postcss-mixins: "npm:^12.1.2"
@@ -13232,7 +13232,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.5.10, postcss@npm:^8.5.6":
+"postcss@npm:^8.5.13":
+  version: 8.5.13
+  resolution: "postcss@npm:8.5.13"
+  dependencies:
+    nanoid: "npm:^3.3.11"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c1/4fcfa4f63b6942d375b98b6a7df4f839e7654d9be9818174faeae249af985ca23c960e1c81dbbb2029940d39f446515004ac0659604fca51d71e7bb59e8876b9
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.5.6":
   version: 8.5.10
   resolution: "postcss@npm:8.5.10"
   dependencies:
