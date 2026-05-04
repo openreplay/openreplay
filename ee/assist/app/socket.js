@@ -236,8 +236,31 @@ async function onAny(socket, eventName, ...args) {
     }
     args[0] = updateSessionData(socket, args[0])
     if (socket.handshake.query.identity === IDENTITIES.session) {
-        logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to room:${socket.handshake.query.roomId}`);
-        sendFrom(socket, socket.handshake.query.roomId, eventName, args[0]);
+        const room = socket.handshake.query.roomId;
+        const memberSet = io.of('/').adapter.rooms.get(room);
+        const recipients = [];
+        const agentSockets = [];
+        if (memberSet) {
+            for (const id of memberSet) {
+                if (id === socket.id) continue;
+                const s = io.of('/').sockets.get(id);
+                recipients.push(`${id}(${s ? s.handshake.query.identity : '?'})`);
+                if (s && s.handshake.query.identity === IDENTITIES.agent) {
+                    agentSockets.push(s);
+                }
+            }
+        }
+        const batch = Array.isArray(args[0]?.data) ? args[0].data.length : '?';
+        logger.debug(`ev=${eventName} from=${socket.id}/${socket.handshake.query.identity} room=${room} recipients=[${recipients.join(',')}] batch=${batch} size:${messageSize}`);
+        sendFrom(socket, room, eventName, args[0]);
+        for (const a of agentSockets) {
+            let buffered = '?', writeBuf = '?', writable = '?', transportName = '?';
+            try { buffered = a.conn?.transport?.socket?.getBufferedAmount?.() ?? '?'; } catch (e) {}
+            try { writeBuf = a.conn?.writeBuffer?.length ?? '?'; } catch (e) {}
+            try { writable = a.conn?.transport?.writable ?? '?'; } catch (e) {}
+            try { transportName = a.conn?.transport?.name ?? '?'; } catch (e) {}
+            logger.debug(`[BP] ev=${eventName} agent=${a.id} transport=${transportName} bufferedAmount=${buffered} writeBuf=${writeBuf} writable=${writable}`);
+        }
     } else {
         handleEvent(eventName, socket, args[0]);
         logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to session of room:${socket.handshake.query.roomId}`);
