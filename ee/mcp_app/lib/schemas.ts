@@ -9,6 +9,10 @@ export const LoginSchema = z.object({
     password: z.string().describe("Password"),
 });
 
+export const LoginJwtSchema = z.object({
+    jwt: z.string().describe("JWT token for authentication"),
+});
+
 export const LoginBrowserSchema = z.object({
     appUrl: z.string().optional().describe("OpenReplay instance URL (optional, uses current if already configured)"),
 });
