@@ -38,17 +38,21 @@ export const getCategoryDisplayName = (category: string): string => {
   return category.charAt(0).toUpperCase() + category.slice(1);
 };
 
+export const getFilterCategoryKey = (filter: Filter): string =>
+  filter.autoCaptured && filter.category?.includes('event')
+    ? 'autocapture'
+    : filter.category || 'Other';
+
+export const getFilterDisplayCategory = (filter: Filter): string =>
+  getCategoryDisplayName(getFilterCategoryKey(filter));
+
 export const groupFiltersByCategory = (
   filters: Filter[],
 ): Record<string, Filter[]> => {
   if (!filters?.length) return {};
   return filters.reduce(
     (acc, filter) => {
-      const key =
-        filter.autoCaptured && filter.category.includes('event')
-          ? 'autocapture'
-          : filter.category || 'Other';
-      const cat = getCategoryDisplayName(key);
+      const cat = getFilterDisplayCategory(filter);
       (acc[cat] ||= []).push(filter);
       return acc;
     },

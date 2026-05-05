@@ -19,21 +19,28 @@ function FilterModal({
   filters = [],
   activeFilters = [],
   type,
+  initialCategory,
 }: {
   onFilterClick: (f: Filter) => void;
   filters: Filter[];
   activeFilters?: string[];
   type?: 'Events' | 'Filters' | 'Properties';
+  initialCategory?: string;
 }) {
   const eventModal = filters.every((f) => f.isEvent) || type === 'Events';
   const inputRef = React.useRef(null);
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery);
-  const [category, setCategory] = useState(`All${type ? ` ${type}` : ''}`);
+  const allCategoryLabel = `All${type ? ` ${type}` : ''}`;
   const groupedFilters = useMemo(
     () => groupFiltersByCategory(filters),
     [filters],
+  );
+  const [category, setCategory] = useState(
+    initialCategory && groupedFilters[initialCategory]
+      ? initialCategory
+      : allCategoryLabel,
   );
   const { matchingCategories, matchingFilters } = useMemo(
     () => getFilteredEntries(debouncedQuery, groupedFilters, type),
