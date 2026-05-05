@@ -163,13 +163,12 @@ const ValueAutoComplete = observer(
     const mappedTopValues: OptionType[] = useMemo(() => {
       return topValues
         .filter(
-          (i): i is { value: string; rowPercentage: number } =>
-            typeof i.value === 'string',
+          (i): i is TopValue & { value: string } => typeof i.value === 'string',
         )
         .sort((a, b) => (b.rowPercentage ?? 0) - (a.rowPercentage ?? 0))
         .map((i) => ({
           value: i.value,
-          label: i.value,
+          label: i.label ?? i.name ?? i.value,
           percentage: i.rowPercentage,
         }));
     }, [topValues]);
@@ -265,7 +264,7 @@ const ValueAutoComplete = observer(
           const _options =
             safeData.map((i: any) => ({
               value: i.value,
-              label: i.value,
+              label: i.label ?? i.name ?? i.value,
               percentage: i.rowPercentage ?? 0,
             })) || [];
           setOptions(_options);

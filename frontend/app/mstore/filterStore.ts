@@ -23,6 +23,8 @@ export interface TopValue {
   rowCount?: number;
   rowPercentage?: number;
   value?: string;
+  label?: string;
+  name?: string;
 }
 
 export interface TopValues {
