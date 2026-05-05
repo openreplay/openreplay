@@ -1,6 +1,6 @@
 import { countries } from '@/constants';
 import { projectStore } from '@/mstore/index';
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, reaction, runInAction } from 'mobx';
 
 import { filterService, searchService } from 'App/services';
 import { arraysIntersect, normalizeDataType } from 'App/utils';
@@ -67,6 +67,18 @@ export default class FilterStore {
   constructor() {
     makeAutoObservable(this);
     this.initCommonFilters();
+
+    reaction(
+      () => projectStore.activeSiteId,
+      (newId, prevId) => {
+        if (newId !== prevId) {
+          runInAction(() => {
+            this.clearCache();
+            this.topValues = {};
+          });
+        }
+      },
+    );
   }
 
   // getEventOptions = (siteId: string): FilterOption[] => {
