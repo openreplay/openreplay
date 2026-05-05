@@ -30,7 +30,7 @@ function FilterModal({
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery);
-  const [category, setCategory] = useState('All');
+  const [category, setCategory] = useState(`All${type ? ` ${type}` : ''}`);
   const groupedFilters = useMemo(
     () => groupFiltersByCategory(filters),
     [filters],
