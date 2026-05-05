@@ -17,6 +17,7 @@ interface FilterSelectionProps {
   disabled?: boolean;
   loading?: boolean;
   type?: 'Events' | 'Filters' | 'Properties';
+  initialCategory?: string;
 }
 
 const FilterSelection: React.FC<FilterSelectionProps> = observer(
@@ -28,6 +29,7 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
     loading = false,
     activeFilters,
     type,
+    initialCategory,
   }) => {
     const [open, setOpen] = useState(false);
 
@@ -83,9 +85,10 @@ const FilterSelection: React.FC<FilterSelectionProps> = observer(
             onFilterClick={handleFilterClick}
             filters={filters}
             type={type}
+            initialCategory={initialCategory}
           />
         ),
-      [loading, filters, handleFilterClick],
+      [loading, filters, handleFilterClick, initialCategory],
     );
 
     const isDisabled = disabled || loading;

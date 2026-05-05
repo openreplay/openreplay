@@ -14,6 +14,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { FilterKey } from 'App/types/filter/filterType';
 
 import { getIconForFilter } from 'Shared/Filters/FilterModal';
+import { getFilterDisplayCategory } from 'Shared/Filters/FilterModal/utils';
 
 import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
@@ -277,6 +278,9 @@ function FilterItem(props: Props) {
               isSubItem ? 'Properties' : filter.isEvent ? 'Events' : 'Filters'
             }
             scope={scope}
+            initialCategory={
+              filter?.category ? getFilterDisplayCategory(filter) : undefined
+            }
           >
             <Button
               type="default"
@@ -429,6 +433,7 @@ function FilterItem(props: Props) {
                 }
                 isFirst={index === 0}
                 isLast={isLast && index === filteredSubFilters.length - 1}
+                scope={(filter.scope?.[0] as Props['scope']) ?? scope}
               />
             </div>
           ))}
