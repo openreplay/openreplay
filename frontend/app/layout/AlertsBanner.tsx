@@ -1,18 +1,17 @@
-import React from 'react';
-import { Alert, Button } from 'antd';
+import { Button } from 'antd';
+import { TriangleAlert } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+
 import { useStore } from 'App/mstore';
 
-const levelToType: Record<
-  string,
-  'success' | 'info' | 'warning' | 'error'
-> = {
-  alert: 'error',
-  error: 'error',
-  warning: 'warning',
-  warn: 'warning',
-  info: 'info',
-  success: 'success',
+const levelToBg: Record<string, string> = {
+  alert: 'bg-red-light',
+  error: 'bg-red-light',
+  warning: 'bg-yellow',
+  warn: 'bg-yellow',
+  info: 'bg-light-blue-bg',
+  success: 'bg-green-light',
 };
 
 function AlertsBanner() {
@@ -23,27 +22,27 @@ function AlertsBanner() {
   return (
     <>
       {alerts.map((alert, idx) => {
-        const type = levelToType[alert.level?.toLowerCase() ?? ''] ?? 'info';
-        const action =
-          alert.button && alert.url ? (
-            <Button
-              size="small"
-              onClick={() =>
-                window.open(alert.url, '_blank', 'noopener,noreferrer')
-              }
-            >
-              {alert.button}
-            </Button>
-          ) : null;
+        const bgClass =
+          levelToBg[alert.level?.toLowerCase() ?? ''] ?? levelToBg.info;
         return (
-          <Alert
+          <div
             key={idx}
-            message={alert.text}
-            type={type}
-            showIcon
-            banner
-            action={action}
-          />
+            className={`px-4 py-2 flex items-center justify-center gap-3 w-full ${bgClass}`}
+          >
+            <TriangleAlert className="text-red" size={16} strokeWidth={2} />
+            <div className="font-bold">{alert.text}</div>
+            {alert.button && alert.url ? (
+              <Button
+                size="small"
+                type="primary"
+                onClick={() =>
+                  window.open(alert.url, '_blank', 'noopener,noreferrer')
+                }
+              >
+                {alert.button}
+              </Button>
+            ) : null}
+          </div>
         );
       })}
     </>
