@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { diffIfRecent } from 'App/date';
 import { useStore } from 'App/mstore';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
+import SimpleEmptyImage from 'Components/DataManagement/SimpleEmptyImage';
 import { CountryFlag } from 'UI';
 
 import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
@@ -38,7 +39,7 @@ function UsersList({
 
   const emptyState = (
     <Empty
-      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      image={<SimpleEmptyImage />}
       description={
         <div className="flex flex-col items-center gap-2 pt-2">
           <div className="text-base font-medium">{t('No users')}</div>

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { sessions, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import type { Tag } from 'App/services/TagWatchService';
+import SimpleEmptyImage from 'Components/DataManagement/SimpleEmptyImage';
 import { useModal } from 'Components/ModalContext';
 import { TextEllipsis } from 'UI';
 
@@ -25,7 +26,7 @@ function TagsPage() {
 
   const emptyState = (
     <Empty
-      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      image={<SimpleEmptyImage />}
       description={
         <div className="flex flex-col items-center gap-3 pt-2">
           <div className="text-base font-medium">{t('No features')}</div>

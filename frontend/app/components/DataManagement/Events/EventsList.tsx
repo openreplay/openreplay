@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import SimpleEmptyImage from 'Components/DataManagement/SimpleEmptyImage';
 import { TextEllipsis } from 'UI';
 
 import FullPagination from 'Shared/FullPagination';
@@ -35,7 +36,7 @@ function EventsList({
   });
   const emptyState = (
     <Empty
-      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      image={<SimpleEmptyImage />}
       description={
         <div className="flex flex-col items-center gap-2 pt-2">
           <div className="text-base font-medium">{t('No events')}</div>
