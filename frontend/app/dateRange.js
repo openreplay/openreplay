@@ -18,8 +18,9 @@ const DATE_RANGE_LABELS = {
 };
 
 const LONG_RANGE_LABELS = {
-  LAST_3_MONTHS: 'Last 3 Months',
-  LAST_YEAR: 'Last Year',
+  LAST_30_DAYS: 'Past Month',
+  LAST_3_MONTHS: 'Past 3 Months',
+  THIS_YEAR: 'This Year',
   CUSTOM_RANGE: 'Custom Range',
 };
 

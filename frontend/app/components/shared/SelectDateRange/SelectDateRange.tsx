@@ -9,6 +9,7 @@ import {
   CUSTOM_RANGE,
   DATE_RANGE_OPTIONS,
   DATE_RANGE_COMPARISON_OPTIONS,
+  LONG_DATE_RANGE_OPTIONS,
 } from 'App/dateRange';
 import { Calendar } from 'lucide-react';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
@@ -31,6 +32,7 @@ interface Props {
   updateInstComparison?: (range: [start: string, end?: string] | null) => void;
   [x: string]: any;
   className?: string;
+  longRange?: boolean;
 }
 
 function SelectDateRange(props: Props) {
@@ -46,7 +48,9 @@ function SelectDateRange(props: Props) {
   const usedPeriod = props.comparison ? props.compPeriod : period;
   const dateRangeOptions = props.comparison
     ? DATE_RANGE_COMPARISON_OPTIONS
-    : DATE_RANGE_OPTIONS;
+    : props.longRange
+      ? LONG_DATE_RANGE_OPTIONS
+      : DATE_RANGE_OPTIONS;
   const dateRangeOptionsLocalized = dateRangeOptions.map((obj: any) => ({
     ...obj,
     label: t(obj.label),
