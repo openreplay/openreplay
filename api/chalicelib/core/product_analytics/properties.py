@@ -6,6 +6,7 @@ from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.ch_client import ClickHouseClient
 
 
+# These display names are defined for auto-captured properties only
 def or_property_display_name(property_name: str) -> str:
     return {
         'label': 'Label',
@@ -69,7 +70,7 @@ def or_property_display_name(property_name: str) -> str:
         'userState': 'State/Province',
         'incident': 'Incident Reported By User',
         'page_title': 'Page Title',
-    }.get(property_name, '')
+    }.get(property_name, helper.key_to_title_case(property_name))
 
 
 PREDEFINED_PROPERTIES = {
@@ -340,7 +341,7 @@ def get_all_properties(project_id: int, include_all: bool = False) -> dict:
         }
 
 
-# @cached(TTLCache(maxsize=1000, ttl=180))
+@cached(TTLCache(maxsize=1000, ttl=20))
 def get_event_properties(project_id: int, event_name: str, auto_captured: bool):
     if auto_captured and event_name == "TAG_TRIGGER":
         return [

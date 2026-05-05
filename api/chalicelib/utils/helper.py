@@ -90,6 +90,11 @@ def key_to_snake_case(name, delimiter='_', split_number=False):
     return re.sub('([a-z])([A-Z0-9])' if split_number else '([a-z0-9])([A-Z])', fr'\1{delimiter}\2', s1).lower()
 
 
+def key_to_title_case(name, delimiter='_'):
+    snake = key_to_snake_case(name, delimiter)
+    return ' '.join(word.capitalize() for word in snake.split(delimiter) if word)
+
+
 TRACK_TIME = True
 
 

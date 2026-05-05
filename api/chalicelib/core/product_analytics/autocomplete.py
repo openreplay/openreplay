@@ -4,6 +4,7 @@ from cachetools import TTLCache, cached
 
 from chalicelib.utils import helper
 from chalicelib.utils.ch_client import ClickHouseClient
+from chalicelib.core.issues import issues_ch
 
 cache = TTLCache(maxsize=1000, ttl=180)
 
@@ -75,7 +76,10 @@ def search_events_properties(project_id: int, property_name: Optional[str] = Non
         )
 
         rows = ch_client.execute(query)
-
+    if event_name == "ISSUE" and property_name == "issue_type":
+        for row in rows:
+            row["name"] = issues_ch.get_all_types() \
+                .get(row["value"], {}).get("name", helper.key_to_title_case(row["value"]))
     return helper.list_to_camel_case(rows)
 
 
