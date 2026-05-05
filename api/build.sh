@@ -74,6 +74,15 @@ function build_api() {
         envarg="default-ee"
         tag="ee-"
     }
+
+    # Sourcing build customize scripts
+    for file in ./build_init_*; do
+        if [ -f "$file" ]; then
+            echo "Sourcing $file"
+            source "$file"
+        fi
+    done
+
     mv Dockerfile.dockerignore .dockerignore
     docker build -f ./Dockerfile --platform ${ARCH} --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/${IMAGE_NAME:-'chalice'}:${image_tag} .
     cd ../api || exit_err 100

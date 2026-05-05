@@ -11,9 +11,12 @@ image:
   tag: "25.11-alpine"
 
 backupImage:
-  repository: alexakulov/clickhouse-backup
+  # Migrated from alexakulov/clickhouse-backup (deprecated, last update ~3 years ago,
+  # only :master tag, no semver releases) to altinity/clickhouse-backup (active fork
+  # by the same project authors, semver-tagged). Required for airgap pinning.
+  repository: altinity/clickhouse-backup
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "2.6.43"
 
 username: default
 password: ""
