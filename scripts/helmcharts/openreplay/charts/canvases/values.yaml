@@ -65,6 +65,7 @@ ingress:
   enabled: true
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations:
+    nginx.org/mergeable-ingress-type: "minion"
     nginx.org/proxy-connect-timeout: "120s"
     nginx.org/proxy-send-timeout: "300s"
     nginx.org/proxy-read-timeout: "300s"
