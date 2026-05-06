@@ -87,6 +87,7 @@ function FilterValue(props: Props) {
       autoCaptured: filter.autoCaptured,
       possibleValues: filter.possibleValues,
       isPredefined: filter.isPredefined,
+      category: filter.category.toLowerCase(),
     };
 
     if (filter.isEvent || eventName) {
