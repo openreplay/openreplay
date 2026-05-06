@@ -91,7 +91,8 @@ async def write_traces_batch(traces: List[TraceSchema]):
         cur.execute(
             cur.mogrify(
                 f"""INSERT INTO traces(user_id, tenant_id, created_at, auth, action, method, path_format, endpoint, payload, parameters, status)
-                    VALUES {" , ".join(values)};""",
+                    VALUES {" , ".join(values)}
+                    ON CONFLICT DO NOTHING;""",
                 params)
         )
 
