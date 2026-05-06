@@ -251,6 +251,7 @@ async function onAny(socket, eventName, ...args) {
             }
         }
         const batch = Array.isArray(args[0]?.data) ? args[0].data.length : '?';
+        const messageSize = JSON.stringify(args[0]).length;
         logger.debug(`ev=${eventName} from=${socket.id}/${socket.handshake.query.identity} room=${room} recipients=[${recipients.join(',')}] batch=${batch} size:${messageSize}`);
         sendFrom(socket, room, eventName, args[0]);
         for (const a of agentSockets) {
