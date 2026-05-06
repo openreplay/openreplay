@@ -895,6 +895,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     @classmethod
     def remove_wrong_filter_values(cls, values):
         for f in values.get("filters", []):
+            if not isinstance(f, dict):
+                continue
             vals = []
             for v in f.get("value", []):
                 if f.get("name", "") == FilterType.DURATION.value and v is None:
