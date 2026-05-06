@@ -134,6 +134,7 @@ export default class FilterStore {
       if (page) {
         params['scope'] = page;
       }
+      params['source'] = filter.category?.toLowerCase();
       params.ac = filter.autoCaptured;
 
       const response = await searchService.fetchTopValues(params);
@@ -459,7 +460,10 @@ export default class FilterStore {
 
     Object.entries(data).forEach(([category, categoryData]) => {
       const { list = [] } = categoryData || {};
-
+      if (category === 'event') {
+        // skip event properties
+        return;
+      }
       const customScope = categoryData.scope;
       if (category === 'events') {
         const autoCaptured = list.filter(

@@ -245,6 +245,7 @@ const ValueAutoComplete = observer(
             q: trimmedQuery,
             ac: params.autoCaptured,
             live: isLive,
+            source: params.category?.toLowerCase(),
           };
 
           if (params.propertyName) {
