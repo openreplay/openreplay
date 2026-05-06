@@ -113,7 +113,7 @@ def autocomplete_properties(
         propertyName: str,
         eventName: Optional[str] = None,
         userId: Optional[str] = None,
-        scope: Optional[str] = None,
+        source: Optional[str] = None,
         q: Optional[str] = None,
         ac: bool = Query(description="auto captured"),
         live: bool = False,
@@ -121,6 +121,13 @@ def autocomplete_properties(
 ):
     if live:
         return assist.autocomplete(project_id=projectId, q=q, key=propertyName)
+    scope = None
+    if source == "session" or source == "sessions":
+        scope = "sessions"
+    elif source == "event" or source == "events":
+        scope = "events"
+    elif source == "user" or source == "users":
+        scope = "users"
     # Auto-captured properties should be transformed from camelCase to snake_case
     if ac:
         propertyName = helper.key_to_snake_case(propertyName)
