@@ -71,40 +71,24 @@ spec:
             runAsUser: {{ .Values.securityContext.runAsUser }}
           {{- end }}
           env:
-            - name: BITNAMI_DEBUG
-              value: {{ ternary "true" "false" .Values.image.debug | quote }}
-            - name: MINIO_FORCE_NEW_KEYS
-              value: {{ ternary "yes" "no" .Values.forceNewKeys | quote }}
-            {{- if .Values.useCredentialsFile }}
-            - name: MINIO_ROOT_USER_FILE
-              value: "/opt/bitnami/minio/secrets/access-key"
-            {{- else }}
-            - name: MINIO_ROOT_USER
+            - name: RUSTFS_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "minio.secretName" . }}
                   key: access-key
-            {{- end }}
-            {{- if .Values.useCredentialsFile }}
-            - name: MINIO_ROOT_PASSWORD_FILE
-              value: "/opt/bitnami/minio/secrets/secret-key"
-            {{- else }}
-            - name: MINIO_ROOT_PASSWORD
+            - name: RUSTFS_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "minio.secretName" . }}
                   key: secret-key
-            {{- end }}
-            {{- if .Values.defaultBuckets }}
-            - name: MINIO_DEFAULT_BUCKETS
-              value: {{ .Values.defaultBuckets }}
-            {{- end }}
-            - name: MINIO_BROWSER
-              value: {{ ternary "off" "on" .Values.disableWebUI | quote }}
-            {{- if .Values.prometheusAuthType }}
-            - name: MINIO_PROMETHEUS_AUTH_TYPE
-              value: {{ .Values.prometheusAuthType }}
-            {{- end }}
+            - name: RUSTFS_ADDRESS
+              value: "0.0.0.0:9000"
+            - name: RUSTFS_CONSOLE_ENABLE
+              value: "true"
+            - name: RUSTFS_CONSOLE_ADDRESS
+              value: "0.0.0.0:9001"
+            - name: RUSTFS_VOLUMES
+              value: {{ .Values.persistence.mountPath | quote }}
             {{- if .Values.extraEnv }}
             {{- toYaml .Values.extraEnv | nindent 12 }}
             {{- end }}
@@ -122,7 +106,7 @@ spec:
             successThreshold: {{ .Values.livenessProbe.successThreshold }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             httpGet:
-              path: /minio/health/live
+              path: /health
               port: minio
           {{- end }}
           {{- if .Values.readinessProbe.enabled }}
@@ -132,7 +116,8 @@ spec:
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
             successThreshold: {{ .Values.readinessProbe.successThreshold }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
-            tcpSocket:
+            httpGet:
+              path: /health/ready
               port: minio
           {{- end }}
           {{- if .Values.resources }}
