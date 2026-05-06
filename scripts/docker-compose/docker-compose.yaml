@@ -78,7 +78,7 @@ services:
     restart: on-failure
 
   minio-migration:
-    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
+    image: minio/mc:latest
     container_name: minio-migration
     profiles:
       - "migration"
@@ -98,10 +98,9 @@ services:
       - /bin/bash
       - -c
       - |
-          apt update && apt install netcat -y
-          # Wait for Minio to be ready
-          until nc -z -v -w30 minio 9000; do
-              echo "Waiting for Minio server to be ready..."
+          # Wait for RustFS to be ready
+          until bash -c 'echo > /dev/tcp/minio/9000' 2>/dev/null; do
+              echo "Waiting for RustFS server to be ready..."
               sleep 1
           done
           bash /tmp/minio.sh init || exit 100
