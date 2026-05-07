@@ -122,7 +122,9 @@ def autocomplete_properties(
     if live:
         return assist.autocomplete(project_id=projectId, q=q, key=propertyName)
     scope = None
-    if source == "session" or source == "sessions":
+    if source == "session" or source == "sessions" \
+            or source == "metadata" or source == "metadatas" \
+            or (source == "user" or source == "users") and not propertyName.startswith("$"):
         scope = "sessions"
     elif source == "event" or source == "events":
         scope = "events"
