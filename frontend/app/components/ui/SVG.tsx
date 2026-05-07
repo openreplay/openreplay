@@ -360,9 +360,6 @@ import {
   Integrations_vuejs,
   Integrations_zustand,
   Journal_code,
-  Kai_mono,
-  Kai,
-  Kai_colored,
   Key,
   Keyboard,
   Layers_half,
@@ -862,9 +859,6 @@ export type IconNames =
   | 'integrations/vuejs'
   | 'integrations/zustand'
   | 'journal-code'
-  | 'kai-mono'
-  | 'kai'
-  | 'kai_colored'
   | 'key'
   | 'keyboard'
   | 'layers-half'
@@ -2595,16 +2589,6 @@ const SVG = (props: Props) => {
     // case 'journal-code':
     case 'journal-code':
       return <Journal_code width={width} height={height} fill={fill} />;
-
-    // case 'kai-mono':
-    case 'kai-mono':
-      return <Kai_mono width={width} height={height} fill={fill} />;
-
-    case 'kai':
-      return <Kai width={width} height={height} fill={fill} />;
-
-    case 'kai_colored':
-      return <Kai_colored width={width} height={height} fill={fill} />;
 
     case 'key':
       return <Key width={width} height={height} fill={fill} />;

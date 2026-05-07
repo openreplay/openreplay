@@ -18,7 +18,6 @@ import APIClient from './api_client';
 import { useStore } from './mstore';
 import * as routes from './routes';
 import { saasRoutes } from './saasComponents';
-import { hasAi } from './utils/split-utils';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -32,7 +31,6 @@ const components: any = {
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
-  KaiPure: lazy(() => import('Components/Kai/KaiChat')),
   ActivityPure: lazy(
     () => import('Components/DataManagement/Activity/ActivityPage'),
   ),
@@ -65,7 +63,6 @@ const enhancedComponents: any = {
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   Highlights: withSiteIdUpdater(components.HighlightsPure),
-  Kai: withSiteIdUpdater(components.KaiPure),
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
   UserPage: withSiteIdUpdater(components.UserPage),
@@ -110,7 +107,6 @@ const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
 
 const HIGHLIGHTS_PATH = routes.highlights();
-const KAI_PATH = routes.kai();
 
 function PrivateRoutes() {
   const {
@@ -361,12 +357,6 @@ function PrivateRoutes() {
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
           element={<enhancedComponents.LiveSession />}
         />
-        {hasAi ? (
-          <Route
-            path={withSiteId(KAI_PATH, siteIdList)}
-            element={<enhancedComponents.Kai />}
-          />
-        ) : null}
         <Route
           path={withSiteId(routes.dataManagement.activity(), siteIdList)}
           element={<enhancedComponents.Activity />}

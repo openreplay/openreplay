@@ -11,7 +11,6 @@ export const menuHidden = {
   clips: true,
   vault: true,
   bookmarks: false,
-  kai: true,
   billing: true,
   videoExport: false,
   dataAnalytics: false,

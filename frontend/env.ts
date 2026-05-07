@@ -4,7 +4,6 @@ const ENV = {
   NODE_ENV: process.env.NODE_ENV,
   PRODUCTION: process.env.PRODUCTION ?? !isDevelopment,
   SOURCEMAP: process.env.SOURCEMAP,
-  KAI_TESTING: process.env.KAI_TESTING,
   ORIGIN: process.env.ORIGIN,
   ASSETS_HOST: process.env.ASSETS_HOST,
   API_EDP: process.env.API_EDP,
