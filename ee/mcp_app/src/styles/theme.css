@@ -2,6 +2,7 @@
 
 /* Light mode (default) */
 :root {
+  --bg-chat:#F8F8F6;
   --or-main: rgb(21, 93, 252);
   --or-teal: #394EFF;
   --or-teal-dark: #2331A8;
@@ -33,6 +34,7 @@
 
 /* Dark mode */
 [data-theme="dark"] {
+  --bg-chat:#1F1F1E;
   --or-main: rgb(81, 162, 255);
   --or-teal: rgb(81, 162, 255);
   --or-teal-dark: rgb(49, 113, 255);

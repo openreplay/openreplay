@@ -13,6 +13,7 @@ import {
   DatasetComponent,
 } from 'echarts/components';
 import { SVGRenderer } from 'echarts/renderers';
+import { formatDateRange } from '../utils/formatDate';
 
 echarts.use([
   LineChart,
@@ -71,23 +72,35 @@ function ChartView({ data }: ChartViewProps) {
     const obs = new ResizeObserver(() => chart.resize());
     obs.observe(chartRef.current);
 
-    try {
-      const chartData = detectChartData(data);
+    const isDark = () =>
+      document.documentElement.getAttribute('data-theme') === 'dark';
 
-      if (!chartData) {
-        console.error('Unable to parse chart data:', data);
-        return;
+    const render = () => {
+      try {
+        const chartData = detectChartData(data);
+        if (!chartData) {
+          console.error('Unable to parse chart data:', data);
+          return;
+        }
+        chart.setOption(buildChartOptions(chartData, isDark()), true);
+      } catch (error) {
+        console.error('Failed to render chart:', error);
       }
+    };
 
-      const options = buildChartOptions(chartData);
-      chart.setOption(options);
-    } catch (error) {
-      console.error('Failed to render chart:', error);
-    }
+    render();
+
+    // Re-render when the host toggles the theme so line opacity tracks dark mode.
+    const themeObs = new MutationObserver(render);
+    themeObs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
 
     return () => {
       chart.dispose();
       obs.disconnect();
+      themeObs.disconnect();
     };
   }, [data]);
 
@@ -96,8 +109,8 @@ function ChartView({ data }: ChartViewProps) {
       <div className="view-header">
         <span className="view-title">
           {data?.title || 'Chart Data'}
-          {data?.startDate && data?.endDate && (
-            <span className="view-title-date">{data.startDate} — {data.endDate}</span>
+          {formatDateRange(data?.startDate, data?.endDate) && (
+            <span className="view-title-date">{formatDateRange(data.startDate, data.endDate)}</span>
           )}
         </span>
       </div>
@@ -105,11 +118,6 @@ function ChartView({ data }: ChartViewProps) {
       <div className="chart-container">
         <div ref={chartRef} style={{ width: '100%', height: 400 }} />
       </div>
-
-      <details className="view-debug">
-        <summary>Raw Data</summary>
-        <pre>{JSON.stringify(data, null, 2)}</pre>
-      </details>
     </div>
   );
 }
@@ -180,7 +188,7 @@ function extractSeriesNames(chart: any[]): string[] {
   return keys;
 }
 
-function buildChartOptions(chartData: ChartData): any {
+function buildChartOptions(chartData: ChartData, isDark: boolean): any {
   const categories = chartData.chart.map((item) => item.time);
 
   const dimensions = ['idx', ...chartData.namesMap];
@@ -194,6 +202,10 @@ function buildChartOptions(chartData: ChartData): any {
     return row;
   });
 
+  // In dark mode, drop saturated palette colors to ~75% opacity so they read
+  // closer to how the frontend's LineChart renders them against a dark canvas.
+  const lineOpacity = isDark ? 0.75 : 1;
+
   const series = chartData.namesMap.map((name, idx) => ({
     name,
     type: 'line',
@@ -201,9 +213,12 @@ function buildChartOptions(chartData: ChartData): any {
     encode: { x: 'idx', y: name },
     itemStyle: {
       color: colors[idx % colors.length],
+      opacity: lineOpacity,
     },
     lineStyle: {
       color: colors[idx % colors.length],
+      opacity: lineOpacity,
+      width: 2,
     },
     showSymbol: chartData.chart.length === 1,
     smooth: true,
