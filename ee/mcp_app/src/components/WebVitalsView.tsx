@@ -1,3 +1,5 @@
+import { formatDateRange } from '../utils/formatDate';
+
 interface Stats {
   Min: number;
   Avg: number;
@@ -67,8 +69,8 @@ function WebVitalsView({ data }: WebVitalsViewProps) {
       <div className="view-header">
         <span className="view-title">
           Web Vitals
-          {data.startDate && data.endDate && (
-            <span className="view-title-date">{data.startDate} — {data.endDate}</span>
+          {formatDateRange(data.startDate, data.endDate) && (
+            <span className="view-title-date">{formatDateRange(data.startDate, data.endDate)}</span>
           )}
         </span>
       </div>

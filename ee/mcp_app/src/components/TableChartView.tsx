@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDateRange } from '../utils/formatDate';
 
 interface TableChartViewProps {
   data: {
@@ -219,8 +220,8 @@ function TableChartView({ data }: TableChartViewProps) {
       <div className="view-header">
         <span className="view-title">
           {data?.title || 'Top Analytics'}
-          {data.startDate && data.endDate && (
-            <span className="view-title-date">{data.startDate} — {data.endDate}</span>
+          {formatDateRange(data.startDate, data.endDate) && (
+            <span className="view-title-date">{formatDateRange(data.startDate, data.endDate)}</span>
           )}
         </span>
       </div>
@@ -228,42 +229,44 @@ function TableChartView({ data }: TableChartViewProps) {
         {numberWithCommas(totalCount)} total across {totalItems} unique {data.metricOf === 'LOCATION' ? 'pages' : 'items'}
       </div>
 
-      <div className="table-list">
-        {displayValues.map((item, i) => {
-          const progress = maxValue > 0 ? Math.round((item.total / maxValue) * 100) : 0;
-          const ItemIcon = getItemIcon(data.metricOf, item.name);
-          const Icon = ItemIcon || MetricIcon;
+      <div className="view-container">
+        <div className="table-list">
+          {displayValues.map((item, i) => {
+            const progress = maxValue > 0 ? Math.round((item.total / maxValue) * 100) : 0;
+            const ItemIcon = getItemIcon(data.metricOf, item.name);
+            const Icon = ItemIcon || MetricIcon;
 
-          return (
-            <div key={i} className="table-row">
-              <div className="table-row-icon">
-                {Icon
-                  ? <Icon />
-                  : <span className="table-row-initial">{getItemInitial(item.name)}</span>
-                }
-              </div>
-              <div className="table-row-content">
-                <div className="table-row-header">
-                  <span className="table-row-name" title={item.name}>{item.name}</span>
-                  <span className="table-row-count">{numberWithCommas(item.total)}</span>
+            return (
+              <div key={i} className="table-row">
+                <div className="table-row-icon">
+                  {Icon
+                    ? <Icon />
+                    : <span className="table-row-initial">{getItemInitial(item.name)}</span>
+                  }
                 </div>
-                <div className="table-row-bar-track">
-                  <div
-                    className="table-row-bar-fill"
-                    style={{ width: `${Math.max(progress, 1)}%` }}
-                  />
+                <div className="table-row-content">
+                  <div className="table-row-header">
+                    <span className="table-row-name" title={item.name}>{item.name}</span>
+                    <span className="table-row-count">{numberWithCommas(item.total)}</span>
+                  </div>
+                  <div className="table-row-bar-track">
+                    <div
+                      className="table-row-bar-fill"
+                      style={{ width: `${Math.max(progress, 1)}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {totalItems > MAX_DISPLAY && (
-        <div className="table-chart-footer">
-          {totalItems - MAX_DISPLAY} more items
+            );
+          })}
         </div>
-      )}
+
+        {totalItems > MAX_DISPLAY && (
+          <div className="table-chart-footer">
+            {totalItems - MAX_DISPLAY} more items
+          </div>
+        )}
+      </div>
     </div>
   );
 }

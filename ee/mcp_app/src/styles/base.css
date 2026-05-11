@@ -33,15 +33,15 @@ h1, h2, h3, h4, h5 {
 .app-container {
   width: 100%;
   min-width: 600px;
-  min-height: 400px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
-  background: var(--color-background-primary, var(--background-primary, var(--or-white)));
+  background: var(--bg-chat, var(--background-primary, var(--or-white)));
 }
 
 .content {
   flex: 1;
   overflow: auto;
   padding: 16px;
-  background: var(--color-background-primary, var(--background-primary, var(--or-white)));
+  background: var(--bg-chat, var(--background-primary, var(--or-white)));
 }
