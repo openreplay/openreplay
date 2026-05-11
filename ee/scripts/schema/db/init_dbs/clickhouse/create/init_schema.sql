@@ -96,38 +96,6 @@ CREATE TABLE IF NOT EXISTS experimental.issues
       ORDER BY (project_id, issue_id, type);
 
 
--- CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.js_errors_sessions_mv
---             ENGINE = ReplacingMergeTree(_timestamp)
---                 PARTITION BY toYYYYMM(datetime)
---                 ORDER BY (project_id, datetime, event_type, error_id, session_id)
---                 TTL _timestamp + INTERVAL 35 DAY
---             POPULATE
--- AS
--- SELECT session_id,
---        project_id,
---        events.datetime         AS datetime,
---        event_type,
---        assumeNotNull(error_id) AS error_id,
---        source,
---        name,
---        message,
---        error_tags_keys,
---        error_tags_values,
---        message_id,
---        user_id,
---        user_browser,
---        user_browser_version,
---        user_os,
---        user_os_version,
---        user_device_type,
---        user_device,
---        user_country,
---        _timestamp
--- FROM experimental.events
---          INNER JOIN experimental.sessions USING (session_id)
--- WHERE event_type = 'ERROR'
---   AND source = 'js_exception';
-
 
 CREATE TABLE IF NOT EXISTS experimental.sessions_feature_flags
 (
@@ -776,61 +744,6 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_user_properties_groupe
 -- All materialized views are placed at the end of the script to ensure
 -- all referenced tables and functions exist before the views are created.
 -- =====================================================================================
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.sessions_l7d_mv
-            ENGINE = ReplacingMergeTree(_timestamp)
-                PARTITION BY toYYYYMMDD(datetime)
-                ORDER BY (project_id, datetime, session_id)
-                TTL datetime + INTERVAL 7 DAY
-                SETTINGS index_granularity = 512
-            POPULATE
-AS
-SELECT session_id,
-       project_id,
-       tracker_version,
-       rev_id,
-       user_uuid,
-       user_os,
-       user_os_version,
-       user_browser,
-       user_browser_version,
-       user_device,
-       user_device_type,
-       user_country,
-       user_city,
-       user_state,
-       platform,
-       datetime,
-       timezone,
-       duration,
-       pages_count,
-       events_count,
-       errors_count,
-       utm_source,
-       utm_medium,
-       utm_campaign,
-       user_id,
-       user_anonymous_id,
-       issue_types,
-       referrer,
-       base_referrer,
-       screen_width,
-       screen_height,
-       metadata_1,
-       metadata_2,
-       metadata_3,
-       metadata_4,
-       metadata_5,
-       metadata_6,
-       metadata_7,
-       metadata_8,
-       metadata_9,
-       metadata_10,
-       _timestamp
-FROM experimental.sessions
-WHERE datetime >= now() - INTERVAL 7 DAY
-  AND isNotNull(duration)
-  AND duration > 0;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.all_events_extractor_mv
     TO product_analytics.all_events AS
