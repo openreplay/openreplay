@@ -1,4 +1,5 @@
 SELECT throwIf((SELECT openreplay_migration_state()) != 0, 'Previous step is not done') AS check;
+DROP TABLE IF EXISTS experimental.sessions_l7d_mv;
 DROP TABLE IF EXISTS product_analytics.users;
 CREATE TABLE IF NOT EXISTS product_analytics.users
 (
