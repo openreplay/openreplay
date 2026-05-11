@@ -80,9 +80,14 @@ function FilterItem(props: Props) {
     ? filterStore.getScopedCurrentProjectFilters([scope])
     : filterStore.getCurrentProjectFilters();
 
+  const hasSubfilters =
+    filter.isEvent &&
+    !isSubItem &&
+    filter.category !== 'segments' &&
+    filter.category !== 'features';
+
   useMemo(() => {
-    if (isSubItem || filter?.name === 'duration' || !filter.isEvent || !fltId)
-      return;
+    if (filter?.name === 'duration' || !fltId || !hasSubfilters) return;
     filterStore.getEventFilters(fltId).then((filters) => {
       setEventFilterOptions(filters);
     });
@@ -230,11 +235,6 @@ function FilterItem(props: Props) {
     }
   }, [readonly, filter.value]);
 
-  const hasSubfilters =
-    filter.isEvent &&
-    !isSubItem &&
-    filter.category !== 'segments' &&
-    filter.category !== 'features';
   return (
     <div className={cn('w-full', isDragging ? 'opacity-50' : '')}>
       <div className="flex items-start w-full gap-x-2">
