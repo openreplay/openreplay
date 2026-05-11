@@ -6,4 +6,5 @@ SELECT throwIf((SELECT openreplay_migration_state()) > -1,
                (SELECT openreplay_migration_state()) || ']') AS check;
 
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.27.0-ee';
+DROP TABLE IF EXISTS experimental.sessions_l7d_mv;
 CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> -1;
