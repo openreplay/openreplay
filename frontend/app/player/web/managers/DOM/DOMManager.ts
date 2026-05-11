@@ -1,5 +1,6 @@
 import logger from 'App/logger';
 
+import ListWalker from '../../../common/ListWalker';
 import type Screen from '../../Screen/Screen';
 import type {
   Message,
@@ -7,20 +8,19 @@ import type {
   SetNodeScroll,
 } from '../../messages';
 import { MType } from '../../messages';
-import ListWalker from '../../../common/ListWalker';
-import StylesManager from './StylesManager';
 import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
+import StylesManager from './StylesManager';
 import {
-  StyleElement,
   OnloadStyleSheet,
+  OnloadVRoot,
+  StyleElement,
   VDocument,
   VElement,
   VHTMLElement,
   VShadowRoot,
-  VText,
-  OnloadVRoot,
   VSlot,
+  VText,
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
 
@@ -50,6 +50,8 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly vTexts: Map<number, VText> = new Map(); // map vs object here?
   private readonly vElements: Map<number, VElement> = new Map();
   private readonly olVRoots: Map<number, OnloadVRoot> = new Map();
+  private readonly pendingSelectValues: Map<number, string> = new Map();
+  private flushScheduled = false;
   /** required to keep track of iframes, frameId : vnodeId */
   private readonly iframeRoots: Record<number, number> = {};
   private shadowRootParentMap: Map<number, number> = new Map();
@@ -302,6 +304,8 @@ export default class DOMManager extends ListWalker<Message> {
         this.vTexts.clear();
         this.olStyleSheets.clear();
         this.pendingStyleRules.clear();
+        this.pendingSelectValues.clear();
+        this.flushScheduled = false;
         this.stylesManager.reset();
         return;
       }
@@ -445,7 +449,11 @@ export default class DOMManager extends ListWalker<Message> {
           };
           return;
         }
-        nodeWithValue.value = val; // Maybe make special VInputValueElement type for lazy value update
+        if (nodeWithValue instanceof HTMLSelectElement) {
+          this.pendingSelectValues.set(msg.id, val);
+        } else {
+          nodeWithValue.value = val; // Maybe make special VInputValueElement type for lazy value update
+        }
         return;
       }
       case MType.SetInputChecked: {
@@ -694,6 +702,27 @@ export default class DOMManager extends ListWalker<Message> {
     }
   };
 
+  private flushPendingSelectValues = (): void => {
+    this.flushScheduled = false;
+    if (this.pendingSelectValues.size === 0) return;
+    this.pendingSelectValues.forEach((val, id) => {
+      const vElem = this.vElements.get(id);
+      if (!vElem) {
+        this.pendingSelectValues.delete(id);
+        return;
+      }
+      const node = vElem.node;
+      if (!(node instanceof HTMLSelectElement)) {
+        this.pendingSelectValues.delete(id);
+        return;
+      }
+      node.value = val;
+      if (node.value === val || node.options.length > 0) {
+        this.pendingSelectValues.delete(id);
+      }
+    });
+  };
+
   /**
    * Moves and applies all the messages from the current (or from the beginning, if t < current.time)
    * to the one with msg[time] >= `t`
@@ -706,6 +735,10 @@ export default class DOMManager extends ListWalker<Message> {
   async moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage);
     this.olVRoots.forEach((rt) => rt.applyChanges());
+    if (this.pendingSelectValues.size > 0 && !this.flushScheduled) {
+      this.flushScheduled = true;
+      setTimeout(this.flushPendingSelectValues, 0);
+    }
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
     return this.stylesManager.moveReady().then(() => {
