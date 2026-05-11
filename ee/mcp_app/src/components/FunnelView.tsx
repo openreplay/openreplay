@@ -1,6 +1,10 @@
+import { formatDateRange } from '../utils/formatDate';
+
+type FunnelStep = string | { type: string; value?: string; operator?: string };
+
 interface FunnelViewProps {
   data: {
-    steps: string[];
+    steps: FunnelStep[];
     data: any;
     startDate?: string;
     endDate?: string;
@@ -9,6 +13,12 @@ interface FunnelViewProps {
 
 function numberWithCommas(n: number): string {
   return n.toLocaleString('en-US');
+}
+
+function stepLabel(step: FunnelStep | undefined, index: number): string {
+  if (!step) return `Step ${index + 1}`;
+  if (typeof step === 'string') return step;
+  return step.value ? `${step.type}: ${step.value}` : step.type;
 }
 
 function FunnelView({ data }: FunnelViewProps) {
@@ -23,7 +33,7 @@ function FunnelView({ data }: FunnelViewProps) {
         })()
       : rawData;
   const stages = unwrapped?.stages || [];
-  const steps = data?.steps || [];
+  const steps: FunnelStep[] = data?.steps || [];
   const firstCount = stages[0]?.count || 0;
   const lastCount = stages.length > 0 ? stages[stages.length - 1].count : 0;
   const overallConvPct = firstCount > 0 ? ((lastCount / firstCount) * 100).toFixed(1) : '0';
@@ -49,16 +59,22 @@ function FunnelView({ data }: FunnelViewProps) {
       <div className="view-header">
         <span className="view-title">
           Funnel Analysis
-          {data.startDate && data.endDate && (
-            <span className="view-title-date">{data.startDate} — {data.endDate}</span>
+          {formatDateRange(data.startDate, data.endDate) && (
+            <span className="view-title-date">{formatDateRange(data.startDate, data.endDate)}</span>
           )}
         </span>
       </div>
       <div className="view-subtitle">{stages.length} steps &middot; {numberWithCommas(firstCount)} sessions entered</div>
 
-      <div className="funnel-stages">
+      <div className="view-container">
+        <div className="funnel-stages">
         {stages.map((stage: any, i: number) => {
-          const label = stage.value?.[0] || steps[i] || `Step ${i + 1}`;
+          // stage.value is the API's top-level filter value array. For LOCATION/CLICK/INPUT
+          // steps it's empty (the user value lives in a sub-filter), so fall back to the
+          // step descriptor — which can be a string or an object — and never render an
+          // object directly.
+          const stageVal = Array.isArray(stage.value) ? stage.value[0] : stage.value;
+          const label = (typeof stageVal === 'string' && stageVal) || stepLabel(steps[i], i);
           const pctOfFirst = firstCount > 0 ? (stage.count / firstCount) * 100 : 0;
           const prevCount = i > 0 ? stages[i - 1].count : stage.count;
           const droppedCount = i > 0 ? prevCount - stage.count : 0;
@@ -113,23 +129,24 @@ function FunnelView({ data }: FunnelViewProps) {
             </div>
           );
         })}
-      </div>
-
-      {/* Summary tags */}
-      {stages.length > 1 && (
-        <div className="funnel-summary">
-          <div className="funnel-summary-item">
-            <span className="funnel-summary-label">Total conversion</span>
-            <span className="funnel-tag funnel-tag-good">{numberWithCommas(lastCount)}</span>
-            <span className="funnel-summary-pct">{overallConvPct}%</span>
-          </div>
-          <div className="funnel-summary-item">
-            <span className="funnel-summary-label">Lost conversion</span>
-            <span className="funnel-tag funnel-tag-bad">{numberWithCommas(lostCount)}</span>
-            <span className="funnel-summary-pct">{lostPct}%</span>
-          </div>
         </div>
-      )}
+
+        {/* Summary tags */}
+        {stages.length > 1 && (
+          <div className="funnel-summary">
+            <div className="funnel-summary-item">
+              <span className="funnel-summary-label">Total conversion</span>
+              <span className="funnel-tag funnel-tag-good">{numberWithCommas(lastCount)}</span>
+              <span className="funnel-summary-pct">{overallConvPct}%</span>
+            </div>
+            <div className="funnel-summary-item">
+              <span className="funnel-summary-label">Lost conversion</span>
+              <span className="funnel-tag funnel-tag-bad">{numberWithCommas(lostCount)}</span>
+              <span className="funnel-summary-pct">{lostPct}%</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
