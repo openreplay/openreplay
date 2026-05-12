@@ -10,6 +10,7 @@ import (
 
 	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/model"
+	chdb "openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/logger"
 )
 
@@ -18,15 +19,17 @@ type Charts interface {
 }
 
 type chartsImpl struct {
-	chConn     driver.Conn
-	Logger     logger.Logger
-	filterRefs []lexicon.FilterRef
+	chConn        driver.Conn
+	chSessionConn chdb.SessionFactory
+	Logger        logger.Logger
+	filterRefs    []lexicon.FilterRef
 }
 
-func New(logger logger.Logger, chConn driver.Conn, segments lexicon.Segments) (Charts, error) {
+func New(logger logger.Logger, chConn driver.Conn, chSessionConn chdb.SessionFactory, segments lexicon.Segments) (Charts, error) {
 	return &chartsImpl{
-		chConn: chConn,
-		Logger: logger,
+		chConn:        chConn,
+		chSessionConn: chSessionConn,
+		Logger:        logger,
 		filterRefs: []lexicon.FilterRef{
 			lexicon.NewSegmentFilterRef(segments),
 		},
@@ -53,7 +56,7 @@ func (s *chartsImpl) GetData(ctx context.Context, projectId int, userID uint64, 
 		s.Logger.Error(ctx, "Error validating payload", zap.Error(err))
 		return nil, fmt.Errorf("error validating payload: %v", err)
 	}
-	qb, err := NewQueryBuilder(s.Logger, payload)
+	qb, err := NewQueryBuilder(s.Logger, payload, s.chSessionConn)
 	if err != nil {
 		s.Logger.Error(ctx, "Error creating query builder", zap.Error(err))
 		return nil, fmt.Errorf("error creating query builder: %v", err)
