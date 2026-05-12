@@ -32,5 +32,5 @@ sudo sed -i "s/email: .*/email: \"${EMAIL_ADDRESS}\"/g" clusterIssuer.yaml
 info "Installing cert-manager for auto letsencrypt certificate"
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
-helm upgrade --install cert-manager --namespace cert-manager --version v1.20.0 jetstack/cert-manager --create-namespace
+helm upgrade --install cert-manager --namespace cert-manager --version v1.20.0 jetstack/cert-manager --create-namespace --set crds.enabled=true
 kubectl apply -f clusterIssuer.yaml
