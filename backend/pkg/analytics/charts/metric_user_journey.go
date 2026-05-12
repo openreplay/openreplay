@@ -13,6 +13,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
+
+	chdb "openreplay/backend/pkg/db/clickhouse"
 )
 
 // Node represents a point in the journey diagram.
@@ -74,10 +76,11 @@ var PredefinedJourneys = map[string]JourneyStep{
 }
 
 type UserJourneyQueryBuilder struct {
-	Logger logger.Logger
+	Logger      logger.Logger
+	SessionConn chdb.SessionFactory
 }
 
-func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
+func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _ driver.Conn) (interface{}, error) {
 	queries, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -85,6 +88,23 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, conn 
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
+
+	// Q1/Q2 create CLICKHOUSE TEMPORARY TABLES whose lifetime is bound to a single
+	// TCP session. The shared pool may dispatch each statement on a different
+	// connection, so we acquire a dedicated 1-conn handle here and run all three
+	// queries through it.
+	if h.SessionConn == nil {
+		return nil, fmt.Errorf("userJourney requires a clickhouse session factory")
+	}
+	conn, err := h.SessionConn()
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire pinned clickhouse connection: %w", err)
+	}
+	defer func() {
+		if cerr := conn.Close(); cerr != nil {
+			h.Logger.Warn(ctx, "failed to close userJourney clickhouse session: %s", cerr)
+		}
+	}()
 
 	chCtx := clickhouse.Context(context.Background(), clickhouse.WithQueryID(uuid.NewString()))
 

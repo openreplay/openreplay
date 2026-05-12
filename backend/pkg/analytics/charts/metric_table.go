@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 
 	"openreplay/backend/pkg/analytics/model"
+	chdb "openreplay/backend/pkg/db/clickhouse"
 )
 
 var validMetricOfValues = map[MetricOfTable]struct{}{
@@ -29,7 +30,8 @@ var validMetricOfValues = map[MetricOfTable]struct{}{
 }
 
 type TableQueryBuilder struct {
-	Logger logger.Logger
+	Logger      logger.Logger
+	SessionConn chdb.SessionFactory
 }
 
 type TableValue struct {
@@ -129,7 +131,7 @@ func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver
 	seriesKey := SeriesKey(p.Name, p.MetricOf)
 	return WrapInSeries(seriesKey, &TableResponse{Total: valuesCount, Count: overallCount, Values: rawValues}), nil
 }
-func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
+func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p *Payload, _ driver.Conn) (interface{}, error) {
 	queries, params, err := t.buildTableOfResolutionsQuery(p)
 	if err != nil {
 		return nil, fmt.Errorf("error building screenResolution queries: %w", err)
@@ -137,6 +139,22 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p 
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for table of resolutions")
 	}
+
+	// Q1 creates a CLICKHOUSE TEMPORARY TABLE that Q2 reads from. Temp-table
+	// lifetime is bound to a single TCP session, so we acquire a dedicated
+	// 1-conn handle here instead of using the shared pool.
+	if t.SessionConn == nil {
+		return nil, fmt.Errorf("screenResolution table requires a clickhouse session factory")
+	}
+	conn, err := t.SessionConn()
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire pinned clickhouse connection: %w", err)
+	}
+	defer func() {
+		if cerr := conn.Close(); cerr != nil {
+			t.Logger.Warn(ctx, "failed to close screenResolution clickhouse session: %s", cerr)
+		}
+	}()
 
 	chCtx := clickhouse.Context(context.Background(), clickhouse.WithQueryID(uuid.NewString()))
 

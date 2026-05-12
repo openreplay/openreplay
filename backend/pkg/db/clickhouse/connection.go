@@ -15,7 +15,13 @@ import (
 	"openreplay/backend/internal/config/common"
 )
 
-func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
+// SessionFactory returns a fresh single-connection ClickHouse handle bound to one
+// physical TCP session. Callers MUST close the returned conn when done — typically
+// with `defer conn.Close()`. Use this when a sequence of statements depends on
+// session-scoped state (e.g. CREATE TEMPORARY TABLE).
+type SessionFactory func() (driver.Conn, error)
+
+func buildNativeOptions(cfg common.Clickhouse) (*clickhouse.Options, error) {
 	tlsConfig, err := buildTLSConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -47,8 +53,16 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 			Method: clickhouse.CompressionLZ4,
 		}
 	}
-	var conn driver.Conn
-	if conn, err = clickhouse.Open(opts); err != nil {
+	return opts, nil
+}
+
+func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
+	opts, err := buildNativeOptions(cfg)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := clickhouse.Open(opts)
+	if err != nil {
 		return nil, err
 	}
 	if err := conn.Ping(context.Background()); err != nil {
@@ -58,7 +72,25 @@ func NewConnection(cfg common.Clickhouse) (driver.Conn, error) {
 		}
 		return nil, err
 	}
-	return conn, err
+	return conn, nil
+}
+
+// NewSessionFactory returns a factory that opens a fresh 1-connection ClickHouse
+// handle on each call. The handle's pool caps (MaxOpenConns/MaxIdleConns = 1)
+// guarantee every statement executed against it lands on the same TCP session,
+// which is required for `CREATE TEMPORARY TABLE` workflows where a later query
+// must see a table created by an earlier one. Callers own the returned conn and
+// must Close() it.
+func NewSessionFactory(cfg common.Clickhouse) (SessionFactory, error) {
+	opts, err := buildNativeOptions(cfg)
+	if err != nil {
+		return nil, err
+	}
+	opts.MaxOpenConns = 1
+	opts.MaxIdleConns = 1
+	return func() (driver.Conn, error) {
+		return clickhouse.Open(opts)
+	}, nil
 }
 func NewSqlDBConnection(cfg common.Clickhouse) (*sqlx.DB, error) {
 	tlsConfig, err := buildTLSConfig(cfg)
