@@ -1,6 +1,6 @@
 {
   "name": "openreplay-mcp-app",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "OpenReplay MCP App - View charts and session replays from your OpenReplay instance",
   "main": "server.ts",
   "scripts": {
