@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	analyticsConfig "openreplay/backend/internal/config/api"
-	orClickhouse "openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/logger"
 	"slices"
 	"strings"
@@ -14,9 +12,9 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 
 	"openreplay/backend/pkg/analytics/model"
+	chdb "openreplay/backend/pkg/db/clickhouse"
 )
 
 var validMetricOfValues = map[MetricOfTable]struct{}{
@@ -31,7 +29,8 @@ var validMetricOfValues = map[MetricOfTable]struct{}{
 }
 
 type TableQueryBuilder struct {
-	Logger logger.Logger
+	Logger      logger.Logger
+	SessionConn chdb.SessionFactory
 }
 
 type TableValue struct {
@@ -127,26 +126,32 @@ func (t *TableQueryBuilder) executeForTableOfResolutions(ctx context.Context, p 
 		return nil, fmt.Errorf("No queries to execute for table of resolutions")
 	}
 
-	cfg := analyticsConfig.New(t.Logger)
+	// Q1 creates a CLICKHOUSE TEMPORARY TABLE that Q2 reads from. Temp-table
+	// lifetime is bound to a single TCP session, so we acquire a dedicated
+	// 1-conn handle here instead of using the shared pool.
+	if t.SessionConn == nil {
+		return nil, fmt.Errorf("screenResolution table requires a clickhouse session factory")
+	}
+	conn, err := t.SessionConn()
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire pinned clickhouse connection: %w", err)
+	}
+	defer func() {
+		if cerr := conn.Close(); cerr != nil {
+			t.Logger.Warn(ctx, "failed to close screenResolution clickhouse session: %s", cerr)
+		}
+	}()
 
-	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
-
-	// Trying to use clickhouseContext in order to keep same session for tmp tables,
-	// otherwise we need to use clickhouse.openDB instead of clickhouse.open in the connexion code
-	chCtx := clickhouse.Context(ctx,
-		clickhouse.WithSettings(clickhouse.Settings{
-			"session_id":      uuid.NewString(),
-			"session_timeout": 60, // seconds
-		}))
+	chCtx := clickhouse.Context(context.Background(), clickhouse.WithQueryID(uuid.NewString()))
 
 	queryParams := convertParams(params)
-	_, err = conn.ExecContext(chCtx, queries[0], queryParams...)
+	err = conn.Exec(chCtx, queries[0], queryParams...)
 	if err != nil {
 		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[0])
 		return nil, fmt.Errorf("error executing tmp query for screenResolution: %w", err)
 	}
 	var rawValues []ResolutionTableValue = make([]ResolutionTableValue, 0)
-	if err = conn.SelectContext(chCtx, &rawValues, queries[1], queryParams...); err != nil {
+	if err = conn.Select(chCtx, &rawValues, queries[1], queryParams...); err != nil {
 		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[0])
 		t.Logger.Error(ctx, "ScreenResolution query failed: %s", queries[1])
 		t.Logger.Error(ctx, "Error executing Table Of Resolutions query: %s\nQuery: %s", err, queries[1])

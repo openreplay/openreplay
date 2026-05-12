@@ -4,19 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	analyticsConfig "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/logger"
 	"slices"
 	"sort"
 	"strings"
 	"time"
 
-	orClickhouse "openreplay/backend/pkg/db/clickhouse"
-
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
+
+	chdb "openreplay/backend/pkg/db/clickhouse"
 )
 
 // Node represents a point in the journey diagram.
@@ -78,10 +76,11 @@ var PredefinedJourneys = map[string]JourneyStep{
 }
 
 type UserJourneyQueryBuilder struct {
-	Logger logger.Logger
+	Logger      logger.Logger
+	SessionConn chdb.SessionFactory
 }
 
-func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _conn driver.Conn) (interface{}, error) {
+func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _ driver.Conn) (interface{}, error) {
 	queries, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
@@ -89,22 +88,30 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _conn
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
-	cfg := analyticsConfig.New(h.Logger)
 
-	var conn *sqlx.DB = orClickhouse.NewSqlDBConnection(cfg.Clickhouse)
-	if conn == nil {
-		return nil, fmt.Errorf("failed to establish clickhouse connection")
+	// Q1/Q2 create CLICKHOUSE TEMPORARY TABLES whose lifetime is bound to a single
+	// TCP session. The shared pool may dispatch each statement on a different
+	// connection, so we acquire a dedicated 1-conn handle here and run all three
+	// queries through it.
+	if h.SessionConn == nil {
+		return nil, fmt.Errorf("userJourney requires a clickhouse session factory")
 	}
+	conn, err := h.SessionConn()
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire pinned clickhouse connection: %w", err)
+	}
+	defer func() {
+		if cerr := conn.Close(); cerr != nil {
+			h.Logger.Warn(ctx, "failed to close userJourney clickhouse session: %s", cerr)
+		}
+	}()
 
-	chCtx := clickhouse.Context(ctx,
-		clickhouse.WithSettings(clickhouse.Settings{
-			"session_id":      uuid.NewString(),
-			"session_timeout": 60, // seconds
-		}))
+	chCtx := clickhouse.Context(context.Background(), clickhouse.WithQueryID(uuid.NewString()))
+
 	for i := 0; i < len(queries)-1; i++ {
 		_start := time.Now()
 		h.Logger.Debug(ctx, "Executing query %d: %s", i+1, queries[i])
-		_, err = conn.ExecContext(chCtx, queries[i])
+		err = conn.Exec(chCtx, queries[i])
 
 		if time.Since(_start) > 2*time.Second {
 			h.Logger.Warn(ctx, "Query execution took longer than 2s: %s", queries[i])
@@ -120,7 +127,7 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _conn
 	var rawData []UserJourneyRawData
 	_start := time.Now()
 	h.Logger.Debug(ctx, "Executing query: %s", queries[len(queries)-1])
-	if err = conn.SelectContext(chCtx, &rawData, queries[len(queries)-1]); err != nil {
+	if err = conn.Select(chCtx, &rawData, queries[len(queries)-1]); err != nil {
 		for j := 0; j < len(queries); j++ {
 			h.Logger.Error(ctx, "UserJourney query failed: %s", queries[j])
 		}

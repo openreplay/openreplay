@@ -15,6 +15,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/analytics/model"
+	chdb "openreplay/backend/pkg/db/clickhouse"
 )
 
 const (
@@ -38,7 +39,7 @@ type QueryBuilder interface {
 	Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error)
 }
 
-func NewQueryBuilder(logger logger.Logger, p *Payload) (QueryBuilder, error) {
+func NewQueryBuilder(logger logger.Logger, p *Payload, sessionConn chdb.SessionFactory) (QueryBuilder, error) {
 	switch p.MetricType {
 	case MetricTypeTimeseries:
 		return &TimeSeriesQueryBuilder{Logger: logger}, nil
@@ -48,13 +49,13 @@ func NewQueryBuilder(logger logger.Logger, p *Payload) (QueryBuilder, error) {
 		if p.MetricOf == "jsException" {
 			return &TableErrorsQueryBuilder{Logger: logger}, nil
 		}
-		return &TableQueryBuilder{Logger: logger}, nil
+		return &TableQueryBuilder{Logger: logger, SessionConn: sessionConn}, nil
 	case MetricTypeHeatmap:
 		return &HeatmapSessionQueryBuilder{Logger: logger}, nil
 	case MetricTypeSession:
 		return &HeatmapQueryBuilder{Logger: logger}, nil
 	case MetricUserJourney:
-		return &UserJourneyQueryBuilder{Logger: logger}, nil
+		return &UserJourneyQueryBuilder{Logger: logger, SessionConn: sessionConn}, nil
 	case MetricWebVitals:
 		return WebVitalsQueryBuilder{Logger: logger}, nil
 	default:
