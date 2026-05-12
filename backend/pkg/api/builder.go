@@ -20,16 +20,17 @@ import (
 	"openreplay/backend/pkg/analytics/users"
 	usersAPI "openreplay/backend/pkg/analytics/users/api"
 	"openreplay/backend/pkg/api_key"
-	"openreplay/backend/pkg/jobs"
 	"openreplay/backend/pkg/assist/proxy"
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/conditions"
 	conditionsApi "openreplay/backend/pkg/conditions/projects_api"
+	chdb "openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/events"
 	eventAPI "openreplay/backend/pkg/events/api"
 	"openreplay/backend/pkg/favorite"
 	favoriteAPI "openreplay/backend/pkg/favorite/api"
+	"openreplay/backend/pkg/jobs"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/notes"
@@ -69,7 +70,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 
 	reqValidator := validator.New()
@@ -192,7 +193,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	chartsService, err := charts.New(log, chconn, segmentsService)
+	chartsService, err := charts.New(log, chconn, chSessionFactory, segmentsService)
 	if err != nil {
 		return nil, err
 	}
