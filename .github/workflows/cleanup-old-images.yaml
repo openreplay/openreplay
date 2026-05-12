@@ -28,7 +28,6 @@ jobs:
       matrix:
         image:
           - kafka
-          - minio
           - postgres
           - valkey
     steps:

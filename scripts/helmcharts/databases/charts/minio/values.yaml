@@ -15,13 +15,13 @@ global:
 #    - myRegistryKeySecretName
 #   storageClass: myStorageClass
 
-## Bitnami MinIO image version
-## ref: https://hub.docker.com/r/bitnami/minio/tags/
+## RustFS image (S3-compatible MinIO replacement)
+## ref: https://hub.docker.com/r/rustfs/rustfs/tags
 ##
 image:
-  registry: ghcr.io
-  repository: openreplay/minio
-  tag: "2025"
+  registry: docker.io
+  repository: rustfs/rustfs
+  tag: "1.0.0-beta.1"
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -265,7 +265,7 @@ persistence:
 
   ## Data volume mount path
   ##
-  mountPath: /bitnami/minio/data
+  mountPath: /data
 
   ## Persistent Volume Access Mode
   ##

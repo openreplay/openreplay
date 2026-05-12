@@ -126,8 +126,9 @@ minio:
   #    accessKey: "{{ minio_access_key }}"
   #    secretKey: "{{ minio_secret_key }}"
   image:
-    repository: openreplay/minio
-    tag: 2025
+    registry: docker.io
+    repository: rustfs/rustfs
+    tag: 1.0.0-beta.1
   fullnameOverride: minio
   enabled: true
   resources:
