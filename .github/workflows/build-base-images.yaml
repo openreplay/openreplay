@@ -47,7 +47,7 @@ jobs:
           # Define all available images with their versions
           # Format: image:version or just image (for single version)
           # migration: DB migration scripts image, tagged with Chart.yaml AppVersion
-          ALL_IMAGES='["kafka", "minio", "postgres:17", "postgres:18", "migration", "valkey"]'
+          ALL_IMAGES='["kafka", "postgres:17", "postgres:18", "migration", "valkey"]'
 
           if [[ "$IMAGES_INPUT" == "all" ]] || [[ -z "$IMAGES_INPUT" ]]; then
             MATRIX="$ALL_IMAGES"
@@ -127,9 +127,6 @@ jobs:
             case "$IMAGE_NAME" in
               kafka)
                 VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
-                ;;
-              minio)
-                VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
                 ;;
               nginx)
                 VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
@@ -267,9 +264,6 @@ jobs:
             case "$IMAGE_NAME" in
               kafka)
                 VERSION=$(grep -oP "kafka~\K[0-9]+" "$DOCKERFILE" || echo "3")
-                ;;
-              minio)
-                VERSION=$(grep -oP "minio>=0\.\K[0-9]{4}" "$DOCKERFILE" || echo "2025")
                 ;;
               nginx)
                 VERSION=$(grep -oP "FROM openresty/openresty:\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" "$DOCKERFILE" || echo "1.27.1.2")
