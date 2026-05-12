@@ -265,7 +265,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 
 	numBreakdowns := len(r.Breakdowns)
 
-	var sessionsSelect []string = []string{"session_id", "user_id", "events_count"}
+	var sessionsSelect []string = []string{"session_id", "user_id", "greatest(1, events_count) AS events_count"}
 	if numBreakdowns > 0 {
 		sessionsSelect = append(sessionsSelect, GetTableBreakdownProjection(r.Breakdowns)...)
 	}
@@ -457,11 +457,14 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, 
 
 	//Determine aggregation column&function
 	main_column := "session_id"
+	mainProjection := "session_id"
 	countFunction := "count(DISTINCT %s)"
 	if r.MetricFormat == MetricFormatUserCount {
 		main_column = "user_id"
+		mainProjection = "user_id"
 	} else if r.MetricFormat == MetricFormatEventCount {
-		main_column = "events_count"
+		main_column = "greatest(1, events_count)"
+		mainProjection = "greatest(1, events_count) AS events_count"
 		countFunction = "sum(%s)"
 	}
 	countFunction = fmt.Sprintf(countFunction, main_column)
@@ -497,7 +500,7 @@ CREATE TEMPORARY TABLE base_%[1]v AS (
        			  LIMIT 1 BY session_id
        			  %[4]v) AS raw
 			GROUP BY ALL);`,
-			tableKey, main_column, strings.Join(queryConditions, " AND "), joinClause, joinEvents, countFunction),
+			tableKey, mainProjection, strings.Join(queryConditions, " AND "), joinClause, joinEvents, countFunction),
 			fmt.Sprintf(`
 SELECT CAST(full_count AS UInt64) AS full_count,
        CAST(number_of_rows AS UInt64)       AS number_of_rows,
