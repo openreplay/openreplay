@@ -66,7 +66,7 @@ SELECT DISTINCT ON (session_id)
 	s.user_state,
 	s.screen_width,
 	s.screen_height,
-	s.events_count,
+	greatest(1, s.events_count) AS events_count,
 	viewed_sessions.session_id>0 AS viewed,
 	count(DISTINCT session_id) OVER() AS total_number_of_sessions
 	%s
@@ -395,7 +395,7 @@ SELECT
 	s.user_device_type,
 	s.user_os,
 	COALESCE(s.user_state, '') AS user_state,
-	s.events_count,
+	GREATEST(1, s.events_count) AS events_count,
 	s.pages_count,
 	ARRAY(SELECT unnest(s.issue_types)::text) AS issue_types,
 	true AS viewed,
