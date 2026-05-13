@@ -460,10 +460,7 @@ export default class FilterStore {
 
     Object.entries(data).forEach(([category, categoryData]) => {
       const { list = [] } = categoryData || {};
-      if (category === 'event') {
-        // skip event properties
-        return;
-      }
+
       const customScope = categoryData.scope;
       if (category === 'events') {
         const autoCaptured = list.filter(
