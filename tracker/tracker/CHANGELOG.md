@@ -1,3 +1,7 @@
+## 17.2.10
+
+- fix for select value tracking
+
 ## 17.2.9
 
 - dedupe order q for child iframes array
