@@ -182,10 +182,12 @@ export default function (app: App, opts: Partial<Options>): void {
 
   const inputValues: Map<number, string> = new Map()
   const checkboxValues: Map<number, boolean> = new Map()
+  const selectValues: Map<number, string> = new Map()
 
   app.attachStopCallback(() => {
     inputValues.clear()
     checkboxValues.clear()
+    selectValues.clear()
     tagSelectorMap.clear()
   })
 
@@ -205,6 +207,14 @@ export default function (app: App, opts: Partial<Options>): void {
     app.send(SetInputChecked(id, value))
   }
 
+  function trackSelectValue(id: number, node: HTMLSelectElement) {
+    if (selectValues.get(id) === node.value) {
+      return
+    }
+    selectValues.set(id, node.value)
+    sendInputValue(id, node)
+  }
+
   // The only way (to our knowledge) to track all kinds of input changes, including those made by JS
   app.ticker.attach(() => {
     inputValues.forEach((value, id) => {
@@ -216,6 +226,11 @@ export default function (app: App, opts: Partial<Options>): void {
       const node = app.nodes.getNode(id) as HTMLInputElement
       if (!node) return checkboxValues.delete(id)
       trackCheckboxValue(id, node.checked)
+    })
+    selectValues.forEach((_, id) => {
+      const node = app.nodes.getNode(id) as HTMLSelectElement
+      if (!node) return selectValues.delete(id)
+      trackSelectValue(id, node)
     })
   }, 3)
 
@@ -243,8 +258,8 @@ export default function (app: App, opts: Partial<Options>): void {
 
       // TODO: support multiple select (?): use selectedOptions;
       if (hasTag(node, 'select')) {
-        sendInputValue(id, node)
-        app.nodes.attachNodeListener(node, 'change', () => sendInputValue(id, node))
+        trackSelectValue(id, node)
+        app.nodes.attachNodeListener(node, 'change', () => trackSelectValue(id, node))
       }
 
       if (isTextFieldElement(node)) {
