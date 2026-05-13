@@ -118,7 +118,7 @@ function FunnelView({ data }: FunnelViewProps) {
                   </div>
                   {i > 0 && (
                     <div className={`funnel-bar-dropped${droppedCount > 0 ? '' : ' no-drop'}`}>
-                      <svg viewBox="0 0 16 16" width="12" height="12" fill={droppedCount > 0 ? '#cc0000' : '#ccc'}>
+                      <svg viewBox="0 0 16 16" width="12" height="12">
                         <path d="M8 1l6 10H2z" transform="rotate(180 8 8)"/>
                       </svg>
                       <span>{numberWithCommas(droppedCount)} Skipped</span>
