@@ -20,6 +20,7 @@ $fn_def$, :'next_version')
 --
 
 DROP TABLE IF EXISTS public.errors_tags;
+DROP TABLE IF EXISTS public.user_favorite_errors;
 DROP TABLE IF EXISTS events.errors;
 DROP TABLE IF EXISTS public.errors;
 DROP TYPE IF EXISTS error_source;
