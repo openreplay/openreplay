@@ -41,7 +41,7 @@ const CountryFlag: FC<CountryFlagProps> = ({
 
   const renderGeoInfo = displayGeoInfo && (
     <span className="mx-1">
-      <TextEllipsis text={displayGeoInfo} maxWidth="150px" />
+      <TextEllipsis text={displayGeoInfo} maxWidth="300px" />
     </span>
   );
 

@@ -137,7 +137,7 @@ export default class QueueSender {
       }
     }
 
-    fetch(`${this.ingestURL}?batch=${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}`, {
+    fetch(`${this.ingestURL}?batch=${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}&keepalive=${useKeepalive ? 'yes' : 'no'}`, {
       // @ts-ignore
       body: batch,
       method: 'POST',
