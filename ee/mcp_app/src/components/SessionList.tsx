@@ -20,6 +20,7 @@ interface Session {
 interface SessionListProps {
   sessions: Session[];
   siteId: string;
+  callServerTool?: (req: { name: string; arguments: Record<string, unknown> }) => Promise<any>;
 }
 
 const MAX_USER_NAME_LENGTH = 20;
@@ -32,7 +33,7 @@ function truncate(str: string, max: number): string {
   return str.slice(0, max) + '...';
 }
 
-function SessionList({ sessions }: SessionListProps) {
+function SessionList({ sessions, siteId, callServerTool }: SessionListProps) {
   const formatDuration = (ms: number) => {
     if (!ms) return '0:00';
     const seconds = Math.floor(ms / 1000);
@@ -159,19 +160,37 @@ function SessionList({ sessions }: SessionListProps) {
                 </div>
               </div>
 
-              {/* Play button */}
+              {/* Play button — launches view_session_replay inside the chat */}
               <div className="session-item-actions">
-                <a
-                  href={session.replayUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="session-play-button"
-                  title="Play session replay"
-                >
-                  <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
-                    <path d="M0 0L12 7L0 14V0Z" fill="currentColor"/>
-                  </svg>
-                </a>
+                {callServerTool ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void callServerTool({
+                        name: 'view_session_replay',
+                        arguments: { sessionId: session.sessionId, siteId },
+                      });
+                    }}
+                    className="session-play-button"
+                    title="View session replay here"
+                  >
+                    <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+                      <path d="M0 0L12 7L0 14V0Z" fill="currentColor"/>
+                    </svg>
+                  </button>
+                ) : (
+                  <a
+                    href={session.replayUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="session-play-button"
+                    title="Play session replay"
+                  >
+                    <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+                      <path d="M0 0L12 7L0 14V0Z" fill="currentColor"/>
+                    </svg>
+                  </a>
+                )}
               </div>
             </div>
           );
