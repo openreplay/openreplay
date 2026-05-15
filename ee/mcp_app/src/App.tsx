@@ -73,6 +73,19 @@ function App() {
     [app],
   );
 
+  // App-initiated tool calls don't fire `ontoolresult` (that's only for
+  // host-driven calls), so feed the result through handleToolResult ourselves
+  // — otherwise the UI never switches views after the tool resolves.
+  const callServerToolAndApply = useCallback(
+    async (req: { name: string; arguments: Record<string, unknown> }) => {
+      if (!app) throw new Error('App not initialized');
+      const result = await app.callServerTool(req);
+      await handleToolResult(result, app);
+      return result;
+    },
+    [app, handleToolResult],
+  );
+
   // Apply host styles and theme
   useHostStyles(app);
   useHostStyleVariables(app);
@@ -262,6 +275,7 @@ function App() {
           <SessionList
             sessions={state.sessionListData.sessions}
             siteId={state.sessionListData.siteId}
+            callServerTool={callServerToolAndApply}
           />
         )}
 
@@ -294,6 +308,11 @@ function App() {
             siteId={state.replayData.siteId}
             callServerTool={callServerTool}
             app={app}
+            onBack={
+              state.sessionListData
+                ? () => setState(prev => ({ ...prev, currentView: 'session_list' }))
+                : undefined
+            }
           />
         )}
       </div>

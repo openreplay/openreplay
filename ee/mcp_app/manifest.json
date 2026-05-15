@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "openreplay",
   "display_name": "OpenReplay MCP",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "View OpenReplay sessions, charts, and replays from Claude.",
   "author": {
     "name": "OpenReplay"

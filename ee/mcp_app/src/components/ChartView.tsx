@@ -188,6 +188,18 @@ function extractSeriesNames(chart: any[]): string[] {
   return keys;
 }
 
+function readThemeColors() {
+  const root = getComputedStyle(document.documentElement);
+  const v = (name: string) => root.getPropertyValue(name).trim();
+  return {
+    text: v('--or-text-primary'),
+    surface: v('--or-white'),
+    border: v('--or-border'),
+    grid: v('--or-gray-lightest'),
+    axisLabel: v('--or-gray-dark'),
+  };
+}
+
 function buildChartOptions(chartData: ChartData, isDark: boolean): any {
   const categories = chartData.chart.map((item) => item.time);
 
@@ -224,16 +236,28 @@ function buildChartOptions(chartData: ChartData, isDark: boolean): any {
     smooth: true,
   }));
 
+  const c = readThemeColors();
+
   return {
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'cross' },
+      axisPointer: {
+        type: 'cross',
+        lineStyle: { color: c.axisLabel, opacity: 0.4 },
+        crossStyle: { color: c.axisLabel, opacity: 0.4 },
+        label: { backgroundColor: c.axisLabel, color: c.surface },
+      },
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      textStyle: { color: c.text },
+      extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);',
     },
     legend: {
       type: 'plain',
       show: true,
       top: 0,
       data: chartData.namesMap,
+      textStyle: { color: c.text },
     },
     grid: {
       left: '3%',
@@ -246,10 +270,17 @@ function buildChartOptions(chartData: ChartData, isDark: boolean): any {
       type: 'category',
       boundaryGap: false,
       data: categories,
+      axisLine: { lineStyle: { color: c.border } },
+      axisTick: { lineStyle: { color: c.border } },
+      axisLabel: { color: c.axisLabel },
     },
     yAxis: {
       type: 'value',
       minInterval: 1,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: c.axisLabel },
+      splitLine: { lineStyle: { color: c.grid } },
     },
     dataset: {
       id: 'main',

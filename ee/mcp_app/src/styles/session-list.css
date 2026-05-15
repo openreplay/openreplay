@@ -220,6 +220,8 @@
 .session-play-button {
   width: 36px;
   height: 36px;
+  padding: 0;
+  font: inherit;
   border-radius: 50%;
   background: var(--or-white);
   border: 1px solid var(--or-border);

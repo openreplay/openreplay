@@ -140,109 +140,144 @@ function SankeyView({ data }: SankeyViewProps) {
       .filter(l => mainNodeIndices.includes(l.source))
       .reduce((sum, l) => sum + l.value, 0);
 
-    const option: any = {
-      tooltip: {
-        trigger: 'item',
-        formatter: (params: any) => {
-          if ('source' in params.data && 'target' in params.data) {
-            const sourceName = shortenString(echartNodes[params.data.source]?.name || '');
-            const targetName = shortenString(echartNodes[params.data.target]?.name || '');
-            const sourceVal = nodeValues[params.data.source] || 0;
-            return `<div style="font-size:13px;max-width:300px">
-              <div style="font-weight:600;color:#394eff">&larr; ${sourceName}</div>
-              <div>${sourceVal} sessions</div>
-              <div style="font-weight:600;color:#394eff;margin-top:6px">&rarr; ${targetName}</div>
-              <div>${params.data.value} (${params.data.percentage?.toFixed(1)}%) sessions</div>
-            </div>`;
-          }
-          if ('name' in params.data) {
-            return `<div style="font-size:13px">
-              <div style="font-weight:600">${params.data.name}</div>
-              <div>${params.value} sessions</div>
-            </div>`;
-          }
-        },
-        backgroundColor: 'var(--color-background-primary, #fff)',
-        borderColor: 'var(--color-border-primary, #e5e7eb)',
-        textStyle: { color: 'var(--color-text-primary, #000)' },
-      },
-      series: [
-        {
-          animation: false,
-          layoutIterations: 0,
-          type: 'sankey',
-          data: echartNodes,
-          links: echartLinks,
-          emphasis: {
-            focus: 'trajectory',
-            lineStyle: { opacity: 0.5 },
-          },
-          top: 40,
-          label: {
-            show: true,
-            position: 'top',
-            textShadowColor: 'transparent',
-            textBorderColor: 'transparent',
-            align: 'left',
-            overflow: 'truncate',
-            maxWidth: 120,
-            distance: 3,
-            formatter(params: any) {
-              const nodeVal = params.value;
-              const percentage = startNodeValue
-                ? `${((nodeVal / startNodeValue) * 100).toFixed(1)}%`
-                : '0%';
-              const maxLen = 24;
-              const safeName = params.name.length > maxLen
-                ? `${params.name.slice(0, maxLen / 2 - 1)}...${params.name.slice(-(maxLen / 2 - 1))}`
-                : params.name;
-              return `{header|${safeName}}\n{percentage|${percentage}}  {sessions|${nodeVal}}`;
-            },
-            rich: {
-              header: {
-                fontWeight: '600',
-                fontSize: 11,
-                color: 'var(--color-text-primary, #333)',
-              },
-              percentage: {
-                fontSize: 11,
-                color: 'var(--color-text-secondary, #666)',
-              },
-              sessions: {
-                fontSize: 11,
-                fontFamily: "monospace",
-                color: 'var(--color-text-secondary, #666)',
-              },
-            },
-          },
-          nodeAlign: 'left',
-          nodeWidth: 40,
-          nodeGap: 40,
-          lineStyle: {
-            color: 'source',
-            curveness: 0.6,
-            opacity: 0.1,
-          },
-          itemStyle: {
-            color: '#394eff',
-            borderRadius: 7,
-          },
-        },
-      ],
+    const isDark = () =>
+      document.documentElement.getAttribute('data-theme') === 'dark';
+
+    const readThemeColors = () => {
+      const root = getComputedStyle(document.documentElement);
+      const v = (name: string) => root.getPropertyValue(name).trim();
+      return {
+        text: v('--or-text-primary'),
+        textMuted: v('--or-text-secondary'),
+        surface: v('--or-white'),
+        border: v('--or-border'),
+        // High-contrast accent for tooltip section headers: darker blue on light
+        // backgrounds, brighter blue on dark — keeps the "from/to" labels legible
+        // against the themed surface.
+        accent: isDark() ? v('--or-teal') : v('--or-teal-dark'),
+      };
     };
 
-    try {
-      chart.setOption(option);
-    } catch (e) {
-      console.error('Sankey render error:', e);
-    }
+    const buildOption = (): any => {
+      const c = readThemeColors();
+
+      return {
+        tooltip: {
+          trigger: 'item',
+          formatter: (params: any) => {
+            if ('source' in params.data && 'target' in params.data) {
+              const sourceName = shortenString(echartNodes[params.data.source]?.name || '');
+              const targetName = shortenString(echartNodes[params.data.target]?.name || '');
+              const sourceVal = nodeValues[params.data.source] || 0;
+              return `<div style="font-size:13px;max-width:300px">
+                <div style="font-weight:600;color:${c.accent}">&larr; ${sourceName}</div>
+                <div>${sourceVal} sessions</div>
+                <div style="font-weight:600;color:${c.accent};margin-top:6px">&rarr; ${targetName}</div>
+                <div>${params.data.value} (${params.data.percentage?.toFixed(1)}%) sessions</div>
+              </div>`;
+            }
+            if ('name' in params.data) {
+              return `<div style="font-size:13px">
+                <div style="font-weight:600">${params.data.name}</div>
+                <div>${params.value} sessions</div>
+              </div>`;
+            }
+          },
+          backgroundColor: c.surface,
+          borderColor: c.border,
+          textStyle: { color: c.text },
+          extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);',
+        },
+        series: [
+          {
+            animation: false,
+            layoutIterations: 0,
+            type: 'sankey',
+            data: echartNodes,
+            links: echartLinks,
+            emphasis: {
+              focus: 'trajectory',
+              lineStyle: { opacity: isDark() ? 0.55 : 0.7 },
+            },
+            top: 40,
+            label: {
+              show: true,
+              position: 'top',
+              textShadowColor: 'transparent',
+              textBorderColor: 'transparent',
+              align: 'left',
+              overflow: 'truncate',
+              maxWidth: 120,
+              distance: 3,
+              formatter(params: any) {
+                const nodeVal = params.value;
+                const percentage = startNodeValue
+                  ? `${((nodeVal / startNodeValue) * 100).toFixed(1)}%`
+                  : '0%';
+                const maxLen = 24;
+                const safeName = params.name.length > maxLen
+                  ? `${params.name.slice(0, maxLen / 2 - 1)}...${params.name.slice(-(maxLen / 2 - 1))}`
+                  : params.name;
+                return `{header|${safeName}}\n{percentage|${percentage}}  {sessions|${nodeVal}}`;
+              },
+              rich: {
+                header: {
+                  fontWeight: '600',
+                  fontSize: 11,
+                  color: c.text,
+                },
+                percentage: {
+                  fontSize: 11,
+                  color: c.textMuted,
+                },
+                sessions: {
+                  fontSize: 11,
+                  fontFamily: "monospace",
+                  color: c.textMuted,
+                },
+              },
+            },
+            nodeAlign: 'left',
+            nodeWidth: 40,
+            nodeGap: 40,
+            lineStyle: {
+              color: 'source',
+              curveness: 0.6,
+              opacity: 0.1,
+            },
+            itemStyle: {
+              color: '#394eff',
+              borderRadius: 7,
+            },
+          },
+        ],
+      };
+    };
+
+    const render = () => {
+      try {
+        chart.setOption(buildOption(), true);
+      } catch (e) {
+        console.error('Sankey render error:', e);
+      }
+    };
+
+    render();
 
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(chartRef.current);
 
+    // Re-render on host theme toggle so rich-text label colors track dark mode.
+    const themeObs = new MutationObserver(render);
+    themeObs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
     return () => {
       chart.dispose();
       ro.disconnect();
+      themeObs.disconnect();
     };
   }, [data]);
 
