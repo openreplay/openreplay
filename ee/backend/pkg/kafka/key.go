@@ -2,7 +2,7 @@ package kafka
 
 import "encoding/binary"
 
-const PARTITIONS_EXPONENT = 3
+const PARTITIONS_EXPONENT = 4
 const PARTITIONS_MAX_INDEX uint64 = 1<<PARTITIONS_EXPONENT - 1
 
 func getKeyPartition(key uint64) int32 {
