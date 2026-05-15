@@ -1,8 +1,9 @@
+import { Tooltip } from 'antd';
 import cn from 'classnames';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
-import React, { useState, useCallback, useMemo } from 'react';
-import { RouteComponentProps, useHistory, withRouter } from 'App/routing';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -12,6 +13,7 @@ import {
   liveSession,
   sessions as sessionsRoute,
 } from 'App/routes';
+import { RouteComponentProps, useHistory, withRouter } from 'App/routing';
 import { capitalize } from 'App/utils';
 import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
 
@@ -20,8 +22,6 @@ import ErrorBars from './ErrorBars';
 import PlayLink from './PlayLink';
 import SessionMetaList from './SessionMetaList';
 import stl from './sessionItem.module.css';
-import { useTranslation } from 'react-i18next';
-import { Tooltip } from 'antd';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();
@@ -395,7 +395,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                 slim ? 'gap-1' : 'gap-2',
               )}
             >
-              <div style={{ height: slim ? undefined : '21px' }}>
+              <div
+                style={{ height: slim ? undefined : '21px' }}
+                className="flex items-center"
+              >
                 <CountryFlag
                   userCity={userCity}
                   userState={userState}
