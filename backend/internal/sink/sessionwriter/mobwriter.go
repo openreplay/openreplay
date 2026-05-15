@@ -89,10 +89,15 @@ func (w *MobWriter) HandleBatch(data []byte, batch *messages.BatchInfo) {
 	switch batch.Type() {
 	case messages.FullBatch, messages.PlayerBatch, messages.AssetsBatch:
 		if batch.DataTimestamp()-sess.startTime <= w.fileSplitTime.Milliseconds() {
+			if sess.stopped[idxDomS] {
+				return
+			}
+
 			if err := w.pool.Write(sess.paths[idxDomS], sess.header, data); err != nil {
 				if errors.Is(err, ErrSizeLimitExceeded) {
 					sess.stopped[idxDomS] = true
-					w.log.Warn(ctx, "domE exceeded max file size for session %d", batch.SessionID())
+					sess.stopped[idxDomE] = true // no needs to collect the second part of the session
+					w.log.Warn(ctx, "domS exceeded max file size for session %d", batch.SessionID())
 					return
 				}
 				w.log.Error(ctx, "domS write error: %s", err)
@@ -104,7 +109,7 @@ func (w *MobWriter) HandleBatch(data []byte, batch *messages.BatchInfo) {
 			if err := w.pool.Write(sess.paths[idxDomE], nil, data); err != nil {
 				if errors.Is(err, ErrSizeLimitExceeded) {
 					sess.stopped[idxDomE] = true
-					w.log.Warn(ctx, "domE exceeded max file size for session %d", batch.SessionID())
+					w.log.Warn(ctx, "domS exceeded max file size for session %d", batch.SessionID())
 					return
 				}
 				w.log.Error(ctx, "domE write error: %s", err)
