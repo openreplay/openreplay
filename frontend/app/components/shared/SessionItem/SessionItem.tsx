@@ -13,7 +13,7 @@ import {
   sessions as sessionsRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
-import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
+import { Avatar, CountryFlag, DbIPNotice, Icon, Label, TextEllipsis } from 'UI';
 
 import Counter from './Counter';
 import ErrorBars from './ErrorBars';
@@ -395,13 +395,17 @@ function SessionItem(props: RouteComponentProps & Props) {
                 slim ? 'gap-1' : 'gap-2',
               )}
             >
-              <div style={{ height: slim ? undefined : '21px' }}>
+              <div
+                style={{ height: slim ? undefined : '21px' }}
+                className="flex items-center"
+              >
                 <CountryFlag
                   userCity={userCity}
                   userState={userState}
                   country={userCountry}
                   showLabel={true}
                 />
+                <DbIPNotice className="ml-1" />
               </div>
               <div className="flex items-center text-sm text-neutral-500">
                 {userBrowser && (
