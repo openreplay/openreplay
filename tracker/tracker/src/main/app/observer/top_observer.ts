@@ -225,6 +225,7 @@ export default class TopObserver extends Observer {
       observer.handleShadowRoot(shadow)
       return shadow
     }
+    this.resetThrottledSetNodeData()
     this.app.nodes.clear()
     // Can observe documentElement (<html>) here, because it is not supposed to be changing.
     // However, it is possible in some exotic cases and may cause an ignorance of the newly created <html>

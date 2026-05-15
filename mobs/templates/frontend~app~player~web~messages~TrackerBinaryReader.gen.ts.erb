@@ -11,6 +11,8 @@ const SIZE_BYTES = 3
 const NO_SIZE_TYPES = new Set([80, 81, 82])
 
 export default class TrackerBinaryReader extends PrimitiveReader {
+  batchMetaMessages: any[] = []
+
   readMessage(): RawMessage | null {
     const p = this.p
     const resetPointer = () => {
@@ -31,6 +33,14 @@ export default class TrackerBinaryReader extends PrimitiveReader {
         const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
         const timestamp = this.readInt(); if (timestamp === null) { return resetPointer() }
         const location = this.readString(); if (location === null) { return resetPointer() }
+        this.batchMetaMessages.push({
+          tp: 81,
+          version,
+          pageNo,
+          firstIndex,
+          timestamp,
+          location,
+        });
         return this.readMessage()
       }
       case 82: {

@@ -709,4 +709,8 @@ export default abstract class Observer {
     this.throttledSetNodeData.clear()
     this.generation++
   }
+
+  protected resetThrottledSetNodeData(): void {
+    this.throttledSetNodeData.clear()
+  }
 }
