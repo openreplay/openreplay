@@ -25,7 +25,7 @@ COPY . .
 
 RUN useradd -u 1001 -m openreplay
 USER 1001
-ADD --chown=1001 https://static.openreplay.com/geoip/GeoLite2-City.mmdb  $MAXMINDDB_FILE
+ADD --chown=1001 https://static.openreplay.com/geoip/dbip-city-lite.mmdb  $MAXMINDDB_FILE
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD npm start
