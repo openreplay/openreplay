@@ -117,7 +117,6 @@ function UserCard({ className, width, height }) {
             <span className="mx-1 font-bold text-xl">&#183;</span>
             {userCity && <span className="mr-1">{userCity},</span>}
             <span>{countries[userCountry]}</span>
-            <DbIPNotice className="ml-1" />
             <span className="mx-1 font-bold text-xl">&#183;</span>
             <span>
               {userBrowser ? `${capitalize(userBrowser)}, ` : ''}
@@ -133,9 +132,13 @@ function UserCard({ className, width, height }) {
                     comp={<CountryFlag country={userCountry} height={11} />}
                     label={countries[userCountry]}
                     value={
-                      <span style={{ whiteSpace: 'nowrap' }}>
+                      <span
+                        className="inline-flex items-center"
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         {userCity && <span className="mr-1">{userCity},</span>}
                         {userState && <span className="mr-1">{userState}</span>}
+                        <DbIPNotice className="ml-1" />
                       </span>
                     }
                   />
