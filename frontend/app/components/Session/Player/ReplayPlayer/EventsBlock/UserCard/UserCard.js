@@ -3,7 +3,7 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip } from 'UI';
+import { Avatar, TextEllipsis, CountryFlag, DbIPNotice, Icon, Tooltip } from 'UI';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import SessionInfoItem from 'Components/Session_/SessionInfoItem';
@@ -117,6 +117,7 @@ function UserCard({ className, width, height }) {
             <span className="mx-1 font-bold text-xl">&#183;</span>
             {userCity && <span className="mr-1">{userCity},</span>}
             <span>{countries[userCountry]}</span>
+            <DbIPNotice className="ml-1" />
             <span className="mx-1 font-bold text-xl">&#183;</span>
             <span>
               {userBrowser ? `${capitalize(userBrowser)}, ` : ''}

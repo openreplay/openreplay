@@ -21,6 +21,7 @@ export { default as Tabs } from './Tabs';
 export { default as Notification } from './Notification';
 export { default as JSONTree } from './JSONTree';
 export { default as CountryFlag } from './CountryFlag';
+export { default as DbIPNotice } from './CountryFlag/DbIPNotice';
 export { default as confirm, MountPoint } from './Confirmation';
 export { default as SideMenuitem } from './SideMenuItem';
 export { default as Avatar } from './Avatar';
