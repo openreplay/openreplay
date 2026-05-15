@@ -1,3 +1,7 @@
+## 18.0.7
+
+- cancel queued attribute messages on tracker restart
+
 ## 18.0.6
 
 - keepalive requests will not have live budget counter to prevent overflowing of 64kb quota
