@@ -108,12 +108,13 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
   const {
     sessionStore: { devTools },
     uiPlayerStore,
+    sessionStore,
   } = useStore();
 
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
-
+  const sessionId = sessionStore.current.sessionId;
   const _list = useRef<VListHandle>(null);
   const { filter } = devTools[INDEX_KEY];
   const { activeTab } = devTools[INDEX_KEY];
@@ -297,6 +298,7 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
                 log={log}
                 key={i}
                 jump={jump}
+                sessionId={sessionId}
                 iconProps={getIconProps(log.level)}
                 renderWithNL={renderWithNL}
                 onClick={() => showDetails(log)}
