@@ -54,7 +54,7 @@ function ApiKeySettings() {
       </div>
       <div>
         <Button
-          disabled={isAdmin}
+          disabled={!isAdmin}
           onClick={onRegenerate}
           loading={regenerating}
         >
