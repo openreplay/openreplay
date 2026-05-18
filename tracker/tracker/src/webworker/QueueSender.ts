@@ -103,7 +103,7 @@ export default class QueueSender {
       this.sendNext()
       return
     }
-    const batchNumStr = batchNum?.toString().replace(/^([^_]+)_([^_]+).*/, '$1_$2_$3')
+    const batchNumStr = batchNum?.toString().replace(/^([^_]+)_([^_]+).*/, '$1_$2')
     this.busy = true
 
     const headers = {
@@ -137,13 +137,24 @@ export default class QueueSender {
       }
     }
 
-    fetch(`${this.ingestURL}?batch=${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}&keepalive=${useKeepalive ? 'yes' : 'no'}`, {
-      // @ts-ignore
-      body: batch,
-      method: 'POST',
-      headers,
-      keepalive: useKeepalive,
-    })
+    const batchSize = batch.byteLength
+    // its simply more human readable even if this looks like boilerplate code
+    let url = this.ingestURL;
+    url += `?batch=${this.pageNo ?? 0}`
+    url += `_${batchNumStr ?? 0}`
+    url += `&keepalive=${useKeepalive ? 'yes' : 'no'}`
+    url += `&batchSize=${batchSize}`
+
+    fetch(
+      url,
+      {
+        // @ts-ignore
+        body: batch,
+        method: 'POST',
+        headers,
+        keepalive: useKeepalive,
+      }
+    )
       .then((r: Record<string, any>) => {
         releaseKeepalive()
         r.body?.cancel().catch(() => {})
