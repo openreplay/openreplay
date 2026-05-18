@@ -14,10 +14,23 @@ import (
 )
 
 const (
-	idxDomS     = 0
-	idxDomE     = 1
-	idxDevtools = 2
+	idxDomS = iota
+	idxDomE
+	idxDevtools
 )
+
+func typeToString(i int) string {
+	switch i {
+	case idxDomS:
+		return "domS"
+	case idxDomE:
+		return "domE"
+	case idxDevtools:
+		return "devtools"
+	default:
+		return "unknown"
+	}
+}
 
 var headerV1 = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 var headerV2 = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe}
@@ -27,6 +40,23 @@ type mobSession struct {
 	header    []byte
 	paths     [3]string // [domS, domE, devtools]
 	stopped   [3]bool   // per-file write stopped due to size limit
+}
+
+func (m *mobSession) Stop(fType int) {
+	switch fType {
+	case idxDomS:
+		m.stopped[idxDomS] = true
+		fallthrough
+	case idxDomE:
+		m.stopped[idxDomE] = true
+		fallthrough
+	case idxDevtools:
+		m.stopped[idxDevtools] = true
+	}
+}
+
+func (m *mobSession) IsStopped(fType int) bool {
+	return m.stopped[fType]
 }
 
 type MobWriter struct {
@@ -85,50 +115,34 @@ func (w *MobWriter) getOrCreateSession(batch *messages.BatchInfo) *mobSession {
 func (w *MobWriter) HandleBatch(data []byte, batch *messages.BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", batch.SessionID())
 	sess := w.getOrCreateSession(batch)
+	fileType := -1
+	fileHeader := sess.header
 
 	switch batch.Type() {
 	case messages.FullBatch, messages.PlayerBatch, messages.AssetsBatch:
 		if batch.DataTimestamp()-sess.startTime <= w.fileSplitTime.Milliseconds() {
-			if sess.stopped[idxDomS] {
-				return
-			}
-
-			if err := w.pool.Write(sess.paths[idxDomS], sess.header, data); err != nil {
-				if errors.Is(err, ErrSizeLimitExceeded) {
-					sess.stopped[idxDomS] = true
-					sess.stopped[idxDomE] = true // no needs to collect the second part of the session
-					w.log.Warn(ctx, "domS exceeded max file size for session %d", batch.SessionID())
-					return
-				}
-				w.log.Error(ctx, "domS write error: %s", err)
-			}
+			fileType = idxDomS
 		} else {
-			if sess.stopped[idxDomE] {
-				return
-			}
-			if err := w.pool.Write(sess.paths[idxDomE], nil, data); err != nil {
-				if errors.Is(err, ErrSizeLimitExceeded) {
-					sess.stopped[idxDomE] = true
-					w.log.Warn(ctx, "domS exceeded max file size for session %d", batch.SessionID())
-					return
-				}
-				w.log.Error(ctx, "domE write error: %s", err)
-			}
+			fileType = idxDomE
+			fileHeader = nil
 		}
 	case messages.DevtoolsBatch:
-		if sess.stopped[idxDevtools] {
-			return
-		}
-		if err := w.pool.Write(sess.paths[idxDevtools], sess.header, data); err != nil {
-			if errors.Is(err, ErrSizeLimitExceeded) {
-				sess.stopped[idxDevtools] = true
-				w.log.Warn(ctx, "devtools exceeded max file size for session %d", batch.SessionID())
-				return
-			}
-			w.log.Error(ctx, "devtools write error: %s", err)
-		}
+		fileType = idxDevtools
 	default:
 		w.log.Debug(ctx, "unknown batch type: %d", batch.Version())
+		return
+	}
+
+	if sess.IsStopped(fileType) {
+		return
+	}
+	if err := w.pool.Write(sess.paths[fileType], fileHeader, data); err != nil {
+		if errors.Is(err, ErrSizeLimitExceeded) {
+			w.log.Warn(ctx, "%s exceeded max file size for session %d", typeToString(fileType), batch.SessionID())
+			sess.Stop(fileType)
+			return
+		}
+		w.log.Error(ctx, "%s write error: %s", typeToString(fileType), err)
 	}
 }
 
