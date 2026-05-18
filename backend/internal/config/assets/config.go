@@ -22,6 +22,7 @@ type Config struct {
 	GroupCache           string            `env:"GROUP_CACHE,required"`
 	TopicRawAssets       string            `env:"TOPIC_RAW_ASSETS,required"`
 	TopicRawWeb          string            `env:"TOPIC_RAW_WEB,required"`
+	TopicTrigger         string            `env:"TOPIC_TRIGGER,required"`
 	AssetsOrigin         string            `env:"ASSETS_ORIGIN,required"`
 	AssetsSizeLimit      int               `env:"ASSETS_SIZE_LIMIT,required"`
 	AssetsRequestHeaders map[string]string `env:"ASSETS_REQUEST_HEADERS"`

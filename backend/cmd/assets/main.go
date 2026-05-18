@@ -116,6 +116,10 @@ func main() {
 
 	msgHandler := func(msg messages.Message) {
 		switch m := msg.(type) {
+		case *messages.SessionEnd:
+			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
+				log.Error(ctx, "can't send SessionEnd to trigger topic: %s", err)
+			}
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
 			assetMetrics.IncreaseProcessesSessions()
