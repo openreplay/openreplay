@@ -83,6 +83,8 @@ var propertyKeyMap = map[string]filterConfig{
 	"FETCHSTATUSCODE": {LogicalProperty: "status", IsNumeric: true, InDProperties: true, InProperties: false},
 	//	For some reason, the code is looking for property-name 'url_path' like event name
 	"URL_PATH": {LogicalProperty: "$current_path", InDProperties: false, InProperties: false},
+	"TAGID":    {LogicalProperty: "tag_id", IsNumeric: true, InDProperties: true, InProperties: false},
+	"TAG_ID":   {LogicalProperty: "tag_id", IsNumeric: true, InDProperties: true, InProperties: false},
 }
 
 // The list of event filters that are represented by columns in the events table
