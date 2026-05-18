@@ -222,6 +222,49 @@ describe('BatchWriter', () => {
       writer.finaliseBatch()
       expect(onBatch).toHaveBeenCalledTimes(1)
     })
+
+    // Pair-flush ordering: when assetBuilder is about to emit (soft-cap or
+    // oversized one-shot), playerBuilder must be flushed first so the DOM
+    // tree always lands before the assets that reference it.
+    test('asset soft-cap flush emits playerBuilder first', () => {
+      const writer = createWriter({ protocolVersion: 2 })
+      // Player msg sits in playerBuilder, hasn't been flushed yet.
+      writer.writeMessage([MType.MouseMove, 100, 200])
+      // First asset msg fits under the 200kB soft cap.
+      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'x'.repeat(150_000), 'http://b.com'])
+      // Second asset msg pushes total past the soft cap and triggers a flush.
+      writer.writeMessage([MType.SetCSSDataURLBased, 2, 'y'.repeat(80_000), 'http://b.com'])
+
+      expect(onBatch).toHaveBeenCalledTimes(2)
+      expect(onBatch.mock.calls[0][2]).toBe('player')
+      expect(onBatch.mock.calls[1][2]).toBe('assets')
+
+      writer.finaliseBatch()
+      // Trailing asset (second large msg) lands on finalise.
+      expect(onBatch).toHaveBeenCalledTimes(3)
+      expect(onBatch.mock.calls[2][2]).toBe('assets')
+    })
+
+    test('oversized asset one-shot emits playerBuilder first', () => {
+      const writer = createWriter({ protocolVersion: 2 })
+      writer.writeMessage([MType.MouseMove, 100, 200])
+      // Single asset msg larger than the soft cap (200kB) but under the hard
+      // cap (1MB) — goes through the oversized one-shot path.
+      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'z'.repeat(250_000), 'http://b.com'])
+
+      expect(onBatch).toHaveBeenCalledTimes(2)
+      expect(onBatch.mock.calls[0][2]).toBe('player')
+      expect(onBatch.mock.calls[1][2]).toBe('assets')
+    })
+
+    test('asset overflow with empty playerBuilder emits only the asset batch', () => {
+      const writer = createWriter({ protocolVersion: 2 })
+      // No player messages — playerBuilder is empty when assetBuilder overflows.
+      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'z'.repeat(250_000), 'http://b.com'])
+
+      expect(onBatch).toHaveBeenCalledTimes(1)
+      expect(onBatch.mock.calls[0][2]).toBe('assets')
+    })
   })
 
   describe('protocol v1: asset messages are regular', () => {

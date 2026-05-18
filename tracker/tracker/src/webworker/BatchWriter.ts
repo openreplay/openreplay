@@ -97,6 +97,9 @@ export default class BatchWriter {
       return
     }
     // Soft-budget hit: flush this stream's batch, retry once on the same builder.
+    // Pair-emit player before assets so the DOM tree always lands first — if the
+    // tab closes between batches, an asset-only batch on the server is useless.
+    if (builder === this.assetBuilder) this.flushBuilder(this.playerBuilder)
     this.flushBuilder(builder)
     if (builder.push(message, ctx)) {
       this.nextIndex++
@@ -110,7 +113,10 @@ export default class BatchWriter {
     }
     this.nextIndex++
     const batch = big.flush()
-    if (batch) this.emitBatch(batch, builder.dataType, false)
+    if (batch) {
+      if (builder === this.assetBuilder) this.flushBuilder(this.playerBuilder)
+      this.emitBatch(batch, builder.dataType, false)
+    }
   }
 
   private flushBuilder(builder: BatchBuilder, skipCompression = false): boolean {
