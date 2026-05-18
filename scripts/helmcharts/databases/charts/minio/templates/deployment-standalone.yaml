@@ -5,6 +5,9 @@ metadata:
   name: {{ include "minio.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels: {{- include "minio.labels" . | nindent 4 }}
+  {{- with .Values.deployment.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if .Values.deployment.updateStrategy }}
   strategy: {{ toYaml .Values.deployment.updateStrategy | nindent 4 }}

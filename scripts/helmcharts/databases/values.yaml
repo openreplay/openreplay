@@ -125,6 +125,9 @@ minio:
   #  minio:
   #    accessKey: "{{ minio_access_key }}"
   #    secretKey: "{{ minio_secret_key }}"
+  deployment:
+    annotations:
+      argocd.argoproj.io/sync-options: Replace=true
   image:
     registry: docker.io
     repository: rustfs/rustfs
