@@ -11,6 +11,7 @@
   "author": "Aleksandr K <alex@openreplay.com>",
   "license": "MIT",
   "type": "module",
+  "types": "./lib/index.d.ts",
   "main": "./lib/index.js",
   "scripts": {
     "tsrun": "tsc",
