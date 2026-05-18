@@ -101,6 +101,7 @@ func main() {
 			os.Exit(0)
 		case <-counterTick:
 			go log.Info(ctx, "count: %d", counter)
+			counter = 0
 			srv.Wait()
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
