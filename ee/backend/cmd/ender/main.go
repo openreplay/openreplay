@@ -211,7 +211,7 @@ func main() {
 							log.Error(sessCtx, "can't send MobileSessionEnd signal to canvas topic: %s", err)
 						}
 					} else {
-						if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
+						if err := producer.Produce(cfg.TopicRawAssets, sessionID, msg.Encode()); err != nil {
 							log.Error(sessCtx, "can't send sessionEnd to raw topic: %s", err)
 							continue
 						}
