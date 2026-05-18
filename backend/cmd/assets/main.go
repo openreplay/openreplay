@@ -118,7 +118,7 @@ func main() {
 		switch m := msg.(type) {
 		case *messages.SessionEnd:
 			if err := producer.Produce(cfg.TopicRawWeb, msg.SessionID(), msg.Encode()); err != nil {
-				log.Error(ctx, "can't send SessionEnd to trigger topic: %s", err)
+				log.Error(ctx, "can't send SessionEnd to raw topic: %s", err)
 			}
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
@@ -138,7 +138,7 @@ func main() {
 	batchIterator := messages.NewAssetsBatchIterator(
 		log,
 		batchHandler,
-		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
+		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgSessionEnd, messages.MsgAssetCache, messages.MsgJSException}, true),
 	)
 
 	msgConsumer, err := queue.NewConsumer(
