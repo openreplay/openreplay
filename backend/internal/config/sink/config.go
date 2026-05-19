@@ -28,6 +28,7 @@ type Config struct {
 	MaxFileSize          int64         `env:"MAX_FILE_SIZE,default=524288000"`
 	SyncWorkers          int           `env:"SYNC_WORKERS,default=16"`
 	SyncInterval         time.Duration `env:"SYNC_INTERVAL,default=30s"`
+	SessionTTL           time.Duration `env:"SESSION_TTL,default=10m"`
 }
 
 func New(log logger.Logger) *Config {

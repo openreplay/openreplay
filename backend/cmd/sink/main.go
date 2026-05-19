@@ -129,6 +129,7 @@ func main() {
 			log.Info(ctx, "sync: fds=%d/%d, synced=%d, size=%.2fMB, dur=%dms",
 				stats.OpenFiles, stats.FilesLimit, stats.FilesSynced,
 				float64(stats.BytesSynced)/(1024*1024), stats.Duration.Milliseconds())
+			mobWriter.EvictStale(cfg.SessionTTL)
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}
