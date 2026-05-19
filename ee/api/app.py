@@ -25,13 +25,11 @@ from routers import ee
 from routers.subs import (
     insights,
     metrics,
-    v1_api,
     health,
     usability_tests,
     spot,
     product_analytics,
 )
-from routers.subs import v1_api_ee
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
@@ -185,8 +183,6 @@ app.include_router(ee.app)
 app.include_router(ee.app_apikey)
 app.include_router(metrics.app)
 app.include_router(insights.app)
-app.include_router(v1_api.app_apikey)
-app.include_router(v1_api_ee.app_apikey)
 app.include_router(health.public_app)
 app.include_router(health.app)
 app.include_router(health.app_apikey)
