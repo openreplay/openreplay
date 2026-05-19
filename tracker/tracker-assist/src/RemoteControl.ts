@@ -111,29 +111,45 @@ export default class RemoteControl {
     this.mouse = null
   }
 
-  scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }
+  private isAuthorized(id: string): boolean {
+    return (
+      this.status === RCStatus.Enabled &&
+      id === this.agentID &&
+      this.mouse !== null
+    )
+  }
+
+  scroll = (id, d) => {
+    if (!this.isAuthorized(id)) return
+    this.mouse!.scroll(d)
+  }
   move = (id, xy) => {
-    return id === this.agentID && this.mouse?.move(xy)
+    if (!this.isAuthorized(id)) return
+    return this.mouse!.move(xy)
   }
   private focused: HTMLElement | SVGElement | null = null
   click = (id, xy) => {
-    if (id !== this.agentID || !this.mouse) { return }
-    this.focused = this.mouse.click(xy)
+    if (!this.isAuthorized(id)) return
+    this.focused = this.mouse!.click(xy)
   }
   focus = (id, el: HTMLElement) => {
+    if (!this.isAuthorized(id)) return
     this.focused = el
   }
   startDrag = (id, xy) => {
-    this.mouse?.startDrag(xy)
+    if (!this.isAuthorized(id)) return
+    this.mouse!.startDrag(xy)
   }
   drag = (id, xydxdy) => {
-    this.mouse?.drag(xydxdy);
+    if (!this.isAuthorized(id)) return
+    this.mouse!.drag(xydxdy);
   }
   stopDrag = (id) => {
-    this.mouse?.stopDrag();
+    if (!this.isAuthorized(id)) return
+    this.mouse!.stopDrag();
   }
   input = (id, value: string) => {
-    if (id !== this.agentID || !this.mouse || !this.focused) { return }
+    if (!this.isAuthorized(id) || !this.focused) return
     if (this.focused instanceof HTMLTextAreaElement
       || this.focused instanceof HTMLInputElement
       || this.focused.tagName === 'INPUT'

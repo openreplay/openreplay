@@ -3,6 +3,21 @@ import attachDND from './dnd.js'
 
 const SS_START_TS_KEY = '__openreplay_assist_call_start_ts'
 
+const FALLBACK_UI_HTML = `<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:14px Roboto,sans-serif;background:#fff;color:#222;padding:8px;width:max-content}
+#or-assist{display:flex;flex-direction:column;gap:6px;min-width:160px}
+button{padding:8px 10px;border:none;border-radius:3px;cursor:pointer;font-weight:600;text-transform:uppercase;font-size:12px;width:100%}
+#end-call-btn{background:#cc0000;color:#fff}
+#end-control-btn{background:#394EFF;color:#fff}
+</style></head><body>
+<div id="or-assist">
+<div id="controls" style="display:none"><button id="end-call-btn">End call</button></div>
+<div id="remote-control-row" style="display:none"><button id="end-control-btn">End remote control</button></div>
+</div>
+</body></html>`
+
 export default class CallWindow {
 	private remoteVideoId: string
 	private readonly iframe: HTMLIFrameElement
@@ -21,6 +36,7 @@ export default class CallWindow {
 	private onToggleVideo: (args: any) => void
 	private tsInterval: ReturnType<typeof setInterval>
 	private remoteVideo: MediaStreamTrack
+	private fallbackMode = false
 
 	private readonly load: Promise<void>
 
@@ -51,7 +67,10 @@ export default class CallWindow {
 		const baseHref = 'https://static.openreplay.com/tracker-assist/widget'
 		// this.load = fetch(this.callUITemplate || baseHref + '/index2.html')
 		this.load = fetch(this.callUITemplate || baseHref + '/index.html')
-			.then((r) => r.text())
+			.then((r) => {
+				if (!r.ok) throw new Error(`Failed to load call UI: HTTP ${r.status}`)
+				return r.text()
+			})
 			.then((text) => {
 				iframe.onload = () => {
 					const assistSection = doc.getElementById('or-assist')
@@ -119,9 +138,25 @@ export default class CallWindow {
 					this.adjustIframeSize()
 				}, 250)
 			})
+			.catch((e) => {
+				logError('OpenReplay: failed to load call UI, rendering fallback', e)
+				this.renderFallbackUI(doc)
+			})
 
 		//this.toggleVideoUI(false)
 		//this.toggleRemoteVideoUI(false)
+	}
+
+	private renderFallbackUI(doc: Document) {
+		this.fallbackMode = true
+		doc.open()
+		doc.write(FALLBACK_UI_HTML)
+		doc.close()
+		this.endCallBtn = doc.getElementById('end-call-btn')
+		this.remoteControlEndBtn = doc.getElementById('end-control-btn')
+		this.controlsContainer = doc.getElementById('controls')
+		this.remoteControlContainer = doc.getElementById('remote-control-row')
+		this.iframe.style.display = 'none'
 	}
 
 	private adjustIframeSize() {
@@ -131,6 +166,13 @@ export default class CallWindow {
 		}
 		this.iframe.style.height = `${doc.body.scrollHeight}px`
 		this.iframe.style.width = `${doc.body.scrollWidth}px`
+		if (this.fallbackMode) {
+			const controlsVisible =
+				!!this.controlsContainer && this.controlsContainer.style.display !== 'none'
+			const rcVisible =
+				!!this.remoteControlContainer && this.remoteControlContainer.style.display !== 'none'
+			this.iframe.style.display = controlsVisible || rcVisible ? '' : 'none'
+		}
 	}
 
 	private checkRemoteVideoInterval: ReturnType<typeof setInterval>

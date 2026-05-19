@@ -17,6 +17,8 @@ import { pkgVersion } from "./version.js";
 import Canvas from "./Canvas.js";
 import { gzip } from "fflate";
 
+const textEncoder = new TextEncoder();
+
 type StartEndCallback = (agentInfo?: Record<string, any>) => (() => any) | void;
 
 interface AgentInfo {
@@ -79,7 +81,7 @@ export default class Assist {
 
   private socket: Socket | null = null;
   private calls: Map<string, RTCPeerConnection> = new Map();
-  private canvasPeers: { [id: number]: RTCPeerConnection | null } = {};
+  private canvasPeers: Map<string, RTCPeerConnection> = new Map();
   private canvasNodeCheckers: Map<number, any> = new Map();
   private assistDemandedRestart = false;
   private callingState: CallingState = CallingState.False;
@@ -157,8 +159,6 @@ export default class Assist {
       this.publishState({ type: "assist_state_check" })
       observer &&
         observer.observe(titleNode, {
-          subtree: true,
-          characterData: true,
           childList: true,
         });
     });
@@ -199,7 +199,7 @@ export default class Assist {
           }
           toSend.forEach((batch) => {
             const str = JSON.stringify(batch);
-            const byteArr = new TextEncoder().encode(str);
+            const byteArr = textEncoder.encode(str);
             gzip(byteArr, { mtime: 0 }, (err, result) => {
               if (err) {
                 this.emit("messages", batch);
@@ -296,9 +296,9 @@ export default class Assist {
       if (args[0] !== "webrtc_call_ice_candidate") {
         app.debug.log("Socket:", ...args);
       }
-      socket.on("close", (e) => {
-        app.debug.warn("Socket closed:", e);
-      });
+    });
+    socket.on("close", (e) => {
+      app.debug.warn("Socket closed:", e);
     });
 
     const onGrand = (id: string) => {
@@ -501,7 +501,7 @@ export default class Assist {
       this.agents[id]?.onDisconnect?.();
       delete this.agents[id];
 
-      Object.values(this.calls).forEach((pc) => pc.close());
+      this.calls.forEach((pc) => pc.close());
       this.calls.clear();
 
       recordingState.stopAgentRecording(id);
@@ -533,7 +533,7 @@ export default class Assist {
     });
 
     socket.on("webrtc_canvas_answer", async (_, data: { answer; id }) => {
-      const pc = this.canvasPeers[data.id];
+      const pc = this.canvasPeers.get(data.id);
       if (pc) {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
@@ -546,7 +546,7 @@ export default class Assist {
     socket.on(
       "webrtc_canvas_ice_candidate",
       async (_, data: { candidate; id }) => {
-        const pc = this.canvasPeers[data.id];
+        const pc = this.canvasPeers.get(data.id);
         if (pc) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
@@ -602,7 +602,7 @@ export default class Assist {
     socket.on(
       "webrtc_call_ice_candidate",
       async (_, data: { from: string; candidate: RTCIceCandidateInit }) => {
-        const pc = this.calls[data.from];
+        const pc = this.calls.get(data.from);
         if (pc) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
@@ -653,7 +653,7 @@ export default class Assist {
 
     // call end handling
     const handleCallEnd = () => {
-      Object.values(this.calls).forEach((pc) => pc.close());
+      this.calls.forEach((pc) => pc.close());
       this.calls.clear();
       Object.values(lStreams).forEach((stream) => {
         stream.stop();
@@ -895,24 +895,23 @@ export default class Assist {
 
     const startCanvasStream = async (stream: MediaStream, id: number) => {
       for (const agent of Object.values(this.agents)) {
-        if (!agent.agentInfo) return;
+        if (!agent.agentInfo) continue;
 
         const uniqueId = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas-${id}`;
 
-        if (!this.canvasPeers[uniqueId]) {
-          this.canvasPeers[uniqueId] = new RTCPeerConnection({
-            iceServers: this.config,
-          });
+        if (!this.canvasPeers.has(uniqueId)) {
+          const peer = new RTCPeerConnection({ iceServers: this.config });
+          this.canvasPeers.set(uniqueId, peer);
           this.setupPeerListeners(uniqueId);
           this.applyBufferedIceCandidates(uniqueId);
 
           stream.getTracks().forEach((track) => {
-            this.canvasPeers[uniqueId]?.addTrack(track, stream);
+            peer.addTrack(track, stream);
           });
 
           // Create SDP offer
-          const offer = await this.canvasPeers[uniqueId].createOffer();
-          await this.canvasPeers[uniqueId].setLocalDescription(offer);
+          const offer = await peer.createOffer();
+          await peer.setLocalDescription(offer);
 
           // Send offer via signaling server
           socket.emit("webrtc_canvas_offer", { offer, id: uniqueId });
@@ -950,7 +949,7 @@ export default class Assist {
   }
 
   private setupPeerListeners(id: string) {
-    const peer = this.canvasPeers[id];
+    const peer = this.canvasPeers.get(id);
     if (!peer) return;
     // ICE candidates
     peer.onicecandidate = (event) => {
@@ -982,42 +981,43 @@ export default class Assist {
       this.peerReconnectTimeout = null;
     }
     this.cleanCanvasConnections();
-    Object.values(this.calls).forEach((pc) => pc.close());
+    this.calls.forEach((pc) => pc.close());
     this.calls.clear();
     if (this.socket) {
       this.socket.disconnect();
       this.app.debug.log("Socket disconnected");
     }
     this.canvasMap.clear();
-    this.canvasPeers = {};
+    this.canvasPeers.clear();
     this.canvasNodeCheckers.forEach((int) => clearInterval(int));
     this.canvasNodeCheckers.clear();
     this.iceCandidatesBuffer.clear();
   }
 
   private cleanCanvasConnections() {
-    Object.values(this.canvasPeers).forEach((pc) => pc?.close());
-    this.canvasPeers = {};
+    this.canvasPeers.forEach((pc) => pc.close());
+    this.canvasPeers.clear();
     this.socket?.emit("webrtc_canvas_restart");
   }
 
   private stopCanvasStream(id: number) {
     for (const agent of Object.values(this.agents)) {
-      if (!agent.agentInfo) return;
+      if (!agent.agentInfo) continue;
 
       const uniqueId = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas-${id}`;
-      this.socket?.emit("webrtc_canvas_stop", { id: uniqueId });
-
-      if (this.canvasPeers[uniqueId]) {
-        this.canvasPeers[uniqueId]?.close();
-        delete this.canvasPeers[uniqueId];
-
-        this.canvasMap.get(id)?.stop();
-        this.canvasMap.delete(id);
-        this.canvasNodeCheckers.get(id) &&
-          clearInterval(this.canvasNodeCheckers.get(id));
-        this.canvasNodeCheckers.delete(id);
+      const peer = this.canvasPeers.get(uniqueId);
+      if (peer) {
+        this.socket?.emit("webrtc_canvas_stop", { id: uniqueId });
+        peer.close();
+        this.canvasPeers.delete(uniqueId);
       }
+    }
+    this.canvasMap.get(id)?.stop();
+    this.canvasMap.delete(id);
+    const interval = this.canvasNodeCheckers.get(id);
+    if (interval) {
+      clearInterval(interval);
+      this.canvasNodeCheckers.delete(id);
     }
   }
 

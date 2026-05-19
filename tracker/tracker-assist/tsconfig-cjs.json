@@ -5,5 +5,5 @@
     "outDir": "./cjs",
     "rootDir": "src"
   },
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts", "tests/**"]
 }

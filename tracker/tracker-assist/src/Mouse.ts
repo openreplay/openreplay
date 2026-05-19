@@ -31,7 +31,7 @@ export default class Mouse {
     this.onDragCamera = onDragCamera
 
     const agentNameStr = this.agentName ? this.agentName.length > 10 ? this.agentName.slice(0, 9) + '...' : this.agentName : 'Agent'
-    agentBubble.innerHTML = `<span>${agentNameStr}</span>`
+    agentBubble.textContent = agentNameStr
 
     this.mouse.appendChild(agentBubble)
 
