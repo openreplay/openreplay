@@ -103,7 +103,11 @@ export default class QueueSender {
       this.sendNext()
       return
     }
-    const batchNumStr = batchNum?.toString().replace(/^([^_]+)_([^_]+).*/, '$1_$2')
+
+    const batchNumRaw = batchNum?.toString() ?? '0'
+    const numMatch = batchNumRaw.match(/^([^_]+)(?:_([^_]+))?/)
+    const mainBatchNum = numMatch?.[1] ?? '0'
+    const retrySuffix = numMatch?.[2] ? numMatch[2] : ''
     this.busy = true
 
     const headers = {
@@ -141,9 +145,12 @@ export default class QueueSender {
     // its simply more human readable even if this looks like boilerplate code
     let url = this.ingestURL;
     url += `?batch=${this.pageNo ?? 0}`
-    url += `_${batchNumStr ?? 0}`
-    url += `&keepalive=${useKeepalive ? 'yes' : 'no'}`
-    url += `&batchSize=${batchSize}`
+    url += `_${mainBatchNum}`
+    url += `_${batchSize}`
+    url += `_${useKeepalive ? 'kyes' : 'kno'}`
+    if (retrySuffix) {
+      url += `_${retrySuffix}`
+    }
 
     fetch(
       url,
