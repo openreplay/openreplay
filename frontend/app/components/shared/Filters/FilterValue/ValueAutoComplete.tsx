@@ -134,14 +134,6 @@ const ValueAutoComplete = observer(
       }
       return map;
     }, [params.isPredefined, params.possibleValues]);
-
-    const getDisplayLabel = (val: string) => {
-      if (params.isPredefined && valueToLabelMap[val]) {
-        return valueToLabelMap[val];
-      }
-      return val;
-    };
-
     const { t } = useTranslation();
     const { filterStore, projectsStore } = useStore();
     const [showValueModal, setShowValueModal] = useState(false);
@@ -153,6 +145,18 @@ const ValueAutoComplete = observer(
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
     const triggerRef = useRef<HTMLButtonElement>(null); // Ref for the main trigger button
 
+    const getDisplayLabel = (val: string) => {
+      if (params.isPredefined && valueToLabelMap[val]) {
+        return valueToLabelMap[val];
+      }
+      if (options.length) {
+        const foundOption = options.find((opt) => opt.value === val);
+        if (foundOption) {
+          return foundOption.label || foundOption.name || val;
+        }
+      }
+      return val;
+    };
     const filterKey = useMemo(() => {
       if (!projectsStore.siteId || !params.id) return null;
       return `${projectsStore.siteId}_${params.id}`;
