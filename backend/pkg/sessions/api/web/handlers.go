@@ -352,22 +352,59 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	}
 	bodySize = len(bodyBytes)
 
-	topic := e.cfg.TopicRawWeb
-	switch batchType {
-	case "assets":
-		topic = e.cfg.TopicRawAssets
-	default: // "analytics", "devtools", "replay"
-		topic = e.cfg.TopicRawWeb
-	}
-	err = e.producer.Produce(topic, sessionData.ID, bodyBytes)
-	if err != nil {
-		e.log.Error(r.Context(), "can't send messages batch to queue: %s", err)
-		errCode := http.StatusInternalServerError
-		if tokenJustExpired {
-			errCode = http.StatusUnauthorized
+	if batchType == "visual" {
+		// parse split url parameter
+		splitString := r.URL.Query().Get("split")
+		if splitString == "" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("split value is empty"), startTime, r.URL.Path, bodySize)
+			return
 		}
-		e.responser.ResponseWithError(e.log, r.Context(), w, errCode, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
-		return
+		split, err := strconv.Atoi(splitString)
+		if err != nil {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+			return
+		}
+		if split <= 0 || split >= bodySize {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("split value is out of range"), startTime, r.URL.Path, bodySize)
+			return
+		}
+
+		// split batches [player]split[assets] and send them to 2 different topics
+		errs := make([]error, 0)
+		if err = e.producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes[:split]); err != nil {
+			errs = append(errs, err)
+		}
+		if err = e.producer.Produce(e.cfg.TopicRawAssets, sessionData.ID, bodyBytes[split:]); err != nil {
+			errs = append(errs, err)
+		}
+
+		if len(errs) > 0 {
+			errCode := http.StatusInternalServerError
+			if tokenJustExpired {
+				errCode = http.StatusUnauthorized
+			}
+			e.responser.ResponseWithError(e.log, r.Context(), w, errCode, errors.Join(errs...), startTime, r.URL.Path, bodySize)
+			return
+		}
+	} else {
+		topic := e.cfg.TopicRawWeb
+		switch batchType {
+		case "assets":
+			topic = e.cfg.TopicRawAssets
+		default: // "analytics", "devtools", "replay"
+			topic = e.cfg.TopicRawWeb
+		}
+
+		err = e.producer.Produce(topic, sessionData.ID, bodyBytes)
+		if err != nil {
+			e.log.Error(r.Context(), "can't send messages batch to queue: %s", err)
+			errCode := http.StatusInternalServerError
+			if tokenJustExpired {
+				errCode = http.StatusUnauthorized
+			}
+			e.responser.ResponseWithError(e.log, r.Context(), w, errCode, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
+			return
+		}
 	}
 
 	if tokenJustExpired {
