@@ -127,7 +127,8 @@ function assertPrelude(batch: Uint8Array): ParsedHeader {
 interface CapturedBatch {
   batch: Uint8Array
   skipCompression: boolean
-  dataType: 'player' | 'assets' | 'devtools' | 'analytics'
+  dataType: 'player' | 'assets' | 'devtools' | 'analytics' | 'visual'
+  split?: number
 }
 
 let onBatch: jest.Mock
@@ -136,8 +137,8 @@ let captured: CapturedBatch[]
 
 function makeWriter(opts: { protocolVersion?: number; beaconSizeLimit?: number } = {}) {
   captured = []
-  onBatch = jest.fn((batch: Uint8Array, skipCompression: boolean | undefined, dataType: any) => {
-    captured.push({ batch, skipCompression: !!skipCompression, dataType })
+  onBatch = jest.fn((batch: Uint8Array, skipCompression: boolean | undefined, dataType: any, split: number | undefined) => {
+    captured.push({ batch, skipCompression: !!skipCompression, dataType, split })
   })
   onOfflineEnd = jest.fn()
   const writer = new BatchWriter(
@@ -155,6 +156,20 @@ function makeWriter(opts: { protocolVersion?: number; beaconSizeLimit?: number }
 
 function batchesByType(type: CapturedBatch['dataType']): CapturedBatch[] {
   return captured.filter((c) => c.dataType === type)
+}
+
+/** Split a 'visual' batch into its player and asset sub-batch byte slices. */
+function splitVisual(c: CapturedBatch): { player?: Uint8Array; assets?: Uint8Array } {
+  if (c.dataType !== 'visual') throw new Error('not a visual batch')
+  if (c.split === undefined) {
+    // Single sub-batch — disambiguate by BatchMetadata.version.
+    const v = parseBatchHeader(c.batch).version
+    return v === VERSION_ASSETS ? { assets: c.batch } : { player: c.batch }
+  }
+  return {
+    player: c.batch.slice(0, c.split),
+    assets: c.batch.slice(c.split),
+  }
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────
@@ -199,37 +214,41 @@ describe('BatchWriter e2e', () => {
 
     writer.finaliseBatch()
 
-    // 4 onBatch calls — one per stream type
-    expect(onBatch).toHaveBeenCalledTimes(4)
-    expect(batchesByType('player')).toHaveLength(1)
-    expect(batchesByType('assets')).toHaveLength(1)
+    // 3 onBatch calls — player+assets bundle into one 'visual', devtools and
+    // analytics stay independent.
+    expect(onBatch).toHaveBeenCalledTimes(3)
+    expect(batchesByType('visual')).toHaveLength(1)
     expect(batchesByType('devtools')).toHaveLength(1)
     expect(batchesByType('analytics')).toHaveLength(1)
 
-    // ── invariants for every emitted batch ─────────────────────────────────
-    for (const c of captured) {
-      const header = assertPrelude(c.batch)
-      // page number propagated
+    const visual = batchesByType('visual')[0]
+    expect(typeof visual.split).toBe('number')
+    const { player: playerBytes, assets: assetBytes } = splitVisual(visual)
+    expect(playerBytes).toBeDefined()
+    expect(assetBytes).toBeDefined()
+
+    // ── invariants for every emitted sub-batch ─────────────────────────────
+    const subBatches: Uint8Array[] = [
+      playerBytes!,
+      assetBytes!,
+      batchesByType('devtools')[0].batch,
+      batchesByType('analytics')[0].batch,
+    ]
+    for (const sb of subBatches) {
+      const header = assertPrelude(sb)
       expect(header.pageNo).toBe(7)
-      // url length matches the literal string we configured
       expect(header.urlLen).toBe('http://example.com/start'.length)
     }
 
     // ── per-stream version and routing ─────────────────────────────────────
-    expect(parseBatchHeader(batchesByType('player')[0].batch).version).toBe(VERSION_PLAYER_V2)
-    expect(parseBatchHeader(batchesByType('assets')[0].batch).version).toBe(VERSION_ASSETS)
+    expect(parseBatchHeader(playerBytes!).version).toBe(VERSION_PLAYER_V2)
+    expect(parseBatchHeader(assetBytes!).version).toBe(VERSION_ASSETS)
     expect(parseBatchHeader(batchesByType('devtools')[0].batch).version).toBe(VERSION_DEVTOOLS)
     expect(parseBatchHeader(batchesByType('analytics')[0].batch).version).toBe(VERSION_ANALYTICS)
 
     // ── content routing ────────────────────────────────────────────────────
-    const playerBody = parseBody(
-      batchesByType('player')[0].batch,
-      parseBatchHeader(batchesByType('player')[0].batch).bodyOffset,
-    )
-    const assetBody = parseBody(
-      batchesByType('assets')[0].batch,
-      parseBatchHeader(batchesByType('assets')[0].batch).bodyOffset,
-    )
+    const playerBody = parseBody(playerBytes!, parseBatchHeader(playerBytes!).bodyOffset)
+    const assetBody = parseBody(assetBytes!, parseBatchHeader(assetBytes!).bodyOffset)
     const devtoolsBody = parseBody(
       batchesByType('devtools')[0].batch,
       parseBatchHeader(batchesByType('devtools')[0].batch).bodyOffset,
@@ -239,14 +258,14 @@ describe('BatchWriter e2e', () => {
       parseBatchHeader(batchesByType('analytics')[0].batch).bodyOffset,
     )
 
-    // Player batch contains MouseMove + caller-pushed Timestamp/TabData; no asset/devtools/analytics types.
+    // Player sub-batch contains MouseMove + caller-pushed Timestamp/TabData; no asset/devtools/analytics types.
     const playerTypes = new Set(playerBody.map((m) => m.type))
     expect(playerTypes.has(T.MouseMove)).toBe(true)
     expect(playerTypes.has(T.SetNodeAttributeURLBased)).toBe(false)
     expect(playerTypes.has(T.ConsoleLog)).toBe(false)
     expect(playerTypes.has(T.CustomEvent)).toBe(false)
 
-    // Asset batch contains SetNodeAttributeURLBased only (plus prelude Timestamps).
+    // Asset sub-batch contains SetNodeAttributeURLBased only (plus prelude Timestamps).
     const assetNonTs = assetBody.filter((m) => m.type !== T.Timestamp && m.type !== T.TabData)
     expect(assetNonTs.length).toBe(10)
     expect(assetNonTs.every((m) => m.type === T.SetNodeAttributeURLBased)).toBe(true)
@@ -261,7 +280,7 @@ describe('BatchWriter e2e', () => {
     expect(analyticsNonTs.length).toBe(10)
     expect(analyticsNonTs.every((m) => m.type === T.CustomEvent)).toBe(true)
 
-    // ── budget: every batch under the soft trigger ─────────────────────────
+    // ── budget: every emitted batch under the soft trigger ─────────────────
     for (const c of captured) {
       expect(c.batch.length).toBeLessThanOrEqual(200_000)
     }
@@ -367,30 +386,49 @@ describe('BatchWriter e2e', () => {
 
     writer.finaliseBatch()
 
-    // Sanity: at least one batch per non-player stream that we exercised
-    expect(batchesByType('player').length).toBeGreaterThanOrEqual(1)
-    expect(batchesByType('assets').length).toBeGreaterThanOrEqual(1)
+    // v2 routing: player+assets land in 'visual' bundles; devtools/analytics
+    // keep their own streams.
+    expect(batchesByType('visual').length).toBeGreaterThanOrEqual(1)
     expect(batchesByType('devtools').length).toBeGreaterThanOrEqual(1)
     expect(batchesByType('analytics').length).toBeGreaterThanOrEqual(1)
 
-    // Every emitted batch is structurally valid.
+    // Walk every sub-batch (visual splits into player + assets) and assert
+    // structural validity on each one.
+    const allSubBatches: Uint8Array[] = []
     for (const c of captured) {
-      expect(c.batch[0]).toBe(T.BatchMetadata)
-      const header = assertPrelude(c.batch)
+      if (c.dataType === 'visual') {
+        const { player, assets } = splitVisual(c)
+        if (player) allSubBatches.push(player)
+        if (assets) allSubBatches.push(assets)
+      } else {
+        allSubBatches.push(c.batch)
+      }
+      // Hard cap (default 1MB) is never exceeded on the wire-level batch.
+      expect(c.batch.length).toBeLessThanOrEqual(1_000_000)
+    }
+    for (const sb of allSubBatches) {
+      expect(sb[0]).toBe(T.BatchMetadata)
+      const header = assertPrelude(sb)
       expect([VERSION_PLAYER_V2, VERSION_ASSETS, VERSION_DEVTOOLS, VERSION_ANALYTICS]).toContain(header.version)
       expect(header.pageNo).toBe(7)
-      // Hard cap (default 1MB) is never exceeded
-      expect(c.batch.length).toBeLessThanOrEqual(1_000_000)
     }
 
     // Per-stream ordering: within each stream, batch firstIndex is monotonic.
-    // (Cross-stream emit order is dictated by finaliseBatch's stream-iteration
-    // order, not by firstIndex — they're independent counters into the same
-    // global nextIndex sequence.)
-    for (const dt of ['player', 'assets', 'devtools', 'analytics'] as const) {
-      const indices = batchesByType(dt).map((c) => parseBatchHeader(c.batch).firstIndex)
-      for (let i = 1; i < indices.length; i++) {
-        expect(indices[i]).toBeGreaterThan(indices[i - 1])
+    // For 'visual', extract the player and asset sub-batches separately.
+    const indicesByStream: Record<string, number[]> = { player: [], assets: [], devtools: [], analytics: [] }
+    for (const c of captured) {
+      if (c.dataType === 'visual') {
+        const { player, assets } = splitVisual(c)
+        if (player) indicesByStream.player.push(parseBatchHeader(player).firstIndex)
+        if (assets) indicesByStream.assets.push(parseBatchHeader(assets).firstIndex)
+      } else {
+        indicesByStream[c.dataType].push(parseBatchHeader(c.batch).firstIndex)
+      }
+    }
+    for (const stream of Object.keys(indicesByStream)) {
+      const idx = indicesByStream[stream]
+      for (let i = 1; i < idx.length; i++) {
+        expect(idx[i]).toBeGreaterThan(idx[i - 1])
       }
     }
   })

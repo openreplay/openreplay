@@ -6,6 +6,7 @@ const KEEPALIVE_SIZE_LIMIT = 64 << 10 // 64 kB
 interface QueueEntry {
   batch: Uint8Array
   dataType: DataType
+  split?: number
 }
 
 export default class QueueSender {
@@ -29,7 +30,7 @@ export default class QueueSender {
     private readonly onFailure: (reason: string) => any,
     private readonly MAX_ATTEMPTS_COUNT = 10,
     private readonly ATTEMPT_TIMEOUT = 250,
-    private readonly onCompress?: (batch: Uint8Array, dataType: DataType) => any,
+    private readonly onCompress?: (batch: Uint8Array, dataType: DataType, split?: number) => any,
     private readonly pageNo?: number,
   ) {
     this.ingestURL = ingestBaseURL + INGEST_PATH
@@ -52,16 +53,16 @@ export default class QueueSender {
     }
   }
 
-  push(batch: Uint8Array, dataType: DataType = 'player'): void {
+  push(batch: Uint8Array, dataType: DataType = 'player', split?: number): void {
     if (this.busy || !this.token) {
-      this.queue.push({ batch, dataType })
+      this.queue.push({ batch, dataType, split })
     } else {
       this.busy = true
       if (this.isCompressing && this.onCompress) {
-        this.onCompress(batch, dataType)
+        this.onCompress(batch, dataType, split)
       } else {
         const batchNum = ++this.lastBatchNum
-        this.sendBatch(batch, false, batchNum, dataType)
+        this.sendBatch(batch, false, batchNum, dataType, split)
       }
     }
   }
@@ -71,17 +72,17 @@ export default class QueueSender {
     if (next) {
       this.busy = true
       if (this.isCompressing && this.onCompress) {
-        this.onCompress(next.batch, next.dataType)
+        this.onCompress(next.batch, next.dataType, next.split)
       } else {
         const batchNum = ++this.lastBatchNum
-        this.sendBatch(next.batch, false, batchNum, next.dataType)
+        this.sendBatch(next.batch, false, batchNum, next.dataType, next.split)
       }
     } else {
       this.busy = false
     }
   }
 
-  private retry(batch: Uint8Array, isCompressed?: boolean, batchNum?: string | number, dataType: DataType = 'player'): void {
+  private retry(batch: Uint8Array, isCompressed?: boolean, batchNum?: string | number, dataType: DataType = 'player', split?: number): void {
     if (this.attemptsCount >= this.MAX_ATTEMPTS_COUNT) {
       this.onFailure(`Failed to send batch after ${this.attemptsCount} attempts.`)
       // remains this.busy === true
@@ -90,13 +91,13 @@ export default class QueueSender {
     this.attemptsCount++
     const batchCopy = new Uint8Array(batch)
     setTimeout(
-      () => this.sendBatch(batchCopy, isCompressed, batchNum, dataType),
+      () => this.sendBatch(batchCopy, isCompressed, batchNum, dataType, split),
       this.ATTEMPT_TIMEOUT * this.attemptsCount,
     )
   }
 
   // would be nice to use Beacon API, but it is not available in WebWorker
-  private sendBatch(batch: Uint8Array, isCompressed?: boolean, batchNum?: string | number, dataType: DataType = 'player'): void {
+  private sendBatch(batch: Uint8Array, isCompressed?: boolean, batchNum?: string | number, dataType: DataType = 'player', split?: number): void {
     if (batch.length === 0) {
       console.error('OpenReplay: refusing to send 0-byte batch.', { batchNum, dataType, isCompressed, batch })
       this.attemptsCount = 0
@@ -124,7 +125,7 @@ export default class QueueSender {
      * */
     if (this.token === null) {
       setTimeout(() => {
-        this.sendBatch(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_newToken`, dataType)
+        this.sendBatch(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_newToken`, dataType, split)
       }, 500)
       return
     }
@@ -151,6 +152,11 @@ export default class QueueSender {
     if (retrySuffix) {
       url += `_${retrySuffix}`
     }
+    // split is an offset into the *uncompressed* body — the server splits
+    // after gunzipping.
+    if (typeof split === 'number') {
+      url += `&split=${split}`
+    }
 
     fetch(
       url,
@@ -171,7 +177,7 @@ export default class QueueSender {
           this.onUnauthorised()
           return
         } else if (r.status >= 400) {
-          this.retry(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_network:${r.status}`, dataType)
+          this.retry(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_network:${r.status}`, dataType, split)
           return
         }
 
@@ -182,18 +188,18 @@ export default class QueueSender {
       .catch((e: Error) => {
         releaseKeepalive()
         console.warn('OpenReplay:', e)
-        this.retry(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_reject:${e.message}`, dataType)
+        this.retry(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_reject:${e.message}`, dataType, split)
       })
   }
 
-  sendCompressed(batch: Uint8Array, dataType: DataType = 'player') {
+  sendCompressed(batch: Uint8Array, dataType: DataType = 'player', split?: number) {
     const batchNum = ++this.lastBatchNum
-    this.sendBatch(batch, true, batchNum, dataType)
+    this.sendBatch(batch, true, batchNum, dataType, split)
   }
 
-  sendUncompressed(batch: Uint8Array, dataType: DataType = 'player') {
+  sendUncompressed(batch: Uint8Array, dataType: DataType = 'player', split?: number) {
     const batchNum = ++this.lastBatchNum
-    this.sendBatch(batch, false, batchNum, dataType)
+    this.sendBatch(batch, false, batchNum, dataType, split)
   }
 
   clean() {

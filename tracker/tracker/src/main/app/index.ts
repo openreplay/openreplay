@@ -864,6 +864,7 @@ export default class App {
     } else if (data.type === 'compress') {
       const batch = data.batch
       const dataType = data.dataType
+      const split = data.split
       const batchSize = batch.byteLength
       const hasCompressionAPI = 'CompressionStream' in globalThis
       if (batchSize > this.compressionThreshold && hasCompressionAPI) {
@@ -876,14 +877,15 @@ export default class App {
               type: 'compressed',
               batch: new Uint8Array(compressedBuffer),
               dataType,
+              split,
             })
           })
           .catch((err) => {
             this.debug.error('Openreplay compression error:', err)
-            this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType })
+            this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType, split })
           })
       } else {
-        this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType })
+        this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType, split })
       }
     } else if (data.type === 'local_save') {
       const blob = new Blob([data.batch as BlobPart], { type: 'application/octet-stream' })
