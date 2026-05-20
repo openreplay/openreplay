@@ -1,3 +1,8 @@
+## 18.0.8
+
+- new combined batches for asset and player messages (type visual) for better handling of short sessions
+- auto request new session on tracker version change
+
 ## 18.0.7
 
 - cancel queued attribute messages on tracker restart

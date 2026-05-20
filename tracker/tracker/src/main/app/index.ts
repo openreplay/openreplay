@@ -1217,13 +1217,14 @@ export default class App {
 
   private checkSessionToken(forceNew?: boolean) {
     const PROTO_VERSION = "2";
+    const versionHash = `${PROTO_VERSION}x${this.version}`
     const needReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
     let needNewSessionID = forceNew || needReset
     const sessionToken = this.session.getSessionToken(this.projectKey)
     if (sessionToken) {
       const storedVersion = this.sessionStorage.getItem(`${this.options.session_token_key}_version`)
-      needNewSessionID = !storedVersion || storedVersion !== PROTO_VERSION
-      this.sessionStorage.setItem(`${this.options.session_token_key}_version`, PROTO_VERSION)
+      needNewSessionID = !storedVersion || storedVersion !== versionHash
+      this.sessionStorage.setItem(`${this.options.session_token_key}_version`, versionHash)
     }
     return needNewSessionID || !sessionToken
   }
