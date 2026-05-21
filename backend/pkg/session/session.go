@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -82,6 +83,8 @@ type SessionReplay struct {
 const (
 	NoSession string = "no session in db"
 )
+
+var ErrNoSession = errors.New(NoSession)
 
 // FYI: full_data, include_fav_viewed and group_metadata are always True, so I didn't move it to Go
 func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID string) (*SessionReplay, error) {
@@ -170,7 +173,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 		&si.UserDeviceMemory, &si.UserDeviceHeap, &si.UserCountry, &si.UserCity, &si.UserState, &si.PagesCount,
 		&si.EventsCount, &si.IssueTypes, &si.UtmSource, &si.UtmMedium, &si.UtmCampaign, &si.Referrer,
 		&si.BaseReferrer, &si.Timezone, &si.ScreenWidth, &si.ScreenHeight, &si.Favorite, &si.Viewed, &si.Metadata); err != nil {
-		return nil, fmt.Errorf(NoSession+", %s", err)
+		return nil, fmt.Errorf("%w, %s", ErrNoSession, err)
 	}
 
 	// Get all pre-signed urls
