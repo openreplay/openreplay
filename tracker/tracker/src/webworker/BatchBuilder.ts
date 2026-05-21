@@ -85,12 +85,6 @@ export default class BatchBuilder {
     return this.snap !== null && this.hasNonTimestamp
   }
 
-  /** Bytes committed via successful pushes (header + sized messages). Resets on
-   *  flush/reset. Used by BatchWriter to enforce the shared soft budget. */
-  currentSize(): number {
-    return this.encoder.getCurrentCheckpoint()
-  }
-
   /** Returns wire bytes, or null if no real (non-Timestamp) message was pushed.
    *  Either way, the builder is reset and ready for a new batch. */
   flush(): Uint8Array | null {

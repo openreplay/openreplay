@@ -165,26 +165,19 @@ describe('BatchWriter', () => {
     })
   })
 
-  describe('protocol v2: pair flush (player + assets as one "visual" emission)', () => {
-    test('player + assets in one finalise emit as a single "visual" batch with split offset', () => {
+  describe('protocol v2: asset message separation', () => {
+    test('asset messages produce a separate batch with dataType=assets', () => {
       const writer = createWriter({ protocolVersion: 2 })
       writer.writeMessage([MType.MouseMove, 100, 200])
       writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'class', 'value', 'http://base.com'])
       writer.finaliseBatch()
 
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      const [batch, , dataType, split] = onBatch.mock.calls[0]
-      expect(dataType).toBe('visual')
-      // split points at the byte where the asset sub-batch begins inside the
-      // concatenated payload. Must land on a BatchMetadata header.
-      expect(typeof split).toBe('number')
-      expect(split).toBeGreaterThan(0)
-      expect(split).toBeLessThan(batch.length)
-      expect(batch[0]).toBe(MType.BatchMetadata)             // player sub-batch
-      expect(batch[split]).toBe(MType.BatchMetadata)         // asset sub-batch
+      expect(onBatch).toHaveBeenCalledTimes(2)
+      expect(onBatch.mock.calls[0][2]).toBe('player')
+      expect(onBatch.mock.calls[1][2]).toBe('assets')
     })
 
-    test('asset-only finalise emits with native dataType=assets and no split', () => {
+    test('asset-only batch (no regular messages) sends only assets', () => {
       const writer = createWriter({ protocolVersion: 2 })
       writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'img.png', 'http://base.com'])
       writer.writeMessage([MType.SetCSSDataURLBased, 2, 'background', 'http://base.com'])
@@ -192,20 +185,9 @@ describe('BatchWriter', () => {
 
       expect(onBatch).toHaveBeenCalledTimes(1)
       expect(onBatch.mock.calls[0][2]).toBe('assets')
-      expect(onBatch.mock.calls[0][3]).toBeUndefined()
     })
 
-    test('player-only finalise in v2 emits with native dataType=player and no split', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.MouseMove, 100, 200])
-      writer.finaliseBatch()
-
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      expect(onBatch.mock.calls[0][2]).toBe('player')
-      expect(onBatch.mock.calls[0][3]).toBeUndefined()
-    })
-
-    test('asset-only batch starts with BatchMetadata version=3', () => {
+    test('asset batch starts with BatchMetadata version=3', () => {
       const writer = createWriter({ protocolVersion: 2 })
       writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'img.png', 'http://base.com'])
       writer.finaliseBatch()
@@ -241,55 +223,47 @@ describe('BatchWriter', () => {
       expect(onBatch).toHaveBeenCalledTimes(1)
     })
 
-    // Soft-cap behaviour: pair budget is shared between player and assets and
-    // the warmup cap (60kB) is in effect for the first 5s of a fresh writer.
-    // When the shared cap trips, both builders flush together as one 'visual'.
-    test('pair soft-cap flush concatenates player and assets into one "visual" batch', () => {
+    // Pair-flush ordering: when assetBuilder is about to emit (soft-cap or
+    // oversized one-shot), playerBuilder must be flushed first so the DOM
+    // tree always lands before the assets that reference it.
+    test('asset soft-cap flush emits playerBuilder first', () => {
       const writer = createWriter({ protocolVersion: 2 })
       // Player msg sits in playerBuilder, hasn't been flushed yet.
       writer.writeMessage([MType.MouseMove, 100, 200])
-      // Asset msg pushes shared pair total past the warmup soft cap (60kB).
-      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'x'.repeat(80_000), 'http://b.com'])
-      // Next message must trigger a pair flush (combined > 60kB).
-      writer.writeMessage([MType.MouseMove, 110, 210])
+      // First asset msg fits under the 200kB soft cap.
+      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'x'.repeat(150_000), 'http://b.com'])
+      // Second asset msg pushes total past the soft cap and triggers a flush.
+      writer.writeMessage([MType.SetCSSDataURLBased, 2, 'y'.repeat(80_000), 'http://b.com'])
 
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      const [batch, , dataType, split] = onBatch.mock.calls[0]
-      expect(dataType).toBe('visual')
-      expect(typeof split).toBe('number')
-      expect(batch[0]).toBe(MType.BatchMetadata)
-      expect(batch[split]).toBe(MType.BatchMetadata)
+      expect(onBatch).toHaveBeenCalledTimes(2)
+      expect(onBatch.mock.calls[0][2]).toBe('player')
+      expect(onBatch.mock.calls[1][2]).toBe('assets')
+
+      writer.finaliseBatch()
+      // Trailing asset (second large msg) lands on finalise.
+      expect(onBatch).toHaveBeenCalledTimes(3)
+      expect(onBatch.mock.calls[2][2]).toBe('assets')
     })
 
-    test('large asset (over soft cap) + pending player finalise as one "visual" batch with split', () => {
+    test('oversized asset one-shot emits playerBuilder first', () => {
       const writer = createWriter({ protocolVersion: 2 })
       writer.writeMessage([MType.MouseMove, 100, 200])
-      // Asset msg larger than the soft cap (60kB warmup) but small enough to fit
-      // in the pair builder buffer so it bundles into one emission rather than
-      // triggering the one-shot oversized path.
-      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'z'.repeat(150_000), 'http://b.com'])
-      writer.finaliseBatch()
+      // Single asset msg larger than the soft cap (200kB) but under the hard
+      // cap (1MB) — goes through the oversized one-shot path.
+      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'z'.repeat(250_000), 'http://b.com'])
 
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      const [batch, , dataType, split] = onBatch.mock.calls[0]
-      expect(dataType).toBe('visual')
-      expect(typeof split).toBe('number')
-      expect(split).toBeGreaterThan(0)
-      expect(split).toBeLessThan(batch.length)
-      expect(batch[0]).toBe(MType.BatchMetadata)
-      expect(batch[split]).toBe(MType.BatchMetadata)
+      expect(onBatch).toHaveBeenCalledTimes(2)
+      expect(onBatch.mock.calls[0][2]).toBe('player')
+      expect(onBatch.mock.calls[1][2]).toBe('assets')
     })
 
-    test('oversized asset-only one-shot emits with native dataType=assets', () => {
+    test('asset overflow with empty playerBuilder emits only the asset batch', () => {
       const writer = createWriter({ protocolVersion: 2 })
-      // No player content — a 250kB asset exceeds the pair builder buffer
-      // (200kB) and goes through the one-shot oversized path.
+      // No player messages — playerBuilder is empty when assetBuilder overflows.
       writer.writeMessage([MType.SetCSSDataURLBased, 1, 'z'.repeat(250_000), 'http://b.com'])
-      writer.finaliseBatch()
 
       expect(onBatch).toHaveBeenCalledTimes(1)
       expect(onBatch.mock.calls[0][2]).toBe('assets')
-      expect(onBatch.mock.calls[0][3]).toBeUndefined()
     })
   })
 
@@ -321,30 +295,26 @@ describe('BatchWriter', () => {
       }
     })
 
-    test('interleaved player and asset content across multiple finalizes (v2)', () => {
+    test('interleaved regular and asset batches across multiple finalizes', () => {
       const writer = createWriter({ protocolVersion: 2 })
 
-      // First finalise: player + assets → "visual" batch with split.
+      // First batch: regular + assets
       writer.writeMessage([MType.MouseMove, 100, 200])
       writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://b.com'])
       writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      expect(onBatch.mock.calls[0][2]).toBe('visual')
-      expect(typeof onBatch.mock.calls[0][3]).toBe('number')
+      expect(onBatch).toHaveBeenCalledTimes(2)
 
-      // Second finalise: only player → native "player" label, no split.
+      // Second batch: only regular
       writer.writeMessage([MType.MouseMove, 120, 220])
       writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(2)
-      expect(onBatch.mock.calls[1][2]).toBe('player')
-      expect(onBatch.mock.calls[1][3]).toBeUndefined()
+      expect(onBatch).toHaveBeenCalledTimes(3)
+      expect(onBatch.mock.calls[2][2]).toBe('player')
 
-      // Third finalise: only assets → native "assets" label, no split.
+      // Third batch: only assets
       writer.writeMessage([MType.SetCSSDataURLBased, 2, 'bg', 'http://c.com'])
       writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(3)
-      expect(onBatch.mock.calls[2][2]).toBe('assets')
-      expect(onBatch.mock.calls[2][3]).toBeUndefined()
+      expect(onBatch).toHaveBeenCalledTimes(4)
+      expect(onBatch.mock.calls[3][2]).toBe('assets')
     })
   })
 
@@ -364,107 +334,6 @@ describe('BatchWriter', () => {
       writer.clean()
       writer.finaliseBatch()
       expect(onBatch).not.toHaveBeenCalled()
-    })
-  })
-
-  // ── Pair shared soft cap & warmup→steady transition ──────────────────────
-  // The pair has a smaller soft cap during a 5s warmup window (so keepalive:
-  // true is usable for early-session batches) and raises to the steady cap
-  // after. These tests pin the boundary numerically.
-  describe('pair soft cap: warmup vs steady', () => {
-    beforeEach(() => { jest.useFakeTimers() })
-    afterEach(() => { jest.useRealTimers() })
-
-    test('warmup soft cap triggers a pair flush around ~60kB of pending content', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      // First push lands ~70kB of asset bytes (above warmup cap, below steady).
-      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'x'.repeat(70_000), 'http://b.com'])
-      // pairSize is now ~70kB but the soft-cap check runs *before* push, so
-      // no flush has happened yet. A subsequent push observes pairSize >= 60kB
-      // and triggers flushPair() before adding the new message.
-      expect(onBatch).not.toHaveBeenCalled()
-      writer.writeMessage([MType.MouseMove, 1, 1])
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      // 70kB of single-stream asset → emits as 'assets', not 'visual'.
-      expect(onBatch.mock.calls[0][2]).toBe('assets')
-    })
-
-    test('steady soft cap (after 5s) does NOT flush at ~70kB; finalise emits once', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      // Cross the 5s warmup boundary before any writes.
-      jest.advanceTimersByTime(5500)
-
-      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'x'.repeat(70_000), 'http://b.com'])
-      writer.writeMessage([MType.MouseMove, 1, 1])
-      // 70kB is below steady cap (100kB) → no auto-flush.
-      expect(onBatch).not.toHaveBeenCalled()
-      writer.finaliseBatch()
-      // Both streams have content → one 'visual' with split.
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      expect(onBatch.mock.calls[0][2]).toBe('visual')
-      expect(typeof onBatch.mock.calls[0][3]).toBe('number')
-    })
-
-    test('clean() before warmup expiry cancels the warmup timer (no late cap flip)', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.clean()
-      // If the warmup timer wasn't cleared, advancing time could fire it and
-      // mutate a now-cleaned writer's internal state. We only need to assert
-      // that nothing throws and no spurious emissions occur.
-      expect(() => jest.advanceTimersByTime(10_000)).not.toThrow()
-      writer.finaliseBatch()
-      expect(onBatch).not.toHaveBeenCalled()
-    })
-  })
-
-  // ── split offset semantics ────────────────────────────────────────────────
-  // When the pair carries both player and asset content, the emitted bytes
-  // are exactly playerBytes followed by assetBytes, and split equals the
-  // length of the player half. Server demux relies on this invariant.
-  describe('split offset semantics (v2)', () => {
-    test('split equals byte length of the player sub-batch (asset BatchMetadata at split)', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.MouseMove, 11, 22])
-      writer.writeMessage([MType.MouseMove, 33, 44])
-      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://b.com'])
-      writer.writeMessage([MType.SetCSSDataURLBased, 2, 'bg', 'http://b.com'])
-      writer.finaliseBatch()
-
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      const [batch, , dataType, split] = onBatch.mock.calls[0]
-      expect(dataType).toBe('visual')
-      expect(typeof split).toBe('number')
-      // Player sub-batch is at [0, split); asset sub-batch is at [split, end).
-      // Both must start with BatchMetadata.
-      expect(batch[0]).toBe(MType.BatchMetadata)
-      expect(batch[split]).toBe(MType.BatchMetadata)
-      // Player BatchMetadata has version=2 (protocolVersion=2 player stream).
-      expect(batch[1]).toBe(2)
-      // Asset BatchMetadata has version=3 (ASSETS_VERSION).
-      expect(batch[split + 1]).toBe(3)
-    })
-
-    test('a single-side flush has no split parameter', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.MouseMove, 11, 22])
-      writer.finaliseBatch()
-      expect(onBatch.mock.calls[0][3]).toBeUndefined()
-    })
-  })
-
-  // ── v1 backward compat: pair logic does NOT fire ──────────────────────────
-  // In v1, the asset builder is never written to; flushPair should just emit
-  // playerBuilder content with the native 'player' dataType so the existing
-  // backend path keeps working unchanged.
-  describe('v1 backward compat: pair logic stays inert', () => {
-    test('v1 finalise emits as "player" even with asset-typed messages routed to playerBuilder', () => {
-      const writer = createWriter({ protocolVersion: 1 })
-      writer.writeMessage([MType.MouseMove, 1, 1])
-      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://b.com'])
-      writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      expect(onBatch.mock.calls[0][2]).toBe('player')
-      expect(onBatch.mock.calls[0][3]).toBeUndefined()
     })
   })
 })

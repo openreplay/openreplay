@@ -8,56 +8,33 @@ const ASSETS_VERSION = 3
 const DEVTOOLS_VERSION = 4
 const ANALYTICS_VERSION = 5
 
-// Warmup cap keeps the concatenated pair under the 64 KiB browser keepalive
-// limit so early-session batches survive a fast tab close.
-const PAIR_WARMUP_SOFT_CAP = 60 * 1024
-const PAIR_STEADY_SOFT_CAP = 100 * 1024
-const PAIR_WARMUP_MS = 5000
-
-// 2x steady cap leaves headroom for the message that crosses the threshold —
-// the soft-cap check runs before push, so push itself can land up to ~100kB
-// on top of an already near-cap builder.
-const PAIR_BUILDER_SIZE = 2 * PAIR_STEADY_SOFT_CAP
-
-const AUX_SOFT_CAP = 2 * 1e5
-
 export default class BatchWriter {
   private nextIndex = 0
-  private pairSoftCap = PAIR_WARMUP_SOFT_CAP
-  private beaconSizeLimit = 1e6
+  private beaconSize = 2 * 1e5 // 200kB soft trigger
+  private beaconSizeLimit = 1e6 // hard cap (set per-session by tracker)
   private playerBuilder: BatchBuilder
   private assetBuilder: BatchBuilder
   private devtoolsBuilder: BatchBuilder
   private analyticsBuilder: BatchBuilder
   private protocolVersion = 1
-  private warmupTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(
     private readonly pageNo: number,
     private timestamp: number,
     private url: string,
-    private readonly onBatch: (
-      batch: Uint8Array,
-      skipCompression?: boolean,
-      dataType?: DataType,
-      split?: number,
-    ) => void,
+    private readonly onBatch: (batch: Uint8Array, skipCompression?: boolean, dataType?: DataType) => void,
     private tabId: string,
     private readonly onOfflineEnd: () => void,
     private readonly localDebug = false,
     private readonly onLocalSave?: (name: string, batch: Uint8Array) => void,
   ) {
-    this.playerBuilder = new BatchBuilder(PAIR_BUILDER_SIZE, this.playerVersion(), 'player')
-    this.assetBuilder = new BatchBuilder(PAIR_BUILDER_SIZE, ASSETS_VERSION, 'assets')
-    this.devtoolsBuilder = new BatchBuilder(AUX_SOFT_CAP, DEVTOOLS_VERSION, 'devtools')
-    this.analyticsBuilder = new BatchBuilder(AUX_SOFT_CAP, ANALYTICS_VERSION, 'analytics')
-
-    this.warmupTimer = setTimeout(() => {
-      this.pairSoftCap = PAIR_STEADY_SOFT_CAP
-      this.warmupTimer = null
-    }, PAIR_WARMUP_MS)
+    this.playerBuilder = new BatchBuilder(this.beaconSize, this.playerVersion(), 'player')
+    this.assetBuilder = new BatchBuilder(this.beaconSize, ASSETS_VERSION, 'assets')
+    this.devtoolsBuilder = new BatchBuilder(this.beaconSize, DEVTOOLS_VERSION, 'devtools')
+    this.analyticsBuilder = new BatchBuilder(this.beaconSize, ANALYTICS_VERSION, 'analytics')
   }
 
+  /** BatchMetadata.version field for the player stream: 2 for protocol v2, else 1. */
   private playerVersion(): number {
     return this.protocolVersion === 2 ? 2 : 1
   }
@@ -79,10 +56,10 @@ export default class BatchWriter {
   setProtocolVersion(version: number) {
     if (this.protocolVersion === version) return
     this.protocolVersion = version
-    // Rebuild so subsequent batches carry the right BatchMetadata.version.
-    // Safe to drop in-flight content — version is set during auth, before writes.
+    // No in-flight content expected at version-set time; recreate the player
+    // builder so subsequent batches carry the right BatchMetadata.version.
     this.playerBuilder.reset()
-    this.playerBuilder = new BatchBuilder(PAIR_BUILDER_SIZE, this.playerVersion(), 'player')
+    this.playerBuilder = new BatchBuilder(this.beaconSize, this.playerVersion(), 'player')
   }
 
   writeMessage(message: Message) {
@@ -111,46 +88,34 @@ export default class BatchWriter {
     return this.playerBuilder
   }
 
-  private isPair(builder: BatchBuilder): boolean {
-    return builder === this.playerBuilder || builder === this.assetBuilder
-  }
-
-  private pairSize(): number {
-    return this.playerBuilder.currentSize() + this.assetBuilder.currentSize()
-  }
-
   private pushTo(builder: BatchBuilder, message: Message): void {
-    // ctx stays valid across retries: nextIndex only advances on a successful
-    // push, and timestamp/url mutate only in writeMessage before this call.
+    // ctx is identical across retries: nextIndex only advances on a successful
+    // push, and timestamp/url are mutated only by writeMessage before pushTo.
     const ctx = this.currentCtx()
-    const isPair = this.isPair(builder)
-
-    if (isPair && this.pairSize() >= this.pairSoftCap) {
-      this.flushPair()
-    }
-
     if (builder.push(message, ctx)) {
       this.nextIndex++
       return
     }
-    if (isPair) this.flushPair()
-    else this.flushBuilder(builder)
-
+    // Soft-budget hit: flush this stream's batch, retry once on the same builder.
+    // Pair-emit player before assets so the DOM tree always lands first — if the
+    // tab closes between batches, an asset-only batch on the server is useless.
+    if (builder === this.assetBuilder) this.flushBuilder(this.playerBuilder)
+    this.flushBuilder(builder)
     if (builder.push(message, ctx)) {
       this.nextIndex++
       return
     }
-    // Message exceeds the builder buffer even after a flush — one-shot it
-    // through a hard-cap-sized builder.
+    // Single message exceeds soft budget: build a one-shot oversized batch.
     const big = new BatchBuilder(this.beaconSizeLimit, builder.version, builder.dataType)
     if (!big.push(message, ctx)) {
       console.warn('OpenReplay: beacon size overflow. Skipping large message.', message)
       return
     }
     this.nextIndex++
-    const bytes = big.flush()
-    if (bytes) {
-      this.emitBatch(bytes, builder.dataType, false)
+    const batch = big.flush()
+    if (batch) {
+      if (builder === this.assetBuilder) this.flushBuilder(this.playerBuilder)
+      this.emitBatch(batch, builder.dataType, false)
     }
   }
 
@@ -161,56 +126,21 @@ export default class BatchWriter {
     return true
   }
 
-  private pairFlushEnabled(): boolean {
-    return this.protocolVersion === 2
-  }
-
-  // 'visual' is reserved for the two-stream concat case so the backend knows
-  // it needs to demux at `split`. Single-stream flushes keep their native
-  // dataType, leaving the existing ingest path untouched.
-  private flushPair(skipCompression = false): void {
-    if (!this.pairFlushEnabled()) {
-      this.flushBuilder(this.playerBuilder, skipCompression)
-      return
-    }
-    const p = this.playerBuilder.flush()
-    const a = this.assetBuilder.flush()
-    if (!p && !a) return
-    if (p && a) {
-      const out = new Uint8Array(p.length + a.length)
-      out.set(p, 0)
-      // Player first: DOM tree must land before the CSS/font assets that reference it.
-      out.set(a, p.length)
-      this.emitBatch(out, 'visual', skipCompression, p.length)
-      return
-    }
-    if (p) this.emitBatch(p, 'player', skipCompression)
-    else   this.emitBatch(a!, 'assets', skipCompression)
-  }
-
-  private emitBatch(
-    batch: Uint8Array,
-    dataType: DataType,
-    skipCompression: boolean,
-    split?: number,
-  ): void {
+  private emitBatch(batch: Uint8Array, dataType: DataType, skipCompression: boolean): void {
     if (this.localDebug && this.onLocalSave) {
       this.onLocalSave(`${dataType}-${Date.now()}`, batch.slice())
     }
-    this.onBatch(batch, skipCompression, dataType, split)
+    this.onBatch(batch, skipCompression, dataType)
   }
 
   finaliseBatch(skipCompression = false) {
-    this.flushPair(skipCompression)
+    this.flushBuilder(this.playerBuilder, skipCompression)
+    this.flushBuilder(this.assetBuilder, skipCompression)
     this.flushBuilder(this.devtoolsBuilder, skipCompression)
     this.flushBuilder(this.analyticsBuilder, skipCompression)
   }
 
   clean() {
-    if (this.warmupTimer !== null) {
-      clearTimeout(this.warmupTimer)
-      this.warmupTimer = null
-    }
     this.playerBuilder.reset()
     this.assetBuilder.reset()
     this.devtoolsBuilder.reset()

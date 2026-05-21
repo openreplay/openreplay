@@ -1,3 +1,7 @@
+## 18.0.9
+
+- rollback batch mixing
+
 ## 18.0.8
 
 - new combined batches for asset and player messages (type visual) for better handling of short sessions
