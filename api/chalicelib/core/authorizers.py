@@ -16,6 +16,8 @@ def get_supported_audience():
 
 def is_spot_token(token: str) -> bool:
     try:
+        if len(token) < 5 or "." not in token:
+            return False
         decoded_token = jwt.decode(token, options={"verify_signature": False, "verify_exp": False})
         audience = decoded_token.get("aud")
         return audience == spot.AUDIENCE
@@ -25,7 +27,7 @@ def is_spot_token(token: str) -> bool:
 
 
 def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
-    if scheme.lower() != "bearer" or len(token) < 5:
+    if scheme.lower() != "bearer" or len(token) < 5 or "." not in token:
         return None
     try:
         payload = jwt.decode(jwt=token,
@@ -46,7 +48,7 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
 
 
 def jwt_refresh_authorizer(scheme: str, token: str):
-    if scheme.lower() != "bearer":
+    if scheme.lower() != "bearer" or len(token) < 5 or "." not in token:
         return None
     try:
         payload = jwt.decode(jwt=token,
