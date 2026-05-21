@@ -109,8 +109,7 @@ export default class SettingsService {
         abortSignal,
       )
       .then((r) => r.json())
-      .then((j) => j.data || {})
-      .catch(console.error);
+      .then((j) => j.data || {});
   }
 
   getSessionEvents = async (sessionId: string) =>
