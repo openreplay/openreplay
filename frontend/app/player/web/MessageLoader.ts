@@ -588,10 +588,18 @@ export function needsSorting(
   end: number,
 ): boolean {
   let maxPriority = -1;
+  let lastCreateId = -1;
   for (let i = start; i < end; i++) {
     const p = getMsgPriority(msgs[i].tp);
     if (p < maxPriority) return true;
     maxPriority = p;
+    if (p === 2) {
+      const id = (msgs[i] as { id?: number }).id;
+      if (id !== undefined) {
+        if (id < lastCreateId) return true;
+        lastCreateId = id;
+      }
+    }
   }
   return false;
 }
@@ -602,6 +610,12 @@ export function sortTimeGroup(msgs: PlayerMsg[], start: number, end: number) {
   for (let i = start; i < end; i++) {
     buckets[getMsgPriority(msgs[i].tp)].push(msgs[i]);
   }
+  if (buckets[2].length > 1) {
+    buckets[2].sort(
+      (a, b) =>
+        ((a as { id?: number }).id ?? 0) - ((b as { id?: number }).id ?? 0),
+    );
+  }
   let idx = start;
   for (let b = 0; b < BUCKET_COUNT; b++) {
     const bucket = buckets[b];
@@ -611,6 +625,22 @@ export function sortTimeGroup(msgs: PlayerMsg[], start: number, end: number) {
   }
 }
 
+/**
+ * Restore a replay-safe order on a batch of messages.
+ *
+ * Two passes:
+ *  1. Stable sort by `time` so older events apply first.
+ *  2. For each same-timestamp group, bucket-sort by `getMsgPriority` so the
+ *     DOM lifecycle is respected: CreateDocument → SetPageLocation → node
+ *     creations → attribute/data mutations → adoptedStyleSheet ops → moves →
+ *     removals. Within the creation bucket, ties are broken by ascending node
+ *     id so parents (lower ids, assigned earlier by the tracker's DFS bind)
+ *     land before their children — otherwise an out-of-order batch can leave
+ *     orphan inserts that silently drop entire subtrees from the replay.
+ *
+ * Uses bucket sort instead of a comparator-based sort to sidestep V8 TimSort's
+ * transitivity issues on large (20k+) arrays.
+ */
 export function fixMessageOrder(msgs: PlayerMsg[]): PlayerMsg[] {
   msgs.sort((a, b) => a.time - b.time);
 
