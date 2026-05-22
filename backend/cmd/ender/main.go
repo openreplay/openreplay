@@ -58,7 +58,7 @@ func main() {
 	projManager := projects.New(log, pgConn, redisClient, dbMetric)
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric)
 
-	sessionEndGenerator, err := ender.New(enderMetric, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessionEndGenerator, err := ender.New(log, enderMetric, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Fatal(ctx, "can't init ender service: %s", err)
 	}

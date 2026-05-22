@@ -1,14 +1,23 @@
 package ender
 
 import (
+	"context"
+	"fmt"
 	"time"
 
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics/ender"
 )
 
 // EndedSessionHandler handler for ended sessions
 type EndedSessionHandler func(map[uint64]uint64) map[uint64]bool
+
+const (
+	pageHasPlayer uint8 = 1 << 0
+	pageHasAssets uint8 = 1 << 1
+	pageComplete        = pageHasPlayer | pageHasAssets
+)
 
 // session holds information about user's session live status
 type session struct {
@@ -17,10 +26,13 @@ type session struct {
 	lastUserTime  uint64
 	isEnded       bool
 	isMobile      bool
+	isValid       bool // true once we saw a legacy batch or a page with both Player+Assets OR for mobile
+	seenPages     map[uint64]uint8
 }
 
 // SessionEnder updates timestamp of last message for each session
 type SessionEnder struct {
+	log      logger.Logger
 	metrics  ender.Ender
 	timeout  int64
 	sessions map[uint64]*session // map[sessionID]session
@@ -29,8 +41,9 @@ type SessionEnder struct {
 	enabled  bool
 }
 
-func New(metrics ender.Ender, timeout int64, parts int) (*SessionEnder, error) {
+func New(log logger.Logger, metrics ender.Ender, timeout int64, parts int) (*SessionEnder, error) {
 	return &SessionEnder{
+		log:      log,
 		metrics:  metrics,
 		timeout:  timeout,
 		sessions: make(map[uint64]*session),
@@ -70,11 +83,13 @@ func (se *SessionEnder) ActivePartitions(parts []uint64) {
 func (se *SessionEnder) UpdateSession(msg messages.Message) {
 	var (
 		sessionID      = msg.Meta().SessionID()
-		batchTimestamp = msg.Meta().Batch().Timestamp()
+		batch          = msg.Meta().Batch()
+		batchTimestamp = batch.Timestamp()
 		msgTimestamp   = msg.Meta().Timestamp
 		localTimestamp = time.Now().UnixMilli()
+		isMobile       = messages.IsMobileType(msg.TypeID())
 	)
-	if messages.IsMobileType(msg.TypeID()) {
+	if isMobile {
 		msgTimestamp = messages.GetTimestamp(msg)
 	}
 	if batchTimestamp == 0 {
@@ -84,15 +99,17 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 	sess, ok := se.sessions[sessionID]
 	if !ok {
 		// Register new session
-		se.sessions[sessionID] = &session{
+		sess = &session{
 			lastTimestamp: batchTimestamp,
 			lastUpdate:    localTimestamp,
 			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
-			isMobile:      messages.IsMobileType(msg.TypeID()),
+			isMobile:      isMobile,
 		}
+		se.sessions[sessionID] = sess
 		se.metrics.IncreaseActiveSessions()
 		se.metrics.IncreaseTotalSessions()
+		updateSessionValidity(sess, batch)
 		return
 	}
 	// Keep the highest user's timestamp for correct session duration value
@@ -104,6 +121,40 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		sess.lastTimestamp = batchTimestamp
 		sess.lastUpdate = localTimestamp
 		sess.isEnded = false
+	}
+	updateSessionValidity(sess, batch)
+}
+
+func updateSessionValidity(sess *session, batch *messages.BatchInfo) {
+	if sess.isValid {
+		return
+	}
+	if sess.isMobile {
+		sess.isValid = true
+		return
+	}
+	page := batch.PageNo()
+	switch batch.Type() {
+	case messages.RawData, messages.FullBatch:
+		sess.isValid = true
+		sess.seenPages = nil
+		return
+	case messages.PlayerBatch:
+		if sess.seenPages == nil {
+			sess.seenPages = make(map[uint64]uint8)
+		}
+		sess.seenPages[page] |= pageHasPlayer
+	case messages.AssetsBatch:
+		if sess.seenPages == nil {
+			sess.seenPages = make(map[uint64]uint8)
+		}
+		sess.seenPages[page] |= pageHasAssets
+	default:
+		return
+	}
+	if sess.seenPages[page] == pageComplete {
+		sess.isValid = true
+		sess.seenPages = nil
 	}
 }
 
@@ -138,6 +189,13 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 	for sessID, sess := range se.sessions {
 		if ended, _ := isSessionEnded(sessID, sess); ended {
 			sess.isEnded = true
+			if !sess.isValid {
+				sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
+				se.log.Info(sessCtx, "skip sessionEnd: session has no Player+Assets pair, pages seen: %v", sess.seenPages)
+				delete(se.sessions, sessID)
+				se.metrics.DecreaseActiveSessions()
+				continue
+			}
 			endedCandidates[sessID] = sess.lastUserTime
 		}
 	}

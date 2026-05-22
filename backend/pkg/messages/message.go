@@ -24,6 +24,7 @@ type BatchInfo struct {
 	timestamp int64
 	version   uint64
 	dataTs    int64
+	pageNo    uint64
 }
 
 func NewBatchInfo(sessID uint64, topic string, id, partition uint64, ts int64) *BatchInfo {
@@ -62,6 +63,14 @@ func (b *BatchInfo) SetType(t BatchType) {
 
 func (b *BatchInfo) Type() BatchType {
 	return BatchType(b.version)
+}
+
+func (b *BatchInfo) PageNo() uint64 {
+	return b.pageNo
+}
+
+func (b *BatchInfo) SetPageNo(p uint64) {
+	b.pageNo = p
 }
 
 func (b *BatchInfo) Info() string {
