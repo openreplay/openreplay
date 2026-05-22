@@ -88,11 +88,6 @@ jobs:
           echo "SENTRY_URL = ''" >> .env
           echo "CAPTCHA_ENABLED = false" >> .env
           echo "CAPTCHA_SITE_KEY = 'asdad'" >> .env
-          echo "MINIO_ENDPOINT = ''" >> .env
-          echo "MINIO_PORT = ''" >> .env
-          echo "MINIO_USE_SSL = ''" >> .env
-          echo "MINIO_ACCESS_KEY = ''" >> .env
-          echo "MINIO_SECRET_KEY = ''" >> .env
           echo "VERSION = '1.15.0'" >> .env
           echo "TRACKER_VERSION = '10.0.0'" >> .env
           echo "COMMIT_HASH = 'dev'" >> .env
