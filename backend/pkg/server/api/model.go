@@ -45,5 +45,5 @@ type RouterMiddleware interface {
 }
 
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Errors []string `json:"errors"`
 }

@@ -27,7 +27,7 @@ func NewResponser(webMetrics web.Web) Responser {
 }
 
 type response struct {
-	Error string `json:"error"`
+	Errors []string `json:"errors"`
 }
 
 func (r *responserImpl) ResponseOK(log logger.Logger, ctx context.Context, w http.ResponseWriter, requestStart time.Time, url string, bodySize int) {
@@ -49,7 +49,7 @@ func (r *responserImpl) ResponseWithJSON(log logger.Logger, ctx context.Context,
 
 func (r *responserImpl) ResponseWithError(log logger.Logger, ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
 	log.Error(ctx, "response error, code: %d, error: %s", code, err)
-	body, err := json.Marshal(&response{err.Error()})
+	body, err := json.Marshal(&response{Errors: []string{err.Error()}})
 	if err != nil {
 		log.Error(ctx, "can't marshal response: %s", err)
 	} else {

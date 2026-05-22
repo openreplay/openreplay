@@ -15,9 +15,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"openreplay/backend/internal/config/api"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
 )
+
+var ErrNoLiveSession = errors.New("no live session")
 
 type Assist interface {
 	GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error)
@@ -58,41 +61,45 @@ func (a *assistImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface
 
 	proj, err := a.projects.GetProject(projID)
 	if err != nil {
+		if postgres.IsNoRowsErr(err) {
+			return nil, ErrNoLiveSession
+		}
 		return nil, err
 	}
 	assistUrl := fmt.Sprintf(a.cfg.AssistUrl, a.cfg.AssistKey) + a.cfg.AssistLiveSuffix + "/" + proj.ProjectKey + "/" + strconv.Itoa(int(sessID))
 
 	resp, err := http.Get(assistUrl)
 	if err != nil {
-		fmt.Println("Error making request:", err)
-		return nil, err
+		return nil, fmt.Errorf("assist request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response:", err)
-		return nil, err
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, ErrNoLiveSession
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("assist returned status %d", resp.StatusCode)
 	}
 
-	// Parse the JSON response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read assist response: %w", err)
+	}
+
 	type assistResponse struct {
 		Data map[string]interface{} `json:"data"`
 	}
 	var response assistResponse
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		fmt.Println("Error parsing JSON response:", err)
-		return nil, err
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("parse assist response: %w", err)
 	}
-	if response.Data == nil {
-		response.Data = make(map[string]interface{})
+	if len(response.Data) == 0 {
+		return nil, ErrNoLiveSession
 	}
 
 	response.Data["live"] = true
 	if token, err := a.getAgentToken(projID, proj.ProjectKey, sessID); err != nil {
-		a.log.Error(context.Background(), "[proxy] GetLiveSessionByID: ", err)
+		a.log.Error(context.Background(), "[proxy] GetLiveSessionByID: %v", err)
 	} else {
 		response.Data["agentToken"] = token
 	}
