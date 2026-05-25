@@ -1,7 +1,7 @@
 urllib3==2.6.3
 requests==2.33.1
 boto3==1.43.2
-pyjwt==2.12.1
+pyjwt==2.13.0
 psycopg2-binary==2.9.12
 psycopg[pool,binary]==3.3.4
 clickhouse-connect==0.15.1
