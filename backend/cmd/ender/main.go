@@ -142,21 +142,13 @@ func processEndedBatch(
 	details *ender.LogDetails,
 ) map[uint64]bool {
 	completed := make(map[uint64]bool, len(candidates))
-	if len(candidates) == 0 {
-		return completed
-	}
-	ids := make([]uint64, 0, len(candidates))
-	for sessionID := range candidates {
-		ids = append(ids, sessionID)
-	}
-	loaded, err := sessManager.GetManySessions(ids)
-	if err != nil {
-		log.Error(ctx, "can't get sessions from database: %s", err)
-		return completed
-	}
 	for sessionID, timestamp := range candidates {
 		sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
-		sess := loaded[sessionID]
+		sess, err := sessManager.Get(sessionID)
+		if err != nil {
+			log.Error(sessCtx, "can't get session from database, will retry: %s", err)
+			continue
+		}
 		if ender.ProcessEndedSession(sessCtx, sessionID, timestamp, sess, sessManager, producer, cfg, log, details) {
 			completed[sessionID] = true
 		}
