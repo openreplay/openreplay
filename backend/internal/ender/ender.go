@@ -11,16 +11,14 @@ import (
 	"openreplay/backend/pkg/metrics/ender"
 )
 
-// EndedSessionHandler handler for ended sessions
-type EndedSessionHandler func(sessionID uint64, timestamp uint64) (bool, int)
+type EndedSessionHandler func(map[uint64]uint64) map[uint64]bool
 
 const (
-	pageHasPlayer uint8 = 1 << 0
-	pageHasAssets uint8 = 1 << 1
-	pageComplete        = pageHasPlayer | pageHasAssets
-
-	validKeyTTL    = 4 * time.Hour
-	redisOpTimeout = 500 * time.Millisecond
+	pageHasPlayer  uint8 = 1 << 0
+	pageHasAssets  uint8 = 1 << 1
+	pageComplete         = pageHasPlayer | pageHasAssets
+	validKeyTTL          = 4 * time.Hour
+	redisOpTimeout       = 500 * time.Millisecond
 )
 
 // session holds information about user's session live status
@@ -145,7 +143,7 @@ func (se *SessionEnder) updateSessionValidity(sess *session, sessID uint64, batc
 		sess.Validate()
 		return
 	}
-	if batch.Type() == messages.RawData || batch.Type() == messages.FullBatch {
+	if batch.Type() == messages.FullBatch {
 		sess.Validate()
 		return
 	}
@@ -207,57 +205,51 @@ func validKey(sessID uint64) string {
 	return fmt.Sprintf("ender:valid:%d", sessID)
 }
 
-// HandleEndedSessions runs handler for each ended session and delete information about session in successful case
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 	if !se.enabled {
 		return
 	}
 	currTime := time.Now().UnixMilli()
-	removedSessions := 0
-	brokerTime := make(map[int]int, 0)
-	serverTime := make(map[int]int, 0)
 
-	isSessionEnded := func(sessID uint64, sess *session) (bool, int) {
-		// Has been finished already
+	isSessionEnded := func(sessID uint64, sess *session) bool {
 		if sess.isEnded {
-			return true, 1
+			return true
 		}
 		batchTimeDiff := se.timeCtrl.LastBatchTimestamp(sessID) - sess.lastTimestamp
-
-		// Has been finished according to batch timestamp and hasn't been updated for a long time
+		// Finished according to batch timestamp and hasn't been updated for a long time.
 		if (batchTimeDiff >= se.timeout) && (currTime-sess.lastUpdate >= se.timeout) {
-			return true, 2
+			return true
 		}
-
-		// Hasn't been finished according to batch timestamp but hasn't been read from partition for a long time
+		// Not finished by batch timestamp but the partition hasn't been read for a long time.
 		if (batchTimeDiff < se.timeout) && (currTime-se.timeCtrl.LastUpdateTimestamp(sessID) >= se.timeout) {
-			return true, 3
+			return true
 		}
-		return false, 0
+		return false
 	}
 
+	// Find ended sessions
+	endedCandidates := make(map[uint64]uint64, len(se.sessions)/2) // [sessionID]lastUserTime
 	for sessID, sess := range se.sessions {
-		if ended, endCase := isSessionEnded(sessID, sess); ended {
-			sess.isEnded = true
-			if !sess.isValid {
-				sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
-				se.log.Info(sessCtx, "skip sessionEnd: session has no Player+Assets pair, pages seen: %v", sess.seenPages)
-				delete(se.sessions, sessID)
-				se.metrics.DecreaseActiveSessions()
-				continue
-			}
-			if res, _ := handler(sessID, sess.lastUserTime); res {
-				delete(se.sessions, sessID)
-				se.metrics.DecreaseActiveSessions()
-				se.metrics.IncreaseClosedSessions()
-				removedSessions++
-				if endCase == 2 {
-					brokerTime[1]++
-				}
-				if endCase == 3 {
-					serverTime[1]++
-				}
-			}
+		if !isSessionEnded(sessID, sess) {
+			continue
+		}
+		sess.isEnded = true
+		if !sess.isValid {
+			sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
+			se.log.Info(sessCtx, "skip sessionEnd: session has no Player+Assets pair, pages seen: %v", sess.seenPages)
+			delete(se.sessions, sessID)
+			se.metrics.DecreaseActiveSessions()
+			continue
+		}
+		endedCandidates[sessID] = sess.lastUserTime
+	}
+
+	// Process ended sessions
+	for sessID, completed := range handler(endedCandidates) {
+		if completed {
+			delete(se.sessions, sessID)
+			se.metrics.DecreaseActiveSessions()
+			se.metrics.IncreaseClosedSessions()
 		}
 	}
 }
