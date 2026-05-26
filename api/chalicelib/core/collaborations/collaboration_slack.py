@@ -7,7 +7,11 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_base import BaseCollaboration
+import logging
 
+from chalicelib.utils.log import sanitize
+
+logger = logging.getLogger(__name__)
 
 class Slack(BaseCollaboration):
     @classmethod
@@ -35,8 +39,8 @@ class Slack(BaseCollaboration):
                 ]
             })
         if r.status_code != 200:
-            print("slack integration failed")
-            print(r.text)
+            logger.error("slack integration failed")
+            logger.error(sanitize(r.text))
             return False
         return True
 
@@ -51,15 +55,15 @@ class Slack(BaseCollaboration):
                 json=body,
                 timeout=5)
             if r.status_code != 200:
-                print(f"!! issue sending slack raw; webhookId:{webhook_id} code:{r.status_code}")
-                print(r.text)
+                logger.warning(f"!! issue sending slack raw; webhookId:{webhook_id} code:{r.status_code}")
+                logger.warning(sanitize(r.text))
                 return None
         except requests.exceptions.Timeout:
-            print(f"!! Timeout sending slack raw webhookId:{webhook_id}")
+            logger.warning(f"!! Timeout sending slack raw webhookId:{webhook_id}")
             return None
         except Exception as e:
-            print(f"!! Issue sending slack raw webhookId:{webhook_id}")
-            print(str(e))
+            logger.warning(f"!! Issue sending slack raw webhookId:{webhook_id}")
+            logger.warning(sanitize(str(e)))
             return None
         return {"data": r.text}
 
@@ -68,16 +72,14 @@ class Slack(BaseCollaboration):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
-        print(f"====> sending slack batch notification: {len(attachments)}")
+        logger.debug(f"====> sending slack batch notification: {len(attachments)}")
         for i in range(0, len(attachments), 100):
             r = requests.post(
                 url=integration["endpoint"],
                 json={"attachments": attachments[i:i + 100]})
             if r.status_code != 200:
-                print("!!!! something went wrong while sending to:")
-                print(integration)
-                print(r)
-                print(r.text)
+                logger.warning(f"!!!! something went wrong while sending slack batch; webhookId:{webhook_id} code:{r.status_code}")
+                logger.warning(sanitize(r.text))
 
     @classmethod
     def __share(cls, tenant_id, integration_id, attachement, extra=None):

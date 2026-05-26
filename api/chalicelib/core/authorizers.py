@@ -6,6 +6,7 @@ from decouple import config
 from chalicelib.core import tenants
 from chalicelib.core import users, spot
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def is_spot_token(token: str) -> bool:
         audience = decoded_token.get("aud")
         return audience == spot.AUDIENCE
     except jwt.InvalidTokenError:
-        logger.error(f"Invalid token for is_spot_token: {token}")
+        logger.error(f"Invalid token for is_spot_token: {sanitize(token, max_length=16)}...")
         raise
 
 
