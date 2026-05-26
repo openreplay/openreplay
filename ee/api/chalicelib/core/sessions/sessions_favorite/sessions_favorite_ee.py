@@ -4,6 +4,7 @@ from decouple import config
 
 import schemas
 from chalicelib.core.sessions import sessions_mobs, sessions_devtool
+from chalicelib.utils.log import sanitize
 from chalicelib.utils.storage import extra
 from .sessions_favorite import add_favorite_session, remove_favorite_session, favorite_session_exists
 
@@ -22,8 +23,8 @@ def favorite_session(context: schemas.CurrentContext, project_id, session_id):
             try:
                 extra.tag_session(file_key=k, tag_value=tag)
             except Exception as e:
-                print(f"!!!Error while tagging: {k} to {tag} for removal")
-                print(str(e))
+                logger.warning(f"!!!Error while tagging: {sanitize(k)} to {sanitize(tag)} for removal")
+                logger.warning(sanitize(str(e)))
 
         return remove_favorite_session(context=context, project_id=project_id, session_id=session_id)
 
@@ -33,7 +34,7 @@ def favorite_session(context: schemas.CurrentContext, project_id, session_id):
         try:
             extra.tag_session(file_key=k, tag_value=tag)
         except Exception as e:
-            print(f"!!!Error while tagging: {k} to {tag} for vault")
-            print(str(e))
+            logger.warning(f"!!!Error while tagging: {sanitize(k)} to {sanitize(tag)} for vault")
+            logger.warning(sanitize(str(e)))
 
     return add_favorite_session(context=context, project_id=project_id, session_id=session_id)

@@ -1,6 +1,7 @@
 import logging
 
 from chalicelib.utils import pg_client
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ class DatabaseRequestHandler:
                 cur.execute(mogrified_query)
                 return cur.fetchall() if cur.description else None
         except Exception as e:
-            self.logger.error(f"Database operation failed: {e}")
+            self.logger.error(f"Database operation failed: {sanitize(str(e))}")
             raise
 
     def fetchall(self):
@@ -155,7 +156,7 @@ class DatabaseRequestHandler:
                 cur.execute(mogrified_query)
                 return cur.fetchall()
         except Exception as e:
-            self.logger.error(f"Database batch insert operation failed: {e}")
+            self.logger.error(f"Database batch insert operation failed: {sanitize(str(e))}")
             raise
 
     def raw_query(self, query, params=None):
@@ -165,7 +166,7 @@ class DatabaseRequestHandler:
                 cur.execute(mogrified_query)
                 return cur.fetchall() if cur.description else None
         except Exception as e:
-            self.logger.error(f"Database operation failed: {e}")
+            self.logger.error(f"Database operation failed: {sanitize(str(e))}")
             raise
 
     def batch_update(self, items):
@@ -201,5 +202,5 @@ class DatabaseRequestHandler:
                 mogrified_query = cur.mogrify(query, combined_params)
                 cur.execute(mogrified_query)
         except Exception as e:
-            self.logger.error(f"Database batch update operation failed: {e}")
+            self.logger.error(f"Database batch update operation failed: {sanitize(str(e))}")
             raise

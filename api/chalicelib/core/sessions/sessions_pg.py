@@ -7,6 +7,7 @@ from chalicelib.core import metadata
 from . import performance_event
 from chalicelib.utils import pg_client, helper, metrics_helper
 from chalicelib.utils import sql_helper as sh
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 logger.warning("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
                 logger.warning(main_query.decode('UTF-8'))
                 logger.warning("--------- PAYLOAD -----------")
-                logger.warning(data.model_dump_json())
+                logger.warning(sanitize(data.model_dump_json(), max_length=4096))
                 logger.warning("--------------------")
                 raise err
             sessions = cur.fetchall()

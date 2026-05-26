@@ -1,10 +1,14 @@
+import logging
 from urllib.parse import urlparse
 
 import requests
 from decouple import config
 
 from chalicelib.core.sourcemaps import sourcemaps_parser
+from chalicelib.utils.log import sanitize
 from chalicelib.utils.storage import StorageClient, generators
+
+logger = logging.getLogger(__name__)
 
 
 def presign_share_urls(project_id, urls):
@@ -72,8 +76,8 @@ def url_exists(url):
         r = requests.head(url, allow_redirects=False)
         return r.status_code == 200 and "text/html" not in r.headers.get("Content-Type", "")
     except Exception as e:
-        print(f"!! Issue checking if URL exists: {url}")
-        print(e)
+        logger.warning(f"!! Issue checking if URL exists: {sanitize(url)}")
+        logger.warning(sanitize(str(e)))
         return False
 
 
@@ -91,20 +95,20 @@ def get_traces_group(project_id, payload):
         params_idx = file_url.find("?")
         if file_url and len(file_url) > 0 \
                 and not (file_url[:params_idx] if params_idx > -1 else file_url).endswith(".js"):
-            print(f"{u['absPath']} sourcemap is not a JS file")
+            logger.debug(f"{sanitize(u['absPath'])} sourcemap is not a JS file")
             payloads[key] = None
 
         if key not in payloads:
             file_exists_in_bucket = len(file_url) > 0 and StorageClient.exists(config('sourcemaps_bucket'), key)
             if len(file_url) > 0 and not file_exists_in_bucket:
-                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 looking in server")
+                logger.debug(f"{sanitize(u['absPath'])} sourcemap (key '{sanitize(key)}') doesn't exist in S3 looking in server")
                 if not file_url.endswith(".map"):
                     file_url += '.map'
                 file_exists_in_server = url_exists(file_url)
                 file_exists_in_bucket = file_exists_in_server
             all_exists = all_exists and file_exists_in_bucket
             if not file_exists_in_bucket and not file_exists_in_server:
-                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 nor server")
+                logger.debug(f"{sanitize(u['absPath'])} sourcemap (key '{sanitize(key)}') doesn't exist in S3 nor server")
                 payloads[key] = None
             else:
                 payloads[key] = []
@@ -155,25 +159,25 @@ def fetch_missed_contexts(frames):
             file_path = get_js_cache_path(file_abs_path)
             file = StorageClient.get_file(config('js_cache_bucket'), file_path)
             if file is None:
-                print(f"Missing abs_path: {file_abs_path}, file {file_path} not found in {config('js_cache_bucket')}")
+                logger.debug(f"Missing abs_path: {sanitize(file_abs_path)}, file {sanitize(file_path)} not found in {config('js_cache_bucket')}")
             source_cache[file_abs_path] = file
         if file is None:
             continue
         lines = file.split("\n")
 
         if frames[i]["lineNo"] is None:
-            print("no original-source found for frame in sourcemap results")
+            logger.debug("no original-source found for frame in sourcemap results")
             frames[i] = frames[i]["frame"]
             frames[i]["originalMapping"] = False
 
         l = frames[i]["lineNo"] - 1  # starts from 1
         c = frames[i]["colNo"] - 1  # starts from 1
         if len(lines) == 1:
-            print(f"minified asset")
+            logger.debug("minified asset")
             l = frames[i]["frame"]["lineNo"] - 1  # starts from 1
             c = frames[i]["frame"]["colNo"] - 1  # starts from 1
         elif l >= len(lines):
-            print(f"line number {l} greater than file length {len(lines)}")
+            logger.debug(f"line number {l} greater than file length {len(lines)}")
             continue
 
         line = lines[l]

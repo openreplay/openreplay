@@ -6,6 +6,7 @@ import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active:
 
             return {"is_active": cur.fetchone()["is_active"]}
     except Exception as e:
-        logger.error(f"Failed to update feature flag status: {e}")
+        logger.error(f"Failed to update feature flag status: {sanitize(str(e))}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Failed to update feature flag status")
 
