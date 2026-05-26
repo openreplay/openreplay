@@ -1,7 +1,12 @@
+import logging
+
 import requests
+
 from chalicelib.core.log_tools import log_tools
+from chalicelib.utils.log import sanitize
 from schemas import schemas
 
+logger = logging.getLogger(__name__)
 IN_TY = "bugsnag"
 
 
@@ -10,10 +15,9 @@ def list_projects(auth_token):
                      params={"per_page": "100"},
                      headers={"Authorization": "token " + auth_token, "X-Version": "2"})
     if r.status_code != 200:
-        print("=======> bugsnag get organizations: something went wrong")
-        print(r)
-        print(r.status_code)
-        print(r.text)
+        logger.error("=======> bugsnag get organizations: something went wrong")
+        logger.error(r.status_code)
+        logger.error(sanitize(r.text))
         return []
 
     orgs = []
@@ -23,10 +27,9 @@ def list_projects(auth_token):
                           params={"per_page": "100"},
                           headers={"Authorization": "token " + auth_token, "X-Version": "2"})
         if pr.status_code != 200:
-            print("=======> bugsnag get projects: something went wrong")
-            print(pr)
-            print(r.status_code)
-            print(r.text)
+            logger.error("=======> bugsnag get projects: something went wrong")
+            logger.error(pr.status_code)
+            logger.error(sanitize(pr.text))
             continue
         orgs.append({"name": i["name"], "projects": [{"name": p["name"], "id": p["id"]} for p in pr.json()]})
     return orgs

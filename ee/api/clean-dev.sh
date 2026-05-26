@@ -101,3 +101,4 @@ rm -rf ./chalicelib/core/notes.py
 rm -rf ./chalicelib/utils/contextual_validators.py
 rm -rf ./routers/subs/product_analytics.py
 rm -rf ./schemas/product_analytics.py
+rm -rf ./chalicelib/utils/log.py

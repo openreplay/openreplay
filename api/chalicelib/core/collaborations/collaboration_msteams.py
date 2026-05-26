@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_base import BaseCollaboration
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class MSTeams(BaseCollaboration):
                 timeout=3)
             if r.status_code != 200:
                 logger.warning("MSTeams integration failed")
-                logger.warning(r.text)
+                logger.warning(sanitize(r.text))
                 return False
         except Exception as e:
             logger.warning("!!! MSTeams integration failed")
@@ -58,7 +59,7 @@ class MSTeams(BaseCollaboration):
                 timeout=5)
             if r.status_code != 200:
                 logger.warning(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
-                logger.warning(r.text)
+                logger.warning(sanitize(r.text))
                 return None
         except requests.exceptions.Timeout:
             logger.warning(f"!! Timeout sending msteams raw webhookId:{webhook_id}")
@@ -89,7 +90,7 @@ class MSTeams(BaseCollaboration):
                               })
             if r.status_code != 200:
                 logger.warning("!!!! something went wrong")
-                logger.warning(r.text)
+                logger.warning(sanitize(r.text))
 
     @classmethod
     def __share(cls, tenant_id, integration_id, attachement, extra=None):

@@ -7,6 +7,7 @@ from decouple import config
 
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def check():
                       json={"mid": __get_mid(), "license": get_license()})
     if r.status_code != 200 or "errors" in r.json() or not r.json()["data"].get("valid"):
         logger.warning("license validation failed")
-        logger.warning(r.text)
+        logger.warning(sanitize(r.text))
         environ["expiration"] = "-1"
     else:
         environ["expiration"] = str(r.json()["data"].get("expiration"))

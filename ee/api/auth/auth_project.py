@@ -6,6 +6,7 @@ from starlette.exceptions import HTTPException
 
 import schemas
 from chalicelib.core import projects
+from chalicelib.utils.log import sanitize
 from or_dependencies import OR_context
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class ProjectAuthorizer:
                 current_project = None
 
         if current_project is None:
-            logger.debug(f"unauthorized project {self.project_identifier}:{value}")
+            logger.debug(f"unauthorized project {self.project_identifier}:{sanitize(value)}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized project.")
         else:
             current_project = schemas.ProjectContext(projectId=current_project["projectId"],

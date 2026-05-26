@@ -6,6 +6,7 @@ from decouple import config
 
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ def __check_be_service(service_name):
                 logger.error(
                     f"!! issue with the {service_name}-health code:{results.status_code}"
                 )
-                logger.error(results.text)
+                logger.error(sanitize(results.text))
                 # fail_response["details"]["errors"].append(results.text)
                 return fail_response
         except requests.exceptions.Timeout:
@@ -91,7 +92,7 @@ def __check_be_service(service_name):
             logger.error(f"!! Issue getting {service_name}-health response")
             logger.exception(e)
             try:
-                logger.error(results.text)
+                logger.error(sanitize(results.text))
                 # fail_response["details"]["errors"].append(results.text)
             except Exception:
                 logger.error("couldn't get response")

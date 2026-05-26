@@ -14,6 +14,13 @@ from chalicelib.core import authorizers, users, spot
 logger = logging.getLogger(__name__)
 
 
+def _get_jwt_leeway() -> datetime.timedelta:
+    days = config("JWT_LEEWAY_DAYS", default=None)
+    if days is not None:
+        return datetime.timedelta(days=int(days))
+    return datetime.timedelta(seconds=config("JWT_LEEWAY_S", cast=int, default=300))
+
+
 def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.CurrentContext:
     user = users.get_user(user_id=jwt_payload.get("userId", -1), tenant_id=jwt_payload.get("tenantId", -1))
     if user is None:
@@ -99,9 +106,7 @@ class JWTAuth(HTTPBearer):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail="Invalid authentication scheme.")
             old_jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials,
-                                                         leeway=datetime.timedelta(
-                                                             days=config("JWT_LEEWAY_DAYS", cast=int, default=3)
-                                                         ))
+                                                         leeway=_get_jwt_leeway())
             if old_jwt_payload is None \
                     or old_jwt_payload.get("userId") is None \
                     or old_jwt_payload.get("userId") != jwt_payload.get("userId"):
@@ -114,7 +119,7 @@ class JWTAuth(HTTPBearer):
 
     async def __process_spot_refresh_call(self, request: Request) -> schemas.CurrentContext:
         if "spotRefreshToken" not in request.cookies:
-            logger.warning("Missing soptRefreshToken cookie.")
+            logger.warning("Missing spotRefreshToken cookie.")
             jwt_payload = None
         else:
             jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=request.cookies["spotRefreshToken"])
@@ -137,9 +142,7 @@ class JWTAuth(HTTPBearer):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail="Invalid spot-authentication scheme.")
             old_jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials,
-                                                         leeway=datetime.timedelta(
-                                                             days=config("JWT_LEEWAY_DAYS", cast=int, default=3)
-                                                         ))
+                                                         leeway=_get_jwt_leeway())
             if old_jwt_payload is None \
                     or old_jwt_payload.get("userId") is None \
                     or old_jwt_payload.get("userId") != jwt_payload.get("userId"):

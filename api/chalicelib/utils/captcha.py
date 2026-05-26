@@ -4,6 +4,7 @@ import requests
 from decouple import config
 
 from chalicelib.utils import helper
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +21,8 @@ def is_valid(response):
     r = requests.post(url=url, data={"secret": secret, "response": response})
     if r.status_code != 200:
         logger.warning("something went wrong")
-        logger.error(r)
         logger.warning(r.status_code)
-        logger.warning(r.text)
+        logger.warning(sanitize(r.text))
         return
     r = r.json()
     logger.debug(r)

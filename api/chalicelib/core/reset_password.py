@@ -5,12 +5,13 @@ from fastapi import BackgroundTasks
 import schemas
 from chalicelib.core import users
 from chalicelib.utils import email_helper, captcha, helper, smtp
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
 
 def reset(data: schemas.ForgetPasswordPayloadSchema, background_tasks: BackgroundTasks):
-    logger.info(f"forget password request for: {data.email}")
+    logger.info(f"forget password request for: {sanitize(data.email)}")
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         return {"errors": ["Invalid captcha."]}
     if not smtp.has_smtp():
@@ -22,5 +23,5 @@ def reset(data: schemas.ForgetPasswordPayloadSchema, background_tasks: Backgroun
                                   recipient=data.email,
                                   invitation_link=invitation_link)
     else:
-        logger.warning(f"!!!invalid email address [{data.email}]")
+        logger.warning(f"!!!invalid email address [{sanitize(data.email)}]")
     return {"data": {"state": "A reset link will be sent if this email exists in our system."}}

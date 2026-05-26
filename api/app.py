@@ -14,6 +14,7 @@ from starlette.responses import StreamingResponse
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client, ch_client
+from chalicelib.utils.log import sanitize
 from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers.subs import insights, metrics, v1_api, health, usability_tests, spot, product_analytics
@@ -95,11 +96,11 @@ IGNORE_ENDPOINT_LOG = ["/"]
 
 @app.middleware("http")
 async def log_all_requests(request: Request, call_next):
-    method = request.method
-    endpoint = request.url.path
+    method = sanitize(request.method, max_length=16)
+    endpoint = sanitize(request.url.path)
     response: Response = await call_next(request)
     # Log all endpoints except health check
-    if endpoint not in IGNORE_ENDPOINT_LOG or response.status_code != 200:
+    if request.url.path not in IGNORE_ENDPOINT_LOG or response.status_code != 200:
         logger.info(f"{method}:{endpoint} {response.status_code}")
     return response
 
@@ -111,15 +112,15 @@ async def or_middleware(request: Request, call_next):
     try:
         response: StreamingResponse = await call_next(request)
     except:
-        logging.error(f"{request.method}: {request.url.path} FAILED!")
+        logging.error(f"{sanitize(request.method, max_length=16)}: {sanitize(request.url.path)} FAILED!")
         raise
     if response.status_code // 100 != 2:
-        logging.warning(f"{request.method}:{request.url.path} {response.status_code}!")
+        logging.warning(f"{sanitize(request.method, max_length=16)}:{sanitize(request.url.path)} {response.status_code}!")
     if helper.TRACK_TIME:
         now = time.time() - now
         if now > 2:
             now = round(now, 2)
-            logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
+            logging.warning(f"Execution time: {now} s for {sanitize(request.method, max_length=16)}: {sanitize(request.url.path)}")
     response.headers["x-robots-tag"] = 'noindex, nofollow'
     return response
 

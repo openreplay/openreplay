@@ -7,6 +7,7 @@ from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
         return {"errors": ["tenants already registered"]}
 
     email = data.email
-    logger.debug(f"email: {email}")
+    logger.debug(f"email: {sanitize(email)}")
     password = data.password.get_secret_value()
     fullname = data.fullname
 
@@ -44,7 +45,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
 
     if len(errors) > 0:
         logger.warning(
-            f"==> signup error for:\n email:{data.email}, fullname:{data.fullname}, organizationName:{data.organizationName}")
+            f"==> signup error for:\n email:{sanitize(data.email)}, fullname:{sanitize(data.fullname)}, organizationName:{sanitize(data.organizationName)}")
         logger.warning(errors)
         return {"errors": errors}
 
