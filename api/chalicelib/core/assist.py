@@ -10,6 +10,7 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.core import projects
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ def __get_live_sessions_ws(project_id, data):
                                 json=data, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for __get_live_sessions_ws")
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
             return {"total": 0, "sessions": []}
         live_peers = results.json().get("data", [])
     except requests.exceptions.Timeout:
@@ -67,7 +68,7 @@ def __get_live_sessions_ws(project_id, data):
         logger.exception(e)
         logger.error("expected JSON, received:")
         try:
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
         except:
             logger.error("couldn't get response")
         live_peers = {"total": 0, "sessions": []}
@@ -106,7 +107,7 @@ def get_live_session_by_id(project_id, session_id):
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for get_live_session_by_id")
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
             return None
         results = results.json().get("data")
         if results is None:
@@ -121,7 +122,7 @@ def get_live_session_by_id(project_id, session_id):
         logger.exception(e)
         logger.error("expected JSON, received:")
         try:
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
         except:
             logger.error("couldn't get response")
         return None
@@ -136,7 +137,7 @@ def is_live(project_id, session_id, project_key=None):
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for is_live")
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
             return False
         results = results.json().get("data")
     except requests.exceptions.Timeout:
@@ -147,7 +148,7 @@ def is_live(project_id, session_id, project_key=None):
         logger.exception(e)
         logger.error("expected JSON, received:")
         try:
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
         except:
             logger.error("couldn't get response")
         return False
@@ -165,7 +166,7 @@ def autocomplete(project_id, q: str, key: str = None):
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for autocomplete")
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
             return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
         results = results.json().get("data", [])
     except requests.exceptions.Timeout:
@@ -176,7 +177,7 @@ def autocomplete(project_id, q: str, key: str = None):
         logger.exception(e)
         logger.error("expected JSON, received:")
         try:
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
         except:
             logger.error("couldn't get response")
         return {"errors": ["Something went wrong wile calling assist"]}
@@ -243,7 +244,7 @@ def session_exists(project_id, session_id):
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for session_exists")
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
             return None
         results = results.json().get("data")
         if results is None:
@@ -257,7 +258,7 @@ def session_exists(project_id, session_id):
         logger.exception(e)
         logger.error("expected JSON, received:")
         try:
-            logger.error(results.text)
+            logger.error(sanitize(results.text))
         except:
             logger.error("couldn't get response")
         return False

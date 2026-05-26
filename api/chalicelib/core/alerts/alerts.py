@@ -11,6 +11,7 @@ from chalicelib.core.collaborations.collaboration_msteams import MSTeams
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 from starlette import status
 from starlette.exceptions import HTTPException
 
@@ -35,7 +36,7 @@ def get(project_id, id):
 
         return helper.custom_alert_to_front(__process_circular(a))
     except Exception as e:
-        logger.error(f"Error fetching alert: {str(e)}")
+        logger.error(f"Error fetching alert: {sanitize(str(e))}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found.")
 
 
@@ -113,7 +114,7 @@ def update(project_id: int, id: int, data: schemas.AlertSchema):
 
         return {"data": helper.custom_alert_to_front(__process_circular(a))}
     except Exception as e:
-        logger.error(f"Error updating alert: {str(e)}")
+        logger.error(f"Error updating alert: {sanitize(str(e))}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to update alert.")
 
 
@@ -147,25 +148,25 @@ def process_notifications(data):
                     send_to_slack_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logger.error("!!!Error while sending slack notifications batch")
-                    logger.error(str(e))
+                    logger.error(sanitize(str(e)))
             elif t == "msteams":
                 try:
                     send_to_msteams_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logger.error("!!!Error while sending msteams notifications batch")
-                    logger.error(str(e))
+                    logger.error(sanitize(str(e)))
             elif t == "email":
                 try:
                     send_by_email_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logger.error("!!!Error while sending email notifications batch")
-                    logger.error(str(e))
+                    logger.error(sanitize(str(e)))
             elif t == "webhook":
                 try:
                     webhook.trigger_batch(data_list=notifications_list)
                 except Exception as e:
                     logger.error("!!!Error while sending webhook notifications batch")
-                    logger.error(str(e))
+                    logger.error(sanitize(str(e)))
 
 
 def send_by_email(notification, destination):

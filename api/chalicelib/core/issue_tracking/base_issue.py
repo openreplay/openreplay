@@ -1,4 +1,9 @@
+import logging
 from abc import ABC, abstractmethod
+
+from chalicelib.utils.log import sanitize
+
+logger = logging.getLogger(__name__)
 
 
 class RequestException(Exception):
@@ -6,8 +11,8 @@ class RequestException(Exception):
 
 
 def proxy_issues_handler(e):
-    print("=======__proxy_issues_handler=======")
-    print(str(e))
+    logger.error("=======__proxy_issues_handler=======")
+    logger.error(sanitize(str(e)))
     return {"errors": [str(e)]}
 
 

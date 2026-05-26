@@ -13,6 +13,7 @@ from starlette.responses import Response, JSONResponse
 
 import schemas
 from chalicelib.utils import helper
+from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class ORRoute(APIRoute):
                 response: Response = await original_route_handler(request)
             except RequestValidationError as exc:
                 # 422 validation exception
-                logger.warning(f"!!! 422 exception when calling: {request.method} {request.url}")
+                logger.warning(f"!!! 422 exception when calling: {sanitize(request.method, max_length=16)} {sanitize(str(request.url))}")
                 logger.warning(exc.errors())
                 for e in exc.errors():
                     if e.get("msg", "").endswith("must be alphanumeric"):

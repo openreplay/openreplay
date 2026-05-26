@@ -1,6 +1,12 @@
+import logging
+
 import requests
+
 from chalicelib.core.log_tools import log_tools
+from chalicelib.utils.log import sanitize
 from schemas import schemas
+
+logger = logging.getLogger(__name__)
 
 IN_TY = "sentry"
 
@@ -60,8 +66,7 @@ def proxy_get(tenant_id, project_id, event_id):
             "organization_slug": i["organizationSlug"], "project_slug": i["projectSlug"], "event_id": event_id},
         headers={"Authorization": "Bearer " + i["token"]})
     if r.status_code != 200:
-        print("=======> sentry get: something went wrong")
-        print(r)
-        print(r.status_code)
-        print(r.text)
+        logger.error("=======> sentry get: something went wrong")
+        logger.error(r.status_code)
+        logger.error(sanitize(r.text))
     return r.json()

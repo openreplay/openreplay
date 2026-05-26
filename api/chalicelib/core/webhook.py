@@ -5,6 +5,7 @@ import requests
 import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
@@ -176,7 +177,7 @@ def __trigger(hook, data):
             logger.error("=======> webhook: something went wrong for:")
             logger.error(hook)
             logger.error(r.status_code)
-            logger.error(r.text)
+            logger.error(sanitize(r.text))
             return
         response = None
         try:

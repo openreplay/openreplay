@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 
 
 def get_by_id(webhook_id):
@@ -183,7 +184,7 @@ def __trigger(hook, data):
             logging.error("=======> webhook: something went wrong for:")
             logging.error(hook)
             logging.error(r.status_code)
-            logging.error(r.text)
+            logging.error(sanitize(r.text))
             return
         response = None
         try:
