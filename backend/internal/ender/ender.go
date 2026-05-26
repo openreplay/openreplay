@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics/ender"
@@ -17,6 +18,9 @@ const (
 	pageHasPlayer uint8 = 1 << 0
 	pageHasAssets uint8 = 1 << 1
 	pageComplete        = pageHasPlayer | pageHasAssets
+
+	validKeyTTL    = 4 * time.Hour
+	redisOpTimeout = 500 * time.Millisecond
 )
 
 // session holds information about user's session live status
@@ -27,12 +31,19 @@ type session struct {
 	isEnded       bool
 	isMobile      bool
 	isValid       bool // true once we saw a legacy batch or a page with both Player+Assets OR for mobile
+	redisChecked  bool
 	seenPages     map[uint64]uint8
+}
+
+func (s *session) Validate() {
+	s.isValid = true
+	s.seenPages = nil
 }
 
 // SessionEnder updates timestamp of last message for each session
 type SessionEnder struct {
 	log      logger.Logger
+	redis    *redis.Client
 	metrics  ender.Ender
 	timeout  int64
 	sessions map[uint64]*session // map[sessionID]session
@@ -41,9 +52,10 @@ type SessionEnder struct {
 	enabled  bool
 }
 
-func New(log logger.Logger, metrics ender.Ender, timeout int64, parts int) (*SessionEnder, error) {
+func New(log logger.Logger, redisClient *redis.Client, metrics ender.Ender, timeout int64, parts int) (*SessionEnder, error) {
 	return &SessionEnder{
 		log:      log,
+		redis:    redisClient,
 		metrics:  metrics,
 		timeout:  timeout,
 		sessions: make(map[uint64]*session),
@@ -109,7 +121,7 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		se.sessions[sessionID] = sess
 		se.metrics.IncreaseActiveSessions()
 		se.metrics.IncreaseTotalSessions()
-		updateSessionValidity(sess, batch)
+		se.updateSessionValidity(sess, sessionID, batch)
 		return
 	}
 	// Keep the highest user's timestamp for correct session duration value
@@ -122,40 +134,77 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		sess.lastUpdate = localTimestamp
 		sess.isEnded = false
 	}
-	updateSessionValidity(sess, batch)
+	se.updateSessionValidity(sess, sessionID, batch)
 }
 
-func updateSessionValidity(sess *session, batch *messages.BatchInfo) {
+func (se *SessionEnder) updateSessionValidity(sess *session, sessID uint64, batch *messages.BatchInfo) {
 	if sess.isValid {
 		return
 	}
 	if sess.isMobile {
-		sess.isValid = true
+		sess.Validate()
 		return
 	}
+	if batch.Type() == messages.RawData || batch.Type() == messages.FullBatch {
+		sess.Validate()
+		return
+	}
+	if batch.Type() != messages.PlayerBatch && batch.Type() != messages.AssetsBatch {
+		return
+	}
+
+	if !sess.redisChecked {
+		sess.redisChecked = true
+		if se.hasValidKey(sessID) {
+			sess.Validate()
+			return
+		}
+	}
+
 	page := batch.PageNo()
-	switch batch.Type() {
-	case messages.RawData, messages.FullBatch:
-		sess.isValid = true
-		sess.seenPages = nil
-		return
-	case messages.PlayerBatch:
-		if sess.seenPages == nil {
-			sess.seenPages = make(map[uint64]uint8)
-		}
+	if sess.seenPages == nil {
+		sess.seenPages = make(map[uint64]uint8)
+	}
+	if batch.Type() == messages.PlayerBatch {
 		sess.seenPages[page] |= pageHasPlayer
-	case messages.AssetsBatch:
-		if sess.seenPages == nil {
-			sess.seenPages = make(map[uint64]uint8)
-		}
+	} else {
 		sess.seenPages[page] |= pageHasAssets
-	default:
-		return
 	}
 	if sess.seenPages[page] == pageComplete {
-		sess.isValid = true
-		sess.seenPages = nil
+		sess.Validate()
+		se.writeValidKey(sessID)
 	}
+}
+
+func (se *SessionEnder) hasValidKey(sessID uint64) bool {
+	if se.redis == nil || se.redis.Redis == nil {
+		return false
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), redisOpTimeout)
+	defer cancel()
+	res, err := se.redis.Redis.Exists(ctx, validKey(sessID)).Result()
+	if err != nil {
+		sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
+		se.log.Warn(sessCtx, "redis EXISTS ender:valid failed: %s", err)
+		return false
+	}
+	return res > 0
+}
+
+func (se *SessionEnder) writeValidKey(sessID uint64) {
+	if se.redis == nil || se.redis.Redis == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), redisOpTimeout)
+	defer cancel()
+	if err := se.redis.Redis.Set(ctx, validKey(sessID), 1, validKeyTTL).Err(); err != nil {
+		sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
+		se.log.Warn(sessCtx, "redis SET ender:valid failed: %s", err)
+	}
+}
+
+func validKey(sessID uint64) string {
+	return fmt.Sprintf("ender:valid:%d", sessID)
 }
 
 // HandleEndedSessions runs handler for each ended session and delete information about session in successful case
