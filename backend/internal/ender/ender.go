@@ -105,6 +105,11 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 	if batchTimestamp == 0 {
 		return
 	}
+	switch msg.TypeID() {
+	case messages.MsgSetCSSData, messages.MsgSetNodeAttribute,
+		messages.MsgAdoptedSSReplace, messages.MsgAdoptedSSInsertRule:
+		se.log.Info(context.Background(), "assets msg, sessID: %d, batchType: %d", sessionID, batch.Type())
+	}
 	se.timeCtrl.UpdateTime(sessionID, batchTimestamp, localTimestamp)
 	sess, ok := se.sessions[sessionID]
 	if !ok {
