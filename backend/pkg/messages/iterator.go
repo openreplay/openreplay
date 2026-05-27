@@ -74,6 +74,8 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	// Prepare iterator before processing messages in batch
 	i.prepareVars(batchInfo)
 
+	tsCounter := 0
+
 	for reader.Next() {
 		// Increase message index (can be overwritten by batch info message)
 		i.messageInfo.Index++
@@ -93,6 +95,10 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 				i.log.Error(ctx, "message preprocessing err: %s", err)
 				return
 			}
+		}
+
+		if msg.TypeID() == MsgTimestamp {
+			tsCounter++
 		}
 
 		// Skip messages we don't have in filter
@@ -121,6 +127,10 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 
 		// Process message
 		i.handler(msg)
+	}
+
+	if batchInfo.Type() == AssetsBatch && tsCounter == 0 {
+		i.log.Warn(ctx, "[!] assets batch without timestamps, %s", batchInfo.Info())
 	}
 }
 
