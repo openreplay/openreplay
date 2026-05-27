@@ -77,7 +77,10 @@ func main() {
 		messages.NewEnderMessageIterator(
 			log,
 			func(msg messages.Message) { sessionEndGenerator.UpdateSession(msg) },
-			append([]int{messages.MsgTimestamp}, mobileMessages...),
+			append([]int{messages.MsgTimestamp,
+				messages.MsgSetCSSData, messages.MsgSetNodeAttribute,
+				messages.MsgAdoptedSSReplace, messages.MsgAdoptedSSInsertRule,
+			}, mobileMessages...),
 			false),
 		false,
 		cfg.MessageSizeLimit,
