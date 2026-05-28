@@ -35,11 +35,15 @@ ingress-nginx: &ingress-nginx
   {{- else -}}
     {{-  .Values.global.s3.endpoint -}}
   {{- end -}}
-{{/* Endpoint wil be empty if used with aws iam roles*/}}
 {{- else if and .Values.global.s3.accessKey .Values.global.s3.secretKey -}}
   {{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region -}}
-{{- else -}}
-  {{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region -}}
+{{/* IRSA / instance-role mode: emit an empty endpoint so the AWS SDK
+     falls back to its default virtual-hosted endpoint resolver over
+     HTTPS. The backend Go S3 client (backend/pkg/objectstorage/s3/s3.go)
+     interprets any non-empty AWS_ENDPOINT as MinIO / S3-compatible mode
+     and sets DisableSSL=true + S3ForcePathStyle=true, which silently
+     breaks PutObject against AWS S3's public endpoint (HTTP -> HTTPS
+     redirect on a PUT body is not followed by aws-sdk-go v1). */}}
 {{- end -}}
 {{- end -}}
 
