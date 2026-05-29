@@ -7,6 +7,7 @@ import { analyticsService } from '@/services';
 import Event from 'App/mstore/types/Analytics/Event';
 import { session, withSiteId } from '@/routes';
 import { Link } from 'react-router-dom';
+import { escapeHtml } from 'App/utils';
 import { Icon, TextEllipsis } from 'UI';
 import { getEventIcon } from './getEventIcon';
 import Tabs from 'Components/shared/Tabs';
@@ -102,15 +103,16 @@ function EventDetailsModal({
     null,
     4,
   );
+  const escapedJson = escapeHtml(strProps);
   const highlightedJson =
     view === 'pretty'
       ? ''
       : query
-        ? strProps.replace(
+        ? escapedJson.replace(
             new RegExp(query, 'ig'),
             (match) => `<mark>${match}</mark>`,
           )
-        : strProps;
+        : escapedJson;
 
   const onCopy = () => {
     copy(strProps);

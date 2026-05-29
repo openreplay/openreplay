@@ -8,6 +8,14 @@ export const HOUR_SECS = 60 * 60;
 export const DAY_SECS = 24 * HOUR_SECS;
 export const WEEK_SECS = 7 * DAY_SECS;
 
+export const escapeHtml = (str: string) =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 export const formatExpirationTime = (seconds: number) => {
   if (seconds >= WEEK_SECS) {
     return `${Math.floor(seconds / DAY_SECS)} days`;
