@@ -2,6 +2,7 @@ package model
 
 import (
 	"openreplay/backend/pkg/analytics/filters"
+	"openreplay/backend/pkg/analytics/sanitizer"
 )
 
 
@@ -74,6 +75,15 @@ func (e *EventEntry) UnmarshalProperties() error {
 	}
 
 	return nil
+}
+
+func (e *EventEntry) SanitizeForHTML() {
+	if e == nil {
+		return
+	}
+	sanitizer.EscapeStructStrings(e)
+	sanitizer.EscapePropertyMap(e.Properties)
+	sanitizer.EscapePropertyMap(e.AutoProperties)
 }
 
 type EventsSearchRequest struct {

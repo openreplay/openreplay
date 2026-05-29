@@ -170,6 +170,8 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 			continue
 		}
 
+		entry.SanitizeForHTML()
+
 		events = append(events, entry)
 	}
 
@@ -237,6 +239,8 @@ func (e *eventsImpl) GetEventByID(ctx context.Context, projID uint32, eventID st
 		e.log.Error(ctx, "failed to unmarshal properties for event %s in project %d: %v", eventID, projID, err)
 		return nil, fmt.Errorf("failed to unmarshal properties for event %s: %w", eventID, err)
 	}
+
+	entry.SanitizeForHTML()
 
 	return &entry, nil
 }
