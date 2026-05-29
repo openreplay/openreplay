@@ -152,10 +152,13 @@ func (se *SessionEnder) updateSessionValidity(sess *session, sessID uint64, batc
 	}
 
 	if !sess.redisChecked {
-		sess.redisChecked = true
-		if se.hasValidKey(sessID) {
-			sess.Validate()
-			return
+		valid, err := se.hasValidKey(sessID)
+		if err == nil {
+			sess.redisChecked = true
+			if valid {
+				sess.Validate()
+				return
+			}
 		}
 	}
 
@@ -174,9 +177,9 @@ func (se *SessionEnder) updateSessionValidity(sess *session, sessID uint64, batc
 	}
 }
 
-func (se *SessionEnder) hasValidKey(sessID uint64) bool {
+func (se *SessionEnder) hasValidKey(sessID uint64) (bool, error) {
 	if se.redis == nil || se.redis.Redis == nil {
-		return false
+		return false, nil
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), redisOpTimeout)
 	defer cancel()
@@ -184,9 +187,9 @@ func (se *SessionEnder) hasValidKey(sessID uint64) bool {
 	if err != nil {
 		sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
 		se.log.Warn(sessCtx, "redis EXISTS ender:valid failed: %s", err)
-		return false
+		return false, err
 	}
-	return res > 0
+	return res > 0, nil
 }
 
 func (se *SessionEnder) writeValidKey(sessID uint64) {
