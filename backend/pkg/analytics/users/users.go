@@ -158,6 +158,8 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 		return nil, fmt.Errorf("failed to unmarshal properties: %w", err)
 	}
 
+	user.SanitizeForHTML()
+
 	return user.ToUser(), nil
 }
 
@@ -241,6 +243,8 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 			u.log.Error(ctx, "failed to unmarshal properties: %v", err)
 			continue
 		}
+
+		user.SanitizeForHTML()
 
 		users = append(users, user.ToMap(columnsStr))
 	}
@@ -524,6 +528,7 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		}
 
 		event.CreatedAt = filters.ConvertTimeToMillis(createdAt)
+		event.SanitizeForHTML()
 		events = append(events, event)
 	}
 
