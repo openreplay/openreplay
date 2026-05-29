@@ -13,6 +13,7 @@ import usePropertyNames from 'App/components/DataManagement/Properties/useProper
 import { useStore } from 'App/mstore';
 import Event from 'App/mstore/types/Analytics/Event';
 import { Link } from 'App/routing';
+import { escapeHtml } from 'App/utils';
 import Tabs from 'Components/shared/Tabs';
 import { Icon, TextEllipsis } from 'UI';
 
@@ -104,15 +105,16 @@ function EventDetailsModal({
     null,
     4,
   );
+  const escapedJson = escapeHtml(strProps);
   const highlightedJson =
     view === 'pretty'
       ? ''
       : query
-        ? strProps.replace(
+        ? escapedJson.replace(
             new RegExp(query, 'ig'),
             (match) => `<mark>${match}</mark>`,
           )
-        : strProps;
+        : escapedJson;
 
   const onCopy = () => {
     copy(strProps);
