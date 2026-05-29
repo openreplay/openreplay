@@ -38,6 +38,7 @@ spec:
       {{- if .Values.tolerations }}
       tolerations: {{- include "minio.tplValue" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
       {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- if .Values.securityContext.enabled }}
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
@@ -123,6 +124,10 @@ spec:
           {{- if .Values.resources }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- end }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep {{ .Values.preStopSleepSeconds }}"]
           volumeMounts:
             {{- if .Values.useCredentialsFile }}
             - name: minio-credentials

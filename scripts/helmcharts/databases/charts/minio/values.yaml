@@ -389,3 +389,10 @@ networkPolicy:
 ## MinIO supports two authentication modes for Prometheus either jwt or public, by default MinIO runs in jwt mode.
 ## To allow public access without authentication for prometheus metrics set environment as follows.
 prometheusAuthType: public
+
+## Graceful shutdown configuration
+## preStopSleepSeconds: delays SIGTERM to allow in-flight writes to complete
+## terminationGracePeriodSeconds: must be > preStopSleepSeconds
+## Increase preStopSleepSeconds if RustFS crashes mid-write on pod termination
+preStopSleepSeconds: 10
+terminationGracePeriodSeconds: 30
