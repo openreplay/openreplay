@@ -17,7 +17,7 @@ function findTextWidth(text, fontProp) {
   tag.style.left = '-99in';
   tag.style.whiteSpace = 'nowrap';
   tag.style.font = fontProp;
-  tag.innerHTML = text;
+  tag.textContent = text;
 
   document.body.appendChild(tag);
   const result = tag.clientWidth;
