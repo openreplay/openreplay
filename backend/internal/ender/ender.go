@@ -1,14 +1,25 @@
 package ender
 
 import (
+	"context"
+	"fmt"
 	"time"
 
+	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics/ender"
 )
 
-// EndedSessionHandler handler for ended sessions
-type EndedSessionHandler func(sessionID uint64, timestamp uint64) (bool, int)
+type EndedSessionHandler func(map[uint64]uint64) map[uint64]bool
+
+const (
+	pageHasPlayer  uint8 = 1 << 0
+	pageHasAssets  uint8 = 1 << 1
+	pageComplete         = pageHasPlayer | pageHasAssets
+	validKeyTTL          = 4 * time.Hour
+	redisOpTimeout       = 500 * time.Millisecond
+)
 
 // session holds information about user's session live status
 type session struct {
@@ -17,10 +28,20 @@ type session struct {
 	lastUserTime  uint64
 	isEnded       bool
 	isMobile      bool
+	isValid       bool // true once we saw a legacy batch or a page with both Player+Assets OR for mobile
+	redisChecked  bool
+	seenPages     map[uint64]uint8
+}
+
+func (s *session) Validate() {
+	s.isValid = true
+	s.seenPages = nil
 }
 
 // SessionEnder updates timestamp of last message for each session
 type SessionEnder struct {
+	log      logger.Logger
+	redis    *redis.Client
 	metrics  ender.Ender
 	timeout  int64
 	sessions map[uint64]*session // map[sessionID]session
@@ -29,8 +50,10 @@ type SessionEnder struct {
 	enabled  bool
 }
 
-func New(metrics ender.Ender, timeout int64, parts int) (*SessionEnder, error) {
+func New(log logger.Logger, redisClient *redis.Client, metrics ender.Ender, timeout int64, parts int) (*SessionEnder, error) {
 	return &SessionEnder{
+		log:      log,
+		redis:    redisClient,
 		metrics:  metrics,
 		timeout:  timeout,
 		sessions: make(map[uint64]*session),
@@ -70,11 +93,13 @@ func (se *SessionEnder) ActivePartitions(parts []uint64) {
 func (se *SessionEnder) UpdateSession(msg messages.Message) {
 	var (
 		sessionID      = msg.Meta().SessionID()
-		batchTimestamp = msg.Meta().Batch().Timestamp()
+		batch          = msg.Meta().Batch()
+		batchTimestamp = batch.Timestamp()
 		msgTimestamp   = msg.Meta().Timestamp
 		localTimestamp = time.Now().UnixMilli()
+		isMobile       = messages.IsMobileType(msg.TypeID())
 	)
-	if messages.IsMobileType(msg.TypeID()) {
+	if isMobile {
 		msgTimestamp = messages.GetTimestamp(msg)
 	}
 	if batchTimestamp == 0 {
@@ -84,15 +109,17 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 	sess, ok := se.sessions[sessionID]
 	if !ok {
 		// Register new session
-		se.sessions[sessionID] = &session{
+		sess = &session{
 			lastTimestamp: batchTimestamp,
 			lastUpdate:    localTimestamp,
 			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
-			isMobile:      messages.IsMobileType(msg.TypeID()),
+			isMobile:      isMobile,
 		}
+		se.sessions[sessionID] = sess
 		se.metrics.IncreaseActiveSessions()
 		se.metrics.IncreaseTotalSessions()
+		se.updateSessionValidity(sess, sessionID, batch)
 		return
 	}
 	// Keep the highest user's timestamp for correct session duration value
@@ -105,52 +132,127 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		sess.lastUpdate = localTimestamp
 		sess.isEnded = false
 	}
+	se.updateSessionValidity(sess, sessionID, batch)
 }
 
-// HandleEndedSessions runs handler for each ended session and delete information about session in successful case
+func (se *SessionEnder) updateSessionValidity(sess *session, sessID uint64, batch *messages.BatchInfo) {
+	if sess.isValid {
+		return
+	}
+	if sess.isMobile {
+		sess.Validate()
+		return
+	}
+	if batch.Type() == messages.FullBatch {
+		sess.Validate()
+		return
+	}
+	if batch.Type() != messages.PlayerBatch && batch.Type() != messages.AssetsBatch {
+		return
+	}
+
+	if !sess.redisChecked {
+		valid, err := se.hasValidKey(sessID)
+		if err == nil {
+			sess.redisChecked = true
+			if valid {
+				sess.Validate()
+				return
+			}
+		}
+	}
+
+	page := batch.PageNo()
+	if sess.seenPages == nil {
+		sess.seenPages = make(map[uint64]uint8)
+	}
+	if batch.Type() == messages.PlayerBatch {
+		sess.seenPages[page] |= pageHasPlayer
+	} else {
+		sess.seenPages[page] |= pageHasAssets
+	}
+	if sess.seenPages[page] == pageComplete {
+		sess.Validate()
+		se.writeValidKey(sessID)
+	}
+}
+
+func (se *SessionEnder) hasValidKey(sessID uint64) (bool, error) {
+	if se.redis == nil || se.redis.Redis == nil {
+		return false, nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), redisOpTimeout)
+	defer cancel()
+	res, err := se.redis.Redis.Exists(ctx, validKey(sessID)).Result()
+	if err != nil {
+		sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
+		se.log.Warn(sessCtx, "redis EXISTS ender:valid failed: %s", err)
+		return false, err
+	}
+	return res > 0, nil
+}
+
+func (se *SessionEnder) writeValidKey(sessID uint64) {
+	if se.redis == nil || se.redis.Redis == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), redisOpTimeout)
+	defer cancel()
+	if err := se.redis.Redis.Set(ctx, validKey(sessID), 1, validKeyTTL).Err(); err != nil {
+		sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
+		se.log.Warn(sessCtx, "redis SET ender:valid failed: %s", err)
+	}
+}
+
+func validKey(sessID uint64) string {
+	return fmt.Sprintf("ender:valid:%d", sessID)
+}
+
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 	if !se.enabled {
 		return
 	}
 	currTime := time.Now().UnixMilli()
-	removedSessions := 0
-	brokerTime := make(map[int]int, 0)
-	serverTime := make(map[int]int, 0)
 
-	isSessionEnded := func(sessID uint64, sess *session) (bool, int) {
-		// Has been finished already
+	isSessionEnded := func(sessID uint64, sess *session) bool {
 		if sess.isEnded {
-			return true, 1
+			return true
 		}
 		batchTimeDiff := se.timeCtrl.LastBatchTimestamp(sessID) - sess.lastTimestamp
-
-		// Has been finished according to batch timestamp and hasn't been updated for a long time
+		// Finished according to batch timestamp and hasn't been updated for a long time.
 		if (batchTimeDiff >= se.timeout) && (currTime-sess.lastUpdate >= se.timeout) {
-			return true, 2
+			return true
 		}
-
-		// Hasn't been finished according to batch timestamp but hasn't been read from partition for a long time
+		// Not finished by batch timestamp but the partition hasn't been read for a long time.
 		if (batchTimeDiff < se.timeout) && (currTime-se.timeCtrl.LastUpdateTimestamp(sessID) >= se.timeout) {
-			return true, 3
+			return true
 		}
-		return false, 0
+		return false
 	}
 
+	// Find ended sessions
+	endedCandidates := make(map[uint64]uint64, len(se.sessions)/2) // [sessionID]lastUserTime
 	for sessID, sess := range se.sessions {
-		if ended, endCase := isSessionEnded(sessID, sess); ended {
-			sess.isEnded = true
-			if res, _ := handler(sessID, sess.lastUserTime); res {
-				delete(se.sessions, sessID)
-				se.metrics.DecreaseActiveSessions()
-				se.metrics.IncreaseClosedSessions()
-				removedSessions++
-				if endCase == 2 {
-					brokerTime[1]++
-				}
-				if endCase == 3 {
-					serverTime[1]++
-				}
-			}
+		if !isSessionEnded(sessID, sess) {
+			continue
+		}
+		sess.isEnded = true
+		if !sess.isValid {
+			sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
+			se.log.Info(sessCtx, "skip sessionEnd: session has no Player+Assets pair, pages seen: %v", sess.seenPages)
+			delete(se.sessions, sessID)
+			se.metrics.DecreaseActiveSessions()
+			continue
+		}
+		endedCandidates[sessID] = sess.lastUserTime
+	}
+
+	// Process ended sessions
+	for sessID, completed := range handler(endedCandidates) {
+		if completed {
+			delete(se.sessions, sessID)
+			se.metrics.DecreaseActiveSessions()
+			se.metrics.IncreaseClosedSessions()
 		}
 	}
 }
