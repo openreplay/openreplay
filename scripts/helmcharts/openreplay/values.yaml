@@ -79,12 +79,6 @@ ingress-nginx:
       name: openreplay
       create: true
       setAsDefaultIngress: false
-    resources:
-      requests:
-        cpu: "2"
-        memory: 4Gi
-      limits:
-        memory: 4Gi
     pod:
       extraLabels:
         app.kubernetes.io/component: controller
