@@ -151,6 +151,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.version = m.Version
 		i.batchInfo.version = m.Version
 		i.batchInfo.dataTs = m.Timestamp
+		i.batchInfo.pageNo = m.PageNo
 
 	case *Timestamp:
 		i.messageInfo.Timestamp = m.Timestamp

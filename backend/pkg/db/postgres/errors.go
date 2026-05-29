@@ -14,5 +14,5 @@ func IsPkeyViolation(err error) bool {
 }
 
 func IsNoRowsErr(err error) bool {
-	return err == pgx.ErrNoRows
+	return errors.Is(err, pgx.ErrNoRows)
 }

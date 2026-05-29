@@ -79,7 +79,7 @@ func (s *sessionsImpl) Add(session *Session) error {
 func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 	session, err := s.storage.Get(sessionID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get session from postgres: %s", err)
+		return nil, fmt.Errorf("failed to get session from postgres: %w", err)
 	}
 	proj, err := s.projects.GetProject(session.ProjectID)
 	if err != nil {
