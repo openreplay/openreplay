@@ -10,6 +10,7 @@ import (
 
 	config "openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/ender"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/health"
@@ -146,6 +147,12 @@ func processEndedBatch(
 		sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
 		sess, err := sessManager.Get(sessionID)
 		if err != nil {
+			if postgres.IsNoRowsErr(err) {
+				// Session doesn't exist in the database, but somehow we got some data from the tracker
+				log.Warn(sessCtx, "session not found in database, dropping: %s", err)
+				completed[sessionID] = true
+				continue
+			}
 			log.Error(sessCtx, "can't get session from database, will retry: %s", err)
 			continue
 		}
