@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/analytics/filters"
+	"openreplay/backend/pkg/analytics/sanitizer"
 )
 
 func init() {
@@ -126,6 +127,14 @@ func (u *UserRequest) UnmarshalProperties() error {
 	var err error
 	u.Properties, err = filters.UnmarshalJSONProperties(u.PropertiesRaw)
 	return err
+}
+
+func (u *UserRequest) SanitizeForHTML() {
+	if u == nil {
+		return
+	}
+	sanitizer.EscapeStructStrings(u)
+	sanitizer.EscapePropertyMap(u.Properties)
 }
 
 func (u *UserRequest) ConvertTimeFields() {
@@ -284,6 +293,13 @@ type UserEvent struct {
 	EventName    string `json:"$event_name"`
 	CreatedAt    int64  `json:"created_at"`
 	AutoCaptured *bool  `json:"$auto_captured,omitempty"`
+}
+
+func (e *UserEvent) SanitizeForHTML() {
+	if e == nil {
+		return
+	}
+	sanitizer.EscapeStructStrings(e)
 }
 
 type UserActivityResponse struct {
