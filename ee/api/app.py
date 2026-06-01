@@ -24,10 +24,7 @@ from crons import core_crons, ee_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers import ee
 from routers.subs import (
-    insights,
-    metrics,
     health,
-    usability_tests,
     spot,
     product_analytics,
 )
@@ -150,7 +147,8 @@ async def or_middleware(request: Request, call_next):
         logging.error(f"{sanitize(request.method, max_length=16)}: {sanitize(request.url.path)} FAILED!")
         raise
     if response.status_code // 100 != 2:
-        logging.warning(f"{sanitize(request.method, max_length=16)}:{sanitize(request.url.path)} {response.status_code}!")
+        logging.warning(
+            f"{sanitize(request.method, max_length=16)}:{sanitize(request.url.path)} {response.status_code}!")
     if helper.TRACK_TIME:
         now = time.time() - now
         if now > 2:
@@ -182,15 +180,9 @@ app.include_router(core_dynamic.app_apikey)
 app.include_router(ee.public_app)
 app.include_router(ee.app)
 app.include_router(ee.app_apikey)
-app.include_router(metrics.app)
-app.include_router(insights.app)
 app.include_router(health.public_app)
 app.include_router(health.app)
 app.include_router(health.app_apikey)
-
-app.include_router(usability_tests.public_app)
-app.include_router(usability_tests.app)
-app.include_router(usability_tests.app_apikey)
 
 app.include_router(spot.public_app)
 app.include_router(spot.app)
