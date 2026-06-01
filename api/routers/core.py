@@ -8,6 +8,7 @@ import schemas
 from chalicelib.core import projects, metadata, reset_password, log_tools, \
     announcements, weekly_report, assist, mobile, tenants, boarding, notifications, webhook, users, tags
 from chalicelib.core.alerts import alerts
+from chalicelib.core.metrics import custom_metrics
 from chalicelib.core.collaborations.collaboration_msteams import MSTeams
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
@@ -502,6 +503,12 @@ def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
 @app.get('/{projectId}/alerts', tags=["alerts"])
 def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get_all(project_id=projectId)}
+
+
+@app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
+def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": alerts.get_predefined_values()
+                    + custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
