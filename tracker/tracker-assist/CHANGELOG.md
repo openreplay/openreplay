@@ -1,3 +1,7 @@
+## 11.0.16
+
+fixes for possible memory leaks and remote control safety
+
 ## 11.0.13
 
 - prevent disconnects on page reload
