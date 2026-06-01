@@ -22,6 +22,8 @@ export interface Options {
   capturePerformance: boolean
 }
 
+const PAUSED = -1
+
 export default function (app: App, opts: Partial<Options>): void {
   const options: Options = Object.assign(
     {
@@ -33,20 +35,55 @@ export default function (app: App, opts: Partial<Options>): void {
     return
   }
 
-  let frames: number | undefined
-  let ticks: number | undefined
+  // Capture references up front so a third party that later replaces the global
+  // (Sentry's browserApiErrors, polyfills, zones, ...) can't change which
+  // implementation we drive the loop with mid-session.
+  const raf =
+    IN_BROWSER && typeof window.requestAnimationFrame === 'function'
+      ? window.requestAnimationFrame.bind(window)
+      : null
+  const caf =
+    IN_BROWSER && typeof window.cancelAnimationFrame === 'function'
+      ? window.cancelAnimationFrame.bind(window)
+      : null
 
-  const nextFrame = (): void => {
-    if (frames === undefined || frames === -1) {
+  let running = false
+  let frames = 0
+  let ticks = 0
+  let rafHandle: number | null = null
+  let inFrame = false
+
+  const onFrame = (): void => {
+    rafHandle = null
+    if (!running || frames === PAUSED) {
       return
     }
     frames++
-    requestAnimationFrame(nextFrame)
+    if (inFrame) {
+      return
+    }
+    scheduleFrame()
+  }
+
+  const scheduleFrame = (): void => {
+    if (!raf || rafHandle !== null) {
+      return
+    }
+    inFrame = true
+    rafHandle = raf(onFrame)
+    inFrame = false
+  }
+
+  const stopLoop = (): void => {
+    if (rafHandle !== null && caf) {
+      caf(rafHandle)
+    }
+    rafHandle = null
   }
 
   app.ticker.attach(
     (): void => {
-      if (ticks === undefined || ticks === -1) {
+      if (!running || ticks === PAUSED) {
         return
       }
       ticks++
@@ -56,7 +93,7 @@ export default function (app: App, opts: Partial<Options>): void {
   )
 
   const sendPerformanceTrack = (): void => {
-    if (frames === undefined || ticks === undefined) {
+    if (!running) {
       return
     }
     app.send(
@@ -67,17 +104,24 @@ export default function (app: App, opts: Partial<Options>): void {
         perf.memory.usedJSHeapSize || 0,
       ),
     )
-    ticks = frames = document.hidden ? -1 : 0
+    if (document.hidden) {
+      frames = ticks = PAUSED
+    } else {
+      frames = ticks = 0
+      scheduleFrame()
+    }
   }
 
   app.attachStartCallback((): void => {
-    ticks = frames = -1
+    running = true
+    frames = ticks = PAUSED
     sendPerformanceTrack()
-    nextFrame()
   })
 
   app.attachStopCallback((): void => {
-    ticks = frames = undefined
+    running = false
+    frames = ticks = 0
+    stopLoop()
   })
 
   app.ticker.attach(sendPerformanceTrack, 165, false)

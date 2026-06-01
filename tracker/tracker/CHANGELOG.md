@@ -1,3 +1,11 @@
+## 18.0.11
+
+- improvememts for performance module to prevent endless loops
+
+## 18.0.10
+
+- new network library version, fixes graphql headers cheks
+
 ## 18.0.9
 
 - rollback batch mixing
