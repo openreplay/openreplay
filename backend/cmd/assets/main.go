@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
-	cacher, err := cacher.NewCacher(cfg, objStore, assetMetrics)
+	cacher, err := cacher.NewCacher(log, cfg, objStore, assetMetrics)
 	if err != nil {
 		log.Fatal(ctx, "can't init cacher: %s", err)
 	}
@@ -175,8 +175,6 @@ func main() {
 			producer.Close(cfg.ProducerCloseTimeout)
 			msgConsumer.Close()
 			os.Exit(0)
-		case err := <-cacher.Errors:
-			log.Error(ctx, "Error while caching: %s", err)
 		case <-tick:
 			cacher.UpdateTimeouts()
 		default:

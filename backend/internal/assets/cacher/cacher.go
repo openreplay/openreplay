@@ -1,6 +1,7 @@
 package cacher
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	config "openreplay/backend/internal/config/assets"
+	"openreplay/backend/pkg/logger"
 	metrics "openreplay/backend/pkg/metrics/assets"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/url/assets"
@@ -23,12 +25,12 @@ import (
 const MAX_CACHE_DEPTH = 5
 
 type cacher struct {
+	log            logger.Logger
 	timeoutMap     *timeoutMap                 // Concurrency implemented
 	objStorage     objectstorage.ObjectStorage // AWS Docs: "These clients are safe to use concurrently."
 	httpClient     *http.Client                // Docs: "Clients are safe for concurrent use by multiple goroutines."
 	rewriter       *assets.Rewriter            // Read only
 	metrics        metrics.Assets
-	Errors         chan error
 	sizeLimit      int
 	requestHeaders map[string]string
 	workers        *WorkerPool
@@ -38,7 +40,7 @@ func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets) (*cacher, error) {
+func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets) (*cacher, error) {
 	switch {
 	case cfg == nil:
 		return nil, errors.New("config is nil")
@@ -81,6 +83,7 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics me
 	}
 
 	c := &cacher{
+		log:        log,
 		timeoutMap: newTimeoutMap(),
 		objStorage: store,
 		httpClient: &http.Client{
@@ -91,7 +94,6 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage, metrics me
 			},
 		},
 		rewriter:       rewriter,
-		Errors:         make(chan error),
 		sizeLimit:      cfg.AssetsSizeLimit,
 		requestHeaders: cfg.AssetsRequestHeaders,
 		metrics:        metrics,
@@ -105,6 +107,7 @@ func (c *cacher) CacheFile(task *Task) {
 }
 
 func (c *cacher) cacheURL(t *Task) {
+	ctx := context.WithValue(context.Background(), "sessionID", t.sessionID)
 	t.retries--
 	start := time.Now()
 	req, _ := http.NewRequest("GET", t.requestURL, nil)
@@ -114,7 +117,7 @@ func (c *cacher) cacheURL(t *Task) {
 	}
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		c.Errors <- errors.Wrap(err, t.urlContext)
+		c.log.Error(ctx, "Error while caching: %s", errors.Wrap(err, t.urlContext))
 		return
 	}
 	c.metrics.RecordDownloadDuration(float64(time.Now().Sub(start).Milliseconds()), res.StatusCode)
@@ -127,17 +130,17 @@ func (c *cacher) cacheURL(t *Task) {
 			printErr = false
 		}
 		if printErr {
-			c.Errors <- errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), t.urlContext)
+			c.log.Error(ctx, "Error while caching: %s", errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), t.urlContext))
 		}
 		return
 	}
 	data, err := io.ReadAll(io.LimitReader(res.Body, int64(c.sizeLimit+1)))
 	if err != nil {
-		c.Errors <- errors.Wrap(err, t.urlContext)
+		c.log.Error(ctx, "Error while caching: %s", errors.Wrap(err, t.urlContext))
 		return
 	}
 	if len(data) > c.sizeLimit {
-		c.Errors <- errors.Wrap(errors.New("Maximum size exceeded"), t.urlContext)
+		c.log.Error(ctx, "Error while caching: %s", errors.Wrap(errors.New("Maximum size exceeded"), t.urlContext))
 		return
 	}
 
@@ -149,7 +152,7 @@ func (c *cacher) cacheURL(t *Task) {
 
 	// Skip html file (usually it's a CDN mock for 404 error)
 	if strings.HasPrefix(contentType, "text/html") {
-		c.Errors <- errors.Wrap(fmt.Errorf("context type is text/html, sessID: %d", t.sessionID), t.urlContext)
+		c.log.Error(ctx, "Error while caching: %s", errors.Wrap(fmt.Errorf("context type is text/html, sessID: %d", t.sessionID), t.urlContext))
 		return
 	}
 
@@ -165,7 +168,7 @@ func (c *cacher) cacheURL(t *Task) {
 	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression)
 	if err != nil {
 		c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
-		c.Errors <- errors.Wrap(err, t.urlContext)
+		c.log.Error(ctx, "Error while caching: %s", errors.Wrap(err, t.urlContext))
 		return
 	}
 	c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), false)
@@ -186,11 +189,11 @@ func (c *cacher) cacheURL(t *Task) {
 				}
 			}
 			if err != nil {
-				c.Errors <- errors.Wrap(err, t.urlContext)
+				c.log.Error(ctx, "Error while caching: %s", errors.Wrap(err, t.urlContext))
 				return
 			}
 		} else {
-			c.Errors <- errors.Wrap(errors.New("Maximum recursion cache depth exceeded"), t.urlContext)
+			c.log.Error(ctx, "Error while caching: %s", errors.Wrap(errors.New("Maximum recursion cache depth exceeded"), t.urlContext))
 			return
 		}
 	}
