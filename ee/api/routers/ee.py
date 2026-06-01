@@ -1,7 +1,7 @@
 from typing import Optional
 
 from chalicelib.core import roles, traces, assist_records
-from chalicelib.core.sessions import sessions
+from chalicelib.core.sessions import sessions_pg
 from chalicelib.core import assist_stats
 from chalicelib.core import unlock
 from chalicelib.utils import assist_helper
@@ -81,7 +81,7 @@ def get_available_trail_actions(context: schemas.CurrentContext = Depends(OR_con
 @app.put('/{projectId}/assist/save', tags=["assist"])
 def sign_record_for_upload(projectId: int, data: schemas.AssistRecordPayloadSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
+    if not sessions_pg.session_exists(project_id=projectId, session_id=data.session_id):
         return {"errors": ["Session not found"]}
     return {"data": assist_records.presign_record(project_id=projectId, data=data, context=context)}
 
@@ -89,7 +89,7 @@ def sign_record_for_upload(projectId: int, data: schemas.AssistRecordPayloadSche
 @app.put('/{projectId}/assist/save/done', tags=["assist"])
 def save_record_after_upload(projectId: int, data: schemas.AssistRecordSavePayloadSchema = Body(...),
                              context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
+    if not sessions_pg.session_exists(project_id=projectId, session_id=data.session_id):
         return {"errors": ["Session not found"]}
     return {"data": {"URL": assist_records.save_record(project_id=projectId, data=data, context=context)}}
 
