@@ -94,6 +94,7 @@ describe('RemoteControl', () => {
     const id = 'agent123'
     const d = 10
     remoteControl.agentID = id
+    remoteControl.status = RCStatus.Enabled
     remoteControl.mouse = {
       scroll: jest.fn(),
     }
@@ -107,6 +108,21 @@ describe('RemoteControl', () => {
     const id = 'agent123'
     const d = 10
     remoteControl.agentID = 'anotherAgent'
+    remoteControl.status = RCStatus.Enabled
+    remoteControl.mouse = {
+      scroll: jest.fn(),
+    }
+
+    remoteControl.scroll(id, d)
+
+    expect(remoteControl.mouse.scroll).not.toHaveBeenCalled()
+  })
+
+  test('should not call mouse.scroll when status is not Enabled', () => {
+    const id = 'agent123'
+    const d = 10
+    remoteControl.agentID = id
+    remoteControl.status = RCStatus.Requesting
     remoteControl.mouse = {
       scroll: jest.fn(),
     }
@@ -120,6 +136,7 @@ describe('RemoteControl', () => {
     const id = 'agent123'
     const xy = { x: 10, y: 20, }
     remoteControl.agentID = id
+    remoteControl.status = RCStatus.Enabled
     remoteControl.mouse = {
       move: jest.fn(),
     }
@@ -133,6 +150,7 @@ describe('RemoteControl', () => {
     const id = 'agent123'
     const xy = { x: 10, y: 20, }
     remoteControl.agentID = 'anotherAgent'
+    remoteControl.status = RCStatus.Enabled
     remoteControl.mouse = {
       move: jest.fn(),
     }
@@ -146,6 +164,7 @@ describe('RemoteControl', () => {
     const id = 'agent123'
     const xy = { x: 10, y: 20, }
     remoteControl.agentID = id
+    remoteControl.status = RCStatus.Enabled
     remoteControl.mouse = {
       click: jest.fn(),
     }
@@ -159,6 +178,7 @@ describe('RemoteControl', () => {
     const id = 'agent123'
     const xy = { x: 10, y: 20, }
     remoteControl.agentID = 'anotherAgent'
+    remoteControl.status = RCStatus.Enabled
     remoteControl.mouse = {
       click: jest.fn(),
     }
@@ -171,10 +191,36 @@ describe('RemoteControl', () => {
   test('should set the focused element when calling focus method', () => {
     const id = 'agent123'
     const element = document.createElement('div')
+    remoteControl.agentID = id
+    remoteControl.status = RCStatus.Enabled
+    remoteControl.mouse = {}
 
     remoteControl.focus(id, element)
 
     expect(remoteControl.focused).toBe(element)
+  })
+
+  test('should not set focused element when called by unauthorized agent', () => {
+    const element = document.createElement('div')
+    remoteControl.agentID = 'agent123'
+    remoteControl.status = RCStatus.Enabled
+    remoteControl.mouse = {}
+
+    remoteControl.focus('anotherAgent', element)
+
+    expect(remoteControl.focused).toBeNull()
+  })
+
+  test('should not call mouse.startDrag when called by unauthorized agent', () => {
+    remoteControl.agentID = 'agent123'
+    remoteControl.status = RCStatus.Enabled
+    remoteControl.mouse = {
+      startDrag: jest.fn(),
+    }
+
+    remoteControl.startDrag('anotherAgent', [0, 0])
+
+    expect(remoteControl.mouse.startDrag).not.toHaveBeenCalled()
   })
 
   test('should call setInputValue and dispatch input event when calling input method with HTMLInputElement', () => {
@@ -183,6 +229,7 @@ describe('RemoteControl', () => {
     const element = document.createElement('input')
     const dispatchSpy = jest.spyOn(element, 'dispatchEvent')
     remoteControl.agentID = id
+    remoteControl.status = RCStatus.Enabled
     remoteControl.mouse = true
     remoteControl.focused = element
 
@@ -201,6 +248,7 @@ describe('RemoteControl', () => {
     //  @ts-ignore
     element['isContentEditable'] = true
     remoteControl.agentID = id
+    remoteControl.status = RCStatus.Enabled
     remoteControl.mouse = true
     remoteControl.focused = element
 

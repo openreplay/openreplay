@@ -11,5 +11,5 @@
     "outDir": "./lib",
     "rootDir": "src"
   },
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts", "tests/**"]
 }
