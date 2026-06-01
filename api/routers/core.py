@@ -6,7 +6,7 @@ from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
 from chalicelib.core import projects, metadata, reset_password, log_tools, \
-    announcements, weekly_report, assist, mobile, tenants, boarding, notifications, webhook, users, saved_search, tags
+    announcements, weekly_report, assist, mobile, tenants, boarding, notifications, webhook, users, tags
 from chalicelib.core.alerts import alerts
 from chalicelib.core.collaborations.collaboration_msteams import MSTeams
 from chalicelib.core.collaborations.collaboration_slack import Slack
@@ -14,8 +14,6 @@ from chalicelib.core.issue_tracking import github, integrations_global, integrat
     jira_cloud
 from chalicelib.core.log_tools import datadog, newrelic, stackdriver, elasticsearch, \
     sentry, bugsnag, cloudwatch, sumologic, rollbar
-from chalicelib.core.metrics import custom_metrics
-from chalicelib.core.sessions import sessions_assignments, sessions
 from chalicelib.core.sourcemaps import sourcemaps
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
@@ -402,31 +400,6 @@ def get_metadata(integrationProjectId: int, context: schemas.CurrentContext = De
     return {"data": data}
 
 
-@app.get('/{projectId}/assignments', tags=["assignment"])
-def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.get_all(project_id=projectId, user_id=context.user_id)
-    return {
-        'data': data
-    }
-
-
-@app.post('/{projectId}/sessions/{sessionId}/assign/projects/{integrationProjectId}', tags=["assignment"])
-def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId,
-                            data: schemas.AssignmentSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.create_new_assignment(tenant_id=context.tenant_id, project_id=projectId,
-                                                      session_id=sessionId,
-                                                      creator_id=context.user_id, assignee=data.assignee,
-                                                      description=data.description, title=data.title,
-                                                      issue_type=data.issue_type,
-                                                      integration_project_id=integrationProjectId)
-    if "errors" in data.keys():
-        return data
-    return {
-        'data': data
-    }
-
-
 @app.get('/{projectId}/gdpr', tags=["projects", "gdpr"])
 def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_gdpr(project_id=projectId)}
@@ -529,12 +502,6 @@ def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
 @app.get('/{projectId}/alerts', tags=["alerts"])
 def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get_all(project_id=projectId)}
-
-
-@app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
-def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get_predefined_values()
-                    + custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
@@ -739,34 +706,6 @@ def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context
     return {"data": users.generate_new_api_key(user_id=context.user_id)}
 
 
-@app.post('/{projectId}/saved_search', tags=["savedSearch"])
-def add_saved_search(projectId: int, data: schemas.SavedSearchSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    return saved_search.create(project_id=projectId, user_id=context.user_id, data=data)
-
-
-@app.get('/{projectId}/saved_search', tags=["savedSearch"])
-def get_saved_searches(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": saved_search.get_all(project_id=projectId, user_id=context.user_id, details=True)}
-
-
-@app.get('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
-def get_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": saved_search.get(project_id=projectId, search_id=search_id, user_id=context.user_id)}
-
-
-@app.post('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
-def update_saved_search(projectId: int, search_id: int, data: schemas.SavedSearchSchema = Body(...),
-                        context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": saved_search.update(user_id=context.user_id, search_id=search_id, data=data, project_id=projectId)}
-
-
-@app.delete('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
-def delete_saved_search(projectId: int, search_id: int, _=Body(None),
-                        context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": saved_search.delete(project_id=projectId, user_id=context.user_id, search_id=search_id)}
-
-
 @app.get('/limits', tags=['accounts'])
 def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
     return {
@@ -815,28 +754,6 @@ def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSche
 def delete_msteams_integration(webhookId: int, _=Body(None),
                                context: schemas.CurrentContext = Depends(OR_context)):
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
-
-
-@app.get('/{projectId}/check-recording-status', tags=["sessions"])
-async def check_recording_status(projectId: int):
-    """
-    Check the recording status and sessions count for a given project ID.
-
-    Args:
-        projectId (int): The ID of the project to check.
-
-    Returns:
-        dict: A dictionary containing the recording status and sessions count.
-              The dictionary has the following structure:
-              {
-                  "recording_status": int,   # The recording status:
-                                            # 0 - No sessions
-                                            # 1 - Processing
-                                            # 2 - Ready
-                  "sessions_count": int      # The total count of sessions
-              }
-    """
-    return {"data": sessions.check_recording_status(project_id=projectId)}
 
 
 @public_app.get('/', tags=["health"])

@@ -65,17 +65,6 @@ def get_urls_depercated(session_id, check_existence: bool = True):
     return results
 
 
-def get_mobile_videos(session_id, project_id, check_existence=False):
-    results = []
-    for k in __get_mobile_video_keys(project_id=project_id, session_id=session_id):
-        if check_existence and not StorageClient.exists(bucket=config("IOS_VIDEO_BUCKET"), key=k):
-            continue
-        results.append(StorageClient.get_presigned_url_for_sharing(
-            bucket=config("IOS_VIDEO_BUCKET"),
-            expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900),
-            key=k
-        ))
-    return results
 
 
 def delete_mobs(project_id, session_ids):

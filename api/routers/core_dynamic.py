@@ -7,18 +7,13 @@ from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
 
 import schemas
-from chalicelib.core import assist, signup, feature_flags
-from chalicelib.core import notes
+from chalicelib.core import signup, feature_flags
 from chalicelib.core import scope
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors, errors_details
-from chalicelib.core.metrics import heatmaps
-from chalicelib.core.sessions import sessions, sessions_replay, sessions_favorite, sessions_viewed, \
-    sessions_assignments, unprocessed_sessions, sessions_search
 from chalicelib.utils import captcha, smtp
-from chalicelib.utils import contextual_validators
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_role
@@ -237,89 +232,9 @@ def edit_member(memberId: int, data: schemas.EditMemberSchema,
                              user_id_to_update=memberId)
 
 
-@app.get('/metadata/session_search', tags=["metadata"])
-def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] = None,
-                                context: schemas.CurrentContext = Depends(OR_context)):
-    if key is None or value is None or len(value) == 0 and len(key) == 0:
-        return {"errors": ["please provide a key&value for search"]}
-    if len(value) == 0:
-        return {"errors": ["please provide a value for search"]}
-    if len(key) == 0:
-        return {"errors": ["please provide a key for search"]}
-    return {
-        "data": sessions_search.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
-                                                   m_key=key, project_id=projectId)}
-
-
 @app.get('/projects', tags=['projects'])
 def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
-
-
-@app.post('/{projectId}/sessions/search', tags=["sessions"])
-def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
-        Depends(contextual_validators.validate_contextual_payload),
-                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id)
-    return {'data': data}
-
-
-@app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
-        Depends(contextual_validators.validate_contextual_payload),
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id, ids_only=True)
-    return {'data': data}
-
-
-@app.get('/{projectId}/sessions/{sessionId}/first-mob', tags=["sessions", "replay"])
-def get_first_mob_file(projectId: int, sessionId: Union[int, str],
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessionId.isnumeric():
-        return {"errors": ["session not found"]}
-    else:
-        sessionId = int(sessionId)
-    data = sessions_replay.get_pre_replay(project_id=projectId, session_id=sessionId)
-    if data is None:
-        return {"errors": ["session not found"]}
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/sessions/{sessionId}/replay', tags=["sessions", "replay"])
-def get_session_events(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessionId.isnumeric():
-        return {"errors": ["session not found"]}
-    else:
-        sessionId = int(sessionId)
-    data = sessions_replay.get_replay(project_id=projectId, session_id=sessionId, full_data=True,
-                                      include_fav_viewed=True, group_metadata=True, context=context)
-    if data is None:
-        return {"errors": ["session not found"]}
-    if data.get("inDB"):
-        background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
-                                  session_id=sessionId)
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/sessions/{sessionId}/events', tags=["sessions", "replay"])
-def get_session_events(projectId: int, sessionId: Union[int, str],
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessionId.isnumeric():
-        return {"errors": ["session not found"]}
-    else:
-        sessionId = int(sessionId)
-    data = sessions_replay.get_events(project_id=projectId, session_id=sessionId)
-    if data is None:
-        return {"errors": ["session not found"]}
-
-    return {
-        'data': data
-    }
 
 
 @app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
@@ -360,193 +275,6 @@ def get_errors_sessions(projectId: int, errorId: str,
     return {
         "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                     start_date=startDate, end_date=endDate)}
-
-
-@app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])
-def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
-    if data is None:
-        data = sessions_replay.get_replay(context=context, project_id=projectId, session_id=sessionId,
-                                          full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
-        if data is None:
-            return {"errors": ["session not found"]}
-        if data.get("inDB"):
-            background_tasks.add_task(sessions_viewed.view_session, project_id=projectId,
-                                      user_id=context.user_id, session_id=sessionId)
-    return {'data': data}
-
-
-@app.get('/{projectId}/unprocessed/{sessionId}/dom.mob', tags=["assist"])
-def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
-                                 context: schemas.CurrentContext = Depends(OR_context)):
-    not_found = {"errors": ["Replay file not found"]}
-    sessionId, err = unprocessed_sessions.check_exists(project_id=projectId, session_id=sessionId,
-                                                       not_found_response=not_found)
-    if err is not None:
-        return err
-    path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
-    if path is None:
-        return not_found
-
-    return FileResponse(path=path, media_type="application/octet-stream")
-
-
-@app.get('/{projectId}/unprocessed/{sessionId}/devtools.mob', tags=["assist"])
-def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
-                                   context: schemas.CurrentContext = Depends(OR_context)):
-    not_found = {"errors": ["Devtools file not found"]}
-    sessionId, err = unprocessed_sessions.check_exists(project_id=projectId, session_id=sessionId,
-                                                       not_found_response=not_found)
-    if err is not None:
-        return err
-    path = assist.get_raw_devtools_by_id(project_id=projectId, session_id=sessionId)
-    if path is None:
-        return not_found
-
-    return FileResponse(path=path, media_type="application/octet-stream")
-
-
-@app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
-def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatMapPayloadSchema = Body(...),
-                        context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
-
-
-@app.post('/{projectId}/sessions/{sessionId}/heatmaps', tags=["heatmaps"])
-def get_heatmaps_by_session_id_url(projectId: int, sessionId: int,
-                                   data: schemas.GetHeatMapPayloadSchema = Body(...),
-                                   context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": heatmaps.get_x_y_by_url_and_session_id(project_id=projectId, session_id=sessionId, data=data)}
-
-
-@app.post('/{projectId}/sessions/{sessionId}/clickmaps', tags=["heatmaps"])
-def get_clickmaps_by_session_id_url(projectId: int, sessionId: int,
-                                    data: schemas.GetClickMapPayloadSchema = Body(...),
-                                    context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": heatmaps.get_selectors_by_url_and_session_id(project_id=projectId, session_id=sessionId, data=data)}
-
-
-@app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"])
-def add_remove_favorite_session2(projectId: int, sessionId: int,
-                                 context: schemas.CurrentContext = Depends(OR_context)):
-    return sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)
-
-
-@app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
-def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
-                                               tenant_id=context.tenant_id,
-                                               user_id=context.user_id)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
-def assign_session(projectId: int, sessionId: int, issueId: str,
-                   context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
-                                    tenant_id=context.tenant_id, user_id=context.user_id)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
-def comment_assignment(projectId: int, sessionId: int, issueId: str,
-                       data: schemas.CommentAssignmentSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
-                                        session_id=sessionId, assignment_id=issueId,
-                                        user_id=context.user_id, message=data.message)
-    if "errors" in data.keys():
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
-def get_note_by_id(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = notes.get_note(tenant_id=context.tenant_id, project_id=projectId, note_id=noteId,
-                          user_id=context.user_id)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"])
-def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
-                context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
-        return {"errors": ["Session not found"]}
-    data = notes.create(tenant_id=context.tenant_id, project_id=projectId,
-                        session_id=sessionId, user_id=context.user_id, data=data)
-    if "errors" in data.keys():
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"])
-def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
-                                   session_id=sessionId, user_id=context.user_id)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.post('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
-def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
-              context: schemas.CurrentContext = Depends(OR_context)):
-    data = notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
-                      note_id=noteId, data=data)
-    if "errors" in data.keys():
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
-def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    data = notes.delete(project_id=projectId, note_id=noteId)
-    return data
-
-
-@app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
-def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
-                        context: schemas.CurrentContext = Depends(OR_context)):
-    return notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
-                                note_id=noteId, webhook_id=webhookId)
-
-
-@app.get('/{projectId}/notes/{noteId}/msteams/{webhookId}', tags=["sessions", "notes"])
-def share_note_to_msteams(projectId: int, noteId: int, webhookId: int,
-                          context: schemas.CurrentContext = Depends(OR_context)):
-    return notes.share_to_msteams(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
-                                  note_id=noteId, webhook_id=webhookId)
-
-
-@app.post('/{projectId}/notes', tags=["sessions", "notes"])
-def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
-                  context: schemas.CurrentContext = Depends(OR_context)):
-    data = notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
-                                             user_id=context.user_id, data=data)
-    if "errors" in data:
-        return data
-    return {'data': data}
 
 
 @app.post('/{project_id}/feature-flags/search', tags=["feature flags"])
