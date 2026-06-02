@@ -54,7 +54,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 	}
 
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: cfg.InsecureSkipVerify,
 	}
 
 	if cfg.ClientCertFilePath != "" && cfg.ClientKeyFilePath != "" && cfg.CaCertFilePath != "" {
@@ -75,7 +75,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: cfg.InsecureSkipVerify,
 			Certificates:       []tls.Certificate{cert},
 			RootCAs:            caCertPool,
 		}

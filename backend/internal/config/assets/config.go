@@ -25,6 +25,7 @@ type Config struct {
 	AssetsOrigin         string            `env:"ASSETS_ORIGIN,required"`
 	AssetsSizeLimit      int               `env:"ASSETS_SIZE_LIMIT,required"`
 	AssetsRequestHeaders map[string]string `env:"ASSETS_REQUEST_HEADERS"`
+	InsecureSkipVerify   bool              `env:"INSECURE_SKIP_VERIFY,default=true"`
 	ProducerCloseTimeout int               `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 	UseProfiler          bool              `env:"PROFILER_ENABLED,default=false"`
 	ClientKeyFilePath    string            `env:"CLIENT_KEY_FILE_PATH"`
