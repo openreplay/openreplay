@@ -89,7 +89,7 @@ func main() {
 			}
 
 			data := msg.Encode()
-			if data != nil && len(data) > 0 {
+			if len(data) > 0 {
 				if !messages.MessageHasSize(uint64(msg.TypeID())) {
 					buf.Write(data)
 				} else {
