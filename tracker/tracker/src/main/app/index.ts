@@ -20,6 +20,7 @@ import {
 import CanvasRecorder from './canvas.js'
 import Logger, { ILogLevel, LogLevel } from './logger.js'
 import Message, {
+  ConsoleLog,
   Metadata,
   TabChange,
   TabData,
@@ -30,6 +31,7 @@ import Message, {
   WSChannel,
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
+import { MASK_ORDER } from './nodes/idSeq.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer, { InlineCssMode } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
@@ -216,12 +218,19 @@ const proto = {
   parentAlive: 'signal that parent is live',
   killIframe: 'stop tracker inside frame',
   startIframe: 'start tracker inside frame',
+  // child -> parent: once-per-minute encoded debug snapshot from inside an iframe
+  iframeDebug: 'iframe debug snapshot',
   // checking updates
   polling: 'hello-how-are-you-im-under-the-water-please-help-me',
   // happens if tab is old and has outdated token but
   // not communicating with backend to update it (for whatever reason)
   reset: 'reset-your-session-please',
 } as const
+
+/** reverse map proto value -> short readable key, for the crossdomain debug log */
+const protoLabel: Record<string, string> = Object.fromEntries(
+  Object.entries(proto).map(([k, v]) => [v, k]),
+)
 
 export default class App {
   readonly nodes: Nodes
@@ -390,7 +399,12 @@ export default class App {
           },
           options.crossdomain?.parentDomain ?? '*',
         )
+        this.markSentToParent()
       }, 250)
+      // Child-only: once per minute, post an encoded snapshot of our own tracking state
+      // (active?, token received, last comms) up to the parent so it lands in the replay.
+      if (this.iframeDebugInterval) clearInterval(this.iframeDebugInterval)
+      this.iframeDebugInterval = setInterval(this.emitIframeDebug, 60_000)
     } else {
       this.initWorker()
       /**
@@ -398,6 +412,12 @@ export default class App {
        * so they can act as if it was just a same-domain iframe
        * */
       window.addEventListener('message', this.crossDomainIframeListener)
+      // Parent-only: once per minute, log an encoded snapshot of every tracked child
+      // iframe and the freshness of our two-way comms, to debug iframes that go silent.
+      if (this.options.crossdomain?.enabled) {
+        if (this.xdomainDebugInterval) clearInterval(this.xdomainDebugInterval)
+        this.xdomainDebugInterval = setInterval(this.emitCrossdomainDebug, 60_000)
+      }
     }
     if (this.bc !== null) {
       this.bc.postMessage({
@@ -453,9 +473,71 @@ export default class App {
   checkStatus = () => {
     return this.parentActive
   }
+
+  /** child-side crossdomain debug state (only meaningful when insideIframe) */
+  private lastTokenReceived: { tok: string; at: number } | null = null
+  private lastParentMsgAt = 0
+  private lastSentToParentAt = 0
+  private iframeDebugInterval: ReturnType<typeof setInterval> | null = null
+  /** stamp every outbound post to the parent window, for the child debug snapshot */
+  private markSentToParent() {
+    this.lastSentToParentAt = Date.now()
+  }
+
+  /**
+   * Child-side counterpart of emitCrossdomainDebug: once per minute an iframe posts an
+   * encoded snapshot of its own tracking state up to the parent, which records it as a
+   * console log. Posted directly (not via this.send) so it is reported even when the
+   * child is NOT active — an inactive/orphaned child is exactly what we want to catch.
+   */
+  private emitIframeDebug = () => {
+    if (!this.insideIframe || !this.options.crossdomain?.enabled) return
+    const now = Date.now()
+    const rel = (t: number) => (t ? now - t : null)
+    const payload = {
+      ctx: this.contextId,
+      active: this.active(),
+      state: ActivityState[this.activityState],
+      parentActive: this.parentActive,
+      rootId: this.rootId,
+      frameOrder: this.frameOderNumber,
+      // when and what token we last received from the parent (token truncated)
+      token: this.lastTokenReceived
+        ? { tok: this.lastTokenReceived.tok, agoMs: now - this.lastTokenReceived.at }
+        : null,
+      // last two-way communication with the parent
+      lastParentMsgAgoMs: rel(this.lastParentMsgAt),
+      lastSentToParentAgoMs: rel(this.lastSentToParentAt),
+    }
+    const json = JSON.stringify(payload)
+    let encoded: string
+    try {
+      encoded = btoa(json)
+    } catch {
+      encoded = json
+    }
+    try {
+      window.parent.postMessage(
+        { line: proto.iframeDebug, context: this.contextId, debug: encoded },
+        this.options.crossdomain?.parentDomain ?? '*',
+      )
+      this.markSentToParent()
+    } catch (e) {
+      this.debug.error('iframe debug post failed', e)
+    }
+  }
   parentCrossDomainFrameListener = (event: MessageEvent) => {
     const { data } = event
     if (!data || event.source === window) return
+    // Debug: remember the last time the parent talked to us.
+    if (
+      data.line === proto.startIframe ||
+      data.line === proto.parentAlive ||
+      data.line === proto.iframeId ||
+      data.line === proto.killIframe
+    ) {
+      this.lastParentMsgAt = Date.now()
+    }
     if (data.line === proto.startIframe) {
       // Avoid corrupting an in-flight start; let it complete.
       if (this.activityState === ActivityState.Starting) return
@@ -465,6 +547,7 @@ export default class App {
         }
         if (data.token) {
           this.session.setSessionToken(data.token as string, this.projectKey)
+          this.lastTokenReceived = { tok: String(data.token).slice(-8), at: Date.now() }
         }
         if (data.id !== undefined) {
           this.rootId = data.id
@@ -482,6 +565,7 @@ export default class App {
       this.parentActive = true
       this.rootId = data.id
       this.session.setSessionToken(data.token as string, this.projectKey)
+      this.lastTokenReceived = { tok: String(data.token).slice(-8), at: Date.now() }
       this.frameOderNumber = data.frameOrderNumber
       this.frameLevel = data.frameLevel
       this.debug.log('starting iframe tracking', data)
@@ -495,7 +579,80 @@ export default class App {
   }
 
   trackedFrames: string[] = []
+  /** every context that has been enrolled at least once, to tell an orphan (re-adopt) apart
+   *  from a brand-new child still mid-enrollment (leave alone). */
+  private everTrackedFrames: Set<string> = new Set()
   private frameLastSeen: Map<string, number> = new Map()
+  /** crossdomain debug diagnostics, reported once per minute as an encoded console log */
+  private frameOrigin: Map<string, string> = new Map()
+  private frameAnyLastSeen: Map<string, number> = new Map()
+  private frameBatchLastSeen: Map<string, number> = new Map()
+  private frameLastSent: Map<string, { line: string; t: number }> = new Map()
+  private xdomainDebugInterval: ReturnType<typeof setInterval> | null = null
+  /** last time we re-adopted a given orphaned context, to avoid restart spam */
+  private reAdoptCooldown: Map<string, number> = new Map()
+  private readonly RE_ADOPT_COOLDOWN_MS = 2000
+
+  /**
+   * Stable, collision-free frame-order allocation. Node ids are partitioned by
+   * (frameLevel, frameOrder) via pack() — every (level, order) owns its own id block, so
+   * two simultaneously-live frames sharing an order at the same level corrupt each other's
+   * node trees and one stops rendering. The previous `trackedFrames.findIndex+1` derived
+   * order from a mutable array index, and pruneStaleFrames()'s .filter() shifts those
+   * indices, so a newly enrolled frame could be handed an order still in use by a live
+   * (but pruned) frame. We instead assign each context a persistent order, unique among all
+   * non-recycled contexts at its level, freed only when the context is GC'd (truly gone).
+   */
+  private frameAlloc: Map<string, { order: number; level: number }> = new Map()
+  private usedOrdersByLevel: Map<number, Set<number>> = new Map()
+  private allocateFrameOrder(ctx: string, level: number): number {
+    const existing = this.frameAlloc.get(ctx)
+    if (existing !== undefined) return existing.order
+    let used = this.usedOrdersByLevel.get(level)
+    if (!used) {
+      used = new Set()
+      this.usedOrdersByLevel.set(level, used)
+    }
+    let order = -1
+    for (let n = 1; n <= MASK_ORDER; n++) {
+      if (!used.has(n)) {
+        order = n
+        break
+      }
+    }
+    if (order === -1) {
+      // Overflow (>127 live frames at one level): evict the least-recently-seen context at
+      // this level that is not currently tracked, and reuse its slot rather than failing.
+      let lru: string | null = null
+      let lruSeen = Infinity
+      const trackedSet = new Set(this.trackedFrames)
+      this.frameAlloc.forEach((alloc, c) => {
+        if (alloc.level !== level || trackedSet.has(c)) return
+        const seen = this.frameAnyLastSeen.get(c) ?? 0
+        if (seen < lruSeen) {
+          lruSeen = seen
+          lru = c
+        }
+      })
+      if (lru !== null) {
+        order = this.frameAlloc.get(lru)!.order
+        this.frameAlloc.delete(lru)
+        this.debug.error('OR: frame order space exhausted, evicting', lru, 'for', ctx)
+      } else {
+        order = MASK_ORDER
+        this.debug.error('OR: frame order overflow, reusing max order for', ctx)
+      }
+    }
+    used.add(order)
+    this.frameAlloc.set(ctx, { order, level })
+    return order
+  }
+  private freeFrameOrder(ctx: string) {
+    const alloc = this.frameAlloc.get(ctx)
+    if (!alloc) return
+    this.frameAlloc.delete(ctx)
+    this.usedOrdersByLevel.get(alloc.level)?.delete(alloc.order)
+  }
   private readonly FRAME_STALE_MS = 1500
   private pruneStaleFrames() {
     const staleAfter = Date.now() - this.FRAME_STALE_MS
@@ -506,19 +663,135 @@ export default class App {
       return false
     })
   }
+
+  /** records the last command/signal we posted to a given child iframe context (debug) */
+  private recordSentToFrame(ctx: string | undefined, line: string) {
+    if (!ctx) return
+    this.frameLastSent.set(ctx, { line: protoLabel[line] ?? line, t: Date.now() })
+  }
+
+  /**
+   * Self-heal for the "kill-then-prune orphan" race: a live child can fall out of
+   * `trackedFrames` (its 250ms poll was delayed past FRAME_STALE_MS during the parent's
+   * stop/start NotActive gap, so pruneStaleFrames evicted it). It keeps polling but the
+   * only re-enrollment path is an `iframeSignal`, which a stopped/active-but-orphaned
+   * child never re-emits — so it would record nothing forever. When we (the parent) are
+   * active and see a poll from an un-tracked context, push a `startIframe` so the child
+   * restarts, re-runs the full handshake and re-observes with a fresh rootId. Cooldowned
+   * so we don't spam restarts during the child's start window.
+   */
+  private reAdoptOrphanFrame(event: MessageEvent, ctx: string) {
+    const now = Date.now()
+    const last = this.reAdoptCooldown.get(ctx) ?? 0
+    if (now - last < this.RE_ADOPT_COOLDOWN_MS) return
+    this.reAdoptCooldown.set(ctx, now)
+    const message: Record<string, any> = {
+      line: proto.startIframe,
+      token: this.session.getSessionToken(this.projectKey),
+    }
+    const targetFrame =
+      this.pageFrames.find((f) => f.contentWindow === event.source) ||
+      Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
+    if (targetFrame) {
+      const nodeId = (targetFrame as any)[this.options.node_id]
+      if (nodeId !== undefined) {
+        message.id = nodeId
+      }
+    }
+    // @ts-ignore
+    event.source?.postMessage(message, '*')
+    this.recordSentToFrame(ctx, proto.startIframe)
+    this.debug.log('Re-adopting orphaned crossdomain iframe', ctx)
+  }
+
+  /**
+   * Once per minute: emit an encoded console log from the parent tracker describing every
+   * tracked child iframe and the freshness of our two-way communication with it. Lets us
+   * see in replay which crossdomain iframe went silent and on which leg of the handshake.
+   */
+  /** drop debug entries for contexts we have neither heard from nor messaged in this long */
+  private readonly XDOMAIN_DEBUG_RETENTION_MS = 10 * 60_000
+  private emitCrossdomainDebug = () => {
+    if (this.insideIframe || !this.options.crossdomain?.enabled || !this.active()) return
+    const now = Date.now()
+    const rel = (t: number | undefined) => (t === undefined ? null : now - t)
+    // Report the union of currently-tracked frames and every context we have any debug
+    // record for: a frame that broke and stopped polling gets pruned from trackedFrames,
+    // but it is exactly the one we want to surface (with a large lastAnyMsgAgoMs).
+    const tracked = new Set(this.trackedFrames)
+    const contexts = new Set<string>([
+      ...this.trackedFrames,
+      ...this.frameAnyLastSeen.keys(),
+      ...this.frameLastSent.keys(),
+    ])
+    const frames = Array.from(contexts).map((ctx, i) => {
+      const sent = this.frameLastSent.get(ctx)
+      const alloc = this.frameAlloc.get(ctx)
+      return {
+        // the actual allocated (level, order) node-id partition, else an enumeration index
+        n: alloc ? alloc.order : i + 1,
+        level: alloc ? alloc.level : null,
+        // identify by domain if we have it, otherwise the context id, otherwise the number
+        id: this.frameOrigin.get(ctx) || ctx || `#${i + 1}`,
+        tracked: tracked.has(ctx),
+        lastAnyMsgAgoMs: rel(this.frameAnyLastSeen.get(ctx)),
+        lastBatchAgoMs: rel(this.frameBatchLastSeen.get(ctx)),
+        lastSent: sent ? { line: sent.line, agoMs: now - sent.t } : null,
+      }
+    })
+    // GC: forget contexts that have been silent and un-messaged past the retention window.
+    const cutoff = now - this.XDOMAIN_DEBUG_RETENTION_MS
+    for (const ctx of contexts) {
+      if (tracked.has(ctx)) continue
+      const seen = this.frameAnyLastSeen.get(ctx) ?? 0
+      const sentT = this.frameLastSent.get(ctx)?.t ?? 0
+      if (Math.max(seen, sentT) < cutoff) {
+        this.frameOrigin.delete(ctx)
+        this.frameAnyLastSeen.delete(ctx)
+        this.frameBatchLastSeen.delete(ctx)
+        this.frameLastSent.delete(ctx)
+        this.reAdoptCooldown.delete(ctx)
+        this.everTrackedFrames.delete(ctx)
+        this.freeFrameOrder(ctx)
+      }
+    }
+    const payload = { t: now, count: frames.length, frames }
+    const json = JSON.stringify(payload)
+    let encoded: string
+    try {
+      // payload is ASCII (base36 contexts, URL origins, numbers), so plain base64 is safe
+      encoded = btoa(json)
+    } catch {
+      encoded = json
+    }
+    this.send(ConsoleLog('info', `[OR_XDOMAIN_DEBUG] ${encoded}`))
+  }
   crossDomainIframeListener = (event: MessageEvent) => {
     if (event.source === window) return
     const { data } = event
     if (!data) return
+    // Debug: remember when we last heard *anything* from this context, and its domain.
+    if (data.context) {
+      this.frameAnyLastSeen.set(data.context, Date.now())
+      if (event.origin && !this.frameOrigin.has(data.context)) {
+        this.frameOrigin.set(data.context, event.origin)
+      }
+    }
     // Record liveness regardless of our own active state so the queue can prune
     // stale contexts reliably once we resume dispatching commands after a cycle.
     if ((data.line === proto.polling || data.line === proto.iframeSignal) && data.context) {
       this.frameLastSeen.set(data.context, Date.now())
     }
     if (!this.active()) return
+    if (data.line === proto.iframeDebug) {
+      // A child posted its once-per-minute snapshot; surface it in our recorded console.
+      this.send(ConsoleLog('info', `[OR_XDOMAIN_IFRAME_DEBUG] ${data.debug as string}`))
+      return
+    }
     if (data.line === proto.iframeSignal) {
       // @ts-ignore
       event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
+      this.recordSentToFrame(data.context, proto.parentAlive)
       const signalId = async () => {
         if (event.source === null) {
           return console.error('Couldnt connect to event.source for child iframe tracking')
@@ -534,26 +807,25 @@ export default class App {
           } else {
             this.trackedFrames.push(data.context)
           }
+          this.everTrackedFrames.add(data.context)
           await this.waitStarted()
           const token = this.session.getSessionToken(this.projectKey)
-          const order = this.trackedFrames.findIndex((f) => f === data.context) + 1
-          if (order === 0) {
-            this.debug.error(
-              'Couldnt get order number for iframe',
-              data.context,
-              this.trackedFrames,
-            )
-          }
+          // Persistent, collision-free order (NOT the shifting array index). A restart of the
+          // same context keeps its order/id-block for continuity; distinct live frames at the
+          // same level never share one.
+          const frameLevel = this.frameLevel + 1
+          const order = this.allocateFrameOrder(data.context, frameLevel)
           const iframeData = {
             line: proto.iframeId,
             id,
             token,
             frameOrderNumber: order,
-            frameLevel: this.frameLevel + 1,
+            frameLevel,
           }
           this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
           // @ts-ignore
           event.source?.postMessage(iframeData, '*')
+          this.recordSentToFrame(data.context, proto.iframeId)
         } catch (e) {
           console.error(e)
         }
@@ -565,6 +837,9 @@ export default class App {
      * plus we rewrite some of the messages to be relative to the main context/window
      * */
     if (data.line === proto.iframeBatch) {
+      if (data.context) {
+        this.frameBatchLastSeen.set(data.context, Date.now())
+      }
       const msgBatch = data.messages
       const mappedMessages: Message[] = []
       msgBatch.forEach((msg: Message) => {
@@ -614,6 +889,18 @@ export default class App {
       this.messages.push(...mappedMessages)
     }
     if (data.line === proto.polling) {
+      // Self-heal: a live child that was enrolled before but fell out of trackedFrames
+      // (pruned during a stop/start gap) keeps polling yet never re-signals. Re-adopt it
+      // so it restarts and re-enrolls. We require everTrackedFrames so a brand-new child
+      // still mid-enrollment (iframeSignal/checkNodeId in flight) is left alone.
+      if (
+        data.context &&
+        this.everTrackedFrames.has(data.context) &&
+        !this.trackedFrames.includes(data.context)
+      ) {
+        this.reAdoptOrphanFrame(event, data.context)
+        return
+      }
       if (!this.pollingQueue.order.length) {
         return
       }
@@ -651,6 +938,7 @@ export default class App {
         }
         // @ts-ignore
         event.source?.postMessage(message, '*')
+        this.recordSentToFrame(data.context, nextCommand)
         if (this.pollingQueue[nextCommand].length === 0) {
           delete this.pollingQueue[nextCommand]
           this.pollingQueue.order.shift()
@@ -697,6 +985,7 @@ export default class App {
       },
       this.options.crossdomain?.parentDomain ?? '*',
     )
+    this.markSentToParent()
 
     /**
      * since we need to wait uncertain amount of time
@@ -722,6 +1011,7 @@ export default class App {
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
+      this.markSentToParent()
       this.debug.info('Trying to signal to parent, attempt:', retries + 1)
       retries++
     }
@@ -942,9 +1232,11 @@ export default class App {
         {
           line: proto.iframeBatch,
           messages: this.messages,
+          context: this.contextId,
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
+      this.markSentToParent()
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
       return
