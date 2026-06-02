@@ -32,9 +32,9 @@ func (p *WorkerPool) CanAddTask() bool {
 
 type Job func(task *Task)
 
-func NewPool(size int, job Job) *WorkerPool {
+func NewPool(size, queueSize int, job Job) *WorkerPool {
 	newPool := &WorkerPool{
-		tasks: make(chan *Task, 128),
+		tasks: make(chan *Task, queueSize),
 		done:  make(chan struct{}),
 		size:  size,
 		job:   job,

@@ -32,6 +32,7 @@ type cacher struct {
 	rewriter       *assets.Rewriter            // Read only
 	metrics        metrics.Assets
 	sizeLimit      int
+	retries        int
 	requestHeaders map[string]string
 	workers        *WorkerPool
 }
@@ -87,7 +88,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		timeoutMap: newTimeoutMap(),
 		objStorage: store,
 		httpClient: &http.Client{
-			Timeout: time.Duration(6) * time.Second,
+			Timeout: time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 			Transport: &http.Transport{
 				Proxy:           http.ProxyFromEnvironment,
 				TLSClientConfig: tlsConfig,
@@ -95,10 +96,11 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		},
 		rewriter:       rewriter,
 		sizeLimit:      cfg.AssetsSizeLimit,
+		retries:        cfg.AssetsRetries,
 		requestHeaders: cfg.AssetsRequestHeaders,
 		metrics:        metrics,
 	}
-	c.workers = NewPool(64, c.CacheFile)
+	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
 	return c, nil
 }
 
@@ -191,7 +193,7 @@ func (c *cacher) cacheURL(t *Task) {
 						depth:      t.depth - 1,
 						urlContext: t.urlContext + "\n  -> " + fullURL,
 						isJS:       false,
-						retries:    setRetries(),
+						retries:    c.retries,
 					}, false)
 				}
 			}
@@ -238,7 +240,7 @@ func (c *cacher) CacheJSFile(sourceURL string) {
 		depth:      0,
 		urlContext: sourceURL,
 		isJS:       true,
-		retries:    setRetries(),
+		retries:    c.retries,
 	}, true)
 }
 
@@ -249,7 +251,7 @@ func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
 		depth:      MAX_CACHE_DEPTH,
 		urlContext: fullURL,
 		isJS:       false,
-		retries:    setRetries(),
+		retries:    c.retries,
 	}, true)
 }
 
@@ -259,8 +261,4 @@ func (c *cacher) UpdateTimeouts() {
 
 func (c *cacher) Stop() {
 	c.workers.Stop()
-}
-
-func setRetries() int {
-	return 10
 }
