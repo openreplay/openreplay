@@ -1,3 +1,7 @@
+## 18.0.12
+
+- work on iframe stability
+
 ## 18.0.11
 
 - improvememts for performance module to prevent endless loops
