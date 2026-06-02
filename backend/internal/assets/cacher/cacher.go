@@ -191,10 +191,6 @@ func (c *cacher) cacheURL(t *Task) {
 					}, false)
 				}
 			}
-			if err != nil {
-				c.log.Error(ctx, "Error while caching: %s", errors.Wrap(err, t.urlContext))
-				return
-			}
 		} else {
 			c.log.Error(ctx, "Error while caching: %s", errors.Wrap(errors.New("Maximum recursion cache depth exceeded"), t.urlContext))
 			return
