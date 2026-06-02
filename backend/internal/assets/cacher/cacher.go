@@ -108,6 +108,10 @@ func (c *cacher) CacheFile(task *Task) {
 
 func (c *cacher) cacheURL(t *Task) {
 	ctx := context.WithValue(context.Background(), "sessionID", t.sessionID)
+	crTime := c.objStorage.GetCreationTime(t.cachePath)
+	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) {
+		return
+	}
 	t.retries--
 	start := time.Now()
 	req, _ := http.NewRequest("GET", t.requestURL, nil)
@@ -214,10 +218,6 @@ func (c *cacher) checkTask(newTask *Task, blocking bool) {
 		return
 	}
 	c.timeoutMap.add(cachePath)
-	crTime := c.objStorage.GetCreationTime(cachePath)
-	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) {
-		return
-	}
 	// add new file in queue to download
 	newTask.cachePath = cachePath
 	if blocking {
