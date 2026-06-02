@@ -28,8 +28,7 @@ var (
 	FTRevID              = FilterTypeDef{Name: "revId", EnumStr: "FilterType.REV_ID"}
 	FTIssue              = FilterTypeDef{Name: "issue", EnumStr: "FilterType.ISSUE"}
 	// User filters
-	FTUserID     = FilterTypeDef{Name: "userId", EnumStr: "FilterType.USER_ID"}
-	FTDistinctID = FilterTypeDef{Name: "distinct_id", EnumStr: "FilterType.DISTINCT_ID"}
+	FTUserID = FilterTypeDef{Name: "userId", EnumStr: "FilterType.USER_ID"}
 )
 
 // IssueType — single entry from the static issue types catalog

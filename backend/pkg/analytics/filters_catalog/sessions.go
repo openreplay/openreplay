@@ -89,8 +89,7 @@ func GetSessionsFilters() model.FilterSection {
 	}
 }
 
-// GetUsersFilters mirrors the Python get_user_filters() output.
-// Both entries use the "uf" prefix via FilterTypeDef enum strings.
+// GetUsersFilters mirrors the Python get_users_filters() output.
 func GetUsersFilters() model.FilterSection {
 	str := []string{"string"}
 
@@ -113,7 +112,6 @@ func GetUsersFilters() model.FilterSection {
 
 	list := []any{
 		mkEnum("uf", FTUserID, "User ID", "string", str, false, true, nil),
-		mkEnum("uf", FTDistinctID, "User Distinct ID", "string", str, false, true, nil),
 	}
 	return model.FilterSection{
 		Total:       2,

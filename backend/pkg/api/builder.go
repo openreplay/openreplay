@@ -224,7 +224,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	}
 
 	filtersCatalogService := filtersCatalog.New(log, chconn, projects, savedSearchesService, tagAdminService)
-	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects)
+	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects, assistProxy)
 	if err != nil {
 		return nil, err
 	}
