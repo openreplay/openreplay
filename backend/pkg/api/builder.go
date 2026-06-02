@@ -69,9 +69,8 @@ type serviceBuilder struct {
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.sessionAPI, b.eventAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI,
-		b.filtersCatalogAPI}
+	return []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
