@@ -179,6 +179,8 @@ func main() {
 			cacher.UpdateTimeouts()
 		default:
 			if !cacher.CanCache() {
+				// TODO: replace with a signal from the pool when a slot frees up.
+				time.Sleep(time.Millisecond)
 				continue
 			}
 			if err := msgConsumer.ConsumeNext(); err != nil {
