@@ -20,6 +20,7 @@ type Config struct {
 	TopicCanvasImages string        `env:"TOPIC_CANVAS_IMAGES,required"`
 	TopicRawImages    string        `env:"TOPIC_RAW_IMAGES,required"`
 	TopicTrigger      string        `env:"TOPIC_TRIGGER,required"`
+	TopicRawAssets    string        `env:"TOPIC_RAW_ASSETS,required"`
 	GroupCleanup      string        `env:"GROUP_CLEANUP,required"`
 	CleanupReadGap    time.Duration `env:"CLEANUP_READ_GAP,default=24h"`
 	ProducerTimeout   int           `env:"PRODUCER_TIMEOUT,default=2000"`

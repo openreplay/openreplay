@@ -134,9 +134,20 @@ func (c *connectorImpl) Stop() error {
 	return c.conn.Close()
 }
 
+func isCHNotEnoughSpace(err error) bool {
+	var chErr *clickhouse.Exception
+	if errors.As(err, &chErr) {
+		return chErr.Code == 243
+	}
+	return false
+}
+
 func (c *connectorImpl) sendBulks(t *task) {
 	for _, b := range t.bulks {
 		if err := b.Send(); err != nil {
+			if isCHNotEnoughSpace(err) {
+				log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
+			}
 			log.Printf("can't send batch: %s", err)
 		}
 	}
