@@ -88,16 +88,24 @@ func (e *AssetsCache) shouldSkipAsset(baseURL string) bool {
 	if len(e.blackList) == 0 {
 		return false
 	}
-	host, err := parseHost(baseURL)
+	u, err := url.Parse(baseURL)
 	if err != nil {
 		return false
 	}
+	host := u.Hostname()
 	for _, blackHost := range e.blackList {
-		if strings.Contains(host, blackHost) {
+		if matchesBlackHost(host, blackHost) {
 			return true
 		}
 	}
 	return false
+}
+
+func matchesBlackHost(host, blackHost string) bool {
+	if strings.HasPrefix(blackHost, ".") {
+		return strings.HasSuffix(host, blackHost)
+	}
+	return host == blackHost || strings.HasSuffix(host, "."+blackHost)
 }
 
 func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
