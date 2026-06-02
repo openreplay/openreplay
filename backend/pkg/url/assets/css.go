@@ -40,7 +40,7 @@ func unquote(str string) (string, string) {
 
 func ExtractURLsFromCSS(css string) []string {
 	indexes := cssUrlsIndex(css)
-	urls := make([]string, len(indexes))
+	urls := make([]string, 0, len(indexes))
 	for _, idx := range indexes {
 
 		f := idx[0]
