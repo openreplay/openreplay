@@ -124,10 +124,12 @@ func (c *cacher) cacheURL(t *Task) {
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		printErr := true
-		// Retry 403/503 errors
+		// TODO: revisit with the retry mechanics rework — when the queue is full
+		// the retry is dropped and we fall through to logging the status code.
 		if (res.StatusCode == 403 || res.StatusCode == 503) && t.retries > 0 {
-			c.workers.AddTask(t)
-			printErr = false
+			if c.workers.tryAddTask(t) {
+				printErr = false
+			}
 		}
 		if printErr {
 			c.log.Error(ctx, "Error while caching: %s", errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), t.urlContext))
@@ -178,6 +180,7 @@ func (c *cacher) cacheURL(t *Task) {
 		if t.depth > 0 {
 			for _, extractedURL := range assets.ExtractURLsFromCSS(string(data)) {
 				if fullURL, cachable := assets.GetFullCachableURL(t.requestURL, extractedURL); cachable {
+					// false: we are inside a worker, enqueue must be non-blocking
 					c.checkTask(&Task{
 						requestURL: fullURL,
 						sessionID:  t.sessionID,
@@ -185,7 +188,7 @@ func (c *cacher) cacheURL(t *Task) {
 						urlContext: t.urlContext + "\n  -> " + fullURL,
 						isJS:       false,
 						retries:    setRetries(),
-					})
+					}, false)
 				}
 			}
 			if err != nil {
@@ -200,7 +203,10 @@ func (c *cacher) cacheURL(t *Task) {
 	return
 }
 
-func (c *cacher) checkTask(newTask *Task) {
+// checkTask deduplicates and enqueues a task. blocking selects the enqueue
+// strategy: external callers (consumer goroutine) pass true to apply backpressure,
+// worker-originated callers (CSS recursion) pass false to avoid deadlocking the pool.
+func (c *cacher) checkTask(newTask *Task, blocking bool) {
 	// check if file was recently uploaded
 	var cachePath string
 	if newTask.isJS {
@@ -218,7 +224,15 @@ func (c *cacher) checkTask(newTask *Task) {
 	}
 	// add new file in queue to download
 	newTask.cachePath = cachePath
-	c.workers.AddTask(newTask)
+	if blocking {
+		c.workers.AddTask(newTask)
+		return
+	}
+	// TODO: revisit with the retry mechanics rework — drop-on-full loses the task.
+	if !c.workers.tryAddTask(newTask) {
+		ctx := context.WithValue(context.Background(), "sessionID", newTask.sessionID)
+		c.log.Warn(ctx, "cacher queue full, dropping asset task: %s", newTask.requestURL)
+	}
 }
 
 func (c *cacher) CacheJSFile(sourceURL string) {
@@ -229,7 +243,7 @@ func (c *cacher) CacheJSFile(sourceURL string) {
 		urlContext: sourceURL,
 		isJS:       true,
 		retries:    setRetries(),
-	})
+	}, true)
 }
 
 func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
@@ -240,7 +254,7 @@ func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
 		urlContext: fullURL,
 		isJS:       false,
 		retries:    setRetries(),
-	})
+	}, true)
 }
 
 func (c *cacher) UpdateTimeouts() {

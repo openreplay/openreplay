@@ -69,6 +69,19 @@ func (p *WorkerPool) AddTask(task *Task) {
 	p.tasks <- task
 }
 
+// TODO: revisit together with the retry mechanics rework
+func (p *WorkerPool) tryAddTask(task *Task) bool {
+	if task.retries <= 0 {
+		return true
+	}
+	select {
+	case p.tasks <- task:
+		return true
+	default:
+		return false
+	}
+}
+
 func (p *WorkerPool) Stop() {
 	p.term.Do(func() {
 		close(p.done)
