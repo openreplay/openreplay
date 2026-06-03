@@ -12,6 +12,8 @@ import (
 	"openreplay/backend/pkg/analytics/dashboards"
 	analyticsEvents "openreplay/backend/pkg/analytics/events"
 	analyticsEventsAPI "openreplay/backend/pkg/analytics/events/api"
+	filtersCatalog "openreplay/backend/pkg/analytics/filters_catalog"
+	filtersCatalogAPI "openreplay/backend/pkg/analytics/filters_catalog/api"
 	"openreplay/backend/pkg/analytics/lexicon"
 	lexiconAPI "openreplay/backend/pkg/analytics/lexicon/api"
 	"openreplay/backend/pkg/analytics/model"
@@ -63,10 +65,11 @@ type serviceBuilder struct {
 	usersAPI           api.Handlers
 	lexiconAPI         api.Handlers
 	tagsAdminAPI       api.Handlers
+	filtersCatalogAPI  api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.sessionAPI, b.eventAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
+	return []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
 		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI}
 }
 
@@ -219,6 +222,12 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	filtersCatalogService := filtersCatalog.New(log, chconn, projects, savedSearchesService, tagAdminService)
+	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects, assistProxy)
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
 		sessionAPI:         sessionHandlers,
 		eventAPI:           eventHandlers,
@@ -236,5 +245,6 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		usersAPI:           usersHandlers,
 		lexiconAPI:         lexiconHandlers,
 		tagsAdminAPI:       tagAdminHandlers,
+		filtersCatalogAPI:  filtersCatalogHandlers,
 	}, nil
 }

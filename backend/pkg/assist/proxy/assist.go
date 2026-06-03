@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ type Assist interface {
 	GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error)
 	GetLiveSessionsWS(projID uint32, req *GetLiveSessionsRequest) (interface{}, error)
 	IsLive(projID uint32, sessID uint64) (bool, error)
+	Autocomplete(projID uint32, q, key string) ([]map[string]interface{}, error)
 }
 
 type assistImpl struct {
@@ -243,6 +245,97 @@ func (r *GetLiveSessionsRequest) Parse() *GetAssistSessionsPayload {
 		}
 	}
 	return res
+}
+
+func (a *assistImpl) Autocomplete(projID uint32, q, key string) ([]map[string]interface{}, error) {
+	if projID == 0 {
+		return nil, errors.New("projID is 0")
+	}
+	proj, err := a.projects.GetProject(projID)
+	if err != nil {
+		return nil, err
+	}
+	base := fmt.Sprintf(a.cfg.AssistUrl, a.cfg.AssistKey) + a.cfg.AssistListSuffix + "/" + proj.ProjectKey + "/autocomplete"
+	u, err := url.Parse(base)
+	if err != nil {
+		return nil, err
+	}
+	query := u.Query()
+	query.Set("q", q)
+	if key != "" {
+		query.Set("key", key)
+	}
+	u.RawQuery = query.Encode()
+
+	client := &http.Client{Timeout: a.cfg.AssistRequestTimeout}
+	resp, err := client.Get(u.String())
+	if err != nil {
+		return nil, fmt.Errorf("assist autocomplete request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("assist autocomplete returned status %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read assist autocomplete response: %w", err)
+	}
+	var parsed struct {
+		Data []map[string]interface{} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("parse assist autocomplete response: %w", err)
+	}
+	for _, r := range parsed.Data {
+		if t, ok := r["type"].(string); ok {
+			r["type"] = changeAssistKey(t)
+		}
+	}
+	return parsed.Data, nil
+}
+
+func changeAssistKey(key string) string {
+	switch strings.ToUpper(key) {
+	case "PAGETITLE":
+		return "pageTitle"
+	case "ACTIVE":
+		return "active"
+	case "LIVE":
+		return "live"
+	case "SESSIONID":
+		return "sessionId"
+	case "METADATA":
+		return "metadata"
+	case "USERID":
+		return "userId"
+	case "USERUUID":
+		return "userUuid"
+	case "PROJECTKEY":
+		return "projectKey"
+	case "REVID":
+		return "revId"
+	case "TIMESTAMP":
+		return "timestamp"
+	case "TRACKERVERSION":
+		return "trackerVersion"
+	case "ISSNIPPET":
+		return "isSnippet"
+	case "USEROS":
+		return "userOs"
+	case "USERBROWSER":
+		return "userBrowser"
+	case "USERBROWSERVERSION":
+		return "userBrowserVersion"
+	case "USERDEVICE":
+		return "userDevice"
+	case "USERDEVICETYPE":
+		return "userDeviceType"
+	case "USERCOUNTRY":
+		return "userCountry"
+	case "PROJECTID":
+		return "projectId"
+	}
+	return key
 }
 
 func (a *assistImpl) requestAssistData(assistURL string, payload []byte) (interface{}, error) {

@@ -20,11 +20,22 @@ var (
 	ErrNoFieldsToUpdate = errors.New("no fields to update")
 )
 
+// TagsForFiltersItem is a lightweight projection used by the filters catalog.
+type TagsForFiltersItem struct {
+	TagID           int
+	Name            string
+	Selector        string
+	IgnoreClickRage bool
+	IgnoreDeadClick bool
+	Location        *string
+}
+
 type TagService interface {
 	Create(ctx context.Context, projectID uint32, req *CreateTagRequest) (int, error)
 	List(ctx context.Context, projectID uint32, limit, offset int) (*ListTagsResponse, error)
 	Update(ctx context.Context, projectID uint32, tagID int, req *UpdateTagRequest) error
 	Delete(ctx context.Context, projectID uint32, tagID int) error
+	ListForFilters(projectID int) ([]TagsForFiltersItem, error)
 }
 
 type tagServiceImpl struct {
@@ -210,4 +221,26 @@ func (s *tagServiceImpl) Delete(ctx context.Context, projectID uint32, tagID int
 		return fmt.Errorf("delete tag: %s", err)
 	}
 	return nil
+}
+
+func (s *tagServiceImpl) ListForFilters(projectID int) ([]TagsForFiltersItem, error) {
+	const q = `
+        SELECT tag_id, name, selector, ignore_click_rage, ignore_dead_click, location
+        FROM public.tags
+        WHERE project_id = $1 AND deleted_at IS NULL
+        ORDER BY name`
+	rows, err := s.pgconn.Query(q, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []TagsForFiltersItem
+	for rows.Next() {
+		var t TagsForFiltersItem
+		if err := rows.Scan(&t.TagID, &t.Name, &t.Selector, &t.IgnoreClickRage, &t.IgnoreDeadClick, &t.Location); err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, rows.Err()
 }
