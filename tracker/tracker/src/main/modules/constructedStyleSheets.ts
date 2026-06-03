@@ -63,9 +63,16 @@ export default function (app: App | null) {
             app.send(AdoptedSSAddOwner(sheetID, nodeID))
           }
           if (init) {
-            const rules = s.cssRules
-            for (let i = 0; i < rules.length; i++) {
-              app.send(AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()))
+            try {
+              const rules = s.cssRules
+              for (let i = 0; i < rules.length; i++) {
+                app.send(
+                  AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()),
+                )
+              }
+            } catch (e) {
+              app.debug.log('Couldnt access adopted stylesheet', e)
+              // Skip inaccessible (cross-origin) stylesheet
             }
           }
           nowOwning.push(sheetID)

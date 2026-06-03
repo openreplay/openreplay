@@ -194,15 +194,29 @@ export default function (app: App, opts: CssRulesOptions) {
     if (!nodeID) return
 
     const sheet = node.sheet
+
+    // Accessing cssRules on a cross-origin stylesheet (e.g. injected by a
+    // browser extension) throws a SecurityError. Probe it before registering
+    // the sheet so an inaccessible sheet is skipped instead of aborting start.
+    let rules: CSSRuleList
+    try {
+      rules = sheet.cssRules
+    } catch (e) {
+      // Skip inaccessible (cross-origin) stylesheet
+      app.debug.log('Couldnt access stylesheet during initial scan', e)
+      return
+    }
+
     const sheetID = nextID()
     styleSheetIDMap.set(sheet, sheetID)
     app.send(AdoptedSSAddOwner(sheetID, nodeID))
 
-    for (let i = 0; i < sheet.cssRules.length; i++) {
+    for (let i = 0; i < rules.length; i++) {
       try {
-        sendInsertDeleteRule(sheet, i, sheet.cssRules[i].cssText)
+        sendInsertDeleteRule(sheet, i, rules[i].cssText)
       } catch (e) {
         // Skip inaccessible rules
+        app.debug.log('Couldnt access stylesheet rule during initial scan', e)
       }
     }
   })

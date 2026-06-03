@@ -1,6 +1,7 @@
 ## 18.0.12
 
 - work on iframe stability
+- wrapper for stylesheets to skip unavailable ones (CSP or other loading issues)
 
 ## 18.0.11
 
