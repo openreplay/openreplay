@@ -1,17 +1,18 @@
-import React from 'react';
-import { App, Button, Card, Layout, Dropdown, Tooltip, Typography } from 'antd';
-import ProjectList from 'Components/Client/Projects/ProjectList';
-import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
-import { useHistory } from 'App/routing';
 import { useStore } from '@/mstore';
-import { observer } from 'mobx-react-lite';
-import { PlusOutlined, KeyOutlined, DownOutlined } from '@ant-design/icons';
-import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
-import { useModal } from 'Components/ModalContext';
-import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
+import { DownOutlined, KeyOutlined, PlusOutlined } from '@ant-design/icons';
+import { App, Button, Card, Dropdown, Layout, Tooltip, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useHistory } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
+import ProjectForm from 'Components/Client/Projects/ProjectForm';
+import ProjectList from 'Components/Client/Projects/ProjectList';
+import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
+import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
+import { useModal } from 'Components/ModalContext';
 
 function Projects() {
   const { t } = useTranslation();

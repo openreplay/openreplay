@@ -83,6 +83,20 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [
         { find: 'antd', replacement: 'antd/es/index.js' },
+        // @ant-design/icons hardcodes its SVG imports to the CJS `/lib/asn/*`
+        // subpath, and @ant-design/icons-svg ships no `exports` map to redirect
+        // them. Rolldown mis-tree-shakes those CJS modules — it drops the
+        // `exports.default = <icon>` assignment (sideEffects:false), leaving the
+        // icon definition undefined so AntdIcon crashes on `icon.name` (prod
+        // only; dev serves unbundled ESM). Route them to the pure-ESM `/es/`
+        // build, which has no reassignment pattern and tree-shakes correctly.
+        {
+          find: /^@ant-design\/icons-svg\/lib\/(.*)$/,
+          replacement: path.resolve(
+            __dirname,
+            'node_modules/@ant-design/icons-svg/es/$1',
+          ),
+        },
         {
           find: 'icons.css',
           replacement: path.resolve(STYLES_IMPORT_DIR, 'icons.css'),
