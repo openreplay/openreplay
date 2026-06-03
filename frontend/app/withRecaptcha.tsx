@@ -81,7 +81,9 @@ const withCaptcha = <P extends object>(
     const onCaptchaExpired = useCallback(() => {
       setTokenExpired(true);
       if (CAPTCHA_ENABLED) {
-        toast.warning('CAPTCHA verification expired. Please verify again.');
+        toast.warning('CAPTCHA verification expired. Please verify again.', {
+          toastId: 'captcha-expired',
+        });
       }
     }, [CAPTCHA_ENABLED]);
 
