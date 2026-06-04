@@ -1,18 +1,14 @@
-import type { Point } from './types';
 import styles from './cursor.module.css';
+import type { Point } from './types';
 
 export default class Cursor {
   private readonly isMobile: boolean;
-
   private readonly cursor: HTMLDivElement;
-
   private tagElement: HTMLDivElement;
-
   private coords = { x: 0, y: 0 };
-
   private isMoving = false;
-
   private onClick: () => void;
+  private highlightCursor = false;
 
   constructor(overlay: HTMLDivElement, isMobile: boolean) {
     this.cursor = document.createElement('div');
@@ -20,6 +16,8 @@ export default class Cursor {
     if (isMobile) this.cursor.style.backgroundImage = 'unset';
     overlay.appendChild(this.cursor);
     this.isMobile = isMobile;
+    this.highlightCursor =
+      new URLSearchParams(window.location.search).get('timer') === 'true';
   }
 
   toggle(flag: boolean) {
@@ -79,6 +77,15 @@ export default class Cursor {
   }
 
   click() {
+    if (this.highlightCursor) {
+      const styleList = styles.timerClicked;
+      this.cursor.classList.add(styleList);
+      this.onClick?.();
+      setTimeout(() => {
+        this.cursor.classList.remove(styleList);
+      }, 510);
+      return;
+    }
     const styleList = styles.clicked;
     this.cursor.classList.add(styleList);
     this.onClick?.();
