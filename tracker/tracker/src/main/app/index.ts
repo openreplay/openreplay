@@ -1147,6 +1147,17 @@ export default class App {
       })
     } else if (data === 'not_init') {
       this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
+      // [OPENREPLAYDEBUG] THEORY: a message batch reached the worker before the
+      // writer was initialised (start handshake not finished) and was DISCARDED.
+      // Surface it into the session (searchable in replay) to test whether
+      // startup batches — which can carry the initial DOM snapshot — are lost.
+      try {
+        this.send(
+          ConsoleLog('warn', '[OPENREPLAYDEBUG] worker not_init: a pre-start message batch was discarded'),
+        )
+      } catch (_) {
+        /* diagnostics must never break recording */
+      }
     } else if (data.type === 'failure') {
       this.stop(false)
       this.debug.error('worker_failed', data.reason)
