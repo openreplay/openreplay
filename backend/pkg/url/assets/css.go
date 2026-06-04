@@ -76,6 +76,24 @@ func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) stri
 	return rewritePseudoclasses(css)
 }
 
+// RewriteCSSAndExtract scans the CSS a single time: it rewrites each url()/@import
+// target via the rewriter and collects the raw (pre-rewrite) URLs it found, so
+// callers that need both don't have to run the regex twice (extract + rewrite).
+func (r *Rewriter) RewriteCSSAndExtract(sessionID uint64, baseurl string, css string) (string, []string) {
+	// cssUrlsIndex returns matches sorted by descending start offset, so rewriting
+	// in place from the end keeps earlier offsets valid.
+	indexes := cssUrlsIndex(css)
+	urls := make([]string, 0, len(indexes))
+	for _, idx := range indexes {
+		f := idx[0]
+		t := idx[1]
+		rawurl, q := unquote(css[f:t])
+		urls = append(urls, rawurl)
+		css = css[:f] + q + r.RewriteURL(sessionID, baseurl, rawurl) + q + css[t:]
+	}
+	return rewritePseudoclasses(css), urls
+}
+
 func rewritePseudoclasses(css string) string {
 	css = strings.Replace(css, ":hover", ".-openreplay-hover", -1)
 	css = strings.Replace(css, ":focus", ".-openreplay-focus", -1)

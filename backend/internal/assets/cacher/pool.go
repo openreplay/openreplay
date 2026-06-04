@@ -6,12 +6,13 @@ import (
 
 type Task struct {
 	requestURL string
+	host       string
 	sessionID  uint64
 	depth      byte
 	urlContext string
 	isJS       bool
 	cachePath  string
-	retries    int
+	attempt    int
 }
 
 type WorkerPool struct {
@@ -62,18 +63,13 @@ func (p *WorkerPool) worker() {
 	}
 }
 
+// AddTask blocking func; use only from the consumer where backpressure is desired
 func (p *WorkerPool) AddTask(task *Task) {
-	if task.retries <= 0 {
-		return
-	}
 	p.tasks <- task
 }
 
-// TODO: revisit together with the retry mechanics rework
+// tryAddTask enqueues without blocking; use from inside workers (CSS recursion) and by the retry scheduler.
 func (p *WorkerPool) tryAddTask(task *Task) bool {
-	if task.retries <= 0 {
-		return true
-	}
 	select {
 	case p.tasks <- task:
 		return true

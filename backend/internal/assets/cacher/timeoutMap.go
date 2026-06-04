@@ -7,8 +7,6 @@ import (
 
 const MAX_STORAGE_TIME = 24 * time.Hour
 
-// If problem with cache contention (>=4 core) look at sync.Map
-
 type timeoutMap struct {
 	mx sync.RWMutex
 	m  map[string]time.Time
@@ -31,6 +29,12 @@ func (tm *timeoutMap) contains(key string) bool {
 	defer tm.mx.RUnlock()
 	_, ok := tm.m[key]
 	return ok
+}
+
+func (tm *timeoutMap) delete(key string) {
+	tm.mx.Lock()
+	defer tm.mx.Unlock()
+	delete(tm.m, key)
 }
 
 func (tm *timeoutMap) deleteOutdated() {
