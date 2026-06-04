@@ -58,6 +58,11 @@ export default class MessageLoader {
       'Checking protocol format from header',
       binary.slice(0, 24).join(' '),
     );
+    const hasHeader = binary.slice(0, 3).every((b) => b === 0xff);
+    if (!hasHeader) {
+      // probably second file in the recording cuz messages arrived late
+      return 3;
+    }
     const isV2 =
       binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
     if (isV2) return 2;
@@ -72,7 +77,7 @@ export default class MessageLoader {
     const hasHeader =
       data.slice(0, 7).every((b) => b === 0xff) &&
       (data[7] === 0xff || data[7] === 0xfe || data[7] === 0xfd);
-    return hasHeader ? data.slice(8) : data;
+    return hasHeader && data[0] !== 81 ? data.slice(8) : data;
   }
 
   rawMessages: any[] = [];

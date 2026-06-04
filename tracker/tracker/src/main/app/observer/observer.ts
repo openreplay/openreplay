@@ -13,6 +13,7 @@ import {
   AdoptedSSInsertRuleURLBased,
   AdoptedSSAddOwner,
   SetNodeSlot,
+  ConsoleLog,
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -237,6 +238,13 @@ export default abstract class Observer {
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
+          // THEORY S1: app.safe() wraps this whole callback in a try/catch that
+          // SILENTLY swallows — so a throw while processing one mutation aborts
+          // the entire batch (the single commitNodes() below never runs) and
+          // every pending node in it is lost. Isolating + logging per mutation
+          // both surfaces it into the session and prevents one bad node from
+          // dropping the rest of the batch.
+          try {
           // mutations order is sequential
           const target = mutation.target
           const type = mutation.type
@@ -278,6 +286,14 @@ export default abstract class Observer {
           if (type === 'characterData') {
             this.textSet.add(id)
             continue
+          }
+          } catch (mutationErr) {
+            const t = mutation.target as Node & { tagName?: string }
+            this.orDebug(
+              `mutation processing threw type=${mutation.type} target=<${
+                t.tagName ?? t.nodeName ?? 'unknown'
+              }>: ${(mutationErr as Error)?.message ?? String(mutationErr)}`,
+            )
           }
         }
         this.commitNodes()
@@ -477,10 +493,11 @@ export default abstract class Observer {
       NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
       {
         acceptNode: (node) => {
-          if (this.app.nodes.getID(node) !== undefined) {
-            this.app.debug.info('! Node is already bound', node)
-          }
-          return isIgnored(node) || this.app.nodes.getID(node) !== undefined
+          // Use the Map-aware isBound() rather than the raw __openreplay_id
+          // property: a node carrying a stale id from a previous observe cycle
+          // must be re-accepted and re-bound here, otherwise the snapshot walk
+          // silently skips it (and its subtree, e.g. a <style>'s CSS text).
+          return isIgnored(node) || this.app.nodes.isBound(node)
             ? NodeFilter.FILTER_REJECT
             : NodeFilter.FILTER_ACCEPT
         },
@@ -548,16 +565,30 @@ export default abstract class Observer {
       if (parent === null) {
         // Sometimes one observation contains attribute mutations for the removimg node, which gets ignored here.
         // That shouldn't affect the visual rendering ( should it? maybe when transition applied? )
+        // THEORY: an element silently dropped at commit time (no message emitted).
+        if (isElementNode(node)) {
+          this.orDebug(`commit drop <${(node as Element).tagName}> reason=no-parent`)
+        }
         this.unbindTree(node)
         return false
       }
       parentID = this.app.nodes.getID(parent)
 
       if (parentID === undefined) {
+        if (isElementNode(node)) {
+          this.orDebug(
+            `commit drop <${(node as Element).tagName}> reason=parent-unbound parent=<${
+              (parent as Node & { tagName?: string }).tagName ?? parent.nodeName
+            }>`,
+          )
+        }
         this.unbindTree(node)
         return false
       }
       if (!this.commitNode(parentID)) {
+        if (isElementNode(node)) {
+          this.orDebug(`commit drop <${(node as Element).tagName}> reason=parent-commit-failed`)
+        }
         this.unbindTree(node)
         return false
       }
@@ -703,7 +734,46 @@ export default abstract class Observer {
     this.commitNodes(true)
   }
 
+  /**
+   * [OPENREPLAYDEBUG] Emits a diagnostic line INTO the recorded session's
+   * console (searchable in replay by "[OPENREPLAYDEBUG]"), NOT the local
+   * devtools console — used to test capture-loss theories against real traffic.
+   */
+  private orDebug(message: string): void {
+    try {
+      this.app.send(ConsoleLog('warn', `[OPENREPLAYDEBUG] ${message}`))
+    } catch (_) {
+      /* diagnostics must never break recording */
+    }
+  }
+
   disconnect(): void {
+    // THEORY S3: a disconnect may discard MutationRecords still queued by the
+    // browser. takeRecords() drains them — they would be discarded by
+    // disconnect() below anyway, so this changes nothing functionally, it only
+    // lets us SEE whether a disconnect strands un-processed DOM additions
+    // (e.g. a freshly appended <head> <style>). NOTE: if this disconnect is part
+    // of stop(), the surrounding buffer may be cleared and this log lost; it is
+    // most reliable for mid-session re-observes (cold-start cycle / iframe).
+    const pending = this.observer.takeRecords()
+    if (pending.length) {
+      let addedEls = 0
+      const tags: string[] = []
+      for (const m of pending) {
+        for (let i = 0; i < m.addedNodes.length; i++) {
+          const n = m.addedNodes[i] as Node & { tagName?: string }
+          if (n.tagName) {
+            addedEls++
+            if (tags.length < 10) tags.push(n.tagName)
+          }
+        }
+      }
+      if (addedEls > 0) {
+        this.orDebug(
+          `disconnect stranded ${pending.length} pending record(s), ${addedEls} added element(s): ${tags.join(',')}`,
+        )
+      }
+    }
     this.observer.disconnect()
     this.clear()
     this.throttledSetNodeData.clear()
