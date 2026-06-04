@@ -65,8 +65,9 @@ export default class Nodes {
   }
 
   registerNode(node: Node): [/*id:*/ number, /*isNew:*/ boolean] {
-    let id: number = (node as any)[this.node_id]
-    const isNew = id === undefined
+    const existing: number | undefined = (node as any)[this.node_id]
+    const isNew = existing === undefined || this.nodes.get(existing) !== node
+    let id: number = existing as number
     if (isNew) {
       id = this.nextNodeId
       this.totalNodeAmount++
@@ -114,6 +115,12 @@ export default class Nodes {
   getID(node: Node): number | undefined {
     if (!node) return undefined
     return (node as any)[this.node_id]
+  }
+
+  isBound(node: Node): boolean {
+    if (!node) return false
+    const id = (node as any)[this.node_id]
+    return id !== undefined && this.nodes.get(id) === node
   }
 
   getNode(id: number) {
