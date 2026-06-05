@@ -1,11 +1,11 @@
 import { Button, Drawer } from 'antd';
-import React from 'react';
-import { useLocation, useNavigate } from 'App/routing';
+import { Menu, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-
-import MenuContent from './MenuContent';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import SupportModal from 'App/layout/SupportModal';
+import { useStore } from 'App/mstore';
 import * as routes from 'App/routes';
 import {
   CLIENT_DEFAULT_TAB,
@@ -13,20 +13,19 @@ import {
   client,
   withSiteId,
 } from 'App/routes';
-import { MODULES } from 'Components/Client/Modules/extra';
-import { hasAi } from 'App/utils/split-utils';
+import { useLocation, useNavigate } from 'App/routing';
 // added: util-based mobile detection
 import { mobileScreen } from 'App/utils/isMobile';
-import { useStore } from 'App/mstore';
+import { MODULES } from 'Components/Client/Modules/extra';
+
 import {
   MENU,
   PREFERENCES_MENU,
   categories as main_menu,
   preferences,
 } from '../data';
-import { useTranslation } from 'react-i18next';
 import { extraRoutes } from '../menuRoutes';
-import { Menu, X } from 'lucide-react';
+import MenuContent from './MenuContent';
 
 interface Props {
   isCollapsed?: boolean;
@@ -75,9 +74,7 @@ function SideMenu(props: Props) {
           item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
           item.isAdmin && !isAdmin,
           item.isEnterprise && !isEnterprise,
-          item.key === MENU.KAI && !hasAi,
-          item.key === PREFERENCES_MENU.EXPORTED_VIDEOS &&
-            !account.hasVideoExport,
+          item.key === PREFERENCES_MENU.EXPORTED_VIDEOS && !isEnterprise,
         ].some(Boolean);
 
         return { ...item, hidden: isHidden };
@@ -120,7 +117,6 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(), siteId),
-    [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
     [MENU.USERS]: () => withSiteId(routes.dataManagement.usersList(), siteId),
