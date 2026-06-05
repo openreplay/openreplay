@@ -185,7 +185,7 @@ function SubHeader(props: any) {
       onClick: showKbHelp,
     },
   ];
-  if (account.hasVideoExport) {
+  if (isEnterprise) {
     dropdownItems.push({
       key: '5',
       label: (
