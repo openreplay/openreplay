@@ -13,6 +13,7 @@ import (
 	"openreplay/backend/pkg/pool"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/klauspost/compress/zstd"
 )
@@ -133,10 +134,12 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	task := payload.(*uploadTask)
 
 	if err := v.streamZstdToS3(task.name, task.path); err != nil {
-		v.log.Fatal(task.ctx, "can't upload canvas, name: %s, err: %s", task.name, err)
-		return
+		if strings.Contains(err.Error(), "no such file or directory") {
+			v.log.Warn(task.ctx, "no replay data found for task: %s", task.name)
+		} else {
+			v.log.Fatal(task.ctx, "can't upload image, name: %s, err: %s", task.name, err)
+		}
 	}
-	return
 }
 
 func (v *ImageStorage) streamZstdToS3(key, srcPath string) error {
