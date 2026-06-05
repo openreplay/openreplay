@@ -289,11 +289,6 @@ export default abstract class Observer {
           }
           } catch (mutationErr) {
             const t = mutation.target as Node & { tagName?: string }
-            this.orDebug(
-              `mutation processing threw type=${mutation.type} target=<${
-                t.tagName ?? t.nodeName ?? 'unknown'
-              }>: ${(mutationErr as Error)?.message ?? String(mutationErr)}`,
-            )
           }
         }
         this.commitNodes()
@@ -563,32 +558,16 @@ export default abstract class Observer {
     // TODO: Clean the logic (though now it workd fine)
     if (!hasTag(node, 'html') || !this.isTopContext) {
       if (parent === null) {
-        // Sometimes one observation contains attribute mutations for the removimg node, which gets ignored here.
-        // That shouldn't affect the visual rendering ( should it? maybe when transition applied? )
-        // THEORY: an element silently dropped at commit time (no message emitted).
-        if (isElementNode(node)) {
-          this.orDebug(`commit drop <${(node as Element).tagName}> reason=no-parent`)
-        }
         this.unbindTree(node)
         return false
       }
       parentID = this.app.nodes.getID(parent)
 
       if (parentID === undefined) {
-        if (isElementNode(node)) {
-          this.orDebug(
-            `commit drop <${(node as Element).tagName}> reason=parent-unbound parent=<${
-              (parent as Node & { tagName?: string }).tagName ?? parent.nodeName
-            }>`,
-          )
-        }
         this.unbindTree(node)
         return false
       }
       if (!this.commitNode(parentID)) {
-        if (isElementNode(node)) {
-          this.orDebug(`commit drop <${(node as Element).tagName}> reason=parent-commit-failed`)
-        }
         this.unbindTree(node)
         return false
       }
@@ -734,19 +713,6 @@ export default abstract class Observer {
     this.commitNodes(true)
   }
 
-  /**
-   * [OPENREPLAYDEBUG] Emits a diagnostic line INTO the recorded session's
-   * console (searchable in replay by "[OPENREPLAYDEBUG]"), NOT the local
-   * devtools console — used to test capture-loss theories against real traffic.
-   */
-  private orDebug(message: string): void {
-    try {
-      this.app.send(ConsoleLog('warn', `[OPENREPLAYDEBUG] ${message}`))
-    } catch (_) {
-      /* diagnostics must never break recording */
-    }
-  }
-
   disconnect(): void {
     // THEORY S3: a disconnect may discard MutationRecords still queued by the
     // browser. takeRecords() drains them — they would be discarded by
@@ -767,11 +733,6 @@ export default abstract class Observer {
             if (tags.length < 10) tags.push(n.tagName)
           }
         }
-      }
-      if (addedEls > 0) {
-        this.orDebug(
-          `disconnect stranded ${pending.length} pending record(s), ${addedEls} added element(s): ${tags.join(',')}`,
-        )
       }
     }
     this.observer.disconnect()

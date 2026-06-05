@@ -1,3 +1,7 @@
+## 18.0.13
+
+- prevent skipping over previously recorded nodes
+
 ## 18.0.12
 
 - work on iframe stability
