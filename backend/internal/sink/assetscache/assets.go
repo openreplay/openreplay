@@ -180,15 +180,19 @@ func (e *AssetsCache) sendAssetForCache(sessionID uint64, baseURL string, relati
 	}
 }
 
-func (e *AssetsCache) rewriteAndQueue(sessionID uint64, baseURL string, css string) string {
+func (e *AssetsCache) rewriteCSS(sessionID uint64, baseURL string, css string) (string, []string) {
 	if !e.cfg.CacheAssets {
-		return assets.ResolveCSS(baseURL, css)
+		return assets.ResolveCSS(baseURL, css), nil
 	}
-	rewritten, urls := e.rewriter.RewriteCSSAndExtract(sessionID, baseURL, css)
+	return e.rewriter.RewriteCSSAndExtract(sessionID, baseURL, css)
+}
+
+func (e *AssetsCache) rewriteAndQueue(sessionID uint64, baseURL string, css string) string {
+	res, urls := e.rewriteCSS(sessionID, baseURL, css)
 	for _, u := range urls {
 		e.sendAssetForCache(sessionID, baseURL, u)
 	}
-	return rewritten
+	return res
 }
 
 func (e *AssetsCache) handleURL(sessionID uint64, baseURL string, urlVal string) string {
@@ -235,8 +239,11 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	}
 	// Rewrite the CSS and queue its referenced assets for download in one pass.
 	start := time.Now()
-	res := e.rewriteAndQueue(sessionID, baseURL, css)
+	res, urls := e.rewriteCSS(sessionID, baseURL, css)
 	duration := time.Now().Sub(start).Milliseconds()
+	for _, u := range urls {
+		e.sendAssetForCache(sessionID, baseURL, u)
+	}
 	e.metrics.RecordAssetSize(float64(len(res)))
 	e.metrics.RecordProcessAssetDuration(float64(duration))
 	// Save asset to cache if we spent more than threshold

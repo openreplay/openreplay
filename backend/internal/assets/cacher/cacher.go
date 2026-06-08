@@ -41,6 +41,7 @@ type cacher struct {
 	retryBase      time.Duration
 	retryCap       time.Duration
 	retryAfterCap  time.Duration
+	failureTTL     time.Duration
 	requestHeaders map[string]string
 	workers        *WorkerPool
 	scheduler      *scheduler
@@ -110,6 +111,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		retryBase:      time.Duration(cfg.AssetsRetryBaseMs) * time.Millisecond,
 		retryCap:       time.Duration(cfg.AssetsRetryMaxMs) * time.Millisecond,
 		retryAfterCap:  time.Duration(cfg.AssetsRetryAfterCap) * time.Millisecond,
+		failureTTL:     time.Duration(cfg.AssetsFailureSuppMin) * time.Minute,
 		requestHeaders: cfg.AssetsRequestHeaders,
 		metrics:        metrics,
 		hosts:          newHostLimiter(cfg.AssetsPerHostLimit),
@@ -231,7 +233,7 @@ func (c *cacher) retry(ctx context.Context, t *Task, explicitDelay time.Duration
 	t.attempt++
 	if t.attempt >= c.maxAttempts {
 		// final try: drop, record, and evict the dedup entry so a future asset can re-trigger the download.
-		c.timeoutMap.delete(t.cachePath)
+		c.timeoutMap.addFor(t.cachePath, c.failureTTL)
 		c.metrics.IncreaseTerminalFailures(reason)
 		c.log.Error(ctx, "Error while caching (terminal, attempts=%d, reason=%s): %s", t.attempt, reason, errors.Wrap(cause, t.urlContext))
 		return

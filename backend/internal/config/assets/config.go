@@ -30,6 +30,7 @@ type Config struct {
 	AssetsRetryMaxMs     int               `env:"ASSETS_RETRY_MAX_MS,default=60000"`
 	AssetsRetryAfterCap  int               `env:"ASSETS_RETRY_AFTER_CAP_MS,default=60000"`
 	AssetsRetryHeapLimit int               `env:"ASSETS_RETRY_HEAP_LIMIT,default=100000"`
+	AssetsFailureSuppMin int               `env:"ASSETS_FAILURE_SUPPRESS_MIN,default=60"`
 	AssetsPerHostLimit   int               `env:"ASSETS_PER_HOST_LIMIT,default=8"`
 	AssetsWorkerCount    int               `env:"ASSETS_WORKER_COUNT,default=64"`
 	AssetsHTTPTimeout    int               `env:"ASSETS_HTTP_TIMEOUT,default=6"` // seconds
