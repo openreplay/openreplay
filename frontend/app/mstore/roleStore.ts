@@ -11,7 +11,6 @@ const permissions = (t: TFunction) => [
   { text: t('Dashboard'), value: 'METRICS' },
   { text: t('Assist (Live)'), value: 'ASSIST_LIVE' },
   { text: t('Assist (Call)'), value: 'ASSIST_CALL' },
-  { text: t('Feature Flags'), value: 'FEATURE_FLAGS' },
   { text: t('Spots'), value: 'SPOT' },
   { text: t('Change Spot Visibility'), value: 'SPOT_PUBLIC' },
   { text: t('Data Management'), value: 'DATA_MANAGEMENT' },
