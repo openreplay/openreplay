@@ -74,18 +74,10 @@ export default class Account {
     makeAutoObservable(this);
   }
 
-  get hasVideoExport() {
-    if (!this.settings || !this.settings.modules) {
-      return false;
-    }
-    const hasModule = this.settings.modules?.includes('replay-export');
-    return hasModule;
-  }
-
   get hasExportPermission() {
     const hasPermission = this.permissions.includes('SESSION_EXPORT');
     const isAdmin = this.admin || this.superAdmin;
-    return this.hasVideoExport && (hasPermission || isAdmin);
+    return hasPermission || isAdmin;
   }
 
   toData = () => ({

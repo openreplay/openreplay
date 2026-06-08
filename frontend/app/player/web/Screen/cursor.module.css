@@ -68,6 +68,23 @@
   }
 }
 
+/* timer mode: static red ring so a click is captured by at least one 2fps frame */
+.timerClicked::after {
+  box-sizing: border-box;
+  position: absolute;
+  margin: -30px 0 0 -30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #cc0000;
+  /* white ring inside and outside the red so it stays visible on any background */
+  box-shadow: 0 0 0 1.5px #fff, inset 0 0 0 1.5px #fff;
+  content: '';
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
 .mobileTouch {
     width: 25px;
     height: 25px;
