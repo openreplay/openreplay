@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"mime"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -103,6 +104,15 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 			Transport: &http.Transport{
 				Proxy:           http.ProxyFromEnvironment,
 				TLSClientConfig: tlsConfig,
+				DialContext: (&net.Dialer{
+					Timeout:   5 * time.Second,
+					KeepAlive: 30 * time.Second,
+				}).DialContext,
+				TLSHandshakeTimeout: 5 * time.Second,
+				MaxConnsPerHost:     8,
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 4,
+				IdleConnTimeout:     30 * time.Second,
 			},
 		},
 		rewriter:       rewriter,
