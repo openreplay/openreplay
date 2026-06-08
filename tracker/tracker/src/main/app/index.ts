@@ -13,6 +13,7 @@ import {
   adjustTimeOrigin,
   createEventListener,
   deleteEventListener,
+  IN_BROWSER,
   now,
   requestIdleCb,
   simpleMerge,
@@ -35,7 +36,7 @@ import { MASK_ORDER } from './nodes/idSeq.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer, { InlineCssMode } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
-import Sanitizer from './sanitizer.js'
+import Sanitizer, { SanitizeLevel } from './sanitizer.js'
 import type { Options as SessOptions } from './session.js'
 import Session from './session.js'
 import Ticker from './ticker.js'
@@ -238,6 +239,11 @@ export default class App {
   readonly ticker: Ticker
   readonly projectKey: string
   readonly sanitizer: Sanitizer
+  /**
+   * Handlers that re-emit a node's payload when its sanitization level changes
+   * at runtime (registered by input/img/canvas modules). See resanitize().
+   */
+  private readonly resanitizeCallbacks: Array<(node: Node, id: number) => void> = []
   readonly debug: Logger
   readonly notify: Logger
   readonly session: Session
@@ -2021,6 +2027,46 @@ export default class App {
 
   restartCanvasTracking = () => {
     this.canvasRecorder?.restartTracking()
+  }
+
+  /**
+   * Registered by modules (input/img/canvas) that mask based on a node's level.
+   * The handler re-emits that node's payload when its level changes at runtime.
+   */
+  attachResanitizeCallback = (cb: (node: Node, id: number) => void): void => {
+    this.resanitizeCallbacks.push(cb)
+  }
+
+  callResanitizeCallbacks = (node: Node, id: number): void => {
+    this.resanitizeCallbacks.forEach((cb) => cb(node, id))
+  }
+
+  /**
+   * Re-evaluates sanitization for a node subtree against the current DOM and
+   * re-emits whatever changed, so already-recorded nodes update mid-session.
+   *
+   * Call after toggling data-openreplay-* attributes or after changing whatever
+   * your `domSanitizer` keys on (class/id/etc). Pass the highest changed node;
+   * omit `el` to re-scan the whole document.
+   */
+  resanitize = (el?: Element): void => {
+    const root = el ?? (IN_BROWSER ? document.documentElement : undefined)
+    if (!root) {
+      return
+    }
+    this.observer.resanitizeSubtree(root)
+  }
+
+  /**
+   * Returns the current sanitization level the tracker has recorded for a node
+   * (Plain = 0, Obscured = 1, Hidden = 2), or undefined if it isn't tracked.
+   */
+  checkSanitization = (el: Node): SanitizeLevel | undefined => {
+    const id = this.nodes.getID(el)
+    if (id === undefined) {
+      return undefined
+    }
+    return this.sanitizer.getLevel(id)
   }
 
   flushBuffer = async (buffer: Message[]) => {
