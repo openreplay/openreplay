@@ -136,6 +136,10 @@ jobs:
 
           # Update changed image tag
           sed -i "/alerts/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+          # Ensure alerts entry exists even if no pod is running
+          if ! grep -q "^alerts:" /tmp/image_override.yaml; then
+            printf 'alerts:\n  image:\n    tag: %s\n' "${IMAGE_TAG}" >> /tmp/image_override.yaml
+          fi
 
           cat /tmp/image_override.yaml
           # Deploy command

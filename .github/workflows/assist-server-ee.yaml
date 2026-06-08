@@ -113,6 +113,10 @@ jobs:
 
           # Update changed image tag
           sed -i "/assist-server/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+          # Ensure assist-server entry exists even if no pod is running
+          if ! grep -q "^assist-server:" /tmp/image_override.yaml; then
+            printf 'assist-server:\n  image:\n    tag: %s\n' "${IMAGE_TAG}" >> /tmp/image_override.yaml
+          fi
 
           cat /tmp/image_override.yaml
           # Deploy command

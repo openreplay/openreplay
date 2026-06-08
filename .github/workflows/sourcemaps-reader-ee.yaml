@@ -128,6 +128,10 @@ jobs:
 
           # Update changed image tag
           sed -i "/sourcemaps-reader/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+          # Ensure sourcemaps-reader entry exists even if no pod is running
+          if ! grep -q "^sourcemaps-reader:" /tmp/image_override.yaml; then
+            printf 'sourcemaps-reader:\n  image:\n    tag: %s\n' "${IMAGE_TAG}" >> /tmp/image_override.yaml
+          fi
           sed -i "s/sourcemaps-reader/sourcemapreader/g" /tmp/image_override.yaml
 
           cat /tmp/image_override.yaml
