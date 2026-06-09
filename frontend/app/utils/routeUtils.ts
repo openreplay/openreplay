@@ -12,5 +12,5 @@ export const CLIENT_TABS = {
   BILLING: 'billing',
   MODULES: 'modules',
   VIDEOS: 'exported',
-  KAI_SETTINGS: 'kai-settings',
+  TEST_AGENTS: 'test-agents',
 };
