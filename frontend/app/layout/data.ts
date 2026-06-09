@@ -36,7 +36,7 @@ export const enum PREFERENCES_MENU {
   NOTIFICATIONS = 'notifications',
   BILLING = 'billing',
   EXPORTED_VIDEOS = 'exported-videos',
-  KAI_SETTINGS = 'kai-settings',
+  TEST_AGENTS = 'test-agents',
 }
 
 export const enum MENU {
@@ -237,8 +237,8 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         hidden: menuHidden.videoExport,
       },
       {
-        label: t('Kai Settings'),
-        key: PREFERENCES_MENU.KAI_SETTINGS,
+        label: t('Test Agents'),
+        key: PREFERENCES_MENU.TEST_AGENTS,
         icon: 'kai-mono',
       },
     ],
