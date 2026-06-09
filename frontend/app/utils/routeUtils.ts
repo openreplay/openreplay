@@ -12,5 +12,5 @@ export const CLIENT_TABS = {
   BILLING: '$_this_url_does_not_exist',
   MODULES: 'modules',
   VIDEOS: 'exported',
-  KAI_SETTINGS: 'kai-settings',
+  TEST_AGENTS: 'test-agents',
 };

@@ -57,7 +57,7 @@ class Client extends React.PureComponent<any> {
         return <Modules />;
       case CLIENT_TABS.VIDEOS:
         return <ExportedVideosList />;
-      case CLIENT_TABS.KAI_SETTINGS:
+      case CLIENT_TABS.TEST_AGENTS:
         return <KaiSettings />;
       default:
         return <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />;

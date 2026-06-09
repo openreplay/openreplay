@@ -118,7 +118,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
-    [PREFERENCES_MENU.KAI_SETTINGS]: () => client(CLIENT_TABS.KAI_SETTINGS),
+    [PREFERENCES_MENU.TEST_AGENTS]: () => client(CLIENT_TABS.TEST_AGENTS),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
     [MENU.USERS]: () => withSiteId(routes.dataManagement.usersList(), siteId),
     [MENU.EVENTS]: () => withSiteId(routes.dataManagement.eventsList(), siteId),
