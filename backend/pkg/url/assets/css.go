@@ -10,6 +10,11 @@ import (
 var cssURLs = regexp.MustCompile(`url\(("[^"]*"|'[^']*'|[^)]*)\)`)
 var cssImports = regexp.MustCompile(`@import "(.*?)"`)
 
+var pseudoReplacer = strings.NewReplacer(
+	":hover", ".-openreplay-hover",
+	":focus", ".-openreplay-focus",
+)
+
 func cssUrlsIndex(css string) [][]int {
 	var idxs [][]int
 	for _, match := range cssURLs.FindAllStringSubmatchIndex(css, -1) {
@@ -85,9 +90,6 @@ func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) stri
 	return out
 }
 
-// RewriteCSSAndExtract scans the CSS a single time: it rewrites each url()/@import
-// target via the rewriter and collects the raw (pre-rewrite) URLs it found, so
-// callers that need both don't have to run the regex twice (extract + rewrite).
 func (r *Rewriter) RewriteCSSAndExtract(sessionID uint64, baseurl string, css string) (string, []string) {
 	return rewriteAndCollect(css, func(rawurl string) string {
 		return r.RewriteURL(sessionID, baseurl, rawurl)
@@ -95,7 +97,8 @@ func (r *Rewriter) RewriteCSSAndExtract(sessionID uint64, baseurl string, css st
 }
 
 func rewritePseudoclasses(css string) string {
-	css = strings.ReplaceAll(css, ":hover", ".-openreplay-hover")
-	css = strings.ReplaceAll(css, ":focus", ".-openreplay-focus")
-	return css
+	if !strings.Contains(css, ":hover") && !strings.Contains(css, ":focus") {
+		return css
+	}
+	return pseudoReplacer.Replace(css)
 }
