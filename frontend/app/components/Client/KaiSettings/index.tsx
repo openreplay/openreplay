@@ -27,13 +27,13 @@ function KaiSettings() {
   return (
     <div className="bg-white rounded-lg border shadow-xs p-4">
       <div className="pb-0">
-        <PageTitle title={t('Kai Settings')} />
+        <PageTitle title={t('Test Agents')} />
       </div>
       <Tabs defaultActiveKey="settings" items={tabItems} />
     </div>
   );
 }
 
-export default withPageTitle('Kai Settings - OpenReplay Preferences')(
+export default withPageTitle('Test Agents - OpenReplay Preferences')(
   KaiSettings,
 );
