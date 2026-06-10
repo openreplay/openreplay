@@ -506,7 +506,14 @@ export default class API {
   }
 
   identify = this.setUserID
-  track = this.analytics?.track
+  // Delegates at call time: `this.analytics` is assigned in the constructor body,
+  // which runs AFTER field initializers, so binding it here directly would always
+  // capture `undefined`.
+  track = (
+    eventName: string,
+    properties?: Record<string, any>,
+    options?: { send_immediately: boolean },
+  ) => this.analytics?.track(eventName, properties, options)
 
   userID = (id: string): void => {
     deprecationWarn("'userID' method", "'setUserID' method", '/')
