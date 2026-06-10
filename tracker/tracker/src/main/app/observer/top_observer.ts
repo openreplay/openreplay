@@ -5,7 +5,7 @@ import IFrameObserver from './iframe_observer.js'
 import ShadowRootObserver from './shadow_root_observer.js'
 import IFrameOffsets, { Offset } from './iframe_offsets.js'
 
-import { CreateDocument } from '../messages.gen.js'
+import { CreateDocument, SetNodeAttribute } from '../messages.gen.js'
 import App from '../index.js'
 import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
 
@@ -242,6 +242,20 @@ export default class TopObserver extends Observer {
       },
       window.document.documentElement,
     )
+
+    // DEBUG orload
+    const markCandidates: Array<Node | null> = [
+      document.head,
+      document.body,
+      document.body ? document.body.querySelector('div') : null,
+    ]
+    for (const candidate of markCandidates) {
+      const markId = candidate ? this.app.nodes.getID(candidate) : undefined
+      if (markId !== undefined) {
+        this.app.send(SetNodeAttribute(markId, 'orloaded', 'true'))
+        break
+      }
+    }
   }
 
   crossdomainObserve(rootNodeId: number, frameOder: number, frameLevel: number) {
