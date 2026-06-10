@@ -346,19 +346,17 @@ func (c *cacher) checkTask(newTask *Task, blocking bool) {
 	} else {
 		cachePath = assets.GetCachePathForAssets(newTask.sessionID, newTask.requestURL)
 	}
-	if c.timeoutMap.contains(cachePath) {
+	if !c.timeoutMap.claim(cachePath) {
 		return
 	}
 	newTask.cachePath = cachePath
 	newTask.host = hostOf(newTask.requestURL)
 	if blocking {
-		c.timeoutMap.add(cachePath)
 		c.workers.AddTask(newTask)
 		return
 	}
-	if c.workers.tryAddTask(newTask) {
-		c.timeoutMap.add(cachePath)
-	} else {
+	if !c.workers.tryAddTask(newTask) {
+		c.timeoutMap.delete(cachePath)
 		ctx := context.WithValue(context.Background(), "sessionID", newTask.sessionID)
 		c.log.Warn(ctx, "cacher queue full, dropping asset task: %s", newTask.requestURL)
 	}
