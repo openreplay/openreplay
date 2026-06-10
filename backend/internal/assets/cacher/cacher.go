@@ -349,16 +349,16 @@ func (c *cacher) checkTask(newTask *Task, blocking bool) {
 	if c.timeoutMap.contains(cachePath) {
 		return
 	}
-	c.timeoutMap.add(cachePath)
-	// add new file in queue to download
 	newTask.cachePath = cachePath
 	newTask.host = hostOf(newTask.requestURL)
 	if blocking {
+		c.timeoutMap.add(cachePath)
 		c.workers.AddTask(newTask)
 		return
 	}
-
-	if !c.workers.tryAddTask(newTask) {
+	if c.workers.tryAddTask(newTask) {
+		c.timeoutMap.add(cachePath)
+	} else {
 		ctx := context.WithValue(context.Background(), "sessionID", newTask.sessionID)
 		c.log.Warn(ctx, "cacher queue full, dropping asset task: %s", newTask.requestURL)
 	}
