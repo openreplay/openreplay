@@ -306,6 +306,14 @@ class TrackerSingleton {
 
     return this.instance.getTabId()
   }
+
+  resanitize() {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return
+    }
+
+    return this.instance.resanitize()
+  }
 }
 
 const tracker = new TrackerSingleton()
