@@ -715,12 +715,8 @@ export default abstract class Observer {
   }
 
   /**
-   * Dynamic re-sanitization entry point. Re-evaluates the sanitization level of
-   * every tracked node in `root`'s subtree against the *current* DOM state and
-   * re-emits whatever changed so already-rendered nodes update in the player.
-   *
-   * Call this after toggling data-openreplay-* attributes or after changing the
-   * data your domSanitizer keys on (e.g. a class/id). Pass the highest node you
+   * Re-evaluates sanitization for every tracked node in `root`'s subtree against
+   * the current DOM and re-emits whatever changed. Pass the highest node you
    * changed (or the document root) so inherited levels propagate correctly.
    */
   public resanitizeSubtree(root: Node): void {
@@ -732,8 +728,6 @@ export default abstract class Observer {
     const parentLevel =
       parentId !== undefined ? this.app.sanitizer.getLevel(parentId) : SanitizeLevel.Plain
     this.resanitizeNode(root, parentLevel)
-    // Flush any messages produced by a recreate (commitNodes is called per-recreate,
-    // but leaf re-emits via sendNodeData are buffered through app.send already).
   }
 
   private resanitizeNode(node: Node, parentLevel: SanitizeLevel): void {
@@ -742,8 +736,7 @@ export default abstract class Observer {
     }
     const id = this.app.nodes.getID(node)
     if (id === undefined) {
-      // Not tracked (brand new, or sitting inside a currently-hidden ancestor whose
-      // children were never sent). The live observer materializes it at the right level.
+      // Untracked (new, or under a hidden ancestor): the live observer handles it.
       return
     }
     const newLevel = this.app.sanitizer.computeLevel(node, parentLevel)
@@ -751,18 +744,16 @@ export default abstract class Observer {
     const wasHidden = prevLevel === SanitizeLevel.Hidden
     const willHidden = newLevel === SanitizeLevel.Hidden
 
-    // Structural transition: a hidden node is a childless sized placeholder in the
-    // player, a non-hidden one carries its real subtree. Crossing that boundary
-    // means the rendered structure differs, so rebuild via destroy + re-observe.
+    // Crossing the hidden boundary changes the rendered structure (placeholder vs
+    // real subtree), so rebuild rather than re-emit.
     if (wasHidden !== willHidden) {
       this.recreateSubtree(node)
       return
     }
-    // Still hidden on both sides: nothing below was ever materialized — skip subtree.
     if (willHidden) {
       return
     }
-    // Plain <-> Obscured: structure is identical, only leaf content needs re-emitting.
+    // Plain <-> Obscured: same structure, only leaf content changes.
     if (prevLevel !== newLevel) {
       this.app.sanitizer.setLevel(id, newLevel)
       this.reemitNode(id, node)
@@ -772,12 +763,8 @@ export default abstract class Observer {
     }
   }
 
-  /**
-   * Destroys the node in the player and re-emits its subtree from scratch through
-   * the normal snapshot path, so it materializes at the freshly-computed level.
-   * New node ids are assigned to the whole subtree (the old placeholder/children
-   * are dropped player-side by the single RemoveNode, matching unbindTree).
-   */
+  // Destroys the node player-side and re-emits its subtree from scratch (new ids)
+  // so it materializes at the freshly-computed level.
   private recreateSubtree(node: Node): void {
     const id = this.app.nodes.getID(node)
     if (id === undefined) {
@@ -822,13 +809,13 @@ export default abstract class Observer {
     if (isTextNode(node)) {
       const parent = node.parentNode
       if (parent !== null && isElementNode(parent)) {
-        // sendNodeData re-runs sanitize() at the level we just set (real or wiped).
+        // re-runs sanitize() at the level we just set
         this.sendNodeData(id, parent, node.data)
       }
       return
     }
     if (isElementNode(node)) {
-      // Inputs, images and canvas re-emit their own payload via registered callbacks.
+      // inputs/images/canvas re-emit their own payload via registered callbacks
       this.app.callResanitizeCallbacks(node, id)
     }
   }

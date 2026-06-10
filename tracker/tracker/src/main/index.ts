@@ -319,7 +319,8 @@ export default class API {
    * `data-openreplay-*` attributes or after changing whatever your `domSanitizer`
    * keys on (class/id/etc).
    *
-   * @param el - the highest node you changed; omit to re-scan the whole document.
+   * @param el - the highest node you changed; omit to re-scan the whole document;
+   * scanning the entire doc is O(dom size)
    * */
   public resanitize = (el?: Element) => {
     if (this.app === null) {

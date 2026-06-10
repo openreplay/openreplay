@@ -239,10 +239,7 @@ export default class App {
   readonly ticker: Ticker
   readonly projectKey: string
   readonly sanitizer: Sanitizer
-  /**
-   * Handlers that re-emit a node's payload when its sanitization level changes
-   * at runtime (registered by input/img/canvas modules). See resanitize().
-   */
+  // Registered by input/img/canvas to re-emit a node when its level changes.
   private readonly resanitizeCallbacks: Array<(node: Node, id: number) => void> = []
   readonly debug: Logger
   readonly notify: Logger
@@ -2029,10 +2026,6 @@ export default class App {
     this.canvasRecorder?.restartTracking()
   }
 
-  /**
-   * Registered by modules (input/img/canvas) that mask based on a node's level.
-   * The handler re-emits that node's payload when its level changes at runtime.
-   */
   attachResanitizeCallback = (cb: (node: Node, id: number) => void): void => {
     this.resanitizeCallbacks.push(cb)
   }
@@ -2041,14 +2034,6 @@ export default class App {
     this.resanitizeCallbacks.forEach((cb) => cb(node, id))
   }
 
-  /**
-   * Re-evaluates sanitization for a node subtree against the current DOM and
-   * re-emits whatever changed, so already-recorded nodes update mid-session.
-   *
-   * Call after toggling data-openreplay-* attributes or after changing whatever
-   * your `domSanitizer` keys on (class/id/etc). Pass the highest changed node;
-   * omit `el` to re-scan the whole document.
-   */
   resanitize = (el?: Element): void => {
     const root = el ?? (IN_BROWSER ? document.documentElement : undefined)
     if (!root) {
@@ -2057,10 +2042,6 @@ export default class App {
     this.observer.resanitizeSubtree(root)
   }
 
-  /**
-   * Returns the current sanitization level the tracker has recorded for a node
-   * (Plain = 0, Obscured = 1, Hidden = 2), or undefined if it isn't tracked.
-   */
   checkSanitization = (el: Node): SanitizeLevel | undefined => {
     const id = this.nodes.getID(el)
     if (id === undefined) {

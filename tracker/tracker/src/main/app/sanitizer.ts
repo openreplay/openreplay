@@ -44,14 +44,8 @@ export const stringWiper = (input: string) =>
     .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\s]/g, '*')
 
 export default class Sanitizer {
-  /**
-   * Single source of truth for a node's sanitization level, keyed by node id.
-   * Replaces the previous append-only `obscured`/`hidden` Sets so that levels can
-   * be both raised and lowered (required for dynamic re-sanitization).
-   *
-   * Plain (0) is never stored: a missing entry means Plain, which keeps the map
-   * roughly as small as the old Sets and makes getLevel() a cheap default.
-   */
+  // Node id -> level. Plain (0) is never stored; a missing entry means Plain.
+  // A map (not the old grow-only Sets) so levels can be raised and lowered.
   private readonly levels: Map<number, SanitizeLevel> = new Map()
   private readonly options: Options
   public readonly privateMode: boolean
@@ -69,15 +63,9 @@ export default class Sanitizer {
     this.options = Object.assign(defaultOptions, params.options)
   }
 
-  /**
-   * Pure, side-effect-free recomputation of a node's sanitization level from the
-   * *live* DOM (attributes + the domSanitizer callback) and its parent's level.
-   *
-   * Because it always reads the current node state, it picks up runtime changes
-   * regardless of how they were made (toggled data-openreplay-* attributes or a
-   * class/id that the user's domSanitizer keys on) — this is what makes
-   * resanitize() reliable. The branching mirrors the original handleNode exactly.
-   */
+  // Pure recomputation of a node's level from the live DOM + parent level.
+  // Reading current state on every call is what lets resanitize() pick up
+  // runtime attribute/domSanitizer changes.
   computeLevel(node: Node, parentLevel: SanitizeLevel): SanitizeLevel {
     if (this.options.privateMode) {
       if (isElementNode(node) && !hasOpenreplayAttribute(node, 'unmask')) {
@@ -122,10 +110,7 @@ export default class Sanitizer {
     return this.levels.get(id) ?? SanitizeLevel.Plain
   }
 
-  /**
-   * Sets a node's level explicitly (both directions) and returns the previous one.
-   * Plain is represented by absence, so it deletes the entry.
-   */
+  // Sets a node's level (either direction) and returns the previous one.
   setLevel(id: number, level: SanitizeLevel): SanitizeLevel {
     const prev = this.getLevel(id)
     if (level === SanitizeLevel.Plain) {
@@ -138,8 +123,7 @@ export default class Sanitizer {
 
   handleNode(id: number, parentID: number, node: Node) {
     const level = this.computeLevel(node, this.getLevel(parentID))
-    // Escalate-only during normal commits, mirroring the original grow-only Sets:
-    // a node's level is never lowered here, only by explicit resanitize/setLevel.
+    // Escalate-only: commits never lower a level, only resanitize/setLevel do.
     if (level > this.getLevel(id)) {
       this.setLevel(id, level)
     }
