@@ -57,6 +57,8 @@ func NewConsumer(
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
 		"max.partition.fetch.bytes":       messageSizeLimit,
+		"queued.max.messages.kbytes":      65536, // 64 MiB prefetch cap (= librdkafka default)
+		"queued.min.messages":             50000, // prefetch target (librdkafka default 100000 per partition)
 		"go.logs.channel.enable":          true,
 	}
 

@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
-	cacher, err := cacher.NewCacher(cfg, objStore, assetMetrics)
+	cacher, err := cacher.NewCacher(log, cfg, objStore, assetMetrics)
 	if err != nil {
 		log.Fatal(ctx, "can't init cacher: %s", err)
 	}
@@ -89,7 +89,7 @@ func main() {
 			}
 
 			data := msg.Encode()
-			if data != nil && len(data) > 0 {
+			if len(data) > 0 {
 				if !messages.MessageHasSize(uint64(msg.TypeID())) {
 					buf.Write(data)
 				} else {
@@ -175,12 +175,12 @@ func main() {
 			producer.Close(cfg.ProducerCloseTimeout)
 			msgConsumer.Close()
 			os.Exit(0)
-		case err := <-cacher.Errors:
-			log.Error(ctx, "Error while caching: %s", err)
 		case <-tick:
 			cacher.UpdateTimeouts()
 		default:
 			if !cacher.CanCache() {
+				// TODO: replace with a signal from the pool when a slot frees up.
+				time.Sleep(time.Millisecond)
 				continue
 			}
 			if err := msgConsumer.ConsumeNext(); err != nil {
