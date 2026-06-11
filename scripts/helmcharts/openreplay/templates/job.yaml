@@ -416,7 +416,7 @@ spec:
           mountPath: /opt/migrations/
       {{- if or .Values.minio.enabled .Values.minio.forceInit }}
       - name: minio
-        image: "{{.Values.minio.image.registry}}/{{.Values.minio.image.repository}}:{{.Values.minio.image.tag}}"
+        image: "{{.Values.minio.migrationImage.registry}}/{{.Values.minio.migrationImage.repository}}:{{.Values.minio.migrationImage.tag}}"
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
