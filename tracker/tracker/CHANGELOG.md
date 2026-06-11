@@ -1,3 +1,8 @@
+## 18.0.14
+
+- support dynamic sanitization changes through `resanitize()` method
+- improvements towards short sessions capture
+
 ## 18.0.13
 
 - prevent skipping over previously recorded nodes
