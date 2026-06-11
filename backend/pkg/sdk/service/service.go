@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -119,9 +120,16 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 						continue
 					}
 					user, err := ds.users.Get(sessInfo.ProjectID, action.UserID)
-					if err != nil {
+					isNew := errors.Is(err, ErrUserNotFound)
+					if err != nil && !isNew {
 						ds.log.Error(context.Background(), "can't get user: %s, userID: %s", err, action.UserID)
 						continue
+					}
+					// User hasn't been identified yet (or has been deleted);
+					// create a new one, so the property update (or event) isn't dropped.
+					if isNew {
+						ds.log.Warn(context.Background(), "user not found, creating new user from session: %d, userID: %s", sessID, action.UserID)
+						user = model.NewUser(action.UserID)
 					}
 
 					switch action.Type {
@@ -138,7 +146,11 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 							user.IncrementProperty(key, val)
 						}
 					}
-					if err = ds.users.Update(user); err != nil {
+					if isNew {
+						if err = ds.users.Create(sessInfo, user); err != nil {
+							ds.log.Error(context.Background(), "can't create user: %s, userID: %s", err, action.UserID)
+						}
+					} else if err = ds.users.Update(user); err != nil {
 						ds.log.Error(context.Background(), "can't insert user: %s", err)
 					}
 				}
