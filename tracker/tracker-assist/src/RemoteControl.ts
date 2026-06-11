@@ -147,4 +147,15 @@ export default class RemoteControl {
       this.focused.innerText = value
     }
   }
+  // Native <select> can't be opened through the agent's mouse (the picker is
+  // a browser-native popup), so the agent opens it on the mirrored DOM and we
+  // receive the chosen value here to apply on the real element.
+  select = (id: string, value: string) => {
+    if (!this.isAuthorized(id) || !this.focused) return
+    if (this.focused instanceof HTMLSelectElement) {
+      this.focused.value = value
+      this.focused.dispatchEvent(new Event('input', { bubbles: true }))
+      this.focused.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+  }
 }
