@@ -313,6 +313,33 @@ export default class API {
     this.app.restartCanvasTracking()
   }
 
+  /**
+   * Re-evaluates sanitization against the current DOM and re-emits whatever
+   * changed, updating already-recorded nodes mid-session. Call after toggling
+   * `data-openreplay-*` attributes or after changing whatever your `domSanitizer`
+   * keys on (class/id/etc).
+   *
+   * @param el - the highest node you changed; omit to re-scan the whole document;
+   * scanning the entire doc is O(dom size)
+   * */
+  public resanitize = (el?: Element) => {
+    if (this.app === null) {
+      return
+    }
+    this.app.resanitize(el)
+  }
+
+  /**
+   * Returns the sanitization level the tracker currently has for a node
+   * (0 = Plain, 1 = Obscured, 2 = Hidden), or undefined if it isn't tracked.
+   * */
+  public checkSanitization = (el: Node) => {
+    if (this.app === null) {
+      return undefined
+    }
+    return this.app.checkSanitization(el)
+  }
+
   use<T>(fn: (app: App | null, options?: Partial<Options>) => T): T {
     return fn(this.app, this.options)
   }
@@ -480,7 +507,14 @@ export default class API {
   }
 
   identify = this.setUserID
-  track = this.analytics?.track
+  // Delegates at call time: `this.analytics` is assigned in the constructor body,
+  // which runs AFTER field initializers, so binding it here directly would always
+  // capture `undefined`.
+  track = (
+    eventName: string,
+    properties?: Record<string, any>,
+    options?: { send_immediately: boolean },
+  ) => this.analytics?.track(eventName, properties, options)
 
   userID = (id: string): void => {
     deprecationWarn("'userID' method", "'setUserID' method", '/')

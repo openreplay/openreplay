@@ -115,4 +115,11 @@ export default function (app: App): void {
     sendImgAttrs(node)
     observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
   })
+
+  // On a runtime level change, re-evaluate placeholder vs real src for this image.
+  app.attachResanitizeCallback((node: Node) => {
+    if (hasTag(node, 'img')) {
+      sendImgAttrs(node)
+    }
+  })
 }
