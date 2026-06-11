@@ -6,12 +6,13 @@ import (
 
 type Task struct {
 	requestURL string
+	host       string
 	sessionID  uint64
 	depth      byte
 	urlContext string
 	isJS       bool
 	cachePath  string
-	retries    int
+	attempt    int
 }
 
 type WorkerPool struct {
@@ -32,9 +33,9 @@ func (p *WorkerPool) CanAddTask() bool {
 
 type Job func(task *Task)
 
-func NewPool(size int, job Job) *WorkerPool {
+func NewPool(size, queueSize int, job Job) *WorkerPool {
 	newPool := &WorkerPool{
-		tasks: make(chan *Task, 128),
+		tasks: make(chan *Task, queueSize),
 		done:  make(chan struct{}),
 		size:  size,
 		job:   job,
@@ -62,11 +63,19 @@ func (p *WorkerPool) worker() {
 	}
 }
 
+// AddTask blocking func; use only from the consumer where backpressure is desired
 func (p *WorkerPool) AddTask(task *Task) {
-	if task.retries <= 0 {
-		return
-	}
 	p.tasks <- task
+}
+
+// tryAddTask enqueues without blocking; use from inside workers (CSS recursion) and by the retry scheduler.
+func (p *WorkerPool) tryAddTask(task *Task) bool {
+	select {
+	case p.tasks <- task:
+		return true
+	default:
+		return false
+	}
 }
 
 func (p *WorkerPool) Stop() {

@@ -30,8 +30,8 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 		"linger.ms":                             1000,
 		"queue.buffering.max.ms":                1000,
 		"batch.num.messages":                    1000,
-		"queue.buffering.max.messages":          100000,
-		"queue.buffering.max.kbytes":            1048576,
+		"queue.buffering.max.messages":          50000,
+		"queue.buffering.max.kbytes":            131072, // 128 MiB un-acked buffer cap (default 1 GiB)
 		"retries":                               3,
 		"retry.backoff.ms":                      100,
 		"max.in.flight.requests.per.connection": 1,
