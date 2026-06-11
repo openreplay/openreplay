@@ -28,7 +28,7 @@ func NewServiceBuilder(log logger.Logger, cfg *images.Config, webMetrics web.Web
 	var err error
 
 	projs := projects.New(log, pgconn, redis, dbMetrics)
-	sessions := sessions.New(log, pgconn, projs, redis, dbMetrics)
+	sessions := sessions.New(log, pgconn, projs, redis, dbMetrics, sessions.DoNotIgnoreInactiveProjects)
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
 	responser := api.NewResponser(webMetrics)
 	if builder.api, err = imageAPI.NewHandlers(cfg, log, responser, tokenizer, sessions, producer); err != nil {

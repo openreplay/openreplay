@@ -83,7 +83,7 @@ func main() {
 	defer redisClient.Close()
 
 	projManager := projects.New(log, pgConn, redisClient, dbMetrics)
-	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetrics)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetrics, sessions.DoNotIgnoreInactiveProjects)
 	dataSaver := saver.New(log, cfg, db, sessManager, projManager)
 
 	// Message filter

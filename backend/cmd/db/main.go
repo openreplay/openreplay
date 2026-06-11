@@ -73,7 +73,7 @@ func main() {
 	defer chConnector.Stop()
 
 	projManager := projects.New(log, pgConn, redisConn, dbMetric)
-	sessManager := sessions.New(log, pgConn, projManager, redisConn, dbMetric)
+	sessManager := sessions.New(log, pgConn, projManager, redisConn, dbMetric, sessions.IgnoreInactiveProjects)
 	tagsManager := tags.New(log, pgConn)
 
 	canvases, err := canvas.New(log, pgConn, dbMetric)

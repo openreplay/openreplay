@@ -33,21 +33,28 @@ type Sessions interface {
 	IsExists(sessionID uint64) (bool, error)
 }
 
+const (
+	IgnoreInactiveProjects      = true
+	DoNotIgnoreInactiveProjects = false
+)
+
 type sessionsImpl struct {
-	log      logger.Logger
-	cache    Cache
-	storage  Storage
-	updates  Updates
-	projects projects.Projects
+	log                    logger.Logger
+	cache                  Cache
+	storage                Storage
+	updates                Updates
+	projects               projects.Projects
+	ignoreInactiveProjects bool
 }
 
-func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.Client, metrics database.Database) Sessions {
+func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.Client, metrics database.Database, ignoreInactiveProjects bool) Sessions {
 	return &sessionsImpl{
-		log:      log,
-		cache:    NewInMemoryCache(log, NewCache(redis, metrics)),
-		storage:  NewStorage(db),
-		updates:  NewSessionUpdates(log, db, metrics),
-		projects: proj,
+		log:                    log,
+		cache:                  NewInMemoryCache(log, NewCache(redis, metrics)),
+		storage:                NewStorage(db),
+		updates:                NewSessionUpdates(log, db, metrics),
+		projects:               proj,
+		ignoreInactiveProjects: ignoreInactiveProjects,
 	}
 }
 
@@ -81,7 +88,11 @@ func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session from postgres: %w", err)
 	}
-	proj, err := s.projects.GetProject(session.ProjectID)
+	getProject := s.projects.GetProject
+	if s.ignoreInactiveProjects {
+		getProject = s.projects.GetProjectNotDeleted
+	}
+	proj, err := getProject(session.ProjectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active project: %d, err: %s", session.ProjectID, err)
 	}
