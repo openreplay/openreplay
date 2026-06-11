@@ -44,8 +44,9 @@ export const stringWiper = (input: string) =>
     .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\s]/g, '*')
 
 export default class Sanitizer {
-  private readonly obscured: Set<number> = new Set()
-  private readonly hidden: Set<number> = new Set()
+  // Node id -> level. Plain (0) is never stored; a missing entry means Plain.
+  // A map (not the old grow-only Sets) so levels can be raised and lowered.
+  private readonly levels: Map<number, SanitizeLevel> = new Map()
   private readonly options: Options
   public readonly privateMode: boolean
   private readonly app: App
@@ -62,44 +63,74 @@ export default class Sanitizer {
     this.options = Object.assign(defaultOptions, params.options)
   }
 
-  handleNode(id: number, parentID: number, node: Node) {
+  // Pure recomputation of a node's level from the live DOM + parent level.
+  // Reading current state on every call is what lets resanitize() pick up
+  // runtime attribute/domSanitizer changes.
+  computeLevel(node: Node, parentLevel: SanitizeLevel): SanitizeLevel {
     if (this.options.privateMode) {
       if (isElementNode(node) && !hasOpenreplayAttribute(node, 'unmask')) {
-        return this.obscured.add(id)
+        return SanitizeLevel.Obscured
       }
       if (isTextNode(node) && !hasOpenreplayAttribute(node.parentNode as Element, 'unmask')) {
-        return this.obscured.add(id)
+        return SanitizeLevel.Obscured
       }
     }
 
+    let level: SanitizeLevel = SanitizeLevel.Plain
+
     if (
-      this.obscured.has(parentID) ||
+      parentLevel >= SanitizeLevel.Obscured ||
       (isElementNode(node) &&
         (hasOpenreplayAttribute(node, 'masked') || hasOpenreplayAttribute(node, 'obscured')))
     ) {
-      this.obscured.add(id)
+      level = SanitizeLevel.Obscured
     }
     if (
-      this.hidden.has(parentID) ||
+      parentLevel === SanitizeLevel.Hidden ||
       (isElementNode(node) &&
         (hasOpenreplayAttribute(node, 'htmlmasked') || hasOpenreplayAttribute(node, 'hidden')))
     ) {
-      this.hidden.add(id)
+      level = SanitizeLevel.Hidden
     }
 
     if (this.options.domSanitizer !== undefined && isElementNode(node)) {
       const sanitizeLevel = this.options.domSanitizer(node)
-      if (sanitizeLevel === SanitizeLevel.Obscured) {
-        this.obscured.add(id)
+      if (sanitizeLevel === SanitizeLevel.Obscured && level < SanitizeLevel.Obscured) {
+        level = SanitizeLevel.Obscured
       }
       if (sanitizeLevel === SanitizeLevel.Hidden) {
-        this.hidden.add(id)
+        level = SanitizeLevel.Hidden
       }
+    }
+
+    return level
+  }
+
+  getLevel(id: number): SanitizeLevel {
+    return this.levels.get(id) ?? SanitizeLevel.Plain
+  }
+
+  // Sets a node's level (either direction) and returns the previous one.
+  setLevel(id: number, level: SanitizeLevel): SanitizeLevel {
+    const prev = this.getLevel(id)
+    if (level === SanitizeLevel.Plain) {
+      this.levels.delete(id)
+    } else {
+      this.levels.set(id, level)
+    }
+    return prev
+  }
+
+  handleNode(id: number, parentID: number, node: Node) {
+    const level = this.computeLevel(node, this.getLevel(parentID))
+    // Escalate-only: commits never lower a level, only resanitize/setLevel do.
+    if (level > this.getLevel(id)) {
+      this.setLevel(id, level)
     }
   }
 
   sanitize(id: number, data: string): string {
-    if (this.obscured.has(id)) {
+    if (this.getLevel(id) >= SanitizeLevel.Obscured) {
       // TODO: is it the best place to put trim() ? Might trimmed spaces be considered in layout in certain cases?
       return stringWiper(data)
     }
@@ -118,11 +149,11 @@ export default class Sanitizer {
   }
 
   isObscured(id: number): boolean {
-    return this.obscured.has(id)
+    return this.getLevel(id) >= SanitizeLevel.Obscured
   }
 
   isHidden(id: number) {
-    return this.hidden.has(id)
+    return this.getLevel(id) === SanitizeLevel.Hidden
   }
 
   getInnerTextSecure(el: HTMLElement): string {
@@ -134,7 +165,6 @@ export default class Sanitizer {
   }
 
   clear(): void {
-    this.obscured.clear()
-    this.hidden.clear()
+    this.levels.clear()
   }
 }

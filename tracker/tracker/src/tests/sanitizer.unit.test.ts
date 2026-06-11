@@ -33,7 +33,7 @@ describe('Sanitizer', () => {
   })
 
   test('should handle node and mark it as obscured if parent is obscured', () => {
-    sanitizer['obscured'].add(2)
+    sanitizer.setLevel(2, SanitizeLevel.Obscured)
     sanitizer.handleNode(1, 2, document.createElement('div'))
     expect(sanitizer.isObscured(1)).toBe(true)
   })
@@ -46,7 +46,7 @@ describe('Sanitizer', () => {
   })
 
   test('should handle node and mark it as hidden if parent is hidden', () => {
-    sanitizer['hidden'].add(2)
+    sanitizer.setLevel(2, SanitizeLevel.Hidden)
     sanitizer.handleNode(1, 2, document.createElement('div'))
     expect(sanitizer.isHidden(1)).toBe(true)
   })
@@ -98,7 +98,7 @@ describe('Sanitizer', () => {
   })
 
   test('should sanitize data as obscured if node is marked as obscured', () => {
-    sanitizer['obscured'].add(1)
+    sanitizer.setLevel(1, SanitizeLevel.Obscured)
     const data = 'Sensitive Data'
 
     const sanitizedData = sanitizer.sanitize(1, data)
@@ -121,7 +121,7 @@ describe('Sanitizer', () => {
 
   test('should return inner text of an element securely by sanitizing it', () => {
     const element = document.createElement('div')
-    sanitizer['obscured'].add(1)
+    sanitizer.setLevel(1, SanitizeLevel.Obscured)
     // @ts-expect-error
     element.mockId = 1
     element.innerText = 'Sensitive Data'
@@ -134,5 +134,66 @@ describe('Sanitizer', () => {
     element.innerText = 'Sensitive Data'
     const sanitizedText = sanitizer.getInnerTextSecure(element)
     expect(sanitizedText).toEqual('')
+  })
+
+  describe('two-way level state (dynamic re-sanitization)', () => {
+    test('getLevel defaults to Plain for untracked ids', () => {
+      expect(sanitizer.getLevel(999)).toBe(SanitizeLevel.Plain)
+    })
+
+    test('setLevel returns previous level and can both raise and lower', () => {
+      expect(sanitizer.setLevel(1, SanitizeLevel.Obscured)).toBe(SanitizeLevel.Plain)
+      expect(sanitizer.getLevel(1)).toBe(SanitizeLevel.Obscured)
+      // lower it back
+      expect(sanitizer.setLevel(1, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      expect(sanitizer.getLevel(1)).toBe(SanitizeLevel.Plain)
+      expect(sanitizer.isObscured(1)).toBe(false)
+    })
+
+    test('handleNode is escalate-only: it never lowers an existing level', () => {
+      sanitizer.setLevel(1, SanitizeLevel.Hidden)
+      // a plain div would compute Plain, but handleNode must not downgrade Hidden
+      sanitizer.handleNode(1, 0, document.createElement('div'))
+      expect(sanitizer.isHidden(1)).toBe(true)
+    })
+
+    test('computeLevel reads the live DOM (attributes win over Plain parent)', () => {
+      const obscuredNode = document.createElement('div')
+      obscuredNode.setAttribute('data-openreplay-obscured', '')
+      expect(sanitizer.computeLevel(obscuredNode, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+
+      const hiddenNode = document.createElement('div')
+      hiddenNode.setAttribute('data-openreplay-hidden', '')
+      expect(sanitizer.computeLevel(hiddenNode, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+
+      const plainNode = document.createElement('div')
+      expect(sanitizer.computeLevel(plainNode, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+    })
+
+    test('computeLevel inherits the parent level (max semantics)', () => {
+      const node = document.createElement('div')
+      expect(sanitizer.computeLevel(node, SanitizeLevel.Obscured)).toBe(SanitizeLevel.Obscured)
+      expect(sanitizer.computeLevel(node, SanitizeLevel.Hidden)).toBe(SanitizeLevel.Hidden)
+    })
+
+    test('computeLevel reflects a domSanitizer toggled via class at call time', () => {
+      const options: Options = {
+        obscureTextEmails: true,
+        obscureTextNumbers: false,
+        domSanitizer: (node: Element): SanitizeLevel =>
+          node.classList.contains('secret') ? SanitizeLevel.Obscured : SanitizeLevel.Plain,
+      }
+      const app = { nodes: { getID: jest.fn() } }
+      // @ts-expect-error partial app mock
+      const s = new Sanitizer({ app, options })
+      const node = document.createElement('div')
+
+      expect(s.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+      // user toggles the marker the callback keys on, then recomputes
+      node.classList.add('secret')
+      expect(s.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      node.classList.remove('secret')
+      expect(s.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+    })
   })
 })

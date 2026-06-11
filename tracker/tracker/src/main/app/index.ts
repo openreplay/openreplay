@@ -13,6 +13,7 @@ import {
   adjustTimeOrigin,
   createEventListener,
   deleteEventListener,
+  IN_BROWSER,
   now,
   requestIdleCb,
   simpleMerge,
@@ -35,7 +36,7 @@ import { MASK_ORDER } from './nodes/idSeq.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer, { InlineCssMode } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
-import Sanitizer from './sanitizer.js'
+import Sanitizer, { SanitizeLevel } from './sanitizer.js'
 import type { Options as SessOptions } from './session.js'
 import Session from './session.js'
 import Ticker from './ticker.js'
@@ -237,6 +238,8 @@ export default class App {
   readonly ticker: Ticker
   readonly projectKey: string
   readonly sanitizer: Sanitizer
+  // Registered by input/img/canvas to re-emit a node when its level changes.
+  private readonly resanitizeCallbacks: Array<(node: Node, id: number) => void> = []
   readonly debug: Logger
   readonly notify: Logger
   readonly session: Session
@@ -1986,6 +1989,30 @@ export default class App {
 
   restartCanvasTracking = () => {
     this.canvasRecorder?.restartTracking()
+  }
+
+  attachResanitizeCallback = (cb: (node: Node, id: number) => void): void => {
+    this.resanitizeCallbacks.push(cb)
+  }
+
+  callResanitizeCallbacks = (node: Node, id: number): void => {
+    this.resanitizeCallbacks.forEach((cb) => cb(node, id))
+  }
+
+  resanitize = (el?: Element): void => {
+    const root = el ?? (IN_BROWSER ? document.documentElement : undefined)
+    if (!root) {
+      return
+    }
+    this.observer.resanitizeSubtree(root)
+  }
+
+  checkSanitization = (el: Node): SanitizeLevel | undefined => {
+    const id = this.nodes.getID(el)
+    if (id === undefined) {
+      return undefined
+    }
+    return this.sanitizer.getLevel(id)
   }
 
   flushBuffer = async (buffer: Message[]) => {
