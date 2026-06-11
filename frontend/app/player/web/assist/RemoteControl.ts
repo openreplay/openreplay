@@ -144,6 +144,24 @@ export default class RemoteControl {
           this.socket && this.emitData('input', el.innerText);
         }
       };
+      // Native <select>: the overlay swallows the click, so the dropdown can't
+      // be opened by the click itself. We open the native picker on the mirrored
+      // element so the agent can pick an option, then forward the chosen value
+      // to the tracker which applies it to the real <select>.
+      if (el instanceof HTMLSelectElement) {
+        el.onchange = () => {
+          this.socket && this.emitData('select', el.value);
+        };
+        try {
+          // showPicker is gated behind transient activation; we're inside the
+          // synchronous click handler so the user gesture is still valid.
+          // @ts-ignore - showPicker may be missing from older TS lib defs
+          el.showPicker?.();
+        } catch (err) {
+          // Some browsers throw if the picker can't be shown programmatically;
+          // the agent can still change the value once the dropdown is opened.
+        }
+      }
       // TODO: send "focus" event to assist with the nodeID
       el.onkeydown = (e) => {
         if (e.key == 'Tab') {
@@ -152,6 +170,7 @@ export default class RemoteControl {
       };
       el.onblur = () => {
         el.oninput = null;
+        el.onchange = null;
         el.onblur = null;
       };
     }
