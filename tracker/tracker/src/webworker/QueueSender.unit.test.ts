@@ -61,6 +61,24 @@ describe('QueueSender', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0][1]).toMatchObject(requestMock)
   })
+  test('Appends &split=<N> to the URL for a visual megabatch', () => {
+    const queueSender = defaultQueueSender()
+    const fetchMock = mockFetch(200)
+
+    queueSender.authorise(randomToken)
+    queueSender.push(sampleArray, 'visual', 123)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0][0]).toContain('&split=123')
+  })
+  test('Omits &split when no split is provided', () => {
+    const queueSender = defaultQueueSender()
+    const fetchMock = mockFetch(200)
+
+    queueSender.authorise(randomToken)
+    queueSender.push(sampleArray, 'player')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0][0]).not.toContain('&split=')
+  })
   test('Sends compressed request if onCompress is provided and compressed batch is included', () => {
     const queueSender = defaultQueueSender({ onCompress: () => true })
     const fetchMock = mockFetch(200)

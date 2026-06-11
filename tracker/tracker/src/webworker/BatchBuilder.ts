@@ -85,6 +85,11 @@ export default class BatchBuilder {
     return this.snap !== null && this.hasNonTimestamp
   }
 
+  /** Current encoded byte size (0 when fresh). */
+  size(): number {
+    return this.snap === null ? 0 : this.encoder.getCurrentOffset()
+  }
+
   /** Returns wire bytes, or null if no real (non-Timestamp) message was pushed.
    *  Either way, the builder is reset and ready for a new batch. */
   flush(): Uint8Array | null {
