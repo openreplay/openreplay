@@ -40,14 +40,17 @@ class TrackerSingleton {
       return Promise.resolve({ success: false, reason: 'Not in browser environment' })
     }
 
-    if (!this.ensureConfigured()) {
+    if (!this.ensureConfigured() || !this.instance) {
       return Promise.resolve({ success: false, reason: 'Tracker not configured' })
     }
 
-    return (
-      this.instance?.start(startOpts) ||
-      Promise.resolve({ success: false, reason: 'Tracker not initialized' })
-    )
+    // Tracker.start() rejects (instead of resolving {success:false}) when the
+    // underlying app failed to initialise (non-https, missing api, doNotTrack,
+    // already initialised...). Normalize so callers always get {success, reason}.
+    return this.instance.start(startOpts).catch((reason) => ({
+      success: false,
+      reason: typeof reason === 'string' ? reason : String(reason),
+    }))
   }
 
   /**
@@ -62,7 +65,7 @@ class TrackerSingleton {
     return this.instance.stop()
   }
 
-  setUserID(id: string): void {
+  setUserID = (id: string): void => {
     if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
       return
     }
@@ -71,20 +74,22 @@ class TrackerSingleton {
   }
 
   get analytics() {
-    if (this.instance?.analytics) {
-      return this.instance.analytics
-    } else {
-      return null;
-    }
-  };
+    return this.instance?.analytics ?? null
+  }
 
   identify = this.setUserID
-  track = (eventName: string, properties?: Record<string, any>, options?: { send_immediately: boolean }): void => {
+  track = (
+    eventName: string,
+    properties?: Record<string, any>,
+    options?: { send_immediately: boolean },
+  ): void => {
     if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
       return
     }
 
-    this.instance.track?.(eventName, properties)
+    // Route through analytics directly: Tracker.track is bound to analytics?.track
+    // at field-init time (before analytics exists), so it is always undefined.
+    this.instance.analytics?.track(eventName, properties, options)
   }
 
   /**
@@ -305,6 +310,61 @@ class TrackerSingleton {
     }
 
     return this.instance.getTabId()
+  }
+
+  /**
+   * Re-evaluates sanitization against the current DOM and re-emits whatever
+   * changed, updating already-recorded nodes mid-session. Call after toggling
+   * `data-openreplay-*` attributes or after changing whatever your `domSanitizer`
+   * keys on (class/id/etc).
+   *
+   * @param el - the highest node you changed; omit to re-scan the whole document.
+   * */
+  resanitize(el?: Element) {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return
+    }
+
+    return this.instance.resanitize(el)
+  }
+
+  /**
+   * Returns the sanitization level the tracker currently has for a node
+   * (0 = Plain, 1 = Obscured, 2 = Hidden), or undefined if it isn't tracked.
+   * */
+  checkSanitization(el: Node) {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return undefined
+    }
+
+    return this.instance.checkSanitization(el)
+  }
+
+  incident(options: { label?: string; startTime: number; endTime?: number }): void {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return
+    }
+
+    this.instance.incident(options)
+  }
+
+  /**
+   * Use custom token for analytics events without session recording
+   * */
+  setAnalyticsToken(token: string): void {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return
+    }
+
+    this.instance.setAnalyticsToken(token)
+  }
+
+  getAnalyticsToken(): string | undefined {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return undefined
+    }
+
+    return this.instance.getAnalyticsToken()
   }
 }
 

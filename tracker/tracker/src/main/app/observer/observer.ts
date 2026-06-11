@@ -26,6 +26,7 @@ import {
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
+import { SanitizeLevel } from '../sanitizer.js'
 
 const iconCache = {}
 const svgUrlCache = {}
@@ -701,6 +702,112 @@ export default abstract class Observer {
     this.bindTree(nodeToBind)
     beforeCommit(this.app.nodes.getID(node))
     this.commitNodes(true)
+  }
+
+  /**
+   * Re-evaluates sanitization for every tracked node in `root`'s subtree against
+   * the current DOM and re-emits whatever changed. Pass the highest node you
+   * changed (or the document root) so inherited levels propagate correctly.
+   */
+  public resanitizeSubtree(root: Node): void {
+    if (!isObservable(root)) {
+      return
+    }
+    const parent = root.parentNode
+    const parentId = parent !== null ? this.app.nodes.getID(parent) : undefined
+    const parentLevel =
+      parentId !== undefined ? this.app.sanitizer.getLevel(parentId) : SanitizeLevel.Plain
+    this.resanitizeNode(root, parentLevel)
+  }
+
+  private resanitizeNode(node: Node, parentLevel: SanitizeLevel): void {
+    if (isIgnored(node)) {
+      return
+    }
+    const id = this.app.nodes.getID(node)
+    if (id === undefined) {
+      // Untracked (new, or under a hidden ancestor): the live observer handles it.
+      return
+    }
+    const newLevel = this.app.sanitizer.computeLevel(node, parentLevel)
+    const prevLevel = this.app.sanitizer.getLevel(id)
+    const wasHidden = prevLevel === SanitizeLevel.Hidden
+    const willHidden = newLevel === SanitizeLevel.Hidden
+
+    // Crossing the hidden boundary changes the rendered structure (placeholder vs
+    // real subtree), so rebuild rather than re-emit.
+    if (wasHidden !== willHidden) {
+      this.recreateSubtree(node)
+      return
+    }
+    if (willHidden) {
+      return
+    }
+    // Plain <-> Obscured: same structure, only leaf content changes.
+    if (prevLevel !== newLevel) {
+      this.app.sanitizer.setLevel(id, newLevel)
+      this.reemitNode(id, node)
+    }
+    for (let child = node.firstChild; child !== null; child = child.nextSibling) {
+      this.resanitizeNode(child, newLevel)
+    }
+  }
+
+  // Destroys the node player-side and re-emits its subtree from scratch (new ids)
+  // so it materializes at the freshly-computed level.
+  private recreateSubtree(node: Node): void {
+    const id = this.app.nodes.getID(node)
+    if (id === undefined) {
+      return
+    }
+    this.app.send(RemoveNode(id))
+    this.clearSubtreeRegistration(node)
+    this.bindTree(node)
+    this.commitNodes()
+  }
+
+  private clearSubtreeRegistration(node: Node): void {
+    const clearOne = (n: Node) => {
+      const oldId = this.app.nodes.getID(n)
+      if (oldId !== undefined) {
+        this.app.sanitizer.setLevel(oldId, SanitizeLevel.Plain)
+      }
+      this.app.nodes.unregisterNode(n)
+    }
+    const walker = document.createTreeWalker(
+      node,
+      NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (n) =>
+          isIgnored(n) || this.app.nodes.getID(n) === undefined
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT,
+      },
+      // @ts-ignore
+      false,
+    )
+    // Collect first, then clear: unregistering mutates the ids the walker reads.
+    const subtree: Node[] = []
+    while (walker.nextNode()) {
+      subtree.push(walker.currentNode)
+    }
+    clearOne(node)
+    subtree.forEach(clearOne)
+  }
+
+  private reemitNode(id: number, node: Node): void {
+    if (isTextNode(node)) {
+      const parent = node.parentNode
+      if (parent !== null && isElementNode(parent)) {
+        // re-runs sanitize() at the level we just set
+        this.sendNodeData(id, parent, node.data)
+      }
+      return
+    }
+    if (isElementNode(node)) {
+      // inputs/images/canvas re-emit their own payload via registered callbacks
+      this.app.callResanitizeCallbacks(node, id)
+    }
   }
 
   disconnect(): void {
