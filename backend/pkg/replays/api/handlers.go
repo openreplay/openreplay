@@ -56,6 +56,16 @@ func (h *handlersImpl) getFirstMob(w http.ResponseWriter, r *http.Request) {
 
 	h.log.Info(r.Context(), "getFirstMob: sessID: %v, projID: %v", sessID, projID)
 
+	isSessionExists, err := h.sessions.IsExists(projID, sessID)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	if !isSessionExists {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("wrong session id"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
 	urls, err := h.files.GetMobStartUrl(sessID)
 	if err != nil {
 		h.log.Error(r.Context(), "Error getting start urls: %v", err)
