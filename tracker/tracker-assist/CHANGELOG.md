@@ -1,3 +1,7 @@
+## 11.0.17
+
+- improvements for rc interaction with select els
+
 ## 11.0.16
 
 fixes for possible memory leaks and remote control safety
