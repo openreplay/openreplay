@@ -52,7 +52,32 @@ class CanvasRecorder {
     setTimeout(() => {
       this.app.nodes.scanTree(this.captureCanvas)
       this.app.nodes.attachNodeCallback(this.captureCanvas)
+      this.app.attachResanitizeCallback(this.resanitizeCanvas)
     }, 125)
+  }
+
+  /**
+   * Reacts to a runtime sanitization change on a canvas: stop capturing if it
+   * just became masked, start if it just became visible. (Already-sent frames
+   * can't be retracted — escalation only stops future capture.)
+   */
+  resanitizeCanvas = (node: Node, id: number) => {
+    if (!hasTag(node, 'canvas')) {
+      return
+    }
+    const isIgnored = this.app.sanitizer.isObscured(id) || this.app.sanitizer.isHidden(id)
+    if (isIgnored) {
+      if (this.snapshots[id] || this.observers.has(id)) {
+        const observer = this.observers.get(id)
+        if (observer) {
+          observer.disconnect()
+          this.observers.delete(id)
+        }
+        this.cleanupCanvas(id)
+      }
+    } else if (!this.snapshots[id] && !this.observers.has(id)) {
+      this.captureCanvas(node)
+    }
   }
 
   restartTracking = () => {

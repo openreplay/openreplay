@@ -234,6 +234,14 @@ export default function (app: App, opts: Partial<Options>): void {
     app.send(InputChange(id, value, mask !== 0, label, hesitationTime, inputTime))
   }
 
+  // Re-emit a field's value when its sanitization level changes at runtime.
+  // getInputValue() reads the current level, so re-sending applies the new mask.
+  app.attachResanitizeCallback((node: Node, id: number) => {
+    if (isTextFieldElement(node) || hasTag(node, 'select')) {
+      sendInputValue(id, node)
+    }
+  })
+
   app.nodes.attachNodeCallback(
     app.safe((node: Node): void => {
       const id = app.nodes.getID(node)
