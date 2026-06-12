@@ -9,6 +9,7 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -60,10 +61,17 @@ func NewTask() *task {
 type connectorImpl struct {
 	conn       driver.Conn
 	metrics    database.Database
+	mu         sync.Mutex
 	batches    map[string]Bulk //driver.Batch
 	workerTask chan *task
 	done       chan struct{}
 	finished   chan struct{}
+}
+
+func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.batches[name].Append(args...)
 }
 
 func NewConnector(conn driver.Conn, metrics database.Database) (Connector, error) {
@@ -116,6 +124,7 @@ func (c *connectorImpl) prepare() error {
 }
 
 func (c *connectorImpl) Commit() error {
+	c.mu.Lock()
 	newTask := NewTask()
 	for _, b := range c.batches {
 		newTask.bulks = append(newTask.bulks, b)
@@ -124,6 +133,7 @@ func (c *connectorImpl) Commit() error {
 	if err := c.prepare(); err != nil {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
+	c.mu.Unlock()
 	c.workerTask <- newTask
 	return nil
 }
@@ -178,7 +188,7 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) 
 	if session.UserAnonymousID != nil && *session.UserAnonymousID == "" {
 		session.UserAnonymousID = nil
 	}
-	if err := c.batches["sessions"].Append(
+	if err := c.appendTo("sessions",
 		session.SessionID,
 		uint16(session.ProjectID),
 		session.UserID,
@@ -297,7 +307,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		return fmt.Errorf("can't marshal input event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -352,7 +362,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -384,7 +394,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	if err := c.batches["issues"].Append(
+	if err := c.appendTo("issues",
 		uint16(session.ProjectID),
 		issueID,
 		"mouse_thrashing",
@@ -424,7 +434,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -456,7 +466,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	if err := c.batches["issues"].Append(
+	if err := c.appendTo("issues",
 		uint16(session.ProjectID),
 		issueID,
 		msg.Type,
@@ -538,7 +548,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		return fmt.Errorf("can't marshal page event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -614,7 +624,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		return fmt.Errorf("can't marshal click event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -664,7 +674,7 @@ func (c *connectorImpl) InsertWebJSException(session *sessions.Session, msg *mes
 		return fmt.Errorf("can't marshal error event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		types.GenerateUUID(msg, session.SessionID),
@@ -730,7 +740,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		return fmt.Errorf("can't marshal performance event: %s", err)
 	}
 	eventTime := datetime(timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -798,7 +808,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		return fmt.Errorf("can't marshal request event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -854,7 +864,7 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 	}
 
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -902,7 +912,7 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 		return fmt.Errorf("can't marshal graphql event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -963,7 +973,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -995,7 +1005,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	if err := c.batches["issues"].Append(
+	if err := c.appendTo("issues",
 		uint16(session.ProjectID),
 		issueID,
 		fakeMsg.Type,
@@ -1015,7 +1025,7 @@ func (c *connectorImpl) InsertTagTrigger(session *sessions.Session, msg *message
 		return fmt.Errorf("can't marshal tagTriggers event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1056,7 +1066,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 	if session.Duration == nil {
 		return errors.New("trying to insert mobile session with nil duration")
 	}
-	if err := c.batches["mobile_sessions"].Append(
+	if err := c.appendTo("mobile_sessions",
 		session.SessionID,
 		uint16(session.ProjectID),
 		session.UserID,
@@ -1108,7 +1118,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 		return fmt.Errorf("can't marshal mobile custom event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1142,7 +1152,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile clicks event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1177,7 +1187,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile swipe event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1211,7 +1221,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile input event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1257,7 +1267,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		return fmt.Errorf("can't marshal mobile request event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1290,7 +1300,7 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile crash event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1323,7 +1333,7 @@ func (c *connectorImpl) InsertMobileIssue(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
