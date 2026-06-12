@@ -24,8 +24,11 @@ export default class BatchWriter {
   // Visual init phase (protocolVersion 2 only): before the "DOM parsed" signal we
   // emit nothing — player + asset bytes accumulate into one "visual" megabatch.
   private visualSent = false
-  // Guards a late protocolVersion→2 flip after content already flowed: skip the feature.
-  private messagesWritten = false
+  // Set once the orloaded signal is seen outside an active init phase. Guards a late
+  // protocolVersion→2 flip after the signal already passed: skip the feature.
+  // Keyed on the signal (not on "any message"), since auth/pv2 lands after the
+  // /v1/web/start round-trip — stray pre-auth traffic must not disable the feature.
+  private signalSeen = false
   // Devtools/analytics batches buffered during init, released right after the visual.
   private heldOther: Array<{ batch: Uint8Array; dataType: DataType }> = []
 
@@ -71,7 +74,7 @@ export default class BatchWriter {
   setProtocolVersion(version: number) {
     if (this.protocolVersion === version) return
     this.protocolVersion = version
-    if (version === 2 && !this.messagesWritten) {
+    if (version === 2 && !this.signalSeen) {
       // Init phase: player+assets accumulate up to the hard cap (soft limit ignored).
       this.playerBuilder.reset()
       this.assetBuilder.reset()
@@ -97,6 +100,7 @@ export default class BatchWriter {
       (message as Messages.SetNodeAttribute)[2] === VISUAL_SIGNAL_ATTR
     ) {
       if (this.initActive()) this.finalizeVisual()
+      else this.signalSeen = true
       return
     }
     if (message[0] === Messages.Type.Timestamp) {
@@ -105,7 +109,6 @@ export default class BatchWriter {
     if (message[0] === Messages.Type.SetPageLocation) {
       this.url = message[1]
     }
-    this.messagesWritten = true
     const target = this.routeMessage(message)
     this.pushTo(target, message)
   }
@@ -258,6 +261,6 @@ export default class BatchWriter {
     this.analyticsBuilder.reset()
     this.heldOther.length = 0
     this.visualSent = false
-    this.messagesWritten = false
+    this.signalSeen = false
   }
 }

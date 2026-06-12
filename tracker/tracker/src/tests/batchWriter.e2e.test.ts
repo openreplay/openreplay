@@ -523,8 +523,28 @@ describe('BatchWriter e2e', () => {
       expect(types).not.toContain(T.SetNodeAttribute)
     })
 
-    test('late protocolVersion→2 after content already flowed skips the feature', () => {
-      // Build a v1 writer, write a real message, THEN flip to v2.
+    test('messages before setProtocolVersion(2) still produce a visual (start→fetch→auth ordering)', () => {
+      // Mirrors the real start path: `start` creates the writer (pv defaults to 1)
+      // and stray traffic may reach it during the /v1/web/start round-trip, before
+      // `auth` applies pv2. That must NOT disable the visual feature.
+      captured = []
+      onBatch = jest.fn(
+        (batch: Uint8Array, skipCompression: boolean | undefined, dataType: any, split?: number) => {
+          captured.push({ batch, skipCompression: !!skipCompression, dataType, split })
+        },
+      )
+      const writer = new BatchWriter(7, 1_000_000, 'http://example.com/start', onBatch, 'tab-XYZ', jest.fn())
+      writer.writeMessage([T.MouseMove, 1, 2]) // stray pre-auth event
+      writer.setProtocolVersion(2) // auth lands after the round-trip → init engages
+      writer.writeMessage([T.MouseMove, 3, 4])
+      writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])
+      writer.writeMessage(VISUAL_SIGNAL)
+
+      expect(captured[0].dataType).toBe('visual')
+      expect(typeof captured[0].split).toBe('number')
+    })
+
+    test('signal already seen under v1 then flip to v2 skips the feature', () => {
       captured = []
       onBatch = jest.fn(
         (batch: Uint8Array, skipCompression: boolean | undefined, dataType: any, split?: number) => {
@@ -533,9 +553,8 @@ describe('BatchWriter e2e', () => {
       )
       const writer = new BatchWriter(7, 1_000_000, 'http://example.com/start', onBatch, 'tab-XYZ', jest.fn())
       writer.writeMessage([T.MouseMove, 1, 2])
-      writer.setProtocolVersion(2) // late flip — orloaded already in the past
-      // No init phase: subsequent messages flow straight through as normal v2
-      // batches (nothing held back, no visual produced).
+      writer.writeMessage(VISUAL_SIGNAL) // signal passes while still v1
+      writer.setProtocolVersion(2) // too late — feature skipped
       writer.writeMessage([T.MouseMove, 3, 4])
       writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])
       writer.finaliseBatch()
