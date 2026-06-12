@@ -30,6 +30,7 @@ const (
 
 type brokenBatchEntry struct {
 	count     int
+	firstErr  string
 	createdAt time.Time
 }
 
@@ -42,27 +43,27 @@ func NewBrokenBatches() *brokenBatches {
 	return &brokenBatches{entries: make(map[uint64]*brokenBatchEntry)}
 }
 
-func (b *brokenBatches) Inc(sessID uint64) int {
+func (b *brokenBatches) Inc(sessID uint64, errMsg string) int {
 	now := time.Now()
 	b.evictExpired(now)
 	e, ok := b.entries[sessID]
 	if !ok {
-		e = &brokenBatchEntry{createdAt: now}
+		e = &brokenBatchEntry{createdAt: now, firstErr: errMsg}
 		b.entries[sessID] = e
 	}
 	e.count++
 	return e.count
 }
 
-func (b *brokenBatches) Pop(sessID uint64) (count int, ok bool) {
+func (b *brokenBatches) Pop(sessID uint64) (count int, firstErr string, ok bool) {
 	now := time.Now()
 	b.evictExpired(now)
 	e, ok := b.entries[sessID]
 	if !ok {
-		return 0, false
+		return 0, "", false
 	}
 	delete(b.entries, sessID)
-	return e.count, true
+	return e.count, e.firstErr, true
 }
 
 func (b *brokenBatches) evictExpired(now time.Time) {

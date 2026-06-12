@@ -66,9 +66,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 
 	reader := NewMessageReader(batchData)
 	if err := reader.Parse(); err != nil {
-		if count := i.brokenStats.Inc(batchInfo.sessionID); count == 1 {
-			i.log.Error(ctx, "pre-decode batch err: %s, info: %s", err, batchInfo.Info())
-		}
+		i.brokenStats.Inc(batchInfo.sessionID, err.Error())
 		return
 	}
 
@@ -177,9 +175,10 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		// Delete session from urls cache layer
 		i.urls.Delete(i.messageInfo.batch.sessionID)
 		// Report and clear broken-batch stats accumulated for this session.
-		if count, ok := i.brokenStats.Pop(i.messageInfo.batch.sessionID); ok {
+		if count, firstErr, ok := i.brokenStats.Pop(i.messageInfo.batch.sessionID); ok {
 			ctx := context.WithValue(context.Background(), "sessionID", i.messageInfo.batch.sessionID)
-			i.log.Warn(ctx, "session ended with %d broken batch(es)", count)
+			i.log.Warn(ctx, "session %d ended with %d broken batch(es), first error: %s, info: %s",
+				i.messageInfo.batch.sessionID, count, firstErr, i.messageInfo.batch.Info())
 		}
 
 	case *SetPageLocation:
