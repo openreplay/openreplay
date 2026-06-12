@@ -59,13 +59,14 @@ func NewTask() *task {
 }
 
 type connectorImpl struct {
-	conn       driver.Conn
-	metrics    database.Database
-	mu         sync.Mutex
-	batches    map[string]Bulk //driver.Batch
-	workerTask chan *task
-	done       chan struct{}
-	finished   chan struct{}
+	conn           driver.Conn
+	metrics        database.Database
+	mu             sync.Mutex
+	batchSizeLimit int
+	batches        map[string]Bulk //driver.Batch
+	workerTask     chan *task
+	done           chan struct{}
+	finished       chan struct{}
 }
 
 func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
@@ -74,7 +75,7 @@ func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
 	return c.batches[name].Append(args...)
 }
 
-func NewConnector(conn driver.Conn, metrics database.Database) (Connector, error) {
+func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit int) (Connector, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("CH connection is required")
@@ -83,12 +84,13 @@ func NewConnector(conn driver.Conn, metrics database.Database) (Connector, error
 	}
 
 	c := &connectorImpl{
-		conn:       conn,
-		metrics:    metrics,
-		batches:    make(map[string]Bulk, len(batches)+1),
-		workerTask: make(chan *task, 1),
-		done:       make(chan struct{}),
-		finished:   make(chan struct{}),
+		conn:           conn,
+		metrics:        metrics,
+		batchSizeLimit: batchSizeLimit,
+		batches:        make(map[string]Bulk, len(batches)+1),
+		workerTask:     make(chan *task, 1),
+		done:           make(chan struct{}),
+		finished:       make(chan struct{}),
 	}
 	if err := c.prepare(); err != nil {
 		return nil, err
@@ -106,7 +108,7 @@ var batches = map[string]string{
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, c.metrics, name, query, 20000)
+	batch, err := NewBulk(c.conn, c.metrics, name, query, c.batchSizeLimit)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
