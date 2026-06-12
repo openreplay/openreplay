@@ -1,6 +1,12 @@
 import { createSignal, createEffect } from "solid-js";
 import { AudioDevice } from "../types";
 import { getAudioDevices } from "../utils/audio";
+import { onMessage, sendMessage } from "~/utils/messaging";
+import {
+  audioPermStore,
+  selectedAudioIdStore,
+  micOnStore,
+} from "~/utils/storage";
 
 export function useAudioDevices() {
   const [audioDevices, setAudioDevices] = createSignal<AudioDevice[]>([]);
@@ -10,30 +16,21 @@ export function useAudioDevices() {
   const [isChecking, setIsChecking] = createSignal(false);
 
   createEffect(() => {
-    chrome.storage.local.get("audioPerm", (data) => {
-      if (data.audioPerm && audioDevices().length === 0) {
-        setHasPermissions(true);
-        checkAudioDevices().then(async (devices) => {
-          const { selectedAudioId, micOn } = await chrome.storage.local.get([
-            "selectedAudioId",
-            "micOn",
-          ]);
-
-          if (selectedAudioId) {
-            const selectedDevice = devices.find(
-              (device) => device.id === selectedAudioId
-            );
-            if (selectedDevice) {
-              setSelectedAudioDevice(selectedDevice.id);
-            }
-          }
-
-          if (micOn) {
-            toggleMic();
-          }
-        });
+    void (async () => {
+      const audioPerm = await audioPermStore.getValue();
+      if (!audioPerm || audioDevices().length !== 0) return;
+      setHasPermissions(true);
+      const devices = await checkAudioDevices();
+      const [selectedAudioId, micOn] = await Promise.all([
+        selectedAudioIdStore.getValue(),
+        micOnStore.getValue(),
+      ]);
+      if (selectedAudioId) {
+        const selectedDevice = devices.find((d) => d.id === selectedAudioId);
+        if (selectedDevice) setSelectedAudioDevice(selectedDevice.id);
       }
-    });
+      if (micOn) toggleMic();
+    })();
   });
 
   const checkAudioDevices = async (): Promise<AudioDevice[]> => {
@@ -42,17 +39,12 @@ export function useAudioDevices() {
     const { granted, audioDevices, denied } = await getAudioDevices();
 
     if (!granted && !denied) {
-      void browser.runtime.sendMessage({
-        type: "popup:get-audio-perm",
-      });
-
-      browser.runtime.onMessage.addListener((message) => {
-        if (message.type === "popup:audio-perm") {
-          void checkAudioDevices();
-        }
+      void sendMessage("popup:get-audio-perm").catch(() => {});
+      onMessage("popup:audio-perm", () => {
+        void checkAudioDevices();
       });
     } else if (audioDevices.length > 0 && selectedAudioDevice() === "") {
-      chrome.storage.local.set({ audioPerm: granted });
+      void audioPermStore.setValue(granted);
       setAudioDevices(audioDevices);
       setSelectedAudioDevice(audioDevices[0]?.id || "");
     }
@@ -70,7 +62,8 @@ export function useAudioDevices() {
     if (!mic()) {
       toggleMic();
     }
-    chrome.storage.local.set({ selectedAudioId: deviceId, micOn: true });
+    void selectedAudioIdStore.setValue(deviceId);
+    void micOnStore.setValue(true);
   };
 
   const handleMicToggle = async () => {
@@ -81,7 +74,7 @@ export function useAudioDevices() {
     if (!selectedAudioDevice() && audioDevices().length) {
       selectAudioDevice(audioDevices()[0].id);
     } else {
-      chrome.storage.local.set({ micOn: !mic() });
+      void micOnStore.setValue(!mic());
       toggleMic();
     }
   };
@@ -90,6 +83,7 @@ export function useAudioDevices() {
     audioDevices,
     selectedAudioDevice,
     mic,
+    setMic,
     hasPermissions,
     isChecking,
     checkAudioDevices,

@@ -6,8 +6,8 @@ import {
   stopClickRecording,
 } from "./eventTrackers";
 import ControlsBox from "~/entrypoints/content/ControlsBox";
-import { messages } from '~/utils/messages';
-import { convertBlobToBase64, getChromeFullVersion } from "./utils";
+import { sendMessage, onMessage } from "~/utils/messaging";
+import { getChromeFullVersion } from "./utils";
 import "./style.css";
 import "~/assets/main.css";
 
@@ -17,7 +17,7 @@ export default defineContentScript({
 
   async main(ctx) {
     if (!ctx.isValid) {
-      console.error("Spot: context is invalidated on mount")
+      console.error("Spot: context is invalidated on mount");
       return;
     }
     const ui = await createShadowRootUi(ctx, {
@@ -57,59 +57,36 @@ export default defineContentScript({
     ctx.onInvalidated(() => {
       ui.remove();
     });
-    let micResponse: boolean | null = null;
-    const getMicStatus = async () => {
-      return new Promise((res) => {
-        browser.runtime.sendMessage({
-          type: messages.content.from.checkMicStatus,
-        });
-        let int = setInterval(() => {
-          if (micResponse !== null) {
-            clearInterval(int);
-            res(micResponse);
-          }
-        }, 200);
-      });
-    };
+
     // no perm - muted - unmuted
     type AudioPermState = 0 | 1 | 2;
     let audioPerm: AudioPermState = 0;
     const getAudioPerm = (): AudioPermState => audioPerm;
     let clockStart = 0;
     let recState = "stopped";
-    const getClockStart = () => {
-      return clockStart;
-    };
+    const getClockStart = () => clockStart;
+
     let data: Record<string, any> | null = null;
     const videoChunks: string[] = [];
     let chunksReady = false;
-    let errorsReady = false;
-    const errorData: { title: string; time: number }[] = [];
 
-    const getErrorEvents = async (): Promise<any> => {
-      let tries = 0;
-      browser.runtime.sendMessage({ type: "ort:get-error-events" });
-      return new Promise((res) => {
-        const interval = setInterval(async () => {
-          if (errorsReady) {
-            clearInterval(interval);
-            errorsReady = false;
-            res(errorData);
-          }
-          // 3 sec timeout
-          if (tries > 30) {
-            clearInterval(interval);
-            res([]);
-          }
-          tries += 1;
-        }, 100);
-      });
+    const getMicStatus = async (): Promise<boolean> => {
+      const r = await sendMessage("ort:getMicStatus").catch(() => ({
+        micStatus: false,
+      }));
+      return r.micStatus;
+    };
+
+    // #12: a direct request/response round trip instead of polling a flag that
+    // was set by a separate push message.
+    const getErrorEvents = async () => {
+      return await sendMessage("ort:get-error-events").catch(() => []);
     };
 
     const getVideoData = async (): Promise<any> => {
       let tries = 0;
       return new Promise((res) => {
-        const interval = setInterval(async () => {
+        const interval = setInterval(() => {
           if (data && chunksReady) {
             clearInterval(interval);
             videoChunks.length = 0;
@@ -130,14 +107,13 @@ export default defineContentScript({
       recState = "stopped";
       stopClickRecording();
       stopLocationRecording();
-      const result = await browser.runtime.sendMessage({ type: messages.content.from.toStop });
+      const result = await sendMessage("ort:stop");
       const maxWait = 1000 * 60;
       const startTime = Date.now();
       if (result.status === "ok") {
         return new Promise((res) => {
           const interval = setInterval(() => {
-            const now = Date.now();
-            const elapsed = now - startTime;
+            const elapsed = Date.now() - startTime;
             if (elapsed > maxWait) {
               console.error("Spot: timed out waiting for video data");
               clearInterval(interval);
@@ -160,20 +136,17 @@ export default defineContentScript({
 
     const pause = () => {
       recState = "paused";
-      browser.runtime.sendMessage({ type: messages.content.from.pause });
+      void sendMessage("ort:pause").catch(() => {});
     };
-
     const resume = () => {
       recState = "recording";
-      browser.runtime.sendMessage({ type: messages.content.from.resume });
+      void sendMessage("ort:resume").catch(() => {});
     };
-
     const muteMic = () => {
-      browser.runtime.sendMessage({ type: messages.content.from.muteMic });
+      void sendMessage("ort:mute-microphone").catch(() => {});
     };
-
     const unmuteMic = () => {
-      browser.runtime.sendMessage({ type: messages.content.from.unmuteMic });
+      void sendMessage("ort:unmute-microphone").catch(() => {});
     };
 
     const onClose = async (
@@ -187,9 +160,7 @@ export default defineContentScript({
       },
     ) => {
       if (!save || !spotObj) {
-        await chrome.runtime.sendMessage({
-          type: "ort:discard",
-        });
+        void sendMessage("ort:discard").catch(() => {});
         stopClickRecording();
         stopLocationRecording();
         ui.remove();
@@ -210,22 +181,18 @@ export default defineContentScript({
       };
 
       try {
-        await browser.runtime.sendMessage({
-          type: messages.content.from.saveSpotData,
-          spot,
-        });
+        await sendMessage("ort:save-spot", { spot });
         ui.remove();
       } catch (e) {
-        console.trace(
-          "error saving video",
-          spot,
-          resolution,
-          browserVersion,
-        );
+        console.trace("error saving video", spot, resolution, browserVersion);
         console.error(e);
       }
     };
 
+    // ---- page-world channel (window.postMessage), left as raw messaging ----
+    // orspot:* is a contract with the OpenReplay web app; injected:* / ort:bump-*
+    // come from page-context scripts. Only the runtime hop to the background is
+    // migrated to the typed protocol.
     window.addEventListener("message", (event) => {
       if (event.data.type === "orspot:ping") {
         window.postMessage({ type: "orspot:pong" }, "*");
@@ -233,28 +200,23 @@ export default defineContentScript({
       if (event.data.type === "orspot:token") {
         window.postMessage({ type: "orspot:logged" }, "*");
         const ingest = window.location.origin;
-        void browser.runtime.sendMessage({
-          type: messages.content.from.setLoginToken,
+        void sendMessage("ort:login-token", {
           token: event.data.token,
-          ingest
-        });
+          ingest,
+        }).catch(() => {});
       }
       if (event.data.type === "orspot:invalidate") {
-        void browser.runtime.sendMessage({
-          type: messages.content.from.invalidateToken,
-        });
+        void sendMessage("ort:invalidate-token").catch(() => {});
       }
       if (event.data.type === "ort:bump-logs") {
-        void chrome.runtime.sendMessage({
-          type:  messages.injected.from.bumpLogs,
-          logs: event.data.logs,
-        });
+        void sendMessage("ort:bump-logs", { logs: event.data.logs }).catch(
+          () => {},
+        );
       }
       if (event.data.type === "ort:bump-network") {
-        void chrome.runtime.sendMessage({
-          type: messages.injected.from.bumpNetwork,
-          event: event.data.event,
-        });
+        void sendMessage("ort:bump-network", { event: event.data.event }).catch(
+          () => {},
+        );
       }
     });
 
@@ -278,19 +240,15 @@ export default defineContentScript({
         window.postMessage({ type: "injected:n-start" });
       }, 100);
     }
-
     function stopConsoleTracking() {
       window.postMessage({ type: "injected:c-stop" });
     }
-
     function stopNetworkTracking() {
       window.postMessage({ type: "injected:n-stop" });
     }
 
     function onRestart() {
-      chrome.runtime.sendMessage({
-        type: messages.content.from.restart,
-      });
+      void sendMessage("ort:restart").catch(() => {});
       stopClickRecording();
       stopLocationRecording();
       stopConsoleTracking();
@@ -303,95 +261,68 @@ export default defineContentScript({
       scriptEl.src = browser.runtime.getURL("/notifications.js");
       document.head.appendChild(scriptEl);
     }
-
-    function unmountNotifications() {
-      window.postMessage({ type: "ornotif:stop" });
-    }
-
     mountNotifications();
 
-    let onEndObj = {};
+    let onEndObj: { area?: "tab" | "desktop"; mic?: boolean; audioId?: string } =
+      {};
     async function countEnd(): Promise<boolean> {
-      return browser.runtime
-        .sendMessage({ ...onEndObj, type: messages.content.from.countEnd })
-        .then((r: boolean) => {
-          onEndObj = {};
-          return r;
-        });
+      const r = await sendMessage("ort:countend", {
+        area: onEndObj.area as "tab" | "desktop",
+        mic: Boolean(onEndObj.mic),
+        audioId: onEndObj.audioId ?? "",
+      }).catch(() => false);
+      onEndObj = {};
+      return r;
     }
 
-    setInterval(() => {
-      void browser.runtime.sendMessage({ type: messages.content.from.contentReady });
-    }, 250);
-    // @ts-ignore false positive
-    browser.runtime.onMessage.addListener((message: any, resp) => {
-      if (message.type === messages.content.to.mount) {
-        if (recState === "count") return;
-        recState = "count";
-        onEndObj = {
-          area: message.area,
-          mic: message.mic,
-          audioId: message.audioId,
-        };
-        audioPerm = message.audioPerm;
-        ui.mount();
-      }
-      if (message.type === messages.content.to.start) {
-        if (recState === "recording") return;
-        clockStart = message.time;
-        recState = "recording";
-        micResponse = null;
-        startClickRecording();
-        startLocationRecording();
-        if (message.withConsole) {
-          startConsoleTracking();
-        }
-        if (message.withNetwork) {
-          startNetworkTracking();
-        }
-        browser.runtime.sendMessage({ type: messages.content.from.started });
-        if (message.shouldMount) {
-          ui.mount();
-        }
-        return "pong";
-      }
-      if (message.type === messages.content.to.notification) {
-        window.postMessage(
-          {
-            type: "ornotif:display",
-            message: message.message,
-          },
-          "*",
-        );
-      }
-      if (message.type === messages.content.to.unmount) {
-        stopClickRecording();
-        stopLocationRecording();
-        stopConsoleTracking();
-        stopNetworkTracking();
-        recState = "stopped";
-        ui.remove();
-        return "unmounted";
-      }
-      if (message.type === messages.content.to.videoChunk) {
-        videoChunks[message.index] = message.data;
-        if (message.total === message.index + 1) {
-          chunksReady = true;
-        }
-      }
-      if (message.type === messages.content.to.spotSaved) {
-        window.postMessage({ type: "ornotif:copy", url: message.url });
-      }
-      if (message.type === messages.content.to.stop) {
-        window.postMessage({ type: "content:trigger-stop" }, "*");
-      }
-      if (message.type === messages.content.to.micStatus) {
-        micResponse = message.micStatus;
-      }
-      if (message.type === messages.content.to.updateErrorEvents) {
-        errorsReady = true;
-        errorData.push(...message.errorData);
-      }
+    // ---- background -> content (typed protocol) ----
+    onMessage("content:mount", ({ data: msg }) => {
+      if (recState === "count") return;
+      recState = "count";
+      onEndObj = { area: msg.area, mic: msg.mic, audioId: msg.audioId };
+      audioPerm = msg.audioPerm;
+      ui.mount();
+    });
+
+    onMessage("content:start", ({ data: msg }) => {
+      if (recState === "recording") return;
+      clockStart = msg.time;
+      recState = "recording";
+      startClickRecording();
+      startLocationRecording();
+      if (msg.withConsole) startConsoleTracking();
+      if (msg.withNetwork) startNetworkTracking();
+      void sendMessage("ort:started").catch(() => {});
+      if (msg.shouldMount) ui.mount();
+    });
+
+    onMessage("notif:display", ({ data: msg }) => {
+      window.postMessage(
+        { type: "ornotif:display", message: msg.message },
+        "*",
+      );
+    });
+
+    onMessage("content:unmount", () => {
+      stopClickRecording();
+      stopLocationRecording();
+      stopConsoleTracking();
+      stopNetworkTracking();
+      recState = "stopped";
+      ui.remove();
+    });
+
+    onMessage("content:video-chunk", ({ data: msg }) => {
+      videoChunks[msg.index] = msg.data;
+      if (msg.total === msg.index + 1) chunksReady = true;
+    });
+
+    onMessage("content:spot-saved", ({ data: msg }) => {
+      window.postMessage({ type: "ornotif:copy", url: msg.url }, "*");
+    });
+
+    onMessage("content:stop", () => {
+      window.postMessage({ type: "content:trigger-stop" }, "*");
     });
   },
 });

@@ -3,15 +3,15 @@ Report bugs in no time. Simply record bugs you spot directly from your browser a
 
 ## Contributing
 
-Be sure to install [nvm](https://github.com/nvm-sh/nvm) or [n](https://www.npmjs.com/package/n) before starting, or simply use node >= v20.0.0.
+This project uses [bun](https://bun.sh) as its package manager and Node >= v20.0.0. Install dependencies with `bun install`.
 
-Running `yarn dev` will start new chrome instance with spot extension installed already, but you need to change ingest point to your local dev env if you don't have account on app.openreplay.com.
+Running `bun run dev` will start a new chrome instance with the spot extension installed already, but you need to change the ingest point to your local dev env if you don't have an account on app.openreplay.com.
 
 ## Building
 
 If you wish to compile your own version of the extension:
 
-- run `yarn build` 
+- run `bun run build`
 - open chrome://extensions/ in your browser
 - enable developer mode
 - click on "Load unpacked" and select the `chrome-mv3` folder inside `spot/.output`

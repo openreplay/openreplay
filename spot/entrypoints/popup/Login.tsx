@@ -1,10 +1,12 @@
+import { settingsStore } from "~/utils/storage";
+
 function Login() {
   const onOpenLoginPage = async () => {
-    const { settings } = await chrome.storage.local.get("settings");
+    const settings = await settingsStore.getValue();
     return openLoginPage(settings.ingestPoint);
   };
   const onOpenSignupPage = async () => {
-    const { settings } = await chrome.storage.local.get("settings");
+    const settings = await settingsStore.getValue();
     return openSignupPage(settings.ingestPoint);
   };
   return (
@@ -41,7 +43,7 @@ function getLink(url: string) {
 function openSignupPage(instanceUrl: string) {
   const signupUrl = `${getLink(instanceUrl)}/signup?spotCallback=true`;
 
-  chrome.tabs.create({
+  browser.tabs.create({
     url: signupUrl,
     active: true,
   });
@@ -50,7 +52,7 @@ function openSignupPage(instanceUrl: string) {
 function openLoginPage(instanceUrl: string) {
   const loginUrl = `${getLink(instanceUrl)}/login?spotCallback=true`;
 
-  chrome.tabs.create({
+  browser.tabs.create({
     url: loginUrl,
     active: true,
   });

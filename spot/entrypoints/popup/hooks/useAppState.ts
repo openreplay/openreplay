@@ -1,27 +1,26 @@
 import { createSignal, onMount } from "solid-js";
 import { AppState, RecordingArea } from "../types";
+import { onMessage, sendMessage } from "~/utils/messaging";
 
 export function useAppState() {
   const [state, setState] = createSignal<AppState>(AppState.LOGIN);
   const [isSettingsOpen, setIsSettingsOpen] = createSignal(false);
 
   onMount(() => {
-    browser.runtime.onMessage.addListener((message) => {
-      if (message.type === "popup:no-login") {
-        setState(AppState.LOGIN);
-      }
-      if (message.type === "popup:login") {
-        setState(AppState.READY);
-      }
-      if (message.type === "popup:stopped") {
-        setState(AppState.READY);
-      }
-      if (message.type === "popup:started") {
-        setState(AppState.RECORDING);
-      }
+    onMessage("popup:no-login", () => {
+      setState(AppState.LOGIN);
+    });
+    onMessage("popup:login", () => {
+      setState(AppState.READY);
+    });
+    onMessage("popup:stopped", () => {
+      setState(AppState.READY);
+    });
+    onMessage("popup:started", () => {
+      setState(AppState.RECORDING);
     });
 
-    void browser.runtime.sendMessage({ type: "popup:check-status" });
+    void sendMessage("popup:check-status").catch(() => {});
   });
 
   const startRecording = async (
@@ -31,22 +30,14 @@ export function useAppState() {
     permissions: boolean
   ) => {
     setState(AppState.STARTING);
-    await browser.runtime.sendMessage({
-      type: "popup:start",
-      area,
-      mic,
-      audioId,
-      permissions,
-    });
+    await sendMessage("popup:start", { area, mic, audioId, permissions }).catch(
+      () => {},
+    );
     window.close();
   };
 
   const stopRecording = (mic: boolean, audioId: string) => {
-    void browser.runtime.sendMessage({
-      type: "popup:stop",
-      mic,
-      audioId,
-    });
+    void sendMessage("popup:stop", { mic, audioId }).catch(() => {});
   };
 
   const openSettings = () => setIsSettingsOpen(true);
