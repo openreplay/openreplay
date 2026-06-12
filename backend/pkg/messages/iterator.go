@@ -82,12 +82,13 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 
 		// Preprocess "system" messages
 		if _, ok := i.preFilter[msg.TypeID()]; ok {
-			msg = msg.Decode()
-			if msg == nil {
-				i.log.Error(ctx, "decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
+			decoded := msg.Decode()
+			if decoded == nil {
+				i.log.Error(ctx, "decode error, type: %d, reason: %s, info: %s",
+					msgType, decodeFailReason(msg), i.batchInfo.Info())
 				return
 			}
-			msg = transformDeprecated(msg)
+			msg = transformDeprecated(decoded)
 			if err := i.preprocessing(msg); err != nil {
 				i.log.Error(ctx, "message preprocessing err: %s", err)
 				return
@@ -102,11 +103,13 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		}
 
 		if i.autoDecode {
-			msg = msg.Decode()
-			if msg == nil {
-				i.log.Error(ctx, "decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
+			decoded := msg.Decode()
+			if decoded == nil {
+				i.log.Error(ctx, "decode error, type: %d, reason: %s, info: %s",
+					msgType, decodeFailReason(msg), i.batchInfo.Info())
 				return
 			}
+			msg = decoded
 		}
 
 		// Set meta information for message
@@ -198,6 +201,13 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 	}
 	return nil
+}
+
+func decodeFailReason(msg Message) string {
+	if rm, ok := msg.(*RawMessage); ok && rm.decodeErr != nil {
+		return rm.decodeErr.Error()
+	}
+	return "unknown"
 }
 
 func MessageHasSize(msgType uint64) bool {
