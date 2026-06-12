@@ -155,14 +155,20 @@ func isCHNotEnoughSpace(err error) bool {
 }
 
 func (c *connectorImpl) sendBulks(t *task) {
+	var wg sync.WaitGroup
+	wg.Add(len(t.bulks))
 	for _, b := range t.bulks {
-		if err := b.Send(); err != nil {
-			if isCHNotEnoughSpace(err) {
-				log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
+		go func(b Bulk) {
+			defer wg.Done()
+			if err := b.Send(); err != nil {
+				if isCHNotEnoughSpace(err) {
+					log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
+				}
+				log.Printf("can't send batch: %s", err)
 			}
-			log.Printf("can't send batch: %s", err)
-		}
+		}(b)
 	}
+	wg.Wait()
 }
 
 func (c *connectorImpl) worker() {
