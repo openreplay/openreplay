@@ -27,14 +27,16 @@ type messageIteratorImpl struct {
 	messageInfo *message
 	batchInfo   *BatchInfo
 	urls        *pageLocations
+	brokenStats *brokenBatches
 }
 
 func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
 	iter := &messageIteratorImpl{
-		log:        log,
-		handler:    messageHandler,
-		autoDecode: autoDecode,
-		urls:       NewPageLocations(),
+		log:         log,
+		handler:     messageHandler,
+		autoDecode:  autoDecode,
+		urls:        NewPageLocations(),
+		brokenStats: NewBrokenBatches(),
 	}
 	if len(messageFilter) != 0 {
 		filter := make(map[int]struct{}, len(messageFilter))
@@ -62,12 +64,11 @@ func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
 func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.sessionID)
 
-	// Create new message reader
 	reader := NewMessageReader(batchData)
-
-	// Pre-decode batch data
 	if err := reader.Parse(); err != nil {
-		i.log.Error(ctx, "pre-decode batch err: %s, info: %s", err, batchInfo.Info())
+		if count := i.brokenStats.Inc(batchInfo.sessionID); count == 1 {
+			i.log.Error(ctx, "pre-decode batch err: %s, info: %s", err, batchInfo.Info())
+		}
 		return
 	}
 
@@ -175,6 +176,11 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 		// Delete session from urls cache layer
 		i.urls.Delete(i.messageInfo.batch.sessionID)
+		// Report and clear broken-batch stats accumulated for this session.
+		if count, ok := i.brokenStats.Pop(i.messageInfo.batch.sessionID); ok {
+			ctx := context.WithValue(context.Background(), "sessionID", i.messageInfo.batch.sessionID)
+			i.log.Warn(ctx, "session ended with %d broken batch(es)", count)
+		}
 
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
