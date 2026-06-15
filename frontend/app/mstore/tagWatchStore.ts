@@ -1,4 +1,4 @@
-import { projectStore } from '@/mstore';
+import { filterStore, projectStore } from '@/mstore';
 import { makeAutoObservable } from 'mobx';
 
 import { tagWatchService } from 'App/services';
@@ -49,6 +49,7 @@ export default class TagWatchStore {
     try {
       const pid = projectId || projectStore.active?.projectId;
       const tagId: number = await tagWatchService.createTag(pid!, data);
+      void filterStore.fetchFilters(String(projectStore.activeSiteId), true);
       return tagId;
     } catch (e) {
       console.error(e);
@@ -60,6 +61,7 @@ export default class TagWatchStore {
       const pid = projectId || projectStore.active?.projectId;
       await tagWatchService.deleteTag(pid!, id);
       this.setTags(this.tags.filter((t) => t.tagId !== id));
+      void filterStore.fetchFilters(String(projectStore.activeSiteId), true);
     } catch (e) {
       console.error(e);
     }
@@ -73,6 +75,7 @@ export default class TagWatchStore {
     try {
       const pid = projectId || projectStore.active?.projectId;
       await tagWatchService.updateTag(pid!, id, data);
+      void filterStore.fetchFilters(String(projectStore.activeSiteId), true);
       const updatedTag = this.tags.find((t) => t.tagId === id);
       if (updatedTag) {
         this.setTags(
