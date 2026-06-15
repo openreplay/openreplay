@@ -413,6 +413,9 @@ export default class Assist {
       socket.on("input", (id, event) =>
         processEvent(id, event, this.remoteControl?.input),
       );
+      socket.on("select", (id, event) =>
+        processEvent(id, event, this.remoteControl?.select),
+      );
     }
 
     // TODO: restrict by id

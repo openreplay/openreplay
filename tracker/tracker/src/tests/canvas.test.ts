@@ -21,6 +21,7 @@ describe('CanvasRecorder', () => {
       isObscured: jest.fn().mockReturnValue(false),
       isHidden: jest.fn().mockReturnValue(false),
     }
+    appMock.attachResanitizeCallback = jest.fn()
     appMock.timestamp = jest.fn().mockReturnValue(1000)
     appMock.send = jest.fn()
     appMock.debug = {

@@ -13,6 +13,9 @@ type Assets interface {
 	IncreaseSavedSessions()
 	RecordDownloadDuration(durMillis float64, code int)
 	RecordUploadDuration(durMillis float64, isFailed bool)
+	IncreaseRetries()
+	IncreaseTerminalFailures(reason string)
+	RecordRetryQueueSize(size float64)
 	List() []prometheus.Collector
 }
 
@@ -21,6 +24,9 @@ type assetsImpl struct {
 	assetsSavedSessions     prometheus.Counter
 	assetsDownloadDuration  *prometheus.HistogramVec
 	assetsUploadDuration    *prometheus.HistogramVec
+	assetsRetries           prometheus.Counter
+	assetsTerminalFailures  *prometheus.CounterVec
+	assetsRetryQueueSize    prometheus.Gauge
 }
 
 func New(serviceName string) Assets {
@@ -29,6 +35,9 @@ func New(serviceName string) Assets {
 		assetsSavedSessions:     newSavedSessions(serviceName),
 		assetsDownloadDuration:  newDownloadDuration(serviceName),
 		assetsUploadDuration:    newUploadDuration(serviceName),
+		assetsRetries:           newRetries(serviceName),
+		assetsTerminalFailures:  newTerminalFailures(serviceName),
+		assetsRetryQueueSize:    newRetryQueueSize(serviceName),
 	}
 }
 
@@ -38,6 +47,9 @@ func (a *assetsImpl) List() []prometheus.Collector {
 		a.assetsSavedSessions,
 		a.assetsDownloadDuration,
 		a.assetsUploadDuration,
+		a.assetsRetries,
+		a.assetsTerminalFailures,
+		a.assetsRetryQueueSize,
 	}
 }
 
@@ -103,4 +115,47 @@ func (a *assetsImpl) RecordUploadDuration(durMillis float64, isFailed bool) {
 		failed = "true"
 	}
 	a.assetsUploadDuration.WithLabelValues(failed).Observe(durMillis / 1000.0)
+}
+
+func newRetries(serviceName string) prometheus.Counter {
+	return prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "retries_total",
+			Help:      "A counter displaying the total number of scheduled asset download retries.",
+		},
+	)
+}
+
+func (a *assetsImpl) IncreaseRetries() {
+	a.assetsRetries.Inc()
+}
+
+func newTerminalFailures(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "terminal_failures_total",
+			Help:      "A counter displaying the total number of assets that permanently failed to cache, by reason.",
+		},
+		[]string{"reason"},
+	)
+}
+
+func (a *assetsImpl) IncreaseTerminalFailures(reason string) {
+	a.assetsTerminalFailures.WithLabelValues(reason).Inc()
+}
+
+func newRetryQueueSize(serviceName string) prometheus.Gauge {
+	return prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: serviceName,
+			Name:      "retry_queue_size",
+			Help:      "A gauge displaying the current number of pending asset download retries.",
+		},
+	)
+}
+
+func (a *assetsImpl) RecordRetryQueueSize(size float64) {
+	a.assetsRetryQueueSize.Set(size)
 }

@@ -133,6 +133,11 @@ minio:
     registry: ghcr.io/openreplay
     repository: minio
     tag: "2025"
+  # Image used for database migration job (needs bash + mc CLI)
+  migrationImage:
+    registry: ghcr.io/openreplay
+    repository: minio
+    tag: "2025"
 
 clickhouse: &clickhouse
   password: ""

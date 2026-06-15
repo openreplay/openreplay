@@ -1,6 +1,5 @@
 import React from 'react';
-const OpenReplayPreloader =
-  require('../../svg/openreplay-preloader.svg').default;
+import OpenReplayPreloader from '../../svg/openreplay-preloader.svg';
 
 interface ORLoaderProps {
   width?: string;
