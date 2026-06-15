@@ -100,10 +100,12 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
     .map((label: string) => allFilterOptions.find((f) => f.name === label))
     .filter((f): f is Filter => f !== undefined);
   const activeFilterNames = breakdownFilters.map((f: any) => f.name);
+  const isMetadata = (i: Filter) =>
+    String(i.category).toLowerCase() === 'metadata';
   const propertyOptions: Filter[] = allFilterOptions.filter(
     (i) =>
       !i.isEvent &&
-      supportedOptions.includes(i.name) &&
+      (supportedOptions.includes(i.name) || isMetadata(i)) &&
       !activeFilterNames.includes(i.name),
   );
   const canAddMore = activeFilterNames.length < 3;

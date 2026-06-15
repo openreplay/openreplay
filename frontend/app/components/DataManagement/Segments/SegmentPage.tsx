@@ -92,6 +92,7 @@ function SegmentPage() {
         t('Segment {{name}} created successfully', { name: created.name }),
       );
       queryClient.invalidateQueries({ queryKey: ['segments-list'] });
+      void filterStore.fetchFilters(String(siteId), true);
       history.push(withSiteId(dataManagement.segmentPage(created.id), siteId!));
     },
     onError: () => {
@@ -108,6 +109,7 @@ function SegmentPage() {
       queryClient.invalidateQueries({
         queryKey: ['segment', siteId, segmentId],
       });
+      void filterStore.fetchFilters(String(siteId), true);
     },
     onError: () => {
       toast.error(t('Failed to update segment. Please try again.'));
@@ -118,6 +120,7 @@ function SegmentPage() {
     mutationFn: () => deleteSegment(segmentId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['segments-list'] });
+      void filterStore.fetchFilters(String(siteId), true);
       history.push(backLink);
     },
     onError: () => {

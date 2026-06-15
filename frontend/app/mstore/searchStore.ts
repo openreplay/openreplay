@@ -9,7 +9,12 @@ import {
 } from 'Types/filter/newFilter';
 import { makeAutoObservable, runInAction } from 'mobx';
 
-import { filterStore, sessionStore, settingsStore } from 'App/mstore';
+import {
+  filterStore,
+  projectStore,
+  sessionStore,
+  settingsStore,
+} from 'App/mstore';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
@@ -414,6 +419,8 @@ class SearchStore {
 
     // Refresh the list to show the latest saved searches
     await this.fetchSavedSearchList();
+    // Refresh filters so the new/updated segment appears in OmniSearch
+    void filterStore.fetchFilters(String(projectStore.activeSiteId), true);
   }
 
   clearList() {
