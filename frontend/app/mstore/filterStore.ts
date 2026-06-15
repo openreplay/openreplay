@@ -443,9 +443,12 @@ export default class FilterStore {
     return filters.map((filter) => ({ ...filter }));
   };
 
-  fetchFilters = async (projectId: string): Promise<Filter[]> => {
-    // Return cached filters if available
-    if (this.filters[projectId]?.length) {
+  fetchFilters = async (
+    projectId: string,
+    force = false,
+  ): Promise<Filter[]> => {
+    // Return cached filters if available (unless a refresh is forced)
+    if (!force && this.filters[projectId]?.length) {
       return this.getFilters(projectId);
     }
 
