@@ -577,6 +577,7 @@ export default class DashboardStore {
             abortSignal,
           );
           data.domURL = sessionResp?.domURL || [];
+          data.startedAt = sessionResp?.startTs ?? data.startTs ?? 0;
           data.events = [];
         }
 
