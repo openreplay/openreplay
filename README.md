@@ -117,13 +117,11 @@ OpenReplay can be deployed anywhere. Start with the [Getting Started guide](http
 
 ## OpenReplay Cloud
 
-Prefer not to self-host? Run OpenReplay in our cloud:
+Prefer not to self-host? Run OpenReplay in our [Cloud](https://openreplay.com/pricing):
 
 - **Serverless** — usage-based, pay only for the sessions you record.
 - **Dedicated** — a fully managed instance, in a dedicated VPC, with data residency across 50+ regions.
 - **Bring-Your-Own-Cloud (BYOC)** — we run and manage OpenReplay inside your own AWS, GCP, or Azure account.
-
-See [pricing](https://openreplay.com/pricing) for details.
 
 ## SDKs
 
