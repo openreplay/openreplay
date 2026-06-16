@@ -55,9 +55,13 @@ jobs:
           set -x
           cd frontend
           mv .env.sample .env
-          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:20-slim /bin/bash -c "yarn && yarn build"
+          # @openreplay/player is a `portal:../player` dependency, so the sibling
+          # player/ dir must be present inside the container at /home/<user>/../player.
+          PLAYER_DIR=$(cd ../player && pwd)
+          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -v ${PLAYER_DIR}:/home/player -w /home/${USER} --name node_build node:20-slim /bin/bash -c "yarn && yarn build"
           # https://github.com/docker/cli/issues/1134#issuecomment-613516912
-          DOCKER_BUILDKIT=1 docker build --target=cicd -t $DOCKER_REPO/frontend:${IMAGE_TAG} .
+          # Build context is the repo root (..) so the Dockerfile can reach player/; -f is relative to cwd (frontend).
+          DOCKER_BUILDKIT=1 docker build --target=cicd -f Dockerfile -t $DOCKER_REPO/frontend:${IMAGE_TAG} ..
           docker tag $DOCKER_REPO/frontend:${IMAGE_TAG} $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
           docker push $DOCKER_REPO/frontend:${IMAGE_TAG}
           docker push $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
