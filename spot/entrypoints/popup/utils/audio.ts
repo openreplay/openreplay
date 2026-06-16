@@ -14,7 +14,7 @@ export async function getAudioDevices(): Promise<{
     return { granted: true, audioDevices };
   } catch (error) {
     console.error("Error accessing audio devices:", error);
-    const msg = error.message ?? "";
+    const msg = error instanceof Error ? error.message : "";
     return {
       granted: false,
       denied: msg.includes("denied"),

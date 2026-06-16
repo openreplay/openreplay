@@ -27,7 +27,6 @@ export interface SpotErrorEvent {
   time: number;
 }
 
-/** Metadata the content UI sends back when saving a Spot. */
 export interface SpotMeta {
   name?: string;
   comment?: string;
@@ -41,11 +40,8 @@ export interface SpotMeta {
 export type RecArea = "tab" | "desktop";
 
 /**
- * Typed protocol for all extension-runtime messaging (background <-> content
- * <-> popup <-> offscreen <-> audio page). Page-world communication that
- * crosses into the host page (window.postMessage: orspot:*, ornotif:*,
- * injected:*) is intentionally NOT part of this map — it is a separate channel
- * and, for orspot:*, a contract with the OpenReplay web app.
+ * Typed protocol for extension-runtime messaging. Page-world communication
+ * (window.postMessage) is a separate channel defined in pageMessages.ts.
  */
 export interface ProtocolMap {
   // popup -> background

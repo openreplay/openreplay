@@ -15,6 +15,7 @@
         "@tailwindcss/postcss": "^4.3.1",
         "@tailwindcss/vite": "^4.3.1",
         "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
+        "@types/chrome": "^0.1.43",
         "@wxt-dev/module-solid": "^1.1.4",
         "autoprefixer": "^10.5.0",
         "daisyui": "5.5.23",
@@ -256,6 +257,8 @@
     "@types/babel__template": ["@types/babel__template@7.4.4", "", { "dependencies": { "@babel/parser": "^7.1.0", "@babel/types": "^7.0.0" } }, "sha512-h/NUaSyG5EyxBIp8YRxo4RMe2/qQgvyowRwVMzhYhBCONbW8PUsg4lkFMrhgZhUe5z3L3MiLDuvyJ/CaPa2A8A=="],
 
     "@types/babel__traverse": ["@types/babel__traverse@7.20.6", "", { "dependencies": { "@babel/types": "^7.20.7" } }, "sha512-r1bzfrm0tomOI8g1SzvCaQHo6Lcv6zu0EA+W2kHrt8dyrHQxGzBBL4kdkzIS+jBMV+EYcMAEAqXqYaLJq5rOZg=="],
+
+    "@types/chrome": ["@types/chrome@0.1.43", "", { "dependencies": { "@types/filesystem": "*", "@types/har-format": "*" } }, "sha512-ukH/HhmR6ht+UTX3PLUWJxgJ/RQcK2Foj4lBzsF24SIWsXgqhGuXqjd8FFuwioPP7d/JUKLM4g8GZxw3F4HTcA=="],
 
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 

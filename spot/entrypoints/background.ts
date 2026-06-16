@@ -34,7 +34,6 @@ export default defineBackground(() => {
   const ALARM_REFRESH = "spot-refresh";
   const ALARM_PING = "spot-ping";
 
-  // ---- recording data buffers (accumulated in-memory during a session) ----
   interface SpotBuffers {
     logs: SpotLog[];
     clicks: SpotClick[];
@@ -60,7 +59,6 @@ export default defineBackground(() => {
   let buffers = makeBuffers();
   let injectNetworkRequests: SpotNetworkRequest[] = [];
 
-  // ---- ephemeral coordination state ----
   let jwtToken = "";
   let micStatus: "on" | "off" = "off";
   let settingsCache: Settings = DEFAULT_SETTINGS;
@@ -87,7 +85,6 @@ export default defineBackground(() => {
   const permToState = (permissions: boolean, mic: boolean): 0 | 1 | 2 =>
     permissions ? (mic ? 2 : 1) : 0;
 
-  // ---------------------------------------------------------------- tabs ----
   async function resolveTabId(
     explicit?: number | null,
   ): Promise<number | undefined> {
@@ -109,10 +106,9 @@ export default defineBackground(() => {
   }
 
   /**
-   * Deliver a message that the recording UI depends on. Retries while the
-   * content script spins up and re-injects it once if it never answers — this
-   * replaces the old in-memory readiness map, which did not survive a service
-   * worker restart (#9).
+   * Deliver a message the recording UI depends on. Retries while the content
+   * script spins up and re-injects it once if it never answers, so delivery
+   * survives a service-worker restart.
    */
   async function sendToTab(
     type: any,
@@ -149,12 +145,9 @@ export default defineBackground(() => {
     if (tabId == null) return;
     try {
       await sendMessage(type, data, tabId);
-    } catch (e) {
-      // best effort
-    }
+    } catch (e) {}
   }
 
-  // ------------------------------------------------------------- auth -------
   function armAlarms() {
     void browser.alarms.create(ALARM_REFRESH, { periodInMinutes: 1 });
     void browser.alarms.create(ALARM_PING, { periodInMinutes: 1 });
@@ -252,7 +245,6 @@ export default defineBackground(() => {
     }
   }
 
-  // ---------------------------------------------------------- recording -----
   async function startRecording(
     area: "tab" | "desktop",
     microphone: boolean,
@@ -317,9 +309,8 @@ export default defineBackground(() => {
     await resetRecState();
   }
 
-  // -------------------------------------------------- top-level listeners ---
-  // Registered synchronously so they survive a service-worker restart (#7).
-  // They read the persisted recording state and no-op when idle.
+  // Listeners registered synchronously so they survive a service-worker
+  // restart; they read the persisted recording state and no-op when idle.
 
   /** Re-mount the recording UI after the followed tab finishes navigating. */
   browser.webNavigation.onCompleted.addListener(async (details) => {
@@ -399,7 +390,6 @@ export default defineBackground(() => {
     else if (alarm.name === ALARM_PING) void pingJWT();
   });
 
-  // --------------------------------------------------- message handlers -----
   onMessage("popup:start", async ({ data }) => {
     lastStartReq = {
       area: data.area,
@@ -477,7 +467,7 @@ export default defineBackground(() => {
 
   onMessage("popup:check-status", async () => {
     // Read persisted state: right after an idle service-worker wake the
-    // in-memory caches may not be rehydrated yet (#6).
+    // in-memory caches may not be rehydrated yet.
     const [token, rec] = await Promise.all([
       jwtTokenStore.getValue(),
       recStateStore.getValue(),
@@ -546,7 +536,6 @@ export default defineBackground(() => {
     return "pong";
   });
   onMessage("ort:bump-vitals", ({ data }) => {
-    // #1: the sender now uses the `vitals` key so this is no longer undefined.
     buffers.vitals.push({ name: data.vitals.name, value: data.vitals.value });
     return "pong";
   });
@@ -563,7 +552,6 @@ export default defineBackground(() => {
     injectNetworkRequests = [];
     await resetRecState();
     if (lastStartReq) {
-      // #4: derive the 0/1/2 audio-permission enum instead of passing a boolean.
       await sendToTab(
         "content:mount",
         {
@@ -786,7 +774,6 @@ export default defineBackground(() => {
     }
   }
 
-  // ------------------------------------------------------- offscreen doc ----
   async function initializeOffscreenDocument(): Promise<void> {
     const existingContexts = await browser.runtime.getContexts({
       contextTypes: ["OFFSCREEN_DOCUMENT"],
@@ -812,7 +799,6 @@ export default defineBackground(() => {
     }
   }
 
-  // -------------------------------------------------------------- boot ------
   browser.runtime.setUninstallURL("https://forms.gle/sMo8da2AvrPg5o7YA");
 
   browser.runtime.onInstalled.addListener(async ({ reason }) => {

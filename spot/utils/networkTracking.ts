@@ -30,8 +30,8 @@ function modifyOnSpot(request: TrackedRequest) {
 }
 
 function trackOnBefore(
-  details: browser.webRequest._OnBeforeRequestDetails & { reqBody?: string },
-) {
+  details: Browser.webRequest.OnBeforeRequestDetails & { reqBody?: string },
+): Browser.webRequest.BlockingResponse | undefined {
   if (details.method === "POST" && details.requestBody) {
     if (details.requestBody.formData) {
       details.reqBody = JSON.stringify(details.requestBody.formData);
@@ -41,19 +41,21 @@ function trackOnBefore(
     }
   }
   rawRequests.push({ ...details, startTs: Date.now(), duration: 0 });
+  return undefined;
 }
 
 function trackOnHeaders(
-  details: browser.webRequest._OnBeforeSendHeadersDetails,
-) {
+  details: Browser.webRequest.OnBeforeSendHeadersDetails,
+): Browser.webRequest.BlockingResponse | undefined {
+  modifyOnSpot(details);
+  return undefined;
+}
+
+function trackOnCompleted(details: Browser.webRequest.OnCompletedDetails) {
   modifyOnSpot(details);
 }
 
-function trackOnCompleted(details: browser.webRequest._OnCompletedDetails) {
-  modifyOnSpot(details);
-}
-
-function trackOnError(details: browser.webRequest._OnErrorOccurredDetails) {
+function trackOnError(details: Browser.webRequest.OnErrorOccurredDetails) {
   modifyOnSpot(details);
 }
 

@@ -2,8 +2,8 @@ import { createSignal, For, Show } from "solid-js";
 
 function Dropdown(props: {
   options: { label: string; id: string }[];
-  selected: string | boolean;
-  onChange: (value: string | boolean) => void;
+  selected: string;
+  onChange: (value: string) => void;
 }) {
   const [isOpen, setIsOpen] = createSignal(false);
 

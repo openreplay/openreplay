@@ -7,6 +7,7 @@ import {
 } from "./eventTrackers";
 import ControlsBox from "~/entrypoints/content/ControlsBox";
 import { sendMessage, onMessage } from "~/utils/messaging";
+import { pageMessages } from "~/utils/pageMessages";
 import { getChromeFullVersion } from "./utils";
 import "./style.css";
 import "~/assets/main.css";
@@ -58,7 +59,7 @@ export default defineContentScript({
       ui.remove();
     });
 
-    // no perm - muted - unmuted
+    // 0 = no perm, 1 = muted, 2 = unmuted
     type AudioPermState = 0 | 1 | 2;
     let audioPerm: AudioPermState = 0;
     const getAudioPerm = (): AudioPermState => audioPerm;
@@ -77,8 +78,6 @@ export default defineContentScript({
       return r.micStatus;
     };
 
-    // #12: a direct request/response round trip instead of polling a flag that
-    // was set by a separate push message.
     const getErrorEvents = async () => {
       return await sendMessage("ort:get-error-events").catch(() => []);
     };
@@ -93,7 +92,6 @@ export default defineContentScript({
             chunksReady = false;
             res(data);
           }
-          // 10 sec timeout
           if (tries > 100) {
             clearInterval(interval);
             res(null);
@@ -189,41 +187,38 @@ export default defineContentScript({
       }
     };
 
-    // ---- page-world channel (window.postMessage), left as raw messaging ----
-    // orspot:* is a contract with the OpenReplay web app; injected:* / ort:bump-*
-    // come from page-context scripts. Only the runtime hop to the background is
-    // migrated to the typed protocol.
+    const { webapp, injected, notifications, controls } = pageMessages;
     window.addEventListener("message", (event) => {
-      if (event.data.type === "orspot:ping") {
-        window.postMessage({ type: "orspot:pong" }, "*");
+      if (event.data.type === webapp.ping) {
+        window.postMessage({ type: webapp.pong }, "*");
       }
-      if (event.data.type === "orspot:token") {
-        window.postMessage({ type: "orspot:logged" }, "*");
+      if (event.data.type === webapp.token) {
+        window.postMessage({ type: webapp.logged }, "*");
         const ingest = window.location.origin;
         void sendMessage("ort:login-token", {
           token: event.data.token,
           ingest,
         }).catch(() => {});
       }
-      if (event.data.type === "orspot:invalidate") {
+      if (event.data.type === webapp.invalidate) {
         void sendMessage("ort:invalidate-token").catch(() => {});
       }
-      if (event.data.type === "ort:bump-logs") {
+      if (event.data.type === injected.bumpLogs) {
         void sendMessage("ort:bump-logs", { logs: event.data.logs }).catch(
           () => {},
         );
       }
-      if (event.data.type === "ort:bump-network") {
+      if (event.data.type === injected.bumpNetwork) {
         void sendMessage("ort:bump-network", { event: event.data.event }).catch(
           () => {},
         );
       }
     });
 
-    let injected = false;
+    let scriptInjected = false;
     function injectScript() {
-      if (injected) return;
-      injected = true;
+      if (scriptInjected) return;
+      scriptInjected = true;
       const scriptEl = document.createElement("script");
       scriptEl.src = browser.runtime.getURL("/injected.js");
       document.head.appendChild(scriptEl);
@@ -231,20 +226,20 @@ export default defineContentScript({
     function startConsoleTracking() {
       injectScript();
       setTimeout(() => {
-        window.postMessage({ type: "injected:c-start" });
+        window.postMessage({ type: injected.consoleStart });
       }, 100);
     }
     function startNetworkTracking() {
       injectScript();
       setTimeout(() => {
-        window.postMessage({ type: "injected:n-start" });
+        window.postMessage({ type: injected.networkStart });
       }, 100);
     }
     function stopConsoleTracking() {
-      window.postMessage({ type: "injected:c-stop" });
+      window.postMessage({ type: injected.consoleStop });
     }
     function stopNetworkTracking() {
-      window.postMessage({ type: "injected:n-stop" });
+      window.postMessage({ type: injected.networkStop });
     }
 
     function onRestart() {
@@ -275,7 +270,6 @@ export default defineContentScript({
       return r;
     }
 
-    // ---- background -> content (typed protocol) ----
     onMessage("content:mount", ({ data: msg }) => {
       if (recState === "count") return;
       recState = "count";
@@ -298,7 +292,7 @@ export default defineContentScript({
 
     onMessage("notif:display", ({ data: msg }) => {
       window.postMessage(
-        { type: "ornotif:display", message: msg.message },
+        { type: notifications.display, message: msg.message },
         "*",
       );
     });
@@ -318,11 +312,11 @@ export default defineContentScript({
     });
 
     onMessage("content:spot-saved", ({ data: msg }) => {
-      window.postMessage({ type: "ornotif:copy", url: msg.url }, "*");
+      window.postMessage({ type: notifications.copy, url: msg.url }, "*");
     });
 
     onMessage("content:stop", () => {
-      window.postMessage({ type: "content:trigger-stop" }, "*");
+      window.postMessage({ type: controls.triggerStop }, "*");
     });
   },
 });

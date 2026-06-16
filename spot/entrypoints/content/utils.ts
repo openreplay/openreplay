@@ -24,7 +24,7 @@ export function convertBlobToBase64(
     const reader = new FileReader();
     reader.readAsDataURL(blob);
     reader.onloadend = () => {
-      const parts = [];
+      const parts: string[] = [];
       const base64data = reader.result as string;
       if (base64data && base64data.length > hardLimit) {
         const chunkSize = hardLimit;

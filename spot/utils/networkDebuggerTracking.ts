@@ -1,14 +1,14 @@
 import { getNetworkRequestType } from "./networkTrackingUtils";
 
-let requestMaps = {};
-const potentialActiveTabs: Array<string | number> = [];
+let requestMaps: Record<number, Record<string, any>> = {};
+const potentialActiveTabs: number[] = [];
 
-export function resetMap(tabId?: string) {
+export function resetMap(tabId?: number) {
   if (tabId) delete requestMaps[tabId];
   else requestMaps = {};
 }
 
-export async function attachDebuggerToTab(tabId: string | number) {
+export async function attachDebuggerToTab(tabId: number) {
   if (requestMaps[tabId] && potentialActiveTabs.includes(tabId)) return;
   await new Promise((resolve, reject) => {
     chrome.debugger.attach({ tabId }, "1.3", () => {
@@ -21,7 +21,7 @@ export async function attachDebuggerToTab(tabId: string | number) {
   });
 }
 
-export function stopDebugger(tabId?: string | number) {
+export function stopDebugger(tabId?: number) {
   if (tabId) {
     chrome.debugger.detach({ tabId });
     const index = potentialActiveTabs.indexOf(tabId);
@@ -75,7 +75,7 @@ function handleRequestIntercept(source, method, params) {
       if (!requestMaps[tabId][reqId]) return;
       requestMaps[tabId][reqId].duration = Date.now() - requestMaps[tabId][reqId].timestamp;
       requestMaps[tabId][reqId].responseBodySize = requestMaps[tabId][reqId].encodedBodySize;
-      chrome.debugger.sendCommand({ tabId }, "Network.getResponseBody", { requestId: params.requestId }, (res) => {
+      chrome.debugger.sendCommand({ tabId }, "Network.getResponseBody", { requestId: params.requestId }, (res?: { body?: string; base64Encoded?: boolean; error?: string }) => {
         if (!res || res.error) {
           requestMaps[tabId][reqId].error = res?.error || "Unknown";
         } else {
@@ -90,9 +90,12 @@ function handleRequestIntercept(source, method, params) {
   }
 }
 
-export function getRequests(tabId?: string) {
+export function getRequests(tabId?: number) {
   if (tabId) {
     return Object.values(requestMaps[tabId] || {});
   }
-  return Object.values(requestMaps).reduce((acc, curr) => acc.concat(Object.values(curr)), []);
+  return Object.values(requestMaps).reduce(
+    (acc: any[], curr) => acc.concat(Object.values(curr)),
+    [] as any[],
+  );
 }

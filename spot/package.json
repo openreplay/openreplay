@@ -26,6 +26,7 @@
     "@tailwindcss/postcss": "^4.3.1",
     "@tailwindcss/vite": "^4.3.1",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
+    "@types/chrome": "^0.1.43",
     "@wxt-dev/module-solid": "^1.1.4",
     "autoprefixer": "^10.5.0",
     "daisyui": "5.5.23",

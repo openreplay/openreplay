@@ -14,7 +14,6 @@ export function startLocationRecording() {
 
   const checkVitals = (val: Metric) => {
     if (locationInt !== null) {
-      // #1: send under the `vitals` key the background actually reads.
       void sendMessage("ort:bump-vitals", { vitals: val }).catch(() => {});
     }
   };
@@ -80,7 +79,7 @@ export function startClickRecording() {
   clicksArray.length = 0;
   document.addEventListener("click", trackClick);
   // The 1s cadence doubles as the service-worker keep-alive during recording:
-  // an inbound message every second resets the MV3 idle timer (#6).
+  // an inbound message every second resets the MV3 idle timer.
   clickInt = setInterval(() => {
     void sendMessage("ort:bump-clicks", { clicks: clicksArray.concat([]) }).catch(
       () => {},

@@ -31,7 +31,6 @@ function App() {
     selectAudioDevice,
   } = useAudioDevices();
 
-  // Listen for mic status updates from background
   onMount(() => {
     onMessage("popup:mic-status", ({ data }) => {
       setMic(data.status);
