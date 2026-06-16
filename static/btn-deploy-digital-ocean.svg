@@ -1,5 +1,5 @@
-<svg width="242" height="44" viewBox="0 0 242 44" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Deploy to DigitalOcean">
-  <rect x="0.5" y="0.5" width="241" height="43" rx="10" fill="#FFFFFF" stroke="#D0D7DE"/>
-  <g transform="translate(14.00,14.00) scale(0.1250)"><path fill="#0080ff" d="M64.1424 102.9593H39.2391V78.5231h24.9033ZM39.2391 122.132H20.3732v-19.1726h18.866Zm-18.8659-19.1726H4.5301v-15.792h15.8431Zm43.3934 24.8132v-24.8132c26.4107 0 46.784-25.9396 36.5973-53.3885-3.7744-10.1506-11.694-18.419-22.2605-22.1813-27.1663-9.7717-53.2 10.5274-53.2 36.468H0C0 22.5037 40.3707-10.206 84.5197 3.3281c19.2427 6.0173 34.3342 21.0547 40.3706 40.2293 13.5812 43.9857-19.2457 84.215-61.1237 84.215Zm0 0"/></g>
-  <text x="40.0" y="28" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="600" fill="#1F2328">Deploy to DigitalOcean</text>
+<svg width="231" height="44" viewBox="0 0 231 44" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Deploy to DigitalOcean">
+  <rect x="0.5" y="0.5" width="230" height="43" rx="21.5" fill="#FFFFFF" stroke="#E7E5E4"></rect>
+  <g transform="translate(18.162,11.625) scale(0.162)"><path fill="#0080ff" d="M64.1424 102.9593H39.2391V78.5231h24.9033ZM39.2391 122.132H20.3732v-19.1726h18.866Zm-18.8659-19.1726H4.5301v-15.792h15.8431Zm43.3934 24.8132v-24.8132c26.4107 0 46.784-25.9396 36.5973-53.3885-3.7744-10.1506-11.694-18.419-22.2605-22.1813-27.1663-9.7717-53.2 10.5274-53.2 36.468H0C0 22.5037 40.3707-10.206 84.5197 3.3281c19.2427 6.0173 34.3342 21.0547 40.3706 40.2293 13.5812 43.9857-19.2457 84.215-61.1237 84.215Zm0 0"></path></g>
+  <text x="50.073" y="27.5" font-family="-apple-system,BlinkMacSystemFont,&#39;Segoe UI&#39;,Helvetica,Arial,sans-serif" font-size="14"><tspan font-weight="500" fill="#78716C">Deploy to </tspan><tspan font-weight="700" fill="#0D033B">DigitalOcean</tspan></text>
 </svg>
