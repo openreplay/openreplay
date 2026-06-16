@@ -93,7 +93,7 @@ On top of free self-hosting, you can run OpenReplay three ways: **Serverless** (
 | Cloud Serverless (usage based) | ✅ | ✅ | ✅ | ✅ |
 | Cloud Dedicated | **50+ regions** | ❌ | ❌ | ❌ |
 | Bring-Your-Own-Cloud (BYOC) | ✅ | ❌ | ❌ | ❌ |
-| Data stays in your infrastructure | ✅ | ❌ | Enterprise | Hobby version |
+| Data stays in your infrastructure | ✅ | ❌ | Enterprise | Hobby |
 | No 3rd-party processor | ✅ | ❌ | ⚠️ | ⚠️ |
 | Mask PII at capture | ✅ | ✅ | ✅ | ✅ |
 
