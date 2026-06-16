@@ -5,6 +5,7 @@ import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globa
 jest.mock('../common/messages.gen', () => {
   const Type = {
     Timestamp: 0,
+    SetNodeAttribute: 12,
     SetViewportSize: 5,
     MouseMove: 20,
     SetPageVisibility: 55,
@@ -32,6 +33,7 @@ import Message from '../common/messages.gen.js'
 
 const MType = {
   Timestamp: 0,
+  SetNodeAttribute: 12,
   BatchMetadata: 81,
   TabData: 118,
   MouseMove: 20,
@@ -39,6 +41,9 @@ const MType = {
   SetNodeAttributeURLBased: 60,
   SetCSSDataURLBased: 61,
 } as const
+
+// "DOM parsed" signal; writing it ends the visual init phase.
+const VISUAL_SIGNAL: Message = [MType.SetNodeAttribute, 0, 'orloaded', 'true'] as unknown as Message
 
 describe('BatchWriter', () => {
   let onBatch: jest.Mock
@@ -55,7 +60,9 @@ describe('BatchWriter', () => {
     jest.clearAllMocks()
   })
 
-  function createWriter(opts: { protocolVersion?: number; localDebug?: boolean } = {}) {
+  function createWriter(
+    opts: { protocolVersion?: number; localDebug?: boolean; exitInit?: boolean } = {},
+  ) {
     const writer = new BatchWriter(
       1,
       1000,
@@ -68,6 +75,11 @@ describe('BatchWriter', () => {
     )
     if (opts.protocolVersion) {
       writer.setProtocolVersion(opts.protocolVersion)
+    }
+    // v2 starts in the visual init phase; end it by default (signal w/ nothing buffered
+    // emits no batch). Init-phase tests pass exitInit:false.
+    if (opts.protocolVersion === 2 && opts.exitInit !== false) {
+      writer.writeMessage(VISUAL_SIGNAL)
     }
     return writer
   }

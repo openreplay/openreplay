@@ -243,19 +243,9 @@ export default class TopObserver extends Observer {
       window.document.documentElement,
     )
 
-    // DEBUG orload
-    const markCandidates: Array<Node | null> = [
-      document.head,
-      document.body,
-      document.body ? document.body.querySelector('div') : null,
-    ]
-    for (const candidate of markCandidates) {
-      const markId = candidate ? this.app.nodes.getID(candidate) : undefined
-      if (markId !== undefined) {
-        this.app.send(SetNodeAttribute(markId, 'orloaded', 'true'))
-        break
-      }
-    }
+    // "DOM parsed" signal: observeRoot sent the full initial tree synchronously above.
+    // The worker keys on this attribute (BatchWriter) to finalize the visual batch.
+    this.app.send(SetNodeAttribute(0, 'orloaded', 'true'))
   }
 
   crossdomainObserve(rootNodeId: number, frameOder: number, frameLevel: number) {

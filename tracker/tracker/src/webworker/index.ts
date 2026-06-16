@@ -182,7 +182,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       initiateRestart()
       return
     }
-    data.batch && sender.sendCompressed(data.batch, data.dataType)
+    data.batch && sender.sendCompressed(data.batch, data.dataType, data.split)
   }
   if (data.type === 'uncompressed') {
     if (!sender) {
@@ -190,7 +190,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       initiateRestart()
       return
     }
-    data.batch && sender.sendUncompressed(data.batch, data.dataType)
+    data.batch && sender.sendUncompressed(data.batch, data.dataType, data.split)
   }
 
   if (data.type === 'start') {
@@ -207,8 +207,8 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       },
       data.connAttemptCount,
       data.connAttemptGap,
-      (batch, dataType) => {
-          postMessage({ type: 'compress', batch, dataType }, [batch.buffer])
+      (batch, dataType, split) => {
+          postMessage({ type: 'compress', batch, dataType, split }, [batch.buffer])
       },
       data.pageNo,
     )
@@ -216,12 +216,12 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       data.pageNo,
       data.timestamp,
       data.url,
-      (batch, skipCompression, dataType = 'player') => {
+      (batch, skipCompression, dataType = 'player', split) => {
         if (!sender) return;
         if (skipCompression) {
-          sender.sendUncompressed(batch, dataType)
+          sender.sendUncompressed(batch, dataType, split)
         } else {
-          sender.push(batch, dataType)
+          sender.push(batch, dataType, split)
         }
       },
       data.tabId,
