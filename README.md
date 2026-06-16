@@ -43,7 +43,7 @@
 
 <p align="center">
   <a href="https://github.com/openreplay/openreplay">
-    <img src="static/overview.png">
+    <img src="static/demo.gif">
   </a>
 </p>
 
