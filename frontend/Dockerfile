@@ -5,7 +5,7 @@ workdir /work/frontend
 COPY player /work/player
 COPY frontend /work/frontend
 # player is its own project: install its deps so its source imports (fflate, fzstd, …) resolve when frontend bundles it.
-RUN cd /work/player && yarn install --frozen-lockfile
+RUN cd /work/player && npm install --no-audit --no-fund
 RUN cp .env.sample .env
 ARG NODE_OPTIONS="--max-old-space-size=10240"
 ENV NODE_OPTIONS=$NODE_OPTIONS
