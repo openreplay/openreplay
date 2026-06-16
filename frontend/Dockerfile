@@ -4,6 +4,8 @@ workdir /work/frontend
 # sibling player/ package is available — frontend depends on it via `portal:../player`.
 COPY player /work/player
 COPY frontend /work/frontend
+# player is its own project: install its deps so its source imports (fflate, fzstd, …) resolve when frontend bundles it.
+RUN cd /work/player && yarn install --frozen-lockfile
 RUN cp .env.sample .env
 ARG NODE_OPTIONS="--max-old-space-size=10240"
 ENV NODE_OPTIONS=$NODE_OPTIONS
