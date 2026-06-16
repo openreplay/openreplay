@@ -1,20 +1,23 @@
-import { makeAutoObservable, runInAction, reaction } from 'mobx';
-import { dashboardService, metricService } from 'App/services';
-import { toast } from 'react-toastify';
-import Period, { LAST_24_HOURS } from 'Types/app/period';
-import { getRE } from 'App/utils';
-import Filter from './types/filter';
-import Widget from './types/widget';
-import Dashboard from './types/dashboard';
 import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
 import { HEATMAP } from '@/constants/card';
-import { sessionStore } from 'App/mstore';
 import { CUSTOM_RANGE } from '@/dateRange';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
+import { makeAutoObservable, reaction, runInAction } from 'mobx';
+import { toast } from 'react-toastify';
+
+import { sessionStore } from 'App/mstore';
+import { dashboardService, metricService } from 'App/services';
+import { getRE } from 'App/utils';
+
+import Dashboard from './types/dashboard';
+import Filter from './types/filter';
+import Widget from './types/widget';
 
 interface DashboardFilter {
   query?: string;
   showMine?: boolean;
 }
+
 export default class DashboardStore {
   siteId: any = null;
   dashboards: Dashboard[] = [];
