@@ -1,0 +1,13 @@
+# Build context is the repo root, but this image only needs frontend/ + player/.
+# Ignore everything, then re-include just those two, then drop heavy subdirs.
+*
+!frontend
+!player
+
+**/node_modules
+**/.git
+**/.cache
+npm-debug.log
+**/build.sh
+**/build_*.sh
+**/*deploy.sh

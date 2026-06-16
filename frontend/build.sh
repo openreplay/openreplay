@@ -63,7 +63,9 @@ update_helm_release() {
 export DOCKER_BUILDKIT=1
 function build() {
     # Run docker as the same user, else we'll run in to permission issues.
-    docker build -t ${DOCKER_REPO:-'local'}/frontend:${image_tag} --platform ${ARCH} --build-arg GIT_SHA=$git_sha .
+    # Build from the repo root so the sibling player/ package (a `portal:../player`
+    # dependency of frontend) is part of the build context.
+    docker build -f "$GIT_ROOT/frontend/Dockerfile" -t ${DOCKER_REPO:-'local'}/frontend:${image_tag} --platform ${ARCH} --build-arg GIT_SHA=$git_sha "$GIT_ROOT"
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/frontend:${image_tag}
     }
