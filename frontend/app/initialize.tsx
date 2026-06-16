@@ -15,6 +15,7 @@ import { BrowserRouter, LocationSync } from 'App/routing';
 import { MountPoint, Notification } from 'UI';
 
 import ENV from '../env';
+import { seedMockStore } from './dev/mockBootstrap';
 import Router from './Router';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import AnimatedSVG from './components/shared/AnimatedSVG';
@@ -32,6 +33,10 @@ window.getCommitHash = () =>
   console.log(`Version: ${ENV.VERSION}, Commit: ${ENV.COMMIT_HASH}`);
 
 const queryClient = new QueryClient();
+
+// Single app store. Under MOCK=1 we seed it with a fake user/project (no backend).
+const mockStore = new RootStore();
+if (process.env.MOCK === '1') seedMockStore();
 
 const cssVar = (name: string) => `var(--color-${name})`;
 
@@ -206,7 +211,7 @@ const ThemedApp: React.FC = () => {
       }}
     >
       <App>
-        <StoreProvider store={new RootStore()}>
+        <StoreProvider store={mockStore}>
           <DndProvider backend={HTML5Backend}>
             <BrowserRouter>
               <LocationSync />

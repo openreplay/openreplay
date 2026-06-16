@@ -99,6 +99,7 @@ function SideMenu(props: Props) {
   const menuRoutes: any = {
     [MENU.EXIT]: () => withSiteId(routes.sessions(), siteId),
     [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
+    [MENU.ISSUES]: () => withSiteId(routes.issues(), siteId),
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.LIVE_SESSIONS]: () => withSiteId(routes.assist(), siteId),

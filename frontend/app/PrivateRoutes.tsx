@@ -32,6 +32,8 @@ const components: any = {
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
+  IssuesPure: lazy(() => import('Components/Issues/IssuesList')),
+  IssueDetailPure: lazy(() => import('Components/Issues/IssueDetail')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
   ActivityPure: lazy(
     () => import('Components/DataManagement/Activity/ActivityPage'),
@@ -65,6 +67,8 @@ const enhancedComponents: any = {
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   Highlights: withSiteIdUpdater(components.HighlightsPure),
+  Issues: withSiteIdUpdater(components.IssuesPure),
+  IssueDetail: withSiteIdUpdater(components.IssueDetailPure),
   Kai: withSiteIdUpdater(components.KaiPure),
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
@@ -110,6 +114,8 @@ const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
 
 const HIGHLIGHTS_PATH = routes.highlights();
+const ISSUES_PATH = routes.issues();
+const ISSUE_DETAIL_PATH = routes.issue();
 const KAI_PATH = routes.kai();
 
 function PrivateRoutes() {
@@ -338,6 +344,15 @@ function PrivateRoutes() {
         <Route
           path={withSiteId(HIGHLIGHTS_PATH, siteIdList)}
           element={<enhancedComponents.Highlights />}
+        />
+
+        <Route
+          path={withSiteId(ISSUE_DETAIL_PATH, siteIdList)}
+          element={<enhancedComponents.IssueDetail />}
+        />
+        <Route
+          path={withSiteId(ISSUES_PATH, siteIdList)}
+          element={<enhancedComponents.Issues />}
         />
 
         <Route
