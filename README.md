@@ -53,17 +53,17 @@ That makes OpenReplay a fit for teams that can't ship customer data to an extern
 
 ## Why OpenReplay
 
-- **Own your data.** Self-host on your own infrastructure (AWS, GCP, Azure, and more). Session data never leaves your security perimeter. OpenReplay is [SOC 2 Type II](https://openreplay.com/solutions/size/enterprise) compliant.
+- **Own your data.** Self-host on your own infrastructure (AWS, GCP, Azure, and more). Session data never leaves your security perimeter.
 - **Privacy by design.** Mask, obscure, or skip any data [at capture time](https://docs.openreplay.com/en/sdk/sanitize-data/), before it ever reaches your servers. Turn on [private mode](https://docs.openreplay.com/en/sdk/private-mode/) to redact everything by default.
 - **Everything in one place.** Session replay, DevTools, product analytics, and cobrowsing — instead of stitching together separate tools.
 - **Lightweight.** A lightweight tracker that sends minimal data asynchronously, for very limited impact on performance.
-- **Open source.** Read the code, self-host it for free, and contribute. No black boxes.
+- **Open-source.** Read the code, self-host it for free, and contribute. No black boxes.
 
 ## Features
 
 - **[Session Replay](https://openreplay.com/product/feature/session-replay).** Relive what your users experience — where they navigate, click, hesitate, or struggle — and catch every error, slowdown, or crash along the way. Search and filter by almost any user action, session attribute, or technical event — no instrumentation required.
 - **[DevTools](https://openreplay.com/product/feature/developer-tools).** Debug as if the bug happened in your own browser. Get the full context — network activity, console logs, JS errors, store actions/state, and 40+ performance metrics — to reproduce and fix issues instantly.
-- **[Product Analytics](https://docs.openreplay.com/en/product-analytics/).** Know which journeys convert and where users drop off, with [funnels](https://docs.openreplay.com/en/product-analytics/funnels/), [trends](https://docs.openreplay.com/en/product-analytics/trends/), [journeys](https://docs.openreplay.com/en/product-analytics/journeys/), [heatmaps](https://docs.openreplay.com/en/product-analytics/heatmaps/), [dashboards](https://docs.openreplay.com/en/product-analytics/dashboards/), and [web analytics](https://docs.openreplay.com/en/product-analytics/web-analytics/) — all backed by the underlying session replays for full context.
+- **[Product Analytics](https://docs.openreplay.com/en/product-analytics/).** Know which journeys convert and where users drop off, with [funnels](https://docs.openreplay.com/en/product-analytics/funnels/), [trends](https://docs.openreplay.com/en/product-analytics/trends/), [journeys](https://docs.openreplay.com/en/product-analytics/journeys/), [heatmaps](https://docs.openreplay.com/en/product-analytics/heatmaps/), and [web analytics](https://docs.openreplay.com/en/product-analytics/web-analytics/) — all backed by the underlying session replays for full context.
 - **[Cobrowsing](https://docs.openreplay.com/en/plugins/assist/).** Support users when it matters most. See their live screen, take cursor control with permission, and hop on a WebRTC call — no meeting links, downloads, or third-party screen-sharing software.
 - **[Spot](https://openreplay.com/platform/spot).** A free Chrome extension that captures bugs straight from the browser. Each recording bundles the console, network, and environment details developers need to fix the issue.
 - **[Mobile](https://openreplay.com/product/feature/mobile).** Native session replay for iOS, Android, and React Native apps.
@@ -80,9 +80,29 @@ OpenReplay was built for teams in regulated and security-conscious industries wh
 - **Access control.** Role-based access (Owner, Admin, Member) plus SSO (SAML, OIDC) for enterprise authentication.
 - **SOC 2 Type II.** OpenReplay Cloud is SOC 2 Type II compliant.
 
+## How OpenReplay compares
+
+Most session-replay and product-analytics tools are closed-source SaaS: your users' data is captured into a vendor's multi-tenant cloud, and your control ends at a settings page. OpenReplay is open source and gives you the full range of deployment models — including options no other vendor offers — so data security and residency stay your decision.
+
+On top of free self-hosting, you can run OpenReplay three ways: **Serverless** (usage-based, like everyone else), a fully managed **Dedicated** instance with data residency in **50+ regions**, or **Bring-Your-Own-Cloud (BYOC)**, where we deploy and manage OpenReplay inside your *own* cloud account so session data never leaves it.
+
+| Security & privacy | OpenReplay | FullStory | LogRocket | PostHog |
+| --- | :---: | :---: | :---: | :---: |
+| Open-source | ✅ | ❌ | ❌ | ✅ |
+| Self-host in production (free) | ✅ | ❌ | Enterprise only <sup>1</sup> | Deprecated <sup>2</sup> |
+| Cloud Serverless (usage based) | ✅ | ✅ | ✅ | ✅ |
+| Cloud Dedicated | **50+ regions across AWS/Azure/GCP** | ❌ | ❌ | ❌ |
+| Bring-Your-Own-Cloud (BYOC) | ✅ | ❌ | ❌ | ❌ |
+| Data stays in your infrastructure | ✅ | ❌ | Enterprise only | Hobby version only |
+| No 3rd-party processor | ✅ | ❌ | ⚠️ | ⚠️ |
+| Mask PII at capture | ✅ | ✅ | ✅ | ✅ |
+
+<sup>1</sup> LogRocket has a self-hosted version but for enterprise customers only. It's limited and not open-source.  
+<sup>2</sup> PostHog is open source, but its self-hosted (Kubernetes) deployment is deprecated — only a "hobby" Docker build remains, and new features ship cloud-only.
+
 ## Deploy anywhere
 
-OpenReplay can be deployed anywhere. Follow our step-by-step guides:
+OpenReplay can be deployed anywhere. Start with the [Getting Started guide](https://docs.openreplay.com/en/getting-started/). All you need is a single VM on a baseline of 2 vCPUs, 8 GB of RAM, and 50 GB of storage:
 
 - [AWS](https://docs.openreplay.com/en/deployment/deploy-aws/)
 - [Google Cloud](https://docs.openreplay.com/en/deployment/deploy-gcp/)
@@ -95,11 +115,15 @@ OpenReplay can be deployed anywhere. Follow our step-by-step guides:
 - [Ubuntu (bare metal)](https://docs.openreplay.com/en/deployment/deploy-ubuntu/)
 - [From source](https://docs.openreplay.com/en/deployment/deploy-source/)
 
-A single instance runs on a baseline of 2 vCPUs, 8 GB of RAM, and 50 GB of storage. New to OpenReplay? Start with the [Getting Started guide](https://docs.openreplay.com/en/getting-started/).
-
 ## OpenReplay Cloud
 
-Prefer not to self-host? [Sign up](https://app.openreplay.com/signup) for a free account on our managed cloud and start recording in minutes. See [pricing](https://openreplay.com/pricing) for details.
+Prefer not to self-host? Run OpenReplay in our cloud:
+
+- **Serverless** — usage-based, pay only for the sessions you record.
+- **Dedicated** — a fully managed instance, in a dedicated VPC, with data residency across 50+ regions.
+- **Bring-Your-Own-Cloud (BYOC)** — we run and manage OpenReplay inside your own AWS, GCP, or Azure account.
+
+See [pricing](https://openreplay.com/pricing) for details.
 
 ## SDKs
 
@@ -112,9 +136,7 @@ Get to the root cause faster by capturing application state and backend context 
 
 - **State management:** [Redux](https://docs.openreplay.com/en/plugins/redux/), [VueX](https://docs.openreplay.com/en/plugins/vuex/), [Pinia](https://docs.openreplay.com/en/plugins/pinia/), [MobX](https://docs.openreplay.com/en/plugins/mobx/), [NgRx](https://docs.openreplay.com/en/plugins/ngrx/), and [Zustand](https://docs.openreplay.com/en/plugins/zustand/).
 - **Network & performance:** [Fetch](https://docs.openreplay.com/en/plugins/fetch/), [Axios](https://docs.openreplay.com/en/plugins/axios/), [GraphQL](https://docs.openreplay.com/en/plugins/graphql/) (Apollo, Relay), and the [Profiler](https://docs.openreplay.com/en/plugins/profiler/).
-- **Integrations:** Sync backend logs and errors with your replays to see what happened front to back — [Sentry](https://docs.openreplay.com/en/integrations/sentry/), [Datadog](https://docs.openreplay.com/en/integrations/datadog/), [Elastic](https://docs.openreplay.com/en/integrations/elastic/), [Dynatrace](https://docs.openreplay.com/en/integrations/dynatrace/), and more. Plus ticketing ([Jira](https://docs.openreplay.com/en/integrations/jira/), [GitHub](https://docs.openreplay.com/en/integrations/github/), [Zendesk](https://docs.openreplay.com/en/integrations/zendesk/)), messaging ([Slack](https://docs.openreplay.com/en/integrations/slack/), [Microsoft Teams](https://docs.openreplay.com/en/integrations/msteams/)), and [Google Tag Manager](https://docs.openreplay.com/en/integrations/google-tag-manager/).
-
-See all [integrations](https://docs.openreplay.com/en/integrations/).
+- **Integrations:** Sync backend logs and errors with your replays to see what happened front to back — [Sentry](https://docs.openreplay.com/en/integrations/sentry/), [Datadog](https://docs.openreplay.com/en/integrations/datadog/), [Elastic](https://docs.openreplay.com/en/integrations/elastic/), [Dynatrace](https://docs.openreplay.com/en/integrations/dynatrace/), and more. Plus ticketing ([Jira](https://docs.openreplay.com/en/integrations/jira/), [GitHub](https://docs.openreplay.com/en/integrations/github/), [Zendesk](https://docs.openreplay.com/en/integrations/zendesk/), messaging ([Slack](https://docs.openreplay.com/en/integrations/slack/), [Microsoft Teams](https://docs.openreplay.com/en/integrations/msteams/), and [Google Tag Manager](https://docs.openreplay.com/en/integrations/google-tag-manager/)).
 
 ## Documentation & resources
 
@@ -132,9 +154,7 @@ Start with the [documentation](https://docs.openreplay.com/) to troubleshoot com
 
 ## Contributing
 
-We're always on the lookout for contributions, and we're glad you're considering it! Not sure where to start? Look for open issues, preferably those marked as good first issues.
-
-See our [Contributing Guide](CONTRIBUTING.md) for more details, and feel free to join our [Slack](https://slack.openreplay.com) to ask questions, discuss ideas, or connect with other contributors.
+We're always on the lookout for contributions, and we're glad you're considering it! Not sure where to start? Look for open issues, preferably those marked as good first issues. See our [Contributing Guide](CONTRIBUTING.md) for more details, and feel free to join our [Slack](https://slack.openreplay.com) to ask questions, discuss ideas, or connect with other contributors.
 
 ## License
 
