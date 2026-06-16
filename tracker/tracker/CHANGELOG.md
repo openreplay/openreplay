@@ -1,3 +1,7 @@
+## 18.0.15
+
+- small fixes towards vizual batch consistency
+
 ## 18.0.14
 
 - support dynamic sanitization changes through `resanitize()` method
