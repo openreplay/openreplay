@@ -89,11 +89,11 @@ On top of free self-hosting, you can run OpenReplay three ways: **Serverless** (
 | Security & privacy | OpenReplay | FullStory | LogRocket | PostHog |
 | --- | :---: | :---: | :---: | :---: |
 | Open-source | ✅ | ❌ | ❌ | ✅ |
-| Self-host in production (free) | ✅ | ❌ | Enterprise only <sup>1</sup> | Deprecated <sup>2</sup> |
+| Self-host in production (free) | ✅ | ❌ | Enterprise <sup>1</sup> | Deprecated <sup>2</sup> |
 | Cloud Serverless (usage based) | ✅ | ✅ | ✅ | ✅ |
-| Cloud Dedicated | **50+ regions across AWS/Azure/GCP** | ❌ | ❌ | ❌ |
+| Cloud Dedicated | **50+ regions** | ❌ | ❌ | ❌ |
 | Bring-Your-Own-Cloud (BYOC) | ✅ | ❌ | ❌ | ❌ |
-| Data stays in your infrastructure | ✅ | ❌ | Enterprise only | Hobby version only |
+| Data stays in your infrastructure | ✅ | ❌ | Enterprise | Hobby version |
 | No 3rd-party processor | ✅ | ❌ | ⚠️ | ⚠️ |
 | Mask PII at capture | ✅ | ✅ | ✅ | ✅ |
 
