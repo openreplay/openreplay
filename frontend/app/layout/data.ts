@@ -239,7 +239,8 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
       {
         label: t('Test Agents'),
         key: PREFERENCES_MENU.TEST_AGENTS,
-        icon: 'kai-mono',
+        icon: 'analytics',
+        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
       },
     ],
   },
