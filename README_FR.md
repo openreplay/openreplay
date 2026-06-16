@@ -5,9 +5,8 @@
   &nbsp;|&nbsp;
   <a href="/README_RU.md">Русский</a>
   &nbsp;|&nbsp;
-  <a href="/README_RU.md">العربية</a>
+  <a href="/README_AR.md">العربية</a>
 </p>
-
 <p align="center">
   <a href="https://openreplay.com/#gh-light-mode-only">
     <img src="static/openreplay-git-banner-light.png" width="100%">
@@ -16,91 +15,144 @@
     <img src="static/openreplay-git-banner-dark.png" width="100%">
   </a>
 </p>
-
-<h3 align="center">Relecture de session pour développeurs</h3>
-<p align="center">La relecture de session la plus avancée sur le marché pour des applications perfectionnées.</p>
-
+<h3 align="center">La plateforme d'expérience open source que vous hébergez vous-même</h3>
+<p align="center">Session replay, cobrowsing et product analytics — auto-hébergés, pour que les données de vos utilisateurs ne quittent jamais votre infrastructure.</p>
 <p align="center">
-  <a href="https://docs.openreplay.com/deployment/deploy-aws">
+  <a href="https://github.com/openreplay/openreplay/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3%20%26%20more-394DFE" alt="Licence"></a>
+  <a href="https://slack.openreplay.com"><img src="https://img.shields.io/badge/Slack-join-394DFE?logo=slack&logoColor=white" alt="Rejoignez-nous sur Slack"></a>
+  <img src="https://img.shields.io/badge/SOC%202-Type%20II-394DFE" alt="SOC 2 Type II">
+</p>
+<p align="center">
+  <a href="https://docs.openreplay.com/en/deployment/deploy-aws">
     <img src="static/btn-deploy-aws.svg" height="40"/>
   </a>
-
-  <a href="https://docs.openreplay.com/deployment/deploy-gcp">
+  <a href="https://docs.openreplay.com/en/deployment/deploy-gcp">
     <img src="static/btn-deploy-google-cloud.svg" height="40" />
   </a>
-
-  <a href="https://docs.openreplay.com/deployment/deploy-azure">
+  <a href="https://docs.openreplay.com/en/deployment/deploy-azure">
     <img src="static/btn-deploy-azure.svg" height="40" />
   </a>
-
-  <a href="https://docs.openreplay.com/deployment/deploy-digitalocean">
+  <a href="https://docs.openreplay.com/en/deployment/deploy-digitalocean">
     <img src="static/btn-deploy-digital-ocean.svg" height="40" />
   </a>
 </p>
-
 <p align="center">
   <a href="https://github.com/openreplay/openreplay">
     <img src="static/openreplay-git-hero.svg">
   </a>
 </p>
 
-OpenReplay est une suite d'outils de relecture (appelée aussi "replay") de sessions que vous pouvez héberger vous-même, vous permettant de voir ce que les utilisateurs font sur une application web, vous aidant ainsi à résoudre différents types de problèmes plus rapidement.
+OpenReplay est une plateforme d'expérience open source que vous hébergez sur votre propre infrastructure. Rejouez les sessions de vos utilisateurs, déboguez avec tout le contexte technique, analysez l'usage de votre produit et co-naviguez en direct avec vos utilisateurs — sans envoyer la moindre session à un tiers. Tout ce qu'OpenReplay capture reste dans votre cloud, entièrement sous votre contrôle.
 
-- **Relecture de session.** OpenReplay rejoue ce que les utilisateurs font, mais pas seulement. Il vous montre également ce qui se passe en coulisse, comment votre site web ou votre application se comporte en capturant l'activité réseau, les journaux de console, les erreurs JS, les actions/états du store, les métriques de chargement des pages, l'utilisation du CPU/mémoire, et bien plus encore.
-- **Faible empreinte**. Avec un traqueur d'environ 26 Ko (.br) qui envoie de manière asynchrone des données minimales, ce qui a un impact très limité sur les performances.
-- **Auto-hébergé**. Plus de vérifications de conformité en matière de sécurité, plus de traitement des données des utilisateurs par des tiers. Tout ce qu'OpenReplay capture reste dans votre cloud pour un contrôle complet sur vos données.
-- **Contrôles de confidentialité**. Fonctionnalités de sécurité détaillées pour la désinfection des données utilisateur.
-- **Déploiement facile**. Avec le support des principaux fournisseurs de cloud public (AWS, GCP, Azure, DigitalOcean).
+OpenReplay convient donc aux équipes qui ne peuvent pas confier les données de leurs clients à un fournisseur externe : aucun sous-traitant tiers, aucune revue de conformité interminable, et un alignement avec les normes réglementaires les plus strictes. Il est utilisé par les équipes d'ingénierie, de produit, de design et de support de grandes entreprises dans des secteurs très réglementés.
+
+## Pourquoi OpenReplay
+
+- **Vos données vous appartiennent.** Hébergez OpenReplay sur votre propre infrastructure (AWS, GCP, Azure, et plus encore). Les données de session ne quittent jamais votre périmètre de sécurité.
+- **Confidentialité dès la conception.** Masquez, obscurcissez ou ignorez n'importe quelle donnée [au moment de la capture](https://docs.openreplay.com/en/sdk/sanitize-data/), avant même qu'elle n'atteigne vos serveurs. Activez le [mode privé](https://docs.openreplay.com/en/sdk/private-mode/) pour tout masquer par défaut.
+- **Tout au même endroit.** Session replay, DevTools, product analytics et cobrowsing — au lieu d'assembler plusieurs outils distincts.
+- **Léger.** Un traceur léger qui envoie un minimum de données de façon asynchrone, pour un impact très limité sur les performances.
+- **Open source.** Lisez le code, hébergez-le gratuitement et contribuez. Aucune boîte noire.
 
 ## Fonctionnalités
 
-- **Relecture de session :** Vous permet de revivre l'expérience de vos utilisateurs, de voir où ils rencontrent des problèmes et comment cela affecte leur comportement. Chaque relecture de session est automatiquement analysée en se basant sur des heuristiques, pour un triage plus facile des problèmes en fonction de l'impact.
-- **Outils de développement (DevTools) :** C'est comme déboguer dans votre propre navigateur. OpenReplay vous fournit le contexte complet (activité réseau, erreurs JS, actions/états du store et plus de 40 métriques) pour que vous puissiez instantanément reproduire les bugs et comprendre les problèmes de performance.
-- **Assistance (Assist) :** Vous aide à soutenir vos utilisateurs en voyant leur écran en direct et en vous connectant instantanément avec eux via appel/vidéo (WebRTC), sans nécessiter de logiciel tiers de partage d'écran.
-- **Recherche universelle (Omni-search) :** Recherchez et filtrez presque n'importe quelle action/critère utilisateur, attribut de session ou événement technique, afin de pouvoir répondre à n'importe quelle question. Aucune instrumentation requise.
-- **Entonnoirs (Funnels) :** Pour mettre en évidence les problèmes les plus impactants entraînant une conversion et une perte de revenus.
-- **Contrôles de confidentialité détaillés :** Choisissez ce que vous voulez capturer, ce que vous voulez obscurcir ou ignorer, de sorte que les données utilisateur n'atteignent même pas vos serveurs.
-- **Orienté vers les plugins :** Corrigez plus rapidement les bogues en suivant l'état de l'application (Redux, VueX, MobX, NgRx, Pinia et Zustand) et enregistrant les requêtes GraphQL (Apollo, Relay) et les requêtes Fetch/Axios.
-- **Intégrations :** Synchronisez vos journaux backend avec vos relectures de sessions et voyez ce qui s'est passé du début à la fin. OpenReplay prend en charge Sentry, Datadog, CloudWatch, Stackdriver, Elastic et bien d'autres.
+- **[Session Replay](https://openreplay.com/product/feature/session-replay).** Revivez l'expérience de vos utilisateurs — où ils naviguent, cliquent, hésitent ou bloquent — et repérez chaque erreur, ralentissement ou plantage de leur parcours. Recherchez et filtrez par presque n'importe quelle action utilisateur, attribut de session ou événement technique — sans instrumentation.
+- **[DevTools](https://openreplay.com/product/feature/developer-tools).** Déboguez comme si le bug s'était produit dans votre propre navigateur. Obtenez tout le contexte — activité réseau, logs console, erreurs JS, actions/état du store et plus de 40 métriques de performance — pour reproduire et corriger les problèmes instantanément.
+- **[Product Analytics](https://docs.openreplay.com/en/product-analytics/).** Sachez quels parcours convertissent et où les utilisateurs décrochent, avec les [funnels](https://docs.openreplay.com/en/product-analytics/funnels/), [tendances](https://docs.openreplay.com/en/product-analytics/trends/), [parcours](https://docs.openreplay.com/en/product-analytics/journeys/), [heatmaps](https://docs.openreplay.com/en/product-analytics/heatmaps/) et [web analytics](https://docs.openreplay.com/en/product-analytics/web-analytics/) — le tout adossé aux session replays pour un contexte complet.
+- **[Cobrowsing](https://docs.openreplay.com/en/plugins/assist/).** Assistez vos utilisateurs au moment crucial. Voyez leur écran en direct, prenez le contrôle du curseur avec leur autorisation et lancez un appel WebRTC — sans lien de réunion, sans téléchargement, sans logiciel de partage d'écran tiers.
+- **[Spot](https://openreplay.com/platform/spot).** Une extension Chrome gratuite qui capture les bugs directement depuis le navigateur. Chaque enregistrement regroupe la console, le réseau et les détails d'environnement dont les développeurs ont besoin pour corriger le problème.
+- **[Mobile](https://openreplay.com/product/feature/mobile).** Session replay natif pour les applications iOS, Android et React Native.
 
-## Options de déploiement
+## Vos données vous appartiennent
 
-OpenReplay peut être déployé n'importe où. Suivez nos guides détaillés pour le déployer sur les principaux clouds publics :
+OpenReplay a été conçu pour les équipes des secteurs réglementés et soucieux de la sécurité, qui ont besoin d'un contrôle total sur les données utilisateur.
 
-- [AWS](https://docs.openreplay.com/deployment/deploy-aws)
-- [Google Cloud](https://docs.openreplay.com/deployment/deploy-gcp)
-- [Azure](https://docs.openreplay.com/deployment/deploy-azure)
-- [Digital Ocean](https://docs.openreplay.com/deployment/deploy-digitalocean)
-- [Scaleway](https://docs.openreplay.com/deployment/deploy-scaleway)
-- [OVHcloud](https://docs.openreplay.com/deployment/deploy-ovhcloud)
-- [Kubernetes](https://docs.openreplay.com/deployment/deploy-kubernetes)
+- **Auto-hébergé.** Exécutez OpenReplay entièrement dans votre propre cloud ou sur site. Aucune donnée n'est partagée avec un tiers.
+- **Assainissement à la capture.** Choisissez ce que vous capturez, obscurcissez ou ignorez, afin que les données sensibles n'atteignent même pas vos serveurs. Masquez par sélecteur CSS, expurgez les champs et assainissez les charges réseau. Voir [Assainissement des données](https://docs.openreplay.com/en/sdk/sanitize-data/).
+- **Mode privé.** Masquez tout le texte et toutes les saisies par défaut — idéal pour les applications de santé, bancaires et juridiques. Voir [Mode privé](https://docs.openreplay.com/en/sdk/private-mode/).
+- **Résistant aux bloqueurs de publicités.** Comme vous l'hébergez vous-même, le suivi est first-party et n'est pas bloqué par les bloqueurs de publicités : vous capturez des données complètes.
+- **RGPD et CCPA.** Des outils intégrés pour assainir les données sensibles, gérer les exports et honorer les demandes de suppression.
+- **Contrôle des accès.** Accès basé sur les rôles (Owner, Admin, Member) et SSO (SAML, OIDC) pour l'authentification en entreprise.
+- **SOC 2 Type II.** OpenReplay Cloud est certifié SOC 2 Type II.
+
+## Comment OpenReplay se compare
+
+La plupart des outils de session replay et de product analytics sont des SaaS propriétaires : les données de vos utilisateurs sont capturées dans le cloud mutualisé d'un fournisseur, et votre contrôle s'arrête à une page de paramètres. OpenReplay est open source et offre toute la gamme des modèles de déploiement — y compris des options qu'aucun autre fournisseur ne propose — pour que la sécurité et la résidence des données restent votre décision.
+
+En plus de l'auto-hébergement gratuit, vous pouvez exécuter OpenReplay de trois façons : **Serverless** (à l'usage, comme tout le monde), une instance **Dedicated** entièrement gérée avec résidence des données dans **plus de 50 régions**, ou **Bring-Your-Own-Cloud (BYOC)**, où nous déployons et gérons OpenReplay dans votre *propre* compte cloud, afin que les données de session ne le quittent jamais.
+
+| Sécurité et confidentialité | OpenReplay | FullStory | LogRocket | PostHog |
+| --- | :---: | :---: | :---: | :---: |
+| Open source | ✅ | ❌ | ❌ | ✅ |
+| Auto-hébergement en production (gratuit) | ✅ | ❌ | Entreprise uniquement <sup>1</sup> | Abandonné <sup>2</sup> |
+| Cloud Serverless (à l'usage) | ✅ | ✅ | ✅ | ✅ |
+| Cloud Dedicated | **50+ régions sur AWS/Azure/GCP** | ❌ | ❌ | ❌ |
+| Bring-Your-Own-Cloud (BYOC) | ✅ | ❌ | ❌ | ❌ |
+| Les données restent dans votre infrastructure | ✅ | ❌ | Entreprise uniquement | Version « hobby » uniquement |
+| Aucun sous-traitant tiers | ✅ | ❌ | ⚠️ | ⚠️ |
+| Masquage des données personnelles à la capture | ✅ | ✅ | ✅ | ✅ |
+
+<sup>1</sup> LogRocket propose une version auto-hébergée, mais réservée aux clients entreprise. Elle est limitée et n'est pas open source.  
+<sup>2</sup> PostHog est open source, mais son déploiement auto-hébergé (Kubernetes) est abandonné — seule une version « hobby » sous Docker subsiste, et les nouvelles fonctionnalités sortent uniquement dans le cloud.
+
+## Déployez partout
+
+OpenReplay peut être déployé n'importe où. Commencez par le [guide de démarrage](https://docs.openreplay.com/en/getting-started/). Il vous suffit d'une seule VM sur une base de 2 vCPU, 8 Go de RAM et 50 Go de stockage :
+
+- [AWS](https://docs.openreplay.com/en/deployment/deploy-aws/)
+- [Google Cloud](https://docs.openreplay.com/en/deployment/deploy-gcp/)
+- [Azure](https://docs.openreplay.com/en/deployment/deploy-azure/)
+- [DigitalOcean](https://docs.openreplay.com/en/deployment/deploy-digitalocean/)
+- [Scaleway](https://docs.openreplay.com/en/deployment/deploy-scaleway/)
+- [OVHcloud](https://docs.openreplay.com/en/deployment/deploy-ovhcloud/)
+- [Kubernetes (Helm)](https://docs.openreplay.com/en/deployment/deploy-kubernetes/)
+- [Docker](https://docs.openreplay.com/en/deployment/deploy-docker/)
+- [Ubuntu (bare metal)](https://docs.openreplay.com/en/deployment/deploy-ubuntu/)
+- [Depuis les sources](https://docs.openreplay.com/en/deployment/deploy-source/)
 
 ## OpenReplay Cloud
 
-Pour ceux qui veulent simplement utiliser OpenReplay en tant que service, [inscrivez-vous](https://app.openreplay.com/signup) pour un compte gratuit sur notre offre cloud.
+Vous préférez ne pas auto-héberger ? Exécutez OpenReplay dans notre cloud :
 
-## Support de la communauté
+- **Serverless** — à l'usage, payez uniquement les sessions que vous enregistrez.
+- **Dedicated** — une instance entièrement gérée, dans un VPC dédié, avec résidence des données dans plus de 50 régions.
+- **Bring-Your-Own-Cloud (BYOC)** — nous exécutons et gérons OpenReplay dans votre propre compte AWS, GCP ou Azure.
 
-Veuillez vous référer à la [documentation officielle d'OpenReplay](https://docs.openreplay.com/). Cela devrait vous aider à résoudre les problèmes courants. Pour toute aide ou question supplémentaire, vous pouvez nous contacter sur l'un des canaux suivants :
+Consultez les [tarifs](https://openreplay.com/pricing) pour plus de détails.
 
-- [Slack](https://slack.openreplay.com) (Connectez-vous avec nos ingénieurs et notre communauté)
-- [GitHub](https://github.com/openreplay/openreplay/issues) (Rapports de bogues et problèmes)
-- [Twitter](https://twitter.com/OpenReplayHQ) (Mises à jour du produit, articles techniques et autres annonces)
-- [YouTube](https://www.youtube.com/channel/UCcnWlW-5wEuuPAwjTR1Ydxw) (Tutoriels)
-- [Chat sur le site Web](https://openreplay.com) (Nous contacter)
+## SDK
 
-## Contribution
+- **Web** — un traceur JavaScript unique avec des guides pour [React](https://docs.openreplay.com/en/sdk/using-or/react/), [Next.js](https://docs.openreplay.com/en/sdk/using-or/next/), [Angular](https://docs.openreplay.com/en/sdk/using-or/angular/), [Vue](https://docs.openreplay.com/en/sdk/using-or/vue/), [Nuxt](https://docs.openreplay.com/en/sdk/using-or/nuxt/), [Svelte](https://docs.openreplay.com/en/sdk/using-or/svelte/), [Gatsby](https://docs.openreplay.com/en/sdk/using-or/gatsby/), [Remix](https://docs.openreplay.com/en/sdk/using-or/remix/), [Electron](https://docs.openreplay.com/en/sdk/using-or/electron/), ou un [snippet à intégrer](https://docs.openreplay.com/en/sdk/using-or/snippet/). Voir la [référence du SDK JavaScript](https://docs.openreplay.com/en/sdk/).
+- **Mobile** — session replay natif pour [iOS](https://docs.openreplay.com/en/ios-sdk/), [Android](https://docs.openreplay.com/en/android-sdk/) et [React Native](https://docs.openreplay.com/en/rn-sdk/) (actuellement en bêta).
 
-Nous sommes toujours à la recherche de contributions pour rendre OpenReplay meilleur. Vous ne savez pas par où commencer ? Recherchez dans notre "GitHub Issues" pour trouver des tickets ouverts, de préférence ceux marqués comme "bonnes premières contributions".
+## Plugins et intégrations
 
-Consultez notre [Guide de contribution](CONTRIBUTING.md) pour plus de détails.
+Identifiez la cause racine plus vite en capturant l'état applicatif et le contexte backend en parallèle de chaque replay.
 
-N'hésitez pas à rejoindre notre [Slack](https://slack.openreplay.com) pour poser des questions, discuter vos idées ou simplement pour vous connecter avec nos contributeurs.
+- **Gestion d'état :** [Redux](https://docs.openreplay.com/en/plugins/redux/), [VueX](https://docs.openreplay.com/en/plugins/vuex/), [Pinia](https://docs.openreplay.com/en/plugins/pinia/), [MobX](https://docs.openreplay.com/en/plugins/mobx/), [NgRx](https://docs.openreplay.com/en/plugins/ngrx/) et [Zustand](https://docs.openreplay.com/en/plugins/zustand/).
+- **Réseau et performance :** [Fetch](https://docs.openreplay.com/en/plugins/fetch/), [Axios](https://docs.openreplay.com/en/plugins/axios/), [GraphQL](https://docs.openreplay.com/en/plugins/graphql/) (Apollo, Relay) et le [Profiler](https://docs.openreplay.com/en/plugins/profiler/).
+- **Intégrations :** Synchronisez les logs backend et les erreurs avec vos replays pour voir ce qui s'est passé de bout en bout — [Sentry](https://docs.openreplay.com/en/integrations/sentry/), [Datadog](https://docs.openreplay.com/en/integrations/datadog/), [Elastic](https://docs.openreplay.com/en/integrations/elastic/), [Dynatrace](https://docs.openreplay.com/en/integrations/dynatrace/) et plus encore. Plus la gestion de tickets ([Jira](https://docs.openreplay.com/en/integrations/jira/), [GitHub](https://docs.openreplay.com/en/integrations/github/), [Zendesk](https://docs.openreplay.com/en/integrations/zendesk/)), la messagerie ([Slack](https://docs.openreplay.com/en/integrations/slack/), [Microsoft Teams](https://docs.openreplay.com/en/integrations/msteams/)) et [Google Tag Manager](https://docs.openreplay.com/en/integrations/google-tag-manager/).
 
-## Feuille de route
+## Documentation et ressources
 
-Consultez notre [feuille de route](https://www.notion.so/openreplay/Roadmap-889d2c3d968b4786ab9b281ab2394a94) et gardez un œil sur ce qui arrive prochainement. Vous êtes libre de [proposer](https://github.com/openreplay/openreplay/issues/new) de nouvelles idées et de voter pour des fonctionnalités.
+- [Documentation](https://docs.openreplay.com/) — guides, références SDK et instructions de déploiement.
+- [Guide de démarrage](https://docs.openreplay.com/en/getting-started/) — de zéro à votre première session en ~30 minutes.
+- [Blog](https://blog.openreplay.com/) — tutoriels, comparatifs et analyses techniques approfondies.
+
+## Communauté et support
+
+Commencez par la [documentation](https://docs.openreplay.com/) pour résoudre les problèmes courants. Pour plus d'aide, contactez-nous sur l'un de ces canaux :
+
+- [Slack](https://slack.openreplay.com) — échangez avec nos ingénieurs et la communauté.
+- [Forum](https://forum.openreplay.com) — posez vos questions et parcourez les discussions passées.
+- [YouTube](https://www.youtube.com/channel/UCcnWlW-5wEuuPAwjTR1Ydxw) — tutoriels et community calls passés.
+
+## Contribuer
+
+Nous sommes toujours à la recherche de contributions, et nous sommes ravis que vous l'envisagiez ! Vous ne savez pas par où commencer ? Cherchez les issues ouvertes, de préférence celles marquées « good first issue ». Consultez notre [Guide de contribution](CONTRIBUTING.md) pour plus de détails, et n'hésitez pas à rejoindre notre [Slack](https://slack.openreplay.com) pour poser des questions, discuter d'idées ou échanger avec d'autres contributeurs.
 
 ## Licence
 
-Ce monorepo utilise plusieurs licences. Consultez [LICENSE](/LICENSE) pour plus de détails.
+Ce monorepo utilise plusieurs licences. La majeure partie du code est sous licence **AGPLv3**, certains répertoires sont sous licence **MIT**, et tout ce qui se trouve dans le répertoire `ee/` (l'Enterprise Edition) est sous une licence commerciale distincte définie dans [`ee/LICENSE`](/ee/LICENSE). Les composants tiers conservent leur licence d'origine.
+
+Voir [LICENSE](/LICENSE) pour tous les détails. Des questions ? Écrivez à license@openreplay.com.
