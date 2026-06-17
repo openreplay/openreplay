@@ -212,7 +212,7 @@ export default defineBackground(() => {
       disarmAlarms();
       return;
     }
-    const url = safeApiUrl(`${safeApiUrl(settings.ingestPoint)}/spot/v1/ping`);
+    const url = safeApiUrl(`${settings.ingestPoint}/spot/v1/ping`);
     try {
       const r = await fetch(url, {
         method: "GET",

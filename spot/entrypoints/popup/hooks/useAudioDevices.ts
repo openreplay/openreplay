@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from "solid-js";
+import { createSignal, createEffect, onCleanup } from "solid-js";
 import { AudioDevice } from "../types";
 import { getAudioDevices } from "../utils/audio";
 import { onMessage, sendMessage } from "~/utils/messaging";
@@ -14,6 +14,13 @@ export function useAudioDevices() {
   const [mic, setMic] = createSignal(false);
   const [hasPermissions, setHasPermissions] = createSignal(false);
   const [isChecking, setIsChecking] = createSignal(false);
+
+  createEffect(() => {
+    const unsubscribe = onMessage("popup:audio-perm", () => {
+      void checkAudioDevices();
+    });
+    onCleanup(() => unsubscribe());
+  });
 
   createEffect(() => {
     void (async () => {
@@ -40,9 +47,6 @@ export function useAudioDevices() {
 
     if (!granted && !denied) {
       void sendMessage("popup:get-audio-perm").catch(() => {});
-      onMessage("popup:audio-perm", () => {
-        void checkAudioDevices();
-      });
     } else if (audioDevices.length > 0 && selectedAudioDevice() === "") {
       void audioPermStore.setValue(granted);
       setAudioDevices(audioDevices);
