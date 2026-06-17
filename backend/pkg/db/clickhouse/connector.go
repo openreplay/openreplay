@@ -74,6 +74,7 @@ type connectorImpl struct {
 	batches        map[string]Bulk
 	pending        qtypes.Offsets
 	needToFlush    bool
+	sizeFlushed    bool
 	committer      OffsetCommitter
 	workerTask     chan *task
 	done           chan struct{}
@@ -158,6 +159,9 @@ func (c *connectorImpl) OnBatchEnd(topic string, partition int32, offset int64) 
 			break
 		}
 	}
+	if full {
+		c.sizeFlushed = true
+	}
 	c.mu.Unlock()
 	if full {
 		c.flush()
@@ -165,6 +169,13 @@ func (c *connectorImpl) OnBatchEnd(topic string, partition int32, offset int64) 
 }
 
 func (c *connectorImpl) Commit() error {
+	c.mu.Lock()
+	skip := c.sizeFlushed
+	c.sizeFlushed = false
+	c.mu.Unlock()
+	if skip {
+		return nil
+	}
 	c.flush()
 	return nil
 }
