@@ -33,6 +33,7 @@ type Config struct {
 	CHSendBatchSizeLimit  int           `env:"CH_SEND_BATCH_SIZE_LIMIT,default=2000"`
 	CHReadUsersSizeLimit  int           `env:"CH_READ_USERS_SIZE_LIMIT,default=50"`
 	CHBatchSizeLimit      int           `env:"CH_BATCH_SIZE_LIMIT,default=20000"`
+	CHWorkerQueueDepth    int           `env:"CH_WORKER_QUEUE_DEPTH,default=3"`
 }
 
 func New(log logger.Logger) *Config {

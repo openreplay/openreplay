@@ -66,7 +66,7 @@ func main() {
 		log.Fatal(ctx, "can't init issues keeper: %s", err)
 	}
 
-	chConnector, err := clickhouse.NewConnector(chConn, dbMetric, cfg.CHBatchSizeLimit)
+	chConnector, err := clickhouse.NewConnector(chConn, dbMetric, cfg.CHBatchSizeLimit, cfg.CHWorkerQueueDepth)
 	if err != nil {
 		log.Fatal(ctx, "can't prepare clickhouse connector: %s", err)
 	}
@@ -122,6 +122,13 @@ func main() {
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
+	if oc, ok := consumer.(interface {
+		clickhouse.OffsetCommitter
+		SetProcessedHook(func(topic string, partition int32, offset int64))
+	}); ok {
+		chConnector.SetCommitter(oc)
+		oc.SetProcessedHook(chConnector.OnBatchEnd)
 	}
 	h.Register("consumer", func(ctx context.Context) error {
 		return consumer.Ping(ctx)

@@ -20,9 +20,14 @@ import (
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics/database"
+	qtypes "openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 )
+
+type OffsetCommitter interface {
+	CommitOffsets(qtypes.Offsets) error
+}
 
 type Connector interface {
 	InsertWebSession(session *sessions.Session) error
@@ -47,11 +52,14 @@ type Connector interface {
 	InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error
 	InsertMobileIssue(session *sessions.Session, msg *messages.MobileIssueEvent) error
 	Commit() error
+	OnBatchEnd(topic string, partition int32, offset int64)
+	SetCommitter(committer OffsetCommitter)
 	Stop() error
 }
 
 type task struct {
 	bulks []Bulk
+	snap  qtypes.Offsets
 }
 
 func NewTask() *task {
@@ -63,7 +71,10 @@ type connectorImpl struct {
 	metrics        database.Database
 	mu             sync.Mutex
 	batchSizeLimit int
-	batches        map[string]Bulk //driver.Batch
+	batches        map[string]Bulk
+	pending        qtypes.Offsets
+	needToFlush    bool
+	committer      OffsetCommitter
 	workerTask     chan *task
 	done           chan struct{}
 	finished       chan struct{}
@@ -75,12 +86,15 @@ func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
 	return c.batches[name].Append(args...)
 }
 
-func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit int) (Connector, error) {
+func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, workerQueueDepth int) (Connector, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("CH connection is required")
 	case metrics == nil:
 		return nil, errors.New("metrics is required")
+	}
+	if workerQueueDepth < 1 {
+		workerQueueDepth = 1
 	}
 
 	c := &connectorImpl{
@@ -88,7 +102,8 @@ func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit in
 		metrics:        metrics,
 		batchSizeLimit: batchSizeLimit,
 		batches:        make(map[string]Bulk, len(batches)+1),
-		workerTask:     make(chan *task, 1),
+		pending:        make(qtypes.Offsets),
+		workerTask:     make(chan *task, workerQueueDepth),
 		done:           make(chan struct{}),
 		finished:       make(chan struct{}),
 	}
@@ -125,8 +140,41 @@ func (c *connectorImpl) prepare() error {
 	return nil
 }
 
-func (c *connectorImpl) Commit() error {
+func (c *connectorImpl) SetCommitter(committer OffsetCommitter) {
+	c.committer = committer
+}
+
+func (c *connectorImpl) OnBatchEnd(topic string, partition int32, offset int64) {
 	c.mu.Lock()
+	if c.pending[topic] == nil {
+		c.pending[topic] = make(map[int32]int64)
+	}
+	c.pending[topic][partition] = offset
+	c.needToFlush = true
+	full := false
+	for _, b := range c.batches {
+		if b.Len() >= c.batchSizeLimit {
+			full = true
+			break
+		}
+	}
+	c.mu.Unlock()
+	if full {
+		c.flush()
+	}
+}
+
+func (c *connectorImpl) Commit() error {
+	c.flush()
+	return nil
+}
+
+func (c *connectorImpl) flush() {
+	c.mu.Lock()
+	if !c.needToFlush {
+		c.mu.Unlock()
+		return
+	}
 	newTask := NewTask()
 	for _, b := range c.batches {
 		newTask.bulks = append(newTask.bulks, b)
@@ -135,9 +183,25 @@ func (c *connectorImpl) Commit() error {
 	if err := c.prepare(); err != nil {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
+	newTask.snap = copyOffsets(c.pending)
+	c.needToFlush = false
 	c.mu.Unlock()
 	c.workerTask <- newTask
-	return nil
+}
+
+func copyOffsets(src qtypes.Offsets) qtypes.Offsets {
+	if len(src) == 0 {
+		return nil
+	}
+	out := make(qtypes.Offsets, len(src))
+	for topic, parts := range src {
+		m := make(map[int32]int64, len(parts))
+		for p, off := range parts {
+			m[p] = off
+		}
+		out[topic] = m
+	}
+	return out
 }
 
 func (c *connectorImpl) Stop() error {
@@ -154,21 +218,51 @@ func isCHNotEnoughSpace(err error) bool {
 	return false
 }
 
+const (
+	sendRetryBase = 200 * time.Millisecond
+	sendRetryMax  = 5 * time.Second
+)
+
+func (c *connectorImpl) sendBulk(b Bulk) {
+	backoff := sendRetryBase
+	for attempt := 1; ; attempt++ {
+		err := b.Send()
+		if err == nil {
+			return
+		}
+		if isCHNotEnoughSpace(err) {
+			log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
+		}
+		log.Printf("can't send batch (attempt %d): %s", attempt, err)
+		time.Sleep(backoff)
+		if backoff < sendRetryMax {
+			backoff *= 2
+			if backoff > sendRetryMax {
+				backoff = sendRetryMax
+			}
+		}
+	}
+}
+
 func (c *connectorImpl) sendBulks(t *task) {
 	var wg sync.WaitGroup
 	wg.Add(len(t.bulks))
 	for _, b := range t.bulks {
 		go func(b Bulk) {
 			defer wg.Done()
-			if err := b.Send(); err != nil {
-				if isCHNotEnoughSpace(err) {
-					log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
-				}
-				log.Printf("can't send batch: %s", err)
-			}
+			c.sendBulk(b)
 		}(b)
 	}
 	wg.Wait()
+}
+
+func (c *connectorImpl) commitOffsets(t *task) {
+	if t.snap == nil || c.committer == nil {
+		return
+	}
+	if err := c.committer.CommitOffsets(t.snap); err != nil {
+		log.Printf("can't commit offsets: %s", err)
+	}
 }
 
 func (c *connectorImpl) worker() {
@@ -176,12 +270,19 @@ func (c *connectorImpl) worker() {
 		select {
 		case t := <-c.workerTask:
 			c.sendBulks(t)
+			c.commitOffsets(t)
 		case <-c.done:
-			for t := range c.workerTask {
-				c.sendBulks(t)
+			// Send whatever is buffered, then stop.
+			for {
+				select {
+				case t := <-c.workerTask:
+					c.sendBulks(t)
+					c.commitOffsets(t)
+				default:
+					c.finished <- struct{}{}
+					return
+				}
 			}
-			c.finished <- struct{}{}
-			return
 		}
 	}
 }

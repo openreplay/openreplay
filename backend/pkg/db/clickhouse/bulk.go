@@ -14,6 +14,7 @@ import (
 
 type Bulk interface {
 	Append(args ...interface{}) error
+	Len() int
 	Send() error
 }
 
@@ -49,10 +50,11 @@ func NewBulk(conn driver.Conn, metrics database.Database, table, query string, s
 func (b *bulkImpl) Append(args ...interface{}) error {
 	b.values = append(b.values, args)
 	b.counter++
-	if b.sizeLimit > 0 && b.counter >= b.sizeLimit {
-		return b.Send()
-	}
 	return nil
+}
+
+func (b *bulkImpl) Len() int {
+	return b.counter
 }
 
 func (b *bulkImpl) Send() error {
@@ -70,7 +72,9 @@ func (b *bulkImpl) Send() error {
 			log.Printf("failed query: %s", b.query)
 		}
 	}
-	err = batch.Send()
+	if err := batch.Send(); err != nil {
+		return err
+	}
 	// log.Printf("[!] batch name: %s, rows: %d, duration: %d ms", b.table, b.counter, time.Now().Sub(start).Milliseconds())
 	// Save bulk metrics
 	if b.metrics != nil {
@@ -80,5 +84,5 @@ func (b *bulkImpl) Send() error {
 	// Prepare values slice for a new data
 	b.values = make([][]interface{}, 0)
 	b.counter = 0
-	return err
+	return nil
 }

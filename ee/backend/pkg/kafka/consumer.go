@@ -37,6 +37,35 @@ type consumerImpl struct {
 	lastOffset        map[string]map[int32]kafka.Offset
 	stopChan          chan struct{}
 	mutex             sync.RWMutex
+	processedHook     func(topic string, partition int32, offset int64)
+}
+
+func (c *consumerImpl) SetProcessedHook(fn func(topic string, partition int32, offset int64)) {
+	c.processedHook = fn
+}
+
+func (c *consumerImpl) CommitOffsets(offsets types.Offsets) error {
+	var tps []kafka.TopicPartition
+	for topic, parts := range offsets {
+		t := topic
+		for p, off := range parts {
+			tps = append(tps, kafka.TopicPartition{
+				Topic:     &t,
+				Partition: p,
+				Offset:    kafka.Offset(off + 1),
+			})
+		}
+	}
+	if len(tps) == 0 {
+		return nil
+	}
+	if _, err := c.consumer.CommitOffsets(tps); err != nil {
+		var ke kafka.Error
+		if errors.As(err, &ke) && ke.Code() != kafka.ErrNoOffset {
+			return err
+		}
+	}
+	return nil
 }
 
 func NewConsumer(
@@ -308,6 +337,9 @@ func (c *consumerImpl) ConsumeNext() error {
 				e.Timestamp.UnixMilli(),
 			),
 		)
+		if c.processedHook != nil {
+			c.processedHook(*e.TopicPartition.Topic, int32(e.TopicPartition.Partition), int64(e.TopicPartition.Offset))
+		}
 		c.shouldPause(e.TopicPartition)
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {

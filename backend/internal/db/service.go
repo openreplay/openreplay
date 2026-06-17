@@ -65,7 +65,6 @@ func (d *dbImpl) run() {
 func (d *dbImpl) commit() {
 	d.saver.Commit()
 	d.sessions.Commit()
-	d.consumer.Commit()
 }
 
 func (d *dbImpl) Stop() {
