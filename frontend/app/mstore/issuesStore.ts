@@ -319,6 +319,11 @@ export default class IssuesStore {
   setMatch = (m: MatchMode) => { this.match = m; };
   setCats = (c: CategoryName[]) => { this.cats = c; };
   setLabels = (l: string[]) => { this.labels = l; };
+  toggleLabel = (t: string) => {
+    this.labels = this.labels.includes(t)
+      ? this.labels.filter((x) => x !== t)
+      : [...this.labels, t];
+  };
   setCritOnly = (v: boolean) => { this.critOnly = v; };
   setShowHidden = (v: boolean) => { this.showHidden = v; };
   rename = (id: number, name: string) => { this.names[id] = name; };

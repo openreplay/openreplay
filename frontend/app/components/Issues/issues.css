@@ -1,0 +1,9 @@
+/* Category icon in the table: neutral at rest, reveals its category color when the
+   row is hovered. The per-row color is passed via the --cat custom property. */
+.issues-table .ant-table-row .cat-ic {
+  color: var(--color-gray-medium);
+  transition: color 0.12s ease;
+}
+.issues-table .ant-table-row:hover .cat-ic {
+  color: var(--cat);
+}

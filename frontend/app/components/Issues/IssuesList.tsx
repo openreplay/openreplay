@@ -14,7 +14,6 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
-  Search,
   Info,
   MoreHorizontal,
   ArrowUpRight,
@@ -42,6 +41,8 @@ import {
   lastSeenLabel,
   lastSeenExact,
 } from 'App/mstore/issuesStore';
+import TagFilter from './TagFilter';
+import './issues.css';
 
 /* Each category keeps its color, but carried by a small icon (a shape cue) rather
    than a filled chip — so the colored area shrinks and category stops looking like
@@ -96,11 +97,26 @@ function IssuesList() {
   const openDetail = (id: number) =>
     history.push(withSiteId(issueRoute(String(id)), siteId));
 
-  const catOptions = CAT_ORDER.map((c) => ({
-    label: `${c} · ${issuesStore.catCount(c)}`,
-    value: c,
-  }));
-  const tagOptions = issuesStore.allTags.map((t) => ({ label: t, value: t }));
+  // Category as a Segmented tab bar (like the Sessions tabs): All + one tab per
+  // category, single-select. "All" maps to no category filter.
+  const catValue: 'All' | CategoryName =
+    issuesStore.cats.length === 1 ? issuesStore.cats[0] : 'All';
+  const faded = (n: number) => (
+    <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
+  );
+  // mirror SessionTags.tsx: Segmented with the icon passed via the `icon` prop
+  const catTabOptions = [
+    { value: 'All', label: <span>All{faded(issuesStore.all.length)}</span> },
+    ...CAT_ORDER.map((c) => {
+      const Ic = CAT_ICON[c];
+      return {
+        value: c,
+        // colored only while this tab is active; neutral otherwise (like Sessions)
+        icon: <Ic size={14} style={{ color: c === catValue ? CAT_COLOR[c] : undefined }} />,
+        label: <span>{c}{faded(issuesStore.catCount(c))}</span>,
+      };
+    }),
+  ];
 
   const dispCount = (issuesStore.critOnly ? 1 : 0) + (issuesStore.showHidden ? 1 : 0);
 
@@ -109,6 +125,9 @@ function IssuesList() {
       title: 'Impact',
       dataIndex: 'impact',
       width: 96,
+      sorter: (a, b) => a.impact - b.impact,
+      showSorterTooltip: false,
+      defaultSortOrder: 'descend',
       render: (v: number, r: Issue) => {
         const level = impactLevel(v);
         const title = r.critical ? `Critical · ${level} impact` : `${level} impact`;
@@ -133,11 +152,17 @@ function IssuesList() {
       title: 'Category',
       dataIndex: 'cat',
       width: 140,
+      sorter: (a, b) => a.cat.localeCompare(b.cat),
+      showSorterTooltip: false,
       render: (c: CategoryName) => {
         const Ic = CAT_ICON[c];
         return (
           <span className="inline-flex items-center" style={{ gap: 7 }}>
-            <Ic size={15} style={{ color: CAT_COLOR[c], flexShrink: 0 }} />
+            <Ic
+              className="cat-ic"
+              size={15}
+              style={{ ['--cat' as string]: CAT_COLOR[c], flexShrink: 0 }}
+            />
             <span style={{ color: 'var(--color-gray-darkest)' }}>{c}</span>
           </span>
         );
@@ -146,6 +171,8 @@ function IssuesList() {
     {
       title: 'Issue',
       dataIndex: 'head',
+      sorter: (a, b) => a.head.localeCompare(b.head),
+      showSorterTooltip: false,
       render: (head: string, r: Issue) => (
         <div className="flex items-center gap-2 min-w-0">
           <span className="truncate font-medium" style={{ color: 'var(--color-gray-darkest)' }}>
@@ -168,7 +195,9 @@ function IssuesList() {
     {
       title: 'Last seen',
       dataIndex: 'seenAgoMin',
-      width: 110,
+      width: 132,
+      sorter: (a, b) => a.seenAgoMin - b.seenAgoMin,
+      showSorterTooltip: false,
       render: (m: number) => (
         <Tooltip title={lastSeenExact(m)}>
           <span className="text-xs tabular-nums" style={{ color: 'var(--color-gray-medium)' }}>
@@ -235,7 +264,7 @@ function IssuesList() {
         checked={issuesStore.showHidden}
         onChange={(e) => issuesStore.setShowHidden(e.target.checked)}
       >
-        Show hidden{issuesStore.hidden.length ? ` (${issuesStore.hidden.length})` : ''}
+        Hidden{issuesStore.hidden.length ? ` (${issuesStore.hidden.length})` : ''}
       </Checkbox>
     </div>
   );
@@ -245,7 +274,7 @@ function IssuesList() {
       className="flex flex-col rounded-lg border bg-white mx-auto"
       style={{ maxWidth: 1360 }}
     >
-      {/* header */}
+      {/* header — title left, OpenReplay-style search on the right */}
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-lg">Issues</span>
@@ -261,90 +290,63 @@ function IssuesList() {
             </span>
           </Tooltip>
         </div>
+        <Input.Search
+          size="small"
+          allowClear
+          maxLength={256}
+          placeholder="Filter by name or description"
+          style={{ width: 280 }}
+          value={issuesStore.q}
+          onChange={(e) => issuesStore.setQ(e.target.value)}
+        />
       </div>
 
-      {/* single-line toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b flex-wrap">
-        <div style={{ width: 248 }}>
-          <Input
-            placeholder="Search issues, tags, users…"
-            allowClear
-            prefix={<Search size={15} style={{ color: 'var(--color-gray-medium)' }} />}
-            value={issuesStore.q}
-            onChange={(e) => issuesStore.setQ(e.target.value)}
+      {/* category tabs (left) + remaining controls (right) */}
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b flex-wrap">
+        <Segmented
+          size="small"
+          value={catValue}
+          onChange={(v) => issuesStore.setCats(v === 'All' ? [] : [v as CategoryName])}
+          options={catTabOptions}
+        />
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <TagFilter
+            allTags={issuesStore.allTags}
+            labels={issuesStore.labels}
+            match={issuesStore.match}
+            onToggle={issuesStore.toggleLabel}
+            onSetMatch={issuesStore.setMatch}
+            onClear={() => issuesStore.setLabels([])}
           />
-        </div>
 
-        <div className="flex-1" />
+          <Popover
+            open={dispOpen}
+            onOpenChange={setDispOpen}
+            trigger="click"
+            placement="bottomRight"
+            content={displayContent}
+          >
+            <Button size="small" icon={<SlidersHorizontal size={14} />}>
+              Display{dispCount ? ` (${dispCount})` : ''}
+            </Button>
+          </Popover>
 
-        <Select
-          mode="multiple"
-          allowClear
-          placeholder="Category"
-          maxTagCount="responsive"
-          style={{ minWidth: 150 }}
-          options={catOptions}
-          value={issuesStore.cats}
-          onChange={(v) => issuesStore.setCats(v as CategoryName[])}
-        />
-
-        <Select
-          mode="multiple"
-          allowClear
-          placeholder="Tags"
-          maxTagCount="responsive"
-          style={{ minWidth: 150 }}
-          options={tagOptions}
-          value={issuesStore.labels}
-          onChange={(v) => issuesStore.setLabels(v as string[])}
-        />
-
-        {issuesStore.labels.length > 1 && (
-          <Segmented
+          <Select
             size="small"
-            value={issuesStore.match}
-            onChange={(v) => issuesStore.setMatch(v as 'all' | 'any')}
+            style={{ width: 150 }}
+            defaultValue="24h"
             options={[
-              { label: 'All', value: 'all' },
-              { label: 'Any', value: 'any' },
+              { label: 'Last 24 hours', value: '24h' },
+              { label: 'Last 7 days', value: '7d' },
+              { label: 'Last 30 days', value: '30d' },
             ]}
           />
-        )}
-
-        <Select
-          style={{ width: 130 }}
-          value={issuesStore.sort}
-          onChange={(v) => issuesStore.setSort(v as 'impact' | 'newest')}
-          options={[
-            { label: 'Sort: Impact', value: 'impact' },
-            { label: 'Sort: Newest', value: 'newest' },
-          ]}
-        />
-
-        <Popover
-          open={dispOpen}
-          onOpenChange={setDispOpen}
-          trigger="click"
-          placement="bottomRight"
-          content={displayContent}
-        >
-          <Button icon={<SlidersHorizontal size={14} />}>
-            Display{dispCount ? ` (${dispCount})` : ''}
-          </Button>
-        </Popover>
-
-        <Select
-          style={{ width: 150 }}
-          defaultValue="24h"
-          options={[
-            { label: 'Last 24 hours', value: '24h' },
-            { label: 'Last 7 days', value: '7d' },
-            { label: 'Last 30 days', value: '30d' },
-          ]}
-        />
+        </div>
       </div>
 
       <Table<Issue>
+        className="issues-table"
         rowKey="id"
         columns={columns}
         dataSource={issuesStore.list}
@@ -357,8 +359,7 @@ function IssuesList() {
       />
 
       <div className="px-4 py-3 text-xs" style={{ color: 'var(--color-gray-medium)' }}>
-        Showing {issuesStore.list.length} of {issuesStore.all.length} issues · ranked by{' '}
-        {issuesStore.sort}
+        Showing {issuesStore.list.length} of {issuesStore.all.length} issues
       </div>
 
       {/* hide-with-reason modal */}
