@@ -92,7 +92,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resourceUri,
           visibility: ["model"],
           csp: {
-            connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
+            connectDomains: ["*.openreplay.com"],
           },
         },
         examples: [
@@ -200,7 +200,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resourceUri,
           visibility: ["model"],
           csp: {
-            connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
+            connectDomains: ["*.openreplay.com"],
           },
         },
         examples: [
@@ -395,7 +395,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resourceUri,
           visibility: ["model"],
           csp: {
-            connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
+            connectDomains: ["*.openreplay.com"],
           },
         },
         examples: [
@@ -564,7 +564,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resourceUri,
           visibility: ["model"],
           csp: {
-            connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
+            connectDomains: [ "*.openreplay.com"],
           },
         },
         examples: [
@@ -709,7 +709,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resourceUri,
           visibility: ["model"],
           csp: {
-            connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
+            connectDomains: ["*.openreplay.com"],
           },
         },
         examples: [
@@ -863,7 +863,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           resourceUri,
           visibility: ["model"],
           csp: {
-            connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
+            connectDomains: ["*.openreplay.com"],
           },
         },
         examples: [

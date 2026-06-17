@@ -36,8 +36,8 @@ export function abortAllPolls() {
 }
 
 // One URL only — the OpenReplay instance the user types into their browser
-// (e.g. https://app.openreplay.com for SaaS, https://foss.openreplay.com for
-// self-hosted). The API base is derived from this in lib/api.ts.
+// (e.g. https://app.openreplay.com for SaaS)
+// The API base is derived from this in lib/api.ts.
 //
 // Supplied by the launcher via OPENREPLAY_URL (Claude Desktop user_config).
 // Legacy: OPENREPLAY_BACKEND_URL is still accepted so existing configs don't

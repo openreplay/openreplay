@@ -5,7 +5,8 @@
   "version": "1.0.3",
   "description": "View OpenReplay sessions, charts, and replays from Claude.",
   "author": {
-    "name": "OpenReplay"
+    "name": "OpenReplay",
+    "url": "https://github.com/openreplay/openreplay/"
   },
   "server": {
     "type": "node",
