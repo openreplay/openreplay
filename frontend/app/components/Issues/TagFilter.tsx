@@ -38,8 +38,8 @@ export default function TagFilter({
           value={match}
           onChange={(v) => onSetMatch(v as 'all' | 'any')}
           options={[
-            { label: 'All', value: 'all' },
-            { label: 'Any', value: 'any' },
+            { label: 'AND', value: 'all' },
+            { label: 'OR', value: 'any' },
           ]}
         />
       </div>

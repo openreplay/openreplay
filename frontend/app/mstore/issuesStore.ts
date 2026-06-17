@@ -1,4 +1,7 @@
+import React from 'react';
 import { makeAutoObservable } from 'mobx';
+import { CircleX, MousePointerClick, Gauge } from 'lucide-react';
+import { getMockSessionById } from 'App/dev/mockSessions';
 
 /* =========================================================================
    Issues — the new AI issue-detection surface. Mock, in-memory data only
@@ -33,9 +36,52 @@ export interface Issue {
   seenAgoMin: number;
   tags: string[];
   sessions: IssueSession[];
+  /** ids into the shared MOCK_SESSION_POOL — the SAME entities the Sessions
+      page lists. Drives the example-session cards on the issue detail page. */
+  sessionIds?: string[];
+}
+
+/** A resolved example-session card for the issue detail page. Factual fields are
+    sourced from the shared session pool (same entity as the Sessions page); the
+    behavioral tags + plain-language journey are issue-authored (zipped by index). */
+export interface IssueSessionCard {
+  sessionId: string;
+  email: string;
+  browser: string;
+  os: string;
+  city: string;
+  country: string;
+  loc: string;
+  durMs: number;
+  dur: string;
+  date: string;
+  device: string;
+  events: number;
+  plan: string;
+  tags: string[];
+  journey: string;
+}
+
+function fmtDuration(ms: number): string {
+  const totalSec = Math.max(1, Math.round(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m ? `${m}m${s}s` : `${s}s`;
 }
 
 export const CAT_ORDER: CategoryName[] = ['Errors', 'UI/UX', 'Slowness'];
+
+/* Single source for the per-category icon so the list and the detail header
+   stay consistent. */
+export const CAT_ICON: Record<
+  CategoryName,
+  React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>
+> = {
+  Errors: CircleX,
+  'UI/UX': MousePointerClick,
+  Slowness: Gauge,
+};
+
 export const CAT_COLOR: Record<CategoryName, string> = {
   Errors: '#CC0000',
   'UI/UX': '#615FFF',
@@ -247,9 +293,27 @@ const RAW: Omit<Issue, 'tags'>[] = [
   },
 ];
 
+/* Link each issue to real sessions in the shared pool (app/dev/mockSessions).
+   These are the SAME entities the Sessions page lists — the issue's example
+   sessions and the sessions list now reference one source of truth. */
+const ISSUE_SESSION_IDS: Record<number, string[]> = {
+  1: ['sess_1001', 'sess_1002', 'sess_1003'],
+  2: ['sess_1004', 'sess_1005'],
+  3: ['sess_1009', 'sess_1020'],
+  4: ['sess_1002', 'sess_1015'],
+  5: ['sess_1013', 'sess_1014'],
+  6: ['sess_1016', 'sess_1011'],
+  7: ['sess_1006', 'sess_1018'],
+  8: ['sess_1012', 'sess_1019'],
+  9: ['sess_1021', 'sess_1010'],
+  10: ['sess_1012', 'sess_1019'],
+  11: ['sess_1010', 'sess_1021'],
+};
+
 const ISSUES: Issue[] = RAW.map((r) => ({
   ...r,
   tags: [...new Set(r.sessions.flatMap((s) => s.tags))],
+  sessionIds: ISSUE_SESSION_IDS[r.id] ?? [],
 }));
 
 export default class IssuesStore {
@@ -311,6 +375,59 @@ export default class IssuesStore {
     const i = this.all.find((x) => x.id === id);
     if (!i) return undefined;
     return this.names[id] ? { ...i, head: this.names[id] } : i;
+  }
+
+  /** Example-session cards for the issue detail page, resolved from the shared
+      session pool (same entities as the Sessions page). Falls back to the
+      issue-authored summaries if no pool ids are mapped. */
+  exampleSessions(issue: Issue): IssueSessionCard[] {
+    const fromPool = (issue.sessionIds ?? [])
+      .map((id, i) => {
+        const s = getMockSessionById(id);
+        if (!s) return null;
+        // narrative (tags + journey) is issue-authored, paired by index
+        const authored = issue.sessions[i];
+        return {
+          sessionId: s.sessionId,
+          email: s.userId,
+          browser: s.userBrowser,
+          os: s.userOs,
+          city: s.userCity,
+          country: s.userCountry,
+          loc: s.userCity || s.userCountry,
+          durMs: s.duration,
+          dur: fmtDuration(s.duration),
+          date: new Date(s.startTs).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          device: s.userDeviceType,
+          events: s.eventsCount ?? 0,
+          plan: s.metadata?.plan ?? '',
+          tags: authored?.tags ?? [],
+          journey: authored?.journey ?? '',
+        };
+      })
+      .filter((s): s is IssueSessionCard => Boolean(s));
+    if (fromPool.length) return fromPool;
+    return issue.sessions.map((s, i) => ({
+      sessionId: `${issue.id}-${i}`,
+      email: s.email,
+      browser: s.browser,
+      os: s.os,
+      city: s.loc,
+      country: '',
+      loc: s.loc,
+      durMs: 0,
+      dur: s.dur,
+      date: '',
+      device: 'desktop',
+      events: 0,
+      plan: s.plan,
+      tags: s.tags,
+      journey: s.journey,
+    }));
   }
 
   // ---- actions ----

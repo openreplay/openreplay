@@ -4,7 +4,17 @@ import { stopPersisting } from 'mobx-persist-store';
 import Account from 'Types/account';
 import Project from 'App/mstore/types/project';
 import userStore from 'App/mstore/userStore';
-import { projectStore, searchStore } from 'App/mstore';
+import {
+  projectStore,
+  searchStore,
+  sessionStore,
+  filterStore,
+} from 'App/mstore';
+import {
+  buildSession,
+  buildMockFilters,
+  filterPool,
+} from 'App/dev/mockSessions';
 
 /**
  * Local, no-backend bootstrap for the Issues design prototype.
@@ -66,6 +76,76 @@ function doSeed() {
   userStore.fetchUserInfo = async () => userStore.account;
   projectStore.fetchList = async () => {};
   searchStore.fetchSavedSearchList = async () => {};
+
+  seedSessions();
+}
+
+/**
+ * Sessions surface, no backend. Serves the shared MOCK_SESSION_POOL — the same
+ * entities the Issues surface references — and makes the filter/event bar fully
+ * functional client-side. See app/dev/mockSessions.ts.
+ */
+function seedSessions() {
+  // Populate the filter catalog the search bar reads from, and stub the fetch
+  // so it never hits the backend (it returns the cached catalog).
+  const seedCatalog = (siteId: string) => {
+    filterStore.setFilters(siteId, buildMockFilters(filterStore));
+    filterStore.setIsLoadingFilters(false);
+  };
+  seedCatalog('1');
+  filterStore.fetchFilters = async (siteId?: string) => {
+    const id = String(siteId ?? '1');
+    if (!filterStore.filters[id]?.length) seedCatalog(id);
+    filterStore.setIsLoadingFilters(false);
+    return filterStore.getFilters(id);
+  };
+
+  // Replace the /sessions/search round-trip with an in-memory filter+paginate
+  // over the shared pool. Mirrors the real method's assignments.
+  sessionStore.fetchSessions = async (params: any = {}) => {
+    const { sessions, total } = filterPool(params);
+    runInAction(() => {
+      sessionStore.list = sessions.map(buildSession);
+      sessionStore.total = total;
+      sessionStore.sessionIds = sessions.map((s) => s.sessionId);
+      sessionStore.favoriteList = sessionStore.list.filter((s) => s.favorite);
+    });
+  };
+
+  // Defuse the remaining backend-bound calls the sessions page fires.
+  sessionStore.getFirstMob = async () => ({}) as any;
+  sessionStore.prefetchSession = () => {};
+  searchStore.checkForLatestSessionCount = async () => {};
+
+  // Pre-seed the bar with a variety of example filters + events so the design
+  // can be evaluated populated. `edit` (not addFilter) avoids an early fetch;
+  // PrivateRoutes runs the real initial fetch. Values kept loose so the list
+  // stays healthy on load.
+  const setVal = (f: any, v: string[]) => {
+    f.value = v;
+    return f;
+  };
+  const seeded = [
+    setVal(filterStore.findEvent({ name: 'CLICK', isEvent: true, autoCaptured: true }), ['']),
+    setVal(filterStore.findEvent({ name: 'INPUT', isEvent: true, autoCaptured: true }), ['']),
+    setVal(filterStore.findEvent({ name: 'userBrowser', isEvent: false }), ['Chrome']),
+  ];
+  searchStore.edit({ filters: seeded });
+
+  // Seed the list for first paint, consistent with the seeded bar (safety net
+  // in case the PrivateRoutes filtersLoaded gate resolves before our fetch
+  // override runs — the list then already matches the visible filters).
+  const initialParams = {
+    ...searchStore.instance.toSearch(),
+    page: 1,
+    limit: searchStore.pageSize,
+  };
+  const initial = filterPool(initialParams);
+  runInAction(() => {
+    sessionStore.list = initial.sessions.map(buildSession);
+    sessionStore.total = initial.total;
+    sessionStore.sessionIds = initial.sessions.map((s) => s.sessionId);
+  });
 }
 
 export function seedMockStore() {

@@ -76,7 +76,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         label: t('Issues'),
         key: MENU.ISSUES,
         icon: 'info-circle',
-        tag: { label: t('AI'), color: '#394DFE', border: true },
       },
       {
         label: t('Recommendations'),

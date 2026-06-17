@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Input,
-  Select,
   Segmented,
   Table,
   Tag,
@@ -21,9 +20,8 @@ import {
   Eye,
   EyeOff,
   SlidersHorizontal,
-  CircleX,
-  MousePointerClick,
-  Gauge,
+  Album,
+  ChevronDown,
 } from 'lucide-react';
 import { WarningFilled } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -35,26 +33,17 @@ import {
   type CategoryName,
   CAT_ORDER,
   CAT_COLOR,
+  CAT_ICON,
   impactLevel,
   IMPACT_FILLED,
   IMPACT_COLOR,
   lastSeenLabel,
   lastSeenExact,
 } from 'App/mstore/issuesStore';
+import SelectDateRange from 'Shared/SelectDateRange';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
 import TagFilter from './TagFilter';
 import './issues.css';
-
-/* Each category keeps its color, but carried by a small icon (a shape cue) rather
-   than a filled chip — so the colored area shrinks and category stops looking like
-   the (neutral) tag/metatag chips. */
-const CAT_ICON: Record<
-  CategoryName,
-  React.ComponentType<{ size?: number; style?: React.CSSProperties }>
-> = {
-  Errors: CircleX,
-  'UI/UX': MousePointerClick,
-  Slowness: Gauge,
-};
 
 /* Impact as three thin rounded ticks — fill count + color encode the level
    (High / Medium / Low), no number. Unlit ticks stay faint. */
@@ -93,6 +82,10 @@ function IssuesList() {
   const [hideReason, setHideReason] = React.useState('');
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
   const [renameValue, setRenameValue] = React.useState('');
+  // Presentational period (issues are mock; matches the Sessions date picker).
+  const [period, setPeriod] = React.useState<any>(
+    Period({ rangeName: LAST_24_HOURS }),
+  );
 
   const openDetail = (id: number) =>
     history.push(withSiteId(issueRoute(String(id)), siteId));
@@ -127,7 +120,6 @@ function IssuesList() {
       width: 96,
       sorter: (a, b) => a.impact - b.impact,
       showSorterTooltip: false,
-      defaultSortOrder: 'descend',
       render: (v: number, r: Issue) => {
         const level = impactLevel(v);
         const title = r.critical ? `Critical · ${level} impact` : `${level} impact`;
@@ -279,7 +271,7 @@ function IssuesList() {
         <div className="flex items-center gap-2">
           <span className="font-semibold text-lg">Issues</span>
           <Tag color="#394DFE" style={{ borderRadius: 4, fontSize: 10, fontWeight: 700, lineHeight: '16px' }}>
-            AI · BETA
+            BETA
           </Tag>
           <Tooltip
             placement="bottom"
@@ -290,19 +282,32 @@ function IssuesList() {
             </span>
           </Tooltip>
         </div>
-        <Input.Search
-          size="small"
-          allowClear
-          maxLength={256}
-          placeholder="Filter by name or description"
-          style={{ width: 280 }}
-          value={issuesStore.q}
-          onChange={(e) => issuesStore.setQ(e.target.value)}
-        />
+        <div className="flex items-center gap-2">
+          <a
+            href="https://docs.openreplay.com/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Button type="text" icon={<Album size={14} />}>
+              Docs
+            </Button>
+          </a>
+          <div className="min-w-50 md:w-1/4 md:min-w-75">
+            <Input.Search
+              size="small"
+              allowClear
+              maxLength={256}
+              placeholder="Filter by name or description"
+              value={issuesStore.q}
+              onChange={(e) => issuesStore.setQ(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* category tabs (left) + remaining controls (right) */}
-      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b flex-wrap">
+      {/* category tabs (left) + remaining controls (right) — bar height matches
+          the Sessions tab bar (SessionHeader: px-4 py-3) */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
         <Segmented
           size="small"
           value={catValue}
@@ -329,18 +334,17 @@ function IssuesList() {
           >
             <Button size="small" icon={<SlidersHorizontal size={14} />}>
               Display{dispCount ? ` (${dispCount})` : ''}
+              <ChevronDown size={13} style={{ marginLeft: 2, opacity: 0.6 }} />
             </Button>
           </Popover>
 
-          <Select
-            size="small"
-            style={{ width: 150 }}
-            defaultValue="24h"
-            options={[
-              { label: 'Last 24 hours', value: '24h' },
-              { label: 'Last 7 days', value: '7d' },
-              { label: 'Last 30 days', value: '30d' },
-            ]}
+          {/* same date picker as Sessions — borderless (isAnt), includes the
+              custom-range calendar picker */}
+          <SelectDateRange
+            isAnt
+            right
+            period={period}
+            onChange={setPeriod}
           />
         </div>
       </div>

@@ -34,6 +34,7 @@ const components: any = {
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
   IssuesPure: lazy(() => import('Components/Issues/IssuesList')),
   IssueDetailPure: lazy(() => import('Components/Issues/IssueDetail')),
+  IssueSessionPure: lazy(() => import('Components/Issues/IssueSessionPlayer')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
   ActivityPure: lazy(
     () => import('Components/DataManagement/Activity/ActivityPage'),
@@ -69,6 +70,7 @@ const enhancedComponents: any = {
   Highlights: withSiteIdUpdater(components.HighlightsPure),
   Issues: withSiteIdUpdater(components.IssuesPure),
   IssueDetail: withSiteIdUpdater(components.IssueDetailPure),
+  IssueSession: withSiteIdUpdater(components.IssueSessionPure),
   Kai: withSiteIdUpdater(components.KaiPure),
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
@@ -116,6 +118,7 @@ const SPOT_PATH = routes.spot();
 const HIGHLIGHTS_PATH = routes.highlights();
 const ISSUES_PATH = routes.issues();
 const ISSUE_DETAIL_PATH = routes.issue();
+const ISSUE_SESSION_PATH = routes.issueSession();
 const KAI_PATH = routes.kai();
 
 function PrivateRoutes() {
@@ -346,6 +349,10 @@ function PrivateRoutes() {
           element={<enhancedComponents.Highlights />}
         />
 
+        <Route
+          path={withSiteId(ISSUE_SESSION_PATH, siteIdList)}
+          element={<enhancedComponents.IssueSession />}
+        />
         <Route
           path={withSiteId(ISSUE_DETAIL_PATH, siteIdList)}
           element={<enhancedComponents.IssueDetail />}

@@ -149,6 +149,8 @@ export const metricDetailsSub = (
 
 export const issues = (): string => '/issues';
 export const issue = (id = ':issueId'): string => `/issues/${id}`;
+export const issueSession = (sessionId = ':sessionId'): string =>
+  `/issue-session/${sessionId}`;
 
 export const alerts = (): string => '/alerts';
 export const alertCreate = (): string => '/alert/create';
@@ -203,6 +205,7 @@ const REQUIRED_SITE_ID_ROUTES = [
 
   issues(),
   issue(''),
+  issueSession(''),
 
   alerts(),
   alertCreate(),
