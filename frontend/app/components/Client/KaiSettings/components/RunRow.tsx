@@ -24,7 +24,12 @@ function RunRow({ run }: { run: RunData }) {
             style={{ transform: expanded ? 'rotate(90deg)' : undefined }}
           />
         </div>
-        <div className="col-span-3">{run.testName}</div>
+        <div className="col-span-3">
+          <div>{run.testName}</div>
+          {run.envName && (
+            <div className="text-xs text-disabled-text">{run.envName}</div>
+          )}
+        </div>
         <div className="col-span-3">{formatDateTimeDefault(run.date)}</div>
         <div className="col-span-2">{formatDuration(run.duration)}</div>
         <div className="col-span-3 text-end">
@@ -38,7 +43,7 @@ function RunRow({ run }: { run: RunData }) {
           {/* Left: Steps */}
           <div className="col-span-7 flex flex-col gap-2">
             <div className="font-medium text-sm">{t('Test Steps')}</div>
-            <ol className="ml-4 text-sm flex flex-col gap-1">
+            <ol className="ml-4 text-sm flex flex-col gap-1 list-decimal">
               {run.steps.map((step, idx) => (
                 <li
                   key={idx}
@@ -65,6 +70,14 @@ function RunRow({ run }: { run: RunData }) {
 
           {/* Right: Video player and failure info */}
           <div className="col-span-5 flex flex-col gap-3">
+            {run.envName && (
+              <div className="text-sm">
+                <span className="text-disabled-text">
+                  {t('Environment')}:{' '}
+                </span>
+                <span className="font-medium">{run.envName}</span>
+              </div>
+            )}
             {run.failedStep !== undefined && (
               <Alert
                 type="error"

@@ -1,4 +1,19 @@
-import { RunData, TestCase } from './types';
+import { Environment, RunData, TestCase } from './types';
+
+export const MOCK_ENVIRONMENTS: Environment[] = [
+  {
+    id: 'env-1',
+    name: 'Production',
+    url: 'https://app.example.com',
+  },
+  {
+    id: 'env-2',
+    name: 'Staging',
+    url: 'https://staging.example.com',
+    login: 'qa@example.com',
+    password: 'staging-secret',
+  },
+];
 
 export const MOCK_TEST_CASES: TestCase[] = [
   {
@@ -51,6 +66,7 @@ export const MOCK_RUNS: RunData[] = [
     date: 1738935120000,
     duration: 2100,
     result: 'passed',
+    envName: 'Production',
     steps: [
       { step: 'Navigate to the login page', status: 'passed' },
       { step: 'Enter the provided credentials', status: 'passed' },
@@ -70,6 +86,7 @@ export const MOCK_RUNS: RunData[] = [
     duration: 5430,
     result: 'failed',
     failedStep: 3,
+    envName: 'Staging',
     steps: [
       {
         step: 'Add a sample product to cart from the product listing page',
@@ -92,6 +109,7 @@ export const MOCK_RUNS: RunData[] = [
     date: 1738694640000,
     duration: 1800,
     result: 'passed',
+    envName: 'Production',
     steps: [
       { step: 'Open the main search bar', status: 'passed' },
       { step: 'Type a product keyword', status: 'passed' },
@@ -112,6 +130,7 @@ export const MOCK_RUNS: RunData[] = [
     duration: 3200,
     result: 'failed',
     failedStep: 1,
+    envName: 'Staging',
     steps: [
       { step: 'Navigate to the login page', status: 'passed' },
       { step: 'Enter the provided credentials', status: 'failed' },
