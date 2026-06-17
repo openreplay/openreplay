@@ -2,6 +2,14 @@ export type TestStatus = 'pending' | 'approved' | 'paused';
 export type RunResult = 'passed' | 'failed';
 export type StepStatus = 'passed' | 'failed' | 'skipped';
 
+export interface Environment {
+  id: string;
+  name: string;
+  url: string;
+  login?: string;
+  password?: string;
+}
+
 export interface TestCase {
   key: string;
   title: string;
@@ -22,4 +30,5 @@ export interface RunData {
   result: RunResult;
   steps: TestStep[];
   failedStep?: number;
+  envName?: string;
 }

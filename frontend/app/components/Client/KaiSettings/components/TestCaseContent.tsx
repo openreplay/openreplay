@@ -2,6 +2,7 @@ import { Button, Input, Select, Typography } from 'antd';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { MOCK_ENVIRONMENTS } from './shared/mockData';
 import { TestCase, TestStatus } from './shared/types';
 
 const FREQUENCY_OPTIONS = [
@@ -10,6 +11,11 @@ const FREQUENCY_OPTIONS = [
   { value: '2weeks', label: '2 Weeks' },
   { value: 'month', label: 'Month' },
 ];
+
+const ENV_OPTIONS = MOCK_ENVIRONMENTS.map((env) => ({
+  value: env.id,
+  label: env.name,
+}));
 
 interface ActionButton {
   label: string;
@@ -22,16 +28,22 @@ function TestCaseContent({ tc }: { tc: TestCase }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(tc.steps.join('\n'));
+  const [savedSteps, setSavedSteps] = useState(tc.steps.join('\n'));
   const [frequency, setFrequency] = useState('week');
+  const [environment, setEnvironment] = useState(ENV_OPTIONS[0]?.value);
   const [status, setStatus] = useState<TestStatus>(tc.status);
+
+  // auto split the description text by line break into a numbered list of steps
+  const steps = savedSteps.split('\n').filter((line) => line.trim() !== '');
 
   const handleSave = () => {
     console.log('save', tc.key, draft.split('\n'));
+    setSavedSteps(draft);
     setEditing(false);
   };
 
   const handleCancel = () => {
-    setDraft(tc.steps.join('\n'));
+    setDraft(savedSteps);
     setEditing(false);
   };
 
@@ -122,8 +134,8 @@ function TestCaseContent({ tc }: { tc: TestCase }) {
         <Typography.Text type="secondary" className="text-sm!">
           {t('Test Steps:')}
         </Typography.Text>
-        <ol className="ml-4 text-sm">
-          {tc.steps.map((step, idx) => (
+        <ol className="ml-4 text-sm list-decimal">
+          {steps.map((step, idx) => (
             <li key={idx} className="mb-1">
               {step}
             </li>
@@ -132,18 +144,34 @@ function TestCaseContent({ tc }: { tc: TestCase }) {
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Typography.Text type="secondary" className="text-sm!">
-            {t('Run every')}
-          </Typography.Text>
-          <Select
-            size="small"
-            value={frequency}
-            onChange={setFrequency}
-            options={FREQUENCY_OPTIONS}
-            style={{ width: 100 }}
-            disabled={status !== 'approved'}
-          />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Typography.Text type="secondary" className="text-sm!">
+              {t('Run every')}
+            </Typography.Text>
+            <Select
+              size="small"
+              value={frequency}
+              onChange={setFrequency}
+              options={FREQUENCY_OPTIONS}
+              style={{ width: 100 }}
+              disabled={status !== 'approved'}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Typography.Text type="secondary" className="text-sm!">
+              {t('Environment')}
+            </Typography.Text>
+            <Select
+              size="small"
+              value={environment}
+              onChange={setEnvironment}
+              options={ENV_OPTIONS}
+              style={{ width: 140 }}
+              disabled={status !== 'approved'}
+              placeholder={t('Select environment')}
+            />
+          </div>
         </div>
         <div className="flex gap-2">
           {actionButtons[status].map((btn, idx) => (
