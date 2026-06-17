@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { onMessage, sendMessage } from "~/utils/messaging";
+
 /**
  * 24 MB; hardlimit for message chunk (base64 string payload)
  */
@@ -676,40 +678,46 @@ const convertBlobToBase64Chunks = async (blob, maxChars = hardLimit) => {
 let recorder = new ScreenRecorder();
 recorder.init(getRecordingSettings('720p'));
 
-browser.runtime.onMessage.addListener((message, _, respond) => {
-  if (message.target !== 'offscreen') return;
-
-  if (message.type === 'offscr:start-recording') {
-    recorder.clearAll();
-    recorder
-      .startRecording(message.area, message.data, message.microphone, message.audioId)
-      .then(() => {
-        respond({ success: true, time: Date.now() });
-      })
-      .catch((e) => {
-        console.error(e);
-        respond({ success: false, time: Date.now() });
-      });
-    return true;
+onMessage('offscr:start-recording', async ({ data: message }) => {
+  recorder.clearAll();
+  try {
+    await recorder.startRecording(
+      message.area,
+      message.data,
+      message.microphone,
+      message.audioId,
+    );
+    return { success: true, time: Date.now() };
+  } catch (e) {
+    console.error(e);
+    return { success: false, time: Date.now() };
   }
+});
 
-  if (message.type === 'offscr:get-ts') {
-    respond({ time: recorder.duration });
-    return true;
-  }
+onMessage('offscr:check-status', () => ({
+  status: recorder.isRecording,
+  time: recorder.duration,
+}));
 
-  if (message.type === 'offscr:check-status') {
-    respond({ status: recorder.isRecording, time: recorder.duration });
-    return true;
-  }
+onMessage('offscr:stop-discard', () => {
+  void recorder.stop().finally(() => recorder.clearAll());
+});
 
-  if (message.type === 'offscr:stop-discard') {
-    void recorder.stop().finally(() => recorder.clearAll());
-    return true;
-  }
+onMessage('offscr:pause-recording', () => {
+  recorder.pause();
+});
+onMessage('offscr:resume-recording', () => {
+  recorder.resume();
+});
+onMessage('offscr:mute-microphone', () => {
+  recorder.muteMicrophone();
+});
+onMessage('offscr:unmute-microphone', () => {
+  recorder.unmuteMicrophone();
+});
 
-  if (message.type === 'offscr:stop-recording') {
-    void (async () => {
+onMessage('offscr:stop-recording', async () => {
+  return await (async () => {
       try {
         await recorder.stop();
         const duration = recorder.duration;
@@ -817,59 +825,32 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
           };
 
           console.error('No data recorded', diag);
-          respond({ status: 'empty' });
           recorder.clearAll();
-          return;
+          return { status: 'empty' };
         }
 
         const { parts } = await convertBlobToBase64Chunks(data.blob, hardLimit);
 
-        if (parts.length > 0) {
-          respond({ status: 'ok' });
-          for (let i = 0; i < parts.length; i++) {
-            void browser.runtime.sendMessage({
-              type: 'offscr:video-data-chunk',
-              data: parts[i],
-              index: i,
-              total: parts.length,
-              duration,
-              mtype: data.mtype,
-            });
-          }
-        } else {
-          respond({ status: 'empty' });
+        if (parts.length === 0) {
+          recorder.clearAll();
+          return { status: 'empty' };
         }
 
+        for (let i = 0; i < parts.length; i++) {
+          void sendMessage('offscr:video-data-chunk', {
+            data: parts[i],
+            index: i,
+            total: parts.length,
+            duration,
+            mtype: data.mtype,
+          });
+        }
         recorder.clearAll();
+        return { status: 'ok' };
       } catch (e) {
         console.error('stop-recording failed:', e);
-        respond({ status: 'error' });
         recorder.clearAll();
+        return { status: 'error' };
       }
     })();
-
-    return true;
-  }
-
-  if (message.type === 'offscr:pause-recording') {
-    recorder.pause();
-    return 'paused';
-  }
-
-  if (message.type === 'offscr:resume-recording') {
-    recorder.resume();
-    return 'resumed';
-  }
-
-  if (message.type === 'offscr:mute-microphone') {
-    recorder.muteMicrophone();
-    return 'muted';
-  }
-
-  if (message.type === 'offscr:unmute-microphone') {
-    recorder.unmuteMicrophone();
-    return 'unmuted';
-  }
-
-  return 'miss';
 });

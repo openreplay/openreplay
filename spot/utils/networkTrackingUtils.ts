@@ -98,15 +98,15 @@ export type TrackedRequest = {
   | WebRequest.OnResponseStartedDetailsType
 );
 
-export function getTopWindow(): Window {
-  let currentWindow = window;
+export function getTopWindow(): Window & typeof globalThis {
+  let currentWindow: Window & typeof globalThis = window;
   try {
     while (currentWindow !== currentWindow.parent) {
-      currentWindow = currentWindow.parent;
+      currentWindow = currentWindow.parent as Window & typeof globalThis;
     }
   } catch (e) {
-    // Accessing currentWindow.parent threw an exception due to cross-origin policy
-    // currentWindow is the topmost accessible window
+    // currentWindow.parent threw on a cross-origin frame; currentWindow is the
+    // topmost window we can reach.
   }
   return currentWindow;
 }

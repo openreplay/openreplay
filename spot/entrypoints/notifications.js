@@ -1,4 +1,7 @@
+import { pageMessages } from "~/utils/pageMessages";
+
 export default defineUnlistedScript(() => {
+  const { notifications } = pageMessages;
   async function copyToTheClipboard(textToCopy) {
     const el = document.createElement("textarea");
     el.value = textToCopy;
@@ -77,10 +80,10 @@ export default defineUnlistedScript(() => {
 
   function initNotificationListener() {
     function handleMessage(event) {
-      if (event.data.type === "ornotif:display") {
+      if (event.data.type === notifications.display) {
         createNotification(event);
       }
-      if (event.data.type === "ornotif:copy") {
+      if (event.data.type === notifications.copy) {
         copyToTheClipboard(event.data.url)
           .then(() => {
             createNotification({
@@ -91,7 +94,7 @@ export default defineUnlistedScript(() => {
             console.error(e);
           });
       }
-      if (event.data.type === "ornotif:stop") {
+      if (event.data.type === notifications.stop) {
         window.removeEventListener("message", handleMessage);
       }
     }

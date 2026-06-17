@@ -7,6 +7,7 @@ import AudioPicker from "./components/AudioPicker";
 import { useAppState } from "./hooks/useAppState";
 import { useAudioDevices } from "./hooks/useAudioDevices";
 import { AppState } from "./types";
+import { onMessage } from "~/utils/messaging";
 
 function App() {
   const {
@@ -22,6 +23,7 @@ function App() {
     audioDevices,
     selectedAudioDevice,
     mic,
+    setMic,
     hasPermissions,
     isChecking,
     checkAudioDevices,
@@ -29,12 +31,9 @@ function App() {
     selectAudioDevice,
   } = useAudioDevices();
 
-  // Listen for mic status updates from background
   onMount(() => {
-    browser.runtime.onMessage.addListener((message) => {
-      if (message.type === "popup:mic-status") {
-        setMic(message.status);
-      }
+    onMessage("popup:mic-status", ({ data }) => {
+      setMic(data.status);
     });
   });
 

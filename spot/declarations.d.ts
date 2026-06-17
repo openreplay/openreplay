@@ -1,5 +1,10 @@
+export {};
+
 declare global {
-  function defineBackground(cb: () => any): any
-  const chrome: typeof import('wxt/browser')['browser']
-  const browser: typeof import('wxt/browser')['browser']
+  interface Window {
+    __or_revokeSpotPatch?: (() => void) | null;
+    __or_proxy_revocable?: { revoke: () => void }[];
+    __or_clear_notifications?: (() => void) | null;
+    revokeSpotPatch?: () => void;
+  }
 }

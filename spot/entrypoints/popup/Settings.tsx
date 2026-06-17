@@ -1,6 +1,8 @@
 import { createSignal, onMount } from "solid-js";
 import orLogo from "~/assets/orSpot.svg";
 import arrowLeft from "~/assets/arrow-left.svg";
+import { sendMessage } from "~/utils/messaging";
+import { settingsStore } from "~/utils/storage";
 
 const defaultIngest = "https://app.openreplay.com";
 
@@ -13,22 +15,19 @@ function Settings({ goBack }: { goBack: () => void }) {
   const [tempIngest, setTempIngest] = createSignal("");
   const [useDebugger, setUseDebugger] = createSignal(false);
 
-  onMount(() => {
-    chrome.storage.local.get("settings", (data: any) => {
-      if (data.settings) {
-        const ingest =
-          data.settings.ingestPoint || defaultIngest;
-        const devToolsEnabled =
-          data.settings.consoleLogs && data.settings.networkLogs;
-        setOpenInNewTab(data.settings.openInNewTab ?? false);
-        setIncludeDevTools(devToolsEnabled);
-        setIngest(ingest);
-        setTempIngest(ingest);
-        setShowIngest(ingest !== defaultIngest);
-        setEditIngest(!data.settings.ingestPoint);
-        setUseDebugger(data.settings.useDebugger);
-      }
-    });
+  onMount(async () => {
+    const settings = await settingsStore.getValue();
+    if (settings) {
+      const ingest = settings.ingestPoint || defaultIngest;
+      const devToolsEnabled = settings.consoleLogs && settings.networkLogs;
+      setOpenInNewTab(settings.openInNewTab ?? false);
+      setIncludeDevTools(devToolsEnabled);
+      setIngest(ingest);
+      setTempIngest(ingest);
+      setShowIngest(ingest !== defaultIngest);
+      setEditIngest(!settings.ingestPoint);
+      setUseDebugger(settings.useDebugger);
+    }
   });
 
   const toggleIncludeDevTools = (e: Event) => {
@@ -36,34 +35,29 @@ function Settings({ goBack }: { goBack: () => void }) {
     e.stopPropagation();
     const value = includeDevTools();
     setIncludeDevTools(!value);
-    chrome.runtime.sendMessage({
-      type: "ort:settings",
+    void sendMessage("ort:settings", {
       settings: { consoleLogs: !value, networkLogs: !value },
-    });
+    }).catch(() => {});
   };
 
   const toggleShowIngest = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
-    const value = e.target.checked
-    const newSettings = { showIngest: value }
+    const value = e.target.checked;
+    const newSettings: Record<string, any> = { showIngest: value };
     if (!value) {
-      newSettings['ingestPoint'] = defaultIngest
+      newSettings["ingestPoint"] = defaultIngest;
     }
-    chrome.runtime.sendMessage({
-      type: "ort:settings",
-      settings: newSettings,
-    });
+    void sendMessage("ort:settings", { settings: newSettings }).catch(() => {});
     setShowIngest(value);
   };
 
   const applyIngest = () => {
     const val = tempIngest();
     if (isValidUrl(val)) {
-      chrome.runtime.sendMessage({
-        type: "ort:settings",
+      void sendMessage("ort:settings", {
         settings: { ingestPoint: val },
-      });
+      }).catch(() => {});
       setIngest(val);
       setEditIngest(false);
     } else {
@@ -89,21 +83,19 @@ function Settings({ goBack }: { goBack: () => void }) {
     e.stopPropagation();
     const value = openInNewTab();
     setOpenInNewTab(!value);
-    chrome.runtime.sendMessage({
-      type: "ort:settings",
+    void sendMessage("ort:settings", {
       settings: { openInNewTab: !value },
-    });
+    }).catch(() => {});
   };
 
   const toggleUseDebugger = (e: Event) => {
     e.stopPropagation();
     const value = useDebugger();
     setUseDebugger(!value);
-    chrome.runtime.sendMessage({
-      type: "ort:settings",
+    void sendMessage("ort:settings", {
       settings: { useDebugger: !value },
-    });
-  }
+    }).catch(() => {});
+  };
 
   return (
     <div class={"flex flex-col"}>

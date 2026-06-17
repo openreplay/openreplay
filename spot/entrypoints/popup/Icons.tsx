@@ -10,7 +10,7 @@ export function ChevronSvg() {
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
-      className="lucide lucide-chevron-down"
+      class="lucide lucide-chevron-down"
     >
       <path d="m6 9 6 6 6-6" />
     </svg>
@@ -29,7 +29,7 @@ export function RecordDesktopSvg() {
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
-      className="lucide lucide-monitor-dot"
+      class="lucide lucide-monitor-dot"
     >
       <circle cx="19" cy="6" r="3" />
       <path d="M22 12v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" />
@@ -51,7 +51,7 @@ export function RecordTabSvg() {
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
-      className="lucide lucide-app-window"
+      class="lucide lucide-app-window"
     >
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <path d="M10 4v4" />
@@ -114,7 +114,7 @@ export function SettingsSvg() {
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
-      className="lucide lucide-cog"
+      class="lucide lucide-cog"
     >
       <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
       <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />

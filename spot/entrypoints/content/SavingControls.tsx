@@ -173,7 +173,7 @@ function SavingControls({
     const thumbnail = await generateThumbnail();
     setProcessing(false);
     const bounds = trimBounds();
-    const trim =
+    const trim: [number, number] | null =
       bounds[0] + bounds[1] === 0
         ? null
         : [Math.floor(bounds[0] * 1000), Math.ceil(bounds[1] * 1000)];
@@ -423,7 +423,6 @@ function SavingControls({
                     </div>
                     <div
                       class="slider-body"
-                      // onMouseDown={startDrag("body")}
                       style={{
                         left: `calc(${startPos()}%)`,
                         width: `calc(${endPos() - startPos()}% - 0px)`,

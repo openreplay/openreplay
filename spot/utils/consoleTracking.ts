@@ -1,3 +1,5 @@
+import { pageMessages } from "~/utils/pageMessages";
+
 function printString(arg) {
   const printError =
     "InstallTrigger" in window // detect Firefox
@@ -50,7 +52,7 @@ function printObject(arg) {
     return `Array(${length})[${values}]`;
   }
   if (typeof arg === "object") {
-    const res = [];
+    const res: string[] = [];
     let i = 0;
     for (const k in arg) {
       if (++i === 10) {
@@ -106,7 +108,7 @@ export const patchConsole = (console, ctx) => {
     const truncated =
       msg.length > 5000 ? `Truncated: ${msg.slice(0, 5000)}...` : msg;
     const logs = [{ level, msg: truncated, time: Date.now() }];
-    window.postMessage({ type: "ort:bump-logs", logs }, "*");
+    window.postMessage({ type: pageMessages.injected.bumpLogs, logs }, "*");
   };
 
   const handler = (level) => ({
@@ -116,7 +118,7 @@ export const patchConsole = (console, ctx) => {
       if (n > 10) {
         return;
       } else {
-        sendConsoleLog(level, argumentsList); // Pass the correct level
+        sendConsoleLog(level, argumentsList);
       }
     },
   });
@@ -127,15 +129,14 @@ export const patchConsole = (console, ctx) => {
       return;
     }
     const fn = ctx.console[method];
-    // is there any way to preserve the original console trace?
     const revProxy = Proxy.revocable(fn, handler(method));
     console[method] = revProxy.proxy;
-    window.__or_proxy_revocable.push(revProxy);
+    window.__or_proxy_revocable?.push(revProxy);
   });
 
   return () => {
     clearInterval(int);
-    window.__or_proxy_revocable.forEach((revocable) => {
+    window.__or_proxy_revocable?.forEach((revocable) => {
       revocable.revoke();
     });
   };

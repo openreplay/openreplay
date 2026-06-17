@@ -1,4 +1,5 @@
 import { onCLS, onINP, onLCP, Metric } from "web-vitals";
+import { sendMessage } from "~/utils/messaging";
 
 export const clicksArray: { time: number; label: string }[] = [];
 export let clickInt: ReturnType<typeof setInterval> | null = null;
@@ -7,19 +8,13 @@ let vitalsSet = false;
 
 export function startLocationRecording() {
   let currentLocation = location.href;
-  const sendLocation = (msg: Record<string, any>) => {
-    void browser.runtime.sendMessage({
-      type: "ort:bump-location",
-      location: msg,
-    });
+  const sendLocation = (msg: any) => {
+    void sendMessage("ort:bump-location", { location: msg }).catch(() => {});
   };
 
   const checkVitals = (val: Metric) => {
     if (locationInt !== null) {
-      void browser.runtime.sendMessage({
-        type: "ort:bump-vitals",
-        vital: val,
-      });
+      void sendMessage("ort:bump-vitals", { vitals: val }).catch(() => {});
     }
   };
 
@@ -83,11 +78,12 @@ export function trackClick(e: any) {
 export function startClickRecording() {
   clicksArray.length = 0;
   document.addEventListener("click", trackClick);
+  // The 1s cadence doubles as the service-worker keep-alive during recording:
+  // an inbound message every second resets the MV3 idle timer.
   clickInt = setInterval(() => {
-    browser.runtime.sendMessage({
-      type: "ort:bump-clicks",
-      clicks: clicksArray,
-    });
+    void sendMessage("ort:bump-clicks", { clicks: clicksArray.concat([]) }).catch(
+      () => {},
+    );
     clicksArray.length = 0;
   }, 1000);
 }
