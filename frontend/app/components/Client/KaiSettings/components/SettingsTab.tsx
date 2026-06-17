@@ -1,15 +1,15 @@
-import { Button, Checkbox, Collapse, Input, Switch, Typography } from 'antd';
+import { Checkbox, Collapse, Typography } from 'antd';
 import { ChevronRight } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import Environments from './Environments';
 import TestCaseContent from './TestCaseContent';
 import { MOCK_TEST_CASES } from './shared/mockData';
 import { getStatusTag } from './shared/utils';
 
 function SettingsTab() {
   const { t } = useTranslation();
-  const [withLogin, setWithLogin] = useState(false);
 
   const testCaseItems = MOCK_TEST_CASES.map((tc) => ({
     key: tc.key,
@@ -25,36 +25,8 @@ function SettingsTab() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <div className="flex flex-col gap-3 max-w-lg">
-        <div className="flex items-center gap-3">
-          <Switch checked={withLogin} onChange={setWithLogin} />
-          <Typography.Text strong>{t('Requires Login')}</Typography.Text>
-        </div>
-        <Typography.Text type="secondary" className="text-sm!">
-          {t(
-            'If login screen encountered, the test agent will attempt to log in using the provided credentials before running the test cases.',
-          )}
-        </Typography.Text>
-
-        {withLogin && (
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <Typography.Text type="secondary" className="text-sm!">
-                {t('Login')}
-              </Typography.Text>
-              <Input placeholder={t('Username or email')} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Typography.Text type="secondary" className="text-sm!">
-                {t('Password')}
-              </Typography.Text>
-              <Input.Password placeholder={t('Password')} />
-            </div>
-            <div className="flex items-center gap-4">
-              <Button type="primary">{t('Save')}</Button>
-            </div>
-          </div>
-        )}
+      <div className="max-w-lg">
+        <Environments />
       </div>
 
       <div className="flex flex-col gap-2">
