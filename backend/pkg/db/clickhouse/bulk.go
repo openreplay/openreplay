@@ -66,23 +66,71 @@ func (b *bulkImpl) Send() error {
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
+	afterPrepare := time.Now()
 	for _, set := range b.values {
 		if err := batch.Append(set...); err != nil {
 			log.Printf("can't append value set to batch, err: %s", err)
 			log.Printf("failed query: %s", b.query)
 		}
 	}
+	afterAppend := time.Now()
 	if err := batch.Send(); err != nil {
 		return err
 	}
-	// log.Printf("[!] batch name: %s, rows: %d, duration: %d ms", b.table, b.counter, time.Now().Sub(start).Milliseconds())
+	afterSend := time.Now()
+
+	jsonRows, jsonBytes, totalBytes := b.payloadStats()
+	log.Printf("[CH] table=%s rows=%d jsonRows=%d jsonBytes=%d totalBytes=%d prepareMs=%d appendMs=%d sendMs=%d totalMs=%d",
+		b.table, b.counter, jsonRows, jsonBytes, totalBytes,
+		afterPrepare.Sub(start).Milliseconds(),
+		afterAppend.Sub(afterPrepare).Milliseconds(),
+		afterSend.Sub(afterAppend).Milliseconds(),
+		afterSend.Sub(start).Milliseconds(),
+	)
+
 	// Save bulk metrics
 	if b.metrics != nil {
 		b.metrics.RecordBulkElements(float64(len(b.values)), "ch", b.table)
-		b.metrics.RecordBulkInsertDuration(float64(time.Now().Sub(start).Milliseconds()), "ch", b.table)
+		b.metrics.RecordBulkInsertDuration(float64(afterSend.Sub(start).Milliseconds()), "ch", b.table)
 	}
 	// Prepare values slice for a new data
 	b.values = make([][]interface{}, 0)
 	b.counter = 0
 	return nil
+}
+
+var jsonColumns = map[string][]int{
+	"web_events":    {25, 26}, // "$properties", properties
+	"mobile_events": {12},     // "$properties"
+}
+
+func argLen(v interface{}) int {
+	switch x := v.(type) {
+	case string:
+		return len(x)
+	case []byte:
+		return len(x)
+	default:
+		return 0
+	}
+}
+
+func (b *bulkImpl) payloadStats() (jsonRows, jsonBytes, totalBytes int) {
+	cols := jsonColumns[b.table]
+	for _, row := range b.values {
+		for _, v := range row {
+			totalBytes += argLen(v)
+		}
+		rowJSON := 0
+		for _, idx := range cols {
+			if idx < len(row) {
+				rowJSON += argLen(row[idx])
+			}
+		}
+		jsonBytes += rowJSON
+		if rowJSON > 4 { // more than "{}"
+			jsonRows++
+		}
+	}
+	return
 }
