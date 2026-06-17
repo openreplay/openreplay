@@ -249,7 +249,7 @@ export function SpotOverviewPanelCont({
 }: any) {
   const selectedFeatures = ['ERRORS', 'NETWORK'];
   const fetchPresented = false; // TODO
-  const endTime = 0; // TODO
+  const endTime = spotEndTime;
   const resources = {
     NETWORK: resourceList,
     ERRORS: exceptionsList,

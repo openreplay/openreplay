@@ -27,7 +27,7 @@ import Tabs from 'App/components/Session/Tabs';
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { hashString } from 'App/types/session/session';
-import { Avatar, Icon } from 'UI';
+import { Avatar, Icon, confirm } from 'UI';
 
 import { TABS, Tab } from '../consts';
 import AccessModal from './AccessModal';
@@ -98,10 +98,20 @@ function SpotPlayerHeader({
         toast.dismiss(loader);
       }, 0);
     } else if (key === '2') {
-      spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
-        history.push(spotsList());
-        message.success(t('Spot successfully deleted'));
-      });
+      if (
+        await confirm({
+          header: t('Delete Spot'),
+          confirmButton: t('Delete'),
+          confirmation: t(
+            'Are you sure you want to delete this Spot? This action is permanent and cannot be undone.',
+          ),
+        })
+      ) {
+        spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
+          history.push(spotsList());
+          message.success(t('Spot successfully deleted'));
+        });
+      }
     }
   };
 
