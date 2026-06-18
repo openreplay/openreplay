@@ -15,6 +15,7 @@ import (
 type Bulk interface {
 	Append(args ...interface{}) error
 	Len() int
+	MarkFlushed()
 	Send() error
 }
 
@@ -27,6 +28,7 @@ type bulkImpl struct {
 	bytes         int
 	firstAppendAt time.Time
 	lastAppendAt  time.Time
+	flushedAt     time.Time
 	values        [][]interface{}
 	sizeLimit     int
 }
@@ -61,7 +63,7 @@ func (b *bulkImpl) Append(args ...interface{}) error {
 	b.counter++
 	if b.isWebEvents() {
 		now := time.Now()
-		if b.counter == 0 {
+		if b.counter == 1 {
 			b.firstAppendAt = now
 		}
 		b.lastAppendAt = now
@@ -75,6 +77,10 @@ func (b *bulkImpl) Append(args ...interface{}) error {
 
 func (b *bulkImpl) Len() int {
 	return b.counter
+}
+
+func (b *bulkImpl) MarkFlushed() {
+	b.flushedAt = time.Now()
 }
 
 func (b *bulkImpl) Send() error {
@@ -101,10 +107,11 @@ func (b *bulkImpl) Send() error {
 
 	if b.isWebEvents() {
 		totalMb := float64(b.bytes) / (1024 * 1024)
-		log.Printf("[CH] table=%s rows=%d totalMb=%.2f fillMs=%d queueMs=%d prepareMs=%d appendMs=%d sendMs=%d totalMs=%d",
+		log.Printf("[CH] table=%s rows=%d totalMb=%.3f fillMs=%d idleMs=%d queueMs=%d prepareMs=%d appendMs=%d sendMs=%d totalMs=%d",
 			b.table, b.counter, totalMb,
 			b.lastAppendAt.Sub(b.firstAppendAt).Milliseconds(),
-			start.Sub(b.lastAppendAt).Milliseconds(),
+			b.flushedAt.Sub(b.lastAppendAt).Milliseconds(),
+			start.Sub(b.flushedAt).Milliseconds(),
 			afterPrepare.Sub(start).Milliseconds(),
 			afterAppend.Sub(afterPrepare).Milliseconds(),
 			afterSend.Sub(afterAppend).Milliseconds(),

@@ -88,6 +88,7 @@ type connectorImpl struct {
 	seq            uint64 // last assigned task seq
 	workerTask     chan *task
 	quit           chan struct{}
+	stopOnce       sync.Once
 	workersWg      sync.WaitGroup
 	commits        *commitState
 	committerWg    sync.WaitGroup
@@ -214,6 +215,7 @@ func (c *connectorImpl) flush() {
 	}
 	newTask := NewTask()
 	for _, b := range c.batches {
+		b.MarkFlushed()
 		newTask.bulks = append(newTask.bulks, b)
 	}
 	c.batches = make(map[string]Bulk, len(batches)+1)
@@ -244,14 +246,18 @@ func copyOffsets(src qtypes.Offsets) qtypes.Offsets {
 }
 
 func (c *connectorImpl) Stop() error {
-	close(c.quit)
-	c.workersWg.Wait()
-	c.commits.mu.Lock()
-	c.commits.closed = true
-	c.commits.cond.Broadcast()
-	c.commits.mu.Unlock()
-	c.committerWg.Wait()
-	return c.conn.Close()
+	var err error
+	c.stopOnce.Do(func() {
+		close(c.quit)
+		c.workersWg.Wait()
+		c.commits.mu.Lock()
+		c.commits.closed = true
+		c.commits.cond.Broadcast()
+		c.commits.mu.Unlock()
+		c.committerWg.Wait()
+		err = c.conn.Close()
+	})
+	return err
 }
 
 func isCHNotEnoughSpace(err error) bool {
