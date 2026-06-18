@@ -4,11 +4,6 @@ export const ConfigureBackendSchema = z.object({
     appUrl: z.string().describe("OpenReplay instance URL (e.g. https://app.openreplay.com or https://openreplay.your-company.com). The API host is derived automatically."),
 });
 
-export const LoginSchema = z.object({
-    email: z.string().describe("Email address"),
-    password: z.string().describe("Password"),
-});
-
 export const LoginJwtSchema = z.object({
     jwt: z.string().describe("JWT token for authentication"),
 });

@@ -77,10 +77,10 @@ Configure my OpenReplay backend to use https://api.mycompany.com
 
 **Step 2: Login**
 ```
-Login to OpenReplay with:
-- Email: john@example.com
-- Password: mypassword123
+Log in to OpenReplay
 ```
+This opens your OpenReplay instance in the browser — approve access there and return.
+(Advanced users can instead log in with a raw JWT token.)
 
 **Step 3: Fetch Chart Data**
 ```
@@ -198,10 +198,9 @@ Fetch chart data from /api/v1/custom/endpoint with params:
 
 ## UI Features
 
-### Configuration Panel
-- Set backend URL for self-hosted instances
-- Login with email/password
-- Fetch data from any API endpoint
+### Auth Overlay
+- Set the OpenReplay instance URL (hosted or self-hosted)
+- Log in through the browser
 - View authentication status
 
 ### Chart View
@@ -269,11 +268,18 @@ Some browsers may block iframe content. To fix:
 }
 ```
 
-### Tool: `login`
+### Tool: `login_browser`
 ```typescript
 {
-  email: string,    // Your OpenReplay account email
-  password: string  // Your OpenReplay account password
+  appUrl?: string  // OpenReplay instance URL (optional, uses configured instance if omitted)
+}
+```
+Returns immediately with an authorize URL; call `complete_login` after the user approves.
+
+### Tool: `login_jwt`
+```typescript
+{
+  jwt: string  // Raw JWT token (advanced / service-account flow)
 }
 ```
 

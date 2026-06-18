@@ -4,7 +4,7 @@ An interactive MCP (Model Context Protocol) app for viewing OpenReplay charts an
 
 ## Features
 
-- 🔐 **Authentication**: Secure login with email/password
+- 🔐 **Authentication**: Browser-based login (recommended) or a raw JWT token
 - ⚙️ **Configurable**: Support for both hosted and self-hosted OpenReplay instances
 - 📊 **Charts**: View analytics charts using Apache ECharts (matching OpenReplay's UI)
 - 🎬 **Session Replay**: Watch session recordings in an embedded iframe
@@ -66,8 +66,11 @@ Configure the OpenReplay backend to use https://api.your-domain.com
 ### 2. Login
 
 ```
-Login to OpenReplay with email: your-email@example.com and password: your-password
+Log in to OpenReplay
 ```
+
+This opens your OpenReplay instance in the browser. Approve access there and return
+to the app. Advanced users can instead authenticate with a raw JWT token.
 
 ### 3. View Charts
 
@@ -106,13 +109,22 @@ Configure the OpenReplay backend URL.
 }
 ```
 
-#### `login`
-Authenticate with OpenReplay.
+#### `login_browser`
+Start browser-based login (recommended). Opens the OpenReplay authorize page and
+returns immediately; call `complete_login` after the user approves access.
 
 ```typescript
 {
-  email: "your-email@example.com",
-  password: "your-password"
+  appUrl: "https://app.openreplay.com" // optional, uses the configured instance if omitted
+}
+```
+
+#### `login_jwt`
+Authenticate with a raw JWT token (advanced / service-account flow).
+
+```typescript
+{
+  jwt: "your-jwt-token"
 }
 ```
 
@@ -248,7 +260,7 @@ The app uses CSS variables for theming. All colors, fonts, and spacing automatic
 ## Troubleshooting
 
 ### "Not authenticated" error
-Make sure you've called the `login` tool first before fetching data.
+Make sure you've logged in (`login_browser` or `login_jwt`) before fetching data.
 
 ### Charts not displaying
 Check the raw data format in the debug section. The app expects OpenReplay's chart data structure.

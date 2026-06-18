@@ -75,7 +75,8 @@ async function main() {
   console.error("[SERVER]   - view_chart (View analytics charts)");
   console.error("[SERVER] Internal tools:");
   console.error("[SERVER]   - configure_backend");
-  console.error("[SERVER]   - login");
+  console.error("[SERVER]   - login_browser");
+  console.error("[SERVER]   - complete_login");
   console.error("[SERVER]   - login_jwt");
   console.error("[SERVER]   - logout");
   console.error("[SERVER]   - fetch_chart_data");

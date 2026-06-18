@@ -26,7 +26,7 @@ src/
     FunnelView.tsx           Pure CSS step-by-step conversion bars
     SessionList.tsx          Session list with play buttons
     SessionReplayView.tsx    Interactive session replay player
-    AuthOverlay.tsx          JWT login overlay
+    AuthOverlay.tsx          Browser-login overlay (URL only)
     ConfigPanel.tsx          Backend/auth/chart config forms (dev)
     IdleView.tsx             Empty state placeholder
     chart.schema             API reference for /cards/try endpoint
@@ -112,7 +112,8 @@ No UI — return plain text/JSON to the model.
 | Tool | Purpose |
 |------|---------|
 | `configure_backend` | Set backend URL (self-hosted) |
-| `login` | Email/password auth |
+| `login_browser` | Browser-based login (recommended); returns authorize URL |
+| `complete_login` | Finalize browser login by polling for approval |
 | `login_jwt` | JWT token auth (persisted to disk) |
 | `logout` | Clear auth and remove persisted token |
 | `get_auth_status` | Check auth state |
@@ -136,7 +137,7 @@ Only applies to `registerAppTool`. Set in `_meta.ui.visibility`:
 | `["app"]` | React app can call via `callServerTool()`, hidden from model |
 | `["model", "app"]` | Both (default if omitted) |
 
-All 7 UI tools use `["model"]`. The React app only calls tools for auth (`configure_backend`, `login_jwt`) and replay internals (`_refresh_replay_urls`, `_fetch_mob_file`) — those are internal tools and don't use visibility.
+All 7 UI tools use `["model"]`. The React app only calls tools for auth (`configure_backend`, `login_browser`, `complete_login`) and replay internals (`_refresh_replay_urls`, `_fetch_mob_file`) — those are internal tools and don't use visibility.
 
 `server.registerTool` does NOT support the visibility feature. It's an MCP Apps extension only for `registerAppTool`.
 
@@ -332,10 +333,13 @@ useAutoResize(app);          // Auto-report size changes to host
 
 ### Auth flow (client-side)
 
-When `showAuthOverlay` is true, `AuthOverlay` renders a form. On submit:
+When `showAuthOverlay` is true, `AuthOverlay` prompts the user to log in via the browser.
+The overlay only takes the OpenReplay URL — no token or credential fields. On "Login with Browser":
 1. Calls `configure_backend` via `app.callServerTool()`
-2. Calls `login_jwt` via `app.callServerTool()`
+2. Calls `login_browser`, then polls `complete_login` until approved
 3. Closes overlay, retries `lastFailedRequest` if set
+
+(The `login_jwt` tool still exists for advanced/service-account use, but the UI does not expose it.)
 
 ---
 

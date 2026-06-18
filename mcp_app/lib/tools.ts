@@ -6,7 +6,6 @@ import { state, savePersistedState, clearPersistedState, generateAuthCode } from
 import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, resolveFunnelSteps, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties, pollForAuth } from "./api.js";
 import {
   ConfigureBackendSchema,
-  LoginSchema,
   LoginJwtSchema,
   LoginBrowserSchema,
   CompleteLoginSchema,
@@ -1225,43 +1224,6 @@ export function registerInternalTools(server: McpServer) {
   );
   console.error("[SERVER] configure_backend tool registered");
 
-  // Login with email/password
-  console.error("[SERVER] Registering login tool...");
-  server.registerTool(
-    "login_email_password",
-    {
-      description: "Authenticate with OpenReplay using email and password. Only use this if the user explicitly provides email and password. Otherwise prefer login_browser.",
-      inputSchema: {
-        email: z.string().describe("Email address"),
-        password: z.string().describe("Password"),
-      },
-    },
-    async (args) => {
-      const parsed = LoginSchema.parse(args);
-      console.error("[SERVER] login called:", parsed.email);
-      const response = await makeApiRequest("/api/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: parsed.email,
-          password: parsed.password,
-        }),
-      });
-
-      state.jwt = response.jwt || response.data?.jwt;
-      state.userData = response.data
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Successfully logged in as ${parsed.email}`,
-          },
-        ],
-      };
-    }
-  );
-  console.error("[SERVER] login_email_password tool registered");
-
   // Login with a raw JWT (testing / service-account flow)
   console.error("[SERVER] Registering login_jwt tool...");
   server.registerTool(
@@ -1302,7 +1264,7 @@ export function registerInternalTools(server: McpServer) {
         "PREFERRED login method. Opens a browser tab for the user to approve access. " +
         "RETURNS IMMEDIATELY with the authorize URL — show the URL to the user, ask them to click 'Authorize' " +
         "in the OpenReplay tab, and then call complete_login to finish the flow. " +
-        "Use this whenever the user needs to log in, unless they explicitly ask for email/password login.",
+        "Use this whenever the user needs to log in. The only alternative is login_jwt for a raw token.",
       inputSchema: {
         appUrl: z.string().optional().describe("OpenReplay instance URL (optional, uses current if already configured)"),
       },

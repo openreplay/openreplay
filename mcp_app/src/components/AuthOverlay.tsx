@@ -2,25 +2,18 @@ import { useState } from 'react';
 
 interface AuthOverlayProps {
   authError: string | null;
-  jwt: string;
-  setJwt: (jwt: string) => void;
   appUrl: string;
   setAppUrl: (url: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
   onBrowserLogin: (appUrl: string) => Promise<void>;
 }
 
 function AuthOverlay({
   authError,
-  jwt,
-  setJwt,
   appUrl,
   setAppUrl,
-  onSubmit,
   onBrowserLogin,
 }: AuthOverlayProps) {
   const [browserLoginPending, setBrowserLoginPending] = useState(false);
-  const [showJwtForm, setShowJwtForm] = useState(false);
 
   const handleBrowserLogin = async () => {
     setBrowserLoginPending(true);
@@ -57,8 +50,12 @@ function AuthOverlay({
         }}
       >
         <h2 style={{ marginBottom: '16px', fontSize: '1.5rem', fontWeight: 600 }}>
-          Authentication Required
+          Sign in to OpenReplay
         </h2>
+
+        <p style={{ marginBottom: '16px', fontSize: '0.875rem', color: 'var(--color-text-secondary, #6b7280)' }}>
+          Log in through your browser to connect this app to your OpenReplay account.
+        </p>
 
         {authError && (
           <div className="error-message" style={{ marginBottom: '16px' }}>
@@ -82,7 +79,7 @@ function AuthOverlay({
         <button
           type="button"
           className="play-button"
-          style={{ width: '100%', justifyContent: 'center', marginBottom: '12px' }}
+          style={{ width: '100%', justifyContent: 'center' }}
           disabled={browserLoginPending}
           onClick={handleBrowserLogin}
         >
@@ -90,54 +87,9 @@ function AuthOverlay({
         </button>
 
         {browserLoginPending && (
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary, #6b7280)', textAlign: 'center', marginBottom: '12px' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary, #6b7280)', textAlign: 'center', marginTop: '12px' }}>
             A browser tab should open. Log in and approve access, then return here.
           </p>
-        )}
-
-        <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-          <button
-            type="button"
-            onClick={() => setShowJwtForm(!showJwtForm)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--or-teal, #394EFF)',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              textDecoration: 'underline',
-            }}
-          >
-            {showJwtForm ? 'Hide JWT login' : 'Or paste a JWT token manually'}
-          </button>
-        </div>
-
-        {showJwtForm && (
-          <form onSubmit={onSubmit}>
-            <div className="form-group" style={{ marginBottom: '16px' }}>
-              <label htmlFor="jwt">JWT Token</label>
-              <textarea
-                id="jwt"
-                value={jwt}
-                onChange={(e) => setJwt(e.target.value)}
-                placeholder="Paste your JWT token here..."
-                required
-                rows={4}
-                style={{
-                  width: '100%',
-                  fontFamily: 'var(--font-mono, monospace)',
-                  fontSize: '0.875rem',
-                }}
-              />
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary, #6b7280)', marginTop: '4px' }}>
-                To get your JWT: Login to OpenReplay in browser → Open DevTools → Network tab → Copy token from Authorization header
-              </p>
-            </div>
-
-            <button type="submit" className="play-button" style={{ width: '100%', justifyContent: 'center' }}>
-              Login with JWT
-            </button>
-          </form>
         )}
       </div>
     </div>
