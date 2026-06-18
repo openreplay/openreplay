@@ -46,7 +46,7 @@ registerAppResource(
         _meta: {
           ui: {
             csp: {
-              connectDomains: ["foss.openreplay.com", "*.openreplay.com"],
+              connectDomains: ["*.openreplay.com"],
             },
           },
         },

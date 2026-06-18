@@ -2,5 +2,5 @@
 # Copy this file to config.toml and fill in your values
 
 [env]
-# OpenReplay backend URL (defaults to https://foss.openreplay.com)
+# OpenReplay backend URL
 OPENREPLAY_BACKEND_URL = "https://your-openreplay-instance.com"
