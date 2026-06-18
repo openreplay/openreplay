@@ -1,0 +1,36 @@
+/* Form elements for auth overlay */
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, var(--text-secondary, var(--or-text-secondary)));
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-primary, var(--border-primary, var(--or-border)));
+  border-radius: 6px;
+  font-size: 1rem;
+  background: var(--color-background-primary, var(--background-primary, var(--or-white)));
+  color: var(--color-text-primary, var(--text-primary, var(--or-text-primary)));
+  font-family: inherit;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--or-teal);
+  box-shadow: 0 0 0 3px var(--or-teal-light);
+}

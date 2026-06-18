@@ -1,0 +1,37 @@
+{
+  "manifest_version": "0.3",
+  "name": "openreplay",
+  "display_name": "OpenReplay MCP",
+  "version": "1.0.3",
+  "description": "View OpenReplay sessions, charts, and replays from Claude.",
+  "author": {
+    "name": "OpenReplay",
+    "url": "https://github.com/openreplay/openreplay/"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist-server/server.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist-server/server.mjs"
+      ],
+      "env": {
+        "OPENREPLAY_URL": "${user_config.app_url}"
+      }
+    }
+  },
+  "homepage": "https://openreplay.com",
+  "support": "https://openreplay.slack.com/",
+  "repository": {"type": "git", "url": "https://github.com/openreplay/openreplay/"},
+  "icon": "logo.png",
+  "user_config": {
+    "app_url": {
+      "type": "string",
+      "title": "OpenReplay URL",
+      "description": "Your OpenReplay instance URL — the address you visit in your browser.",
+      "default": "https://app.openreplay.com",
+      "required": false
+    }
+  }
+}

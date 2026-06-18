@@ -1,0 +1,19 @@
+/* Utility classes */
+
+.error-message {
+  padding: 12px 16px;
+  background: var(--or-red-light);
+  border: 1px solid var(--or-red);
+  border-radius: 6px;
+  color: var(--or-red);
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--color-text-secondary, var(--text-secondary, var(--or-text-secondary)));
+}
