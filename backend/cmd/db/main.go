@@ -66,7 +66,7 @@ func main() {
 		log.Fatal(ctx, "can't init issues keeper: %s", err)
 	}
 
-	chConnector, err := clickhouse.NewConnector(chConn, dbMetric, cfg.CHBatchSizeLimit, cfg.CHWorkerQueueDepth)
+	chConnector, err := clickhouse.NewConnector(chConn, dbMetric, cfg.CHBatchSizeLimit, cfg.CHWorkerQueueDepth, cfg.CHSendWorkers)
 	if err != nil {
 		log.Fatal(ctx, "can't prepare clickhouse connector: %s", err)
 	}

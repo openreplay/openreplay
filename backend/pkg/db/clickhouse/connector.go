@@ -58,12 +58,21 @@ type Connector interface {
 }
 
 type task struct {
+	seq   uint64
 	bulks []Bulk
 	snap  qtypes.Offsets
 }
 
 func NewTask() *task {
 	return &task{bulks: make([]Bulk, 0, len(batches))}
+}
+
+type commitState struct {
+	mu     sync.Mutex
+	cond   *sync.Cond
+	next   uint64
+	done   map[uint64]*task
+	closed bool
 }
 
 type connectorImpl struct {
@@ -76,9 +85,12 @@ type connectorImpl struct {
 	needToFlush    bool
 	sizeFlushed    bool
 	committer      OffsetCommitter
+	seq            uint64 // last assigned task seq
 	workerTask     chan *task
-	done           chan struct{}
-	finished       chan struct{}
+	quit           chan struct{}
+	workersWg      sync.WaitGroup
+	commits        *commitState
+	committerWg    sync.WaitGroup
 }
 
 func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
@@ -87,7 +99,7 @@ func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
 	return c.batches[name].Append(args...)
 }
 
-func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, workerQueueDepth int) (Connector, error) {
+func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, workerQueueDepth, sendWorkers int) (Connector, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("CH connection is required")
@@ -97,6 +109,15 @@ func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, w
 	if workerQueueDepth < 1 {
 		workerQueueDepth = 1
 	}
+	if sendWorkers < 1 {
+		sendWorkers = 1
+	}
+
+	cs := &commitState{
+		next: 1,
+		done: make(map[uint64]*task),
+	}
+	cs.cond = sync.NewCond(&cs.mu)
 
 	c := &connectorImpl{
 		conn:           conn,
@@ -105,13 +126,18 @@ func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, w
 		batches:        make(map[string]Bulk, len(batches)+1),
 		pending:        make(qtypes.Offsets),
 		workerTask:     make(chan *task, workerQueueDepth),
-		done:           make(chan struct{}),
-		finished:       make(chan struct{}),
+		quit:           make(chan struct{}),
+		commits:        cs,
 	}
 	if err := c.prepare(); err != nil {
 		return nil, err
 	}
-	go c.worker()
+	c.workersWg.Add(sendWorkers)
+	for i := 0; i < sendWorkers; i++ {
+		go c.worker()
+	}
+	c.committerWg.Add(1)
+	go c.runCommitter()
 	return c, nil
 }
 
@@ -195,6 +221,8 @@ func (c *connectorImpl) flush() {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
 	newTask.snap = copyOffsets(c.pending)
+	c.seq++
+	newTask.seq = c.seq
 	c.needToFlush = false
 	c.mu.Unlock()
 	c.workerTask <- newTask
@@ -216,8 +244,13 @@ func copyOffsets(src qtypes.Offsets) qtypes.Offsets {
 }
 
 func (c *connectorImpl) Stop() error {
-	c.done <- struct{}{}
-	<-c.finished
+	close(c.quit)
+	c.workersWg.Wait()
+	c.commits.mu.Lock()
+	c.commits.closed = true
+	c.commits.cond.Broadcast()
+	c.commits.mu.Unlock()
+	c.committerWg.Wait()
 	return c.conn.Close()
 }
 
@@ -277,23 +310,62 @@ func (c *connectorImpl) commitOffsets(t *task) {
 }
 
 func (c *connectorImpl) worker() {
+	defer c.workersWg.Done()
 	for {
 		select {
 		case t := <-c.workerTask:
 			c.sendBulks(t)
-			c.commitOffsets(t)
-		case <-c.done:
+			c.markCompleted(t)
+		case <-c.quit:
 			// Send whatever is buffered, then stop.
 			for {
 				select {
 				case t := <-c.workerTask:
 					c.sendBulks(t)
-					c.commitOffsets(t)
+					c.markCompleted(t)
 				default:
-					c.finished <- struct{}{}
 					return
 				}
 			}
+		}
+	}
+}
+
+func (c *connectorImpl) markCompleted(t *task) {
+	cs := c.commits
+	cs.mu.Lock()
+	cs.done[t.seq] = t
+	cs.cond.Signal()
+	cs.mu.Unlock()
+}
+
+func (c *connectorImpl) runCommitter() {
+	defer c.committerWg.Done()
+	cs := c.commits
+	for {
+		cs.mu.Lock()
+		for cs.done[cs.next] == nil && !cs.closed {
+			cs.cond.Wait()
+		}
+		var latest *task
+		for {
+			t := cs.done[cs.next]
+			if t == nil {
+				break
+			}
+			latest = t
+			delete(cs.done, cs.next)
+			cs.next++
+		}
+		closed := cs.closed
+		drained := cs.done[cs.next] == nil
+		cs.mu.Unlock()
+
+		if latest != nil {
+			c.commitOffsets(latest)
+		}
+		if closed && drained {
+			return
 		}
 	}
 }
