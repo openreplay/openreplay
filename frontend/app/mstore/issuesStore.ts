@@ -22,6 +22,8 @@ export interface IssueSession {
   dur: string;
   tags: string[];
   journey: string;
+  /** short headline for how this session experienced the issue — a "variation" */
+  variation: string;
 }
 
 export interface Issue {
@@ -30,6 +32,8 @@ export interface Issue {
   critical: boolean;
   cat: CategoryName;
   real: string;
+  /** suggested fix / resolution — paired with `real` in the detail diagnosis */
+  fix: string;
   journey: string;
   impact: number;
   /** minutes since this issue was last seen (drives "Last seen" + newest sort) */
@@ -60,6 +64,8 @@ export interface IssueSessionCard {
   plan: string;
   tags: string[];
   journey: string;
+  /** short headline of this session's variation of the issue */
+  variation: string;
 }
 
 function fmtDuration(ms: number): string {
@@ -70,6 +76,25 @@ function fmtDuration(ms: number): string {
 }
 
 export const CAT_ORDER: CategoryName[] = ['Errors', 'UI/UX', 'Slowness'];
+
+/* Reason chips offered when hiding an issue (shared by the list + detail pages),
+   so the agent learns why something was dismissed. */
+export const HIDE_REASONS = [
+  'Not a real issue',
+  'Already fixed',
+  'Expected behavior',
+  'Duplicate',
+  'Low priority',
+];
+
+/* Reason chips offered when removing an issue's critical flag (shared by the
+   list + detail pages). */
+export const CRITICAL_REASONS = [
+  'Not actually critical',
+  'Already resolved',
+  'Acceptable risk',
+  'Low user impact',
+];
 
 /* Single source for the per-category icon so the list and the detail header
    stay consistent. */
@@ -135,7 +160,7 @@ export function lastSeenExact(minAgo: number): string {
   });
 }
 
-const RAW: Omit<Issue, 'tags'>[] = [
+const RAW: Omit<Issue, 'tags' | 'fix'>[] = [
   {
     id: 1,
     head: 'Card declined with no error message at checkout',
@@ -146,9 +171,9 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'The payment request returns a declined status but the UI shows no error — the "Place order" button just resets to its default state, leaving the user unsure whether the order went through.',
     journey: 'User filled in card details, hit "Place order", saw the spinner end with nothing, retried the same card twice, then abandoned the cart.',
     sessions: [
-      { email: 'daniel@black-bird.io', plan: 'paid', browser: 'Chrome', os: 'Mac OS X', loc: 'Frankfurt am Main', dur: '12m1s', tags: ['Payment', 'Checkout', 'Error'], journey: 'Filled in card details, hit "Place order", watched the spinner end with nothing, re-entered the same card twice, then left the cart.' },
-      { email: 'lucas@finhub.io', plan: 'paid', browser: 'Chrome', os: 'Windows', loc: 'Toronto', dur: '9m12s', tags: ['Checkout', 'Frustration', 'Drop-off'], journey: 'Reached checkout, submitted payment, got silently bounced back to the form, grew visibly frustrated and abandoned.' },
-      { email: 'amara@shopwave.co', plan: 'trial', browser: 'Safari', os: 'iOS', loc: 'Lagos', dur: '6m03s', tags: ['Payment', 'Drop-off'], journey: 'Tried to pay on her phone, saw the button reset with no message, and gave up after a single attempt.' },
+      { email: 'daniel@black-bird.io', plan: 'paid', browser: 'Chrome', os: 'Mac OS X', loc: 'Frankfurt am Main', dur: '12m1s', variation: 'Order silently failed, retried twice', tags: ['Payment', 'Checkout', 'Error'], journey: 'Filled in card details, hit "Place order", watched the spinner end with nothing, re-entered the same card twice, then left the cart.' },
+      { email: 'lucas@finhub.io', plan: 'paid', browser: 'Chrome', os: 'Windows', loc: 'Toronto', dur: '9m12s', variation: 'Bounced back to the form, abandoned', tags: ['Checkout', 'Frustration', 'Drop-off'], journey: 'Reached checkout, submitted payment, got silently bounced back to the form, grew visibly frustrated and abandoned.' },
+      { email: 'amara@shopwave.co', plan: 'trial', browser: 'Safari', os: 'iOS', loc: 'Lagos', dur: '6m03s', variation: 'Pay button reset on mobile', tags: ['Payment', 'Drop-off'], journey: 'Tried to pay on her phone, saw the button reset with no message, and gave up after a single attempt.' },
     ],
   },
   {
@@ -161,8 +186,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'On mobile viewports the primary checkout button receives the tap but never fires its handler, so nothing happens. Users tap it repeatedly (rage clicks) with no response.',
     journey: 'User reached the checkout step on a phone, tapped "Place order" seven times in a row, scrolled up and back down looking for an error, then left.',
     sessions: [
-      { email: 'main@badmanners.gg', plan: 'trial', browser: 'Safari', os: 'iOS', loc: 'Islamabad', dur: '8m7s', tags: ['Checkout', 'Rage Clicks', 'Frustration'], journey: 'Tapped "Place order" seven times in a row on a phone, nothing fired, scrolled up and down hunting for an error, then quit.' },
-      { email: 'priya@meshcart.in', plan: 'free', browser: 'Chrome', os: 'Android', loc: 'Mumbai', dur: '5m44s', tags: ['Checkout', 'Back-and-Forth'], journey: 'Tapped the order button, looped back to the cart and forward again twice, and never got a response.' },
+      { email: 'main@badmanners.gg', plan: 'trial', browser: 'Safari', os: 'iOS', loc: 'Islamabad', dur: '8m7s', variation: 'Tapped seven times, nothing fired', tags: ['Checkout', 'Rage Clicks', 'Frustration'], journey: 'Tapped "Place order" seven times in a row on a phone, nothing fired, scrolled up and down hunting for an error, then quit.' },
+      { email: 'priya@meshcart.in', plan: 'free', browser: 'Chrome', os: 'Android', loc: 'Mumbai', dur: '5m44s', variation: 'Looped between cart and checkout', tags: ['Checkout', 'Back-and-Forth'], journey: 'Tapped the order button, looped back to the cart and forward again twice, and never got a response.' },
     ],
   },
   {
@@ -175,8 +200,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'The expiry-date field throws a form validation error on correctly formatted future dates (MM/YY), blocking the user from submitting payment.',
     journey: 'User entered a valid expiry three different ways, each rejected with "invalid date", re-typed slowly, then gave up on the payment step.',
     sessions: [
-      { email: 'dev@dosetech.co', plan: 'paid', browser: 'Firefox', os: 'Linux', loc: 'Lahore (Sher Kot)', dur: '9m1s', tags: ['Payment', 'Form Completion', 'Error'], journey: 'Entered a valid expiry three different ways, each rejected as "invalid date", re-typed it slowly, then abandoned payment.' },
-      { email: 'sofia@oakmont.eu', plan: 'paid', browser: 'Chrome', os: 'Windows', loc: 'Madrid', dur: '7m20s', tags: ['Form Completion', 'Data Entry'], journey: 'Corrected the expiry field over and over against a false validation error before giving up on the order.' },
+      { email: 'dev@dosetech.co', plan: 'paid', browser: 'Firefox', os: 'Linux', loc: 'Lahore (Sher Kot)', dur: '9m1s', variation: 'Valid expiry rejected three times', tags: ['Payment', 'Form Completion', 'Error'], journey: 'Entered a valid expiry three different ways, each rejected as "invalid date", re-typed it slowly, then abandoned payment.' },
+      { email: 'sofia@oakmont.eu', plan: 'paid', browser: 'Chrome', os: 'Windows', loc: 'Madrid', dur: '7m20s', variation: 'Fought a false validation error', tags: ['Form Completion', 'Data Entry'], journey: 'Corrected the expiry field over and over against a false validation error before giving up on the order.' },
     ],
   },
   {
@@ -189,8 +214,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'The checkout page takes around eight seconds to become interactive, with the order summary and payment fields rendering well after the rest of the page.',
     journey: 'User clicked through to checkout, stared at a half-loaded page for several seconds, switched tabs, came back, and a portion of users left before it finished.',
     sessions: [
-      { email: 'rajesh+support@acme.com', plan: 'paid', browser: 'Chrome', os: 'Windows', loc: 'Newark', dur: '15m20s', tags: ['Checkout', 'Slow Performance'], journey: 'Clicked through to checkout, stared at a half-loaded page, switched tabs while it loaded, and came back several seconds later.' },
-      { email: 'elena@brightbox.io', plan: 'trial', browser: 'Chrome', os: 'Mac OS X', loc: 'Berlin', dur: '11m02s', tags: ['Slow Performance', 'Drop-off'], journey: 'Waited on the slow checkout, lost patience before the payment fields rendered, and left without ordering.' },
+      { email: 'rajesh+support@acme.com', plan: 'paid', browser: 'Chrome', os: 'Windows', loc: 'Newark', dur: '15m20s', variation: 'Tab-switched while it loaded', tags: ['Checkout', 'Slow Performance'], journey: 'Clicked through to checkout, stared at a half-loaded page, switched tabs while it loaded, and came back several seconds later.' },
+      { email: 'elena@brightbox.io', plan: 'trial', browser: 'Chrome', os: 'Mac OS X', loc: 'Berlin', dur: '11m02s', variation: 'Left before fields rendered', tags: ['Slow Performance', 'Drop-off'], journey: 'Waited on the slow checkout, lost patience before the payment fields rendered, and left without ordering.' },
     ],
   },
   {
@@ -203,8 +228,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'Step 4 of onboarding is a single overly long form with 14 required fields; completion drops sharply here and many users never reach step 5.',
     journey: 'User progressed smoothly through steps 1–3, hit the long form at step 4, scrolled the whole thing, hesitated on several fields, then closed the tab.',
     sessions: [
-      { email: 'muhammad.hadayat@swipbox.com', plan: 'trial', browser: 'Chrome', os: 'Mac OS X', loc: 'Saidpur', dur: '11m31s', tags: ['Onboarding', 'Form Completion', 'Hesitation'], journey: 'Breezed through steps 1–3, hit the 14-field form at step 4, hesitated on several inputs, then closed the tab.' },
-      { email: 'tom@layerlabs.dev', plan: 'trial', browser: 'Firefox', os: 'Windows', loc: 'Austin', dur: '8m49s', tags: ['Onboarding', 'Drop-off'], journey: 'Scrolled the long step-4 form top to bottom, never started filling it, and abandoned onboarding.' },
+      { email: 'muhammad.hadayat@swipbox.com', plan: 'trial', browser: 'Chrome', os: 'Mac OS X', loc: 'Saidpur', dur: '11m31s', variation: 'Stalled on the 14-field form', tags: ['Onboarding', 'Form Completion', 'Hesitation'], journey: 'Breezed through steps 1–3, hit the 14-field form at step 4, hesitated on several inputs, then closed the tab.' },
+      { email: 'tom@layerlabs.dev', plan: 'trial', browser: 'Firefox', os: 'Windows', loc: 'Austin', dur: '8m49s', variation: 'Never started the long form', tags: ['Onboarding', 'Drop-off'], journey: 'Scrolled the long step-4 form top to bottom, never started filling it, and abandoned onboarding.' },
     ],
   },
   {
@@ -217,8 +242,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'Product thumbnails on the category listing take several seconds to appear, loading one by one as the user scrolls, so the grid looks broken on first paint.',
     journey: 'User opened a category, scrolled a grid of empty image placeholders, paused waiting for thumbnails, and scrolled back up once they finally loaded.',
     sessions: [
-      { email: 'apps@vfairs.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Poznan', dur: '7m55s', tags: ['Navigation', 'Slow Performance'], journey: 'Opened a category, scrolled a grid of empty placeholders, waited, then scrolled back up once the thumbnails finally loaded.' },
-      { email: 'kenji@miraisoft.jp', plan: 'paid', browser: 'Safari', os: 'Mac OS X', loc: 'Osaka', dur: '6m10s', tags: ['Search', 'Slow Performance'], journey: 'Searched the listing, watched images trickle in one by one, and paused before interacting with the grid.' },
+      { email: 'apps@vfairs.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Poznan', dur: '7m55s', variation: 'Scrolled past empty placeholders', tags: ['Navigation', 'Slow Performance'], journey: 'Opened a category, scrolled a grid of empty placeholders, waited, then scrolled back up once the thumbnails finally loaded.' },
+      { email: 'kenji@miraisoft.jp', plan: 'paid', browser: 'Safari', os: 'Mac OS X', loc: 'Osaka', dur: '6m10s', variation: 'Images trickled in one by one', tags: ['Search', 'Slow Performance'], journey: 'Searched the listing, watched images trickle in one by one, and paused before interacting with the grid.' },
     ],
   },
   {
@@ -231,8 +256,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'A search request fails silently on the network layer; the results spinner keeps spinning indefinitely and no results or error are ever shown.',
     journey: 'User typed a query, waited on the spinner, cleared and retried twice, then tried navigating to the category manually instead.',
     sessions: [
-      { email: 'mehdi+new@openreplay.cloud', plan: 'paid', browser: 'Firefox', os: 'Mac OS X', loc: 'Schieren', dur: '10m26s', tags: ['Search', 'Error'], journey: 'Typed a query, watched the spinner hang, cleared and retried twice, then tried browsing to the category by hand instead.' },
-      { email: 'hana@coralpay.io', plan: 'trial', browser: 'Chrome', os: 'Windows', loc: 'Seoul', dur: '6m38s', tags: ['Filtering', 'Frustration'], journey: 'Applied a filter, hit a spinner that never resolved, retried it a few times and grew frustrated before leaving.' },
+      { email: 'mehdi+new@openreplay.cloud', plan: 'paid', browser: 'Firefox', os: 'Mac OS X', loc: 'Schieren', dur: '10m26s', variation: 'Spinner hung, browsed manually', tags: ['Search', 'Error'], journey: 'Typed a query, watched the spinner hang, cleared and retried twice, then tried browsing to the category by hand instead.' },
+      { email: 'hana@coralpay.io', plan: 'trial', browser: 'Chrome', os: 'Windows', loc: 'Seoul', dur: '6m38s', variation: 'Filter spinner never resolved', tags: ['Filtering', 'Frustration'], journey: 'Applied a filter, hit a spinner that never resolved, retried it a few times and grew frustrated before leaving.' },
     ],
   },
   {
@@ -245,8 +270,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'Active filter chips are silently dropped when the user paginates, so page 2 shows unfiltered results — an information mismatch between what the user set and what they see.',
     journey: 'User applied two filters, reviewed page 1, clicked to page 2, saw the filters gone and results changed, went back and re-applied them repeatedly.',
     sessions: [
-      { email: 'apps@vfairs.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Nong Sung', dur: '9m20s', tags: ['Filtering', 'Lost Filters'], journey: 'Set two filters, reviewed page 1, clicked to page 2 and found them silently cleared, then re-applied them repeatedly.' },
-      { email: 'omar@gridly.io', plan: 'paid', browser: 'Chrome', os: 'Linux', loc: 'Cairo', dur: '7m02s', tags: ['Search', 'Back-and-Forth'], journey: 'Filtered the results, paged forward and back, lost the filters each time, and eventually gave up.' },
+      { email: 'apps@vfairs.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Nong Sung', dur: '9m20s', variation: 'Filters cleared on page 2', tags: ['Filtering', 'Lost Filters'], journey: 'Set two filters, reviewed page 1, clicked to page 2 and found them silently cleared, then re-applied them repeatedly.' },
+      { email: 'omar@gridly.io', plan: 'paid', browser: 'Chrome', os: 'Linux', loc: 'Cairo', dur: '7m02s', variation: 'Lost filters paging back and forth', tags: ['Search', 'Back-and-Forth'], journey: 'Filtered the results, paged forward and back, lost the filters each time, and eventually gave up.' },
     ],
   },
   {
@@ -259,8 +284,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'The Help Center link in the footer points to a dead URL and returns a 404, blocking users who are trying to reach support.',
     journey: 'User scrolled to the footer, clicked "Help Center", landed on a 404 page, hit back, and tried the contact link instead.',
     sessions: [
-      { email: 'daniel@black-bird.io', plan: 'paid', browser: 'Chrome', os: 'Mac OS X', loc: 'Thung Khru', dur: '5m44s', tags: ['Navigation', 'Help Seeking'], journey: 'Scrolled to the footer, clicked "Help Center", landed on a 404, hit back, and tried the contact link instead.' },
-      { email: 'greta@nordkit.se', plan: 'free', browser: 'Firefox', os: 'Windows', loc: 'Stockholm', dur: '4m12s', tags: ['Help Seeking', 'Error'], journey: 'Went looking for support, clicked the footer Help Center link, hit the dead 404 page, and abandoned the attempt.' },
+      { email: 'daniel@black-bird.io', plan: 'paid', browser: 'Chrome', os: 'Mac OS X', loc: 'Thung Khru', dur: '5m44s', variation: 'Help Center link 404’d', tags: ['Navigation', 'Help Seeking'], journey: 'Scrolled to the footer, clicked "Help Center", landed on a 404, hit back, and tried the contact link instead.' },
+      { email: 'greta@nordkit.se', plan: 'free', browser: 'Firefox', os: 'Windows', loc: 'Stockholm', dur: '4m12s', variation: 'Hit a dead support page', tags: ['Help Seeking', 'Error'], journey: 'Went looking for support, clicked the footer Help Center link, hit the dead 404 page, and abandoned the attempt.' },
     ],
   },
   {
@@ -273,8 +298,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'The account dashboard charts take around five seconds to fetch and draw after the page loads, leaving the panels blank in the meantime.',
     journey: 'User opened the dashboard, waited on blank chart panels, moved the cursor around expecting data, and continued once the charts appeared.',
     sessions: [
-      { email: 'rajesh+support@acme.com', plan: 'trial', browser: 'Chrome', os: 'Linux', loc: 'Lahore (Sher Kot)', dur: '6m32s', tags: ['Navigation', 'Slow Performance'], journey: 'Opened the dashboard, waited on blank chart panels, moved the cursor around expecting data, and carried on once it drew.' },
-      { email: 'bea@finchly.com', plan: 'paid', browser: 'Chrome', os: 'Mac OS X', loc: 'Lisbon', dur: '5m18s', tags: ['Navigation'], journey: 'Landed on the dashboard and sat through several seconds of empty panels before the charts finally appeared.' },
+      { email: 'rajesh+support@acme.com', plan: 'trial', browser: 'Chrome', os: 'Linux', loc: 'Lahore (Sher Kot)', dur: '6m32s', variation: 'Waited on blank chart panels', tags: ['Navigation', 'Slow Performance'], journey: 'Opened the dashboard, waited on blank chart panels, moved the cursor around expecting data, and carried on once it drew.' },
+      { email: 'bea@finchly.com', plan: 'paid', browser: 'Chrome', os: 'Mac OS X', loc: 'Lisbon', dur: '5m18s', variation: 'Sat through an empty dashboard', tags: ['Navigation'], journey: 'Landed on the dashboard and sat through several seconds of empty panels before the charts finally appeared.' },
     ],
   },
   {
@@ -287,8 +312,8 @@ const RAW: Omit<Issue, 'tags'>[] = [
     real: 'A noticeable share of sessions land on the pricing page and leave within a few seconds with no scroll or click — a bounce that suggests the page is not matching intent.',
     journey: 'User landed on pricing from an ad, stayed under ten seconds without scrolling or interacting, and closed the tab.',
     sessions: [
-      { email: 'visitor@gmail.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Manila', dur: '8s', tags: ['Bounce', 'Inactive'], journey: 'Landed on pricing from an ad, stayed under ten seconds without scrolling or clicking, and closed the tab.' },
-      { email: 'guest@yahoo.com', plan: 'free', browser: 'Safari', os: 'iOS', loc: 'Jakarta', dur: '6s', tags: ['Navigation', 'Bounce'], journey: 'Arrived on the pricing page from a link, did not scroll or interact at all, and bounced within seconds.' },
+      { email: 'visitor@gmail.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Manila', dur: '8s', variation: 'Bounced in under ten seconds', tags: ['Bounce', 'Inactive'], journey: 'Landed on pricing from an ad, stayed under ten seconds without scrolling or clicking, and closed the tab.' },
+      { email: 'guest@yahoo.com', plan: 'free', browser: 'Safari', os: 'iOS', loc: 'Jakarta', dur: '6s', variation: 'Left pricing without scrolling', tags: ['Navigation', 'Bounce'], journey: 'Arrived on the pricing page from a link, did not scroll or interact at all, and bounced within seconds.' },
     ],
   },
 ];
@@ -310,10 +335,27 @@ const ISSUE_SESSION_IDS: Record<number, string[]> = {
   11: ['sess_1010', 'sess_1021'],
 };
 
+/* Suggested fix / resolution per issue — paired with `real` in the detail-page
+   diagnosis (The problem / Suggested fix). */
+const ISSUE_FIX: Record<number, string> = {
+  1: 'Surface the decline reason inline and keep the user on the payment step, instead of silently resetting the “Place order” button.',
+  2: 'Bind the tap handler to the button on mobile (check the overlay/z-index intercepting taps) and show a pressed state so the action registers.',
+  3: 'Fix the expiry validation to accept correctly formatted future MM/YY dates, and validate on blur rather than per keystroke.',
+  4: 'Defer non-critical work and prioritize the order summary + payment fields so checkout is interactive in under ~2s.',
+  5: 'Split step 4 into smaller grouped steps (or progressively disclose fields) and trim the required set to reduce drop-off.',
+  6: 'Reserve image space and lazy-load thumbnails with low-res placeholders so the grid never looks broken on first paint.',
+  7: 'Add a timeout + error state to the search request and let the user retry, instead of an indefinite spinner.',
+  8: 'Persist active filters in the URL/query so they survive pagination instead of resetting on page change.',
+  9: 'Point the footer “Help Center” link to the live support URL and add a redirect/monitor to catch future 404s.',
+  10: 'Render the dashboard shell immediately with skeleton panels and stream chart data, or cache the last result.',
+  11: 'Match the pricing page to ad intent above the fold and test a clearer value prop to reduce instant bounces.',
+};
+
 const ISSUES: Issue[] = RAW.map((r) => ({
   ...r,
   tags: [...new Set(r.sessions.flatMap((s) => s.tags))],
   sessionIds: ISSUE_SESSION_IDS[r.id] ?? [],
+  fix: ISSUE_FIX[r.id] ?? '',
 }));
 
 export default class IssuesStore {
@@ -329,6 +371,10 @@ export default class IssuesStore {
   hidden: number[] = [];
   names: Record<number, string> = {};
   dismissReasons: Record<number, string> = {};
+  dismissTags: Record<number, string[]> = {};
+  // per-issue override of the authored `critical` flag (Gmail-style toggle)
+  criticalOverride: Record<number, boolean> = {};
+  criticalReasons: Record<number, string> = {};
 
   constructor() {
     makeAutoObservable(this);
@@ -343,10 +389,18 @@ export default class IssuesStore {
     return this.all.filter((i) => i.cat === c).length;
   }
 
+  /** Apply per-issue user overrides (rename + critical toggle) to a raw issue. */
+  decorate = (i: Issue): Issue => {
+    const head = this.names[i.id] ?? i.head;
+    const critical =
+      i.id in this.criticalOverride ? this.criticalOverride[i.id] : i.critical;
+    return head === i.head && critical === i.critical
+      ? i
+      : { ...i, head, critical };
+  };
+
   get list(): Issue[] {
-    let l = this.all.map((i) =>
-      this.names[i.id] ? { ...i, head: this.names[i.id] } : i,
-    );
+    let l = this.all.map(this.decorate);
     if (!this.showHidden) l = l.filter((i) => !this.hidden.includes(i.id));
     if (this.cats.length) l = l.filter((i) => this.cats.includes(i.cat));
     if (this.labels.length)
@@ -374,7 +428,7 @@ export default class IssuesStore {
   byId(id: number): Issue | undefined {
     const i = this.all.find((x) => x.id === id);
     if (!i) return undefined;
-    return this.names[id] ? { ...i, head: this.names[id] } : i;
+    return this.decorate(i);
   }
 
   /** Example-session cards for the issue detail page, resolved from the shared
@@ -407,6 +461,7 @@ export default class IssuesStore {
           plan: s.metadata?.plan ?? '',
           tags: authored?.tags ?? [],
           journey: authored?.journey ?? '',
+          variation: authored?.variation ?? '',
         };
       })
       .filter((s): s is IssueSessionCard => Boolean(s));
@@ -427,6 +482,7 @@ export default class IssuesStore {
       plan: s.plan,
       tags: s.tags,
       journey: s.journey,
+      variation: s.variation,
     }));
   }
 
@@ -444,12 +500,21 @@ export default class IssuesStore {
   setCritOnly = (v: boolean) => { this.critOnly = v; };
   setShowHidden = (v: boolean) => { this.showHidden = v; };
   rename = (id: number, name: string) => { this.names[id] = name; };
-  hide = (id: number, reason: string) => {
+  hide = (id: number, reason: string, tags: string[] = []) => {
     if (!this.hidden.includes(id)) this.hidden.push(id);
     this.dismissReasons[id] = reason;
+    this.dismissTags[id] = tags;
   };
   unhide = (id: number) => {
     this.hidden = this.hidden.filter((x) => x !== id);
     delete this.dismissReasons[id];
+    delete this.dismissTags[id];
+  };
+  /** Toggle the critical flag. Marking is instant; unmarking carries an optional
+      reason so the agent can learn what wasn't actually critical. */
+  setCritical = (id: number, val: boolean, reason = '') => {
+    this.criticalOverride[id] = val;
+    if (val) delete this.criticalReasons[id];
+    else this.criticalReasons[id] = reason;
   };
 }

@@ -18,7 +18,6 @@ import { capitalize } from 'App/utils';
 import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
 
 import Counter from './Counter';
-import ErrorBars from './ErrorBars';
 import PlayLink from './PlayLink';
 import SessionMetaList from './SessionMetaList';
 import stl from './sessionItem.module.css';
@@ -440,14 +439,6 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </span>
               </div>
             </div>
-            {isSessions && (
-              <div
-                style={{ width: '10%' }}
-                className="md:self-center md:px-2 flex items-center"
-              >
-                <ErrorBars count={issueTypes?.length} />
-              </div>
-            )}
           </div>
 
           <div className="flex items-center m-auto w-[15%] justify-end">

@@ -1,19 +1,15 @@
 import React from 'react';
-import { Button, Segmented, Popover } from 'antd';
+import { Button, Popover, Modal, Input, Tooltip } from 'antd';
 import {
   ArrowLeft,
   ExternalLink,
-  Pencil,
   EyeOff,
+  Eye,
   Play,
   SkipBack,
   SkipForward,
   Maximize2,
   ArrowUpRight,
-  PanelLeft,
-  PanelBottom,
-  LayoutGrid,
-  List,
 } from 'lucide-react';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -30,8 +26,8 @@ import {
   issueSession as issueSessionRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
-import { type IssueSessionCard } from 'App/mstore/issuesStore';
-import ProblemCard, { AiSummary } from './ProblemCard';
+import { type IssueSessionCard, HIDE_REASONS } from 'App/mstore/issuesStore';
+import ProblemCard, { AiSummary, ReasonChip } from './ProblemCard';
 import { MOCK_THUMB } from './mockThumb';
 
 /* Issue detail — the intermediary page, built from real app primitives to keep
@@ -316,7 +312,7 @@ function SpotCard({
         className="relative group overflow-hidden"
         style={{
           width: '100%',
-          height: 150,
+          height: 180,
           background: 'var(--color-gray-lightest)',
         }}
       >
@@ -340,17 +336,60 @@ function SpotCard({
           {s.dur}
         </div>
       </div>
-      <div className="border-t px-3 py-2">
-        <TextEllipsis
-          text={s.email}
+      {/* This card is a VARIATION of the issue, not a user profile — lead with
+          how this session experienced it, then the behavioral tags. The session's
+          environment specs live behind "More" so the card stays clean. */}
+      <div className="border-t px-3 py-3 flex flex-col gap-2">
+        <span
           className="text-sm font-medium"
-          popupProps={{ size: 'small', disabled: true }}
-        />
+          style={{ color: 'var(--color-gray-darkest)', lineHeight: 1.35 }}
+        >
+          {s.variation || s.journey}
+        </span>
+        {s.tags.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {s.tags.slice(0, 3).map((t) => (
+              <TagChip key={t} label={t} />
+            ))}
+          </div>
+        )}
         <div
-          className="text-xs truncate"
+          className="flex items-center justify-between text-xs"
           style={{ color: 'var(--color-gray-medium)' }}
         >
-          {capitalize(s.browser)} · {s.loc} · {eventsLabel(s.events)}
+          <span className="whitespace-nowrap">{s.date}</span>
+          <Popover
+            trigger="hover"
+            placement="top"
+            content={
+              <div className="text-left bg-white" style={{ minWidth: 230 }}>
+                <SessionInfoItem
+                  comp={<CountryFlag country={s.country} />}
+                  label={countries[s.country] || s.country || 'Unknown'}
+                  value={s.loc}
+                />
+                <SessionInfoItem
+                  icon={browserIcon(s.browser)}
+                  label={s.browser}
+                  value="v149.0.0"
+                />
+                <SessionInfoItem icon={osIcon(s.os)} label={s.os} value="10.15.7" />
+                <SessionInfoItem
+                  icon={deviceTypeIcon(s.device)}
+                  label={s.device}
+                  value="1440 × 900"
+                />
+                <SessionInfoItem label="Events" value={String(s.events)} isLast />
+              </div>
+            }
+          >
+            <span
+              className="link cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              More
+            </span>
+          </Popover>
         </div>
       </div>
     </div>
@@ -420,9 +459,10 @@ function IssueDetail() {
   const params = useParams() as { issueId?: string };
   const issue = issuesStore.byId(Number(params.issueId));
 
-  const [layout, setLayout] = React.useState<GalleryLayout>('lean');
-  const [selected, setSelected] = React.useState(0);
   const [ticketHover, setTicketHover] = React.useState(false);
+  const [hideOpen, setHideOpen] = React.useState(false);
+  const [hideReason, setHideReason] = React.useState('');
+  const [hideTags, setHideTags] = React.useState<string[]>([]);
 
   const back = () => history.push(withSiteId(issuesRoute(), siteId));
   const openReplay = (s: IssueSessionCard) =>
@@ -430,15 +470,23 @@ function IssueDetail() {
 
   if (!issue) {
     return (
-      <div className="mx-auto flex flex-col gap-4" style={{ maxWidth: 1100 }}>
-        <Button type="text" icon={<ArrowLeft size={15} />} onClick={back}>
-          Back to Issues
-        </Button>
-        <div
-          className="p-8 text-center rounded-lg border"
-          style={{ color: 'var(--color-gray-medium)' }}
-        >
-          Issue not found.
+      <div className="mx-auto w-full" style={{ maxWidth: 1360 }}>
+        <div className="rounded-lg border bg-white flex flex-col p-4 gap-4">
+          <Button
+            type="text"
+            size="small"
+            icon={<ArrowLeft size={15} />}
+            onClick={back}
+            className="self-start -ml-2"
+          >
+            Back to Issues
+          </Button>
+          <div
+            className="p-8 text-center"
+            style={{ color: 'var(--color-gray-medium)' }}
+          >
+            Issue not found.
+          </div>
         </div>
       </div>
     );
@@ -446,170 +494,132 @@ function IssueDetail() {
 
   // only the 3 most representative sessions — a curated pick, not a search
   const sessions = issuesStore.exampleSessions(issue).slice(0, 3);
-  const current = sessions[Math.min(selected, sessions.length - 1)];
 
-  // lean text rows (default) — the de-cluttered picker
-  const leanSelector = (
-    <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: 300 }}>
-      {sessions.map((s, i) => (
-        <SessionRow
-          key={s.sessionId}
-          s={s}
-          active={i === selected}
-          onClick={() => setSelected(i)}
-        />
-      ))}
-    </div>
-  );
-
-  // big-thumbnail cards (kept for comparison)
-  const selector = (
-    <div
-      className={
-        layout === 'left'
-          ? 'flex flex-col gap-3 flex-shrink-0'
-          : 'flex flex-row gap-3 overflow-x-auto pb-1'
-      }
-      style={layout === 'left' ? { width: 280 } : undefined}
-    >
-      {sessions.map((s, i) => (
-        <div
-          key={s.sessionId}
-          style={layout === 'bottom' ? { width: 280, flexShrink: 0 } : undefined}
-        >
-          <SpotCard
-            s={s}
-            active={i === selected}
-            onClick={() => setSelected(i)}
-          />
-        </div>
-      ))}
-    </div>
-  );
-
-  const stage = (
-    <div className="flex flex-col gap-3 flex-1 min-w-0">
-      <div
-        className="rounded-lg border overflow-hidden flex flex-col"
-        style={{ borderColor: 'var(--color-gray-light)' }}
-      >
-        <ReplayStage
-          height={layout === 'left' || layout === 'lean' ? 320 : 360}
-          durationMs={current?.durMs ?? 0}
-          onOpen={() => current && openReplay(current)}
-        />
-        {current && (
-          <SessionInfoBar s={current} onOpen={() => openReplay(current)} />
-        )}
-        {current && (current.journey || current.tags.length > 0) && (
-          <div
-            className="border-t bg-white px-3 py-3 flex flex-col gap-2"
-            style={{ borderColor: 'var(--color-gray-light)' }}
-          >
-            {current.journey && (
-              <AiSummary variant="secondary">{current.journey}</AiSummary>
-            )}
-            {current.tags.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {current.tags.map((t) => (
-                  <TagChip key={t} label={t} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // a 3-card grid, like Spots — tiny data per card, click to open the replay
+  // a card grid, like Spots — tiny data per card, click to open the replay
   const gridView = (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
       {sessions.map((s) => (
         <SpotCard key={s.sessionId} s={s} onClick={() => openReplay(s)} />
       ))}
     </div>
   );
 
-  const galleryHeader = (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center justify-between">
-        <span
-          className="text-sm font-medium"
-          style={{ color: 'var(--color-gray-dark)' }}
-        >
-          Example sessions
-        </span>
-        <Segmented
-          size="small"
-          value={layout}
-          onChange={(v) => setLayout(v as GalleryLayout)}
-          options={[
-            { value: 'lean', icon: <List size={14} /> },
-            { value: 'left', icon: <PanelLeft size={14} /> },
-            { value: 'bottom', icon: <PanelBottom size={14} /> },
-            { value: 'grid', icon: <LayoutGrid size={14} /> },
-          ]}
+  return (
+    <div
+      className="mx-auto w-full flex flex-col gap-4"
+      style={{ maxWidth: 1360 }}
+    >
+      {/* back lives outside the box, on top */}
+      <Button
+        type="text"
+        size="small"
+        icon={<ArrowLeft size={15} />}
+        onClick={back}
+        className="self-start -ml-2"
+      >
+        Back to Issues
+      </Button>
+
+      {/* issue card: title + actions header, full-width divider, then the rest */}
+      <div className="rounded-lg border bg-white">
+        <ProblemCard
+          framed
+          issue={issue}
+          editable
+          onRename={(name) => issuesStore.rename(issue.id, name)}
+          onSetCritical={(val, reason) =>
+            issuesStore.setCritical(issue.id, val, reason)
+          }
+          actions={
+            <>
+              <Button
+                type="primary"
+                size="small"
+                icon={
+                  ticketHover ? (
+                    <ExternalLink size={14} />
+                  ) : (
+                    <JiraIcon size={14} />
+                  )
+                }
+                onMouseEnter={() => setTicketHover(true)}
+                onMouseLeave={() => setTicketHover(false)}
+              >
+                Create ticket
+              </Button>
+              {issuesStore.hidden.includes(issue.id) ? (
+                <Button
+                  size="small"
+                  icon={<Eye size={14} />}
+                  onClick={() => issuesStore.unhide(issue.id)}
+                >
+                  Unhide
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  icon={<EyeOff size={14} />}
+                  onClick={() => {
+                    setHideReason('');
+                    setHideTags([]);
+                    setHideOpen(true);
+                  }}
+                >
+                  Hide
+                </Button>
+              )}
+            </>
+          }
         />
       </div>
-      <span className="text-xs" style={{ color: 'var(--color-gray-medium)' }}>
-        The most representative sessions for this issue, picked automatically.
-      </span>
-    </div>
-  );
 
-  return (
-    <div className="mx-auto flex flex-col gap-4" style={{ maxWidth: 1100 }}>
-      <div className="flex items-center justify-between">
-        <Button type="text" icon={<ArrowLeft size={15} />} onClick={back}>
-          Back to Issues
-        </Button>
-        <div className="flex items-center gap-2">
-          <Button
-            type="primary"
-            icon={
-              ticketHover ? <ExternalLink size={15} /> : <JiraIcon size={15} />
-            }
-            onMouseEnter={() => setTicketHover(true)}
-            onMouseLeave={() => setTicketHover(false)}
-          >
-            Create ticket
-          </Button>
-          <Button icon={<Pencil size={14} />}>Rename</Button>
-          <Button icon={<EyeOff size={14} />}>Hide</Button>
+      {/* example-session cards float below on the gray background, like Spots */}
+      {sessions.length === 0 ? (
+        <div
+          className="p-6 text-center rounded-lg border bg-white text-sm"
+          style={{ color: 'var(--color-gray-medium)' }}
+        >
+          No example sessions.
         </div>
-      </div>
+      ) : (
+        gridView
+      )}
 
-      <ProblemCard issue={issue} />
-
-      <div className="flex flex-col gap-3">
-        {galleryHeader}
-        {sessions.length === 0 ? (
-          <div
-            className="p-6 text-center rounded-lg border text-sm"
-            style={{ color: 'var(--color-gray-medium)' }}
-          >
-            No example sessions.
-          </div>
-        ) : layout === 'grid' ? (
-          gridView
-        ) : layout === 'lean' ? (
-          <div className="flex gap-4">
-            {leanSelector}
-            {stage}
-          </div>
-        ) : layout === 'left' ? (
-          <div className="flex gap-4">
-            {selector}
-            {stage}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {stage}
-            {selector}
-          </div>
-        )}
-      </div>
+      {/* hide-with-reason modal — mirrors the issue list */}
+      <Modal
+        title="Hide this issue?"
+        open={hideOpen}
+        onCancel={() => setHideOpen(false)}
+        onOk={() => {
+          issuesStore.hide(issue.id, hideReason.trim(), hideTags);
+          setHideOpen(false);
+        }}
+        okText="Hide issue"
+      >
+        <p className="mb-3" style={{ color: 'var(--color-gray-dark)' }}>
+          “{issue.head}” will be removed from the list. Tell us why so the agent can learn.
+        </p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {HIDE_REASONS.map((t) => (
+            <ReasonChip
+              key={t}
+              label={t}
+              checked={hideTags.includes(t)}
+              onChange={(on) =>
+                setHideTags((prev) =>
+                  on ? [...prev, t] : prev.filter((x) => x !== t),
+                )
+              }
+            />
+          ))}
+        </div>
+        <Input.TextArea
+          rows={3}
+          placeholder="Add a note (optional)…"
+          value={hideReason}
+          onChange={(e) => setHideReason(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 }

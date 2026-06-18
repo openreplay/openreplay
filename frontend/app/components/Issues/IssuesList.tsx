@@ -14,16 +14,16 @@ import {
 import type { TableColumnsType } from 'antd';
 import {
   Info,
-  MoreHorizontal,
+  MoreVertical,
   ArrowUpRight,
   Pencil,
   Eye,
   EyeOff,
+  AlertTriangle,
   SlidersHorizontal,
   Album,
   ChevronDown,
 } from 'lucide-react';
-import { WarningFilled } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
@@ -34,42 +34,18 @@ import {
   CAT_ORDER,
   CAT_COLOR,
   CAT_ICON,
+  HIDE_REASONS,
+  CRITICAL_REASONS,
   impactLevel,
-  IMPACT_FILLED,
-  IMPACT_COLOR,
   lastSeenLabel,
   lastSeenExact,
 } from 'App/mstore/issuesStore';
 import SelectDateRange from 'Shared/SelectDateRange';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import TagFilter from './TagFilter';
+import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
 
-/* Impact as three thin rounded ticks — fill count + color encode the level
-   (High / Medium / Low), no number. Unlit ticks stay faint. */
-function ImpactTicks({ value }: { value: number }) {
-  const level = impactLevel(value);
-  const filled = IMPACT_FILLED[level];
-  const color = IMPACT_COLOR[level];
-  return (
-    <span className="inline-flex items-center" style={{ gap: 4 }}>
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          style={{
-            width: 3,
-            height: 13,
-            borderRadius: 2,
-            background:
-              i < filled
-                ? color
-                : 'color-mix(in srgb, var(--color-gray-light) 55%, white)',
-          }}
-        />
-      ))}
-    </span>
-  );
-}
 
 function IssuesList() {
   const { issuesStore } = useStore();
@@ -80,6 +56,10 @@ function IssuesList() {
   const [dispOpen, setDispOpen] = React.useState(false);
   const [hideTarget, setHideTarget] = React.useState<Issue | null>(null);
   const [hideReason, setHideReason] = React.useState('');
+  const [hideTags, setHideTags] = React.useState<string[]>([]);
+  const [critTarget, setCritTarget] = React.useState<Issue | null>(null);
+  const [critReason, setCritReason] = React.useState('');
+  const [critTags, setCritTags] = React.useState<string[]>([]);
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
   const [renameValue, setRenameValue] = React.useState('');
   // Presentational period (issues are mock; matches the Sessions date picker).
@@ -105,7 +85,7 @@ function IssuesList() {
       return {
         value: c,
         // colored only while this tab is active; neutral otherwise (like Sessions)
-        icon: <Ic size={14} style={{ color: c === catValue ? CAT_COLOR[c] : undefined }} />,
+        icon: <Ic size={14} strokeWidth={2} style={{ color: c === catValue ? CAT_COLOR[c] : undefined }} />,
         label: <span>{c}{faded(issuesStore.catCount(c))}</span>,
       };
     }),
@@ -120,21 +100,17 @@ function IssuesList() {
       width: 96,
       sorter: (a, b) => a.impact - b.impact,
       showSorterTooltip: false,
-      render: (v: number, r: Issue) => {
+      render: (v: number) => {
         const level = impactLevel(v);
-        const title = r.critical ? `Critical · ${level} impact` : `${level} impact`;
+        const title = `${level} impact`;
         return (
           <Tooltip title={title}>
             <span
               className="inline-flex items-center"
-              style={{ gap: 8 }}
               role="img"
               aria-label={title}
             >
-              <ImpactTicks value={v} />
-              {r.critical && (
-                <WarningFilled style={{ color: 'var(--color-red)', fontSize: 14 }} />
-              )}
+              <ImpactGauge value={v} />
             </span>
           </Tooltip>
         );
@@ -146,19 +122,9 @@ function IssuesList() {
       width: 140,
       sorter: (a, b) => a.cat.localeCompare(b.cat),
       showSorterTooltip: false,
-      render: (c: CategoryName) => {
-        const Ic = CAT_ICON[c];
-        return (
-          <span className="inline-flex items-center" style={{ gap: 7 }}>
-            <Ic
-              className="cat-ic"
-              size={15}
-              style={{ ['--cat' as string]: CAT_COLOR[c], flexShrink: 0 }}
-            />
-            <span style={{ color: 'var(--color-gray-darkest)' }}>{c}</span>
-          </span>
-        );
-      },
+      render: (c: CategoryName) => (
+        <span style={{ color: 'var(--color-gray-darkest)' }}>{c}</span>
+      ),
     },
     {
       title: 'Issue',
@@ -167,6 +133,39 @@ function IssuesList() {
       showSorterTooltip: false,
       render: (head: string, r: Issue) => (
         <div className="flex items-center gap-2 min-w-0">
+          <Tooltip title={r.critical ? 'Critical — click to remove' : 'Mark as critical'}>
+            <Button
+              type="text"
+              size="small"
+              className={`critical-toggle flex items-center justify-center shrink-0${
+                r.critical ? ' critical-on' : ''
+              }`}
+              aria-label={r.critical ? 'Remove critical flag' : 'Mark as critical'}
+              aria-pressed={r.critical}
+              icon={
+                <AlertTriangle
+                  size={15}
+                  strokeWidth={2}
+                  style={{
+                    color: r.critical
+                      ? 'var(--color-red)'
+                      : 'var(--color-gray-medium)',
+                    fill: 'none',
+                  }}
+                />
+              }
+              onClick={(e) => {
+                e.stopPropagation();
+                if (r.critical) {
+                  setCritTarget(r);
+                  setCritReason('');
+                  setCritTags([]);
+                } else {
+                  issuesStore.setCritical(r.id, true);
+                }
+              }}
+            />
+          </Tooltip>
           <span className="truncate font-medium" style={{ color: 'var(--color-gray-darkest)' }}>
             {head}
           </span>
@@ -187,12 +186,12 @@ function IssuesList() {
     {
       title: 'Last seen',
       dataIndex: 'seenAgoMin',
-      width: 132,
+      width: 156,
       sorter: (a, b) => a.seenAgoMin - b.seenAgoMin,
       showSorterTooltip: false,
       render: (m: number) => (
         <Tooltip title={lastSeenExact(m)}>
-          <span className="text-xs tabular-nums" style={{ color: 'var(--color-gray-medium)' }}>
+          <span className="text-sm tabular-nums" style={{ color: 'var(--color-gray-medium)' }}>
             {lastSeenLabel(m)}
           </span>
         </Tooltip>
@@ -219,10 +218,11 @@ function IssuesList() {
                 } else if (key === 'hide') {
                   setHideTarget(r);
                   setHideReason('');
+                  setHideTags([]);
                 } else if (key === 'unhide') issuesStore.unhide(r.id);
               },
               items: [
-                { key: 'detail', icon: <ArrowUpRight size={14} />, label: 'Open details' },
+                { key: 'detail', icon: <ArrowUpRight size={14} />, label: 'Open' },
                 { key: 'rename', icon: <Pencil size={14} />, label: 'Rename' },
                 { type: 'divider' },
                 isHidden
@@ -231,13 +231,14 @@ function IssuesList() {
               ],
             }}
           >
-            <button
-              className="flex items-center justify-center rounded p-1 hover:bg-gray-lightest"
+            <Button
+              type="text"
+              size="small"
+              className="flex items-center justify-center"
               aria-label="Issue actions"
+              icon={<MoreVertical size={16} />}
               onClick={(e) => e.stopPropagation()}
-            >
-              <MoreHorizontal size={16} />
-            </button>
+            />
           </Dropdown>
         );
       },
@@ -297,7 +298,7 @@ function IssuesList() {
               size="small"
               allowClear
               maxLength={256}
-              placeholder="Filter by name or description"
+              placeholder="Filter by issue or category"
               value={issuesStore.q}
               onChange={(e) => issuesStore.setQ(e.target.value)}
             />
@@ -338,14 +339,17 @@ function IssuesList() {
             </Button>
           </Popover>
 
-          {/* same date picker as Sessions — borderless (isAnt), includes the
-              custom-range calendar picker */}
-          <SelectDateRange
-            isAnt
-            right
-            period={period}
-            onChange={setPeriod}
-          />
+          {/* date picker styled as an outlined dropdown to match Tags / Display,
+              with a calendar icon. Keeps the Sessions custom-range picker. */}
+          <span className="issues-date-range">
+            <SelectDateRange
+              isAnt
+              right
+              useButtonStyle
+              period={period}
+              onChange={setPeriod}
+            />
+          </span>
         </div>
       </div>
 
@@ -372,18 +376,32 @@ function IssuesList() {
         open={hideTarget != null}
         onCancel={() => setHideTarget(null)}
         onOk={() => {
-          if (hideTarget) issuesStore.hide(hideTarget.id, hideReason.trim());
+          if (hideTarget)
+            issuesStore.hide(hideTarget.id, hideReason.trim(), hideTags);
           setHideTarget(null);
         }}
         okText="Hide issue"
       >
-        <p className="mb-2" style={{ color: 'var(--color-gray-dark)' }}>
+        <p className="mb-3" style={{ color: 'var(--color-gray-dark)' }}>
           “{hideTarget?.head}” will be removed from the list. Tell us why so the agent can learn.
         </p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {HIDE_REASONS.map((t) => (
+            <ReasonChip
+              key={t}
+              label={t}
+              checked={hideTags.includes(t)}
+              onChange={(on) =>
+                setHideTags((prev) =>
+                  on ? [...prev, t] : prev.filter((x) => x !== t),
+                )
+              }
+            />
+          ))}
+        </div>
         <Input.TextArea
           rows={3}
-          autoFocus
-          placeholder="e.g. Not a real issue, already fixed, expected behavior…"
+          placeholder="Add a note (optional)…"
           value={hideReason}
           onChange={(e) => setHideReason(e.target.value)}
         />
@@ -410,6 +428,47 @@ function IssuesList() {
             if (renameTarget && v) issuesStore.rename(renameTarget.id, v);
             setRenameTarget(null);
           }}
+        />
+      </Modal>
+
+      {/* remove-critical reason modal — unmarking is a teaching moment */}
+      <Modal
+        title="Remove critical flag?"
+        open={critTarget != null}
+        onCancel={() => setCritTarget(null)}
+        onOk={() => {
+          if (critTarget)
+            issuesStore.setCritical(
+              critTarget.id,
+              false,
+              [...critTags, critReason.trim()].filter(Boolean).join(' · '),
+            );
+          setCritTarget(null);
+        }}
+        okText="Remove critical"
+      >
+        <p className="mb-3" style={{ color: 'var(--color-gray-dark)' }}>
+          “{critTarget?.head}” will no longer be flagged critical. Tell us why so the agent can learn.
+        </p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {CRITICAL_REASONS.map((t) => (
+            <ReasonChip
+              key={t}
+              label={t}
+              checked={critTags.includes(t)}
+              onChange={(on) =>
+                setCritTags((prev) =>
+                  on ? [...prev, t] : prev.filter((x) => x !== t),
+                )
+              }
+            />
+          ))}
+        </div>
+        <Input.TextArea
+          rows={3}
+          placeholder="Add a note (optional)…"
+          value={critReason}
+          onChange={(e) => setCritReason(e.target.value)}
         />
       </Modal>
     </div>

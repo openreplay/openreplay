@@ -1,9 +1,65 @@
-/* Category icon in the table: neutral at rest, reveals its category color when the
-   row is hovered. The per-row color is passed via the --cat custom property. */
-.issues-table .ant-table-row .cat-ic {
-  color: var(--color-gray-medium);
-  transition: color 0.12s ease;
+/* Fixed issue-row height. */
+.issues-table .ant-table-tbody > tr > td {
+  height: 55px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
-.issues-table .ant-table-row:hover .cat-ic {
-  color: var(--cat);
+
+/* Interactive critical tag (detail page) — subtle darken on hover so it reads
+   as clickable. */
+.crit-tag {
+  transition: filter 0.12s ease;
 }
+.crit-tag:hover {
+  filter: brightness(0.95);
+}
+
+/* Active critical toggle: same outline icon as inactive, marked by a subtle red
+   backdrop in the same rounded-square shape as the button hover. */
+.critical-toggle.critical-on {
+  background: rgba(204, 0, 0, 0.09) !important;
+}
+.critical-toggle.critical-on:hover {
+  background: rgba(204, 0, 0, 0.15) !important;
+}
+
+/* Date-range trigger restyled as an outlined dropdown to match the Tags /
+   Display buttons (antd default size="small"). Scoped to the issues toolbar so
+   the Sessions date picker is untouched. */
+/* The shared component renders this as an antd text button, whose hover paints a
+   gray fill. Lock the outlined-default look (white bg, gray border) so it can't
+   leak in, then match the default button's exact blue hover. !important is
+   needed to beat antd's higher-specificity text-variant hover rule. */
+.issues-date-range .btn-card-period-range,
+.issues-date-range .btn-card-period-range:hover,
+.issues-date-range .btn-card-period-range:focus,
+.issues-date-range .btn-card-period-range:focus-visible {
+  background: #fff !important;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016) !important;
+  color: rgba(0, 0, 0, 0.88) !important;
+}
+.issues-date-range .btn-card-period-range:hover {
+  border-color: rgb(21, 93, 252) !important;
+  color: rgb(21, 93, 252) !important;
+}
+/* Use the same lucide chevron-down as the Tags / Display buttons instead of
+   antd's DownOutlined. A mask filled with currentColor makes it inherit the
+   button color, so it turns blue on hover exactly like the others. */
+.issues-date-range .btn-card-period-range .anticon-down {
+  display: none;
+}
+.issues-date-range .btn-card-period-range::after {
+  content: '';
+  width: 13px;
+  height: 13px;
+  margin-left: 2px;
+  opacity: 0.6;
+  background-color: currentColor;
+  -webkit-mask: center / 13px 13px no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  mask: center / 13px 13px no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
