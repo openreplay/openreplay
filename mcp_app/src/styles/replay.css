@@ -1,0 +1,584 @@
+.replay-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--or-white);
+}
+
+.replay-screen {
+  width: 100%;
+  min-height: 400px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    135deg,
+    #f1f1f1, #f1f1f1 1px,
+    #f6f6f6 1px, #fff 4px
+  );
+}
+
+.replay-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Transparent overlay – click to toggle play/pause */
+.replay-click-guard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  cursor: pointer;
+}
+
+/* Click-to-start overlay */
+.replay-start-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.replay-start-overlay:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.replay-start-icon {
+  opacity: 0.9;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.replay-start-overlay:hover .replay-start-icon {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.replay-start-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* ── Controls panel ── */
+.replay-controls {
+  display: flex;
+  flex-direction: column;
+  background: var(--or-white);
+  border-top: 1px solid var(--or-border);
+}
+
+/* ── Progress bar wrapper (timeline on top) ── */
+.replay-progress-wrapper {
+  width: 100%;
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+/* ── Visible track background ── */
+.replay-progress-track {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 10px;
+  background: white;
+  border: 1px solid #f1f1f1;
+}
+
+/* ── Skip interval indicators on timeline ── */
+.replay-skip-interval {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 10px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Range input (transparent, sits on top for interaction) ── */
+.replay-progress {
+  width: 100%;
+  height: 22px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+  margin: 0;
+}
+
+.replay-progress::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 10px;
+}
+
+.replay-progress::-moz-range-track {
+  background: transparent;
+  height: 10px;
+  border: none;
+}
+
+/* ── Slider thumb – paused (default) ── */
+.replay-progress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #404040;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px #404040;
+  transition: width 0.2s ease-out, height 0.2s ease-out;
+  margin-top: -2px;
+}
+
+.replay-progress::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #404040;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px #404040;
+  transition: width 0.2s ease-out, height 0.2s ease-out;
+}
+
+/* ── Slider thumb – playing ── */
+.replay-controls.is-playing .replay-progress::-webkit-slider-thumb {
+  background: #394EFF;
+  box-shadow: 0 0 0 1px #2331A8;
+}
+
+.replay-controls.is-playing .replay-progress::-moz-range-thumb {
+  background: #394EFF;
+  box-shadow: 0 0 0 1px #2331A8;
+}
+
+/* ── Thumb hover – expand ── */
+.replay-progress::-webkit-slider-thumb:hover {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-progress::-moz-range-thumb:hover {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Progress fill (played portion) ── */
+.replay-progress-fill {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 10px;
+  background: rgb(208, 212, 242);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Buttons row ── */
+.replay-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 6px;
+}
+
+/* ── Play / Pause button ── */
+.replay-play-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--or-teal);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  padding: 0;
+}
+
+.replay-play-btn:hover:not(:disabled) {
+  background: rgba(57, 78, 255, 0.08);
+}
+
+[data-theme="dark"] .replay-play-btn:hover:not(:disabled) {
+  background: rgba(81, 162, 255, 0.12);
+}
+
+.replay-play-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.replay-play-btn svg {
+  display: block;
+}
+
+/* ── Time label ── */
+.replay-time {
+  font-size: 12px;
+  color: var(--or-text-primary);
+  font-family: monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.replay-time-sep {
+  color: var(--or-gray-medium);
+  margin: 0 1px;
+}
+
+/* ── Generic control button ── */
+.replay-ctrl-btn {
+  height: 28px;
+  border: 1px solid var(--or-border);
+  border-radius: 6px;
+  background: var(--or-white);
+  color: var(--or-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+  gap: 4px;
+}
+
+.replay-ctrl-btn:hover:not(:disabled) {
+  background: var(--or-gray-lightest);
+  border-color: var(--or-gray-light);
+}
+
+.replay-ctrl-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+[data-theme="dark"] .replay-ctrl-btn {
+  background: var(--or-gray-lighter);
+  border-color: var(--or-gray-light);
+}
+
+/* ── Skip back / interval / forward group ── */
+.replay-skip-group {
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+  height: 22px;
+  gap: 0;
+}
+
+.replay-skip-arrow {
+  height: 22px;
+  background: transparent;
+  border: none;
+  color: var(--or-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  transition: color 0.2s, box-shadow 0.2s;
+}
+
+.replay-skip-arrow-left {
+  border-radius: 3px 0 0 3px;
+}
+
+.replay-skip-arrow-right {
+  border-radius: 0 3px 3px 0;
+}
+
+.replay-skip-arrow:hover:not(:disabled) {
+  color: var(--or-teal);
+  box-shadow: inset 0 0 0 1px var(--or-teal);
+}
+
+.replay-skip-arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Interval selector (middle of skip group) ── */
+.replay-interval-selector {
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--or-border);
+  border-right: 1px solid var(--or-border);
+}
+
+.replay-interval-btn {
+  height: 22px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--or-text-primary);
+  cursor: pointer;
+  padding: 0 6px;
+  white-space: nowrap;
+  transition: color 0.2s, box-shadow 0.2s;
+}
+
+.replay-interval-btn:hover:not(:disabled) {
+  color: var(--or-teal);
+  box-shadow: inset 0 0 0 1px var(--or-teal);
+}
+
+.replay-interval-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.replay-interval-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--or-white);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+}
+
+[data-theme="dark"] .replay-interval-menu {
+  background: var(--or-gray-lighter);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.replay-interval-header {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  color: var(--or-text-primary);
+  white-space: nowrap;
+}
+
+.replay-interval-hint {
+  color: var(--or-gray-medium);
+  font-weight: 400;
+}
+
+.replay-interval-option {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--or-text-primary);
+  cursor: pointer;
+  text-align: left;
+  border-top: 1px solid var(--or-border);
+  transition: background 0.1s;
+}
+
+.replay-interval-option:hover {
+  background: rgba(57, 78, 255, 0.06);
+}
+
+.replay-interval-option.active {
+  color: var(--or-teal);
+}
+
+/* ── Speed selector ── */
+.replay-speed-wrapper {
+  position: relative;
+}
+
+.replay-speed-btn {
+  min-width: 38px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--or-gray-lightest);
+  border-color: transparent;
+  border-radius: 3px;
+  padding: 0 8px;
+  height: 22px;
+}
+
+.replay-speed-btn:hover:not(:disabled) {
+  background: rgba(57, 78, 255, 0.06);
+  color: var(--or-teal);
+}
+
+.replay-speed-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--or-white);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  min-width: 120px;
+}
+
+[data-theme="dark"] .replay-speed-menu {
+  background: var(--or-gray-lighter);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.replay-speed-header {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  color: var(--or-text-primary);
+  white-space: nowrap;
+}
+
+.replay-speed-option {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--or-text-primary);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  border-top: 1px solid var(--or-border);
+  transition: background 0.1s;
+}
+
+.replay-speed-option:hover {
+  background: rgba(57, 78, 255, 0.06);
+}
+
+.replay-speed-option.active {
+  color: var(--or-teal);
+}
+
+/* ── Skip Inactivity toggle ── */
+.replay-skip-inactivity-btn {
+  font-size: 11px;
+  gap: 3px;
+}
+
+.replay-skip-inactivity-btn.active {
+  border-color: var(--or-teal);
+  color: var(--or-teal);
+  background: rgba(57, 78, 255, 0.06);
+}
+
+.replay-skip-inactivity-btn.active:hover:not(:disabled) {
+  background: rgba(57, 78, 255, 0.1);
+}
+
+/* ── Fullscreen toggle — pushed right ── */
+.replay-fullscreen-btn {
+  margin-left: auto;
+  width: 28px;
+  padding: 0;
+}
+
+/* ── Loading / Error overlays ── */
+.replay-loading,
+.replay-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  gap: 12px;
+  z-index: 20;
+  background: inherit;
+}
+
+.replay-error {
+  color: #888;
+}
+
+.replay-retry-btn {
+  padding: 8px 20px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.replay-retry-btn:hover:not(:disabled) {
+  background: #f6f6f6;
+  border-color: #aaa;
+}
+
+.replay-retry-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.replay-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #ddd;
+  border-top-color: var(--or-teal);
+  border-radius: 50%;
+  animation: replay-spin 0.8s linear infinite;
+}
+
+@keyframes replay-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes or-click-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,57 @@
+.screen {
+  user-select: none;
+  overflow: hidden;
+  position: absolute;
+  transform-origin: left top;
+  top: 50%;
+  left: 50%;
+  background: white;
+}
+.iframe {
+  pointer-events: none;
+  position: absolute;
+  border: none;
+  background: white;
+}
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.highlightoff {
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0, 0, 0.4, 1.0);
+}
+
+.mobileScreen {
+  user-select: none;
+  position: absolute;
+  transform-origin: left top;
+  top: 50%;
+  left: 50%;
+  background-color: rgb(223, 223, 223);
+  border-radius: 70px;
+  box-shadow: 0 0 30px 0 rgba(0,0,0,0.2); /* 0 0 70px 30px rgba(0,0,0,0.1); */
+  margin-top: -20px;
+}
+.mobileScreenFullview {
+  user-select: none;
+  position: absolute;
+  transform-origin: left top;
+  top: 50%;
+  left: 50%;
+  background-color: rgb(223, 223, 223);
+  border-radius: 70px;
+  box-shadow: 0 0 30px 0 rgba(0,0,0,0.2);
+  margin-top: 0!important;
+}
+
+.mobileIframe {
+  position: absolute;
+  border: none;
+  background: none;
+}
