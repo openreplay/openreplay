@@ -19,13 +19,20 @@ type Bulk interface {
 }
 
 type bulkImpl struct {
-	conn      driver.Conn
-	metrics   database.Database
-	table     string
-	query     string
-	counter   int
-	values    [][]interface{}
-	sizeLimit int
+	conn          driver.Conn
+	metrics       database.Database
+	table         string
+	query         string
+	counter       int
+	bytes         int
+	firstAppendAt time.Time
+	lastAppendAt  time.Time
+	values        [][]interface{}
+	sizeLimit     int
+}
+
+func (b *bulkImpl) isWebEvents() bool {
+	return b.table == "web_events"
 }
 
 func NewBulk(conn driver.Conn, metrics database.Database, table, query string, sizeLimit int) (Bulk, error) {
@@ -47,9 +54,22 @@ func NewBulk(conn driver.Conn, metrics database.Database, table, query string, s
 	}, nil
 }
 
+const webEventsFixedRowBytes = 30
+
 func (b *bulkImpl) Append(args ...interface{}) error {
 	b.values = append(b.values, args)
 	b.counter++
+	if b.isWebEvents() {
+		now := time.Now()
+		if b.counter == 0 {
+			b.firstAppendAt = now
+		}
+		b.lastAppendAt = now
+		b.bytes += webEventsFixedRowBytes
+		for _, v := range args {
+			b.bytes += argLen(v)
+		}
+	}
 	return nil
 }
 
@@ -79,14 +99,18 @@ func (b *bulkImpl) Send() error {
 	}
 	afterSend := time.Now()
 
-	jsonRows, jsonBytes, totalBytes := b.payloadStats()
-	log.Printf("[CH] table=%s rows=%d jsonRows=%d jsonBytes=%d totalBytes=%d prepareMs=%d appendMs=%d sendMs=%d totalMs=%d",
-		b.table, b.counter, jsonRows, jsonBytes, totalBytes,
-		afterPrepare.Sub(start).Milliseconds(),
-		afterAppend.Sub(afterPrepare).Milliseconds(),
-		afterSend.Sub(afterAppend).Milliseconds(),
-		afterSend.Sub(start).Milliseconds(),
-	)
+	if b.isWebEvents() {
+		totalMb := float64(b.bytes) / (1024 * 1024)
+		log.Printf("[CH] table=%s rows=%d totalMb=%.2f fillMs=%d queueMs=%d prepareMs=%d appendMs=%d sendMs=%d totalMs=%d",
+			b.table, b.counter, totalMb,
+			b.lastAppendAt.Sub(b.firstAppendAt).Milliseconds(),
+			start.Sub(b.lastAppendAt).Milliseconds(),
+			afterPrepare.Sub(start).Milliseconds(),
+			afterAppend.Sub(afterPrepare).Milliseconds(),
+			afterSend.Sub(afterAppend).Milliseconds(),
+			afterSend.Sub(start).Milliseconds(),
+		)
+	}
 
 	// Save bulk metrics
 	if b.metrics != nil {
@@ -96,12 +120,8 @@ func (b *bulkImpl) Send() error {
 	// Prepare values slice for a new data
 	b.values = make([][]interface{}, 0)
 	b.counter = 0
+	b.bytes = 0
 	return nil
-}
-
-var jsonColumns = map[string][]int{
-	"web_events":    {25, 26}, // "$properties", properties
-	"mobile_events": {12},     // "$properties"
 }
 
 func argLen(v interface{}) int {
@@ -113,24 +133,4 @@ func argLen(v interface{}) int {
 	default:
 		return 0
 	}
-}
-
-func (b *bulkImpl) payloadStats() (jsonRows, jsonBytes, totalBytes int) {
-	cols := jsonColumns[b.table]
-	for _, row := range b.values {
-		for _, v := range row {
-			totalBytes += argLen(v)
-		}
-		rowJSON := 0
-		for _, idx := range cols {
-			if idx < len(row) {
-				rowJSON += argLen(row[idx])
-			}
-		}
-		jsonBytes += rowJSON
-		if rowJSON > 4 { // more than "{}"
-			jsonRows++
-		}
-	}
-	return
 }
