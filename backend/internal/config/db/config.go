@@ -35,6 +35,7 @@ type Config struct {
 	CHBatchSizeLimit      int           `env:"CH_BATCH_SIZE_LIMIT,default=50000"`
 	CHWorkerQueueDepth    int           `env:"CH_WORKER_QUEUE_DEPTH,default=2"`
 	CHSendWorkers         int           `env:"CH_SEND_WORKERS,default=4"`
+	IssuesFlushInterval   time.Duration `env:"ISSUES_FLUSH_INTERVAL,default=1s"`
 }
 
 func New(log logger.Logger) *Config {

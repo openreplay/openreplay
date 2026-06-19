@@ -61,7 +61,7 @@ func main() {
 		return redisConn.Ping(ctx)
 	})
 
-	issuesManager, err := issues.New(log, redisConn)
+	issuesManager, err := issues.New(log, redisConn, cfg.IssuesFlushInterval)
 	if err != nil {
 		log.Fatal(ctx, "can't init issues keeper: %s", err)
 	}
@@ -117,7 +117,15 @@ func main() {
 		messages.NewMessageIterator(log, saver.Handle, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
-		nil,
+		func(t types.RebalanceType, _ []uint64) {
+			if t != types.RebalanceTypeRevoke {
+				return
+			}
+			if err := issuesManager.Flush(); err != nil {
+				log.Error(ctx, "rebalance issues flush error: %s", err)
+			}
+			sessManager.Commit()
+		},
 		types.NoReadBackGap,
 	)
 	if err != nil {
