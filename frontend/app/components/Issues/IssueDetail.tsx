@@ -277,12 +277,11 @@ function ReplayStage({
 function TagChip({ label }: { label: string }) {
   return (
     <span
-      className="text-xs px-2 rounded border whitespace-nowrap"
+      className="text-sm px-2.5 py-0.5 rounded-md border whitespace-nowrap"
       style={{
         borderColor: 'var(--color-gray-light)',
-        background: 'white',
-        color: 'var(--color-gray-medium)',
-        lineHeight: '20px',
+        background: 'var(--color-gray-lightest)',
+        color: 'var(--color-gray-dark)',
       }}
     >
       {label}

@@ -168,7 +168,7 @@ const RAW: Omit<Issue, 'tags' | 'fix'>[] = [
     cat: 'Errors',
     impact: 71,
     seenAgoMin: 3,
-    real: 'The payment request returns a declined status but the UI shows no error — the "Place order" button just resets to its default state, leaving the user unsure whether the order went through.',
+    real: 'The payment request returns a declined status but the UI shows no error. The "Place order" button just resets to its default state, leaving the user unsure whether the order went through.',
     journey: 'User filled in card details, hit "Place order", saw the spinner end with nothing, retried the same card twice, then abandoned the cart.',
     sessions: [
       { email: 'daniel@black-bird.io', plan: 'paid', browser: 'Chrome', os: 'Mac OS X', loc: 'Frankfurt am Main', dur: '12m1s', variation: 'Order silently failed, retried twice', tags: ['Payment', 'Checkout', 'Error'], journey: 'Filled in card details, hit "Place order", watched the spinner end with nothing, re-entered the same card twice, then left the cart.' },
@@ -267,7 +267,7 @@ const RAW: Omit<Issue, 'tags' | 'fix'>[] = [
     cat: 'UI/UX',
     impact: 30,
     seenAgoMin: 5760,
-    real: 'Active filter chips are silently dropped when the user paginates, so page 2 shows unfiltered results — an information mismatch between what the user set and what they see.',
+    real: 'Active filter chips are silently dropped when the user paginates, so page 2 shows unfiltered results, a mismatch between what the user set and what they see.',
     journey: 'User applied two filters, reviewed page 1, clicked to page 2, saw the filters gone and results changed, went back and re-applied them repeatedly.',
     sessions: [
       { email: 'apps@vfairs.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Nong Sung', dur: '9m20s', variation: 'Filters cleared on page 2', tags: ['Filtering', 'Lost Filters'], journey: 'Set two filters, reviewed page 1, clicked to page 2 and found them silently cleared, then re-applied them repeatedly.' },
@@ -309,7 +309,7 @@ const RAW: Omit<Issue, 'tags' | 'fix'>[] = [
     cat: 'UI/UX',
     impact: 12,
     seenAgoMin: 20160,
-    real: 'A noticeable share of sessions land on the pricing page and leave within a few seconds with no scroll or click — a bounce that suggests the page is not matching intent.',
+    real: 'A noticeable share of sessions land on the pricing page and leave within a few seconds with no scroll or click, a bounce that suggests the page is not matching intent.',
     journey: 'User landed on pricing from an ad, stayed under ten seconds without scrolling or interacting, and closed the tab.',
     sessions: [
       { email: 'visitor@gmail.com', plan: 'free', browser: 'Chrome', os: 'Windows', loc: 'Manila', dur: '8s', variation: 'Bounced in under ten seconds', tags: ['Bounce', 'Inactive'], journey: 'Landed on pricing from an ad, stayed under ten seconds without scrolling or clicking, and closed the tab.' },

@@ -445,7 +445,7 @@ function IssuesList() {
             );
           setCritTarget(null);
         }}
-        okText="Remove critical"
+        okText="Mark as not critical"
       >
         <p className="mb-3" style={{ color: 'var(--color-gray-dark)' }}>
           “{critTarget?.head}” will no longer be flagged critical. Tell us why so the agent can learn.

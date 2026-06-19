@@ -202,8 +202,17 @@ export function ReasonChip({
   return (
     <Button
       size="small"
-      type={checked ? 'primary' : 'default'}
+      type="default"
       onClick={() => onChange(!checked)}
+      style={
+        checked
+          ? {
+              background: 'var(--color-active-blue)',
+              borderColor: 'var(--color-active-blue-border)',
+              color: 'var(--color-teal)',
+            }
+          : undefined
+      }
     >
       {label}
     </Button>
@@ -297,7 +306,7 @@ function CriticalControl({
             setNote('');
           }}
         >
-          Remove critical
+          Mark as not critical
         </Button>
       </div>
     </div>
@@ -334,6 +343,8 @@ interface Props {
   actions?: React.ReactNode;
   /** detail-page framing: title+actions header, full-width divider, then body */
   framed?: boolean;
+  /** hide the "The problem" diagnosis (e.g. when it's shown in its own tab) */
+  hideProblem?: boolean;
 }
 
 function ProblemCard({
@@ -343,6 +354,7 @@ function ProblemCard({
   onSetCritical,
   actions,
   framed,
+  hideProblem,
 }: Props) {
   const level = impactLevel(issue.impact);
 
@@ -429,7 +441,7 @@ function ProblemCard({
         </div>
         {meta}
       </div>
-      {diagnosis}
+      {!hideProblem && diagnosis}
     </div>
   );
 }
