@@ -45,10 +45,28 @@ func (c *consumerImpl) SetProcessedHook(fn func(topic string, partition int32, o
 }
 
 func (c *consumerImpl) CommitOffsets(offsets types.Offsets) error {
+	assigned, err := c.consumer.Assignment()
+	if err != nil {
+		return err
+	}
+	owned := make(map[string]map[int32]bool, len(assigned))
+	for _, tp := range assigned {
+		if tp.Topic == nil {
+			continue
+		}
+		if owned[*tp.Topic] == nil {
+			owned[*tp.Topic] = make(map[int32]bool)
+		}
+		owned[*tp.Topic][tp.Partition] = true
+	}
+
 	var tps []kafka.TopicPartition
 	for topic, parts := range offsets {
 		t := topic
 		for p, off := range parts {
+			if !owned[t][p] {
+				continue
+			}
 			tps = append(tps, kafka.TopicPartition{
 				Topic:     &t,
 				Partition: p,
