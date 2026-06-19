@@ -182,6 +182,12 @@ function isObservable(node: Node): boolean {
   return !isIgnored(node)
 }
 
+const PRESERVE_VALUE_INPUT_TYPES = new Set(['button', 'reset', 'submit', 'checkbox', 'radio'])
+
+export function shouldSkipValueAttribute(node: Element): boolean {
+  return hasTag(node, 'input') && !PRESERVE_VALUE_INPUT_TYPES.has(node.type)
+}
+
 /*
   TODO:
     - fix unbinding logic + send all removals first (ensure sequence is correct)
@@ -390,13 +396,7 @@ export default abstract class Observer {
     ) {
       return
     }
-    if (
-      name === 'value' &&
-      hasTag(node, 'input') &&
-      node.type !== 'button' &&
-      node.type !== 'reset' &&
-      node.type !== 'submit'
-    ) {
+    if (name === 'value' && shouldSkipValueAttribute(node)) {
       return
     }
     if (value === null) {

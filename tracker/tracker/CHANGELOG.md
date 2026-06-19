@@ -1,3 +1,11 @@
+## 18.0.17
+
+- revisiting node maintainer class (should be slightly better performance now)
+
+## 18.0.16
+
+- keep values for radio and checkbox inputs
+
 ## 18.0.15
 
 - small fixes towards vizual batch consistency

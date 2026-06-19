@@ -1,25 +1,27 @@
-import React from 'react';
+import { MoreOutlined } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
 import {
-  Card,
-  Tag,
-  Select,
   Button,
-  Input,
-  Table,
-  TableProps,
+  Card,
   Checkbox,
   Dropdown,
+  Input,
+  Select,
+  Table,
+  TableProps,
+  Tag,
 } from 'antd';
-import { MoreOutlined } from '@ant-design/icons';
 import { X } from 'lucide-react';
-import { useModal } from '../Modal';
-import { useQuery } from '@tanstack/react-query';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { useParams } from 'App/routing';
-import { Data } from './types';
-import { getIssues, getTagLabels, hideIssue, renameIssue } from './api';
-import IssueSessions from './IssueSessionsModal';
 import { Modal, confirm } from 'UI';
+
+import { useModal } from '../Modal';
+import IssueSessions from './IssueSessionsModal';
+import { getIssues, getTagLabels, hideIssue, renameIssue } from './api';
+import { Data } from './types';
 
 function getTagColor(label: string): string {
   const safeLabel = label.toLowerCase();

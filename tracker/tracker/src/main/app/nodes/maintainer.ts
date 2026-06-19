@@ -4,26 +4,34 @@ function processMapInBatches(
   map: Map<number, Node | void>,
   batchSize: number,
   processBatchCallback: (node: Node) => void,
+  // reports the pending inter-batch timeout so the caller can cancel it on stop()
+  onScheduled: (timeout: ReturnType<typeof setTimeout>) => void,
+  // called once the whole map has been walked (or there was nothing to walk)
+  onComplete: () => void,
 ) {
   const iterator = map.entries()
 
   function processNextBatch() {
-    const batch: any[] = []
+    let processed = 0
     let result = iterator.next()
 
-    while (!result.done && batch.length < batchSize) {
-      batch.push(result.value)
+    // process inline as we pull from the iterator — no intermediate array.
+    // deleting from the map during iteration (via unregisterNode) is safe:
+    // unvisited deleted entries are skipped, newly added nodes get visited.
+    while (!result.done && processed < batchSize) {
+      const node = result.value[1]
+      if (node) {
+        processBatchCallback(node)
+      }
+      processed++
       result = iterator.next()
     }
 
-    if (batch.length > 0) {
-      batch.forEach(([_, node]) => {
-        if (node) {
-          processBatchCallback(node)
-        }
-      })
-
-      setTimeout(processNextBatch, 50)
+    if (processed > 0) {
+      // yield the thread between batches so the browser can run other work
+      onScheduled(setTimeout(processNextBatch, 50))
+    } else {
+      onComplete()
     }
   }
 
@@ -86,6 +94,8 @@ const defaults = {
 
 class Maintainer {
   private interval: ReturnType<typeof setInterval>
+  private batchTimeout: ReturnType<typeof setTimeout> | undefined
+  private isScanning = false
   private readonly options: MaintainerOptions
   constructor(
     private readonly nodes: Map<number, Node | void>,
@@ -103,12 +113,29 @@ class Maintainer {
     this.stop()
 
     this.interval = setInterval(() => {
-      processMapInBatches(this.nodes, this.options.batchSize, (node) => {
-        const isActive = isNodeStillActive(node)[0]
-        if (!isActive) {
-          this.unregisterNode(node)
-        }
-      })
+      // a previous scan may still be walking the map across batch timeouts
+      // (large DOM and/or background-tab timer throttling). don't pile up.
+      if (this.isScanning) {
+        return
+      }
+      this.isScanning = true
+      processMapInBatches(
+        this.nodes,
+        this.options.batchSize,
+        (node) => {
+          const isActive = isNodeStillActive(node)[0]
+          if (!isActive) {
+            this.unregisterNode(node)
+          }
+        },
+        (timeout) => {
+          this.batchTimeout = timeout
+        },
+        () => {
+          this.batchTimeout = undefined
+          this.isScanning = false
+        },
+      )
     }, this.options.interval)
   }
 
@@ -116,6 +143,11 @@ class Maintainer {
     if (this.interval) {
       clearInterval(this.interval)
     }
+    if (this.batchTimeout) {
+      clearTimeout(this.batchTimeout)
+      this.batchTimeout = undefined
+    }
+    this.isScanning = false
   }
 }
 
