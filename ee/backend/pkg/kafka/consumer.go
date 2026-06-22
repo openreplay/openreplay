@@ -427,12 +427,12 @@ func (c *consumerImpl) shouldPause(p kafka.TopicPartition) {
 	cur := p.Offset
 	if cur >= stop {
 		if err := c.Commit(); err != nil { // TODO: commit on the specific partition
-			c.log.Info(context.Background(), "consumer.shouldPause() commit error: %v", err)
+			c.log.Warn(context.Background(), "consumer.shouldPause() commit error: %v", err)
 		}
 		if err := c.consumer.Pause([]kafka.TopicPartition{p}); err != nil {
-			c.log.Info(context.Background(), "consumer.shouldPause() pause error: %v", err)
+			c.log.Debug(context.Background(), "consumer.shouldPause() pause error: %v", err)
 		} else {
-			c.log.Info(context.Background(), "consumer.shouldPause() paused %s[%d] at offset %d (stopAt %d)",
+			c.log.Debug(context.Background(), "consumer.shouldPause() paused %s[%d] at offset %d (stopAt %d)",
 				topic, part, cur, stop)
 		}
 	}
