@@ -234,12 +234,14 @@ export async function fetchRecentSessions(siteId: string = "5", limit: number = 
     }
 
     // Construct player URLs for each session — use the UI URL directly.
+    // No JWT in the URL: the user opening the link is authenticated by their
+    // existing OpenReplay browser session. Tokens in URLs leak into browser
+    // history, server logs, and Referer headers.
     const baseUrl = state.appUrl.replace(/\/+$/, '');
-    const jwt = state.jwt!; // Already checked above
 
     const sessions = data.sessions.map((session: any) => ({
         ...session,
-        replayUrl: `${baseUrl}/${siteId}/session/${session.sessionId}?jwt=${encodeURIComponent(jwt)}`,
+        replayUrl: `${baseUrl}/${siteId}/session/${session.sessionId}`,
     }));
 
     console.error(`[SERVER] Returning ${sessions.length} sessions`);
