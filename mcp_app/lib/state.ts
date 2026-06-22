@@ -115,7 +115,8 @@ export async function loadPersistedState() {
 // Save state to disk
 export async function savePersistedState() {
   try {
-    await fs.mkdir(CONFIG_DIR, { recursive: true });
+    // The config file holds the JWT — keep the directory and file owner-only.
+    await fs.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
     await fs.writeFile(
       CONFIG_FILE,
       JSON.stringify({
@@ -123,8 +124,12 @@ export async function savePersistedState() {
         jwt: state.jwt,
         appUrl: state.appUrl,
         userData: state.userData,
-      }, null, 2)
+      }, null, 2),
+      { mode: 0o600 }
     );
+    // `mode` on writeFile only applies when the file is created; enforce it on
+    // every write so an existing 0644 file from an older version gets tightened.
+    await fs.chmod(CONFIG_FILE, 0o600);
     console.error("[SERVER] Saved authentication to disk");
   } catch (err) {
     console.error("[SERVER] Failed to save state:", err);
@@ -134,6 +139,22 @@ export async function savePersistedState() {
 // Generate a random auth code for browser-based login
 export function generateAuthCode(): string {
   return crypto.randomBytes(32).toString("hex");
+}
+
+// Validate and normalize a user/model-supplied OpenReplay instance URL.
+// Only https URLs are accepted — the value flows into authorize URLs and API
+// requests, so a non-http(s) or malformed value must be rejected at the source.
+export function assertHttpsUrl(raw: string): string {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new Error(`Invalid URL: ${raw}`);
+  }
+  if (u.protocol !== "https:") {
+    throw new Error(`OpenReplay URL must use https (got "${u.protocol}//" in ${raw})`);
+  }
+  return u.toString().replace(/\/+$/, "");
 }
 
 // Clear persisted state

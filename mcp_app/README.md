@@ -252,10 +252,16 @@ The app uses CSS variables for theming. All colors, fonts, and spacing automatic
 
 ## Security Notes
 
-- Credentials are stored in memory only (not persisted)
-- JWT tokens are included in API requests via Authorization header
-- Session replay iframe uses `sandbox` attribute for security
-- All API requests go through the MCP server (not directly from UI)
+- The JWT is persisted to `~/.openreplay-mcp/config.json` so the session survives
+  restarts. The directory is created `0700` and the file is written `0600`
+  (owner read/write only). Run `logout` to delete it.
+- JWT tokens are sent only via the `Authorization: Bearer` header — never embedded
+  in replay/session URLs.
+- The browser login flow returns an authorize URL for you to open yourself; the
+  server does not launch a browser process.
+- Session replay iframe uses the `sandbox` attribute for security
+- All API requests go through the MCP server (not directly from the UI), and the
+  configured instance URL must be `https`
 
 ## Troubleshooting
 

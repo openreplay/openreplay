@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
-import { exec } from "node:child_process";
+import net from "node:net";
 import { z } from "zod";
-import { state, savePersistedState, clearPersistedState, generateAuthCode } from "./state.js";
+import { state, savePersistedState, clearPersistedState, generateAuthCode, assertHttpsUrl } from "./state.js";
 import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, resolveFunnelSteps, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties, pollForAuth } from "./api.js";
 import {
   ConfigureBackendSchema,
@@ -65,6 +65,31 @@ const DOCS_STOP_WORDS = new Set([
   "that", "does", "openreplay", "open", "replay", "use", "using", "you", "your",
 ]);
 
+// Validate a mob-file URL before fetching it server-side.
+//
+// Mob files (replay recordings) are served from blob storage whose host
+// differs from the configured OpenReplay instance, so we can't pin the host to
+// state.appUrl here. What we can do is require https and reject URLs that point
+// directly at an IP literal — closing the obvious SSRF path to loopback /
+// link-local / private addresses (e.g. 127.0.0.1, 169.254.169.254, 10.x).
+function assertFetchableMobUrl(raw: string): string {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new Error(`Invalid mob file URL: ${raw}`);
+  }
+  if (u.protocol !== "https:") {
+    throw new Error("Mob file URL must use https");
+  }
+  // Strip brackets from IPv6 literals (e.g. "[::1]") before testing.
+  const host = u.hostname.replace(/^\[|\]$/g, "");
+  if (net.isIP(host) !== 0) {
+    throw new Error("Refusing to fetch a mob file from a raw IP address");
+  }
+  return u.toString();
+}
+
 // Register UI tools
 export function registerUITools(server: McpServer, resourceUri: string) {
   // Tool 1: View Recent Sessions
@@ -74,6 +99,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
     "view_recent_sessions",
     {
       title: "OpenReplay Recent Sessions",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description: "PREFERRED tool for fetching and displaying sessions. Always use this tool when the user asks to see, show, list, get, or fetch sessions. " +
         "Renders a rich interactive session list with user info, timing, device details, and play buttons. " +
         "You can specify one of the required parameters: project ID (siteId param) or its name (projectName param). " +
@@ -179,6 +205,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
     "view_chart",
     {
       title: "OpenReplay Sessions Chart",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "PREFERRED tool for showing session analytics charts. Use this when the user asks to see charts, graphs, " +
         "numbers, trends, or analytics about sessions over time. Examples: 'show me sessions chart for last week', " +
@@ -371,6 +398,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
     "view_user_journey",
     {
       title: "OpenReplay User Journey",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "PREFERRED tool for showing user journey / path analysis as a Sankey flow diagram. " +
         "Use this when the user asks about user journeys, navigation paths, drop-offs, funnels, " +
@@ -542,6 +570,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
     "view_web_vitals",
     {
       title: "OpenReplay Web Vitals",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "PREFERRED tool for showing Web Vitals performance metrics. Displays 6 core metrics: " +
         "DOM Complete, TTFB (Time to First Byte), Speed Index, FCP (First Contentful Paint), " +
@@ -684,6 +713,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
     "view_table_chart",
     {
       title: "OpenReplay Top Analytics",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "PREFERRED tool for showing ranked table/bar chart for 'top X' analytics. " +
         "Use this when the user asks for top, most popular, distribution, or breakdown of any dimension. " +
@@ -833,6 +863,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
     "view_funnel",
     {
       title: "OpenReplay Funnel Analysis",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "PREFERRED tool for showing step-by-step conversion funnels. " +
         "Use this when the user asks about conversion rates, drop-off, funnel analysis, " +
@@ -995,6 +1026,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
     "view_session_replay",
     {
       title: "Session Replay",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "View a session replay with full DOM reconstruction. " +
         "Provide a sessionId from a previous session list or search. " +
@@ -1109,6 +1141,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "_refresh_replay_urls",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Re-fetch signed mob file URLs for a session replay (internal use by UI only)",
       inputSchema: {
         sessionId: z.string().describe("Session ID"),
@@ -1160,13 +1193,22 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "_fetch_mob_file",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Fetch a mob file by URL and return base64 (internal use by UI only)",
       inputSchema: {
         url: z.string().describe("Mob file URL"),
       },
     },
     async (args: any) => {
-      const url = args.url as string;
+      let url: string;
+      try {
+        url = assertFetchableMobUrl(args.url as string);
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: err.message }) }],
+          isError: true,
+        };
+      }
       console.error(`[SERVER] _fetch_mob_file: fetching ${url.slice(0, 80)}...`);
       try {
         const response = await fetch(url);
@@ -1197,6 +1239,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "configure_backend",
     {
+      annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: false },
       description: "Configure the OpenReplay instance URL. Pass the URL the user types into their browser; the API host is derived automatically (api.openreplay.com for SaaS, <host>/api otherwise).",
       inputSchema: {
         appUrl: z.string().describe("OpenReplay instance URL (e.g. https://app.openreplay.com or https://openreplay.your-company.com)"),
@@ -1211,7 +1254,7 @@ export function registerInternalTools(server: McpServer) {
     async (args) => {
       console.error("[SERVER] configure_backend called:", args);
       const parsed = ConfigureBackendSchema.parse(args);
-      state.appUrl = parsed.appUrl;
+      state.appUrl = assertHttpsUrl(parsed.appUrl);
       return {
         content: [
           {
@@ -1229,6 +1272,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "login_jwt",
     {
+      annotations: { readOnlyHint: false, openWorldHint: false },
       description: "Authenticate with OpenReplay using a JWT token (for testing).",
       inputSchema: {
         jwt: z.string().describe("JWT token for authentication"),
@@ -1260,10 +1304,11 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "login_browser",
     {
+      annotations: { readOnlyHint: false, openWorldHint: false },
       description:
-        "PREFERRED login method. Opens a browser tab for the user to approve access. " +
-        "RETURNS IMMEDIATELY with the authorize URL — show the URL to the user, ask them to click 'Authorize' " +
-        "in the OpenReplay tab, and then call complete_login to finish the flow. " +
+        "PREFERRED login method. RETURNS IMMEDIATELY with an authorize URL — show the URL to the user " +
+        "and ask them to open it in their browser and click 'Authorize' in the OpenReplay tab, " +
+        "then call complete_login to finish the flow. " +
         "Use this whenever the user needs to log in. The only alternative is login_jwt for a raw token.",
       inputSchema: {
         appUrl: z.string().optional().describe("OpenReplay instance URL (optional, uses current if already configured)"),
@@ -1277,25 +1322,24 @@ export function registerInternalTools(server: McpServer) {
     },
     async (args) => {
       const parsed = LoginBrowserSchema.parse(args);
+      // Validate any model-supplied URL up front; reject non-https before it
+      // ever reaches an authorize link or API request.
       if (parsed.appUrl) {
-        state.appUrl = parsed.appUrl;
+        state.appUrl = assertHttpsUrl(parsed.appUrl);
       }
-      const appUrl = state.appUrl.replace(/\/+$/, '');
+      const appUrl = assertHttpsUrl(state.appUrl);
 
       const authCode = generateAuthCode();
       state.pendingAuthCode = authCode;
       const authorizeUrl = `${appUrl}/mcp/authorize?state=${authCode}&client_id=${state.clientId}&app_name=${encodeURIComponent("OpenReplay MCP")}`;
 
-      console.error(`[SERVER] login_browser: opening browser at ${authorizeUrl}`);
+      // The authorize URL is built from the validated instance host, so it is
+      // guaranteed same-origin with the configured backend.
+      console.error(`[SERVER] login_browser: authorize URL ${authorizeUrl}`);
 
-      // Open the URL in the user's default browser (best-effort — model also gets the URL)
-      const openCmd = process.platform === "darwin"
-        ? "open"
-        : process.platform === "win32"
-          ? "start"
-          : "xdg-open";
-      exec(`${openCmd} "${authorizeUrl}"`);
-
+      // We do NOT launch a browser process here — instead we hand the URL back
+      // for the user to open. (Spawning a shell to "open" a model-influenced URL
+      // is an injection risk and unnecessary.)
       return {
         content: [
           {
@@ -1306,8 +1350,8 @@ export function registerInternalTools(server: McpServer) {
               state: authCode,
               appUrl,
               message:
-                "Browser opened to OpenReplay's authorize page. Tell the user to click 'Authorize', " +
-                "then call complete_login to finish. If the browser didn't open, share the authorizeUrl with the user.",
+                "Share this authorize URL with the user and ask them to open it in their browser " +
+                "and click 'Authorize'. Then call complete_login to finish.",
             }),
           },
         ],
@@ -1321,6 +1365,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "complete_login",
     {
+      annotations: { readOnlyHint: false, openWorldHint: true },
       description:
         "Finalize browser-based login started by login_browser. Polls OpenReplay for approval. " +
         "Call this AFTER the user confirms they clicked 'Authorize' in the browser. " +
@@ -1404,6 +1449,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "fetch_chart_data",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Fetch chart data from OpenReplay API",
       inputSchema: {
         endpoint: z.string().describe("API endpoint to fetch chart data from"),
@@ -1447,6 +1493,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "get_session_replay",
     {
+      annotations: { readOnlyHint: true, openWorldHint: false },
       description: "Get session replay URL",
       inputSchema: {
         sessionId: z.string().describe("Session ID to get replay URL for"),
@@ -1482,6 +1529,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "get_auth_status",
     {
+      annotations: { readOnlyHint: true, openWorldHint: false },
       description: "Check current authentication status",
     },
     async () => {
@@ -1507,6 +1555,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "logout",
     {
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
       description: "Clear authentication and remove persisted token",
     },
     async () => {
@@ -1534,6 +1583,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "list_projects",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Fetch and list all available OpenReplay projects. This saves the projects to context so you can reference them by name in subsequent requests.",
     },
     async () => {
@@ -1568,6 +1618,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "get_project_id",
     {
+      annotations: { readOnlyHint: true, openWorldHint: false },
       description: "Get the project ID for a given project name. Must call list_projects first to populate the project cache.",
       inputSchema: {
         projectName: z.string().describe("Project name to look up"),
@@ -1615,6 +1666,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "fetch_sessions",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Internal tool: fetch sessions as raw JSON without UI. Only use this when you specifically need raw session data for processing, analysis, getting more data, or when the user explicitly asks for JSON output. " +
         "For normal session listing that you need to present to user, ALWAYS prefer view_recent_sessions instead which shows a rich interactive UI. " +
         "This tool automatically resolves project names to IDs. Supports filtering by user attributes.",
@@ -1716,6 +1768,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "get_session_details",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "Get detailed information about a specific session including metadata and events. " +
         "Fetches both session replay metadata (user info, device, location, timing) and session events " +
@@ -1790,9 +1843,10 @@ export function registerInternalTools(server: McpServer) {
         userEvents: Array.isArray(events.userEvents) ? events.userEvents.length : 0,
       };
 
-      // Construct replay URL — use the UI URL directly.
+      // Construct replay URL — use the UI URL directly. No JWT in the URL;
+      // the user's existing OpenReplay browser session authenticates the link.
       const baseUrl = state.appUrl.replace(/\/+$/, '');
-      const replayUrl = `${baseUrl}/${siteId}/session/${parsed.sessionId}?jwt=${encodeURIComponent(state.jwt!)}`;
+      const replayUrl = `${baseUrl}/${siteId}/session/${parsed.sessionId}`;
 
       // Structure response with summary first (for large data pattern)
       const response = {
@@ -1835,6 +1889,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "get_available_filters",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "Get the list of available filters for a project. Call this before applying filters to data tools " +
         "(view_recent_sessions, view_chart, view_user_journey, fetch_sessions) to discover valid filter names " +
@@ -1955,6 +2010,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "fetch_events",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "Fetch recent tracked events (pageviews, clicks, custom events, errors) from the analytics data pipeline. " +
         "Returns event name, timestamp, user ID, session ID, city, OS, and whether it was auto-captured. " +
@@ -2032,6 +2088,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "fetch_users",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "Fetch tracked users from the analytics data pipeline. " +
         "Returns user ID, name, email, location, last seen, and custom properties. " +
@@ -2110,6 +2167,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "fetch_event_definitions",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "Fetch all tracked event definitions and user attribute definitions for a project. " +
         "Returns two lists: (1) events — custom and auto-captured event types being tracked, " +
@@ -2186,6 +2244,7 @@ export function registerInternalTools(server: McpServer) {
   server.registerTool(
     "search_docs",
     {
+      annotations: { readOnlyHint: true, openWorldHint: true },
       description:
         "ALWAYS use this tool when the user asks any question about OpenReplay itself — " +
         "how features work, SDK setup and methods, deployment, integrations, plugins, configuration, " +
