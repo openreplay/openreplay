@@ -62,6 +62,7 @@ export const enum MENU {
   DATA_MANAGEMENT = 'data-management',
   SEGMENTS = 'data-segments',
   TAGS = 'data-tags',
+  ISSUES = 'issues',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -75,6 +76,11 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         key: MENU.RECOMMENDATIONS,
         icon: 'magic',
         hidden: true,
+      },
+      {
+        label: t('Issues'),
+        key: MENU.ISSUES,
+        icon: 'info-circle',
       },
       {
         label: t('Vault'),
@@ -113,14 +119,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     items: [
       { label: t('Dashboards'), key: MENU.DASHBOARDS, icon: 'columns-gap' },
       { label: t('Cards'), key: MENU.CARDS, icon: 'bar-chart-line' },
-      // {
-      //   label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line', children: [
-      //     { label: 'All', key: MENU.CARDS },
-      //     { label: 'Funnels', key: MENU.FUNNELS },
-      //     { label: 'Error Tracking', key: MENU.ERROR_TRACKING },
-      //     { label: 'Resource Monitoring', key: MENU.RESOURCE_MONITORING }
-      //   ]
-      // },
       { label: t('Alerts'), key: MENU.ALERTS, icon: 'bell' },
     ],
   },
