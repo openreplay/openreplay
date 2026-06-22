@@ -87,6 +87,7 @@ type connectorImpl struct {
 	committer      OffsetCommitter
 	seq            uint64 // last assigned task seq
 	workerTask     chan *task
+	inflight       chan struct{}
 	quit           chan struct{}
 	stopOnce       sync.Once
 	workersWg      sync.WaitGroup
@@ -119,6 +120,7 @@ func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, w
 		done: make(map[uint64]*task),
 	}
 	cs.cond = sync.NewCond(&cs.mu)
+	maxInflight := workerQueueDepth + 2*sendWorkers
 
 	c := &connectorImpl{
 		conn:           conn,
@@ -127,6 +129,7 @@ func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, w
 		batches:        make(map[string]Bulk, len(batches)+1),
 		pending:        make(qtypes.Offsets),
 		workerTask:     make(chan *task, workerQueueDepth),
+		inflight:       make(chan struct{}, maxInflight),
 		quit:           make(chan struct{}),
 		commits:        cs,
 	}
@@ -227,6 +230,7 @@ func (c *connectorImpl) flush() {
 	newTask.seq = c.seq
 	c.needToFlush = false
 	c.mu.Unlock()
+	c.inflight <- struct{}{}
 	c.workerTask <- newTask
 }
 
@@ -354,6 +358,7 @@ func (c *connectorImpl) runCommitter() {
 			cs.cond.Wait()
 		}
 		var latest *task
+		released := 0
 		for {
 			t := cs.done[cs.next]
 			if t == nil {
@@ -362,6 +367,7 @@ func (c *connectorImpl) runCommitter() {
 			latest = t
 			delete(cs.done, cs.next)
 			cs.next++
+			released++
 		}
 		closed := cs.closed
 		drained := cs.done[cs.next] == nil
@@ -369,6 +375,9 @@ func (c *connectorImpl) runCommitter() {
 
 		if latest != nil {
 			c.commitOffsets(latest)
+		}
+		for i := 0; i < released; i++ {
+			<-c.inflight
 		}
 		if closed && drained {
 			return
