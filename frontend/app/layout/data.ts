@@ -36,6 +36,7 @@ export const enum PREFERENCES_MENU {
   NOTIFICATIONS = 'notifications',
   BILLING = 'billing',
   EXPORTED_VIDEOS = 'exported-videos',
+  TEST_AGENTS = 'test-agents',
 }
 
 export const enum MENU {
@@ -253,6 +254,12 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         key: PREFERENCES_MENU.EXPORTED_VIDEOS,
         icon: 'ic-network',
         hidden: menuHidden.videoExport,
+      },
+      {
+        label: t('Test Agents'),
+        key: PREFERENCES_MENU.TEST_AGENTS,
+        icon: 'analytics',
+        hidden: false,
       },
     ],
   },

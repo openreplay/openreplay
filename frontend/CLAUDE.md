@@ -1,34 +1,41 @@
-# OpenReplay frontend — AI Issues redesign demo
+# OpenReplay frontend — Test Agents redesign demo
 
-This branch (`feat/ai-issues-redesign`) adds the redesigned **AI Issues** page as a
-mock-data prototype inside the real OpenReplay frontend.
+This branch (`feat/test-agents-redesign`) redesigns the **Test Agents** ("Kai")
+preferences page as a mock-data prototype inside the real OpenReplay frontend.
 
-## Running the Issues prototype (no login, mock data)
+It reuses the no-login mock environment built for the AI Issues prototype
+(`mockBootstrap`, `MOCK=1` gating, `dev:mock`, Vercel deploy config). The Test Agents
+UI was transplanted from upstream's `kai-testing-ui` branch; it runs entirely on mock
+data (`KaiSettings/components/shared/mockData.ts`) — no backend.
 
-**Always run the prototype this way** — it's the only correct way to open the Issues
-page locally:
+This is a **design-only** workstream: change the UI/design, keep it on mock data.
+Do not wire real APIs.
+
+## Running the prototype (no login, mock data)
+
+This worktree runs on **port 3334** (the Issues worktree uses 3333):
 
 ```bash
-yarn dev:mock      # == MOCK=1 parcel app/index.html --port 3333 --open
+MOCK=1 ./node_modules/.bin/parcel app/index.html --port 3334
+# or, via the Issues default port: yarn dev:mock
 ```
 
-Then open: **http://localhost:3333/1/issues**
+Then open: **http://localhost:3334/client/test-agents**
 
 - `MOCK=1` triggers `app/dev/mockBootstrap.ts` (gated in `app/initialize.tsx`), which
-  seeds a fake user + project (siteId `1`) into the MobX stores so the app chrome and
-  Issues page render with **no backend and no login**.
-- Issues data is mock/in-memory from `app/mstore/issuesStore.ts`.
-- Other pages render as empty states. This mirrors the deployed demo:
-  https://openreplay-issues-demo.vercel.app/1/issues
-
-## Do NOT use plain `yarn dev` for the prototype
-
-Plain `yarn dev` boots the real app → login screen. The local `.env` has no backend
-(`API_EDP`/`ORIGIN` empty), so login fails and the page is unusable. Use `yarn dev:mock`.
+  seeds a fake user + project into the MobX stores so the app chrome and preferences
+  pages render with **no backend and no login**.
+- Test Agents data is mock/in-memory from `KaiSettings/components/shared/mockData.ts`.
+- Console errors about JWT / property filters are the expected no-backend noise.
 
 ## Key files
 
-- `app/components/Issues/IssuesList.tsx`, `IssueDetail.tsx`, `TagFilter.tsx`, `issues.css`
-- `app/mstore/issuesStore.ts` — mock data + types
-- `app/dev/mockBootstrap.ts` — the no-backend auth/store seed
-- `app/initialize.tsx` — `if (process.env.MOCK === '1') seedMockStore()`
+- `app/components/Client/KaiSettings/` — the Test Agents page (index + tabs)
+  - `index.tsx` — `PageTitle('Test Agents')` + tabs (Auto-Testing Settings / Test Runs)
+  - `components/` — `SettingsTab`, `RunsTab`, `RunRow`, `Environments`, `TestCaseContent`
+  - `components/shared/mockData.ts` — mock data + types (`MOCK_RUNS`, environments, test cases)
+- Wiring (kept minimal, transplanted from `kai-testing-ui`):
+  - `app/utils/routeUtils.ts` — `CLIENT_TABS.TEST_AGENTS = 'test-agents'`
+  - `app/components/Client/Client.tsx` — `case CLIENT_TABS.TEST_AGENTS: return <KaiSettings />`
+  - `app/layout/data.ts` — `PREFERENCES_MENU.TEST_AGENTS` nav entry (always visible here)
+- `app/dev/mockBootstrap.ts` / `app/initialize.tsx` — the no-backend auth/store seed

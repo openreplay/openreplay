@@ -12,4 +12,5 @@ export const CLIENT_TABS = {
   BILLING: '$_this_url_does_not_exist',
   MODULES: 'modules',
   VIDEOS: 'exported',
+  TEST_AGENTS: 'test-agents',
 };
