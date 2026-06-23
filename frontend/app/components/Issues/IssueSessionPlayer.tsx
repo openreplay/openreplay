@@ -10,6 +10,7 @@ import {
   File,
   User,
   Search,
+  Play,
 } from 'lucide-react';
 import {
   MoreOutlined,
@@ -54,7 +55,7 @@ import { CountryFlag, EscapeButton, Icon } from 'UI';
 import { countries } from 'App/constants';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import SessionInfoItem from 'Components/Session_/SessionInfoItem';
-import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
+import MetaItem from 'Shared/SessionItem/MetaItem';
 import {
   CAT_ICON,
   CRITICAL_REASONS,
@@ -71,15 +72,35 @@ import { SpotOverviewPanelCont } from 'Components/Session_/OverviewPanel/Overvie
 import SpotConsole from 'Components/Spots/SpotPlayer/components/Panels/SpotConsole';
 import SpotNetwork from 'Components/Spots/SpotPlayer/components/Panels/SpotNetwork';
 import SpotLocation from 'Components/Spots/SpotPlayer/components/SpotLocation';
-import SpotPlayerControls from 'Components/Spots/SpotPlayer/components/SpotPlayerControls';
 import SpotTimeline from 'Components/Spots/SpotPlayer/components/SpotTimeline';
 import SpotVideoContainer from 'Components/Spots/SpotPlayer/components/SpotVideoContainer';
-import spotPlayerStore, {
-  PANELS,
-} from 'Components/Spots/SpotPlayer/spotPlayerStore';
+import spotPlayerStore from 'Components/Spots/SpotPlayer/spotPlayerStore';
+import { SPEED_OPTIONS } from 'Player/player/Player';
+import {
+  IntervalSelector,
+  JumpBack,
+  JumpForward,
+  SpeedOptions,
+} from 'Components/Session_/Player/Controls/components/ControlsComponents';
+import {
+  FullScreenButton,
+  PlayButton,
+  PlayTime,
+  PlayingState,
+} from 'App/player-ui';
+import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
+import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 
 import { getMockSessionById } from 'App/dev/mockSessions';
 import { ReasonChip, CategoryLabel, ImpactGauge } from './ProblemCard';
+import {
+  PerformancePanel,
+  GraphQLPanel,
+  StatePanel,
+  EventsPanel,
+  ProfilerPanel,
+  BackendLogsPanel,
+} from './devPanels';
 import sessionVideo from './sessionVideo';
 import './issues.css';
 import {
@@ -396,33 +417,230 @@ const HeaderCriticalToggle = observer(({ issue }: { issue: Issue }) => {
   );
 });
 
-/* The problem + the suggested fix as two tabs in one card (Mehdi: combine the
-   issue and the resolution). Both stated plainly. */
-function ProblemResolutionTabs({ issue }: { issue: Issue }) {
-  const [view, setView] = React.useState<'problem' | 'fix'>('problem');
+/* Break a journey sentence into ordered steps so it can be drawn as a path
+   rather than read as prose ("they won't read it"). Splits on clause commas
+   and strips leading connectors. */
+function toJourneySteps(journey: string): string[] {
+  if (!journey) return [];
+  return journey
+    .replace(/\.+$/, '')
+    .split(/,\s*/)
+    .map((s) => s.replace(/^(and then|and|then)\s+/i, '').trim())
+    .filter(Boolean)
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+}
+
+/* Spread the session's behavioural tags across its journey steps so each tag
+   sits on the moment it describes (last step always gets the terminal tag).
+   Returns a map of stepIndex -> tag. */
+function spreadTagsOverSteps(
+  stepCount: number,
+  tags: string[],
+): Record<number, string> {
+  const map: Record<number, string> = {};
+  const m = tags.length;
+  if (!m || !stepCount) return map;
+  tags.forEach((tag, i) => {
+    const pos =
+      m === 1 ? stepCount - 1 : Math.round((i * (stepCount - 1)) / (m - 1));
+    map[pos] = tag;
+  });
+  return map;
+}
+
+/* Place each journey step on the session timeline. Earlier steps spread evenly
+   from a small lead-in up to the moment the issue starts; the final step (the
+   drop-off / the issue itself) lands on the issue moment, so clicking it seeks
+   the player to exactly when it happened. Times are in seconds. */
+function stepTimes(n: number): number[] {
+  if (n <= 0) return [];
+  if (n === 1) return [ISSUE_START_S];
+  const lead = 2;
+  return Array.from(
+    { length: n },
+    (_, i) => lead + ((ISSUE_START_S - lead) * i) / (n - 1),
+  );
+}
+
+function fmtTime(s: number): string {
+  const total = Math.max(0, Math.round(s));
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
+  return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+/* Journey tab — the user's path as a light, single system: a hairline rail
+   (the session-replay Activity blue, #A7BFFF) with small nodes, each step's
+   behavioural tag sitting inline on it so tags and steps read as one thing.
+   The final step is the drop-off, in red. No separate tag row, no heavy
+   markers, no prose paragraph. Each step is clickable: it seeks the player to
+   the moment that step happened, and the step under the playhead is
+   highlighted. */
+const RAIL = '#A7BFFF';
+const STEP_BLUE = '#394EFF';
+// Height of the rail segment above each dot. It both positions the dot level
+// with its step's first text line and (when colored) connects to the previous
+// step's rail, so the line stays continuous while each pill keeps even padding.
+const RAIL_LEAD = 14;
+const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
+  const steps = toJourneySteps(card?.journey ?? '');
+  const stepTags = spreadTagsOverSteps(steps.length, card?.tags ?? []);
+  if (steps.length === 0) return null;
+  const times = stepTimes(steps.length);
+  // the current step is the last one whose moment the playhead has reached
+  const now = spotPlayerStore.time;
+  let current = 0;
+  times.forEach((t, i) => {
+    if (now >= t - 0.5) current = i;
+  });
   return (
-    <div
-      className="rounded-lg border overflow-hidden"
-      style={{ borderColor: 'var(--color-gray-light)' }}
+    <div className="flex flex-col">
+      {steps.map((s, i) => {
+        const last = i === steps.length - 1;
+        const tag = stepTags[i];
+        const active = i === current;
+        const dot = last ? 'var(--color-red)' : STEP_BLUE;
+        return (
+          <div
+            key={i}
+            role="button"
+            tabIndex={0}
+            title={`Jump to ${fmtTime(times[i])}`}
+            onClick={() => spotPlayerStore.setTime(times[i])}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                spotPlayerStore.setTime(times[i]);
+              }
+            }}
+            className={`group flex gap-2.5 -mx-2 px-2 rounded cursor-pointer transition-colors ${
+              last ? 'hover:bg-red-lightest' : 'hover:bg-active-blue'
+            }`}
+            style={{
+              background: active
+                ? last
+                  ? 'var(--color-red-lightest)'
+                  : 'var(--color-active-blue)'
+                : undefined,
+            }}
+          >
+            <div className="flex flex-col items-center shrink-0" style={{ width: 7 }}>
+              {/* lead: positions the dot level with the first line; colored
+                  (except on the first step) so it connects to the rail above */}
+              <span
+                style={{ height: RAIL_LEAD, width: 1, background: i === 0 ? 'transparent' : RAIL }}
+              />
+              <span
+                style={{
+                  width: active ? 8 : 6,
+                  height: active ? 8 : 6,
+                  borderRadius: 9999,
+                  background: dot,
+                  boxShadow: active ? `0 0 0 3px ${last ? 'var(--color-red-lightest)' : 'rgba(57,78,255,0.18)'}` : undefined,
+                }}
+              />
+              {!last && (
+                <span style={{ flex: 1, width: 1, minHeight: 8, background: RAIL }} />
+              )}
+            </div>
+            <div className="py-2 flex flex-col items-start gap-2 min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2 w-full">
+                <span
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 1.45,
+                    color: last ? 'var(--color-red)' : 'var(--color-gray-dark)',
+                    fontWeight: last || active ? 500 : 400,
+                  }}
+                >
+                  {s}
+                </span>
+                <span
+                  className="shrink-0 flex items-center gap-1 tabular-nums"
+                  style={{ fontSize: 11, color: 'var(--color-gray-medium)' }}
+                >
+                  <Play
+                    size={9}
+                    strokeWidth={0}
+                    className="opacity-0 transition-opacity group-hover:opacity-100"
+                    style={{ fill: last ? 'var(--color-red)' : STEP_BLUE }}
+                  />
+                  {fmtTime(times[i])}
+                </span>
+              </div>
+              {tag && <TagChip label={tag} />}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
+/* Details tab — the issue described plainly, with the suggested fix folded in
+   below (not its own tab: many non-UI/UX issues have no clean fix, so it lives
+   here as a secondary section rather than a permanent tab). */
+function DetailsView({ issue }: { issue: Issue }) {
+  const textStyle = {
+    color: 'var(--color-gray-dark)',
+    fontSize: 15,
+    lineHeight: 1.65,
+  };
+  const eyebrow = (
+    text: string,
+  ) => (
+    <span
+      className="text-xs font-semibold uppercase"
+      style={{ color: 'var(--color-gray-medium)', letterSpacing: '0.05em' }}
     >
-      <div className="p-2 border-b" style={{ borderColor: 'var(--color-gray-light)' }}>
-        <Segmented
-          block
-          value={view}
-          onChange={(v) => setView(v as 'problem' | 'fix')}
-          options={[
-            { label: 'The problem', value: 'problem' },
-            { label: 'Suggested fix', value: 'fix' },
-          ]}
-        />
+      {text}
+    </span>
+  );
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        {eyebrow('The problem')}
+        <span style={textStyle}>{issue.real}</span>
       </div>
-      <div className="p-3">
-        <span
-          style={{ color: 'var(--color-gray-dark)', fontSize: 15, lineHeight: 1.6 }}
+      {issue.fix && (
+        <div
+          className="flex flex-col gap-1.5 pt-3 border-t"
+          style={{ borderColor: 'var(--color-gray-light)' }}
         >
-          {view === 'problem' ? issue.real : issue.fix || 'No suggestion yet.'}
-        </span>
-      </div>
+          {eyebrow('Suggested fix')}
+          <span style={textStyle}>{issue.fix}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Slide-out context as two tabs: Journey (the path, via tags + steps) and
+   Details (the plain-language problem + suggested fix). */
+function IssueContextTabs({
+  issue,
+  card,
+}: {
+  issue: Issue;
+  card?: IssueSessionCard;
+}) {
+  const [view, setView] = React.useState<'journey' | 'details'>('journey');
+  return (
+    <div className="flex flex-col gap-3">
+      <Segmented
+        block
+        value={view}
+        onChange={(v) => setView(v as 'journey' | 'details')}
+        options={[
+          { label: 'Journey', value: 'journey' },
+          { label: 'Details', value: 'details' },
+        ]}
+      />
+      {view === 'journey' ? (
+        <JourneyView card={card} />
+      ) : (
+        <DetailsView issue={issue} />
+      )}
     </div>
   );
 }
@@ -448,6 +666,101 @@ const X_Ray = observer(() => {
   );
 });
 
+/* Developer-tools tab set, matching the real session replay (not Spot's
+   reduced X-Ray/Console/Network). 'overview' = X-Ray. */
+type DevTab =
+  | 'overview'
+  | 'console'
+  | 'network'
+  | 'performance'
+  | 'graphql'
+  | 'state'
+  | 'events'
+  | 'profiler'
+  | 'backend';
+const DEV_TABS: { key: DevTab; label: string }[] = [
+  { key: 'overview', label: 'X-Ray' },
+  { key: 'console', label: 'Console' },
+  { key: 'network', label: 'Network' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'graphql', label: 'GraphQL' },
+  { key: 'state', label: 'State' },
+  { key: 'events', label: 'Events' },
+  { key: 'profiler', label: 'Profiler' },
+  { key: 'backend', label: 'Backend Logs' },
+];
+
+/* The player's bottom control bar — mirrors the real session-replay controls
+   (play / seek / speed + the full developer-tools tab row), not Spot's reduced
+   bar. Built here (rather than reusing SpotPlayerControls) so the demo can show
+   every session tab; the tab buttons drive local `devTab` state. */
+const IssueDevControls = observer(
+  ({
+    devTab,
+    setDevTab,
+  }: {
+    devTab: DevTab | null;
+    setDevTab: (t: DevTab | null) => void;
+  }) => {
+    const togglePlay = () => {
+      if (spotPlayerStore.state === PlayingState.Completed) {
+        spotPlayerStore.setTime(0);
+        spotPlayerStore.setIsPlaying(true);
+      }
+      spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying);
+    };
+    const back = () =>
+      spotPlayerStore.setTime(spotPlayerStore.time - spotPlayerStore.skipInterval);
+    const forth = () =>
+      spotPlayerStore.setTime(spotPlayerStore.time + spotPlayerStore.skipInterval);
+    const toggle = (t: DevTab) => setDevTab(devTab === t ? null : t);
+
+    return (
+      <div className="hidden lg:flex w-full p-4 items-center gap-4 bg-white">
+        <PlayButton togglePlay={togglePlay} state={spotPlayerStore.state} iconSize={36} />
+        <div className="px-2 py-1 bg-white rounded-sm font-semibold flex items-center gap-2">
+          <PlayTime isCustom time={spotPlayerStore.time * 1000} format="mm:ss" />
+          <span>/</span>
+          <div>{spotPlayerStore.durationString}</div>
+        </div>
+        <div
+          className="rounded-sm ml-1 bg-white border-gray-lighter flex items-center"
+          style={{ gap: 1 }}
+        >
+          <JumpBack backTenSeconds={back} currentInterval={spotPlayerStore.skipInterval} />
+          <IntervalSelector
+            skipIntervals={SKIP_INTERVALS}
+            setSkipInterval={spotPlayerStore.setSkipInterval}
+            currentInterval={spotPlayerStore.skipInterval}
+          />
+          <JumpForward forthTenSeconds={forth} currentInterval={spotPlayerStore.skipInterval} />
+        </div>
+        <SpeedOptions
+          toggleSpeed={(s: number) => spotPlayerStore.setPlaybackRate(SPEED_OPTIONS[s])}
+          disabled={false}
+          speed={spotPlayerStore.playbackRate}
+        />
+
+        <div className="ml-auto flex items-center gap-1 overflow-x-auto">
+          {DEV_TABS.map((t) => (
+            <ControlButton
+              key={t.key}
+              label={t.label}
+              onClick={() => toggle(t.key)}
+              active={devTab === t.key}
+            />
+          ))}
+        </div>
+
+        <FullScreenButton
+          size={18}
+          onClick={() => spotPlayerStore.setIsFullScreen(true)}
+        />
+      </div>
+    );
+  },
+);
+
 function IssueSessionPlayer() {
   const history = useHistory();
   const { projectsStore, issuesStore } = useStore();
@@ -463,8 +776,17 @@ function IssueSessionPlayer() {
     ? issuesStore.exampleSessions(issue).find((c) => c.sessionId === sessionId)
     : undefined;
 
+  // user metadata — customer-defined, can be many; shown as wrapping pills in
+  // the header "More" popover (hidden by default), compact enough for dozens.
+  const metaList = sess?.metadata
+    ? Object.entries(sess.metadata).map(([label, value]) => ({ label, value }))
+    : card?.plan
+      ? [{ label: 'plan', value: card.plan }]
+      : [];
+
   const [panelHeight, setPanelHeight] = React.useState(getDefaultPanelHeight());
   const [tab, setTab] = React.useState<SideTab>('issue');
+  const [devTab, setDevTab] = React.useState<DevTab | null>(null);
   const [autoplay, setAutoplay] = React.useState(false);
   const [bookmarked, setBookmarked] = React.useState(false);
 
@@ -567,7 +889,7 @@ function IssueSessionPlayer() {
         siteId,
       ),
     );
-  const { isFullScreen, activePanel } = spotPlayerStore;
+  const { isFullScreen } = spotPlayerStore;
   const Divider = () => (
     <div className="h-6 border-l mx-1" style={{ borderColor: 'var(--color-gray-light)' }} />
   );
@@ -600,8 +922,26 @@ function IssueSessionPlayer() {
         icon={deviceTypeIcon(device)}
         label={device}
         value="1440 × 900"
-        isLast
+        isLast={metaList.length === 0}
       />
+      {/* User metadata — customer-defined, can be many (Mehdi: up to 10/15+).
+          Hidden behind "More", rendered as wrapping pills so dozens stay
+          compact instead of a tall one-row-per-field list. */}
+      {metaList.length > 0 && (
+        <div className="pt-3" style={{ maxWidth: 320 }}>
+          <div
+            className="px-2 pb-2 text-xs font-semibold uppercase color-gray-medium"
+            style={{ letterSpacing: '0.05em' }}
+          >
+            Metadata
+          </div>
+          <div className="px-2 flex flex-wrap gap-1">
+            {metaList.map((m) => (
+              <MetaItem key={m.label} label={m.label} value={m.value} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -795,26 +1135,33 @@ function IssueSessionPlayer() {
             />
           </div>
 
-          {!isFullScreen && activePanel ? (
+          {!isFullScreen && devTab ? (
             <div
-              className="shrink-0 relative overflow-hidden bg-white"
-              style={{ height: panelHeight, width: '100%' }}
+              className="shrink-0 relative overflow-hidden bg-white border-t"
+              style={{
+                height: panelHeight,
+                width: '100%',
+                borderColor: 'var(--color-gray-light)',
+              }}
             >
               <div
                 onMouseDown={handleResize}
                 className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
               />
               <div className="w-full h-full bg-white">
-                {activePanel === PANELS.CONSOLE && (
-                  <SpotConsole onClose={() => spotPlayerStore.setActivePanel(null)} />
+                {devTab === 'console' && (
+                  <SpotConsole onClose={() => setDevTab(null)} />
                 )}
-                {activePanel === PANELS.NETWORK && (
-                  <SpotNetwork
-                    onClose={() => spotPlayerStore.setActivePanel(null)}
-                    panelHeight={panelHeight}
-                  />
+                {devTab === 'network' && (
+                  <SpotNetwork onClose={() => setDevTab(null)} panelHeight={panelHeight} />
                 )}
-                {activePanel === PANELS.OVERVIEW && <X_Ray />}
+                {devTab === 'overview' && <X_Ray />}
+                {devTab === 'performance' && <PerformancePanel />}
+                {devTab === 'graphql' && <GraphQLPanel />}
+                {devTab === 'state' && <StatePanel />}
+                {devTab === 'events' && <EventsPanel />}
+                {devTab === 'profiler' && <ProfilerPanel />}
+                {devTab === 'backend' && <BackendLogsPanel />}
               </div>
             </div>
           ) : null}
@@ -827,13 +1174,15 @@ function IssueSessionPlayer() {
               className="pointer-events-none absolute inset-0"
               style={{ zIndex: 40 }}
             >
-              {/* issue window — a solid red band over the blue bar */}
+              {/* issue glow — gradient centered on the issue marker, fading out
+                  symmetrically both ways to convey the fuzzy issue location */}
               <div
                 className="absolute top-0 bottom-0"
                 style={{
-                  left: `${(ISSUE_START_S / 61) * 100}%`,
-                  width: `${((ISSUE_END_S - ISSUE_START_S) / 61) * 100}%`,
-                  background: 'rgba(204,0,0,0.32)',
+                  left: `${((ISSUE_START_S - 6) / 61) * 100}%`,
+                  width: `${(12 / 61) * 100}%`,
+                  background:
+                    'linear-gradient(to right, transparent, rgba(204,0,0,0.28) 50%, transparent)',
                 }}
               />
               {/* bold tick at the issue moment, with a white halo to lift it
@@ -865,7 +1214,9 @@ function IssueSessionPlayer() {
               />
             </div>
           </div>
-          {isFullScreen ? null : <SpotPlayerControls />}
+          {isFullScreen ? null : (
+            <IssueDevControls devTab={devTab} setDevTab={setDevTab} />
+          )}
         </div>
 
         {/* right sidebar — Activity (real) or Issue (rich AI context) */}
@@ -890,8 +1241,18 @@ function IssueSessionPlayer() {
               </Button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-5">
-              {/* 1 · the issue — title + one line: category · impact · critical */}
+              {/* 1 · the issue — labelled "ISSUE" so the issue title is never
+                  confused with this session's variation below */}
               <div className="flex flex-col gap-2.5">
+                <span
+                  className="text-xs font-semibold uppercase"
+                  style={{
+                    color: 'var(--color-gray-medium)',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Issue
+                </span>
                 <span
                   className="font-semibold"
                   style={{
@@ -908,23 +1269,21 @@ function IssueSessionPlayer() {
                 >
                   <CategoryLabel cat={issue.cat} />
                   <span style={{ color: 'var(--color-gray-light)' }}>|</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <ImpactGauge value={issue.impact} />
-                    <span className="text-sm whitespace-nowrap">
-                      {impactLevel(issue.impact)} impact
+                  <Tooltip title={`${impactLevel(issue.impact)} impact`}>
+                    <span className="inline-flex items-center cursor-default">
+                      <ImpactGauge value={issue.impact} />
                     </span>
-                  </span>
+                  </Tooltip>
                   <span style={{ color: 'var(--color-gray-light)' }}>|</span>
                   <HeaderCriticalToggle issue={issue} />
                 </div>
               </div>
 
-              {/* 2 · this session — its own variation of the issue */}
-              {(card?.variation ||
-                card?.journey ||
-                (card?.tags?.length ?? 0) > 0 ||
-                card?.plan) && (
-                <div className="flex flex-col gap-3">
+              {/* 2 · this session — just the variation title (this session's
+                  take on the issue). Tags + journey now live in the Journey
+                  tab; metadata lives in the header "More" popover. */}
+              {card?.variation && (
+                <div className="flex flex-col gap-1.5">
                   <span
                     className="text-xs font-semibold uppercase"
                     style={{
@@ -934,49 +1293,21 @@ function IssueSessionPlayer() {
                   >
                     This session
                   </span>
-                  {card?.variation && (
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: 'var(--color-gray-darkest)',
-                        fontSize: 15,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {card.variation}
-                    </span>
-                  )}
-                  {/* tags lead — the behavioural signals of this session */}
-                  {(card?.tags?.length ?? 0) > 0 && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {card!.tags.map((t) => (
-                        <TagChip key={t} label={t} />
-                      ))}
-                    </div>
-                  )}
-                  {card?.journey && (
-                    <span
-                      style={{
-                        color: 'var(--color-gray-dark)',
-                        fontSize: 15,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {card.journey}
-                    </span>
-                  )}
-                  {card?.plan && (
-                    <SessionMetaList
-                      horizontal
-                      maxLength={3}
-                      metaList={[{ label: 'plan', value: card.plan }]}
-                    />
-                  )}
+                  <span
+                    className="font-medium"
+                    style={{
+                      color: 'var(--color-gray-darkest)',
+                      fontSize: 15,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {card.variation}
+                  </span>
                 </div>
               )}
 
-              {/* 3 · the problem and the suggested fix, combined as tabs */}
-              <ProblemResolutionTabs issue={issue} />
+              {/* 3 · Journey (path via tags + steps) and Details (problem + fix) */}
+              <IssueContextTabs issue={issue} card={card} />
             </div>
           </div>
         )}

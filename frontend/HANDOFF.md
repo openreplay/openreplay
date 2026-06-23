@@ -59,31 +59,9 @@ For production:
 - Each session represents **one issue's variation**; multiple distinct issues in a session are split
   into separate issues (per Mehdi), not merged.
 
-## Design decisions to PRESERVE (from the 2026-06-18 review)
-- **Native look** — reuse components, don't invent.
-- **Critical:** outline `AlertTriangle` in the issue column, click-to-toggle (Gmail "important" style),
-  with a subtle red backdrop when on. Un-marking opens a reason flow with the CTA **"Mark as not
-  critical"**. Reason chips use the **muted active-blue** selected state (`--color-active-blue` /
-  `--color-active-blue-border` / `--color-teal` text) — **not** solid blue (must not compete with the CTA).
-- **Impact:** horizontal **3-segment gauge**; **no percentages** anywhere.
-- **Category:** teal circle avatar, differentiated by icon (uniform color).
-- **Detail:** session cards titled by their **variation** (not user metadata); only two actions
-  (**Create ticket** + **Hide**); the "AI summary" label was removed.
-- **Replay header:** sourced from the session subheader (share / highlight / autoplay / prev-next);
-  title = the session's **variation**, parent issue + env metadata tucked into **More**; no user avatar.
-- **Slide-out:** issue identity (one line: category · impact · critical) → "This session"
-  (variation + tags + journey + meta) → **Problem / Suggested-fix tabs**.
-- Vertical ellipsis everywhere; menu item is **"Open"**, not "Open details".
-
 ## Email digests (separate workstream)
 `../../email-digests/v2/daily-light.html` + `weekly-light.html` — standalone HTML templates
 (illustrative data) that are the spec for the digest emails. Rules applied: no percentages; weekly
 has **no "Resolved" metric** (the concept doesn't exist); per-category **count + trend** with a
 "staying the same" example; teal category avatars; the **impact gauge + critical indicator match the
 app exactly**; daily uses a blue "Open issue" button, outline critical triangle, critical-on-the-left.
-
-## Suggested implementation order
-1. **Real data** — replace the `issuesStore` mock with the API (list, detail, example sessions); drop `mockBootstrap`.
-2. **List + detail** — mostly lift-and-wire.
-3. **Replay** — re-point header / Activity / slide-out onto the real session player; swap dev tools to session replay.
-4. **Email digests.**

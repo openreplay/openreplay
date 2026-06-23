@@ -27,7 +27,7 @@ import {
 } from 'App/routes';
 import { capitalize } from 'App/utils';
 import { type IssueSessionCard, HIDE_REASONS } from 'App/mstore/issuesStore';
-import ProblemCard, { AiSummary, ReasonChip } from './ProblemCard';
+import ProblemCard, { ReasonChip } from './ProblemCard';
 import { MOCK_THUMB } from './mockThumb';
 
 /* Issue detail — the intermediary page, built from real app primitives to keep

@@ -1,0 +1,6 @@
+{
+  "buildCommand": "MOCK=1 yarn build",
+  "outputDirectory": "public",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

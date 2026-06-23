@@ -24,3 +24,5 @@ cypress/videos/
 coverage
 dist
 .parcel-cache/
+.vercel
+.claude

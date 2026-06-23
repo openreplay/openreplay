@@ -15,7 +15,6 @@ import type { TableColumnsType } from 'antd';
 import {
   Info,
   MoreVertical,
-  ArrowUpRight,
   Pencil,
   Eye,
   EyeOff,
@@ -32,7 +31,6 @@ import {
   type Issue,
   type CategoryName,
   CAT_ORDER,
-  CAT_COLOR,
   CAT_ICON,
   HIDE_REASONS,
   CRITICAL_REASONS,
@@ -46,6 +44,21 @@ import TagFilter from './TagFilter';
 import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
 
+
+function RowTagChip({ label }: { label: string }) {
+  return (
+    <span
+      className="text-xs px-2 py-0.5 rounded-md border whitespace-nowrap"
+      style={{
+        borderColor: 'var(--color-gray-light)',
+        background: 'var(--color-gray-lightest)',
+        color: 'var(--color-gray-dark)',
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
 function IssuesList() {
   const { issuesStore } = useStore();
@@ -84,8 +97,8 @@ function IssuesList() {
       const Ic = CAT_ICON[c];
       return {
         value: c,
-        // colored only while this tab is active; neutral otherwise (like Sessions)
-        icon: <Ic size={14} strokeWidth={2} style={{ color: c === catValue ? CAT_COLOR[c] : undefined }} />,
+        // neutral icon — no per-category color (like Sessions)
+        icon: <Ic size={14} strokeWidth={2} />,
         label: <span>{c}{faded(issuesStore.catCount(c))}</span>,
       };
     }),
@@ -117,16 +130,6 @@ function IssuesList() {
       },
     },
     {
-      title: 'Category',
-      dataIndex: 'cat',
-      width: 140,
-      sorter: (a, b) => a.cat.localeCompare(b.cat),
-      showSorterTooltip: false,
-      render: (c: CategoryName) => (
-        <span style={{ color: 'var(--color-gray-darkest)' }}>{c}</span>
-      ),
-    },
-    {
       title: 'Issue',
       dataIndex: 'head',
       sorter: (a, b) => a.head.localeCompare(b.head),
@@ -147,9 +150,7 @@ function IssuesList() {
                   size={15}
                   strokeWidth={2}
                   style={{
-                    color: r.critical
-                      ? 'var(--color-red)'
-                      : 'var(--color-gray-medium)',
+                    color: r.critical ? 'var(--color-red)' : undefined,
                     fill: 'none',
                   }}
                 />
@@ -184,6 +185,25 @@ function IssuesList() {
       ),
     },
     {
+      title: 'Tags',
+      dataIndex: 'tags',
+      width: 200,
+      render: (tags: string[]) => {
+        const visible = tags.slice(0, 2);
+        const hidden = tags.slice(2);
+        return (
+          <div className="flex items-center gap-1 overflow-hidden">
+            {visible.map((t) => <RowTagChip key={t} label={t} />)}
+            {hidden.length > 0 && (
+              <Tooltip title={hidden.join(', ')} placement="top">
+                <span className="text-xs shrink-0 cursor-default" style={{ color: 'var(--color-gray-medium)' }}>+{hidden.length}</span>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       title: 'Last seen',
       dataIndex: 'seenAgoMin',
       width: 156,
@@ -211,8 +231,7 @@ function IssuesList() {
             menu={{
               onClick: ({ key, domEvent }) => {
                 domEvent.stopPropagation();
-                if (key === 'detail') openDetail(r.id);
-                else if (key === 'rename') {
+                if (key === 'rename') {
                   setRenameTarget(r);
                   setRenameValue(r.head);
                 } else if (key === 'hide') {
@@ -222,7 +241,6 @@ function IssuesList() {
                 } else if (key === 'unhide') issuesStore.unhide(r.id);
               },
               items: [
-                { key: 'detail', icon: <ArrowUpRight size={14} />, label: 'Open' },
                 { key: 'rename', icon: <Pencil size={14} />, label: 'Rename' },
                 { type: 'divider' },
                 isHidden

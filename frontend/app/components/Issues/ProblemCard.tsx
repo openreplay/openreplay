@@ -377,10 +377,11 @@ function ProblemCard({
     >
       <CategoryLabel cat={issue.cat} />
       <span style={{ color: 'var(--color-gray-light)' }}>|</span>
-      <span className="inline-flex items-center" style={{ gap: 8 }}>
-        <ImpactGauge value={issue.impact} />
-        <span className="whitespace-nowrap">{level} impact</span>
-      </span>
+      <Tooltip title={`${level} impact`}>
+        <span className="inline-flex items-center cursor-default">
+          <ImpactGauge value={issue.impact} />
+        </span>
+      </Tooltip>
       {(onSetCritical || issue.critical) && (
         <>
           <span style={{ color: 'var(--color-gray-light)' }}>|</span>

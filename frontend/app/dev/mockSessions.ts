@@ -102,6 +102,30 @@ const SPECS: Spec[] = [
   { id: 'sess_1021', user: 'liam@harborline.ie', browser: 'Edge', os: 'Windows', device: 'desktop', platform: 'web', country: 'IE', city: 'Dublin', durMs: 198000, events: 16, errors: 0, pages: 2, plan: 'free', minAgo: 14400, ev: [[L, '/'], [C, 'Book a demo'], [I, 'Company']] },
 ];
 
+/* Realistic user metadata — these are customer-defined in OpenReplay and there
+   can be many (Mehdi: "you can have up to 10/15"). Derived deterministically
+   from the spec so the demo stays stable across reloads. */
+const META_ROLES = ['Admin', 'Member', 'Owner', 'Viewer', 'Billing'];
+const META_TIERS = ['Enterprise', 'Growth', 'Startup', 'Self-serve'];
+function hashStr(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+function buildMetadata(s: Spec): Record<string, string> {
+  const h = hashStr(s.id);
+  const domain = s.user.includes('@') ? s.user.split('@')[1] : '';
+  const company = domain ? domain.split('.')[0] : 'guest';
+  return {
+    plan: s.plan,
+    company,
+    role: META_ROLES[h % META_ROLES.length],
+    tier: META_TIERS[(h >> 3) % META_TIERS.length],
+    accountId: `acc_${1000 + (h % 9000)}`,
+    seats: String((h % 48) + 2),
+  };
+}
+
 function buildSeed(s: Spec): MockSessionSeed {
   const startTs = NOW - s.minAgo * MIN;
   return {
@@ -121,7 +145,7 @@ function buildSeed(s: Spec): MockSessionSeed {
     viewed: s.viewed ?? false,
     favorite: s.fav ?? false,
     issueTypes: s.issues ?? [],
-    metadata: { plan: s.plan },
+    metadata: buildMetadata(s),
     startTs,
     projectId: 1,
     events: s.ev.map(([type, value], i) => ({

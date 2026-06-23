@@ -1,0 +1,9 @@
+node_modules
+.parcel-cache
+.git
+public
+dist
+coverage
+cypress/videos
+cypress/screenshots
+.vercel

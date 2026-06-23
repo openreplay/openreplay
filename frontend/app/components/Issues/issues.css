@@ -14,6 +14,15 @@
   filter: brightness(0.95);
 }
 
+/* Inactive critical toggle: very faint at rest, readable on hover */
+.critical-toggle:not(.critical-on) svg {
+  color: var(--color-gray-light);
+  transition: color 0.15s ease;
+}
+.critical-toggle:not(.critical-on):hover svg {
+  color: var(--color-gray-medium);
+}
+
 /* Active critical toggle: same outline icon as inactive, marked by a subtle red
    backdrop in the same rounded-square shape as the button hover. */
 .critical-toggle.critical-on {
