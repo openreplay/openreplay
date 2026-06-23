@@ -1,5 +1,5 @@
 {{- if and .Values.ingress.enabled (not .Values.disableWebUI ) -}}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "minio.fullname" . }}
@@ -9,6 +9,7 @@ metadata:
     {{ $key }}: {{ $value }}
 {{- end }}
   annotations:
+    nginx.org/mergeable-ingress-type: "minion"
     {{- if .Values.ingress.certManager }}
     kubernetes.io/tls-acme: "true"
     {{- end }}
@@ -22,9 +23,12 @@ spec:
       http:
         paths:
           - path: {{ default "/" .path }}
+            pathType: ImplementationSpecific
             backend:
-              serviceName: {{ include "minio.fullname" $ }}
-              servicePort: minio
+              service:
+                name: {{ include "minio.fullname" $ }}
+                port:
+                  name: minio
     {{- end }}
   tls:
     {{- range .Values.ingress.hosts }}
