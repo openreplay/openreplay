@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_simple
     _timestamp    DateTime
 ) ENGINE = AggregatingMergeTree()
       ORDER BY (project_id, auto_captured, source, name, value)
+      PARTITION BY toYYYYMM(_timestamp)
       TTL _timestamp + INTERVAL 1 MONTH;
 
 DROP TABLE IF EXISTS product_analytics.autocomplete_simple_user_browser_mv;

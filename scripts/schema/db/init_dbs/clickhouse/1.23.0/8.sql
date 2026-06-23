@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.autocomplete_event_properties_group
     _timestamp    DateTime DEFAULT now()
 ) ENGINE = AggregatingMergeTree()
       ORDER BY (project_id, event_name, property_name, value)
+      PARTITION BY toYYYYMM(_timestamp)
       TTL _timestamp + INTERVAL 1 MONTH;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS product_analytics.autocomplete_event_properties_grouped_mv
