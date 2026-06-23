@@ -330,7 +330,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 		wrapped := make([]string, len(values))
 		for i, v := range values {
 			if isNumeric {
-				wrapped[i] = v
+				wrapped[i] = sqlNumericLiteral(v)
 			} else {
 				wrapped[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
 			}
@@ -406,10 +406,20 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 	}
 }
 
+func sqlNumericLiteral(v string) string {
+	t := strings.TrimSpace(v)
+	if _, err := strconv.ParseFloat(t, 64); err == nil {
+		return t
+	}
+	return "NULL"
+}
+
 // formatCondition applies a template to a single value, handling quoting and escaping
 func formatCondition(expr, tmpl, value string, isNumeric bool) string {
 	val := value
-	if !isNumeric {
+	if isNumeric {
+		val = sqlNumericLiteral(value)
+	} else {
 		val = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(value))
 	}
 	return fmt.Sprintf(tmpl, expr, val)
@@ -437,7 +447,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 	if len(values) == 1 {
 		return fmt.Sprintf("%s %s (%s)", expr, op, func() string {
 			if isNumeric {
-				return values[0]
+				return sqlNumericLiteral(values[0])
 			}
 			return fmt.Sprintf("'%s'", sqlStringReplacer.Replace(values[0]))
 		}())
@@ -445,7 +455,7 @@ func inClause(expr string, values []string, negate, isNumeric bool) string {
 	quoted := make([]string, len(values))
 	for i, v := range values {
 		if isNumeric {
-			quoted[i] = v
+			quoted[i] = sqlNumericLiteral(v)
 		} else {
 			quoted[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
 		}
