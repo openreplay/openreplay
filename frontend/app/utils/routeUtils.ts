@@ -13,4 +13,5 @@ export const CLIENT_TABS = {
   MODULES: 'modules',
   VIDEOS: 'exported',
   TEST_AGENTS: 'test-agents',
+  SUPPORT: 'support',
 };
