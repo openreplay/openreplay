@@ -6,7 +6,7 @@ import {
   UserSwitchOutlined,
 } from '@ant-design/icons';
 import { Button, Popover, Tooltip } from 'antd';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, User } from 'lucide-react';
 import React from 'react';
 
 import { countries } from 'App/constants';
@@ -18,6 +18,8 @@ import HighlightButton from 'Components/Session_/Highlight/HighlightButton';
 import SessionInfoItem from 'Components/Session_/SessionInfoItem';
 import SessionCopyLink from 'Components/shared/SharePopup/SessionCopyLink';
 import { CountryFlag } from 'UI';
+
+import MetaItem from 'Shared/SessionItem/MetaItem';
 
 import {
   CAT_ICON,
@@ -90,6 +92,17 @@ export default function IssuePlayerHeader({
         />
       )}
       <SessionInfoItem
+        comp={
+          <User
+            size={16}
+            strokeWidth={2}
+            style={{ color: 'var(--color-gray-medium)' }}
+          />
+        }
+        label="User"
+        value={email}
+      />
+      <SessionInfoItem
         comp={<CountryFlag country={countryCode} />}
         label={countries[countryCode] || countryCode || 'Unknown'}
         value={city}
@@ -102,8 +115,22 @@ export default function IssuePlayerHeader({
         icon={deviceTypeIcon(device)}
         label={capitalize(device)}
         value=""
-        isLast
+        isLast={!card?.plan}
       />
+      {/* customer-defined metadata — wrapping pills so many fields stay compact */}
+      {card?.plan && (
+        <div className="pt-3" style={{ maxWidth: 320 }}>
+          <div
+            className="px-2 pb-2 text-xs font-semibold uppercase color-gray-medium"
+            style={{ letterSpacing: '0.05em' }}
+          >
+            Metadata
+          </div>
+          <div className="px-2 flex flex-wrap gap-1">
+            <MetaItem label="plan" value={card.plan} />
+          </div>
+        </div>
+      )}
     </div>
   );
 
