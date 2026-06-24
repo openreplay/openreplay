@@ -128,6 +128,11 @@ function TestDrawer({ test, open, onClose, onChange, onRemove }: Props) {
         </div>
       }
     >
+      <EditableSteps
+        steps={test.steps}
+        onStepsChange={(steps) => onChange({ ...test, steps })}
+      />
+
       <Section title={t('Run settings')}>
         <RunSettingsFields value={settings} onChange={patch} />
         <div className="mt-3 text-xs text-disabled-text">
@@ -189,11 +194,6 @@ function TestDrawer({ test, open, onClose, onChange, onRemove }: Props) {
           </div>
         )}
       </Section>
-
-      <EditableSteps
-        steps={test.steps}
-        onStepsChange={(steps) => onChange({ ...test, steps })}
-      />
     </EntityDrawer>
   );
 }

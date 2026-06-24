@@ -104,6 +104,14 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
         </div>
       </div>
 
+      <EditableSteps
+        steps={draft.steps}
+        alternatives={draft.alternatives}
+        reviewable
+        onIncludedChange={setIncluded}
+        onStepsChange={(steps) => patch({ steps })}
+      />
+
       <Section title={t('Will run against')}>
         <RunSettingsFields value={settings} onChange={patch} />
       </Section>
@@ -113,14 +121,6 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
           <TagEditor value={draft.tags} onChange={(tags) => patch({ tags })} />
         </Field>
       </Section>
-
-      <EditableSteps
-        steps={draft.steps}
-        alternatives={draft.alternatives}
-        reviewable
-        onIncludedChange={setIncluded}
-        onStepsChange={(steps) => patch({ steps })}
-      />
     </EntityDrawer>
   );
 }
