@@ -1,8 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import React from 'react';
-
-import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 
 import {
   CategoryLabel,
@@ -10,15 +8,23 @@ import {
   ImpactGauge,
   type Issue,
   type IssueSessionCard,
-  TagChip,
   impactLevel,
 } from '../shared';
-import ProblemResolutionTabs from './ProblemResolutionTabs';
+import IssueContextTabs from './IssueContextTabs';
 
 const TOP_Z = 2147483647;
 
+const Eyebrow = ({ text }: { text: string }) => (
+  <span
+    className="text-xs font-semibold uppercase color-gray-medium"
+    style={{ letterSpacing: '0.05em' }}
+  >
+    {text}
+  </span>
+);
+
 /* The right-hand "Issue" context panel: issue identity → this session's
-   variation → problem / suggested-fix tabs. */
+   variation → Journey / Details tabs. */
 export default function IssuePanel({
   issue,
   card,
@@ -30,12 +36,6 @@ export default function IssuePanel({
   onClose: () => void;
   onSetCritical: (val: boolean, reason?: string) => void;
 }) {
-  const hasSessionBlock =
-    Boolean(card?.variation) ||
-    Boolean(card?.journey) ||
-    (card?.tags?.length ?? 0) > 0 ||
-    Boolean(card?.plan);
-
   return (
     <div
       className="flex flex-col h-full bg-white border-l border-gray-light"
@@ -52,10 +52,13 @@ export default function IssuePanel({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-5">
+        {/* 1 · the issue — labelled so the title is never confused with the
+            session variation below */}
         <div className="flex flex-col gap-2.5">
+          <Eyebrow text="Issue" />
           <span
-            className="font-semibold color-gray-darkest leading-snug"
-            style={{ fontSize: 17 }}
+            className="font-semibold color-gray-darkest"
+            style={{ fontSize: 17, lineHeight: 1.35 }}
           >
             {issue.head}
           </span>
@@ -66,12 +69,11 @@ export default function IssuePanel({
                 <span className="color-gray-light">|</span>
               </>
             )}
-            <span className="inline-flex items-center gap-1.5">
-              <ImpactGauge value={issue.impact} />
-              <span className="text-sm whitespace-nowrap">
-                {impactLevel(issue.impact)} impact
+            <Tooltip title={`${impactLevel(issue.impact)} impact`}>
+              <span className="inline-flex items-center cursor-default">
+                <ImpactGauge value={issue.impact} />
               </span>
-            </span>
+            </Tooltip>
             <span className="color-gray-light">|</span>
             <CriticalToggle
               critical={issue.critical}
@@ -81,48 +83,22 @@ export default function IssuePanel({
           </div>
         </div>
 
-        {hasSessionBlock && (
-          <div className="flex flex-col gap-3">
+        {/* 2 · this session — its variation headline (tags + journey live in the
+            Journey tab; environment metadata lives in the header "More") */}
+        {card?.variation && (
+          <div className="flex flex-col gap-1.5">
+            <Eyebrow text="This session" />
             <span
-              className="text-xs font-semibold uppercase color-gray-medium"
-              style={{ letterSpacing: '0.05em' }}
+              className="font-medium color-gray-darkest"
+              style={{ fontSize: 15, lineHeight: 1.4 }}
             >
-              This session
+              {card.variation}
             </span>
-            {card?.variation && (
-              <span
-                className="font-medium color-gray-darkest leading-snug"
-                style={{ fontSize: 15 }}
-              >
-                {card.variation}
-              </span>
-            )}
-            {(card?.tags?.length ?? 0) > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {card!.tags.map((t) => (
-                  <TagChip key={t} label={t} />
-                ))}
-              </div>
-            )}
-            {card?.journey && (
-              <span
-                className="color-gray-dark leading-relaxed"
-                style={{ fontSize: 15 }}
-              >
-                {card.journey}
-              </span>
-            )}
-            {card?.plan && (
-              <SessionMetaList
-                horizontal
-                maxLength={3}
-                metaList={[{ label: 'plan', value: card.plan }]}
-              />
-            )}
           </div>
         )}
 
-        <ProblemResolutionTabs issue={issue} />
+        {/* 3 · Journey (path via tags + steps) and Details (problem + fix) */}
+        <IssueContextTabs issue={issue} card={card} />
       </div>
     </div>
   );

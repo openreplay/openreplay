@@ -15,6 +15,7 @@ import {
 } from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 
 import { MobEventsList, WebEventsList } from './EventsList';
+import IssueMarkersList from './IssueMarkersList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
 import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
@@ -178,16 +179,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
         {isMobile ? <MobEventsList /> : <WebEventsList />}
         <NotesList scale={scale} />
         <SkipIntervalsList scale={scale} />
-
-        {/* TODO: refactor and make any sense out of this */}
-
-        {/*  {issues.map((i: Issue) => ( */}
-        {/*  <div */}
-        {/*    key={i.key} */}
-        {/*    className={stl.redEvent} */}
-        {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }} */}
-        {/*  /> */}
-        {/* ))} */}
+        <IssueMarkersList scale={scale} />
       </div>
     </div>
   );
