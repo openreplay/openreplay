@@ -1,194 +1,171 @@
-import { Button, Input, Select, Typography } from 'antd';
-import React, { useState } from 'react';
+import { Button, Dropdown, Tag, Tooltip, message } from 'antd';
+import {
+  Calendar,
+  ChevronRight,
+  Clock,
+  FlaskConical,
+  MoreVertical,
+  Play,
+  Sparkles,
+} from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { MOCK_ENVIRONMENTS } from './shared/mockData';
-import { TestCase, TestStatus } from './shared/types';
+import { TestCase } from './shared/types';
+import { TESTS_GRID, scheduleLabel, scheduleShort } from './shared/utils';
 
-const FREQUENCY_OPTIONS = [
-  { value: 'day', label: 'Day' },
-  { value: 'week', label: 'Week' },
-  { value: '2weeks', label: '2 Weeks' },
-  { value: 'month', label: 'Month' },
-];
-
-const ENV_OPTIONS = MOCK_ENVIRONMENTS.map((env) => ({
-  value: env.id,
-  label: env.name,
-}));
-
-interface ActionButton {
-  label: string;
-  onClick: () => void;
-  type?: 'primary' | 'default';
-  danger?: boolean;
+interface Props {
+  test: TestCase;
+  onOpen: (test: TestCase) => void;
+  onChange: (updated: TestCase) => void;
+  onRemove: (key: string) => void;
 }
 
-function TestCaseContent({ tc }: { tc: TestCase }) {
+/** One collapsed test row, laid out on the shared grid so columns line up.
+ *  Run history (dots / last result) lives in the drawer and the Runs tab — this
+ *  table is about the test's identity and config, not its run log. */
+function TestCaseRow({ test, onOpen, onChange, onRemove }: Props) {
   const { t } = useTranslation();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(tc.steps.join('\n'));
-  const [savedSteps, setSavedSteps] = useState(tc.steps.join('\n'));
-  const [frequency, setFrequency] = useState('week');
-  const [environment, setEnvironment] = useState(ENV_OPTIONS[0]?.value);
-  const [status, setStatus] = useState<TestStatus>(tc.status);
+  const isDraft = test.status === 'draft';
+  const scheduled = !!test.schedule && test.schedule.days.length > 0;
 
-  // auto split the description text by line break into a numbered list of steps
-  const steps = savedSteps.split('\n').filter((line) => line.trim() !== '');
+  const runNow = () =>
+    message.success(`${test.title} — ${t('run started, see Runs')}`);
 
-  const handleSave = () => {
-    console.log('save', tc.key, draft.split('\n'));
-    setSavedSteps(draft);
-    setEditing(false);
+  const menuItems = isDraft
+    ? [
+        { key: 'open', label: t('Review draft') },
+        { type: 'divider' as const },
+        { key: 'dismiss', label: t('Dismiss'), danger: true },
+      ]
+    : test.status === 'active'
+      ? [
+          { key: 'pause', label: t('Pause') },
+          { key: 'open', label: t('Run settings…') },
+          { type: 'divider' as const },
+          { key: 'delete', label: t('Delete'), danger: true },
+        ]
+      : [
+          { key: 'resume', label: t('Resume') },
+          { key: 'open', label: t('Run settings…') },
+          { type: 'divider' as const },
+          { key: 'delete', label: t('Delete'), danger: true },
+        ];
+
+  const onMenuClick = ({ key }: { key: string }) => {
+    if (key === 'open') onOpen(test);
+    else if (key === 'run') runNow();
+    else if (key === 'pause') onChange({ ...test, status: 'paused' });
+    else if (key === 'resume') onChange({ ...test, status: 'active' });
+    else if (key === 'dismiss' || key === 'delete') onRemove(test.key);
   };
 
-  const handleCancel = () => {
-    setDraft(savedSteps);
-    setEditing(false);
-  };
+  const leadIcon = isDraft ? (
+    <Sparkles size={15} className="text-tealx shrink-0" />
+  ) : (
+    <FlaskConical
+      size={15}
+      className={`shrink-0 ${
+        test.status === 'paused' ? 'text-disabled-text' : 'text-green-dark'
+      }`}
+    />
+  );
 
-  const actionButtons: Record<TestStatus, ActionButton[]> = {
-    pending: [
-      {
-        label: t('Approve'),
-        onClick: () => {
-          console.log('approve', tc.key);
-          setStatus('approved');
-        },
-        type: 'primary',
-      },
-      {
-        label: t('Deny'),
-        onClick: () => console.log('deny', tc.key),
-        danger: true,
-      },
-      {
-        label: t('Edit'),
-        onClick: () => setEditing(true),
-      },
-    ],
-    approved: [
-      {
-        label: t('Pause'),
-        onClick: () => {
-          console.log('pause', tc.key);
-          setStatus('paused');
-        },
-      },
-      {
-        label: t('Edit'),
-        onClick: () => setEditing(true),
-      },
-    ],
-    paused: [
-      {
-        label: t('Resume'),
-        onClick: () => {
-          console.log('resume', tc.key);
-          setStatus('approved');
-        },
-        type: 'primary',
-      },
-      {
-        label: t('Edit'),
-        onClick: () => setEditing(true),
-      },
-      {
-        label: t('Delete'),
-        onClick: () => console.log('delete', tc.key),
-        danger: true,
-      },
-    ],
-  };
-
-  if (editing) {
-    return (
-      <div className="px-4 pb-4 flex flex-col gap-2">
-        <Typography.Text type="secondary" className="text-sm!">
-          {t('Enter test steps (one per line):')}
-        </Typography.Text>
-        <Input.TextArea
-          rows={6}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={t(
-            '1. Navigate to login page\n2. Enter credentials\n3. Click submit button\n4. Verify redirect to dashboard',
-          )}
-          autoFocus
-        />
-        <div className="flex gap-2">
-          <Button type="primary" size="small" onClick={handleSave}>
-            {t('Save')}
-          </Button>
-          <Button size="small" onClick={handleCancel}>
-            {t('Cancel')}
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const statusChip = isDraft ? (
+    <Tag color="cyan" className="m-0!">
+      {t('Draft')}
+    </Tag>
+  ) : test.status === 'paused' ? (
+    <Tag color="orange" className="m-0!">
+      {t('Paused')}
+    </Tag>
+  ) : (
+    <Tag color="green" className="m-0!">
+      {t('Active')}
+    </Tag>
+  );
 
   return (
-    <div className="px-4 pb-4 flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <Typography.Text type="secondary" className="text-sm!">
-          {t('Test Steps:')}
-        </Typography.Text>
-        <ol className="ml-4 text-sm list-decimal">
-          {steps.map((step, idx) => (
-            <li key={idx} className="mb-1">
-              {step}
-            </li>
-          ))}
-        </ol>
+    <div
+      className={`${TESTS_GRID} px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-active-blue select-none`}
+      onClick={() => onOpen(test)}
+    >
+      {/* Test */}
+      <div className="flex items-center gap-2 min-w-0">
+        {leadIcon}
+        <span className="font-medium truncate">{test.title}</span>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Typography.Text type="secondary" className="text-sm!">
-              {t('Run every')}
-            </Typography.Text>
-            <Select
-              size="small"
-              value={frequency}
-              onChange={setFrequency}
-              options={FREQUENCY_OPTIONS}
-              style={{ width: 100 }}
-              disabled={status !== 'approved'}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Typography.Text type="secondary" className="text-sm!">
-              {t('Environment')}
-            </Typography.Text>
-            <Select
-              size="small"
-              value={environment}
-              onChange={setEnvironment}
-              options={ENV_OPTIONS}
-              style={{ width: 140 }}
-              disabled={status !== 'approved'}
-              placeholder={t('Select environment')}
-            />
-          </div>
+      {/* Tags */}
+      <div className="flex items-center gap-1 overflow-hidden">
+        {test.tags?.slice(0, 3).map((tag) => (
+          <span
+            key={tag}
+            className="text-xs px-2 py-0.5 rounded bg-gray-lightest text-disabled-text truncate"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Environment */}
+      <span
+        className={`text-sm truncate ${
+          test.envName ? 'text-disabled-text' : 'text-disabled-text italic'
+        }`}
+      >
+        {test.envName || t('Not set')}
+      </span>
+
+      {/* Schedule — drafts have no schedule yet; it's chosen on approval */}
+      {isDraft ? (
+        <span className="flex items-center gap-1.5 min-w-0 text-sm text-disabled-text italic">
+          <Clock size={13} className="shrink-0" />
+          {t('Pending')}
+        </span>
+      ) : (
+        <div className="flex items-center gap-1.5 min-w-0 text-sm text-disabled-text">
+          {scheduled && <Calendar size={13} className="shrink-0" />}
+          <Tooltip title={scheduleLabel(test.schedule)}>
+            <span className="truncate">{scheduleShort(test.schedule)}</span>
+          </Tooltip>
         </div>
-        <div className="flex gap-2">
-          {actionButtons[status].map((btn, idx) => (
+      )}
+
+      {/* Status */}
+      <div className="min-w-0">{statusChip}</div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-0.5">
+        {!isDraft && (
+          <span onClick={(e) => e.stopPropagation()}>
+            <Tooltip title={t('Run now')}>
+              <Button
+                type="text"
+                size="small"
+                icon={<Play size={15} />}
+                aria-label={t('Run now')}
+                onClick={runNow}
+              />
+            </Tooltip>
+          </span>
+        )}
+        <span onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            trigger={['click']}
+            menu={{ items: menuItems, onClick: onMenuClick }}
+          >
             <Button
-              key={idx}
+              type="text"
               size="small"
-              type={btn.type}
-              danger={btn.danger}
-              onClick={btn.onClick}
-            >
-              {btn.label}
-            </Button>
-          ))}
-        </div>
+              icon={<MoreVertical size={16} />}
+            />
+          </Dropdown>
+        </span>
+        <ChevronRight size={15} className="text-disabled-text shrink-0" />
       </div>
     </div>
   );
 }
 
-export default TestCaseContent;
+export default TestCaseRow;

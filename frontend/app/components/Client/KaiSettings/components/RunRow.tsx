@@ -1,111 +1,122 @@
-import { Alert, Tag } from 'antd';
-import { ChevronRight } from 'lucide-react';
-import React, { useState } from 'react';
+import { Button, Tooltip, message } from 'antd';
+import {
+  CheckCircle2,
+  ChevronRight,
+  Loader,
+  Pause,
+  RotateCw,
+  XCircle,
+} from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDateTimeDefault } from 'App/date';
 
 import { RunData } from './shared/types';
-import { formatDuration } from './shared/utils';
+import { RUNS_GRID, formatDuration, relativeTime } from './shared/utils';
 
-function RunRow({ run }: { run: RunData }) {
+interface Props {
+  run: RunData;
+  today?: boolean;
+  onOpen: (run: RunData) => void;
+}
+
+/** A collapsed run row on the shared runs grid. Clicking opens the run drawer.
+ *  Today's runs get an indigo left accent so recency reads without day-grouping. */
+function RunRow({ run, today, onOpen }: Props) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+
+  const running = run.status === 'running';
+  const failed = run.status === 'failed';
+  const total = run.steps.length;
+  const currentIdx = run.steps.findIndex((s) => s.status === 'running');
+
+  const result = running ? (
+    <span className="flex items-center gap-1.5 text-indigo">
+      <Loader size={15} className="animate-spin shrink-0" />
+      {t('Running')}
+    </span>
+  ) : failed ? (
+    <span className="flex items-center gap-1.5 text-red">
+      <XCircle size={15} className="shrink-0" />
+      {t('Failed')}
+    </span>
+  ) : (
+    <span className="flex items-center gap-1.5 text-green-dark">
+      <CheckCircle2 size={15} className="shrink-0" />
+      {t('Passed')}
+    </span>
+  );
+
+  const rerun = () =>
+    message.success(`${run.testName} — ${t('rerun started, see Runs')}`);
+  const pause = () => message.info(`${run.testName} — ${t('run paused')}`);
 
   return (
-    <div className="border-b last:border-b-0">
-      <div
-        className="grid grid-cols-12 py-3 px-4 items-center cursor-pointer hover:bg-active-blue select-none"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="col-span-1">
-          <ChevronRight
-            size={14}
-            className="transition-transform"
-            style={{ transform: expanded ? 'rotate(90deg)' : undefined }}
-          />
-        </div>
-        <div className="col-span-3">
-          <div>{run.testName}</div>
-          {run.envName && (
-            <div className="text-xs text-disabled-text">{run.envName}</div>
-          )}
-        </div>
-        <div className="col-span-3">{formatDateTimeDefault(run.date)}</div>
-        <div className="col-span-2">{formatDuration(run.duration)}</div>
-        <div className="col-span-3 text-end">
-          <Tag color={run.result === 'passed' ? 'green' : 'red'}>
-            {run.result === 'passed' ? t('Passed') : t('Failed')}
-          </Tag>
-        </div>
-      </div>
-      {expanded && (
-        <div className="p-4 grid grid-cols-12 gap-4">
-          {/* Left: Steps */}
-          <div className="col-span-7 flex flex-col gap-2">
-            <div className="font-medium text-sm">{t('Test Steps')}</div>
-            <ol className="ml-4 text-sm flex flex-col gap-1 list-decimal">
-              {run.steps.map((step, idx) => (
-                <li
-                  key={idx}
-                  className={`
-                    ${step.status === 'failed' ? 'text-red bg-red-lightest font-medium p-2 rounded' : ''}
-                    ${step.status === 'skipped' ? 'text-disabled-text' : ''}
-                  `}
-                >
-                  {step.step}
-                  {step.status === 'failed' && (
-                    <span className="ml-2 text-xs">
-                      ({t('Failed')})
-                    </span>
-                  )}
-                  {step.status === 'skipped' && (
-                    <span className="ml-2 text-xs">
-                      ({t('Skipped')})
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </div>
+    <div
+      className={`${RUNS_GRID} px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-active-blue select-none text-sm`}
+      style={{
+        borderLeft: `2px solid ${today ? 'var(--color-indigo)' : 'transparent'}`,
+      }}
+      onClick={() => onOpen(run)}
+    >
+      {/* Result */}
+      <div className="min-w-0 font-medium">{result}</div>
 
-          {/* Right: Video player and failure info */}
-          <div className="col-span-5 flex flex-col gap-3">
-            {run.envName && (
-              <div className="text-sm">
-                <span className="text-disabled-text">
-                  {t('Environment')}:{' '}
-                </span>
-                <span className="font-medium">{run.envName}</span>
-              </div>
-            )}
-            {run.failedStep !== undefined && (
-              <Alert
-                type="error"
-                classNames={{
-                  root: 'px-4! py-2!'
-                }}
-                title={t('Test Failed')}
-                description={
-                  <span className="text-sm">
-                    {t('Failed at step')}: {run.failedStep + 1}
-                  </span>
-                }
-                showIcon={false}
+      {/* Test */}
+      <span className="font-medium truncate">{run.testName}</span>
+
+      {/* Tags */}
+      <div className="flex items-center gap-1 overflow-hidden">
+        {run.tags?.slice(0, 3).map((tag) => (
+          <span
+            key={tag}
+            className="text-xs px-2 py-0.5 rounded bg-gray-lightest text-disabled-text truncate"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Environment */}
+      <span className="text-disabled-text truncate">{run.envName ?? '—'}</span>
+
+      {/* Duration */}
+      <span className="text-disabled-text">
+        {running
+          ? `${currentIdx + 1}/${total}`
+          : run.duration
+            ? formatDuration(run.duration)
+            : '—'}
+      </span>
+
+      {/* When */}
+      <Tooltip title={formatDateTimeDefault(run.date)}>
+        <span className="text-disabled-text truncate">
+          {relativeTime(run.date)}
+        </span>
+      </Tooltip>
+
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-0.5">
+        <span onClick={(e) => e.stopPropagation()}>
+          {running ? (
+            <Button size="small" icon={<Pause size={13} />} onClick={pause}>
+              {t('Pause')}
+            </Button>
+          ) : (
+            <Tooltip title={t('Rerun')}>
+              <Button
+                type="text"
+                size="small"
+                icon={<RotateCw size={15} />}
+                aria-label={t('Rerun')}
+                onClick={rerun}
               />
-            )}
-            <div className="border rounded overflow-hidden bg-gray-100">
-              <img
-                src="https://placehold.co/600x400?text=Hello+World"
-                alt="Test recording"
-                className="w-full"
-              />
-            </div>
-            <div className="text-xs text-disabled-text text-center">
-              {t('Test recording will be available here')}
-            </div>
-          </div>
-        </div>
-      )}
+            </Tooltip>
+          )}
+        </span>
+        <ChevronRight size={15} className="text-disabled-text shrink-0" />
+      </div>
     </div>
   );
 }

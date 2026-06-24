@@ -7,20 +7,26 @@ import { PageTitle } from 'UI';
 
 import RunsTab from './components/RunsTab';
 import SettingsTab from './components/SettingsTab';
+import TestsTab from './components/TestsTab';
 
 function KaiSettings() {
   const { t } = useTranslation();
 
   const tabItems = [
     {
-      key: 'settings',
-      label: t('Auto-Testing Settings'),
-      children: <SettingsTab />,
+      key: 'tests',
+      label: t('Tests'),
+      children: <TestsTab />,
     },
     {
       key: 'runs',
-      label: t('Test Runs'),
+      label: t('Runs'),
       children: <RunsTab />,
+    },
+    {
+      key: 'settings',
+      label: t('Settings'),
+      children: <SettingsTab />,
     },
   ];
 
@@ -29,7 +35,7 @@ function KaiSettings() {
       <div className="pb-0">
         <PageTitle title={t('Test Agents')} />
       </div>
-      <Tabs defaultActiveKey="settings" items={tabItems} />
+      <Tabs defaultActiveKey="tests" items={tabItems} />
     </div>
   );
 }
