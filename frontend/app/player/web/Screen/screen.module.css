@@ -50,6 +50,7 @@
 }
 
 .mobileIframe {
+  pointer-events: none;
   position: absolute;
   border: none;
   background: none;
