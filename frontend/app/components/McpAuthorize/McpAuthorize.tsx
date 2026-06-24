@@ -46,6 +46,28 @@ function McpAuthorize() {
     void userStore.logout();
   };
 
+  if (!userStore.isEnterprise) {
+    return (
+      <div className="flex items-center justify-center bg-gray-lightest fixed top-0 bottom-0 left-0 right-0">
+        <Card style={{ width: 400 }}>
+          <div className="flex flex-col items-center gap-4">
+            <Logo siteId={projectsStore.activeSiteId} />
+            <div className="text-center">
+              <div>
+                {t(
+                  'This page is only available for Enterprise Edition of Open Replay',
+                )}
+              </div>
+            </div>
+            <div className="link mt-2" onClick={openRoot}>
+              {t('Back to Openreplay')}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center bg-gray-lightest fixed top-0 bottom-0 left-0 right-0">
       <Card style={{ width: 400 }}>
