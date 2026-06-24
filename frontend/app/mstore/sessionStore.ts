@@ -182,6 +182,11 @@ export default class SessionStore {
     userTime: '',
   };
 
+  /** AI-detected issue markers to overlay on the player timeline (ms from
+      session start). Empty for a regular session; populated by the issue
+      player. */
+  timelineIssues: { time: number; label?: string }[] = [];
+
   createNoteTooltip = {
     time: 0,
     isVisible: false,
@@ -604,6 +609,10 @@ export default class SessionStore {
     this.timeLineTooltip = tp;
   };
 
+  setTimelineIssues = (issues: { time: number; label?: string }[]) => {
+    this.timelineIssues = issues;
+  };
+
   setCreateNoteTooltip = (noteTooltip: any) => {
     this.createNoteTooltip = noteTooltip;
   };
@@ -628,6 +637,7 @@ export default class SessionStore {
     this.eventsIndex = [];
     this.visitedEvents = [];
     this.host = '';
+    this.timelineIssues = [];
   };
 
   prefetchSession = (sessionData: Session) => {
