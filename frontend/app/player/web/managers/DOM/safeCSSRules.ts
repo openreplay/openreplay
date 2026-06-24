@@ -1,4 +1,5 @@
 import logger from 'App/logger';
+import { sanitizeCssText } from './sanitize';
 
 function isChromium(item) {
   return ['Chromium', 'Google Chrome', 'NewBrowser'].includes(item.brand);
@@ -18,6 +19,8 @@ export function insertRule(
   if (msg.rule.includes('-moz-') && isChromeLike) {
     msg.rule = msg.rule.replace(/-moz-/g, '-webkit-');
   }
+  // Defense-in-depth: neutralize legacy script-bearing CSS constructs.
+  msg.rule = sanitizeCssText(msg.rule);
   try {
     sheet.insertRule(msg.rule, msg.index);
   } catch (e) {

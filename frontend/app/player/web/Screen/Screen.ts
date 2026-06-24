@@ -83,6 +83,9 @@ export default class Screen {
   ) {
     const iframe = document.createElement('iframe');
     iframe.className = styles.iframe;
+    // These flags are fixed when the browsing
+    // context is created, so this MUST be set before the iframe is attached.
+    iframe.setAttribute('sandbox', 'allow-same-origin');
     this.iframe = iframe;
 
     const overlay = document.createElement('div');
