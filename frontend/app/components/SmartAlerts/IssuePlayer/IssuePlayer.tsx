@@ -148,6 +148,20 @@ function IssuePlayer() {
     }
   }, [contextValue.player, visualOffset, card?.issueTimestamp]);
 
+  // mark the issue moment on the shared player timeline (ms from session start)
+  React.useEffect(() => {
+    const ts = card?.issueTimestamp;
+    if (!session.sessionId || !ts) {
+      sessionStore.setTimelineIssues([]);
+      return;
+    }
+    const dur = session.durationMs ?? 0;
+    const rel = dur && ts > dur ? ts - (session.startedAt || 0) : ts;
+    sessionStore.setTimelineIssues([
+      { time: Math.max(rel, 0), label: issue ? `Issue: ${issue.head}` : undefined },
+    ]);
+  }, [session.sessionId, session.durationMs, card?.issueTimestamp, issue?.head]);
+
   React.useEffect(
     () => () => {
       const inst = playerRef.current;
