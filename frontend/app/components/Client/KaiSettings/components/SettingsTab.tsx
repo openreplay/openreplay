@@ -1,25 +1,27 @@
-import { Checkbox, Collapse, Typography } from 'antd';
+import { Checkbox, Collapse, Empty, Skeleton, Typography } from 'antd';
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useTests } from '../queries';
 import Environments from './Environments';
 import TestCaseContent from './TestCaseContent';
-import { MOCK_TEST_CASES } from './shared/mockData';
 import { getStatusTag } from './shared/utils';
 
 function SettingsTab() {
   const { t } = useTranslation();
+  const { data, isPending } = useTests();
+  const tests = data?.items ?? [];
 
-  const testCaseItems = MOCK_TEST_CASES.map((tc) => ({
-    key: tc.key,
+  const testCaseItems = tests.map((test) => ({
+    key: test.testId,
     label: (
       <div className="flex items-center gap-2">
-        <span className="font-medium">{tc.title}</span>
-        {getStatusTag(tc.status, t)}
+        <span className="font-medium">{test.name}</span>
+        {getStatusTag(test.status, t)}
       </div>
     ),
-    children: <TestCaseContent tc={tc} />,
+    children: <TestCaseContent test={test} />,
     showArrow: true,
   }));
 
@@ -36,17 +38,26 @@ function SettingsTab() {
             'Kai automatically generates test cases based on your application. Review and approve suggested tests, or create your own custom test scenarios.',
           )}
         </Typography.Text>
-        <Collapse
-          expandIcon={({ isActive }) => (
-            <ChevronRight
-              size={14}
-              className="transition-transform"
-              style={{ transform: isActive ? 'rotate(90deg)' : undefined }}
-            />
-          )}
-          items={testCaseItems}
-          className="border rounded-lg"
-        />
+        {isPending ? (
+          <Skeleton active paragraph={{ rows: 3 }} />
+        ) : tests.length === 0 ? (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={t('No test cases yet.')}
+          />
+        ) : (
+          <Collapse
+            expandIcon={({ isActive }) => (
+              <ChevronRight
+                size={14}
+                className="transition-transform"
+                style={{ transform: isActive ? 'rotate(90deg)' : undefined }}
+              />
+            )}
+            items={testCaseItems}
+            className="border rounded-lg"
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-2 max-w-lg">
