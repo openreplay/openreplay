@@ -23,6 +23,12 @@ import {
   VText,
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
+import {
+  REPLAY_IFRAME_SANDBOX,
+  isForbiddenTag,
+  sanitizeAttribute,
+  sanitizeCssText,
+} from './sanitize';
 
 function isStyleVElement(
   vElem: VElement,
@@ -230,6 +236,15 @@ export default class DOMManager extends ListWalker<Message> {
       return;
     }
 
+    // Untrusted stream: drop event handlers, script-scheme URLs and iframe
+    // navigation sources before they ever reach the real element (see sanitize.ts).
+    const sanitized = sanitizeAttribute(vn.tagName, name, value);
+    if (!sanitized) {
+      logger.log('Rejecting unsafe attribute:', name, msg);
+      return;
+    }
+    value = sanitized.value;
+
     if (vn.tagName === 'INPUT' && name === 'name') {
       // Otherwise binds local autocomplete values (maybe should ignore on the tracker level?)
       return;
@@ -271,7 +286,7 @@ export default class DOMManager extends ListWalker<Message> {
       } else if (pendingMsg.tp === MType.AdoptedSsReplace) {
         olStyleSheet.whenReady((s) => {
           // @ts-ignore
-          s.replaceSync(pendingMsg.text);
+          s.replaceSync(sanitizeCssText(pendingMsg.text));
         });
       }
     }
@@ -316,6 +331,12 @@ export default class DOMManager extends ListWalker<Message> {
         return;
       }
       case MType.CreateElementNode: {
+        // Untrusted stream: never build a node that can execute script or
+        // hijack URL resolution in the player origin (see sanitize.ts).
+        if (isForbiddenTag(msg.tag)) {
+          logger.log('Rejecting forbidden element node:', msg.tag, msg);
+          return;
+        }
         // if (msg.tag.toLowerCase() === 'canvas') msg.tag = 'video'
         const vElem =
           msg.tag === 'SLOT'
@@ -327,6 +348,13 @@ export default class DOMManager extends ListWalker<Message> {
         if (this.vElements.has(msg.id)) {
           logger.error('CreateElementNode: Node already exists', msg);
           return;
+        }
+        if (vElem.tagName === 'IFRAME') {
+          // The iframe's content is rebuilt from messages (CreateIFrameDocument),
+          // so it never needs to load anything itself. Sandbox it without
+          // allow-scripts so a crafted remote/inline src can't run JS, while
+          // keeping allow-same-origin so the player can write its contentDocument.
+          vElem.setAttribute('sandbox', REPLAY_IFRAME_SANDBOX);
         }
         this.vElements.set(msg.id, vElem);
         this.insertNode(msg);
@@ -568,7 +596,7 @@ export default class DOMManager extends ListWalker<Message> {
           return;
         }
         // @ts-ignore (configure ts with recent WebAPI)
-        styleSheet.replaceSync(msg.text);
+        styleSheet.replaceSync(sanitizeCssText(msg.text));
         return;
       }
       case MType.AdoptedSsAddOwner: {
