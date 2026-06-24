@@ -272,9 +272,33 @@ func isCHNotEnoughSpace(err error) bool {
 	return false
 }
 
+var permanentDataErrorCodes = map[int32]bool{
+	6:   true, // CANNOT_PARSE_TEXT
+	26:  true, // CANNOT_PARSE_QUOTED_STRING
+	27:  true, // CANNOT_PARSE_INPUT_ASSERTION_FAILED
+	38:  true, // CANNOT_PARSE_DATE
+	41:  true, // CANNOT_PARSE_DATETIME
+	53:  true, // TYPE_MISMATCH
+	69:  true, // ARGUMENT_OUT_OF_BOUND
+	70:  true, // CANNOT_CONVERT_TYPE
+	72:  true, // CANNOT_PARSE_NUMBER
+	85:  true, // FORMAT_IS_NOT_SUITABLE_FOR_INPUT
+	117: true, // INCORRECT_DATA
+	321: true, // VALUE_IS_OUT_OF_RANGE_OF_DATA_TYPE
+}
+
+func isPermanentDataError(err error) bool {
+	var chErr *clickhouse.Exception
+	if errors.As(err, &chErr) {
+		return permanentDataErrorCodes[chErr.Code]
+	}
+	return false
+}
+
 const (
-	sendRetryBase = 200 * time.Millisecond
-	sendRetryMax  = 5 * time.Second
+	sendRetryBase   = 200 * time.Millisecond
+	sendRetryMax    = 5 * time.Second
+	maxSendAttempts = 10
 )
 
 func (c *connectorImpl) sendBulk(b Bulk) {
@@ -286,6 +310,13 @@ func (c *connectorImpl) sendBulk(b Bulk) {
 		}
 		if isCHNotEnoughSpace(err) {
 			log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
+		}
+		if isPermanentDataError(err) {
+			log.Printf("BROKEN_BATCH_DROPPED: table=%s rows=%d, unparseable data, dropping batch: %s", b.Table(), b.Len(), err)
+			return
+		}
+		if attempt >= maxSendAttempts {
+			log.Fatalf("FATAL_CH_SEND: table=%s giving up after %d attempts, restarting: %s", b.Table(), attempt, err)
 		}
 		log.Printf("can't send batch (attempt %d): %s", attempt, err)
 		time.Sleep(backoff)

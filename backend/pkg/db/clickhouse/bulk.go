@@ -15,6 +15,7 @@ import (
 type Bulk interface {
 	Append(args ...interface{}) error
 	Len() int
+	Table() string
 	MarkFlushed()
 	Send() error
 }
@@ -77,6 +78,10 @@ func (b *bulkImpl) Append(args ...interface{}) error {
 
 func (b *bulkImpl) Len() int {
 	return b.counter
+}
+
+func (b *bulkImpl) Table() string {
+	return b.table
 }
 
 func (b *bulkImpl) MarkFlushed() {
