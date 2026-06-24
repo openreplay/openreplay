@@ -148,8 +148,10 @@ jobs:
           clone_msaas
           if grep -qx $service /tmp/backend.txt; then
             # Backend service: use dedicated build script
-            cp "$MSAAS_REPO_FOLDER"/backend/* \
-               "$MSAAS_REPO_FOLDER/openreplay/backend/"
+            if [ -d "$MSAAS_REPO_FOLDER/backend" ]; then
+              cp "$MSAAS_REPO_FOLDER"/backend/* \
+                 "$MSAAS_REPO_FOLDER/openreplay/backend/"
+            fi
             cd "$MSAAS_REPO_FOLDER/openreplay/backend"
             IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh nil $service
           elif [[ $service == 'chalice' ]]; then
