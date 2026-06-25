@@ -395,7 +395,8 @@ export default class MessageManager {
     void this.hookManager.moveReady(t);
     if (
       this.waitingForFiles ||
-      (this.lastMessageTime <= t && t < this.session.durationMs)
+      // first file is 15 secs usually, everything else means last msg was before reported session duration
+      (this.lastMessageTime <= t && t < this.session.durationMs) && t < 15000
     ) {
       this.setMessagesLoading(true);
     }
