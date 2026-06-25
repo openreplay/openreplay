@@ -100,7 +100,7 @@
     "virtua": "^0.49.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.6",
+    "@babel/core": "^7.29.7",
     "@babel/preset-env": "^7.29.2",
     "@babel/preset-react": "^7.28.5",
     "@eslint/eslintrc": "^3.3.5",
