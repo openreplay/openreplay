@@ -69,6 +69,9 @@ ingress:
     nginx.org/proxy-connect-timeout: "120s"
     nginx.org/proxy-send-timeout: "300s"
     nginx.org/proxy-read-timeout: "300s"
+    nginx.org/location-snippets: |
+      # Strip /ingest prefix
+      rewrite ^/ingest/(.*)$ /$1 break;
   cors:
     allowOrigin: "*"
     allowMethods: "POST, OPTIONS"
