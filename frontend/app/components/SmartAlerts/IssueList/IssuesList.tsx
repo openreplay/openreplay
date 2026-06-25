@@ -105,6 +105,7 @@ function IssuesList() {
       dataIndex: 'impact',
       width: 96,
       sorter: (a, b) => a.impact - b.impact,
+      defaultSortOrder: 'descend',
       showSorterTooltip: false,
       render: (v: number) => {
         const title = `${impactLevel(v)} impact`;
