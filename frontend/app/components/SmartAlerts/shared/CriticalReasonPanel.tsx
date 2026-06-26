@@ -1,5 +1,6 @@
 import { Button, Input } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ReasonChip from './ReasonChip';
 import { CRITICAL_REASONS } from './model';
@@ -13,32 +14,35 @@ export default function CriticalReasonPanel({
   onCancel: () => void;
   onConfirm: (reason: string) => void;
 }) {
+  const { t } = useTranslation();
   const [reasons, setReasons] = React.useState<string[]>([]);
   const [note, setNote] = React.useState('');
   return (
     <div className="flex flex-col gap-2" style={{ width: 264 }}>
-      <span className="text-sm color-gray-dark">Why is this not critical?</span>
+      <span className="text-sm color-gray-dark">
+        {t('Why is this not critical?')}
+      </span>
       <div className="flex flex-wrap gap-1.5">
-        {CRITICAL_REASONS.map((t) => (
+        {CRITICAL_REASONS.map((r) => (
           <ReasonChip
-            key={t}
-            label={t}
-            checked={reasons.includes(t)}
+            key={r}
+            label={t(r)}
+            checked={reasons.includes(r)}
             onChange={(on) =>
-              setReasons((p) => (on ? [...p, t] : p.filter((x) => x !== t)))
+              setReasons((p) => (on ? [...p, r] : p.filter((x) => x !== r)))
             }
           />
         ))}
       </div>
       <Input.TextArea
         rows={2}
-        placeholder="Add a note (optional)…"
+        placeholder={t('Add a note (optional)…')}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
       <div className="flex justify-end gap-2">
         <Button size="small" type="text" onClick={onCancel}>
-          Cancel
+          {t('Cancel')}
         </Button>
         <Button
           size="small"
@@ -48,7 +52,7 @@ export default function CriticalReasonPanel({
             onConfirm([...reasons, note.trim()].filter(Boolean).join(' · '))
           }
         >
-          Mark as not critical
+          {t('Mark as not critical')}
         </Button>
       </div>
     </div>

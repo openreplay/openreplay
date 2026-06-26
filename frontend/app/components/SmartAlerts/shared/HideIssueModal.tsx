@@ -1,5 +1,6 @@
 import { Input, Modal } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ReasonChip from './ReasonChip';
 import { HIDE_REASONS } from './model';
@@ -18,6 +19,7 @@ export default function HideIssueModal({
   onCancel: () => void;
   onConfirm: (note: string, tags: string[]) => void;
 }) {
+  const { t } = useTranslation();
   const [note, setNote] = React.useState('');
   const [tags, setTags] = React.useState<string[]>([]);
 
@@ -36,25 +38,27 @@ export default function HideIssueModal({
 
   return (
     <Modal
-      title="Hide this issue?"
+      title={t('Hide this issue?')}
       open={open}
       onCancel={cancel}
       onOk={confirm}
-      okText="Hide issue"
+      okText={t('Hide issue')}
     >
       <p className="mb-3 color-gray-dark">
-        “{head}” will be removed from the list. Tell us why so the agent can
-        learn.
+        {t(
+          '“{{head}}” will be removed from the list. Tell us why so the agent can learn.',
+          { head },
+        )}
       </p>
       <div className="flex flex-wrap gap-2 mb-3">
-        {HIDE_REASONS.map((t) => (
+        {HIDE_REASONS.map((r) => (
           <ReasonChip
-            key={t}
-            label={t}
-            checked={tags.includes(t)}
+            key={r}
+            label={t(r)}
+            checked={tags.includes(r)}
             onChange={(on) =>
               setTags((prev) =>
-                on ? [...prev, t] : prev.filter((x) => x !== t),
+                on ? [...prev, r] : prev.filter((x) => x !== r),
               )
             }
           />
@@ -62,7 +66,7 @@ export default function HideIssueModal({
       </div>
       <Input.TextArea
         rows={3}
-        placeholder="Add a note (optional)…"
+        placeholder={t('Add a note (optional)…')}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />

@@ -1,3 +1,4 @@
+import withPageTitle from '@/components/hocs/withPageTitle';
 import {
   Button,
   Checkbox,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
@@ -54,6 +56,7 @@ import TagFilter from './TagFilter';
 
 function IssuesList() {
   const { issuesStore, projectsStore } = useStore();
+  const { t } = useTranslation();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
 
@@ -79,7 +82,15 @@ function IssuesList() {
     issuesStore.cats.length === 1 ? issuesStore.cats[0] : 'All';
   const faded = (n: number) => <span className="opacity-50 ml-1.5">{n}</span>;
   const catTabOptions = [
-    { value: 'All', label: <span>All{faded(issuesStore.all.length)}</span> },
+    {
+      value: 'All',
+      label: (
+        <span>
+          {t('All')}
+          {faded(issuesStore.all.length)}
+        </span>
+      ),
+    },
     ...CAT_ORDER.map((c) => {
       const Ic = CAT_ICON[c];
       return {
@@ -93,7 +104,7 @@ function IssuesList() {
         ),
         label: (
           <span>
-            {c}
+            {t(c)}
             {faded(issuesStore.catCount(c))}
           </span>
         ),
@@ -103,13 +114,13 @@ function IssuesList() {
 
   const columns: TableColumnsType<Issue> = [
     {
-      title: 'Impact',
+      title: t('Impact'),
       dataIndex: 'impact',
       width: 96,
       sorter: (a, b) => a.impact - b.impact,
       showSorterTooltip: false,
       render: (v: number) => {
-        const title = `${impactLevel(v)} impact`;
+        const title = t('{{level}} impact', { level: t(impactLevel(v)) });
         return (
           <Tooltip title={title}>
             <span
@@ -124,7 +135,7 @@ function IssuesList() {
       },
     },
     {
-      title: 'Issue',
+      title: t('Issue'),
       dataIndex: 'head',
       sorter: (a, b) => a.head.localeCompare(b.head),
       showSorterTooltip: false,
@@ -142,18 +153,20 @@ function IssuesList() {
             <Tooltip
               title={
                 issuesStore.dismissReasons[r.id]
-                  ? `Dismissed: ${issuesStore.dismissReasons[r.id]}`
-                  : 'Dismissed'
+                  ? t('Dismissed: {{reason}}', {
+                      reason: issuesStore.dismissReasons[r.id],
+                    })
+                  : t('Dismissed')
               }
             >
-              <Tag className="rounded">Hidden</Tag>
+              <Tag className="rounded">{t('Hidden')}</Tag>
             </Tooltip>
           )}
         </div>
       ),
     },
     {
-      title: 'Tags',
+      title: t('Tags'),
       dataIndex: 'journeyLabels',
       width: 260,
       render: (labels: string[]) => {
@@ -179,7 +192,7 @@ function IssuesList() {
     ...(showLastSeen
       ? ([
           {
-            title: 'Last seen',
+            title: t('Last seen'),
             dataIndex: 'seenAgoMin',
             width: 156,
             sorter: (a: Issue, b: Issue) =>
@@ -219,13 +232,25 @@ function IssuesList() {
                 {
                   key: 'detail',
                   icon: <ArrowUpRight size={14} />,
-                  label: 'Open',
+                  label: t('Open'),
                 },
-                { key: 'rename', icon: <Pencil size={14} />, label: 'Rename' },
+                {
+                  key: 'rename',
+                  icon: <Pencil size={14} />,
+                  label: t('Rename'),
+                },
                 { type: 'divider' },
                 isHidden
-                  ? { key: 'unhide', icon: <Eye size={14} />, label: 'Unhide' }
-                  : { key: 'hide', icon: <EyeOff size={14} />, label: 'Hide' },
+                  ? {
+                      key: 'unhide',
+                      icon: <Eye size={14} />,
+                      label: t('Unhide'),
+                    }
+                  : {
+                      key: 'hide',
+                      icon: <EyeOff size={14} />,
+                      label: t('Hide'),
+                    },
               ],
             }}
           >
@@ -233,7 +258,7 @@ function IssuesList() {
               type="text"
               size="small"
               className="flex items-center justify-center"
-              aria-label="Issue actions"
+              aria-label={t('Issue actions')}
               icon={<MoreVertical size={16} />}
               onClick={(e) => e.stopPropagation()}
             />
@@ -253,13 +278,13 @@ function IssuesList() {
         checked={issuesStore.critOnly}
         onChange={(e) => issuesStore.setCritOnly(e.target.checked)}
       >
-        Critical only
+        {t('Critical only')}
       </Checkbox>
       <Checkbox
         checked={issuesStore.showHidden}
         onChange={(e) => issuesStore.setShowHidden(e.target.checked)}
       >
-        Hidden
+        {t('Hidden')}
         {issuesStore.hidden.length ? ` (${issuesStore.hidden.length})` : ''}
       </Checkbox>
     </div>
@@ -272,17 +297,19 @@ function IssuesList() {
     >
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg">Issues</span>
+          <span className="font-semibold text-lg">{t('Issues')}</span>
           <Tag
             color="#394DFE"
             className="rounded"
             style={{ fontSize: 10, fontWeight: 700, lineHeight: '16px' }}
           >
-            BETA
+            {t('BETA')}
           </Tag>
           <Tooltip
             placement="bottom"
-            title="Issues our agents found while reviewing session replays for this project, ranked by impact. Open one to read the journey and jump straight to the moment it happened."
+            title={t(
+              'Issues our agents found while reviewing session replays for this project, ranked by impact. Open one to read the journey and jump straight to the moment it happened.',
+            )}
           >
             <span className="flex items-center cursor-help color-gray-medium">
               <Info size={15} />
@@ -296,7 +323,7 @@ function IssuesList() {
             rel="noreferrer"
           >
             <Button type="text" icon={<Album size={14} />}>
-              Docs
+              {t('Docs')}
             </Button>
           </a>
           <div className="min-w-50 md:w-1/4 md:min-w-75">
@@ -304,9 +331,9 @@ function IssuesList() {
               size="small"
               allowClear
               maxLength={256}
-              placeholder="Filter by issue or category"
-              value={issuesStore.q}
-              onChange={(e) => issuesStore.setQ(e.target.value)}
+              placeholder={t('Filter by issue or category')}
+              value={issuesStore.query}
+              onChange={(e) => issuesStore.setQuery(e.target.value)}
             />
           </div>
         </div>
@@ -347,16 +374,17 @@ function IssuesList() {
             content={displayContent}
           >
             <Button size="small" icon={<SlidersHorizontal size={14} />}>
-              Display{dispCount ? ` (${dispCount})` : ''}
+              {t('Display')}
+              {dispCount ? ` (${dispCount})` : ''}
               <ChevronDown size={13} className="ml-0.5 opacity-60" />
             </Button>
           </Popover>
 
           {/* Date range isn't range-scoped on the backend yet — shown disabled. */}
-          <Tooltip title="Not available yet">
+          <Tooltip title={t('Not available yet')}>
             <span className="inline-flex">
               <Button size="small" disabled icon={<Clock size={14} />}>
-                Last 24 hours
+                {t('Last 24 hours')}
                 <ChevronDown size={13} className="ml-0.5 opacity-60" />
               </Button>
             </span>
@@ -387,11 +415,14 @@ function IssuesList() {
           `cursor-pointer${issuesStore.hidden.includes(r.id) ? ' opacity-60' : ''}`
         }
         onRow={(r) => ({ onClick: () => openDetail(r.id) })}
-        locale={{ emptyText: 'No issues match these filters.' }}
+        locale={{ emptyText: t('No issues match these filters.') }}
       />
 
       <div className="px-4 py-3 text-xs color-gray-medium">
-        Showing {issuesStore.list.length} of {issuesStore.all.length} issues
+        {t('Showing {{shown}} of {{total}} issues', {
+          shown: issuesStore.list.length,
+          total: issuesStore.all.length,
+        })}
       </div>
 
       <HideIssueModal
@@ -417,4 +448,4 @@ function IssuesList() {
   );
 }
 
-export default observer(IssuesList);
+export default withPageTitle('Smart Issues')(observer(IssuesList));

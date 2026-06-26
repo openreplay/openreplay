@@ -1,6 +1,7 @@
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { Popover } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { countries } from 'App/constants';
 import { browserIcon, deviceTypeIcon, osIcon } from 'App/iconNames';
@@ -21,11 +22,12 @@ export default function SessionCard({
   s: IssueSessionCard;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-xs border transition hover:border-teal">
       <button
         onClick={onClick}
-        aria-label="Open session replay"
+        aria-label={t('Open session replay')}
         className="relative group w-full block cursor-pointer bg-gray-lightest"
         style={{ height: 180 }}
       >
@@ -60,7 +62,7 @@ export default function SessionCard({
               <div className="text-left bg-white" style={{ minWidth: 230 }}>
                 <SessionInfoItem
                   comp={<CountryFlag country={s.country} />}
-                  label={countries[s.country] || s.country || 'Unknown'}
+                  label={countries[s.country] || s.country || t('Unknown')}
                   value={s.loc}
                 />
                 {s.browser && (
@@ -79,7 +81,7 @@ export default function SessionCard({
                   value=""
                 />
                 <SessionInfoItem
-                  label="Events"
+                  label={t('Events')}
                   value={String(s.events)}
                   isLast
                 />
@@ -90,7 +92,7 @@ export default function SessionCard({
               className="link cursor-pointer"
               onClick={(e) => e.stopPropagation()}
             >
-              More
+              {t('More')}
             </span>
           </Popover>
         </div>

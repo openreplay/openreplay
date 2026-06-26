@@ -1,6 +1,7 @@
 import { Button, Checkbox, Input, Popover, Segmented } from 'antd';
 import { ChevronDown, Search, Tag as TagIcon } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { MatchMode } from '../shared/model';
 
@@ -21,6 +22,7 @@ export default function TagFilter({
   onSetMatch: (m: MatchMode) => void;
   onClear: () => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
   const n = labels.length;
@@ -31,14 +33,14 @@ export default function TagFilter({
   const panel = (
     <div style={{ width: 288 }} className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs color-gray-medium">Issues match</span>
+        <span className="text-xs color-gray-medium">{t('Issues match')}</span>
         <Segmented
           size="small"
           value={match}
           onChange={(v) => onSetMatch(v as MatchMode)}
           options={[
-            { label: 'AND', value: 'all' },
-            { label: 'OR', value: 'any' },
+            { label: t('AND'), value: 'all' },
+            { label: t('OR'), value: 'any' },
           ]}
         />
       </div>
@@ -47,7 +49,7 @@ export default function TagFilter({
         size="small"
         allowClear
         autoFocus
-        placeholder="Search tags"
+        placeholder={t('Search tags')}
         prefix={<Search size={15} className="color-gray-medium mr-0.5" />}
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -73,15 +75,17 @@ export default function TagFilter({
           })
         ) : (
           <div className="text-sm px-2 py-3 color-gray-medium">
-            No tags match “{q}”
+            {t('No tags match “{{q}}”', { q })}
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between border-t pt-2">
-        <span className="text-xs color-gray-medium">{n} selected</span>
+        <span className="text-xs color-gray-medium">
+          {t('{{n}} selected', { n })}
+        </span>
         <Button type="text" size="small" disabled={!n} onClick={onClear}>
-          Clear
+          {t('Clear')}
         </Button>
       </div>
     </div>
@@ -100,7 +104,8 @@ export default function TagFilter({
       }}
     >
       <Button size="small" icon={<TagIcon size={14} />}>
-        Tags{n ? ` · ${n}` : ''}
+        {t('Tags')}
+        {n ? ` · ${n}` : ''}
         <ChevronDown size={13} className="ml-0.5 opacity-60" />
       </Button>
     </Popover>

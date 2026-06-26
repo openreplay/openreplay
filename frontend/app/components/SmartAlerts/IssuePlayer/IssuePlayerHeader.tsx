@@ -8,6 +8,7 @@ import {
 import { Button, Popover, Tooltip } from 'antd';
 import { ArrowLeft, User } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { countries } from 'App/constants';
 import { browserIcon, deviceTypeIcon, osIcon } from 'App/iconNames';
@@ -22,13 +23,13 @@ import { CountryFlag } from 'UI';
 import MetaItem from 'Shared/SessionItem/MetaItem';
 
 import {
+  CAT_AVATAR_COLOR,
   CAT_ICON,
   CriticalToggle,
   type Issue,
   type IssueSessionCard,
+  PLAYER_POPUP_Z,
 } from '../shared';
-
-const TOP_Z = 2147483647;
 
 type SideTab = 'activity' | 'issue' | null;
 
@@ -76,6 +77,7 @@ export default function IssuePlayerHeader({
   onGoSession: (sid: string) => void;
   onHighlight: () => void;
 }) {
+  const { t } = useTranslation();
   const ctx = React.useContext(PlayerContext);
   const time = ctx.store?.get?.()?.time ?? 0;
 
@@ -85,9 +87,13 @@ export default function IssuePlayerHeader({
       {issue?.cat && CatIc && (
         <SessionInfoItem
           comp={
-            <CatIc size={16} strokeWidth={2} style={{ color: '#3EAAAF' }} />
+            <CatIc
+              size={16}
+              strokeWidth={2}
+              style={{ color: CAT_AVATAR_COLOR }}
+            />
           }
-          label="Category"
+          label={t('Category')}
           value={issue.cat}
         />
       )}
@@ -99,12 +105,12 @@ export default function IssuePlayerHeader({
             style={{ color: 'var(--color-gray-medium)' }}
           />
         }
-        label="User"
+        label={t('User')}
         value={email}
       />
       <SessionInfoItem
         comp={<CountryFlag country={countryCode} />}
-        label={countries[countryCode] || countryCode || 'Unknown'}
+        label={countries[countryCode] || countryCode || t('Unknown')}
         value={city}
       />
       {browser && (
@@ -124,7 +130,7 @@ export default function IssuePlayerHeader({
             className="px-2 pb-2 text-xs font-semibold uppercase color-gray-medium"
             style={{ letterSpacing: '0.05em' }}
           >
-            Metadata
+            {t('Metadata')}
           </div>
           <div className="px-2 flex flex-wrap gap-1">
             <MetaItem label="plan" value={card.plan} />
@@ -136,7 +142,13 @@ export default function IssuePlayerHeader({
 
   return (
     <div className="flex items-center gap-1 px-2 py-2.5 w-full bg-white border-b border-gray-light">
-      <Tooltip title={issue ? `Back to “${issue.head}”` : 'Back to issues'}>
+      <Tooltip
+        title={
+          issue
+            ? t('Back to “{{head}}”', { head: issue.head })
+            : t('Back to issues')
+        }
+      >
         <Button
           type="text"
           size="small"
@@ -144,7 +156,7 @@ export default function IssuePlayerHeader({
           onClick={onBack}
           className="px-2"
         >
-          Back to issue
+          {t('Back to issue')}
         </Button>
       </Tooltip>
       <Divider />
@@ -155,7 +167,7 @@ export default function IssuePlayerHeader({
             <CriticalToggle
               critical={issue.critical}
               onSet={onSetCritical}
-              zIndex={TOP_Z}
+              zIndex={PLAYER_POPUP_Z}
             />
           )}
           <Tooltip title={variation}>
@@ -163,14 +175,16 @@ export default function IssuePlayerHeader({
               className="font-medium truncate color-gray-darkest"
               style={{ maxWidth: 480 }}
             >
-              {variation ?? 'Session replay'}
+              {variation ?? t('Session replay')}
             </span>
           </Tooltip>
         </div>
         <div className="flex items-center gap-1 lg:gap-2 text-black/50 text-sm">
           {issue && (
             <>
-              <Tooltip title={`Part of issue: ${issue.head}`}>
+              <Tooltip
+                title={t('Part of issue: {{head}}', { head: issue.head })}
+              >
                 <span className="truncate" style={{ maxWidth: 320 }}>
                   {issue.head}
                 </span>
@@ -188,9 +202,9 @@ export default function IssuePlayerHeader({
             content={more}
             trigger="hover"
             placement="bottom"
-            zIndex={TOP_Z}
+            zIndex={PLAYER_POPUP_Z}
           >
-            <span className="link cursor-pointer">More</span>
+            <span className="link cursor-pointer">{t('More')}</span>
           </Popover>
         </div>
       </div>
@@ -199,14 +213,14 @@ export default function IssuePlayerHeader({
         <Popover
           trigger="click"
           placement="bottomRight"
-          zIndex={TOP_Z}
+          zIndex={PLAYER_POPUP_Z}
           content={
             <div style={{ width: 248 }}>
               <SessionCopyLink time={time} />
             </div>
           }
         >
-          <Tooltip title="Share session" placement="bottom">
+          <Tooltip title={t('Share session')} placement="bottom">
             <Button size="small" icon={<ShareAltOutlined />} />
           </Tooltip>
         </Popover>
@@ -217,7 +231,7 @@ export default function IssuePlayerHeader({
 
         <div className="flex items-center gap-1">
           <Tooltip
-            title="Previous session"
+            title={t('Previous session')}
             placement="bottom"
             open={prevId ? undefined : false}
           >
@@ -230,7 +244,7 @@ export default function IssuePlayerHeader({
             />
           </Tooltip>
           <Tooltip
-            title="Next session"
+            title={t('Next session')}
             placement="bottom"
             open={nextId ? undefined : false}
           >
@@ -251,7 +265,7 @@ export default function IssuePlayerHeader({
           tabs={[
             {
               key: 'activity',
-              text: 'Activity',
+              text: t('Activity'),
               iconComp: (
                 <div className="mr-1">
                   <UserSwitchOutlined />
@@ -260,7 +274,7 @@ export default function IssuePlayerHeader({
             },
             {
               key: 'issue',
-              text: 'Issue',
+              text: t('Issue'),
               iconComp: (
                 <div className="mr-1">
                   <InfoCircleOutlined />
