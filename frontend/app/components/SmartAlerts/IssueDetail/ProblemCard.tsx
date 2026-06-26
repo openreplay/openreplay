@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   CategoryLabel,
@@ -35,6 +36,7 @@ export default function ProblemCard({
   framed,
   hideProblem,
 }: Props) {
+  const { t } = useTranslation();
   const title =
     editable && onRename ? (
       <EditableTitle value={issue.head} onSave={onRename} />
@@ -51,7 +53,7 @@ export default function ProblemCard({
     <span className="inline-flex items-center gap-2">
       <ImpactGauge value={issue.impact} />
       <span className="whitespace-nowrap">
-        {impactLevel(issue.impact)} impact
+        {t('{{level}} impact', { level: t(impactLevel(issue.impact)) })}
       </span>
     </span>,
   );
@@ -62,7 +64,7 @@ export default function ProblemCard({
   if (issue.seenAgoMin != null)
     cells.push(
       <span className="whitespace-nowrap">
-        last seen {lastSeenLabel(issue.seenAgoMin)}
+        {t('last seen {{when}}', { when: lastSeenLabel(issue.seenAgoMin) })}
       </span>,
     );
 
@@ -77,16 +79,16 @@ export default function ProblemCard({
     </div>
   );
 
-  const diagnosis = issue.real ? (
+  const diagnosis = issue.problem ? (
     <div className="flex flex-col gap-1.5">
       <span
         className="text-xs font-semibold uppercase color-gray-medium"
         style={{ letterSpacing: '0.05em' }}
       >
-        The problem
+        {t('The problem')}
       </span>
       <span className="text-base color-gray-dark leading-relaxed">
-        {issue.real}
+        {issue.problem}
       </span>
     </div>
   ) : null;

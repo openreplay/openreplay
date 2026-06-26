@@ -1,6 +1,7 @@
 import { Button, Popover, Tooltip } from 'antd';
 import { AlertTriangle } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import CriticalReasonPanel from './CriticalReasonPanel';
 
@@ -18,17 +19,20 @@ export default function CriticalToggle({
   stopPropagation?: boolean;
   zIndex?: number;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
 
   const btn = (
     <Tooltip
-      title={critical ? 'Critical — click to remove' : 'Mark as critical'}
+      title={critical ? t('Critical — click to remove') : t('Mark as critical')}
     >
       <Button
         type="text"
         size="small"
         aria-pressed={critical}
-        aria-label={critical ? 'Remove critical flag' : 'Mark as critical'}
+        aria-label={
+          critical ? t('Remove critical flag') : t('Mark as critical')
+        }
         className={`flex items-center justify-center shrink-0 ${
           critical
             ? 'bg-[rgba(204,0,0,0.09)] hover:!bg-[rgba(204,0,0,0.15)]'

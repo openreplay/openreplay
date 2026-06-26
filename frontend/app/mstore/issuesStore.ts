@@ -48,7 +48,7 @@ export default class IssuesStore {
   sessionsLoading: Record<string, boolean> = {};
 
   // ---- filters / ui (client-side, except `labels` which refetches) ----
-  q = '';
+  query = '';
   cats: CategoryName[] = [];
   labels: string[] = [];
   match: MatchMode = 'all';
@@ -69,9 +69,30 @@ export default class IssuesStore {
 
   init = (projectId: string) => {
     if (projectId === this.projectId && this.loaded) return;
+    // switching projects: drop the previous project's data, overrides and
+    // filters (they are keyed by issueName and would otherwise leak across).
+    if (projectId !== this.projectId) this.reset();
     this.projectId = projectId;
     void this.fetchIssues();
     // BACKEND-PENDING: void this.fetchLabels();
+  };
+
+  /** Clear all project-scoped state when the active project changes. */
+  private reset = () => {
+    this.raw = [];
+    this.loaded = false;
+    this.sessions = {};
+    this.sessionsLoading = {};
+    this.hidden = [];
+    this.names = {};
+    this.dismissReasons = {};
+    this.criticalOverride = {};
+    this.criticalReasons = {};
+    this.query = '';
+    this.cats = [];
+    this.labels = [];
+    this.critOnly = false;
+    this.showHidden = false;
   };
 
   fetchIssues = async () => {
@@ -119,10 +140,9 @@ export default class IssuesStore {
         this.sessions[id] = rows.map(makeIssueSessionCard);
       });
     } catch (e) {
+      // leave sessions[id] unset so the next open retries (an empty array would
+      // be cached as a successful "no sessions" result and never refetch).
       console.error('Failed to load issue sessions', e);
-      runInAction(() => {
-        this.sessions[id] = [];
-      });
     } finally {
       runInAction(() => {
         this.sessionsLoading[id] = false;
@@ -185,7 +205,7 @@ export default class IssuesStore {
           : this.labels.every((t) => i.journeyLabels.includes(t)),
       );
     if (this.critOnly) l = l.filter((i) => i.critical);
-    const q = this.q.toLowerCase().trim();
+    const q = this.query.toLowerCase().trim();
     if (q)
       l = l.filter((i) =>
         (i.head + i.tags.join() + (i.cat ?? '')).toLowerCase().includes(q),
@@ -210,8 +230,8 @@ export default class IssuesStore {
   }
 
   // ---- actions ----
-  setQ = (q: string) => {
-    this.q = q;
+  setQuery = (q: string) => {
+    this.query = q;
   };
   setSort = (s: SortMode) => {
     this.sort = s;

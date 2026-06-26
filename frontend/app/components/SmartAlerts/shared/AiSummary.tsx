@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Icon } from 'UI';
 
@@ -12,6 +13,7 @@ export default function AiSummary({
   children: React.ReactNode;
   variant?: 'primary' | 'secondary';
 }) {
+  const { t } = useTranslation();
   if (variant === 'secondary') {
     return (
       <div className="flex items-start gap-1.5 text-sm leading-relaxed color-gray-dark">
@@ -29,7 +31,9 @@ export default function AiSummary({
     >
       <span className="inline-flex items-center gap-1.5">
         <Icon name="sparkles" size={14} />
-        <span className="text-xs font-semibold text-main">AI summary</span>
+        <span className="text-xs font-semibold text-main">
+          {t('AI summary')}
+        </span>
       </span>
       <div className="leading-relaxed color-gray-dark">{children}</div>
     </div>

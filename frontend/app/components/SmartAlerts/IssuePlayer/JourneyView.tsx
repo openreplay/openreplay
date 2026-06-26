@@ -1,5 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'Components/Session/playerContext';
 
@@ -12,6 +13,7 @@ const STEP_BLUE = '#394EFF';
    this file (BACKEND-PENDING) — it needs real per-step timings the backend
    doesn't return yet, so for now the journey is a single block. */
 const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
+  const { t } = useTranslation();
   const { player } = React.useContext(PlayerContext);
   const journey = card?.journey?.trim();
   const tags = card?.tags ?? [];
@@ -22,16 +24,24 @@ const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
 
   return (
     <div className="flex gap-2.5">
-      <div className="flex flex-col items-center shrink-0 pt-2" style={{ width: 7 }}>
+      <div
+        className="flex flex-col items-center shrink-0 pt-2"
+        style={{ width: 7 }}
+      >
         <span
-          style={{ width: 8, height: 8, borderRadius: 9999, background: STEP_BLUE }}
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 9999,
+            background: STEP_BLUE,
+          }}
         />
       </div>
       <div className="py-1 flex flex-col items-start gap-2 min-w-0 flex-1">
         <button
           type="button"
           onClick={seekStart}
-          title="Jump to start"
+          title={t('Jump to start')}
           className="tabular-nums cursor-pointer"
           style={{ fontSize: 11, color: 'var(--color-gray-medium)' }}
         >
@@ -39,7 +49,11 @@ const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
         </button>
         {journey && (
           <span
-            style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--color-gray-dark)' }}
+            style={{
+              fontSize: 13,
+              lineHeight: 1.55,
+              color: 'var(--color-gray-dark)',
+            }}
           >
             {journey}
           </span>

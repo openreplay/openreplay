@@ -1,5 +1,6 @@
 import { Segmented } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { Issue, IssueSessionCard } from '../shared';
 import DetailsView from './DetailsView';
@@ -14,6 +15,7 @@ export default function IssueContextTabs({
   issue: Issue;
   card?: IssueSessionCard;
 }) {
+  const { t } = useTranslation();
   const [view, setView] = React.useState<'journey' | 'details'>('journey');
   return (
     <div className="flex flex-col gap-3">
@@ -22,8 +24,8 @@ export default function IssueContextTabs({
         value={view}
         onChange={(v) => setView(v as 'journey' | 'details')}
         options={[
-          { label: 'Journey', value: 'journey' },
-          { label: 'Details', value: 'details' },
+          { label: t('Journey'), value: 'journey' },
+          { label: t('Details'), value: 'details' },
         ]}
       />
       {view === 'journey' ? (

@@ -1,6 +1,7 @@
 import { Popover, Tag, Tooltip } from 'antd';
 import { AlertTriangle, X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import CriticalReasonPanel from './CriticalReasonPanel';
 
@@ -22,18 +23,19 @@ export default function CriticalControl({
   critical: boolean;
   onSet?: (val: boolean, reason?: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
 
   if (!critical) {
     if (!onSet) return null;
     return (
-      <Tooltip title="Mark as critical">
+      <Tooltip title={t('Mark as critical')}>
         <Tag
           bordered
           onClick={() => onSet(true)}
           className="crit-tag cursor-pointer transition-[filter] hover:brightness-95 m-0 color-gray-medium"
         >
-          {critContent('Mark critical')}
+          {critContent(t('Mark critical'))}
         </Tag>
       </Tooltip>
     );
@@ -42,7 +44,7 @@ export default function CriticalControl({
   if (!onSet) {
     return (
       <Tag color="red" bordered className="m-0">
-        {critContent('Critical')}
+        {critContent(t('Critical'))}
       </Tag>
     );
   }
@@ -68,7 +70,7 @@ export default function CriticalControl({
         bordered
         className="crit-tag cursor-pointer transition-[filter] hover:brightness-95 m-0"
       >
-        {critContent('Critical', true)}
+        {critContent(t('Critical'), true)}
       </Tag>
     </Popover>
   );
