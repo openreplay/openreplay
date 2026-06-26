@@ -40,6 +40,7 @@ export const MOCK_TEST_CASES: TestCase[] = [
     key: 'tc-signup',
     title: 'New sign-up flow',
     status: 'draft',
+    isNew: true,
     tags: ['Onboarding'],
     envName: 'Production',
     resolution: 'desktop',
@@ -59,6 +60,7 @@ export const MOCK_TEST_CASES: TestCase[] = [
     key: 'tc-byoc',
     title: 'BYOC setup flow',
     status: 'draft',
+    isNew: true,
     tags: ['Onboarding'],
     steps: [
       'Open the deployment settings',
@@ -87,6 +89,7 @@ export const MOCK_TEST_CASES: TestCase[] = [
     key: 'tc-coupon',
     title: 'Apply coupon at checkout',
     status: 'draft',
+    isNew: true,
     tags: ['Checkout'],
     steps: [
       'Add an item to the cart',
@@ -308,6 +311,8 @@ export const MOCK_RUNS: RunData[] = [
     date: ago(0.05),
     status: 'running',
     envName: 'Production',
+    resolution: 'desktop',
+    region: 'paris',
     tags: ['Checkout'],
     steps: [
       { step: 'Add a sample product to the cart', status: 'passed' },
@@ -326,6 +331,8 @@ export const MOCK_RUNS: RunData[] = [
     status: 'failed',
     failedStep: 2,
     envName: 'QA',
+    resolution: 'mobile',
+    region: 'ny',
     tags: ['Auth'],
     error:
       'Submit button not found — timed out after 5s waiting for [type="submit"].',
@@ -376,6 +383,8 @@ export const MOCK_RUNS: RunData[] = [
     status: 'failed',
     failedStep: 2,
     envName: 'Staging',
+    resolution: 'tablet',
+    region: 'sao-paulo',
     tags: ['Billing'],
     error: 'Card field rejected input — Stripe iframe did not load in time.',
     steps: [

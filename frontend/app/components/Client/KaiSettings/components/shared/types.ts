@@ -24,11 +24,25 @@ export interface Environment {
 // Run viewport, simplified to three device classes.
 export type Resolution = 'mobile' | 'tablet' | 'desktop';
 
-// When a test runs. days: 0=Sun … 6=Sat. time: "HH:mm" (24h). A null schedule on an
-// active test means "run manually only" / disabled.
+// How often a test runs. `custom` falls back to the day picker.
+export type ScheduleFreq =
+  | 'daily'
+  | 'weekdays'
+  | 'weekly'
+  | 'monthly'
+  | 'custom';
+
+// When a test runs.
+//  - days: 0=Sun … 6=Sat (daily / weekdays / weekly / custom).
+//  - dayOfMonth: 1–28, or 0 = "last day" (monthly only).
+//  - time: "HH:mm" (24h).
+// A null schedule on an active test means "run manually only" / disabled.
+// `freq` is optional on stored data — it's inferred from days/dayOfMonth when absent.
 export interface Schedule {
   days: number[];
   time: string;
+  freq?: ScheduleFreq;
+  dayOfMonth?: number;
 }
 
 // An alternative branch the agent observed in real sessions — rendered as a fork
@@ -43,6 +57,8 @@ export interface TestCase {
   title: string;
   steps: string[];
   status: TestLifecycle;
+  // an unreviewed draft the user hasn't opened yet — drives the "new" dot in the table
+  isNew?: boolean;
   envName?: string;
   schedule?: Schedule | null;
   resolution?: Resolution;
@@ -70,5 +86,7 @@ export interface RunData {
   failedStep?: number;
   error?: string;
   envName?: string;
+  resolution?: Resolution;
+  region?: string;
   tags?: string[];
 }

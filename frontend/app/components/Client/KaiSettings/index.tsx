@@ -31,11 +31,15 @@ function KaiSettings() {
   ];
 
   return (
-    <div className="bg-white rounded-lg border shadow-xs p-4">
-      <div className="pb-0">
+    <div className="bg-white rounded-lg border shadow-xs overflow-hidden">
+      <div className="px-4 pt-4">
         <PageTitle title={t('Test Agents')} />
       </div>
-      <Tabs defaultActiveKey="tests" items={tabItems} />
+      <Tabs
+        defaultActiveKey="tests"
+        items={tabItems}
+        tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
+      />
     </div>
   );
 }

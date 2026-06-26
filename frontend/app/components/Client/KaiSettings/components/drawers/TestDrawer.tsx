@@ -1,4 +1,4 @@
-import { Button, Popconfirm, Tag, Tooltip, message } from 'antd';
+import { Button, Popconfirm, Tooltip, message } from 'antd';
 import {
   CheckCircle2,
   Pause,
@@ -14,6 +14,7 @@ import { MOCK_RUNS } from '../shared/mockData';
 import { TestCase } from '../shared/types';
 import {
   formatDuration,
+  getStatusTag,
   regionLabel,
   relativeTime,
   resolutionLabel,
@@ -75,15 +76,7 @@ function TestDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       eyebrow={paused ? 'Test · Paused' : 'Test'}
       statusLine={
         <div className="flex items-center gap-2 text-xs">
-          {paused ? (
-            <Tag color="orange" className="m-0!">
-              {t('Paused')}
-            </Tag>
-          ) : (
-            <Tag color="green" className="m-0!">
-              {t('Active')}
-            </Tag>
-          )}
+          {getStatusTag(test.status, t, 'm-0!')}
           {test.recent && (
             <span className="flex items-center gap-1">
               {test.recent.slice(-5).map((r, i) => (

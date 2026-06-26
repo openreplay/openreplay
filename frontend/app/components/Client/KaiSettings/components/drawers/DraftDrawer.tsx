@@ -94,8 +94,8 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
     >
       {/* why this was drafted */}
       <div className="px-5 py-4 border-b">
-        <div className="flex gap-2.5 rounded-lg bg-tealx-lightest p-3">
-          <Sparkles size={16} className="text-tealx shrink-0 mt-0.5" />
+        <div className="flex gap-2.5 rounded-lg bg-gray-lightest p-3">
+          <Sparkles size={16} className="text-gray-medium shrink-0 mt-0.5" />
           <p className="text-sm text-black/80 m-0">
             {t(
               'This test was drafted from real user sessions that completed this journey. Tune the steps below, then approve to start running it.',

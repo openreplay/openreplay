@@ -1,0 +1,22 @@
+/* Fixed test-row height, mirroring the Issues table. */
+.kai-table .ant-table-tbody > tr > td {
+  height: 52px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* New (unreviewed) drafts get a faint wash + a dot in the Test cell so they read as
+   "needs a look". Both clear once the draft has been opened. */
+.kai-table .ant-table-tbody > tr.kai-row-new > td {
+  background: var(--color-active-blue);
+}
+
+/* Center action-button icons exactly. antd's .ant-btn-icon is display:block, so the
+   lucide svg keeps a baseline gap that nudges the dots ~1px above center; flex-center
+   it so the ellipsis sits dead-center in the hover square (matching the Cards list). */
+.kai-table .ant-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}

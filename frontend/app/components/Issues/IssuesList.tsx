@@ -14,7 +14,7 @@ import {
 import type { TableColumnsType } from 'antd';
 import {
   Info,
-  MoreVertical,
+  EllipsisVertical,
   Pencil,
   Eye,
   EyeOff,
@@ -220,7 +220,7 @@ function IssuesList() {
     {
       title: '',
       dataIndex: 'actions',
-      width: 48,
+      width: 56,
       align: 'center',
       render: (_: unknown, r: Issue) => {
         const isHidden = issuesStore.hidden.includes(r.id);
@@ -251,10 +251,8 @@ function IssuesList() {
           >
             <Button
               type="text"
-              size="small"
-              className="flex items-center justify-center"
               aria-label="Issue actions"
-              icon={<MoreVertical size={16} />}
+              icon={<EllipsisVertical size={16} />}
               onClick={(e) => e.stopPropagation()}
             />
           </Dropdown>

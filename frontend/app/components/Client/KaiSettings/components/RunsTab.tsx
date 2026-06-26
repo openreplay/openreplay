@@ -1,5 +1,5 @@
-import { Select, Switch, Tooltip } from 'antd';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Input, Select, Switch, Tooltip } from 'antd';
+import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,6 +25,7 @@ const RESULT_ORDER: Record<string, number> = {
 
 function RunsTab() {
   const { t } = useTranslation();
+  const [query, setQuery] = useState('');
   const [showFailedOnly, setShowFailedOnly] = useState(false);
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
@@ -43,6 +44,11 @@ function RunsTab() {
   };
 
   const filteredRuns = MOCK_RUNS.filter((run) => {
+    if (
+      query.trim() &&
+      !run.testName.toLowerCase().includes(query.toLowerCase())
+    )
+      return false;
     if (showFailedOnly && run.status !== 'failed') return false;
     if (envFilter !== 'all' && run.envName !== envFilter) return false;
     if (tagFilter !== 'all' && !(run.tags ?? []).includes(tagFilter))
@@ -101,6 +107,15 @@ function RunsTab() {
           {t('runs')} · {t('run in the cloud')}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Input
+            size="small"
+            allowClear
+            prefix={<Search size={14} className="text-disabled-text" />}
+            placeholder={t('Search runs')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ width: 200 }}
+          />
           <Select
             size="small"
             value={envFilter}

@@ -17,14 +17,14 @@ interface TypeMeta {
 }
 
 export const TYPE_META: Record<EntityType, TypeMeta> = {
-  // teal — a proposal from the agent, not yet real
+  // gray — an AI proposal from the agent, not yet real
   draft: {
     label: 'Draft',
     eyebrow: 'Draft · auto-generated',
     Icon: Sparkles,
-    square: 'bg-tealx-light text-tealx',
-    accentText: 'text-tealx',
-    accentBorder: 'border-tealx',
+    square: 'bg-gray-lightest text-gray-dark',
+    accentText: 'text-gray-dark',
+    accentBorder: 'border-gray-light',
   },
   // green — an approved, living test
   test: {

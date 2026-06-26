@@ -5,6 +5,16 @@
   padding-bottom: 0;
 }
 
+/* Center action-button icons exactly. antd's .ant-btn-icon is display:block, so the
+   lucide svg keeps a baseline gap that nudges the dots ~1px above center; flex-center
+   it so the ellipsis sits dead-center in the hover square (matches the Tests table). */
+.issues-table .ant-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
 /* Interactive critical tag (detail page) — subtle darken on hover so it reads
    as clickable. */
 .crit-tag {
