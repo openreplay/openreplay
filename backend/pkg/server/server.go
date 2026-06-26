@@ -60,7 +60,7 @@ func Run(ctx context.Context, log logger.Logger, cfg *common.HTTP, router api.Ro
 		log.Fatal(ctx, "failed while creating server: %s", err)
 	}
 	go func() {
-		if err := webServer.Start(); err != nil {
+		if err := webServer.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(ctx, "http server error: %s", err)
 		}
 	}()

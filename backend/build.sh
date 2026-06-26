@@ -98,7 +98,6 @@ function build_api() {
         return
     }
     for image in $(ls cmd); do
-        [[ $image == "video-replays" ]] && continue
         [[ $image == "connector" ]] && continue
         build_service "$image"
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${image_tag}"

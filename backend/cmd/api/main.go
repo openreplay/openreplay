@@ -70,7 +70,7 @@ func main() {
 		log.Fatal(ctx, "can't init project service: %s", err)
 	}
 
-	services, err := apiService.NewServiceBuilder(log, cfg, webMetrics, pgPool, chConnection, chSessionFactory, objStore, projects, canvases)
+	services, err := apiService.NewServiceBuilder(log, cfg, webMetrics, dbMetric, pgPool, chConnection, chSessionFactory, objStore, projects, canvases)
 	if err != nil {
 		log.Fatal(ctx, "can't init services and handlers: %s", err)
 	}
@@ -88,5 +88,7 @@ func main() {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 
+	services.Run()
 	server.Run(ctx, log, &cfg.HTTP, router)
+	services.Close()
 }

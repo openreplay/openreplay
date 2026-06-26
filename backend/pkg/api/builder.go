@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/go-playground/validator/v10"
@@ -34,6 +35,7 @@ import (
 	favoriteAPI "openreplay/backend/pkg/favorite/api"
 	"openreplay/backend/pkg/jobs"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/notes"
 	noteAPI "openreplay/backend/pkg/notes/api"
@@ -66,14 +68,35 @@ type serviceBuilder struct {
 	lexiconAPI         api.Handlers
 	tagsAdminAPI       api.Handlers
 	filtersCatalogAPI  api.Handlers
+	extraHandlers      []api.Handlers
+	workers            []Worker
+	wg                 sync.WaitGroup
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
+	handlers := []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
 		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI}
+	return append(handlers, b.extraHandlers...)
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
+func (b *serviceBuilder) Run() {
+	for _, w := range b.workers {
+		b.wg.Add(1)
+		go func(w Worker) {
+			defer b.wg.Done()
+			w.Run()
+		}(w)
+	}
+}
+
+func (b *serviceBuilder) Close() {
+	for _, w := range b.workers {
+		w.Stop()
+	}
+	b.wg.Wait()
+}
+
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (Service, error) {
 	responser := api.NewResponser(webMetrics)
 
 	reqValidator := validator.New()
@@ -228,6 +251,18 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	extraHandlers, workers, err := eeServices(eeDeps{
+		log:        log,
+		pgconn:     pgconn,
+		objStore:   objStore,
+		projects:   projects,
+		webMetrics: webMetrics,
+		dbMetrics:  dbMetrics,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
 		sessionAPI:         sessionHandlers,
 		eventAPI:           eventHandlers,
@@ -246,5 +281,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		lexiconAPI:         lexiconHandlers,
 		tagsAdminAPI:       tagAdminHandlers,
 		filtersCatalogAPI:  filtersCatalogHandlers,
+		extraHandlers:      extraHandlers,
+		workers:            workers,
 	}, nil
 }
