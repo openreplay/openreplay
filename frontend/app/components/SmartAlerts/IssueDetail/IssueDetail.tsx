@@ -37,8 +37,8 @@ function IssueDetail() {
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const params = useParams() as { issueId?: string };
-  const issueId = params.issueId ? decodeURIComponent(params.issueId) : '';
-  const issue = issuesStore.byId(issueId);
+  const slug = params.issueId ?? '';
+  const issue = issuesStore.bySlug(slug);
 
   const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
@@ -47,17 +47,14 @@ function IssueDetail() {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
   React.useEffect(() => {
-    if (issueId) void issuesStore.loadSessions(issueId);
-  }, [issueId]);
+    if (issue) void issuesStore.loadSessions(issue.id);
+  }, [issue?.id]);
 
   const back = () => history.push(withSiteId(smartIssues(), siteId));
   const openReplay = (s: IssueSessionCard) => {
     const q = s.issueTimestamp ? `?jumpto=${s.issueTimestamp}` : '';
     history.push(
-      withSiteId(
-        smartIssueSession(encodeURIComponent(issueId), s.sessionId),
-        siteId,
-      ) + q,
+      withSiteId(smartIssueSession(slug, s.sessionId), siteId) + q,
     );
   };
 
