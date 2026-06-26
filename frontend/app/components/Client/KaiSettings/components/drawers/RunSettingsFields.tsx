@@ -1,6 +1,8 @@
-import { Segmented, Select, Tooltip } from 'antd';
+import { Select } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 import ScheduleControl from '../ScheduleControl';
 import { MOCK_ENVIRONMENTS } from '../shared/mockData';
@@ -49,21 +51,20 @@ function RunSettingsFields({ value, onChange }: Props) {
         </Field>
 
         <Field label={t('Resolution')}>
-          <Segmented
+          <Select
             size="small"
-            block
             value={value.resolution ?? 'desktop'}
+            style={{ width: '100%' }}
             onChange={(v) => onChange({ resolution: v as Resolution })}
             options={RESOLUTION_OPTIONS.map((o) => {
               const Icon = RESOLUTION_ICON[o.value];
               return {
                 value: o.value,
                 label: (
-                  <Tooltip title={t(o.label)}>
-                    <span className="flex items-center justify-center py-0.5">
-                      <Icon size={15} />
-                    </span>
-                  </Tooltip>
+                  <span className="flex items-center gap-1.5">
+                    <Icon size={15} />
+                    {t(o.label)}
+                  </span>
                 ),
               };
             })}
@@ -80,7 +81,10 @@ function RunSettingsFields({ value, onChange }: Props) {
               value: o.value,
               label: (
                 <span className="flex items-center gap-1.5">
-                  <span>{o.flag}</span>
+                  <CountryFlagIcon
+                    countryCode={o.country}
+                    style={{ width: 16, borderRadius: 2 }}
+                  />
                   {o.label}
                 </span>
               ),

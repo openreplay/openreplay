@@ -18,13 +18,16 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { formatDateTimeDefault } from 'App/date';
+
+import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 import { RunData, TestStep } from '../shared/types';
 import {
   RESOLUTION_ICON,
   formatDuration,
-  regionFlag,
+  regionCountry,
   regionLabel,
   relativeTime,
   resolutionLabel,
@@ -266,7 +269,11 @@ function RunDrawer({ run, open, onClose }: Props) {
               <ResIcon size={14} /> {resolutionLabel(run.resolution)}
             </span>
             <span className="flex items-center gap-1.5">
-              <span>{regionFlag(run.region)}</span> {regionLabel(run.region)}
+              <CountryFlagIcon
+                countryCode={regionCountry(run.region)}
+                style={{ width: 16, borderRadius: 2 }}
+              />{' '}
+              {regionLabel(run.region)}
             </span>
             <span>
               {t('Started')} {formatDateTimeDefault(run.date)}
@@ -310,7 +317,10 @@ function RunDrawer({ run, open, onClose }: Props) {
                 {currentStep.status === 'failed' ? (
                   <XCircle size={16} className="text-red shrink-0" />
                 ) : currentStep.status === 'running' ? (
-                  <Loader size={16} className="text-indigo animate-spin shrink-0" />
+                  <Loader
+                    size={16}
+                    className="text-indigo animate-spin shrink-0"
+                  />
                 ) : (
                   <CheckCircle2 size={16} className="text-green shrink-0" />
                 )}

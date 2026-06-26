@@ -1,5 +1,5 @@
-import { Button, Drawer, Select } from 'antd';
-import { FlaskConical, LucideIcon, Play, Sparkles, X } from 'lucide-react';
+import { Drawer, Select } from 'antd';
+import { FlaskConical, LucideIcon, Play, Sparkles } from 'lucide-react';
 import React from 'react';
 
 // The three things a user can open from the tables. They share one shell so they read
@@ -55,6 +55,8 @@ interface DrawerProps {
   eyebrow?: string;
   /** small line under the title */
   statusLine?: React.ReactNode;
+  /** actions rendered top-right in the header, before the close icon */
+  headerActions?: React.ReactNode;
   footer?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -66,19 +68,32 @@ export function EntityDrawer({
   title,
   eyebrow,
   statusLine,
+  headerActions,
   footer,
   children,
 }: DrawerProps) {
   const meta = TYPE_META[type];
-  const Icon = meta.Icon;
 
   return (
     <Drawer
       open={open}
       onClose={onClose}
       placement="right"
-      closable={false}
-      title={null}
+      // native antd header: standard close icon (matches the app's other drawers),
+      // actions in `extra`, the title block carries eyebrow + name + status line.
+      closable
+      title={
+        <div className="min-w-0">
+          <div className="text-xs font-medium uppercase tracking-wide text-disabled-text">
+            {eyebrow ?? meta.eyebrow}
+          </div>
+          <div className="text-xl font-semibold text-black leading-tight mt-1 break-words">
+            {title}
+          </div>
+          {statusLine && <div className="mt-2 font-normal">{statusLine}</div>}
+        </div>
+      }
+      extra={headerActions}
       footer={footer}
       styles={{
         wrapper: { width: 560 },
@@ -86,36 +101,6 @@ export function EntityDrawer({
         footer: { padding: '12px 20px' },
       }}
     >
-      {/* shared header — accent + icon + type word is the constant "what am I looking at" */}
-      <div
-        className={`flex items-start gap-3 px-5 pt-5 pb-4 border-b-2 ${meta.accentBorder}`}
-      >
-        <div
-          className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${meta.square}`}
-        >
-          <Icon size={20} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div
-            className={`text-xs font-semibold uppercase tracking-wide ${meta.accentText}`}
-          >
-            {eyebrow ?? meta.eyebrow}
-          </div>
-          <div className="text-lg font-semibold text-black leading-tight mt-0.5 break-words">
-            {title}
-          </div>
-          {statusLine && <div className="mt-1.5">{statusLine}</div>}
-        </div>
-        <Button
-          type="text"
-          size="small"
-          icon={<X size={18} />}
-          onClick={onClose}
-          aria-label="Close"
-          className="shrink-0 -mr-1"
-        />
-      </div>
-
       {children}
     </Drawer>
   );
@@ -134,11 +119,9 @@ export function Section({
   className?: string;
 }) {
   return (
-    <div className={`px-5 py-4 border-b last:border-b-0 ${className}`}>
-      <div className="flex items-center justify-between min-h-[24px] mb-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-disabled-text">
-          {title}
-        </span>
+    <div className={`px-6 py-5 border-b last:border-b-0 ${className}`}>
+      <div className="flex items-center justify-between min-h-[28px] mb-3">
+        <h3 className="text-base font-semibold text-black">{title}</h3>
         {action}
       </div>
       {children}
@@ -175,8 +158,8 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-disabled-text">{label}</span>
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm font-medium text-gray-dark">{label}</span>
       {children}
     </div>
   );

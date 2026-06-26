@@ -18,12 +18,16 @@ export const RESOLUTION_ICON: Record<Resolution, LucideIcon> = {
   mobile: Smartphone,
 };
 
-export const REGION_OPTIONS: { value: string; label: string; flag: string }[] =
-  [
-    { value: 'paris', label: 'Paris', flag: '🇫🇷' },
-    { value: 'ny', label: 'New York', flag: '🇺🇸' },
-    { value: 'sao-paulo', label: 'São Paulo', flag: '🇧🇷' },
-  ];
+// `country` is an ISO code for the app's standard CountryFlagIcon (country-flag-icons).
+export const REGION_OPTIONS: {
+  value: string;
+  label: string;
+  country: string;
+}[] = [
+  { value: 'paris', label: 'Paris', country: 'FR' },
+  { value: 'ny', label: 'New York', country: 'US' },
+  { value: 'sao-paulo', label: 'São Paulo', country: 'BR' },
+];
 
 export const resolutionLabel = (r?: Resolution): string =>
   RESOLUTION_OPTIONS.find((o) => o.value === r)?.label ?? 'Desktop';
@@ -31,8 +35,8 @@ export const resolutionLabel = (r?: Resolution): string =>
 export const regionLabel = (r?: string): string =>
   REGION_OPTIONS.find((o) => o.value === r)?.label ?? 'Paris';
 
-export const regionFlag = (r?: string): string =>
-  REGION_OPTIONS.find((o) => o.value === r)?.flag ?? '🇫🇷';
+export const regionCountry = (r?: string): string =>
+  REGION_OPTIONS.find((o) => o.value === r)?.country ?? 'FR';
 
 // Status chips reuse the app's antd <Tag> (same component as the Alerts list), tinted
 // with the brand green/orange tokens via `variant="filled"` rather than antd's color
@@ -108,7 +112,7 @@ export const DOM_OPTIONS = [
 // The frequency picker. "Custom…" falls back to the day-by-day chooser.
 export const FREQ_OPTIONS: { value: ScheduleFreq | 'never'; label: string }[] =
   [
-    { value: 'never', label: 'Never (manual only)' },
+    { value: 'never', label: 'Never' },
     { value: 'daily', label: 'Daily' },
     { value: 'weekdays', label: 'Weekdays' },
     { value: 'weekly', label: 'Weekly' },

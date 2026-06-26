@@ -76,37 +76,35 @@ function ScheduleControl({ value, onChange }: Props) {
     </span>
   );
 
+  // Everything on one wrapping line: frequency, then its day picker (weekly/custom)
+  // or day-of-month (monthly), then the time — to spare vertical space.
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <Select
-          size="small"
-          value={freq ?? 'never'}
-          options={FREQ_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
-          style={{ width: 160 }}
-          onChange={setFreq}
-        />
+    <div className="flex items-center gap-x-2 gap-y-2 flex-wrap">
+      <Select
+        size="small"
+        value={freq ?? 'never'}
+        options={FREQ_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
+        style={{ width: 124 }}
+        onChange={setFreq}
+      />
 
-        {freq === 'monthly' && (
-          <span className="flex items-center gap-2">
-            <span className="text-sm text-disabled-text">{t('on')}</span>
-            <Select
-              size="small"
-              value={value?.dayOfMonth ?? 1}
-              options={DOM_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
-              style={{ width: 120 }}
-              onChange={(dayOfMonth) =>
-                onChange({ ...(value as Schedule), dayOfMonth })
-              }
-            />
-          </span>
-        )}
-
-        {freq && TimeSelect}
-      </div>
+      {freq === 'monthly' && (
+        <span className="flex items-center gap-2">
+          <span className="text-sm text-disabled-text">{t('on')}</span>
+          <Select
+            size="small"
+            value={value?.dayOfMonth ?? 1}
+            options={DOM_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
+            style={{ width: 116 }}
+            onChange={(dayOfMonth) =>
+              onChange({ ...(value as Schedule), dayOfMonth })
+            }
+          />
+        </span>
+      )}
 
       {showDays && (
-        <div className="flex items-center gap-1">
+        <span className="flex items-center gap-1">
           {DAY_LABELS.map((label, d) => {
             const on = value?.days?.includes(d);
             return (
@@ -114,18 +112,20 @@ function ScheduleControl({ value, onChange }: Props) {
                 key={d}
                 type="button"
                 onClick={() => pickDay(d)}
-                className={`w-7 h-7 rounded-full text-xs border transition-colors ${
+                className={`w-6 h-6 rounded-full text-xs border transition-colors ${
                   on
                     ? 'bg-active-blue border-active-blue-border text-blue'
-                    : 'border-gray-light text-disabled-text'
+                    : 'border-gray-light text-disabled-text hover:border-gray-medium'
                 }`}
               >
                 {label}
               </button>
             );
           })}
-        </div>
+        </span>
       )}
+
+      {freq && TimeSelect}
     </div>
   );
 }

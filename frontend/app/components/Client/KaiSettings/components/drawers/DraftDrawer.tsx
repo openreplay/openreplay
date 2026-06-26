@@ -21,11 +21,9 @@ interface Props {
 function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<TestCase | null>(test);
-  const [included, setIncluded] = useState<string[]>(test?.steps ?? []);
 
   useEffect(() => {
     setDraft(test);
-    setIncluded(test?.steps ?? []);
   }, [test]);
 
   if (!draft) return null;
@@ -41,7 +39,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
     setDraft((d) => (d ? { ...d, ...p } : d));
 
   const approve = () => {
-    onChange({ ...draft, status: 'active', steps: included });
+    onChange({ ...draft, status: 'active' });
     onClose();
   };
   const saveDraft = () => {
@@ -107,8 +105,6 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       <EditableSteps
         steps={draft.steps}
         alternatives={draft.alternatives}
-        reviewable
-        onIncludedChange={setIncluded}
         onStepsChange={(steps) => patch({ steps })}
       />
 
