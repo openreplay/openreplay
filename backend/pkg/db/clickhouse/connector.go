@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
+	"openreplay/backend/pkg/logger"
 	"reflect"
 	"strings"
 	"sync"
@@ -76,6 +77,7 @@ type commitState struct {
 }
 
 type connectorImpl struct {
+	log            logger.Logger
 	conn           driver.Conn
 	metrics        database.Database
 	mu             sync.Mutex
@@ -101,7 +103,7 @@ func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
 	return c.batches[name].Append(args...)
 }
 
-func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, workerQueueDepth, sendWorkers int) (Connector, error) {
+func NewConnector(log logger.Logger, conn driver.Conn, metrics database.Database, batchSizeLimit, workerQueueDepth, sendWorkers int) (Connector, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("CH connection is required")
@@ -123,6 +125,7 @@ func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, w
 	maxInflight := workerQueueDepth + 2*sendWorkers
 
 	c := &connectorImpl{
+		log:            log,
 		conn:           conn,
 		metrics:        metrics,
 		batchSizeLimit: batchSizeLimit,
@@ -154,7 +157,7 @@ var batches = map[string]string{
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBatch(c.conn, c.metrics, name, query, c.batchSizeLimit)
+	batch, err := NewBatch(c.log, c.conn, c.metrics, name, query, c.batchSizeLimit)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
