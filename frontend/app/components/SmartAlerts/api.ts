@@ -61,7 +61,7 @@ export async function getIssueSessions(
     limit?: number;
     page?: number;
   } = {},
-): Promise<RawIssueSession[]> {
+): Promise<{ rows: RawIssueSession[]; total: number }> {
   const res = await client.post(`/kai/${projectId}/smart_alerts/search`, {
     issue: issueName,
     query: opts.query ?? null,
@@ -70,12 +70,15 @@ export async function getIssueSessions(
     sortBy: 'time',
     sortDir: 'desc',
     range: opts.range ?? [Date.now() - 30 * 24 * 60 * 60 * 1000, Date.now()],
-    limit: opts.limit ?? 10,
+    limit: opts.limit ?? 50,
     page: opts.page ?? 1,
   });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   const json = await res.json();
-  return json.data ?? [];
+  const rows: RawIssueSession[] = json.data ?? [];
+  // prefer a server-provided total; otherwise fall back to the returned count
+  const total: number = json.total ?? json.count ?? rows.length;
+  return { rows, total };
 }
 
 export async function hideIssue(projectId: string, issueName: string) {
