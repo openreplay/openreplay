@@ -1,5 +1,6 @@
 import { Input, Modal } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function RenameIssueModal({
   open,
@@ -12,6 +13,7 @@ export default function RenameIssueModal({
   onCancel: () => void;
   onConfirm: (name: string) => void;
 }) {
+  const { t } = useTranslation();
   const [value, setValue] = React.useState(initial);
   // Re-seed from `initial` when the modal opens — adjusting state during render
   // (React's recommended alternative to an effect for prop-derived state).
@@ -28,11 +30,11 @@ export default function RenameIssueModal({
 
   return (
     <Modal
-      title="Rename issue"
+      title={t('Rename issue')}
       open={open}
       onCancel={onCancel}
       onOk={save}
-      okText="Save"
+      okText={t('Save')}
     >
       <Input
         autoFocus

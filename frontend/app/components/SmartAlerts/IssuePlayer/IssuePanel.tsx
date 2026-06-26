@@ -1,27 +1,19 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   CategoryLabel,
   CriticalToggle,
+  Eyebrow,
   ImpactGauge,
   type Issue,
   type IssueSessionCard,
+  PLAYER_POPUP_Z,
   impactLevel,
 } from '../shared';
 import IssueContextTabs from './IssueContextTabs';
-
-const TOP_Z = 2147483647;
-
-const Eyebrow = ({ text }: { text: string }) => (
-  <span
-    className="text-xs font-semibold uppercase color-gray-medium"
-    style={{ letterSpacing: '0.05em' }}
-  >
-    {text}
-  </span>
-);
 
 /* The right-hand "Issue" context panel: issue identity → this session's
    variation → Journey / Details tabs. */
@@ -36,13 +28,14 @@ export default function IssuePanel({
   onClose: () => void;
   onSetCritical: (val: boolean, reason?: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className="flex flex-col h-full bg-white border-l border-gray-light"
       style={{ width: 320 }}
     >
       <div className="flex items-center justify-between p-3 border-b border-gray-light">
-        <span className="font-medium text-lg">Issue</span>
+        <span className="font-medium text-lg">{t('Issue')}</span>
         <Button
           type="text"
           size="small"
@@ -55,7 +48,7 @@ export default function IssuePanel({
         {/* 1 · the issue — labelled so the title is never confused with the
             session variation below */}
         <div className="flex flex-col gap-2.5">
-          <Eyebrow text="Issue" />
+          <Eyebrow text={t('Issue')} />
           <span
             className="font-semibold color-gray-darkest"
             style={{ fontSize: 17, lineHeight: 1.35 }}
@@ -69,7 +62,11 @@ export default function IssuePanel({
                 <span className="color-gray-light">|</span>
               </>
             )}
-            <Tooltip title={`${impactLevel(issue.impact)} impact`}>
+            <Tooltip
+              title={t('{{level}} impact', {
+                level: t(impactLevel(issue.impact)),
+              })}
+            >
               <span className="inline-flex items-center cursor-default">
                 <ImpactGauge value={issue.impact} />
               </span>
@@ -78,7 +75,7 @@ export default function IssuePanel({
             <CriticalToggle
               critical={issue.critical}
               onSet={onSetCritical}
-              zIndex={TOP_Z}
+              zIndex={PLAYER_POPUP_Z}
             />
           </div>
         </div>
@@ -87,7 +84,7 @@ export default function IssuePanel({
             Journey tab; environment metadata lives in the header "More") */}
         {card?.variation && (
           <div className="flex flex-col gap-1.5">
-            <Eyebrow text="This session" />
+            <Eyebrow text={t('This session')} />
             <span
               className="font-medium color-gray-darkest"
               style={{ fontSize: 15, lineHeight: 1.4 }}

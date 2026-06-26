@@ -1,8 +1,10 @@
+import withPageTitle from '@/components/hocs/withPageTitle';
 import { createWebPlayer } from 'Player';
 import { ConfigProvider } from 'antd';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
@@ -21,10 +23,9 @@ import {
 } from 'Components/Session/playerContext';
 import { Loader } from 'UI';
 
+import { PLAYER_OVERLAY_Z, fmtDate } from '../shared';
 import IssuePanel from './IssuePanel';
 import IssuePlayerHeader from './IssuePlayerHeader';
-
-const TOP_Z = 2147483000;
 
 type View = 'activity' | 'issue' | 'highlight' | null;
 
@@ -34,6 +35,7 @@ type View = 'activity' | 'issue' | 'highlight' | null;
 function IssuePlayer() {
   const { sessionStore, issuesStore, projectsStore, integrationsStore } =
     useStore();
+  const { t } = useTranslation();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const params = useParams<{ issueId: string; sessionId: string }>();
@@ -162,9 +164,17 @@ function IssuePlayer() {
     const dur = session.durationMs ?? 0;
     const rel = dur && ts > dur ? ts - (session.startedAt || 0) : ts;
     sessionStore.setTimelineIssues([
-      { time: Math.max(rel, 0), label: issue ? `Issue: ${issue.head}` : undefined },
+      {
+        time: Math.max(rel, 0),
+        label: issue ? t('Issue: {{head}}', { head: issue.head }) : undefined,
+      },
     ]);
-  }, [session.sessionId, session.durationMs, card?.issueTimestamp, issue?.head]);
+  }, [
+    session.sessionId,
+    session.durationMs,
+    card?.issueTimestamp,
+    issue?.head,
+  ]);
 
   React.useEffect(
     () => () => {
@@ -202,29 +212,21 @@ function IssuePlayer() {
     else if (tab === '') setView(null);
   };
 
-  const email = card?.email ?? session.userId ?? 'Anonymous';
+  const email = card?.email ?? session.userId ?? t('Anonymous');
   const browser = card?.browser ?? session.userBrowser ?? '';
   const os = card?.os ?? session.userOs ?? '';
   const device = card?.device ?? session.userDeviceType ?? 'desktop';
   const countryCode = card?.country ?? session.userCountry ?? '';
   const city = card?.city ?? session.userCity ?? '';
-  const date =
-    card?.date ??
-    (session.startedAt
-      ? new Date(session.startedAt).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        })
-      : '');
+  const date = card?.date ?? fmtDate(session.startedAt);
   const variation = card?.variation || card?.journey || issue?.head;
 
   return (
-    <ConfigProvider theme={{ token: { zIndexPopupBase: TOP_Z } }}>
+    <ConfigProvider theme={{ token: { zIndexPopupBase: PLAYER_OVERLAY_Z } }}>
       <PlayerContext.Provider value={contextValue}>
         <div
           className="fixed inset-0 bg-white flex flex-col overflow-hidden"
-          style={{ zIndex: TOP_Z }}
+          style={{ zIndex: PLAYER_OVERLAY_Z }}
         >
           <IssuePlayerHeader
             issue={issue}
@@ -278,4 +280,4 @@ function IssuePlayer() {
   );
 }
 
-export default observer(IssuePlayer);
+export default withPageTitle('Smart Issues')(observer(IssuePlayer));
