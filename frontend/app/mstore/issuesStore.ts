@@ -170,6 +170,8 @@ export default class IssuesStore {
 
   get list(): Issue[] {
     let l = this.all;
+    // hidden issues are dropped unless "Show hidden" is on (Display filter)
+    if (!this.showHidden) l = l.filter((i) => !this.hidden.includes(i.id));
     if (this.cats.length)
       l = l.filter(
         (i) =>
@@ -182,6 +184,7 @@ export default class IssuesStore {
           ? this.labels.some((t) => i.journeyLabels.includes(t))
           : this.labels.every((t) => i.journeyLabels.includes(t)),
       );
+    if (this.critOnly) l = l.filter((i) => i.critical);
     const q = this.q.toLowerCase().trim();
     if (q)
       l = l.filter((i) =>
