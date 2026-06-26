@@ -4,6 +4,7 @@ import {
   type CategoryName,
   type Issue,
   type IssueSessionCard,
+  fmtDate,
   fmtDuration,
 } from './shared/model';
 
@@ -26,7 +27,8 @@ function dominantCategory(
 ): CategoryName | undefined {
   const cats = labels.filter((l) => CATEGORY_SET.has(l.name));
   if (!cats.length) return undefined;
-  return cats.reduce((a, b) => (b.ratio > a.ratio ? b : a)).name as CategoryName;
+  return cats.reduce((a, b) => (b.ratio > a.ratio ? b : a))
+    .name as CategoryName;
 }
 
 function memberCategories(
@@ -53,7 +55,7 @@ export function makeIssue(d: RawIssue): Issue {
     cat: dominantCategory(d.issueLabels),
     categories: memberCategories(d.issueLabels),
 
-    real: '' /* WAITING BACKEND: issue-level problem description */,
+    problem: '' /* WAITING BACKEND: issue-level problem description */,
     fix: '' /* WAITING BACKEND: suggested fix / resolution */,
     seenAgoMin:
       null /* WAITING BACKEND: minutes since the issue was last seen */,
@@ -65,6 +67,7 @@ export function makeIssueSessionCard(s: RawIssueSession): IssueSessionCard {
   const ts = s.startTs ?? s.timestamp ?? null;
   return {
     sessionId: s.sessionId,
+    date: fmtDate(ts),
     email: s.userId ?? '',
     browser: s.userBrowser ?? '',
     os: s.userOs ?? '',
@@ -74,13 +77,6 @@ export function makeIssueSessionCard(s: RawIssueSession): IssueSessionCard {
     loc: s.userCity || s.userCountry || '',
     durMs: s.duration ?? 0,
     dur: fmtDuration(s.duration ?? 0),
-    date: ts
-      ? new Date(ts).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        })
-      : '',
     events: s.eventsCount ?? 0,
     // the session metadata bag is free-form; "plan" may or may not be present
     plan: (s.metadata && (s.metadata as any).plan) ?? '',
