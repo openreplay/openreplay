@@ -235,7 +235,6 @@ export default class APIClient {
     }
     const safeV2Replacer = (url: string) => {
       if (isSaas) {
-        if (url.includes('replay-exporter')) return url;
         return url.replace('.com', '.com/v2');
       } else {
         try {
