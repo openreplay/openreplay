@@ -25,8 +25,10 @@ export interface RawIssueSession {
   metadata?: Record<string, any> | null;
   description?: string;
   journey?: string;
-  issueLabels?: { name: string }[];
-  journeyLabels?: { name: string }[];
+  // the search endpoint returns these as plain strings (unlike the issue-list
+  // endpoint, which uses { name, ratio }) — accept both shapes
+  issueLabels?: (string | { name: string })[];
+  journeyLabels?: (string | { name: string })[];
   issueTimestamp?: number | null;
 }
 
