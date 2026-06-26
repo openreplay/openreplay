@@ -22,7 +22,7 @@ export interface Issue {
   categories: CategoryName[];
   /** the following are not yet provided by the backend (see TODO.md + the
       factory defaults); the UI degrades gracefully when they are absent */
-  real: string;
+  problem: string;
   fix: string;
   seenAgoMin: number | null;
 }
@@ -50,6 +50,17 @@ export interface IssueSessionCard {
 }
 
 export const CAT_ORDER: CategoryName[] = ['Errors', 'UI/UX', 'Slowness'];
+
+/* Uniform teal used for the category avatar/icon (matches the `tealx` token in
+   app/theme/colors.js). The per-category CAT_COLOR below is only the tab-highlight. */
+export const CAT_AVATAR_COLOR = 'var(--color-tealx)';
+
+/* The issue player renders as a `fixed inset-0` overlay above the whole app, so
+   it needs an extreme z-index. The overlay container sits just below the popup
+   layer, so its own popovers/tooltips/dropdowns (which carry PLAYER_POPUP_Z)
+   always stack above the player chrome. */
+export const PLAYER_OVERLAY_Z = 2147483000;
+export const PLAYER_POPUP_Z = 2147483647;
 
 export const HIDE_REASONS = [
   'Not a real issue',
@@ -135,6 +146,16 @@ export function fmtDuration(ms: number): string {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return m ? `${m}m${s}s` : `${s}s`;
+}
+
+/** "Jun 26, 2026" — the standard session date label; empty when no timestamp. */
+export function fmtDate(ts: number | null | undefined): string {
+  if (!ts) return '';
+  return new Date(ts).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 /* URL-safe slug for an issue name (spaces/symbols → dashes). Lossy, so it can't
