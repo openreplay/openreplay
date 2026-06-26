@@ -4,12 +4,13 @@ import {
   type RawIssue,
   getIssueSessions,
   getIssues,
-  getTagLabels,
   hideIssue,
   renameIssue,
 } from 'App/components/SmartAlerts/api';
+// BACKEND-PENDING: server-side tag filtering used getTagLabels (see the
+// commented fetchLabels / allTags / setLabels blocks below).
+// import { getTagLabels } from 'App/components/SmartAlerts/api';
 import {
-  isCriticalLabel,
   makeIssue,
   makeIssueSessionCard,
 } from 'App/components/SmartAlerts/factories';
@@ -19,6 +20,7 @@ import {
   type IssueSessionCard,
   type MatchMode,
   type SortMode,
+  slugify,
 } from 'App/components/SmartAlerts/shared/model';
 
 /* Store behind the AI Issues surface. Issues + example sessions come from the
@@ -29,14 +31,17 @@ import {
    gracefully. Critical toggle, rename and hide that the backend can't fully
    persist are tracked client-side here (see TODO.md). */
 
+/* Selecting a category narrows to its significant issues (impact above this);
+   "All" is unfiltered. Local rule until the backend scopes categories. */
+const CATEGORY_IMPACT_MIN = 25;
+
 export default class IssuesStore {
   projectId = '';
   raw: RawIssue[] = [];
   loading = false;
   loaded = false;
-
-  /** all available issue labels for the tag filter */
-  labelsAll: string[] = [];
+  // BACKEND-PENDING: all issue labels for server-side tag filtering.
+  // labelsAll: string[] = [];
 
   /** example sessions per issue id (issueName), lazily loaded */
   sessions: Record<string, IssueSessionCard[]> = {};
@@ -66,14 +71,16 @@ export default class IssuesStore {
     if (projectId === this.projectId && this.loaded) return;
     this.projectId = projectId;
     void this.fetchIssues();
-    void this.fetchLabels();
+    // BACKEND-PENDING: void this.fetchLabels();
   };
 
   fetchIssues = async () => {
     if (!this.projectId) return;
     this.loading = true;
     try {
-      const data = await getIssues(this.projectId, this.labels);
+      // tag filtering is done locally (see `list`); don't scope on the server.
+      // BACKEND-PENDING: const data = await getIssues(this.projectId, this.labels);
+      const data = await getIssues(this.projectId);
       runInAction(() => {
         this.raw = data;
         this.loaded = true;
@@ -87,6 +94,9 @@ export default class IssuesStore {
     }
   };
 
+  /* BACKEND-PENDING: fetched the full label set for server-side tag filtering.
+     Re-add the getTagLabels import + labelsAll field + the init call, and swap
+     `allTags` / `setLabels` back to their commented variants.
   fetchLabels = async () => {
     if (!this.projectId) return;
     try {
@@ -98,6 +108,7 @@ export default class IssuesStore {
       console.error('Failed to load issue labels', e);
     }
   };
+  */
 
   loadSessions = async (id: string) => {
     if (this.sessions[id] || this.sessionsLoading[id]) return;
@@ -135,11 +146,12 @@ export default class IssuesStore {
     return this.raw.map((d) => this.decorate(makeIssue(d)));
   }
 
-  /** Tag options for the filter — issue labels minus the critical marker. */
+  /** Tag options for the filter — the journey labels across loaded issues
+      (filtered locally; no server label endpoint is used). */
   get allTags(): string[] {
-    return [...new Set(this.labelsAll)]
-      .filter((t) => !isCriticalLabel(t))
-      .sort();
+    return [...new Set(this.all.flatMap((i) => i.journeyLabels))].sort();
+    // BACKEND-PENDING: server-provided label set instead of local journey labels:
+    // return [...new Set(this.labelsAll)].filter((t) => !isCriticalLabel(t)).sort();
   }
 
   /** Whether any issue carries a category (drives the category UI visibility). */
@@ -147,31 +159,46 @@ export default class IssuesStore {
     return this.all.some((i) => Boolean(i.cat));
   }
 
+  /** A selected category shows its significant issues (impact above the
+      threshold); an issue can belong to several categories. The count next to
+      each tab matches that filtered view. */
   catCount(c: CategoryName): number {
-    return this.all.filter((i) => i.cat === c).length;
+    return this.all.filter(
+      (i) => i.categories.includes(c) && i.impact > CATEGORY_IMPACT_MIN,
+    ).length;
   }
 
   get list(): Issue[] {
     let l = this.all;
-    if (!this.showHidden) l = l.filter((i) => !this.hidden.includes(i.id));
     if (this.cats.length)
-      l = l.filter((i) => i.cat && this.cats.includes(i.cat));
-    if (this.critOnly) l = l.filter((i) => i.critical);
+      l = l.filter(
+        (i) =>
+          i.categories.some((c) => this.cats.includes(c)) &&
+          i.impact > CATEGORY_IMPACT_MIN,
+      );
+    if (this.labels.length)
+      l = l.filter((i) =>
+        this.match === 'any'
+          ? this.labels.some((t) => i.journeyLabels.includes(t))
+          : this.labels.every((t) => i.journeyLabels.includes(t)),
+      );
     const q = this.q.toLowerCase().trim();
     if (q)
       l = l.filter((i) =>
         (i.head + i.tags.join() + (i.cat ?? '')).toLowerCase().includes(q),
       );
-    const cmp =
-      this.sort === 'newest'
-        ? (a: Issue, b: Issue) => (a.seenAgoMin ?? 0) - (b.seenAgoMin ?? 0)
-        : (a: Issue, b: Issue) =>
-            +b.critical - +a.critical || b.impact - a.impact;
-    return [...l].sort(cmp);
+    return [...l].sort((a: Issue, b: Issue) => b.impact - a.impact);
   }
 
   byId(id: string): Issue | undefined {
     const d = this.raw.find((x) => x.issueName === id);
+    return d ? this.decorate(makeIssue(d)) : undefined;
+  }
+
+  /** Resolve an issue from its URL slug by matching against loaded issues
+      (the slug is lossy, so this needs the list to be fetched first). */
+  bySlug(slug: string): Issue | undefined {
+    const d = this.raw.find((x) => slugify(x.issueName) === slug);
     return d ? this.decorate(makeIssue(d)) : undefined;
   }
 
@@ -194,7 +221,8 @@ export default class IssuesStore {
   };
   setLabels = (l: string[]) => {
     this.labels = l;
-    void this.fetchIssues();
+    // BACKEND-PENDING: refetch for server-side label filtering:
+    // void this.fetchIssues();
   };
   toggleLabel = (t: string) => {
     this.setLabels(

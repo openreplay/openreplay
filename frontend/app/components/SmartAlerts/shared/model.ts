@@ -14,9 +14,14 @@ export interface Issue {
   tags: string[];
   /** journey-level labels, kept distinct from issue tags for the detail page */
   journeyLabels: string[];
+  /** dominant category (highest-ratio label) — the single value shown in the
+      column/avatar */
+  cat?: CategoryName;
+  /** every category the issue is significant in (label ratio over threshold) —
+      drives the category tab filter + counts (an issue can be in several) */
+  categories: CategoryName[];
   /** the following are not yet provided by the backend (see TODO.md + the
       factory defaults); the UI degrades gracefully when they are absent */
-  cat?: CategoryName;
   real: string;
   fix: string;
   seenAgoMin: number | null;
@@ -130,4 +135,16 @@ export function fmtDuration(ms: number): string {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return m ? `${m}m${s}s` : `${s}s`;
+}
+
+/* URL-safe slug for an issue name (spaces/symbols → dashes). Lossy, so it can't
+   be reversed — pages resolve the real issue by matching this slug against the
+   loaded issues (see issuesStore.bySlug). */
+export function slugify(name: string): string {
+  const s = name
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return s || 'issue';
 }

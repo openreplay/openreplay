@@ -23,11 +23,11 @@ data arrives.
 ### `GET/POST /kai/:projectId/smart_alerts` (issues list) → `makeIssue`
 | Field we need | Default now | UI effect while missing |
 |---|---|---|
-| `category` (`Errors` \| `UI/UX` \| `Slowness`) | `cat = undefined` | Category **tabs + column hidden** (gated by `issuesStore.hasCategories`); category avatar absent in detail/player |
+| `category` (`Errors` \| `UI/UX` \| `Slowness`) | **derived locally** in `makeIssue` from the per-label ratios | `cat` (column/avatar) = dominant (highest-ratio) label. `categories` (tab filter + counts) = every category label with **ratio > 25** (`CATEGORY_RATIO_MIN`), so an issue can sit in several tabs. Selecting a tab additionally requires issue **impact > 25** (`CATEGORY_IMPACT_MIN`). Both are local rules — replace with server-provided per-issue categories when available. |
 | `description` (issue-level problem text) | `real = ''` | "The problem" block hidden on detail; "The problem" tab shows placeholder in player |
 | `suggestedFix` | `fix = ''` | "Suggested fix" tab shows "No suggestion yet." |
 | `lastSeen` (timestamp or minutes-ago) | `seenAgoMin = null` | "Last seen" column hidden; "Newest" sort inert |
-| stable `id` | using `issueName` (URL-encoded) as the id | breaks if a name contains `/` or the name is renamed; see §2 |
+| stable `id` | using `issueName` (slugified) as the id | relies on a unique slug; breaks if two names slugify alike or a name changes; see §2 |
 
 ### `POST /kai/:projectId/smart_alerts/search` (example sessions) → `makeIssueSessionCard`
 | Field we need | Default now | Notes |

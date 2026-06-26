@@ -1,20 +1,10 @@
-import Period, { LAST_24_HOURS } from 'Types/app/period';
-import {
-  Button,
-  Checkbox,
-  Dropdown,
-  Input,
-  Popover,
-  Segmented,
-  Table,
-  Tag,
-  Tooltip,
-} from 'antd';
+import { Button, Dropdown, Input, Segmented, Table, Tag, Tooltip } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   Album,
   ArrowUpRight,
   ChevronDown,
+  Clock,
   Eye,
   EyeOff,
   Info,
@@ -29,7 +19,11 @@ import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
 import { smartIssueDetails, withSiteId } from 'App/saasComponents';
 
-import SelectDateRange from 'Shared/SelectDateRange';
+// BACKEND-PENDING: imports for the disabled Display popover + date-range picker
+// (uncomment together with the matching blocks below).
+// import { Checkbox, Popover } from 'antd';
+// import Period, { LAST_24_HOURS } from 'Types/app/period';
+// import SelectDateRange from 'Shared/SelectDateRange';
 
 import {
   CAT_COLOR,
@@ -41,9 +35,11 @@ import {
   ImpactGauge,
   type Issue,
   RenameIssueModal,
+  TagChip,
   impactLevel,
   lastSeenExact,
   lastSeenLabel,
+  slugify,
 } from '../shared';
 import TagFilter from './TagFilter';
 
@@ -52,20 +48,20 @@ function IssuesList() {
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
 
-  const [dispOpen, setDispOpen] = React.useState(false);
   const [hideTarget, setHideTarget] = React.useState<Issue | null>(null);
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
-  // Presentational period — the list endpoint is not range-scoped yet.
-  const [period, setPeriod] = React.useState<any>(
-    Period({ rangeName: LAST_24_HOURS }),
-  );
+  // BACKEND-PENDING: state for the disabled Display popover + date-range picker.
+  // const [dispOpen, setDispOpen] = React.useState(false);
+  // const [period, setPeriod] = React.useState<any>(
+  //   Period({ rangeName: LAST_24_HOURS }),
+  // );
 
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
 
   const openDetail = (id: string) =>
-    history.push(withSiteId(smartIssueDetails(encodeURIComponent(id)), siteId));
+    history.push(withSiteId(smartIssueDetails(slugify(id)), siteId));
 
   const showCategory = issuesStore.hasCategories;
   const showLastSeen = issuesStore.all.some((i) => i.seenAgoMin != null);
@@ -96,16 +92,12 @@ function IssuesList() {
     }),
   ];
 
-  const dispCount =
-    (issuesStore.critOnly ? 1 : 0) + (issuesStore.showHidden ? 1 : 0);
-
   const columns: TableColumnsType<Issue> = [
     {
       title: 'Impact',
       dataIndex: 'impact',
       width: 96,
       sorter: (a, b) => a.impact - b.impact,
-      defaultSortOrder: 'descend',
       showSorterTooltip: false,
       render: (v: number) => {
         const title = `${impactLevel(v)} impact`;
@@ -122,21 +114,6 @@ function IssuesList() {
         );
       },
     },
-    ...(showCategory
-      ? ([
-          {
-            title: 'Category',
-            dataIndex: 'cat',
-            width: 140,
-            sorter: (a: Issue, b: Issue) =>
-              (a.cat ?? '').localeCompare(b.cat ?? ''),
-            showSorterTooltip: false,
-            render: (c?: CategoryName) => (
-              <span className="color-gray-darkest">{c}</span>
-            ),
-          },
-        ] as TableColumnsType<Issue>)
-      : []),
     {
       title: 'Issue',
       dataIndex: 'head',
@@ -165,6 +142,30 @@ function IssuesList() {
           )}
         </div>
       ),
+    },
+    {
+      title: 'Tags',
+      dataIndex: 'journeyLabels',
+      width: 260,
+      render: (labels: string[]) => {
+        if (!labels?.length) return null;
+        const shown = labels.slice(0, 2);
+        const rest = labels.length - shown.length;
+        return (
+          <Tooltip title={rest > 0 ? labels.join(' · ') : undefined}>
+            <div className="flex items-center gap-1.5 overflow-hidden">
+              {shown.map((t) => (
+                <TagChip key={t} label={t} />
+              ))}
+              {rest > 0 && (
+                <span className="text-xs color-gray-medium shrink-0">
+                  +{rest}
+                </span>
+              )}
+            </div>
+          </Tooltip>
+        );
+      },
     },
     ...(showLastSeen
       ? ([
@@ -233,6 +234,12 @@ function IssuesList() {
     },
   ];
 
+  /* BACKEND-PENDING: count + content for the disabled Display popover (filters
+     the already-loaded list client-side; re-enable when critical/hidden state
+     is backed by the server).
+  const dispCount =
+    (issuesStore.critOnly ? 1 : 0) + (issuesStore.showHidden ? 1 : 0);
+
   const displayContent = (
     <div className="flex flex-col gap-2 p-1" style={{ minWidth: 170 }}>
       <Checkbox
@@ -250,6 +257,7 @@ function IssuesList() {
       </Checkbox>
     </div>
   );
+  */
 
   return (
     <div
@@ -322,6 +330,35 @@ function IssuesList() {
             onClear={() => issuesStore.setLabels([])}
           />
 
+          {/* Display (critical-only / hidden) and date range aren't supported
+              by the backend yet — shown disabled. */}
+          <Tooltip title="Not available yet">
+            <span className="inline-flex">
+              <Button
+                size="small"
+                disabled
+                icon={<SlidersHorizontal size={14} />}
+              >
+                Display
+                <ChevronDown size={13} className="ml-0.5 opacity-60" />
+              </Button>
+            </span>
+          </Tooltip>
+
+          <Tooltip title="Not available yet">
+            <span className="inline-flex">
+              <Button size="small" disabled icon={<Clock size={14} />}>
+                Last 24 hours
+                <ChevronDown size={13} className="ml-0.5 opacity-60" />
+              </Button>
+            </span>
+          </Tooltip>
+
+          {/* BACKEND-PENDING: the working Display popover + date-range picker.
+              Replace the two disabled buttons above with these once the backend
+              supports persisted critical/hidden state and range-scoped issues.
+              Also uncomment the imports, state and `displayContent` marked
+              BACKEND-PENDING above.
           <Popover
             open={dispOpen}
             onOpenChange={setDispOpen}
@@ -342,6 +379,7 @@ function IssuesList() {
             period={period}
             onChange={setPeriod}
           />
+          */}
         </div>
       </div>
 
