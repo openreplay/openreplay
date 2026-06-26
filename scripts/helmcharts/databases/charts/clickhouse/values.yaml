@@ -16,7 +16,7 @@ backupImage:
   # by the same project authors, semver-tagged). Required for airgap pinning.
   repository: altinity/clickhouse-backup
   pullPolicy: IfNotPresent
-  tag: "2.6.43"
+  tag: "2.7.2"
 
 username: default
 password: ""
