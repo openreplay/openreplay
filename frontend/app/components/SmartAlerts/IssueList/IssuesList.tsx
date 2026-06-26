@@ -1,4 +1,14 @@
-import { Button, Dropdown, Input, Segmented, Table, Tag, Tooltip } from 'antd';
+import {
+  Button,
+  Checkbox,
+  Dropdown,
+  Input,
+  Popover,
+  Segmented,
+  Table,
+  Tag,
+  Tooltip,
+} from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   Album,
@@ -19,9 +29,8 @@ import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
 import { smartIssueDetails, withSiteId } from 'App/saasComponents';
 
-// BACKEND-PENDING: imports for the disabled Display popover + date-range picker
-// (uncomment together with the matching blocks below).
-// import { Checkbox, Popover } from 'antd';
+// BACKEND-PENDING: imports for the disabled date-range picker
+// (uncomment together with the matching block below).
 // import Period, { LAST_24_HOURS } from 'Types/app/period';
 // import SelectDateRange from 'Shared/SelectDateRange';
 
@@ -48,10 +57,10 @@ function IssuesList() {
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
 
+  const [dispOpen, setDispOpen] = React.useState(false);
   const [hideTarget, setHideTarget] = React.useState<Issue | null>(null);
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
-  // BACKEND-PENDING: state for the disabled Display popover + date-range picker.
-  // const [dispOpen, setDispOpen] = React.useState(false);
+  // BACKEND-PENDING: state for the disabled date-range picker.
   // const [period, setPeriod] = React.useState<any>(
   //   Period({ rangeName: LAST_24_HOURS }),
   // );
@@ -234,9 +243,7 @@ function IssuesList() {
     },
   ];
 
-  /* BACKEND-PENDING: count + content for the disabled Display popover (filters
-     the already-loaded list client-side; re-enable when critical/hidden state
-     is backed by the server).
+  // Display filters run client-side over the already-loaded list.
   const dispCount =
     (issuesStore.critOnly ? 1 : 0) + (issuesStore.showHidden ? 1 : 0);
 
@@ -257,7 +264,6 @@ function IssuesList() {
       </Checkbox>
     </div>
   );
-  */
 
   return (
     <div
@@ -330,35 +336,9 @@ function IssuesList() {
             onClear={() => issuesStore.setLabels([])}
           />
 
-          {/* Display (critical-only / hidden) and date range aren't supported
-              by the backend yet — shown disabled. */}
-          <Tooltip title="Not available yet">
-            <span className="inline-flex">
-              <Button
-                size="small"
-                disabled
-                icon={<SlidersHorizontal size={14} />}
-              >
-                Display
-                <ChevronDown size={13} className="ml-0.5 opacity-60" />
-              </Button>
-            </span>
-          </Tooltip>
-
-          <Tooltip title="Not available yet">
-            <span className="inline-flex">
-              <Button size="small" disabled icon={<Clock size={14} />}>
-                Last 24 hours
-                <ChevronDown size={13} className="ml-0.5 opacity-60" />
-              </Button>
-            </span>
-          </Tooltip>
-
-          {/* BACKEND-PENDING: the working Display popover + date-range picker.
-              Replace the two disabled buttons above with these once the backend
-              supports persisted critical/hidden state and range-scoped issues.
-              Also uncomment the imports, state and `displayContent` marked
-              BACKEND-PENDING above.
+          {/* Display filters (critical-only / hidden) run client-side over the
+              loaded issues. Hidden state isn't backend-persisted yet, so that
+              list is usually empty — Critical-only is the useful one for now. */}
           <Popover
             open={dispOpen}
             onOpenChange={setDispOpen}
@@ -372,6 +352,19 @@ function IssuesList() {
             </Button>
           </Popover>
 
+          {/* Date range isn't range-scoped on the backend yet — shown disabled. */}
+          <Tooltip title="Not available yet">
+            <span className="inline-flex">
+              <Button size="small" disabled icon={<Clock size={14} />}>
+                Last 24 hours
+                <ChevronDown size={13} className="ml-0.5 opacity-60" />
+              </Button>
+            </span>
+          </Tooltip>
+
+          {/* BACKEND-PENDING: the working date-range picker. Replace the disabled
+              button above with this once issues are range-scoped on the server.
+              Re-add the `Period` / `SelectDateRange` imports + `period` state.
           <SelectDateRange
             isAnt
             right
