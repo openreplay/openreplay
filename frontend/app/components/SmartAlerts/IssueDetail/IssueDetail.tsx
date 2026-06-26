@@ -1,5 +1,5 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
-import { Button } from 'antd';
+import { Button, Input } from 'antd';
 import { ArrowLeft, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -8,10 +8,13 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { useHistory, useParams } from 'App/routing';
 import { smartIssueSession, smartIssues, withSiteId } from 'App/saasComponents';
+import { debounce } from 'App/utils';
 
 import { HideIssueModal, type IssueSessionCard, JiraIcon } from '../shared';
 import ProblemCard from './ProblemCard';
 import SessionCard from './SessionCard';
+
+const SHOWN_LIMIT = 3;
 
 function IssueDetail() {
   const { issuesStore, projectsStore } = useStore();
@@ -24,13 +27,23 @@ function IssueDetail() {
 
   const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
+  // debounce keystrokes before hitting the search endpoint
+  const debouncedSearch = React.useMemo(
+    () => debounce(setSearchQuery, 300),
+    [],
+  );
 
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
   React.useEffect(() => {
-    if (issue) void issuesStore.loadSessions(issue.id);
-  }, [issue?.id]);
+    debouncedSearch(query);
+  }, [query]);
+  React.useEffect(() => {
+    if (issue) void issuesStore.loadSessions(issue.id, searchQuery);
+  }, [issue?.id, searchQuery]);
 
   const back = () => history.push(withSiteId(smartIssues(), siteId));
   const openReplay = (s: IssueSessionCard) => {
@@ -59,7 +72,24 @@ function IssueDetail() {
     );
   }
 
-  const sessions = issuesStore.exampleSessions(issue.id);
+  // only a few example sessions are shown to keep the focus tight, but the
+  // search reports the full match count (out of X)
+  const sessions = issuesStore.exampleSessions(issue.id, searchQuery);
+  const shown = sessions.slice(0, SHOWN_LIMIT);
+  const total = issuesStore.sessionsCount(issue.id, searchQuery);
+  const loadingSessions = issuesStore.isLoadingSessions(issue.id, searchQuery);
+
+  const search = (
+    <Input.Search
+      allowClear
+      size="small"
+      className="w-[280px]"
+      placeholder={t('Search sessions by journey or issue')}
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+      onSearch={(v) => setSearchQuery(v)}
+    />
+  );
 
   return (
     <div
@@ -124,23 +154,35 @@ function IssueDetail() {
         />
       </div>
 
-      {issuesStore.sessionsLoading[issue.id] ? (
+      <div className="flex items-center justify-end">{search}</div>
+
+      {loadingSessions ? (
         <div className="p-6 text-center rounded-lg border bg-white text-sm color-gray-medium">
           {t('Loading sessions…')}
         </div>
-      ) : sessions.length === 0 ? (
+      ) : shown.length === 0 ? (
         <div className="p-6 text-center rounded-lg border bg-white text-sm color-gray-medium">
-          {t('No example sessions.')}
+          {searchQuery
+            ? t('No sessions match this search.')
+            : t('No example sessions.')}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          {sessions.map((s) => (
-            <SessionCard
-              key={s.sessionId}
-              s={s}
-              onClick={() => openReplay(s)}
-            />
-          ))}
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {shown.map((s) => (
+              <SessionCard
+                key={s.sessionId}
+                s={s}
+                onClick={() => openReplay(s)}
+              />
+            ))}
+          </div>
+          <div className="text-disabled-text text-sm">
+            {t('Showing {{shown}} example sessions out of {{total}}', {
+              shown: shown.length,
+              total,
+            })}
+          </div>
         </div>
       )}
 
