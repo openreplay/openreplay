@@ -82,6 +82,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         label: t('Issues'),
         key: MENU.ISSUES,
         icon: 'info-circle',
+        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
       },
       {
         label: t('Vault'),
