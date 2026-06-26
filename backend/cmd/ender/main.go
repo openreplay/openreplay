@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,7 +9,7 @@ import (
 
 	config "openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/ender"
-	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/cleanup"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/health"
@@ -99,6 +98,11 @@ func main() {
 		return consumer.Ping(ctx)
 	})
 
+	cleanupDispatcher, err := cleanup.NewDispatcher(log, cfg, producer)
+	if err != nil {
+		log.Fatal(ctx, "can't init cleanup dispatcher: %s", err)
+	}
+
 	log.Info(ctx, "Ender service started")
 
 	sigchan := make(chan os.Signal, 1)
@@ -114,6 +118,7 @@ func main() {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
 			consumer.Close()
+			cleanupDispatcher.Close()
 			os.Exit(0)
 		case <-tick:
 			details := ender.NewLogDetails()
@@ -142,23 +147,17 @@ func processEndedBatch(
 	log logger.Logger,
 	details *ender.LogDetails,
 ) map[uint64]bool {
-	completed := make(map[uint64]bool, len(candidates))
-	for sessionID, timestamp := range candidates {
-		sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
-		sess, err := sessManager.Get(sessionID)
-		if err != nil {
-			if postgres.IsNoRowsErr(err) {
-				// Session doesn't exist in the database, but somehow we got some data from the tracker
-				log.Warn(sessCtx, "session not found in database, dropping: %s", err)
-				completed[sessionID] = true
-				continue
-			}
-			log.Error(sessCtx, "can't get session from database, will retry: %s", err)
-			continue
-		}
-		if ender.ProcessEndedSession(sessCtx, sessionID, timestamp, sess, sessManager, producer, cfg, log, details) {
-			completed[sessionID] = true
-		}
+	if len(candidates) == 0 {
+		return map[uint64]bool{}
 	}
-	return completed
+	ids := make([]uint64, 0, len(candidates))
+	for sessionID := range candidates {
+		ids = append(ids, sessionID)
+	}
+	loaded, err := sessManager.GetManySessions(ids)
+	if err != nil {
+		log.Error(ctx, "can't get sessions from database: %s", err)
+		return map[uint64]bool{}
+	}
+	return ender.ProcessEndedSessions(ctx, candidates, loaded, sessManager, producer, cfg, log, details)
 }

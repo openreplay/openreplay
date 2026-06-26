@@ -2,6 +2,7 @@ package ender
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	config "openreplay/backend/internal/config/ender"
@@ -11,6 +12,78 @@ import (
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/storage"
 )
+
+func ProcessEndedSessions(
+	ctx context.Context,
+	candidates map[uint64]uint64,
+	loaded map[uint64]*sessions.Session,
+	sessManager sessions.Sessions,
+	producer types.Producer,
+	cfg *config.Config,
+	log logger.Logger,
+	details *LogDetails,
+) map[uint64]bool {
+	completed := make(map[uint64]bool, len(candidates))
+	toUpdate := make(map[uint64]uint64, len(candidates)) // sessionID -> timestamp
+	prevDur := make(map[uint64]uint64, len(candidates))  // sessionID -> duration before the update
+
+	for sessionID, timestamp := range candidates {
+		sess := loaded[sessionID]
+		if sess == nil {
+			details.NotFound[sessionID] = timestamp
+			completed[sessionID] = true
+			continue
+		}
+		var currDuration uint64
+		if sess.Duration != nil {
+			currDuration = *sess.Duration
+		}
+		newDur := timestamp - sess.Timestamp
+		if currDuration == newDur {
+			details.Duplicated[sessionID] = currDuration
+			completed[sessionID] = true
+			continue
+		}
+		if currDuration > newDur {
+			details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
+			completed[sessionID] = true
+			continue
+		}
+		toUpdate[sessionID] = timestamp
+		prevDur[sessionID] = currDuration
+	}
+
+	if len(toUpdate) == 0 {
+		return completed
+	}
+
+	newDurs, err := sessManager.UpdateDurations(toUpdate, loaded)
+	if err != nil {
+		log.Error(ctx, "batch duration update failed, falling back per-session: %s", err)
+		for sessionID, timestamp := range toUpdate {
+			sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
+			if ProcessEndedSession(sessCtx, sessionID, timestamp, loaded[sessionID], sessManager, producer, cfg, log, details) {
+				completed[sessionID] = true
+			}
+		}
+		return completed
+	}
+
+	for sessionID, timestamp := range toUpdate {
+		newDuration, ok := newDurs[sessionID]
+		if !ok {
+			// No RETURNING row: the session isn't in the table.
+			details.NotFound[sessionID] = timestamp
+			completed[sessionID] = true
+			continue
+		}
+		sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
+		if emitSessionEnd(sessCtx, sessionID, timestamp, loaded[sessionID], prevDur[sessionID], newDuration, sessManager, producer, cfg, log, details) {
+			completed[sessionID] = true
+		}
+	}
+	return completed
+}
 
 func ProcessEndedSession(
 	ctx context.Context,
@@ -58,6 +131,22 @@ func ProcessEndedSession(
 		log.Error(ctx, "can't update session duration, err: %s", err)
 		return false
 	}
+	return emitSessionEnd(ctx, sessionID, timestamp, sess, currDuration, newDuration, sessManager, producer, cfg, log, details)
+}
+
+func emitSessionEnd(
+	ctx context.Context,
+	sessionID uint64,
+	timestamp uint64,
+	sess *sessions.Session,
+	currDuration uint64,
+	newDuration uint64,
+	sessManager sessions.Sessions,
+	producer types.Producer,
+	cfg *config.Config,
+	log logger.Logger,
+	details *LogDetails,
+) bool {
 	// Re-check after the update — could have raced with another path.
 	if currDuration == newDuration {
 		details.Duplicated[sessionID] = currDuration
