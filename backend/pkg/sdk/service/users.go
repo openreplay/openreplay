@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -13,9 +15,12 @@ import (
 	"openreplay/backend/pkg/sessions"
 )
 
+var ErrUserNotFound = errors.New("user not found")
+
 type Users interface {
 	Add(session *sessions.Session, user *model.User) error
 	Get(projectID uint32, userID string) (*model.User, error)
+	Create(session *sessions.Session, user *model.User) error
 	Update(user *model.User) error
 	Delete(projectID uint32, userID string) error
 }
@@ -36,7 +41,7 @@ func NewUsers(log logger.Logger, conn driver.Conn, sessions sessions.Sessions) (
 
 var (
 	insertQuery = `INSERT INTO product_analytics.users (project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	selectQuery = `SELECT project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen" from product_analytics.users WHERE project_id = ? AND "$user_id" = ? LIMIT 1`
+	selectQuery = `SELECT project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen", _deleted_at != '1970-01-01 00:00:00' AS _deleted from product_analytics.users WHERE project_id = ? AND "$user_id" = ? ORDER BY _timestamp DESC LIMIT 1`
 )
 
 func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
@@ -126,9 +131,19 @@ func (u *usersImpl) addUserDistinctID(session *sessions.Session, user *model.Use
 func (u *usersImpl) Get(projectID uint32, userID string) (*model.User, error) {
 	user := &model.User{}
 	if err := u.conn.QueryRow(context.Background(), selectQuery, projectID, userID).ScanStruct(user); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
 		return nil, fmt.Errorf("can't get user from database: %s", err)
 	}
+	if user.Deleted != 0 {
+		return nil, ErrUserNotFound
+	}
 	return user, nil
+}
+
+func (u *usersImpl) Create(session *sessions.Session, user *model.User) error {
+	return u.add(session, user)
 }
 
 func (u *usersImpl) Update(user *model.User) error {

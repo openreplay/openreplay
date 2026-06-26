@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgtype"
+	"github.com/lib/pq"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 )
@@ -14,6 +15,7 @@ type Storage interface {
 	GetMany(sessionIDs []uint64) ([]*Session, error)
 	GetDuration(sessionID uint64) (uint64, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
+	UpdateDurations(updates map[uint64]uint64) (map[uint64]uint64, error)
 	InsertEncryptionKey(sessionID uint64, key []byte) error
 	InsertUserID(sessionID uint64, userID string) error
 	InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error
@@ -128,6 +130,83 @@ func (s *storageImpl) GetDuration(sessionID uint64) (uint64, error) {
 	return dur, nil
 }
 
+type scannable interface {
+	Scan(dest ...interface{}) error
+}
+
+const sessionColumns = `session_id, platform,
+	CASE WHEN duration IS NULL OR duration < 0 THEN 0 ELSE duration END,
+	project_id, start_ts, timezone,
+	user_uuid, user_os, user_os_version,
+	user_device, user_device_type, user_country, user_state, user_city,
+	rev_id, tracker_version,
+	user_id, user_anonymous_id, referrer,
+	pages_count, events_count, errors_count, issue_types,
+	user_browser, user_browser_version,
+	metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
+	metadata_6, metadata_7, metadata_8, metadata_9, metadata_10,
+	utm_source, utm_medium, utm_campaign, screen_width, screen_height`
+
+func scanSession(row scannable) (*Session, error) {
+	sess := &Session{}
+	var revID, userOSVersion, userBrowser, userBrowserVersion, userState, userCity *string
+	var issueTypes pgtype.EnumArray
+	if err := row.Scan(
+		&sess.SessionID, &sess.Platform,
+		&sess.Duration, &sess.ProjectID, &sess.Timestamp, &sess.Timezone,
+		&sess.UserUUID, &sess.UserOS, &userOSVersion,
+		&sess.UserDevice, &sess.UserDeviceType, &sess.UserCountry, &userState, &userCity,
+		&revID, &sess.TrackerVersion,
+		&sess.UserID, &sess.UserAnonymousID, &sess.Referrer,
+		&sess.PagesCount, &sess.EventsCount, &sess.ErrorsCount, &issueTypes,
+		&userBrowser, &userBrowserVersion,
+		&sess.Metadata1, &sess.Metadata2, &sess.Metadata3, &sess.Metadata4, &sess.Metadata5,
+		&sess.Metadata6, &sess.Metadata7, &sess.Metadata8, &sess.Metadata9, &sess.Metadata10,
+		&sess.UtmSource, &sess.UtmMedium, &sess.UtmCampaign, &sess.ScreenWidth, &sess.ScreenHeight,
+	); err != nil {
+		return nil, err
+	}
+	if userOSVersion != nil {
+		sess.UserOSVersion = *userOSVersion
+	}
+	if userBrowser != nil {
+		sess.UserBrowser = *userBrowser
+	}
+	if userBrowserVersion != nil {
+		sess.UserBrowserVersion = *userBrowserVersion
+	}
+	if revID != nil {
+		sess.RevID = *revID
+	}
+	issueTypes.AssignTo(&sess.IssueTypes)
+	if userState != nil {
+		sess.UserState = *userState
+	}
+	if userCity != nil {
+		sess.UserCity = *userCity
+	}
+	return sess, nil
+}
+
+func (s *storageImpl) GetMany(sessionIDs []uint64) ([]*Session, error) {
+	rows, err := s.db.Query(`SELECT `+sessionColumns+`
+		FROM sessions
+		WHERE session_id = ANY($1)`, pq.Array(sessionIDs))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	sessions := make([]*Session, 0, len(sessionIDs))
+	for rows.Next() {
+		sess, err := scanSession(rows)
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, sess)
+	}
+	return sessions, rows.Err()
+}
+
 func (s *storageImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error) {
 	var dur uint64
 	if err := s.db.QueryRow(`
@@ -145,6 +224,41 @@ func (s *storageImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64
 		return 0, err
 	}
 	return dur, nil
+}
+
+func (s *storageImpl) UpdateDurations(updates map[uint64]uint64) (map[uint64]uint64, error) {
+	if len(updates) == 0 {
+		return map[uint64]uint64{}, nil
+	}
+	ids := make([]uint64, 0, len(updates))
+	timestamps := make([]uint64, 0, len(updates))
+	for sessionID, ts := range updates {
+		ids = append(ids, sessionID)
+		timestamps = append(timestamps, ts)
+	}
+	rows, err := s.db.Query(`
+		UPDATE sessions AS s
+		SET duration = CASE
+			WHEN v.ts - s.start_ts < 0   THEN 999    -- negative duration becomes 999
+			WHEN v.ts - s.start_ts = 999 THEN 1000   -- exact 999 becomes 1000
+			ELSE v.ts - s.start_ts                   -- otherwise use original value
+		END
+		FROM unnest($1::bigint[], $2::bigint[]) AS v(session_id, ts)
+		WHERE s.session_id = v.session_id
+		RETURNING s.session_id, s.duration`, pq.Array(ids), pq.Array(timestamps))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	res := make(map[uint64]uint64, len(updates))
+	for rows.Next() {
+		var sessionID, dur uint64
+		if err := rows.Scan(&sessionID, &dur); err != nil {
+			return nil, err
+		}
+		res[sessionID] = dur
+	}
+	return res, rows.Err()
 }
 
 func (s *storageImpl) InsertEncryptionKey(sessionID uint64, key []byte) error {

@@ -29,6 +29,15 @@ type consumerImpl struct {
 	idsPending      streamPendingIDsMap
 	lastTs          int64
 	autoCommit      bool
+	processedHook   func(topic string, partition int32, offset int64)
+}
+
+func (c *consumerImpl) SetProcessedHook(fn func(topic string, partition int32, offset int64)) {
+	c.processedHook = fn
+}
+
+func (c *consumerImpl) CommitOffsets(_ types.Offsets) error {
+	return nil
 }
 
 func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) (types.Consumer, error) {
@@ -108,6 +117,9 @@ func (c *consumerImpl) ConsumeNext() error {
 			}
 			bID := ts<<13 | (idx & 0x1FFF) // Max: 4096 messages/ms for 69 years
 			c.messageIterator.Iterate([]byte(valueString), messages.NewBatchInfo(sessionID, r.Stream, bID, 0, int64(ts)))
+			if c.processedHook != nil {
+				c.processedHook(r.Stream, 0, int64(bID))
+			}
 			if c.autoCommit {
 				if err = c.redis.XAck(context.Background(), r.Stream, c.group, m.ID).Err(); err != nil {
 					return errors.Wrapf(err, "Acknoledgment error for messageID %v", m.ID)

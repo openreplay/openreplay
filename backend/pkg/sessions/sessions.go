@@ -21,6 +21,7 @@ type Sessions interface {
 	GetDuration(sessionID uint64) (uint64, error)
 	GetManySessions(sessionIDs []uint64) (map[uint64]*Session, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
+	UpdateDurations(updates map[uint64]uint64, loaded map[uint64]*Session) (map[uint64]uint64, error)
 	UpdateEncryptionKey(sessionID uint64, key []byte) error
 	UpdateUserID(sessionID uint64, userID string) error
 	UpdateAnonymousID(sessionID uint64, userAnonymousID string) error
@@ -33,21 +34,28 @@ type Sessions interface {
 	IsExists(sessionID uint64) (bool, error)
 }
 
+const (
+	IgnoreInactiveProjects      = true
+	DoNotIgnoreInactiveProjects = false
+)
+
 type sessionsImpl struct {
-	log      logger.Logger
-	cache    Cache
-	storage  Storage
-	updates  Updates
-	projects projects.Projects
+	log                    logger.Logger
+	cache                  Cache
+	storage                Storage
+	updates                Updates
+	projects               projects.Projects
+	ignoreInactiveProjects bool
 }
 
-func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.Client, metrics database.Database) Sessions {
+func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.Client, metrics database.Database, ignoreInactiveProjects bool) Sessions {
 	return &sessionsImpl{
-		log:      log,
-		cache:    NewInMemoryCache(log, NewCache(redis, metrics)),
-		storage:  NewStorage(db),
-		updates:  NewSessionUpdates(log, db, metrics),
-		projects: proj,
+		log:                    log,
+		cache:                  NewInMemoryCache(log, NewCache(redis, metrics)),
+		storage:                NewStorage(db),
+		updates:                NewSessionUpdates(log, db, metrics),
+		projects:               proj,
+		ignoreInactiveProjects: ignoreInactiveProjects,
 	}
 }
 
@@ -81,7 +89,11 @@ func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session from postgres: %w", err)
 	}
-	proj, err := s.projects.GetProject(session.ProjectID)
+	getProject := s.projects.GetProject
+	if s.ignoreInactiveProjects {
+		getProject = s.projects.GetProjectNotDeleted
+	}
+	proj, err := getProject(session.ProjectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active project: %d, err: %s", session.ProjectID, err)
 	}
@@ -150,6 +162,31 @@ func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
 	return 0, nil
 }
 
+func (s *sessionsImpl) GetManySessions(sessionIDs []uint64) (map[uint64]*Session, error) {
+	res := make(map[uint64]*Session, len(sessionIDs))
+	toRequest := make([]uint64, 0, len(sessionIDs))
+	// Grab sessions from the cache
+	for _, sessionID := range sessionIDs {
+		if sess, err := s.cache.Get(sessionID); err == nil {
+			res[sessionID] = sess
+		} else {
+			toRequest = append(toRequest, sessionID)
+		}
+	}
+	if len(toRequest) == 0 {
+		return res, nil
+	}
+	// Grab the rest from the database
+	sessionFromDB, err := s.storage.GetMany(toRequest)
+	if err != nil {
+		return nil, err
+	}
+	for _, sess := range sessionFromDB {
+		res[sess.SessionID] = sess
+	}
+	return res, nil
+}
+
 // UpdateDuration usage: in ender to update session duration
 func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error) {
 	newDuration, err := s.storage.UpdateDuration(sessionID, timestamp)
@@ -168,6 +205,29 @@ func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint6
 		s.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return newDuration, nil
+}
+
+func (s *sessionsImpl) UpdateDurations(updates map[uint64]uint64, loaded map[uint64]*Session) (map[uint64]uint64, error) {
+	if len(updates) == 0 {
+		return map[uint64]uint64{}, nil
+	}
+	newDurations, err := s.storage.UpdateDurations(updates)
+	if err != nil {
+		return nil, err
+	}
+	for sessionID, dur := range newDurations {
+		sess := loaded[sessionID]
+		if sess == nil {
+			continue
+		}
+		d := dur
+		sess.Duration = &d
+		if err := s.cache.Set(sess); err != nil {
+			ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+			s.log.Warn(ctx, "failed to cache session: %s", err)
+		}
+	}
+	return newDurations, nil
 }
 
 // UpdateEncryptionKey usage: in ender to update session encryption key if encryption is enabled

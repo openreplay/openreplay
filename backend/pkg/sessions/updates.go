@@ -3,6 +3,7 @@ package sessions
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -25,6 +26,7 @@ type Updates interface {
 type updatesImpl struct {
 	log     logger.Logger
 	db      pool.Pool
+	mu      sync.Mutex
 	updates map[uint64]*sessionUpdate
 	metrics database.Database
 }
@@ -38,51 +40,53 @@ func NewSessionUpdates(log logger.Logger, db pool.Pool, metrics database.Databas
 	}
 }
 
-func (u *updatesImpl) AddUserID(sessionID uint64, userID string) {
-	if u.updates[sessionID] == nil {
-		u.updates[sessionID] = NewSessionUpdate(sessionID)
+func (u *updatesImpl) update(sessionID uint64, fn func(*sessionUpdate)) {
+	u.mu.Lock()
+	su := u.updates[sessionID]
+	if su == nil {
+		su = NewSessionUpdate(sessionID)
+		u.updates[sessionID] = su
 	}
-	u.updates[sessionID].setUserID(userID)
+	fn(su)
+	u.mu.Unlock()
+}
+
+func (u *updatesImpl) AddUserID(sessionID uint64, userID string) {
+	u.update(sessionID, func(su *sessionUpdate) { su.setUserID(userID) })
 }
 
 func (u *updatesImpl) AddAnonID(sessionID uint64, userID string) {
-	if u.updates[sessionID] == nil {
-		u.updates[sessionID] = NewSessionUpdate(sessionID)
-	}
-	u.updates[sessionID].setAnonID(userID)
+	u.update(sessionID, func(su *sessionUpdate) { su.setAnonID(userID) })
 }
 
 func (u *updatesImpl) SetReferrer(sessionID uint64, referrer, baseReferrer string) {
-	if u.updates[sessionID] == nil {
-		u.updates[sessionID] = NewSessionUpdate(sessionID)
-	}
-	u.updates[sessionID].setReferrer(referrer, baseReferrer)
+	u.update(sessionID, func(su *sessionUpdate) { su.setReferrer(referrer, baseReferrer) })
 }
 
 func (u *updatesImpl) SetMetadata(sessionID uint64, keyNo uint, value string) {
-	if u.updates[sessionID] == nil {
-		u.updates[sessionID] = NewSessionUpdate(sessionID)
-	}
-	u.updates[sessionID].setMetadata(keyNo, value)
+	u.update(sessionID, func(su *sessionUpdate) { su.setMetadata(keyNo, value) })
 }
 
 func (u *updatesImpl) SetUTM(sessionID uint64, utmSource, utmMedium, utmCampaign string) {
-	if u.updates[sessionID] == nil {
-		u.updates[sessionID] = NewSessionUpdate(sessionID)
-	}
-	u.updates[sessionID].setUTM(utmSource, utmMedium, utmCampaign)
+	u.update(sessionID, func(su *sessionUpdate) { su.setUTM(utmSource, utmMedium, utmCampaign) })
 }
 
 func (u *updatesImpl) AddEvents(sessionID uint64, events, pages int) {
-	if u.updates[sessionID] == nil {
-		u.updates[sessionID] = NewSessionUpdate(sessionID)
-	}
-	u.updates[sessionID].addEvents(events, pages)
+	u.update(sessionID, func(su *sessionUpdate) { su.addEvents(events, pages) })
 }
 
 func (u *updatesImpl) Commit() {
+	u.mu.Lock()
+	if len(u.updates) == 0 {
+		u.mu.Unlock()
+		return
+	}
+	batch := u.updates
+	u.updates = make(map[uint64]*sessionUpdate)
+	u.mu.Unlock()
+
 	b := &pgx.Batch{}
-	for _, upd := range u.updates {
+	for _, upd := range batch {
 		if str, args := upd.request(); str != "" {
 			b.Queue(str, args...)
 		}
@@ -107,7 +111,7 @@ func (u *updatesImpl) Commit() {
 		u.log.Error(context.Background(), "error in PG batch.Close(): %s", err)
 	}
 	if failed {
-		for _, upd := range u.updates {
+		for _, upd := range batch {
 			if str, args := upd.request(); str != "" {
 				if err := u.db.Exec(str, args...); err != nil {
 					u.log.Error(context.Background(), "error in PG Exec(): %s", err)
@@ -116,7 +120,6 @@ func (u *updatesImpl) Commit() {
 		}
 	}
 	u.metrics.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
-	u.updates = make(map[uint64]*sessionUpdate)
 }
 
 type sessionUpdate struct {

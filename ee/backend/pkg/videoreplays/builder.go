@@ -41,7 +41,7 @@ func NewServiceBuilder(log logger.Logger, cfg *videoConfig.Config, sessions sess
 		return nil, err
 	}
 
-	users := user.New(pgconn)
+	users := user.New(pgconn, user.MCPConfig{})
 
 	videoService, err := service.New(log, cfg, videoStorage, batchJobs, objStore, users)
 	if err != nil {

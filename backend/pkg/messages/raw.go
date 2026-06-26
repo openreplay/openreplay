@@ -1,15 +1,12 @@
 package messages
 
-import (
-	"log"
-)
-
 // RawMessage is a not decoded message
 type RawMessage struct {
-	tp     uint64
-	data   []byte
-	broken *bool
-	meta   *message
+	tp        uint64
+	data      []byte
+	broken    *bool
+	meta      *message
+	decodeErr error
 }
 
 func (m *RawMessage) Encode() []byte {
@@ -19,7 +16,7 @@ func (m *RawMessage) Encode() []byte {
 func (m *RawMessage) Decode() Message {
 	msg, err := ReadMessage(m.tp, NewBytesReader(m.data[1:]))
 	if err != nil {
-		log.Printf("decode err: %s", err)
+		m.decodeErr = err
 		*m.broken = true
 		return nil
 	}
