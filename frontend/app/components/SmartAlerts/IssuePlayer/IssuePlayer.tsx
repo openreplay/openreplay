@@ -37,7 +37,7 @@ function IssuePlayer() {
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const params = useParams<{ issueId: string; sessionId: string }>();
-  const issueId = params.issueId ? decodeURIComponent(params.issueId) : '';
+  const slug = params.issueId ?? '';
   const sessionId = params.sessionId ?? '';
 
   const session = sessionStore.current;
@@ -52,19 +52,23 @@ function IssuePlayer() {
   const adjustedRef = React.useRef(false);
   const [view, setView] = React.useState<View>('issue');
 
+  const issue = issuesStore.bySlug(slug);
+  const realId = issue?.id ?? '';
+  const sessions = issuesStore.exampleSessions(realId);
+  const card = sessions.find((c) => c.sessionId === sessionId);
+
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
-    if (issueId) void issuesStore.loadSessions(issueId);
-  }, [siteId, issueId]);
+  }, [siteId]);
+
+  React.useEffect(() => {
+    if (realId) void issuesStore.loadSessions(realId);
+  }, [realId]);
 
   React.useEffect(() => {
     if (sessionId) void sessionStore.fetchSessionData(sessionId);
     return () => sessionStore.clearCurrentSession();
   }, [sessionId]);
-
-  const issue = issuesStore.byId(issueId);
-  const sessions = issuesStore.exampleSessions(issueId);
-  const card = sessions.find((c) => c.sessionId === sessionId);
 
   // build the real web player once the session has loaded
   React.useEffect(() => {
@@ -181,15 +185,10 @@ function IssuePlayer() {
       ? sessions[sessIdx + 1].sessionId
       : null;
   const goSession = (sid: string) =>
-    history.push(
-      withSiteId(smartIssueSession(encodeURIComponent(issueId), sid), siteId),
-    );
+    history.push(withSiteId(smartIssueSession(slug, sid), siteId));
   const back = () =>
     history.push(
-      withSiteId(
-        issue ? smartIssueDetails(encodeURIComponent(issueId)) : smartIssues(),
-        siteId,
-      ),
+      withSiteId(issue ? smartIssueDetails(slug) : smartIssues(), siteId),
     );
   const onSetCritical = (val: boolean, reason?: string) => {
     if (issue) issuesStore.setCritical(issue.id, val, reason);
