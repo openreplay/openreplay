@@ -59,12 +59,12 @@ type Connector interface {
 
 type task struct {
 	seq   uint64
-	bulks []Bulk
+	bulks []Batch
 	snap  qtypes.Offsets
 }
 
 func NewTask() *task {
-	return &task{bulks: make([]Bulk, 0, len(batches))}
+	return &task{bulks: make([]Batch, 0, len(batches))}
 }
 
 type commitState struct {
@@ -80,7 +80,7 @@ type connectorImpl struct {
 	metrics        database.Database
 	mu             sync.Mutex
 	batchSizeLimit int
-	batches        map[string]Bulk
+	batches        map[string]Batch
 	pending        qtypes.Offsets
 	needToFlush    bool
 	sizeFlushed    bool
@@ -126,7 +126,7 @@ func NewConnector(conn driver.Conn, metrics database.Database, batchSizeLimit, w
 		conn:           conn,
 		metrics:        metrics,
 		batchSizeLimit: batchSizeLimit,
-		batches:        make(map[string]Bulk, len(batches)+1),
+		batches:        make(map[string]Batch, len(batches)+1),
 		pending:        make(qtypes.Offsets),
 		workerTask:     make(chan *task, workerQueueDepth),
 		inflight:       make(chan struct{}, maxInflight),
@@ -154,7 +154,7 @@ var batches = map[string]string{
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, c.metrics, name, query, c.batchSizeLimit)
+	batch, err := NewBatch(c.conn, c.metrics, name, query, c.batchSizeLimit)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
@@ -221,7 +221,7 @@ func (c *connectorImpl) flush() {
 		b.MarkFlushed()
 		newTask.bulks = append(newTask.bulks, b)
 	}
-	c.batches = make(map[string]Bulk, len(batches)+1)
+	c.batches = make(map[string]Batch, len(batches)+1)
 	if err := c.prepare(); err != nil {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
@@ -301,7 +301,7 @@ const (
 	maxSendAttempts = 10
 )
 
-func (c *connectorImpl) sendBulk(b Bulk) {
+func (c *connectorImpl) sendBulk(b Batch) {
 	backoff := sendRetryBase
 	for attempt := 1; ; attempt++ {
 		err := b.Send()
@@ -333,7 +333,7 @@ func (c *connectorImpl) sendBulks(t *task) {
 	var wg sync.WaitGroup
 	wg.Add(len(t.bulks))
 	for _, b := range t.bulks {
-		go func(b Bulk) {
+		go func(b Batch) {
 			defer wg.Done()
 			c.sendBulk(b)
 		}(b)

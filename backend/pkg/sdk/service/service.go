@@ -353,7 +353,7 @@ func (ds *dataSaverImpl) run() {
 }
 
 func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
-	batch, err := clickhouse.NewBulk(ds.conn, nil, "updatedEvents", insertEventsQuery,
+	batch, err := clickhouse.NewBatch(ds.log, ds.conn, nil, "updatedEvents", insertEventsQuery,
 		ds.cfg.CHSendBatchSizeLimit+ds.cfg.BatchSizeLimit+1)
 	if err != nil {
 		return err
@@ -445,7 +445,7 @@ func (ds *dataSaverImpl) loadUsersBatch(ctx context.Context) error {
 	return nil
 }
 
-func (ds *dataSaverImpl) processUserEvents(ctx context.Context, batch clickhouse.Bulk, user *UserRecord) (int, error) {
+func (ds *dataSaverImpl) processUserEvents(ctx context.Context, batch clickhouse.Batch, user *UserRecord) (int, error) {
 	totalCount := 0
 	offset := 0
 
@@ -482,7 +482,7 @@ func (ds *dataSaverImpl) processUserEvents(ctx context.Context, batch clickhouse
 	return totalCount, nil
 }
 
-func addUserEvents(batch clickhouse.Bulk, rows []UserEvent, userRec *UserRecord) (int, error) {
+func addUserEvents(batch clickhouse.Batch, rows []UserEvent, userRec *UserRecord) (int, error) {
 	for i := 0; i < len(rows); i++ {
 		if err := batch.Append(
 			rows[i].SessionID,

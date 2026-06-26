@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/logger"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -12,7 +13,7 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 )
 
-type Bulk interface {
+type Batch interface {
 	Append(args ...interface{}) error
 	Len() int
 	Table() string
@@ -20,7 +21,8 @@ type Bulk interface {
 	Send() error
 }
 
-type bulkImpl struct {
+type batchImpl struct {
+	log           logger.Logger
 	conn          driver.Conn
 	metrics       database.Database
 	table         string
@@ -34,11 +36,11 @@ type bulkImpl struct {
 	sizeLimit     int
 }
 
-func (b *bulkImpl) isWebEvents() bool {
+func (b *batchImpl) isWebEvents() bool {
 	return b.table == "web_events"
 }
 
-func NewBulk(conn driver.Conn, metrics database.Database, table, query string, sizeLimit int) (Bulk, error) {
+func NewBatch(log logger.Logger, conn driver.Conn, metrics database.Database, table, query string, sizeLimit int) (Batch, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("clickhouse connection is empty")
@@ -47,7 +49,8 @@ func NewBulk(conn driver.Conn, metrics database.Database, table, query string, s
 	case query == "":
 		return nil, errors.New("query is empty")
 	}
-	return &bulkImpl{
+	return &batchImpl{
+		log:       log,
 		conn:      conn,
 		metrics:   metrics,
 		table:     table,
@@ -59,7 +62,7 @@ func NewBulk(conn driver.Conn, metrics database.Database, table, query string, s
 
 const webEventsFixedRowBytes = 30
 
-func (b *bulkImpl) Append(args ...interface{}) error {
+func (b *batchImpl) Append(args ...interface{}) error {
 	b.values = append(b.values, args)
 	b.counter++
 	if b.isWebEvents() {
@@ -76,19 +79,19 @@ func (b *bulkImpl) Append(args ...interface{}) error {
 	return nil
 }
 
-func (b *bulkImpl) Len() int {
+func (b *batchImpl) Len() int {
 	return b.counter
 }
 
-func (b *bulkImpl) Table() string {
+func (b *batchImpl) Table() string {
 	return b.table
 }
 
-func (b *bulkImpl) MarkFlushed() {
+func (b *batchImpl) MarkFlushed() {
 	b.flushedAt = time.Now()
 }
 
-func (b *bulkImpl) Send() error {
+func (b *batchImpl) Send() error {
 	if len(b.values) == 0 {
 		return nil
 	}
@@ -112,7 +115,7 @@ func (b *bulkImpl) Send() error {
 
 	if b.isWebEvents() {
 		totalMb := float64(b.bytes) / (1024 * 1024)
-		log.Printf("[CH] table=%s rows=%d totalMb=%.3f fillMs=%d idleMs=%d queueMs=%d prepareMs=%d appendMs=%d sendMs=%d totalMs=%d",
+		b.log.Debug(context.Background(), "[CH] table=%s rows=%d totalMb=%.3f fillMs=%d idleMs=%d queueMs=%d prepareMs=%d appendMs=%d sendMs=%d totalMs=%d",
 			b.table, b.counter, totalMb,
 			b.lastAppendAt.Sub(b.firstAppendAt).Milliseconds(),
 			b.flushedAt.Sub(b.lastAppendAt).Milliseconds(),
