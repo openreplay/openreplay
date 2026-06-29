@@ -1,4 +1,4 @@
-import { Button, Modal, Tooltip, message } from 'antd';
+import { Button, Modal, Segmented, Tooltip, message } from 'antd';
 import {
   CheckCircle2,
   ChevronDown,
@@ -7,13 +7,16 @@ import {
   Clock,
   Image as ImageIcon,
   Images,
+  Info,
   Loader,
+  Maximize2,
   Minus,
   Network,
-  Pause,
   RotateCw,
   Server,
+  Terminal,
   Timer,
+  TriangleAlert,
   XCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -23,16 +26,17 @@ import { formatDateTimeDefault } from 'App/date';
 
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
-import { RunData, TestStep } from '../shared/types';
+import { ConsoleLog, NetworkRequest, RunData, TestStep } from '../shared/types';
 import {
   RESOLUTION_ICON,
+  RowTags,
   formatDuration,
   regionCountry,
   regionLabel,
   relativeTime,
   resolutionLabel,
 } from '../shared/utils';
-import { EntityDrawer, Section, TagChips } from './EntityDrawer';
+import { EntityDrawer, Section } from './EntityDrawer';
 
 interface Props {
   run: RunData | null;
@@ -41,172 +45,401 @@ interface Props {
 }
 
 // A step is worth a screenshot once it has actually executed.
-const hasShot = (s: TestStep) =>
-  s.status === 'passed' || s.status === 'failed' || s.status === 'running';
+const hasShot = (s: TestStep) => s.status === 'passed' || s.status === 'failed';
 
-/** One execution of a test. Read-only history: outcome, a compact meta line, and the
- *  per-step list — screenshots live in a carousel so the failure is what you see first. */
+const isNetError = (r: NetworkRequest) => r.status === 0 || r.status >= 400;
+
+function DevEmpty({ text }: { text: string }) {
+  return (
+    <div className="text-sm text-disabled-text text-center py-8 border rounded-lg">
+      {text}
+    </div>
+  );
+}
+
+/** Console output captured during the run — mirrors the session console: level icon +
+ *  monospace message, time on the right, error rows tinted. */
+function ConsoleView({ logs }: { logs?: ConsoleLog[] }) {
+  const { t } = useTranslation();
+  if (!logs || logs.length === 0)
+    return <DevEmpty text={t('No console output captured for this run.')} />;
+  return (
+    <div className="border rounded-lg overflow-hidden font-mono text-xs">
+      {logs.map((l, i) => {
+        const cfg =
+          l.level === 'error'
+            ? { color: 'text-red', bg: 'bg-red-lightest', Icon: XCircle }
+            : l.level === 'warn'
+              ? { color: 'text-orange-dark', bg: '', Icon: TriangleAlert }
+              : { color: 'text-gray-dark', bg: '', Icon: Info };
+        const LevelIcon = cfg.Icon;
+        return (
+          <div
+            key={i}
+            className={`flex items-start gap-2 px-3 py-1.5 border-b border-neutral-950/5 last:border-b-0 ${cfg.bg}`}
+          >
+            <LevelIcon size={13} className={`mt-0.5 shrink-0 ${cfg.color}`} />
+            <span
+              className={`flex-1 whitespace-pre-wrap break-words ${cfg.color}`}
+            >
+              {l.text}
+            </span>
+            <span className="text-disabled-text shrink-0">
+              {`${(l.time / 1000).toFixed(2)}s`}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Network requests captured during the run — same columns as the session network
+ *  panel (status / method / name / type / time), failures tinted red. */
+function NetworkView({ reqs }: { reqs?: NetworkRequest[] }) {
+  const { t } = useTranslation();
+  if (!reqs || reqs.length === 0)
+    return <DevEmpty text={t('No network activity captured for this run.')} />;
+  return (
+    <div className="border rounded-lg overflow-hidden text-xs">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-lightest border-b text-disabled-text font-medium uppercase tracking-wide">
+        <span className="w-9 shrink-0">{t('Status')}</span>
+        <span className="w-12 shrink-0">{t('Method')}</span>
+        <span className="flex-1 min-w-0">{t('Name')}</span>
+        <span className="w-14 shrink-0">{t('Type')}</span>
+        <span className="w-12 shrink-0 text-right">{t('Time')}</span>
+      </div>
+      {reqs.map((r, i) => {
+        const errored = isNetError(r);
+        return (
+          <div
+            key={i}
+            className={`flex items-center gap-2 px-3 py-1.5 border-b last:border-b-0 ${
+              errored ? 'bg-red-lightest' : ''
+            }`}
+          >
+            <span
+              className={`w-9 shrink-0 font-medium ${
+                errored ? 'text-red' : 'text-green-dark'
+              }`}
+            >
+              {r.status === 0 ? t('ERR') : r.status}
+            </span>
+            <span className="w-12 shrink-0 text-disabled-text">{r.method}</span>
+            <Tooltip title={r.url}>
+              <span className="flex-1 min-w-0 truncate">{r.name}</span>
+            </Tooltip>
+            <span className="w-14 shrink-0 text-disabled-text truncate">
+              {r.type}
+            </span>
+            <span className="w-12 shrink-0 text-right text-disabled-text">
+              {r.duration ? `${Math.round(r.duration)}ms` : '—'}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Step screenshots — a big preview with prev/next and a thumbnail strip. Opens on the
+ *  failed step by default. When `onExpand` is set the preview is click-to-enlarge. */
+function ScreenshotsView({
+  run,
+  onExpand,
+}: {
+  run: RunData;
+  onExpand?: () => void;
+}) {
+  const { t } = useTranslation();
+  const shotSteps = run.steps
+    .map((step, i) => ({ step, i }))
+    .filter(({ step }) => hasShot(step));
+  const failedPos =
+    run.failedStep != null
+      ? shotSteps.findIndex((s) => s.i === run.failedStep)
+      : -1;
+  const [idx, setIdx] = useState(failedPos >= 0 ? failedPos : 0);
+
+  if (run.status === 'running')
+    return (
+      <DevEmpty
+        text={t('Run in progress — screenshots appear as it finishes.')}
+      />
+    );
+  if (shotSteps.length === 0)
+    return <DevEmpty text={t('No screenshots captured for this run.')} />;
+
+  const cur = shotSteps[Math.min(idx, shotSteps.length - 1)];
+  const curStep = run.steps[cur.i];
+  const failed = curStep.status === 'failed';
+  const prev = () =>
+    setIdx((i) => (i - 1 + shotSteps.length) % shotSteps.length);
+  const next = () => setIdx((i) => (i + 1) % shotSteps.length);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className="font-medium truncate">
+          {t('Step')} {cur.i + 1} · {curStep.step}
+        </span>
+        <span className="text-xs text-disabled-text shrink-0">
+          {shotSteps.indexOf(cur) + 1}/{shotSteps.length}
+        </span>
+      </div>
+      <div
+        className={`group relative w-full rounded-lg border bg-gray-lightest flex items-center justify-center ${
+          failed ? 'border-red-light' : ''
+        } ${onExpand ? 'cursor-zoom-in' : ''}`}
+        style={{ aspectRatio: '16 / 10' }}
+        onClick={onExpand}
+        role={onExpand ? 'button' : undefined}
+        aria-label={onExpand ? t('Expand screenshot') : undefined}
+      >
+        <div className="flex flex-col items-center gap-1 text-disabled-text">
+          <ImageIcon size={36} />
+          <span className="text-xs">
+            {failed
+              ? t('Screenshot at failure')
+              : `${t('Step')} ${cur.i + 1} ${t('screenshot')}`}
+          </span>
+        </div>
+        {onExpand && (
+          <span className="absolute top-2 right-2 w-7 h-7 rounded bg-white/90 border shadow-sm flex items-center justify-center text-gray-dark opacity-0 group-hover:opacity-100 transition-opacity">
+            <Maximize2 size={14} />
+          </span>
+        )}
+        {shotSteps.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                prev();
+              }}
+              aria-label={t('Previous')}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-sm border flex items-center justify-center hover:bg-gray-lightest"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                next();
+              }}
+              aria-label={t('Next')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-sm border flex items-center justify-center hover:bg-gray-lightest"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </>
+        )}
+      </div>
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {shotSteps.map((s, pos) => (
+          <button
+            key={s.i}
+            type="button"
+            onClick={() => setIdx(pos)}
+            className={`shrink-0 w-16 h-11 rounded border flex items-center justify-center text-xs bg-gray-lightest transition ${
+              s === cur
+                ? 'ring-2 ring-inset ring-active-blue-border text-black'
+                : 'text-disabled-text'
+            } ${run.steps[s.i].status === 'failed' ? 'border-red-light' : ''}`}
+          >
+            {s.i + 1}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type DevTab = 'screenshots' | 'network' | 'console';
+
+/** One execution of a test. Read-only: outcome, a compact meta line, the step list
+ *  (failed step shows its error inline), and a tabbed DevTools block — screenshots,
+ *  network and console — mirroring what a session shows. */
 function RunDrawer({ run, open, onClose }: Props) {
   const { t } = useTranslation();
   const [more, setMore] = useState(false);
-  const [carouselOpen, setCarouselOpen] = useState(false);
-  const [shotIdx, setShotIdx] = useState(0);
+  const [devTab, setDevTab] = useState<DevTab>('screenshots');
+  const [expanded, setExpanded] = useState(false);
+  const [modalTab, setModalTab] = useState<DevTab>('screenshots');
 
   if (!run) return null;
+
+  const openExpanded = (tab: DevTab) => {
+    setModalTab(tab);
+    setExpanded(true);
+  };
 
   const running = run.status === 'running';
   const failed = run.status === 'failed';
   const total = run.steps.length;
-  const doneCount = run.steps.filter(
-    (s) => s.status === 'passed' || s.status === 'failed',
-  ).length;
-  const currentIdx = run.steps.findIndex((s) => s.status === 'running');
-
-  // steps that carry a screenshot, paired with their original index
-  const shotSteps = run.steps
-    .map((step, i) => ({ step, i }))
-    .filter(({ step }) => hasShot(step));
 
   const ResIcon = RESOLUTION_ICON[run.resolution ?? 'desktop'];
+  const consoleErrors = (run.console ?? []).filter(
+    (l) => l.level === 'error',
+  ).length;
+  const netErrors = (run.network ?? []).filter(isNetError).length;
 
   const rerun = () =>
     message.success(`${run.testName} — ${t('rerun started, see Runs')}`);
-  const pause = () => message.info(`${run.testName} — ${t('run paused')}`);
-
-  const openCarouselAt = (stepIndex: number) => {
-    const pos = shotSteps.findIndex((s) => s.i === stepIndex);
-    setShotIdx(pos < 0 ? 0 : pos);
-    setCarouselOpen(true);
-  };
-  const openCarousel = () => {
-    const start =
-      failed && run.failedStep != null
-        ? shotSteps.findIndex((s) => s.i === run.failedStep)
-        : 0;
-    setShotIdx(start < 0 ? 0 : start);
-    setCarouselOpen(true);
-  };
-  const prevShot = () =>
-    setShotIdx((i) => (i - 1 + shotSteps.length) % shotSteps.length);
-  const nextShot = () => setShotIdx((i) => (i + 1) % shotSteps.length);
 
   const renderStep = (step: TestStep, idx: number) => {
-    const stepFailed = step.status === 'failed';
-    const skipped = step.status === 'skipped';
-    const isRunning = step.status === 'running';
-    const pending = step.status === 'pending';
+    // For a running run we can't know per-step status (we only know the run is
+    // running), so every step shows a neutral marker until the run finishes.
+    const status = running ? 'unknown' : step.status;
+    const stepFailed = status === 'failed';
+    const skipped = status === 'skipped';
+    const pending = status === 'pending';
+    const notRun = skipped || pending;
 
-    const icon = stepFailed ? (
-      <XCircle size={15} className="text-red" />
-    ) : skipped ? (
-      <Minus size={15} className="text-disabled-text" />
-    ) : isRunning ? (
-      <Loader size={15} className="text-indigo animate-spin" />
-    ) : pending ? (
-      <span className="block w-[15px] h-[15px] rounded-full border border-gray-light" />
-    ) : (
-      <CheckCircle2 size={15} className="text-green" />
-    );
+    const icon =
+      status === 'unknown' || pending ? (
+        <span className="block w-[14px] h-[14px] rounded-full border border-gray-light" />
+      ) : stepFailed ? (
+        <XCircle size={15} className="text-red" />
+      ) : skipped ? (
+        <Minus size={15} className="text-disabled-text" />
+      ) : (
+        <CheckCircle2 size={15} className="text-green" />
+      );
 
     return (
       <div
         key={idx}
-        className="group flex items-start gap-3 py-2.5 border-b last:border-b-0"
+        className="flex items-start gap-2.5 rounded px-1 -mx-1 py-1.5"
       >
-        <span className="pt-0.5 shrink-0">{icon}</span>
+        <span className="w-5 h-6 flex items-center justify-center shrink-0">
+          {icon}
+        </span>
         <div className="flex-1 min-w-0">
           <div
-            className={`text-sm ${stepFailed ? 'text-red font-medium' : ''} ${
-              skipped || pending ? 'text-disabled-text' : ''
-            } ${isRunning ? 'text-indigo font-medium' : ''}`}
+            className={`text-[15px] leading-6 break-words ${
+              notRun ? 'text-disabled-text' : ''
+            }`}
           >
-            {idx + 1}. {step.step}
+            {step.step}
             {skipped && <span className="ml-2 text-xs">({t('skipped')})</span>}
-            {isRunning && (
-              <span className="ml-2 text-xs">({t('running')})</span>
-            )}
-            {pending && <span className="ml-2 text-xs">({t('pending')})</span>}
           </div>
           {stepFailed && run.error && (
-            <div className="mt-2 flex flex-col gap-2">
-              <div className="bg-red-lightest rounded p-2 text-sm">
-                <span className="text-red font-medium">{t('Error')}: </span>
-                <span className="text-red">{run.error}</span>
-              </div>
-              <div className="border border-dashed rounded p-2 flex items-center gap-2 text-xs text-disabled-text w-fit">
-                <Network size={14} />
-                {t('Network trace — coming soon')}
+            <div className="mt-1.5 flex flex-col gap-1.5 items-start">
+              <div className="text-sm text-red">{run.error}</div>
+              <div className="flex items-center gap-3 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setDevTab('console')}
+                  className="text-main hover:underline flex items-center gap-1"
+                >
+                  <Terminal size={12} /> {t('View console')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDevTab('network')}
+                  className="text-main hover:underline flex items-center gap-1"
+                >
+                  <Network size={12} /> {t('View network')}
+                </button>
               </div>
             </div>
           )}
         </div>
-
-        {/* Screenshots: only the failure shows inline; the rest sit one tap away so
-            passed steps don't drown the list in unreadable thumbnails. */}
-        {skipped || pending ? (
-          <span className="text-xs text-disabled-text shrink-0 self-center">
-            {t('Not run')}
-          </span>
-        ) : stepFailed ? (
-          <button
-            type="button"
-            onClick={() => openCarouselAt(idx)}
-            className="w-40 h-24 rounded border border-red-light bg-gray-lightest flex flex-col items-center justify-center gap-0.5 text-disabled-text shrink-0 hover:ring-2 hover:ring-red-light transition"
-          >
-            <ImageIcon size={18} />
-            <span className="text-xs">{t('At failure')}</span>
-          </button>
-        ) : (
-          <Tooltip title={t('View screenshot')}>
-            <Button
-              type="text"
-              size="small"
-              icon={<ImageIcon size={15} />}
-              aria-label={t('View screenshot')}
-              onClick={() => openCarouselAt(idx)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-center"
-            />
-          </Tooltip>
-        )}
       </div>
     );
   };
 
-  // outcome banner — distinct from the test's own state, so a passed run never
-  // looks like an active test
-  const banner = running ? (
-    <div className="rounded-lg bg-indigo-lightest p-3 flex flex-col gap-2">
-      <div className="flex items-center gap-2 text-sm text-indigo font-medium">
-        <Loader size={16} className="animate-spin" />
-        {t('Running')} · {t('step')} {currentIdx + 1} {t('of')} {total}
-      </div>
-      <div className="h-1.5 rounded-full bg-white/70 overflow-hidden">
-        <div
-          className="h-full bg-indigo rounded-full transition-all"
-          style={{ width: `${(doneCount / total) * 100}%` }}
-        />
-      </div>
-    </div>
-  ) : failed ? (
-    <div className="rounded-lg bg-red-lightest p-3 flex items-center gap-2 text-sm text-red font-medium">
-      <XCircle size={16} />
-      {t('Failed at step')} {(run.failedStep ?? 0) + 1} {t('of')} {total}
-      {run.duration && (
-        <span className="font-normal">· {formatDuration(run.duration)}</span>
-      )}
-    </div>
-  ) : (
-    <div className="rounded-lg bg-green-light p-3 flex items-center gap-2 text-sm text-green-dark font-medium">
-      <CheckCircle2 size={16} />
-      {t('Passed')} · {total} {t('steps')}
-      {run.duration && (
-        <span className="font-normal">· {formatDuration(run.duration)}</span>
+  // Full-width outcome strip: subtle brand tint + coloured icon, dark high-contrast text.
+  const bannerCfg = running
+    ? {
+        bg: 'rgba(97, 95, 255, 0.1)',
+        color: 'var(--color-indigo)',
+        Icon: Loader,
+        spin: true,
+      }
+    : failed
+      ? {
+          bg: 'rgba(204, 0, 0, 0.08)',
+          color: 'var(--color-red)',
+          Icon: XCircle,
+        }
+      : {
+          bg: 'rgba(66, 174, 94, 0.1)',
+          color: 'var(--color-green-dark)',
+          Icon: CheckCircle2,
+        };
+  const BannerIcon = bannerCfg.Icon;
+  const banner = (
+    <div
+      className="px-5 py-3 border-b flex items-center gap-2 text-sm font-medium text-gray-darkest"
+      style={{ background: bannerCfg.bg }}
+    >
+      <BannerIcon
+        size={16}
+        className={`shrink-0 ${bannerCfg.spin ? 'animate-spin' : ''}`}
+        style={{ color: bannerCfg.color }}
+      />
+      {running ? (
+        <span>{t('Running')}</span>
+      ) : failed ? (
+        <span>
+          {t('Failed at step')} {(run.failedStep ?? 0) + 1} {t('of')} {total}
+          {run.duration && (
+            <span className="font-normal text-disabled-text">
+              {' '}
+              · {formatDuration(run.duration)}
+            </span>
+          )}
+        </span>
+      ) : (
+        <span>
+          {t('Passed')} · {total} {t('steps')}
+          {run.duration && (
+            <span className="font-normal text-disabled-text">
+              {' '}
+              · {formatDuration(run.duration)}
+            </span>
+          )}
+        </span>
       )}
     </div>
   );
 
-  const current = shotSteps[shotIdx];
-  const currentStep = current ? run.steps[current.i] : null;
+  // count chip shown on the Network / Console tab labels when there are failures
+  const tabCount = (n: number) =>
+    n > 0 ? <span className="ml-1.5 text-red font-medium">{n}</span> : null;
+
+  // shared by the inline tabs and the expanded modal so they stay in lockstep
+  const devOptions = [
+    {
+      value: 'screenshots',
+      label: (
+        <span className="flex items-center justify-center gap-1.5 py-0.5">
+          <Images size={14} /> {t('Screenshots')}
+        </span>
+      ),
+    },
+    {
+      value: 'network',
+      label: (
+        <span className="flex items-center justify-center gap-1.5 py-0.5">
+          <Network size={14} /> {t('Network')}
+          {tabCount(netErrors)}
+        </span>
+      ),
+    },
+    {
+      value: 'console',
+      label: (
+        <span className="flex items-center justify-center gap-1.5 py-0.5">
+          <Terminal size={14} /> {t('Console')}
+          {tabCount(consoleErrors)}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <EntityDrawer
@@ -214,27 +447,21 @@ function RunDrawer({ run, open, onClose }: Props) {
       open={open}
       onClose={onClose}
       title={run.testName}
-      eyebrow={running ? 'Run · in progress' : 'Run'}
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button onClick={onClose}>{t('Close')}</Button>
-          {running ? (
-            <Button type="primary" icon={<Pause size={14} />} onClick={pause}>
-              {t('Pause')}
-            </Button>
-          ) : (
-            <Button
-              type="primary"
-              icon={<RotateCw size={14} />}
-              onClick={rerun}
-            >
-              {t('Rerun')}
-            </Button>
-          )}
-        </div>
+      eyebrow="Run"
+      headerActions={
+        !running ? (
+          <Button
+            type="primary"
+            size="small"
+            icon={<RotateCw size={13} />}
+            onClick={rerun}
+          >
+            {t('Rerun')}
+          </Button>
+        ) : undefined
       }
     >
-      <div className="px-5 py-4 border-b">{banner}</div>
+      {banner}
 
       {/* compact meta — duration / when / environment up front; the rest behind "More" */}
       <div className="px-5 py-3 border-b">
@@ -275,126 +502,75 @@ function RunDrawer({ run, open, onClose }: Props) {
               />{' '}
               {regionLabel(run.region)}
             </span>
-            <span>
-              {t('Started')} {formatDateTimeDefault(run.date)}
-            </span>
-            <TagChips tags={run.tags} />
+            <RowTags tags={run.tags} />
           </div>
         )}
       </div>
 
-      <Section
-        title={`${t('Steps')} · ${doneCount}/${total}`}
-        action={
-          <Button
-            type="text"
-            size="small"
-            icon={<Images size={14} />}
-            onClick={openCarousel}
-            disabled={shotSteps.length === 0}
-          >
-            {t('View screenshots')}
-          </Button>
-        }
-      >
+      <Section title={t('Steps')}>
         <div className="flex flex-col">
           {run.steps.map((step, idx) => renderStep(step, idx))}
         </div>
       </Section>
 
+      {/* DevTools — the same things you'd check on a session: screenshots, network,
+          console. One tab at a time so the drawer stays readable; expand for room. */}
+      <Section
+        title={t('Activity')}
+        action={
+          <Tooltip title={t('Expand')}>
+            <Button
+              type="text"
+              size="small"
+              icon={<Maximize2 size={15} />}
+              aria-label={t('Expand')}
+              onClick={() => openExpanded(devTab)}
+            />
+          </Tooltip>
+        }
+      >
+        <Segmented
+          block
+          size="small"
+          value={devTab}
+          onChange={(v) => setDevTab(v as DevTab)}
+          options={devOptions}
+        />
+        <div className="mt-3">
+          {devTab === 'screenshots' && (
+            <ScreenshotsView
+              run={run}
+              onExpand={() => openExpanded('screenshots')}
+            />
+          )}
+          {devTab === 'network' && <NetworkView reqs={run.network} />}
+          {devTab === 'console' && <ConsoleView logs={run.console} />}
+        </div>
+      </Section>
+
+      {/* Expanded view — same three tabs, with room for the screenshot + network table */}
       <Modal
-        open={carouselOpen}
-        onCancel={() => setCarouselOpen(false)}
+        open={expanded}
+        onCancel={() => setExpanded(false)}
         footer={null}
         title={null}
-        width={760}
+        width={920}
         centered
       >
-        {currentStep && current && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2 pr-6">
-              <div className="text-sm font-medium flex items-center gap-2 min-w-0">
-                {currentStep.status === 'failed' ? (
-                  <XCircle size={16} className="text-red shrink-0" />
-                ) : currentStep.status === 'running' ? (
-                  <Loader
-                    size={16}
-                    className="text-indigo animate-spin shrink-0"
-                  />
-                ) : (
-                  <CheckCircle2 size={16} className="text-green shrink-0" />
-                )}
-                <span className="truncate">
-                  {t('Step')} {current.i + 1} {t('of')} {total} ·{' '}
-                  {currentStep.step}
-                </span>
-              </div>
-              <span className="text-xs text-disabled-text shrink-0">
-                {shotIdx + 1}/{shotSteps.length}
-              </span>
-            </div>
-
-            <div
-              className={`relative w-full rounded-lg border bg-gray-lightest flex items-center justify-center ${
-                currentStep.status === 'failed' ? 'border-red-light' : ''
-              }`}
-              style={{ aspectRatio: '16 / 10' }}
-            >
-              <div className="flex flex-col items-center gap-1 text-disabled-text">
-                <ImageIcon size={40} />
-                <span className="text-sm">
-                  {currentStep.status === 'failed'
-                    ? t('Screenshot at failure')
-                    : `${t('Step')} ${current.i + 1} ${t('screenshot')}`}
-                </span>
-              </div>
-              {shotSteps.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={prevShot}
-                    aria-label={t('Previous')}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-sm border flex items-center justify-center hover:bg-gray-lightest"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextShot}
-                    aria-label={t('Next')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-sm border flex items-center justify-center hover:bg-gray-lightest"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {currentStep.status === 'failed' && run.error && (
-              <div className="bg-red-lightest rounded p-2 text-sm">
-                <span className="text-red font-medium">{t('Error')}: </span>
-                <span className="text-red">{run.error}</span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {shotSteps.map((s, pos) => (
-                <button
-                  key={s.i}
-                  type="button"
-                  onClick={() => setShotIdx(pos)}
-                  className={`shrink-0 w-20 h-14 rounded border flex items-center justify-center text-xs bg-gray-lightest transition ${
-                    pos === shotIdx
-                      ? 'ring-2 ring-active-blue-border border-active-blue-border text-black'
-                      : 'text-disabled-text'
-                  } ${run.steps[s.i].status === 'failed' ? 'border-red-light' : ''}`}
-                >
-                  {s.i + 1}
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-col gap-3 pt-2">
+          <Segmented
+            block
+            size="small"
+            value={modalTab}
+            onChange={(v) => setModalTab(v as DevTab)}
+            options={devOptions}
+          />
+          <div>
+            {modalTab === 'screenshots' && <ScreenshotsView run={run} />}
+            {modalTab === 'network' && <NetworkView reqs={run.network} />}
+            {modalTab === 'console' && <ConsoleView logs={run.console} />}
           </div>
-        )}
+        </div>
       </Modal>
     </EntityDrawer>
   );

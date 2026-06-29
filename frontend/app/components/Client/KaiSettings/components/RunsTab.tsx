@@ -1,13 +1,55 @@
-import { Input, Select, Switch, Tooltip } from 'antd';
-import { ChevronDown, ChevronUp, Search } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import {
+  Button,
+  Dropdown,
+  Input,
+  Segmented,
+  Select,
+  Table,
+  Tooltip,
+  message,
+} from 'antd';
+import type { TableColumnsType } from 'antd';
+import { EllipsisVertical, RotateCw } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import RunRow from './RunRow';
+import { formatDateTimeDefault } from 'App/date';
+
 import RunDrawer from './drawers/RunDrawer';
+import './kai-table.css';
 import { MOCK_RUNS } from './shared/mockData';
-import { RunData } from './shared/types';
-import { RUNS_GRID, isToday, relativeTime } from './shared/utils';
+import { RunData, RunStatus } from './shared/types';
+import {
+  RowTags,
+  formatDuration,
+  getRunResult,
+  relativeTime,
+} from './shared/utils';
+
+type StatusTab = 'all' | RunStatus;
+const RESULT_ORDER: Record<RunStatus, number> = {
+  running: 0,
+  failed: 1,
+  passed: 2,
+};
+
+// Live elapsed counter for an in-flight run — ticks each second from its start time.
+function LiveDuration({ start }: { start: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const total = Math.max(0, Math.floor((now - start) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const label =
+    h > 0
+      ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+      : `${m}:${String(s).padStart(2, '0')}`;
+  return <span className="text-indigo tabular-nums">{label}</span>;
+}
 
 const ENV_NAMES = Array.from(
   new Set(MOCK_RUNS.map((r) => r.envName).filter(Boolean)),
@@ -16,101 +58,202 @@ const TAG_NAMES = Array.from(
   new Set(MOCK_RUNS.flatMap((r) => r.tags ?? [])),
 ).sort();
 
-type SortKey = 'result' | 'test' | 'env' | 'duration' | 'when';
-const RESULT_ORDER: Record<string, number> = {
-  running: 0,
-  failed: 1,
-  passed: 2,
-};
-
 function RunsTab() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [showFailedOnly, setShowFailedOnly] = useState(false);
+  const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
-  const [sortKey, setSortKey] = useState<SortKey>('when');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const openRun = MOCK_RUNS.find((r) => r.key === openKey) ?? null;
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortKey(key);
-      setSortDir(key === 'when' ? 'desc' : 'asc');
-    }
-  };
+  const runningCount = MOCK_RUNS.filter((r) => r.status === 'running').length;
+  const failedCount = MOCK_RUNS.filter((r) => r.status === 'failed').length;
+  const passedCount = MOCK_RUNS.filter((r) => r.status === 'passed').length;
 
-  const filteredRuns = MOCK_RUNS.filter((run) => {
-    if (
-      query.trim() &&
-      !run.testName.toLowerCase().includes(query.toLowerCase())
-    )
-      return false;
-    if (showFailedOnly && run.status !== 'failed') return false;
-    if (envFilter !== 'all' && run.envName !== envFilter) return false;
-    if (tagFilter !== 'all' && !(run.tags ?? []).includes(tagFilter))
-      return false;
-    return true;
+  const visible = useMemo(() => {
+    let arr = MOCK_RUNS;
+    if (query.trim())
+      arr = arr.filter((r) =>
+        r.testName.toLowerCase().includes(query.toLowerCase()),
+      );
+    if (statusTab !== 'all') arr = arr.filter((r) => r.status === statusTab);
+    if (envFilter !== 'all') arr = arr.filter((r) => r.envName === envFilter);
+    if (tagFilter !== 'all')
+      arr = arr.filter((r) => (r.tags ?? []).includes(tagFilter));
+    return arr;
+  }, [query, statusTab, envFilter, tagFilter]);
+
+  const rerun = (run: RunData) =>
+    message.success(`${run.testName} — ${t('rerun started, see Runs')}`);
+
+  const rowMenu = (run: RunData) => ({
+    items: [{ key: 'open', label: t('View run') }],
+    onClick: ({ key, domEvent }: { key: string; domEvent: any }) => {
+      domEvent.stopPropagation();
+      if (key === 'open') setOpenKey(run.key);
+    },
   });
 
-  const sortedRuns = useMemo(() => {
-    const arr = [...filteredRuns];
-    arr.sort((a, b) => {
-      let r = 0;
-      if (sortKey === 'result')
-        r = RESULT_ORDER[a.status] - RESULT_ORDER[b.status];
-      else if (sortKey === 'test') r = a.testName.localeCompare(b.testName);
-      else if (sortKey === 'env')
-        r = (a.envName ?? '').localeCompare(b.envName ?? '');
-      else if (sortKey === 'duration')
-        r = (a.duration ?? Infinity) - (b.duration ?? Infinity);
-      else r = a.date - b.date; // when
-      return sortDir === 'asc' ? r : -r;
-    });
-    return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredRuns, sortKey, sortDir]);
-
-  // recent-runs pulse — last 14 runs (respecting filters), oldest → newest
-  const pulse = useMemo(
-    () => [...filteredRuns].sort((a, b) => b.date - a.date).slice(0, 14).reverse(),
-    [filteredRuns],
+  const faded = (n: number) => (
+    <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
   );
+  const statusOptions = [
+    {
+      value: 'all',
+      label: (
+        <span>
+          {t('All')}
+          {faded(MOCK_RUNS.length)}
+        </span>
+      ),
+    },
+    {
+      value: 'running',
+      label: (
+        <span>
+          {t('Running')}
+          {faded(runningCount)}
+        </span>
+      ),
+    },
+    {
+      value: 'failed',
+      label: (
+        <span>
+          {t('Failed')}
+          {faded(failedCount)}
+        </span>
+      ),
+    },
+    {
+      value: 'passed',
+      label: (
+        <span>
+          {t('Passed')}
+          {faded(passedCount)}
+        </span>
+      ),
+    },
+  ];
 
-  const dotColor = (s: RunData['status']) =>
-    s === 'passed' ? 'bg-green' : s === 'failed' ? 'bg-red' : 'bg-indigo';
-
-  const SortHeader = ({ label, k }: { label: string; k: SortKey }) => (
-    <button
-      type="button"
-      onClick={() => toggleSort(k)}
-      className="flex items-center gap-1 text-left uppercase tracking-wide hover:text-black"
-    >
-      {label}
-      {sortKey === k &&
-        (sortDir === 'asc' ? (
-          <ChevronUp size={12} />
+  const columns: TableColumnsType<RunData> = [
+    {
+      title: t('Result'),
+      dataIndex: 'status',
+      width: 130,
+      sorter: (a, b) => RESULT_ORDER[a.status] - RESULT_ORDER[b.status],
+      showSorterTooltip: false,
+      render: (status: RunStatus) => getRunResult(status, t),
+    },
+    {
+      title: t('Test'),
+      dataIndex: 'testName',
+      sorter: (a, b) => a.testName.localeCompare(b.testName),
+      showSorterTooltip: false,
+      render: (name: string) => (
+        <span className="font-medium truncate">{name}</span>
+      ),
+    },
+    {
+      title: t('Tags'),
+      dataIndex: 'tags',
+      width: 190,
+      render: (tags: string[]) => <RowTags tags={tags} />,
+    },
+    {
+      title: t('Environment'),
+      dataIndex: 'envName',
+      width: 150,
+      sorter: (a, b) => (a.envName ?? '').localeCompare(b.envName ?? ''),
+      showSorterTooltip: false,
+      render: (env?: string) =>
+        env ? (
+          <span className="text-gray-dark">{env}</span>
         ) : (
-          <ChevronDown size={12} />
-        ))}
-    </button>
-  );
+          <span className="text-disabled-text">—</span>
+        ),
+    },
+    {
+      title: t('Duration'),
+      dataIndex: 'duration',
+      width: 120,
+      sorter: (a, b) => (a.duration ?? Infinity) - (b.duration ?? Infinity),
+      showSorterTooltip: false,
+      render: (_: unknown, run) =>
+        run.status === 'running' ? (
+          <LiveDuration start={run.date} />
+        ) : (
+          <span className="text-disabled-text">
+            {run.duration ? formatDuration(run.duration) : '—'}
+          </span>
+        ),
+    },
+    {
+      title: t('When'),
+      dataIndex: 'date',
+      width: 150,
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.date - b.date,
+      showSorterTooltip: false,
+      render: (date: number) => (
+        <Tooltip title={formatDateTimeDefault(date)}>
+          <span className="text-disabled-text">{relativeTime(date)}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      title: '',
+      dataIndex: 'actions',
+      width: 116,
+      align: 'right',
+      render: (_: unknown, run) => (
+        <div className="flex items-center justify-end">
+          {run.status !== 'running' && (
+            <Tooltip title={t('Rerun')}>
+              <Button
+                type="text"
+                icon={<RotateCw size={16} />}
+                aria-label={t('Rerun')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  rerun(run);
+                }}
+              />
+            </Tooltip>
+          )}
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={rowMenu(run)}
+          >
+            <Button
+              type="text"
+              icon={<EllipsisVertical size={16} />}
+              aria-label={t('Actions')}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-4 flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="text-sm text-disabled-text">
-          {t('Showing')} {filteredRuns.length} {t('of')} {MOCK_RUNS.length}{' '}
-          {t('runs')} · {t('run in the cloud')}
-        </div>
+    <div className="flex flex-col">
+      {/* controls bar — status tabs (left) + search & filters (right) */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
+        <Segmented
+          size="small"
+          value={statusTab}
+          onChange={(v) => setStatusTab(v as StatusTab)}
+          options={statusOptions}
+        />
         <div className="flex items-center gap-2 flex-wrap">
-          <Input
+          <Input.Search
             size="small"
             allowClear
-            prefix={<Search size={14} className="text-disabled-text" />}
             placeholder={t('Search runs')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -136,72 +279,30 @@ function RunsTab() {
               ...TAG_NAMES.map((tag) => ({ value: tag, label: tag })),
             ]}
           />
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={showFailedOnly}
-              onChange={setShowFailedOnly}
-              size="small"
-            />
-            <span className="text-sm">{t('Show failed only')}</span>
-          </div>
         </div>
       </div>
 
-      {/* recent-runs pulse */}
-      {pulse.length > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wide text-disabled-text">
-            {t('Recent')}
-          </span>
-          <div className="flex items-center gap-1">
-            {pulse.map((run) => (
-              <Tooltip
-                key={run.key}
-                title={`${run.testName} · ${run.status} · ${relativeTime(run.date)}`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenKey(run.key)}
-                  aria-label={`${run.testName} ${run.status}`}
-                  className={`w-2.5 h-2.5 rounded-full ${dotColor(run.status)} ${
-                    run.status === 'running' ? 'animate-pulse' : ''
-                  } hover:ring-2 hover:ring-active-blue-border transition`}
-                />
-              </Tooltip>
-            ))}
-          </div>
-        </div>
-      )}
+      <Table<RunData>
+        className="kai-table"
+        rowKey="key"
+        columns={columns}
+        dataSource={visible}
+        pagination={false}
+        rowClassName="cursor-pointer"
+        onRow={(run) => ({
+          onClick: (e) => {
+            const el = e.target as HTMLElement;
+            if (el.closest('button') || el.closest('.ant-dropdown')) return;
+            setOpenKey(run.key);
+          },
+        })}
+        locale={{ emptyText: t('No runs match these filters.') }}
+      />
 
-      {filteredRuns.length === 0 ? (
-        <div className="text-sm text-disabled-text">
-          {t('No runs match these filters.')}
-        </div>
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          {/* column header */}
-          <div
-            className={`${RUNS_GRID} px-4 py-2 bg-gray-lightest border-b text-xs font-medium text-disabled-text`}
-            style={{ borderLeft: '2px solid transparent' }}
-          >
-            <SortHeader label={t('Result')} k="result" />
-            <SortHeader label={t('Test')} k="test" />
-            <span className="uppercase tracking-wide">{t('Tags')}</span>
-            <SortHeader label={t('Environment')} k="env" />
-            <SortHeader label={t('Duration')} k="duration" />
-            <SortHeader label={t('When')} k="when" />
-            <span />
-          </div>
-          {sortedRuns.map((run) => (
-            <RunRow
-              key={run.key}
-              run={run}
-              today={isToday(run.date)}
-              onOpen={() => setOpenKey(run.key)}
-            />
-          ))}
-        </div>
-      )}
+      <div className="px-4 py-3 text-xs text-disabled-text">
+        {t('Showing')} {visible.length} {t('of')} {MOCK_RUNS.length} {t('runs')}{' '}
+        · {t('run in the cloud')}
+      </div>
 
       <RunDrawer
         run={openRun}

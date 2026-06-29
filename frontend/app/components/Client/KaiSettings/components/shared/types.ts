@@ -4,7 +4,12 @@ export type TestLifecycle = 'draft' | 'active' | 'paused';
 export type RunResult = 'passed' | 'failed';
 // A run can still be in flight, hence `running`.
 export type RunStatus = 'running' | 'passed' | 'failed';
-export type StepStatus = 'passed' | 'failed' | 'skipped' | 'running' | 'pending';
+export type StepStatus =
+  | 'passed'
+  | 'failed'
+  | 'skipped'
+  | 'running'
+  | 'pending';
 
 export interface HttpHeader {
   name: string;
@@ -76,6 +81,25 @@ export interface TestStep {
   status: StepStatus;
 }
 
+// Per-run DevTools captured during execution — mirrors what a session shows.
+export type ConsoleLevel = 'info' | 'warn' | 'error';
+export interface ConsoleLog {
+  level: ConsoleLevel;
+  text: string;
+  time: number; // ms into the run
+}
+
+export interface NetworkRequest {
+  method: string;
+  url: string;
+  name: string; // last path segment / display name
+  type: string; // xhr | fetch | script | stylesheet | img | document
+  status: number; // HTTP status; 0 = failed / no response
+  size?: number; // bytes
+  duration: number; // ms (0 when failed)
+  time: number; // ms into the run
+}
+
 export interface RunData {
   key: string;
   testName: string;
@@ -89,4 +113,6 @@ export interface RunData {
   resolution?: Resolution;
   region?: string;
   tags?: string[];
+  console?: ConsoleLog[];
+  network?: NetworkRequest[];
 }

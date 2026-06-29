@@ -1,10 +1,9 @@
 import { Button, Popconfirm, Tooltip, message } from 'antd';
-import { CheckCircle2, Pause, Play, Trash2, XCircle } from 'lucide-react';
+import { Pause, Play, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TestCase } from '../shared/types';
-import { getStatusTag, relativeTime } from '../shared/utils';
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
@@ -47,40 +46,13 @@ function TestDrawer({ test, open, onClose, onChange, onRemove }: Props) {
     onClose();
   };
 
-  // the outcome of the most recent run, surfaced at the top
-  const lastOutcome = test.recent?.[test.recent.length - 1];
-
   return (
     <EntityDrawer
       type="test"
       open={open}
       onClose={onClose}
       title={test.title}
-      eyebrow={paused ? 'Test · Paused' : 'Test'}
-      statusLine={
-        <div className="flex items-center gap-2 text-xs">
-          {getStatusTag(test.status, t, 'm-0!')}
-          {lastOutcome && (
-            <span className="flex items-center gap-1">
-              {lastOutcome === 'passed' ? (
-                <CheckCircle2 size={13} className="text-green" />
-              ) : (
-                <XCircle size={13} className="text-red" />
-              )}
-              <span
-                className={
-                  lastOutcome === 'passed' ? 'text-green-dark' : 'text-red'
-                }
-              >
-                {lastOutcome === 'passed' ? t('Passed') : t('Failed')}
-              </span>
-            </span>
-          )}
-          <span className="text-disabled-text">
-            · {t('last run')} {relativeTime(test.lastRunAt)}
-          </span>
-        </div>
-      }
+      eyebrow="Test"
       headerActions={
         <div className="flex items-center gap-2">
           <Button

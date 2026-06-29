@@ -1,5 +1,4 @@
 import { Button, Popconfirm } from 'antd';
-import { Sparkles } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -59,10 +58,12 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       cancelText={t('Cancel')}
       onConfirm={approve}
     >
-      <Button type="primary">{t('Approve')}</Button>
+      <Button type="primary" size="small">
+        {t('Approve')}
+      </Button>
     </Popconfirm>
   ) : (
-    <Button type="primary" onClick={approve}>
+    <Button type="primary" size="small" onClick={approve}>
       {t('Approve')}
     </Button>
   );
@@ -73,35 +74,18 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       open={open}
       onClose={onClose}
       title={draft.title}
-      statusLine={
-        <span className="text-xs text-disabled-text">
-          {t('Not running yet — review and approve to start')}
-        </span>
-      }
-      footer={
-        <div className="flex items-center justify-between">
-          <Button type="text" danger onClick={dismiss}>
+      headerActions={
+        <div className="flex items-center gap-2">
+          {approveBtn}
+          <Button size="small" onClick={saveDraft}>
+            {t('Save draft')}
+          </Button>
+          <Button size="small" type="text" danger onClick={dismiss}>
             {t('Dismiss')}
           </Button>
-          <div className="flex gap-2">
-            <Button onClick={saveDraft}>{t('Save draft')}</Button>
-            {approveBtn}
-          </div>
         </div>
       }
     >
-      {/* why this was drafted */}
-      <div className="px-5 py-4 border-b">
-        <div className="flex gap-2.5 rounded-lg bg-gray-lightest p-3">
-          <Sparkles size={16} className="text-gray-medium shrink-0 mt-0.5" />
-          <p className="text-sm text-black/80 m-0">
-            {t(
-              'This test was drafted from real user sessions that completed this journey. Tune the steps below, then approve to start running it.',
-            )}
-          </p>
-        </div>
-      </div>
-
       <EditableSteps
         steps={draft.steps}
         alternatives={draft.alternatives}

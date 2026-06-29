@@ -6,7 +6,6 @@ import {
   Segmented,
   Select,
   Table,
-  Tag,
   Tooltip,
   Typography,
   message,
@@ -18,46 +17,19 @@ import { useTranslation } from 'react-i18next';
 
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
+import './kai-table.css';
 import { MOCK_TEST_CASES } from './shared/mockData';
 import { TestCase, TestLifecycle } from './shared/types';
 import {
+  RowTags,
   getStatusTag,
   isScheduled,
   scheduleLabel,
   scheduleShort,
 } from './shared/utils';
-import './kai-table.css';
 
 type StatusTab = 'all' | TestLifecycle;
 const STATUS_ORDER: Record<string, number> = { draft: 0, active: 1, paused: 2 };
-
-// Compact tag chips for a table cell (2 shown, rest folded into +N).
-function RowTags({ tags }: { tags?: string[] }) {
-  if (!tags || tags.length === 0)
-    return <span className="text-disabled-text">—</span>;
-  const shown = tags.slice(0, 2);
-  const rest = tags.slice(2);
-  return (
-    <div className="flex items-center gap-1 overflow-hidden">
-      {shown.map((tag) => (
-        <span
-          key={tag}
-          className="text-xs px-2 py-0.5 rounded border whitespace-nowrap bg-gray-lightest text-gray-dark"
-          style={{ borderColor: 'var(--color-gray-light)' }}
-        >
-          {tag}
-        </span>
-      ))}
-      {rest.length > 0 && (
-        <Tooltip title={rest.join(', ')}>
-          <span className="text-xs text-gray-medium shrink-0 cursor-default">
-            +{rest.length}
-          </span>
-        </Tooltip>
-      )}
-    </div>
-  );
-}
 
 function TestsTab() {
   const { t } = useTranslation();
@@ -70,7 +42,9 @@ function TestsTab() {
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const updateTest = (updated: TestCase) =>
-    setTests((prev) => prev.map((tc) => (tc.key === updated.key ? updated : tc)));
+    setTests((prev) =>
+      prev.map((tc) => (tc.key === updated.key ? updated : tc)),
+    );
   const removeMany = (keys: React.Key[]) => {
     const set = new Set(keys);
     setTests((prev) => prev.filter((tc) => !set.has(tc.key)));
@@ -82,8 +56,7 @@ function TestsTab() {
   // open a row's drawer; opening a new draft marks it seen (clears the dot)
   const openRow = (tc: TestCase) => {
     setOpenKey(tc.key);
-    if (tc.status === 'draft' && tc.isNew)
-      updateTest({ ...tc, isNew: false });
+    if (tc.status === 'draft' && tc.isNew) updateTest({ ...tc, isNew: false });
   };
 
   const openTest = tests.find((tc) => tc.key === openKey) ?? null;
@@ -117,14 +90,19 @@ function TestsTab() {
 
   // ---- bulk actions over the current selection -------------------------
   const selected = tests.filter((tc) => selectedKeys.includes(tc.key));
-  const hasDrafts = selected.some((tc) => tc.status === 'draft');
-  const hasActive = selected.some((tc) => tc.status === 'active');
-  const hasPaused = selected.some((tc) => tc.status === 'paused');
+  const selDrafts = selected.filter((tc) => tc.status === 'draft').length;
+  const selActive = selected.filter((tc) => tc.status === 'active').length;
+  const selPaused = selected.filter((tc) => tc.status === 'paused').length;
 
-  const bulkSet = (predicate: (tc: TestCase) => boolean, patch: Partial<TestCase>) => {
+  const bulkSet = (
+    predicate: (tc: TestCase) => boolean,
+    patch: Partial<TestCase>,
+  ) => {
     setTests((prev) =>
       prev.map((tc) =>
-        selectedKeys.includes(tc.key) && predicate(tc) ? { ...tc, ...patch } : tc,
+        selectedKeys.includes(tc.key) && predicate(tc)
+          ? { ...tc, ...patch }
+          : tc,
       ),
     );
     setSelectedKeys([]);
@@ -146,10 +124,42 @@ function TestsTab() {
     <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
   );
   const statusOptions = [
-    { value: 'all', label: <span>{t('All')}{faded(tests.length)}</span> },
-    { value: 'draft', label: <span>{t('Drafts')}{faded(draftCount)}</span> },
-    { value: 'active', label: <span>{t('Active')}{faded(activeCount)}</span> },
-    { value: 'paused', label: <span>{t('Paused')}{faded(pausedCount)}</span> },
+    {
+      value: 'all',
+      label: (
+        <span>
+          {t('All')}
+          {faded(tests.length)}
+        </span>
+      ),
+    },
+    {
+      value: 'draft',
+      label: (
+        <span>
+          {t('Drafts')}
+          {faded(draftCount)}
+        </span>
+      ),
+    },
+    {
+      value: 'active',
+      label: (
+        <span>
+          {t('Active')}
+          {faded(activeCount)}
+        </span>
+      ),
+    },
+    {
+      value: 'paused',
+      label: (
+        <span>
+          {t('Paused')}
+          {faded(pausedCount)}
+        </span>
+      ),
+    },
   ];
 
   const rowMenu = (tc: TestCase) => {
@@ -267,7 +277,11 @@ function TestsTab() {
               />
             </Tooltip>
           )}
-          <Dropdown trigger={['click']} placement="bottomRight" menu={rowMenu(tc)}>
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={rowMenu(tc)}
+          >
             <Button
               type="text"
               icon={<EllipsisVertical size={16} />}
@@ -312,71 +326,72 @@ function TestsTab() {
           onChange={(v) => setStatusTab(v as StatusTab)}
           options={statusOptions}
         />
-        <div className="flex items-center gap-2 flex-wrap">
-          <Input.Search
-            size="small"
-            allowClear
-            placeholder={t('Search tests')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={{ width: 200 }}
-          />
-          <Select
-            size="small"
-            value={envFilter}
-            onChange={setEnvFilter}
-            style={{ width: 150 }}
-            options={[
-              { value: 'all', label: t('All environments') },
-              ...envNames.map((n) => ({ value: n, label: n })),
-            ]}
-          />
-          <Select
-            size="small"
-            value={tagFilter}
-            onChange={setTagFilter}
-            style={{ width: 130 }}
-            options={[
-              { value: 'all', label: t('All tags') },
-              ...allTags.map((tag) => ({ value: tag, label: tag })),
-            ]}
-          />
-        </div>
+        {/* selecting rows swaps the filters out for bulk actions — same row, no
+            extra banner; each button carries the count it will affect */}
+        {selectedKeys.length > 0 ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-disabled-text">
+              {selectedKeys.length} {t('selected')}
+            </span>
+            {selDrafts > 0 && (
+              <Button size="small" onClick={approveSelected}>
+                {t('Approve')} ({selDrafts})
+              </Button>
+            )}
+            {selActive > 0 && (
+              <Button size="small" onClick={pauseSelected}>
+                {t('Pause')} ({selActive})
+              </Button>
+            )}
+            {selPaused > 0 && (
+              <Button size="small" onClick={resumeSelected}>
+                {t('Resume')} ({selPaused})
+              </Button>
+            )}
+            <Button size="small" danger onClick={deleteSelected}>
+              {t('Delete')} ({selectedKeys.length})
+            </Button>
+            <Button
+              size="small"
+              type="text"
+              onClick={() => setSelectedKeys([])}
+            >
+              {t('Clear')}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 flex-wrap">
+            <Input.Search
+              size="small"
+              allowClear
+              placeholder={t('Search tests')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={{ width: 200 }}
+            />
+            <Select
+              size="small"
+              value={envFilter}
+              onChange={setEnvFilter}
+              style={{ width: 150 }}
+              options={[
+                { value: 'all', label: t('All environments') },
+                ...envNames.map((n) => ({ value: n, label: n })),
+              ]}
+            />
+            <Select
+              size="small"
+              value={tagFilter}
+              onChange={setTagFilter}
+              style={{ width: 130 }}
+              options={[
+                { value: 'all', label: t('All tags') },
+                ...allTags.map((tag) => ({ value: tag, label: tag })),
+              ]}
+            />
+          </div>
+        )}
       </div>
-
-      {/* bulk-action bar — appears only when rows are selected */}
-      {selectedKeys.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b bg-active-blue text-sm flex-wrap">
-          <span className="font-medium">
-            {selectedKeys.length} {t('selected')}
-          </span>
-          {hasDrafts && (
-            <Button size="small" onClick={approveSelected}>
-              {t('Approve')}
-            </Button>
-          )}
-          {hasActive && (
-            <Button size="small" onClick={pauseSelected}>
-              {t('Pause')}
-            </Button>
-          )}
-          {hasPaused && (
-            <Button size="small" onClick={resumeSelected}>
-              {t('Resume')}
-            </Button>
-          )}
-          <Button size="small" danger onClick={deleteSelected}>
-            {t('Delete')}
-          </Button>
-          <Button
-            size="small"
-            type="text"
-            onClick={() => setSelectedKeys([])}
-          >
-            {t('Clear')}
-          </Button>
-        </div>
-      )}
 
       <Table<TestCase>
         className="kai-table"

@@ -1,9 +1,23 @@
-import { Tag } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { TFunction } from 'i18next';
-import { LucideIcon, Monitor, Smartphone, Tablet } from 'lucide-react';
+import {
+  CheckCircle2,
+  Loader,
+  LucideIcon,
+  Monitor,
+  Smartphone,
+  Tablet,
+  XCircle,
+} from 'lucide-react';
 import React from 'react';
 
-import { Resolution, Schedule, ScheduleFreq, TestLifecycle } from './types';
+import {
+  Resolution,
+  RunStatus,
+  Schedule,
+  ScheduleFreq,
+  TestLifecycle,
+} from './types';
 
 export const RESOLUTION_OPTIONS: { value: Resolution; label: string }[] = [
   { value: 'desktop', label: 'Desktop' },
@@ -73,6 +87,79 @@ export const getStatusTag = (
     >
       {cfg.label}
     </Tag>
+  );
+};
+
+// Run result chip — a filled <Tag> in the same brand-tint style as getStatusTag (the
+// tests' Status column), plus a leading icon so the outcome reads without relying on
+// colour alone. Keeps the two tables' status language identical.
+export const getRunResult = (
+  status: RunStatus,
+  t: TFunction,
+  className?: string,
+) => {
+  const cfg =
+    status === 'running'
+      ? {
+          label: t('Running'),
+          background: 'rgba(97, 95, 255, 0.12)', // indigo tint
+          color: 'var(--color-indigo)',
+          Icon: Loader,
+          spin: true,
+        }
+      : status === 'failed'
+        ? {
+            label: t('Failed'),
+            background: 'rgba(204, 0, 0, 0.1)', // brand red tint
+            color: 'var(--color-red)',
+            Icon: XCircle,
+          }
+        : {
+            label: t('Passed'),
+            background: 'rgba(66, 174, 94, 0.12)', // brand green tint
+            color: 'var(--color-green-dark)',
+            Icon: CheckCircle2,
+          };
+  const { Icon } = cfg;
+  return (
+    <Tag
+      variant="filled"
+      className={className}
+      style={{ background: cfg.background, color: cfg.color, border: 'none' }}
+    >
+      <span className="inline-flex items-center gap-1">
+        <Icon size={12} className={cfg.spin ? 'animate-spin' : ''} />
+        {cfg.label}
+      </span>
+    </Tag>
+  );
+};
+
+// Compact tag chips for a table cell: first 2 shown, the rest folded into a +N hint.
+export const RowTags = ({ tags }: { tags?: string[] }) => {
+  if (!tags || tags.length === 0)
+    return <span className="text-disabled-text">—</span>;
+  const shown = tags.slice(0, 2);
+  const rest = tags.slice(2);
+  return (
+    <div className="flex items-center gap-1 overflow-hidden">
+      {shown.map((tag) => (
+        <span
+          key={tag}
+          className="text-xs px-2 py-0.5 rounded border whitespace-nowrap bg-gray-lightest text-gray-dark"
+          style={{ borderColor: 'var(--color-gray-light)' }}
+        >
+          {tag}
+        </span>
+      ))}
+      {rest.length > 0 && (
+        <Tooltip title={rest.join(', ')}>
+          <span className="text-xs text-gray-medium shrink-0 cursor-default">
+            +{rest.length}
+          </span>
+        </Tooltip>
+      )}
+    </div>
   );
 };
 

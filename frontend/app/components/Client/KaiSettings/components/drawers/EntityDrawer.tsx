@@ -1,6 +1,14 @@
-import { Drawer, Select } from 'antd';
-import { FlaskConical, LucideIcon, Play, Sparkles } from 'lucide-react';
-import React from 'react';
+import { Drawer } from 'antd';
+import {
+  FlaskConical,
+  LucideIcon,
+  Play,
+  Plus,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // The three things a user can open from the tables. They share one shell so they read
 // as the same family of objects; each owns a distinct accent + icon + word so you can
@@ -20,7 +28,7 @@ export const TYPE_META: Record<EntityType, TypeMeta> = {
   // gray — an AI proposal from the agent, not yet real
   draft: {
     label: 'Draft',
-    eyebrow: 'Draft · auto-generated',
+    eyebrow: 'Draft',
     Icon: Sparkles,
     square: 'bg-gray-lightest text-gray-dark',
     accentText: 'text-gray-dark',
@@ -182,7 +190,9 @@ export function TagChips({ tags }: { tags?: string[] }) {
   );
 }
 
-/** Up to 3 tags per test (Mehdi). */
+/** Up to 3 tags per test (Mehdi). Chips match the table's RowTags exactly; each has a
+ *  remove ×, plus a dashed "Add" chip that turns into an inline input. A plain chip row
+ *  (not an antd tags-Select) so the height doesn't jump while editing. */
 export function TagEditor({
   value = [],
   onChange,
@@ -190,16 +200,68 @@ export function TagEditor({
   value?: string[];
   onChange: (tags: string[]) => void;
 }) {
+  const { t } = useTranslation();
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState('');
+  const canAdd = value.length < 3;
+
+  const commit = () => {
+    const v = draft.trim();
+    if (v && !value.includes(v) && value.length < 3) onChange([...value, v]);
+    setDraft('');
+    setAdding(false);
+  };
+
+  const chip =
+    'inline-flex items-center text-xs rounded border bg-gray-lightest text-gray-dark';
   return (
-    <Select
-      mode="tags"
-      size="small"
-      value={value}
-      onChange={(v: string[]) => onChange(v.slice(0, 3))}
-      style={{ width: '100%' }}
-      placeholder="Add up to 3 tags"
-      maxTagCount={3}
-      tokenSeparators={[',']}
-    />
+    <div className="flex flex-wrap items-center gap-1.5">
+      {value.map((tag) => (
+        <span
+          key={tag}
+          className={`${chip} pl-2 pr-1 py-0.5`}
+          style={{ borderColor: 'var(--color-gray-light)' }}
+        >
+          {tag}
+          <button
+            type="button"
+            aria-label={t('Remove tag')}
+            onClick={() => onChange(value.filter((x) => x !== tag))}
+            className="ml-1 text-disabled-text hover:text-gray-dark"
+          >
+            <X size={11} />
+          </button>
+        </span>
+      ))}
+
+      {canAdd &&
+        (adding ? (
+          <input
+            autoFocus
+            value={draft}
+            placeholder={t('Tag')}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit();
+              if (e.key === 'Escape') {
+                setDraft('');
+                setAdding(false);
+              }
+            }}
+            className="text-xs px-2 py-0.5 rounded border outline-none w-24"
+            style={{ borderColor: 'var(--color-gray-light)' }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className={`${chip} gap-1 px-2 py-0.5 border-dashed text-disabled-text hover:text-gray-dark`}
+            style={{ borderColor: 'var(--color-gray-light)' }}
+          >
+            <Plus size={11} /> {t('Add')}
+          </button>
+        ))}
+    </div>
   );
 }
