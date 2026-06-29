@@ -102,6 +102,12 @@ type HTTP struct {
 	JWTExpiration           time.Duration `env:"JWT_EXPIRATION,default=3600s"`
 	JWTIssuer               string        `env:"JWT_ISSUER,default=openreplay"`
 	FileSizeLimit           int64         `env:"FILE_SIZE_LIMIT,default=10000000"`
+	MCP                     MCPConfig
+}
+
+type MCPConfig struct {
+	Secret    string `env:"JWT_MCP_SECRET"`
+	Algorithm string `env:"JWT_MCP_ALGORITHM,default=HS256"`
 }
 
 type RateLimiter struct {

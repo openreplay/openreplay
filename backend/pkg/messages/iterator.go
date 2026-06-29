@@ -27,14 +27,16 @@ type messageIteratorImpl struct {
 	messageInfo *message
 	batchInfo   *BatchInfo
 	urls        *pageLocations
+	brokenStats *brokenBatches
 }
 
 func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
 	iter := &messageIteratorImpl{
-		log:        log,
-		handler:    messageHandler,
-		autoDecode: autoDecode,
-		urls:       NewPageLocations(),
+		log:         log,
+		handler:     messageHandler,
+		autoDecode:  autoDecode,
+		urls:        NewPageLocations(),
+		brokenStats: NewBrokenBatches(),
 	}
 	if len(messageFilter) != 0 {
 		filter := make(map[int]struct{}, len(messageFilter))
@@ -62,12 +64,9 @@ func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
 func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.sessionID)
 
-	// Create new message reader
 	reader := NewMessageReader(batchData)
-
-	// Pre-decode batch data
 	if err := reader.Parse(); err != nil {
-		i.log.Error(ctx, "pre-decode batch err: %s, info: %s", err, batchInfo.Info())
+		i.brokenStats.Inc(batchInfo.sessionID, err.Error())
 		return
 	}
 
@@ -83,12 +82,13 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 
 		// Preprocess "system" messages
 		if _, ok := i.preFilter[msg.TypeID()]; ok {
-			msg = msg.Decode()
-			if msg == nil {
-				i.log.Error(ctx, "decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
+			decoded := msg.Decode()
+			if decoded == nil {
+				i.log.Error(ctx, "decode error, type: %d, reason: %s, info: %s",
+					msgType, decodeFailReason(msg), i.batchInfo.Info())
 				return
 			}
-			msg = transformDeprecated(msg)
+			msg = transformDeprecated(decoded)
 			if err := i.preprocessing(msg); err != nil {
 				i.log.Error(ctx, "message preprocessing err: %s", err)
 				return
@@ -103,11 +103,13 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		}
 
 		if i.autoDecode {
-			msg = msg.Decode()
-			if msg == nil {
-				i.log.Error(ctx, "decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
+			decoded := msg.Decode()
+			if decoded == nil {
+				i.log.Error(ctx, "decode error, type: %d, reason: %s, info: %s",
+					msgType, decodeFailReason(msg), i.batchInfo.Info())
 				return
 			}
+			msg = decoded
 		}
 
 		// Set meta information for message
@@ -175,6 +177,12 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 		// Delete session from urls cache layer
 		i.urls.Delete(i.messageInfo.batch.sessionID)
+		// Report and clear broken-batch stats accumulated for this session.
+		if count, firstErr, ok := i.brokenStats.Pop(i.messageInfo.batch.sessionID); ok {
+			ctx := context.WithValue(context.Background(), "sessionID", i.messageInfo.batch.sessionID)
+			i.log.Warn(ctx, "session %d ended with %d broken batch(es), first error: %s, info: %s",
+				i.messageInfo.batch.sessionID, count, firstErr, i.messageInfo.batch.Info())
+		}
 
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
@@ -193,6 +201,13 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 	}
 	return nil
+}
+
+func decodeFailReason(msg Message) string {
+	if rm, ok := msg.(*RawMessage); ok && rm.decodeErr != nil {
+		return rm.decodeErr.Error()
+	}
+	return "unknown"
 }
 
 func MessageHasSize(msgType uint64) bool {

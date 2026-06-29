@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+type Offsets map[string]map[int32]int64
+
 type RebalanceType int
 
 const (
