@@ -85,7 +85,6 @@ type connectorImpl struct {
 	batches        map[string]Batch
 	pending        qtypes.Offsets
 	needToFlush    bool
-	sizeFlushed    bool
 	committer      OffsetCommitter
 	seq            uint64 // last assigned task seq
 	workerTask     chan *task
@@ -192,9 +191,6 @@ func (c *connectorImpl) OnBatchEnd(topic string, partition int32, offset int64) 
 			break
 		}
 	}
-	if full {
-		c.sizeFlushed = true
-	}
 	c.mu.Unlock()
 	if full {
 		c.flush()
@@ -202,13 +198,6 @@ func (c *connectorImpl) OnBatchEnd(topic string, partition int32, offset int64) 
 }
 
 func (c *connectorImpl) Commit() error {
-	c.mu.Lock()
-	skip := c.sizeFlushed
-	c.sizeFlushed = false
-	c.mu.Unlock()
-	if skip {
-		return nil
-	}
 	c.flush()
 	return nil
 }
@@ -255,6 +244,9 @@ func copyOffsets(src qtypes.Offsets) qtypes.Offsets {
 func (c *connectorImpl) Stop() error {
 	var err error
 	c.stopOnce.Do(func() {
+		// Flush whatever is still buffered while the workers are alive so the
+		// final task is sent and its offsets committed before we tear down.
+		c.flush()
 		close(c.quit)
 		c.workersWg.Wait()
 		c.commits.mu.Lock()

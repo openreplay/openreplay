@@ -194,7 +194,9 @@ func (b *bufferedStore) Get(sessionID uint64) ([]string, error) {
 	res, err := b.backing.Get(sessionID)
 	if flushed {
 		b.mu.Lock()
-		delete(b.sessions, sessionID)
+		if s2 := b.sessions[sessionID]; s2 != nil && len(s2.pending) == 0 {
+			delete(b.sessions, sessionID)
+		}
 		b.mu.Unlock()
 	}
 	return res, err
