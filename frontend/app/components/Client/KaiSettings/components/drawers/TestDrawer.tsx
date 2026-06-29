@@ -1,4 +1,4 @@
-import { Button, Popconfirm, Tooltip, message } from 'antd';
+import { Button, Popconfirm, message } from 'antd';
 import { Pause, Play, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,9 +24,9 @@ function TestDrawer({ test, open, onClose, onChange, onRemove }: Props) {
 
   const paused = test.status === 'paused';
   const settings: RunSettings = {
-    envName: test.envName,
-    resolution: test.resolution,
-    region: test.region,
+    envNames: test.envNames,
+    resolutions: test.resolutions,
+    regions: test.regions,
     schedule: test.schedule,
   };
 
@@ -70,24 +70,20 @@ function TestDrawer({ test, open, onClose, onChange, onRemove }: Props) {
           >
             {paused ? t('Resume') : t('Pause')}
           </Button>
-          <Popconfirm
-            title={t('Delete this test?')}
-            okText={t('Delete')}
-            okButtonProps={{ danger: true }}
-            cancelText={t('Cancel')}
-            onConfirm={remove}
-          >
-            <Tooltip title={t('Delete')}>
-              <Button
-                type="text"
-                size="small"
-                danger
-                aria-label={t('Delete')}
-                icon={<Trash2 size={15} />}
-              />
-            </Tooltip>
-          </Popconfirm>
         </div>
+      }
+      footer={
+        <Popconfirm
+          title={t('Delete this test?')}
+          okText={t('Delete')}
+          okButtonProps={{ danger: true }}
+          cancelText={t('Cancel')}
+          onConfirm={remove}
+        >
+          <Button type="text" danger icon={<Trash2 size={15} />}>
+            {t('Delete test')}
+          </Button>
+        </Popconfirm>
       }
     >
       <EditableSteps

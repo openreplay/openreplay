@@ -64,10 +64,12 @@ export interface TestCase {
   status: TestLifecycle;
   // an unreviewed draft the user hasn't opened yet — drives the "new" dot in the table
   isNew?: boolean;
-  envName?: string;
+  // a test can target a matrix of environments / resolutions / regions; each run
+  // (RunData) is one concrete combination from that matrix.
+  envNames?: string[];
+  resolutions?: Resolution[];
+  regions?: string[];
   schedule?: Schedule | null;
-  resolution?: Resolution;
-  region?: string;
   tags?: string[]; // up to 3
   alternatives?: TestAlternative[];
   // status snapshot for active/paused tests — drives the table and health summary

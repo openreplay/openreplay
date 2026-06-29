@@ -27,11 +27,11 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
 
   if (!draft) return null;
 
-  const isProd = draft.envName === 'Production';
+  const isProd = (draft.envNames ?? []).includes('Production');
   const settings: RunSettings = {
-    envName: draft.envName,
-    resolution: draft.resolution,
-    region: draft.region,
+    envNames: draft.envNames,
+    resolutions: draft.resolutions,
+    regions: draft.regions,
     schedule: draft.schedule,
   };
   const patch = (p: Partial<TestCase>) =>
@@ -52,7 +52,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
 
   const approveBtn = isProd ? (
     <Popconfirm
-      title={`${t('Run against')} ${draft.envName}?`}
+      title={t('Run against Production?')}
       description={t('This test will run against Production on a schedule.')}
       okText={t('Approve & schedule')}
       cancelText={t('Cancel')}

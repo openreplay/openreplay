@@ -66,8 +66,8 @@ function TestsTab() {
   const pausedCount = tests.filter((tc) => tc.status === 'paused').length;
 
   const envNames = Array.from(
-    new Set(tests.map((tc) => tc.envName).filter(Boolean)),
-  ) as string[];
+    new Set(tests.flatMap((tc) => tc.envNames ?? [])),
+  ).sort();
   const allTags = Array.from(
     new Set(tests.flatMap((tc) => tc.tags ?? [])),
   ).sort();
@@ -79,7 +79,8 @@ function TestsTab() {
         tc.title.toLowerCase().includes(query.toLowerCase()),
       );
     if (statusTab !== 'all') arr = arr.filter((tc) => tc.status === statusTab);
-    if (envFilter !== 'all') arr = arr.filter((tc) => tc.envName === envFilter);
+    if (envFilter !== 'all')
+      arr = arr.filter((tc) => (tc.envNames ?? []).includes(envFilter));
     if (tagFilter !== 'all')
       arr = arr.filter((tc) => (tc.tags ?? []).includes(tagFilter));
     // drafts float to the top by default; column sort overrides this on click
@@ -217,16 +218,28 @@ function TestsTab() {
     },
     {
       title: t('Environment'),
-      dataIndex: 'envName',
-      width: 140,
-      sorter: (a, b) => (a.envName ?? '').localeCompare(b.envName ?? ''),
+      dataIndex: 'envNames',
+      width: 150,
+      sorter: (a, b) =>
+        (a.envNames?.[0] ?? '').localeCompare(b.envNames?.[0] ?? ''),
       showSorterTooltip: false,
-      render: (env?: string) =>
-        env ? (
-          <span className="text-gray-dark">{env}</span>
-        ) : (
-          <span className="text-disabled-text italic">{t('Not set')}</span>
-        ),
+      render: (envNames?: string[]) => {
+        if (!envNames || envNames.length === 0)
+          return (
+            <span className="text-disabled-text italic">{t('Not set')}</span>
+          );
+        const [first, ...rest] = envNames;
+        return (
+          <Tooltip title={envNames.join(', ')}>
+            <span className="text-gray-dark">
+              {first}
+              {rest.length > 0 && (
+                <span className="text-gray-medium"> +{rest.length}</span>
+              )}
+            </span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: t('Schedule'),
@@ -238,12 +251,14 @@ function TestsTab() {
       render: (_: unknown, tc) =>
         tc.status === 'draft' ? (
           <span className="text-disabled-text">—</span>
+        ) : !isScheduled(tc.schedule) ? (
+          <span className="text-disabled-text italic">
+            {t('Not scheduled')}
+          </span>
         ) : (
           <Tooltip title={scheduleLabel(tc.schedule)}>
             <span className="flex items-center gap-1.5 text-gray-dark">
-              {isScheduled(tc.schedule) && (
-                <Calendar size={13} className="shrink-0 text-gray-medium" />
-              )}
+              <Calendar size={13} className="shrink-0 text-gray-medium" />
               <span className="truncate">{scheduleShort(tc.schedule)}</span>
             </span>
           </Tooltip>
@@ -398,7 +413,11 @@ function TestsTab() {
         rowKey="key"
         columns={columns}
         dataSource={visible}
-        pagination={false}
+        pagination={{
+          pageSize: 20,
+          hideOnSinglePage: true,
+          showSizeChanger: false,
+        }}
         rowSelection={{
           selectedRowKeys: selectedKeys,
           onChange: setSelectedKeys,

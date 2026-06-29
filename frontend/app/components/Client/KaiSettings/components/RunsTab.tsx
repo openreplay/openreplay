@@ -1,6 +1,5 @@
 import {
   Button,
-  Dropdown,
   Input,
   Segmented,
   Select,
@@ -9,7 +8,7 @@ import {
   message,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { EllipsisVertical, RotateCw } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,6 +19,8 @@ import './kai-table.css';
 import { MOCK_RUNS } from './shared/mockData';
 import { RunData, RunStatus } from './shared/types';
 import {
+  REGION_OPTIONS,
+  RESOLUTION_OPTIONS,
   RowTags,
   formatDuration,
   getRunResult,
@@ -64,6 +65,8 @@ function RunsTab() {
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
+  const [resFilter, setResFilter] = useState('all');
+  const [regionFilter, setRegionFilter] = useState('all');
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const openRun = MOCK_RUNS.find((r) => r.key === openKey) ?? null;
@@ -82,19 +85,15 @@ function RunsTab() {
     if (envFilter !== 'all') arr = arr.filter((r) => r.envName === envFilter);
     if (tagFilter !== 'all')
       arr = arr.filter((r) => (r.tags ?? []).includes(tagFilter));
+    if (resFilter !== 'all')
+      arr = arr.filter((r) => (r.resolution ?? 'desktop') === resFilter);
+    if (regionFilter !== 'all')
+      arr = arr.filter((r) => r.region === regionFilter);
     return arr;
-  }, [query, statusTab, envFilter, tagFilter]);
+  }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter]);
 
   const rerun = (run: RunData) =>
     message.success(`${run.testName} — ${t('rerun started, see Runs')}`);
-
-  const rowMenu = (run: RunData) => ({
-    items: [{ key: 'open', label: t('View run') }],
-    onClick: ({ key, domEvent }: { key: string; domEvent: any }) => {
-      domEvent.stopPropagation();
-      if (key === 'open') setOpenKey(run.key);
-    },
-  });
 
   const faded = (n: number) => (
     <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
@@ -206,37 +205,22 @@ function RunsTab() {
     {
       title: '',
       dataIndex: 'actions',
-      width: 116,
+      width: 64,
       align: 'right',
-      render: (_: unknown, run) => (
-        <div className="flex items-center justify-end">
-          {run.status !== 'running' && (
-            <Tooltip title={t('Rerun')}>
-              <Button
-                type="text"
-                icon={<RotateCw size={16} />}
-                aria-label={t('Rerun')}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  rerun(run);
-                }}
-              />
-            </Tooltip>
-          )}
-          <Dropdown
-            trigger={['click']}
-            placement="bottomRight"
-            menu={rowMenu(run)}
-          >
+      render: (_: unknown, run) =>
+        run.status === 'running' ? null : (
+          <Tooltip title={t('Rerun')}>
             <Button
               type="text"
-              icon={<EllipsisVertical size={16} />}
-              aria-label={t('Actions')}
-              onClick={(e) => e.stopPropagation()}
+              icon={<RotateCw size={16} />}
+              aria-label={t('Rerun')}
+              onClick={(e) => {
+                e.stopPropagation();
+                rerun(run);
+              }}
             />
-          </Dropdown>
-        </div>
-      ),
+          </Tooltip>
+        ),
     },
   ];
 
@@ -279,6 +263,32 @@ function RunsTab() {
               ...TAG_NAMES.map((tag) => ({ value: tag, label: tag })),
             ]}
           />
+          <Select
+            size="small"
+            value={resFilter}
+            onChange={setResFilter}
+            style={{ width: 140 }}
+            options={[
+              { value: 'all', label: t('All resolutions') },
+              ...RESOLUTION_OPTIONS.map((o) => ({
+                value: o.value,
+                label: t(o.label),
+              })),
+            ]}
+          />
+          <Select
+            size="small"
+            value={regionFilter}
+            onChange={setRegionFilter}
+            style={{ width: 140 }}
+            options={[
+              { value: 'all', label: t('All regions') },
+              ...REGION_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+              })),
+            ]}
+          />
         </div>
       </div>
 
@@ -287,12 +297,16 @@ function RunsTab() {
         rowKey="key"
         columns={columns}
         dataSource={visible}
-        pagination={false}
+        pagination={{
+          pageSize: 20,
+          hideOnSinglePage: true,
+          showSizeChanger: false,
+        }}
         rowClassName="cursor-pointer"
         onRow={(run) => ({
           onClick: (e) => {
             const el = e.target as HTMLElement;
-            if (el.closest('button') || el.closest('.ant-dropdown')) return;
+            if (el.closest('button')) return;
             setOpenKey(run.key);
           },
         })}

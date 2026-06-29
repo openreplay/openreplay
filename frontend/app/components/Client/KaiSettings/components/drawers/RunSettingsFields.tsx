@@ -20,9 +20,9 @@ const ENV_OPTIONS = MOCK_ENVIRONMENTS.map((env) => ({
 }));
 
 export interface RunSettings {
-  envName?: string;
-  resolution?: Resolution;
-  region?: string;
+  envNames?: string[];
+  resolutions?: Resolution[];
+  regions?: string[];
   schedule?: Schedule | null;
 }
 
@@ -32,30 +32,44 @@ interface Props {
 }
 
 /** Shared environment / resolution / region / schedule editor used by Draft + Test.
- *  Environment · Resolution · Region share one row; schedule sits below it. */
+ *  Environment · Resolution · Region are multi-select (a test runs across the matrix);
+ *  they share one row and the schedule sits below it. */
 function RunSettingsFields({ value, onChange }: Props) {
   const { t } = useTranslation();
+
+  // narrow cells can't show chips nicely → collapse the box to a clean "N selected".
+  const summary = (omitted: { label: React.ReactNode; value: any }[]) =>
+    `${omitted.length} ${t('selected')}`;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-3 gap-3">
-        <Field label={t('Environment')}>
+        <Field label={t('Environments')}>
           <Select
+            mode="multiple"
             size="small"
-            value={value.envName}
+            showSearch={false}
+            value={value.envNames}
             options={ENV_OPTIONS}
             style={{ width: '100%' }}
-            placeholder={t('Select')}
-            onChange={(envName) => onChange({ envName })}
+            placeholder={t('Any')}
+            maxTagCount={0}
+            maxTagPlaceholder={summary}
+            onChange={(envNames) => onChange({ envNames })}
           />
         </Field>
 
-        <Field label={t('Resolution')}>
+        <Field label={t('Resolutions')}>
           <Select
+            mode="multiple"
             size="small"
-            value={value.resolution ?? 'desktop'}
+            showSearch={false}
+            value={value.resolutions}
             style={{ width: '100%' }}
-            onChange={(v) => onChange({ resolution: v as Resolution })}
+            placeholder={t('Any')}
+            maxTagCount={0}
+            maxTagPlaceholder={summary}
+            onChange={(v) => onChange({ resolutions: v as Resolution[] })}
             options={RESOLUTION_OPTIONS.map((o) => {
               const Icon = RESOLUTION_ICON[o.value];
               return {
@@ -71,12 +85,17 @@ function RunSettingsFields({ value, onChange }: Props) {
           />
         </Field>
 
-        <Field label={t('Region')}>
+        <Field label={t('Regions')}>
           <Select
+            mode="multiple"
             size="small"
-            value={value.region ?? 'paris'}
+            showSearch={false}
+            value={value.regions}
             style={{ width: '100%' }}
-            onChange={(region) => onChange({ region })}
+            placeholder={t('Any')}
+            maxTagCount={0}
+            maxTagPlaceholder={summary}
+            onChange={(regions) => onChange({ regions })}
             options={REGION_OPTIONS.map((o) => ({
               value: o.value,
               label: (
