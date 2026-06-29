@@ -179,10 +179,9 @@ func (b *bufferedStore) Get(sessionID uint64) ([]string, error) {
 	}
 	b.mu.Unlock()
 
-	flushed := true
+	var writeErr error
 	if len(all) > 0 {
-		if err := b.backing.addMany(map[uint64][]string{sessionID: all}); err != nil {
-			flushed = false
+		if writeErr = b.backing.addMany(map[uint64][]string{sessionID: all}); writeErr != nil {
 			b.mu.Lock()
 			if s2 := b.sessions[sessionID]; s2 != nil {
 				s2.pending = append(s2.pending, all...)
@@ -191,15 +190,41 @@ func (b *bufferedStore) Get(sessionID uint64) ([]string, error) {
 		}
 	}
 
-	res, err := b.backing.Get(sessionID)
-	if flushed {
+	res, readErr := b.backing.Get(sessionID)
+	if writeErr != nil || readErr != nil {
+		res = mergeUnique(res, all)
+	} else {
 		b.mu.Lock()
 		if s2 := b.sessions[sessionID]; s2 != nil && len(s2.pending) == 0 {
 			delete(b.sessions, sessionID)
 		}
 		b.mu.Unlock()
 	}
-	return res, err
+	if writeErr != nil {
+		return res, writeErr
+	}
+	return res, readErr
+}
+
+func mergeUnique(a, b []string) []string {
+	if len(b) == 0 {
+		return a
+	}
+	seen := make(map[string]struct{}, len(a)+len(b))
+	out := make([]string, 0, len(a)+len(b))
+	for _, v := range a {
+		if _, ok := seen[v]; !ok {
+			seen[v] = struct{}{}
+			out = append(out, v)
+		}
+	}
+	for _, v := range b {
+		if _, ok := seen[v]; !ok {
+			seen[v] = struct{}{}
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 func (b *bufferedStore) loop(gcInterval time.Duration) {
