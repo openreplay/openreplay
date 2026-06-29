@@ -9,6 +9,13 @@ import (
 	"openreplay/backend/pkg/math"
 )
 
+const MCPAudience = "mcp:OpenReplay"
+
+type MCPConfig struct {
+	Secret    string
+	Algorithm string
+}
+
 type JWTClaims struct {
 	UserId   int `json:"userId"`
 	TenantID int `json:"tenantId"`
@@ -23,6 +30,7 @@ type User struct {
 	JwtIat         int             `json:"jwtIat"`
 	Permissions    map[string]bool `json:"permissions"`
 	ServiceAccount bool            `json:"serviceAccount"`
+	IsEnterprise   bool            `json:"isEnterprise"`
 	AuthMethod     string
 }
 
@@ -52,27 +60,69 @@ type Users interface {
 
 type usersImpl struct {
 	conn pool.Pool
+	mcp  MCPConfig
 }
 
-func New(pgconn pool.Pool) Users {
-	return &usersImpl{conn: pgconn}
+func New(pgconn pool.Pool, mcp MCPConfig) Users {
+	return &usersImpl{conn: pgconn, mcp: mcp}
 }
 
-func parseJWT(tokenString, secret string) (*JWTClaims, error) {
+func peekAudience(tokenString string) string {
+	parser := jwt.NewParser()
+	var claims jwt.MapClaims
+	if _, _, err := parser.ParseUnverified(tokenString, &claims); err != nil {
+		return ""
+	}
+	switch v := claims["aud"].(type) {
+	case string:
+		return v
+	case []interface{}:
+		if len(v) > 0 {
+			if s, ok := v[0].(string); ok {
+				return s
+			}
+		}
+	}
+	return ""
+}
+
+func parseJWT(tokenString, secret string, allowedMethods []string, audience string) (*JWTClaims, error) {
 	claims := &JWTClaims{}
+	opts := []jwt.ParserOption{jwt.WithValidMethods(allowedMethods)}
+	if audience != "" {
+		opts = append(opts, jwt.WithAudience(audience))
+	}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(secret), nil
-		})
-	if err != nil || !token.Valid {
-		fmt.Printf("token err: %v\n", err)
+		}, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("invalid token: %w", err)
+	}
+	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
 	return claims, nil
 }
 
 func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, error) {
-	jwtInfo, err := parseJWT(authHeader, secret)
+	isMCP := peekAudience(authHeader) == MCPAudience
+
+	useSecret := secret
+	allowedAlg := []string{"HS256", "HS384", "HS512"}
+	audience := ""
+	if isMCP {
+		if u.mcp.Secret == "" {
+			return nil, fmt.Errorf("MCP authentication is not configured")
+		}
+		useSecret = u.mcp.Secret
+		if u.mcp.Algorithm != "" {
+			allowedAlg = []string{u.mcp.Algorithm}
+		}
+		audience = MCPAudience
+	}
+
+	jwtInfo, err := parseJWT(authHeader, useSecret, allowedAlg, audience)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +130,10 @@ func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, 
 	if err != nil {
 		return nil, err
 	}
-	if !dbUser.ServiceAccount && (dbUser.JwtIat == 0 || math.Abs(int(jwtInfo.IssuedAt.Unix())-dbUser.JwtIat) > 1) {
+	// MCP tokens carry their own lifetime via exp/aud — skip the
+	// users.jwt_iat-vs-token.iat tracking used for UI sessions.
+	if !isMCP && !dbUser.ServiceAccount &&
+		(dbUser.JwtIat == 0 || math.Abs(int(jwtInfo.IssuedAt.Unix())-dbUser.JwtIat) > 1) {
 		return nil, fmt.Errorf("token has been updated")
 	}
 	return dbUser, nil

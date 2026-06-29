@@ -37,6 +37,53 @@ type consumerImpl struct {
 	lastOffset        map[string]map[int32]kafka.Offset
 	stopChan          chan struct{}
 	mutex             sync.RWMutex
+	processedHook     func(topic string, partition int32, offset int64)
+}
+
+func (c *consumerImpl) SetProcessedHook(fn func(topic string, partition int32, offset int64)) {
+	c.processedHook = fn
+}
+
+func (c *consumerImpl) CommitOffsets(offsets types.Offsets) error {
+	assigned, err := c.consumer.Assignment()
+	if err != nil {
+		return err
+	}
+	owned := make(map[string]map[int32]bool, len(assigned))
+	for _, tp := range assigned {
+		if tp.Topic == nil {
+			continue
+		}
+		if owned[*tp.Topic] == nil {
+			owned[*tp.Topic] = make(map[int32]bool)
+		}
+		owned[*tp.Topic][tp.Partition] = true
+	}
+
+	var tps []kafka.TopicPartition
+	for topic, parts := range offsets {
+		t := topic
+		for p, off := range parts {
+			if !owned[t][p] {
+				continue
+			}
+			tps = append(tps, kafka.TopicPartition{
+				Topic:     &t,
+				Partition: p,
+				Offset:    kafka.Offset(off + 1),
+			})
+		}
+	}
+	if len(tps) == 0 {
+		return nil
+	}
+	if _, err := c.consumer.CommitOffsets(tps); err != nil {
+		var ke kafka.Error
+		if errors.As(err, &ke) && ke.Code() != kafka.ErrNoOffset {
+			return err
+		}
+	}
+	return nil
 }
 
 func NewConsumer(
@@ -57,6 +104,8 @@ func NewConsumer(
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
 		"max.partition.fetch.bytes":       messageSizeLimit,
+		"queued.max.messages.kbytes":      65536, // 64 MiB prefetch cap (= librdkafka default)
+		"queued.min.messages":             50000, // prefetch target (librdkafka default 100000 per partition)
 		"go.logs.channel.enable":          true,
 	}
 
@@ -306,6 +355,9 @@ func (c *consumerImpl) ConsumeNext() error {
 				e.Timestamp.UnixMilli(),
 			),
 		)
+		if c.processedHook != nil {
+			c.processedHook(*e.TopicPartition.Topic, int32(e.TopicPartition.Partition), int64(e.TopicPartition.Offset))
+		}
 		c.shouldPause(e.TopicPartition)
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {
@@ -375,12 +427,12 @@ func (c *consumerImpl) shouldPause(p kafka.TopicPartition) {
 	cur := p.Offset
 	if cur >= stop {
 		if err := c.Commit(); err != nil { // TODO: commit on the specific partition
-			c.log.Info(context.Background(), "consumer.shouldPause() commit error: %v", err)
+			c.log.Warn(context.Background(), "consumer.shouldPause() commit error: %v", err)
 		}
 		if err := c.consumer.Pause([]kafka.TopicPartition{p}); err != nil {
-			c.log.Info(context.Background(), "consumer.shouldPause() pause error: %v", err)
+			c.log.Debug(context.Background(), "consumer.shouldPause() pause error: %v", err)
 		} else {
-			c.log.Info(context.Background(), "consumer.shouldPause() paused %s[%d] at offset %d (stopAt %d)",
+			c.log.Debug(context.Background(), "consumer.shouldPause() paused %s[%d] at offset %d (stopAt %d)",
 				topic, part, cur, stop)
 		}
 	}

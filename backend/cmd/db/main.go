@@ -61,19 +61,19 @@ func main() {
 		return redisConn.Ping(ctx)
 	})
 
-	issuesManager, err := issues.New(log, redisConn)
+	issuesManager, err := issues.New(log, redisConn, cfg.IssuesFlushInterval)
 	if err != nil {
 		log.Fatal(ctx, "can't init issues keeper: %s", err)
 	}
 
-	chConnector, err := clickhouse.NewConnector(chConn, dbMetric)
+	chConnector, err := clickhouse.NewConnector(log, chConn, dbMetric, cfg.CHBatchSizeLimit, cfg.CHWorkerQueueDepth, cfg.CHSendWorkers)
 	if err != nil {
 		log.Fatal(ctx, "can't prepare clickhouse connector: %s", err)
 	}
 	defer chConnector.Stop()
 
 	projManager := projects.New(log, pgConn, redisConn, dbMetric)
-	sessManager := sessions.New(log, pgConn, projManager, redisConn, dbMetric)
+	sessManager := sessions.New(log, pgConn, projManager, redisConn, dbMetric, sessions.IgnoreInactiveProjects)
 	tagsManager := tags.New(log, pgConn)
 
 	canvases, err := canvas.New(log, pgConn, dbMetric)
@@ -117,11 +117,26 @@ func main() {
 		messages.NewMessageIterator(log, saver.Handle, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
-		nil,
+		func(t types.RebalanceType, _ []uint64) {
+			if t != types.RebalanceTypeRevoke {
+				return
+			}
+			if err := issuesManager.Flush(); err != nil {
+				log.Error(ctx, "rebalance issues flush error: %s", err)
+			}
+			sessManager.Commit()
+		},
 		types.NoReadBackGap,
 	)
 	if err != nil {
 		log.Fatal(ctx, "can't init message consumer: %s", err)
+	}
+	if oc, ok := consumer.(interface {
+		clickhouse.OffsetCommitter
+		SetProcessedHook(func(topic string, partition int32, offset int64))
+	}); ok {
+		chConnector.SetCommitter(oc)
+		oc.SetProcessedHook(chConnector.OnBatchEnd)
 	}
 	h.Register("consumer", func(ctx context.Context) error {
 		return consumer.Ping(ctx)

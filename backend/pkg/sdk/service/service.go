@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -99,6 +100,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 
 			for _, action := range sdkDataBatch.Data.UserActions {
 				ds.log.Debug(context.Background(), "userAction: %+v", action)
+				action.UserID = strings.TrimSpace(action.UserID)
 				if action.UserID == "" {
 					ds.log.Debug(context.Background(), "empty userID for session: %d", sessID)
 					continue
@@ -119,9 +121,16 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 						continue
 					}
 					user, err := ds.users.Get(sessInfo.ProjectID, action.UserID)
-					if err != nil {
+					isNew := errors.Is(err, ErrUserNotFound)
+					if err != nil && !isNew {
 						ds.log.Error(context.Background(), "can't get user: %s, userID: %s", err, action.UserID)
 						continue
+					}
+					// User hasn't been identified yet (or has been deleted);
+					// create a new one, so the property update (or event) isn't dropped.
+					if isNew {
+						ds.log.Warn(context.Background(), "user not found, creating new user from session: %d, userID: %s", sessID, action.UserID)
+						user = model.NewUser(action.UserID)
 					}
 
 					switch action.Type {
@@ -138,7 +147,11 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 							user.IncrementProperty(key, val)
 						}
 					}
-					if err = ds.users.Update(user); err != nil {
+					if isNew {
+						if err = ds.users.Create(sessInfo, user); err != nil {
+							ds.log.Error(context.Background(), "can't create user: %s, userID: %s", err, action.UserID)
+						}
+					} else if err = ds.users.Update(user); err != nil {
 						ds.log.Error(context.Background(), "can't insert user: %s", err)
 					}
 				}
@@ -341,7 +354,7 @@ func (ds *dataSaverImpl) run() {
 }
 
 func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
-	batch, err := clickhouse.NewBulk(ds.conn, nil, "updatedEvents", insertEventsQuery,
+	batch, err := clickhouse.NewBatch(ds.log, ds.conn, nil, "updatedEvents", insertEventsQuery,
 		ds.cfg.CHSendBatchSizeLimit+ds.cfg.BatchSizeLimit+1)
 	if err != nil {
 		return err
@@ -433,7 +446,7 @@ func (ds *dataSaverImpl) loadUsersBatch(ctx context.Context) error {
 	return nil
 }
 
-func (ds *dataSaverImpl) processUserEvents(ctx context.Context, batch clickhouse.Bulk, user *UserRecord) (int, error) {
+func (ds *dataSaverImpl) processUserEvents(ctx context.Context, batch clickhouse.Batch, user *UserRecord) (int, error) {
 	totalCount := 0
 	offset := 0
 
@@ -470,7 +483,7 @@ func (ds *dataSaverImpl) processUserEvents(ctx context.Context, batch clickhouse
 	return totalCount, nil
 }
 
-func addUserEvents(batch clickhouse.Bulk, rows []UserEvent, userRec *UserRecord) (int, error) {
+func addUserEvents(batch clickhouse.Batch, rows []UserEvent, userRec *UserRecord) (int, error) {
 	for i := 0; i < len(rows); i++ {
 		if err := batch.Append(
 			rows[i].SessionID,

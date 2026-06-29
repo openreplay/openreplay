@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
+	"openreplay/backend/pkg/logger"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -19,9 +21,14 @@ import (
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics/database"
+	qtypes "openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 )
+
+type OffsetCommitter interface {
+	CommitOffsets(qtypes.Offsets) error
+}
 
 type Connector interface {
 	InsertWebSession(session *sessions.Session) error
@@ -46,46 +53,97 @@ type Connector interface {
 	InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error
 	InsertMobileIssue(session *sessions.Session, msg *messages.MobileIssueEvent) error
 	Commit() error
+	OnBatchEnd(topic string, partition int32, offset int64)
+	SetCommitter(committer OffsetCommitter)
 	Stop() error
 }
 
 type task struct {
-	bulks []Bulk
+	seq   uint64
+	bulks []Batch
+	snap  qtypes.Offsets
 }
 
 func NewTask() *task {
-	return &task{bulks: make([]Bulk, 0, len(batches))}
+	return &task{bulks: make([]Batch, 0, len(batches))}
+}
+
+type commitState struct {
+	mu     sync.Mutex
+	cond   *sync.Cond
+	next   uint64
+	done   map[uint64]*task
+	closed bool
 }
 
 type connectorImpl struct {
-	conn       driver.Conn
-	metrics    database.Database
-	batches    map[string]Bulk //driver.Batch
-	workerTask chan *task
-	done       chan struct{}
-	finished   chan struct{}
+	log            logger.Logger
+	conn           driver.Conn
+	metrics        database.Database
+	mu             sync.Mutex
+	batchSizeLimit int
+	batches        map[string]Batch
+	pending        qtypes.Offsets
+	needToFlush    bool
+	committer      OffsetCommitter
+	seq            uint64 // last assigned task seq
+	workerTask     chan *task
+	inflight       chan struct{}
+	quit           chan struct{}
+	stopOnce       sync.Once
+	workersWg      sync.WaitGroup
+	commits        *commitState
+	committerWg    sync.WaitGroup
 }
 
-func NewConnector(conn driver.Conn, metrics database.Database) (Connector, error) {
+func (c *connectorImpl) appendTo(name string, args ...interface{}) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.batches[name].Append(args...)
+}
+
+func NewConnector(log logger.Logger, conn driver.Conn, metrics database.Database, batchSizeLimit, workerQueueDepth, sendWorkers int) (Connector, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("CH connection is required")
 	case metrics == nil:
 		return nil, errors.New("metrics is required")
 	}
+	if workerQueueDepth < 1 {
+		workerQueueDepth = 1
+	}
+	if sendWorkers < 1 {
+		sendWorkers = 1
+	}
+
+	cs := &commitState{
+		next: 1,
+		done: make(map[uint64]*task),
+	}
+	cs.cond = sync.NewCond(&cs.mu)
+	maxInflight := workerQueueDepth + 2*sendWorkers
 
 	c := &connectorImpl{
-		conn:       conn,
-		metrics:    metrics,
-		batches:    make(map[string]Bulk, len(batches)+1),
-		workerTask: make(chan *task, 1),
-		done:       make(chan struct{}),
-		finished:   make(chan struct{}),
+		log:            log,
+		conn:           conn,
+		metrics:        metrics,
+		batchSizeLimit: batchSizeLimit,
+		batches:        make(map[string]Batch, len(batches)+1),
+		pending:        make(qtypes.Offsets),
+		workerTask:     make(chan *task, workerQueueDepth),
+		inflight:       make(chan struct{}, maxInflight),
+		quit:           make(chan struct{}),
+		commits:        cs,
 	}
 	if err := c.prepare(); err != nil {
 		return nil, err
 	}
-	go c.worker()
+	c.workersWg.Add(sendWorkers)
+	for i := 0; i < sendWorkers; i++ {
+		go c.worker()
+	}
+	c.committerWg.Add(1)
+	go c.runCommitter()
 	return c, nil
 }
 
@@ -98,7 +156,7 @@ var batches = map[string]string{
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, c.metrics, name, query, 20000)
+	batch, err := NewBatch(c.log, c.conn, c.metrics, name, query, c.batchSizeLimit)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
@@ -115,23 +173,90 @@ func (c *connectorImpl) prepare() error {
 	return nil
 }
 
-func (c *connectorImpl) Commit() error {
-	newTask := NewTask()
+func (c *connectorImpl) SetCommitter(committer OffsetCommitter) {
+	c.committer = committer
+}
+
+func (c *connectorImpl) OnBatchEnd(topic string, partition int32, offset int64) {
+	c.mu.Lock()
+	if c.pending[topic] == nil {
+		c.pending[topic] = make(map[int32]int64)
+	}
+	c.pending[topic][partition] = offset
+	c.needToFlush = true
+	full := false
 	for _, b := range c.batches {
-		newTask.bulks = append(newTask.bulks, b)
+		if b.Len() >= c.batchSizeLimit {
+			full = true
+			break
+		}
 	}
-	c.batches = make(map[string]Bulk, len(batches)+1)
-	if err := c.prepare(); err != nil {
-		log.Printf("can't prepare new CH batch set: %s", err)
+	c.mu.Unlock()
+	if full {
+		c.flush()
 	}
-	c.workerTask <- newTask
+}
+
+func (c *connectorImpl) Commit() error {
+	c.flush()
 	return nil
 }
 
+func (c *connectorImpl) flush() {
+	c.mu.Lock()
+	if !c.needToFlush {
+		c.mu.Unlock()
+		return
+	}
+	newTask := NewTask()
+	for _, b := range c.batches {
+		b.MarkFlushed()
+		newTask.bulks = append(newTask.bulks, b)
+	}
+	c.batches = make(map[string]Batch, len(batches)+1)
+	if err := c.prepare(); err != nil {
+		log.Printf("can't prepare new CH batch set: %s", err)
+	}
+	newTask.snap = copyOffsets(c.pending)
+	c.seq++
+	newTask.seq = c.seq
+	c.needToFlush = false
+	c.mu.Unlock()
+	c.inflight <- struct{}{}
+	c.workerTask <- newTask
+}
+
+func copyOffsets(src qtypes.Offsets) qtypes.Offsets {
+	if len(src) == 0 {
+		return nil
+	}
+	out := make(qtypes.Offsets, len(src))
+	for topic, parts := range src {
+		m := make(map[int32]int64, len(parts))
+		for p, off := range parts {
+			m[p] = off
+		}
+		out[topic] = m
+	}
+	return out
+}
+
 func (c *connectorImpl) Stop() error {
-	c.done <- struct{}{}
-	<-c.finished
-	return c.conn.Close()
+	var err error
+	c.stopOnce.Do(func() {
+		// Flush whatever is still buffered while the workers are alive so the
+		// final task is sent and its offsets committed before we tear down.
+		c.flush()
+		close(c.quit)
+		c.workersWg.Wait()
+		c.commits.mu.Lock()
+		c.commits.closed = true
+		c.commits.cond.Broadcast()
+		c.commits.mu.Unlock()
+		c.committerWg.Wait()
+		err = c.conn.Close()
+	})
+	return err
 }
 
 func isCHNotEnoughSpace(err error) bool {
@@ -142,27 +267,145 @@ func isCHNotEnoughSpace(err error) bool {
 	return false
 }
 
-func (c *connectorImpl) sendBulks(t *task) {
-	for _, b := range t.bulks {
-		if err := b.Send(); err != nil {
-			if isCHNotEnoughSpace(err) {
-				log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
+var permanentDataErrorCodes = map[int32]bool{
+	6:   true, // CANNOT_PARSE_TEXT
+	26:  true, // CANNOT_PARSE_QUOTED_STRING
+	27:  true, // CANNOT_PARSE_INPUT_ASSERTION_FAILED
+	38:  true, // CANNOT_PARSE_DATE
+	41:  true, // CANNOT_PARSE_DATETIME
+	53:  true, // TYPE_MISMATCH
+	69:  true, // ARGUMENT_OUT_OF_BOUND
+	70:  true, // CANNOT_CONVERT_TYPE
+	72:  true, // CANNOT_PARSE_NUMBER
+	85:  true, // FORMAT_IS_NOT_SUITABLE_FOR_INPUT
+	117: true, // INCORRECT_DATA
+	321: true, // VALUE_IS_OUT_OF_RANGE_OF_DATA_TYPE
+}
+
+func isPermanentDataError(err error) bool {
+	var chErr *clickhouse.Exception
+	if errors.As(err, &chErr) {
+		return permanentDataErrorCodes[chErr.Code]
+	}
+	return false
+}
+
+const (
+	sendRetryBase   = 200 * time.Millisecond
+	sendRetryMax    = 5 * time.Second
+	maxSendAttempts = 10
+)
+
+func (c *connectorImpl) sendBulk(b Batch) {
+	backoff := sendRetryBase
+	for attempt := 1; ; attempt++ {
+		err := b.Send()
+		if err == nil {
+			return
+		}
+		if isCHNotEnoughSpace(err) {
+			log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
+		}
+		if isPermanentDataError(err) {
+			log.Printf("BROKEN_BATCH_DROPPED: table=%s rows=%d, unparseable data, dropping batch: %s", b.Table(), b.Len(), err)
+			return
+		}
+		if attempt >= maxSendAttempts {
+			log.Fatalf("FATAL_CH_SEND: table=%s giving up after %d attempts, restarting: %s", b.Table(), attempt, err)
+		}
+		log.Printf("can't send batch (attempt %d): %s", attempt, err)
+		time.Sleep(backoff)
+		if backoff < sendRetryMax {
+			backoff *= 2
+			if backoff > sendRetryMax {
+				backoff = sendRetryMax
 			}
-			log.Printf("can't send batch: %s", err)
 		}
 	}
 }
 
+func (c *connectorImpl) sendBulks(t *task) {
+	var wg sync.WaitGroup
+	wg.Add(len(t.bulks))
+	for _, b := range t.bulks {
+		go func(b Batch) {
+			defer wg.Done()
+			c.sendBulk(b)
+		}(b)
+	}
+	wg.Wait()
+}
+
+func (c *connectorImpl) commitOffsets(t *task) {
+	if t.snap == nil || c.committer == nil {
+		return
+	}
+	if err := c.committer.CommitOffsets(t.snap); err != nil {
+		log.Printf("can't commit offsets: %s", err)
+	}
+}
+
 func (c *connectorImpl) worker() {
+	defer c.workersWg.Done()
 	for {
 		select {
 		case t := <-c.workerTask:
 			c.sendBulks(t)
-		case <-c.done:
-			for t := range c.workerTask {
-				c.sendBulks(t)
+			c.markCompleted(t)
+		case <-c.quit:
+			// Send whatever is buffered, then stop.
+			for {
+				select {
+				case t := <-c.workerTask:
+					c.sendBulks(t)
+					c.markCompleted(t)
+				default:
+					return
+				}
 			}
-			c.finished <- struct{}{}
+		}
+	}
+}
+
+func (c *connectorImpl) markCompleted(t *task) {
+	cs := c.commits
+	cs.mu.Lock()
+	cs.done[t.seq] = t
+	cs.cond.Signal()
+	cs.mu.Unlock()
+}
+
+func (c *connectorImpl) runCommitter() {
+	defer c.committerWg.Done()
+	cs := c.commits
+	for {
+		cs.mu.Lock()
+		for cs.done[cs.next] == nil && !cs.closed {
+			cs.cond.Wait()
+		}
+		var latest *task
+		released := 0
+		for {
+			t := cs.done[cs.next]
+			if t == nil {
+				break
+			}
+			latest = t
+			delete(cs.done, cs.next)
+			cs.next++
+			released++
+		}
+		closed := cs.closed
+		drained := cs.done[cs.next] == nil
+		cs.mu.Unlock()
+
+		if latest != nil {
+			c.commitOffsets(latest)
+		}
+		for i := 0; i < released; i++ {
+			<-c.inflight
+		}
+		if closed && drained {
 			return
 		}
 	}
@@ -178,7 +421,7 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) (err error) 
 	if session.UserAnonymousID != nil && *session.UserAnonymousID == "" {
 		session.UserAnonymousID = nil
 	}
-	if err := c.batches["sessions"].Append(
+	if err := c.appendTo("sessions",
 		session.SessionID,
 		uint16(session.ProjectID),
 		session.UserID,
@@ -297,7 +540,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 		return fmt.Errorf("can't marshal input event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -352,7 +595,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -384,7 +627,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	if err := c.batches["issues"].Append(
+	if err := c.appendTo("issues",
 		uint16(session.ProjectID),
 		issueID,
 		"mouse_thrashing",
@@ -424,7 +667,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -456,7 +699,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	if err := c.batches["issues"].Append(
+	if err := c.appendTo("issues",
 		uint16(session.ProjectID),
 		issueID,
 		msg.Type,
@@ -538,7 +781,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		return fmt.Errorf("can't marshal page event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -614,7 +857,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		return fmt.Errorf("can't marshal click event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -664,7 +907,7 @@ func (c *connectorImpl) InsertWebJSException(session *sessions.Session, msg *mes
 		return fmt.Errorf("can't marshal error event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		types.GenerateUUID(msg, session.SessionID),
@@ -730,7 +973,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		return fmt.Errorf("can't marshal performance event: %s", err)
 	}
 	eventTime := datetime(timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -798,7 +1041,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		return fmt.Errorf("can't marshal request event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -854,7 +1097,7 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 	}
 
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -902,7 +1145,7 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 		return fmt.Errorf("can't marshal graphql event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -963,7 +1206,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -995,7 +1238,7 @@ func (c *connectorImpl) InsertIncident(session *sessions.Session, msg *messages.
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	if err := c.batches["issues"].Append(
+	if err := c.appendTo("issues",
 		uint16(session.ProjectID),
 		issueID,
 		fakeMsg.Type,
@@ -1015,7 +1258,7 @@ func (c *connectorImpl) InsertTagTrigger(session *sessions.Session, msg *message
 		return fmt.Errorf("can't marshal tagTriggers event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["web_events"].Append(
+	if err := c.appendTo("web_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1056,7 +1299,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 	if session.Duration == nil {
 		return errors.New("trying to insert mobile session with nil duration")
 	}
-	if err := c.batches["mobile_sessions"].Append(
+	if err := c.appendTo("mobile_sessions",
 		session.SessionID,
 		uint16(session.ProjectID),
 		session.UserID,
@@ -1108,7 +1351,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 		return fmt.Errorf("can't marshal mobile custom event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1142,7 +1385,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile clicks event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1177,7 +1420,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile swipe event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1211,7 +1454,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile input event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1257,7 +1500,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		return fmt.Errorf("can't marshal mobile request event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1290,7 +1533,7 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile crash event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -1323,7 +1566,7 @@ func (c *connectorImpl) InsertMobileIssue(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile issue event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["mobile_events"].Append(
+	if err := c.appendTo("mobile_events",
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),

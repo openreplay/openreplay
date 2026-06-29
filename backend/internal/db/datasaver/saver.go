@@ -113,6 +113,9 @@ func (s *saverImpl) Commit() error {
 }
 
 func (s *saverImpl) Close() error {
+	if err := s.issues.Flush(); err != nil {
+		s.log.Error(context.Background(), "issues flush error: %s", err)
+	}
 	if err := s.ch.Stop(); err != nil {
 		s.log.Error(context.Background(), "ch.Close error: %s", err)
 	}

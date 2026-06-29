@@ -46,7 +46,7 @@ func main() {
 	}
 
 	projManager := projects.New(log, pgPool, nil, dbMetrics)
-	sessManager := sessions.New(log, pgPool, projManager, nil, dbMetrics)
+	sessManager := sessions.New(log, pgPool, projManager, nil, dbMetrics, sessions.DoNotIgnoreInactiveProjects)
 	tenantsService := tenant.New(pgPool)
 
 	videoService, err := videoreplays.NewServiceBuilder(log, cfg, sessManager, webMetrics, pgPool, objStore)
