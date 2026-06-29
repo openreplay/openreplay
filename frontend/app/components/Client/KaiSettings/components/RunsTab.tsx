@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
+import { Pagination } from 'UI';
 
 import RunDrawer from './drawers/RunDrawer';
 import './kai-table.css';
@@ -67,7 +68,14 @@ function RunsTab() {
   const [tagFilter, setTagFilter] = useState('all');
   const [resFilter, setResFilter] = useState('all');
   const [regionFilter, setRegionFilter] = useState('all');
+  const [page, setPage] = useState(1);
   const [openKey, setOpenKey] = useState<string | null>(null);
+
+  const PAGE_SIZE = 20;
+  // any filter change resets to page 1
+  useEffect(() => {
+    setPage(1);
+  }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter]);
 
   const openRun = MOCK_RUNS.find((r) => r.key === openKey) ?? null;
 
@@ -91,6 +99,10 @@ function RunsTab() {
       arr = arr.filter((r) => r.region === regionFilter);
     return arr;
   }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter]);
+
+  const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rangeStart = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = (page - 1) * PAGE_SIZE + pageItems.length;
 
   const rerun = (run: RunData) =>
     message.success(`${run.testName} — ${t('rerun started, see Runs')}`);
@@ -296,12 +308,8 @@ function RunsTab() {
         className="kai-table"
         rowKey="key"
         columns={columns}
-        dataSource={visible}
-        pagination={{
-          pageSize: 20,
-          hideOnSinglePage: true,
-          showSizeChanger: false,
-        }}
+        dataSource={pageItems}
+        pagination={false}
         rowClassName="cursor-pointer"
         onRow={(run) => ({
           onClick: (e) => {
@@ -313,10 +321,22 @@ function RunsTab() {
         locale={{ emptyText: t('No runs match these filters.') }}
       />
 
-      <div className="px-4 py-3 text-xs text-disabled-text">
-        {t('Showing')} {visible.length} {t('of')} {MOCK_RUNS.length} {t('runs')}{' '}
-        · {t('run in the cloud')}
-      </div>
+      {visible.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <span className="text-sm text-disabled-text">
+            {t('Showing')} {rangeStart}–{rangeEnd} {t('of')} {visible.length}{' '}
+            {t('runs')}
+          </span>
+          <div className="w-[200px]">
+            <Pagination
+              page={page}
+              total={visible.length}
+              limit={PAGE_SIZE}
+              onPageChange={setPage}
+            />
+          </div>
+        </div>
+      )}
 
       <RunDrawer
         run={openRun}

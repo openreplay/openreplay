@@ -12,8 +12,10 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { Calendar, EllipsisVertical, Play, Radar } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Pagination } from 'UI';
 
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
@@ -39,7 +41,13 @@ function TestsTab() {
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+  const [page, setPage] = useState(1);
   const [openKey, setOpenKey] = useState<string | null>(null);
+
+  const PAGE_SIZE = 20;
+  useEffect(() => {
+    setPage(1);
+  }, [query, statusTab, envFilter, tagFilter]);
 
   const updateTest = (updated: TestCase) =>
     setTests((prev) =>
@@ -88,6 +96,10 @@ function TestsTab() {
     const rest = arr.filter((tc) => tc.status !== 'draft');
     return [...drafts, ...rest];
   }, [tests, query, statusTab, envFilter, tagFilter]);
+
+  const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rangeStart = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = (page - 1) * PAGE_SIZE + pageItems.length;
 
   // ---- bulk actions over the current selection -------------------------
   const selected = tests.filter((tc) => selectedKeys.includes(tc.key));
@@ -412,12 +424,8 @@ function TestsTab() {
         className="kai-table"
         rowKey="key"
         columns={columns}
-        dataSource={visible}
-        pagination={{
-          pageSize: 20,
-          hideOnSinglePage: true,
-          showSizeChanger: false,
-        }}
+        dataSource={pageItems}
+        pagination={false}
         rowSelection={{
           selectedRowKeys: selectedKeys,
           onChange: setSelectedKeys,
@@ -442,9 +450,22 @@ function TestsTab() {
         locale={{ emptyText: t('No tests match these filters.') }}
       />
 
-      <div className="px-4 py-3 text-xs text-disabled-text">
-        {t('Showing')} {visible.length} {t('of')} {tests.length} {t('tests')}
-      </div>
+      {visible.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <span className="text-sm text-disabled-text">
+            {t('Showing')} {rangeStart}–{rangeEnd} {t('of')} {visible.length}{' '}
+            {t('tests')}
+          </span>
+          <div className="w-[200px]">
+            <Pagination
+              page={page}
+              total={visible.length}
+              limit={PAGE_SIZE}
+              onPageChange={setPage}
+            />
+          </div>
+        </div>
+      )}
 
       {/* one drawer instance; draft vs test is decided by the opened row's status */}
       <DraftDrawer
