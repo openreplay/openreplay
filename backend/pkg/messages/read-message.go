@@ -1179,9 +1179,9 @@ func DecodeZustand(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeBatchMetadata(reader BytesReader) (Message, error) {
+func DecodeBatchMetadataDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &BatchMetadata{}
+	msg := &BatchMetadataDeprecated{}
 	if msg.Version, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1197,6 +1197,13 @@ func DecodeBatchMetadata(reader BytesReader) (Message, error) {
 	if msg.Location, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
+	return msg, err
+}
+
+func DecodeBatchMessageOffsets(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &BatchMessageOffsets{}
+
 	return msg, err
 }
 
@@ -1309,6 +1316,33 @@ func DecodeResourceTiming(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Stalled, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeBatchMetadata(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &BatchMetadata{}
+	if msg.Version, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.PageNo, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.FirstIndex, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.FirstTimestamp, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.Location, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.LastTimestamp, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.BatchMessageOffsetsSize, err = reader.ReadInt(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -2188,13 +2222,17 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 79:
 		return DecodeZustand(reader)
 	case 81:
-		return DecodeBatchMetadata(reader)
+		return DecodeBatchMetadataDeprecated(reader)
+	case 82:
+		return DecodeBatchMessageOffsets(reader)
 	case 83:
 		return DecodeNetworkRequest(reader)
 	case 84:
 		return DecodeWSChannel(reader)
 	case 85:
 		return DecodeResourceTiming(reader)
+	case 86:
+		return DecodeBatchMetadata(reader)
 	case 87:
 		return DecodeIncident(reader)
 	case 89:

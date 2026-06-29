@@ -73,10 +73,12 @@ const (
 	MsgAdoptedSSRemoveOwner               = 77
 	MsgJSException                        = 78
 	MsgZustand                            = 79
-	MsgBatchMetadata                      = 81
+	MsgBatchMetadataDeprecated            = 81
+	MsgBatchMessageOffsets                = 82
 	MsgNetworkRequest                     = 83
 	MsgWSChannel                          = 84
 	MsgResourceTiming                     = 85
+	MsgBatchMetadata                      = 86
 	MsgIncident                           = 87
 	MsgLongAnimationTask                  = 89
 	MsgInputChange                        = 112
@@ -1965,7 +1967,7 @@ func (msg *Zustand) TypeID() int {
 	return 79
 }
 
-type BatchMetadata struct {
+type BatchMetadataDeprecated struct {
 	message
 	Version    uint64
 	PageNo     uint64
@@ -1974,7 +1976,7 @@ type BatchMetadata struct {
 	Location   string
 }
 
-func (msg *BatchMetadata) Encode() []byte {
+func (msg *BatchMetadataDeprecated) Encode() []byte {
 	buf := make([]byte, 51+len(msg.Location))
 	buf[0] = 81
 	p := 1
@@ -1986,12 +1988,32 @@ func (msg *BatchMetadata) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *BatchMetadata) Decode() Message {
+func (msg *BatchMetadataDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *BatchMetadata) TypeID() int {
+func (msg *BatchMetadataDeprecated) TypeID() int {
 	return 81
+}
+
+type BatchMessageOffsets struct {
+	message
+}
+
+func (msg *BatchMessageOffsets) Encode() []byte {
+	buf := make([]byte, 1)
+	buf[0] = 82
+	p := 1
+
+	return buf[:p]
+}
+
+func (msg *BatchMessageOffsets) Decode() Message {
+	return msg
+}
+
+func (msg *BatchMessageOffsets) TypeID() int {
+	return 82
 }
 
 type NetworkRequest struct {
@@ -2113,6 +2135,39 @@ func (msg *ResourceTiming) Decode() Message {
 
 func (msg *ResourceTiming) TypeID() int {
 	return 85
+}
+
+type BatchMetadata struct {
+	message
+	Version                 uint64
+	PageNo                  uint64
+	FirstIndex              uint64
+	FirstTimestamp          int64
+	Location                string
+	LastTimestamp           int64
+	BatchMessageOffsetsSize int64
+}
+
+func (msg *BatchMetadata) Encode() []byte {
+	buf := make([]byte, 71+len(msg.Location))
+	buf[0] = 86
+	p := 1
+	p = WriteUint(msg.Version, buf, p)
+	p = WriteUint(msg.PageNo, buf, p)
+	p = WriteUint(msg.FirstIndex, buf, p)
+	p = WriteInt(msg.FirstTimestamp, buf, p)
+	p = WriteString(msg.Location, buf, p)
+	p = WriteInt(msg.LastTimestamp, buf, p)
+	p = WriteInt(msg.BatchMessageOffsetsSize, buf, p)
+	return buf[:p]
+}
+
+func (msg *BatchMetadata) Decode() Message {
+	return msg
+}
+
+func (msg *BatchMetadata) TypeID() int {
+	return 86
 }
 
 type Incident struct {

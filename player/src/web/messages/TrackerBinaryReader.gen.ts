@@ -8,10 +8,10 @@ import type { RawMessage } from './raw.gen'
 const SIZE_BYTES = 3
 
 // Message types that are written WITHOUT a size prefix (batch-level protocol messages)
-const NO_SIZE_TYPES = new Set([80, 81, 82])
+const NO_SIZE_TYPES = new Set([80, 81, 82, 86])
 
 export default class TrackerBinaryReader extends PrimitiveReader {
-  batchMetaMessages: any = [];
+  batchMetaMessages: any[] = []
 
   readMessage(): RawMessage | null {
     const p = this.p
@@ -44,9 +44,36 @@ export default class TrackerBinaryReader extends PrimitiveReader {
         return this.readMessage()
       }
       case 82: {
-        // PartitionedMessage: PartNo, PartTotal
-        const partNo = this.readUint(); if (partNo === null) { return resetPointer() }
-        const partTotal = this.readUint(); if (partTotal === null) { return resetPointer() }
+        // BatchMessageOffsets: a map of [messageType] => []offset
+        const mapSize = this.readUint(); if (mapSize === null) { return resetPointer() }
+        for (let e = 0; e < mapSize; e++) {
+          const messageType = this.readUint(); if (messageType === null) { return resetPointer() }
+          const offsetCount = this.readUint(); if (offsetCount === null) { return resetPointer() }
+          for (let k = 0; k < offsetCount; k++) {
+            const offset = this.readUint(); if (offset === null) { return resetPointer() }
+          }
+        }
+        return this.readMessage()
+      }
+      case 86: {
+        // BatchMetadata: Version, PageNo, FirstIndex, Timestamp, Location
+        const version = this.readUint(); if (version === null) { return resetPointer() }
+        const pageNo = this.readUint(); if (pageNo === null) { return resetPointer() }
+        const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
+        const firstTimestamp = this.readInt(); if (firstTimestamp === null) { return resetPointer() }
+        const location = this.readString(); if (location === null) { return resetPointer() }
+        const lastTimestamp = this.readInt(); if (lastTimestamp === null) { return resetPointer() }
+        const batchMessageOffsetsSize = this.readInt(); if (batchMessageOffsetsSize === null) { return resetPointer() }
+        this.batchMetaMessages.push({
+          tp: 86,
+          version,
+          pageNo,
+          firstIndex,
+          firstTimestamp,
+          location,
+          lastTimestamp,
+          batchMessageOffsetsSize,
+        });
         return this.readMessage()
       }
       default:

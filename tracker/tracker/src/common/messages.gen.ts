@@ -63,10 +63,12 @@ export declare const enum Type {
   AdoptedSSRemoveOwner = 77,
   JSException = 78,
   Zustand = 79,
-  BatchMetadata = 81,
+  BatchMetadataDeprecated = 81,
+  BatchMessageOffsets = 82,
   NetworkRequest = 83,
   WSChannel = 84,
   ResourceTiming = 85,
+  BatchMetadata = 86,
   Incident = 87,
   LongAnimationTask = 89,
   InputChange = 112,
@@ -500,13 +502,18 @@ export type Zustand = [
   /*state:*/ string,
 ]
 
-export type BatchMetadata = [
-  /*type:*/ Type.BatchMetadata,
+export type BatchMetadataDeprecated = [
+  /*type:*/ Type.BatchMetadataDeprecated,
   /*version:*/ number,
   /*pageNo:*/ number,
   /*firstIndex:*/ number,
   /*timestamp:*/ number,
   /*location:*/ string,
+]
+
+export type BatchMessageOffsets = [
+  /*type:*/ Type.BatchMessageOffsets,
+  
 ]
 
 export type NetworkRequest = [
@@ -551,6 +558,17 @@ export type ResourceTiming = [
   /*contentDownload:*/ number,
   /*total:*/ number,
   /*stalled:*/ number,
+]
+
+export type BatchMetadata = [
+  /*type:*/ Type.BatchMetadata,
+  /*version:*/ number,
+  /*pageNo:*/ number,
+  /*firstIndex:*/ number,
+  /*firstTimestamp:*/ number,
+  /*location:*/ string,
+  /*lastTimestamp:*/ number,
+  /*batchMessageOffsetsSize:*/ number,
 ]
 
 export type Incident = [
@@ -710,5 +728,5 @@ export const ANALYTICS_MESSAGES: ReadonlySet<number> = new Set([
   124,
 ])
 
-type Message =  Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | StringDictGlobal | SetNodeAttributeDictGlobal | NodeAnimationResult | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecatedDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | SetNodeSlot | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | NetworkRequest | WSChannel | ResourceTiming | Incident | LongAnimationTask | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTimingDeprecated | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals
+type Message =  Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | StringDictGlobal | SetNodeAttributeDictGlobal | NodeAnimationResult | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecatedDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | SetNodeSlot | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadataDeprecated | BatchMessageOffsets | NetworkRequest | WSChannel | ResourceTiming | BatchMetadata | Incident | LongAnimationTask | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTimingDeprecated | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals
 export default Message

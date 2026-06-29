@@ -1,3 +1,9 @@
+## 19.0.0
+
+- add msg type-offset map to improve backend reading speed
+- fix tabid duplication on pulse message
+- add last timestamp to batchmeta
+
 ## 18.0.17
 
 - revisiting node maintainer class (should be slightly better performance now)

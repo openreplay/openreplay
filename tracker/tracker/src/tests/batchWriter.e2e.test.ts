@@ -21,7 +21,8 @@ jest.mock('../common/messages.gen', () => {
     SetCSSDataURLBased: 61,          // assets
     AdoptedSSReplaceURLBased: 71,    // assets
     AdoptedSSInsertRuleURLBased: 73, // assets
-    BatchMetadata: 81,
+    BatchMessageOffsets: 82,
+    BatchMetadata: 86,
     TabData: 118,
     SetPageLocation: 122,
   }
@@ -45,7 +46,8 @@ const T = {
   CustomEvent: 27,
   SetNodeAttributeURLBased: 60,
   SetCSSDataURLBased: 61,
-  BatchMetadata: 81,
+  BatchMessageOffsets: 82,
+  BatchMetadata: 86,
   TabData: 118,
 } as const
 
@@ -83,6 +85,8 @@ interface ParsedHeader {
   firstIndex: number
   timestamp: number
   urlLen: number
+  lastTimestamp: number
+  offsetsSize: number
   bodyOffset: number
 }
 
@@ -96,7 +100,10 @@ function parseBatchHeader(batch: Uint8Array): ParsedHeader {
   const [timestamp, t5] = readZigZagInt(batch, i); i += t5
   const [urlLen, t6] = readUVarint(batch, i); i += t6
   i += urlLen // skip url bytes — we don't need to decode them in tests
-  return { version, pageNo, firstIndex, timestamp, urlLen, bodyOffset: i }
+  const [lastTimestamp, t7] = readZigZagInt(batch, i); i += t7
+  const [offsetsSize, t8] = readZigZagInt(batch, i); i += t8
+  // Body starts right after the metadata; the offsets table is appended at the end of the batch.
+  return { version, pageNo, firstIndex, timestamp, urlLen, lastTimestamp, offsetsSize, bodyOffset: i }
 }
 
 interface ParsedMessage {
@@ -105,12 +112,14 @@ interface ParsedMessage {
   payloadOffset: number
 }
 
-/** Walks the body (after the BatchMetadata fields) and returns each
- *  [type][size:3LE][payload] segment. */
+/** Walks the body (after the BatchMetadata fields, up to the appended offsets table) and
+ *  returns each [type][size:3LE][payload] segment. */
 function parseBody(batch: Uint8Array, startOffset: number): ParsedMessage[] {
   const out: ParsedMessage[] = []
+  // The BatchMessageOffsets table is appended at the end with no size prefix — stop before it.
+  const end = batch.length - parseBatchHeader(batch).offsetsSize
   let i = startOffset
-  while (i < batch.length) {
+  while (i < end) {
     const [type, tlen] = readUVarint(batch, i); i += tlen
     const size = batch[i] | (batch[i + 1] << 8) | (batch[i + 2] << 16); i += 3
     out.push({ type, size, payloadOffset: i })

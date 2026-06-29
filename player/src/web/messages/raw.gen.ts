@@ -1,7 +1,7 @@
 // Auto-generated, do not edit
 /* eslint-disable */
 
-export enum MType {
+export const enum MType {
   Timestamp = 0,
   SetPageLocationDeprecated = 4,
   SetViewportSize = 5,

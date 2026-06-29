@@ -682,7 +682,7 @@ class Zustand(Message):
         self.state = state
 
 
-class BatchMetadata(Message):
+class BatchMetadataDeprecated(Message):
     __id__ = 81
 
     def __init__(self, version, page_no, first_index, timestamp, location):
@@ -691,6 +691,13 @@ class BatchMetadata(Message):
         self.first_index = first_index
         self.timestamp = timestamp
         self.location = location
+
+
+class BatchMessageOffsets(Message):
+    __id__ = 82
+
+    def __init__(self, ):
+        
 
 
 class NetworkRequest(Message):
@@ -741,6 +748,19 @@ class ResourceTiming(Message):
         self.content_download = content_download
         self.total = total
         self.stalled = stalled
+
+
+class BatchMetadata(Message):
+    __id__ = 86
+
+    def __init__(self, version, page_no, first_index, first_timestamp, location, last_timestamp, batch_message_offsets_size):
+        self.version = version
+        self.page_no = page_no
+        self.first_index = first_index
+        self.first_timestamp = first_timestamp
+        self.location = location
+        self.last_timestamp = last_timestamp
+        self.batch_message_offsets_size = batch_message_offsets_size
 
 
 class Incident(Message):

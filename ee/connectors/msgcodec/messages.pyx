@@ -1007,7 +1007,7 @@ cdef class Zustand(PyMessage):
         self.state = state
 
 
-cdef class BatchMetadata(PyMessage):
+cdef class BatchMetadataDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long version
     cdef public unsigned long page_no
@@ -1022,6 +1022,15 @@ cdef class BatchMetadata(PyMessage):
         self.first_index = first_index
         self.timestamp = timestamp
         self.location = location
+
+
+cdef class BatchMessageOffsets(PyMessage):
+    cdef public int __id__
+    
+
+    def __init__(self, ):
+        self.__id__ = 82
+        
 
 
 cdef class NetworkRequest(PyMessage):
@@ -1107,6 +1116,27 @@ cdef class ResourceTiming(PyMessage):
         self.content_download = content_download
         self.total = total
         self.stalled = stalled
+
+
+cdef class BatchMetadata(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long version
+    cdef public unsigned long page_no
+    cdef public unsigned long first_index
+    cdef public long first_timestamp
+    cdef public str location
+    cdef public long last_timestamp
+    cdef public long batch_message_offsets_size
+
+    def __init__(self, unsigned long version, unsigned long page_no, unsigned long first_index, long first_timestamp, str location, long last_timestamp, long batch_message_offsets_size):
+        self.__id__ = 86
+        self.version = version
+        self.page_no = page_no
+        self.first_index = first_index
+        self.first_timestamp = first_timestamp
+        self.location = location
+        self.last_timestamp = last_timestamp
+        self.batch_message_offsets_size = batch_message_offsets_size
 
 
 cdef class Incident(PyMessage):
