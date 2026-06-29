@@ -49,7 +49,7 @@ func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics data
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
 	conditions := conditions.New(pgconn)
 	flaker := flakeid.NewFlaker(cfg.WorkerID)
-	sessions := sessions.New(log, pgconn, projs, redis, dbMetrics)
+	sessions := sessions.New(log, pgconn, projs, redis, dbMetrics, sessions.DoNotIgnoreInactiveProjects)
 	tags := tags.New(log, pgconn)
 	responser := api.NewResponser(webMetrics)
 	builder := &serviceBuilder{}
