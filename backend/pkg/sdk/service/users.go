@@ -148,6 +148,12 @@ func (u *usersImpl) Create(session *sessions.Session, user *model.User) error {
 		u.log.Debug(context.Background(), "create user with empty userID, session: %d", session.SessionID)
 		return nil
 	}
+	if session.UserID == nil || *session.UserID != user.UserID {
+		if err := u.sessions.UpdateUserID(session.SessionID, user.UserID); err != nil {
+			u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
+		}
+		session.UserID = &user.UserID
+	}
 	return u.add(session, user)
 }
 
