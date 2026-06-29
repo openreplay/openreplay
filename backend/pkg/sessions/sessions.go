@@ -181,7 +181,17 @@ func (s *sessionsImpl) GetManySessions(sessionIDs []uint64) (map[uint64]*Session
 	if err != nil {
 		return nil, err
 	}
+	getProject := s.projects.GetProject
+	if s.ignoreInactiveProjects {
+		getProject = s.projects.GetProjectNotDeleted
+	}
 	for _, sess := range sessionFromDB {
+		if proj, err := getProject(sess.ProjectID); err != nil {
+			ctx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+			s.log.Warn(ctx, "failed to get project %d for session: %s", sess.ProjectID, err)
+		} else {
+			sess.SaveRequestPayload = proj.SaveRequestPayloads
+		}
 		res[sess.SessionID] = sess
 	}
 	return res, nil
