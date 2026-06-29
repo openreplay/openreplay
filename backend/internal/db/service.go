@@ -13,28 +13,30 @@ import (
 )
 
 type dbImpl struct {
-	log        logger.Logger
-	cfg        *db.Config
-	ctx        context.Context
-	consumer   types.Consumer
-	saver      datasaver.Saver
-	sessions   sessions.Sessions
-	done       chan struct{}
-	finished   chan struct{}
-	commitDone chan struct{}
+	log            logger.Logger
+	cfg            *db.Config
+	ctx            context.Context
+	consumer       types.Consumer
+	saver          datasaver.Saver
+	sessions       sessions.Sessions
+	done           chan struct{}
+	finished       chan struct{}
+	commitDone     chan struct{}
+	commitLoopDone chan struct{}
 }
 
 func New(log logger.Logger, cfg *db.Config, consumer types.Consumer, saver datasaver.Saver, sessions sessions.Sessions) service.Interface {
 	s := &dbImpl{
-		log:        log,
-		cfg:        cfg,
-		ctx:        context.Background(),
-		consumer:   consumer,
-		saver:      saver,
-		sessions:   sessions,
-		done:       make(chan struct{}),
-		finished:   make(chan struct{}),
-		commitDone: make(chan struct{}),
+		log:            log,
+		cfg:            cfg,
+		ctx:            context.Background(),
+		consumer:       consumer,
+		saver:          saver,
+		sessions:       sessions,
+		done:           make(chan struct{}),
+		finished:       make(chan struct{}),
+		commitDone:     make(chan struct{}),
+		commitLoopDone: make(chan struct{}),
 	}
 	go s.run()
 	go s.sessionsCommitLoop()
@@ -42,6 +44,7 @@ func New(log logger.Logger, cfg *db.Config, consumer types.Consumer, saver datas
 }
 
 func (d *dbImpl) sessionsCommitLoop() {
+	defer close(d.commitLoopDone)
 	tick := time.NewTicker(time.Second * 3)
 	defer tick.Stop()
 	for {
@@ -61,7 +64,8 @@ func (d *dbImpl) run() {
 		case <-commitTick:
 			d.commit()
 		case <-d.done:
-			close(d.commitDone) // stop the background sessions flusher
+			close(d.commitDone)
+			<-d.commitLoopDone
 			d.commit()
 			d.sessions.Commit() // final PG flush
 			if err := d.saver.Close(); err != nil {
