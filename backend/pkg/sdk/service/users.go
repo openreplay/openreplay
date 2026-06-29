@@ -143,6 +143,11 @@ func (u *usersImpl) Get(projectID uint32, userID string) (*model.User, error) {
 }
 
 func (u *usersImpl) Create(session *sessions.Session, user *model.User) error {
+	user.UserID = strings.TrimSpace(user.UserID)
+	if user.UserID == "" {
+		u.log.Debug(context.Background(), "create user with empty userID, session: %d", session.SessionID)
+		return nil
+	}
 	return u.add(session, user)
 }
 

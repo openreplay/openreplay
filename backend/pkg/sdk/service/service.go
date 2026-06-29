@@ -100,6 +100,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 
 			for _, action := range sdkDataBatch.Data.UserActions {
 				ds.log.Debug(context.Background(), "userAction: %+v", action)
+				action.UserID = strings.TrimSpace(action.UserID)
 				if action.UserID == "" {
 					ds.log.Debug(context.Background(), "empty userID for session: %d", sessID)
 					continue
