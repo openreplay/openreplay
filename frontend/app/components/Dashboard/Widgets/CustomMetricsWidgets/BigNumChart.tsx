@@ -31,13 +31,13 @@ function BigNumChart(props: Props) {
   const count = values.length;
   const columnCount = Math.min(count, 5);
   return (
-    <div className="pb-3">
+    <div className="pb-3 relative">
       <div
         className="grid gap-2"
         style={{
           height: height ?? 240,
           gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-          ...(props.inGrid ? {} : { overflowY: 'auto' as const }),
+          overflowY: 'hidden' as const,
         }}
       >
         {values.map((val, i) => (
@@ -54,6 +54,16 @@ function BigNumChart(props: Props) {
           />
         ))}
       </div>
+      {props.inGrid && (
+        <div
+          className="pointer-events-none absolute bottom-0 left-0 right-0"
+          style={{
+            height: 40,
+            background:
+              'linear-gradient(to bottom, transparent, var(--color-white))',
+          }}
+        />
+      )}
     </div>
   );
 }

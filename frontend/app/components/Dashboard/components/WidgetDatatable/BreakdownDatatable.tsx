@@ -391,6 +391,9 @@ function BreakdownDatatable(props: Props) {
   );
 
   const isTableOnlyMode = props.metric.viewType === 'table';
+  // In the dashboard grid (not the card builder/preview) the table height is
+  // capped and the controls row (level selection + export) is hidden.
+  const inGrid = !props.inBuilder;
 
   if (!props.data || Object.keys(props.data).length === 0) {
     return null;
@@ -422,32 +425,53 @@ function BreakdownDatatable(props: Props) {
 
       {showTable || isTableOnlyMode ? (
         <div className="relative">
-          <div className="flex items-center mb-2 gap-2">
-            {hasBreakdowns && (
-              <BreakdownSelectionPanel
-                data={props.data}
-                breakdownLabels={props.breakdownLabels}
-              />
-            )}
-            <Button
-              icon={<Download size={14} />}
+          {!inGrid && (
+            <div className="flex items-center mb-2 gap-2">
+              {hasBreakdowns && (
+                <BreakdownSelectionPanel
+                  data={props.data}
+                  breakdownLabels={props.breakdownLabels}
+                />
+              )}
+              <Button
+                icon={<Download size={14} />}
+                size="small"
+                type="default"
+                className="ml-auto"
+                onClick={() => exportAntCsv(columns, rows, props.metric.name)}
+              >
+                {t('Export as CSV')}
+              </Button>
+            </div>
+          )}
+          <div
+            className="relative"
+            style={
+              inGrid
+                ? { maxHeight: 240, overflow: 'hidden' }
+                : undefined
+            }
+          >
+            <Table
+              columns={columns}
+              dataSource={rows}
+              pagination={false}
               size="small"
-              type="default"
-              className="ml-auto"
-              onClick={() => exportAntCsv(columns, rows, props.metric.name)}
-            >
-              {t('Export as CSV')}
-            </Button>
+              scroll={{ x: 'max-content' }}
+              bordered
+              rowClassName={rowClassName}
+            />
           </div>
-          <Table
-            columns={columns}
-            dataSource={rows}
-            pagination={false}
-            size="small"
-            scroll={{ x: 'max-content' }}
-            bordered
-            rowClassName={rowClassName}
-          />
+          {inGrid && (
+            <div
+              className="pointer-events-none absolute bottom-0 left-0 right-0"
+              style={{
+                height: 40,
+                background:
+                  'linear-gradient(to bottom, transparent, var(--color-white))',
+              }}
+            />
+          )}
         </div>
       ) : null}
     </div>
