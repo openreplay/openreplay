@@ -19,7 +19,27 @@ $fn_def$, :'next_version')
 
 --
 
-ALTER TABLE public.tags ADD COLUMN IF NOT EXISTS location text NULL DEFAULT NULL;
+ALTER TABLE IF EXISTS public.tags
+    ADD COLUMN IF NOT EXISTS location text NULL DEFAULT NULL;
+
+CREATE TABLE IF NOT EXISTS public.mcp_authentication_tokens
+(
+    user_id   integer                     NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
+    client_id text                        NOT NULL,
+    state     text                        NOT NULL,
+    jti       text                        NOT NULL DEFAULT generate_api_key(10),
+    iat       timestamp without time zone NULL     DEFAULT NULL,
+    generated bool                                 DEFAULT FALSE,
+    PRIMARY KEY (user_id, client_id, state)
+);
+
+CREATE TABLE IF NOT EXISTS public.mcp_app_users
+(
+    user_id    integer                     NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
+    client_id  text                        NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    PRIMARY KEY (user_id, client_id)
+);
 
 COMMIT;
 
