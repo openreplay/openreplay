@@ -1,12 +1,14 @@
-import React from 'react';
 import { Alert } from 'antd';
-import { Icon } from 'UI';
-import { useTranslation } from 'react-i18next';
+import ENV from 'env';
 import { ArrowUpRight, X } from 'lucide-react';
-import ENV from '../../../env';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Icon } from 'UI';
 
 const localhostWarn = (project: string) => `${project}_localhost_warn`;
 const vModeWarn = (project: string) => `${project}_v_mode_warn`;
+const trackerVerWarn = (project: string) => `${project}_tracker_ver_warn`;
 
 const VersionComparison = {
   Lower: -1,
@@ -77,18 +79,22 @@ const WarnBadge = React.memo(
     const { t } = useTranslation();
     const localhostWarnSiteKey = localhostWarn(siteId);
     const vModeWarnSiteKey = vModeWarn(siteId);
+    const trackerVerWarnSiteKey = trackerVerWarn(siteId);
     const vModeWarnActive =
       localStorage.getItem(vModeWarnSiteKey) !== '1' && virtualElsFailed;
     const defaultLocalhostWarn =
       localStorage.getItem(localhostWarnSiteKey) !== '1';
     const localhostWarnActive = Boolean(
       currentLocation &&
-        defaultLocalhostWarn &&
-        /(localhost)|(127\.0\.0\.1)|(0\.0\.0\.0)/.test(currentLocation),
+      defaultLocalhostWarn &&
+      /(localhost)|(127\.0\.0\.1)|(0\.0\.0\.0)/.test(currentLocation),
     );
     const trackerVersion = ENV.TRACKER_VERSION ?? undefined;
     const trackerVerDiff = compareVersions(version, trackerVersion);
-    const trackerWarnActive = trackerVerDiff !== VersionComparison.Same;
+    const defaultTrackerVerWarn =
+      localStorage.getItem(trackerVerWarnSiteKey) !== '1';
+    const trackerWarnActive =
+      defaultTrackerVerWarn && trackerVerDiff !== VersionComparison.Same;
 
     const [warnings, setWarnings] = React.useState<Warns>([
       localhostWarnActive,
@@ -103,6 +109,9 @@ const WarnBadge = React.memo(
     const closeWarning = (type: 0 | 1 | 2) => {
       if (type === WARNINGS.LOCALHOST) {
         localStorage.setItem(localhostWarnSiteKey, '1');
+      }
+      if (type === WARNINGS.TRACKER_VERSION) {
+        localStorage.setItem(trackerVerWarnSiteKey, '1');
       }
       if (type === WARNINGS.VIRTUAL_ELS_FAIL) {
         localStorage.setItem(vModeWarnSiteKey, '1');
