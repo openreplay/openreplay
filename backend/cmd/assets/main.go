@@ -69,7 +69,7 @@ func main() {
 		sessCtx := context.WithValue(ctx, "sessionID", info.SessionID())
 
 		reader := messages.NewMessageReader(batchData)
-		if err := reader.Parse(); err != nil {
+		if err := reader.Parse(nil); err != nil {
 			log.Error(sessCtx, "assets batch parse err: %s, info: %s", err, info.Info())
 			return
 		}
