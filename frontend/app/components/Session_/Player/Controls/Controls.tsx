@@ -48,6 +48,7 @@ import styles from './controls.module.css';
 import { useTranslation } from 'react-i18next';
 import { mobileScreen } from 'App/utils/isMobile';
 import { hasAi } from '@/utils/split-utils';
+import SummaryButton from './SummaryButton';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -516,37 +517,6 @@ const DevtoolsButtons = observer(
     );
   },
 );
-
-export function SummaryButton({
-  onClick,
-  withToggle,
-  onToggle,
-  toggleValue,
-}: {
-  onClick?: () => void;
-  withToggle?: boolean;
-  onToggle?: () => void;
-  toggleValue?: boolean;
-}) {
-  const { t } = useTranslation();
-  const [isHovered, setHovered] = React.useState(false);
-
-  return (
-    <div style={gradientButton} onClick={onClick}>
-      <div
-        style={isHovered ? onHoverFillStyle : fillStyle}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {withToggle ? (
-          <Switch size="small" checked={toggleValue} onChange={onToggle} />
-        ) : null}
-        <Icon name="sparkles" size={16} />
-        <div className="font-semibold text-main">{t('Summary AI')}</div>
-      </div>
-    </div>
-  );
-}
 
 export const gradientButton = {
   border: 'double 1px transparent',
