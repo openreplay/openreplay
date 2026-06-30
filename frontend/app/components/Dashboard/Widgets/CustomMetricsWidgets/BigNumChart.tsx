@@ -37,7 +37,7 @@ function BigNumChart(props: Props) {
         style={{
           height: height ?? 240,
           gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-          overflowY: 'hidden' as const,
+          overflowY: props.inGrid ? 'hidden' : 'auto',
         }}
       >
         {values.map((val, i) => (
