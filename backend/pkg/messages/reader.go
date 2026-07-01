@@ -91,7 +91,7 @@ func (m *messageReaderImpl) Parse(filter map[int]struct{}) (err error) {
 				return fmt.Errorf("read message err: %s", err)
 			}
 			if m.msgType == MsgBatchMetadata {
-				if len(m.messages) > 0 {
+				if m.index > 1 {
 					return fmt.Errorf("batch meta not at the start of batch")
 				}
 				switch message := msg.(type) {
