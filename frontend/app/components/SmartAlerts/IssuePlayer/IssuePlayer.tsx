@@ -39,7 +39,8 @@ function IssuePlayer() {
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const params = useParams<{ issueId: string; sessionId: string }>();
-  const slug = params.issueId ?? '';
+  const idParam = params.issueId ?? '';
+  const name = idParam ? decodeURIComponent(idParam) : '';
   const sessionId = params.sessionId ?? '';
 
   const session = sessionStore.current;
@@ -54,14 +55,18 @@ function IssuePlayer() {
   const adjustedRef = React.useRef(false);
   const [view, setView] = React.useState<View>('issue');
 
-  const issue = issuesStore.bySlug(slug);
-  const realId = issue?.id ?? '';
+  const issue = issuesStore.byId(name);
+  const realId = issue?.id ?? name;
   const sessions = issuesStore.exampleSessions(realId);
   const card = sessions.find((c) => c.sessionId === sessionId);
 
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
+
+  React.useEffect(() => {
+    if (name) void issuesStore.loadIssue(name);
+  }, [name]);
 
   React.useEffect(() => {
     if (realId) void issuesStore.loadSessions(realId);
@@ -195,13 +200,13 @@ function IssuePlayer() {
       ? sessions[sessIdx + 1].sessionId
       : null;
   const goSession = (sid: string) =>
-    history.push(withSiteId(smartIssueSession(slug, sid), siteId));
+    history.push(withSiteId(smartIssueSession(idParam, sid), siteId));
   const back = () =>
     history.push(
-      withSiteId(issue ? smartIssueDetails(slug) : smartIssues(), siteId),
+      withSiteId(issue ? smartIssueDetails(idParam) : smartIssues(), siteId),
     );
-  const onSetCritical = (val: boolean, reason?: string) => {
-    if (issue) issuesStore.setCritical(issue.id, val, reason);
+  const onSetCritical = (val: boolean, reasons?: string[], note?: string) => {
+    if (issue) issuesStore.setCritical(issue.id, val, reasons, note);
   };
 
   const playerActiveTab =
@@ -243,6 +248,7 @@ function IssuePlayer() {
             setTab={(t) => setView(t)}
             onBack={back}
             onSetCritical={onSetCritical}
+            criticalReasons={issuesStore.reasons.criticality}
             prevId={prevId}
             nextId={nextId}
             onGoSession={goSession}
@@ -271,6 +277,7 @@ function IssuePlayer() {
                 card={card}
                 onClose={() => setView(null)}
                 onSetCritical={onSetCritical}
+                criticalReasons={issuesStore.reasons.criticality}
               />
             )}
           </div>

@@ -53,6 +53,7 @@ export default function IssuePlayerHeader({
   setTab,
   onBack,
   onSetCritical,
+  criticalReasons,
   prevId,
   nextId,
   onGoSession,
@@ -71,7 +72,8 @@ export default function IssuePlayerHeader({
   tab: SideTab;
   setTab: (t: SideTab) => void;
   onBack: () => void;
-  onSetCritical: (val: boolean, reason?: string) => void;
+  onSetCritical: (val: boolean, reasons?: string[], note?: string) => void;
+  criticalReasons?: string[];
   prevId: string | null;
   nextId: string | null;
   onGoSession: (sid: string) => void;
@@ -167,6 +169,7 @@ export default function IssuePlayerHeader({
             <CriticalToggle
               critical={issue.critical}
               onSet={onSetCritical}
+              reasons={criticalReasons}
               zIndex={PLAYER_POPUP_Z}
             />
           )}

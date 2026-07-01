@@ -224,6 +224,10 @@ export default class APIClient {
 
     const noChalice =
       path.includes('/kai') ||
+      // Smart Issues live in the Go `api` service at /v2/smart-issues (migrated
+      // from the Python `kai` service) — routed at the origin root like /kai,
+      // not under the chalice /api prefix.
+      path.includes('/smart-issues') ||
       path.includes('/integration/') ||
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('replay-exporter');

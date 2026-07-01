@@ -6,33 +6,36 @@ import ReasonChip from './ReasonChip';
 import { HIDE_REASONS } from './model';
 
 /* Shared hide-with-reason modal (issue list + detail). The reason teaches the
-   agent why an issue was dismissed. State is reset on close so each open is
-   clean. */
+   agent why an issue was dismissed. The reason vocabulary comes from the server
+   (GET …/reasons); we fall back to the built-in list until it loads. State is
+   reset on close so each open is clean. */
 export default function HideIssueModal({
   open,
   head,
+  reasons: options = HIDE_REASONS,
   onCancel,
   onConfirm,
 }: {
   open: boolean;
   head?: string;
+  reasons?: string[];
   onCancel: () => void;
-  onConfirm: (note: string, tags: string[]) => void;
+  onConfirm: (reasons: string[], note: string) => void;
 }) {
   const { t } = useTranslation();
   const [note, setNote] = React.useState('');
-  const [tags, setTags] = React.useState<string[]>([]);
+  const [reasons, setReasons] = React.useState<string[]>([]);
 
   const reset = () => {
     setNote('');
-    setTags([]);
+    setReasons([]);
   };
   const cancel = () => {
     reset();
     onCancel();
   };
   const confirm = () => {
-    onConfirm(note.trim(), tags);
+    onConfirm(reasons, note.trim());
     reset();
   };
 
@@ -51,13 +54,13 @@ export default function HideIssueModal({
         )}
       </p>
       <div className="flex flex-wrap gap-2 mb-3">
-        {HIDE_REASONS.map((r) => (
+        {options.map((r) => (
           <ReasonChip
             key={r}
             label={t(r)}
-            checked={tags.includes(r)}
+            checked={reasons.includes(r)}
             onChange={(on) =>
-              setTags((prev) =>
+              setReasons((prev) =>
                 on ? [...prev, r] : prev.filter((x) => x !== r),
               )
             }

@@ -22,11 +22,13 @@ export default function IssuePanel({
   card,
   onClose,
   onSetCritical,
+  criticalReasons,
 }: {
   issue: Issue;
   card?: IssueSessionCard;
   onClose: () => void;
-  onSetCritical: (val: boolean, reason?: string) => void;
+  onSetCritical: (val: boolean, reasons?: string[], note?: string) => void;
+  criticalReasons?: string[];
 }) {
   const { t } = useTranslation();
   return (
@@ -75,6 +77,7 @@ export default function IssuePanel({
             <CriticalToggle
               critical={issue.critical}
               onSet={onSetCritical}
+              reasons={criticalReasons}
               zIndex={PLAYER_POPUP_Z}
             />
           </div>
