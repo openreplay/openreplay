@@ -6,7 +6,11 @@ import (
 )
 
 type MessageReader interface {
+<<<<<<< HEAD
 	Parse(filter *TypeFilter) (err error)
+=======
+	Parse(filter map[int]struct{}) (err error)
+>>>>>>> c1f297d01 (Message parser optimization (#4741))
 	Next() bool
 	Message() Message
 }
@@ -20,7 +24,11 @@ func NewMessageReader(data []byte) MessageReader {
 
 type messageReaderImpl struct {
 	data     []byte
+<<<<<<< HEAD
 	reader   *bytesReaderImpl
+=======
+	reader   BytesReader
+>>>>>>> c1f297d01 (Message parser optimization (#4741))
 	msgType  uint64
 	msgSize  uint64
 	msgBody  []byte
@@ -28,11 +36,16 @@ type messageReaderImpl struct {
 	broken   bool
 	message  Message
 	err      error
+<<<<<<< HEAD
 	messages []RawMessage
+=======
+	messages []*RawMessage
+>>>>>>> c1f297d01 (Message parser optimization (#4741))
 	listPtr  int
 	index    uint64
 }
 
+<<<<<<< HEAD
 func (m *messageReaderImpl) Reset(data []byte) {
 	m.data = data
 	m.reader.Reset(data)
@@ -45,6 +58,12 @@ func (m *messageReaderImpl) Parse(filter *TypeFilter) (err error) {
 	m.listPtr = 0
 	m.index = 0
 	m.messages = m.messages[:0]
+=======
+func (m *messageReaderImpl) Parse(filter map[int]struct{}) (err error) {
+	m.listPtr = 0
+	m.index = 0
+	m.messages = make([]*RawMessage, 0, 1024)
+>>>>>>> c1f297d01 (Message parser optimization (#4741))
 	m.broken = false
 	for {
 		// Try to read and decode message type, message size and check range in
@@ -73,6 +92,7 @@ func (m *messageReaderImpl) Parse(filter *TypeFilter) (err error) {
 			}
 			m.reader.SetPointer(curr + int64(m.msgSize))
 
+<<<<<<< HEAD
 			if filter != nil && !filter.Has(int(m.msgType)) {
 				continue
 			}
@@ -94,6 +114,24 @@ func (m *messageReaderImpl) Parse(filter *TypeFilter) (err error) {
 				data:   m.data[from : curr+int64(m.msgSize)],
 				broken: &m.broken,
 				meta: message{
+=======
+			if filter != nil {
+				if _, ok := filter[int(m.msgType)]; !ok {
+					continue
+				}
+			}
+
+			// Dirty hack to avoid extra memory allocation
+			mTypeByteSize := ByteSizeUint(m.msgType)
+			from := int(curr) - mTypeByteSize
+			WriteUint(m.msgType, m.data, from)
+
+			m.messages = append(m.messages, &RawMessage{
+				tp:     m.msgType,
+				data:   m.data[uint64(from) : uint64(from)+m.msgSize+1],
+				broken: &m.broken,
+				meta: &message{
+>>>>>>> c1f297d01 (Message parser optimization (#4741))
 					Index: m.index,
 				},
 			})
@@ -125,6 +163,7 @@ func (m *messageReaderImpl) Parse(filter *TypeFilter) (err error) {
 				}
 			}
 
+<<<<<<< HEAD
 			if filter != nil && !filter.Has(int(m.msgType)) {
 				continue
 			}
@@ -134,6 +173,19 @@ func (m *messageReaderImpl) Parse(filter *TypeFilter) (err error) {
 				data:   m.data[from:m.reader.Pointer()],
 				broken: &m.broken,
 				meta: message{
+=======
+			if filter != nil {
+				if _, ok := filter[int(m.msgType)]; !ok {
+					continue
+				}
+			}
+
+			m.messages = append(m.messages, &RawMessage{
+				tp:     m.msgType,
+				data:   m.data[uint64(from):uint64(m.reader.Pointer())],
+				broken: &m.broken,
+				meta: &message{
+>>>>>>> c1f297d01 (Message parser optimization (#4741))
 					Index: m.index,
 				},
 			})
@@ -152,7 +204,11 @@ func (m *messageReaderImpl) Next() bool {
 			return false
 		}
 
+<<<<<<< HEAD
 		m.message = &m.messages[m.listPtr]
+=======
+		m.message = m.messages[m.listPtr]
+>>>>>>> c1f297d01 (Message parser optimization (#4741))
 		m.listPtr++
 		return true
 	}
