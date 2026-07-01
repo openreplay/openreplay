@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ReasonChip from './ReasonChip';
-import { CRITICAL_REASONS } from './model';
+import { CRITICAL_REASONS, humanizeReason } from './model';
 
 /* The "why is this not critical?" picker used inside the detail/player popovers.
    Un-marking critical is a teaching moment, so a reason is collected. The reason
@@ -30,7 +30,7 @@ export default function CriticalReasonPanel({
         {options.map((r) => (
           <ReasonChip
             key={r}
-            label={t(r)}
+            label={t(humanizeReason(r))}
             checked={reasons.includes(r)}
             onChange={(on) =>
               setReasons((p) => (on ? [...p, r] : p.filter((x) => x !== r)))
