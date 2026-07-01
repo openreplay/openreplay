@@ -69,7 +69,12 @@ export default class ConstantProperties {
     private readonly sessionStorage: StorageLike,
   ) {
     const { width, height, browser, browserVersion, browserMajorVersion, os, osVersion, mobile } =
-      uaParse(win)
+      uaParse(win, (refinedOsVersion) => {
+        // Windows 10/11 are indistinguishable from the UA string; the async
+        // high-entropy result lands after construction, so update it live here.
+        // `all` is a getter, so later events pick up the corrected value.
+        this.osVersion = refinedOsVersion
+      })
     const storedUserId = this.sessionStorage.getItem(userIdKey)
     if (storedUserId) {
       this.user_id = storedUserId

@@ -1,3 +1,17 @@
+## 18.1.0
+
+- restart or resume the session when a page is restored from back-forward cache (bfcache)
+- mask every email in a text node, not only nodes that are a single email
+- keep analytics events on failed send and flush them when the tab is hidden
+- fix potential crash when removing an attribute from an svg element
+- prune throttling maps to avoid slow memory growth on long sessions
+- fix leaked interval when multiple duration-based conditions are used
+- fix image mutations being skipped after an untracked node
+- fix in-memory css scan skipping remaining stylesheets after one hits its check limit
+- restore original console methods when the tracker stops
+- correctly detect windows 11 version
+- fix sprite icon cache mixing icons across sprite files and recovering after a failed fetch
+
 ## 18.0.17
 
 - revisiting node maintainer class (should be slightly better performance now)

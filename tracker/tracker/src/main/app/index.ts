@@ -137,6 +137,14 @@ type AppOptions = {
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
+  /**
+   * When a page is restored from the browser's back-forward cache (bfcache),
+   * the tracker resumes the existing session if it was frozen for less than this
+   * many milliseconds, and starts a fresh session otherwise (the previous one has
+   * likely gone stale server-side). Set to 0 to always restart on restore.
+   * @default 1800000 (30 min)
+   */
+  bfcacheRestartThreshold?: number
   /** Sometimes helps to prevent session breaking due to dict reset */
   disableStringDict?: boolean
   assistSocketHost?: string
@@ -284,6 +292,7 @@ export default class App {
   private frameOderNumber = 0
   private frameLevel = 0
   private emptyBatchCounter = 0
+  private lastHiddenAt: number | null = null
 
   constructor(
     projectKey: string,
@@ -314,6 +323,7 @@ export default class App {
       localStorage: null,
       sessionStorage: null,
       forceSingleTab: false,
+      bfcacheRestartThreshold: 30 * 60 * 1000,
       assistSocketHost: '',
       captureIFrames: true,
       obscureTextEmails: false,
@@ -1106,7 +1116,22 @@ export default class App {
         }
       }
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
-      this.attachEventListener(window, 'pagehide', alertWorker, false, false)
+      this.attachEventListener(
+        window,
+        'pagehide',
+        () => {
+          // pagehide is the entry point into the back-forward cache; remember when
+          // it fired so pageshow can measure how long the page stayed frozen.
+          this.lastHiddenAt = Date.now()
+          alertWorker()
+        },
+        false,
+        false,
+      )
+      // Detect restores from the back-forward cache. Attached directly rather than via
+      // attachEventListener so it persists through stop()/restart() and can still catch a
+      // restore that happens while the tracker is briefly stopped.
+      window.addEventListener('pageshow', this.handlePageShow, false)
       // TODO: stop session after inactivity timeout (make configurable)
       this.attachEventListener(
         document,
@@ -1131,6 +1156,29 @@ export default class App {
           this.debug.error('Session restart failed', e)
         })
     })
+  }
+
+  private handlePageShow = (e: PageTransitionEvent): void => {
+    // Only back-forward cache restores set persisted === true; a normal navigation is false.
+    if (!e || !e.persisted) {
+      return
+    }
+    try {
+      const frozenMs = this.lastHiddenAt != null ? Date.now() - this.lastHiddenAt : null
+      this.lastHiddenAt = null
+      const threshold = this.options.bfcacheRestartThreshold ?? 30 * 60 * 1000
+      // If we couldn't measure the freeze, or it outlasted the threshold, the session has
+      // likely expired server-side - start a clean one. Otherwise let the resumed page
+      // continue on the existing session (preserving continuity).
+      if (frozenMs === null || frozenMs >= threshold) {
+        this.debug.info('OpenReplay: restarting session after bfcache restore', { frozenMs })
+        this.restart()
+      } else {
+        this.debug.info('OpenReplay: resuming session after bfcache restore', { frozenMs })
+      }
+    } catch (err) {
+      this._debug('bfcache_restore', err)
+    }
   }
 
   private handleWorkerMsg(data: FromWorkerData) {

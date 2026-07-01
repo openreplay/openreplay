@@ -123,6 +123,10 @@ export default function (app: App, opts: Partial<Options>): void {
   app.attachStartCallback(reset)
   app.ticker.attach(reset, 33, false)
 
+  // Restorers for every method we patch, so we can put the host's console back
+  // when the session stops instead of leaving it proxied for the page's lifetime.
+  const restores: Array<() => void> = []
+
   const patchConsole = (console: Console, ctx: typeof globalThis) => {
     const handler = {
       apply: function (target: Console['log'], thisArg: typeof this, argumentsList: unknown[]) {
@@ -144,6 +148,9 @@ export default function (app: App, opts: Partial<Options>): void {
       const fn = (ctx.console as any)[method]
       // is there any way to preserve the original console trace?
       ;(console as any)[method] = new Proxy(fn, handler)
+      restores.push(() => {
+        ;(console as any)[method] = fn
+      })
     })
   }
 
@@ -151,6 +158,23 @@ export default function (app: App, opts: Partial<Options>): void {
     patchConsole(context.console, context),
   )
 
-  patchContext(window)
+  let patched = false
+  const startPatching = () => {
+    if (patched) {
+      return
+    }
+    patched = true
+    patchContext(window)
+  }
+  // Patch immediately, and re-patch on any later start; restore on stop so the
+  // host console isn't left wrapped for the page's lifetime and capture is
+  // re-established symmetrically across a stop/restart.
+  startPatching()
+  app.attachStartCallback(startPatching)
+  app.attachStopCallback(() => {
+    patched = false
+    restores.forEach((restore) => restore())
+    restores.length = 0
+  })
   app.observer.attachContextCallback(patchContext)
 }
