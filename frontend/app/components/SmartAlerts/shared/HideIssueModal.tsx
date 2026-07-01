@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ReasonChip from './ReasonChip';
-import { HIDE_REASONS } from './model';
+import { HIDE_REASONS, humanizeReason } from './model';
 
 /* Shared hide-with-reason modal (issue list + detail). The reason teaches the
    agent why an issue was dismissed. The reason vocabulary comes from the server
@@ -57,7 +57,7 @@ export default function HideIssueModal({
         {options.map((r) => (
           <ReasonChip
             key={r}
-            label={t(r)}
+            label={t(humanizeReason(r))}
             checked={reasons.includes(r)}
             onChange={(on) =>
               setReasons((prev) =>

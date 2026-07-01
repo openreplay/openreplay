@@ -158,6 +158,14 @@ export function fmtDuration(ms: number): string {
   return m ? `${m}m${s}s` : `${s}s`;
 }
 
+/** Display label for a server reason key: snake_case → sentence case
+    (e.g. "not_a_real_issue" → "Not a real issue"). The original key is kept as
+    the value and sent back to the server; only the label is humanized. */
+export function humanizeReason(reason: string): string {
+  const words = reason.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : '';
+}
+
 /** "Jun 26, 2026" — the standard session date label; empty when no timestamp. */
 export function fmtDate(ts: number | null | undefined): string {
   if (!ts) return '';
