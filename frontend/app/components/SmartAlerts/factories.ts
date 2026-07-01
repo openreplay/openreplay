@@ -8,12 +8,15 @@ import {
   fmtDuration,
 } from './shared/model';
 
-/* Factories that map raw backend payloads to our view-model shapes. Every field
-   the backend does not return yet is given a safe default and tagged with a
-   WAITING BACKEND marker so the gaps are greppable (see TODO.md). */
+/* Factories mapping raw /v2/smart-issues payloads to our view-model shapes.
+   Categories are still derived locally from label ratios (the backend has no
+   explicit per-issue category); `fix` (suggested fix) is the only field the
+   contract still doesn't provide — see TODO.md. */
 
+/* The backend's critical label is a real issue label whose stored name contains
+   "critical" (e.g. "Critical") — match by substring, case-insensitive. */
 export const isCriticalLabel = (name: string) =>
-  name.toLowerCase() === 'critical';
+  name.toLowerCase().includes('critical');
 
 const CATEGORY_SET = new Set<string>(CAT_ORDER);
 /* A category label counts as a real membership above this ratio — an issue can
@@ -39,32 +42,40 @@ function memberCategories(
     .map((l) => l.name as CategoryName);
 }
 
-/** RawIssue (POST /kai/:projectId/smart_alerts) -> Issue */
+/** RawIssue (POST /smart-issues/{projectId}, GET …/issue) -> Issue */
 export function makeIssue(d: RawIssue): Issue {
+  const lastSeen = d.lastSeen ?? null;
   return {
-    // identity — issueName is the only stable key the backend exposes today
+    // identity — issueName is the stable key the backend keys on
     id: d.issueName,
     head: d.issueName,
     impact: d.impact ?? 0,
-    // critical is inferred from the presence of a "critical" label
-    critical: d.issueLabels.some((l) => isCriticalLabel(l.name)),
-    tags: d.issueLabels.map((l) => l.name).filter((n) => !isCriticalLabel(n)),
-    journeyLabels: d.journeyLabels.map((l) => l.name),
+    // critical is now a real server field (override, else the 'critical' label)
+    critical: Boolean(d.critical),
+    tags: (d.issueLabels ?? [])
+      .map((l) => l.name)
+      .filter((n) => !isCriticalLabel(n)),
+    journeyLabels: (d.journeyLabels ?? []).map((l) => l.name),
     // derived locally from label ratios (see dominantCategory/memberCategories);
     // replace with server-provided categories when available
-    cat: dominantCategory(d.issueLabels),
-    categories: memberCategories(d.issueLabels),
+    cat: dominantCategory(d.issueLabels ?? []),
+    categories: memberCategories(d.issueLabels ?? []),
 
-    problem: '' /* WAITING BACKEND: issue-level problem description */,
+    impactedSessions: d.impactedSessions ?? 0,
+    count: d.count ?? 0,
+    firstSeen: d.firstSeen ?? null,
+    lastSeen,
+    seenAgoMin: lastSeen ? Math.max(0, (Date.now() - lastSeen) / 60000) : null,
+
+    // issueDescription only rides along on GET …/issue; empty in list items
+    problem: d.issueDescription ?? '',
     fix: '' /* WAITING BACKEND: suggested fix / resolution */,
-    seenAgoMin:
-      null /* WAITING BACKEND: minutes since the issue was last seen */,
   };
 }
 
-/** RawIssueSession (POST /kai/:projectId/smart_alerts/search) -> IssueSessionCard */
+/** RawIssueSession (POST /smart-issues/{projectId}/search) -> IssueSessionCard */
 export function makeIssueSessionCard(s: RawIssueSession): IssueSessionCard {
-  const ts = s.startTs ?? s.timestamp ?? null;
+  const ts = s.startTs ?? null;
   return {
     sessionId: s.sessionId,
     date: fmtDate(ts),

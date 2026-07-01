@@ -3,7 +3,8 @@ import React from 'react';
 
 export type CategoryName = 'Errors' | 'UI/UX' | 'Slowness';
 export type MatchMode = 'all' | 'any';
-export type SortMode = 'impact' | 'newest';
+/** server-backed sort keys (see api.yaml IssuesListRequest.sortBy) */
+export type SortMode = 'impact' | 'count' | 'recency' | 'firstSeen';
 export type ImpactLevel = 'High' | 'Medium' | 'Low';
 
 export interface Issue {
@@ -20,11 +21,20 @@ export interface Issue {
   /** every category the issue is significant in (label ratio over threshold) —
       drives the category tab filter + counts (an issue can be in several) */
   categories: CategoryName[];
-  /** the following are not yet provided by the backend (see TODO.md + the
-      factory defaults); the UI degrades gracefully when they are absent */
-  problem: string;
-  fix: string;
+  /** distinct sessions affected within the window (impact% is derived from this) */
+  impactedSessions: number;
+  /** total occurrences within the window */
+  count: number;
+  /** epoch-ms of the earliest / most recent occurrence within the window */
+  firstSeen: number | null;
+  lastSeen: number | null;
+  /** minutes since `lastSeen`, derived for the relative "last seen" labels */
   seenAgoMin: number | null;
+  /** issue-level problem text — only populated from GET …/issue (detail/player) */
+  problem: string;
+  /** suggested fix — still not provided by the backend (see TODO.md); the UI
+      hides the "Suggested fix" section until it lands */
+  fix: string;
 }
 
 export interface IssueSessionCard {
@@ -156,16 +166,4 @@ export function fmtDate(ts: number | null | undefined): string {
     day: 'numeric',
     year: 'numeric',
   });
-}
-
-/* URL-safe slug for an issue name (spaces/symbols → dashes). Lossy, so it can't
-   be reversed — pages resolve the real issue by matching this slug against the
-   loaded issues (see issuesStore.bySlug). */
-export function slugify(name: string): string {
-  const s = name
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return s || 'issue';
 }

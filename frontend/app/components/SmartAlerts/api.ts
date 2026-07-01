@@ -1,104 +1,252 @@
 import { client } from 'App/mstore';
 
-/* Raw issue row from the smart-alerts endpoint (same contract IssuesSummary
-   used). The redesign needs more than this returns — see HANDOFF data contract
-   and the backend checklist in the issues store. */
+/* Smart Issues REST client — the Go `api` service under /v2/smart-issues
+   (migrated from the Python `kai` service). See api.yaml for the full contract.
+
+   NOTE(base-path): /smart-issues is added to `noChalice` in api_client.ts so the
+   path resolves at the origin root (…/v2/smart-issues/{projectId}) on
+   self-hosted, mirroring how /kai was routed. The exact SaaS gateway prefix
+   still needs a smoke-test against a live backend — see HANDOFF.md. */
+
+const base = (projectId: string | number) => `/v2/smart-issues/${projectId}`;
+
+// ---- shared enums (mirror api.yaml) ----
+export type Visibility = 'active' | 'hidden' | 'deleted' | 'all';
+export type ListSortBy = 'impact' | 'count' | 'recency' | 'firstSeen';
+export type SearchSortBy = 'time' | 'events';
+export type SortDir = 'asc' | 'desc';
+export type LabelsMatch = 'and' | 'or';
+
+export interface RawLabelRatio {
+  name: string;
+  /** per-label share of the issue's session count (0-100) */
+  ratio: number;
+}
+
+/* Issue row from POST /smart-issues/{projectId} (and GET …/issue, which
+   additionally carries `issueDescription`). */
 export interface RawIssue {
   issueName: string;
   impact: number;
-  issueLabels: { name: string; ratio: number }[];
-  journeyLabels: { name: string; ratio: number }[];
+  critical: boolean;
+  impactedSessions: number;
+  count: number;
+  firstSeen: number;
+  lastSeen: number;
+  /** representative description — only returned by GET …/issue */
+  issueDescription?: string;
+  issueLabels: RawLabelRatio[];
+  journeyLabels: RawLabelRatio[];
 }
 
+/* Session row from POST /smart-issues/{projectId}/search — replay metadata
+   merged with the issue-specific fields. `additionalProperties: true` in the
+   schema means more replay props (userBrowser, userOs, metadata, …) ride along;
+   we read the ones the cards need and tolerate their absence. */
 export interface RawIssueSession {
   sessionId: string;
-  userId?: string;
+  projectId?: number;
+  startTs?: number;
+  duration?: number | null;
+  userId?: string | null;
+  userUuid?: string;
+  description?: string;
+  journey?: string;
+  issueLabels?: (string | { name: string })[];
+  journeyLabels?: (string | { name: string })[];
+  issueTimestamp?: number | null;
+  // replay extras (not enumerated in the schema, present via additionalProperties)
   userBrowser?: string;
   userOs?: string;
   userDeviceType?: string;
   userCountry?: string;
   userCity?: string;
-  duration?: number;
-  startTs?: number;
-  timestamp?: number;
   eventsCount?: number;
   metadata?: Record<string, any> | null;
-  description?: string;
-  journey?: string;
-  // the search endpoint returns these as plain strings (unlike the issue-list
-  // endpoint, which uses { name, ratio }) — accept both shapes
-  issueLabels?: (string | { name: string })[];
-  journeyLabels?: (string | { name: string })[];
-  issueTimestamp?: number | null;
 }
 
-export async function getTagLabels(projectId: string): Promise<string[]> {
-  const response = await client.get(`/kai/${projectId}/smart_labels`);
-  const json = await response.json();
-  return (json.data ?? { issueLabels: [] }).issueLabels ?? [];
+export interface ListParams {
+  limit?: number;
+  page?: number;
+  issueLabels?: string[];
+  journeyLabels?: string[];
+  labelsMatch?: LabelsMatch;
+  sortBy?: ListSortBy;
+  sortDir?: SortDir;
+  range?: [number, number];
+  hidden?: Visibility;
+  minImpact?: number;
+  minCount?: number;
+  query?: string;
 }
 
+export interface SearchParams {
+  query?: string | null;
+  issueLabels?: string[];
+  journeyLabels?: string[];
+  sortBy?: SearchSortBy;
+  sortDir?: SortDir;
+  range?: [number, number];
+  limit?: number;
+  page?: number;
+}
+
+export interface Reasons {
+  hide: string[];
+  criticality: string[];
+}
+
+export type IssueOperation =
+  | { hide: boolean }
+  | { rename: string }
+  | { critical: boolean }
+  | { restore: true }
+  // {} triggers the AI auto-rename branch
+  | Record<string, never>;
+
+/** Default window when the caller doesn't scope one: the last 7 days (matches
+    the server default). */
+const defaultRange = (): [number, number] => [
+  Date.now() - 7 * 24 * 60 * 60 * 1000,
+  Date.now(),
+];
+
+/** POST /smart-issues/{projectId} — paginated, filtered, sorted issue list. */
 export async function getIssues(
   projectId: string,
-  labels?: string[],
-): Promise<RawIssue[]> {
-  const response = await client.post(`/kai/${projectId}/smart_alerts`, {
-    issues_limit: 40,
-    labels,
+  params: ListParams = {},
+): Promise<{ rows: RawIssue[]; total: number }> {
+  const res = await client.post(base(projectId), {
+    limit: params.limit ?? 20,
+    page: params.page ?? 1,
+    issueLabels: params.issueLabels ?? [],
+    journeyLabels: params.journeyLabels ?? [],
+    labelsMatch: params.labelsMatch ?? 'and',
+    sortBy: params.sortBy ?? 'impact',
+    sortDir: params.sortDir ?? 'desc',
+    range: params.range ?? defaultRange(),
+    hidden: params.hidden ?? 'active',
+    minImpact: params.minImpact ?? 0,
+    minCount: params.minCount ?? 0,
+    query: params.query ?? '',
   });
-  const json = await response.json();
-  return json.data ?? [];
+  const json = await res.json();
+  const rows: RawIssue[] = json.data ?? [];
+  return { rows, total: json.total ?? rows.length };
 }
 
+/** GET /smart-issues/{projectId}/issue?name=… — one issue by name (returns it
+    even if hidden). Resolves to null on 404 so callers can render "not found". */
+export async function getIssue(
+  projectId: string,
+  name: string,
+  range?: [number, number],
+): Promise<RawIssue | null> {
+  try {
+    const res = await client.get(`${base(projectId)}/issue`, {
+      name,
+      startMs: range?.[0],
+      endMs: range?.[1],
+    });
+    const json = await res.json();
+    return json.data ?? null;
+  } catch (e: any) {
+    if ((e?.cause as Response)?.status === 404) return null;
+    throw e;
+  }
+}
+
+/** GET /smart-issues/{projectId}/labels — the issue + journey label vocabulary
+    for the filter controls. */
+export async function getLabels(
+  projectId: string,
+): Promise<{ issueLabels: string[]; journeyLabels: string[] }> {
+  const res = await client.get(`${base(projectId)}/labels`);
+  const json = await res.json();
+  const data = json.data ?? {};
+  return {
+    issueLabels: data.issueLabels ?? [],
+    journeyLabels: data.journeyLabels ?? [],
+  };
+}
+
+/** GET /smart-issues/{projectId}/reasons — canonical hide/criticality reason
+    lists for the feedback prompts. */
+export async function getReasons(projectId: string): Promise<Reasons> {
+  const res = await client.get(`${base(projectId)}/reasons`);
+  const json = await res.json();
+  const data = json.data ?? {};
+  return { hide: data.hide ?? [], criticality: data.criticality ?? [] };
+}
+
+/** POST /smart-issues/{projectId}/search — sessions for an issue, replay-enriched.
+    A non-null `query` triggers the AI vector + LLM re-rank branch. */
 export async function getIssueSessions(
   projectId: string,
   issueName: string,
-  opts: {
-    query?: string | null;
-    issueLabels?: string[];
-    journeyLabels?: string[];
-    range?: [number, number];
-    limit?: number;
-    page?: number;
-  } = {},
+  opts: SearchParams = {},
 ): Promise<{ rows: RawIssueSession[]; total: number }> {
-  const res = await client.post(`/kai/${projectId}/smart_alerts/search`, {
+  const res = await client.post(`${base(projectId)}/search`, {
     issue: issueName,
     query: opts.query ?? null,
     issueLabels: opts.issueLabels ?? [],
     journeyLabels: opts.journeyLabels ?? [],
-    sortBy: 'time',
-    sortDir: 'desc',
-    range: opts.range ?? [Date.now() - 30 * 24 * 60 * 60 * 1000, Date.now()],
+    sortBy: opts.sortBy ?? 'time',
+    sortDir: opts.sortDir ?? 'desc',
+    range: opts.range ?? defaultRange(),
     limit: opts.limit ?? 50,
     page: opts.page ?? 1,
   });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   const json = await res.json();
   const rows: RawIssueSession[] = json.data ?? [];
-  // prefer a server-provided total; otherwise fall back to the returned count
-  const total: number = json.total ?? json.count ?? rows.length;
-  return { rows, total };
+  return { rows, total: json.total ?? rows.length };
 }
 
-export async function hideIssue(projectId: string, issueName: string) {
-  const res = await client.put(`/kai/${projectId}/smart_alerts`, {
+/** PUT /smart-issues/{projectId} — dispatches on `operation`. `reasons`/`note`
+    are captured with hide + criticality changes. */
+export async function updateIssue(
+  projectId: string,
+  issueName: string,
+  operation: IssueOperation,
+  reasons?: string[],
+  note?: string,
+) {
+  return client.put(base(projectId), {
     issue: issueName,
-    operation: { hide: true },
+    operation,
+    ...(reasons && reasons.length ? { reasons } : {}),
+    ...(note ? { note } : {}),
   });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res;
 }
 
-export async function renameIssue(
+export const hideIssue = (
+  projectId: string,
+  issueName: string,
+  reasons?: string[],
+  note?: string,
+) => updateIssue(projectId, issueName, { hide: true }, reasons, note);
+
+export const unhideIssue = (projectId: string, issueName: string) =>
+  updateIssue(projectId, issueName, { hide: false });
+
+export const renameIssue = (
   projectId: string,
   issueName: string,
   newName: string,
-) {
-  const res = await client.put(`/kai/${projectId}/smart_alerts`, {
-    issue: issueName,
-    operation: { rename: newName },
-  });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res;
-}
+) => updateIssue(projectId, issueName, { rename: newName });
+
+export const setIssueCritical = (
+  projectId: string,
+  issueName: string,
+  critical: boolean,
+  reasons?: string[],
+  note?: string,
+) => updateIssue(projectId, issueName, { critical }, reasons, note);
+
+export const restoreIssue = (projectId: string, issueName: string) =>
+  updateIssue(projectId, issueName, { restore: true });
+
+/** DELETE /smart-issues/{projectId} — soft-delete (not reversible via the API;
+    a `restore` un-deletes it). */
+export const deleteIssue = (projectId: string, issueName: string) =>
+  client.delete(base(projectId), { issue: issueName });

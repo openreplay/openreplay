@@ -1,27 +1,32 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
+import Period, { LAST_7_DAYS } from 'Types/app/period';
 import {
   Button,
   Checkbox,
   Dropdown,
   Input,
+  Modal,
   Popover,
   Segmented,
+  Select,
   Table,
   Tag,
   Tooltip,
 } from 'antd';
-import type { TableColumnsType } from 'antd';
+import type { TableColumnsType, TablePaginationConfig } from 'antd';
+import type { SorterResult } from 'antd/es/table/interface';
 import {
   Album,
   ArrowUpRight,
   ChevronDown,
-  Clock,
   Eye,
   EyeOff,
   Info,
   MoreVertical,
   Pencil,
+  RotateCcw,
   SlidersHorizontal,
+  Trash2,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -31,11 +36,9 @@ import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
 import { smartIssueDetails, withSiteId } from 'App/saasComponents';
 
-// BACKEND-PENDING: imports for the disabled date-range picker
-// (uncomment together with the matching block below).
-// import Period, { LAST_24_HOURS } from 'Types/app/period';
-// import SelectDateRange from 'Shared/SelectDateRange';
+import SelectDateRange from 'Shared/SelectDateRange';
 
+import type { SortDir, Visibility } from '../api';
 import {
   CAT_COLOR,
   CAT_ICON,
@@ -50,9 +53,24 @@ import {
   impactLevel,
   lastSeenExact,
   lastSeenLabel,
-  slugify,
 } from '../shared';
+import type { SortMode } from '../shared/model';
 import TagFilter from './TagFilter';
+
+/* antd header-sort order -> our SortMode, per sortable column. */
+const SORT_FIELD: Record<string, SortMode> = {
+  impact: 'impact',
+  seenAgoMin: 'recency',
+};
+const antOrder = (dir: SortDir): 'ascend' | 'descend' =>
+  dir === 'asc' ? 'ascend' : 'descend';
+
+const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'hidden', label: 'Hidden' },
+  { value: 'deleted', label: 'Deleted' },
+  { value: 'all', label: 'All' },
+];
 
 function IssuesList() {
   const { issuesStore, projectsStore } = useStore();
@@ -63,34 +81,30 @@ function IssuesList() {
   const [dispOpen, setDispOpen] = React.useState(false);
   const [hideTarget, setHideTarget] = React.useState<Issue | null>(null);
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
-  // BACKEND-PENDING: state for the disabled date-range picker.
-  // const [period, setPeriod] = React.useState<any>(
-  //   Period({ rangeName: LAST_24_HOURS }),
-  // );
+  const [period, setPeriod] = React.useState<any>(
+    Period({ rangeName: LAST_7_DAYS }),
+  );
 
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
 
   const openDetail = (id: string) =>
-    history.push(withSiteId(smartIssueDetails(slugify(id)), siteId));
+    history.push(withSiteId(smartIssueDetails(encodeURIComponent(id)), siteId));
+
+  const onPeriodChange = (p: any) => {
+    setPeriod(p);
+    issuesStore.setRange([p.start, p.end]);
+  };
 
   const showCategory = issuesStore.hasCategories;
-  const showLastSeen = issuesStore.all.some((i) => i.seenAgoMin != null);
+  const showLastSeen = issuesStore.list.some((i) => i.seenAgoMin != null);
+  const { visibility } = issuesStore;
 
   const catValue: 'All' | CategoryName =
     issuesStore.cats.length === 1 ? issuesStore.cats[0] : 'All';
-  const faded = (n: number) => <span className="opacity-50 ml-1.5">{n}</span>;
   const catTabOptions = [
-    {
-      value: 'All',
-      label: (
-        <span>
-          {t('All')}
-          {faded(issuesStore.all.length)}
-        </span>
-      ),
-    },
+    { value: 'All', label: t('All') },
     ...CAT_ORDER.map((c) => {
       const Ic = CAT_ICON[c];
       return {
@@ -102,12 +116,7 @@ function IssuesList() {
             style={{ color: c === catValue ? CAT_COLOR[c] : undefined }}
           />
         ),
-        label: (
-          <span>
-            {t(c)}
-            {faded(issuesStore.catCount(c))}
-          </span>
-        ),
+        label: t(c),
       };
     }),
   ];
@@ -117,7 +126,9 @@ function IssuesList() {
       title: t('Impact'),
       dataIndex: 'impact',
       width: 96,
-      sorter: (a, b) => a.impact - b.impact,
+      sorter: true,
+      sortOrder:
+        issuesStore.sort === 'impact' ? antOrder(issuesStore.sortDir) : null,
       showSorterTooltip: false,
       render: (v: number) => {
         const title = t('{{level}} impact', { level: t(impactLevel(v)) });
@@ -137,29 +148,29 @@ function IssuesList() {
     {
       title: t('Issue'),
       dataIndex: 'head',
-      sorter: (a, b) => a.head.localeCompare(b.head),
-      showSorterTooltip: false,
       render: (head: string, r: Issue) => (
         <div className="flex items-center gap-2 min-w-0">
           <CriticalToggle
             critical={r.critical}
+            reasons={issuesStore.reasons.criticality}
             stopPropagation
-            onSet={(val, reason) => issuesStore.setCritical(r.id, val, reason)}
+            onSet={(val, reasons, note) =>
+              issuesStore.setCritical(r.id, val, reasons, note)
+            }
           />
           <span className="truncate font-medium color-gray-darkest">
             {head}
           </span>
-          {issuesStore.showHidden && issuesStore.hidden.includes(r.id) && (
-            <Tooltip
-              title={
-                issuesStore.dismissReasons[r.id]
-                  ? t('Dismissed: {{reason}}', {
-                      reason: issuesStore.dismissReasons[r.id],
-                    })
-                  : t('Dismissed')
-              }
-            >
+          {issuesStore.viewingHidden && (
+            <Tooltip title={t('Hidden')}>
               <Tag className="rounded">{t('Hidden')}</Tag>
+            </Tooltip>
+          )}
+          {issuesStore.viewingDeleted && (
+            <Tooltip title={t('Deleted')}>
+              <Tag color="red" className="rounded">
+                {t('Deleted')}
+              </Tag>
             </Tooltip>
           )}
         </div>
@@ -195,8 +206,11 @@ function IssuesList() {
             title: t('Last seen'),
             dataIndex: 'seenAgoMin',
             width: 156,
-            sorter: (a: Issue, b: Issue) =>
-              (a.seenAgoMin ?? 0) - (b.seenAgoMin ?? 0),
+            sorter: true,
+            sortOrder:
+              issuesStore.sort === 'recency'
+                ? antOrder(issuesStore.sortDir)
+                : null,
             showSorterTooltip: false,
             render: (m?: number) =>
               m == null ? null : (
@@ -215,7 +229,42 @@ function IssuesList() {
       width: 48,
       align: 'center',
       render: (_: unknown, r: Issue) => {
-        const isHidden = issuesStore.hidden.includes(r.id);
+        const items = [
+          {
+            key: 'detail',
+            icon: <ArrowUpRight size={14} />,
+            label: t('Open'),
+          },
+          { key: 'rename', icon: <Pencil size={14} />, label: t('Rename') },
+          { type: 'divider' as const },
+          ...(visibility === 'deleted'
+            ? [
+                {
+                  key: 'restore',
+                  icon: <RotateCcw size={14} />,
+                  label: t('Restore'),
+                },
+              ]
+            : [
+                visibility === 'hidden'
+                  ? {
+                      key: 'unhide',
+                      icon: <Eye size={14} />,
+                      label: t('Unhide'),
+                    }
+                  : {
+                      key: 'hide',
+                      icon: <EyeOff size={14} />,
+                      label: t('Hide'),
+                    },
+                {
+                  key: 'delete',
+                  icon: <Trash2 size={14} />,
+                  label: t('Delete'),
+                  danger: true,
+                },
+              ]),
+        ];
         return (
           <Dropdown
             trigger={['click']}
@@ -227,31 +276,10 @@ function IssuesList() {
                 else if (key === 'rename') setRenameTarget(r);
                 else if (key === 'hide') setHideTarget(r);
                 else if (key === 'unhide') issuesStore.unhide(r.id);
+                else if (key === 'restore') issuesStore.restore(r.id);
+                else if (key === 'delete') confirmDelete(r);
               },
-              items: [
-                {
-                  key: 'detail',
-                  icon: <ArrowUpRight size={14} />,
-                  label: t('Open'),
-                },
-                {
-                  key: 'rename',
-                  icon: <Pencil size={14} />,
-                  label: t('Rename'),
-                },
-                { type: 'divider' },
-                isHidden
-                  ? {
-                      key: 'unhide',
-                      icon: <Eye size={14} />,
-                      label: t('Unhide'),
-                    }
-                  : {
-                      key: 'hide',
-                      icon: <EyeOff size={14} />,
-                      label: t('Hide'),
-                    },
-              ],
+              items,
             }}
           >
             <Button
@@ -268,25 +296,54 @@ function IssuesList() {
     },
   ];
 
-  // Display filters run client-side over the already-loaded list.
-  const dispCount =
-    (issuesStore.critOnly ? 1 : 0) + (issuesStore.showHidden ? 1 : 0);
+  const confirmDelete = (r: Issue) =>
+    Modal.confirm({
+      title: t('Delete this issue?'),
+      content: t(
+        '“{{head}}” will be removed. You can restore it later from the Deleted view.',
+        { head: r.head },
+      ),
+      okText: t('Delete'),
+      okButtonProps: { danger: true },
+      onOk: () => issuesStore.remove(r.id),
+    });
+
+  const onTableChange = (
+    _pagination: TablePaginationConfig,
+    _filters: unknown,
+    sorter: SorterResult<Issue> | SorterResult<Issue>[],
+  ) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    const field = SORT_FIELD[String(s?.field ?? '')];
+    // pagination changes also fire onChange with the sorter unchanged — the
+    // setter no-ops when nothing changed, and page is handled by pagination.onChange.
+    if (field && s?.order) {
+      issuesStore.setSortState(field, s.order === 'ascend' ? 'asc' : 'desc');
+    }
+  };
+
+  const dispCount = issuesStore.critOnly ? 1 : 0;
 
   const displayContent = (
-    <div className="flex flex-col gap-2 p-1" style={{ minWidth: 170 }}>
+    <div className="flex flex-col gap-3 p-1" style={{ minWidth: 190 }}>
       <Checkbox
         checked={issuesStore.critOnly}
         onChange={(e) => issuesStore.setCritOnly(e.target.checked)}
       >
         {t('Critical only')}
       </Checkbox>
-      <Checkbox
-        checked={issuesStore.showHidden}
-        onChange={(e) => issuesStore.setShowHidden(e.target.checked)}
-      >
-        {t('Hidden')}
-        {issuesStore.hidden.length ? ` (${issuesStore.hidden.length})` : ''}
-      </Checkbox>
+      <div className="flex flex-col gap-1">
+        <span className="text-xs color-gray-medium">{t('Show')}</span>
+        <Select
+          size="small"
+          value={visibility}
+          onChange={(v) => issuesStore.setVisibility(v as Visibility)}
+          options={VISIBILITY_OPTIONS.map((o) => ({
+            value: o.value,
+            label: t(o.label),
+          }))}
+        />
+      </div>
     </div>
   );
 
@@ -331,7 +388,7 @@ function IssuesList() {
               size="small"
               allowClear
               maxLength={256}
-              placeholder={t('Filter by issue or category')}
+              placeholder={t('Filter by issue name')}
               value={issuesStore.query}
               onChange={(e) => issuesStore.setQuery(e.target.value)}
             />
@@ -363,9 +420,6 @@ function IssuesList() {
             onClear={() => issuesStore.setLabels([])}
           />
 
-          {/* Display filters (critical-only / hidden) run client-side over the
-              loaded issues. Hidden state isn't backend-persisted yet, so that
-              list is usually empty — Critical-only is the useful one for now. */}
           <Popover
             open={dispOpen}
             onOpenChange={setDispOpen}
@@ -380,27 +434,13 @@ function IssuesList() {
             </Button>
           </Popover>
 
-          {/* Date range isn't range-scoped on the backend yet — shown disabled. */}
-          <Tooltip title={t('Not available yet')}>
-            <span className="inline-flex">
-              <Button size="small" disabled icon={<Clock size={14} />}>
-                {t('Last 24 hours')}
-                <ChevronDown size={13} className="ml-0.5 opacity-60" />
-              </Button>
-            </span>
-          </Tooltip>
-
-          {/* BACKEND-PENDING: the working date-range picker. Replace the disabled
-              button above with this once issues are range-scoped on the server.
-              Re-add the `Period` / `SelectDateRange` imports + `period` state.
           <SelectDateRange
             isAnt
             right
             useButtonStyle
             period={period}
-            onChange={setPeriod}
+            onChange={onPeriodChange}
           />
-          */}
         </div>
       </div>
 
@@ -410,9 +450,17 @@ function IssuesList() {
         columns={columns}
         dataSource={issuesStore.list}
         loading={issuesStore.loading}
-        pagination={false}
-        rowClassName={(r) =>
-          `cursor-pointer${issuesStore.hidden.includes(r.id) ? ' opacity-60' : ''}`
+        onChange={onTableChange}
+        pagination={{
+          current: issuesStore.page,
+          pageSize: issuesStore.limit,
+          total: issuesStore.total,
+          showSizeChanger: false,
+          hideOnSinglePage: true,
+          onChange: (p) => issuesStore.setPage(p),
+        }}
+        rowClassName={() =>
+          `cursor-pointer${visibility !== 'active' ? ' opacity-60' : ''}`
         }
         onRow={(r) => ({ onClick: () => openDetail(r.id) })}
         locale={{ emptyText: t('No issues match these filters.') }}
@@ -421,16 +469,17 @@ function IssuesList() {
       <div className="px-4 py-3 text-xs color-gray-medium">
         {t('Showing {{shown}} of {{total}} issues', {
           shown: issuesStore.list.length,
-          total: issuesStore.all.length,
+          total: issuesStore.total,
         })}
       </div>
 
       <HideIssueModal
         open={hideTarget != null}
         head={hideTarget?.head}
+        reasons={issuesStore.reasons.hide}
         onCancel={() => setHideTarget(null)}
-        onConfirm={(note, tags) => {
-          if (hideTarget) issuesStore.hide(hideTarget.id, note, tags);
+        onConfirm={(reasons, note) => {
+          if (hideTarget) issuesStore.hide(hideTarget.id, reasons, note);
           setHideTarget(null);
         }}
       />

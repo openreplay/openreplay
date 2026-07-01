@@ -22,8 +22,10 @@ function IssueDetail() {
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const params = useParams() as { issueId?: string };
-  const slug = params.issueId ?? '';
-  const issue = issuesStore.bySlug(slug);
+  // the URL carries the (encoded) issue name; resolve it from cache/list or fetch
+  const name = params.issueId ? decodeURIComponent(params.issueId) : '';
+  const idParam = params.issueId ?? '';
+  const issue = issuesStore.byId(name);
 
   const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
@@ -39,6 +41,9 @@ function IssueDetail() {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
   React.useEffect(() => {
+    if (name) void issuesStore.loadIssue(name);
+  }, [name]);
+  React.useEffect(() => {
     debouncedSearch(query);
   }, [query]);
   React.useEffect(() => {
@@ -48,7 +53,9 @@ function IssueDetail() {
   const back = () => history.push(withSiteId(smartIssues(), siteId));
   const openReplay = (s: IssueSessionCard) => {
     const q = s.issueTimestamp ? `?jumpto=${s.issueTimestamp}` : '';
-    history.push(withSiteId(smartIssueSession(slug, s.sessionId), siteId) + q);
+    history.push(
+      withSiteId(smartIssueSession(idParam, s.sessionId), siteId) + q,
+    );
   };
 
   if (!issue) {
@@ -65,7 +72,9 @@ function IssueDetail() {
             {t('Back to Issues')}
           </Button>
           <div className="p-8 text-center color-gray-medium">
-            {issuesStore.loading ? t('Loading…') : t('Issue not found.')}
+            {issuesStore.loading || issuesStore.isLoadingIssue(name)
+              ? t('Loading…')
+              : t('Issue not found.')}
           </div>
         </div>
       </div>
@@ -111,10 +120,11 @@ function IssueDetail() {
           framed
           issue={issue}
           editable
-          onRename={(name) => issuesStore.rename(issue.id, name)}
-          onSetCritical={(val, reason) =>
-            issuesStore.setCritical(issue.id, val, reason)
+          onRename={(newName) => issuesStore.rename(issue.id, newName)}
+          onSetCritical={(val, reasons, note) =>
+            issuesStore.setCritical(issue.id, val, reasons, note)
           }
+          criticalReasons={issuesStore.reasons.criticality}
           actions={
             <>
               <Button
@@ -132,7 +142,7 @@ function IssueDetail() {
               >
                 {t('Create ticket')}
               </Button>
-              {issuesStore.hidden.includes(issue.id) ? (
+              {issuesStore.viewingHidden ? (
                 <Button
                   size="small"
                   icon={<Eye size={14} />}
@@ -189,9 +199,10 @@ function IssueDetail() {
       <HideIssueModal
         open={hideOpen}
         head={issue.head}
+        reasons={issuesStore.reasons.hide}
         onCancel={() => setHideOpen(false)}
-        onConfirm={(note, tags) => {
-          issuesStore.hide(issue.id, note, tags);
+        onConfirm={(reasons, note) => {
+          issuesStore.hide(issue.id, reasons, note);
           setHideOpen(false);
         }}
       />

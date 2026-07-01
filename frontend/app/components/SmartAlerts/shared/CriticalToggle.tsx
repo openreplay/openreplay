@@ -11,11 +11,14 @@ import CriticalReasonPanel from './CriticalReasonPanel';
 export default function CriticalToggle({
   critical,
   onSet,
+  reasons,
   stopPropagation,
   zIndex,
 }: {
   critical: boolean;
-  onSet: (val: boolean, reason?: string) => void;
+  onSet: (val: boolean, reasons?: string[], note?: string) => void;
+  /** reason vocabulary for the un-mark popover (server-provided) */
+  reasons?: string[];
   stopPropagation?: boolean;
   zIndex?: number;
 }) {
@@ -68,9 +71,10 @@ export default function CriticalToggle({
       zIndex={zIndex}
       content={
         <CriticalReasonPanel
+          reasons={reasons}
           onCancel={() => setOpen(false)}
-          onConfirm={(reason) => {
-            onSet(false, reason);
+          onConfirm={(rs, note) => {
+            onSet(false, rs, note);
             setOpen(false);
           }}
         />
