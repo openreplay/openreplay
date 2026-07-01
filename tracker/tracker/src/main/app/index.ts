@@ -1511,9 +1511,13 @@ export default class App {
   coldStartTs = 0
   singleBuffer = false
 
+  private getSessionVersionHash() {
+    const PROTO_VERSION = '2'
+    return `${PROTO_VERSION}x${this.version}`
+  }
+
   private checkSessionToken(forceNew?: boolean) {
-    const PROTO_VERSION = "2";
-    const versionHash = `${PROTO_VERSION}x${this.version}`
+    const versionHash = this.getSessionVersionHash()
     const needReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
     let needNewSessionID = forceNew || needReset
     const sessionToken = this.session.getSessionToken(this.projectKey)
@@ -1913,6 +1917,10 @@ export default class App {
 
       this.delay = delay
       this.session.setSessionToken(token, this.projectKey)
+      this.sessionStorage.setItem(
+        `${this.options.session_token_key}_version`,
+        this.getSessionVersionHash(),
+      )
       if (sessionToken && sessionToken !== token) {
         this.bc?.postMessage({
           type: proto.reset,
