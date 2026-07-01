@@ -200,7 +200,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
-		i.messageInfo.Index = m.FirstIndex
 		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("MobileBatchMeta")

@@ -105,6 +105,11 @@ func (m *messageReaderImpl) Parse(filter map[int]struct{}) (err error) {
 					m.reader.SetPointer(0)
 					return nil
 				}
+			} else if m.msgType == MsgMobileBatchMeta {
+				switch message := msg.(type) {
+				case *MobileBatchMeta:
+					m.index = message.FirstIndex
+				}
 			}
 
 			if filter != nil {
