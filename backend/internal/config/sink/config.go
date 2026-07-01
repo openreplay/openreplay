@@ -26,7 +26,7 @@ type Config struct {
 	ProducerCloseTimeout int           `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 	FileSplitTime        time.Duration `env:"FILE_SPLIT_TIME,default=15s"`
 	MaxFileSize          int64         `env:"MAX_FILE_SIZE,default=524288000"`
-	SyncWorkers          int           `env:"SYNC_WORKERS,default=16"`
+	SyncWorkers          int           `env:"SYNC_WORKERS,default=64"`
 	SyncInterval         time.Duration `env:"SYNC_INTERVAL,default=30s"`
 	SessionTTL           time.Duration `env:"SESSION_TTL,default=10m"`
 }

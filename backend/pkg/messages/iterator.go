@@ -15,19 +15,20 @@ type MessageIterator interface {
 }
 
 type messageIteratorImpl struct {
-	log         logger.Logger
-	filter      map[int]struct{}
-	preFilter   map[int]struct{}
-	handler     MessageHandler
-	autoDecode  bool
-	version     uint64
-	size        uint64
-	canSkip     bool
-	broken      bool
-	messageInfo *message
-	batchInfo   *BatchInfo
-	urls        *pageLocations
-	brokenStats *brokenBatches
+	log           logger.Logger
+	filter        map[int]struct{} // union(preFilter, handlerFilter)
+	handlerFilter map[int]struct{}
+	preFilter     map[int]struct{}
+	handler       MessageHandler
+	autoDecode    bool
+	version       uint64
+	size          uint64
+	canSkip       bool
+	broken        bool
+	messageInfo   *message
+	batchInfo     *BatchInfo
+	urls          *pageLocations
+	brokenStats   *brokenBatches
 }
 
 func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
@@ -38,16 +39,25 @@ func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messag
 		urls:        NewPageLocations(),
 		brokenStats: NewBrokenBatches(),
 	}
+	iter.preFilter = map[int]struct{}{
+		MsgBatchMetadata: {}, MsgTimestamp: {}, MsgSessionStart: {},
+		MsgSessionEnd: {}, MsgSetPageLocation: {}, MsgMobileBatchMeta: {},
+	}
 	if len(messageFilter) != 0 {
-		filter := make(map[int]struct{}, len(messageFilter))
+		handlerFilter := make(map[int]struct{}, len(messageFilter))
+		for _, msgType := range messageFilter {
+			handlerFilter[msgType] = struct{}{}
+		}
+		iter.handlerFilter = handlerFilter
+
+		filter := make(map[int]struct{}, len(messageFilter)+len(iter.preFilter))
+		for msgType := range iter.preFilter {
+			filter[msgType] = struct{}{}
+		}
 		for _, msgType := range messageFilter {
 			filter[msgType] = struct{}{}
 		}
 		iter.filter = filter
-	}
-	iter.preFilter = map[int]struct{}{
-		MsgBatchMetadata: {}, MsgTimestamp: {}, MsgSessionStart: {},
-		MsgSessionEnd: {}, MsgSetPageLocation: {}, MsgMobileBatchMeta: {},
 	}
 	return iter
 }
@@ -65,7 +75,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.sessionID)
 
 	reader := NewMessageReader(batchData)
-	if err := reader.Parse(); err != nil {
+	if err := reader.Parse(i.filter); err != nil {
 		i.brokenStats.Inc(batchInfo.sessionID, err.Error())
 		return
 	}
@@ -74,9 +84,6 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	i.prepareVars(batchInfo)
 
 	for reader.Next() {
-		// Increase message index (can be overwritten by batch info message)
-		i.messageInfo.Index++
-
 		msg := reader.Message()
 		msgType := msg.TypeID()
 
@@ -95,9 +102,8 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 			}
 		}
 
-		// Skip messages we don't have in filter
-		if i.filter != nil {
-			if _, ok := i.filter[msg.TypeID()]; !ok {
+		if i.handlerFilter != nil {
+			if _, ok := i.handlerFilter[msg.TypeID()]; !ok {
 				continue
 			}
 		}
@@ -113,6 +119,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		}
 
 		// Set meta information for message
+		i.messageInfo.Index = msg.Meta().Index
 		msg.Meta().SetMeta(i.messageInfo)
 
 		// Update timestamp value for iOS message types
@@ -144,7 +151,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if m.Version > 5 {
 			return fmt.Errorf("incorrect batch version: %d, skip current batch, info: %s", i.version, i.batchInfo.Info())
 		}
-		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.messageInfo.Timestamp = uint64(m.Timestamp)
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMetadata")
@@ -194,7 +200,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
-		i.messageInfo.Index = m.FirstIndex
 		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("MobileBatchMeta")
