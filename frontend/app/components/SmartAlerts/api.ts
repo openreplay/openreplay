@@ -29,6 +29,7 @@ export interface RawIssue {
   issueName: string;
   impact: number;
   critical: boolean;
+  hidden: boolean;
   impactedSessions: number;
   count: number;
   firstSeen: number;
@@ -70,11 +71,14 @@ export interface ListParams {
   page?: number;
   issueLabels?: string[];
   journeyLabels?: string[];
-  labelsMatch?: LabelsMatch;
+  issueLabelsMatch?: LabelsMatch;
+  journeyLabelsMatch?: LabelsMatch;
   sortBy?: ListSortBy;
   sortDir?: SortDir;
   range?: [number, number];
   hidden?: Visibility;
+  /** filter to critical issues only */
+  critical?: boolean;
   minImpact?: number;
   minCount?: number;
   query?: string;
@@ -121,7 +125,8 @@ export async function getIssues(
     page: params.page ?? 1,
     issueLabels: params.issueLabels ?? [],
     journeyLabels: params.journeyLabels ?? [],
-    labelsMatch: params.labelsMatch ?? 'and',
+    issueLabelsMatch: params.issueLabelsMatch ?? 'and',
+    journeyLabelsMatch: params.journeyLabelsMatch ?? 'and',
     sortBy: params.sortBy ?? 'impact',
     sortDir: params.sortDir ?? 'desc',
     range: params.range ?? defaultRange(),
@@ -129,6 +134,8 @@ export async function getIssues(
     minImpact: params.minImpact ?? 0,
     minCount: params.minCount ?? 0,
     query: params.query ?? '',
+    // only include when filtering to criticals; omit means no critical filter
+    ...(params.critical ? { critical: true } : {}),
   });
   const json = await res.json();
   const rows: RawIssue[] = json.data ?? [];

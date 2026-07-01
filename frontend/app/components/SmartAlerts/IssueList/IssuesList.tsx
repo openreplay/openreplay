@@ -8,7 +8,6 @@ import {
   Modal,
   Popover,
   Segmented,
-  Select,
   Table,
   Tag,
   Tooltip,
@@ -36,9 +35,10 @@ import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
 import { smartIssueDetails, withSiteId } from 'App/saasComponents';
 
+import FullPagination from 'Shared/FullPagination';
 import SelectDateRange from 'Shared/SelectDateRange';
 
-import type { SortDir, Visibility } from '../api';
+import type { SortDir } from '../api';
 import {
   CAT_COLOR,
   CAT_ICON,
@@ -64,13 +64,6 @@ const SORT_FIELD: Record<string, SortMode> = {
 };
 const antOrder = (dir: SortDir): 'ascend' | 'descend' =>
   dir === 'asc' ? 'ascend' : 'descend';
-
-const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'hidden', label: 'Hidden' },
-  { value: 'deleted', label: 'Deleted' },
-  { value: 'all', label: 'All' },
-];
 
 function IssuesList() {
   const { issuesStore, projectsStore } = useStore();
@@ -128,7 +121,9 @@ function IssuesList() {
       width: 96,
       sorter: true,
       sortOrder:
-        issuesStore.sort === 'impact' ? antOrder(issuesStore.sortDir) : null,
+        issuesStore.sortTouched && issuesStore.sort === 'impact'
+          ? antOrder(issuesStore.sortDir)
+          : null,
       showSorterTooltip: false,
       render: (v: number) => {
         const title = t('{{level}} impact', { level: t(impactLevel(v)) });
@@ -161,7 +156,7 @@ function IssuesList() {
           <span className="truncate font-medium color-gray-darkest">
             {head}
           </span>
-          {issuesStore.viewingHidden && (
+          {r.hidden && (
             <Tooltip title={t('Hidden')}>
               <Tag className="rounded">{t('Hidden')}</Tag>
             </Tooltip>
@@ -208,7 +203,7 @@ function IssuesList() {
             width: 156,
             sorter: true,
             sortOrder:
-              issuesStore.sort === 'recency'
+              issuesStore.sortTouched && issuesStore.sort === 'recency'
                 ? antOrder(issuesStore.sortDir)
                 : null,
             showSorterTooltip: false,
@@ -246,7 +241,7 @@ function IssuesList() {
                 },
               ]
             : [
-                visibility === 'hidden'
+                r.hidden
                   ? {
                       key: 'unhide',
                       icon: <Eye size={14} />,
@@ -322,156 +317,147 @@ function IssuesList() {
     }
   };
 
-  const dispCount = issuesStore.critOnly ? 1 : 0;
+  const dispCount =
+    (issuesStore.critOnly ? 1 : 0) + (visibility === 'hidden' ? 1 : 0);
 
   const displayContent = (
-    <div className="flex flex-col gap-3 p-1" style={{ minWidth: 190 }}>
+    <div className="flex flex-col gap-2 p-1" style={{ minWidth: 170 }}>
       <Checkbox
         checked={issuesStore.critOnly}
         onChange={(e) => issuesStore.setCritOnly(e.target.checked)}
       >
         {t('Critical only')}
       </Checkbox>
-      <div className="flex flex-col gap-1">
-        <span className="text-xs color-gray-medium">{t('Show')}</span>
-        <Select
-          size="small"
-          value={visibility}
-          onChange={(v) => issuesStore.setVisibility(v as Visibility)}
-          options={VISIBILITY_OPTIONS.map((o) => ({
-            value: o.value,
-            label: t(o.label),
-          }))}
-        />
-      </div>
+      <Checkbox
+        checked={visibility === 'hidden'}
+        onChange={(e) =>
+          issuesStore.setVisibility(e.target.checked ? 'hidden' : 'active')
+        }
+      >
+        {t('Hidden')}
+      </Checkbox>
     </div>
   );
 
   return (
-    <div
-      className="flex flex-col rounded-lg border bg-white mx-auto"
-      style={{ maxWidth: 1360 }}
-    >
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg">{t('Issues')}</span>
-          <Tag
-            color="#394DFE"
-            className="rounded"
-            style={{ fontSize: 10, fontWeight: 700, lineHeight: '16px' }}
-          >
-            {t('BETA')}
-          </Tag>
-          <Tooltip
-            placement="bottom"
-            title={t(
-              'Issues our agents found while reviewing session replays for this project, ranked by impact. Open one to read the journey and jump straight to the moment it happened.',
-            )}
-          >
-            <span className="flex items-center cursor-help color-gray-medium">
-              <Info size={15} />
-            </span>
-          </Tooltip>
+    <div className="mx-auto w-full flex flex-col" style={{ maxWidth: 1360 }}>
+      <div className="flex flex-col rounded-lg border bg-white">
+        <div className="flex items-center justify-between border-b px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-lg">{t('Issues')}</span>
+            <Tag
+              color="#394DFE"
+              className="rounded"
+              style={{ fontSize: 10, fontWeight: 700, lineHeight: '16px' }}
+            >
+              {t('BETA')}
+            </Tag>
+            <Tooltip
+              placement="bottom"
+              title={t(
+                'Issues our agents found while reviewing session replays for this project, ranked by impact. Open one to read the journey and jump straight to the moment it happened.',
+              )}
+            >
+              <span className="flex items-center cursor-help color-gray-medium">
+                <Info size={15} />
+              </span>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href="https://docs.openreplay.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Button type="text" icon={<Album size={14} />}>
+                {t('Docs')}
+              </Button>
+            </a>
+            <div className="min-w-50 md:w-1/4 md:min-w-75">
+              <Input.Search
+                size="small"
+                allowClear
+                maxLength={256}
+                placeholder={t('Filter by issue name')}
+                value={issuesStore.query}
+                onChange={(e) => issuesStore.setQuery(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <a
-            href="https://docs.openreplay.com/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Button type="text" icon={<Album size={14} />}>
-              {t('Docs')}
-            </Button>
-          </a>
-          <div className="min-w-50 md:w-1/4 md:min-w-75">
-            <Input.Search
+
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
+          {showCategory ? (
+            <Segmented
               size="small"
-              allowClear
-              maxLength={256}
-              placeholder={t('Filter by issue name')}
-              value={issuesStore.query}
-              onChange={(e) => issuesStore.setQuery(e.target.value)}
+              value={catValue}
+              onChange={(v) =>
+                issuesStore.setCats(v === 'All' ? [] : [v as CategoryName])
+              }
+              options={catTabOptions}
+            />
+          ) : (
+            <span />
+          )}
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <TagFilter
+              allTags={issuesStore.allTags}
+              labels={issuesStore.labels}
+              match={issuesStore.match}
+              onToggle={issuesStore.toggleLabel}
+              onSetMatch={issuesStore.setMatch}
+              onClear={() => issuesStore.setLabels([])}
+            />
+
+            <Popover
+              open={dispOpen}
+              onOpenChange={setDispOpen}
+              trigger="click"
+              placement="bottomRight"
+              content={displayContent}
+            >
+              <Button size="small" icon={<SlidersHorizontal size={14} />}>
+                {t('Display')}
+                {dispCount ? ` (${dispCount})` : ''}
+                <ChevronDown size={13} className="ml-0.5 opacity-60" />
+              </Button>
+            </Popover>
+
+            <SelectDateRange
+              isAnt
+              right
+              useButtonStyle
+              period={period}
+              onChange={onPeriodChange}
             />
           </div>
         </div>
+
+        <Table<Issue>
+          className="[&_.ant-table-tbody>tr>td]:!py-0 [&_.ant-table-tbody>tr>td]:h-[55px]"
+          rowKey="id"
+          columns={columns}
+          dataSource={issuesStore.list}
+          loading={issuesStore.loading}
+          onChange={onTableChange}
+          pagination={false}
+          rowClassName={(r) =>
+            `cursor-pointer${r.hidden || visibility === 'deleted' ? ' opacity-60' : ''}`
+          }
+          onRow={(r) => ({ onClick: () => openDetail(r.id) })}
+          locale={{ emptyText: t('No issues match these filters.') }}
+        />
       </div>
 
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
-        {showCategory ? (
-          <Segmented
-            size="small"
-            value={catValue}
-            onChange={(v) =>
-              issuesStore.setCats(v === 'All' ? [] : [v as CategoryName])
-            }
-            options={catTabOptions}
-          />
-        ) : (
-          <span />
-        )}
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <TagFilter
-            allTags={issuesStore.allTags}
-            labels={issuesStore.labels}
-            match={issuesStore.match}
-            onToggle={issuesStore.toggleLabel}
-            onSetMatch={issuesStore.setMatch}
-            onClear={() => issuesStore.setLabels([])}
-          />
-
-          <Popover
-            open={dispOpen}
-            onOpenChange={setDispOpen}
-            trigger="click"
-            placement="bottomRight"
-            content={displayContent}
-          >
-            <Button size="small" icon={<SlidersHorizontal size={14} />}>
-              {t('Display')}
-              {dispCount ? ` (${dispCount})` : ''}
-              <ChevronDown size={13} className="ml-0.5 opacity-60" />
-            </Button>
-          </Popover>
-
-          <SelectDateRange
-            isAnt
-            right
-            useButtonStyle
-            period={period}
-            onChange={onPeriodChange}
-          />
-        </div>
-      </div>
-
-      <Table<Issue>
-        className="[&_.ant-table-tbody>tr>td]:!py-0 [&_.ant-table-tbody>tr>td]:h-[55px]"
-        rowKey="id"
-        columns={columns}
-        dataSource={issuesStore.list}
-        loading={issuesStore.loading}
-        onChange={onTableChange}
-        pagination={{
-          current: issuesStore.page,
-          pageSize: issuesStore.limit,
-          total: issuesStore.total,
-          showSizeChanger: false,
-          hideOnSinglePage: true,
-          onChange: (p) => issuesStore.setPage(p),
-        }}
-        rowClassName={() =>
-          `cursor-pointer${visibility !== 'active' ? ' opacity-60' : ''}`
-        }
-        onRow={(r) => ({ onClick: () => openDetail(r.id) })}
-        locale={{ emptyText: t('No issues match these filters.') }}
+      <FullPagination
+        page={issuesStore.page}
+        limit={issuesStore.limit}
+        total={issuesStore.total}
+        listLen={issuesStore.list.length}
+        onPageChange={(p) => issuesStore.setPage(p)}
+        entity={t('issues')}
       />
-
-      <div className="px-4 py-3 text-xs color-gray-medium">
-        {t('Showing {{shown}} of {{total}} issues', {
-          shown: issuesStore.list.length,
-          total: issuesStore.total,
-        })}
-      </div>
 
       <HideIssueModal
         open={hideTarget != null}

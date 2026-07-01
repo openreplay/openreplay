@@ -50,8 +50,9 @@ export function makeIssue(d: RawIssue): Issue {
     id: d.issueName,
     head: d.issueName,
     impact: d.impact ?? 0,
-    // critical is now a real server field (override, else the 'critical' label)
+    // critical is the server's own flag — not inferred from labels
     critical: Boolean(d.critical),
+    hidden: Boolean(d.hidden),
     tags: (d.issueLabels ?? [])
       .map((l) => l.name)
       .filter((n) => !isCriticalLabel(n)),
