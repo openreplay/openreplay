@@ -96,6 +96,9 @@ export default class IssuesStore {
   match: MatchMode = 'all';
   sort: SortMode = 'impact';
   sortDir: SortDir = 'desc';
+  // the default sort is applied silently; a column header only lights up once
+  // the user explicitly sorts
+  sortTouched = false;
   critOnly = false;
   visibility: Visibility = 'active';
   range: [number, number] | null = null; // null => server default (last 7 days)
@@ -111,6 +114,8 @@ export default class IssuesStore {
   // ---- single-issue cache for detail/player deep-links (may be off-page) ----
   issueCache: Record<string, Issue> = {};
   issueLoading: Record<string, boolean> = {};
+  // issues whose full detail (incl. issueDescription) has been fetched
+  issueDetailLoaded: Record<string, boolean> = {};
 
   // ---- example sessions per cache key (issue name + optional search query) ----
   sessions: Record<string, IssueSessionCard[]> = {};
@@ -154,6 +159,7 @@ export default class IssuesStore {
     this.match = 'all';
     this.sort = 'impact';
     this.sortDir = 'desc';
+    this.sortTouched = false;
     this.critOnly = false;
     this.visibility = 'active';
     this.range = null;
@@ -162,29 +168,11 @@ export default class IssuesStore {
     this.reasons = { hide: [], criticality: [] };
     this.issueCache = {};
     this.issueLoading = {};
+    this.issueDetailLoaded = {};
     this.sessions = {};
     this.sessionsTotal = {};
     this.sessionsLoading = {};
   };
-
-  /* The stored critical label as the backend returns it in issueLabels — a name
-     containing "critical" (e.g. "Critical"). Resolved from the label vocabulary;
-     falls back to "Critical" until the vocabulary loads. */
-  get criticalLabel(): string {
-    return (
-      this.labelsAll.issueLabels.find((l) =>
-        l.toLowerCase().includes('critical'),
-      ) ?? 'Critical'
-    );
-  }
-
-  /* Issue labels sent to the server: the selected category tab(s) plus the real
-     critical label when Critical-only is on. */
-  private get issueLabelsParam(): string[] {
-    const l: string[] = [...this.cats];
-    if (this.critOnly) l.push(this.criticalLabel);
-    return l;
-  }
 
   fetchIssues = async () => {
     if (!this.projectId) return;
@@ -193,21 +181,28 @@ export default class IssuesStore {
       const { rows, total } = await getIssues(this.projectId, {
         limit: this.limit,
         page: this.page,
-        issueLabels: this.issueLabelsParam,
+        issueLabels: [...this.cats],
         journeyLabels: this.labels,
-        labelsMatch: toLabelsMatch(this.match),
+        // categories combine with AND; the journey-tag match honours the toggle
+        issueLabelsMatch: 'and',
+        journeyLabelsMatch: toLabelsMatch(this.match),
         sortBy: this.sort,
         sortDir: this.sortDir,
         range: this.range ?? undefined,
         hidden: this.visibility,
+        // "Critical only" is a dedicated request flag, not a label filter
+        critical: this.critOnly,
         minImpact: this.minImpact,
         query: this.query.trim(),
       });
       runInAction(() => {
         this.issues = rows.map(makeIssue);
-        // keep the deep-link cache fresh with what we've just loaded
+        // keep the deep-link cache fresh, but preserve a description already
+        // loaded via getIssue (list rows don't carry issueDescription)
         this.issues.forEach((i) => {
-          this.issueCache[i.id] = i;
+          const prev = this.issueCache[i.id];
+          this.issueCache[i.id] =
+            prev?.problem && !i.problem ? { ...i, problem: prev.problem } : i;
         });
         this.total = total;
         this.loaded = true;
@@ -262,12 +257,15 @@ export default class IssuesStore {
   /** Ensure an issue is loaded by name (may be off the current page/filter). */
   loadIssue = async (name: string) => {
     if (!this.projectId || !name) return;
-    if (this.issueCache[name] || this.issueLoading[name]) return;
+    // a list row may already be cached, but it lacks issueDescription — fetch
+    // the full issue once so the detail page can show it
+    if (this.issueDetailLoaded[name] || this.issueLoading[name]) return;
     this.issueLoading[name] = true;
     try {
       const raw = await getIssue(this.projectId, name, this.range ?? undefined);
       runInAction(() => {
         if (raw) this.issueCache[name] = makeIssue(raw);
+        this.issueDetailLoaded[name] = true;
       });
     } catch (e) {
       console.error('Failed to load issue', e);
@@ -354,6 +352,7 @@ export default class IssuesStore {
   };
   /** Set sort key + direction together so a header click refetches once. */
   setSortState = (s: SortMode, d: SortDir) => {
+    this.sortTouched = true;
     if (s === this.sort && d === this.sortDir) return;
     this.sort = s;
     this.sortDir = d;

@@ -11,6 +11,8 @@ export interface Issue {
   id: string;
   head: string;
   critical: boolean;
+  /** server-persisted hidden flag (surfaced when viewing hidden/all) */
+  hidden: boolean;
   impact: number;
   tags: string[];
   /** journey-level labels, kept distinct from issue tags for the detail page */
