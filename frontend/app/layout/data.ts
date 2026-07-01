@@ -54,7 +54,6 @@ export const enum MENU {
   SUPPORT = 'support',
   EXIT = 'exit',
   SPOTS = 'spots',
-  KAI = 'kai',
   ACTIVITY = 'activity',
   USER = 'user-page',
   USERS = 'data-users',
@@ -106,18 +105,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     key: 'assist',
     items: [
       { label: t('Co-Browse'), key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
-    ],
-  },
-  {
-    title: '',
-    key: 'kai',
-    hidden: menuHidden.kai,
-    items: [
-      {
-        label: t('Kai'),
-        key: MENU.KAI,
-        icon: 'kai-mono',
-      },
     ],
   },
   {
