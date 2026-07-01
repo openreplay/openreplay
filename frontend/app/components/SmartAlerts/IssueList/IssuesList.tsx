@@ -1,4 +1,5 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
+import withPermissions from '@/components/hocs/withPermissions';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import {
   Button,
@@ -483,4 +484,6 @@ function IssuesList() {
   );
 }
 
-export default withPageTitle('Smart Issues')(observer(IssuesList));
+export default withPermissions(['SMART_ISSUES'])(
+  withPageTitle('Smart Issues')(observer(IssuesList)),
+);

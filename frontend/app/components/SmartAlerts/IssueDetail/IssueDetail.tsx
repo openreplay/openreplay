@@ -1,4 +1,5 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
+import withPermissions from '@/components/hocs/withPermissions';
 import { Button, Input } from 'antd';
 import { ArrowLeft, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -210,4 +211,6 @@ function IssueDetail() {
   );
 }
 
-export default withPageTitle('Smart Issues')(observer(IssueDetail));
+export default withPermissions(['SMART_ISSUES'])(
+  withPageTitle('Smart Issues')(observer(IssueDetail)),
+);
