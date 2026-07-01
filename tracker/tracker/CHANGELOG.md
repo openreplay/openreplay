@@ -11,6 +11,7 @@
 - restore original console methods when the tracker stops
 - correctly detect Windows 11 version
 - fix sprite icon cache mixing icons across sprite files and recovering after a failed fetch
+- preserve protocol version token on first render of the page
 
 ## 18.0.17
 
