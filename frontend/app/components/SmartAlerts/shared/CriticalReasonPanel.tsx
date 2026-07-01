@@ -6,13 +6,17 @@ import ReasonChip from './ReasonChip';
 import { CRITICAL_REASONS } from './model';
 
 /* The "why is this not critical?" picker used inside the detail/player popovers.
-   Un-marking critical is a teaching moment, so a reason is collected. */
+   Un-marking critical is a teaching moment, so a reason is collected. The reason
+   vocabulary comes from the server (GET …/reasons); we fall back to the built-in
+   list until it loads. */
 export default function CriticalReasonPanel({
+  reasons: options = CRITICAL_REASONS,
   onCancel,
   onConfirm,
 }: {
+  reasons?: string[];
   onCancel: () => void;
-  onConfirm: (reason: string) => void;
+  onConfirm: (reasons: string[], note: string) => void;
 }) {
   const { t } = useTranslation();
   const [reasons, setReasons] = React.useState<string[]>([]);
@@ -23,7 +27,7 @@ export default function CriticalReasonPanel({
         {t('Why is this not critical?')}
       </span>
       <div className="flex flex-wrap gap-1.5">
-        {CRITICAL_REASONS.map((r) => (
+        {options.map((r) => (
           <ReasonChip
             key={r}
             label={t(r)}
@@ -48,9 +52,7 @@ export default function CriticalReasonPanel({
           size="small"
           type="primary"
           danger
-          onClick={() =>
-            onConfirm([...reasons, note.trim()].filter(Boolean).join(' · '))
-          }
+          onClick={() => onConfirm(reasons, note.trim())}
         >
           {t('Mark as not critical')}
         </Button>

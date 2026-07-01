@@ -17,7 +17,9 @@ interface Props {
   editable?: boolean;
   onRename?: (name: string) => void;
   /** when set, the Critical chip becomes a two-way toggle */
-  onSetCritical?: (val: boolean, reason?: string) => void;
+  onSetCritical?: (val: boolean, reasons?: string[], note?: string) => void;
+  /** reason vocabulary for the un-mark popover (server-provided) */
+  criticalReasons?: string[];
   /** right-aligned actions on the title row (e.g. Create ticket / Hide) */
   actions?: React.ReactNode;
   /** title+actions header, full-width divider, then body */
@@ -32,6 +34,7 @@ export default function ProblemCard({
   editable,
   onRename,
   onSetCritical,
+  criticalReasons,
   actions,
   framed,
   hideProblem,
@@ -59,7 +62,11 @@ export default function ProblemCard({
   );
   if (onSetCritical || issue.critical)
     cells.push(
-      <CriticalControl critical={issue.critical} onSet={onSetCritical} />,
+      <CriticalControl
+        critical={issue.critical}
+        onSet={onSetCritical}
+        reasons={criticalReasons}
+      />,
     );
   if (issue.seenAgoMin != null)
     cells.push(

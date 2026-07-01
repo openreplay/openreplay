@@ -19,9 +19,12 @@ const critContent = (text: string, withClose = false) => (
 export default function CriticalControl({
   critical,
   onSet,
+  reasons,
 }: {
   critical: boolean;
-  onSet?: (val: boolean, reason?: string) => void;
+  onSet?: (val: boolean, reasons?: string[], note?: string) => void;
+  /** reason vocabulary for the un-mark popover (server-provided) */
+  reasons?: string[];
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -57,9 +60,10 @@ export default function CriticalControl({
       placement="bottomLeft"
       content={
         <CriticalReasonPanel
+          reasons={reasons}
           onCancel={() => setOpen(false)}
-          onConfirm={(reason) => {
-            onSet(false, reason);
+          onConfirm={(rs, note) => {
+            onSet(false, rs, note);
             setOpen(false);
           }}
         />
