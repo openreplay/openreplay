@@ -1,4 +1,5 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
+import withPermissions from '@/components/hocs/withPermissions';
 import { createWebPlayer } from 'Player';
 import { ConfigProvider } from 'antd';
 import { makeAutoObservable } from 'mobx';
@@ -287,4 +288,6 @@ function IssuePlayer() {
   );
 }
 
-export default withPageTitle('Smart Issues')(observer(IssuePlayer));
+export default withPermissions(['SMART_ISSUES'])(
+  withPageTitle('Smart Issues')(observer(IssuePlayer)),
+);
