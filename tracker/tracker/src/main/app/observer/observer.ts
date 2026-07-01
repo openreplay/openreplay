@@ -54,7 +54,9 @@ export async function parseUseEl(
     // Key the cache by url + symbol + mode: the same symbol id lives in different
     // sprite files, and different modes store different value shapes (object vs
     // string vs data-url), so keying by symbolId alone returns the wrong asset.
-    const cacheKey = `${url || 'local'}#${symbolId}#${mode}`
+    // Namespace remote vs in-document sprites so a relative sprite file literally
+    // named "local" can't collide with the in-document bucket.
+    const cacheKey = url ? `url:${url}#${symbolId}#${mode}` : `doc:${symbolId}#${mode}`
 
     if (iconCache[cacheKey]) {
       return iconCache[cacheKey]

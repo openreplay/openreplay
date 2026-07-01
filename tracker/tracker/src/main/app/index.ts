@@ -1128,10 +1128,16 @@ export default class App {
         false,
         false,
       )
-      // Detect restores from the back-forward cache. Attached directly rather than via
-      // attachEventListener so it persists through stop()/restart() and can still catch a
-      // restore that happens while the tracker is briefly stopped.
-      window.addEventListener('pageshow', this.handlePageShow, false)
+      // Detect restores from the back-forward cache. Registered through
+      // attachEventListener so it's removed on stop (no leak) and a tracker that was
+      // intentionally stopped does not resurrect itself on a back/forward restore.
+      this.attachEventListener(
+        window,
+        'pageshow',
+        this.handlePageShow as EventListener,
+        false,
+        false,
+      )
       // TODO: stop session after inactivity timeout (make configurable)
       this.attachEventListener(
         document,
@@ -1144,12 +1150,18 @@ export default class App {
     }
   }
 
-  private restart = () => {
+  private restart = (forceNew = false) => {
     this.stop(false)
     this.waitStatus(ActivityState.NotActive).then(() => {
       this.allowAppStart()
-      this.start(this.prevOpts, true)
+      // Force a brand-new session when asked (e.g. a stale bfcache restore) without
+      // letting forceNew leak into later restarts through prevOpts.
+      const startOpts = forceNew ? { ...this.prevOpts, forceNew: true } : this.prevOpts
+      this.start(startOpts, true)
         .then((r) => {
+          if (forceNew) {
+            this.prevOpts = { ...this.prevOpts, forceNew: false }
+          }
           this.debug.info('Session restart', r)
         })
         .catch((e) => {
@@ -1163,16 +1175,20 @@ export default class App {
     if (!e || !e.persisted) {
       return
     }
+    // Don't resurrect a tracker that was intentionally stopped.
+    if (this.activityState === ActivityState.NotActive) {
+      return
+    }
     try {
       const frozenMs = this.lastHiddenAt != null ? Date.now() - this.lastHiddenAt : null
       this.lastHiddenAt = null
       const threshold = this.options.bfcacheRestartThreshold ?? 30 * 60 * 1000
       // If we couldn't measure the freeze, or it outlasted the threshold, the session has
-      // likely expired server-side - start a clean one. Otherwise let the resumed page
-      // continue on the existing session (preserving continuity).
+      // likely expired server-side - start a fresh one (forceNew). Otherwise let the
+      // resumed page continue on the existing session (preserving continuity).
       if (frozenMs === null || frozenMs >= threshold) {
         this.debug.info('OpenReplay: restarting session after bfcache restore', { frozenMs })
-        this.restart()
+        this.restart(true)
       } else {
         this.debug.info('OpenReplay: resuming session after bfcache restore', { frozenMs })
       }

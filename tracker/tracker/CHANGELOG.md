@@ -9,7 +9,7 @@
 - fix image mutations being skipped after an untracked node
 - fix in-memory css scan skipping remaining stylesheets after one hits its check limit
 - restore original console methods when the tracker stops
-- correctly detect windows 11 version
+- correctly detect Windows 11 version
 - fix sprite icon cache mixing icons across sprite files and recovering after a failed fetch
 
 ## 18.0.17
