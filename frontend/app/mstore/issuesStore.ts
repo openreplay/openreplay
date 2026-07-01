@@ -1,7 +1,7 @@
 import React from 'react';
 import { makeAutoObservable } from 'mobx';
 import { CircleX, MousePointerClick, Gauge } from 'lucide-react';
-import { getMockSessionById } from 'App/dev/mockSessions';
+import { getMockSessionById, MOCK_SESSION_POOL } from 'App/dev/mockSessions';
 
 /* =========================================================================
    Issues — the new AI issue-detection surface. Mock, in-memory data only
@@ -435,12 +435,21 @@ export default class IssuesStore {
       session pool (same entities as the Sessions page). Falls back to the
       issue-authored summaries if no pool ids are mapped. */
   exampleSessions(issue: Issue): IssueSessionCard[] {
-    const fromPool = (issue.sessionIds ?? [])
+    // The curated ids come first; we then top up from the shared pool so the detail
+    // page can "load more" / "refresh" through a bigger sample (we never show a count).
+    const curated = issue.sessionIds ?? [];
+    const extra = MOCK_SESSION_POOL.map((s) => s.sessionId).filter(
+      (id) => !curated.includes(id),
+    );
+    const orderedIds = [...curated, ...extra].slice(0, 12);
+    const fromPool = orderedIds
       .map((id, i) => {
         const s = getMockSessionById(id);
         if (!s) return null;
-        // narrative (tags + journey) is issue-authored, paired by index
-        const authored = issue.sessions[i];
+        // narrative (tags + journey) is issue-authored, cycled so every card has one
+        const authored = issue.sessions.length
+          ? issue.sessions[i % issue.sessions.length]
+          : undefined;
         return {
           sessionId: s.sessionId,
           email: s.userId,

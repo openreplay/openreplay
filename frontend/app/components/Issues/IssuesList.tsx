@@ -40,6 +40,7 @@ import {
 } from 'App/mstore/issuesStore';
 import SelectDateRange from 'Shared/SelectDateRange';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
+import { Pagination } from 'UI';
 import TagFilter from './TagFilter';
 import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
@@ -75,6 +76,19 @@ function IssuesList() {
   const [critTags, setCritTags] = React.useState<string[]>([]);
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
   const [renameValue, setRenameValue] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const PAGE_SIZE = 10;
+  // reset to the first page whenever the filtered set size changes
+  const totalIssues = issuesStore.list.length;
+  React.useEffect(() => {
+    setPage(1);
+  }, [totalIssues]);
+  const pagedIssues = issuesStore.list.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
+  const rangeStart = totalIssues === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = (page - 1) * PAGE_SIZE + pagedIssues.length;
   // Presentational period (issues are mock; matches the Sessions date picker).
   const [period, setPeriod] = React.useState<any>(
     Period({ rangeName: LAST_24_HOURS }),
@@ -373,7 +387,7 @@ function IssuesList() {
         className="issues-table"
         rowKey="id"
         columns={columns}
-        dataSource={issuesStore.list}
+        dataSource={pagedIssues}
         pagination={false}
         rowClassName={(r) =>
           `cursor-pointer${issuesStore.hidden.includes(r.id) ? ' opacity-60' : ''}`
@@ -382,8 +396,20 @@ function IssuesList() {
         locale={{ emptyText: 'No issues match these filters.' }}
       />
 
-      <div className="px-4 py-3 text-xs" style={{ color: 'var(--color-gray-medium)' }}>
-        Showing {issuesStore.list.length} of {issuesStore.all.length} issues
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="text-xs" style={{ color: 'var(--color-gray-medium)' }}>
+          Showing {rangeStart}–{rangeEnd} of {totalIssues} issues
+        </span>
+        {totalIssues > PAGE_SIZE && (
+          <div className="w-[200px]">
+            <Pagination
+              page={page}
+              total={totalIssues}
+              limit={PAGE_SIZE}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
       </div>
 
       {/* hide-with-reason modal */}

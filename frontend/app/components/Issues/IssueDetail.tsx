@@ -10,6 +10,9 @@ import {
   SkipForward,
   Maximize2,
   ArrowUpRight,
+  Info,
+  Loader,
+  RefreshCw,
 } from 'lucide-react';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -463,6 +466,13 @@ function IssueDetail() {
   const [hideReason, setHideReason] = React.useState('');
   const [hideTags, setHideTags] = React.useState<string[]>([]);
 
+  // example-session controls: NL journey search, refresh (pick other examples), load more
+  const [query, setQuery] = React.useState('');
+  const [searching, setSearching] = React.useState(false);
+  const [seed, setSeed] = React.useState(0); // rotates which examples surface
+  const [visibleCount, setVisibleCount] = React.useState(3);
+  const searchTimer = React.useRef<number | undefined>(undefined);
+
   const back = () => history.push(withSiteId(issuesRoute(), siteId));
   const openReplay = (s: IssueSessionCard) =>
     history.push(withSiteId(issueSessionRoute(s.sessionId), siteId));
@@ -491,8 +501,31 @@ function IssueDetail() {
     );
   }
 
-  // only the 3 most representative sessions — a curated pick, not a search
-  const sessions = issuesStore.exampleSessions(issue).slice(0, 3);
+  // Examples are a *sample* — surface a rotating pick (never a total count). Refresh
+  // and search rotate `seed`; "load more" reveals up to 10.
+  const allExamples = issuesStore.exampleSessions(issue);
+  const rot = allExamples.length ? seed % allExamples.length : 0;
+  const rotated = [...allExamples.slice(rot), ...allExamples.slice(0, rot)];
+  const MAX_EXAMPLES = Math.min(10, allExamples.length);
+  const sessions = rotated.slice(0, Math.min(visibleCount, MAX_EXAMPLES));
+  const canLoadMore = sessions.length < MAX_EXAMPLES;
+
+  // NL journey search — a backend search that takes a few seconds, so show a wait state
+  const runSearch = (_value: string) => {
+    setSearching(true);
+    window.clearTimeout(searchTimer.current);
+    searchTimer.current = window.setTimeout(() => {
+      setSeed((s) => s + 2); // surface a different sample for the query
+      setVisibleCount(3);
+      setSearching(false);
+    }, 1800);
+  };
+  const refreshExamples = () => {
+    setSeed((s) => s + 3); // pick other examples
+    setVisibleCount(3);
+  };
+  const loadMore = () =>
+    setVisibleCount((c) => Math.min(MAX_EXAMPLES, c + 3));
 
   // a card grid, like Spots — tiny data per card, click to open the replay
   const gridView = (
@@ -572,17 +605,71 @@ function IssueDetail() {
         />
       </div>
 
-      {/* example-session cards float below on the gray background, like Spots */}
-      {sessions.length === 0 ? (
-        <div
-          className="p-6 text-center rounded-lg border bg-white text-sm"
-          style={{ color: 'var(--color-gray-medium)' }}
-        >
-          No example sessions.
+      {/* example sessions — a rotating sample (not the full set) + NL journey search */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-base font-semibold text-black">
+              Example sessions
+            </span>
+            <Tooltip title="A sample of the sessions where the agent detected this issue, not the full set. Search or refresh to see other examples.">
+              <Info size={15} style={{ color: 'var(--color-gray-medium)' }} />
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input.Search
+              size="small"
+              allowClear
+              maxLength={256}
+              placeholder="Describe the journey to find…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onSearch={runSearch}
+              style={{ width: 300 }}
+            />
+            <Tooltip title="Show other examples">
+              <Button
+                size="small"
+                icon={<RefreshCw size={15} />}
+                aria-label="Refresh examples"
+                onClick={refreshExamples}
+              />
+            </Tooltip>
+          </div>
         </div>
-      ) : (
-        gridView
-      )}
+
+        {searching ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-16 rounded-lg border bg-white">
+            <Loader
+              size={22}
+              className="animate-spin"
+              style={{ color: 'var(--color-teal)' }}
+            />
+            <span className="text-sm font-medium" style={{ color: 'var(--color-gray-dark)' }}>
+              Searching journeys…
+            </span>
+            <span className="text-xs" style={{ color: 'var(--color-gray-medium)' }}>
+              This might take a bit.
+            </span>
+          </div>
+        ) : sessions.length === 0 ? (
+          <div
+            className="p-6 text-center rounded-lg border bg-white text-sm"
+            style={{ color: 'var(--color-gray-medium)' }}
+          >
+            No example sessions.
+          </div>
+        ) : (
+          <>
+            {gridView}
+            {canLoadMore && (
+              <div className="flex justify-center">
+                <Button onClick={loadMore}>Load more examples</Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* hide-with-reason modal — mirrors the issue list */}
       <Modal
