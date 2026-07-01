@@ -42,7 +42,7 @@ function RunSettingsFields({ value, onChange }: Props) {
     `${omitted.length} ${t('selected')}`;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 kai-run-settings">
       <div className="grid grid-cols-3 gap-3">
         <Field label={t('Environments')}>
           <Select

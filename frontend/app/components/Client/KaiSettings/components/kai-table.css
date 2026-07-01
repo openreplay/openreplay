@@ -11,6 +11,36 @@
   background: var(--color-active-blue);
 }
 
+/* Entity drawers: the close (✕) sits ~24px from the drawer edge but only ~8px from the
+   title, so it reads crammed against it. Widen the gap between the ✕ and the title so it
+   has comparable breathing room on both sides. */
+.kai-entity-drawer .ant-drawer-header .ant-drawer-close {
+  margin-inline-end: 24px !important;
+}
+
+/* Run-settings multi-selects. In antd v6 the selection content (.ant-select-content)
+   defaults to flex-wrap:wrap, so the "N selected" placeholder + the search input wrap
+   onto a second row — the control renders ~38px and grows/jumps on focus. Pin it to a
+   single line so the small multi-selects stay 24px like the single selects. */
+.kai-run-settings .ant-select-multiple .ant-select-content {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+/* Brief highlight when a drawer section is jumped to (e.g. opening Settings via the
+   "Schedule" action scrolls to and flashes the run-settings block). */
+@keyframes kai-flash {
+  0% {
+    background: rgba(97, 95, 255, 0.12);
+  }
+  100% {
+    background: transparent;
+  }
+}
+.kai-flash {
+  animation: kai-flash 1.2s ease-out;
+}
+
 /* Center action-button icons exactly. antd's .ant-btn-icon is display:block, so the
    lucide svg keeps a baseline gap that nudges the dots ~1px above center; flex-center
    it so the ellipsis sits dead-center in the hover square (matching the Cards list). */

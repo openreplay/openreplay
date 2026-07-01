@@ -1,4 +1,4 @@
-import { Button, Modal, Segmented, Tooltip, message } from 'antd';
+import { Button, Modal, Segmented, Select, Tooltip, message } from 'antd';
 import {
   CheckCircle2,
   ChevronDown,
@@ -14,12 +14,13 @@ import {
   Network,
   RotateCw,
   Server,
+  Tag as TagIcon,
   Terminal,
   Timer,
   TriangleAlert,
   XCircle,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
@@ -29,7 +30,6 @@ import CountryFlagIcon from 'Shared/CountryFlagIcon';
 import { ConsoleLog, NetworkRequest, RunData, TestStep } from '../shared/types';
 import {
   RESOLUTION_ICON,
-  RowTags,
   formatDuration,
   regionCountry,
   regionLabel,
@@ -37,6 +37,7 @@ import {
   resolutionLabel,
 } from '../shared/utils';
 import { EntityDrawer, Section } from './EntityDrawer';
+import NetworkPanel from './NetworkPanel';
 
 interface Props {
   run: RunData | null;
@@ -94,56 +95,9 @@ function ConsoleView({ logs }: { logs?: ConsoleLog[] }) {
   );
 }
 
-/** Network requests captured during the run — same columns as the session network
- *  panel (status / method / name / type / time), failures tinted red. */
-function NetworkView({ reqs }: { reqs?: NetworkRequest[] }) {
-  const { t } = useTranslation();
-  if (!reqs || reqs.length === 0)
-    return <DevEmpty text={t('No network activity captured for this run.')} />;
-  return (
-    <div className="border rounded-lg overflow-hidden text-xs">
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-lightest border-b text-disabled-text font-medium uppercase tracking-wide">
-        <span className="w-9 shrink-0">{t('Status')}</span>
-        <span className="w-12 shrink-0">{t('Method')}</span>
-        <span className="flex-1 min-w-0">{t('Name')}</span>
-        <span className="w-14 shrink-0">{t('Type')}</span>
-        <span className="w-12 shrink-0 text-right">{t('Time')}</span>
-      </div>
-      {reqs.map((r, i) => {
-        const errored = isNetError(r);
-        return (
-          <div
-            key={i}
-            className={`flex items-center gap-2 px-3 py-1.5 border-b last:border-b-0 ${
-              errored ? 'bg-red-lightest' : ''
-            }`}
-          >
-            <span
-              className={`w-9 shrink-0 font-medium ${
-                errored ? 'text-red' : 'text-green-dark'
-              }`}
-            >
-              {r.status === 0 ? t('ERR') : r.status}
-            </span>
-            <span className="w-12 shrink-0 text-disabled-text">{r.method}</span>
-            <Tooltip title={r.url}>
-              <span className="flex-1 min-w-0 truncate">{r.name}</span>
-            </Tooltip>
-            <span className="w-14 shrink-0 text-disabled-text truncate">
-              {r.type}
-            </span>
-            <span className="w-12 shrink-0 text-right text-disabled-text">
-              {r.duration ? `${Math.round(r.duration)}ms` : '—'}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/** Step screenshots — a big preview with prev/next and a thumbnail strip. Opens on the
- *  failed step by default. When `onExpand` is set the preview is click-to-enlarge. */
+/** Step screenshots. A step can capture several screenshots, so a Step Selector picks
+ *  the step and the carousel arrows move between that step's screenshots. Opens on the
+ *  failed step. When `onExpand` is set the preview is click-to-enlarge. */
 function ScreenshotsView({
   run,
   onExpand,
@@ -155,11 +109,9 @@ function ScreenshotsView({
   const shotSteps = run.steps
     .map((step, i) => ({ step, i }))
     .filter(({ step }) => hasShot(step));
-  const failedPos =
-    run.failedStep != null
-      ? shotSteps.findIndex((s) => s.i === run.failedStep)
-      : -1;
-  const [idx, setIdx] = useState(failedPos >= 0 ? failedPos : 0);
+  const failedPos = shotSteps.findIndex((s) => s.step.status === 'failed');
+  const [stepPos, setStepPos] = useState(failedPos >= 0 ? failedPos : 0);
+  const [shotIdx, setShotIdx] = useState(0);
 
   if (run.status === 'running')
     return (
@@ -170,52 +122,94 @@ function ScreenshotsView({
   if (shotSteps.length === 0)
     return <DevEmpty text={t('No screenshots captured for this run.')} />;
 
-  const cur = shotSteps[Math.min(idx, shotSteps.length - 1)];
+  const cur = shotSteps[Math.min(stepPos, shotSteps.length - 1)];
   const curStep = run.steps[cur.i];
   const failed = curStep.status === 'failed';
-  const prev = () =>
-    setIdx((i) => (i - 1 + shotSteps.length) % shotSteps.length);
-  const next = () => setIdx((i) => (i + 1) % shotSteps.length);
+  const shotCount = Math.max(1, curStep.shots ?? 1);
+  const safeShot = Math.min(shotIdx, shotCount - 1);
+
+  const pickStep = (pos: number) => {
+    setStepPos(pos);
+    setShotIdx(0);
+  };
+  const prevShot = () => setShotIdx((safeShot - 1 + shotCount) % shotCount);
+  const nextShot = () => setShotIdx((safeShot + 1) % shotCount);
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="font-medium truncate">
-          {t('Step')} {cur.i + 1} · {curStep.step}
-        </span>
-        <span className="text-xs text-disabled-text shrink-0">
-          {shotSteps.indexOf(cur) + 1}/{shotSteps.length}
-        </span>
-      </div>
+      {/* Step selector — pick the step; the carousel below holds that step's screenshots */}
+      <Select
+        size="small"
+        value={stepPos}
+        onChange={pickStep}
+        className="w-full"
+        options={shotSteps.map((s, pos) => ({
+          value: pos,
+          label: (
+            <span className="flex items-center gap-1.5 min-w-0">
+              {s.step.status === 'failed' && (
+                <span
+                  className="shrink-0 w-1.5 h-1.5 rounded-full"
+                  style={{ background: 'var(--color-red)' }}
+                />
+              )}
+              <span className="truncate">
+                {t('Step')} {s.i + 1} · {s.step.step}
+              </span>
+            </span>
+          ),
+        }))}
+      />
+
+      {/* Carousel — arrows move between the selected step's screenshots */}
       <div
         className={`group relative w-full rounded-lg border bg-gray-lightest flex items-center justify-center ${
-          failed ? 'border-red-light' : ''
+          failed ? 'border-red' : ''
         } ${onExpand ? 'cursor-zoom-in' : ''}`}
         style={{ aspectRatio: '16 / 10' }}
         onClick={onExpand}
         role={onExpand ? 'button' : undefined}
         aria-label={onExpand ? t('Expand screenshot') : undefined}
       >
+        {/* floating "Failed" label, top-right — same tint/icon as the result tags */}
+        {failed && (
+          <span
+            className="absolute top-2 right-2 inline-flex items-center gap-1 text-xs font-medium rounded px-1.5 py-0.5"
+            style={{
+              background: 'rgba(204, 0, 0, 0.1)',
+              color: 'var(--color-red)',
+            }}
+          >
+            <XCircle size={12} /> {t('Failed')}
+          </span>
+        )}
         <div className="flex flex-col items-center gap-1 text-disabled-text">
           <ImageIcon size={36} />
           <span className="text-xs">
             {failed
               ? t('Screenshot at failure')
-              : `${t('Step')} ${cur.i + 1} ${t('screenshot')}`}
+              : `${t('Step')} ${cur.i + 1} · ${t('screenshot')} ${safeShot + 1}`}
           </span>
         </div>
+        {/* explicit image counter, bottom-right — clearly about screenshots, not steps */}
+        <span
+          className="absolute bottom-2 right-2 text-xs font-medium rounded px-1.5 py-0.5 bg-white/90 border text-gray-dark"
+          style={{ borderColor: 'var(--color-gray-light)' }}
+        >
+          {t('Screenshot')} {safeShot + 1} {t('of')} {shotCount}
+        </span>
         {onExpand && (
-          <span className="absolute top-2 right-2 w-7 h-7 rounded bg-white/90 border shadow-sm flex items-center justify-center text-gray-dark opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="absolute bottom-2 left-2 w-7 h-7 rounded bg-white/90 border shadow-sm flex items-center justify-center text-gray-dark opacity-0 group-hover:opacity-100 transition-opacity">
             <Maximize2 size={14} />
           </span>
         )}
-        {shotSteps.length > 1 && (
+        {shotCount > 1 && (
           <>
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                prev();
+                prevShot();
               }}
               aria-label={t('Previous')}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-sm border flex items-center justify-center hover:bg-gray-lightest"
@@ -226,7 +220,7 @@ function ScreenshotsView({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                next();
+                nextShot();
               }}
               aria-label={t('Next')}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-sm border flex items-center justify-center hover:bg-gray-lightest"
@@ -235,22 +229,6 @@ function ScreenshotsView({
             </button>
           </>
         )}
-      </div>
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {shotSteps.map((s, pos) => (
-          <button
-            key={s.i}
-            type="button"
-            onClick={() => setIdx(pos)}
-            className={`shrink-0 w-16 h-11 rounded border flex items-center justify-center text-xs bg-gray-lightest transition ${
-              s === cur
-                ? 'ring-2 ring-inset ring-active-blue-border text-black'
-                : 'text-disabled-text'
-            } ${run.steps[s.i].status === 'failed' ? 'border-red-light' : ''}`}
-          >
-            {s.i + 1}
-          </button>
-        ))}
       </div>
     </div>
   );
@@ -267,6 +245,20 @@ function RunDrawer({ run, open, onClose }: Props) {
   const [devTab, setDevTab] = useState<DevTab>('screenshots');
   const [expanded, setExpanded] = useState(false);
   const [modalTab, setModalTab] = useState<DevTab>('screenshots');
+  const activityRef = useRef<HTMLDivElement>(null);
+
+  // a per-step "View …" link selects the tab and scrolls the Activity panel into view
+  const jumpToActivity = (tab: DevTab) => {
+    setDevTab(tab);
+    window.setTimeout(
+      () =>
+        activityRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        }),
+      0,
+    );
+  };
 
   if (!run) return null;
 
@@ -331,14 +323,21 @@ function RunDrawer({ run, open, onClose }: Props) {
               <div className="flex items-center gap-3 text-xs">
                 <button
                   type="button"
-                  onClick={() => setDevTab('console')}
+                  onClick={() => jumpToActivity('screenshots')}
+                  className="text-main hover:underline flex items-center gap-1"
+                >
+                  <ImageIcon size={12} /> {t('View screenshot')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => jumpToActivity('console')}
                   className="text-main hover:underline flex items-center gap-1"
                 >
                   <Terminal size={12} /> {t('View console')}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDevTab('network')}
+                  onClick={() => jumpToActivity('network')}
                   className="text-main hover:underline flex items-center gap-1"
                 >
                   <Network size={12} /> {t('View network')}
@@ -371,40 +370,78 @@ function RunDrawer({ run, open, onClose }: Props) {
           Icon: CheckCircle2,
         };
   const BannerIcon = bannerCfg.Icon;
+  // One merged strip: the status/outcome line carries the More toggle; expanding reveals
+  // the meta (when / duration / env / resolution / region / tags) on a single line in the
+  // same strip — no separate info banner. Collapsed, it's just the compact status line.
   const banner = (
-    <div
-      className="px-5 py-3 border-b flex items-center gap-2 text-sm font-medium text-gray-darkest"
-      style={{ background: bannerCfg.bg }}
-    >
-      <BannerIcon
-        size={16}
-        className={`shrink-0 ${bannerCfg.spin ? 'animate-spin' : ''}`}
-        style={{ color: bannerCfg.color }}
-      />
-      {running ? (
-        <span>{t('Running')}</span>
-      ) : failed ? (
-        <span>
-          {t('Failed at step')} {(run.failedStep ?? 0) + 1} {t('of')} {total}
-          {run.duration && (
-            <span className="font-normal text-disabled-text">
-              {' '}
-              · {formatDuration(run.duration)}
+    <>
+      <div
+        className="px-5 py-3 border-b flex items-center gap-2 text-sm font-medium text-gray-darkest"
+        style={{ background: bannerCfg.bg }}
+      >
+        <BannerIcon
+          size={16}
+          className={`shrink-0 ${bannerCfg.spin ? 'animate-spin' : ''}`}
+          style={{ color: bannerCfg.color }}
+        />
+        {running ? (
+          <span>{t('Running')}</span>
+        ) : failed ? (
+          <span>
+            {t('Failed at step')} {(run.failedStep ?? 0) + 1} {t('of')} {total}
+          </span>
+        ) : (
+          <span>
+            {t('Passed')} · {total} {t('steps')}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          className="ml-auto text-xs font-normal text-disabled-text hover:text-black flex items-center gap-1"
+        >
+          {more ? t('Less') : t('More')}
+          <ChevronDown
+            size={13}
+            className={`transition-transform ${more ? 'rotate-180' : ''}`}
+          />
+        </button>
+      </div>
+      {more && (
+        <div className="px-5 py-3 border-b bg-white flex items-center gap-x-4 gap-y-1 flex-wrap text-sm text-disabled-text">
+          <Tooltip title={formatDateTimeDefault(run.date)}>
+            <span className="flex items-center gap-1.5">
+              <Clock size={14} /> {relativeTime(run.date)}
             </span>
+          </Tooltip>
+          <span className="flex items-center gap-1.5">
+            <Timer size={14} />{' '}
+            {run.duration ? formatDuration(run.duration) : t('Running…')}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Server size={14} /> {run.envName ?? '—'}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ResIcon size={14} /> {resolutionLabel(run.resolution)}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CountryFlagIcon
+              countryCode={regionCountry(run.region)}
+              style={{ width: 16, borderRadius: 2 }}
+            />{' '}
+            {regionLabel(run.region)}
+          </span>
+          {run.tags && run.tags.length > 0 && (
+            <Tooltip title={run.tags.join(', ')}>
+              <span className="flex items-center gap-1.5 cursor-default">
+                <TagIcon size={14} /> {run.tags.length}{' '}
+                {run.tags.length === 1 ? t('tag') : t('tags')}
+              </span>
+            </Tooltip>
           )}
-        </span>
-      ) : (
-        <span>
-          {t('Passed')} · {total} {t('steps')}
-          {run.duration && (
-            <span className="font-normal text-disabled-text">
-              {' '}
-              · {formatDuration(run.duration)}
-            </span>
-          )}
-        </span>
+        </div>
       )}
-    </div>
+    </>
   );
 
   // count chip shown on the Network / Console tab labels when there are failures
@@ -463,50 +500,6 @@ function RunDrawer({ run, open, onClose }: Props) {
     >
       {banner}
 
-      {/* compact meta — duration / when / environment up front; the rest behind "More" */}
-      <div className="px-5 py-3 border-b">
-        <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-sm">
-          <Tooltip title={formatDateTimeDefault(run.date)}>
-            <span className="flex items-center gap-1.5 text-disabled-text">
-              <Clock size={14} /> {relativeTime(run.date)}
-            </span>
-          </Tooltip>
-          <span className="flex items-center gap-1.5 text-disabled-text">
-            <Timer size={14} />{' '}
-            {run.duration ? formatDuration(run.duration) : t('Running…')}
-          </span>
-          <span className="flex items-center gap-1.5 text-disabled-text">
-            <Server size={14} /> {run.envName ?? '—'}
-          </span>
-          <button
-            type="button"
-            onClick={() => setMore((v) => !v)}
-            className="ml-auto text-xs text-disabled-text hover:text-black flex items-center gap-1"
-          >
-            {more ? t('Less') : t('More')}
-            <ChevronDown
-              size={13}
-              className={`transition-transform ${more ? 'rotate-180' : ''}`}
-            />
-          </button>
-        </div>
-        {more && (
-          <div className="mt-2 pt-2 border-t flex items-center gap-x-4 gap-y-1.5 flex-wrap text-sm text-disabled-text">
-            <span className="flex items-center gap-1.5">
-              <ResIcon size={14} /> {resolutionLabel(run.resolution)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CountryFlagIcon
-                countryCode={regionCountry(run.region)}
-                style={{ width: 16, borderRadius: 2 }}
-              />{' '}
-              {regionLabel(run.region)}
-            </span>
-            <RowTags tags={run.tags} />
-          </div>
-        )}
-      </div>
-
       <Section title={t('Steps')}>
         <div className="flex flex-col">
           {run.steps.map((step, idx) => renderStep(step, idx))}
@@ -515,6 +508,7 @@ function RunDrawer({ run, open, onClose }: Props) {
 
       {/* DevTools — the same things you'd check on a session: screenshots, network,
           console. One tab at a time so the drawer stays readable; expand for room. */}
+      <div ref={activityRef} />
       <Section
         title={t('Activity')}
         action={
@@ -543,7 +537,9 @@ function RunDrawer({ run, open, onClose }: Props) {
               onExpand={() => openExpanded('screenshots')}
             />
           )}
-          {devTab === 'network' && <NetworkView reqs={run.network} />}
+          {devTab === 'network' && (
+            <NetworkPanel reqs={run.network} startedAt={run.date} />
+          )}
           {devTab === 'console' && <ConsoleView logs={run.console} />}
         </div>
       </Section>
@@ -553,11 +549,20 @@ function RunDrawer({ run, open, onClose }: Props) {
         open={expanded}
         onCancel={() => setExpanded(false)}
         footer={null}
-        title={null}
+        title={
+          <div className="flex flex-col gap-0.5 pr-6">
+            <span className="text-xs font-medium uppercase tracking-wide text-disabled-text">
+              {t('Run activity')}
+            </span>
+            <span className="text-base font-semibold text-black leading-tight">
+              {run.testName}
+            </span>
+          </div>
+        }
         width={920}
         centered
       >
-        <div className="flex flex-col gap-3 pt-2">
+        <div className="flex flex-col gap-3 pt-1">
           <Segmented
             block
             size="small"
@@ -567,7 +572,9 @@ function RunDrawer({ run, open, onClose }: Props) {
           />
           <div>
             {modalTab === 'screenshots' && <ScreenshotsView run={run} />}
-            {modalTab === 'network' && <NetworkView reqs={run.network} />}
+            {modalTab === 'network' && (
+              <NetworkPanel reqs={run.network} startedAt={run.date} />
+            )}
             {modalTab === 'console' && <ConsoleView logs={run.console} />}
           </div>
         </div>

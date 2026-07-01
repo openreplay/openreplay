@@ -74,11 +74,18 @@ export const getStatusTag = (
           background: 'rgba(66, 174, 94, 0.12)', // brand green (#42AE5E) tint
           color: 'var(--color-green-dark)',
         }
-      : {
-          label: t('Paused'),
-          background: 'rgba(226, 137, 64, 0.14)', // brand orange (#E28940) tint
-          color: 'var(--color-orange-dark)',
-        };
+      : status === 'approved'
+        ? {
+            // indigo — approved but idle (no schedule yet), distinct from green Active
+            label: t('Approved'),
+            background: 'rgba(97, 95, 255, 0.12)',
+            color: 'var(--color-indigo)',
+          }
+        : {
+            label: t('Paused'),
+            background: 'rgba(226, 137, 64, 0.14)', // brand orange (#E28940) tint
+            color: 'var(--color-orange-dark)',
+          };
   return (
     <Tag
       variant="filled"

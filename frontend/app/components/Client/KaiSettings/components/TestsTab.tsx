@@ -31,7 +31,12 @@ import {
 } from './shared/utils';
 
 type StatusTab = 'all' | TestLifecycle;
-const STATUS_ORDER: Record<string, number> = { draft: 0, active: 1, paused: 2 };
+const STATUS_ORDER: Record<string, number> = {
+  draft: 0,
+  approved: 1,
+  active: 2,
+  paused: 3,
+};
 
 function TestsTab() {
   const { t } = useTranslation();
@@ -43,6 +48,8 @@ function TestsTab() {
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [page, setPage] = useState(1);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  // when a drawer is opened via the "Schedule" action, jump straight to the schedule
+  const [focusSchedule, setFocusSchedule] = useState(false);
 
   const PAGE_SIZE = 20;
   useEffect(() => {
@@ -63,13 +70,23 @@ function TestsTab() {
 
   // open a row's drawer; opening a new draft marks it seen (clears the dot)
   const openRow = (tc: TestCase) => {
+    setFocusSchedule(false);
     setOpenKey(tc.key);
     if (tc.status === 'draft' && tc.isNew) updateTest({ ...tc, isNew: false });
   };
+  // open the Settings drawer scrolled to the schedule (from the "Schedule" action)
+  const openSchedule = (tc: TestCase) => {
+    setOpenKey(tc.key);
+    setFocusSchedule(true);
+  };
+  // drop the schedule → the test goes back to "approved" (ready, not scheduled)
+  const unschedule = (tc: TestCase) =>
+    updateTest({ ...tc, status: 'approved', schedule: null });
 
   const openTest = tests.find((tc) => tc.key === openKey) ?? null;
 
   const draftCount = tests.filter((tc) => tc.status === 'draft').length;
+  const approvedCount = tests.filter((tc) => tc.status === 'approved').length;
   const activeCount = tests.filter((tc) => tc.status === 'active').length;
   const pausedCount = tests.filter((tc) => tc.status === 'paused').length;
 
@@ -120,8 +137,13 @@ function TestsTab() {
     );
     setSelectedKeys([]);
   };
+  // Bulk approve can't gather a schedule per test, so drafts land in `approved`
+  // (ready, not scheduled) — the user schedules each from its drawer or the ellipsis.
   const approveSelected = () => {
-    bulkSet((tc) => tc.status === 'draft', { status: 'active', isNew: false });
+    bulkSet((tc) => tc.status === 'draft', {
+      status: 'approved',
+      isNew: false,
+    });
     message.success(t('Drafts approved'));
   };
   const pauseSelected = () =>
@@ -156,6 +178,15 @@ function TestsTab() {
       ),
     },
     {
+      value: 'approved',
+      label: (
+        <span>
+          {t('Approved')}
+          {faded(approvedCount)}
+        </span>
+      ),
+    },
+    {
       value: 'active',
       label: (
         <span>
@@ -176,26 +207,38 @@ function TestsTab() {
   ];
 
   const rowMenu = (tc: TestCase) => {
-    const items =
-      tc.status === 'draft'
-        ? [
-            { key: 'open', label: t('Review draft') },
-            { type: 'divider' as const },
-            { key: 'dismiss', label: t('Dismiss'), danger: true },
-          ]
-        : [
-            tc.status === 'active'
-              ? { key: 'pause', label: t('Pause') }
-              : { key: 'resume', label: t('Resume') },
-            { key: 'open', label: t('Settings') },
-            { type: 'divider' as const },
-            { key: 'delete', label: t('Delete'), danger: true },
-          ];
+    let items;
+    if (tc.status === 'draft') {
+      items = [
+        { key: 'open', label: t('Review draft') },
+        { type: 'divider' as const },
+        { key: 'dismiss', label: t('Dismiss'), danger: true },
+      ];
+    } else {
+      // state-dependent run controls, then Settings, then Delete
+      const controls: { key: string; label: string }[] = [];
+      if (tc.status === 'active')
+        controls.push({ key: 'pause', label: t('Pause') });
+      if (tc.status === 'paused')
+        controls.push({ key: 'resume', label: t('Resume') });
+      if (tc.status === 'approved')
+        controls.push({ key: 'schedule', label: t('Schedule') });
+      if (tc.status === 'active' || tc.status === 'paused')
+        controls.push({ key: 'unschedule', label: t('Unschedule') });
+      items = [
+        ...controls,
+        { key: 'open', label: t('Settings') },
+        { type: 'divider' as const },
+        { key: 'delete', label: t('Delete'), danger: true },
+      ];
+    }
     return {
       items,
       onClick: ({ key, domEvent }: { key: string; domEvent: any }) => {
         domEvent.stopPropagation();
         if (key === 'open') openRow(tc);
+        else if (key === 'schedule') openSchedule(tc);
+        else if (key === 'unschedule') unschedule(tc);
         else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
         else if (key === 'resume') updateTest({ ...tc, status: 'active' });
         else if (key === 'dismiss' || key === 'delete') removeTest(tc.key);
@@ -478,7 +521,11 @@ function TestsTab() {
       <TestDrawer
         test={openTest && openTest.status !== 'draft' ? openTest : null}
         open={!!openTest && openTest.status !== 'draft'}
-        onClose={() => setOpenKey(null)}
+        focusSchedule={focusSchedule}
+        onClose={() => {
+          setOpenKey(null);
+          setFocusSchedule(false);
+        }}
         onChange={updateTest}
         onRemove={removeTest}
       />

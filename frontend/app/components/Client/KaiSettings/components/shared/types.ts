@@ -1,6 +1,8 @@
-// Lifecycle of a test: the agent surfaces a `draft`, the user approves it into an
-// `active` test that runs on a schedule, and an active test can be `paused`.
-export type TestLifecycle = 'draft' | 'active' | 'paused';
+// Lifecycle of a test: the agent surfaces a `draft`; the user approves its steps into
+// an `approved` test (ready but with no schedule yet); attaching a schedule makes it
+// `active`; an active test can be `paused`. Approving and scheduling are two distinct
+// steps — `approved` is the state in between.
+export type TestLifecycle = 'draft' | 'approved' | 'active' | 'paused';
 export type RunResult = 'passed' | 'failed';
 // A run can still be in flight, hence `running`.
 export type RunStatus = 'running' | 'passed' | 'failed';
@@ -81,6 +83,9 @@ export interface TestCase {
 export interface TestStep {
   step: string;
   status: StepStatus;
+  // a single step can capture several screenshots during execution; the run drawer
+  // shows them as a per-step carousel. Defaults to 1 when omitted.
+  shots?: number;
 }
 
 // Per-run DevTools captured during execution — mirrors what a session shows.
@@ -91,15 +96,32 @@ export interface ConsoleLog {
   time: number; // ms into the run
 }
 
+// Per-request timing breakdown (ms), mirroring the HAR phases shown in the viewer.
+export interface NetworkTiming {
+  dns?: number;
+  connect?: number;
+  ssl?: number;
+  ttfb?: number; // waiting
+  download?: number; // content download
+}
+
 export interface NetworkRequest {
   method: string;
   url: string;
   name: string; // last path segment / display name
-  type: string; // xhr | fetch | script | stylesheet | img | document
+  type: string; // xhr | fetch | script | stylesheet | img | document | media | font
   status: number; // HTTP status; 0 = failed / no response
   size?: number; // bytes
   duration: number; // ms (0 when failed)
   time: number; // ms into the run
+  // HAR-style detail, shown when a request is selected in the network panel
+  ip?: string;
+  protocol?: string; // e.g. "HTTP/2.0"
+  requestHeaders?: HttpHeader[];
+  responseHeaders?: HttpHeader[];
+  payload?: string; // request body (pretty JSON / text)
+  response?: string; // response body (pretty JSON / text)
+  timing?: NetworkTiming;
 }
 
 export interface RunData {

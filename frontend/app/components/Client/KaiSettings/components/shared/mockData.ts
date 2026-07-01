@@ -113,7 +113,45 @@ export const MOCK_TEST_CASES: TestCase[] = [
     ],
   },
 
-  // ---- approved tests --------------------------------------------------
+  // ---- approved, not yet scheduled -------------------------------------
+  // steps approved by the user but no schedule attached yet: ready to run on
+  // demand or to be scheduled. No run history because they haven't run.
+  {
+    key: 'tc-export',
+    title: 'Export report to CSV',
+    status: 'approved',
+    tags: ['Reporting'],
+    envNames: ['Staging'],
+    resolutions: ['desktop'],
+    regions: ['paris'],
+    schedule: null,
+    steps: [
+      'Open the reports dashboard',
+      'Pick a date range',
+      'Click export',
+      'Choose CSV',
+      'Verify the file downloads',
+    ],
+  },
+  {
+    key: 'tc-2fa',
+    title: 'Enable two-factor auth',
+    status: 'approved',
+    tags: ['Auth', 'Security'],
+    envNames: ['QA'],
+    resolutions: ['desktop', 'mobile'],
+    regions: ['ny'],
+    schedule: null,
+    steps: [
+      'Open security settings',
+      'Click enable two-factor',
+      'Scan the QR code',
+      'Enter the verification code',
+      'Confirm 2FA is active',
+    ],
+  },
+
+  // ---- active / paused tests -------------------------------------------
   {
     key: 'tc-checkout',
     title: 'Checkout flow',
@@ -519,6 +557,20 @@ export const MOCK_RUNS: RunData[] = [
         size: 18420,
         duration: 142,
         time: 60,
+        ip: '203.0.113.10',
+        protocol: 'HTTP/2.0',
+        timing: { dns: 4, connect: 9, ssl: 14, ttfb: 96, download: 19 },
+        requestHeaders: [
+          { name: ':authority', value: 'app.example.com' },
+          { name: ':method', value: 'GET' },
+          { name: 'accept', value: 'text/html,application/xhtml+xml' },
+          { name: 'user-agent', value: 'OpenReplay-TestAgent/1.0' },
+        ],
+        responseHeaders: [
+          { name: 'content-type', value: 'text/html; charset=utf-8' },
+          { name: 'cache-control', value: 'no-store' },
+          { name: 'content-length', value: '18420' },
+        ],
       },
       {
         method: 'GET',
@@ -529,6 +581,19 @@ export const MOCK_RUNS: RunData[] = [
         size: 254300,
         duration: 320,
         time: 220,
+        ip: '203.0.113.10',
+        protocol: 'HTTP/2.0',
+        timing: { dns: 0, connect: 0, ssl: 0, ttfb: 70, download: 250 },
+        requestHeaders: [
+          { name: ':authority', value: 'app.example.com' },
+          { name: 'accept', value: '*/*' },
+          { name: 'referer', value: 'https://app.example.com/login' },
+        ],
+        responseHeaders: [
+          { name: 'content-type', value: 'application/javascript' },
+          { name: 'cache-control', value: 'public, max-age=31536000' },
+          { name: 'content-encoding', value: 'br' },
+        ],
       },
       {
         method: 'POST',
@@ -539,6 +604,25 @@ export const MOCK_RUNS: RunData[] = [
         size: 512,
         duration: 4980,
         time: 900,
+        ip: '203.0.113.42',
+        protocol: 'HTTP/2.0',
+        timing: { dns: 3, connect: 11, ssl: 18, ttfb: 4910, download: 38 },
+        requestHeaders: [
+          { name: ':authority', value: 'api.example.com' },
+          { name: ':method', value: 'POST' },
+          { name: 'content-type', value: 'application/json' },
+          {
+            name: 'authorization',
+            value: 'Bearer eyJhbGciOiJIUzI1NiJ9.sample-token',
+          },
+        ],
+        responseHeaders: [
+          { name: 'content-type', value: 'application/json' },
+          { name: 'x-request-id', value: 'req_9f2c14ab' },
+        ],
+        payload: '{\n  "email": "qa+bot@example.com",\n  "password": "••••••••"\n}',
+        response:
+          '{\n  "error": "internal_error",\n  "message": "Unexpected error while creating session",\n  "requestId": "req_9f2c14ab"\n}',
       },
       {
         method: 'GET',
@@ -548,12 +632,18 @@ export const MOCK_RUNS: RunData[] = [
         status: 0,
         duration: 0,
         time: 5100,
+        ip: '203.0.113.42',
+        protocol: 'HTTP/2.0',
+        requestHeaders: [
+          { name: ':authority', value: 'api.example.com' },
+          { name: 'accept', value: 'application/json' },
+        ],
       },
     ],
     steps: [
-      { step: 'Navigate to the login page', status: 'passed' },
-      { step: 'Enter the provided credentials', status: 'passed' },
-      { step: 'Click the submit button', status: 'failed' },
+      { step: 'Navigate to the login page', status: 'passed', shots: 2 },
+      { step: 'Enter the provided credentials', status: 'passed', shots: 3 },
+      { step: 'Click the submit button', status: 'failed', shots: 4 },
       { step: 'Verify redirect to dashboard', status: 'skipped' },
     ],
   },
@@ -602,11 +692,11 @@ export const MOCK_RUNS: RunData[] = [
       },
     ],
     steps: [
-      { step: 'Add a sample product to the cart', status: 'passed' },
-      { step: 'Navigate to the cart', status: 'passed' },
-      { step: 'Proceed to checkout', status: 'passed' },
-      { step: 'Submit the order', status: 'passed' },
-      { step: 'Verify the order confirmation page', status: 'passed' },
+      { step: 'Add a sample product to the cart', status: 'passed', shots: 2 },
+      { step: 'Navigate to the cart', status: 'passed', shots: 1 },
+      { step: 'Proceed to checkout', status: 'passed', shots: 3 },
+      { step: 'Submit the order', status: 'passed', shots: 2 },
+      { step: 'Verify the order confirmation page', status: 'passed', shots: 2 },
     ],
   },
   {

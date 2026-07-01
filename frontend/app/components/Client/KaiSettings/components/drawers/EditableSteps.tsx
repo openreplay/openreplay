@@ -1,4 +1,4 @@
-import { Input, InputRef, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import {
   Check,
   Circle,
@@ -96,7 +96,7 @@ interface StepRowProps {
   isIgnored: boolean;
   fork?: TestAlternative;
   draft: string;
-  inputRef: React.RefObject<InputRef>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   setDraft: (v: string) => void;
   onStartEdit: (idx: number) => void;
   onToggleIgnore: (idx: number) => void;
@@ -199,18 +199,19 @@ function StepRow({
         )}
 
         {editing ? (
-          <Input
+          // native input (not antd) so its box exactly matches the static text line —
+          // antd's <Input> carries its own line-height/min-height and reflows the row.
+          <input
             ref={inputRef}
-            variant="borderless"
             value={draft}
             placeholder={t('Describe the step')}
             onChange={(e) => setDraft(e.target.value)}
-            onPressEnter={onEnter}
             onBlur={onBlur}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') onEscape();
+              if (e.key === 'Enter') onEnter();
+              else if (e.key === 'Escape') onEscape();
             }}
-            className="flex-1 px-0! py-0! text-[15px]! leading-6"
+            className="flex-1 text-[15px] leading-6 bg-transparent outline-none border-0 p-0 m-0 text-black placeholder:text-disabled-text"
           />
         ) : (
           <button
@@ -295,7 +296,7 @@ function EditableSteps({
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
   const [ignored, setIgnored] = useState<Set<number>>(new Set());
-  const inputRef = useRef<InputRef>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   // swallow the trailing onBlur that fires when an edit commits via Enter/Esc
   const skipBlur = useRef(false);
 
