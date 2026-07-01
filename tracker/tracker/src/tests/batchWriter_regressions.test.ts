@@ -24,7 +24,8 @@ jest.mock('../common/messages.gen', () => {
     Timestamp: 0,
     MouseMove: 20,
     ConsoleLog: 22,
-    BatchMetadata: 81,
+    BatchMessageOffsets: 82,
+    BatchMetadata: 86,
     TabData: 118,
     SetPageLocation: 122,
   }
@@ -44,7 +45,8 @@ const MType = {
   Timestamp: 0,
   MouseMove: 20,
   ConsoleLog: 22,
-  BatchMetadata: 81,
+  BatchMessageOffsets: 82,
+  BatchMetadata: 86,
   TabData: 118,
 } as const
 
@@ -68,6 +70,7 @@ function firstMessageType(batch: Uint8Array): number {
 }
 
 // Walk past BatchMetadata fields and verify the next two messages are Timestamp + TabData.
+// The body starts right after the metadata; the offsets table is appended at the batch end.
 function expectPrelude(batch: Uint8Array): void {
   let i = 0
   let consumed: number
@@ -75,8 +78,10 @@ function expectPrelude(batch: Uint8Array): void {
   ;[, consumed] = readVarint(batch, i); i += consumed // version
   ;[, consumed] = readVarint(batch, i); i += consumed // pageNo
   ;[, consumed] = readVarint(batch, i); i += consumed // firstIndex
-  ;[, consumed] = readVarint(batch, i); i += consumed // timestamp (zigzag int)
+  ;[, consumed] = readVarint(batch, i); i += consumed // firstTimestamp (zigzag int)
   const [urlLen, urlLenSize] = readVarint(batch, i); i += urlLenSize + urlLen
+  ;[, consumed] = readVarint(batch, i); i += consumed // lastTimestamp (zigzag int)
+  ;[, consumed] = readVarint(batch, i); i += consumed // batchMessageOffsetsSize (zigzag int)
   expect(batch[i]).toBe(MType.Timestamp) // synth Timestamp message
   // skip type(1) + size(3) + ts varint
   i += 1 + 3

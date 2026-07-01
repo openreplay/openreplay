@@ -628,12 +628,17 @@ class MessageCodec(Codec):
             )
 
         if message_id == 81:
-            return BatchMetadata(
+            return BatchMetadataDeprecated(
                 version=self.read_uint(reader),
                 page_no=self.read_uint(reader),
                 first_index=self.read_uint(reader),
                 timestamp=self.read_int(reader),
                 location=self.read_string(reader)
+            )
+
+        if message_id == 82:
+            return BatchMessageOffsets(
+                
             )
 
         if message_id == 83:
@@ -678,6 +683,17 @@ class MessageCodec(Codec):
                 content_download=self.read_uint(reader),
                 total=self.read_uint(reader),
                 stalled=self.read_uint(reader)
+            )
+
+        if message_id == 86:
+            return BatchMetadata(
+                version=self.read_uint(reader),
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                first_timestamp=self.read_int(reader),
+                location=self.read_string(reader),
+                last_timestamp=self.read_int(reader),
+                batch_message_offsets_size=self.read_int(reader)
             )
 
         if message_id == 87:

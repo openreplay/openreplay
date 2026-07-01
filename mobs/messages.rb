@@ -416,12 +416,15 @@ message 79, 'Zustand', :replayer => :devtools, :pipeline => 'd' do
 end
 
 # since tracker 3.6.0   TODO: for webworker only
-message 81, 'BatchMetadata', :replayer => false do
+message 81, 'BatchMetadataDeprecated', :replayer => false do
   uint 'Version'
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
   string 'Location'
+end
+
+message 82, 'BatchMessageOffsets', :replayer => false do
 end
 
 message 83, 'NetworkRequest', :replayer => :devtools, :pipeline => 'd' do
@@ -463,6 +466,16 @@ message 85, 'ResourceTiming', :replayer => :devtools, :pipeline => 'd' do
   uint 'ContentDownload'
   uint 'Total'
   uint 'Stalled'
+end
+
+message 86, 'BatchMetadata', :replayer => false do
+  uint 'Version'
+  uint 'PageNo'
+  uint 'FirstIndex'
+  int 'FirstTimestamp'
+  string 'Location'
+  int 'LastTimestamp'
+  int 'BatchMessageOffsetsSize'
 end
 
 message 87, 'Incident', :replayer => :devtools, :pipeline => 'd' do
@@ -582,4 +595,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 34, 35, 36, 65, 85, 86, 87, 88
+# FREE 2, 36, 65, 87, 88

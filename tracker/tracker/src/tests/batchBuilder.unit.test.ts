@@ -6,7 +6,8 @@ jest.mock('../common/messages.gen', () => {
     Timestamp: 0,
     MouseMove: 20,
     ConsoleLog: 22,
-    BatchMetadata: 81,
+    BatchMessageOffsets: 82,
+    BatchMetadata: 86,
     TabData: 118,
     SetPageLocation: 122,
   }
@@ -26,7 +27,8 @@ const MType = {
   Timestamp: 0,
   MouseMove: 20,
   ConsoleLog: 22,
-  BatchMetadata: 81,
+  BatchMessageOffsets: 82,
+  BatchMetadata: 86,
   TabData: 118,
   SetPageLocation: 122,
 } as const
@@ -42,6 +44,82 @@ function readVarint(bytes: Uint8Array, start = 0): [number, number] {
     shift += 7
   }
   return [val, i - start]
+}
+
+// Skip the BatchMetadata header (type varint + 7 fields, no size prefix):
+// version, pageNo, firstIndex, firstTimestamp(int), location(string), lastTimestamp(int),
+// batchMessageOffsetsSize(int). Returns the index right after it.
+function skipMeta(out: Uint8Array): number {
+  let i = 0
+  let c: number
+  ;[, c] = readVarint(out, i); i += c // type
+  ;[, c] = readVarint(out, i); i += c // version
+  ;[, c] = readVarint(out, i); i += c // pageNo
+  ;[, c] = readVarint(out, i); i += c // firstIndex
+  ;[, c] = readVarint(out, i); i += c // firstTimestamp (zigzag)
+  const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen // location
+  ;[, c] = readVarint(out, i); i += c // lastTimestamp (zigzag)
+  ;[, c] = readVarint(out, i); i += c // batchMessageOffsetsSize (zigzag)
+  return i
+}
+
+// Index of the first body message (synthetic Timestamp). The body starts right after the
+// metadata; the offsets table is appended at the end of the batch.
+function bodyStart(out: Uint8Array): number {
+  return skipMeta(out)
+}
+
+// Decode the batchMessageOffsetsSize field (last BatchMetadata field, zigzag int).
+function readOffsetsSize(out: Uint8Array): number {
+  let i = 0
+  let c: number
+  ;[, c] = readVarint(out, i); i += c // type
+  ;[, c] = readVarint(out, i); i += c // version
+  ;[, c] = readVarint(out, i); i += c // pageNo
+  ;[, c] = readVarint(out, i); i += c // firstIndex
+  ;[, c] = readVarint(out, i); i += c // firstTimestamp
+  const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen // location
+  ;[, c] = readVarint(out, i); i += c // lastTimestamp
+  const [zz] = readVarint(out, i) // batchMessageOffsetsSize (zigzag)
+  return zz % 2 === 0 ? zz / 2 : -(zz + 1) / 2
+}
+
+// Decode the lastTimestamp field (6th BatchMetadata field, after location; zigzag int).
+function readLastTimestamp(out: Uint8Array): number {
+  let i = 0
+  let c: number
+  ;[, c] = readVarint(out, i); i += c // type
+  ;[, c] = readVarint(out, i); i += c // version
+  ;[, c] = readVarint(out, i); i += c // pageNo
+  ;[, c] = readVarint(out, i); i += c // firstIndex
+  ;[, c] = readVarint(out, i); i += c // firstTimestamp
+  const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen // location
+  const [zz] = readVarint(out, i) // lastTimestamp (zigzag)
+  return zz % 2 === 0 ? zz / 2 : -(zz + 1) / 2
+}
+
+// Parse the BatchMessageOffsets map ([type 82][uint mapSize, then per type:
+// uint type, uint count, count x uint offset], no size prefix). The table is appended at the
+// end of the batch — locate it via EOF - batchMessageOffsetsSize. Returns type -> offsets[].
+function parseOffsetsMap(out: Uint8Array): Map<number, number[]> {
+  let i = out.length - readOffsetsSize(out)
+  let c: number
+  const [type] = readVarint(out, i)
+  expect(type).toBe(MType.BatchMessageOffsets)
+  ;[, c] = readVarint(out, i); i += c // type
+  const map = new Map<number, number[]>()
+  const [mapSize, ms] = readVarint(out, i); i += ms
+  for (let e = 0; e < mapSize; e++) {
+    const [mType, mt] = readVarint(out, i); i += mt
+    const [count, cs] = readVarint(out, i); i += cs
+    const offsets: number[] = []
+    for (let k = 0; k < count; k++) {
+      const [off, os] = readVarint(out, i); i += os
+      offsets.push(off)
+    }
+    map.set(mType, offsets)
+  }
+  return map
 }
 
 function ctx(overrides: Partial<{ pageNo: number; index: number; timestamp: number; url: string; tabId: string }> = {}) {
@@ -72,27 +150,20 @@ describe('BatchBuilder', () => {
       expect(builder.flush()).toBeNull()
     })
 
-    test('first byte of any non-empty batch is the BatchMetadata varint type (0x51)', () => {
+    test('first byte of any non-empty batch is the BatchMetadata varint type (0x56)', () => {
       builder.push([MType.MouseMove, 100, 200], ctx())
       const out = builder.flush()
       expect(out).not.toBeNull()
       expect(out![0]).toBe(MType.BatchMetadata)
     })
 
-    test('header carries Timestamp+TabData prelude immediately after BatchMetadata', () => {
+    test('header carries Timestamp+TabData prelude after BatchMetadata + offsets map', () => {
       builder.push([MType.MouseMove, 100, 200], ctx({ timestamp: 12345, tabId: 'abc-tab' }))
       const out = builder.flush()!
-      // Skip BatchMetadata: type(varint) + version(uint) + pageNo(uint) + firstIndex(uint) + ts(int) + url(string)
-      let i = 0
-      let consumed: number
-      ;[, consumed] = readVarint(out, i); i += consumed // type=81
-      ;[, consumed] = readVarint(out, i); i += consumed // version
-      ;[, consumed] = readVarint(out, i); i += consumed // pageNo
-      ;[, consumed] = readVarint(out, i); i += consumed // firstIndex
-      ;[, consumed] = readVarint(out, i); i += consumed // timestamp (zigzag int)
-      const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen
+      // Skip BatchMetadata + the BatchMessageOffsets map to reach the body.
+      let i = bodyStart(out)
 
-      // After BatchMetadata fields, expect Timestamp message: type=0, then 3-byte size, then varint ts
+      // First body message is the Timestamp: type=0, then 3-byte size, then varint ts
       expect(out[i]).toBe(MType.Timestamp)
       // The next byte after Timestamp's [type+3-byte size] should be the ts varint
       // Then we should find a TabData message right after.
@@ -211,7 +282,7 @@ describe('BatchBuilder', () => {
   })
 
   describe('budget enforcement', () => {
-    test('hard cap: bufferSize is never exceeded', () => {
+    test('bufferSize bounds metadata + body; the offsets map is spliced on top', () => {
       const small = new BatchBuilder(500, 1, 'player')
       // Try to fill it with successively-pushed mouse moves
       let ok = true
@@ -223,7 +294,50 @@ describe('BatchBuilder', () => {
       }
       const out = small.flush()
       expect(out).not.toBeNull()
-      expect(out!.length).toBeLessThanOrEqual(500)
+      // The encoder bounds (placeholder metadata + body) to bufferSize. The flushed batch
+      // adds the BatchMessageOffsets map on top — it is deliberately NOT counted against the
+      // budget — plus a few bytes as the metadata int fields grow past their zero placeholders.
+      const offsetsSize = readOffsetsSize(out!)
+      expect(out!.length).toBeLessThanOrEqual(500 + offsetsSize + 16)
+    })
+  })
+
+  describe('BatchMessageOffsets map', () => {
+    test('every offset (relative mode) points at a message of its mapped type', () => {
+      builder.push([MType.MouseMove, 1, 2], ctx({ index: 0, timestamp: 1000 }))
+      builder.push([MType.ConsoleLog, 'info', 'a'], ctx({ index: 1, timestamp: 1000 }))
+      builder.push([MType.MouseMove, 3, 4], ctx({ index: 2, timestamp: 1000 }))
+      const out = builder.flush()!
+
+      const map = parseOffsetsMap(out)
+      const base = bodyStart(out) // relative offsets count from the first body byte
+
+      // Each recorded offset must land on a message whose varint type equals the map key.
+      for (const [type, offsets] of map) {
+        for (const off of offsets) {
+          expect(readVarint(out, base + off)[0]).toBe(type)
+        }
+      }
+
+      // Body = synth Timestamp, synth TabData, MouseMove, ConsoleLog, MouseMove.
+      expect(map.get(MType.Timestamp)).toEqual([0]) // first message, at offset 0
+      expect(map.get(MType.TabData)?.length).toBe(1)
+      expect(map.get(MType.MouseMove)?.length).toBe(2)
+      expect(map.get(MType.ConsoleLog)?.length).toBe(1)
+    })
+
+    test('asset batches still carry BatchMetadata (with lastTimestamp) but no map', () => {
+      const assets = new BatchBuilder(200000, 3, 'assets')
+      assets.push([MType.MouseMove, 1, 2], ctx({ timestamp: 7777 }))
+      const out = assets.flush()!
+
+      // BatchMetadata is always emitted — even for assets, where there is no offsets map.
+      expect(out[0]).toBe(MType.BatchMetadata)
+      expect(readOffsetsSize(out)).toBe(0)
+      // lastTimestamp is included regardless of dataType.
+      expect(readLastTimestamp(out)).toBe(7777)
+      // With no map, the first body message sits immediately after BatchMetadata.
+      expect(out[skipMeta(out)]).toBe(MType.Timestamp)
     })
   })
 
@@ -233,15 +347,9 @@ describe('BatchBuilder', () => {
       builder.push([MType.MouseMove, 3, 4], ctx({ index: 1, timestamp: 2000 }))
       const out = builder.flush()!
 
-      // Walk past header (BatchMetadata fields + synth Timestamp + synth TabData),
+      // Walk past header (BatchMetadata + offsets map + synth Timestamp + synth TabData),
       // then past first MouseMove, then verify the next message is a Timestamp(2000).
-      let i = 0, consumed: number
-      ;[, consumed] = readVarint(out, i); i += consumed // BatchMeta type
-      ;[, consumed] = readVarint(out, i); i += consumed // version
-      ;[, consumed] = readVarint(out, i); i += consumed // pageNo
-      ;[, consumed] = readVarint(out, i); i += consumed // firstIndex
-      ;[, consumed] = readVarint(out, i); i += consumed // ts (zigzag)
-      const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen
+      let i = bodyStart(out), consumed: number
 
       // synth Timestamp
       expect(out[i]).toBe(MType.Timestamp); i += 1 + 3
@@ -267,17 +375,10 @@ describe('BatchBuilder', () => {
       builder.push([MType.MouseMove, 3, 4], ctx({ index: 2, timestamp: 2000 }))
       const out = builder.flush()!
 
-      // Count the number of Timestamp messages in the body (after BatchMeta + synth Timestamp + synth TabData).
+      // Count the number of Timestamp messages in the body (after BatchMeta + offsets map).
       // We expect: header synth Timestamp(1000), header synth TabData, MouseMove, explicit Timestamp(2000), MouseMove.
       // No additional auto-synth before the second MouseMove because lastPushedTs was updated to 2000 by the explicit Timestamp.
-      let i = 0, consumed: number
-      // skip BatchMeta
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen
+      let i = bodyStart(out)
 
       // Walk subsequent [type][size:3][fields] messages and count Timestamps.
       let timestampCount = 0
@@ -299,13 +400,7 @@ describe('BatchBuilder', () => {
       builder.push([MType.MouseMove, 1, 2], ctx({ index: 0, timestamp: 5000 }))
       const out = builder.flush()!
 
-      let i = 0, consumed: number
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen
+      let i = bodyStart(out), consumed: number
       // synth Timestamp + TabData from header
       expect(out[i]).toBe(MType.Timestamp); i += 1 + 3
       ;[, consumed] = readVarint(out, i); i += consumed

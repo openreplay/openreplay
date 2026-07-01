@@ -247,6 +247,8 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
+  // Last tabId we emitted
+  private lastSentTabId: string | undefined = undefined
   /**
    * we need 2 buffers, so we don't lose anything
    * @read coldStart implementation
@@ -1233,12 +1235,25 @@ export default class App {
     }
   }
 
+  private commitPrefix(): Array<Message> {
+    const prefix: Array<Message> = [Timestamp(this.timestamp())]
+    const tabId = this.session.getTabId()
+    if (tabId !== this.lastSentTabId) {
+      this.lastSentTabId = tabId
+      prefix.push(TabData(tabId))
+    }
+    return prefix
+  }
+
   /**
    * Normal workflow: add timestamp and tab data to batch, then commit it
    * every ~30ms
    * */
   private _nCommit(): void {
     if (this.socketMode) {
+      // Socket/assist mode streams straight to live viewers — there's no BatchBuilder header
+      // to carry a baseline TabData, and a viewer can join mid-stream, so keep emitting it on
+      // every commit (the change-only dedup is for the batched worker path).
       this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
@@ -1270,10 +1285,14 @@ export default class App {
         this.emptyBatchCounter++
         return
       }
-      // Keepalive: send just Timestamp + TabData so the session stays alive
+      // Keepalive: send just Timestamp + TabData so the session stays alive. TabData is
+      // always included here (a batch needs a non-Timestamp message to be emitted); record
+      // it so the next normal commit doesn't redundantly re-send the same tab.
       this.emptyBatchCounter = 0
+      const tabId = this.session.getTabId()
       try {
-        this.worker?.postMessage([Timestamp(this.timestamp()), TabData(this.session.getTabId())])
+        this.worker?.postMessage([Timestamp(this.timestamp()), TabData(tabId)])
+        this.lastSentTabId = tabId
       } catch (e) {
         this._debug('worker_keepalive', e)
       }
@@ -1287,7 +1306,7 @@ export default class App {
         if (!this.messages.length) {
           return
         }
-        this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
+        this.messages.unshift(...this.commitPrefix())
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
@@ -2203,6 +2222,7 @@ export default class App {
         this.tagWatcher.clear()
         if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
+          this.lastSentTabId = undefined
         }
         this.canvasRecorder?.clear()
         this.messages.length = 0

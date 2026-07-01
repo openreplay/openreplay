@@ -774,20 +774,29 @@ export function Zustand(
   ]
 }
 
-export function BatchMetadata(
+export function BatchMetadataDeprecated(
   version: number,
   pageNo: number,
   firstIndex: number,
   timestamp: number,
   location: string,
-): Messages.BatchMetadata {
+): Messages.BatchMetadataDeprecated {
   return [
-    Messages.Type.BatchMetadata,
+    Messages.Type.BatchMetadataDeprecated,
     version,
     pageNo,
     firstIndex,
     timestamp,
     location,
+  ]
+}
+
+export function BatchMessageOffsets(
+  
+): Messages.BatchMessageOffsets {
+  return [
+    Messages.Type.BatchMessageOffsets,
+    
   ]
 }
 
@@ -873,6 +882,27 @@ export function ResourceTiming(
     contentDownload,
     total,
     stalled,
+  ]
+}
+
+export function BatchMetadata(
+  version: number,
+  pageNo: number,
+  firstIndex: number,
+  firstTimestamp: number,
+  location: string,
+  lastTimestamp: number,
+  batchMessageOffsetsSize: number,
+): Messages.BatchMetadata {
+  return [
+    Messages.Type.BatchMetadata,
+    version,
+    pageNo,
+    firstIndex,
+    firstTimestamp,
+    location,
+    lastTimestamp,
+    batchMessageOffsetsSize,
   ]
 }
 

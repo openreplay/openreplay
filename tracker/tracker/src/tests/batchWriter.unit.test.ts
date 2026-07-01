@@ -13,7 +13,8 @@ jest.mock('../common/messages.gen', () => {
     SetCSSDataURLBased: 61,
     AdoptedSSReplaceURLBased: 71,
     AdoptedSSInsertRuleURLBased: 73,
-    BatchMetadata: 81,
+    BatchMessageOffsets: 82,
+    BatchMetadata: 86,
     TabData: 118,
     SetPageLocation: 122,
   }
@@ -34,7 +35,8 @@ import Message from '../common/messages.gen.js'
 const MType = {
   Timestamp: 0,
   SetNodeAttribute: 12,
-  BatchMetadata: 81,
+  BatchMessageOffsets: 82,
+  BatchMetadata: 86,
   TabData: 118,
   MouseMove: 20,
   SetPageLocation: 122,
