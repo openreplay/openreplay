@@ -17,10 +17,7 @@ export default function ImpactGauge({ value }: { value: number }) {
           key={i}
           style={{
             flex: 1,
-            background:
-              i < filled
-                ? color
-                : 'color-mix(in srgb, var(--color-gray-light) 55%, white)',
+            background: i < filled ? color : 'var(--color-gray-light)',
           }}
         />
       ))}

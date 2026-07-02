@@ -70,14 +70,16 @@ export default function CriticalToggle({
       placement="bottomLeft"
       zIndex={zIndex}
       content={
-        <CriticalReasonPanel
-          reasons={reasons}
-          onCancel={() => setOpen(false)}
-          onConfirm={(rs, note) => {
-            onSet(false, rs, note);
-            setOpen(false);
-          }}
-        />
+        <div onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}>
+          <CriticalReasonPanel
+            reasons={reasons}
+            onCancel={() => setOpen(false)}
+            onConfirm={(rs, note) => {
+              onSet(false, rs, note);
+              setOpen(false);
+            }}
+          />
+        </div>
       }
     >
       {btn}
