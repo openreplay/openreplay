@@ -147,6 +147,11 @@ export const metricDetailsSub = (
   hash?: string | number,
 ): string => hashed(`/metrics/${id}/details/${subId}`, hash);
 
+export const issues = (): string => '/issues';
+export const issue = (id = ':issueId'): string => `/issues/${id}`;
+export const issueSession = (sessionId = ':sessionId'): string =>
+  `/issue-session/${sessionId}`;
+
 export const alerts = (): string => '/alerts';
 export const alertCreate = (): string => '/alert/create';
 export const alertEdit = (id = ':alertId', hash?: string | number): string =>
@@ -197,6 +202,10 @@ const REQUIRED_SITE_ID_ROUTES = [
   dashboardMetrics(),
   dashboardMetricCreate(),
   dashboardMetricDetails(),
+
+  issues(),
+  issue(''),
+  issueSession(''),
 
   alerts(),
   alertCreate(),

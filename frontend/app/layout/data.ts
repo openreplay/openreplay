@@ -36,10 +36,12 @@ export const enum PREFERENCES_MENU {
   NOTIFICATIONS = 'notifications',
   BILLING = 'billing',
   EXPORTED_VIDEOS = 'exported-videos',
+  TEST_AGENTS = 'test-agents',
 }
 
 export const enum MENU {
   SESSIONS = 'sessions',
+  ISSUES = 'issues',
   RECOMMENDATIONS = 'recommendations',
   VAULT = 'vault',
   BOOKMARKS = 'bookmarks',
@@ -71,6 +73,11 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     key: 'replays',
     items: [
       { label: t('Sessions'), key: MENU.SESSIONS, icon: 'collection-play' },
+      {
+        label: t('Issues'),
+        key: MENU.ISSUES,
+        icon: 'info-circle',
+      },
       {
         label: t('Recommendations'),
         key: MENU.RECOMMENDATIONS,
@@ -247,6 +254,12 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         key: PREFERENCES_MENU.EXPORTED_VIDEOS,
         icon: 'ic-network',
         hidden: menuHidden.videoExport,
+      },
+      {
+        label: t('Test Agents'),
+        key: PREFERENCES_MENU.TEST_AGENTS,
+        icon: 'analytics',
+        hidden: false,
       },
     ],
   },

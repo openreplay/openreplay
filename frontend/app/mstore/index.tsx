@@ -15,6 +15,7 @@ import FilterStore from './filterStore';
 import FunnelStore from './funnelStore';
 import { IntegrationsStore } from './integrationsStore';
 import IssueReportingStore from './issueReportingStore';
+import IssuesStore from './issuesStore';
 import LoginStore from './loginStore';
 import MetricStore from './metricStore';
 import NotesStore from './notesStore';
@@ -105,6 +106,7 @@ export class RootStore {
   filterStore: FilterStore;
   uiPlayerStore: UiPlayerStore;
   issueReportingStore: IssueReportingStore;
+  issuesStore: IssuesStore;
   customFieldStore: CustomFieldStore;
   searchStore: SearchStore;
   searchStoreLive: SearchStoreLive;
@@ -138,6 +140,7 @@ export class RootStore {
     this.filterStore = filterStore;
     this.uiPlayerStore = new UiPlayerStore();
     this.issueReportingStore = new IssueReportingStore();
+    this.issuesStore = new IssuesStore();
     this.customFieldStore = new CustomFieldStore();
     this.projectsStore = projectStore;
     this.searchStore = searchStore;
