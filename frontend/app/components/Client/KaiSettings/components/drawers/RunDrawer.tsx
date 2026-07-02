@@ -251,10 +251,12 @@ function ScreenshotsView({
       {/* Filmstrip (modal only) — one thumb per step, faster than arrow-hopping;
           the failed step is tinted red so it's findable at a glance */}
       {fill && shotSteps.length > 1 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 shrink-0">
+        <div className="flex gap-1.5 overflow-x-auto py-0.5 shrink-0">
           {shotSteps.map((s, pos) => {
             const active = pos === Math.min(stepPos, shotSteps.length - 1);
             const isFailed = s.step.status === 'failed';
+            // selection mirrors the network filter chips: light-blue fill + 1px
+            // teal border — no shadow ring (it read heavy and clipped in scroll)
             return (
               <Tooltip key={s.i} title={`${t('Step')} ${s.i + 1} · ${s.step.step}`}>
                 <button
@@ -265,18 +267,21 @@ function ScreenshotsView({
                   style={{
                     background: isFailed
                       ? 'rgba(204, 0, 0, 0.08)'
-                      : 'var(--color-gray-lightest)',
+                      : active
+                        ? 'var(--color-active-blue)'
+                        : 'var(--color-gray-lightest)',
                     color: isFailed
                       ? 'var(--color-red)'
-                      : 'var(--color-gray-dark)',
+                      : active
+                        ? 'var(--color-teal)'
+                        : 'var(--color-gray-dark)',
                     borderColor: active
-                      ? 'var(--color-teal)'
-                      : isFailed
+                      ? isFailed
                         ? 'var(--color-red)'
+                        : 'var(--color-teal)'
+                      : isFailed
+                        ? 'rgba(204, 0, 0, 0.35)'
                         : 'var(--color-gray-light)',
-                    boxShadow: active
-                      ? '0 0 0 1px var(--color-teal)'
-                      : undefined,
                   }}
                 >
                   {isFailed ? <XCircle size={13} /> : s.i + 1}
