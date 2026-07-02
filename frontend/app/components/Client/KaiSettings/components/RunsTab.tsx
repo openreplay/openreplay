@@ -18,6 +18,7 @@ import { Pagination } from 'UI';
 import RunDrawer from './drawers/RunDrawer';
 import './kai-table.css';
 import { MOCK_RUNS } from './shared/mockData';
+import { kaiStore, useKaiStore } from './shared/store';
 import { RunData, RunStatus } from './shared/types';
 import {
   REGION_OPTIONS,
@@ -76,6 +77,17 @@ function RunsTab() {
   useEffect(() => {
     setPage(1);
   }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter]);
+
+  // a test drawer's "View runs" shortcut lands here: adopt the test as the search
+  // query (one-shot — clearing the search shows everything again)
+  const { runsTestFilter } = useKaiStore();
+  useEffect(() => {
+    if (runsTestFilter) {
+      setQuery(runsTestFilter);
+      setStatusTab('all');
+      kaiStore.clearRunsTestFilter();
+    }
+  }, [runsTestFilter]);
 
   const openRun = MOCK_RUNS.find((r) => r.key === openKey) ?? null;
 
@@ -281,7 +293,7 @@ function RunsTab() {
             onChange={setResFilter}
             style={{ width: 140 }}
             options={[
-              { value: 'all', label: t('All resolutions') },
+              { value: 'all', label: t('All viewports') },
               ...RESOLUTION_OPTIONS.map((o) => ({
                 value: o.value,
                 label: t(o.label),

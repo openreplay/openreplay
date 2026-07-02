@@ -8,7 +8,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { NoContent } from 'UI';
 
 import EnvironmentForm from './EnvironmentForm';
-import { MOCK_TEST_CASES } from './shared/mockData';
+import { kaiStore } from './shared/store';
 import { Environment } from './shared/types';
 
 let idCounter = 0;
@@ -16,7 +16,7 @@ const nextId = () => `env-new-${(idCounter += 1)}`;
 
 interface Props {
   environments: Environment[];
-  setEnvironments: React.Dispatch<React.SetStateAction<Environment[]>>;
+  setEnvironments: (updater: (prev: Environment[]) => Environment[]) => void;
 }
 
 // Environments list — same section pattern as the app's Webhooks / Projects settings:
@@ -51,37 +51,51 @@ function Environments({ environments, setEnvironments }: Props) {
       { title: t('Edit environment') },
     );
 
-  // Deleting an environment that active tests still run on has to pause those tests —
-    // surface them first so the delete is never silent (per the run-scheduling flow).
+  // Deleting an environment must never be silent: tests whose ONLY environment this
+  // is get paused (their env reads "Not set" until a new one is chosen); tests that
+  // run on other environments too just drop this one and keep going.
   const confirmDelete = (env: Environment) => {
-    const affected = MOCK_TEST_CASES.filter(
-      (tc) => tc.status === 'active' && tc.envNames?.includes(env.name),
+    const tests = kaiStore.get().tests;
+    const uses = tests.filter((tc) => tc.envNames?.includes(env.name));
+    // sole environment + actively scheduled → these are the ones that pause
+    const toPause = uses.filter(
+      (tc) => tc.envNames?.length === 1 && tc.status === 'active',
     );
+    // still have other environments → just lose this one, keep running
+    const detachOnly = uses.filter((tc) => (tc.envNames?.length ?? 0) > 1);
 
     modal.confirm({
       title: t('Delete environment?'),
-      okText: affected.length ? t('Pause tests & delete') : t('Delete'),
+      okText: toPause.length ? t('Pause tests & delete') : t('Delete'),
       okButtonProps: { danger: true },
       cancelText: t('Cancel'),
       width: 460,
-      content: affected.length ? (
+      content: (
         <div className="flex flex-col gap-2">
-          <Typography.Text>
-            {t('“{{name}}” is the only environment for the tests below. Deleting it will pause them — you can re-add an environment later to resume.', { name: env.name })}
-          </Typography.Text>
-          <ul className="list-disc pl-5 text-sm text-gray-dark max-h-40 overflow-auto">
-            {affected.map((tc) => (
-              <li key={tc.key}>{tc.title}</li>
-            ))}
-          </ul>
+          {toPause.length > 0 ? (
+            <>
+              <Typography.Text>
+                {t('“{{name}}” is the only environment for the tests below. Deleting it will pause them — set a new environment on the test to resume.', { name: env.name })}
+              </Typography.Text>
+              <ul className="list-disc pl-5 text-sm text-gray-dark max-h-40 overflow-auto">
+                {toPause.map((tc) => (
+                  <li key={tc.key}>{tc.title}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <Typography.Text>
+              {t('“{{name}}” isn’t the only environment of any active test. This can’t be undone.', { name: env.name })}
+            </Typography.Text>
+          )}
+          {detachOnly.length > 0 && (
+            <Typography.Text type="secondary" className="text-sm!">
+              {t('It will also be removed from {{count}} tests that run on other environments — those keep running.', { count: detachOnly.length })}
+            </Typography.Text>
+          )}
         </div>
-      ) : (
-        <Typography.Text>
-          {t('“{{name}}” isn’t used by any scheduled test. This can’t be undone.', { name: env.name })}
-        </Typography.Text>
       ),
-      onOk: () =>
-        setEnvironments((prev) => prev.filter((e) => e.id !== env.id)),
+      onOk: () => kaiStore.deleteEnvironment(env),
     });
   };
 

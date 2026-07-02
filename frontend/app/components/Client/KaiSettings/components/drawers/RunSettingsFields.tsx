@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 import ScheduleControl from '../ScheduleControl';
-import { MOCK_ENVIRONMENTS } from '../shared/mockData';
+import { useKaiStore } from '../shared/store';
 import { Resolution, Schedule } from '../shared/types';
 import {
   REGION_OPTIONS,
@@ -13,11 +13,6 @@ import {
   RESOLUTION_OPTIONS,
 } from '../shared/utils';
 import { Field } from './EntityDrawer';
-
-const ENV_OPTIONS = MOCK_ENVIRONMENTS.map((env) => ({
-  value: env.name,
-  label: env.name,
-}));
 
 export interface RunSettings {
   envNames?: string[];
@@ -36,6 +31,12 @@ interface Props {
  *  they share one row and the schedule sits below it. */
 function RunSettingsFields({ value, onChange }: Props) {
   const { t } = useTranslation();
+  // live list — an environment deleted in Settings disappears from the options here
+  const { environments } = useKaiStore();
+  const envOptions = environments.map((env) => ({
+    value: env.name,
+    label: env.name,
+  }));
 
   // narrow cells can't show chips nicely → collapse the box to a clean "N selected".
   const summary = (omitted: { label: React.ReactNode; value: any }[]) =>
@@ -50,7 +51,7 @@ function RunSettingsFields({ value, onChange }: Props) {
             size="small"
             showSearch={false}
             value={value.envNames}
-            options={ENV_OPTIONS}
+            options={envOptions}
             style={{ width: '100%' }}
             placeholder={t('Any')}
             maxTagCount={0}
@@ -59,7 +60,7 @@ function RunSettingsFields({ value, onChange }: Props) {
           />
         </Field>
 
-        <Field label={t('Resolutions')}>
+        <Field label={t('Viewports')}>
           <Select
             mode="multiple"
             size="small"

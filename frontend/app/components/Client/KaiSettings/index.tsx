@@ -8,9 +8,12 @@ import { PageTitle } from 'UI';
 import RunsTab from './components/RunsTab';
 import SettingsTab from './components/SettingsTab';
 import TestsTab from './components/TestsTab';
+import { KaiTab, kaiStore, useKaiStore } from './components/shared/store';
 
 function KaiSettings() {
   const { t } = useTranslation();
+  // controlled by the store so drawers can deep-link across tabs ("View runs")
+  const { activeTab } = useKaiStore();
 
   const tabItems = [
     {
@@ -36,7 +39,8 @@ function KaiSettings() {
         <PageTitle title={t('Test Agents')} />
       </div>
       <Tabs
-        defaultActiveKey="tests"
+        activeKey={activeTab}
+        onChange={(k) => kaiStore.setActiveTab(k as KaiTab)}
         items={tabItems}
         tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
       />

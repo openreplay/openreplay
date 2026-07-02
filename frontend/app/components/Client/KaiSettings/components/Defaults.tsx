@@ -42,12 +42,12 @@ function Defaults({ environments, value, onChange }: Props) {
         />
       </Field>
 
-      <Field label={t('Default device')}>
+      <Field label={t('Default viewport')}>
         <Select
           showSearch={false}
           value={value.resolution}
           style={{ width: '100%' }}
-          placeholder={t('Select device')}
+          placeholder={t('Select viewport')}
           onChange={(resolution) => onChange({ resolution })}
           options={RESOLUTION_OPTIONS.map((o) => {
             const Icon = RESOLUTION_ICON[o.value];

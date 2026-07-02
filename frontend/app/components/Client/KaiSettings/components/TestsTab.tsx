@@ -11,7 +11,7 @@ import {
   message,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { Calendar, EllipsisVertical, Play, Radar } from 'lucide-react';
+import { Calendar, EllipsisVertical, Play, Plus, Radar } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +20,7 @@ import { Pagination } from 'UI';
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
 import './kai-table.css';
-import { MOCK_TEST_CASES } from './shared/mockData';
+import { hasNoEnvironment, kaiStore, useKaiStore } from './shared/store';
 import { TestCase, TestLifecycle } from './shared/types';
 import {
   RowTags,
@@ -38,9 +38,13 @@ const STATUS_ORDER: Record<string, number> = {
   paused: 3,
 };
 
+let manualCounter = 0;
+
 function TestsTab() {
   const { t } = useTranslation();
-  const [tests, setTests] = useState<TestCase[]>(MOCK_TEST_CASES);
+  // tests live in the shared store — Settings (environment deletion) mutates them too
+  const { tests } = useKaiStore();
+  const { setTests } = kaiStore;
   const [query, setQuery] = useState('');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
@@ -83,6 +87,28 @@ function TestsTab() {
   const unschedule = (tc: TestCase) =>
     updateTest({ ...tc, status: 'approved', schedule: null });
 
+  // Manual creation — writing steps by hand is easy, so a hand-made test skips the
+  // draft/approve flow and starts life `approved` (ready, unscheduled), drawer open.
+  const addTest = () => {
+    const tc: TestCase = {
+      key: `test-manual-${(manualCounter += 1)}-${Date.now()}`,
+      title: t('Untitled test'),
+      steps: [],
+      status: 'approved',
+      schedule: null,
+      tags: [],
+    };
+    setTests((prev) => [tc, ...prev]);
+    setFocusSchedule(false);
+    setOpenKey(tc.key);
+  };
+
+  // jump to the Runs tab pre-filtered to this test (the drawer's "View runs" shortcut)
+  const viewRuns = (tc: TestCase) => {
+    setOpenKey(null);
+    kaiStore.showRunsForTest(tc.title);
+  };
+
   const openTest = tests.find((tc) => tc.key === openKey) ?? null;
 
   const draftCount = tests.filter((tc) => tc.status === 'draft').length;
@@ -122,7 +148,9 @@ function TestsTab() {
   const selected = tests.filter((tc) => selectedKeys.includes(tc.key));
   const selDrafts = selected.filter((tc) => tc.status === 'draft').length;
   const selActive = selected.filter((tc) => tc.status === 'active').length;
-  const selPaused = selected.filter((tc) => tc.status === 'paused').length;
+  const selPaused = selected.filter(
+    (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
+  ).length;
 
   const bulkSet = (
     predicate: (tc: TestCase) => boolean,
@@ -148,8 +176,11 @@ function TestsTab() {
   };
   const pauseSelected = () =>
     bulkSet((tc) => tc.status === 'active', { status: 'paused' });
+  // paused tests with no environment left can't resume — nothing to run against
   const resumeSelected = () =>
-    bulkSet((tc) => tc.status === 'paused', { status: 'active' });
+    bulkSet((tc) => tc.status === 'paused' && !hasNoEnvironment(tc), {
+      status: 'active',
+    });
   const deleteSelected = () => removeMany(selectedKeys);
 
   const runNow = (tc: TestCase) =>
@@ -216,11 +247,31 @@ function TestsTab() {
       ];
     } else {
       // state-dependent run controls, then Settings, then Delete
-      const controls: { key: string; label: string }[] = [];
+      const controls: {
+        key: string;
+        label: React.ReactNode;
+        disabled?: boolean;
+      }[] = [];
       if (tc.status === 'active')
         controls.push({ key: 'pause', label: t('Pause') });
-      if (tc.status === 'paused')
-        controls.push({ key: 'resume', label: t('Resume') });
+      if (tc.status === 'paused') {
+        // no environment → nothing to run against; Resume unlocks once one is set
+        const blocked = hasNoEnvironment(tc);
+        controls.push({
+          key: 'resume',
+          disabled: blocked,
+          label: blocked ? (
+            <Tooltip
+              title={t('Set an environment in this test’s settings to resume.')}
+              placement="left"
+            >
+              <span>{t('Resume')}</span>
+            </Tooltip>
+          ) : (
+            t('Resume')
+          ),
+        });
+      }
       if (tc.status === 'approved')
         controls.push({ key: 'schedule', label: t('Schedule') });
       if (tc.status === 'active' || tc.status === 'paused')
@@ -382,6 +433,14 @@ function TestsTab() {
         <span className="text-xs text-disabled-text">
           {t('Nothing to set up — drafts will appear as they are ready.')}
         </span>
+        <Button
+          type="primary"
+          icon={<Plus size={14} />}
+          onClick={addTest}
+          className="mt-1"
+        >
+          {t('Add test manually')}
+        </Button>
       </div>
     );
   }
@@ -459,6 +518,16 @@ function TestsTab() {
                 ...allTags.map((tag) => ({ value: tag, label: tag })),
               ]}
             />
+            {/* manual creation — the agent drafts most tests, but writing steps by
+                hand is easy enough to deserve a first-class button */}
+            <Button
+              size="small"
+              type="primary"
+              icon={<Plus size={14} />}
+              onClick={addTest}
+            >
+              {t('Add test')}
+            </Button>
           </div>
         )}
       </div>
@@ -522,6 +591,7 @@ function TestsTab() {
         test={openTest && openTest.status !== 'draft' ? openTest : null}
         open={!!openTest && openTest.status !== 'draft'}
         focusSchedule={focusSchedule}
+        onViewRuns={viewRuns}
         onClose={() => {
           setOpenKey(null);
           setFocusSchedule(false);

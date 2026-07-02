@@ -4,16 +4,16 @@ import { useTranslation } from 'react-i18next';
 
 import Defaults, { RunDefaults } from './Defaults';
 import Environments from './Environments';
-import { MOCK_ENVIRONMENTS } from './shared/mockData';
-import { Environment } from './shared/types';
+import { kaiStore, useKaiStore } from './shared/store';
 
 function SettingsTab() {
   const { t } = useTranslation();
 
-  const [environments, setEnvironments] =
-    useState<Environment[]>(MOCK_ENVIRONMENTS);
+  // environments live in the shared store — deleting one has to reach the tests
+  const { environments } = useKaiStore();
+  const setEnvironments = kaiStore.setEnvironments;
   const [defaults, setDefaults] = useState<RunDefaults>({
-    envName: MOCK_ENVIRONMENTS[0]?.name,
+    envName: environments[0]?.name,
     resolution: 'desktop',
     region: 'paris',
   });

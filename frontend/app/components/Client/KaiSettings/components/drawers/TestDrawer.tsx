@@ -1,10 +1,12 @@
-import { Button, Popconfirm, message } from 'antd';
-import { Pause, Play, Trash2 } from 'lucide-react';
+import { Button, Popconfirm, Tooltip, message } from 'antd';
+import { ChevronRight, Pause, Play, Trash2 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { MOCK_RUNS } from '../shared/mockData';
+import { hasNoEnvironment } from '../shared/store';
 import { TestCase } from '../shared/types';
-import { isScheduled } from '../shared/utils';
+import { getRunResult, isScheduled, relativeTime } from '../shared/utils';
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
@@ -17,6 +19,8 @@ interface Props {
   onClose: () => void;
   onChange: (updated: TestCase) => void;
   onRemove: (key: string) => void;
+  /** the Runs-history shortcut — jump to the Runs tab filtered to this test */
+  onViewRuns?: (tc: TestCase) => void;
 }
 
 /** A live, approved test. Single-column control panel; the row's actions live in the
@@ -30,6 +34,7 @@ function TestDrawer({
   onClose,
   onChange,
   onRemove,
+  onViewRuns,
 }: Props) {
   const { t } = useTranslation();
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -51,6 +56,13 @@ function TestDrawer({
   if (!test) return null;
 
   const paused = test.status === 'paused';
+  // a paused test with no environment can't resume until one is set below
+  const resumeBlocked = paused && hasNoEnvironment(test);
+  const runs = MOCK_RUNS.filter((r) => r.testName === test.title);
+  const lastRun = runs.reduce(
+    (latest, r) => (latest && latest.date >= r.date ? latest : r),
+    undefined as (typeof runs)[number] | undefined,
+  );
   const settings: RunSettings = {
     envNames: test.envNames,
     resolutions: test.resolutions,
@@ -97,13 +109,22 @@ function TestDrawer({
           </Button>
           {/* approved tests have no schedule to pause — they just run on demand */}
           {test.status !== 'approved' && (
-            <Button
-              size="small"
-              icon={paused ? <Play size={13} /> : <Pause size={13} />}
-              onClick={togglePause}
+            <Tooltip
+              title={
+                resumeBlocked
+                  ? t('Set an environment below to resume this test.')
+                  : undefined
+              }
             >
-              {paused ? t('Resume') : t('Pause')}
-            </Button>
+              <Button
+                size="small"
+                disabled={resumeBlocked}
+                icon={paused ? <Play size={13} /> : <Pause size={13} />}
+                onClick={togglePause}
+              >
+                {paused ? t('Resume') : t('Pause')}
+              </Button>
+            </Tooltip>
           )}
         </div>
       }
@@ -139,15 +160,55 @@ function TestDrawer({
         </Section>
       </div>
 
-      <Section title={t('Tags')}>
+      {/* compact — the hint rides the header so tags stay a single row */}
+      <Section
+        title={t('Tags')}
+        className="py-3!"
+        action={
+          <span className="text-xs text-disabled-text">
+            {t('Up to 3 tags')}
+          </span>
+        }
+      >
         <TagEditor
           value={test.tags}
           onChange={(tags) => onChange({ ...test, tags })}
         />
-        <div className="mt-1.5 text-xs text-disabled-text">
-          {t('Up to 3 tags')}
-        </div>
       </Section>
+
+      {/* shortcut into this test's execution history on the Runs tab */}
+      {onViewRuns && (
+        <Section title={t('Runs')} className="py-3!">
+          {runs.length === 0 ? (
+            <div className="text-sm text-disabled-text">
+              {t('No runs yet — run now or set a schedule above.')}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onViewRuns(test)}
+              className="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 hover:bg-active-blue transition text-left cursor-pointer"
+              style={{ borderColor: 'var(--color-gray-light)' }}
+            >
+              <span className="flex items-center gap-2 text-sm min-w-0">
+                {lastRun && getRunResult(lastRun.status, t)}
+                <span className="text-gray-dark whitespace-nowrap">
+                  {runs.length} {runs.length === 1 ? t('run') : t('runs')}
+                </span>
+                {lastRun && (
+                  <span className="text-disabled-text truncate">
+                    · {t('last')} {relativeTime(lastRun.date)}
+                  </span>
+                )}
+              </span>
+              <span className="flex items-center gap-1 shrink-0 text-sm text-main">
+                {t('View all')}
+                <ChevronRight size={15} />
+              </span>
+            </button>
+          )}
+        </Section>
+      )}
     </EntityDrawer>
   );
 }

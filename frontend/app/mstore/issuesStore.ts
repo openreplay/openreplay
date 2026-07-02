@@ -96,6 +96,24 @@ export const CRITICAL_REASONS = [
   'Low user impact',
 ];
 
+/* Canned journey descriptions offered as autocomplete suggestions in the NL
+   journey search on the issue detail page. Phrased from the same vocabulary as
+   the mock session journeys below so they read like real, findable journeys. */
+export const JOURNEY_SEARCH_SUGGESTIONS = [
+  'users who add to cart then abandon at checkout',
+  'users who hit "Place order" and watch the spinner end with nothing',
+  'users who tap the order button repeatedly with no response',
+  'users whose valid card expiry gets rejected as invalid',
+  'users who leave before the payment fields render',
+  'users who abandon the long onboarding form at step 4',
+  'users who scroll past empty image placeholders',
+  'users who retry a search after the spinner hangs',
+  'users who lose their filters when moving to page 2',
+  'users who hit the dead Help Center link in the footer',
+  'users who wait on blank dashboard charts',
+  'users who bounce from pricing in under ten seconds',
+];
+
 /* Single source for the per-category icon so the list and the detail header
    stay consistent. */
 export const CAT_ICON: Record<
@@ -431,12 +449,20 @@ export default class IssuesStore {
     return this.decorate(i);
   }
 
+  /** Mock total of sessions matching a journey search on this issue — the
+      example cards are a small sample of this larger set. Deterministic and
+      scaled off impact so bigger issues report bigger matched populations. */
+  journeyMatchTotal(issue: Issue): number {
+    return issue.impact * 7 + ((issue.id * 13) % 29);
+  }
+
   /** Example-session cards for the issue detail page, resolved from the shared
       session pool (same entities as the Sessions page). Falls back to the
       issue-authored summaries if no pool ids are mapped. */
   exampleSessions(issue: Issue): IssueSessionCard[] {
     // The curated ids come first; we then top up from the shared pool so the detail
-    // page can "load more" / "refresh" through a bigger sample (we never show a count).
+    // page can "load more" / "refresh" through a bigger sample (the only count shown
+    // is the quiet matched-sessions total, see journeyMatchTotal).
     const curated = issue.sessionIds ?? [];
     const extra = MOCK_SESSION_POOL.map((s) => s.sessionId).filter(
       (id) => !curated.includes(id),

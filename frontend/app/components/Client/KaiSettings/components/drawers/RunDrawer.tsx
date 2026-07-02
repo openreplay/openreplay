@@ -1,7 +1,6 @@
 import { Button, Modal, Segmented, Select, Tooltip, message } from 'antd';
 import {
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -241,7 +240,6 @@ type DevTab = 'screenshots' | 'network' | 'console';
  *  network and console — mirroring what a session shows. */
 function RunDrawer({ run, open, onClose }: Props) {
   const { t } = useTranslation();
-  const [more, setMore] = useState(false);
   const [devTab, setDevTab] = useState<DevTab>('screenshots');
   const [expanded, setExpanded] = useState(false);
   const [modalTab, setModalTab] = useState<DevTab>('screenshots');
@@ -370,9 +368,8 @@ function RunDrawer({ run, open, onClose }: Props) {
           Icon: CheckCircle2,
         };
   const BannerIcon = bannerCfg.Icon;
-  // One merged strip: the status/outcome line carries the More toggle; expanding reveals
-  // the meta (when / duration / env / resolution / region / tags) on a single line in the
-  // same strip — no separate info banner. Collapsed, it's just the compact status line.
+  // Status strip + meta line, both always visible (Jul 1 review: run info shows
+  // directly — nothing tucked behind a "More" toggle).
   const banner = (
     <>
       <div
@@ -395,20 +392,8 @@ function RunDrawer({ run, open, onClose }: Props) {
             {t('Passed')} · {total} {t('steps')}
           </span>
         )}
-        <button
-          type="button"
-          onClick={() => setMore((v) => !v)}
-          className="ml-auto text-xs font-normal text-disabled-text hover:text-black flex items-center gap-1"
-        >
-          {more ? t('Less') : t('More')}
-          <ChevronDown
-            size={13}
-            className={`transition-transform ${more ? 'rotate-180' : ''}`}
-          />
-        </button>
       </div>
-      {more && (
-        <div className="px-5 py-3 border-b bg-white flex items-center gap-x-4 gap-y-1 flex-wrap text-sm text-disabled-text">
+      <div className="px-5 py-3 border-b bg-white flex items-center gap-x-4 gap-y-1 flex-wrap text-sm text-disabled-text">
           <Tooltip title={formatDateTimeDefault(run.date)}>
             <span className="flex items-center gap-1.5">
               <Clock size={14} /> {relativeTime(run.date)}
@@ -439,8 +424,7 @@ function RunDrawer({ run, open, onClose }: Props) {
               </span>
             </Tooltip>
           )}
-        </div>
-      )}
+      </div>
     </>
   );
 
