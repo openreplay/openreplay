@@ -21,7 +21,7 @@ import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
 import './kai-table.css';
 import { hasNoEnvironment, kaiStore, useKaiStore } from './shared/store';
-import { TestCase, TestLifecycle } from './shared/types';
+import { RunData, TestCase, TestLifecycle } from './shared/types';
 import {
   RowTags,
   getStatusTag,
@@ -113,10 +113,15 @@ function TestsTab() {
     setOpenKey(tc.key);
   };
 
-  // jump to the Runs tab pre-filtered to this test (the drawer's "View runs" shortcut)
+  // jump to the Runs tab pre-filtered to this test ("View all runs")
   const viewRuns = (tc: TestCase) => {
     setOpenKey(null);
     kaiStore.showRunsForTest(tc.title);
+  };
+  // jump to the Runs tab with one exact run's drawer open ("View" on last failed run)
+  const viewRun = (run: RunData) => {
+    setOpenKey(null);
+    kaiStore.openRunInRunsTab(run);
   };
 
   const openTest = tests.find((tc) => tc.key === openKey) ?? null;
@@ -606,6 +611,7 @@ function TestsTab() {
           message.success(t('Test created'));
         }}
         onViewRuns={viewRuns}
+        onViewRun={viewRun}
         onClose={() => {
           // abandoning creation discards the placeholder test
           if (creating && openKey) removeTest(openKey);

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { MOCK_ENVIRONMENTS, MOCK_TEST_CASES } from './mockData';
-import { Environment, RunDefaults, TestCase } from './types';
+import { Environment, RunData, RunDefaults, TestCase } from './types';
 
 export type KaiTab = 'tests' | 'runs' | 'settings';
 
@@ -15,8 +15,10 @@ interface KaiState {
   // Settings → Default run configuration; pre-fills new drafts / manual tests
   defaults: RunDefaults;
   activeTab: KaiTab;
-  // one-shot handoff: set by the test drawer's "View runs", consumed by RunsTab
+  // one-shot handoffs: set by the test drawer's "View all runs" / "View" (on the last
+  // failed run), consumed by RunsTab
   runsTestFilter: string | null;
+  runsOpenRunKey: string | null;
 }
 
 let state: KaiState = {
@@ -29,6 +31,7 @@ let state: KaiState = {
   },
   activeTab: 'tests',
   runsTestFilter: null,
+  runsOpenRunKey: null,
 };
 
 const listeners = new Set<() => void>();
@@ -53,10 +56,19 @@ export const kaiStore = {
     set({ defaults: { ...state.defaults, ...patch } }),
 
   setActiveTab: (activeTab: KaiTab) => set({ activeTab }),
-  /** "View runs" on a test — jump to the Runs tab filtered to that test. */
+  /** "View all runs" on a test — jump to the Runs tab filtered to that test. */
   showRunsForTest: (testName: string) =>
     set({ activeTab: 'runs', runsTestFilter: testName }),
   clearRunsTestFilter: () => set({ runsTestFilter: null }),
+  /** "View" on the last-failed-run row — jump to the Runs tab, filtered to that test,
+   *  with that exact run's drawer already open. */
+  openRunInRunsTab: (run: RunData) =>
+    set({
+      activeTab: 'runs',
+      runsTestFilter: run.testName,
+      runsOpenRunKey: run.key,
+    }),
+  clearRunsOpenRunKey: () => set({ runsOpenRunKey: null }),
 
   /** Deleting an environment detaches it from every test. A test left with no
    *  environment at all reads "Not set" — and if it was active, it pauses (there is

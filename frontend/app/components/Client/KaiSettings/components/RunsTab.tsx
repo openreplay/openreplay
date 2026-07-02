@@ -78,9 +78,9 @@ function RunsTab() {
     setPage(1);
   }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter]);
 
-  // a test drawer's "View runs" shortcut lands here: adopt the test as the search
+  // a test drawer's "View all runs" shortcut lands here: adopt the test as the search
   // query (one-shot — clearing the search shows everything again)
-  const { runsTestFilter } = useKaiStore();
+  const { runsTestFilter, runsOpenRunKey } = useKaiStore();
   useEffect(() => {
     if (runsTestFilter) {
       setQuery(runsTestFilter);
@@ -88,6 +88,15 @@ function RunsTab() {
       kaiStore.clearRunsTestFilter();
     }
   }, [runsTestFilter]);
+
+  // "View" on a specific run (the last-failed-run row) opens that run's drawer here,
+  // on top of whatever filter just landed above
+  useEffect(() => {
+    if (runsOpenRunKey) {
+      setOpenKey(runsOpenRunKey);
+      kaiStore.clearRunsOpenRunKey();
+    }
+  }, [runsOpenRunKey]);
 
   const openRun = MOCK_RUNS.find((r) => r.key === openKey) ?? null;
 
