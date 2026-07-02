@@ -126,6 +126,7 @@ global:
   # secret key to inject to assist and peers service
   assistKey: "{{ randAlphaNum 20}}"
   assistJWTSecret: "{{ randAlphaNum 20}}"
+  assistStatsAccessToken: "{{ randAlphaNum 32 }}"
   jwtSecret: "{{ randAlphaNum 20}}"
   jwtSpotSecret: "{{ randAlphaNum 20}}"
   tokenSecret: "{{randAlphaNum 20}}"

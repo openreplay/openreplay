@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import HTTPException, Depends, status, Security
 from fastapi.security import OAuth2PasswordBearer
 from decouple import config
@@ -15,16 +17,19 @@ class AuthHandler:
         self.api_key = config("ACCESS_TOKEN", default=None)
 
     def verify_api_key(self, api_key: str):
-        return api_key == self.api_key
+        return secrets.compare_digest(api_key, self.api_key)
 
 
 auth_handler = AuthHandler()
 
 
 async def api_key_auth(api_key: str = Security(oauth2_scheme)):
-    # If ACCESS_TOKEN is not configured, skip the authorization check
+    # Fail closed: refuse all requests when no ACCESS_TOKEN is configured
     if not auth_handler.api_key:
-        return True
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service not configured for authentication"
+        )
 
     # If the Authorization header is not provided, raise an HTTP 403 Forbidden error
     if not api_key:

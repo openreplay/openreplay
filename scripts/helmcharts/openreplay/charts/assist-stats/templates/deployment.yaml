@@ -62,6 +62,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.orAppSecrets.existingSecret | default "or-secrets" }}
+                  key: assist-stats-access-token
+                  optional: true
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
             {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
           ports:
