@@ -11,6 +11,8 @@ import {
   REGION_OPTIONS,
   RESOLUTION_ICON,
   RESOLUTION_OPTIONS,
+  regionLabel,
+  resolutionLabel,
 } from '../shared/utils';
 import { Field } from './EntityDrawer';
 
@@ -24,23 +26,42 @@ export interface RunSettings {
 interface Props {
   value: RunSettings;
   onChange: (patch: Partial<RunSettings>) => void;
+  /** draft flow: values pre-filled from Settings' default run configuration get a
+   *  "(default)" suffix until the user changes them */
+  defaultHints?: boolean;
 }
 
 /** Shared environment / resolution / region / schedule editor used by Draft + Test.
  *  Environment · Resolution · Region are multi-select (a test runs across the matrix);
  *  they share one row and the schedule sits below it. */
-function RunSettingsFields({ value, onChange }: Props) {
+function RunSettingsFields({ value, onChange, defaultHints }: Props) {
   const { t } = useTranslation();
   // live list — an environment deleted in Settings disappears from the options here
-  const { environments } = useKaiStore();
+  const { environments, defaults } = useKaiStore();
   const envOptions = environments.map((env) => ({
     value: env.name,
     label: env.name,
   }));
 
-  // narrow cells can't show chips nicely → collapse the box to a clean "N selected".
-  const summary = (omitted: { label: React.ReactNode; value: any }[]) =>
-    `${omitted.length} ${t('selected')}`;
+  // narrow cells can't show chips nicely → collapse the box to a summary. A single
+  // selection shows its name — suffixed "(default)" when it came from Settings'
+  // default run configuration (draft flow only).
+  const summarize =
+    (toLabel: (v: any) => string, defaultValue?: string) =>
+    (omitted: { label: React.ReactNode; value: any }[]) => {
+      if (omitted.length === 1) {
+        const v = omitted[0].value;
+        const isDefault = defaultHints && defaultValue != null && v === defaultValue;
+        return `${toLabel(v)}${isDefault ? ` ${t('(default)')}` : ''}`;
+      }
+      return `${omitted.length} ${t('selected')}`;
+    };
+  const envSummary = summarize((v) => String(v), defaults.envName);
+  const viewportSummary = summarize(
+    (v) => t(resolutionLabel(v)),
+    defaults.resolution,
+  );
+  const regionSummary = summarize((v) => regionLabel(v), defaults.region);
 
   return (
     <div className="flex flex-col gap-4 kai-run-settings">
@@ -55,7 +76,7 @@ function RunSettingsFields({ value, onChange }: Props) {
             style={{ width: '100%' }}
             placeholder={t('Any')}
             maxTagCount={0}
-            maxTagPlaceholder={summary}
+            maxTagPlaceholder={envSummary}
             onChange={(envNames) => onChange({ envNames })}
           />
         </Field>
@@ -69,7 +90,7 @@ function RunSettingsFields({ value, onChange }: Props) {
             style={{ width: '100%' }}
             placeholder={t('Any')}
             maxTagCount={0}
-            maxTagPlaceholder={summary}
+            maxTagPlaceholder={viewportSummary}
             onChange={(v) => onChange({ resolutions: v as Resolution[] })}
             options={RESOLUTION_OPTIONS.map((o) => {
               const Icon = RESOLUTION_ICON[o.value];
@@ -95,7 +116,7 @@ function RunSettingsFields({ value, onChange }: Props) {
             style={{ width: '100%' }}
             placeholder={t('Any')}
             maxTagCount={0}
-            maxTagPlaceholder={summary}
+            maxTagPlaceholder={regionSummary}
             onChange={(regions) => onChange({ regions })}
             options={REGION_OPTIONS.map((o) => ({
               value: o.value,

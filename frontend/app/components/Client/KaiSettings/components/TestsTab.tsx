@@ -94,6 +94,8 @@ function TestsTab() {
   // Manual creation — writing steps by hand is easy, so a hand-made test skips the
   // draft/approve flow and starts life `approved` (ready, unscheduled), drawer open.
   const addTest = () => {
+    // manual tests start from Settings' default run configuration, like drafts
+    const { defaults } = kaiStore.get();
     const tc: TestCase = {
       key: `test-manual-${(manualCounter += 1)}-${Date.now()}`,
       title: t('Untitled test'),
@@ -101,6 +103,9 @@ function TestsTab() {
       status: 'approved',
       schedule: null,
       tags: [],
+      envNames: defaults.envName ? [defaults.envName] : undefined,
+      resolutions: defaults.resolution ? [defaults.resolution] : undefined,
+      regions: defaults.region ? [defaults.region] : undefined,
     };
     setTests((prev) => [tc, ...prev]);
     setFocusSchedule(false);

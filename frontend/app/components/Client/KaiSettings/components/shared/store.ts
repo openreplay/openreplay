@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { MOCK_ENVIRONMENTS, MOCK_TEST_CASES } from './mockData';
-import { Environment, TestCase } from './types';
+import { Environment, RunDefaults, TestCase } from './types';
 
 export type KaiTab = 'tests' | 'runs' | 'settings';
 
@@ -12,6 +12,8 @@ export type KaiTab = 'tests' | 'runs' | 'settings';
 interface KaiState {
   tests: TestCase[];
   environments: Environment[];
+  // Settings → Default run configuration; pre-fills new drafts / manual tests
+  defaults: RunDefaults;
   activeTab: KaiTab;
   // one-shot handoff: set by the test drawer's "View runs", consumed by RunsTab
   runsTestFilter: string | null;
@@ -20,6 +22,11 @@ interface KaiState {
 let state: KaiState = {
   tests: MOCK_TEST_CASES,
   environments: MOCK_ENVIRONMENTS,
+  defaults: {
+    envName: MOCK_ENVIRONMENTS[0]?.name,
+    resolution: 'desktop',
+    region: 'paris',
+  },
   activeTab: 'tests',
   runsTestFilter: null,
 };
@@ -42,6 +49,8 @@ export const kaiStore = {
     set({ tests: updater(state.tests) }),
   setEnvironments: (updater: (prev: Environment[]) => Environment[]) =>
     set({ environments: updater(state.environments) }),
+  setDefaults: (patch: Partial<RunDefaults>) =>
+    set({ defaults: { ...state.defaults, ...patch } }),
 
   setActiveTab: (activeTab: KaiTab) => set({ activeTab }),
   /** "View runs" on a test — jump to the Runs tab filtered to that test. */
@@ -65,6 +74,11 @@ export const kaiStore = {
     set({
       tests,
       environments: state.environments.filter((e) => e.id !== env.id),
+      // it can't stay the default either
+      defaults:
+        state.defaults.envName === env.name
+          ? { ...state.defaults, envName: undefined }
+          : state.defaults,
     });
   },
 };

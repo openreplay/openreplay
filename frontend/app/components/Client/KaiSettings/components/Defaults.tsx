@@ -5,14 +5,10 @@ import { useTranslation } from 'react-i18next';
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 import { Field } from './drawers/EntityDrawer';
-import { Environment, Resolution } from './shared/types';
+import { Environment, RunDefaults } from './shared/types';
 import { REGION_OPTIONS, RESOLUTION_ICON, RESOLUTION_OPTIONS } from './shared/utils';
 
-export interface RunDefaults {
-  envName?: string;
-  resolution?: Resolution;
-  region?: string;
-}
+export type { RunDefaults };
 
 interface Props {
   environments: Environment[];

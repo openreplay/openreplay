@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, CalendarClock, Check } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { kaiStore } from '../shared/store';
 import { TestCase } from '../shared/types';
 import { isScheduled } from '../shared/utils';
 import EditableSteps from './EditableSteps';
@@ -33,7 +34,32 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
   const [approved, setApproved] = useState(false);
 
   useEffect(() => {
-    setDraft(test);
+    // a fresh draft carries nothing — pre-fill its run settings from Settings →
+    // Default run configuration (shown as "(default)" until the user changes them);
+    // only committed if the draft is finished/saved
+    if (test) {
+      const { defaults } = kaiStore.get();
+      setDraft({
+        ...test,
+        envNames: test.envNames?.length
+          ? test.envNames
+          : defaults.envName
+            ? [defaults.envName]
+            : test.envNames,
+        resolutions: test.resolutions?.length
+          ? test.resolutions
+          : defaults.resolution
+            ? [defaults.resolution]
+            : test.resolutions,
+        regions: test.regions?.length
+          ? test.regions
+          : defaults.region
+            ? [defaults.region]
+            : test.regions,
+      });
+    } else {
+      setDraft(test);
+    }
     setStep(0);
     setApproved(false);
   }, [test]);
@@ -224,7 +250,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       {/* Step 2 — where & when it runs (a schedule is optional) */}
       {step === 1 && (
         <Section title={t('Where & when it runs')}>
-          <RunSettingsFields value={settings} onChange={patch} />
+          <RunSettingsFields value={settings} onChange={patch} defaultHints />
           <div className="mt-3 flex items-start gap-2 text-xs text-disabled-text">
             <CalendarClock size={14} className="mt-0.5 shrink-0" />
             <span>

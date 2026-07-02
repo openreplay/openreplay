@@ -2,21 +2,17 @@ import { Divider, Switch, Typography } from 'antd';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Defaults, { RunDefaults } from './Defaults';
+import Defaults from './Defaults';
 import Environments from './Environments';
 import { kaiStore, useKaiStore } from './shared/store';
 
 function SettingsTab() {
   const { t } = useTranslation();
 
-  // environments live in the shared store — deleting one has to reach the tests
-  const { environments } = useKaiStore();
+  // environments + defaults live in the shared store — deleting an environment has
+  // to reach the tests, and the defaults pre-fill new drafts / manual tests
+  const { environments, defaults } = useKaiStore();
   const setEnvironments = kaiStore.setEnvironments;
-  const [defaults, setDefaults] = useState<RunDefaults>({
-    envName: environments[0]?.name,
-    resolution: 'desktop',
-    region: 'paris',
-  });
   const [dailySummary, setDailySummary] = useState(false);
   const [weeklySummary, setWeeklySummary] = useState(true);
 
@@ -35,7 +31,7 @@ function SettingsTab() {
         <Defaults
           environments={environments}
           value={defaults}
-          onChange={(patch) => setDefaults((d) => ({ ...d, ...patch }))}
+          onChange={(patch) => kaiStore.setDefaults(patch)}
         />
       </section>
 
