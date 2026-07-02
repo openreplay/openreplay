@@ -290,31 +290,38 @@ function TestDrawer({
               {t('No runs yet — run now or set a schedule above.')}
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               {lastFailedRun ? (
-                <button
-                  type="button"
-                  onClick={() => onViewRun?.(lastFailedRun)}
-                  aria-label={t('View this failed run')}
-                  className="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 hover:bg-active-blue transition text-left cursor-pointer"
-                  style={{ borderColor: 'var(--color-gray-light)' }}
-                >
-                  <span className="flex items-center gap-2 text-sm min-w-0">
-                    {getRunResult('failed', t)}
-                    {lastFailedRun.duration != null && (
-                      <span className="text-gray-dark whitespace-nowrap">
-                        {formatDuration(lastFailedRun.duration)}
+                <>
+                  {/* a title, not a helper line below — names the box before you
+                      read its contents, and disambiguates from "latest run" */}
+                  <span className="text-xs text-disabled-text">
+                    {t('Most recent failure')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onViewRun?.(lastFailedRun)}
+                    aria-label={t('View this failed run')}
+                    className="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 hover:bg-active-blue transition text-left cursor-pointer"
+                    style={{ borderColor: 'var(--color-gray-light)' }}
+                  >
+                    <span className="flex items-center gap-2 text-sm min-w-0">
+                      {getRunResult('failed', t)}
+                      {lastFailedRun.duration != null && (
+                        <span className="text-gray-dark whitespace-nowrap">
+                          {formatDuration(lastFailedRun.duration)}
+                        </span>
+                      )}
+                      <span className="text-disabled-text truncate">
+                        · {relativeTime(lastFailedRun.date)}
                       </span>
-                    )}
-                    <span className="text-disabled-text truncate">
-                      · {relativeTime(lastFailedRun.date)}
                     </span>
-                  </span>
-                  <span className="flex items-center gap-1 shrink-0 text-sm text-main">
-                    {t('View')}
-                    <ChevronRight size={15} />
-                  </span>
-                </button>
+                    <span className="flex items-center gap-1 shrink-0 text-sm text-main">
+                      {t('View')}
+                      <ChevronRight size={15} />
+                    </span>
+                  </button>
+                </>
               ) : trend.length > 0 ? (
                 <div
                   className="text-sm text-disabled-text rounded-lg border px-3 py-2.5"
