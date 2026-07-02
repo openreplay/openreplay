@@ -450,6 +450,17 @@ svg {
     max-width: 640px;
 }
 
-.ant-select-input:focus {
-    border:none!important;
+/* Kill the Select focus ring. It's a box-shadow on .ant-select-selector (not a
+   border/outline on the inner search input), so clear box-shadow there; also reset the
+   input's own outline for good measure. */
+.ant-select-focused .ant-select-selector,
+.ant-select .ant-select-selector:focus-within {
+    border-color: var(--color-gray-light)!important;
+    box-shadow: none!important;
+    outline: none!important;
+}
+.ant-select-input:focus,
+.ant-select-input:focus-visible {
+    outline: none!important;
+    box-shadow: none!important;
 }
