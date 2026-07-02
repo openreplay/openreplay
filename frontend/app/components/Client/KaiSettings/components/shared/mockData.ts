@@ -903,8 +903,9 @@ export const MOCK_RUNS: RunData[] = [
     ],
   },
 
-  // ---- more runs (volume, to exercise pagination + filters) ------------
-  ...Array.from({ length: 18 }, (_, i): RunData => {
+  // ---- more runs (volume, to exercise pagination + filters, and so a test's
+  // trend strip in its drawer has a real last-10 to show — not just 3-4) ------
+  ...Array.from({ length: 70 }, (_, i): RunData => {
     const defs = [
       {
         testName: 'Login flow',
@@ -947,6 +948,13 @@ export const MOCK_RUNS: RunData[] = [
         resolution: 'mobile',
         region: 'ny',
         tags: ['Auth'],
+      },
+      {
+        testName: 'Checkout flow',
+        env: 'Production',
+        resolution: 'desktop',
+        region: 'paris',
+        tags: ['Checkout'],
       },
     ] as const;
     const d = defs[i % defs.length];
