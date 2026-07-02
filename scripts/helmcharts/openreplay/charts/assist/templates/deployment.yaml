@@ -53,6 +53,8 @@ spec:
             - name: TOKEN_SECRET
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "token-secret" "ctx" .) | nindent 18 }}
+            - name: CHECK_AUTH
+              value: "{{ .Values.checkAuth | default false }}"
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
             - name: REDIS_URL

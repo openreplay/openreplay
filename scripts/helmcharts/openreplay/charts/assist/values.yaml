@@ -4,6 +4,9 @@
 
 replicaCount: 1
 
+# When true, assist only accepts session connections that present a valid backend-issued token
+checkAuth: false
+
 image:
   registry: "{{ .Values.global.openReplayContainerRegistry }}"
   repository: assist

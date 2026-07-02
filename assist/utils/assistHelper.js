@@ -124,12 +124,12 @@ function generateAccessToken(payload) {
 }
 
 const JWT_TOKEN_PREFIX = "Bearer ";
-const PROTOCOL_V2 = "2";
+const CHECK_AUTH = process.env.CHECK_AUTH === "true";
 
 function check(socket, next) {
     if (socket.handshake.query.identity === IDENTITIES.session) {
-        // Older trackers don't send the protocol flag and stay accepted (back compatibility).
-        if (String(socket.handshake.query.protocol) === PROTOCOL_V2) {
+        // When enabled, only sessions carrying a valid backend-issued token are allowed.
+        if (CHECK_AUTH) {
             const token = socket.handshake.auth && socket.handshake.auth.token;
             if (!verifySessionToken(token)) {
                 logger.debug(`invalid session token, refusing connexion, peerId: ${socket.handshake.query.peerId}`);

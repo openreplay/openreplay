@@ -272,9 +272,6 @@ export default class Assist {
         peerId: peerID,
         identity: "session",
         tabId: this.app.getTabId(),
-        // Marks a connection that carries a session token to be validated server-side.
-        // Older trackers omit this, so the server keeps accepting them (back compatibility).
-        protocol: 2,
         sessionInfo: JSON.stringify({
           pageTitle: document.title,
           active: true,
@@ -283,7 +280,7 @@ export default class Assist {
         }),
       },
       auth: {
-        // Backend-issued session token, verified server-side for protocol v2 connections
+        // Backend-issued session token, verified server-side when CHECK_AUTH is enabled
         token: sessionToken,
       },
       extraHeaders: {
