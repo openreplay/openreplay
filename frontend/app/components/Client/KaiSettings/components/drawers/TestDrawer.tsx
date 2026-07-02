@@ -229,13 +229,13 @@ function TestDrawer({
           pattern — always-red / just-started-failing / healthy), and below it just
           the one thing worth acting on — the most recent failure. Each element is a
           single run, not an aggregate: dots are read-only history, the failed-run
-          row opens that exact run, "View all" opens the full filtered list. */}
+          row opens that exact run, the trailing chevron opens the full filtered list. */}
       {(onViewRuns || onViewRun) && !creating && (
         <Section
           title={t('Runs')}
           className="py-3!"
           action={
-            trend.length > 0 ? (
+            runs.length > 0 ? (
               <span className="flex items-center gap-1.5">
                 {trend.map((r) => {
                   const failed = r.status === 'failed';
@@ -262,12 +262,20 @@ function TestDrawer({
                     </Tooltip>
                   );
                 })}
-                <Tooltip title={t('Last {{count}} runs, oldest to most recent', { count: trend.length })}>
-                  <ChevronRight
-                    size={14}
-                    className="text-disabled-text shrink-0"
-                  />
-                </Tooltip>
+                {onViewRuns && (
+                  <Tooltip
+                    title={t('View all {{count}} runs', { count: runs.length })}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onViewRuns(test)}
+                      aria-label={t('View all runs')}
+                      className="text-disabled-text hover:text-main transition-colors shrink-0 flex items-center"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </Tooltip>
+                )}
               </span>
             ) : undefined
           }
@@ -312,18 +320,6 @@ function TestDrawer({
                   })}
                 </div>
               ) : null}
-
-              {onViewRuns && (
-                <button
-                  type="button"
-                  onClick={() => onViewRuns(test)}
-                  className="self-start flex items-center gap-1 text-sm text-main"
-                >
-                  {t('View all')} {runs.length}{' '}
-                  {runs.length === 1 ? t('run') : t('runs')}
-                  <ChevronRight size={14} />
-                </button>
-              )}
             </div>
           )}
         </Section>
