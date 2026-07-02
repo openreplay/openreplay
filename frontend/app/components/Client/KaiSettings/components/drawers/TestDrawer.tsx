@@ -251,10 +251,7 @@ function TestDrawer({
                         {failed ? (
                           <X size={9} strokeWidth={3} className="text-red" />
                         ) : (
-                          <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: 'var(--color-green)' }}
-                          />
+                          <Check size={9} strokeWidth={3} className="text-green" />
                         )}
                       </span>
                     </Tooltip>
