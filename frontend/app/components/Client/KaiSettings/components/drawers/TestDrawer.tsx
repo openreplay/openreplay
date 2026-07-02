@@ -192,7 +192,7 @@ function TestDrawer({
       <div ref={settingsRef}>
         <Section title={t('Run settings')}>
           {test.status === 'approved' && (
-            <div className="-mt-1 mb-3 text-xs text-disabled-text">
+            <div className="-mt-1 mb-3 text-sm text-disabled-text">
               {t(
                 'Not scheduled — this test runs manually until you set a schedule below.',
               )}

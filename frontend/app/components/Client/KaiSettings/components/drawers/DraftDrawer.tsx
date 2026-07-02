@@ -251,7 +251,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       {step === 1 && (
         <Section title={t('Where & when it runs')}>
           <RunSettingsFields value={settings} onChange={patch} defaultHints />
-          <div className="mt-3 flex items-start gap-2 text-xs text-disabled-text">
+          <div className="mt-3 flex items-start gap-2 text-sm text-disabled-text">
             <CalendarClock size={14} className="mt-0.5 shrink-0" />
             <span>
               {scheduled
