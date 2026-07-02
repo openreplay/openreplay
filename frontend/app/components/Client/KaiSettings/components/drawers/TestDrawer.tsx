@@ -6,7 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { MOCK_RUNS } from '../shared/mockData';
 import { hasNoEnvironment } from '../shared/store';
 import { RunData, TestCase } from '../shared/types';
-import { formatDuration, isScheduled, relativeTime } from '../shared/utils';
+import {
+  formatDuration,
+  getRunResult,
+  isScheduled,
+  relativeTime,
+} from '../shared/utils';
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
@@ -282,9 +287,7 @@ function TestDrawer({
                   style={{ borderColor: 'var(--color-gray-light)' }}
                 >
                   <span className="flex items-center gap-2 text-sm min-w-0">
-                    <span className="text-disabled-text whitespace-nowrap">
-                      {t('Last failed run')}
-                    </span>
+                    {getRunResult('failed', t)}
                     {lastFailedRun.duration != null && (
                       <span className="text-gray-dark whitespace-nowrap">
                         {formatDuration(lastFailedRun.duration)}
