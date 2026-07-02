@@ -72,7 +72,6 @@ function TopHeader() {
             onClick={() => {
               settingsStore.updateMenuCollapsed(!settingsStore.menuCollapsed);
             }}
-            style={{ paddingTop: '4px' }}
             className="cursor-pointer xl:block hidden"
           >
             <Tooltip
