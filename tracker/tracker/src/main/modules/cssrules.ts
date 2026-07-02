@@ -54,14 +54,12 @@ export default function (app: App, opts: CssRulesOptions) {
         const sheetID = styleSheetIDMap.get(sheet)
         if (!sheetID) continue
         if (options.checkLimit) {
-          if (!checkIterations[sheetID]) {
-            checkIterations[sheetID] = 0
-          } else {
-            checkIterations[sheetID]++
-          }
+          checkIterations[sheetID] = (checkIterations[sheetID] ?? 0) + 1
           if (checkIterations[sheetID] > options.checkLimit) {
             trackedSheets.delete(sheet)
-            return
+            // continue, not return: skipping one exhausted sheet must not
+            // abandon the remaining tracked sheets in this scan.
+            continue
           }
         }
         for (let j = 0; j < sheet.cssRules.length; j++) {

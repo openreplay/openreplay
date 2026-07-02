@@ -51,8 +51,15 @@ export async function parseUseEl(
       return
     }
 
-    if (iconCache[symbolId]) {
-      return iconCache[symbolId]
+    // Key the cache by url + symbol + mode: the same symbol id lives in different
+    // sprite files, and different modes store different value shapes (object vs
+    // string vs data-url), so keying by symbolId alone returns the wrong asset.
+    // Namespace remote vs in-document sprites so a relative sprite file literally
+    // named "local" can't collide with the in-document bucket.
+    const cacheKey = url ? `url:${url}#${symbolId}#${mode}` : `doc:${symbolId}#${mode}`
+
+    if (iconCache[cacheKey]) {
+      return iconCache[cacheKey]
     }
 
     // happens if svg spritemap is local, fastest case for us
@@ -73,7 +80,7 @@ export async function parseUseEl(
         </svg>
       `
 
-        iconCache[symbolId] = inlineSvg
+        iconCache[cacheKey] = inlineSvg
 
         return inlineSvg
       } else {
@@ -81,7 +88,7 @@ export async function parseUseEl(
         return
       }
     }
-    let svgDoc: Document
+    let svgDoc: Document | undefined
     if (svgUrlCache[url]) {
       if (svgUrlCache[url] === 1) {
         await new Promise((resolve) => {
@@ -105,10 +112,21 @@ export async function parseUseEl(
       }
     } else {
       svgUrlCache[url] = 1
-      const response = await fetch(url)
-      const svgText = await response.text()
-      svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
-      svgUrlCache[url] = svgDoc
+      try {
+        const response = await fetch(url)
+        const svgText = await response.text()
+        svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
+        svgUrlCache[url] = svgDoc
+      } catch (e) {
+        // Clear the in-flight sentinel so a failed fetch doesn't wedge every
+        // future <use> for this url into a 10s poll-then-give-up loop.
+        delete svgUrlCache[url]
+        throw e
+      }
+    }
+
+    if (!svgDoc) {
+      return
     }
 
     // @ts-ignore
@@ -121,7 +139,7 @@ export async function parseUseEl(
 
     if (mode === 'inline') {
       const res = { paths: symbol.innerHTML, vbox: symbol.getAttribute('viewBox') || '0 0 24 24' }
-      iconCache[symbolId] = res
+      iconCache[cacheKey] = res
       return res
     }
     if (mode === 'svgtext') {
@@ -131,7 +149,7 @@ export async function parseUseEl(
         </svg>
       `
 
-      iconCache[symbolId] = inlineSvg
+      iconCache[cacheKey] = inlineSvg
 
       return inlineSvg
     }
@@ -144,7 +162,7 @@ export async function parseUseEl(
       const encodedSvg = btoa(inlineSvg)
       const dataUrl = `data:image/svg+xml;base64,${encodedSvg}`
 
-      iconCache[symbolId] = dataUrl
+      iconCache[cacheKey] = dataUrl
 
       return dataUrl
     }
@@ -361,6 +379,7 @@ export default abstract class Observer {
       }
       if (value === null) {
         this.app.send(RemoveNodeAttribute(id, name))
+        return
       }
 
       if (isUseElement(node) && name === 'href' && !this.disableSprites) {

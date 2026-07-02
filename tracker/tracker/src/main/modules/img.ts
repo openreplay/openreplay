@@ -88,7 +88,7 @@ export default function (app: App): void {
           const target = mutation.target as HTMLImageElement
           const id = app.nodes.getID(target)
           if (id === undefined) {
-            return
+            continue
           }
           if (mutation.attributeName === 'src') {
             sendSrc(id, target)

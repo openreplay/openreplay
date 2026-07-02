@@ -79,7 +79,7 @@ describe('ConstantProperties', () => {
   test('constructs with correct base properties', () => {
     const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
 
-    expect(utils.uaParse).toHaveBeenCalledWith(window)
+    expect(utils.uaParse).toHaveBeenCalledWith(window, expect.any(Function))
     expect(properties.os).toBe('Windows')
     expect(properties.osVersion).toBe('10')
     expect(properties.browser).toBe('Chrome')

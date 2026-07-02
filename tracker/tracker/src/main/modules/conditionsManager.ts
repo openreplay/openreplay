@@ -147,20 +147,25 @@ export default class ConditionsManager {
     }
   }
 
-  durationInt: ReturnType<typeof setInterval> | null = null
+  durationInts: Array<ReturnType<typeof setInterval>> = []
+
+  private clearDurationInt(int: ReturnType<typeof setInterval>) {
+    clearInterval(int)
+    this.durationInts = this.durationInts.filter((i) => i !== int)
+  }
 
   processDuration(durationMs: number, condName: string) {
-    this.durationInt = setInterval(() => {
-      const sessionLength = performance.now()
-      if (sessionLength > durationMs) {
+    // Track each interval independently: with more than one duration condition a
+    // single shared field would leak every interval but the last, and the timer
+    // would keep firing after it triggered.
+    const int = setInterval(() => {
+      if (performance.now() > durationMs) {
+        this.clearDurationInt(int)
         this.trigger(condName)
       }
     }, 1000)
-    this.app.attachStopCallback(() => {
-      if (this.durationInt) {
-        clearInterval(this.durationInt)
-      }
-    })
+    this.durationInts.push(int)
+    this.app.attachStopCallback(() => this.clearDurationInt(int))
   }
 
   networkRequest(message: NetworkRequest) {

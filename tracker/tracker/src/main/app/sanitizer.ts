@@ -139,10 +139,18 @@ export default class Sanitizer {
       data = data.replace(/\d/g, '0')
     }
     if (this.options.obscureTextEmails) {
-      data = data.replace(/^\w+([+.-]\w+)*@\w+([.-]\w+)*\.\w{2,3}$/g, (email) => {
-        const [name, domain] = email.split('@')
-        const [domainName, host] = domain.split('.')
-        return `${stars(name)}@${stars(domainName)}.${stars(host)}`
+      // Match every email-like substring anywhere in the text (not just when the
+      // whole node is a single email), and preserve every domain label including
+      // multi-part TLDs (e.g. .co.uk) so nothing leaks through unmasked.
+      data = data.replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, (email) => {
+        const atIdx = email.lastIndexOf('@')
+        const name = email.slice(0, atIdx)
+        const domain = email.slice(atIdx + 1)
+        const maskedDomain = domain
+          .split('.')
+          .map((part) => stars(part))
+          .join('.')
+        return `${stars(name)}@${maskedDomain}`
       })
     }
     return data

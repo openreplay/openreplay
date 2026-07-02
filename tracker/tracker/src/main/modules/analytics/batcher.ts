@@ -122,8 +122,13 @@ class Batcher {
     return Array.from(uniqueEventsByType.values())
   }
 
-  private sendBatch(batch: Record<string, any>) {
+  private sendBatch(
+    batch: Record<string, any>,
+    keepalive = false,
+    onTerminalFailure?: () => void,
+  ) {
     if (this.stopped) {
+      onTerminalFailure?.()
       return
     }
     const sentBatch = batch
@@ -131,11 +136,14 @@ class Batcher {
     const send = () => {
       const token = this.getToken()
       if (!token) {
+        // No token yet: keep the events so they go out once one is available.
+        onTerminalFailure?.()
         return
       }
       attempts++
       return fetch(`${this.backendUrl}${this.apiEdp}`, {
         method: 'POST',
+        keepalive,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -154,6 +162,7 @@ class Batcher {
                 send()
               })
             }
+            onTerminalFailure?.()
             return
           }
           if (response.status === 403) {
@@ -162,6 +171,7 @@ class Batcher {
                 send()
               })
             }
+            onTerminalFailure?.()
             return
           }
           if (!response.ok) {
@@ -171,6 +181,8 @@ class Batcher {
         .catch(() => {
           if (attempts < this.retryLimit) {
             setTimeout(() => void send(), this.retryTimeout)
+          } else {
+            onTerminalFailure?.()
           }
         })
     }
@@ -180,7 +192,14 @@ class Batcher {
   private paused = false
 
   private onVisibilityChange = () => {
-    this.paused = document.hidden
+    if (document.hidden) {
+      // The tab may be closing; flush now with keepalive so buffered events
+      // survive the transition instead of waiting for the (paused) interval.
+      this.flush(true)
+      this.paused = true
+    } else {
+      this.paused = false
+    }
   }
 
   startAutosend() {
@@ -196,17 +215,40 @@ class Batcher {
     }, this.autosendInterval)
   }
 
-  flush() {
-    const categories = Object.keys(this.batch)
-    const isEmpty = categories.every((category) => this.batch[category].length === 0)
+  flush(keepalive = false) {
+    const cats = Object.keys(this.batch)
+    const isEmpty = cats.every((category) => this.batch[category].length === 0)
     if (isEmpty) {
       return
     }
 
-    this.sendBatch(this.getBatches())
-    categories.forEach((key) => {
+    const batches = this.getBatches()
+    // Snapshot what we're about to send so we can restore it if the request
+    // ultimately fails, instead of dropping events the moment we clear the buffer.
+    const snapshot = {
+      [categories.people]: [...batches.data[categories.people]],
+      [categories.events]: [...batches.data[categories.events]],
+    }
+    cats.forEach((key) => {
       this.batch[key] = []
     })
+    this.sendBatch(batches, keepalive, () => this.requeue(snapshot))
+  }
+
+  private requeue(snapshot: Record<string, any[]>) {
+    if (this.stopped) {
+      return
+    }
+    // Put the failed events back at the front, ahead of anything queued since,
+    // so they're retried on the next flush rather than lost.
+    this.batch[categories.people] = [
+      ...snapshot[categories.people],
+      ...this.batch[categories.people],
+    ]
+    this.batch[categories.events] = [
+      ...snapshot[categories.events],
+      ...this.batch[categories.events],
+    ]
   }
 
   stop() {
