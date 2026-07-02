@@ -144,8 +144,10 @@ function TestDrawer({
         </Popconfirm>
       }
     >
+      {/* bounded: run settings / tags / runs stay reachable even with 50 steps */}
       <EditableSteps
         steps={test.steps}
+        bounded
         onStepsChange={(steps) => onChange({ ...test, steps })}
       />
 

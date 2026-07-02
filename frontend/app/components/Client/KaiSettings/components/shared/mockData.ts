@@ -8,6 +8,31 @@ const EVERY_DAY = { days: [0, 1, 2, 3, 4, 5, 6], time: '06:00' };
 const WEEKDAYS = { days: [1, 2, 3, 4, 5], time: '09:00' };
 const MWF = { days: [1, 3, 5], time: '17:00' };
 
+// 50 steps (1 sign-in + 8 areas × 6 checks + 1 sign-out) — the worst-case long test
+// the drawers have to stay usable with.
+const REGRESSION_AREAS = [
+  'dashboard',
+  'projects',
+  'sessions',
+  'heatmaps',
+  'alerts',
+  'billing',
+  'members',
+  'integrations',
+];
+const REGRESSION_STEPS: string[] = [
+  'Sign in as the QA admin',
+  ...REGRESSION_AREAS.flatMap((area) => [
+    `Open the ${area} page`,
+    `Verify the ${area} page loads without errors`,
+    `Create a new ${area} entry`,
+    `Verify the new ${area} entry appears in the list`,
+    `Edit the ${area} entry and save`,
+    `Delete the ${area} entry and confirm`,
+  ]),
+  'Sign out and verify the redirect to login',
+];
+
 export const MOCK_ENVIRONMENTS: Environment[] = [
   {
     id: 'env-prod',
@@ -497,11 +522,46 @@ export const MOCK_TEST_CASES: TestCase[] = [
     recent: ['passed', 'passed', 'passed', 'passed', 'passed'],
     steps: ['Open search', 'Type a nonsense query', 'Verify the empty state'],
   },
+  {
+    // a deliberately long test (50 steps) — exercises the bounded step lists
+    key: 'tc-regression',
+    title: 'Full regression sweep',
+    status: 'active',
+    tags: ['Regression'],
+    envNames: ['Staging'],
+    resolutions: ['desktop'],
+    regions: ['paris'],
+    schedule: { days: [1], time: '05:00' },
+    lastResult: 'failed',
+    lastRunAt: ago(26),
+    recent: ['passed', 'passed', 'passed', 'passed', 'failed'],
+    steps: REGRESSION_STEPS,
+  },
 ];
 
 // A run is one execution of a test. The same test shows up every time it runs, with
 // its own timestamp — that's what makes this a log, not a second list of tests.
 export const MOCK_RUNS: RunData[] = [
+  // ---- the 50-step regression run — long step list, failed mid-way ------
+  {
+    key: 'r-regression',
+    testName: 'Full regression sweep',
+    date: ago(26),
+    duration: 184000,
+    status: 'failed',
+    failedStep: 33,
+    envName: 'Staging',
+    resolution: 'desktop',
+    region: 'paris',
+    tags: ['Regression'],
+    error:
+      'Row not found — timed out after 10s waiting for the new billing entry.',
+    steps: REGRESSION_STEPS.map((step, i) => ({
+      step,
+      status: i < 33 ? 'passed' : i === 33 ? 'failed' : 'skipped',
+      ...(i % 8 === 0 ? { shots: 2 } : {}),
+    })) as RunData['steps'],
+  },
   // ---- in progress (today) --------------------------------------------
   {
     key: 'r1',

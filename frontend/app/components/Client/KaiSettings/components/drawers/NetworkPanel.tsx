@@ -1,13 +1,15 @@
 import { Button, Tooltip, message } from 'antd';
-import { Copy, Download, X } from 'lucide-react';
+import { ChevronLeft, Copy, Download } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { NetworkRequest } from '../shared/types';
 
 // A stripped HAR-file-viewer (per the 06-29 review): type filter chips, a clickable
-// request list (no waterfall bars, no legend), and a detail panel with request/response
+// request list (no waterfall bars, no legend), and a detail view with request/response
 // headers, payload, response and timing. Mirrors openreplay.com/tools/har-file-viewer.
+// Clicking a request REPLACES the list with the detail (back-to-list on top) — the two
+// never stack, so the panel's height stays predictable (Jul 1 review).
 
 const isNetError = (r: NetworkRequest) => r.status === 0 || r.status >= 400;
 
@@ -196,7 +198,17 @@ function Detail({
   ].filter((r) => r.value != null);
 
   return (
-    <div className="border rounded-lg p-3 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
+      {/* the detail replaces the list, so the way out is "back", not "close" */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="self-start inline-flex items-center gap-1 text-sm text-main hover:underline"
+      >
+        <ChevronLeft size={15} /> {t('Back to requests')}
+      </button>
+
+      <div className="border rounded-lg p-3 flex flex-col gap-3">
       {/* header */}
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
@@ -236,14 +248,6 @@ function Detail({
             <Copy size={12} /> {t('Copy full URL')}
           </button>
         </div>
-        <button
-          type="button"
-          aria-label={t('Close')}
-          onClick={onClose}
-          className="shrink-0 text-disabled-text hover:text-black"
-        >
-          <X size={16} />
-        </button>
       </div>
 
       {/* stat cards */}
@@ -316,6 +320,7 @@ function Detail({
             </div>
           ))}
       </div>
+      </div>
     </div>
   );
 }
@@ -327,9 +332,12 @@ const NET_GRID =
 function NetworkPanel({
   reqs,
   startedAt,
+  fillHeight,
 }: {
   reqs?: NetworkRequest[];
   startedAt?: number;
+  /** fill the parent's fixed height (expand modal) — list/detail scroll inside */
+  fillHeight?: boolean;
 }) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState('all');
@@ -349,15 +357,31 @@ function NetworkPanel({
 
   if (!reqs || reqs.length === 0)
     return (
-      <div className="text-sm text-disabled-text text-center py-8 border rounded-lg">
+      <div
+        className={`text-sm text-disabled-text text-center border rounded-lg ${
+          fillHeight ? 'h-full flex items-center justify-center' : 'py-8'
+        }`}
+      >
         {t('No network activity captured for this run.')}
       </div>
     );
 
   const cur = selected != null ? reqs[selected] : null;
 
+  // detail REPLACES the list — one view at a time, stable height
+  if (cur)
+    return (
+      <div className={fillHeight ? 'h-full overflow-y-auto' : ''}>
+        <Detail
+          req={cur}
+          startedAt={startedAt}
+          onClose={() => setSelected(null)}
+        />
+      </div>
+    );
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`flex flex-col gap-3 ${fillHeight ? 'h-full min-h-0' : ''}`}>
       {/* type filter chips (no legend, no waterfall — per review) + HAR download */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap gap-1.5">
@@ -406,9 +430,15 @@ function NetworkPanel({
       </div>
 
       {/* request list */}
-      <div className="border rounded-lg overflow-hidden text-xs">
+      <div
+        className={`border rounded-lg text-xs ${
+          fillHeight ? 'flex-1 min-h-0 overflow-y-auto' : 'overflow-hidden'
+        }`}
+      >
         <div
-          className={`${NET_GRID} px-3 py-1.5 bg-gray-lightest border-b text-disabled-text font-medium uppercase tracking-wide`}
+          className={`${NET_GRID} px-3 py-1.5 bg-gray-lightest border-b text-disabled-text font-medium uppercase tracking-wide ${
+            fillHeight ? 'sticky top-0 z-1' : ''
+          }`}
         >
           <span>{t('Status')}</span>
           <span>{t('Method')}</span>
@@ -457,14 +487,6 @@ function NetworkPanel({
         )}
       </div>
 
-      {/* detail for the selected request */}
-      {cur && (
-        <Detail
-          req={cur}
-          startedAt={startedAt}
-          onClose={() => setSelected(null)}
-        />
-      )}
     </div>
   );
 }
