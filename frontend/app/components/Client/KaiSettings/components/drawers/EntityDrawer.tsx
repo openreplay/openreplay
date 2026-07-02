@@ -244,7 +244,10 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-gray-dark">{label}</span>
+      {/* matches the app's Account-settings field-label darkness (gray-dark read too
+          light next to it) — kept here as the one shared style every field label in
+          Kai settings should use */}
+      <span className="text-sm font-medium text-gray-darkest">{label}</span>
       {children}
     </div>
   );
