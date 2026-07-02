@@ -261,7 +261,7 @@ function ScreenshotsView({
                   type="button"
                   onClick={() => pickStep(pos)}
                   aria-label={`${t('Step')} ${s.i + 1}`}
-                  className="shrink-0 w-[72px] h-[45px] rounded border flex items-center justify-center text-xs font-medium transition"
+                  className="shrink-0 w-[72px] h-[45px] rounded border flex items-center justify-center text-xs font-medium transition outline-none focus:outline-none"
                   style={{
                     background: isFailed
                       ? 'rgba(204, 0, 0, 0.08)'
