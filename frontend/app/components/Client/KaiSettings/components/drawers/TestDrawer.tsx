@@ -1,5 +1,13 @@
 import { Button, Popconfirm, Tooltip, message } from 'antd';
-import { Check, ChevronRight, Pause, Play, Trash2, X } from 'lucide-react';
+import {
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Pause,
+  Play,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -239,25 +247,22 @@ function TestDrawer({
               <span className="flex items-center gap-1.5">
                 {trend.map((r) => {
                   const failed = r.status === 'failed';
+                  // same icons as the Failed/Passed pill everywhere else (getRunResult)
+                  // — a custom heavier-stroke circle here read inconsistent next to it
+                  const Icon = failed ? XCircle : CheckCircle2;
                   return (
                     <Tooltip
                       key={r.key}
                       title={`${failed ? t('Failed') : t('Passed')} · ${relativeTime(r.date)}`}
                     >
                       <span
-                        className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 bg-white"
-                        style={{
-                          border: `1.5px solid ${
-                            failed ? 'var(--color-red)' : 'var(--color-green)'
-                          }`,
-                        }}
+                        className="flex items-center shrink-0"
                         aria-label={failed ? t('Failed run') : t('Passed run')}
                       >
-                        {failed ? (
-                          <X size={9} strokeWidth={3} className="text-red" />
-                        ) : (
-                          <Check size={9} strokeWidth={3} className="text-green" />
-                        )}
+                        <Icon
+                          size={14}
+                          className={failed ? 'text-red' : 'text-green'}
+                        />
                       </span>
                     </Tooltip>
                   );
