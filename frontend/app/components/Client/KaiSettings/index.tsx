@@ -12,6 +12,7 @@ import SiteDropdown from 'Shared/SiteDropdown';
 
 import RunsTab from './components/RunsTab';
 import SettingsTab from './components/SettingsTab';
+import TestsTab from './components/TestsTab';
 import { BrowserTestsProjectProvider } from './queries';
 
 function KaiSettings() {
@@ -24,21 +25,26 @@ function KaiSettings() {
 
   const tabItems = [
     {
-      key: 'settings',
-      label: t('Auto-Testing Settings'),
-      children: <SettingsTab />,
+      key: 'tests',
+      label: t('Tests'),
+      children: <TestsTab />,
     },
     {
       key: 'runs',
-      label: t('Test Runs'),
+      label: t('Runs'),
       children: <RunsTab />,
+    },
+    {
+      key: 'settings',
+      label: t('Settings'),
+      children: <SettingsTab />,
     },
   ];
 
   return (
     <BrowserTestsProjectProvider value={siteId}>
-      <div className="bg-white rounded-lg border shadow-xs p-4">
-        <div className="flex items-center gap-2 pb-0">
+      <div className="bg-white rounded-lg border shadow-xs overflow-hidden">
+        <div className="flex items-center gap-2 px-4 pt-4">
           <PageTitle title={t('Test Agents')} />
           <SiteDropdown
             value={siteId}
@@ -47,7 +53,11 @@ function KaiSettings() {
             }
           />
         </div>
-        <Tabs defaultActiveKey="settings" items={tabItems} />
+        <Tabs
+          defaultActiveKey="tests"
+          items={tabItems}
+          tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
+        />
       </div>
     </BrowserTestsProjectProvider>
   );

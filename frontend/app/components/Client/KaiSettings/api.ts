@@ -11,7 +11,7 @@ import {
   ListTestsParams,
   Run,
   RunDetail,
-  RunWithSteps,
+  RunListItem,
   Test,
   TestCreateRequest,
   TestUpdateRequest,
@@ -119,14 +119,15 @@ export function deleteEnvironment(
 
 // ---- Runs ----
 
-// Project-wide runs list; each item embeds its steps. Optional `testId` filter.
+// Project-wide runs list; lean summaries (no steps, no finalResult). Optional
+// `testId` filter. Fetch full step detail via getRun.
 export function listAllRuns(
   projectId: string | number,
   params?: ListAllRunsParams,
-): Promise<ListResponse<RunWithSteps>> {
+): Promise<ListResponse<RunListItem>> {
   return client
     .get(`${base(projectId)}/runs`, params)
-    .then(toJson<ListResponse<RunWithSteps>>);
+    .then(toJson<ListResponse<RunListItem>>);
 }
 
 export function listRuns(
