@@ -8,6 +8,7 @@ import (
 )
 
 type BytesReader interface {
+	Reset(data []byte)
 	ReadSize() (uint64, error)
 	ReadByte() (byte, error)
 	ReadUint() (uint64, error)
@@ -29,6 +30,11 @@ func NewBytesReader(data []byte) BytesReader {
 	return &bytesReaderImpl{
 		data: data,
 	}
+}
+
+func (m *bytesReaderImpl) Reset(data []byte) {
+	m.data = data
+	m.curr = 0
 }
 
 func (m *bytesReaderImpl) ReadSize() (uint64, error) {
