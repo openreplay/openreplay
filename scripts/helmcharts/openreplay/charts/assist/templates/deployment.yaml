@@ -50,6 +50,9 @@ spec:
             - name: ASSIST_KEY
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-key" "ctx" .) | nindent 18 }}
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "token-secret" "ctx" .) | nindent 18 }}
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
             - name: REDIS_URL
