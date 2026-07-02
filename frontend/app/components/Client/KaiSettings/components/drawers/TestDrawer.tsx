@@ -207,7 +207,7 @@ function TestDrawer({
         title={t('Tags')}
         className="py-3!"
         action={
-          <span className="text-xs text-disabled-text">
+          <span className="text-sm text-disabled-text">
             {t('Up to 3 tags')}
           </span>
         }

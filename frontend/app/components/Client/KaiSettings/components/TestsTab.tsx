@@ -438,7 +438,7 @@ function TestsTab() {
             'As real users move through your app, the agent learns the journeys they take. Once it has seen a full journey across enough sessions, it drafts a test here for you to review.',
           )}
         </Typography.Text>
-        <span className="text-xs text-disabled-text">
+        <span className="text-sm text-disabled-text">
           {t('Nothing to set up — drafts will appear as they are ready.')}
         </span>
         <Button
