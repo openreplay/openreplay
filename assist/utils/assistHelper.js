@@ -3,6 +3,7 @@ const uaParser = require('ua-parser-js');
 const {geoip} = require('./geoIP');
 const {extractPeerId} = require('./helper');
 const {logger} = require('./logger');
+const {verifySessionToken} = require('./sessionToken');
 
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
@@ -123,9 +124,18 @@ function generateAccessToken(payload) {
 }
 
 const JWT_TOKEN_PREFIX = "Bearer ";
+const PROTOCOL_V2 = "2";
 
 function check(socket, next) {
     if (socket.handshake.query.identity === IDENTITIES.session) {
+        // Older trackers don't send the protocol flag and stay accepted (back compatibility).
+        if (String(socket.handshake.query.protocol) === PROTOCOL_V2) {
+            const token = socket.handshake.auth && socket.handshake.auth.token;
+            if (!verifySessionToken(token)) {
+                logger.debug(`invalid session token, refusing connexion, peerId: ${socket.handshake.query.peerId}`);
+                return next(new Error('Authentication error'));
+            }
+        }
         return next();
     }
     if (socket.handshake.query.peerId && socket.handshake.auth && socket.handshake.auth.token) {

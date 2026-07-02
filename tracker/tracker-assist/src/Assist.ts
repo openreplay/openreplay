@@ -263,6 +263,7 @@ export default class Assist {
       return app.debug.error("No session ID");
     }
     const peerID = `${app.getProjectKey()}-${sessionId}-${this.app.getTabId()}`;
+    const sessionToken = app.getSessionToken();
 
     // SocketIO
     const socket = (this.socket = connect(this.getHost(), {
@@ -271,12 +272,19 @@ export default class Assist {
         peerId: peerID,
         identity: "session",
         tabId: this.app.getTabId(),
+        // Marks a connection that carries a session token to be validated server-side.
+        // Older trackers omit this, so the server keeps accepting them (back compatibility).
+        protocol: 2,
         sessionInfo: JSON.stringify({
           pageTitle: document.title,
           active: true,
           assistOnly: this.app.socketMode,
           ...this.app.getSessionInfo(),
         }),
+      },
+      auth: {
+        // Backend-issued session token, verified server-side for protocol v2 connections
+        token: sessionToken,
       },
       extraHeaders: {
         sessionId,

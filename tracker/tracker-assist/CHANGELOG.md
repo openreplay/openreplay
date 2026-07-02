@@ -1,3 +1,7 @@
+## 11.0.18
+
+- add proto v2 for wss authorization
+
 ## 11.0.17
 
 - improvements for rc interaction with select els
