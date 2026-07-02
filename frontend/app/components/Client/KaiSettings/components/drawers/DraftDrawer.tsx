@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, CalendarClock, Check } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { kaiStore } from '../shared/store';
 import { TestCase } from '../shared/types';
 import { isScheduled } from '../shared/utils';
 import EditableSteps from './EditableSteps';
@@ -33,7 +34,32 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
   const [approved, setApproved] = useState(false);
 
   useEffect(() => {
-    setDraft(test);
+    // a fresh draft carries nothing — pre-fill its run settings from Settings →
+    // Default run configuration (shown as "(default)" until the user changes them);
+    // only committed if the draft is finished/saved
+    if (test) {
+      const { defaults } = kaiStore.get();
+      setDraft({
+        ...test,
+        envNames: test.envNames?.length
+          ? test.envNames
+          : defaults.envName
+            ? [defaults.envName]
+            : test.envNames,
+        resolutions: test.resolutions?.length
+          ? test.resolutions
+          : defaults.resolution
+            ? [defaults.resolution]
+            : test.resolutions,
+        regions: test.regions?.length
+          ? test.regions
+          : defaults.region
+            ? [defaults.region]
+            : test.regions,
+      });
+    } else {
+      setDraft(test);
+    }
     setStep(0);
     setApproved(false);
   }, [test]);
@@ -83,11 +109,13 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
     if (i === 0 || approved) setStep(i as WizStep);
   };
 
-  // footer changes per step — the workflow's forward/back controls
+  // footer changes per step — the workflow's forward/back controls. Only step 0 talks
+  // about approving (that's where approval happens); afterwards it's schedule → done.
   const footer =
     step === 0 ? (
       <div className="flex items-center justify-between">
-        <Button type="text" danger onClick={dismiss}>
+        {/* dismiss is a quiet gray — red is reserved for Delete */}
+        <Button type="text" onClick={dismiss}>
           {t('Dismiss')}
         </Button>
         <div className="flex items-center gap-2">
@@ -113,7 +141,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
         </Button>
         <div className="flex items-center gap-2">
           <Button type="text" onClick={finalize}>
-            {scheduled ? t('Skip tags') : t('Approve without schedule')}
+            {scheduled ? t('Skip tags & finish') : t('Finish without schedule')}
           </Button>
           <Button
             type="primary"
@@ -121,7 +149,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
             icon={<ArrowRight size={15} />}
             iconPosition="end"
           >
-            {t('Continue')}
+            {t('Continue to tags')}
           </Button>
         </div>
       </div>
@@ -135,7 +163,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
           {t('Back')}
         </Button>
         <Button type="primary" onClick={finalize} icon={<Check size={15} />}>
-          {scheduled ? t('Schedule & activate') : t('Approve test')}
+          {t('Done')}
         </Button>
       </div>
     );
@@ -222,8 +250,8 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       {/* Step 2 — where & when it runs (a schedule is optional) */}
       {step === 1 && (
         <Section title={t('Where & when it runs')}>
-          <RunSettingsFields value={settings} onChange={patch} />
-          <div className="mt-3 flex items-start gap-2 text-xs text-disabled-text">
+          <RunSettingsFields value={settings} onChange={patch} defaultHints />
+          <div className="mt-3 flex items-start gap-2 text-sm text-disabled-text">
             <CalendarClock size={14} className="mt-0.5 shrink-0" />
             <span>
               {scheduled

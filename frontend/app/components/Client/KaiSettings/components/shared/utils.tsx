@@ -143,9 +143,10 @@ export const getRunResult = (
 };
 
 // Compact tag chips for a table cell: first 2 shown, the rest folded into a +N hint.
+// Empty reads italic "Not set" — same language as the environment/schedule gaps.
 export const RowTags = ({ tags }: { tags?: string[] }) => {
   if (!tags || tags.length === 0)
-    return <span className="text-disabled-text">—</span>;
+    return <span className="text-disabled-text italic">Not set</span>;
   const shown = tags.slice(0, 2);
   const rest = tags.slice(2);
   return (

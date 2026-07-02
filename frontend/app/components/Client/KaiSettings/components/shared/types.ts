@@ -31,6 +31,14 @@ export interface Environment {
 // Run viewport, simplified to three device classes.
 export type Resolution = 'mobile' | 'tablet' | 'desktop';
 
+// The preset environment / viewport / region (Settings → Default run configuration)
+// that pre-fill a new draft's or manually-created test's run settings.
+export interface RunDefaults {
+  envName?: string;
+  resolution?: Resolution;
+  region?: string;
+}
+
 // How often a test runs. `custom` falls back to the day picker.
 export type ScheduleFreq =
   | 'daily'

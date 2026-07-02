@@ -1,5 +1,13 @@
 import React from 'react';
-import { Button, Popover, Modal, Input, Tooltip } from 'antd';
+import {
+  AutoComplete,
+  Button,
+  Popover,
+  Modal,
+  Input,
+  Tooltip,
+  Typography,
+} from 'antd';
 import {
   ArrowLeft,
   ExternalLink,
@@ -12,7 +20,6 @@ import {
   ArrowUpRight,
   Info,
   Loader,
-  RefreshCw,
 } from 'lucide-react';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -29,7 +36,11 @@ import {
   issueSession as issueSessionRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
-import { type IssueSessionCard, HIDE_REASONS } from 'App/mstore/issuesStore';
+import {
+  type IssueSessionCard,
+  HIDE_REASONS,
+  JOURNEY_SEARCH_SUGGESTIONS,
+} from 'App/mstore/issuesStore';
 import ProblemCard, { ReasonChip } from './ProblemCard';
 import { MOCK_THUMB } from './mockThumb';
 
@@ -501,8 +512,9 @@ function IssueDetail() {
     );
   }
 
-  // Examples are a *sample* — surface a rotating pick (never a total count). Refresh
-  // and search rotate `seed`; "load more" reveals up to 10.
+  // Examples are a *sample* — surface a rotating pick; the only count shown is the
+  // quiet matched-sessions total bottom-left of the grid. Search rotates `seed`;
+  // "load more" reveals up to 10 (it replaced the refresh button).
   const allExamples = issuesStore.exampleSessions(issue);
   const rot = allExamples.length ? seed % allExamples.length : 0;
   const rotated = [...allExamples.slice(rot), ...allExamples.slice(0, rot)];
@@ -520,10 +532,30 @@ function IssueDetail() {
       setSearching(false);
     }, 1800);
   };
-  const refreshExamples = () => {
-    setSeed((s) => s + 3); // pick other examples
-    setVisibleCount(3);
-  };
+
+  // journey suggestions — canned phrases filtered by the typed text, with the
+  // matching substring bolded; up to 10, ~5 visible before the list scrolls
+  const q = query.trim().toLowerCase();
+  const suggestions = React.useMemo(() => {
+    if (!q) return [];
+    return JOURNEY_SEARCH_SUGGESTIONS.filter((s) =>
+      s.toLowerCase().includes(q),
+    )
+      .slice(0, 10)
+      .map((s) => {
+        const at = s.toLowerCase().indexOf(q);
+        return {
+          value: s,
+          label: (
+            <>
+              {s.slice(0, at)}
+              <b>{s.slice(at, at + q.length)}</b>
+              {s.slice(at + q.length)}
+            </>
+          ),
+        };
+      });
+  }, [q]);
   const loadMore = () =>
     setVisibleCount((c) => Math.min(MAX_EXAMPLES, c + 3));
 
@@ -612,30 +644,27 @@ function IssueDetail() {
             <span className="text-base font-semibold text-black">
               Example sessions
             </span>
-            <Tooltip title="A sample of the sessions where the agent detected this issue, not the full set. Search or refresh to see other examples.">
+            <Tooltip title="A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.">
               <Info size={15} style={{ color: 'var(--color-gray-medium)' }} />
             </Tooltip>
           </div>
-          <div className="flex items-center gap-2">
+          {/* no refresh button — "Load more" covers picking up other examples */}
+          <AutoComplete
+            value={query}
+            onChange={(v) => setQuery(v)}
+            options={suggestions}
+            onSelect={runSearch}
+            listHeight={160} // ~5 rows visible, the rest by scroll
+            style={{ width: 440 }}
+          >
             <Input.Search
               size="small"
               allowClear
               maxLength={256}
               placeholder="Describe the journey to find…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
               onSearch={runSearch}
-              style={{ width: 300 }}
             />
-            <Tooltip title="Show other examples">
-              <Button
-                size="small"
-                icon={<RefreshCw size={15} />}
-                aria-label="Refresh examples"
-                onClick={refreshExamples}
-              />
-            </Tooltip>
-          </div>
+          </AutoComplete>
         </div>
 
         {searching ? (
@@ -662,11 +691,20 @@ function IssueDetail() {
         ) : (
           <>
             {gridView}
-            {canLoadMore && (
+            {/* one footer row: quiet sample-total bottom-left (counts live bottom-left
+                across the app), Load more truly centered via the 3-col grid */}
+            <div className="grid grid-cols-3 items-center min-h-8">
+              <Typography.Text type="secondary" className="text-sm">
+                Sample of {issuesStore.journeyMatchTotal(issue)} matching
+                sessions
+              </Typography.Text>
               <div className="flex justify-center">
-                <Button onClick={loadMore}>Load more examples</Button>
+                {canLoadMore && (
+                  <Button onClick={loadMore}>Load more examples</Button>
+                )}
               </div>
-            )}
+              <span />
+            </div>
           </>
         )}
       </div>
