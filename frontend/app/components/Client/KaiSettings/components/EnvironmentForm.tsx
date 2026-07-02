@@ -57,8 +57,10 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* field labels match the section titles below (bold, black, same size) — same
+          label language as the app's other drawer forms */}
       <div className="flex flex-col gap-1">
-        <Typography.Text type="secondary" className="text-sm!">
+        <Typography.Text strong className="text-sm!">
           {t('Name')}
         </Typography.Text>
         <Input
@@ -69,7 +71,7 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <Typography.Text type="secondary" className="text-sm!">
+        <Typography.Text strong className="text-sm!">
           {t('URL')}
         </Typography.Text>
         <Input

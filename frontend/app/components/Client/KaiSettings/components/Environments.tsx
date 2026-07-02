@@ -69,29 +69,34 @@ function Environments({ environments, setEnvironments }: Props) {
       okText: toPause.length ? t('Pause tests & delete') : t('Delete'),
       okButtonProps: { danger: true },
       cancelText: t('Cancel'),
-      width: 460,
+      width: 480,
+      centered: true,
       content: (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4 py-2">
           {toPause.length > 0 ? (
             <>
-              <Typography.Text>
+              <div className="text-sm leading-relaxed">
                 {t('“{{name}}” is the only environment for the tests below. Deleting it will pause them — set a new environment on the test to resume.', { name: env.name })}
-              </Typography.Text>
-              <ul className="list-disc pl-5 text-sm text-gray-dark max-h-40 overflow-auto">
+              </div>
+              {/* bounded, visibly scrollable box — the list can be long */}
+              <ul
+                className="list-disc pl-8 pr-3 py-2.5 text-sm leading-relaxed text-gray-dark max-h-40 overflow-y-auto border rounded-lg bg-gray-lightest"
+                style={{ borderColor: 'var(--color-gray-light)' }}
+              >
                 {toPause.map((tc) => (
                   <li key={tc.key}>{tc.title}</li>
                 ))}
               </ul>
             </>
           ) : (
-            <Typography.Text>
+            <div className="text-sm leading-relaxed">
               {t('“{{name}}” isn’t the only environment of any active test. This can’t be undone.', { name: env.name })}
-            </Typography.Text>
+            </div>
           )}
           {detachOnly.length > 0 && (
-            <Typography.Text type="secondary" className="text-sm!">
+            <div className="text-sm leading-relaxed text-disabled-text">
               {t('It will also be removed from {{count}} tests that run on other environments — those keep running.', { count: detachOnly.length })}
-            </Typography.Text>
+            </div>
           )}
         </div>
       ),

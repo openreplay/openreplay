@@ -54,6 +54,9 @@ function TestsTab() {
   const [openKey, setOpenKey] = useState<string | null>(null);
   // when a drawer is opened via the "Schedule" action, jump straight to the schedule
   const [focusSchedule, setFocusSchedule] = useState(false);
+  // the open drawer belongs to a just-added test: creation mode (footer "Create test");
+  // closing without creating discards the placeholder
+  const [creating, setCreating] = useState(false);
 
   const PAGE_SIZE = 20;
   useEffect(() => {
@@ -75,6 +78,7 @@ function TestsTab() {
   // open a row's drawer; opening a new draft marks it seen (clears the dot)
   const openRow = (tc: TestCase) => {
     setFocusSchedule(false);
+    setCreating(false);
     setOpenKey(tc.key);
     if (tc.status === 'draft' && tc.isNew) updateTest({ ...tc, isNew: false });
   };
@@ -100,6 +104,7 @@ function TestsTab() {
     };
     setTests((prev) => [tc, ...prev]);
     setFocusSchedule(false);
+    setCreating(true);
     setOpenKey(tc.key);
   };
 
@@ -355,9 +360,7 @@ function TestsTab() {
         scheduleLabel(a.schedule).localeCompare(scheduleLabel(b.schedule)),
       showSorterTooltip: false,
       render: (_: unknown, tc) =>
-        tc.status === 'draft' ? (
-          <span className="text-disabled-text">—</span>
-        ) : !isScheduled(tc.schedule) ? (
+        !isScheduled(tc.schedule) ? (
           <span className="text-disabled-text italic">
             {t('Not scheduled')}
           </span>
@@ -591,8 +594,17 @@ function TestsTab() {
         test={openTest && openTest.status !== 'draft' ? openTest : null}
         open={!!openTest && openTest.status !== 'draft'}
         focusSchedule={focusSchedule}
+        creating={creating}
+        onCreate={() => {
+          setCreating(false);
+          setOpenKey(null);
+          message.success(t('Test created'));
+        }}
         onViewRuns={viewRuns}
         onClose={() => {
+          // abandoning creation discards the placeholder test
+          if (creating && openKey) removeTest(openKey);
+          setCreating(false);
           setOpenKey(null);
           setFocusSchedule(false);
         }}

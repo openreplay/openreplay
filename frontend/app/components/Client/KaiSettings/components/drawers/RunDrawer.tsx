@@ -494,6 +494,16 @@ function RunDrawer({ run, open, onClose }: Props) {
   const tabCount = (n: number) =>
     n > 0 ? <span className="ml-1.5 text-red font-medium">{n}</span> : null;
 
+  // passed runs capture no network/console — those tabs are disabled (not hidden,
+  // so nothing "pops up" between runs), with the reason on hover
+  const passed = run.status === 'passed';
+  const disabledHint = (label: React.ReactNode) =>
+    passed ? (
+      <Tooltip title={t('Not captured — this run passed.')}>{label}</Tooltip>
+    ) : (
+      label
+    );
+
   // shared by the inline tabs and the expanded modal so they stay in lockstep
   const devOptions = [
     {
@@ -506,20 +516,22 @@ function RunDrawer({ run, open, onClose }: Props) {
     },
     {
       value: 'network',
-      label: (
+      disabled: passed,
+      label: disabledHint(
         <span className="flex items-center justify-center gap-1.5 py-0.5">
           <Network size={14} /> {t('Network')}
           {tabCount(netErrors)}
-        </span>
+        </span>,
       ),
     },
     {
       value: 'console',
-      label: (
+      disabled: passed,
+      label: disabledHint(
         <span className="flex items-center justify-center gap-1.5 py-0.5">
           <Terminal size={14} /> {t('Console')}
           {tabCount(consoleErrors)}
-        </span>
+        </span>,
       ),
     },
   ];

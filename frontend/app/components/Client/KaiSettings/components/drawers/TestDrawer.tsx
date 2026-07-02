@@ -1,12 +1,17 @@
 import { Button, Popconfirm, Tooltip, message } from 'antd';
-import { ChevronRight, Pause, Play, Trash2 } from 'lucide-react';
+import { Check, ChevronRight, Pause, Play, Trash2, XCircle } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MOCK_RUNS } from '../shared/mockData';
 import { hasNoEnvironment } from '../shared/store';
 import { TestCase } from '../shared/types';
-import { getRunResult, isScheduled, relativeTime } from '../shared/utils';
+import {
+  formatDuration,
+  getRunResult,
+  isScheduled,
+  relativeTime,
+} from '../shared/utils';
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
@@ -21,6 +26,9 @@ interface Props {
   onRemove: (key: string) => void;
   /** the Runs-history shortcut — jump to the Runs tab filtered to this test */
   onViewRuns?: (tc: TestCase) => void;
+  /** creation mode: footer "Create test" instead of header run controls */
+  creating?: boolean;
+  onCreate?: () => void;
 }
 
 /** A live, approved test. Single-column control panel; the row's actions live in the
@@ -35,6 +43,8 @@ function TestDrawer({
   onChange,
   onRemove,
   onViewRuns,
+  creating,
+  onCreate,
 }: Props) {
   const { t } = useTranslation();
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -63,6 +73,12 @@ function TestDrawer({
     (latest, r) => (latest && latest.date >= r.date ? latest : r),
     undefined as (typeof runs)[number] | undefined,
   );
+  // trend: the last 10 completed runs, oldest → newest (newest on the right, with
+  // relative times flanking the strip so the direction is unambiguous)
+  const trend = runs
+    .filter((r) => r.status !== 'running')
+    .sort((a, b) => a.date - b.date)
+    .slice(-10);
   const settings: RunSettings = {
     envNames: test.envNames,
     resolutions: test.resolutions,
@@ -94,10 +110,19 @@ function TestDrawer({
       onClose={onClose}
       title={test.title}
       onTitleChange={(title) => onChange({ ...test, title })}
-      eyebrow={`${t('Test')} · ${
-        paused ? t('Paused') : test.status === 'approved' ? t('Approved') : t('Active')
-      }`}
+      eyebrow={
+        creating
+          ? `${t('Test')} · ${t('New')}`
+          : `${t('Test')} · ${
+              paused
+                ? t('Paused')
+                : test.status === 'approved'
+                  ? t('Approved')
+                  : t('Active')
+            }`
+      }
       headerActions={
+        creating ? undefined : (
         <div className="flex items-center gap-2">
           {/* paused: resuming is the main intent, so Resume takes the primary slot */}
           <Button
@@ -129,19 +154,32 @@ function TestDrawer({
             </Tooltip>
           )}
         </div>
+        )
       }
       footer={
-        <Popconfirm
-          title={t('Delete this test?')}
-          okText={t('Delete')}
-          okButtonProps={{ danger: true }}
-          cancelText={t('Cancel')}
-          onConfirm={remove}
-        >
-          <Button type="text" danger icon={<Trash2 size={15} />}>
-            {t('Delete test')}
-          </Button>
-        </Popconfirm>
+        creating ? (
+          // creation flow: commit action lives in the footer, like the draft workflow
+          <div className="flex items-center justify-between">
+            <Button type="text" onClick={onClose}>
+              {t('Discard')}
+            </Button>
+            <Button type="primary" icon={<Check size={15} />} onClick={onCreate}>
+              {t('Create test')}
+            </Button>
+          </div>
+        ) : (
+          <Popconfirm
+            title={t('Delete this test?')}
+            okText={t('Delete')}
+            okButtonProps={{ danger: true }}
+            cancelText={t('Cancel')}
+            onConfirm={remove}
+          >
+            <Button type="text" danger icon={<Trash2 size={15} />}>
+              {t('Delete test')}
+            </Button>
+          </Popconfirm>
+        )
       }
     >
       {/* bounded: run settings / tags / runs stay reachable even with 50 steps */}
@@ -180,8 +218,12 @@ function TestDrawer({
         />
       </Section>
 
-      {/* shortcut into this test's execution history on the Runs tab */}
-      {onViewRuns && (
+      {/* shortcut into this test's execution history on the Runs tab. One card, one
+          action (the whole card opens the filtered Runs tab): the latest outcome with
+          duration + when, and a last-10 trend strip — newest on the right, relative
+          times flanking the strip so the direction can't be misread. Failed runs are
+          an ✕ icon (bigger, different shape), not just a different colour. */}
+      {onViewRuns && !creating && (
         <Section title={t('Runs')} className="py-3!">
           {runs.length === 0 ? (
             <div className="text-sm text-disabled-text">
@@ -191,24 +233,63 @@ function TestDrawer({
             <button
               type="button"
               onClick={() => onViewRuns(test)}
-              className="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 hover:bg-active-blue transition text-left cursor-pointer"
+              aria-label={t('View all runs of this test')}
+              className="w-full flex flex-col gap-2 rounded-lg border px-3 py-2.5 hover:bg-active-blue transition text-left cursor-pointer"
               style={{ borderColor: 'var(--color-gray-light)' }}
             >
-              <span className="flex items-center gap-2 text-sm min-w-0">
-                {lastRun && getRunResult(lastRun.status, t)}
-                <span className="text-gray-dark whitespace-nowrap">
-                  {runs.length} {runs.length === 1 ? t('run') : t('runs')}
+              <span className="flex items-center justify-between gap-3 w-full">
+                <span className="flex items-center gap-2 text-sm min-w-0">
+                  {lastRun && getRunResult(lastRun.status, t)}
+                  {lastRun?.duration != null && (
+                    <span className="text-gray-dark whitespace-nowrap">
+                      {formatDuration(lastRun.duration)}
+                    </span>
+                  )}
+                  {lastRun && (
+                    <span className="text-disabled-text truncate">
+                      · {relativeTime(lastRun.date)}
+                    </span>
+                  )}
                 </span>
-                {lastRun && (
-                  <span className="text-disabled-text truncate">
-                    · {t('last')} {relativeTime(lastRun.date)}
+                <span className="flex items-center gap-1 shrink-0 text-sm text-main">
+                  {runs.length} {runs.length === 1 ? t('run') : t('runs')} ·{' '}
+                  {t('View all')}
+                  <ChevronRight size={15} />
+                </span>
+              </span>
+
+              {trend.length > 1 && (
+                <span className="flex items-center gap-2 w-full">
+                  <span className="text-xs text-disabled-text shrink-0">
+                    {relativeTime(trend[0].date)}
                   </span>
-                )}
-              </span>
-              <span className="flex items-center gap-1 shrink-0 text-sm text-main">
-                {t('View all')}
-                <ChevronRight size={15} />
-              </span>
+                  <span className="flex items-center gap-1.5 flex-1 justify-center">
+                    {trend.map((r) => (
+                      <Tooltip
+                        key={r.key}
+                        title={`${r.status === 'failed' ? t('Failed') : t('Passed')} · ${relativeTime(r.date)}`}
+                      >
+                        {r.status === 'failed' ? (
+                          <XCircle
+                            size={14}
+                            className="text-red shrink-0"
+                            aria-label={t('Failed run')}
+                          />
+                        ) : (
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ background: 'var(--color-green)' }}
+                            aria-label={t('Passed run')}
+                          />
+                        )}
+                      </Tooltip>
+                    ))}
+                  </span>
+                  <span className="text-xs text-disabled-text shrink-0">
+                    {relativeTime(trend[trend.length - 1].date)}
+                  </span>
+                </span>
+              )}
             </button>
           )}
         </Section>

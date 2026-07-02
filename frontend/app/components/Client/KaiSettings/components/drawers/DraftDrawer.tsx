@@ -83,11 +83,13 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
     if (i === 0 || approved) setStep(i as WizStep);
   };
 
-  // footer changes per step — the workflow's forward/back controls
+  // footer changes per step — the workflow's forward/back controls. Only step 0 talks
+  // about approving (that's where approval happens); afterwards it's schedule → done.
   const footer =
     step === 0 ? (
       <div className="flex items-center justify-between">
-        <Button type="text" danger onClick={dismiss}>
+        {/* dismiss is a quiet gray — red is reserved for Delete */}
+        <Button type="text" onClick={dismiss}>
           {t('Dismiss')}
         </Button>
         <div className="flex items-center gap-2">
@@ -113,7 +115,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
         </Button>
         <div className="flex items-center gap-2">
           <Button type="text" onClick={finalize}>
-            {scheduled ? t('Skip tags') : t('Approve without schedule')}
+            {scheduled ? t('Skip tags & finish') : t('Finish without schedule')}
           </Button>
           <Button
             type="primary"
@@ -121,7 +123,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
             icon={<ArrowRight size={15} />}
             iconPosition="end"
           >
-            {t('Continue')}
+            {t('Continue to tags')}
           </Button>
         </div>
       </div>
@@ -135,7 +137,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
           {t('Back')}
         </Button>
         <Button type="primary" onClick={finalize} icon={<Check size={15} />}>
-          {scheduled ? t('Schedule & activate') : t('Approve test')}
+          {t('Done')}
         </Button>
       </div>
     );

@@ -66,10 +66,8 @@ export const MOCK_TEST_CASES: TestCase[] = [
     title: 'New sign-up flow',
     status: 'draft',
     isNew: true,
-    tags: ['Onboarding'],
-    envNames: ['Production'],
-    resolutions: ['desktop'],
-    regions: ['paris'],
+    // drafts carry nothing the user hasn't set: no tags, envs, viewports, regions —
+    // the empty "Not set" cells are part of how drafts read in the table (Jul 2)
     steps: [
       'Open the sign-up page',
       'Enter email and password',
@@ -86,7 +84,6 @@ export const MOCK_TEST_CASES: TestCase[] = [
     title: 'BYOC setup flow',
     status: 'draft',
     isNew: true,
-    tags: ['Onboarding'],
     steps: [
       'Open the deployment settings',
       'Choose bring-your-own-cloud',
@@ -99,8 +96,6 @@ export const MOCK_TEST_CASES: TestCase[] = [
     key: 'tc-reset',
     title: 'Password reset',
     status: 'draft',
-    tags: ['Auth'],
-    envNames: ['QA'],
     steps: [
       'Open the login page',
       'Click forgot password',
@@ -115,7 +110,6 @@ export const MOCK_TEST_CASES: TestCase[] = [
     title: 'Apply coupon at checkout',
     status: 'draft',
     isNew: true,
-    tags: ['Checkout'],
     steps: [
       'Add an item to the cart',
       'Go to checkout',
@@ -127,8 +121,6 @@ export const MOCK_TEST_CASES: TestCase[] = [
     key: 'tc-invite',
     title: 'Add a team member',
     status: 'draft',
-    tags: ['Settings'],
-    envNames: ['QA'],
     steps: [
       'Open team settings',
       'Click invite member',

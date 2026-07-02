@@ -20,7 +20,6 @@ import {
   ArrowUpRight,
   Info,
   Loader,
-  RefreshCw,
 } from 'lucide-react';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -514,8 +513,8 @@ function IssueDetail() {
   }
 
   // Examples are a *sample* — surface a rotating pick; the only count shown is the
-  // quiet matched-sessions total under the grid. Refresh and search rotate `seed`;
-  // "load more" reveals up to 10.
+  // quiet matched-sessions total bottom-left of the grid. Search rotates `seed`;
+  // "load more" reveals up to 10 (it replaced the refresh button).
   const allExamples = issuesStore.exampleSessions(issue);
   const rot = allExamples.length ? seed % allExamples.length : 0;
   const rotated = [...allExamples.slice(rot), ...allExamples.slice(0, rot)];
@@ -532,10 +531,6 @@ function IssueDetail() {
       setVisibleCount(3);
       setSearching(false);
     }, 1800);
-  };
-  const refreshExamples = () => {
-    setSeed((s) => s + 3); // pick other examples
-    setVisibleCount(3);
   };
 
   // journey suggestions — canned phrases filtered by the typed text, with the
@@ -649,36 +644,27 @@ function IssueDetail() {
             <span className="text-base font-semibold text-black">
               Example sessions
             </span>
-            <Tooltip title="A sample of the sessions where the agent detected this issue, not the full set. Search or refresh to see other examples.">
+            <Tooltip title="A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.">
               <Info size={15} style={{ color: 'var(--color-gray-medium)' }} />
             </Tooltip>
           </div>
-          <div className="flex items-center gap-2">
-            <AutoComplete
-              value={query}
-              onChange={(v) => setQuery(v)}
-              options={suggestions}
-              onSelect={runSearch}
-              listHeight={160} // ~5 rows visible, the rest by scroll
-              style={{ width: 440 }}
-            >
-              <Input.Search
-                size="small"
-                allowClear
-                maxLength={256}
-                placeholder="Describe the journey to find…"
-                onSearch={runSearch}
-              />
-            </AutoComplete>
-            <Tooltip title="Show other examples">
-              <Button
-                size="small"
-                icon={<RefreshCw size={15} />}
-                aria-label="Refresh examples"
-                onClick={refreshExamples}
-              />
-            </Tooltip>
-          </div>
+          {/* no refresh button — "Load more" covers picking up other examples */}
+          <AutoComplete
+            value={query}
+            onChange={(v) => setQuery(v)}
+            options={suggestions}
+            onSelect={runSearch}
+            listHeight={160} // ~5 rows visible, the rest by scroll
+            style={{ width: 440 }}
+          >
+            <Input.Search
+              size="small"
+              allowClear
+              maxLength={256}
+              placeholder="Describe the journey to find…"
+              onSearch={runSearch}
+            />
+          </AutoComplete>
         </div>
 
         {searching ? (
@@ -705,17 +691,19 @@ function IssueDetail() {
         ) : (
           <>
             {gridView}
-            {canLoadMore && (
-              <div className="flex justify-center">
-                <Button onClick={loadMore}>Load more examples</Button>
-              </div>
-            )}
-            {/* quiet clarifier that the cards are a sample of a larger matched set */}
-            <div className="flex justify-end">
+            {/* one footer row: quiet sample-total bottom-left (counts live bottom-left
+                across the app), Load more truly centered via the 3-col grid */}
+            <div className="grid grid-cols-3 items-center min-h-8">
               <Typography.Text type="secondary" className="text-sm">
                 Sample of {issuesStore.journeyMatchTotal(issue)} matching
                 sessions
               </Typography.Text>
+              <div className="flex justify-center">
+                {canLoadMore && (
+                  <Button onClick={loadMore}>Load more examples</Button>
+                )}
+              </div>
+              <span />
             </div>
           </>
         )}
