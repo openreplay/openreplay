@@ -1,5 +1,5 @@
-import { Tooltip, message } from 'antd';
-import { Copy, X } from 'lucide-react';
+import { Button, Tooltip, message } from 'antd';
+import { Copy, Download, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -358,9 +358,10 @@ function NetworkPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* type filter chips (no legend, no waterfall — per review) */}
-      <div className="flex flex-wrap gap-1.5">
-        {FILTERS.map((f) => {
+      {/* type filter chips (no legend, no waterfall — per review) + HAR download */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap gap-1.5">
+          {FILTERS.map((f) => {
           const active = filter === f.key;
           const isErr = f.key === 'errors';
           return (
@@ -391,6 +392,17 @@ function NetworkPanel({
             </button>
           );
         })}
+        </div>
+        <Tooltip title="Download the captured network as a .HAR file">
+          <Button
+            size="small"
+            icon={<Download size={14} />}
+            className="shrink-0"
+            onClick={() => message.success('Downloading network.har…')}
+          >
+            {t('Download')} .HAR
+          </Button>
+        </Tooltip>
       </div>
 
       {/* request list */}

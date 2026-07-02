@@ -1,23 +1,84 @@
-import { Checkbox, Typography } from 'antd';
-import React from 'react';
+import { Divider, Switch, Typography } from 'antd';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import Defaults, { RunDefaults } from './Defaults';
 import Environments from './Environments';
+import { MOCK_ENVIRONMENTS } from './shared/mockData';
+import { Environment } from './shared/types';
 
 function SettingsTab() {
   const { t } = useTranslation();
 
-  return (
-    <div className="flex flex-col gap-8 p-4 max-w-2xl">
-      <Environments />
+  const [environments, setEnvironments] =
+    useState<Environment[]>(MOCK_ENVIRONMENTS);
+  const [defaults, setDefaults] = useState<RunDefaults>({
+    envName: MOCK_ENVIRONMENTS[0]?.name,
+    resolution: 'desktop',
+    region: 'paris',
+  });
+  const [dailySummary, setDailySummary] = useState(false);
+  const [weeklySummary, setWeeklySummary] = useState(true);
 
-      <div className="flex flex-col gap-2">
-        <Typography.Text strong>{t('Notifications')}</Typography.Text>
-        <Typography.Text type="secondary" className="text-sm!">
-          {t('You will receive a weekly summary of all test runs to your email.')}
-        </Typography.Text>
-        <Checkbox>{t('Notify immediately on failures')}</Checkbox>
-      </div>
+  return (
+    <div className="flex flex-col p-5 max-w-3xl">
+      {/* Defaults — pre-fill new tests' run settings */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <Typography.Title level={5} style={{ marginBottom: 0 }}>
+            {t('Default run configuration')}
+          </Typography.Title>
+          <Typography.Text type="secondary" className="text-sm!">
+            {t('New tests start with these. You can override them per test.')}
+          </Typography.Text>
+        </div>
+        <Defaults
+          environments={environments}
+          value={defaults}
+          onChange={(patch) => setDefaults((d) => ({ ...d, ...patch }))}
+        />
+      </section>
+
+      <Divider />
+
+      <Environments
+        environments={environments}
+        setEnvironments={setEnvironments}
+      />
+
+      <Divider />
+
+      {/* Notifications */}
+      <section className="flex flex-col gap-4">
+        <div>
+          <Typography.Title level={5} style={{ marginBottom: 0 }}>
+            {t('Notifications')}
+          </Typography.Title>
+          <Typography.Text type="secondary" className="text-sm!">
+            {t('How you hear about your test runs.')}
+          </Typography.Text>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="font-medium">{t('Daily summary')}</span>
+            <Typography.Text type="secondary" className="text-sm!">
+              {t('A daily digest of all test runs, sent to your email.')}
+            </Typography.Text>
+          </div>
+          <Switch checked={dailySummary} onChange={setDailySummary} />
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="font-medium">{t('Weekly summary')}</span>
+            <Typography.Text type="secondary" className="text-sm!">
+              {t('A weekly digest of all test runs, sent to your email.')}
+            </Typography.Text>
+          </div>
+          <Switch checked={weeklySummary} onChange={setWeeklySummary} />
+        </div>
+      </section>
     </div>
   );
 }

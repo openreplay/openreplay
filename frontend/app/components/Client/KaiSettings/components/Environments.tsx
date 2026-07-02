@@ -1,23 +1,31 @@
-import { Button, Tag, Typography } from 'antd';
-import { Globe, Pencil, Plus, Trash2 } from 'lucide-react';
-import React, { useState } from 'react';
+import { App, Button, List, Tag, Typography } from 'antd';
+import { Globe, PencilIcon, Plus, Trash2 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'Components/ModalContext';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { NoContent } from 'UI';
 
 import EnvironmentForm from './EnvironmentForm';
-import { MOCK_ENVIRONMENTS } from './shared/mockData';
+import { MOCK_TEST_CASES } from './shared/mockData';
 import { Environment } from './shared/types';
 
 let idCounter = 0;
 const nextId = () => `env-new-${(idCounter += 1)}`;
 
-function Environments() {
+interface Props {
+  environments: Environment[];
+  setEnvironments: React.Dispatch<React.SetStateAction<Environment[]>>;
+}
+
+// Environments list — same section pattern as the app's Webhooks / Projects settings:
+// a titled header with a primary add action, an antd List with a hover-reveal edit,
+// and a NoContent empty state. The add / edit form opens in the standard right drawer.
+function Environments({ environments, setEnvironments }: Props) {
   const { t } = useTranslation();
   const { openModal } = useModal();
-  const [environments, setEnvironments] = useState<Environment[]>(
-    MOCK_ENVIRONMENTS,
-  );
+  const { modal } = App.useApp();
 
   const openAdd = () =>
     openModal(
@@ -38,80 +46,127 @@ function Environments() {
             prev.map((e) => (e.id === env.id ? { ...e, ...values } : e)),
           )
         }
-        onDelete={() =>
-          setEnvironments((prev) => prev.filter((e) => e.id !== env.id))
-        }
+        onDelete={() => confirmDelete(env)}
       />,
       { title: t('Edit environment') },
     );
 
-  const handleDelete = (id: string) =>
-    setEnvironments((prev) => prev.filter((e) => e.id !== id));
+  // Deleting an environment that active tests still run on has to pause those tests —
+    // surface them first so the delete is never silent (per the run-scheduling flow).
+  const confirmDelete = (env: Environment) => {
+    const affected = MOCK_TEST_CASES.filter(
+      (tc) => tc.status === 'active' && tc.envNames?.includes(env.name),
+    );
+
+    modal.confirm({
+      title: t('Delete environment?'),
+      okText: affected.length ? t('Pause tests & delete') : t('Delete'),
+      okButtonProps: { danger: true },
+      cancelText: t('Cancel'),
+      width: 460,
+      content: affected.length ? (
+        <div className="flex flex-col gap-2">
+          <Typography.Text>
+            {t('“{{name}}” is the only environment for the tests below. Deleting it will pause them — you can re-add an environment later to resume.', { name: env.name })}
+          </Typography.Text>
+          <ul className="list-disc pl-5 text-sm text-gray-dark max-h-40 overflow-auto">
+            {affected.map((tc) => (
+              <li key={tc.key}>{tc.title}</li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <Typography.Text>
+          {t('“{{name}}” isn’t used by any scheduled test. This can’t be undone.', { name: env.name })}
+        </Typography.Text>
+      ),
+      onOk: () =>
+        setEnvironments((prev) => prev.filter((e) => e.id !== env.id)),
+    });
+  };
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <Typography.Text strong>{t('Environments')}</Typography.Text>
-        <Button size="small" icon={<Plus size={14} />} onClick={openAdd}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Typography.Title level={5} style={{ marginBottom: 0 }}>
+            {t('Environments')}
+          </Typography.Title>
+          <Typography.Text type="secondary" className="text-sm!">
+            {t('The URLs and credentials your tests run against.')}
+          </Typography.Text>
+        </div>
+        <Button type="primary" icon={<Plus size={16} />} onClick={openAdd}>
           {t('Add environment')}
         </Button>
       </div>
 
-      <div className="flex flex-col gap-2">
-        {environments.length === 0 && (
-          <Typography.Text type="secondary" className="text-sm!">
-            {t('No environments yet. Add one to get started.')}
-          </Typography.Text>
-        )}
-        {environments.map((env) => (
-          <div
-            key={env.id}
-            className="border rounded-lg px-3 py-2 flex items-center justify-between gap-3 cursor-pointer hover:bg-active-blue"
-            onClick={() => openEdit(env)}
-          >
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium">{env.name}</span>
-                {env.username ? (
-                  <Tag color="blue">{t('With credentials')}</Tag>
-                ) : (
-                  <Tag>{t('No credentials')}</Tag>
-                )}
-                {!!env.headers?.length && (
-                  <Tag>
-                    {env.headers.length} {t('headers')}
-                  </Tag>
-                )}
-                {env.ignoreHttpsErrors && <Tag>{t('Ignores SSL errors')}</Tag>}
-              </div>
-              <div className="flex items-center gap-1 text-sm text-disabled-text truncate">
-                <Globe size={12} />
-                <span className="truncate">{env.url}</span>
-              </div>
-            </div>
-            <div
-              className="flex items-center gap-1"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Button
-                type="text"
-                size="small"
-                icon={<Pencil size={14} />}
-                aria-label={t('Edit')}
-                onClick={() => openEdit(env)}
-              />
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<Trash2 size={14} />}
-                aria-label={t('Delete')}
-                onClick={() => handleDelete(env.id)}
-              />
+      <NoContent
+        title={
+          <div className="flex flex-col items-center justify-center">
+            <AnimatedSVG name={ICONS.NO_WEBHOOKS} size={60} />
+            <div className="text-center my-4">
+              {t('No environments yet. Add one to get started.')}
             </div>
           </div>
-        ))}
-      </div>
+        }
+        size="small"
+        show={environments.length === 0}
+      >
+        <List
+          size="small"
+          dataSource={environments}
+          renderItem={(env) => (
+            <List.Item
+              onClick={() => openEdit(env)}
+              className="p-2! group flex justify-between items-center gap-3 cursor-pointer hover:bg-active-blue transition"
+            >
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium">{env.name}</span>
+                  {env.username ? (
+                    <Tag color="blue">{t('With credentials')}</Tag>
+                  ) : (
+                    <Tag>{t('No credentials')}</Tag>
+                  )}
+                  {!!env.headers?.length && (
+                    <Tag>
+                      {env.headers.length} {t('headers')}
+                    </Tag>
+                  )}
+                  {env.ignoreHttpsErrors && (
+                    <Tag>{t('Ignores SSL errors')}</Tag>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-sm text-disabled-text truncate">
+                  <Globe size={12} />
+                  <span className="truncate">{env.url}</span>
+                </div>
+              </div>
+              <div
+                className="flex items-center gap-1 shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  type="text"
+                  className="invisible group-hover:visible"
+                  icon={<PencilIcon size={16} />}
+                  aria-label={t('Edit')}
+                  onClick={() => openEdit(env)}
+                />
+                <Button
+                  type="text"
+                  danger
+                  className="invisible group-hover:visible"
+                  icon={<Trash2 size={16} />}
+                  aria-label={t('Delete')}
+                  onClick={() => confirmDelete(env)}
+                />
+              </div>
+            </List.Item>
+          )}
+        />
+      </NoContent>
     </div>
   );
 }
