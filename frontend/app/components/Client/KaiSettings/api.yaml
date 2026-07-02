@@ -1,0 +1,765 @@
+openapi: 3.0.3
+info:
+  title: Browser Tests API
+  version: "1.0.0"
+  description: |
+    Project-scoped REST API for **Browser Tests**, **Environments**, and **Runs**.
+
+    - **Base path:** `/v2/{projectId}/browser-tests`
+    - **Auth:** same as all other `/v2` endpoints — send the logged-in user's auth
+      header. Every route is scoped to `{projectId}`; a resource owned by another
+      project responds `404` (never leaks existence).
+    - **EE-only:** endpoints require the `BROWSER_TESTS` permission on enterprise tenants.
+
+    **List responses** are always `{ "items": [...], "total": 123 }`.
+    **Mutation responses:** `POST`/`PUT` return the full resource; `DELETE` (soft
+    delete) returns `{ "success": true }`.
+    **Errors** return `{ "errors": ["human readable message"] }`.
+
+servers:
+  - url: /v2
+    description: API v2 base
+
+security:
+  - sessionAuth: []
+
+tags:
+  - name: Tests
+  - name: Environments
+  - name: Runs
+
+paths:
+  /{projectId}/browser-tests/tests:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Tests]
+      summary: List tests
+      operationId: listTests
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at, updated_at, last_run_at, next_run_at]
+            default: created_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on test name.
+          schema: { type: string }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/TestStatus"
+        - name: environmentId
+          in: query
+          description: Matches tests whose `environments` array contains this id.
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Paged list of tests.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TestList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      tags: [Tests]
+      summary: Create a test
+      operationId: createTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TestCreateRequest" }
+      responses:
+        "200":
+          description: The created test.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Test" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+    get:
+      tags: [Tests]
+      summary: Get a test
+      description: |
+        Returns a single test. `environments` is returned as the array of
+        environment IDs — resolve names/details via the Environments endpoints.
+      operationId: getTest
+      responses:
+        "200":
+          description: The test.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Test" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    put:
+      tags: [Tests]
+      summary: Update a test
+      description: |
+        Partial update — send only the fields to change. Validates `cron` and the
+        status transition. Allowed status transitions: `pending` → `approved` /
+        `rejected` / `paused` (a no-op `from == to` is also allowed; anything else → `400`).
+      operationId: updateTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TestUpdateRequest" }
+      responses:
+        "200":
+          description: The updated test.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Test" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      tags: [Tests]
+      summary: Delete a test (soft)
+      operationId: deleteTest
+      responses:
+        "200": { $ref: "#/components/responses/DeleteSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/environments:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Environments]
+      summary: List environments
+      operationId: listEnvironments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at]
+            default: created_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on environment name.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paged list of environments.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnvironmentList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      tags: [Environments]
+      summary: Create an environment
+      operationId: createEnvironment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnvironmentRequest" }
+      responses:
+        "200":
+          description: The created environment.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Environment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/environments/{environmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/EnvironmentId"
+    get:
+      tags: [Environments]
+      summary: Get an environment
+      operationId: getEnvironment
+      responses:
+        "200":
+          description: The environment.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Environment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    put:
+      tags: [Environments]
+      summary: Update an environment
+      description: Replaces `name`, `baseUrl`, and `variables`.
+      operationId: updateEnvironment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnvironmentRequest" }
+      responses:
+        "200":
+          description: The updated environment.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Environment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      tags: [Environments]
+      summary: Delete an environment (soft)
+      description: Returns `409` if a test still references this environment.
+      operationId: deleteEnvironment
+      responses:
+        "200": { $ref: "#/components/responses/DeleteSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/runs:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Runs]
+      summary: List runs across the project
+      description: |
+        Read-only, project-wide list of runs. Each item is a lean run summary —
+        it omits `steps` and `finalResult` (and the detail-only fields: `model`,
+        token counts, `failedStep*`, `errors`). Use `GET /runs/{runId}` for the
+        full run with steps. Optionally narrow to a single test with the `testId`
+        filter. Same dispatched-run caveat as the per-test list: a run without a
+        result row yet is not listed until it completes.
+      operationId: listAllRuns
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [started_at, duration_ms, cost_usd]
+            default: started_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: testId
+          in: query
+          description: Narrow the list to runs of a single test.
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RunStatus"
+        - name: from
+          in: query
+          description: RFC3339 lower bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: RFC3339 upper bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Paged list of run summaries (no steps, no finalResult).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunListItemList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/runs:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+    get:
+      tags: [Runs]
+      summary: List runs for a test
+      description: |
+        Read-only. A run appears once the runner has written its result; a
+        just-dispatched run with no result yet is not listed until it completes.
+      operationId: listRuns
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [started_at, duration_ms, cost_usd]
+            default: started_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RunStatus"
+        - name: from
+          in: query
+          description: RFC3339 lower bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: RFC3339 upper bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Paged list of runs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/runs/{runId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - name: runId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Runs]
+      summary: Get a run with full step detail
+      operationId: getRun
+      responses:
+        "200":
+          description: The run with step-by-step detail.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: The logged-in user's auth header, as used by all `/v2` endpoints.
+
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: { type: integer }
+    TestId:
+      name: testId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    EnvironmentId:
+      name: environmentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      name: page
+      in: query
+      description: 1-based page number.
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      description: Page size (clamped to 100).
+      schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+    SortOrder:
+      name: sortOrder
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+
+  responses:
+    BadRequest:
+      description: Invalid body, bad `sortField`/`sortOrder`, invalid `cron`, invalid status transition, or malformed id.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not found, or owned by another project.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Deleting an environment still referenced by a test.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ServerError:
+      description: Server / database error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    DeleteSuccess:
+      description: Resource soft-deleted.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DeleteSuccess" }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items: { type: string }
+      required: [errors]
+      example:
+        errors: ["test not found"]
+
+    DeleteSuccess:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+      required: [success]
+
+    TestStatus:
+      type: string
+      enum: [pending, approved, rejected, paused]
+
+    RunStatus:
+      type: string
+      enum: [dispatched, passed, failed, error, timeout]
+
+    Environment:
+      type: object
+      properties:
+        environmentId: { type: string, format: uuid }
+        projectId: { type: integer }
+        name: { type: string }
+        baseUrl: { type: string, format: uri }
+        variables:
+          type: object
+          additionalProperties: true
+          description: Non-secret key/value variables.
+        isDefault:
+          type: boolean
+          description: At most one default environment per project; promoting one demotes the previous default.
+        isActive:
+          type: boolean
+          description: Soft on/off toggle, independent of soft-delete.
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [environmentId, projectId, name, baseUrl, variables, isDefault, isActive, createdAt, updatedAt]
+      example:
+        environmentId: "11111111-1111-1111-1111-111111111111"
+        projectId: 65
+        name: "Staging"
+        baseUrl: "https://staging.example.com"
+        variables: { USERNAME: "demo", REGION: "eu" }
+        isDefault: false
+        isActive: true
+        createdAt: "2026-06-22T10:00:00Z"
+        updatedAt: "2026-06-22T10:00:00Z"
+
+    EnvironmentRequest:
+      type: object
+      properties:
+        name: { type: string }
+        baseUrl:
+          type: string
+          format: uri
+          description: Must be a valid URL.
+        variables:
+          type: object
+          additionalProperties: true
+        isDefault:
+          type: boolean
+          description: >-
+            On create, defaults to false; setting true demotes any existing default.
+            On update, omitted means leave unchanged.
+        isActive:
+          type: boolean
+          description: >-
+            On create, defaults to true. On update, omitted means leave unchanged.
+      required: [name, baseUrl]
+
+    Test:
+      type: object
+      properties:
+        testId: { type: string, format: uuid }
+        projectId: { type: integer }
+        environments:
+          type: array
+          description: Environment IDs this test runs against.
+          items: { type: string, format: uuid }
+        name: { type: string }
+        scenario: { type: string }
+        steps:
+          description: Free-form JSON (array or object).
+          nullable: true
+        expectedResult: { type: string }
+        cron:
+          type: string
+          nullable: true
+          description: Standard 5-field cron string, or empty/null. The API does not schedule or run anything — an external scheduler reads this.
+        status: { $ref: "#/components/schemas/TestStatus" }
+        timeoutSecs: { type: integer }
+        llmModel:
+          type: string
+          nullable: true
+          description: Per-test LLM override; null ⇒ runner env default (DEFAULT_LLM_MODEL).
+        extractionModel:
+          type: string
+          nullable: true
+          description: Per-test extraction-model override; null ⇒ env default (DEFAULT_EXTRACTION_MODEL).
+        fallbackModel: { type: string, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+          description: Opaque per-test config (auth, screen_type, ssl_enforce, locale). Stored/returned verbatim; defaults to {}.
+        nextRunAt: { type: string, format: date-time, nullable: true }
+        lastRunAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        - testId
+        - projectId
+        - environments
+        - name
+        - scenario
+        - expectedResult
+        - status
+        - timeoutSecs
+        - createdAt
+        - updatedAt
+      example:
+        testId: "22222222-2222-2222-2222-222222222222"
+        projectId: 65
+        environments: ["11111111-1111-1111-1111-111111111111"]
+        name: "Login smoke test"
+        scenario: "User can log in"
+        steps: ["Go to homepage", "Click Login", "Submit credentials"]
+        expectedResult: "Dashboard loads"
+        cron: "0 9 * * *"
+        status: "pending"
+        timeoutSecs: 300
+        nextRunAt: "2026-06-23T09:00:00Z"
+        lastRunAt: null
+        createdAt: "2026-06-22T10:00:00Z"
+        updatedAt: "2026-06-22T10:00:00Z"
+
+    TestCreateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        scenario: { type: string }
+        steps:
+          description: Free-form JSON (array or object).
+          nullable: true
+        expectedResult: { type: string }
+        cron:
+          type: string
+          nullable: true
+          description: Standard 5-field cron string. Optional; validated when present.
+        timeoutSecs: { type: integer }
+        environments:
+          type: array
+          items: { type: string, format: uuid }
+        llmModel: { type: string, nullable: true }
+        extractionModel: { type: string, nullable: true }
+        fallbackModel: { type: string, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+          description: Opaque per-test config; defaults to {} when omitted.
+      required: [name]
+      example:
+        name: "Login smoke test"
+        scenario: "User can log in and reach the dashboard"
+        steps: ["Go to homepage", "Click Login", "Submit credentials"]
+        expectedResult: "Dashboard visible"
+        cron: "0 9 * * *"
+        timeoutSecs: 300
+        environments: ["11111111-1111-1111-1111-111111111111"]
+
+    TestUpdateRequest:
+      type: object
+      description: Partial update — only the provided fields are changed.
+      properties:
+        name: { type: string }
+        scenario: { type: string }
+        steps:
+          description: Free-form JSON (array or object).
+          nullable: true
+        expectedResult: { type: string }
+        cron: { type: string, nullable: true }
+        timeoutSecs: { type: integer }
+        environments:
+          type: array
+          items: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/TestStatus" }
+        llmModel: { type: string, nullable: true }
+        extractionModel: { type: string, nullable: true }
+        fallbackModel: { type: string, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+          description: Opaque per-test config; send the full object to replace it.
+      example:
+        status: "approved"
+
+    Run:
+      type: object
+      description: One execution of a test (list item).
+      properties:
+        runId: { type: string, format: uuid }
+        testId: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        containerId: { type: string, nullable: true }
+        s3Prefix: { type: string, nullable: true }
+        screenType:
+          type: string
+          description: Viewport the run executed against (mobile/desktop/tablet); defaults to desktop.
+        batchId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Groups fan-out runs from the same trigger; null if standalone.
+        dispatchMode:
+          type: string
+          nullable: true
+          description: How the run was launched (docker/ecs/k8s); null until set.
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        durationMs: { type: integer, format: int64 }
+        costUsd: { type: number, format: double }
+        finalResult: { type: string }
+        stepsCount: { type: integer }
+      required: [runId, testId, status, screenType, durationMs, costUsd, finalResult, stepsCount]
+      example:
+        runId: "33333333-3333-3333-3333-333333333333"
+        testId: "22222222-2222-2222-2222-222222222222"
+        status: "passed"
+        containerId: null
+        s3Prefix: null
+        startedAt: "2026-06-22T09:00:00Z"
+        finishedAt: "2026-06-22T09:00:42Z"
+        durationMs: 42000
+        costUsd: 0.0123
+        finalResult: "All steps passed"
+        stepsCount: 7
+
+    RunStep:
+      type: object
+      properties:
+        stepIndex: { type: integer }
+        action: { type: string }
+        status: { type: string }
+        durationMs: { type: integer, format: int64 }
+        costUsd: { type: number, format: double }
+        error: { type: string }
+        extractedContent: { type: string }
+        screenshot:
+          type: string
+          description: >-
+            Presigned download URL valid ~15 minutes. Stored relative to the run
+            (e.g. "screenshots/2.png") and anchored under "scenario/<runId>/"
+            (full key scenario/<runId>/screenshots/2.png) before presigning. Empty
+            when the step has no screenshot; relative value returned unchanged if
+            presigning is unconfigured/fails. Only returned by GET /runs/{runId}.
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+
+    RunListItem:
+      type: object
+      description: >-
+        A project-wide runs-list item: a lean run summary. Omits steps and
+        finalResult (fetch those via GET /runs/{runId}).
+      properties:
+        runId: { type: string, format: uuid }
+        testId: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        containerId: { type: string, nullable: true }
+        s3Prefix: { type: string, nullable: true }
+        screenType: { type: string }
+        batchId: { type: string, format: uuid, nullable: true }
+        dispatchMode: { type: string, nullable: true }
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        durationMs: { type: integer, format: int64 }
+        costUsd: { type: number, format: double }
+        stepsCount: { type: integer }
+      required: [runId, testId, status, screenType, durationMs, costUsd, stepsCount]
+
+    RunDetail:
+      allOf:
+        - $ref: "#/components/schemas/Run"
+        - type: object
+          properties:
+            model: { type: string }
+            testName: { type: string }
+            tokensInput: { type: integer }
+            tokensOutput: { type: integer }
+            tokensCached: { type: integer }
+            tokensTotal: { type: integer }
+            failedStepIndex:
+              type: integer
+              nullable: true
+              description: Null when the run did not fail on a step.
+            failedStepText: { type: string, nullable: true }
+            failedStepError: { type: string, nullable: true }
+            errors:
+              type: array
+              items: { type: string }
+            steps:
+              type: array
+              items: { $ref: "#/components/schemas/RunStep" }
+
+    TestList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Test" }
+        total: { type: integer }
+      required: [items, total]
+
+    EnvironmentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Environment" }
+        total: { type: integer }
+      required: [items, total]
+
+    RunList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Run" }
+        total: { type: integer }
+      required: [items, total]
+
+    RunListItemList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RunListItem" }
+        total: { type: integer }
+      required: [items, total]
