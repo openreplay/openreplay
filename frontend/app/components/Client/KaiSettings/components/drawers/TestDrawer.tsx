@@ -99,8 +99,9 @@ function TestDrawer({
       }`}
       headerActions={
         <div className="flex items-center gap-2">
+          {/* paused: resuming is the main intent, so Resume takes the primary slot */}
           <Button
-            type="primary"
+            type={paused ? 'default' : 'primary'}
             size="small"
             icon={<Play size={13} />}
             onClick={runNow}
@@ -117,6 +118,7 @@ function TestDrawer({
               }
             >
               <Button
+                type={paused ? 'primary' : 'default'}
                 size="small"
                 disabled={resumeBlocked}
                 icon={paused ? <Play size={13} /> : <Pause size={13} />}
