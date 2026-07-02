@@ -1,32 +1,280 @@
-import { Tag } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { TFunction } from 'i18next';
+import {
+  CheckCircle2,
+  Loader,
+  LucideIcon,
+  Monitor,
+  Smartphone,
+  Tablet,
+  XCircle,
+} from 'lucide-react';
 import React from 'react';
 
-import { RunStatus, TestStatus } from './types';
+import {
+  Resolution,
+  Schedule,
+  ScheduleFreq,
+  TestLifecycle,
+  UiRunStatus,
+} from './types';
 
-export const getStatusTag = (status: TestStatus, t: TFunction) => {
-  const config: Record<TestStatus, { color: string; label: string }> = {
-    pending: { color: 'orange', label: t('Pending Review') },
-    approved: { color: 'green', label: t('Approved') },
-    rejected: { color: 'red', label: t('Rejected') },
-    paused: { color: 'default', label: t('Paused') },
-  };
+export const RESOLUTION_OPTIONS: { value: Resolution; label: string }[] = [
+  { value: 'desktop', label: 'Desktop' },
+  { value: 'tablet', label: 'Tablet' },
+  { value: 'mobile', label: 'Mobile' },
+];
 
-  const { color, label } = config[status];
-  return <Tag color={color}>{label}</Tag>;
+export const RESOLUTION_ICON: Record<Resolution, LucideIcon> = {
+  desktop: Monitor,
+  tablet: Tablet,
+  mobile: Smartphone,
 };
 
-export const getRunStatusTag = (status: RunStatus, t: TFunction) => {
-  const config: Record<RunStatus, { color: string; label: string }> = {
-    dispatched: { color: 'processing', label: t('Running') },
-    passed: { color: 'green', label: t('Passed') },
-    failed: { color: 'red', label: t('Failed') },
-    error: { color: 'red', label: t('Error') },
-    timeout: { color: 'volcano', label: t('Timeout') },
-  };
+// `country` is an ISO code for the shared CountryFlagIcon (country-flag-icons).
+export const REGION_OPTIONS: {
+  value: string;
+  label: string;
+  country: string;
+}[] = [
+  { value: 'paris', label: 'Paris', country: 'FR' },
+  { value: 'ny', label: 'New York', country: 'US' },
+  { value: 'sao-paulo', label: 'São Paulo', country: 'BR' },
+];
 
-  const { color, label } = config[status];
-  return <Tag color={color}>{label}</Tag>;
+export const resolutionLabel = (r?: Resolution): string =>
+  RESOLUTION_OPTIONS.find((o) => o.value === r)?.label ?? 'Desktop';
+
+export const regionLabel = (r?: string): string =>
+  REGION_OPTIONS.find((o) => o.value === r)?.label ?? 'Paris';
+
+export const regionCountry = (r?: string): string =>
+  REGION_OPTIONS.find((o) => o.value === r)?.country ?? 'FR';
+
+// Status chip for the tests table — a filled <Tag> tinted with brand tokens. Draft
+// stays neutral; approved indigo (idle), active green, paused orange.
+export const getStatusTag = (
+  status: TestLifecycle,
+  t: TFunction,
+  className?: string,
+) => {
+  if (status === 'draft') {
+    return (
+      <Tag variant="filled" className={className}>
+        {t('Draft')}
+      </Tag>
+    );
+  }
+  const cfg =
+    status === 'active'
+      ? {
+          label: t('Active'),
+          background: 'rgba(66, 174, 94, 0.12)',
+          color: 'var(--color-green-dark)',
+        }
+      : status === 'approved'
+        ? {
+            label: t('Approved'),
+            background: 'rgba(97, 95, 255, 0.12)',
+            color: 'var(--color-indigo)',
+          }
+        : {
+            label: t('Paused'),
+            background: 'rgba(226, 137, 64, 0.14)',
+            color: 'var(--color-orange-dark)',
+          };
+  return (
+    <Tag
+      variant="filled"
+      className={className}
+      style={{ background: cfg.background, color: cfg.color, border: 'none' }}
+    >
+      {cfg.label}
+    </Tag>
+  );
+};
+
+// Run result chip — matches getStatusTag's brand-tint style plus a leading icon so the
+// outcome reads without relying on colour alone.
+export const getRunResult = (
+  status: UiRunStatus,
+  t: TFunction,
+  className?: string,
+) => {
+  const cfg =
+    status === 'running'
+      ? {
+          label: t('Running'),
+          background: 'rgba(97, 95, 255, 0.12)',
+          color: 'var(--color-indigo)',
+          Icon: Loader,
+          spin: true,
+        }
+      : status === 'failed'
+        ? {
+            label: t('Failed'),
+            background: 'rgba(204, 0, 0, 0.1)',
+            color: 'var(--color-red)',
+            Icon: XCircle,
+          }
+        : {
+            label: t('Passed'),
+            background: 'rgba(66, 174, 94, 0.12)',
+            color: 'var(--color-green-dark)',
+            Icon: CheckCircle2,
+          };
+  const { Icon } = cfg;
+  return (
+    <Tag
+      variant="filled"
+      className={className}
+      style={{ background: cfg.background, color: cfg.color, border: 'none' }}
+    >
+      <span className="inline-flex items-center gap-1">
+        <Icon size={12} className={cfg.spin ? 'animate-spin' : ''} />
+        {cfg.label}
+      </span>
+    </Tag>
+  );
+};
+
+// Compact tag chips for a table cell: first 2 shown, the rest folded into a +N hint.
+export const RowTags = ({ tags }: { tags?: string[] }) => {
+  if (!tags || tags.length === 0)
+    return <span className="text-disabled-text">—</span>;
+  const shown = tags.slice(0, 2);
+  const rest = tags.slice(2);
+  return (
+    <div className="flex items-center gap-1 overflow-hidden">
+      {shown.map((tag) => (
+        <span
+          key={tag}
+          className="text-xs px-2 py-0.5 rounded border whitespace-nowrap bg-gray-lightest text-gray-dark"
+          style={{ borderColor: 'var(--color-gray-light)' }}
+        >
+          {tag}
+        </span>
+      ))}
+      {rest.length > 0 && (
+        <Tooltip title={rest.join(', ')}>
+          <span className="text-xs text-gray-medium shrink-0 cursor-default">
+            +{rest.length}
+          </span>
+        </Tooltip>
+      )}
+    </div>
+  );
+};
+
+export const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+export const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+export function formatTime(time: string): string {
+  const [h, m = 0] = time.split(':').map(Number);
+  const period = h < 12 ? 'AM' : 'PM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+export const TIME_OPTIONS = Array.from({ length: 24 }, (_, h) => {
+  const value = `${String(h).padStart(2, '0')}:00`;
+  return { value, label: formatTime(value) };
+});
+
+export const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+export const WEEKDAY_DAYS = [1, 2, 3, 4, 5];
+
+export function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+}
+
+// Day-of-month options for the monthly schedule (1–28, plus "last day").
+export const DOM_OPTIONS = [
+  ...Array.from({ length: 28 }, (_, i) => ({
+    value: i + 1,
+    label: `the ${ordinal(i + 1)}`,
+  })),
+  { value: 0, label: 'the last day' },
+];
+
+// The frequency picker. "Custom…" falls back to the day-by-day chooser.
+export const FREQ_OPTIONS: { value: ScheduleFreq | 'never'; label: string }[] =
+  [
+    { value: 'never', label: 'Never' },
+    { value: 'daily', label: 'Daily' },
+    { value: 'weekdays', label: 'Weekdays' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'custom', label: 'Custom…' },
+  ];
+
+// Infer the frequency from a schedule's days/dayOfMonth when `freq` is absent.
+const inferFreq = (s: Schedule): ScheduleFreq | null => {
+  if (s.dayOfMonth != null) return 'monthly';
+  if (!s.days || s.days.length === 0) return null;
+  if (s.days.length === 7) return 'daily';
+  if (s.days.length === 5 && WEEKDAY_DAYS.every((d) => s.days.includes(d)))
+    return 'weekdays';
+  if (s.days.length === 1) return 'weekly';
+  return 'custom';
+};
+
+// Classify a schedule into a frequency. A day-based frequency (weekly/custom) with no
+// days selected is treated as "not scheduled" so it never produces a malformed cron.
+export const scheduleFreq = (s?: Schedule | null): ScheduleFreq | null => {
+  if (!s) return null;
+  const freq = s.freq ?? inferFreq(s);
+  if (!freq) return null;
+  if ((freq === 'weekly' || freq === 'custom') && !s.days?.length) return null;
+  return freq;
+};
+
+export const isScheduled = (s?: Schedule | null): boolean =>
+  scheduleFreq(s) !== null;
+
+const domLabel = (dom?: number): string =>
+  dom === 0 ? 'the last day' : `the ${ordinal(dom ?? 1)}`;
+
+export const scheduleLabel = (schedule?: Schedule | null): string => {
+  const freq = scheduleFreq(schedule);
+  if (!freq || !schedule) return 'Not scheduled';
+  const at = formatTime(schedule.time);
+  switch (freq) {
+    case 'daily':
+      return `Every day · ${at}`;
+    case 'weekdays':
+      return `Weekdays · ${at}`;
+    case 'weekly':
+      return `Every ${DAY_SHORT[schedule.days[0] ?? 1]} · ${at}`;
+    case 'monthly':
+      return `Monthly on ${domLabel(schedule.dayOfMonth)} · ${at}`;
+    default:
+      return `${[...schedule.days]
+        .sort((a, b) => a - b)
+        .map((d) => DAY_SHORT[d])
+        .join(', ')} · ${at}`;
+  }
+};
+
+// Short form for the table column (full label lives in the tooltip).
+export const scheduleShort = (schedule?: Schedule | null): string => {
+  const freq = scheduleFreq(schedule);
+  if (!freq || !schedule) return 'Not scheduled';
+  const at = formatTime(schedule.time);
+  switch (freq) {
+    case 'daily':
+      return `Daily · ${at}`;
+    case 'weekdays':
+      return `Weekdays · ${at}`;
+    case 'weekly':
+      return `Weekly · ${at}`;
+    case 'monthly':
+      return `Monthly · ${at}`;
+    default:
+      return `${schedule.days.length} days · ${at}`;
+  }
 };
 
 export const formatDuration = (ms: number): string => {
@@ -36,69 +284,79 @@ export const formatDuration = (ms: number): string => {
   return `${seconds}s`;
 };
 
-// ---- Run cadence <-> cron ----
-// The backend stores schedules as standard 5-field cron strings. The UI only
-// offers a few coarse cadences, so we bucket an arbitrary cron into one of them
-// on read, and rebuild a cron on write (preserving the existing time of day).
+export const relativeTime = (ts?: number): string => {
+  if (!ts) return '—';
+  const mins = Math.round((Date.now() - ts) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+};
 
-export type Frequency = 'day' | 'week' | '2weeks' | 'month';
+// ---- Schedule <-> cron ----
+// The API stores schedules as standard 5-field cron strings. The Schedule object the
+// UI edits round-trips through cron so a schedule persists as a `cron` on the test.
 
-export const DEFAULT_FREQUENCY: Frequency = 'week';
-
-export const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
-  { value: 'day', label: 'Day' },
-  { value: 'week', label: 'Week' },
-  { value: '2weeks', label: '2 Weeks' },
-  { value: 'month', label: 'Month' },
-];
-
-/** Bucket a cron string into one of the UI cadence options. */
-export const cronToFrequency = (cron?: string | null): Frequency => {
-  if (!cron) return DEFAULT_FREQUENCY;
+export function cronToSchedule(cron?: string | null): Schedule | null {
+  if (!cron) return null;
   const parts = cron.trim().split(/\s+/);
-  if (parts.length < 5) return DEFAULT_FREQUENCY;
-  const [, , dayOfMonth, , dayOfWeek] = parts;
-  // A specific weekday -> weekly.
-  if (dayOfWeek !== '*' && dayOfWeek !== '?') return 'week';
-  // Multiple / stepped days of month -> bi-weekly.
-  if (dayOfMonth.includes(',') || dayOfMonth.includes('/')) return '2weeks';
-  // A single day of month -> monthly.
-  if (dayOfMonth !== '*' && dayOfMonth !== '?') return 'month';
-  return 'day';
-};
+  if (parts.length < 5) return null;
+  const [min, hour, dom, , dow] = parts;
+  const h = Number(hour);
+  const m = Number(min);
+  const time =
+    Number.isFinite(h) && Number.isFinite(m)
+      ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+      : '09:00';
 
-/**
- * Build a cron for a cadence, preserving the minute/hour of an existing cron so
- * we don't reset the configured time of day. Defaults to 09:00.
- */
-export const frequencyToCron = (
-  freq: Frequency,
-  baseCron?: string | null,
-): string => {
-  let minute = '0';
-  let hour = '9';
-  if (baseCron) {
-    const parts = baseCron.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      [minute, hour] = parts;
-    }
+  // Monthly — a concrete day-of-month with no weekday constraint.
+  if (dom !== '*' && dom !== '?' && (dow === '*' || dow === '?')) {
+    const dayOfMonth =
+      dom.toUpperCase() === 'L' ? 0 : Number(dom.split(',')[0]) || 1;
+    return { freq: 'monthly', days: [], dayOfMonth, time };
   }
+
+  if (dow === '*' || dow === '?')
+    return { freq: 'daily', days: ALL_DAYS, time };
+
+  const days = dow
+    .split(',')
+    .flatMap((token) => {
+      const range = token.match(/^(\d)-(\d)$/);
+      if (range) {
+        const [, a, b] = range.map(Number);
+        return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+      }
+      return [Number(token)];
+    })
+    .filter((d) => Number.isFinite(d) && d >= 0 && d <= 6);
+
+  if (days.length === 0) return { freq: 'daily', days: ALL_DAYS, time };
+  return { days, time, freq: scheduleFreq({ days, time }) ?? 'custom' };
+}
+
+export function scheduleToCron(schedule?: Schedule | null): string | null {
+  const freq = scheduleFreq(schedule);
+  if (!freq || !schedule) return null;
+  const [h, m] = schedule.time.split(':').map(Number);
   switch (freq) {
-    case 'day':
-      return `${minute} ${hour} * * *`;
-    case '2weeks':
-      return `${minute} ${hour} 1,15 * *`;
-    case 'month':
-      return `${minute} ${hour} 1 * *`;
-    case 'week':
+    case 'daily':
+      return `${m} ${h} * * *`;
+    case 'weekdays':
+      return `${m} ${h} * * 1-5`;
+    case 'monthly':
+      return `${m} ${h} ${schedule.dayOfMonth === 0 ? 'L' : (schedule.dayOfMonth ?? 1)} * *`;
+    case 'weekly':
     default:
-      return `${minute} ${hour} * * 1`;
+      return `${m} ${h} * * ${[...schedule.days].sort((a, b) => a - b).join(',')}`;
   }
-};
+}
 
 /**
- * The API stores test `steps` as free-form JSON. The UI works with a flat list
- * of step strings (one per line), so normalise whatever shape we get back.
+ * The API stores test `steps` as free-form JSON. The UI works with a flat list of
+ * step strings, so normalise whatever shape we get back.
  */
 export const stepsToLines = (steps: unknown): string[] => {
   if (!steps) return [];
