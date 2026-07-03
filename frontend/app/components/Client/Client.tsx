@@ -9,6 +9,7 @@ import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 
 import AuditView from './Audit/AuditView';
 import Billing from './Billing/Billing';
+import ClientSaas from './ClientSaas';
 import CustomFields from './CustomFields';
 import ExportedVideosList from './ExportedVideos/ExportedVideosList';
 import Integrations from './Integrations';
@@ -57,7 +58,7 @@ class Client extends React.PureComponent<any> {
       case CLIENT_TABS.VIDEOS:
         return <ExportedVideosList />;
       default:
-        return <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />;
+        return <ClientSaas activeTab={activeTab} />;
     }
   };
 
