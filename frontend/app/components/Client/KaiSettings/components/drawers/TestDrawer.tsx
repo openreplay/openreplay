@@ -28,7 +28,6 @@ import { RunData, TestCase } from '../shared/types';
 import {
   VersionLabel,
   formatDuration,
-  getRunResult,
   isScheduled,
   relativeTime,
 } from '../shared/utils';
@@ -187,15 +186,6 @@ function TestDrawer({
     .filter((r) => r.status !== 'running')
     .sort((a, b) => a.date - b.date)
     .slice(-10);
-  // the one thing worth surfacing — the most recent failure *within that same
-  // window*, so it stays consistent with what the dots show. A test with no
-  // failures in that window has nothing here (empty state instead).
-  const lastFailedRun = trend
-    .filter((r) => r.status === 'failed')
-    .reduce(
-      (latest, r) => (latest && latest.date >= r.date ? latest : r),
-      undefined as RunData | undefined,
-    );
   const settings: RunSettings = {
     envNames: test.envNames,
     resolutions: test.resolutions,
@@ -417,11 +407,10 @@ function TestDrawer({
         />
       </Section>
 
-      {/* Runs: a "last 10" trend strip inline with the section title (glanceable
-          pattern — always-red / just-started-failing / healthy), and below it just
-          the one thing worth acting on — the most recent failure. Each element is a
-          single run, not an aggregate: dots are read-only history, the failed-run
-          row opens that exact run, the trailing chevron opens the full filtered list. */}
+      {/* Runs: just the "last 10" trend strip inline with the section title
+          (glanceable pattern — always-red / just-started-failing / healthy).
+          Each icon is one run: hover for result · duration · when, click to open
+          that exact run's drawer; the trailing chevron opens the full filtered list. */}
       {(onViewRuns || onViewRun) && !creating && (
         <Section
           title={t('Runs')}
@@ -434,20 +423,26 @@ function TestDrawer({
                   // same icons as the Failed/Passed pill everywhere else (getRunResult)
                   // — a custom heavier-stroke circle here read inconsistent next to it
                   const Icon = failed ? XCircle : CheckCircle2;
+                  const info = [
+                    failed ? t('Failed') : t('Passed'),
+                    r.duration != null ? formatDuration(r.duration) : null,
+                    relativeTime(r.date),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
                   return (
-                    <Tooltip
-                      key={r.key}
-                      title={`${failed ? t('Failed') : t('Passed')} · ${relativeTime(r.date)}`}
-                    >
-                      <span
-                        className="flex items-center shrink-0"
-                        aria-label={failed ? t('Failed run') : t('Passed run')}
+                    <Tooltip key={r.key} title={info}>
+                      <button
+                        type="button"
+                        onClick={() => onViewRun?.(r)}
+                        aria-label={`${info} — ${t('View run')}`}
+                        className="flex items-center shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
                       >
                         <Icon
                           size={14}
                           className={failed ? 'text-red' : 'text-green'}
                         />
-                      </span>
+                      </button>
                     </Tooltip>
                   );
                 })}
@@ -473,51 +468,7 @@ function TestDrawer({
             <div className="text-sm text-disabled-text">
               {t('No runs yet — run now or set a schedule above.')}
             </div>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              {lastFailedRun ? (
-                <>
-                  {/* a title, not a helper line below — names the box before you
-                      read its contents, and disambiguates from "latest run" */}
-                  <span className="text-xs text-disabled-text">
-                    {t('Most recent failure')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onViewRun?.(lastFailedRun)}
-                    aria-label={t('View this failed run')}
-                    className="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 hover:bg-active-blue transition text-left cursor-pointer"
-                    style={{ borderColor: 'var(--color-gray-light)' }}
-                  >
-                    <span className="flex items-center gap-2 text-sm min-w-0">
-                      {getRunResult('failed', t)}
-                      {lastFailedRun.duration != null && (
-                        <span className="text-gray-dark whitespace-nowrap">
-                          {formatDuration(lastFailedRun.duration)}
-                        </span>
-                      )}
-                      <span className="text-disabled-text truncate">
-                        · {relativeTime(lastFailedRun.date)}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1 shrink-0 text-sm text-main">
-                      {t('View')}
-                      <ChevronRight size={15} />
-                    </span>
-                  </button>
-                </>
-              ) : trend.length > 0 ? (
-                <div
-                  className="text-sm text-disabled-text rounded-lg border px-3 py-2.5"
-                  style={{ borderColor: 'var(--color-gray-light)' }}
-                >
-                  {t('No failures in the last {{count}} runs', {
-                    count: trend.length,
-                  })}
-                </div>
-              ) : null}
-            </div>
-          )}
+          ) : null}
         </Section>
       )}
     </EntityDrawer>
