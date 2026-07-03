@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'Components/ModalContext';
 
+import { Field } from './drawers/EntityDrawer';
 import { EnvironmentVM, HttpHeader } from './shared/types';
 
 interface Props {
@@ -63,27 +64,23 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <Typography.Text type="secondary" className="text-sm!">
-          {t('Name')}
-        </Typography.Text>
+      {/* the shared Field label — same style as every run-settings field elsewhere
+          in Kai settings, not an ad-hoc one */}
+      <Field label={t('Name')}>
         <Input
           autoFocus
           value={name}
           placeholder={t('e.g. Production')}
           onChange={(e) => setName(e.target.value)}
         />
-      </div>
-      <div className="flex flex-col gap-1">
-        <Typography.Text type="secondary" className="text-sm!">
-          {t('URL')}
-        </Typography.Text>
+      </Field>
+      <Field label={t('URL')}>
         <Input
           value={url}
           placeholder="https://app.example.com"
           onChange={(e) => setUrl(e.target.value)}
         />
-      </div>
+      </Field>
 
       <div className="flex items-center gap-2">
         <Switch size="small" checked={isDefault} onChange={setIsDefault} />
@@ -104,9 +101,9 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
       {showAdvanced && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Typography.Text strong className="text-sm!">
+            <span className="text-sm font-medium text-gray-darkest">
               {t('HTTP Credentials')}
-            </Typography.Text>
+            </span>
             {/* these are the test target's creds, not the user's — keep browsers /
                 password managers from autofilling the logged-in user's own login */}
             <Input
@@ -127,9 +124,9 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Typography.Text strong className="text-sm!">
+            <span className="text-sm font-medium text-gray-darkest">
               {t('HTTP Headers')}
-            </Typography.Text>
+            </span>
             {headers.map((h, i) => (
               <div key={i} className="flex gap-2 items-center">
                 <Input

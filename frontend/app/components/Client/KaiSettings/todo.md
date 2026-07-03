@@ -48,11 +48,17 @@ a few frontend follow-ups where data exists but isn't surfaced yet. Adapters liv
 - **Run now** (tests) and **Rerun** (runs) only show a toast — no dispatch endpoint.
 - **Bulk approve/pause/resume/delete** fan out to individual `updateTest`/`deleteTest`
   calls. A batch endpoint would be cheaper.
+- **Manual test creation** ("Add test"): `POST /tests` takes no `status`, so a hand-made
+  test is created (lands `pending`) and then a follow-up `PUT` lifts it to `approved`
+  (see `TestsTab.commitCreate` + `vmToCreateRequest`). A single create-with-status would
+  drop the extra round-trip.
 
 ## Settings
-- **Default run configuration** (`Defaults.tsx`: default environment / device / region)
-  is local-only — no endpoint to store per-project run defaults, and nothing consumes
-  them when creating a test yet.
+- **Default run configuration** (`Defaults.tsx`: default environment / viewport / region)
+  now pre-fills new drafts and manually-created tests (shown as "(default)" in the run
+  settings until changed) — but it lives in `shared/uiStore.ts` (in-memory, per session)
+  because there's no endpoint to persist per-project run defaults. Wire it once the API
+  can store/return them.
 - **Notifications** (Daily / Weekly summary switches) are local-only — no
   notification-preference endpoint.
 - **Environment headers & "ignore HTTPS errors"** are stored in the environment's
@@ -74,8 +80,10 @@ a few frontend follow-ups where data exists but isn't surfaced yet. Adapters liv
 ## Agent insights
 - **Alternatives** (`TestCase.alternatives`): agent-observed branch notes rendered under a
   step in `EditableSteps`. No API field yet.
-- **Trend dots** (`lastResult` / `recent`): last-N run outcomes per test — not returned by
-  the tests endpoint.
+- **Trend dots + most-recent-failure** (test drawer "Runs" section): now derived
+  client-side from `useAllRuns` filtered by `testId` (last 10 completed runs). Works, but
+  it loads the project-wide runs page and filters in memory; a per-test recent-runs
+  endpoint (or `lastResult` / `recent` on the tests response) would avoid that.
 
 ## Known limitations
 - Tests/Runs load one API page (`limit` capped at 100) and filter/sort/paginate
@@ -100,4 +108,13 @@ a few frontend follow-ups where data exists but isn't surfaced yet. Adapters liv
 - Missing `lastResult` + `recent: RunStatus[]` props in `Test` (health/trend).
 - Missing `POST /tests/{testId}/runs` (or `/runs`) request to trigger a run now / rerun.
 - Missing bulk `PUT /tests` (or `PATCH`) request to update/delete many tests at once.
+- Missing `status` on `POST /tests` (create seeds `pending`; manual "Add test" needs a
+  second `PUT` to reach `approved` — see `TestsTab.commitCreate`).
+- Missing per-project run-defaults persistence (e.g. `GET`/`PUT /browser-tests/defaults`
+  for default environment / viewport / region — currently in-memory `shared/uiStore.ts`).
+- Missing environment-delete cascade: `DELETE /environments/{id}` 409s while a test
+  references it (no server-side detach / "pause tests & delete"), so the UI asks the user
+  to reassign first.
+- Missing per-test recent-runs (or `lastResult` + `recent`) so the test-drawer trend strip
+  doesn't have to load & filter the project-wide runs page client-side.
 - Missing notification-preferences request (e.g. `GET`/`PUT /browser-tests/settings`).

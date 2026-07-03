@@ -2,10 +2,10 @@ import { Drawer, Tooltip } from 'antd';
 import {
   FlaskConical,
   LucideIcon,
-  Pencil,
   Play,
   Plus,
   Sparkles,
+  SquarePen,
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -151,30 +151,34 @@ function EditableTitle({
     setEditing(false);
   };
 
+  // both states live in the same fixed-height row so toggling edit never grows the
+  // header; mr-4 keeps the input clear of the header action buttons
   if (editing) {
     return (
-      <input
-        autoFocus
-        value={val}
-        aria-label={t('Test name')}
-        onChange={(e) => setVal(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commit();
-          if (e.key === 'Escape') {
-            setVal(title);
-            setEditing(false);
-          }
-        }}
-        className="text-xl font-semibold text-black leading-tight mt-1 w-full rounded border px-2 py-0.5 outline-none"
-        style={{ borderColor: 'var(--color-gray-light)' }}
-      />
+      <div className="mt-1 h-8 flex items-center min-w-0 mr-4">
+        <input
+          autoFocus
+          value={val}
+          aria-label={t('Test name')}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') {
+              setVal(title);
+              setEditing(false);
+            }
+          }}
+          className="text-xl font-semibold text-black leading-tight w-full h-8 rounded border px-2 -mx-2 py-0 outline-none"
+          style={{ borderColor: 'var(--color-gray-light)' }}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="group flex items-center gap-2 mt-1 min-w-0">
-      <span className="text-xl font-semibold text-black leading-tight break-words">
+    <div className="group mt-1 h-8 flex items-center gap-2 min-w-0 mr-4">
+      <span className="text-xl font-semibold text-black leading-tight truncate">
         {title}
       </span>
       <Tooltip title={t('Rename')}>
@@ -184,7 +188,7 @@ function EditableTitle({
           onClick={() => setEditing(true)}
           className="shrink-0 text-disabled-text hover:text-gray-dark opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          <Pencil size={15} />
+          <SquarePen size={15} />
         </button>
       </Tooltip>
     </div>
@@ -244,7 +248,10 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-gray-dark">{label}</span>
+      {/* matches the app's Account-settings field-label darkness (gray-dark read too
+          light next to it) — kept here as the one shared style every field label in
+          Kai settings should use */}
+      <span className="text-sm font-medium text-gray-darkest">{label}</span>
       {children}
     </div>
   );
