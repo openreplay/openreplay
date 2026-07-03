@@ -36,6 +36,6 @@ func (b *assetsBatchIteratorImpl) Iterate(batchData []byte, batch *BatchInfo) {
 	case AssetsBatch:
 		b.batchHandler(batchData, batch)
 	default:
-		b.log.Error(ctx, "unknown batch type: %d, info: %s", batchType, batch)
+		b.log.Error(ctx, "unknown batch type: %d, info: %s", batchType, batch.Info())
 	}
 }

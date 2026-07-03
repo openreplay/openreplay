@@ -54,7 +54,10 @@ func (h *TapRageDetector) Handle(message Message, timestamp uint64) Message {
 	var event Message = nil
 	switch message.TypeID() {
 	case MsgMobileClickEvent:
-		m := message.Decode().(*MobileClickEvent)
+		m, ok := message.Decode().(*MobileClickEvent)
+		if !ok {
+			return nil
+		}
 		if h.lastTimestamp+TapTimeDiff < m.Timestamp && h.lastLabel == m.Label {
 			h.lastTimestamp = m.Timestamp
 			h.countsInARow += 1

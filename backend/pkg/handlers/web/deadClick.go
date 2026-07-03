@@ -71,7 +71,10 @@ func (d *DeadClickDetector) Handle(message Message, timestamp uint64) Message {
 	d.lastTimestamp = timestamp
 	switch message.TypeID() {
 	case MsgMouseClick:
-		msg := message.Decode().(*MouseClick)
+		msg, ok := message.Decode().(*MouseClick)
+		if !ok {
+			return nil
+		}
 		if msg.Label == "" {
 			return nil
 		}
@@ -85,7 +88,10 @@ func (d *DeadClickDetector) Handle(message Message, timestamp uint64) Message {
 		d.lastMessageID = message.MsgID()
 		return event
 	case MsgSetInputTarget:
-		msg := message.Decode().(*SetInputTarget)
+		msg, ok := message.Decode().(*SetInputTarget)
+		if !ok {
+			return nil
+		}
 		d.addInputID(msg.ID)
 	case MsgCreateDocument:
 		d.clearInputIDs()
