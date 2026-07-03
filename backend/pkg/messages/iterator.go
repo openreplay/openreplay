@@ -127,6 +127,9 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 }
 
 func (i *messageIteratorImpl) getMobileTimestamp(msg Message) uint64 {
+	if raw, ok := msg.(*RawMessage); ok {
+		return raw.MobileTimestamp()
+	}
 	return GetTimestamp(msg)
 }
 
