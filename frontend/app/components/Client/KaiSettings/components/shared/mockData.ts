@@ -170,6 +170,8 @@ export const MOCK_TEST_CASES: TestCase[] = [
 
   // ---- active / paused tests -------------------------------------------
   {
+    // the flow changed in real sessions → a v2 is proposed and waits for review;
+    // covers all three change kinds (added / removed / updated) in one diff
     key: 'tc-checkout',
     title: 'Checkout flow',
     status: 'active',
@@ -188,6 +190,23 @@ export const MOCK_TEST_CASES: TestCase[] = [
       'Submit the order',
       'Verify the order confirmation page',
     ],
+    version: 1,
+    pendingRevision: {
+      toVersion: 2,
+      detectedAt: ago(3),
+      changes: [
+        // checkout now opens straight from the cart popover
+        { type: 'removed', index: 1 },
+        { type: 'added', afterIndex: 2, text: 'Enter a promo code' },
+        // reworded step = remove + add, git-style (no "updated" kind)
+        { type: 'removed', index: 3 },
+        {
+          type: 'added',
+          afterIndex: 3,
+          text: 'Choose a payment method and submit the order',
+        },
+      ],
+    },
   },
   {
     key: 'tc-login',
@@ -209,6 +228,7 @@ export const MOCK_TEST_CASES: TestCase[] = [
     ],
   },
   {
+    // already revised once (v2) — shows the version label + switcher with one snapshot
     key: 'tc-search',
     title: 'Search & filter',
     status: 'active',
@@ -224,8 +244,22 @@ export const MOCK_TEST_CASES: TestCase[] = [
       'Select a suggestion',
       'Apply a price filter',
     ],
+    version: 2,
+    history: [
+      {
+        version: 1,
+        savedAt: ago(12 * 24),
+        steps: [
+          'Open the main search bar',
+          'Type a product keyword',
+          'Apply a price filter',
+        ],
+      },
+    ],
   },
   {
+    // twice-revised (v3) — exercises the full version dropdown and the per-step
+    // history popover (several steps changed wording across v1 → v2 → v3)
     key: 'tc-billing',
     title: 'Update billing card',
     status: 'active',
@@ -240,6 +274,29 @@ export const MOCK_TEST_CASES: TestCase[] = [
       'Click update card',
       'Enter new card details',
       'Save and verify confirmation',
+    ],
+    version: 3,
+    history: [
+      {
+        version: 1,
+        savedAt: ago(30 * 24),
+        steps: [
+          'Open account settings',
+          'Click update card',
+          'Enter card details',
+          'Save the card',
+        ],
+      },
+      {
+        version: 2,
+        savedAt: ago(10 * 24),
+        steps: [
+          'Open billing settings',
+          'Click update card',
+          'Enter new card details',
+          'Save the card',
+        ],
+      },
     ],
   },
   {
@@ -276,7 +333,8 @@ export const MOCK_TEST_CASES: TestCase[] = [
     ],
   },
   {
-    key: 'tc-2fa',
+    // (was a duplicate of the approved tc-2fa key — antd Table needs unique rowKeys)
+    key: 'tc-2fa-active',
     title: 'Enable two-factor auth',
     status: 'active',
     tags: ['Auth'],
@@ -305,6 +363,8 @@ export const MOCK_TEST_CASES: TestCase[] = [
     steps: ['Open billing history', 'Pick an invoice', 'Download the PDF'],
   },
   {
+    // v2 with ANOTHER revision pending (v3) — versioned tests keep evolving; this
+    // one's diff is a single added step, so reviews aren't always multi-change
     key: 'tc-profile',
     title: 'Upload profile photo',
     status: 'active',
@@ -320,6 +380,21 @@ export const MOCK_TEST_CASES: TestCase[] = [
       'Upload an image',
       'Save and verify it shows',
     ],
+    version: 2,
+    history: [
+      {
+        version: 1,
+        savedAt: ago(20 * 24),
+        steps: ['Open profile settings', 'Upload an image', 'Save'],
+      },
+    ],
+    pendingRevision: {
+      toVersion: 3,
+      detectedAt: ago(26),
+      changes: [
+        { type: 'added', afterIndex: 2, text: 'Crop the image to fit' },
+      ],
+    },
   },
 
   // ---- paused ----------------------------------------------------------
@@ -754,6 +829,7 @@ export const MOCK_RUNS: RunData[] = [
   {
     key: 'r4',
     testName: 'Search & filter',
+    version: 2,
     date: ago(7),
     duration: 1800,
     status: 'passed',
@@ -770,6 +846,7 @@ export const MOCK_RUNS: RunData[] = [
   {
     key: 'r5',
     testName: 'Update billing card',
+    version: 3,
     date: ago(28),
     duration: 4200,
     status: 'failed',
@@ -959,10 +1036,19 @@ export const MOCK_RUNS: RunData[] = [
     ] as const;
     const d = defs[i % defs.length];
     const failed = i % 5 === 2; // every 5th-ish run failed
+    const date = ago(58 + i * 6);
+    // versioned tests: runs older than the version bump executed the previous steps
+    const rv = {
+      'Search & filter': { current: 2, since: ago(12 * 24) },
+      'Update billing card': { current: 3, since: ago(10 * 24) },
+    }[d.testName as string];
     return {
       key: `r${10 + i}`,
       testName: d.testName,
-      date: ago(58 + i * 6),
+      ...(rv
+        ? { version: date >= rv.since ? rv.current : rv.current - 1 }
+        : {}),
+      date,
       duration: 1500 + ((i * 370) % 4200),
       status: failed ? 'failed' : 'passed',
       ...(failed

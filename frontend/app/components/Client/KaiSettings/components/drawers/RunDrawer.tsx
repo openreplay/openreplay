@@ -29,6 +29,7 @@ import CountryFlagIcon from 'Shared/CountryFlagIcon';
 import { ConsoleLog, NetworkRequest, RunData, TestStep } from '../shared/types';
 import {
   RESOLUTION_ICON,
+  VersionLabel,
   formatDuration,
   regionCountry,
   regionLabel,
@@ -558,7 +559,17 @@ function RunDrawer({ run, open, onClose }: Props) {
     >
       {banner}
 
-      <Section title={`${t('Steps')} · ${total}`}>
+      <Section
+        title={
+          // which step version this run executed — same chip as the tests table
+          <span className="flex items-center gap-1.5">
+            {t('Steps')}
+            <span className="text-gray-medium font-normal">·</span>
+            {total}
+            <VersionLabel version={run.version} always />
+          </span>
+        }
+      >
         {/* bounded like the test drawer — Activity stays reachable on long runs */}
         <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
           {run.steps.map((step, idx) => renderStep(step, idx))}

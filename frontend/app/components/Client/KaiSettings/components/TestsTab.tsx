@@ -20,22 +20,27 @@ import { Pagination } from 'UI';
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
 import './kai-table.css';
+import { needsReview } from './shared/revisions';
 import { hasNoEnvironment, kaiStore, useKaiStore } from './shared/store';
-import { RunData, TestCase, TestLifecycle } from './shared/types';
+import { RunData, TestCase } from './shared/types';
 import {
+  DisplayStatus,
   RowTags,
+  VersionLabel,
+  displayStatus,
   getStatusTag,
   isScheduled,
   scheduleLabel,
   scheduleShort,
 } from './shared/utils';
 
-type StatusTab = 'all' | TestLifecycle;
+type StatusTab = 'all' | DisplayStatus;
 const STATUS_ORDER: Record<string, number> = {
   draft: 0,
-  approved: 1,
-  active: 2,
-  paused: 3,
+  needs_review: 1,
+  approved: 2,
+  active: 3,
+  paused: 4,
 };
 
 let manualCounter = 0;
@@ -62,6 +67,13 @@ function TestsTab() {
   useEffect(() => {
     setPage(1);
   }, [query, statusTab, envFilter, tagFilter]);
+
+  // the Needs review tab only exists while something needs review — reviewing the
+  // last one from inside that tab falls back to All instead of an empty filter
+  const anyReview = tests.some((tc) => needsReview(tc));
+  useEffect(() => {
+    if (statusTab === 'needs_review' && !anyReview) setStatusTab('all');
+  }, [statusTab, anyReview]);
 
   const updateTest = (updated: TestCase) =>
     setTests((prev) =>
@@ -124,12 +136,31 @@ function TestsTab() {
     kaiStore.openRunInRunsTab(run);
   };
 
+  // Duplicate (row ellipsis): copies the steps only — no environment, schedule or
+  // tags travel with it — and lands as a draft at v1, floating to the top.
+  const duplicateTest = (tc: TestCase) => {
+    const copy: TestCase = {
+      key: `test-copy-${(manualCounter += 1)}-${Date.now()}`,
+      title: `${tc.title} (copy)`,
+      steps: [...tc.steps],
+      status: 'draft',
+      isNew: true,
+    };
+    setTests((prev) => [copy, ...prev]);
+    message.success(t('Duplicated as a draft'));
+  };
+
   const openTest = tests.find((tc) => tc.key === openKey) ?? null;
 
-  const draftCount = tests.filter((tc) => tc.status === 'draft').length;
-  const approvedCount = tests.filter((tc) => tc.status === 'approved').length;
-  const activeCount = tests.filter((tc) => tc.status === 'active').length;
-  const pausedCount = tests.filter((tc) => tc.status === 'paused').length;
+  // counts follow the DISPLAY status — a test with a pending revision counts under
+  // Needs review, not under its underlying lifecycle status
+  const countOf = (s: DisplayStatus) =>
+    tests.filter((tc) => displayStatus(tc) === s).length;
+  const draftCount = countOf('draft');
+  const reviewCount = countOf('needs_review');
+  const approvedCount = countOf('approved');
+  const activeCount = countOf('active');
+  const pausedCount = countOf('paused');
 
   const envNames = Array.from(
     new Set(tests.flatMap((tc) => tc.envNames ?? [])),
@@ -144,15 +175,18 @@ function TestsTab() {
       arr = arr.filter((tc) =>
         tc.title.toLowerCase().includes(query.toLowerCase()),
       );
-    if (statusTab !== 'all') arr = arr.filter((tc) => tc.status === statusTab);
+    if (statusTab !== 'all')
+      arr = arr.filter((tc) => displayStatus(tc) === statusTab);
     if (envFilter !== 'all')
       arr = arr.filter((tc) => (tc.envNames ?? []).includes(envFilter));
     if (tagFilter !== 'all')
       arr = arr.filter((tc) => (tc.tags ?? []).includes(tagFilter));
-    // drafts float to the top by default; column sort overrides this on click
+    // needs-attention rows float to the top by default — drafts first, then tests
+    // waiting on a revision review; column sort overrides this on click
     const drafts = arr.filter((tc) => tc.status === 'draft');
-    const rest = arr.filter((tc) => tc.status !== 'draft');
-    return [...drafts, ...rest];
+    const review = arr.filter((tc) => tc.status !== 'draft' && needsReview(tc));
+    const rest = arr.filter((tc) => tc.status !== 'draft' && !needsReview(tc));
+    return [...drafts, ...review, ...rest];
   }, [tests, query, statusTab, envFilter, tagFilter]);
 
   const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -223,6 +257,21 @@ function TestsTab() {
         </span>
       ),
     },
+    // only appears when something actually needs review — a permanently-empty tab
+    // would read as one more thing to worry about
+    ...(reviewCount > 0
+      ? [
+          {
+            value: 'needs_review',
+            label: (
+              <span>
+                {t('Needs review')}
+                {faded(reviewCount)}
+              </span>
+            ),
+          },
+        ]
+      : []),
     {
       value: 'approved',
       label: (
@@ -260,6 +309,15 @@ function TestsTab() {
         { type: 'divider' as const },
         { key: 'dismiss', label: t('Dismiss'), danger: true },
       ];
+    } else if (needsReview(tc)) {
+      // a pending revision suspends the run controls — reviewing is the only way
+      // forward, so the menu leads with it
+      items = [
+        { key: 'open', label: t('Review changes') },
+        { key: 'duplicate', label: t('Duplicate') },
+        { type: 'divider' as const },
+        { key: 'delete', label: t('Delete'), danger: true },
+      ];
     } else {
       // state-dependent run controls, then Settings, then Delete
       const controls: {
@@ -294,6 +352,7 @@ function TestsTab() {
       items = [
         ...controls,
         { key: 'open', label: t('Settings') },
+        { key: 'duplicate', label: t('Duplicate') },
         { type: 'divider' as const },
         { key: 'delete', label: t('Delete'), danger: true },
       ];
@@ -305,6 +364,7 @@ function TestsTab() {
         if (key === 'open') openRow(tc);
         else if (key === 'schedule') openSchedule(tc);
         else if (key === 'unschedule') unschedule(tc);
+        else if (key === 'duplicate') duplicateTest(tc);
         else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
         else if (key === 'resume') updateTest({ ...tc, status: 'active' });
         else if (key === 'dismiss' || key === 'delete') removeTest(tc.key);
@@ -321,8 +381,17 @@ function TestsTab() {
       render: (title: string, tc) => (
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-medium truncate">{title}</span>
-          {tc.status === 'draft' && tc.isNew && (
-            <Tooltip title={t('New — not reviewed yet')}>
+          <VersionLabel version={tc.version} />
+          {/* the same "something new is waiting" dot as new drafts — a pending
+              revision is new until reviewed (no row tint here, though) */}
+          {(needsReview(tc) || (tc.status === 'draft' && tc.isNew)) && (
+            <Tooltip
+              title={
+                needsReview(tc)
+                  ? t('New version — not reviewed yet')
+                  : t('New — not reviewed yet')
+              }
+            >
               <span className="shrink-0 flex items-center">
                 <Badge color="var(--color-main)" />
               </span>
@@ -386,10 +455,11 @@ function TestsTab() {
     {
       title: t('Status'),
       dataIndex: 'status',
-      width: 110,
-      sorter: (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status],
+      width: 120,
+      sorter: (a, b) =>
+        STATUS_ORDER[displayStatus(a)] - STATUS_ORDER[displayStatus(b)],
       showSorterTooltip: false,
-      render: (status: TestLifecycle) => getStatusTag(status, t),
+      render: (_: unknown, tc) => getStatusTag(displayStatus(tc), t),
     },
     {
       title: '',
@@ -399,9 +469,16 @@ function TestsTab() {
       render: (_: unknown, tc) => (
         <div className="flex items-center justify-end">
           {tc.status !== 'draft' && (
-            <Tooltip title={t('Run now')}>
+            <Tooltip
+              title={
+                needsReview(tc)
+                  ? t('Paused until the new version is reviewed')
+                  : t('Run now')
+              }
+            >
               <Button
                 type="text"
+                disabled={needsReview(tc)}
                 icon={<Play size={16} />}
                 aria-label={t('Run now')}
                 onClick={(e) => {
