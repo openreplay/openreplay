@@ -46,7 +46,7 @@ interface Props {
   /** rendered on the right of the section header (version switcher / summary) */
   headerAction?: React.ReactNode;
   /** section title override (version review: "Steps · V1 → V2") */
-  title?: string;
+  title?: React.ReactNode;
   /** version-review mode: rows carry proposed add/remove markers but the whole list
    *  stays fully editable, exactly like a draft — mutations flow through
    *  onItemsChange instead of onStepsChange */

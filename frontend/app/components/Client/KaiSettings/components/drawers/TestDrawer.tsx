@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  MoveRight,
   Pause,
   Play,
   Trash2,
@@ -26,6 +27,7 @@ import {
 import { hasNoEnvironment } from '../shared/store';
 import { RunData, TestCase } from '../shared/types';
 import {
+  VersionLabel,
   formatDuration,
   getRunResult,
   isScheduled,
@@ -333,7 +335,16 @@ function TestDrawer({
         <EditableSteps
           steps={[]}
           bounded
-          title={`${t('Steps')} · V${version} → V${revision.toVersion}`}
+          title={
+            // same version chips as the table's title label, gray arrow between
+            <span className="flex items-center gap-1.5">
+              {t('Steps')}
+              <span className="text-gray-medium font-normal">·</span>
+              <VersionLabel version={version} always />
+              <MoveRight size={15} className="text-gray-medium" />
+              <VersionLabel version={revision.toVersion} always />
+            </span>
+          }
           headerAction={reviewSummary}
           reviewItems={reviewItems}
           onItemsChange={setReviewItems}
@@ -342,7 +353,13 @@ function TestDrawer({
         />
       ) : viewedSnapshot ? (
         <Section
-          title={`${t('Steps')} · V${viewedSnapshot.version}`}
+          title={
+            <span className="flex items-center gap-1.5">
+              {t('Steps')}
+              <span className="text-gray-medium font-normal">·</span>
+              <VersionLabel version={viewedSnapshot.version} always />
+            </span>
+          }
           action={versionSwitcher}
         >
           <div

@@ -161,8 +161,15 @@ export const getRunResult = (
 
 // Muted version tag next to a test's title — only from v2 up ("v1" everywhere would
 // be noise; a version only becomes interesting once the steps have actually changed).
-export const VersionLabel = ({ version }: { version?: number }) => {
-  if (!version || version < 2) return null;
+// `always` shows V1 too — for places comparing versions (the review's V1 → V2).
+export const VersionLabel = ({
+  version,
+  always,
+}: {
+  version?: number;
+  always?: boolean;
+}) => {
+  if (!version || (!always && version < 2)) return null;
   return (
     <span
       className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium"

@@ -198,7 +198,7 @@ export function Section({
   children,
   className = '',
 }: {
-  title: string;
+  title: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
