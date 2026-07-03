@@ -349,11 +349,10 @@ function TestDrawer({
         <Section
           title={
             // an approved version is history — read-only, no way back; the version
-            // dropdown is the only control. The whole story fits the title line.
+            // dropdown already names it (no chip), the rest fits the title line.
             <span className="flex items-center gap-1.5">
               {t('Steps')}
               <span className="text-gray-medium font-normal">·</span>
-              <VersionLabel version={viewedSnapshot.version} always />
               <span className="text-sm text-disabled-text font-normal">
                 {t('saved {{date}} · read-only', {
                   date: versionDate(viewedSnapshot.savedAt),
