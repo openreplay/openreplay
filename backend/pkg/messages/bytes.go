@@ -26,7 +26,7 @@ type bytesReaderImpl struct {
 	curr int64
 }
 
-func NewBytesReader(data []byte) BytesReader {
+func NewBytesReader(data []byte) *bytesReaderImpl {
 	return &bytesReaderImpl{
 		data: data,
 	}

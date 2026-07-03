@@ -20,7 +20,7 @@ func NewMessageReader(data []byte) MessageReader {
 
 type messageReaderImpl struct {
 	data     []byte
-	reader   BytesReader
+	reader   *bytesReaderImpl
 	msgType  uint64
 	msgSize  uint64
 	msgBody  []byte

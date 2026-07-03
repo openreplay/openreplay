@@ -14,7 +14,8 @@ func (m *RawMessage) Encode() []byte {
 }
 
 func (m *RawMessage) Decode() Message {
-	msg, err := ReadMessage(m.tp, NewBytesReader(m.data[1:]))
+	reader := bytesReaderImpl{data: m.data[1:]}
+	msg, err := ReadMessage(m.tp, &reader)
 	if err != nil {
 		m.decodeErr = err
 		*m.broken = true
