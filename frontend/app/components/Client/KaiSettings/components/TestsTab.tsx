@@ -382,8 +382,16 @@ function TestsTab() {
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-medium truncate">{title}</span>
           <VersionLabel version={tc.version} />
-          {tc.status === 'draft' && tc.isNew && (
-            <Tooltip title={t('New — not reviewed yet')}>
+          {/* the same "something new is waiting" dot as new drafts — a pending
+              revision is new until reviewed (no row tint here, though) */}
+          {(needsReview(tc) || (tc.status === 'draft' && tc.isNew)) && (
+            <Tooltip
+              title={
+                needsReview(tc)
+                  ? t('New version — not reviewed yet')
+                  : t('New — not reviewed yet')
+              }
+            >
               <span className="shrink-0 flex items-center">
                 <Badge color="var(--color-main)" />
               </span>
