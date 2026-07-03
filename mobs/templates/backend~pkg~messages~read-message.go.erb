@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 <% $messages.each do |msg| %>
-func Decode<%= msg.name %>(reader BytesReader) (Message, error) {
+func Decode<%= msg.name %>(reader *bytesReaderImpl) (Message, error) {
     var err error = nil
     msg := &<%= msg.name %>{}
     <%= msg.attributes.map { |attr|
@@ -15,7 +15,7 @@ func Decode<%= msg.name %>(reader BytesReader) (Message, error) {
         return msg, err
 }
 <% end %>
-func ReadMessage(t uint64, reader BytesReader) (Message, error) {
+func ReadMessage(t uint64, reader *bytesReaderImpl) (Message, error) {
 	switch t {<% $messages.each do |msg| %>
 	case <%= msg.id %>:
 		return Decode<%= msg.name %>(reader)<% end %>

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
+	"math/bits"
 )
 
 var (
@@ -52,12 +52,10 @@ func WriteUint(v uint64, buf []byte, p int) int {
 }
 
 func ByteSizeUint(v uint64) int {
-	if v == 0 {
+	if v < 0x80 {
 		return 1
 	}
-	nBits := math.Floor(math.Log2(float64(v))) + 1
-	nBytes := math.Ceil(nBits / 7)
-	return int(nBytes)
+	return (bits.Len64(v) + 6) / 7
 }
 
 func ReadInt(reader io.Reader) (int64, error) {
