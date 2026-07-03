@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  History,
   Image as ImageIcon,
   Images,
   Info,
@@ -468,6 +469,13 @@ function RunDrawer({ run, open, onClose }: Props) {
           <span className="flex items-center gap-1.5">
             <Server size={14} /> {run.envName ?? '—'}
           </span>
+          {run.version != null && run.version > 1 && (
+            <Tooltip title={t('Step version this run executed')}>
+              <span className="flex items-center gap-1.5 cursor-default">
+                <History size={14} /> v{run.version}
+              </span>
+            </Tooltip>
+          )}
           <span className="flex items-center gap-1.5">
             <ResIcon size={14} /> {resolutionLabel(run.resolution)}
           </span>

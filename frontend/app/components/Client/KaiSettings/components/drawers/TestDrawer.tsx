@@ -1,17 +1,26 @@
-import { Button, Popconfirm, Tooltip, message } from 'antd';
+import { Button, Dropdown, Popconfirm, Tooltip, message } from 'antd';
 import {
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Pause,
   Play,
   Trash2,
   XCircle,
 } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MOCK_RUNS } from '../shared/mockData';
+import {
+  applyRevision,
+  keepCurrentVersion,
+  resolveSteps,
+  restoreVersion,
+  stepHistory,
+  testVersion,
+} from '../shared/revisions';
 import { hasNoEnvironment } from '../shared/store';
 import { RunData, TestCase } from '../shared/types';
 import {
@@ -22,7 +31,11 @@ import {
 } from '../shared/utils';
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
+import ReviewSteps from './ReviewSteps';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
+
+const versionDate = (ts: number): string =>
+  new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
 interface Props {
   test: TestCase | null;
@@ -60,6 +73,18 @@ function TestDrawer({
   const { t } = useTranslation();
   const settingsRef = useRef<HTMLDivElement>(null);
 
+  // review state: which proposed changes were turned off, and inline edits to the
+  // proposed rows — reset whenever another test (or another revision) opens
+  const [discarded, setDiscarded] = useState<Set<number>>(new Set());
+  const [edits, setEdits] = useState<Map<number, string>>(new Map());
+  // version switcher: non-null = viewing an older read-only snapshot
+  const [viewVersion, setViewVersion] = useState<number | null>(null);
+  useEffect(() => {
+    setDiscarded(new Set());
+    setEdits(new Map());
+    setViewVersion(null);
+  }, [test?.key, test?.pendingRevision]);
+
   // jump to the schedule when opened via the Schedule action
   useEffect(() => {
     if (open && focusSchedule && settingsRef.current) {
@@ -77,6 +102,78 @@ function TestDrawer({
   if (!test) return null;
 
   const paused = test.status === 'paused';
+  const revision = test.pendingRevision;
+  const version = testVersion(test);
+  const history = test.history ?? [];
+  const viewedSnapshot =
+    viewVersion != null
+      ? history.find((h) => h.version === viewVersion)
+      : undefined;
+
+  // ---- pending revision (needs review) ---------------------------------
+  const toggleChange = (changeIdx: number) =>
+    setDiscarded((prev) => {
+      const next = new Set(prev);
+      if (next.has(changeIdx)) next.delete(changeIdx);
+      else next.add(changeIdx);
+      return next;
+    });
+  const editChange = (changeIdx: number, text: string) =>
+    setEdits((prev) => new Map(prev).set(changeIdx, text));
+  const saveRevision = () => {
+    if (!revision) return;
+    const resolved = resolveSteps(test.steps, revision.changes, discarded, edits);
+    onChange(applyRevision(test, resolved, Date.now()));
+    message.success(
+      test.status === 'active'
+        ? t('Saved as v{{v}} — schedule resumed', { v: revision.toVersion })
+        : t('Saved as v{{v}}', { v: revision.toVersion }),
+    );
+  };
+  const keepVersion = () => {
+    if (!revision) return;
+    onChange(keepCurrentVersion(test));
+    message.success(t('Kept v{{v}}', { v: version }));
+  };
+
+  // ---- version switcher / restore --------------------------------------
+  const restore = (v: number) => {
+    onChange(restoreVersion(test, v, Date.now()));
+    setViewVersion(null);
+    message.success(t('Restored as v{{v}}', { v: version + 1 }));
+  };
+  const versionMenu = {
+    items: [
+      {
+        key: String(version),
+        label: `v${version} · ${t('Current')}`,
+      },
+      ...[...history]
+        .sort((a, b) => b.version - a.version)
+        .map((h) => ({
+          key: String(h.version),
+          label: `v${h.version} · ${versionDate(h.savedAt)}`,
+        })),
+    ],
+    selectedKeys: [String(viewVersion ?? version)],
+    onClick: ({ key }: { key: string }) =>
+      setViewVersion(Number(key) === version ? null : Number(key)),
+  };
+  // the version chip + dropdown next to the Steps title — only once v2 exists
+  const versionSwitcher =
+    history.length > 0 ? (
+      <Dropdown menu={versionMenu} trigger={['click']} placement="bottomRight">
+        <button
+          type="button"
+          aria-label={t('Switch version')}
+          className="flex items-center gap-1 text-sm text-gray-dark border rounded px-2 py-0.5 hover:bg-gray-lightest"
+          style={{ borderColor: 'var(--color-gray-light)' }}
+        >
+          v{viewVersion ?? version}
+          <ChevronDown size={13} className="text-gray-medium" />
+        </button>
+      </Dropdown>
+    ) : undefined;
   // a paused test with no environment can't resume until one is set below
   const resumeBlocked = paused && hasNoEnvironment(test);
   const runs = MOCK_RUNS.filter((r) => r.testName === test.title);
@@ -128,16 +225,25 @@ function TestDrawer({
       eyebrow={
         creating
           ? `${t('Test')} · ${t('New')}`
-          : `${t('Test')} · ${
-              paused
-                ? t('Paused')
-                : test.status === 'approved'
-                  ? t('Approved')
-                  : t('Active')
-            }`
+          : revision
+            ? `${t('Test')} · ${t('Needs review')}`
+            : `${t('Test')} · ${
+                paused
+                  ? t('Paused')
+                  : test.status === 'approved'
+                    ? t('Approved')
+                    : t('Active')
+              }${version > 1 ? ` · v${version}` : ''}`
       }
       headerActions={
-        creating ? undefined : (
+        creating ? undefined : revision ? (
+          // a pending revision pauses the runs — nothing to start until it's reviewed
+          <Tooltip title={t('Runs are paused until the new version is reviewed.')}>
+            <Button size="small" disabled icon={<Play size={13} />}>
+              {t('Run now')}
+            </Button>
+          </Tooltip>
+        ) : (
         <div className="flex items-center gap-2">
           {/* paused: resuming is the main intent, so Resume takes the primary slot */}
           <Button
@@ -182,6 +288,20 @@ function TestDrawer({
               {t('Create test')}
             </Button>
           </div>
+        ) : revision ? (
+          // reviewing: stay on the current version, or save the reviewed one
+          <div className="flex items-center justify-between">
+            <Button type="text" onClick={keepVersion}>
+              {t('Keep v{{v}}', { v: version })}
+            </Button>
+            <Button
+              type="primary"
+              icon={<Check size={15} />}
+              onClick={saveRevision}
+            >
+              {t('Save v{{v}}', { v: revision.toVersion })}
+            </Button>
+          </div>
         ) : (
           <Popconfirm
             title={t('Delete this test?')}
@@ -197,12 +317,72 @@ function TestDrawer({
         )
       }
     >
-      {/* bounded: run settings / tags / runs stay reachable even with 50 steps */}
-      <EditableSteps
-        steps={test.steps}
-        bounded
-        onStepsChange={(steps) => onChange({ ...test, steps })}
-      />
+      {/* the steps section wears three hats: reviewing a proposed version (diff),
+          viewing an older snapshot (read-only), or plain editing */}
+      {revision ? (
+        <ReviewSteps
+          steps={test.steps}
+          revision={revision}
+          fromVersion={version}
+          discarded={discarded}
+          edits={edits}
+          onToggle={toggleChange}
+          onEdit={editChange}
+        />
+      ) : viewedSnapshot ? (
+        <Section
+          title={`${t('Steps')} · v${viewedSnapshot.version}`}
+          action={versionSwitcher}
+        >
+          <div
+            className="mb-2 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 bg-gray-lightest"
+            style={{ borderColor: 'var(--color-gray-light)' }}
+          >
+            <span className="text-sm text-gray-dark">
+              {t('Viewing v{{v}} · saved {{date}} · read-only', {
+                v: viewedSnapshot.version,
+                date: versionDate(viewedSnapshot.savedAt),
+              })}
+            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button size="small" onClick={() => setViewVersion(null)}>
+                {t('Back to v{{v}}', { v: version })}
+              </Button>
+              <Button
+                size="small"
+                type="primary"
+                onClick={() => restore(viewedSnapshot.version)}
+              >
+                {t('Restore')}
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
+            {viewedSnapshot.steps.map((step, idx) => (
+              <div
+                key={idx}
+                className="flex items-start gap-2.5 rounded px-1 -mx-1 py-1.5"
+              >
+                <span className="w-5 h-6 flex items-center justify-center shrink-0 leading-6 text-sm text-disabled-text">
+                  {idx + 1}
+                </span>
+                <span className="flex-1 text-[15px] leading-6 break-words text-gray-dark">
+                  {step}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : (
+        /* bounded: run settings / tags / runs stay reachable even with 50 steps */
+        <EditableSteps
+          steps={test.steps}
+          bounded
+          headerAction={versionSwitcher}
+          historyFor={history.length > 0 ? (idx) => stepHistory(test, idx) : undefined}
+          onStepsChange={(steps) => onChange({ ...test, steps })}
+        />
+      )}
 
       <div ref={settingsRef}>
         <Section title={t('Run settings')}>

@@ -16,6 +16,7 @@ import {
   RunStatus,
   Schedule,
   ScheduleFreq,
+  TestCase,
   TestLifecycle,
 } from './types';
 
@@ -52,11 +53,19 @@ export const regionLabel = (r?: string): string =>
 export const regionCountry = (r?: string): string =>
   REGION_OPTIONS.find((o) => o.value === r)?.country ?? 'FR';
 
+// What the table shows as the status. A pending step revision overrides the
+// lifecycle: the test reads "Needs review" (and its scheduled runs pause) until the
+// proposed version is reviewed — then it falls back to its real lifecycle status.
+export type DisplayStatus = TestLifecycle | 'needs_review';
+
+export const displayStatus = (tc: TestCase): DisplayStatus =>
+  tc.pendingRevision ? 'needs_review' : tc.status;
+
 // Status chips reuse the app's antd <Tag> (same component as the Alerts list), tinted
 // with the brand green/orange tokens via `variant="filled"` rather than antd's color
 // presets. Draft stays neutral — the themed default gray Tag.
 export const getStatusTag = (
-  status: TestLifecycle,
+  status: DisplayStatus,
   t: TFunction,
   className?: string,
 ) => {
@@ -81,11 +90,19 @@ export const getStatusTag = (
             background: 'rgba(97, 95, 255, 0.12)',
             color: 'var(--color-indigo)',
           }
-        : {
-            label: t('Paused'),
-            background: 'rgba(226, 137, 64, 0.14)', // brand orange (#E28940) tint
-            color: 'var(--color-orange-dark)',
-          };
+        : status === 'needs_review'
+          ? {
+              // brand blue — same language as the "new draft" dot: something new
+              // from the agent is waiting for the user
+              label: t('Needs review'),
+              background: 'rgba(57, 78, 255, 0.1)',
+              color: 'var(--color-main)',
+            }
+          : {
+              label: t('Paused'),
+              background: 'rgba(226, 137, 64, 0.14)', // brand orange (#E28940) tint
+              color: 'var(--color-orange-dark)',
+            };
   return (
     <Tag
       variant="filled"
@@ -139,6 +156,20 @@ export const getRunResult = (
         {cfg.label}
       </span>
     </Tag>
+  );
+};
+
+// Muted version tag next to a test's title — only from v2 up ("v1" everywhere would
+// be noise; a version only becomes interesting once the steps have actually changed).
+export const VersionLabel = ({ version }: { version?: number }) => {
+  if (!version || version < 2) return null;
+  return (
+    <span
+      className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium"
+      style={{ borderColor: 'var(--color-gray-light)' }}
+    >
+      v{version}
+    </span>
   );
 };
 

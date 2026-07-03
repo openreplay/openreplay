@@ -67,6 +67,29 @@ export interface TestAlternative {
   note: string;
 }
 
+// One proposed step change in a pending revision, authored against the CURRENT step
+// list (indices refer to positions in `TestCase.steps`), so applying is order-stable.
+export type StepChange =
+  | { type: 'added'; afterIndex: number; text: string } // -1 = before the first step
+  | { type: 'removed'; index: number }
+  | { type: 'updated'; index: number; text: string };
+
+// A saved snapshot of the steps as they were at `version` — powers the version
+// switcher and per-step history. Oldest → newest; the current steps are NOT in here.
+export interface TestVersion {
+  version: number;
+  savedAt: number; // epoch ms
+  steps: string[];
+}
+
+// The flow changed in real sessions: a new version of the steps is proposed and waits
+// for review. While pending, the test reads "Needs review" and scheduled runs pause.
+export interface PendingRevision {
+  toVersion: number;
+  detectedAt: number; // epoch ms
+  changes: StepChange[];
+}
+
 export interface TestCase {
   key: string;
   title: string;
@@ -86,6 +109,12 @@ export interface TestCase {
   lastResult?: RunResult;
   lastRunAt?: number; // epoch ms
   recent?: RunResult[]; // most-recent-last, for the trend dots
+  // step versioning — steps carry a version (default 1); saved snapshots of older
+  // versions live in `history`, and a detected flow change sits in `pendingRevision`
+  // until the user reviews it (accept/discard/edit per change → save as vN).
+  version?: number;
+  history?: TestVersion[];
+  pendingRevision?: PendingRevision;
 }
 
 export interface TestStep {
@@ -135,6 +164,7 @@ export interface NetworkRequest {
 export interface RunData {
   key: string;
   testName: string;
+  version?: number; // which step version the run executed (default 1)
   date: number; // when the run started (epoch ms)
   duration?: number; // omitted while running
   status: RunStatus;

@@ -1,12 +1,14 @@
-import { Tooltip } from 'antd';
+import { Popover, Tooltip } from 'antd';
 import {
   Check,
   Circle,
   CornerDownLeft,
   GitBranch,
   GripVertical,
+  History,
   Plus,
   Trash2,
+  Undo2,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -32,6 +34,69 @@ interface Props {
   /** cap the list height and scroll inside — for drawers where steps share the
    *  space with other sections (test settings). Drafts scroll the page instead. */
   bounded?: boolean;
+  /** what a step said in earlier versions — non-empty turns on the subtle per-step
+   *  history affordance (hover → clock icon → popover with restore) */
+  historyFor?: (idx: number) => { version: number; text: string }[];
+  /** rendered on the right of the section header (the version switcher) */
+  headerAction?: React.ReactNode;
+}
+
+/** The subtle per-step history: a clock icon that only appears on row hover (same
+ *  reveal as delete), opening a popover of the step's earlier wordings, each with a
+ *  one-click restore. */
+function StepHistory({
+  entries,
+  onRestore,
+}: {
+  entries: { version: number; text: string }[];
+  onRestore: (text: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Popover
+      trigger="click"
+      placement="left"
+      content={
+        <div className="flex flex-col w-72">
+          <span className="text-xs text-disabled-text mb-1">
+            {t('Previous versions of this step')}
+          </span>
+          {entries.map((e) => (
+            <div key={e.version} className="flex items-start gap-2 py-1.5">
+              <span
+                className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium mt-0.5"
+                style={{ borderColor: 'var(--color-gray-light)' }}
+              >
+                v{e.version}
+              </span>
+              <span className="flex-1 text-sm break-words">{e.text}</span>
+              <Tooltip title={t('Restore this wording')}>
+                <button
+                  type="button"
+                  aria-label={t('Restore this wording')}
+                  onClick={() => onRestore(e.text)}
+                  className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest"
+                >
+                  <Undo2 size={14} />
+                </button>
+              </Tooltip>
+            </div>
+          ))}
+        </div>
+      }
+    >
+      <Tooltip title={t('Step history')}>
+        <button
+          type="button"
+          aria-label={t('Step history')}
+          onClick={(e) => e.stopPropagation()}
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-start w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest"
+        >
+          <History size={14} />
+        </button>
+      </Tooltip>
+    </Popover>
+  );
 }
 
 /** The gap between two steps — same height whether inserting or dragging, so starting a
@@ -109,6 +174,8 @@ interface StepRowProps {
   onEscape: () => void;
   onDragStart: (idx: number) => void;
   onDragEnd: () => void;
+  historyEntries?: { version: number; text: string }[];
+  onRestoreText?: (idx: number, text: string) => void;
 }
 
 /** One step. Drag the grip (it replaces the number on hover) to reorder. Click the
@@ -131,6 +198,8 @@ function StepRow({
   onEscape,
   onDragStart,
   onDragEnd,
+  historyEntries,
+  onRestoreText,
 }: StepRowProps) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
@@ -260,16 +329,24 @@ function StepRow({
             </Tooltip>
           </div>
         ) : (
-          <Tooltip title={t('Delete step')}>
-            <button
-              type="button"
-              aria-label={t('Delete step')}
-              onClick={() => onRemove(idx)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-start w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
-            >
-              <Trash2 size={14} />
-            </button>
-          </Tooltip>
+          <div className="flex items-center gap-0.5 shrink-0 self-start">
+            {historyEntries && historyEntries.length > 0 && onRestoreText && (
+              <StepHistory
+                entries={historyEntries}
+                onRestore={(text) => onRestoreText(idx, text)}
+              />
+            )}
+            <Tooltip title={t('Delete step')}>
+              <button
+                type="button"
+                aria-label={t('Delete step')}
+                onClick={() => onRemove(idx)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
+              >
+                <Trash2 size={14} />
+              </button>
+            </Tooltip>
+          </div>
         )}
       </div>
 
@@ -295,6 +372,8 @@ function EditableSteps({
   onIncludedChange,
   onStepsChange,
   bounded,
+  historyFor,
+  headerAction,
 }: Props) {
   const { t } = useTranslation();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -465,8 +544,12 @@ function EditableSteps({
       ? `${t('Steps')} · ${steps.length}`
       : t('Steps');
 
+  // restore an older wording of one step (from the history popover)
+  const restoreText = (idx: number, text: string) =>
+    onStepsChange(steps.map((s, i) => (i === idx ? text : s)));
+
   return (
-    <Section title={sectionTitle}>
+    <Section title={sectionTitle} action={headerAction}>
       {steps.length === 0 ? (
         <Gap onInsert={() => insertAt(0)} always label={t('Add step')} />
       ) : (
@@ -503,6 +586,8 @@ function EditableSteps({
                 onEscape={onEscape}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
+                historyEntries={historyFor?.(idx)}
+                onRestoreText={historyFor ? restoreText : undefined}
               />
             </React.Fragment>
           ))}
