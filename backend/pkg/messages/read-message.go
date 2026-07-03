@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func DecodeTimestamp(reader BytesReader) (Message, error) {
+func DecodeTimestamp(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Timestamp{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -14,7 +14,7 @@ func DecodeTimestamp(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSessionStart(reader BytesReader) (Message, error) {
+func DecodeSessionStart(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SessionStart{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -68,7 +68,7 @@ func DecodeSessionStart(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCleanSession(reader BytesReader) (Message, error) {
+func DecodeCleanSession(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CleanSession{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -77,7 +77,7 @@ func DecodeCleanSession(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetPageLocationDeprecated(reader BytesReader) (Message, error) {
+func DecodeSetPageLocationDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetPageLocationDeprecated{}
 	if msg.URL, err = reader.ReadString(); err != nil {
@@ -92,7 +92,7 @@ func DecodeSetPageLocationDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetViewportSize(reader BytesReader) (Message, error) {
+func DecodeSetViewportSize(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetViewportSize{}
 	if msg.Width, err = reader.ReadUint(); err != nil {
@@ -104,7 +104,7 @@ func DecodeSetViewportSize(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetViewportScroll(reader BytesReader) (Message, error) {
+func DecodeSetViewportScroll(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetViewportScroll{}
 	if msg.X, err = reader.ReadInt(); err != nil {
@@ -116,14 +116,14 @@ func DecodeSetViewportScroll(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCreateDocument(reader BytesReader) (Message, error) {
+func DecodeCreateDocument(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CreateDocument{}
 
 	return msg, err
 }
 
-func DecodeCreateElementNode(reader BytesReader) (Message, error) {
+func DecodeCreateElementNode(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CreateElementNode{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -144,7 +144,7 @@ func DecodeCreateElementNode(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCreateTextNode(reader BytesReader) (Message, error) {
+func DecodeCreateTextNode(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CreateTextNode{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -159,7 +159,7 @@ func DecodeCreateTextNode(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMoveNode(reader BytesReader) (Message, error) {
+func DecodeMoveNode(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MoveNode{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -174,7 +174,7 @@ func DecodeMoveNode(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeRemoveNode(reader BytesReader) (Message, error) {
+func DecodeRemoveNode(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &RemoveNode{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -183,7 +183,7 @@ func DecodeRemoveNode(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeAttribute(reader BytesReader) (Message, error) {
+func DecodeSetNodeAttribute(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeAttribute{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -198,7 +198,7 @@ func DecodeSetNodeAttribute(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeRemoveNodeAttribute(reader BytesReader) (Message, error) {
+func DecodeRemoveNodeAttribute(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &RemoveNodeAttribute{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -210,7 +210,7 @@ func DecodeRemoveNodeAttribute(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeData(reader BytesReader) (Message, error) {
+func DecodeSetNodeData(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeData{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -222,7 +222,7 @@ func DecodeSetNodeData(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetCSSData(reader BytesReader) (Message, error) {
+func DecodeSetCSSData(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetCSSData{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -234,7 +234,7 @@ func DecodeSetCSSData(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeScroll(reader BytesReader) (Message, error) {
+func DecodeSetNodeScroll(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeScroll{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -249,7 +249,7 @@ func DecodeSetNodeScroll(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetInputTarget(reader BytesReader) (Message, error) {
+func DecodeSetInputTarget(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetInputTarget{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -261,7 +261,7 @@ func DecodeSetInputTarget(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetInputValue(reader BytesReader) (Message, error) {
+func DecodeSetInputValue(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetInputValue{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -276,7 +276,7 @@ func DecodeSetInputValue(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetInputChecked(reader BytesReader) (Message, error) {
+func DecodeSetInputChecked(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetInputChecked{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -288,7 +288,7 @@ func DecodeSetInputChecked(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMouseMove(reader BytesReader) (Message, error) {
+func DecodeMouseMove(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MouseMove{}
 	if msg.X, err = reader.ReadUint(); err != nil {
@@ -300,7 +300,7 @@ func DecodeMouseMove(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNetworkRequestDeprecated(reader BytesReader) (Message, error) {
+func DecodeNetworkRequestDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &NetworkRequestDeprecated{}
 	if msg.Type, err = reader.ReadString(); err != nil {
@@ -330,7 +330,7 @@ func DecodeNetworkRequestDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeConsoleLog(reader BytesReader) (Message, error) {
+func DecodeConsoleLog(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &ConsoleLog{}
 	if msg.Level, err = reader.ReadString(); err != nil {
@@ -342,7 +342,7 @@ func DecodeConsoleLog(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePageLoadTiming(reader BytesReader) (Message, error) {
+func DecodePageLoadTiming(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &PageLoadTiming{}
 	if msg.RequestStart, err = reader.ReadUint(); err != nil {
@@ -375,7 +375,7 @@ func DecodePageLoadTiming(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePageRenderTiming(reader BytesReader) (Message, error) {
+func DecodePageRenderTiming(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &PageRenderTiming{}
 	if msg.SpeedIndex, err = reader.ReadUint(); err != nil {
@@ -390,7 +390,7 @@ func DecodePageRenderTiming(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCustomEvent(reader BytesReader) (Message, error) {
+func DecodeCustomEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CustomEvent{}
 	if msg.Name, err = reader.ReadString(); err != nil {
@@ -402,7 +402,7 @@ func DecodeCustomEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeUserID(reader BytesReader) (Message, error) {
+func DecodeUserID(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &UserID{}
 	if msg.ID, err = reader.ReadString(); err != nil {
@@ -411,7 +411,7 @@ func DecodeUserID(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeUserAnonymousID(reader BytesReader) (Message, error) {
+func DecodeUserAnonymousID(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &UserAnonymousID{}
 	if msg.ID, err = reader.ReadString(); err != nil {
@@ -420,7 +420,7 @@ func DecodeUserAnonymousID(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMetadata(reader BytesReader) (Message, error) {
+func DecodeMetadata(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Metadata{}
 	if msg.Key, err = reader.ReadString(); err != nil {
@@ -432,7 +432,7 @@ func DecodeMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePageEventDeprecated(reader BytesReader) (Message, error) {
+func DecodePageEventDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &PageEventDeprecated{}
 	if msg.MessageID, err = reader.ReadUint(); err != nil {
@@ -489,7 +489,7 @@ func DecodePageEventDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeInputEvent(reader BytesReader) (Message, error) {
+func DecodeInputEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &InputEvent{}
 	if msg.MessageID, err = reader.ReadUint(); err != nil {
@@ -510,7 +510,7 @@ func DecodeInputEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePageEvent(reader BytesReader) (Message, error) {
+func DecodePageEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &PageEvent{}
 	if msg.MessageID, err = reader.ReadUint(); err != nil {
@@ -570,7 +570,7 @@ func DecodePageEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeStringDictGlobal(reader BytesReader) (Message, error) {
+func DecodeStringDictGlobal(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &StringDictGlobal{}
 	if msg.Key, err = reader.ReadUint(); err != nil {
@@ -582,7 +582,7 @@ func DecodeStringDictGlobal(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeAttributeDictGlobal(reader BytesReader) (Message, error) {
+func DecodeSetNodeAttributeDictGlobal(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeAttributeDictGlobal{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -597,7 +597,7 @@ func DecodeSetNodeAttributeDictGlobal(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNodeAnimationResult(reader BytesReader) (Message, error) {
+func DecodeNodeAnimationResult(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &NodeAnimationResult{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -609,7 +609,7 @@ func DecodeNodeAnimationResult(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeProfiler(reader BytesReader) (Message, error) {
+func DecodeProfiler(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Profiler{}
 	if msg.Name, err = reader.ReadString(); err != nil {
@@ -627,7 +627,7 @@ func DecodeProfiler(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeOTable(reader BytesReader) (Message, error) {
+func DecodeOTable(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &OTable{}
 	if msg.Key, err = reader.ReadString(); err != nil {
@@ -639,7 +639,7 @@ func DecodeOTable(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeStateAction(reader BytesReader) (Message, error) {
+func DecodeStateAction(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &StateAction{}
 	if msg.Type, err = reader.ReadString(); err != nil {
@@ -648,7 +648,7 @@ func DecodeStateAction(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeReduxDeprecated(reader BytesReader) (Message, error) {
+func DecodeReduxDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &ReduxDeprecated{}
 	if msg.Action, err = reader.ReadString(); err != nil {
@@ -663,7 +663,7 @@ func DecodeReduxDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeVuex(reader BytesReader) (Message, error) {
+func DecodeVuex(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Vuex{}
 	if msg.Mutation, err = reader.ReadString(); err != nil {
@@ -675,7 +675,7 @@ func DecodeVuex(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobX(reader BytesReader) (Message, error) {
+func DecodeMobX(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobX{}
 	if msg.Type, err = reader.ReadString(); err != nil {
@@ -687,7 +687,7 @@ func DecodeMobX(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNgRx(reader BytesReader) (Message, error) {
+func DecodeNgRx(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &NgRx{}
 	if msg.Action, err = reader.ReadString(); err != nil {
@@ -702,7 +702,7 @@ func DecodeNgRx(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeGraphQLDeprecated(reader BytesReader) (Message, error) {
+func DecodeGraphQLDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &GraphQLDeprecated{}
 	if msg.OperationKind, err = reader.ReadString(); err != nil {
@@ -723,7 +723,7 @@ func DecodeGraphQLDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePerformanceTrack(reader BytesReader) (Message, error) {
+func DecodePerformanceTrack(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &PerformanceTrack{}
 	if msg.Frames, err = reader.ReadInt(); err != nil {
@@ -741,7 +741,7 @@ func DecodePerformanceTrack(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeStringDictDeprecated(reader BytesReader) (Message, error) {
+func DecodeStringDictDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &StringDictDeprecated{}
 	if msg.Key, err = reader.ReadUint(); err != nil {
@@ -753,7 +753,7 @@ func DecodeStringDictDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeAttributeDictDeprecated(reader BytesReader) (Message, error) {
+func DecodeSetNodeAttributeDictDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeAttributeDictDeprecated{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -768,7 +768,7 @@ func DecodeSetNodeAttributeDictDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeStringDict(reader BytesReader) (Message, error) {
+func DecodeStringDict(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &StringDict{}
 	if msg.Key, err = reader.ReadString(); err != nil {
@@ -780,7 +780,7 @@ func DecodeStringDict(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
+func DecodeSetNodeAttributeDict(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeAttributeDict{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -795,7 +795,7 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeResourceTimingDeprecatedDeprecated(reader BytesReader) (Message, error) {
+func DecodeResourceTimingDeprecatedDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &ResourceTimingDeprecatedDeprecated{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -825,7 +825,7 @@ func DecodeResourceTimingDeprecatedDeprecated(reader BytesReader) (Message, erro
 	return msg, err
 }
 
-func DecodeConnectionInformation(reader BytesReader) (Message, error) {
+func DecodeConnectionInformation(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &ConnectionInformation{}
 	if msg.Downlink, err = reader.ReadUint(); err != nil {
@@ -837,7 +837,7 @@ func DecodeConnectionInformation(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetPageVisibility(reader BytesReader) (Message, error) {
+func DecodeSetPageVisibility(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetPageVisibility{}
 	if msg.hidden, err = reader.ReadBoolean(); err != nil {
@@ -846,7 +846,7 @@ func DecodeSetPageVisibility(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePerformanceTrackAggr(reader BytesReader) (Message, error) {
+func DecodePerformanceTrackAggr(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &PerformanceTrackAggr{}
 	if msg.TimestampStart, err = reader.ReadUint(); err != nil {
@@ -894,7 +894,7 @@ func DecodePerformanceTrackAggr(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeLoadFontFace(reader BytesReader) (Message, error) {
+func DecodeLoadFontFace(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &LoadFontFace{}
 	if msg.ParentID, err = reader.ReadUint(); err != nil {
@@ -912,7 +912,7 @@ func DecodeLoadFontFace(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeFocus(reader BytesReader) (Message, error) {
+func DecodeSetNodeFocus(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeFocus{}
 	if msg.ID, err = reader.ReadInt(); err != nil {
@@ -921,7 +921,7 @@ func DecodeSetNodeFocus(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeAttributeURLBased(reader BytesReader) (Message, error) {
+func DecodeSetNodeAttributeURLBased(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeAttributeURLBased{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -939,7 +939,7 @@ func DecodeSetNodeAttributeURLBased(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetCSSDataURLBased(reader BytesReader) (Message, error) {
+func DecodeSetCSSDataURLBased(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetCSSDataURLBased{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -954,7 +954,7 @@ func DecodeSetCSSDataURLBased(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeTechnicalInfo(reader BytesReader) (Message, error) {
+func DecodeTechnicalInfo(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &TechnicalInfo{}
 	if msg.Type, err = reader.ReadString(); err != nil {
@@ -966,7 +966,7 @@ func DecodeTechnicalInfo(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCustomIssue(reader BytesReader) (Message, error) {
+func DecodeCustomIssue(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CustomIssue{}
 	if msg.Name, err = reader.ReadString(); err != nil {
@@ -978,7 +978,7 @@ func DecodeCustomIssue(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetNodeSlot(reader BytesReader) (Message, error) {
+func DecodeSetNodeSlot(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetNodeSlot{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -990,7 +990,7 @@ func DecodeSetNodeSlot(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAssetCache(reader BytesReader) (Message, error) {
+func DecodeAssetCache(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AssetCache{}
 	if msg.URL, err = reader.ReadString(); err != nil {
@@ -999,7 +999,7 @@ func DecodeAssetCache(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMouseClick(reader BytesReader) (Message, error) {
+func DecodeMouseClick(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MouseClick{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -1023,7 +1023,7 @@ func DecodeMouseClick(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMouseClickDeprecated(reader BytesReader) (Message, error) {
+func DecodeMouseClickDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MouseClickDeprecated{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -1041,7 +1041,7 @@ func DecodeMouseClickDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCreateIFrameDocument(reader BytesReader) (Message, error) {
+func DecodeCreateIFrameDocument(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CreateIFrameDocument{}
 	if msg.FrameID, err = reader.ReadUint(); err != nil {
@@ -1053,7 +1053,7 @@ func DecodeCreateIFrameDocument(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAdoptedSSReplaceURLBased(reader BytesReader) (Message, error) {
+func DecodeAdoptedSSReplaceURLBased(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AdoptedSSReplaceURLBased{}
 	if msg.SheetID, err = reader.ReadUint(); err != nil {
@@ -1068,7 +1068,7 @@ func DecodeAdoptedSSReplaceURLBased(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAdoptedSSReplace(reader BytesReader) (Message, error) {
+func DecodeAdoptedSSReplace(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AdoptedSSReplace{}
 	if msg.SheetID, err = reader.ReadUint(); err != nil {
@@ -1080,7 +1080,7 @@ func DecodeAdoptedSSReplace(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAdoptedSSInsertRuleURLBased(reader BytesReader) (Message, error) {
+func DecodeAdoptedSSInsertRuleURLBased(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AdoptedSSInsertRuleURLBased{}
 	if msg.SheetID, err = reader.ReadUint(); err != nil {
@@ -1098,7 +1098,7 @@ func DecodeAdoptedSSInsertRuleURLBased(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAdoptedSSInsertRule(reader BytesReader) (Message, error) {
+func DecodeAdoptedSSInsertRule(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AdoptedSSInsertRule{}
 	if msg.SheetID, err = reader.ReadUint(); err != nil {
@@ -1113,7 +1113,7 @@ func DecodeAdoptedSSInsertRule(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAdoptedSSDeleteRule(reader BytesReader) (Message, error) {
+func DecodeAdoptedSSDeleteRule(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AdoptedSSDeleteRule{}
 	if msg.SheetID, err = reader.ReadUint(); err != nil {
@@ -1125,7 +1125,7 @@ func DecodeAdoptedSSDeleteRule(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAdoptedSSAddOwner(reader BytesReader) (Message, error) {
+func DecodeAdoptedSSAddOwner(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AdoptedSSAddOwner{}
 	if msg.SheetID, err = reader.ReadUint(); err != nil {
@@ -1137,7 +1137,7 @@ func DecodeAdoptedSSAddOwner(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeAdoptedSSRemoveOwner(reader BytesReader) (Message, error) {
+func DecodeAdoptedSSRemoveOwner(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &AdoptedSSRemoveOwner{}
 	if msg.SheetID, err = reader.ReadUint(); err != nil {
@@ -1149,7 +1149,7 @@ func DecodeAdoptedSSRemoveOwner(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeJSException(reader BytesReader) (Message, error) {
+func DecodeJSException(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &JSException{}
 	if msg.Name, err = reader.ReadString(); err != nil {
@@ -1167,7 +1167,7 @@ func DecodeJSException(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeZustand(reader BytesReader) (Message, error) {
+func DecodeZustand(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Zustand{}
 	if msg.Mutation, err = reader.ReadString(); err != nil {
@@ -1179,7 +1179,7 @@ func DecodeZustand(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeBatchMetadata(reader BytesReader) (Message, error) {
+func DecodeBatchMetadata(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &BatchMetadata{}
 	if msg.Version, err = reader.ReadUint(); err != nil {
@@ -1200,7 +1200,7 @@ func DecodeBatchMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+func DecodeNetworkRequest(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &NetworkRequest{}
 	if msg.Type, err = reader.ReadString(); err != nil {
@@ -1233,7 +1233,7 @@ func DecodeNetworkRequest(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeWSChannel(reader BytesReader) (Message, error) {
+func DecodeWSChannel(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &WSChannel{}
 	if msg.ChType, err = reader.ReadString(); err != nil {
@@ -1257,7 +1257,7 @@ func DecodeWSChannel(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeResourceTiming(reader BytesReader) (Message, error) {
+func DecodeResourceTiming(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &ResourceTiming{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1314,7 +1314,7 @@ func DecodeResourceTiming(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIncident(reader BytesReader) (Message, error) {
+func DecodeIncident(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Incident{}
 	if msg.Label, err = reader.ReadString(); err != nil {
@@ -1329,7 +1329,7 @@ func DecodeIncident(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeLongAnimationTask(reader BytesReader) (Message, error) {
+func DecodeLongAnimationTask(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &LongAnimationTask{}
 	if msg.Name, err = reader.ReadString(); err != nil {
@@ -1353,7 +1353,7 @@ func DecodeLongAnimationTask(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeInputChange(reader BytesReader) (Message, error) {
+func DecodeInputChange(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &InputChange{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
@@ -1377,7 +1377,7 @@ func DecodeInputChange(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSelectionChange(reader BytesReader) (Message, error) {
+func DecodeSelectionChange(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SelectionChange{}
 	if msg.SelectionStart, err = reader.ReadUint(); err != nil {
@@ -1392,7 +1392,7 @@ func DecodeSelectionChange(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMouseThrashing(reader BytesReader) (Message, error) {
+func DecodeMouseThrashing(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MouseThrashing{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1401,7 +1401,7 @@ func DecodeMouseThrashing(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeUnbindNodes(reader BytesReader) (Message, error) {
+func DecodeUnbindNodes(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &UnbindNodes{}
 	if msg.TotalRemovedPercent, err = reader.ReadUint(); err != nil {
@@ -1410,7 +1410,7 @@ func DecodeUnbindNodes(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeResourceTimingDeprecated(reader BytesReader) (Message, error) {
+func DecodeResourceTimingDeprecated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &ResourceTimingDeprecated{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1446,7 +1446,7 @@ func DecodeResourceTimingDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeTabChange(reader BytesReader) (Message, error) {
+func DecodeTabChange(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &TabChange{}
 	if msg.TabId, err = reader.ReadString(); err != nil {
@@ -1455,7 +1455,7 @@ func DecodeTabChange(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeTabData(reader BytesReader) (Message, error) {
+func DecodeTabData(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &TabData{}
 	if msg.TabId, err = reader.ReadString(); err != nil {
@@ -1464,7 +1464,7 @@ func DecodeTabData(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCanvasNode(reader BytesReader) (Message, error) {
+func DecodeCanvasNode(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CanvasNode{}
 	if msg.NodeId, err = reader.ReadString(); err != nil {
@@ -1476,7 +1476,7 @@ func DecodeCanvasNode(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeTagTrigger(reader BytesReader) (Message, error) {
+func DecodeTagTrigger(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &TagTrigger{}
 	if msg.TagId, err = reader.ReadInt(); err != nil {
@@ -1485,7 +1485,7 @@ func DecodeTagTrigger(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeRedux(reader BytesReader) (Message, error) {
+func DecodeRedux(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Redux{}
 	if msg.Action, err = reader.ReadString(); err != nil {
@@ -1503,7 +1503,7 @@ func DecodeRedux(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetPageLocation(reader BytesReader) (Message, error) {
+func DecodeSetPageLocation(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SetPageLocation{}
 	if msg.URL, err = reader.ReadString(); err != nil {
@@ -1521,7 +1521,7 @@ func DecodeSetPageLocation(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeGraphQL(reader BytesReader) (Message, error) {
+func DecodeGraphQL(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &GraphQL{}
 	if msg.OperationKind, err = reader.ReadString(); err != nil {
@@ -1542,7 +1542,7 @@ func DecodeGraphQL(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeWebVitals(reader BytesReader) (Message, error) {
+func DecodeWebVitals(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &WebVitals{}
 	if msg.Name, err = reader.ReadString(); err != nil {
@@ -1554,7 +1554,7 @@ func DecodeWebVitals(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIssueEvent(reader BytesReader) (Message, error) {
+func DecodeIssueEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
 	if msg.MessageID, err = reader.ReadUint(); err != nil {
@@ -1581,7 +1581,7 @@ func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSessionEnd(reader BytesReader) (Message, error) {
+func DecodeSessionEnd(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SessionEnd{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1593,7 +1593,7 @@ func DecodeSessionEnd(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSessionSearch(reader BytesReader) (Message, error) {
+func DecodeSessionSearch(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &SessionSearch{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1605,7 +1605,7 @@ func DecodeSessionSearch(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileSessionStart(reader BytesReader) (Message, error) {
+func DecodeMobileSessionStart(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileSessionStart{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1641,7 +1641,7 @@ func DecodeMobileSessionStart(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileSessionEnd(reader BytesReader) (Message, error) {
+func DecodeMobileSessionEnd(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileSessionEnd{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1650,7 +1650,7 @@ func DecodeMobileSessionEnd(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileMetadata(reader BytesReader) (Message, error) {
+func DecodeMobileMetadata(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileMetadata{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1668,7 +1668,7 @@ func DecodeMobileMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileEvent(reader BytesReader) (Message, error) {
+func DecodeMobileEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1686,7 +1686,7 @@ func DecodeMobileEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileUserID(reader BytesReader) (Message, error) {
+func DecodeMobileUserID(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileUserID{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1701,7 +1701,7 @@ func DecodeMobileUserID(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileUserAnonymousID(reader BytesReader) (Message, error) {
+func DecodeMobileUserAnonymousID(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileUserAnonymousID{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1716,7 +1716,7 @@ func DecodeMobileUserAnonymousID(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileScreenChanges(reader BytesReader) (Message, error) {
+func DecodeMobileScreenChanges(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileScreenChanges{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1740,7 +1740,7 @@ func DecodeMobileScreenChanges(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileCrash(reader BytesReader) (Message, error) {
+func DecodeMobileCrash(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileCrash{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1761,7 +1761,7 @@ func DecodeMobileCrash(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileViewComponentEvent(reader BytesReader) (Message, error) {
+func DecodeMobileViewComponentEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileViewComponentEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1782,7 +1782,7 @@ func DecodeMobileViewComponentEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileClickEvent(reader BytesReader) (Message, error) {
+func DecodeMobileClickEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileClickEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1803,7 +1803,7 @@ func DecodeMobileClickEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileInputEvent(reader BytesReader) (Message, error) {
+func DecodeMobileInputEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileInputEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1824,7 +1824,7 @@ func DecodeMobileInputEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobilePerformanceEvent(reader BytesReader) (Message, error) {
+func DecodeMobilePerformanceEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobilePerformanceEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1842,7 +1842,7 @@ func DecodeMobilePerformanceEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileLog(reader BytesReader) (Message, error) {
+func DecodeMobileLog(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileLog{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1860,7 +1860,7 @@ func DecodeMobileLog(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileInternalError(reader BytesReader) (Message, error) {
+func DecodeMobileInternalError(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileInternalError{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1875,7 +1875,7 @@ func DecodeMobileInternalError(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileNetworkCall(reader BytesReader) (Message, error) {
+func DecodeMobileNetworkCall(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileNetworkCall{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1908,7 +1908,7 @@ func DecodeMobileNetworkCall(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileSwipeEvent(reader BytesReader) (Message, error) {
+func DecodeMobileSwipeEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileSwipeEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1932,7 +1932,7 @@ func DecodeMobileSwipeEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileBatchMeta(reader BytesReader) (Message, error) {
+func DecodeMobileBatchMeta(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileBatchMeta{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1947,7 +1947,7 @@ func DecodeMobileBatchMeta(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileGraphQL(reader BytesReader) (Message, error) {
+func DecodeMobileGraphQL(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileGraphQL{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -1974,7 +1974,7 @@ func DecodeMobileGraphQL(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobilePerformanceAggregated(reader BytesReader) (Message, error) {
+func DecodeMobilePerformanceAggregated(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobilePerformanceAggregated{}
 	if msg.TimestampStart, err = reader.ReadUint(); err != nil {
@@ -2022,7 +2022,7 @@ func DecodeMobilePerformanceAggregated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMobileIssueEvent(reader BytesReader) (Message, error) {
+func DecodeMobileIssueEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &MobileIssueEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
@@ -2043,7 +2043,7 @@ func DecodeMobileIssueEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func ReadMessage(t uint64, reader BytesReader) (Message, error) {
+func ReadMessage(t uint64, reader *bytesReaderImpl) (Message, error) {
 	switch t {
 	case 0:
 		return DecodeTimestamp(reader)

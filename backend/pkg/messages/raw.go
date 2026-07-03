@@ -5,7 +5,7 @@ type RawMessage struct {
 	tp        uint64
 	data      []byte
 	broken    *bool
-	meta      *message
+	meta      message
 	decodeErr error
 }
 
@@ -14,14 +14,15 @@ func (m *RawMessage) Encode() []byte {
 }
 
 func (m *RawMessage) Decode() Message {
-	msg, err := ReadMessage(m.tp, NewBytesReader(m.data[1:]))
+	reader := bytesReaderImpl{data: m.data[1:]}
+	msg, err := ReadMessage(m.tp, &reader)
 	if err != nil {
 		m.decodeErr = err
 		*m.broken = true
 		return nil
 	}
 	msg = transformDeprecated(msg)
-	msg.Meta().SetMeta(m.meta)
+	msg.Meta().SetMeta(&m.meta)
 	return msg
 }
 
@@ -30,26 +31,20 @@ func (m *RawMessage) TypeID() int {
 }
 
 func (m *RawMessage) Meta() *message {
-	return m.meta
+	return &m.meta
 }
 
 func (m *RawMessage) SessionID() uint64 {
-	if m.meta != nil {
-		return m.meta.SessionID()
+	if m.meta.batch != nil {
+		return m.meta.batch.sessionID
 	}
 	return 0
 }
 
 func (m *RawMessage) MsgID() uint64 {
-	if m.meta != nil {
-		return m.meta.Index
-	}
-	return 0
+	return m.meta.Index
 }
 
 func (m *RawMessage) Time() uint64 {
-	if m.meta != nil {
-		return m.meta.Timestamp
-	}
-	return 0
+	return m.meta.Timestamp
 }

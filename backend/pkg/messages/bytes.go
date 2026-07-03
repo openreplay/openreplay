@@ -8,6 +8,7 @@ import (
 )
 
 type BytesReader interface {
+	Reset(data []byte)
 	ReadSize() (uint64, error)
 	ReadByte() (byte, error)
 	ReadUint() (uint64, error)
@@ -25,10 +26,15 @@ type bytesReaderImpl struct {
 	curr int64
 }
 
-func NewBytesReader(data []byte) BytesReader {
+func NewBytesReader(data []byte) *bytesReaderImpl {
 	return &bytesReaderImpl{
 		data: data,
 	}
+}
+
+func (m *bytesReaderImpl) Reset(data []byte) {
+	m.data = data
+	m.curr = 0
 }
 
 func (m *bytesReaderImpl) ReadSize() (uint64, error) {

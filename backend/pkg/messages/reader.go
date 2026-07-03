@@ -6,7 +6,7 @@ import (
 )
 
 type MessageReader interface {
-	Parse(filter map[int]struct{}) (err error)
+	Parse(filter *TypeFilter) (err error)
 	Next() bool
 	Message() Message
 }
@@ -20,7 +20,7 @@ func NewMessageReader(data []byte) MessageReader {
 
 type messageReaderImpl struct {
 	data     []byte
-	reader   BytesReader
+	reader   *bytesReaderImpl
 	msgType  uint64
 	msgSize  uint64
 	msgBody  []byte
@@ -28,15 +28,23 @@ type messageReaderImpl struct {
 	broken   bool
 	message  Message
 	err      error
-	messages []*RawMessage
+	messages []RawMessage
 	listPtr  int
 	index    uint64
 }
 
-func (m *messageReaderImpl) Parse(filter map[int]struct{}) (err error) {
+func (m *messageReaderImpl) Reset(data []byte) {
+	m.data = data
+	m.reader.Reset(data)
+	m.version = 0
+	m.message = nil
+	m.err = nil
+}
+
+func (m *messageReaderImpl) Parse(filter *TypeFilter) (err error) {
 	m.listPtr = 0
 	m.index = 0
-	m.messages = make([]*RawMessage, 0, 1024)
+	m.messages = m.messages[:0]
 	m.broken = false
 	for {
 		// Try to read and decode message type, message size and check range in
@@ -65,22 +73,27 @@ func (m *messageReaderImpl) Parse(filter map[int]struct{}) (err error) {
 			}
 			m.reader.SetPointer(curr + int64(m.msgSize))
 
-			if filter != nil {
-				if _, ok := filter[int(m.msgType)]; !ok {
-					continue
-				}
+			if filter != nil && !filter.Has(int(m.msgType)) {
+				continue
 			}
 
-			// Dirty hack to avoid extra memory allocation
-			mTypeByteSize := ByteSizeUint(m.msgType)
-			from := int(curr) - mTypeByteSize
-			WriteUint(m.msgType, m.data, from)
+			// Rewrite the type right before the body (over the last size byte)
+			// so RawMessage.data is a contiguous [type][body] view into the
+			// batch buffer with no extra allocation
+			var from int
+			if m.msgType < 0x80 {
+				from = int(curr) - 1
+				m.data[from] = byte(m.msgType)
+			} else {
+				from = int(curr) - ByteSizeUint(m.msgType)
+				WriteUint(m.msgType, m.data, from)
+			}
 
-			m.messages = append(m.messages, &RawMessage{
+			m.messages = append(m.messages, RawMessage{
 				tp:     m.msgType,
-				data:   m.data[uint64(from) : uint64(from)+m.msgSize+1],
+				data:   m.data[from : curr+int64(m.msgSize)],
 				broken: &m.broken,
-				meta: &message{
+				meta: message{
 					Index: m.index,
 				},
 			})
@@ -112,17 +125,15 @@ func (m *messageReaderImpl) Parse(filter map[int]struct{}) (err error) {
 				}
 			}
 
-			if filter != nil {
-				if _, ok := filter[int(m.msgType)]; !ok {
-					continue
-				}
+			if filter != nil && !filter.Has(int(m.msgType)) {
+				continue
 			}
 
-			m.messages = append(m.messages, &RawMessage{
+			m.messages = append(m.messages, RawMessage{
 				tp:     m.msgType,
-				data:   m.data[uint64(from):uint64(m.reader.Pointer())],
+				data:   m.data[from:m.reader.Pointer()],
 				broken: &m.broken,
-				meta: &message{
+				meta: message{
 					Index: m.index,
 				},
 			})
@@ -141,7 +152,7 @@ func (m *messageReaderImpl) Next() bool {
 			return false
 		}
 
-		m.message = m.messages[m.listPtr]
+		m.message = &m.messages[m.listPtr]
 		m.listPtr++
 		return true
 	}
