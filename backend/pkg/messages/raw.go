@@ -26,6 +26,18 @@ func (m *RawMessage) Decode() Message {
 	return msg
 }
 
+func (m *RawMessage) MobileTimestamp() uint64 {
+	if len(m.data) < 2 || !IsMobileType(int(m.tp)) {
+		return m.meta.Timestamp
+	}
+	reader := bytesReaderImpl{data: m.data[1:]}
+	ts, err := reader.ReadUint()
+	if err != nil {
+		return m.meta.Timestamp
+	}
+	return ts
+}
+
 func (m *RawMessage) TypeID() int {
 	return int(m.tp)
 }
