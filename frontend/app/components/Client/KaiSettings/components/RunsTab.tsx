@@ -22,6 +22,7 @@ import RunDrawer from './drawers/RunDrawer';
 import './kai-table.css';
 import { apiRunDetailToVM, apiRunToVM } from './shared/adapters';
 import { RunData, UiRunStatus } from './shared/types';
+import { useKaiUi } from './shared/uiStore';
 import {
   RESOLUTION_OPTIONS,
   RowTags,
@@ -72,7 +73,13 @@ function RunsTab() {
   const { data: runsData, isPending } = useAllRuns({ limit: LOOKUP_LIMIT });
   const { data: testsData } = useTests({ limit: LOOKUP_LIMIT });
 
-  const [query, setQuery] = useState('');
+  // A test drawer's "View all runs" / "View" shortcut sets a handoff on the ui store
+  // (a fresh `handoffId`) and switches to this tab. Adopt it as the search / open run:
+  // at mount for a handoff that arrived with the switch, and — since this pane stays
+  // mounted between visits — again whenever `handoffId` changes (React's supported
+  // "adjust state on external change during render" pattern, no effect).
+  const { runsTestFilter, runsOpenRunKey, handoffId } = useKaiUi();
+  const [query, setQuery] = useState(runsTestFilter ?? '');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [resFilter, setResFilter] = useState('all');
   const [sortBy, setSortBy] = useState<{
@@ -80,7 +87,15 @@ function RunsTab() {
     order?: 'ascend' | 'descend';
   }>({ field: 'date', order: 'descend' });
   const [page, setPage] = useState(1);
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [openKey, setOpenKey] = useState<string | null>(runsOpenRunKey ?? null);
+
+  const [seenHandoff, setSeenHandoff] = useState(handoffId);
+  if (handoffId !== seenHandoff) {
+    setSeenHandoff(handoffId);
+    setQuery(runsTestFilter ?? '');
+    setStatusTab('all');
+    setOpenKey(runsOpenRunKey ?? null);
+  }
 
   const PAGE_SIZE = 20;
   // Reset to page 1 when a filter changes — during render, not in an effect.
@@ -303,7 +318,7 @@ function RunsTab() {
             onChange={setResFilter}
             style={{ width: 140 }}
             options={[
-              { value: 'all', label: t('All resolutions') },
+              { value: 'all', label: t('All viewports') },
               ...RESOLUTION_OPTIONS.map((o) => ({
                 value: o.value,
                 label: t(o.label),

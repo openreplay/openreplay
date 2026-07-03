@@ -18,6 +18,7 @@ import {
   StepStatus,
   Test,
   TestCase,
+  TestCreateRequest,
   TestLifecycle,
   TestStatus,
   TestStep,
@@ -80,6 +81,24 @@ export function apiTestToVM(
 
 // Build a full update request from a VM — the drawers hand back an updated VM and the
 // tab persists it wholesale.
+// Create doesn't accept a status (the backend seeds new tests as pending), so a
+// manually-created test is lifted to its intended lifecycle with a follow-up update
+// — see TestsTab.commitCreate and todo.md.
+export function vmToCreateRequest(vm: TestCase): TestCreateRequest {
+  const config = vm.resolutions?.length
+    ? { ...(vm.config ?? {}), screen_type: vm.resolutions[0] }
+    : vm.config;
+  return {
+    name: vm.title,
+    steps: vm.steps,
+    expectedResult: vm.expectedResult,
+    cron: scheduleToCron(vm.schedule),
+    timeoutSecs: vm.timeoutSecs,
+    environments: vm.environments,
+    config,
+  };
+}
+
 export function vmToUpdateRequest(vm: TestCase): TestUpdateRequest {
   // Persist the first chosen resolution into config.screen_type (single-value backend).
   const config = vm.resolutions?.length
