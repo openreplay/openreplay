@@ -57,7 +57,10 @@ func (crd *ClickRageDetector) Build() Message {
 }
 
 func (crd *ClickRageDetector) Handle(message Message, timestamp uint64) Message {
-	msg := message.Decode().(*MouseClick)
+	msg, ok := message.Decode().(*MouseClick)
+	if !ok {
+		return nil
+	}
 	if crd.url == "" && msg.Url != "" {
 		crd.url = msg.Url
 	}
