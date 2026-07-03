@@ -4,7 +4,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  History,
   Image as ImageIcon,
   Images,
   Info,
@@ -30,6 +29,7 @@ import CountryFlagIcon from 'Shared/CountryFlagIcon';
 import { ConsoleLog, NetworkRequest, RunData, TestStep } from '../shared/types';
 import {
   RESOLUTION_ICON,
+  VersionLabel,
   formatDuration,
   regionCountry,
   regionLabel,
@@ -469,13 +469,6 @@ function RunDrawer({ run, open, onClose }: Props) {
           <span className="flex items-center gap-1.5">
             <Server size={14} /> {run.envName ?? '—'}
           </span>
-          {run.version != null && run.version > 1 && (
-            <Tooltip title={t('Step version this run executed')}>
-              <span className="flex items-center gap-1.5 cursor-default">
-                <History size={14} /> V{run.version}
-              </span>
-            </Tooltip>
-          )}
           <span className="flex items-center gap-1.5">
             <ResIcon size={14} /> {resolutionLabel(run.resolution)}
           </span>
@@ -566,7 +559,17 @@ function RunDrawer({ run, open, onClose }: Props) {
     >
       {banner}
 
-      <Section title={`${t('Steps')} · ${total}`}>
+      <Section
+        title={
+          // which step version this run executed — same chip as the tests table
+          <span className="flex items-center gap-1.5">
+            {t('Steps')}
+            <span className="text-gray-medium font-normal">·</span>
+            {total}
+            <VersionLabel version={run.version} always />
+          </span>
+        }
+      >
         {/* bounded like the test drawer — Activity stays reachable on long runs */}
         <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
           {run.steps.map((step, idx) => renderStep(step, idx))}

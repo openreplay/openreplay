@@ -20,7 +20,6 @@ import {
   buildReviewItems,
   keepCurrentVersion,
   resolveItems,
-  restoreVersion,
   stepHistory,
   testVersion,
 } from '../shared/revisions';
@@ -147,12 +146,7 @@ function TestDrawer({
     message.success(t('Kept V{{v}}', { v: version }));
   };
 
-  // ---- version switcher / restore --------------------------------------
-  const restore = (v: number) => {
-    onChange(restoreVersion(test, v, Date.now()));
-    setViewVersion(null);
-    message.success(t('Restored as V{{v}}', { v: version + 1 }));
-  };
+  // ---- version switcher (older versions are read-only history) ---------
   const versionMenu = {
     items: [
       {
@@ -362,28 +356,16 @@ function TestDrawer({
           }
           action={versionSwitcher}
         >
+          {/* an approved version is history — read-only, no way back. The version
+              dropdown is the only control (it returns to the current version). */}
           <div
-            className="mb-2 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 bg-gray-lightest"
+            className="mb-2 rounded-lg border px-3 py-2 bg-gray-lightest text-sm text-gray-dark"
             style={{ borderColor: 'var(--color-gray-light)' }}
           >
-            <span className="text-sm text-gray-dark">
-              {t('Viewing V{{v}} · saved {{date}} · read-only', {
-                v: viewedSnapshot.version,
-                date: versionDate(viewedSnapshot.savedAt),
-              })}
-            </span>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button size="small" onClick={() => setViewVersion(null)}>
-                {t('Back to V{{v}}', { v: version })}
-              </Button>
-              <Button
-                size="small"
-                type="primary"
-                onClick={() => restore(viewedSnapshot.version)}
-              >
-                {t('Restore')}
-              </Button>
-            </div>
+            {t('Viewing V{{v}} · saved {{date}} · read-only', {
+              v: viewedSnapshot.version,
+              date: versionDate(viewedSnapshot.savedAt),
+            })}
           </div>
           <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
             {viewedSnapshot.steps.map((step, idx) => (

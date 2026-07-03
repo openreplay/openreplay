@@ -82,28 +82,6 @@ export function keepCurrentVersion(tc: TestCase): TestCase {
   return { ...tc, pendingRevision: undefined };
 }
 
-/** Restore an older snapshot — git-revert style: the restored steps become a NEW
- *  version (history only ever grows), so nothing is lost. */
-export function restoreVersion(
-  tc: TestCase,
-  version: number,
-  savedAt: number,
-): TestCase {
-  const snap = tc.history?.find((h) => h.version === version);
-  if (!snap) return tc;
-  const current: TestVersion = {
-    version: testVersion(tc),
-    savedAt,
-    steps: [...tc.steps],
-  };
-  return {
-    ...tc,
-    steps: [...snap.steps],
-    version: testVersion(tc) + 1,
-    history: [...(tc.history ?? []), current],
-  };
-}
-
 /** What a step said in earlier versions (same position, only where it differs) —
  *  newest first. Powers the subtle per-step history popover. */
 export function stepHistory(
