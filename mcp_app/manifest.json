@@ -2,8 +2,8 @@
   "manifest_version": "0.3",
   "name": "openreplay",
   "display_name": "OpenReplay",
-  "version": "1.0.5",
-  "description": "View OpenReplay sessions, charts, and replays from Claude.",
+  "version": "1.0.6",
+  "description": "Query and explore your OpenReplay recordings and analytics.",
   "author": {
     "name": "OpenReplay",
     "url": "https://github.com/openreplay/openreplay/"
