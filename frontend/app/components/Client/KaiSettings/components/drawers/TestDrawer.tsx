@@ -130,6 +130,8 @@ function TestDrawer({
         {changedCount} {changedCount === 1 ? t('change') : t('changes')}
       </span>
     ) : undefined;
+  // finishing a review closes the drawer — the test is active and scheduled again,
+  // and a lingering primary "Run now" would read like a required next step
   const saveRevision = () => {
     if (!revision || !reviewItems) return;
     onChange(applyRevision(test, resolveItems(reviewItems), Date.now()));
@@ -138,11 +140,13 @@ function TestDrawer({
         ? t('Saved as V{{v}} — schedule resumed', { v: revision.toVersion })
         : t('Saved as V{{v}}', { v: revision.toVersion }),
     );
+    onClose();
   };
   const keepVersion = () => {
     if (!revision) return;
     onChange(keepCurrentVersion(test));
     message.success(t('Kept V{{v}}', { v: version }));
+    onClose();
   };
 
   // ---- version switcher (older versions are read-only history) ---------
