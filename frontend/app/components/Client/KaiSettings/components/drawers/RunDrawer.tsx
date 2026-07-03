@@ -472,7 +472,7 @@ function RunDrawer({ run, open, onClose }: Props) {
           {run.version != null && run.version > 1 && (
             <Tooltip title={t('Step version this run executed')}>
               <span className="flex items-center gap-1.5 cursor-default">
-                <History size={14} /> v{run.version}
+                <History size={14} /> V{run.version}
               </span>
             </Tooltip>
           )}

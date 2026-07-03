@@ -126,33 +126,33 @@ function TestDrawer({
     onChange(applyRevision(test, resolved, Date.now()));
     message.success(
       test.status === 'active'
-        ? t('Saved as v{{v}} — schedule resumed', { v: revision.toVersion })
-        : t('Saved as v{{v}}', { v: revision.toVersion }),
+        ? t('Saved as V{{v}} — schedule resumed', { v: revision.toVersion })
+        : t('Saved as V{{v}}', { v: revision.toVersion }),
     );
   };
   const keepVersion = () => {
     if (!revision) return;
     onChange(keepCurrentVersion(test));
-    message.success(t('Kept v{{v}}', { v: version }));
+    message.success(t('Kept V{{v}}', { v: version }));
   };
 
   // ---- version switcher / restore --------------------------------------
   const restore = (v: number) => {
     onChange(restoreVersion(test, v, Date.now()));
     setViewVersion(null);
-    message.success(t('Restored as v{{v}}', { v: version + 1 }));
+    message.success(t('Restored as V{{v}}', { v: version + 1 }));
   };
   const versionMenu = {
     items: [
       {
         key: String(version),
-        label: `v${version} · ${t('Current')}`,
+        label: `V${version} · ${t('Current')}`,
       },
       ...[...history]
         .sort((a, b) => b.version - a.version)
         .map((h) => ({
           key: String(h.version),
-          label: `v${h.version} · ${versionDate(h.savedAt)}`,
+          label: `V${h.version} · ${versionDate(h.savedAt)}`,
         })),
     ],
     selectedKeys: [String(viewVersion ?? version)],
@@ -169,7 +169,7 @@ function TestDrawer({
           className="flex items-center gap-1 text-sm text-gray-dark border rounded px-2 py-0.5 hover:bg-gray-lightest"
           style={{ borderColor: 'var(--color-gray-light)' }}
         >
-          v{viewVersion ?? version}
+          V{viewVersion ?? version}
           <ChevronDown size={13} className="text-gray-medium" />
         </button>
       </Dropdown>
@@ -233,7 +233,7 @@ function TestDrawer({
                   : test.status === 'approved'
                     ? t('Approved')
                     : t('Active')
-              }${version > 1 ? ` · v${version}` : ''}`
+              }${version > 1 ? ` · V${version}` : ''}`
       }
       headerActions={
         creating ? undefined : revision ? (
@@ -292,14 +292,14 @@ function TestDrawer({
           // reviewing: stay on the current version, or save the reviewed one
           <div className="flex items-center justify-between">
             <Button type="text" onClick={keepVersion}>
-              {t('Keep v{{v}}', { v: version })}
+              {t('Keep V{{v}}', { v: version })}
             </Button>
             <Button
               type="primary"
               icon={<Check size={15} />}
               onClick={saveRevision}
             >
-              {t('Save v{{v}}', { v: revision.toVersion })}
+              {t('Save V{{v}}', { v: revision.toVersion })}
             </Button>
           </div>
         ) : (
@@ -331,7 +331,7 @@ function TestDrawer({
         />
       ) : viewedSnapshot ? (
         <Section
-          title={`${t('Steps')} · v${viewedSnapshot.version}`}
+          title={`${t('Steps')} · V${viewedSnapshot.version}`}
           action={versionSwitcher}
         >
           <div
@@ -339,14 +339,14 @@ function TestDrawer({
             style={{ borderColor: 'var(--color-gray-light)' }}
           >
             <span className="text-sm text-gray-dark">
-              {t('Viewing v{{v}} · saved {{date}} · read-only', {
+              {t('Viewing V{{v}} · saved {{date}} · read-only', {
                 v: viewedSnapshot.version,
                 date: versionDate(viewedSnapshot.savedAt),
               })}
             </span>
             <div className="flex items-center gap-2 shrink-0">
               <Button size="small" onClick={() => setViewVersion(null)}>
-                {t('Back to v{{v}}', { v: version })}
+                {t('Back to V{{v}}', { v: version })}
               </Button>
               <Button
                 size="small"

@@ -61,7 +61,7 @@ function ReviewSteps({
 
   return (
     <Section
-      title={`${t('Steps')} · v${fromVersion} → v${revision.toVersion}`}
+      title={`${t('Steps')} · V${fromVersion} → V${revision.toVersion}`}
       action={<span className="text-sm text-disabled-text">{summary}</span>}
     >
       <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">

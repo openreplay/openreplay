@@ -67,7 +67,7 @@ function StepHistory({
                 className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium mt-0.5"
                 style={{ borderColor: 'var(--color-gray-light)' }}
               >
-                v{e.version}
+                V{e.version}
               </span>
               <span className="flex-1 text-sm break-words">{e.text}</span>
               <Tooltip title={t('Restore this wording')}>

@@ -168,7 +168,7 @@ export const VersionLabel = ({ version }: { version?: number }) => {
       className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium"
       style={{ borderColor: 'var(--color-gray-light)' }}
     >
-      v{version}
+      V{version}
     </span>
   );
 };
