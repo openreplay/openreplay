@@ -348,25 +348,21 @@ function TestDrawer({
       ) : viewedSnapshot ? (
         <Section
           title={
+            // an approved version is history — read-only, no way back; the version
+            // dropdown is the only control. The whole story fits the title line.
             <span className="flex items-center gap-1.5">
               {t('Steps')}
               <span className="text-gray-medium font-normal">·</span>
               <VersionLabel version={viewedSnapshot.version} always />
+              <span className="text-sm text-disabled-text font-normal">
+                {t('saved {{date}} · read-only', {
+                  date: versionDate(viewedSnapshot.savedAt),
+                })}
+              </span>
             </span>
           }
           action={versionSwitcher}
         >
-          {/* an approved version is history — read-only, no way back. The version
-              dropdown is the only control (it returns to the current version). */}
-          <div
-            className="mb-2 rounded-lg border px-3 py-2 bg-gray-lightest text-sm text-gray-dark"
-            style={{ borderColor: 'var(--color-gray-light)' }}
-          >
-            {t('Viewing V{{v}} · saved {{date}} · read-only', {
-              v: viewedSnapshot.version,
-              date: versionDate(viewedSnapshot.savedAt),
-            })}
-          </div>
           <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
             {viewedSnapshot.steps.map((step, idx) => (
               <div
