@@ -198,9 +198,11 @@ export const MOCK_TEST_CASES: TestCase[] = [
         // checkout now opens straight from the cart popover
         { type: 'removed', index: 1 },
         { type: 'added', afterIndex: 2, text: 'Enter a promo code' },
+        // reworded step = remove + add, git-style (no "updated" kind)
+        { type: 'removed', index: 3 },
         {
-          type: 'updated',
-          index: 3,
+          type: 'added',
+          afterIndex: 3,
           text: 'Choose a payment method and submit the order',
         },
       ],

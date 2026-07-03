@@ -69,10 +69,10 @@ export interface TestAlternative {
 
 // One proposed step change in a pending revision, authored against the CURRENT step
 // list (indices refer to positions in `TestCase.steps`), so applying is order-stable.
+// There is no "updated" kind — a reworded step is a remove + an add, git-style.
 export type StepChange =
   | { type: 'added'; afterIndex: number; text: string } // -1 = before the first step
-  | { type: 'removed'; index: number }
-  | { type: 'updated'; index: number; text: string };
+  | { type: 'removed'; index: number };
 
 // A saved snapshot of the steps as they were at `version` — powers the version
 // switcher and per-step history. Oldest → newest; the current steps are NOT in here.

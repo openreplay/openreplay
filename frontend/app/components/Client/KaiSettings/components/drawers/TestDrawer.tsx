@@ -14,9 +14,11 @@ import { useTranslation } from 'react-i18next';
 
 import { MOCK_RUNS } from '../shared/mockData';
 import {
+  StepItem,
   applyRevision,
+  buildReviewItems,
   keepCurrentVersion,
-  resolveSteps,
+  resolveItems,
   restoreVersion,
   stepHistory,
   testVersion,
@@ -31,7 +33,6 @@ import {
 } from '../shared/utils';
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
-import ReviewSteps from './ReviewSteps';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
 
 const versionDate = (ts: number): string =>
@@ -73,15 +74,18 @@ function TestDrawer({
   const { t } = useTranslation();
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  // review state: which proposed changes were turned off, and inline edits to the
-  // proposed rows — reset whenever another test (or another revision) opens
-  const [discarded, setDiscarded] = useState<Set<number>>(new Set());
-  const [edits, setEdits] = useState<Map<number, string>>(new Map());
+  // review state: the proposal materialised as a live, fully-editable step list
+  // (plain rows + marked add/remove rows) — rebuilt when another test or another
+  // revision opens. Edits during a review land here, not on test.steps.
+  const [reviewItems, setReviewItems] = useState<StepItem[] | null>(null);
   // version switcher: non-null = viewing an older read-only snapshot
   const [viewVersion, setViewVersion] = useState<number | null>(null);
   useEffect(() => {
-    setDiscarded(new Set());
-    setEdits(new Map());
+    setReviewItems(
+      test?.pendingRevision
+        ? buildReviewItems(test.steps, test.pendingRevision.changes)
+        : null,
+    );
     setViewVersion(null);
   }, [test?.key, test?.pendingRevision]);
 
@@ -111,19 +115,25 @@ function TestDrawer({
       : undefined;
 
   // ---- pending revision (needs review) ---------------------------------
-  const toggleChange = (changeIdx: number) =>
-    setDiscarded((prev) => {
-      const next = new Set(prev);
-      if (next.has(changeIdx)) next.delete(changeIdx);
-      else next.add(changeIdx);
-      return next;
-    });
-  const editChange = (changeIdx: number, text: string) =>
-    setEdits((prev) => new Map(prev).set(changeIdx, text));
+  const toggleChange = (idx: number) =>
+    setReviewItems(
+      (prev) =>
+        prev &&
+        prev.map((it, i) => (i === idx ? { ...it, off: !it.off } : it)),
+    );
+  // "N changes" / "x of N changes applied" next to the Steps · V1 → V2 title
+  const changedCount = reviewItems?.filter((it) => it.kind).length ?? 0;
+  const offCount = reviewItems?.filter((it) => it.kind && it.off).length ?? 0;
+  const reviewSummary = (
+    <span className="text-sm text-disabled-text">
+      {offCount === 0
+        ? `${changedCount} ${changedCount === 1 ? t('change') : t('changes')}`
+        : `${changedCount - offCount} ${t('of')} ${changedCount} ${t('changes applied')}`}
+    </span>
+  );
   const saveRevision = () => {
-    if (!revision) return;
-    const resolved = resolveSteps(test.steps, revision.changes, discarded, edits);
-    onChange(applyRevision(test, resolved, Date.now()));
+    if (!revision || !reviewItems) return;
+    onChange(applyRevision(test, resolveItems(reviewItems), Date.now()));
     message.success(
       test.status === 'active'
         ? t('Saved as V{{v}} — schedule resumed', { v: revision.toVersion })
@@ -317,17 +327,19 @@ function TestDrawer({
         )
       }
     >
-      {/* the steps section wears three hats: reviewing a proposed version (diff),
-          viewing an older snapshot (read-only), or plain editing */}
-      {revision ? (
-        <ReviewSteps
-          steps={test.steps}
-          revision={revision}
-          fromVersion={version}
-          discarded={discarded}
-          edits={edits}
-          onToggle={toggleChange}
-          onEdit={editChange}
+      {/* the steps section wears three hats: reviewing a proposed version (the same
+          fully-editable list, with the proposal's add/remove rows dressed as a
+          diff), viewing an older snapshot (read-only), or plain editing */}
+      {revision && reviewItems ? (
+        <EditableSteps
+          steps={[]}
+          bounded
+          title={`${t('Steps')} · V${version} → V${revision.toVersion}`}
+          headerAction={reviewSummary}
+          reviewItems={reviewItems}
+          onItemsChange={setReviewItems}
+          onToggleChange={toggleChange}
+          onStepsChange={() => {}}
         />
       ) : viewedSnapshot ? (
         <Section

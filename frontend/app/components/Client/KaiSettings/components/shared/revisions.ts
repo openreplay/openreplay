@@ -1,94 +1,62 @@
 import { StepChange, TestCase, TestVersion } from './types';
 
-// Pure step-revision logic, kept out of the components so the diff rows, the apply
-// result and the per-step history all derive from one place.
+// Pure step-revision logic, kept out of the components so the review rows, the
+// resolved result and the per-step history all derive from one place.
 
 export const testVersion = (tc: TestCase): number => tc.version ?? 1;
 
 export const needsReview = (tc: TestCase): boolean => !!tc.pendingRevision;
 
-// One row of the review list — the current steps merged with the proposed changes,
-// in the order the new version would read.
-export interface ReviewRow {
-  kind: 'kept' | 'added' | 'removed' | 'updated';
-  /** display text — for `updated` this is the proposed text, `removed` the old step */
+// One row of the review list. During a review the whole list stays a live,
+// editable step list (same as drafts) — proposed rows just carry a marker:
+//  - kind 'added'   → proposed new step (blue); `off` = don't add it
+//  - kind 'removed' → proposed deletion (struck); `off` = keep the step
+//  - no kind        → a plain step (kept, or typed by the user during the review)
+export interface StepItem {
   text: string;
-  /** `updated` only: what the step says today */
-  oldText?: string;
-  /** index into `pendingRevision.changes` (kept rows have none) */
-  changeIdx?: number;
-  /** index into the current `steps` (added rows have none) */
-  stepIdx?: number;
+  kind?: 'added' | 'removed';
+  off?: boolean;
 }
 
-/** Merge the current steps with the proposed changes into display order. */
-export function buildReviewRows(
+/** Merge the current steps with the proposed changes into one editable list. */
+export function buildReviewItems(
   steps: string[],
   changes: StepChange[],
-): ReviewRow[] {
-  const removed = new Map<number, number>(); // stepIdx → changeIdx
-  const updated = new Map<number, number>();
-  const added = new Map<number, number[]>(); // afterIndex → changeIdx[]
-  changes.forEach((c, i) => {
-    if (c.type === 'removed') removed.set(c.index, i);
-    else if (c.type === 'updated') updated.set(c.index, i);
-    else added.set(c.afterIndex, [...(added.get(c.afterIndex) ?? []), i]);
+): StepItem[] {
+  const removed = new Set(
+    changes.filter((c) => c.type === 'removed').map((c) => c.index),
+  );
+  const added = new Map<number, string[]>();
+  changes.forEach((c) => {
+    if (c.type === 'added')
+      added.set(c.afterIndex, [...(added.get(c.afterIndex) ?? []), c.text]);
   });
 
-  const rows: ReviewRow[] = [];
-  const pushAdded = (after: number) =>
-    (added.get(after) ?? []).forEach((changeIdx) => {
-      const c = changes[changeIdx] as Extract<StepChange, { type: 'added' }>;
-      rows.push({ kind: 'added', text: c.text, changeIdx });
-    });
-
-  pushAdded(-1);
-  steps.forEach((step, stepIdx) => {
-    if (removed.has(stepIdx)) {
-      rows.push({
-        kind: 'removed',
-        text: step,
-        changeIdx: removed.get(stepIdx),
-        stepIdx,
-      });
-    } else if (updated.has(stepIdx)) {
-      const changeIdx = updated.get(stepIdx)!;
-      const c = changes[changeIdx] as Extract<StepChange, { type: 'updated' }>;
-      rows.push({ kind: 'updated', text: c.text, oldText: step, changeIdx, stepIdx });
-    } else {
-      rows.push({ kind: 'kept', text: step, stepIdx });
-    }
-    pushAdded(stepIdx);
+  const out: StepItem[] = [];
+  (added.get(-1) ?? []).forEach((text) => out.push({ text, kind: 'added' }));
+  steps.forEach((text, i) => {
+    out.push(removed.has(i) ? { text, kind: 'removed' } : { text });
+    (added.get(i) ?? []).forEach((t) => out.push({ text: t, kind: 'added' }));
   });
-  return rows;
+  return out;
 }
 
-/** The steps the new version would have, given which changes were discarded and any
- *  inline edits made to proposed rows (keyed by change index). */
-export function resolveSteps(
-  steps: string[],
-  changes: StepChange[],
-  discarded: Set<number>,
-  edits: Map<number, string>,
-): string[] {
-  return buildReviewRows(steps, changes)
-    .map((row) => {
-      const off = row.changeIdx != null && discarded.has(row.changeIdx);
-      switch (row.kind) {
-        case 'kept':
-          return row.text;
-        case 'added':
-          return off ? null : (edits.get(row.changeIdx!) ?? row.text);
-        case 'removed':
-          return off ? row.text : null; // discarding a removal keeps the step
-        case 'updated':
-          return off ? row.oldText! : (edits.get(row.changeIdx!) ?? row.text);
-        default:
-          return null;
-      }
-    })
-    .filter((s): s is string => s != null && s.trim() !== '');
+/** The steps the new version would have, given the reviewed (and freely edited)
+ *  item list: plain rows stay, additions count unless turned off, removals drop
+ *  unless turned off. */
+export function resolveItems(items: StepItem[]): string[] {
+  return items
+    .filter((it) =>
+      it.kind === 'added' ? !it.off : it.kind === 'removed' ? !!it.off : true,
+    )
+    .map((it) => it.text)
+    .filter((s) => s.trim() !== '');
 }
+
+/** A row that's leaving the test (an accepted removal, or a rejected addition) —
+ *  rendered struck-through, not editable, not counted in the numbering. */
+export const isStruck = (it: StepItem): boolean =>
+  (it.kind === 'removed' && !it.off) || (it.kind === 'added' && !!it.off);
 
 /** Commit a reviewed revision: steps become the resolved list, the old steps are
  *  snapshotted into history, and the pending revision clears. Status is untouched —
