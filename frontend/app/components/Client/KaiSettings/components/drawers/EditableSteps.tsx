@@ -29,6 +29,9 @@ interface Props {
   onIncludedChange?: (included: string[]) => void;
   /** commit an edit (add / delete / rename steps) */
   onStepsChange: (steps: string[]) => void;
+  /** cap the list height and scroll inside — for drawers where steps share the
+   *  space with other sections (test settings). Drafts scroll the page instead. */
+  bounded?: boolean;
   /** when set, edits stay local and a Save/Cancel bar shows at the bottom-right */
   onSave?: () => void;
   onCancel?: () => void;
@@ -314,6 +317,7 @@ function EditableSteps({
   reviewable,
   onIncludedChange,
   onStepsChange,
+  bounded,
   onSave,
   onCancel,
   dirty,
@@ -483,14 +487,25 @@ function EditableSteps({
   const includedCount = steps.length - ignored.size;
   const sectionTitle = reviewable
     ? `${t('Steps')} · ${includedCount}/${steps.length} ${t('included')}`
-    : t('Steps');
+    : steps.length > 0
+      ? `${t('Steps')} · ${steps.length}`
+      : t('Steps');
 
   return (
     <Section title={sectionTitle}>
       {steps.length === 0 ? (
         <Gap onInsert={() => insertAt(0)} always label={t('Add step')} />
       ) : (
-        <div className="flex flex-col" ref={listRef}>
+        <div
+          className={`flex flex-col ${
+            // bounded: long step lists scroll inside so run settings / tags / runs
+            // below stay one glance away
+            bounded
+              ? 'max-h-[50vh] overflow-y-auto overscroll-contain pr-1'
+              : ''
+          }`}
+          ref={listRef}
+        >
           {steps.map((step, idx) => (
             <React.Fragment key={idx}>
               <Gap

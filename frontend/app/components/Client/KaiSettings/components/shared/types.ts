@@ -237,6 +237,15 @@ export interface HttpHeader {
 
 export type Resolution = 'mobile' | 'tablet' | 'desktop';
 
+// The preset environment / viewport / region (Settings → Default run configuration)
+// that pre-fill a new draft's or manually-created test's run settings. Local-only —
+// no endpoint to persist per-project run defaults yet (see todo.md).
+export interface RunDefaults {
+  envId?: string;
+  resolution?: Resolution;
+  region?: string;
+}
+
 export type ScheduleFreq =
   | 'daily'
   | 'weekdays'

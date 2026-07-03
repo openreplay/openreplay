@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, CalendarClock, Check } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { TestCase } from '../shared/types';
+import { RunDefaults, TestCase } from '../shared/types';
 import { isScheduled } from '../shared/utils';
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
@@ -15,7 +15,33 @@ interface Props {
   onClose: () => void;
   onChange: (updated: TestCase) => void;
   onRemove: (key: string) => void;
+  /** Settings → Default run configuration; pre-fills a fresh draft's run settings */
+  defaults?: RunDefaults;
 }
+
+// A fresh draft carries nothing the user set — pre-fill env / viewport / region from
+// Settings' defaults (shown "(default)" until changed); never overwrite real values.
+const withDefaults = (tc: TestCase, defaults?: RunDefaults): TestCase => {
+  if (!defaults) return tc;
+  return {
+    ...tc,
+    environments: tc.environments?.length
+      ? tc.environments
+      : defaults.envId
+        ? [defaults.envId]
+        : tc.environments,
+    resolutions: tc.resolutions?.length
+      ? tc.resolutions
+      : defaults.resolution
+        ? [defaults.resolution]
+        : tc.resolutions,
+    regions: tc.regions?.length
+      ? tc.regions
+      : defaults.region
+        ? [defaults.region]
+        : tc.regions,
+  };
+};
 
 // The draft review is a small workflow: approve the steps, then choose a schedule (or
 // not), then optionally tag it. Approving without a schedule leaves the test "approved"
@@ -25,11 +51,20 @@ type WizStep = 0 | 1 | 2;
 /** A draft: the agent's proposal. Walk the approve → schedule → tag workflow, or
  *  dismiss it. Nothing is committed to the table until the user finishes (or closes
  *  after approving — in which case it lands as "approved"). */
-function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
+function DraftDrawer({
+  test,
+  open,
+  onClose,
+  onChange,
+  onRemove,
+  defaults,
+}: Props) {
   const { t } = useTranslation();
   // Seeded once per mount; the parent keys this drawer by the test id, so opening a
   // different draft remounts it with fresh state (no prop→state sync effect needed).
-  const [draft, setDraft] = useState<TestCase | null>(test);
+  const [draft, setDraft] = useState<TestCase | null>(() =>
+    test ? withDefaults(test, defaults) : test,
+  );
   const [step, setStep] = useState<WizStep>(0);
   // true once the user has clicked "Approve steps" — closing now keeps it approved
   const [approved, setApproved] = useState(false);
@@ -79,11 +114,13 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
     if (i === 0 || approved) setStep(i as WizStep);
   };
 
-  // footer changes per step — the workflow's forward/back controls
+  // footer changes per step — the workflow's forward/back controls. Only step 0 talks
+  // about approving (that's where approval happens); afterwards it's schedule → done.
   const footer =
     step === 0 ? (
       <div className="flex items-center justify-between">
-        <Button type="text" danger onClick={dismiss}>
+        {/* dismiss is a quiet gray — red is reserved for Delete */}
+        <Button type="text" onClick={dismiss}>
           {t('Dismiss')}
         </Button>
         <div className="flex items-center gap-2">
@@ -109,7 +146,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
         </Button>
         <div className="flex items-center gap-2">
           <Button type="text" onClick={finalize}>
-            {scheduled ? t('Skip tags') : t('Approve without schedule')}
+            {scheduled ? t('Skip tags & finish') : t('Finish without schedule')}
           </Button>
           <Button
             type="primary"
@@ -117,7 +154,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
             icon={<ArrowRight size={15} />}
             iconPosition="end"
           >
-            {t('Continue')}
+            {t('Continue to tags')}
           </Button>
         </div>
       </div>
@@ -131,7 +168,7 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
           {t('Back')}
         </Button>
         <Button type="primary" onClick={finalize} icon={<Check size={15} />}>
-          {scheduled ? t('Schedule & activate') : t('Approve test')}
+          {t('Done')}
         </Button>
       </div>
     );
@@ -218,8 +255,13 @@ function DraftDrawer({ test, open, onClose, onChange, onRemove }: Props) {
       {/* Step 2 — where & when it runs (a schedule is optional) */}
       {step === 1 && (
         <Section title={t('Where & when it runs')}>
-          <RunSettingsFields value={settings} onChange={patch} />
-          <div className="mt-3 flex items-start gap-2 text-xs text-disabled-text">
+          <RunSettingsFields
+            value={settings}
+            onChange={patch}
+            defaults={defaults}
+            defaultHints
+          />
+          <div className="mt-3 flex items-start gap-2 text-sm text-disabled-text">
             <CalendarClock size={14} className="mt-0.5 shrink-0" />
             <span>
               {scheduled

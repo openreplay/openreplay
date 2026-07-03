@@ -6,18 +6,14 @@ import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 import { useEnvironments } from '../queries';
 import { Field } from './drawers/EntityDrawer';
-import { Resolution } from './shared/types';
+import { RunDefaults } from './shared/types';
 import {
   REGION_OPTIONS,
   RESOLUTION_ICON,
   RESOLUTION_OPTIONS,
 } from './shared/utils';
 
-export interface RunDefaults {
-  envId?: string;
-  resolution?: Resolution;
-  region?: string;
-}
+export type { RunDefaults };
 
 interface Props {
   value: RunDefaults;
@@ -51,12 +47,12 @@ function Defaults({ value, onChange }: Props) {
         />
       </Field>
 
-      <Field label={t('Default device')}>
+      <Field label={t('Default viewport')}>
         <Select
           showSearch={false}
           value={value.resolution}
           style={{ width: '100%' }}
-          placeholder={t('Select device')}
+          placeholder={t('Select viewport')}
           onChange={(resolution) => onChange({ resolution })}
           options={RESOLUTION_OPTIONS.map((o) => {
             const Icon = RESOLUTION_ICON[o.value];

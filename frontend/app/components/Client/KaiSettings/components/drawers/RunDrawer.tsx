@@ -49,9 +49,13 @@ const hasShot = (s: TestStep) => s.status === 'passed' || s.status === 'failed';
 
 const isNetError = (r: NetworkRequest) => r.status === 0 || r.status >= 400;
 
-function DevEmpty({ text }: { text: string }) {
+function DevEmpty({ text, fill }: { text: string; fill?: boolean }) {
   return (
-    <div className="text-sm text-disabled-text text-center py-8 border rounded-lg">
+    <div
+      className={`text-sm text-disabled-text text-center border rounded-lg ${
+        fill ? 'h-full flex items-center justify-center' : 'py-8'
+      }`}
+    >
       {text}
     </div>
   );
@@ -59,10 +63,15 @@ function DevEmpty({ text }: { text: string }) {
 
 /** Console output captured during the run — mirrors the session console: level icon +
  *  monospace message, time on the right, error rows tinted. */
-function ConsoleView({ logs }: { logs?: ConsoleLog[] }) {
+function ConsoleView({ logs, fill }: { logs?: ConsoleLog[]; fill?: boolean }) {
   const { t } = useTranslation();
   if (!logs || logs.length === 0)
-    return <DevEmpty text={t('No console output captured for this run.')} />;
+    return (
+      <DevEmpty
+        fill={fill}
+        text={t('No console output captured for this run.')}
+      />
+    );
   return (
     <div className="border rounded-lg overflow-hidden font-mono text-xs">
       {logs.map((l, i) => {
@@ -96,13 +105,17 @@ function ConsoleView({ logs }: { logs?: ConsoleLog[] }) {
 
 /** Step screenshots. A step can capture several screenshots, so a Step Selector picks
  *  the step and the carousel arrows move between that step's screenshots. Opens on the
- *  failed step. When `onExpand` is set the preview is click-to-enlarge. */
+ *  failed step. When `onExpand` is set the preview is click-to-enlarge. With `fill`
+ *  (expand modal) the image letterboxes into the fixed stage and a step filmstrip
+ *  rides the bottom — the screenshot never dictates the modal's height. */
 function ScreenshotsView({
   run,
   onExpand,
+  fill,
 }: {
   run: RunData;
   onExpand?: () => void;
+  fill?: boolean;
 }) {
   const { t } = useTranslation();
   const shotSteps = run.steps
@@ -115,11 +128,14 @@ function ScreenshotsView({
   if (run.status === 'running')
     return (
       <DevEmpty
+        fill={fill}
         text={t('Run in progress — screenshots appear as it finishes.')}
       />
     );
   if (shotSteps.length === 0)
-    return <DevEmpty text={t('No screenshots captured for this run.')} />;
+    return (
+      <DevEmpty fill={fill} text={t('No screenshots captured for this run.')} />
+    );
 
   const cur = shotSteps[Math.min(stepPos, shotSteps.length - 1)];
   const curStep = run.steps[cur.i];
@@ -135,7 +151,7 @@ function ScreenshotsView({
   const nextShot = () => setShotIdx((safeShot + 1) % shotCount);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${fill ? 'h-full min-h-0' : ''}`}>
       {/* Step selector — pick the step; the carousel below holds that step's screenshots */}
       <Select
         size="small"
@@ -160,12 +176,14 @@ function ScreenshotsView({
         }))}
       />
 
-      {/* Carousel — arrows move between the selected step's screenshots */}
+      {/* Carousel — arrows move between the selected step's screenshots. In the fixed
+          modal stage the image letterboxes into the remaining height instead of the
+          aspect-ratio box driving the layout. */}
       <div
         className={`group relative w-full rounded-lg border bg-gray-lightest flex items-center justify-center ${
           failed ? 'border-red' : ''
-        } ${onExpand ? 'cursor-zoom-in' : ''}`}
-        style={{ aspectRatio: '16 / 10' }}
+        } ${onExpand ? 'cursor-zoom-in' : ''} ${fill ? 'flex-1 min-h-0' : ''}`}
+        style={fill ? undefined : { aspectRatio: '16 / 10' }}
         onClick={onExpand}
         role={onExpand ? 'button' : undefined}
         aria-label={onExpand ? t('Expand screenshot') : undefined}
@@ -229,6 +247,53 @@ function ScreenshotsView({
           </>
         )}
       </div>
+
+      {/* Filmstrip (modal only) — one thumb per step, faster than arrow-hopping;
+          the failed step is tinted red so it's findable at a glance */}
+      {fill && shotSteps.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto py-0.5 shrink-0">
+          {shotSteps.map((s, pos) => {
+            const active = pos === Math.min(stepPos, shotSteps.length - 1);
+            const isFailed = s.step.status === 'failed';
+            // selection mirrors the network filter chips: light-blue fill + 1px
+            // teal border — no shadow ring (it read heavy and clipped in scroll)
+            return (
+              <Tooltip
+                key={s.i}
+                title={`${t('Step')} ${s.i + 1} · ${s.step.step}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => pickStep(pos)}
+                  aria-label={`${t('Step')} ${s.i + 1}`}
+                  className="shrink-0 w-[72px] h-[45px] rounded border flex items-center justify-center text-xs font-medium transition outline-none focus:outline-none"
+                  style={{
+                    background: isFailed
+                      ? 'rgba(204, 0, 0, 0.08)'
+                      : active
+                        ? 'var(--color-active-blue)'
+                        : 'var(--color-gray-lightest)',
+                    color: isFailed
+                      ? 'var(--color-red)'
+                      : active
+                        ? 'var(--color-teal)'
+                        : 'var(--color-gray-dark)',
+                    borderColor: active
+                      ? isFailed
+                        ? 'var(--color-red)'
+                        : 'var(--color-teal)'
+                      : isFailed
+                        ? 'rgba(204, 0, 0, 0.35)'
+                        : 'var(--color-gray-light)',
+                  }}
+                >
+                  {isFailed ? <XCircle size={13} /> : s.i + 1}
+                </button>
+              </Tooltip>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -440,6 +505,16 @@ function RunDrawer({ run, open, onClose }: Props) {
   const tabCount = (n: number) =>
     n > 0 ? <span className="ml-1.5 text-red font-medium">{n}</span> : null;
 
+  // passed runs capture no network/console — those tabs are disabled (not hidden,
+  // so nothing "pops up" between runs), with the reason on hover
+  const passed = run.status === 'passed';
+  const disabledHint = (label: React.ReactNode) =>
+    passed ? (
+      <Tooltip title={t('Not captured — this run passed.')}>{label}</Tooltip>
+    ) : (
+      label
+    );
+
   // shared by the inline tabs and the expanded modal so they stay in lockstep
   const devOptions = [
     {
@@ -452,20 +527,22 @@ function RunDrawer({ run, open, onClose }: Props) {
     },
     {
       value: 'network',
-      label: (
+      disabled: passed,
+      label: disabledHint(
         <span className="flex items-center justify-center gap-1.5 py-0.5">
           <Network size={14} /> {t('Network')}
           {tabCount(netErrors)}
-        </span>
+        </span>,
       ),
     },
     {
       value: 'console',
-      label: (
+      disabled: passed,
+      label: disabledHint(
         <span className="flex items-center justify-center gap-1.5 py-0.5">
           <Terminal size={14} /> {t('Console')}
           {tabCount(consoleErrors)}
-        </span>
+        </span>,
       ),
     },
   ];
@@ -492,8 +569,9 @@ function RunDrawer({ run, open, onClose }: Props) {
     >
       {banner}
 
-      <Section title={t('Steps')}>
-        <div className="flex flex-col">
+      <Section title={`${t('Steps')} · ${total}`}>
+        {/* bounded like the test drawer — Activity stays reachable on long runs */}
+        <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
           {run.steps.map((step, idx) => renderStep(step, idx))}
         </div>
       </Section>
@@ -562,12 +640,22 @@ function RunDrawer({ run, open, onClose }: Props) {
             onChange={(v) => setModalTab(v as DevTab)}
             options={devOptions}
           />
-          <div>
-            {modalTab === 'screenshots' && <ScreenshotsView run={run} />}
+          {/* fixed stage — every tab renders inside the same height, so switching
+              tabs (or an empty console) never resizes the modal */}
+          <div className="h-[60vh] min-h-[420px]">
+            {modalTab === 'screenshots' && <ScreenshotsView run={run} fill />}
             {modalTab === 'network' && (
-              <NetworkPanel reqs={run.network} startedAt={run.date} />
+              <NetworkPanel
+                reqs={run.network}
+                startedAt={run.date}
+                fillHeight
+              />
             )}
-            {modalTab === 'console' && <ConsoleView logs={run.console} />}
+            {modalTab === 'console' && (
+              <div className="h-full overflow-y-auto">
+                <ConsoleView logs={run.console} fill />
+              </div>
+            )}
           </div>
         </div>
       </Modal>

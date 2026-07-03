@@ -2,16 +2,15 @@ import { Divider, Switch, Typography } from 'antd';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Defaults, { RunDefaults } from './Defaults';
+import Defaults from './Defaults';
 import Environments from './Environments';
+import { kaiUi, useKaiUi } from './shared/uiStore';
 
 // Defaults + notification preferences are local-only for now — no endpoint yet (todo.md).
 function SettingsTab() {
   const { t } = useTranslation();
-  const [defaults, setDefaults] = useState<RunDefaults>({
-    resolution: 'desktop',
-    region: 'paris',
-  });
+  // defaults live in the ui store — they pre-fill new drafts / manual tests in Tests tab
+  const { defaults } = useKaiUi();
   const [dailySummary, setDailySummary] = useState(false);
   const [weeklySummary, setWeeklySummary] = useState(true);
 
@@ -29,7 +28,7 @@ function SettingsTab() {
         </div>
         <Defaults
           value={defaults}
-          onChange={(patch) => setDefaults((d) => ({ ...d, ...patch }))}
+          onChange={(patch) => kaiUi.setDefaults(patch)}
         />
       </section>
 
