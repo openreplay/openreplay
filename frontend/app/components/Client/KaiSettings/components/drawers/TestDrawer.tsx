@@ -115,22 +115,21 @@ function TestDrawer({
       : undefined;
 
   // ---- pending revision (needs review) ---------------------------------
-  const toggleChange = (idx: number) =>
+  // ✕ on a struck row: keep the step — the removal marker clears and the row is a
+  // plain, editable step again (re-deleting it is just the normal trash)
+  const keepStep = (idx: number) =>
     setReviewItems(
       (prev) =>
-        prev &&
-        prev.map((it, i) => (i === idx ? { ...it, off: !it.off } : it)),
+        prev && prev.map((it, i) => (i === idx ? { text: it.text } : it)),
     );
-  // "N changes" / "x of N changes applied" next to the Steps · V1 → V2 title
+  // live count of proposal rows still in the list, next to Steps · V1 → V2
   const changedCount = reviewItems?.filter((it) => it.kind).length ?? 0;
-  const offCount = reviewItems?.filter((it) => it.kind && it.off).length ?? 0;
-  const reviewSummary = (
-    <span className="text-sm text-disabled-text">
-      {offCount === 0
-        ? `${changedCount} ${changedCount === 1 ? t('change') : t('changes')}`
-        : `${changedCount - offCount} ${t('of')} ${changedCount} ${t('changes applied')}`}
-    </span>
-  );
+  const reviewSummary =
+    changedCount > 0 ? (
+      <span className="text-sm text-disabled-text">
+        {changedCount} {changedCount === 1 ? t('change') : t('changes')}
+      </span>
+    ) : undefined;
   const saveRevision = () => {
     if (!revision || !reviewItems) return;
     onChange(applyRevision(test, resolveItems(reviewItems), Date.now()));
@@ -338,7 +337,7 @@ function TestDrawer({
           headerAction={reviewSummary}
           reviewItems={reviewItems}
           onItemsChange={setReviewItems}
-          onToggleChange={toggleChange}
+          onKeepStep={keepStep}
           onStepsChange={() => {}}
         />
       ) : viewedSnapshot ? (

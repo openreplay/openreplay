@@ -52,8 +52,8 @@ interface Props {
    *  onItemsChange instead of onStepsChange */
   reviewItems?: StepItem[];
   onItemsChange?: (items: StepItem[]) => void;
-  /** flip one proposed change on/off (✕ keeps the step as-is, ↺ re-applies) */
-  onToggleChange?: (idx: number) => void;
+  /** ✕ on a struck row — keep the step (the removal marker clears) */
+  onKeepStep?: (idx: number) => void;
 }
 
 /** The subtle per-step history: a clock icon that only appears on row hover (same
@@ -193,8 +193,8 @@ interface StepRowProps {
   onDragEnd: () => void;
   historyEntries?: { version: number; text: string }[];
   onRestoreText?: (idx: number, text: string) => void;
-  /** version review: flip this row's proposed change on/off */
-  onToggleChange?: (idx: number) => void;
+  /** version review: keep a step the proposal wants removed */
+  onKeepStep?: (idx: number) => void;
 }
 
 /** One step. Drag the grip (it replaces the number on hover) to reorder. Click the
@@ -221,7 +221,7 @@ function StepRow({
   onDragEnd,
   historyEntries,
   onRestoreText,
-  onToggleChange,
+  onKeepStep,
 }: StepRowProps) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
@@ -229,7 +229,7 @@ function StepRow({
 
   const step = item.text;
   const struck = isStruck(item);
-  const proposedAdd = item.kind === 'added' && !item.off;
+  const proposedAdd = item.kind === 'added';
 
   const [{ isDragging }, drag, preview] = useDrag({
     type: STEP_DND,
@@ -245,15 +245,6 @@ function StepRow({
 
   preview(ref);
   drag(handleRef);
-
-  const toggleTip =
-    item.kind === 'added'
-      ? item.off
-        ? t('Restore this new step')
-        : t('Don’t add this step')
-      : item.off
-        ? t('Remove this step')
-        : t('Keep this step');
 
   return (
     <>
@@ -383,21 +374,21 @@ function StepRow({
                 onRestore={(text) => onRestoreText(idx, text)}
               />
             )}
-            {/* proposed rows: the accept/discard toggle, always visible — a review
-                asks for a decision, so its control doesn't hide behind hover */}
-            {item.kind && onToggleChange && (
-              <Tooltip title={toggleTip}>
+            {/* one control per meaning — ✕ keeps a step the proposal wants removed
+                (always visible: it asks for a decision), the trash deletes. An added
+                row needs no extra control: deleting it IS rejecting the addition. */}
+            {struck && onKeepStep ? (
+              <Tooltip title={t('Keep this step')}>
                 <button
                   type="button"
-                  aria-label={toggleTip}
-                  onClick={() => onToggleChange(idx)}
+                  aria-label={t('Keep this step')}
+                  onClick={() => onKeepStep(idx)}
                   className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest"
                 >
-                  {item.off ? <Undo2 size={14} /> : <X size={14} />}
+                  <X size={14} />
                 </button>
               </Tooltip>
-            )}
-            {!struck && (
+            ) : (
               <Tooltip title={t('Delete step')}>
                 <button
                   type="button"
@@ -443,7 +434,7 @@ function EditableSteps({
   title,
   reviewItems,
   onItemsChange,
-  onToggleChange,
+  onKeepStep,
 }: Props) {
   const { t } = useTranslation();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -689,7 +680,7 @@ function EditableSteps({
                   onDragEnd={onDragEnd}
                   historyEntries={historyFor?.(idx)}
                   onRestoreText={historyFor ? restoreText : undefined}
-                  onToggleChange={onToggleChange}
+                  onKeepStep={onKeepStep}
                 />
               </React.Fragment>
             );

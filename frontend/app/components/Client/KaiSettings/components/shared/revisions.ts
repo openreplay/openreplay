@@ -9,13 +9,14 @@ export const needsReview = (tc: TestCase): boolean => !!tc.pendingRevision;
 
 // One row of the review list. During a review the whole list stays a live,
 // editable step list (same as drafts) — proposed rows just carry a marker:
-//  - kind 'added'   → proposed new step (blue); `off` = don't add it
-//  - kind 'removed' → proposed deletion (struck); `off` = keep the step
+//  - kind 'added'   → proposed new step (blue); deleting the row rejects it
+//  - kind 'removed' → proposed deletion (struck); ✕ keeps it (marker clears,
+//    the row becomes a plain step again)
 //  - no kind        → a plain step (kept, or typed by the user during the review)
+// One control per meaning: ✕ = keep, trash = delete. No on/off toggling.
 export interface StepItem {
   text: string;
   kind?: 'added' | 'removed';
-  off?: boolean;
 }
 
 /** Merge the current steps with the proposed changes into one editable list. */
@@ -42,21 +43,17 @@ export function buildReviewItems(
 }
 
 /** The steps the new version would have, given the reviewed (and freely edited)
- *  item list: plain rows stay, additions count unless turned off, removals drop
- *  unless turned off. */
+ *  item list: everything stays except the rows still marked for removal. */
 export function resolveItems(items: StepItem[]): string[] {
   return items
-    .filter((it) =>
-      it.kind === 'added' ? !it.off : it.kind === 'removed' ? !!it.off : true,
-    )
+    .filter((it) => it.kind !== 'removed')
     .map((it) => it.text)
     .filter((s) => s.trim() !== '');
 }
 
-/** A row that's leaving the test (an accepted removal, or a rejected addition) —
+/** A row that's leaving the test (a proposed removal the user hasn't kept) —
  *  rendered struck-through, not editable, not counted in the numbering. */
-export const isStruck = (it: StepItem): boolean =>
-  (it.kind === 'removed' && !it.off) || (it.kind === 'added' && !!it.off);
+export const isStruck = (it: StepItem): boolean => it.kind === 'removed';
 
 /** Commit a reviewed revision: steps become the resolved list, the old steps are
  *  snapshotted into history, and the pending revision clears. Status is untouched —
