@@ -1,5 +1,5 @@
 import { Button, Tooltip, message } from 'antd';
-import { Copy, Download, X } from 'lucide-react';
+import { ChevronLeft, Copy, Download } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,8 +9,10 @@ import { formatBytes } from 'App/utils';
 import { NetworkRequest } from '../shared/types';
 
 // A stripped HAR-file-viewer (per the 06-29 review): type filter chips, a clickable
-// request list (no waterfall bars, no legend), and a detail panel with request/response
+// request list (no waterfall bars, no legend), and a detail view with request/response
 // headers, payload, response and timing. Mirrors openreplay.com/tools/har-file-viewer.
+// Clicking a request REPLACES the list with the detail (back-to-list on top) — the two
+// never stack, so the panel's height stays predictable.
 
 const isNetError = (r: NetworkRequest) => r.status === 0 || r.status >= 400;
 
@@ -200,125 +202,130 @@ function Detail({
   ].filter((r) => r.value != null);
 
   return (
-    <div className="border rounded-lg p-3 flex flex-col gap-3">
-      {/* header */}
-      <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className="inline-flex items-center gap-1 text-sm font-medium rounded px-1.5 py-0.5"
-              style={{
-                background: errored
-                  ? 'rgba(204, 0, 0, 0.1)'
-                  : 'rgba(66, 174, 94, 0.12)',
-                color: statusColor(req.status),
-              }}
-            >
-              {req.status === 0
-                ? t('ERR')
-                : `${req.status} ${STATUS_TEXT[req.status] ?? ''}`.trim()}
-            </span>
-            <span className="text-sm font-semibold text-black">
-              {req.method}
-            </span>
-            {req.protocol && (
-              <span className="text-xs text-disabled-text">{req.protocol}</span>
-            )}
-          </div>
-          <div className="mt-1 text-xs text-disabled-text">
-            {hostOf(req.url)}
-            {req.ip ? ` · ${req.ip}` : ''}
-          </div>
-          <div className="mt-1.5 text-sm font-mono text-black break-all">
-            {pathOf(req.url)}
-          </div>
-          <button
-            type="button"
-            onClick={copyUrl}
-            className="mt-1.5 inline-flex items-center gap-1 text-xs text-disabled-text hover:text-black"
-          >
-            <Copy size={12} /> {t('Copy full URL')}
-          </button>
-        </div>
-        <button
-          type="button"
-          aria-label={t('Close')}
-          onClick={onClose}
-          className="shrink-0 text-disabled-text hover:text-black"
-        >
-          <X size={16} />
-        </button>
-      </div>
+    <div className="flex flex-col gap-3">
+      {/* the detail replaces the list, so the way out is "back", not "close" */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="self-start inline-flex items-center gap-1 text-sm text-main hover:underline"
+      >
+        <ChevronLeft size={15} /> {t('Back to requests')}
+      </button>
 
-      {/* stat cards */}
-      <div className="grid grid-cols-2 gap-2">
-        {stat(t('Size'), fmtBytes(req.size))}
-        {stat(t('Total time'), fmtMs(req.duration))}
-        {stat(t('Type'), req.type)}
-        {stat(t('Started'), started)}
-      </div>
-
-      {/* tabs */}
-      <div className="flex flex-wrap gap-1.5">
-        {tabs.map((tb) => {
-          const active = tab === tb.key;
-          return (
-            <button
-              key={tb.key}
-              type="button"
-              onClick={() => setTab(tb.key)}
-              className={`text-xs font-medium rounded-full px-2.5 py-1 border transition ${
-                active
-                  ? ''
-                  : 'bg-gray-lightest text-gray-dark border-transparent hover:bg-gray-light'
-              }`}
-              style={
-                active
-                  ? {
-                      background: 'var(--color-active-blue)',
-                      borderColor: 'var(--color-teal)',
-                      color: 'var(--color-teal)',
-                    }
-                  : undefined
-              }
-            >
-              {tb.label}
-              {tb.count != null && (
-                <span className={active ? '' : 'text-disabled-text'}>
-                  {' '}
-                  ({tb.count})
+      <div className="border rounded-lg p-3 flex flex-col gap-3">
+        {/* header */}
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className="inline-flex items-center gap-1 text-sm font-medium rounded px-1.5 py-0.5"
+                style={{
+                  background: errored
+                    ? 'rgba(204, 0, 0, 0.1)'
+                    : 'rgba(66, 174, 94, 0.12)',
+                  color: statusColor(req.status),
+                }}
+              >
+                {req.status === 0
+                  ? t('ERR')
+                  : `${req.status} ${STATUS_TEXT[req.status] ?? ''}`.trim()}
+              </span>
+              <span className="text-sm font-semibold text-black">
+                {req.method}
+              </span>
+              {req.protocol && (
+                <span className="text-xs text-disabled-text">
+                  {req.protocol}
                 </span>
               )}
+            </div>
+            <div className="mt-1 text-xs text-disabled-text">
+              {hostOf(req.url)}
+              {req.ip ? ` · ${req.ip}` : ''}
+            </div>
+            <div className="mt-1.5 text-sm font-mono text-black break-all">
+              {pathOf(req.url)}
+            </div>
+            <button
+              type="button"
+              onClick={copyUrl}
+              className="mt-1.5 inline-flex items-center gap-1 text-xs text-disabled-text hover:text-black"
+            >
+              <Copy size={12} /> {t('Copy full URL')}
             </button>
-          );
-        })}
-      </div>
+          </div>
+        </div>
 
-      <div>
-        {tab === 'reqHeaders' && <HeaderRows rows={req.requestHeaders} />}
-        {tab === 'resHeaders' && <HeaderRows rows={req.responseHeaders} />}
-        {tab === 'payload' && <CodeBlock text={req.payload} />}
-        {tab === 'response' && <CodeBlock text={req.response} />}
-        {tab === 'timing' &&
-          (timingRows.length === 0 ? (
-            <div className="text-sm text-disabled-text py-3">
-              {t('No timing captured.')}
-            </div>
-          ) : (
-            <div className="border rounded-lg overflow-hidden divide-y">
-              {timingRows.map((r) => (
-                <div
-                  key={r.label}
-                  className="flex items-center justify-between px-3 py-2 text-xs"
-                >
-                  <span className="text-gray-dark">{r.label}</span>
-                  <span className="font-mono text-gray-darkest">
-                    {fmtMs(r.value)}
+        {/* stat cards */}
+        <div className="grid grid-cols-2 gap-2">
+          {stat(t('Size'), fmtBytes(req.size))}
+          {stat(t('Total time'), fmtMs(req.duration))}
+          {stat(t('Type'), req.type)}
+          {stat(t('Started'), started)}
+        </div>
+
+        {/* tabs */}
+        <div className="flex flex-wrap gap-1.5">
+          {tabs.map((tb) => {
+            const active = tab === tb.key;
+            return (
+              <button
+                key={tb.key}
+                type="button"
+                onClick={() => setTab(tb.key)}
+                className={`text-xs font-medium rounded-full px-2.5 py-1 border transition ${
+                  active
+                    ? ''
+                    : 'bg-gray-lightest text-gray-dark border-transparent hover:bg-gray-light'
+                }`}
+                style={
+                  active
+                    ? {
+                        background: 'var(--color-active-blue)',
+                        borderColor: 'var(--color-teal)',
+                        color: 'var(--color-teal)',
+                      }
+                    : undefined
+                }
+              >
+                {tb.label}
+                {tb.count != null && (
+                  <span className={active ? '' : 'text-disabled-text'}>
+                    {' '}
+                    ({tb.count})
                   </span>
-                </div>
-              ))}
-            </div>
-          ))}
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div>
+          {tab === 'reqHeaders' && <HeaderRows rows={req.requestHeaders} />}
+          {tab === 'resHeaders' && <HeaderRows rows={req.responseHeaders} />}
+          {tab === 'payload' && <CodeBlock text={req.payload} />}
+          {tab === 'response' && <CodeBlock text={req.response} />}
+          {tab === 'timing' &&
+            (timingRows.length === 0 ? (
+              <div className="text-sm text-disabled-text py-3">
+                {t('No timing captured.')}
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden divide-y">
+                {timingRows.map((r) => (
+                  <div
+                    key={r.label}
+                    className="flex items-center justify-between px-3 py-2 text-xs"
+                  >
+                    <span className="text-gray-dark">{r.label}</span>
+                    <span className="font-mono text-gray-darkest">
+                      {fmtMs(r.value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );
@@ -331,9 +338,12 @@ const NET_GRID =
 function NetworkPanel({
   reqs,
   startedAt,
+  fillHeight,
 }: {
   reqs?: NetworkRequest[];
   startedAt?: number;
+  /** fill the parent's fixed height (expand modal) — list/detail scroll inside */
+  fillHeight?: boolean;
 }) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState('all');
@@ -353,15 +363,33 @@ function NetworkPanel({
 
   if (!reqs || reqs.length === 0)
     return (
-      <div className="text-sm text-disabled-text text-center py-8 border rounded-lg">
+      <div
+        className={`text-sm text-disabled-text text-center border rounded-lg ${
+          fillHeight ? 'h-full flex items-center justify-center' : 'py-8'
+        }`}
+      >
         {t('No network activity captured for this run.')}
       </div>
     );
 
   const cur = selected != null ? reqs[selected] : null;
 
+  // detail REPLACES the list — one view at a time, stable height
+  if (cur)
+    return (
+      <div className={fillHeight ? 'h-full overflow-y-auto' : ''}>
+        <Detail
+          req={cur}
+          startedAt={startedAt}
+          onClose={() => setSelected(null)}
+        />
+      </div>
+    );
+
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      className={`flex flex-col gap-3 ${fillHeight ? 'h-full min-h-0' : ''}`}
+    >
       {/* type filter chips (no legend, no waterfall — per review) + HAR download */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap gap-1.5">
@@ -411,9 +439,15 @@ function NetworkPanel({
       </div>
 
       {/* request list */}
-      <div className="border rounded-lg overflow-hidden text-xs">
+      <div
+        className={`border rounded-lg text-xs ${
+          fillHeight ? 'flex-1 min-h-0 overflow-y-auto' : 'overflow-hidden'
+        }`}
+      >
         <div
-          className={`${NET_GRID} px-3 py-1.5 bg-gray-lightest border-b text-disabled-text font-medium uppercase tracking-wide`}
+          className={`${NET_GRID} px-3 py-1.5 bg-gray-lightest border-b text-disabled-text font-medium uppercase tracking-wide ${
+            fillHeight ? 'sticky top-0 z-1' : ''
+          }`}
         >
           <span>{t('Status')}</span>
           <span>{t('Method')}</span>
@@ -460,15 +494,6 @@ function NetworkPanel({
           })
         )}
       </div>
-
-      {/* detail for the selected request */}
-      {cur && (
-        <Detail
-          req={cur}
-          startedAt={startedAt}
-          onClose={() => setSelected(null)}
-        />
-      )}
     </div>
   );
 }

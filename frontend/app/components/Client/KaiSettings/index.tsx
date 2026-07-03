@@ -13,11 +13,14 @@ import SiteDropdown from 'Shared/SiteDropdown';
 import RunsTab from './components/RunsTab';
 import SettingsTab from './components/SettingsTab';
 import TestsTab from './components/TestsTab';
+import { KaiTab, kaiUi, useKaiUi } from './components/shared/uiStore';
 import { BrowserTestsProjectProvider } from './queries';
 
 function KaiSettings() {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
+  // controlled by the ui store so drawers can deep-link across tabs ("View runs")
+  const { activeTab } = useKaiUi();
   // Local project selection, defaulting to the globally-active project. Kept
   // local so changing it here doesn't change the project elsewhere in the app.
   const [selectedSiteId, setSelectedSiteId] = useState<string | undefined>();
@@ -54,7 +57,8 @@ function KaiSettings() {
           />
         </div>
         <Tabs
-          defaultActiveKey="tests"
+          activeKey={activeTab}
+          onChange={(k) => kaiUi.setActiveTab(k as KaiTab)}
           items={tabItems}
           tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
         />

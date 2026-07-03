@@ -13,7 +13,7 @@ import {
   message,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { Calendar, EllipsisVertical, Play, Radar } from 'lucide-react';
+import { Calendar, EllipsisVertical, Play, Plus, Radar } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
@@ -21,6 +21,7 @@ import { toast } from 'react-toastify';
 import FullPagination from 'Shared/FullPagination';
 
 import {
+  createTest as apiCreateTest,
   deleteTest as apiDeleteTest,
   updateTest as apiUpdateTest,
 } from '../api';
@@ -35,11 +36,17 @@ import {
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
 import './kai-table.css';
-import { apiTestToVM, vmToUpdateRequest } from './shared/adapters';
-import { TestCase, TestLifecycle } from './shared/types';
+import {
+  apiTestToVM,
+  vmToCreateRequest,
+  vmToUpdateRequest,
+} from './shared/adapters';
+import { RunData, TestCase, TestLifecycle } from './shared/types';
+import { kaiUi } from './shared/uiStore';
 import {
   RowTags,
   getStatusTag,
+  hasNoEnvironment,
   isScheduled,
   scheduleLabel,
   scheduleShort,
@@ -90,6 +97,10 @@ function TestsTab() {
   const [openKey, setOpenKey] = useState<string | null>(null);
   // when a drawer is opened via the "Schedule" action, jump straight to the schedule
   const [focusSchedule, setFocusSchedule] = useState(false);
+  // manual creation: a placeholder test edited in the drawer, not yet persisted. It
+  // lives here (not in the query cache) until "Create test" commits it.
+  const [draftTest, setDraftTest] = useState<TestCase | null>(null);
+  const creating = draftTest != null;
 
   const PAGE_SIZE = 20;
   // Reset to page 1 when a filter changes — done during render (React's supported
@@ -190,12 +201,69 @@ function TestsTab() {
   const selected = tests.filter((tc) => selectedKeys.includes(tc.key));
   const selDrafts = selected.filter((tc) => tc.status === 'draft').length;
   const selActive = selected.filter((tc) => tc.status === 'active').length;
-  const selPaused = selected.filter((tc) => tc.status === 'paused').length;
+  // paused tests with no environment left can't resume — nothing to run against
+  const selPaused = selected.filter(
+    (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
+  ).length;
 
   const invalidateAll = () =>
     queryClient.invalidateQueries({
       queryKey: browserTestsKeys.all(projectId),
     });
+
+  // Manual creation — writing steps by hand is easy, so a hand-made test skips the
+  // draft/approve flow and starts life `approved` (ready, unscheduled), drawer open.
+  // The placeholder is only persisted when the user commits it.
+  const addTest = () => {
+    const { defaults } = kaiUi.get();
+    setFocusSchedule(false);
+    setDraftTest({
+      key: `new-${Date.now()}`, // temp; replaced by the server id on create
+      title: t('Untitled test'),
+      steps: [],
+      status: 'approved',
+      schedule: null,
+      tags: [],
+      environments: defaults.envId ? [defaults.envId] : undefined,
+      resolutions: defaults.resolution ? [defaults.resolution] : undefined,
+      regions: defaults.region ? [defaults.region] : undefined,
+    });
+    setOpenKey(null);
+  };
+  const cancelCreate = () => setDraftTest(null);
+  // Create seeds a `pending` test (the endpoint takes no status), so lift it to the
+  // intended lifecycle with a follow-up update, then invalidate once — see todo.md.
+  const commitCreate = async () => {
+    if (!draftTest) return;
+    const intended = draftTest;
+    setDraftTest(null);
+    try {
+      const created = await apiCreateTest(
+        projectId,
+        vmToCreateRequest(intended),
+      );
+      await apiUpdateTest(
+        projectId,
+        created.testId,
+        vmToUpdateRequest({ ...intended, key: created.testId }),
+      );
+      message.success(t('Test created'));
+    } catch {
+      toast.error(t('Failed to create test'));
+    }
+    invalidateAll();
+  };
+
+  // jump to the Runs tab pre-filtered to this test ("View all runs")
+  const viewRuns = (tc: TestCase) => {
+    setOpenKey(null);
+    kaiUi.showRunsForTest(tc.title);
+  };
+  // jump to the Runs tab with one exact run's drawer open ("View" on last failed run)
+  const viewRun = (run: RunData) => {
+    setOpenKey(null);
+    kaiUi.openRunInRunsTab(run);
+  };
 
   // Bulk actions fire the mutations directly (not via the single-item hooks) so the
   // whole batch runs, then the list is invalidated once instead of per item.
@@ -234,7 +302,7 @@ function TestsTab() {
     );
   const resumeSelected = () =>
     void bulkUpdate(
-      (tc) => tc.status === 'paused',
+      (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
       (tc) => ({ status: isScheduled(tc.schedule) ? 'active' : 'approved' }),
     );
   const deleteSelected = async () => {
@@ -312,11 +380,31 @@ function TestsTab() {
         { key: 'dismiss', label: t('Dismiss'), danger: true },
       ];
     } else {
-      const controls: { key: string; label: string }[] = [];
+      const controls: {
+        key: string;
+        label: React.ReactNode;
+        disabled?: boolean;
+      }[] = [];
       if (tc.status === 'active')
         controls.push({ key: 'pause', label: t('Pause') });
-      if (tc.status === 'paused')
-        controls.push({ key: 'resume', label: t('Resume') });
+      if (tc.status === 'paused') {
+        // no environment → nothing to run against; Resume unlocks once one is set
+        const blocked = hasNoEnvironment(tc);
+        controls.push({
+          key: 'resume',
+          disabled: blocked,
+          label: blocked ? (
+            <Tooltip
+              title={t('Set an environment in this test’s settings to resume.')}
+              placement="left"
+            >
+              <span>{t('Resume')}</span>
+            </Tooltip>
+          ) : (
+            t('Resume')
+          ),
+        });
+      }
       if (tc.status === 'approved')
         controls.push({ key: 'schedule', label: t('Schedule') });
       if (tc.status === 'active' || tc.status === 'paused')
@@ -402,9 +490,7 @@ function TestsTab() {
       sorter: true,
       showSorterTooltip: false,
       render: (_: unknown, tc) =>
-        tc.status === 'draft' ? (
-          <span className="text-disabled-text">—</span>
-        ) : !isScheduled(tc.schedule) ? (
+        !isScheduled(tc.schedule) ? (
           <span className="text-disabled-text italic">
             {t('Not scheduled')}
           </span>
@@ -470,8 +556,8 @@ function TestsTab() {
     );
   }
 
-  // first-run / empty state
-  if (tests.length === 0) {
+  // first-run / empty state (still show the drawer if a manual test is being created)
+  if (tests.length === 0 && !creating) {
     return (
       <div className="flex flex-col items-center text-center gap-3 py-16 px-4">
         <div className="w-12 h-12 rounded-full bg-gray-lightest flex items-center justify-center">
@@ -485,9 +571,17 @@ function TestsTab() {
             'As real users move through your app, the agent learns the journeys they take. Once it has seen a full journey across enough sessions, it drafts a test here for you to review.',
           )}
         </Typography.Text>
-        <span className="text-xs text-disabled-text">
+        <span className="text-sm text-disabled-text">
           {t('Nothing to set up — drafts will appear as they are ready.')}
         </span>
+        <Button
+          type="primary"
+          icon={<Plus size={14} />}
+          onClick={addTest}
+          className="mt-1"
+        >
+          {t('Add test manually')}
+        </Button>
       </div>
     );
   }
@@ -564,6 +658,16 @@ function TestsTab() {
                 ...allTags.map((tag) => ({ value: tag, label: tag })),
               ]}
             />
+            {/* manual creation — the agent drafts most tests, but writing steps by
+                hand is easy enough to deserve a first-class button */}
+            <Button
+              size="small"
+              type="primary"
+              icon={<Plus size={14} />}
+              onClick={addTest}
+            >
+              {t('Add test')}
+            </Button>
           </div>
         )}
       </div>
@@ -630,20 +734,40 @@ function TestsTab() {
         key={`draft-${openKey ?? 'none'}`}
         test={openTest?.status === 'draft' ? openTest : null}
         open={openTest?.status === 'draft'}
+        defaults={kaiUi.get().defaults}
         onClose={() => setOpenKey(null)}
         onChange={updateTest}
         onRemove={removeTest}
       />
+      {/* one TestDrawer for both live tests and manual creation. Creating edits the
+          local placeholder (`draftTest`) and commits on "Create test"; otherwise it
+          edits the opened row live. */}
       <TestDrawer
-        key={`test-${openKey ?? 'none'}`}
-        test={openTest && openTest.status !== 'draft' ? openTest : null}
-        open={!!openTest && openTest.status !== 'draft'}
+        key={
+          creating ? `test-new-${draftTest?.key}` : `test-${openKey ?? 'none'}`
+        }
+        test={
+          creating
+            ? draftTest
+            : openTest && openTest.status !== 'draft'
+              ? openTest
+              : null
+        }
+        open={creating || (!!openTest && openTest.status !== 'draft')}
+        creating={creating}
         focusSchedule={focusSchedule}
+        onCreate={commitCreate}
+        onViewRuns={viewRuns}
+        onViewRun={viewRun}
         onClose={() => {
+          if (creating) {
+            cancelCreate();
+            return;
+          }
           setOpenKey(null);
           setFocusSchedule(false);
         }}
-        onChange={updateTest}
+        onChange={creating ? setDraftTest : updateTest}
         onRemove={removeTest}
       />
     </div>

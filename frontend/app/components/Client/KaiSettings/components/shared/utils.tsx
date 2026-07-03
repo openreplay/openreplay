@@ -10,6 +10,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Resolution,
@@ -139,9 +140,11 @@ export const getRunResult = (
 };
 
 // Compact tag chips for a table cell: first 2 shown, the rest folded into a +N hint.
+// Empty reads italic "Not set" — same language as the environment/schedule gaps.
 export const RowTags = ({ tags }: { tags?: string[] }) => {
+  const { t } = useTranslation();
   if (!tags || tags.length === 0)
-    return <span className="text-disabled-text">—</span>;
+    return <span className="text-disabled-text italic">{t('Not set')}</span>;
   const shown = tags.slice(0, 2);
   const rest = tags.slice(2);
   return (
@@ -233,6 +236,10 @@ export const scheduleFreq = (s?: Schedule | null): ScheduleFreq | null => {
 
 export const isScheduled = (s?: Schedule | null): boolean =>
   scheduleFreq(s) !== null;
+
+/** A test with no environment can't run — gates Resume until one is set. */
+export const hasNoEnvironment = (tc: { environments?: string[] }): boolean =>
+  !tc.environments || tc.environments.length === 0;
 
 const domLabel = (dom?: number): string =>
   dom === 0 ? 'the last day' : `the ${ordinal(dom ?? 1)}`;
