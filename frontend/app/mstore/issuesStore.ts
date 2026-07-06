@@ -30,6 +30,8 @@ export interface Issue {
   id: number;
   head: string;
   critical: boolean;
+  /** which focus surfaced this issue — absent = found in full traffic */
+  focusId?: number;
   cat: CategoryName;
   real: string;
   /** suggested fix / resolution — paired with `real` in the detail diagnosis */
@@ -131,6 +133,96 @@ export const CAT_COLOR: Record<CategoryName, string> = {
   Slowness: '#E28940',
 };
 
+/* =========================================================================
+   FOCUS — point the agent's limited daily sample at portions of traffic.
+   A focus = an omni-search query (the same filters as Sessions) + optional
+   free-text instructions. Several can be active at once (one per teammate's
+   area, typically); full traffic keeps a baseline share of the sample and
+   active focuses get concentrated sampling on top. Issues carry the focus
+   that surfaced them (focusId) — absent means found in full traffic.
+   ========================================================================= */
+
+/** One serialized omni-search filter — enough to re-hydrate the real filter
+    object from the catalog (filterStore.findEvent) when editing a focus. */
+export interface FocusFilterSeed {
+  name: string;
+  isEvent: boolean;
+  autoCaptured?: boolean;
+  operator?: string;
+  value: string[];
+}
+
+export interface Focus {
+  id: number;
+  name: string;
+  /** display name of the creator; `mine` gates edit/delete (anyone toggles) */
+  createdBy: string;
+  mine: boolean;
+  active: boolean;
+  /** serialized omni-search query (rebuilt into real filters on edit) */
+  seeds: FocusFilterSeed[];
+  /** human-readable one-liner of the query, shown in the popover */
+  summary: string;
+  /** share of daily traffic this query matches (computed at save time) */
+  trafficPct: number;
+  /** ~sessions analysed per day for this focus */
+  sessionsPerDay: number;
+  instructions?: string;
+}
+
+/** One origin an issue can come from: the full-traffic baseline, or a specific
+    focus (by id). Filtering is multi-select, like tag labels — an empty
+    selection means "everywhere". */
+export type IssueOrigin = 'full' | number;
+
+/* Seeded focuses — one of mine (edit/delete), two from teammates (toggle only).
+   Filter names/values match the mock omni-search catalog (dev/mockSessions). */
+export const MOCK_FOCUSES: Focus[] = [
+  {
+    id: 1,
+    name: 'Billing & checkout',
+    createdBy: 'You',
+    mine: true,
+    active: true,
+    seeds: [
+      { name: 'LOCATION', isEvent: true, autoCaptured: true, operator: 'contains', value: ['/checkout'] },
+      { name: 'CLICK', isEvent: true, autoCaptured: true, value: ['Place order'] },
+    ],
+    summary: 'Path contains /checkout · Click "Place order"',
+    trafficPct: 2,
+    sessionsPerDay: 40,
+    instructions:
+      'Watch for silent payment failures and anything around coupons or card validation.',
+  },
+  {
+    id: 2,
+    name: 'Pricing · France',
+    createdBy: 'Mehdi',
+    mine: false,
+    active: true,
+    seeds: [
+      { name: 'LOCATION', isEvent: true, autoCaptured: true, operator: 'contains', value: ['/pricing'] },
+      { name: 'userCountry', isEvent: false, operator: 'is', value: ['FR'] },
+    ],
+    summary: 'Path contains /pricing · Country = FR',
+    trafficPct: 6,
+    sessionsPerDay: 120,
+  },
+  {
+    id: 3,
+    name: 'Mobile visitors',
+    createdBy: 'Nikita',
+    mine: false,
+    active: false,
+    seeds: [
+      { name: 'userDevice', isEvent: false, operator: 'is', value: ['mobile'] },
+    ],
+    summary: 'Device = mobile',
+    trafficPct: 38,
+    sessionsPerDay: 760,
+  },
+];
+
 /* Impact as three levels (no number). Thresholds match the sort order. */
 export type ImpactLevel = 'High' | 'Medium' | 'Low';
 
@@ -183,6 +275,7 @@ const RAW: Omit<Issue, 'tags' | 'fix'>[] = [
     id: 1,
     head: 'Card declined with no error message at checkout',
     critical: true,
+    focusId: 1, // surfaced by the "Billing & checkout" focus
     cat: 'Errors',
     impact: 71,
     seenAgoMin: 3,
@@ -212,6 +305,7 @@ const RAW: Omit<Issue, 'tags' | 'fix'>[] = [
     id: 3,
     head: 'Card form rejects a valid expiry date',
     critical: true,
+    focusId: 1, // surfaced by the "Billing & checkout" focus
     cat: 'Errors',
     impact: 58,
     seenAgoMin: 52,
@@ -324,6 +418,7 @@ const RAW: Omit<Issue, 'tags' | 'fix'>[] = [
     id: 11,
     head: 'Quick bounce off the pricing page',
     critical: false,
+    focusId: 2, // surfaced by the "Pricing · France" focus
     cat: 'UI/UX',
     impact: 12,
     seenAgoMin: 20160,
@@ -394,6 +489,13 @@ export default class IssuesStore {
   criticalOverride: Record<number, boolean> = {};
   criticalReasons: Record<number, string> = {};
 
+  // ---- focus (portions of traffic the agent concentrates on) ----
+  focuses: Focus[] = MOCK_FOCUSES;
+  /** "found in" filter — lives in the Tags dropdown next to the labels, because
+      origin is an ATTRIBUTE of an issue (Display only shapes visibility).
+      Multi-select; empty = everywhere. */
+  origins: IssueOrigin[] = [];
+
   constructor() {
     makeAutoObservable(this);
   }
@@ -428,6 +530,12 @@ export default class IssuesStore {
           : this.labels.every((t) => i.tags.includes(t)),
       );
     if (this.critOnly) l = l.filter((i) => i.critical);
+    if (this.origins.length)
+      l = l.filter((i) =>
+        i.focusId != null
+          ? this.origins.includes(i.focusId)
+          : this.origins.includes('full'),
+      );
     const q = this.q.toLowerCase().trim();
     if (q)
       l = l.filter((i) =>
@@ -534,6 +642,52 @@ export default class IssuesStore {
   };
   setCritOnly = (v: boolean) => { this.critOnly = v; };
   setShowHidden = (v: boolean) => { this.showHidden = v; };
+
+  // ---- focus ----
+  get activeFocusCount(): number {
+    return this.focuses.filter((f) => f.active).length;
+  }
+
+  focusById(id?: number): Focus | undefined {
+    return id == null ? undefined : this.focuses.find((f) => f.id === id);
+  }
+
+  toggleOrigin = (o: IssueOrigin) => {
+    this.origins = this.origins.includes(o)
+      ? this.origins.filter((x) => x !== o)
+      : [...this.origins, o];
+  };
+
+  clearOrigins = () => { this.origins = []; };
+
+  /** anyone can toggle any focus — it's the project's shared analysis budget */
+  toggleFocus = (id: number, active: boolean) => {
+    this.focuses = this.focuses.map((f) => (f.id === id ? { ...f, active } : f));
+  };
+
+  /** create (no id) or update (id) — editing is gated to `mine` in the UI */
+  saveFocus = (
+    focus: Omit<Focus, 'id' | 'createdBy' | 'mine'> & { id?: number },
+  ) => {
+    if (focus.id != null) {
+      this.focuses = this.focuses.map((f) =>
+        f.id === focus.id
+          ? { ...f, ...focus, id: f.id, createdBy: f.createdBy, mine: f.mine }
+          : f,
+      );
+    } else {
+      const id = Math.max(0, ...this.focuses.map((f) => f.id)) + 1;
+      this.focuses = [
+        { ...focus, id, createdBy: 'You', mine: true },
+        ...this.focuses,
+      ];
+    }
+  };
+
+  deleteFocus = (id: number) => {
+    this.focuses = this.focuses.filter((f) => f.id !== id);
+    this.origins = this.origins.filter((o) => o !== id);
+  };
   rename = (id: number, name: string) => { this.names[id] = name; };
   hide = (id: number, reason: string, tags: string[] = []) => {
     if (!this.hidden.includes(id)) this.hidden.push(id);

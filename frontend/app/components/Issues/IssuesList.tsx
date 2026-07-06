@@ -22,6 +22,8 @@ import {
   SlidersHorizontal,
   Album,
   ChevronDown,
+  Focus as FocusIcon,
+  Globe,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -42,6 +44,7 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { Pagination } from 'UI';
 import TagFilter from './TagFilter';
+import FocusButton from './focus/FocusButton';
 import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
 
@@ -202,11 +205,33 @@ function IssuesList() {
       title: 'Tags',
       dataIndex: 'tags',
       width: 200,
-      render: (tags: string[]) => {
-        const visible = tags.slice(0, 2);
-        const hidden = tags.slice(2);
+      render: (tags: string[], r: Issue) => {
+        const focus = issuesStore.focusById(r.focusId);
+        const visible = tags.slice(0, 1);
+        const hidden = tags.slice(1);
         return (
           <div className="flex items-center gap-1 overflow-hidden">
+            {/* origin chip — every issue carries one: a focus find shows the focus
+                icon in blue, a full-traffic find the globe in gray. The chip itself
+                stays a normal tag (gray border/bg); only the icon carries meaning.
+                Pairs with the "Found in" filters inside the Tags dropdown. */}
+            <Tooltip
+              title={focus ? `Found in focus: ${focus.name}` : 'Found in full traffic'}
+              placement="top"
+            >
+              <span
+                className="rounded-md border flex items-center justify-center shrink-0 cursor-default"
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderColor: 'var(--color-gray-light)',
+                  background: 'var(--color-gray-lightest)',
+                  color: focus ? 'var(--color-main)' : 'var(--color-gray-medium)',
+                }}
+              >
+                {focus ? <FocusIcon size={13} /> : <Globe size={13} />}
+              </span>
+            </Tooltip>
             {visible.map((t) => <RowTagChip key={t} label={t} />)}
             {hidden.length > 0 && (
               <Tooltip title={hidden.join(', ')} placement="top">
@@ -323,6 +348,7 @@ function IssuesList() {
               Docs
             </Button>
           </a>
+          <FocusButton />
           <div className="min-w-50 md:w-1/4 md:min-w-75">
             <Input.Search
               size="small"
@@ -351,9 +377,15 @@ function IssuesList() {
             allTags={issuesStore.allTags}
             labels={issuesStore.labels}
             match={issuesStore.match}
+            focuses={issuesStore.focuses.map((f) => ({ id: f.id, name: f.name }))}
+            origins={issuesStore.origins}
             onToggle={issuesStore.toggleLabel}
+            onToggleOrigin={issuesStore.toggleOrigin}
             onSetMatch={issuesStore.setMatch}
-            onClear={() => issuesStore.setLabels([])}
+            onClear={() => {
+              issuesStore.setLabels([]);
+              issuesStore.clearOrigins();
+            }}
           />
 
           <Popover
