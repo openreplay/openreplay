@@ -57,11 +57,11 @@ interface Props {
   onDecide?: (idx: number, off: boolean) => void;
 }
 
-/** The per-suggestion decision: a miniature of the app's Segmented control (gray
- *  track, white selected thumb) — radio semantics, one side always selected. The
- *  ROW's diff color carries the meaning; the pill stays neutral, so it never
- *  fights the red/green background. */
-function DecisionPill({
+/** The per-suggestion decision: two of the SAME 24px ghost icon buttons every row
+ *  control uses (trash, history, rename-confirm) — identical size, padding and
+ *  hover. Radio semantics: the selected side wears a quiet white bordered chip
+ *  (readable on red, green and white rows without fighting the diff colors). */
+function DecisionButtons({
   off,
   onDecide,
 }: {
@@ -69,26 +69,22 @@ function DecisionPill({
   onDecide: (off: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const seg =
-    'w-6 h-5 flex items-center justify-center rounded transition-all cursor-pointer';
-  const selected = 'bg-white shadow-sm text-gray-darkest';
-  const idle = 'text-gray-medium hover:text-gray-darkest';
+  const base =
+    'shrink-0 w-6 h-6 rounded flex items-center justify-center transition-colors';
+  const selected = 'bg-white text-gray-darkest border shadow-sm';
+  const idle = 'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest';
   return (
-    <span
-      className="inline-flex items-center gap-0.5 rounded-md p-0.5"
-      style={{ background: 'var(--color-gray-lightest)' }}
-      role="radiogroup"
-      aria-label={t('Suggestion decision')}
-    >
+    <>
       <Tooltip title={t('Accept suggestion')}>
         <button
           type="button"
           aria-label={t('Accept suggestion')}
           aria-pressed={!off}
           onClick={() => onDecide(false)}
-          className={`${seg} ${off ? idle : selected}`}
+          className={`${base} ${off ? idle : selected}`}
+          style={off ? undefined : { borderColor: 'var(--color-gray-light)' }}
         >
-          <Check size={13} strokeWidth={2.5} />
+          <Check size={14} />
         </button>
       </Tooltip>
       <Tooltip title={t('Reject suggestion')}>
@@ -97,12 +93,13 @@ function DecisionPill({
           aria-label={t('Reject suggestion')}
           aria-pressed={!!off}
           onClick={() => onDecide(true)}
-          className={`${seg} ${off ? selected : idle}`}
+          className={`${base} ${off ? selected : idle}`}
+          style={off ? { borderColor: 'var(--color-gray-light)' } : undefined}
         >
-          <X size={13} strokeWidth={2.5} />
+          <X size={14} />
         </button>
       </Tooltip>
-    </span>
+    </>
   );
 }
 
@@ -426,9 +423,9 @@ function StepRow({
           // hover-revealed history/delete)
           <div className="flex items-center justify-end gap-0.5 shrink-0 self-start min-w-[60px]">
             {item.kind && onDecide ? (
-              /* a suggestion asks for exactly one decision — the pill carries both
-                 actions and shows the current side; no other controls compete */
-              <DecisionPill
+              /* a suggestion asks for exactly one decision — the ✓/✕ pair carries
+                 both actions and shows the current side; nothing else competes */
+              <DecisionButtons
                 off={item.off}
                 onDecide={(off) => onDecide(idx, off)}
               />
