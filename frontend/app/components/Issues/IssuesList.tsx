@@ -23,6 +23,7 @@ import {
   Album,
   ChevronDown,
   Focus as FocusIcon,
+  Globe,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -206,29 +207,31 @@ function IssuesList() {
       width: 200,
       render: (tags: string[], r: Issue) => {
         const focus = issuesStore.focusById(r.focusId);
-        const visible = tags.slice(0, focus ? 1 : 2);
-        const hidden = tags.slice(focus ? 1 : 2);
+        const visible = tags.slice(0, 1);
+        const hidden = tags.slice(1);
         return (
           <div className="flex items-center gap-1 overflow-hidden">
-            {/* origin chip — same anatomy as the tag chips, blue and icon-only;
-                pairs with the "Found in" filters inside the Tags dropdown */}
-            {focus && (
-              <Tooltip title={`Found in focus: ${focus.name}`} placement="top">
-                {/* squared — icon-only, so equal sides; height matches the tag chips */}
-                <span
-                  className="rounded-md border flex items-center justify-center shrink-0 cursor-default"
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderColor: 'rgba(57, 78, 255, 0.25)',
-                    background: 'rgba(57, 78, 255, 0.08)',
-                    color: 'var(--color-main)',
-                  }}
-                >
-                  <FocusIcon size={13} />
-                </span>
-              </Tooltip>
-            )}
+            {/* origin chip — every issue carries one: a focus find shows the focus
+                icon in blue, a full-traffic find the globe in gray. The chip itself
+                stays a normal tag (gray border/bg); only the icon carries meaning.
+                Pairs with the "Found in" filters inside the Tags dropdown. */}
+            <Tooltip
+              title={focus ? `Found in focus: ${focus.name}` : 'Found in full traffic'}
+              placement="top"
+            >
+              <span
+                className="rounded-md border flex items-center justify-center shrink-0 cursor-default"
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderColor: 'var(--color-gray-light)',
+                  background: 'var(--color-gray-lightest)',
+                  color: focus ? 'var(--color-main)' : 'var(--color-gray-medium)',
+                }}
+              >
+                {focus ? <FocusIcon size={13} /> : <Globe size={13} />}
+              </span>
+            </Tooltip>
             {visible.map((t) => <RowTagChip key={t} label={t} />)}
             {hidden.length > 0 && (
               <Tooltip title={hidden.join(', ')} placement="top">

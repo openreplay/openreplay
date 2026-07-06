@@ -290,8 +290,9 @@ function ReplayStage({
 
 function TagChip({ label }: { label: string }) {
   return (
+    // one chip size across the Issues surface — the list's (smaller) size
     <span
-      className="text-sm px-2.5 py-0.5 rounded-md border whitespace-nowrap"
+      className="text-xs px-2 py-0.5 rounded-md border whitespace-nowrap"
       style={{
         borderColor: 'var(--color-gray-light)',
         background: 'var(--color-gray-lightest)',
