@@ -10,12 +10,13 @@ import {
   Plus,
   Trash2,
   Undo2,
+  X,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
-import { StepItem, isStruck } from '../shared/revisions';
+import { StepDecision, StepItem, isStruck } from '../shared/revisions';
 import { TestAlternative } from '../shared/types';
 import { Section } from './EntityDrawer';
 
@@ -52,8 +53,72 @@ interface Props {
    *  onItemsChange instead of onStepsChange */
   reviewItems?: StepItem[];
   onItemsChange?: (items: StepItem[]) => void;
-  /** the per-line ✓/↺ pair — accept (off=false) or reject (off=true) a suggestion */
-  onDecide?: (idx: number, off: boolean) => void;
+  /** the per-line ✓/✕ pair — decide a suggestion (parent toggles: same side
+   *  clicked again un-decides) */
+  onDecide?: (idx: number, decision: StepDecision) => void;
+}
+
+/** The per-suggestion decision: two of the SAME 24px ghost icon buttons every row
+ *  control uses (trash, history, rename-confirm) — identical size, padding and
+ *  hover. Suggestions arrive UNDECIDED (both ghost), so the first click is a real
+ *  action: the chosen side gains a quiet white bordered chip. Clicking it again
+ *  un-decides — every click reacts. */
+function DecisionButtons({
+  decision,
+  onDecide,
+}: {
+  decision?: StepDecision;
+  onDecide: (decision: StepDecision) => void;
+}) {
+  const { t } = useTranslation();
+  const base =
+    'shrink-0 w-6 h-6 rounded flex items-center justify-center transition-colors';
+  const selected = 'bg-white text-gray-darkest border shadow-sm';
+  const idle = 'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest';
+  return (
+    <>
+      <Tooltip
+        title={
+          decision === 'accepted' ? t('Accepted — undo') : t('Accept suggestion')
+        }
+      >
+        <button
+          type="button"
+          aria-label={t('Accept suggestion')}
+          aria-pressed={decision === 'accepted'}
+          onClick={() => onDecide('accepted')}
+          className={`${base} ${decision === 'accepted' ? selected : idle}`}
+          style={
+            decision === 'accepted'
+              ? { borderColor: 'var(--color-gray-light)' }
+              : undefined
+          }
+        >
+          <Check size={14} />
+        </button>
+      </Tooltip>
+      <Tooltip
+        title={
+          decision === 'rejected' ? t('Rejected — undo') : t('Reject suggestion')
+        }
+      >
+        <button
+          type="button"
+          aria-label={t('Reject suggestion')}
+          aria-pressed={decision === 'rejected'}
+          onClick={() => onDecide('rejected')}
+          className={`${base} ${decision === 'rejected' ? selected : idle}`}
+          style={
+            decision === 'rejected'
+              ? { borderColor: 'var(--color-gray-light)' }
+              : undefined
+          }
+        >
+          <X size={14} />
+        </button>
+      </Tooltip>
+    </>
+  );
 }
 
 /** The subtle per-step history: a clock icon that only appears on row hover (same
@@ -193,8 +258,8 @@ interface StepRowProps {
   onDragEnd: () => void;
   historyEntries?: { version: number; text: string }[];
   onRestoreText?: (idx: number, text: string) => void;
-  /** version review: accept or reject this row's suggestion */
-  onDecide?: (idx: number, off: boolean) => void;
+  /** version review: decide this row's suggestion */
+  onDecide?: (idx: number, decision: StepDecision) => void;
 }
 
 /** One step. Drag the grip (it replaces the number on hover) to reorder. Click the
@@ -229,10 +294,10 @@ function StepRow({
 
   const step = item.text;
   const struck = isStruck(item);
-  // accepted addition = green row; accepted removal = red row (git-style). A
-  // rejected suggestion loses its tint — it reads as the step list staying as-is.
-  const addedOn = item.kind === 'added' && !item.off;
-  const removedOn = item.kind === 'removed' && !item.off;
+  // a standing addition = green row; a standing removal = red row (git-style).
+  // A rejected suggestion loses its tint — the step list stays as-is.
+  const addedOn = item.kind === 'added' && item.decision !== 'rejected';
+  const removedOn = item.kind === 'removed' && item.decision !== 'rejected';
 
   const [{ isDragging }, drag, preview] = useDrag({
     type: STEP_DND,
@@ -346,7 +411,7 @@ function StepRow({
         {editing ? (
           // mousedown-preventDefault keeps the input focused so its onBlur doesn't
           // fire first and commit/close before the click handler runs
-          <div className="flex items-center gap-0.5 shrink-0 self-start">
+          <div className="flex items-center justify-end gap-0.5 shrink-0 self-start min-w-[60px]">
             <Tooltip title={t('Confirm — Enter')}>
               <button
                 type="button"
@@ -371,60 +436,36 @@ function StepRow({
             </Tooltip>
           </div>
         ) : (
-          <div className="flex items-center gap-0.5 shrink-0 self-start">
-            {historyEntries && historyEntries.length > 0 && onRestoreText && (
-              <StepHistory
-                entries={historyEntries}
-                onRestore={(text) => onRestoreText(idx, text)}
+          // one right-aligned controls column, same edge on every row, so nothing
+          // jumps between suggestion rows (the decision pill) and plain rows (the
+          // hover-revealed history/delete)
+          <div className="flex items-center justify-end gap-0.5 shrink-0 self-start min-w-[60px]">
+            {item.kind && onDecide ? (
+              /* a suggestion asks for exactly one decision — the ✓/✕ pair carries
+                 both actions and shows the current side; nothing else competes */
+              <DecisionButtons
+                decision={item.decision}
+                onDecide={(d) => onDecide(idx, d)}
               />
-            )}
-            {/* the review pair, always visible — a suggestion asks for a decision.
-                Git language: ✓ accepts the line, ↺ rolls it back; the active side
-                is filled. Delete stays a separate control (Mehdi 07-06 — the lone
-                ✕ read as "remove the step", not "reject the suggestion"). */}
-            {item.kind && onDecide && (
+            ) : (
               <>
-                <Tooltip title={t('Accept suggestion')}>
+                {historyEntries && historyEntries.length > 0 && onRestoreText && (
+                  <StepHistory
+                    entries={historyEntries}
+                    onRestore={(text) => onRestoreText(idx, text)}
+                  />
+                )}
+                <Tooltip title={t('Delete step')}>
                   <button
                     type="button"
-                    aria-label={t('Accept suggestion')}
-                    onClick={() => onDecide(idx, false)}
-                    className={`shrink-0 w-6 h-6 rounded flex items-center justify-center ${
-                      item.off
-                        ? 'text-gray-medium hover:text-green-dark hover:bg-green-light'
-                        : 'bg-green-light text-green-dark'
-                    }`}
+                    aria-label={t('Delete step')}
+                    onClick={() => onRemove(idx)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
                   >
-                    <Check size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip title={t('Reject suggestion')}>
-                  <button
-                    type="button"
-                    aria-label={t('Reject suggestion')}
-                    onClick={() => onDecide(idx, true)}
-                    className={`shrink-0 w-6 h-6 rounded flex items-center justify-center ${
-                      item.off
-                        ? 'bg-gray-lightest text-gray-darkest'
-                        : 'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest'
-                    }`}
-                  >
-                    <Undo2 size={14} />
+                    <Trash2 size={14} />
                   </button>
                 </Tooltip>
               </>
-            )}
-            {!struck && (
-              <Tooltip title={t('Delete step')}>
-                <button
-                  type="button"
-                  aria-label={t('Delete step')}
-                  onClick={() => onRemove(idx)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </Tooltip>
             )}
           </div>
         )}

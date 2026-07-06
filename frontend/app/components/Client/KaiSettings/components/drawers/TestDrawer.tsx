@@ -1,6 +1,7 @@
 import { Button, Dropdown, Popconfirm, Tooltip, message } from 'antd';
 import {
   Check,
+  CheckCheck,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -118,18 +119,49 @@ function TestDrawer({
       : undefined;
 
   // ---- pending revision (needs review) ---------------------------------
-  // the per-line ✓/↺ pair: accept re-applies the suggestion, reject rolls it back
-  const decideChange = (idx: number, off: boolean) =>
+  // the per-line ✓/✕ pair: clicking a side decides the suggestion; clicking the
+  // same side again un-decides it — every click gives feedback
+  const decideChange = (idx: number, decision: 'accepted' | 'rejected') =>
     setReviewItems(
       (prev) =>
-        prev && prev.map((it, i) => (i === idx ? { ...it, off } : it)),
+        prev &&
+        prev.map((it, i) =>
+          i === idx
+            ? { ...it, decision: it.decision === decision ? undefined : decision }
+            : it,
+        ),
     );
-  // count of suggestion rows still in the list, next to Steps · v1 → v2
+  // review progress next to Steps · v1 → v2 — undecided suggestions apply on save
   const changedCount = reviewItems?.filter((it) => it.kind).length ?? 0;
+  const decidedCount =
+    reviewItems?.filter((it) => it.kind && it.decision).length ?? 0;
+  const allAccepted =
+    changedCount > 0 &&
+    (reviewItems?.every((it) => !it.kind || it.decision === 'accepted') ??
+      false);
+  const acceptAll = () =>
+    setReviewItems(
+      (prev) =>
+        prev &&
+        prev.map((it) => (it.kind ? { ...it, decision: 'accepted' } : it)),
+    );
   const reviewSummary =
     changedCount > 0 ? (
-      <span className="text-sm text-disabled-text">
-        {changedCount} {changedCount === 1 ? t('change') : t('changes')}
+      <span className="flex items-center gap-2">
+        <span className="text-sm text-disabled-text">
+          {decidedCount > 0
+            ? `${decidedCount} ${t('of')} ${changedCount} ${t('reviewed')}`
+            : `${changedCount} ${changedCount === 1 ? t('change') : t('changes')}`}
+        </span>
+        <Button
+          size="small"
+          type="text"
+          disabled={allAccepted}
+          icon={<CheckCheck size={14} />}
+          onClick={acceptAll}
+        >
+          {t('Accept all')}
+        </Button>
       </span>
     ) : undefined;
   // finishing a review closes the drawer — the test is active and scheduled again,
