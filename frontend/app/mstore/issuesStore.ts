@@ -170,9 +170,10 @@ export interface Focus {
   instructions?: string;
 }
 
-/** What the issues list can be scoped to: everything, only full-traffic finds,
-    or the finds of one specific focus. */
-export type OriginFilter = 'all' | 'full' | number;
+/** One origin an issue can come from: the full-traffic baseline, or a specific
+    focus (by id). Filtering is multi-select, like tag labels — an empty
+    selection means "everywhere". */
+export type IssueOrigin = 'full' | number;
 
 /* Seeded focuses — one of mine (edit/delete), two from teammates (toggle only).
    Filter names/values match the mock omni-search catalog (dev/mockSessions). */
@@ -490,8 +491,10 @@ export default class IssuesStore {
 
   // ---- focus (portions of traffic the agent concentrates on) ----
   focuses: Focus[] = MOCK_FOCUSES;
-  /** issues-list scope: everything / full traffic only / one focus's finds */
-  origin: OriginFilter = 'all';
+  /** "found in" filter — lives in the Tags dropdown next to the labels, because
+      origin is an ATTRIBUTE of an issue (Display only shapes visibility).
+      Multi-select; empty = everywhere. */
+  origins: IssueOrigin[] = [];
 
   constructor() {
     makeAutoObservable(this);
@@ -527,9 +530,12 @@ export default class IssuesStore {
           : this.labels.every((t) => i.tags.includes(t)),
       );
     if (this.critOnly) l = l.filter((i) => i.critical);
-    if (this.origin === 'full') l = l.filter((i) => !i.focusId);
-    else if (typeof this.origin === 'number')
-      l = l.filter((i) => i.focusId === this.origin);
+    if (this.origins.length)
+      l = l.filter((i) =>
+        i.focusId != null
+          ? this.origins.includes(i.focusId)
+          : this.origins.includes('full'),
+      );
     const q = this.q.toLowerCase().trim();
     if (q)
       l = l.filter((i) =>
@@ -646,7 +652,13 @@ export default class IssuesStore {
     return id == null ? undefined : this.focuses.find((f) => f.id === id);
   }
 
-  setOrigin = (o: OriginFilter) => { this.origin = o; };
+  toggleOrigin = (o: IssueOrigin) => {
+    this.origins = this.origins.includes(o)
+      ? this.origins.filter((x) => x !== o)
+      : [...this.origins, o];
+  };
+
+  clearOrigins = () => { this.origins = []; };
 
   /** anyone can toggle any focus — it's the project's shared analysis budget */
   toggleFocus = (id: number, active: boolean) => {
@@ -674,7 +686,7 @@ export default class IssuesStore {
 
   deleteFocus = (id: number) => {
     this.focuses = this.focuses.filter((f) => f.id !== id);
-    if (this.origin === id) this.origin = 'all';
+    this.origins = this.origins.filter((o) => o !== id);
   };
   rename = (id: number, name: string) => { this.names[id] = name; };
   hide = (id: number, reason: string, tags: string[] = []) => {
