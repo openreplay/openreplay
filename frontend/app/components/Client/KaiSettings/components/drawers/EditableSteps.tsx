@@ -16,7 +16,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
-import { StepItem, isStruck } from '../shared/revisions';
+import { StepDecision, StepItem, isStruck } from '../shared/revisions';
 import { TestAlternative } from '../shared/types';
 import { Section } from './EntityDrawer';
 
@@ -53,20 +53,22 @@ interface Props {
    *  onItemsChange instead of onStepsChange */
   reviewItems?: StepItem[];
   onItemsChange?: (items: StepItem[]) => void;
-  /** the per-line ✓/↺ pair — accept (off=false) or reject (off=true) a suggestion */
-  onDecide?: (idx: number, off: boolean) => void;
+  /** the per-line ✓/✕ pair — decide a suggestion (parent toggles: same side
+   *  clicked again un-decides) */
+  onDecide?: (idx: number, decision: StepDecision) => void;
 }
 
 /** The per-suggestion decision: two of the SAME 24px ghost icon buttons every row
  *  control uses (trash, history, rename-confirm) — identical size, padding and
- *  hover. Radio semantics: the selected side wears a quiet white bordered chip
- *  (readable on red, green and white rows without fighting the diff colors). */
+ *  hover. Suggestions arrive UNDECIDED (both ghost), so the first click is a real
+ *  action: the chosen side gains a quiet white bordered chip. Clicking it again
+ *  un-decides — every click reacts. */
 function DecisionButtons({
-  off,
+  decision,
   onDecide,
 }: {
-  off?: boolean;
-  onDecide: (off: boolean) => void;
+  decision?: StepDecision;
+  onDecide: (decision: StepDecision) => void;
 }) {
   const { t } = useTranslation();
   const base =
@@ -75,26 +77,42 @@ function DecisionButtons({
   const idle = 'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest';
   return (
     <>
-      <Tooltip title={t('Accept suggestion')}>
+      <Tooltip
+        title={
+          decision === 'accepted' ? t('Accepted — undo') : t('Accept suggestion')
+        }
+      >
         <button
           type="button"
           aria-label={t('Accept suggestion')}
-          aria-pressed={!off}
-          onClick={() => onDecide(false)}
-          className={`${base} ${off ? idle : selected}`}
-          style={off ? undefined : { borderColor: 'var(--color-gray-light)' }}
+          aria-pressed={decision === 'accepted'}
+          onClick={() => onDecide('accepted')}
+          className={`${base} ${decision === 'accepted' ? selected : idle}`}
+          style={
+            decision === 'accepted'
+              ? { borderColor: 'var(--color-gray-light)' }
+              : undefined
+          }
         >
           <Check size={14} />
         </button>
       </Tooltip>
-      <Tooltip title={t('Reject suggestion')}>
+      <Tooltip
+        title={
+          decision === 'rejected' ? t('Rejected — undo') : t('Reject suggestion')
+        }
+      >
         <button
           type="button"
           aria-label={t('Reject suggestion')}
-          aria-pressed={!!off}
-          onClick={() => onDecide(true)}
-          className={`${base} ${off ? selected : idle}`}
-          style={off ? { borderColor: 'var(--color-gray-light)' } : undefined}
+          aria-pressed={decision === 'rejected'}
+          onClick={() => onDecide('rejected')}
+          className={`${base} ${decision === 'rejected' ? selected : idle}`}
+          style={
+            decision === 'rejected'
+              ? { borderColor: 'var(--color-gray-light)' }
+              : undefined
+          }
         >
           <X size={14} />
         </button>
@@ -240,8 +258,8 @@ interface StepRowProps {
   onDragEnd: () => void;
   historyEntries?: { version: number; text: string }[];
   onRestoreText?: (idx: number, text: string) => void;
-  /** version review: accept or reject this row's suggestion */
-  onDecide?: (idx: number, off: boolean) => void;
+  /** version review: decide this row's suggestion */
+  onDecide?: (idx: number, decision: StepDecision) => void;
 }
 
 /** One step. Drag the grip (it replaces the number on hover) to reorder. Click the
@@ -276,10 +294,10 @@ function StepRow({
 
   const step = item.text;
   const struck = isStruck(item);
-  // accepted addition = green row; accepted removal = red row (git-style). A
-  // rejected suggestion loses its tint — it reads as the step list staying as-is.
-  const addedOn = item.kind === 'added' && !item.off;
-  const removedOn = item.kind === 'removed' && !item.off;
+  // a standing addition = green row; a standing removal = red row (git-style).
+  // A rejected suggestion loses its tint — the step list stays as-is.
+  const addedOn = item.kind === 'added' && item.decision !== 'rejected';
+  const removedOn = item.kind === 'removed' && item.decision !== 'rejected';
 
   const [{ isDragging }, drag, preview] = useDrag({
     type: STEP_DND,
@@ -426,8 +444,8 @@ function StepRow({
               /* a suggestion asks for exactly one decision — the ✓/✕ pair carries
                  both actions and shows the current side; nothing else competes */
               <DecisionButtons
-                off={item.off}
-                onDecide={(off) => onDecide(idx, off)}
+                decision={item.decision}
+                onDecide={(d) => onDecide(idx, d)}
               />
             ) : (
               <>
