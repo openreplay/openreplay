@@ -9,14 +9,16 @@ export const needsReview = (tc: TestCase): boolean => !!tc.pendingRevision;
 
 // One row of the review list. During a review the whole list stays a live,
 // editable step list (same as drafts) — proposed rows just carry a marker:
-//  - kind 'added'   → proposed new step (blue); deleting the row rejects it
-//  - kind 'removed' → proposed deletion (struck); ✕ keeps it (marker clears,
-//    the row becomes a plain step again)
+//  - kind 'added'   → proposed new step (green, git-style)
+//  - kind 'removed' → proposed deletion (red background, struck)
 //  - no kind        → a plain step (kept, or typed by the user during the review)
-// One control per meaning: ✕ = keep, trash = delete. No on/off toggling.
+// Every marked row carries an explicit accept/reject pair (Mehdi 07-06): `off`
+// means the suggestion is rejected — an added step won't be added, a removed
+// step stays. Suggestions arrive accepted; reject rolls one back.
 export interface StepItem {
   text: string;
   kind?: 'added' | 'removed';
+  off?: boolean;
 }
 
 /** Merge the current steps with the proposed changes into one editable list. */
@@ -43,17 +45,21 @@ export function buildReviewItems(
 }
 
 /** The steps the new version would have, given the reviewed (and freely edited)
- *  item list: everything stays except the rows still marked for removal. */
+ *  item list: plain rows stay, accepted additions count, accepted removals drop —
+ *  and rejecting a suggestion flips it. */
 export function resolveItems(items: StepItem[]): string[] {
   return items
-    .filter((it) => it.kind !== 'removed')
+    .filter((it) =>
+      it.kind === 'added' ? !it.off : it.kind === 'removed' ? !!it.off : true,
+    )
     .map((it) => it.text)
     .filter((s) => s.trim() !== '');
 }
 
-/** A row that's leaving the test (a proposed removal the user hasn't kept) —
+/** A row that's leaving the test (an accepted removal, or a rejected addition) —
  *  rendered struck-through, not editable, not counted in the numbering. */
-export const isStruck = (it: StepItem): boolean => it.kind === 'removed';
+export const isStruck = (it: StepItem): boolean =>
+  (it.kind === 'removed' && !it.off) || (it.kind === 'added' && !!it.off);
 
 /** Commit a reviewed revision: steps become the resolved list, the old steps are
  *  snapshotted into history, and the pending revision clears. Status is untouched —

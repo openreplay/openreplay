@@ -53,13 +53,18 @@ export const regionLabel = (r?: string): string =>
 export const regionCountry = (r?: string): string =>
   REGION_OPTIONS.find((o) => o.value === r)?.country ?? 'FR';
 
-// What the table shows as the status. A pending step revision overrides the
-// lifecycle: the test reads "Needs review" (and its scheduled runs pause) until the
-// proposed version is reviewed — then it falls back to its real lifecycle status.
+// What the table shows as the status. When Settings → "Pause tests on new
+// revisions" is on, a pending revision overrides the lifecycle: the test reads
+// "Needs review" and its scheduled runs pause until the proposed version is
+// reviewed. With the setting off, the test keeps its real status (and keeps
+// running) — the review is signalled by the blue dot and the Needs review tab.
 export type DisplayStatus = TestLifecycle | 'needs_review';
 
-export const displayStatus = (tc: TestCase): DisplayStatus =>
-  tc.pendingRevision ? 'needs_review' : tc.status;
+export const displayStatus = (
+  tc: TestCase,
+  reviewPauses = true,
+): DisplayStatus =>
+  tc.pendingRevision && reviewPauses ? 'needs_review' : tc.status;
 
 // Status chips reuse the app's antd <Tag> (same component as the Alerts list), tinted
 // with the brand green/orange tokens via `variant="filled"` rather than antd's color
@@ -161,7 +166,8 @@ export const getRunResult = (
 
 // Muted version tag next to a test's title — only from v2 up ("v1" everywhere would
 // be noise; a version only becomes interesting once the steps have actually changed).
-// `always` shows V1 too — for places comparing versions (the review's V1 → V2).
+// `always` shows v1 too — for places comparing versions (the review's v1 → v2).
+// Lowercase v (Mehdi 07-06).
 export const VersionLabel = ({
   version,
   always,
@@ -175,7 +181,7 @@ export const VersionLabel = ({
       className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium"
       style={{ borderColor: 'var(--color-gray-light)' }}
     >
-      V{version}
+      v{version}
     </span>
   );
 };

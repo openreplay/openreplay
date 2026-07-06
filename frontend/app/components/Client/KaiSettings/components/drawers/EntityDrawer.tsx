@@ -115,7 +115,9 @@ export function EntityDrawer({
       styles={{
         wrapper: { width: 560 },
         body: { padding: 0 },
-        footer: { padding: '12px 20px' },
+        // 24px right/left = the header's padding, so the footer's primary button
+        // right-aligns with the header actions (Mehdi 07-06: Run now ↔ Save)
+        footer: { padding: '12px 24px' },
       }}
     >
       {children}

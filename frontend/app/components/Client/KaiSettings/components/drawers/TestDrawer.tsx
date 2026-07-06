@@ -23,7 +23,7 @@ import {
   stepHistory,
   testVersion,
 } from '../shared/revisions';
-import { hasNoEnvironment } from '../shared/store';
+import { hasNoEnvironment, useKaiStore } from '../shared/store';
 import { RunData, TestCase } from '../shared/types';
 import {
   VersionLabel,
@@ -73,6 +73,9 @@ function TestDrawer({
 }: Props) {
   const { t } = useTranslation();
   const settingsRef = useRef<HTMLDivElement>(null);
+  // Settings → "Pause tests on new revisions": decides whether a pending revision
+  // pauses the test (Needs review status, run controls off) or it keeps running
+  const { pauseOnRevision } = useKaiStore();
 
   // review state: the proposal materialised as a live, fully-editable step list
   // (plain rows + marked add/remove rows) — rebuilt when another test or another
@@ -115,14 +118,13 @@ function TestDrawer({
       : undefined;
 
   // ---- pending revision (needs review) ---------------------------------
-  // ✕ on a struck row: keep the step — the removal marker clears and the row is a
-  // plain, editable step again (re-deleting it is just the normal trash)
-  const keepStep = (idx: number) =>
+  // the per-line ✓/↺ pair: accept re-applies the suggestion, reject rolls it back
+  const decideChange = (idx: number, off: boolean) =>
     setReviewItems(
       (prev) =>
-        prev && prev.map((it, i) => (i === idx ? { text: it.text } : it)),
+        prev && prev.map((it, i) => (i === idx ? { ...it, off } : it)),
     );
-  // live count of proposal rows still in the list, next to Steps · V1 → V2
+  // count of suggestion rows still in the list, next to Steps · v1 → v2
   const changedCount = reviewItems?.filter((it) => it.kind).length ?? 0;
   const reviewSummary =
     changedCount > 0 ? (
@@ -136,16 +138,16 @@ function TestDrawer({
     if (!revision || !reviewItems) return;
     onChange(applyRevision(test, resolveItems(reviewItems), Date.now()));
     message.success(
-      test.status === 'active'
-        ? t('Saved as V{{v}} — schedule resumed', { v: revision.toVersion })
-        : t('Saved as V{{v}}', { v: revision.toVersion }),
+      pauseOnRevision && test.status === 'active'
+        ? t('Saved as v{{v}} — schedule resumed', { v: revision.toVersion })
+        : t('Saved as v{{v}}', { v: revision.toVersion }),
     );
     onClose();
   };
   const keepVersion = () => {
     if (!revision) return;
     onChange(keepCurrentVersion(test));
-    message.success(t('Kept V{{v}}', { v: version }));
+    message.success(t('Kept v{{v}}', { v: version }));
     onClose();
   };
 
@@ -154,13 +156,13 @@ function TestDrawer({
     items: [
       {
         key: String(version),
-        label: `V${version} · ${t('Current')}`,
+        label: `v${version} · ${t('Current')}`,
       },
       ...[...history]
         .sort((a, b) => b.version - a.version)
         .map((h) => ({
           key: String(h.version),
-          label: `V${h.version} · ${versionDate(h.savedAt)}`,
+          label: `v${h.version} · ${versionDate(h.savedAt)}`,
         })),
     ],
     selectedKeys: [String(viewVersion ?? version)],
@@ -177,14 +179,20 @@ function TestDrawer({
           className="flex items-center gap-1 text-sm text-gray-dark border rounded px-2 py-0.5 hover:bg-gray-lightest"
           style={{ borderColor: 'var(--color-gray-light)' }}
         >
-          V{viewVersion ?? version}
+          v{viewVersion ?? version}
           <ChevronDown size={13} className="text-gray-medium" />
         </button>
       </Dropdown>
     ) : undefined;
   // a paused test with no environment can't resume until one is set below
   const resumeBlocked = paused && hasNoEnvironment(test);
-  const runs = MOCK_RUNS.filter((r) => r.testName === test.title);
+  // viewing an older version scopes the runs to it too — runs from before the
+  // bump belong to that version's story (no version recorded = v1)
+  const runs = MOCK_RUNS.filter(
+    (r) =>
+      r.testName === test.title &&
+      (viewVersion == null || (r.version ?? 1) === viewVersion),
+  );
   // trend: the last 10 completed runs, oldest → newest (newest on the right)
   const trend = runs
     .filter((r) => r.status !== 'running')
@@ -224,7 +232,7 @@ function TestDrawer({
       eyebrow={
         creating
           ? `${t('Test')} · ${t('New')}`
-          : revision
+          : revision && pauseOnRevision
             ? `${t('Test')} · ${t('Needs review')}`
             : `${t('Test')} · ${
                 paused
@@ -232,11 +240,13 @@ function TestDrawer({
                   : test.status === 'approved'
                     ? t('Approved')
                     : t('Active')
-              }${version > 1 ? ` · V${version}` : ''}`
+              }${version > 1 ? ` · v${version}` : ''}${
+                revision ? ` · ${t('Needs review')}` : ''
+              }`
       }
       headerActions={
-        creating ? undefined : revision ? (
-          // a pending revision pauses the runs — nothing to start until it's reviewed
+        creating ? undefined : revision && pauseOnRevision ? (
+          // pause-on-revision is ON: nothing runs until the review is done
           <Tooltip title={t('Runs are paused until the new version is reviewed.')}>
             <Button size="small" disabled icon={<Play size={13} />}>
               {t('Run now')}
@@ -291,14 +301,14 @@ function TestDrawer({
           // reviewing: stay on the current version, or save the reviewed one
           <div className="flex items-center justify-between">
             <Button type="text" onClick={keepVersion}>
-              {t('Keep V{{v}}', { v: version })}
+              {t('Keep v{{v}}', { v: version })}
             </Button>
             <Button
               type="primary"
               icon={<Check size={15} />}
               onClick={saveRevision}
             >
-              {t('Save V{{v}}', { v: revision.toVersion })}
+              {t('Save v{{v}}', { v: revision.toVersion })}
             </Button>
           </div>
         ) : (
@@ -336,7 +346,7 @@ function TestDrawer({
           headerAction={reviewSummary}
           reviewItems={reviewItems}
           onItemsChange={setReviewItems}
-          onKeepStep={keepStep}
+          onDecide={decideChange}
           onStepsChange={() => {}}
         />
       ) : viewedSnapshot ? (
@@ -470,7 +480,9 @@ function TestDrawer({
         >
           {runs.length === 0 ? (
             <div className="text-sm text-disabled-text">
-              {t('No runs yet — run now or set a schedule above.')}
+              {viewVersion != null
+                ? t('No runs on v{{v}}.', { v: viewVersion })
+                : t('No runs yet — run now or set a schedule above.')}
             </div>
           ) : null}
         </Section>
