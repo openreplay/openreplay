@@ -341,7 +341,7 @@ function RunsTab() {
             style={{ width: 120 }}
             options={[
               { value: 'all', label: t('All versions') },
-              ...VERSIONS.map((v) => ({ value: String(v), label: `V${v}` })),
+              ...VERSIONS.map((v) => ({ value: String(v), label: `v${v}` })),
             ]}
           />
         </div>

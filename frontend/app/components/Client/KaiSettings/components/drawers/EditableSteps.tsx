@@ -10,7 +10,6 @@ import {
   Plus,
   Trash2,
   Undo2,
-  X,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -24,9 +23,10 @@ const STEP_DND = 'KAI_STEP';
 // muted, semi-transparent blue — shared by the insert line and the drag drop line so
 // "add here" and "move here" read identically.
 const LINE = 'rgba(54, 108, 217, 0.55)';
-// proposed-addition tint (version review) — a softer cousin of the editing row's
-// blue, so "proposed" and "editing" read as the same family without confusion
-const PROPOSED_BG = 'rgba(57, 78, 255, 0.06)';
+// git-diff row tints (Mehdi 07-06: "as close to a git diff as possible") — light
+// green for additions, light red for deletions, on the brand green/red
+const ADDED_BG = 'rgba(66, 174, 94, 0.1)';
+const REMOVED_BG = 'rgba(204, 0, 0, 0.06)';
 
 interface Props {
   steps: string[];
@@ -52,8 +52,8 @@ interface Props {
    *  onItemsChange instead of onStepsChange */
   reviewItems?: StepItem[];
   onItemsChange?: (items: StepItem[]) => void;
-  /** ✕ on a struck row — keep the step (the removal marker clears) */
-  onKeepStep?: (idx: number) => void;
+  /** the per-line ✓/↺ pair — accept (off=false) or reject (off=true) a suggestion */
+  onDecide?: (idx: number, off: boolean) => void;
 }
 
 /** The subtle per-step history: a clock icon that only appears on row hover (same
@@ -82,7 +82,7 @@ function StepHistory({
                 className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium mt-0.5"
                 style={{ borderColor: 'var(--color-gray-light)' }}
               >
-                V{e.version}
+                v{e.version}
               </span>
               <span className="flex-1 text-sm break-words">{e.text}</span>
               <Tooltip title={t('Restore this wording')}>
@@ -193,8 +193,8 @@ interface StepRowProps {
   onDragEnd: () => void;
   historyEntries?: { version: number; text: string }[];
   onRestoreText?: (idx: number, text: string) => void;
-  /** version review: keep a step the proposal wants removed */
-  onKeepStep?: (idx: number) => void;
+  /** version review: accept or reject this row's suggestion */
+  onDecide?: (idx: number, off: boolean) => void;
 }
 
 /** One step. Drag the grip (it replaces the number on hover) to reorder. Click the
@@ -221,7 +221,7 @@ function StepRow({
   onDragEnd,
   historyEntries,
   onRestoreText,
-  onKeepStep,
+  onDecide,
 }: StepRowProps) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
@@ -229,7 +229,10 @@ function StepRow({
 
   const step = item.text;
   const struck = isStruck(item);
-  const proposedAdd = item.kind === 'added';
+  // accepted addition = green row; accepted removal = red row (git-style). A
+  // rejected suggestion loses its tint — it reads as the step list staying as-is.
+  const addedOn = item.kind === 'added' && !item.off;
+  const removedOn = item.kind === 'removed' && !item.off;
 
   const [{ isDragging }, drag, preview] = useDrag({
     type: STEP_DND,
@@ -253,7 +256,8 @@ function StepRow({
         data-step-row
         style={{
           opacity: isDragging ? 0.4 : 1,
-          ...(proposedAdd && !editing ? { background: PROPOSED_BG } : {}),
+          ...(!editing && addedOn ? { background: ADDED_BG } : {}),
+          ...(!editing && removedOn ? { background: REMOVED_BG } : {}),
         }}
         className={`group flex items-start gap-2.5 rounded px-1 -mx-1 py-1.5 ${
           editing ? 'bg-active-blue' : struck ? '' : 'hover:bg-gray-lightest'
@@ -287,8 +291,8 @@ function StepRow({
             <span
               className={`text-sm ${
                 editing ? '' : 'group-hover:opacity-0'
-              } ${proposedAdd ? '' : 'text-disabled-text'}`}
-              style={proposedAdd ? { color: 'var(--color-main)' } : undefined}
+              } ${addedOn ? '' : 'text-disabled-text'}`}
+              style={addedOn ? { color: 'var(--color-green-dark)' } : undefined}
             >
               {number}
             </span>
@@ -374,21 +378,43 @@ function StepRow({
                 onRestore={(text) => onRestoreText(idx, text)}
               />
             )}
-            {/* one control per meaning — ✕ keeps a step the proposal wants removed
-                (always visible: it asks for a decision), the trash deletes. An added
-                row needs no extra control: deleting it IS rejecting the addition. */}
-            {struck && onKeepStep ? (
-              <Tooltip title={t('Keep this step')}>
-                <button
-                  type="button"
-                  aria-label={t('Keep this step')}
-                  onClick={() => onKeepStep(idx)}
-                  className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest"
-                >
-                  <X size={14} />
-                </button>
-              </Tooltip>
-            ) : (
+            {/* the review pair, always visible — a suggestion asks for a decision.
+                Git language: ✓ accepts the line, ↺ rolls it back; the active side
+                is filled. Delete stays a separate control (Mehdi 07-06 — the lone
+                ✕ read as "remove the step", not "reject the suggestion"). */}
+            {item.kind && onDecide && (
+              <>
+                <Tooltip title={t('Accept suggestion')}>
+                  <button
+                    type="button"
+                    aria-label={t('Accept suggestion')}
+                    onClick={() => onDecide(idx, false)}
+                    className={`shrink-0 w-6 h-6 rounded flex items-center justify-center ${
+                      item.off
+                        ? 'text-gray-medium hover:text-green-dark hover:bg-green-light'
+                        : 'bg-green-light text-green-dark'
+                    }`}
+                  >
+                    <Check size={14} />
+                  </button>
+                </Tooltip>
+                <Tooltip title={t('Reject suggestion')}>
+                  <button
+                    type="button"
+                    aria-label={t('Reject suggestion')}
+                    onClick={() => onDecide(idx, true)}
+                    className={`shrink-0 w-6 h-6 rounded flex items-center justify-center ${
+                      item.off
+                        ? 'bg-gray-lightest text-gray-darkest'
+                        : 'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest'
+                    }`}
+                  >
+                    <Undo2 size={14} />
+                  </button>
+                </Tooltip>
+              </>
+            )}
+            {!struck && (
               <Tooltip title={t('Delete step')}>
                 <button
                   type="button"
@@ -434,7 +460,7 @@ function EditableSteps({
   title,
   reviewItems,
   onItemsChange,
-  onKeepStep,
+  onDecide,
 }: Props) {
   const { t } = useTranslation();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -680,7 +706,7 @@ function EditableSteps({
                   onDragEnd={onDragEnd}
                   historyEntries={historyFor?.(idx)}
                   onRestoreText={historyFor ? restoreText : undefined}
-                  onKeepStep={onKeepStep}
+                  onDecide={onDecide}
                 />
               </React.Fragment>
             );

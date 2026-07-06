@@ -47,9 +47,12 @@ let manualCounter = 0;
 
 function TestsTab() {
   const { t } = useTranslation();
-  // tests live in the shared store — Settings (environment deletion) mutates them too
-  const { tests } = useKaiStore();
+  // tests live in the shared store — Settings (environment deletion) mutates them too.
+  // pauseOnRevision decides whether a pending revision reads "Needs review" and
+  // suspends the run controls, or the test keeps running while the review waits.
+  const { tests, pauseOnRevision } = useKaiStore();
   const { setTests } = kaiStore;
+  const statusOf = (tc: TestCase) => displayStatus(tc, pauseOnRevision);
   const [query, setQuery] = useState('');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
@@ -152,12 +155,12 @@ function TestsTab() {
 
   const openTest = tests.find((tc) => tc.key === openKey) ?? null;
 
-  // counts follow the DISPLAY status — a test with a pending revision counts under
-  // Needs review, not under its underlying lifecycle status
+  // counts follow the DISPLAY status. The Needs review count is always the pending
+  // revisions (the tab must surface reviews even when they don't pause the test).
   const countOf = (s: DisplayStatus) =>
-    tests.filter((tc) => displayStatus(tc) === s).length;
+    tests.filter((tc) => statusOf(tc) === s).length;
   const draftCount = countOf('draft');
-  const reviewCount = countOf('needs_review');
+  const reviewCount = tests.filter((tc) => needsReview(tc)).length;
   const approvedCount = countOf('approved');
   const activeCount = countOf('active');
   const pausedCount = countOf('paused');
@@ -175,8 +178,10 @@ function TestsTab() {
       arr = arr.filter((tc) =>
         tc.title.toLowerCase().includes(query.toLowerCase()),
       );
-    if (statusTab !== 'all')
-      arr = arr.filter((tc) => displayStatus(tc) === statusTab);
+    if (statusTab === 'needs_review')
+      arr = arr.filter((tc) => needsReview(tc));
+    else if (statusTab !== 'all')
+      arr = arr.filter((tc) => statusOf(tc) === statusTab);
     if (envFilter !== 'all')
       arr = arr.filter((tc) => (tc.envNames ?? []).includes(envFilter));
     if (tagFilter !== 'all')
@@ -309,9 +314,9 @@ function TestsTab() {
         { type: 'divider' as const },
         { key: 'dismiss', label: t('Dismiss'), danger: true },
       ];
-    } else if (needsReview(tc)) {
-      // a pending revision suspends the run controls — reviewing is the only way
-      // forward, so the menu leads with it
+    } else if (needsReview(tc) && pauseOnRevision) {
+      // pause-on-revision: the run controls are suspended — reviewing is the only
+      // way forward, so the menu leads with it
       items = [
         { key: 'open', label: t('Review changes') },
         { key: 'duplicate', label: t('Duplicate') },
@@ -351,7 +356,11 @@ function TestsTab() {
         controls.push({ key: 'unschedule', label: t('Unschedule') });
       items = [
         ...controls,
-        { key: 'open', label: t('Settings') },
+        // the drawer opens straight into the review while one is pending
+        {
+          key: 'open',
+          label: needsReview(tc) ? t('Review changes') : t('Settings'),
+        },
         { key: 'duplicate', label: t('Duplicate') },
         { type: 'divider' as const },
         { key: 'delete', label: t('Delete'), danger: true },
@@ -456,10 +465,9 @@ function TestsTab() {
       title: t('Status'),
       dataIndex: 'status',
       width: 120,
-      sorter: (a, b) =>
-        STATUS_ORDER[displayStatus(a)] - STATUS_ORDER[displayStatus(b)],
+      sorter: (a, b) => STATUS_ORDER[statusOf(a)] - STATUS_ORDER[statusOf(b)],
       showSorterTooltip: false,
-      render: (_: unknown, tc) => getStatusTag(displayStatus(tc), t),
+      render: (_: unknown, tc) => getStatusTag(statusOf(tc), t),
     },
     {
       title: '',
@@ -471,14 +479,14 @@ function TestsTab() {
           {tc.status !== 'draft' && (
             <Tooltip
               title={
-                needsReview(tc)
+                pauseOnRevision && needsReview(tc)
                   ? t('Paused until the new version is reviewed')
                   : t('Run now')
               }
             >
               <Button
                 type="text"
-                disabled={needsReview(tc)}
+                disabled={pauseOnRevision && needsReview(tc)}
                 icon={<Play size={16} />}
                 aria-label={t('Run now')}
                 onClick={(e) => {

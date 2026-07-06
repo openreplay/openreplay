@@ -14,6 +14,9 @@ interface KaiState {
   environments: Environment[];
   // Settings → Default run configuration; pre-fills new drafts / manual tests
   defaults: RunDefaults;
+  // Settings → pause tests while a new step revision waits for review (all tests,
+  // Mehdi 07-06). Off = they keep running on the current version until reviewed.
+  pauseOnRevision: boolean;
   activeTab: KaiTab;
   // one-shot handoffs: set by the test drawer's "View all runs" / "View" (on the last
   // failed run), consumed by RunsTab
@@ -29,6 +32,7 @@ let state: KaiState = {
     resolution: 'desktop',
     region: 'paris',
   },
+  pauseOnRevision: true,
   activeTab: 'tests',
   runsTestFilter: null,
   runsOpenRunKey: null,
@@ -54,6 +58,7 @@ export const kaiStore = {
     set({ environments: updater(state.environments) }),
   setDefaults: (patch: Partial<RunDefaults>) =>
     set({ defaults: { ...state.defaults, ...patch } }),
+  setPauseOnRevision: (pauseOnRevision: boolean) => set({ pauseOnRevision }),
 
   setActiveTab: (activeTab: KaiTab) => set({ activeTab }),
   /** "View all runs" on a test — jump to the Runs tab filtered to that test. */
