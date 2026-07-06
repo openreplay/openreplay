@@ -57,10 +57,10 @@ interface Props {
   onDecide?: (idx: number, off: boolean) => void;
 }
 
-/** The per-suggestion decision: a joined two-segment pill (radio semantics — one
- *  side is always selected, so re-clicking it rightly does nothing). ✓ applies the
- *  suggestion, ✕ rejects it and the row falls back to as-is. Living in one fixed
- *  spot on every suggestion row keeps the controls column steady. */
+/** The per-suggestion decision: a miniature of the app's Segmented control (gray
+ *  track, white selected thumb) — radio semantics, one side always selected. The
+ *  ROW's diff color carries the meaning; the pill stays neutral, so it never
+ *  fights the red/green background. */
 function DecisionPill({
   off,
   onDecide,
@@ -70,11 +70,15 @@ function DecisionPill({
 }) {
   const { t } = useTranslation();
   const seg =
-    'w-7 h-6 flex items-center justify-center transition-colors cursor-pointer';
+    'w-6 h-5 flex items-center justify-center rounded transition-all cursor-pointer';
+  const selected = 'bg-white shadow-sm text-gray-darkest';
+  const idle = 'text-gray-medium hover:text-gray-darkest';
   return (
     <span
-      className="inline-flex rounded-md border overflow-hidden bg-white"
-      style={{ borderColor: 'var(--color-gray-light)' }}
+      className="inline-flex items-center gap-0.5 rounded-md p-0.5"
+      style={{ background: 'var(--color-gray-lightest)' }}
+      role="radiogroup"
+      aria-label={t('Suggestion decision')}
     >
       <Tooltip title={t('Accept suggestion')}>
         <button
@@ -82,30 +86,18 @@ function DecisionPill({
           aria-label={t('Accept suggestion')}
           aria-pressed={!off}
           onClick={() => onDecide(false)}
-          className={`${seg} ${
-            off
-              ? 'text-gray-medium hover:text-green-dark hover:bg-green-lightest'
-              : 'bg-green-light text-green-dark'
-          }`}
+          className={`${seg} ${off ? idle : selected}`}
         >
           <Check size={13} strokeWidth={2.5} />
         </button>
       </Tooltip>
-      <span
-        className="w-px self-stretch"
-        style={{ background: 'var(--color-gray-light)' }}
-      />
       <Tooltip title={t('Reject suggestion')}>
         <button
           type="button"
           aria-label={t('Reject suggestion')}
           aria-pressed={!!off}
           onClick={() => onDecide(true)}
-          className={`${seg} ${
-            off
-              ? 'bg-gray-lightest text-gray-darkest'
-              : 'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest'
-          }`}
+          className={`${seg} ${off ? selected : idle}`}
         >
           <X size={13} strokeWidth={2.5} />
         </button>
