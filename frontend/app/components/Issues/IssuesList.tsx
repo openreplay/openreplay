@@ -214,9 +214,12 @@ function IssuesList() {
                 pairs with the "Found in" filters inside the Tags dropdown */}
             {focus && (
               <Tooltip title={`Found in focus: ${focus.name}`} placement="top">
+                {/* squared — icon-only, so equal sides; height matches the tag chips */}
                 <span
-                  className="text-xs px-2 py-0.5 rounded-md border whitespace-nowrap flex items-center shrink-0 cursor-default"
+                  className="rounded-md border flex items-center justify-center shrink-0 cursor-default"
                   style={{
+                    width: 22,
+                    height: 22,
                     borderColor: 'rgba(57, 78, 255, 0.25)',
                     background: 'rgba(57, 78, 255, 0.08)',
                     color: 'var(--color-main)',
