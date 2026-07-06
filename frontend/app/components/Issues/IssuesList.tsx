@@ -22,6 +22,7 @@ import {
   SlidersHorizontal,
   Album,
   ChevronDown,
+  Focus as FocusIcon,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -42,6 +43,7 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { Pagination } from 'UI';
 import TagFilter from './TagFilter';
+import FocusButton from './focus/FocusButton';
 import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
 
@@ -184,6 +186,19 @@ function IssuesList() {
           <span className="truncate font-medium" style={{ color: 'var(--color-gray-darkest)' }}>
             {head}
           </span>
+          {/* origin mark — only on focus-found issues; full traffic stays clean */}
+          {r.focusId != null && issuesStore.focusById(r.focusId) && (
+            <Tooltip
+              title={`Found in focus: ${issuesStore.focusById(r.focusId)!.name}`}
+            >
+              <span
+                className="flex items-center shrink-0 cursor-default"
+                style={{ color: 'var(--color-gray-medium)' }}
+              >
+                <FocusIcon size={14} />
+              </span>
+            </Tooltip>
+          )}
           {issuesStore.showHidden && issuesStore.hidden.includes(r.id) && (
             <Tooltip
               title={
@@ -323,6 +338,7 @@ function IssuesList() {
               Docs
             </Button>
           </a>
+          <FocusButton />
           <div className="min-w-50 md:w-1/4 md:min-w-75">
             <Input.Search
               size="small"
@@ -347,6 +363,49 @@ function IssuesList() {
         />
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* scope the list by where issues were found — full traffic vs a focus */}
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{
+              selectedKeys: [String(issuesStore.origin)],
+              onClick: ({ key }) =>
+                issuesStore.setOrigin(
+                  key === 'all' || key === 'full' ? key : Number(key),
+                ),
+              items: [
+                { key: 'all', label: 'All traffic' },
+                { key: 'full', label: 'Full traffic only' },
+                ...(issuesStore.focuses.length
+                  ? [
+                      { type: 'divider' as const },
+                      ...issuesStore.focuses.map((f) => ({
+                        key: String(f.id),
+                        icon: <FocusIcon size={13} />,
+                        label: f.name,
+                      })),
+                    ]
+                  : []),
+              ],
+            }}
+          >
+            <Button
+              size="small"
+              icon={
+                issuesStore.origin !== 'all' ? (
+                  <FocusIcon size={14} />
+                ) : undefined
+              }
+            >
+              {issuesStore.origin === 'all'
+                ? 'All traffic'
+                : issuesStore.origin === 'full'
+                  ? 'Full traffic'
+                  : issuesStore.focusById(issuesStore.origin)?.name ?? 'Focus'}
+              <ChevronDown size={13} style={{ marginLeft: 2, opacity: 0.6 }} />
+            </Button>
+          </Dropdown>
+
           <TagFilter
             allTags={issuesStore.allTags}
             labels={issuesStore.labels}
