@@ -28,9 +28,28 @@ function FocusRow({
 }) {
   const { issuesStore } = useStore();
   return (
-    <div className="flex items-start justify-between gap-3 py-1.5 group">
-      <div className="flex flex-col min-w-0">
-        <span className="text-sm font-medium truncate" style={{ color: 'var(--color-gray-darkest)' }}>
+    <div className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg group hover:bg-gray-lightest transition-colors">
+      {/* state tile — blue while the agent is watching this slice, gray when off */}
+      <span
+        className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+        style={
+          focus.active
+            ? { background: 'rgba(57, 78, 255, 0.1)', color: 'var(--color-main)' }
+            : { background: 'var(--color-gray-lightest)', color: 'var(--color-gray-medium)' }
+        }
+      >
+        <FocusIcon size={15} />
+      </span>
+
+      <div className="flex flex-col min-w-0 flex-1">
+        <span
+          className="text-sm font-medium truncate"
+          style={{
+            color: focus.active
+              ? 'var(--color-gray-darkest)'
+              : 'var(--color-gray-dark)',
+          }}
+        >
           {focus.name}
         </span>
         <Tooltip title={focus.summary} placement="left">
@@ -40,7 +59,16 @@ function FocusRow({
           </span>
         </Tooltip>
       </div>
-      <div className="flex items-center gap-1 shrink-0">
+
+      <Switch
+        size="small"
+        checked={focus.active}
+        aria-label={`${focus.name} — ${focus.active ? 'on' : 'off'}`}
+        onChange={(on) => issuesStore.toggleFocus(focus.id, on)}
+      />
+
+      {/* far-right actions slot — constant width so every switch shares one edge */}
+      <span className="w-6 shrink-0 flex items-center justify-center">
         {focus.mine && (
           <Dropdown
             trigger={['click']}
@@ -62,22 +90,17 @@ function FocusRow({
               },
             }}
           >
-            <Button
-              type="text"
-              size="small"
+            <button
+              type="button"
               aria-label="Focus actions"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              icon={<EllipsisVertical size={14} />}
-            />
+              className="w-6 h-6 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ color: 'var(--color-gray-medium)' }}
+            >
+              <EllipsisVertical size={15} />
+            </button>
           </Dropdown>
         )}
-        <Switch
-          size="small"
-          checked={focus.active}
-          aria-label={`${focus.name} — ${focus.active ? 'on' : 'off'}`}
-          onChange={(on) => issuesStore.toggleFocus(focus.id, on)}
-        />
-      </div>
+      </span>
     </div>
   );
 }
@@ -105,7 +128,7 @@ function FocusButton() {
 
   const sectionTitle = (label: string) => (
     <div
-      className="text-xs font-medium uppercase tracking-wide mt-1"
+      className="text-[11px] font-medium uppercase tracking-wider mt-3 mb-0.5"
       style={{ color: 'var(--color-gray-medium)' }}
     >
       {label}
@@ -113,23 +136,29 @@ function FocusButton() {
   );
 
   const content = (
-    <div className="flex flex-col" style={{ width: 300 }}>
-      <div className="flex items-center gap-1.5 pb-1">
-        <span className="text-sm font-semibold" style={{ color: 'var(--color-gray-darkest)' }}>
-          Focus
-        </span>
-        <Tooltip
-          placement="bottom"
-          title="Point the agent's analysis at portions of your traffic. Full traffic keeps a baseline share of the daily sample; active focuses get concentrated sampling on top. Anyone can switch a focus on or off."
-        >
-          <span className="flex items-center cursor-help" style={{ color: 'var(--color-gray-medium)' }}>
-            <Info size={13} />
+    <div className="flex flex-col" style={{ width: 340 }}>
+      {/* header — a real header, not a lone word: title + what this thing does */}
+      <div className="pb-2.5 border-b -mx-1 px-1">
+        <div className="flex items-center gap-1.5">
+          <span className="text-base font-semibold" style={{ color: 'var(--color-gray-darkest)' }}>
+            Focus
           </span>
-        </Tooltip>
+          <Tooltip
+            placement="bottom"
+            title="Full traffic keeps a baseline share of the daily sample; active focuses get concentrated sampling on top. Anyone can switch a focus on or off."
+          >
+            <span className="flex items-center cursor-help" style={{ color: 'var(--color-gray-medium)' }}>
+              <Info size={14} />
+            </span>
+          </Tooltip>
+        </div>
+        <div className="text-xs mt-0.5" style={{ color: 'var(--color-gray-medium)' }}>
+          Concentrate the agent's analysis on portions of your traffic.
+        </div>
       </div>
 
       {issuesStore.focuses.length === 0 ? (
-        <div className="text-sm py-2" style={{ color: 'var(--color-gray-medium)' }}>
+        <div className="text-sm py-3" style={{ color: 'var(--color-gray-medium)' }}>
           No focuses yet — the agent samples all traffic. Create one to concentrate
           its analysis on the part you care about.
         </div>
@@ -146,13 +175,13 @@ function FocusButton() {
         </>
       )}
 
-      <div className="border-t mt-2 pt-2 -mx-1 px-1">
+      <div className="border-t mt-2.5 pt-2 -mx-1 px-1">
         <Button
           type="text"
-          size="small"
-          icon={<Plus size={14} />}
+          icon={<Plus size={15} />}
           onClick={startCreate}
           className="w-full justify-start!"
+          style={{ color: 'var(--color-main)' }}
         >
           New focus
         </Button>
