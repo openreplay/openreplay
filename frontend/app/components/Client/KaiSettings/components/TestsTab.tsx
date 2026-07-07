@@ -199,8 +199,10 @@ function TestsTab() {
   const rangeEnd = (page - 1) * PAGE_SIZE + pageItems.length;
 
   // ---- bulk actions over the current selection -------------------------
+  // NOTE: no bulk approve/activate of drafts — activating a draft untested is
+  // exactly what review is for, so drafts are approved one by one from their
+  // drawer (Mehdi 07-07)
   const selected = tests.filter((tc) => selectedKeys.includes(tc.key));
-  const selDrafts = selected.filter((tc) => tc.status === 'draft').length;
   const selActive = selected.filter((tc) => tc.status === 'active').length;
   const selPaused = selected.filter(
     (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
@@ -218,15 +220,6 @@ function TestsTab() {
       ),
     );
     setSelectedKeys([]);
-  };
-  // Bulk approve can't gather a schedule per test, so drafts land in `approved`
-  // (ready, not scheduled) — the user schedules each from its drawer or the ellipsis.
-  const approveSelected = () => {
-    bulkSet((tc) => tc.status === 'draft', {
-      status: 'approved',
-      isNew: false,
-    });
-    message.success(t('Drafts approved'));
   };
   const pauseSelected = () =>
     bulkSet((tc) => tc.status === 'active', { status: 'paused' });
@@ -560,11 +553,6 @@ function TestsTab() {
             <span className="text-sm text-disabled-text">
               {selectedKeys.length} {t('selected')}
             </span>
-            {selDrafts > 0 && (
-              <Button size="small" onClick={approveSelected}>
-                {t('Approve')} ({selDrafts})
-              </Button>
-            )}
             {selActive > 0 && (
               <Button size="small" onClick={pauseSelected}>
                 {t('Pause')} ({selActive})
