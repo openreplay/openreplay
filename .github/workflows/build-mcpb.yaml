@@ -76,11 +76,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: openreplay-mcp
-          path: mcp_app/openreplay.mcpb
+          path: mcp_app/openreplay-mcp-desktop.mcpb
           retention-days: 90
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${RELEASE_TAG}" openreplay.mcpb --clobber
+        run: gh release upload "${RELEASE_TAG}" openreplay-mcp-desktop.mcpb --clobber
