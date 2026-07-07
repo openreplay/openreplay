@@ -121,7 +121,10 @@ function IssuesList() {
     }),
   ];
 
-  const dispCount = (issuesStore.critOnly ? 1 : 0) + (issuesStore.showHidden ? 1 : 0);
+  const dispCount =
+    (issuesStore.critOnly ? 1 : 0) +
+    (issuesStore.showHidden ? 1 : 0) +
+    (issuesStore.relevantToMe ? 1 : 0);
 
   const columns: TableColumnsType<Issue> = [
     {
@@ -151,36 +154,49 @@ function IssuesList() {
       dataIndex: 'head',
       sorter: (a, b) => a.head.localeCompare(b.head),
       showSorterTooltip: false,
-      render: (head: string, r: Issue) => (
+      render: (head: string, r: Issue) => {
+        // three-state critical: red = project criticality, FILL = mine.
+        // Click cycles my personal layer only (Mehdi 07-07): gray → mine,
+        // agent-critical → adopt as mine, mine → step back. Always silent —
+        // my layer never carries the project flag, so nobody else is
+        // affected. Removing an agent critical (for everyone, with a
+        // teaching reason) lives in the row ellipsis, not here.
+        const critState = issuesStore.critState(r.id);
+        const critTip =
+          critState === 'mine'
+            ? 'Remove from my criticals'
+            : critState === 'project'
+              ? 'Add to my criticals'
+              : 'Mark critical for me';
+        return (
         <div className="flex items-center gap-2 min-w-0">
-          <Tooltip title={r.critical ? 'Critical — click to remove' : 'Mark as critical'}>
+          <Tooltip title={critTip}>
             <Button
               type="text"
               size="small"
               className={`critical-toggle flex items-center justify-center shrink-0${
-                r.critical ? ' critical-on' : ''
-              }`}
-              aria-label={r.critical ? 'Remove critical flag' : 'Mark as critical'}
-              aria-pressed={r.critical}
+                critState !== 'none' ? ' critical-on' : ''
+              }${critState === 'mine' ? ' critical-mine' : ''}`}
+              aria-label={critTip}
+              aria-pressed={critState !== 'none'}
               icon={
+                // "mine" is marked by the chip color (`critical-mine` in
+                // issues.css: gray chip = agent's critical, red chip = mine),
+                // not by the icon — ownership is a different axis than
+                // severity, so the triangle stays the same red outline.
                 <AlertTriangle
                   size={15}
                   strokeWidth={2}
                   style={{
-                    color: r.critical ? 'var(--color-red)' : undefined,
+                    color: critState !== 'none' ? 'var(--color-red)' : undefined,
                     fill: 'none',
                   }}
                 />
               }
               onClick={(e) => {
                 e.stopPropagation();
-                if (r.critical) {
-                  setCritTarget(r);
-                  setCritReason('');
-                  setCritTags([]);
-                } else {
-                  issuesStore.setCritical(r.id, true);
-                }
+                if (critState === 'mine') issuesStore.removeMine(r.id);
+                else issuesStore.markMine(r.id);
               }}
             />
           </Tooltip>
@@ -199,7 +215,8 @@ function IssuesList() {
             </Tooltip>
           )}
         </div>
-      ),
+        );
+      },
     },
     {
       title: 'Tags',
@@ -263,6 +280,10 @@ function IssuesList() {
       align: 'center',
       render: (_: unknown, r: Issue) => {
         const isHidden = issuesStore.hidden.includes(r.id);
+        // the triangle only cycles my personal layer, so removing the
+        // project-wide (agent) flag — the teaching modal — lives here; a
+        // personal mark has nothing to remove for the team
+        const isCritical = issuesStore.agentCritical(r.id);
         return (
           <Dropdown
             trigger={['click']}
@@ -273,6 +294,10 @@ function IssuesList() {
                 if (key === 'rename') {
                   setRenameTarget(r);
                   setRenameValue(r.head);
+                } else if (key === 'notCritical') {
+                  setCritTarget(r);
+                  setCritReason('');
+                  setCritTags([]);
                 } else if (key === 'hide') {
                   setHideTarget(r);
                   setHideReason('');
@@ -281,7 +306,16 @@ function IssuesList() {
               },
               items: [
                 { key: 'rename', icon: <Pencil size={14} />, label: 'Rename' },
-                { type: 'divider' },
+                ...(isCritical
+                  ? [
+                      {
+                        key: 'notCritical',
+                        icon: <AlertTriangle size={14} />,
+                        label: 'Mark as not critical…',
+                      },
+                    ]
+                  : []),
+                { type: 'divider' as const },
                 isHidden
                   ? { key: 'unhide', icon: <Eye size={14} />, label: 'Unhide' }
                   : { key: 'hide', icon: <EyeOff size={14} />, label: 'Hide' },
@@ -313,6 +347,14 @@ function IssuesList() {
         onChange={(e) => issuesStore.setShowHidden(e.target.checked)}
       >
         Hidden{issuesStore.hidden.length ? ` (${issuesStore.hidden.length})` : ''}
+      </Checkbox>
+      {/* one toggle for "what's mine": critical-for-me ∪ my segments' finds
+          (Mehdi 07-07 — "just show me what's relevant to me") */}
+      <Checkbox
+        checked={issuesStore.relevantToMe}
+        onChange={(e) => issuesStore.setRelevantToMe(e.target.checked)}
+      >
+        Relevant to me{issuesStore.relevantCount ? ` (${issuesStore.relevantCount})` : ''}
       </Checkbox>
     </div>
   );
@@ -377,7 +419,7 @@ function IssuesList() {
             allTags={issuesStore.allTags}
             labels={issuesStore.labels}
             match={issuesStore.match}
-            focuses={issuesStore.focuses.map((f) => ({ id: f.id, name: f.name }))}
+            focuses={issuesStore.focuses.map((f) => ({ id: f.id, name: f.name, mine: f.mine }))}
             origins={issuesStore.origins}
             onToggle={issuesStore.toggleLabel}
             onToggleOrigin={issuesStore.toggleOrigin}
@@ -425,7 +467,12 @@ function IssuesList() {
           `cursor-pointer${issuesStore.hidden.includes(r.id) ? ' opacity-60' : ''}`
         }
         onRow={(r) => ({ onClick: () => openDetail(r.id) })}
-        locale={{ emptyText: 'No issues match these filters.' }}
+        locale={{
+          emptyText:
+            issuesStore.relevantToMe && totalIssues === 0
+              ? 'Nothing relevant yet — mark issues critical for you, or create a traffic segment, and they’ll show up here.'
+              : 'No issues match these filters.',
+        }}
       />
 
       <div className="flex items-center justify-between px-4 py-3">
@@ -522,7 +569,7 @@ function IssuesList() {
         okText="Mark as not critical"
       >
         <p className="mb-3" style={{ color: 'var(--color-gray-dark)' }}>
-          “{critTarget?.head}” will no longer be flagged critical. Tell us why so the agent can learn.
+          “{critTarget?.head}” will no longer be critical for anyone. Your reason helps the agent learn.
         </p>
         <div className="flex flex-wrap gap-2 mb-3">
           {CRITICAL_REASONS.map((t) => (
