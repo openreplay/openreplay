@@ -11,10 +11,14 @@ export default class FocusManager extends ListWalker<SetNodeFocus> {
 
   private focused: Element | null = null;
 
-  move(t: number) {
+  /**
+   * @returns `undefined` when no new focus message was crossed, otherwise the
+   * newly focused node (or `null` on blur). Lets callers react to focus changes.
+   */
+  move(t: number): Element | null | undefined {
     const msg = this.moveGetLast(t);
     if (!msg) {
-      return;
+      return undefined;
     }
     this.focused?.classList.remove(FOCUS_CLASSNAME);
     const oldParent = this.focused?.parentElement;
@@ -26,12 +30,12 @@ export default class FocusManager extends ListWalker<SetNodeFocus> {
     }
     if (msg.id === -1) {
       this.focused = null;
-      return;
+      return null;
     }
     const vn = this.vElements.get(msg.id);
     if (!vn) {
       logger.error('Node not found', msg);
-      return;
+      return undefined;
     }
     this.focused = vn.node;
     this.focused.classList.add(FOCUS_CLASSNAME);
@@ -39,5 +43,6 @@ export default class FocusManager extends ListWalker<SetNodeFocus> {
     if (currParent) {
       currParent.classList.add(`${FOCUS_CLASSNAME}-within`);
     }
+    return this.focused;
   }
 }
