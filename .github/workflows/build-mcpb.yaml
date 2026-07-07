@@ -16,6 +16,10 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag to upload the MCPB bundle to (e.g. v1.2.3)'
+        required: true
 
 concurrency:
   group: build-mcpb-${{ github.ref }}
@@ -27,6 +31,8 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.tag_name }}
     defaults:
       run:
         working-directory: mcp_app
@@ -37,9 +43,9 @@ jobs:
           fetch-depth: 0
 
       - name: Update version from release tag
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
-          version_number=$(echo "${{ github.event.release.tag_name }}" | sed 's/^v//')
+          version_number=$(echo "${RELEASE_TAG}" | sed 's/^v//')
           echo "Updating manifest version to ${version_number}"
           sed -i.bak "s/\"version\": \".*\"/\"version\": \"${version_number}\"/" manifest.json
           rm -f manifest.json.bak
@@ -69,7 +75,7 @@ jobs:
           retention-days: 90
 
       - name: Upload to GitHub Release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" openreplay.mcpb --clobber
+        run: gh release upload "${RELEASE_TAG}" openreplay.mcpb --clobber
