@@ -24,22 +24,45 @@
   filter: brightness(0.95);
 }
 
-/* Inactive critical toggle: very faint at rest, readable on hover */
+/* Critical toggle — resting states (Gabriel 07-07): the icon alone carries
+   severity (red outline = critical), the chip carries ownership. Agent
+   criticals are icon-only on transparent; ONLY "critical for me" wears the
+   red chip. Hovers preview the state a click produces — gain-hovers glow,
+   the loss-hover drains:
+   - gray (none)        → faint red chip + red icon ("this will become mine")
+   - agent (icon-only)  → the same faint red chip ("adopt as mine")
+   - mine (red chip)    → chip nearly gone + dimmed icon ("click lets it go") */
+.critical-toggle {
+  transition: background 0.15s ease;
+}
+.critical-toggle svg {
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
 .critical-toggle:not(.critical-on) svg {
   color: var(--color-gray-light);
-  transition: color 0.15s ease;
+}
+.critical-toggle:not(.critical-on):hover {
+  background: rgba(204, 0, 0, 0.06) !important;
 }
 .critical-toggle:not(.critical-on):hover svg {
-  color: var(--color-gray-medium);
+  color: var(--color-red);
 }
-
-/* Active critical toggle: same outline icon as inactive, marked by a subtle red
-   backdrop in the same rounded-square shape as the button hover. */
 .critical-toggle.critical-on {
-  background: rgba(204, 0, 0, 0.09) !important;
+  background: transparent !important;
 }
 .critical-toggle.critical-on:hover {
-  background: rgba(204, 0, 0, 0.15) !important;
+  background: rgba(204, 0, 0, 0.06) !important;
+}
+.critical-toggle.critical-on.critical-mine {
+  background: rgba(204, 0, 0, 0.09) !important;
+}
+.critical-toggle.critical-on.critical-mine:hover {
+  background: rgba(204, 0, 0, 0.03) !important;
+}
+.critical-toggle.critical-on.critical-mine:hover svg {
+  opacity: 0.45;
 }
 
 /* Date-range trigger restyled as an outlined dropdown to match the Tags /

@@ -29,6 +29,7 @@ export interface IssueSession {
 export interface Issue {
   id: number;
   head: string;
+  /** project-wide critical flag (decorated: agent/teammates OR my own mark) */
   critical: boolean;
   /** which focus surfaced this issue — absent = found in full traffic */
   focusId?: number;
@@ -488,6 +489,16 @@ export default class IssuesStore {
   // per-issue override of the authored `critical` flag (Gmail-style toggle)
   criticalOverride: Record<number, boolean> = {};
   criticalReasons: Record<number, string> = {};
+  /* ---- per-user critical ("critical for me") ----
+     Red encodes project criticality; the FILL encodes my relationship to it.
+     `mine` is my personal layer and STAYS personal: marking — fresh from gray
+     or re-marking something un-flagged earlier — never touches the project-
+     wide flag; teammates don't see it (Mehdi 07-07, "keep it simple: for me
+     only"). Seeded: #3 = an agent-critical I adopted, #5 = my own personal
+     mark. */
+  mine: number[] = [3, 5];
+  /** Display filter: my criticals ∪ issues surfaced by segments I own */
+  relevantToMe = false;
 
   // ---- focus (portions of traffic the agent concentrates on) ----
   focuses: Focus[] = MOCK_FOCUSES;
@@ -509,11 +520,26 @@ export default class IssuesStore {
     return this.all.filter((i) => i.cat === c).length;
   }
 
-  /** Apply per-issue user overrides (rename + critical toggle) to a raw issue. */
+  /** The flag's non-me source: the agent's authored critical, unless it was
+      explicitly removed with a reason. My own manual mark lives in `mine`,
+      never here — so this is exactly the "another source exists" test. */
+  agentCritical(id: number): boolean {
+    const raw = this.all.find((x) => x.id === id);
+    return Boolean(raw?.critical) && this.criticalOverride[id] !== false;
+  }
+
+  /** Three-state critical: none → critical (project) → critical for me. */
+  critState(id: number): 'none' | 'project' | 'mine' {
+    if (this.mine.includes(id)) return 'mine';
+    return this.agentCritical(id) ? 'project' : 'none';
+  }
+
+  /** Apply per-issue user overrides (rename + critical toggle) to a raw issue.
+      Displayed `critical` includes my personal layer — this is MY view of the
+      list; a personal mark doesn't exist for teammates. */
   decorate = (i: Issue): Issue => {
     const head = this.names[i.id] ?? i.head;
-    const critical =
-      i.id in this.criticalOverride ? this.criticalOverride[i.id] : i.critical;
+    const critical = this.agentCritical(i.id) || this.mine.includes(i.id);
     return head === i.head && critical === i.critical
       ? i
       : { ...i, head, critical };
@@ -530,6 +556,7 @@ export default class IssuesStore {
           : this.labels.every((t) => i.tags.includes(t)),
       );
     if (this.critOnly) l = l.filter((i) => i.critical);
+    if (this.relevantToMe) l = l.filter(this.isRelevant);
     if (this.origins.length)
       l = l.filter((i) =>
         i.focusId != null
@@ -643,6 +670,34 @@ export default class IssuesStore {
   setCritOnly = (v: boolean) => { this.critOnly = v; };
   setShowHidden = (v: boolean) => { this.showHidden = v; };
 
+  // ---- per-user critical + "Relevant to me" ----
+  /** relevant = critical for me, or surfaced by a segment I own */
+  isRelevant = (i: Issue): boolean =>
+    this.mine.includes(i.id) ||
+    (i.focusId != null && Boolean(this.focusById(i.focusId)?.mine));
+
+  /** count shown next to the Display checkbox (ignores other filters) */
+  get relevantCount(): number {
+    return this.all.filter(
+      (i) => !this.hidden.includes(i.id) && this.isRelevant(i),
+    ).length;
+  }
+
+  setRelevantToMe = (v: boolean) => { this.relevantToMe = v; };
+
+  /** Mark critical for me — fresh from gray or adopting an agent critical.
+      Personal only, no ceremony: the project-wide flag is never touched. */
+  markMine = (id: number) => {
+    if (!this.mine.includes(id)) this.mine.push(id);
+    delete this.criticalReasons[id];
+  };
+
+  /** Step my personal layer back — always silent: my layer never carries the
+      project flag, so nobody else is affected. */
+  removeMine = (id: number) => {
+    this.mine = this.mine.filter((x) => x !== id);
+  };
+
   // ---- focus ----
   get activeFocusCount(): number {
     return this.focuses.filter((f) => f.active).length;
@@ -699,11 +754,22 @@ export default class IssuesStore {
     delete this.dismissReasons[id];
     delete this.dismissTags[id];
   };
-  /** Toggle the critical flag. Marking is instant; unmarking carries an optional
-      reason so the agent can learn what wasn't actually critical. */
+  /** Two-way critical toggle used by the detail page and the list's teaching
+      modal. Marking is my personal layer ONLY (Mehdi 07-07) — it never sets
+      the project-wide flag, and re-marking something un-flagged earlier does
+      not restore it. Unmarking clears my layer always, and lifts the project
+      flag only where one exists — that removal carries the reason so the
+      agent can learn what wasn't actually critical. */
   setCritical = (id: number, val: boolean, reason = '') => {
-    this.criticalOverride[id] = val;
-    if (val) delete this.criticalReasons[id];
-    else this.criticalReasons[id] = reason;
+    if (val) {
+      delete this.criticalReasons[id];
+      this.markMine(id);
+    } else {
+      this.removeMine(id);
+      if (this.agentCritical(id)) {
+        this.criticalOverride[id] = false;
+        this.criticalReasons[id] = reason;
+      }
+    }
   };
 }

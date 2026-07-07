@@ -595,6 +595,7 @@ function IssueDetail() {
           onSetCritical={(val, reason) =>
             issuesStore.setCritical(issue.id, val, reason)
           }
+          criticalPersonalOnly={!issuesStore.agentCritical(issue.id)}
           actions={
             <>
               <Button

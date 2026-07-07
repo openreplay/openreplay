@@ -58,7 +58,6 @@ import SessionInfoItem from 'Components/Session_/SessionInfoItem';
 import MetaItem from 'Shared/SessionItem/MetaItem';
 import {
   CAT_ICON,
-  CRITICAL_REASONS,
   impactLevel,
   type Issue,
   type IssueSessionCard,
@@ -92,7 +91,7 @@ import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 
 import { getMockSessionById } from 'App/dev/mockSessions';
-import { ReasonChip, CategoryLabel, ImpactGauge } from './ProblemCard';
+import { CategoryLabel, ImpactGauge } from './ProblemCard';
 import {
   PerformancePanel,
   GraphQLPanel,
@@ -315,106 +314,51 @@ function TagChip({ label }: { label: string }) {
   );
 }
 
-/* Critical toggle for the header — the exact issue-list control (the
-   `critical-toggle` icon button, red `critical-on` backdrop when set). Marking
-   is instant; un-marking opens the same teaching-moment reason popover used on
-   the detail page. Kept in sync with the slide-out via the shared issuesStore. */
+/* Critical toggle for the header — the exact issue-list control (three-state
+   triangle: red outline = project criticality, tinted fill = mine). Click
+   cycles my personal layer only (Mehdi 07-07), always silently — removing the
+   project-wide flag (with a teaching reason) lives on the detail page and in
+   the list's row ellipsis. Kept in sync via the shared issuesStore. */
 const HeaderCriticalToggle = observer(({ issue }: { issue: Issue }) => {
   const { issuesStore } = useStore();
-  const [open, setOpen] = React.useState(false);
-  const [reasons, setReasons] = React.useState<string[]>([]);
-  const [note, setNote] = React.useState('');
-
-  const btn = (
-    <Tooltip title={issue.critical ? 'Critical — click to remove' : 'Mark as critical'}>
+  const critState = issuesStore.critState(issue.id);
+  const critTip =
+    critState === 'mine'
+      ? 'Remove from my criticals'
+      : critState === 'project'
+        ? 'Add to my criticals'
+        : 'Mark critical for me';
+  return (
+    <Tooltip title={critTip}>
       <Button
         type="text"
         size="small"
-        aria-pressed={issue.critical}
+        aria-label={critTip}
+        aria-pressed={critState !== 'none'}
         className={`critical-toggle flex items-center justify-center shrink-0${
-          issue.critical ? ' critical-on' : ''
-        }`}
+          critState !== 'none' ? ' critical-on' : ''
+        }${critState === 'mine' ? ' critical-mine' : ''}`}
         icon={
+          // same chip-color language as the list (`critical-mine` in
+          // issues.css): gray chip = agent's critical, red chip = mine —
+          // the icon itself stays the project-critical red outline
           <AlertTriangle
             size={15}
             strokeWidth={2}
             style={{
-              color: issue.critical
-                ? 'var(--color-red)'
-                : 'var(--color-gray-medium)',
+              // none-state color is left to issues.css so the hover preview
+              // (gray → red) can take effect; inline style would win over it
+              color: critState !== 'none' ? 'var(--color-red)' : undefined,
               fill: 'none',
             }}
           />
         }
         onClick={() => {
-          if (issue.critical) setOpen(true);
-          else issuesStore.setCritical(issue.id, true);
+          if (critState === 'mine') issuesStore.removeMine(issue.id);
+          else issuesStore.markMine(issue.id);
         }}
       />
     </Tooltip>
-  );
-
-  if (!issue.critical) return btn;
-
-  const panel = (
-    <div className="flex flex-col gap-2" style={{ width: 264 }}>
-      <span className="text-sm" style={{ color: 'var(--color-gray-dark)' }}>
-        Why is this not critical?
-      </span>
-      <div className="flex flex-wrap gap-1.5">
-        {CRITICAL_REASONS.map((t) => (
-          <ReasonChip
-            key={t}
-            label={t}
-            checked={reasons.includes(t)}
-            onChange={(on) =>
-              setReasons((p) => (on ? [...p, t] : p.filter((x) => x !== t)))
-            }
-          />
-        ))}
-      </div>
-      <Input.TextArea
-        rows={2}
-        placeholder="Add a note (optional)…"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-      />
-      <div className="flex justify-end gap-2">
-        <Button size="small" type="text" onClick={() => setOpen(false)}>
-          Cancel
-        </Button>
-        <Button
-          size="small"
-          type="primary"
-          danger
-          onClick={() => {
-            issuesStore.setCritical(
-              issue.id,
-              false,
-              [...reasons, note.trim()].filter(Boolean).join(' · '),
-            );
-            setOpen(false);
-            setReasons([]);
-            setNote('');
-          }}
-        >
-          Mark as not critical
-        </Button>
-      </div>
-    </div>
-  );
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={setOpen}
-      trigger="click"
-      placement="bottomLeft"
-      content={panel}
-      zIndex={2147483647}
-    >
-      {btn}
-    </Popover>
   );
 });
 

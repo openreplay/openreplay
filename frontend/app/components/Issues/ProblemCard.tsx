@@ -230,14 +230,20 @@ const critContent = (text: string, withClose = false) => (
 );
 
 /* The critical flag on the detail page, built on antd Tag (red, same
-   AlertTriangle as the issues list). With `onSet` it's a two-way toggle: a
-   removable red tag that opens a "why" reason popover, and a faint "Mark
-   critical" tag to set it (instant). Without `onSet` it's a static red tag. */
+   AlertTriangle as the issues list). With `onSet` it's a two-way toggle:
+   marking is instant and personal-only (Mehdi 07-07). Removal depends on the
+   flag's source — `personalOnly` (my mark, no agent flag) removes instantly
+   and silently; an agent flag opens the "why" reason popover, since that
+   removal is for everyone and teaches the agent. Without `onSet` it's a
+   static red tag. */
 function CriticalControl({
   critical,
+  personalOnly,
   onSet,
 }: {
   critical: boolean;
+  /** the flag has no agent/project source — it exists only in my layer */
+  personalOnly?: boolean;
   onSet?: (val: boolean, reason?: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -247,7 +253,7 @@ function CriticalControl({
   if (!critical) {
     if (!onSet) return null;
     return (
-      <Tooltip title="Mark as critical">
+      <Tooltip title="Mark critical for me">
         <Tag
           bordered
           onClick={() => onSet(true)}
@@ -268,10 +274,26 @@ function CriticalControl({
     );
   }
 
+  if (personalOnly) {
+    return (
+      <Tooltip title="Remove from my criticals">
+        <Tag
+          color="red"
+          bordered
+          onClick={() => onSet(false)}
+          className="crit-tag cursor-pointer"
+          style={{ margin: 0 }}
+        >
+          {critContent('Critical for me', true)}
+        </Tag>
+      </Tooltip>
+    );
+  }
+
   const panel = (
     <div className="flex flex-col gap-2" style={{ width: 264 }}>
       <span className="text-sm" style={{ color: 'var(--color-gray-dark)' }}>
-        Why is this not critical?
+        Removes the flag for everyone. Why isn’t it critical?
       </span>
       <div className="flex flex-wrap gap-1.5">
         {CRITICAL_REASONS.map((t) => (
@@ -339,6 +361,9 @@ interface Props {
   onRename?: (name: string) => void;
   /** when set, the Critical chip becomes a two-way toggle (issue detail page) */
   onSetCritical?: (val: boolean, reason?: string) => void;
+  /** the critical flag exists only in my personal layer (no agent flag) —
+      removal is instant instead of the teaching popover */
+  criticalPersonalOnly?: boolean;
   /** right-aligned actions on the title row (e.g. Create ticket / Hide) */
   actions?: React.ReactNode;
   /** detail-page framing: title+actions header, full-width divider, then body */
@@ -352,6 +377,7 @@ function ProblemCard({
   editable,
   onRename,
   onSetCritical,
+  criticalPersonalOnly,
   actions,
   framed,
   hideProblem,
@@ -385,7 +411,11 @@ function ProblemCard({
       {(onSetCritical || issue.critical) && (
         <>
           <span style={{ color: 'var(--color-gray-light)' }}>|</span>
-          <CriticalControl critical={issue.critical} onSet={onSetCritical} />
+          <CriticalControl
+            critical={issue.critical}
+            personalOnly={criticalPersonalOnly}
+            onSet={onSetCritical}
+          />
         </>
       )}
       <span style={{ color: 'var(--color-gray-light)' }}>|</span>
