@@ -120,6 +120,7 @@ export default class MessageManager {
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
+  private lastSelectClickTime = -1;
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
   private activityManager: ActivityManager | null = null;
   private mouseMoveManager: MouseMoveManager;
@@ -289,6 +290,8 @@ export default class MessageManager {
 
   resetMessageManagers() {
     this.clickManager = new ListWalker();
+    this.lastSelectClickTime = -1;
+    this.screen.selectMenu.hide();
     this.mouseMoveManager = new MouseMoveManager(this.screen);
     this.activityManager = new ActivityManager(this.session.durationMs);
     this.activeTabManager = new ActiveTabManager();
@@ -328,6 +331,12 @@ export default class MessageManager {
       // getting clicks happened during last 600ms
       if (!!lastClick && t - lastClick.time < 600) {
         this.screen.cursor.click();
+        // Fire once per click: a native <select> picker can't be reopened during
+        // replay (needs a user gesture), so approximate it with a synthetic list.
+        if (lastClick.time !== this.lastSelectClickTime) {
+          this.lastSelectClickTime = lastClick.time;
+          this.screen.showSelectMenu(this.getNode(lastClick.id)?.node);
+        }
       }
       const lastThrashing = this.mouseThrashingManager.moveGetLast(t);
       if (!!lastThrashing && t - lastThrashing.time < 300) {

@@ -1,5 +1,6 @@
 import styles from './screen.module.css';
 import Cursor from './Cursor';
+import SelectDropdown from './SelectDropdown';
 
 import type { Point, Dimensions } from './types';
 
@@ -62,6 +63,7 @@ function isIframe(el: Element): el is HTMLIFrameElement {
 export default class Screen {
   readonly overlay: HTMLDivElement;
   readonly cursor: Cursor;
+  readonly selectMenu: SelectDropdown;
   private selectionTargets: Element[];
   private readonly iframe: HTMLIFrameElement;
   private readonly screen: HTMLDivElement;
@@ -92,6 +94,37 @@ export default class Screen {
     this.screen = screen;
 
     this.cursor = new Cursor(this.overlay, isMobile); // TODO: move outside
+    this.selectMenu = new SelectDropdown(this.overlay);
+  }
+
+  private remoteControlActive = false;
+
+  /**
+   * During remote control the agent drives the real <select> (native picker via
+   * showPicker on their own gesture), so the synthetic replay picker must stay
+   * out of the way. Toggled by the assist RemoteControl.
+   */
+  setRemoteControlActive(active: boolean): void {
+    this.remoteControlActive = active;
+    if (active) {
+      this.selectMenu.hide();
+    }
+  }
+
+  /**
+   * Reflect a recorded click on a native <select>: show a synthetic option list
+   * approximating the open picker (the real one can't be reopened during replay
+   * — it needs a user gesture). Any other click target dismisses it.
+   */
+  showSelectMenu(node: Node | null | undefined): void {
+    if (this.remoteControlActive) {
+      return;
+    }
+    if (node instanceof HTMLSelectElement) {
+      this.selectMenu.open(node);
+    } else {
+      this.selectMenu.hide();
+    }
   }
 
   addMobileStyles(stableTop?: boolean) {
@@ -113,6 +146,7 @@ export default class Screen {
   }
 
   clean() {
+    this.selectMenu.remove(); // clears its pending timer + scroll listener
     this.iframe?.remove?.();
     this.overlay?.remove?.();
     this.screen?.remove?.();

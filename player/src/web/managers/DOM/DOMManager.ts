@@ -481,6 +481,8 @@ export default class DOMManager extends ListWalker<Message> {
           this.pendingSelectValues.set(msg.id, val);
         } else {
           nodeWithValue.value = val; // Maybe make special VInputValueElement type for lazy value update
+          // Input on another element dismisses the synthetic <select> picker.
+          this.screen.selectMenu.onValueApplied(nodeWithValue);
         }
         return;
       }
@@ -491,6 +493,8 @@ export default class DOMManager extends ListWalker<Message> {
           return;
         }
         (vElem.node as HTMLInputElement).checked = msg.checked; // Maybe make special VCheckableElement type for lazy checking
+        // Input on another element dismisses the synthetic <select> picker.
+        this.screen.selectMenu.onValueApplied(vElem.node);
         return;
       }
       case MType.SetNodeData:
@@ -747,6 +751,9 @@ export default class DOMManager extends ListWalker<Message> {
       node.value = val;
       if (node.value === val || node.options.length > 0) {
         this.pendingSelectValues.delete(id);
+        // If the synthetic picker for this select is open, move its highlight to
+        // the applied value and dismiss it shortly after.
+        this.screen.selectMenu.onValueApplied(node);
       }
     });
   };
@@ -772,7 +779,12 @@ export default class DOMManager extends ListWalker<Message> {
     return this.stylesManager.moveReady().then(() => {
       /* Waiting for styles to be applied first */
       /* Applying focus */
-      this.focusManager.move(t);
+      const focusChange = this.focusManager.move(t);
+      // A focus landing anywhere but the open <select> (or a blur) dismisses the
+      // synthetic picker; focus on the select itself (its opening click) is kept.
+      if (focusChange !== undefined) {
+        this.screen.selectMenu.onFocus(focusChange);
+      }
       /* Applying text selections */
       this.selectionManager.move(t);
       /* Applying all scrolls */
