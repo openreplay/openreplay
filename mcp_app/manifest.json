@@ -3,7 +3,8 @@
   "name": "openreplay",
   "display_name": "OpenReplay",
   "version": "1.0.6",
-  "description": "Query and explore your OpenReplay recordings and analytics.",
+  "description": "Query and explore your replays and analytics.",
+  "long_description": "Query your OpenReplay data using natural language. Search and replay user sessions, and build interactive cards to track trends, explore web analytics, map user journeys, catch drop-offs with funnels, and monitor web vitals, errors, and slow queries.",
   "author": {
     "name": "OpenReplay",
     "url": "https://github.com/openreplay/openreplay/"
