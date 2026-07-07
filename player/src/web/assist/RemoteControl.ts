@@ -221,6 +221,9 @@ export default class RemoteControl {
   };
 
   private toggleRemoteControl(enable: boolean) {
+    // Suppress the synthetic <select> replay picker while the agent controls the
+    // real element (they get the native picker via their own gesture).
+    this.screen.setRemoteControlActive(enable);
     if (enable) {
       this.screen.overlay.addEventListener('mousemove', this.onMouseMove);
       this.screen.overlay.addEventListener('click', this.onMouseClick);
