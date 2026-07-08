@@ -20,6 +20,9 @@ interface Props {
   onSetCritical?: (val: boolean, reasons?: string[], note?: string) => void;
   /** reason vocabulary for the un-mark popover (server-provided) */
   criticalReasons?: string[];
+  /** the critical flag is only in my personal layer (no agent flag) — removal
+      is instant instead of the teaching popover */
+  criticalPersonalOnly?: boolean;
   /** right-aligned actions on the title row (e.g. Create ticket / Hide) */
   actions?: React.ReactNode;
   /** title+actions header, full-width divider, then body */
@@ -35,6 +38,7 @@ export default function ProblemCard({
   onRename,
   onSetCritical,
   criticalReasons,
+  criticalPersonalOnly,
   actions,
   framed,
   hideProblem,
@@ -66,6 +70,7 @@ export default function ProblemCard({
         critical={issue.critical}
         onSet={onSetCritical}
         reasons={criticalReasons}
+        personalOnly={criticalPersonalOnly}
       />,
     );
   if (issue.seenAgoMin != null)

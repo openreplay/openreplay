@@ -51,3 +51,49 @@ and journey-label filters, and there is **no dedicated critical-only param**:
   the Jira/ticket integration (project/issue-type mapping TBD).
 - **Session thumbnails** — the detail `SessionCard` shows a neutral play surface;
   wire a thumbnail URL if one exists, otherwise the placeholder is intended.
+
+---
+
+## NOT-YET-BACKED — designer features shipped ahead of the backend
+
+The UI is fully built and wired to the **real `client`**, but the endpoints
+below don't exist yet. Reads swallow errors and resolve empty; writes are
+best-effort no-ops (`silent`/`silentVoid` in `api.ts`). So the features render
+and behave locally (optimistic), just don't persist — shipping the backend needs
+**no frontend change**. Grep:
+
+```
+grep -rn "NOT-YET-BACKED" app/components/SmartAlerts app/mstore/issuesStore.ts
+```
+
+### Per-user "critical for me" (three-state critical)
+- Triangle is three-state: **none → project (agent) → mine**. Clicking cycles
+  only my personal layer (`markMine`/`removeMine`) — never the project flag.
+  Removing the project-wide flag (with a teaching reason) lives in the list row
+  ellipsis + the detail chip.
+- Store: `mine: string[]`, `critState()`, `agentCritical()`, `isRelevant()`,
+  `relevantCount`. Hydrated by `getMyCriticals` (stub → `[]`).
+- Endpoints needed: `GET …/my-criticals` → `string[]` (issue names);
+  `POST …/my-criticals {issue}`; `DELETE …/my-criticals {issue}`.
+- "Critical to me" Display checkbox → `relevantToMe` list param (server ignores
+  it for now, so the filter is inert until backed).
+
+### Focus (traffic segments the agent concentrates on)
+- `FocusButton` (header) + `FocusDrawer` (create/edit, uses the real Sessions
+  `<SessionFilters/>` omni-search) + TagFilter "Found in" origins (Full traffic /
+  My segments / per-focus) + a per-row origin chip (shown only once focuses exist).
+- Store: `focuses: Focus[]`, `origins: IssueOrigin[]`, `activeFocusCount`,
+  `focusById`, `toggleFocus`, `saveFocus`, `deleteFocus`, `toggleOrigin`,
+  `clearOrigins`. Hydrated by `getFocuses` (stub → `[]`), so the whole subsystem
+  is dormant/empty until the backend ships.
+- Endpoints needed: `GET/POST …/focuses`, `PUT/DELETE …/focuses/{id}`; the list
+  request should honour `origins` (full-traffic + focus ids) and issues should
+  carry `focusId` (surfacing focus). `saveFocus` sends the serialized Sessions
+  filter `seeds`; `trafficPct`/`sessionsPerDay` are `0` until the backend
+  estimates them.
+
+### Notes
+- "Critical to me" count = `mine.length` (personal criticals only); segment
+  finds aren't included until `focusId`/focuses are backed.
+- Focuses created via the drawer are optimistic (in-memory) and vanish on reload
+  while `getFocuses` returns `[]`.
