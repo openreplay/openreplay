@@ -22,7 +22,7 @@ import {
   SlidersHorizontal,
   Album,
   ChevronDown,
-  Focus as FocusIcon,
+  Split,
   Globe,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -44,7 +44,7 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { Pagination } from 'UI';
 import TagFilter from './TagFilter';
-import FocusButton from './focus/FocusButton';
+import SegmentsIndicator, { CaptureModeBadge } from './segments/SegmentsIndicator';
 import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
 
@@ -223,17 +223,17 @@ function IssuesList() {
       dataIndex: 'tags',
       width: 200,
       render: (tags: string[], r: Issue) => {
-        const focus = issuesStore.focusById(r.focusId);
+        const segment = issuesStore.segmentById(r.segmentId);
         const visible = tags.slice(0, 1);
         const hidden = tags.slice(1);
         return (
           <div className="flex items-center gap-1 overflow-hidden">
-            {/* origin chip — every issue carries one: a focus find shows the focus
-                icon in blue, a full-traffic find the globe in gray. The chip itself
-                stays a normal tag (gray border/bg); only the icon carries meaning.
-                Pairs with the "Found in" filters inside the Tags dropdown. */}
+            {/* origin chip — every issue carries one: a segment find shows the
+                fork icon in blue, a full-traffic find the globe in gray. The chip
+                itself stays a normal tag (gray border/bg); only the icon carries
+                meaning. Pairs with the "Found in" filters inside the Tags dropdown. */}
             <Tooltip
-              title={focus ? `Found in focus: ${focus.name}` : 'Found in full traffic'}
+              title={segment ? `Found in segment: ${segment.name}` : 'Found in full traffic'}
               placement="top"
             >
               <span
@@ -243,10 +243,10 @@ function IssuesList() {
                   height: 22,
                   borderColor: 'var(--color-gray-light)',
                   background: 'var(--color-gray-lightest)',
-                  color: focus ? 'var(--color-main)' : 'var(--color-gray-medium)',
+                  color: segment ? 'var(--color-main)' : 'var(--color-gray-medium)',
                 }}
               >
-                {focus ? <FocusIcon size={13} /> : <Globe size={13} />}
+                {segment ? <Split size={13} /> : <Globe size={13} />}
               </span>
             </Tooltip>
             {visible.map((t) => <RowTagChip key={t} label={t} />)}
@@ -377,6 +377,9 @@ function IssuesList() {
               <Info size={15} />
             </span>
           </Tooltip>
+          {/* compact capture-mode cue (Mehdi 07-07) — which mode am I in,
+              readable on page load; management lives in the dropdown on the right */}
+          <CaptureModeBadge />
         </div>
         <div className="flex items-center gap-2">
           <a
@@ -388,7 +391,6 @@ function IssuesList() {
               Docs
             </Button>
           </a>
-          <FocusButton />
           <div className="min-w-50 md:w-1/4 md:min-w-75">
             <Input.Search
               size="small"
@@ -413,11 +415,14 @@ function IssuesList() {
         />
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* capture management — out of the search-bar area (Mehdi 07-07),
+              among the other list controls; the live cue stays by the title */}
+          <SegmentsIndicator />
           <TagFilter
             allTags={issuesStore.allTags}
             labels={issuesStore.labels}
             match={issuesStore.match}
-            focuses={issuesStore.focuses.map((f) => ({ id: f.id, name: f.name, mine: f.mine }))}
+            segments={issuesStore.segments.map((s) => ({ id: s.id, name: s.name, mine: s.mine }))}
             origins={issuesStore.origins}
             onToggle={issuesStore.toggleLabel}
             onToggleOrigin={issuesStore.toggleOrigin}
