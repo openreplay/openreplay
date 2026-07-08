@@ -311,7 +311,7 @@ function IssuesList() {
                       {
                         key: 'notCritical',
                         icon: <AlertTriangle size={14} />,
-                        label: 'Mark as not critical…',
+                        label: 'Mark as not critical',
                       },
                     ]
                   : []),
@@ -340,21 +340,22 @@ function IssuesList() {
         checked={issuesStore.critOnly}
         onChange={(e) => issuesStore.setCritOnly(e.target.checked)}
       >
-        Critical only
+        Critical only ({issuesStore.criticalCount})
       </Checkbox>
       <Checkbox
         checked={issuesStore.showHidden}
         onChange={(e) => issuesStore.setShowHidden(e.target.checked)}
       >
-        Hidden{issuesStore.hidden.length ? ` (${issuesStore.hidden.length})` : ''}
+        Hidden ({issuesStore.hidden.length})
       </Checkbox>
       {/* one toggle for "what's mine": critical-for-me ∪ my segments' finds
-          (Mehdi 07-07 — "just show me what's relevant to me") */}
+          (Mehdi 07-07 — "just show me what's relevant to me"; labeled around
+          "critical" per Gabriel 07-07 since that's the flag it's built on) */}
       <Checkbox
         checked={issuesStore.relevantToMe}
         onChange={(e) => issuesStore.setRelevantToMe(e.target.checked)}
       >
-        Relevant to me{issuesStore.relevantCount ? ` (${issuesStore.relevantCount})` : ''}
+        Critical to me ({issuesStore.relevantCount})
       </Checkbox>
     </div>
   );

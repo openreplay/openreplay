@@ -670,7 +670,16 @@ export default class IssuesStore {
   setCritOnly = (v: boolean) => { this.critOnly = v; };
   setShowHidden = (v: boolean) => { this.showHidden = v; };
 
-  // ---- per-user critical + "Relevant to me" ----
+  /** count shown next to "Critical only" (ignores other filters, same shape
+      as relevantCount/hidden.length below — Display checkboxes always show
+      their count in parens) */
+  get criticalCount(): number {
+    return this.all.map(this.decorate).filter(
+      (i) => !this.hidden.includes(i.id) && i.critical,
+    ).length;
+  }
+
+  // ---- per-user critical + "Critical to me" ----
   /** relevant = critical for me, or surfaced by a segment I own */
   isRelevant = (i: Issue): boolean =>
     this.mine.includes(i.id) ||
