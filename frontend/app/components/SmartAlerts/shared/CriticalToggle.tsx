@@ -1,88 +1,65 @@
-import { Button, Popover, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import CriticalReasonPanel from './CriticalReasonPanel';
+export type CritState = 'none' | 'project' | 'mine';
 
-/* The AlertTriangle icon toggle used in the issue-list row and the player
-   header. Marking critical is instant; un-marking opens the reason popover. A
-   subtle red backdrop marks the active state. */
+/* Three-state critical triangle used in the issue-list row and the player.
+   Red outline icon = project criticality; the red chip = "mine". Clicking only
+   cycles my personal layer (Mehdi 07-07): gray→mine, project→adopt as mine,
+   mine→step back — always silent. Removing the project-wide flag (with a
+   teaching reason) lives on the detail page / list ellipsis, not here. */
 export default function CriticalToggle({
-  critical,
-  onSet,
-  reasons,
+  state,
+  onMark,
+  onRemoveMine,
   stopPropagation,
-  zIndex,
 }: {
-  critical: boolean;
-  onSet: (val: boolean, reasons?: string[], note?: string) => void;
-  /** reason vocabulary for the un-mark popover (server-provided) */
-  reasons?: string[];
+  state: CritState;
+  onMark: () => void;
+  onRemoveMine: () => void;
   stopPropagation?: boolean;
-  zIndex?: number;
 }) {
   const { t } = useTranslation();
-  const [open, setOpen] = React.useState(false);
+  const tip =
+    state === 'mine'
+      ? t('Remove from my criticals')
+      : state === 'project'
+        ? t('Add to my criticals')
+        : t('Mark critical for me');
 
-  const btn = (
-    <Tooltip
-      title={critical ? t('Critical — click to remove') : t('Mark as critical')}
-    >
+  return (
+    <Tooltip title={tip}>
       <Button
         type="text"
         size="small"
-        aria-pressed={critical}
-        aria-label={
-          critical ? t('Remove critical flag') : t('Mark as critical')
-        }
+        aria-label={tip}
+        aria-pressed={state !== 'none'}
         className={`flex items-center justify-center shrink-0 ${
-          critical
+          state === 'mine'
             ? 'bg-[rgba(204,0,0,0.09)] hover:!bg-[rgba(204,0,0,0.15)]'
-            : ''
+            : 'hover:!bg-[rgba(204,0,0,0.06)]'
         }`}
         icon={
           <AlertTriangle
             size={15}
             strokeWidth={2}
             style={{
-              color: critical ? 'var(--color-red)' : 'var(--color-gray-medium)',
+              color:
+                state === 'none'
+                  ? 'var(--color-gray-medium)'
+                  : 'var(--color-red)',
               fill: 'none',
             }}
           />
         }
         onClick={(e) => {
           if (stopPropagation) e.stopPropagation();
-          if (critical) setOpen(true);
-          else onSet(true);
+          if (state === 'mine') onRemoveMine();
+          else onMark();
         }}
       />
     </Tooltip>
-  );
-
-  if (!critical) return btn;
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={setOpen}
-      trigger="click"
-      placement="bottomLeft"
-      zIndex={zIndex}
-      content={
-        <div onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}>
-          <CriticalReasonPanel
-            reasons={reasons}
-            onCancel={() => setOpen(false)}
-            onConfirm={(rs, note) => {
-              onSet(false, rs, note);
-              setOpen(false);
-            }}
-          />
-        </div>
-      }
-    >
-      {btn}
-    </Popover>
   );
 }

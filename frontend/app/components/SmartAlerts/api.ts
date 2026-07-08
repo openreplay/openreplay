@@ -23,6 +23,34 @@ export interface RawLabelRatio {
   ratio: number;
 }
 
+/* ---- focus (portions of traffic the agent concentrates on) ----
+   NOT-YET-BACKED: the endpoints below are stubs (silent-empty) until the
+   backend ships them — see TODO.md. */
+export interface FocusFilterSeed {
+  name: string;
+  isEvent: boolean;
+  autoCaptured?: boolean;
+  operator?: string;
+  value: any[];
+}
+export interface Focus {
+  id: number;
+  name: string;
+  active: boolean;
+  /** owned by the current user (edit/delete) vs a teammate's (toggle only) */
+  mine: boolean;
+  createdBy: string;
+  seeds: FocusFilterSeed[];
+  summary: string;
+  /** ~share of traffic this focus matches (0-100) */
+  trafficPct: number;
+  /** ~sessions analysed per day for this focus */
+  sessionsPerDay: number;
+  instructions?: string;
+}
+/** origin an issue can come from: the full-traffic baseline, or a focus id */
+export type IssueOrigin = 'full' | number;
+
 /* Issue row from POST /smart-issues/{projectId} (and GET …/issue, which
    additionally carries `issueDescription`). */
 export interface RawIssue {
@@ -38,6 +66,8 @@ export interface RawIssue {
   issueDescription?: string;
   issueLabels: RawLabelRatio[];
   journeyLabels: RawLabelRatio[];
+  /** which focus surfaced this issue (NOT-YET-BACKED) — absent = full traffic */
+  focusId?: number;
 }
 
 /* Session row from POST /smart-issues/{projectId}/search — replay metadata
@@ -79,6 +109,10 @@ export interface ListParams {
   hidden?: Visibility;
   /** filter to critical issues only */
   critical?: boolean;
+  /** filter to origins (full traffic + focus ids); NOT-YET-BACKED */
+  origins?: IssueOrigin[];
+  /** filter to what's relevant to me (my criticals + my segments); NOT-YET-BACKED */
+  relevantToMe?: boolean;
   minImpact?: number;
   minCount?: number;
   query?: string;
@@ -136,6 +170,9 @@ export async function getIssues(
     query: params.query ?? '',
     // only include when filtering to criticals; omit means no critical filter
     ...(params.critical ? { critical: true } : {}),
+    // NOT-YET-BACKED filters — server ignores until implemented
+    ...(params.origins?.length ? { origins: params.origins } : {}),
+    ...(params.relevantToMe ? { relevantToMe: true } : {}),
   });
   const json = await res.json();
   const rows: RawIssue[] = json.data ?? [];
@@ -257,3 +294,71 @@ export const restoreIssue = (projectId: string, issueName: string) =>
     a `restore` un-deletes it). */
 export const deleteIssue = (projectId: string, issueName: string) =>
   client.delete(base(projectId), { issue: issueName });
+
+/* ===========================================================================
+   NOT-YET-BACKED endpoints — focus (traffic segments) + per-user "critical for
+   me". The routes don't exist server-side yet, so reads swallow errors and
+   resolve empty, and writes are best-effort no-ops. This keeps the UI wired to
+   the real client so shipping the backend needs no frontend change. See TODO.md.
+   =========================================================================== */
+
+const silent = async <T>(p: Promise<Response>, empty: T): Promise<T> => {
+  try {
+    const res = await p;
+    const json = await res.json();
+    return (json.data ?? empty) as T;
+  } catch {
+    return empty;
+  }
+};
+const silentVoid = async (p: Promise<Response>): Promise<void> => {
+  try {
+    await p;
+  } catch {
+    /* endpoint not shipped yet — no-op */
+  }
+};
+
+/** GET …/focuses — the project's traffic focuses. */
+export const getFocuses = (projectId: string): Promise<Focus[]> =>
+  silent<Focus[]>(client.get(`${base(projectId)}/focuses`), []);
+
+export const saveFocus = (
+  projectId: string,
+  focus: Partial<Focus> & { id?: number },
+): Promise<void> =>
+  silentVoid(
+    focus.id != null
+      ? client.put(`${base(projectId)}/focuses/${focus.id}`, focus)
+      : client.post(`${base(projectId)}/focuses`, focus),
+  );
+
+export const setFocusActive = (
+  projectId: string,
+  id: number,
+  active: boolean,
+): Promise<void> =>
+  silentVoid(client.put(`${base(projectId)}/focuses/${id}`, { active }));
+
+export const deleteFocus = (projectId: string, id: number): Promise<void> =>
+  silentVoid(client.delete(`${base(projectId)}/focuses/${id}`));
+
+/** GET …/my-criticals — issue names the current user marked critical for them. */
+export const getMyCriticals = (projectId: string): Promise<string[]> =>
+  silent<string[]>(client.get(`${base(projectId)}/my-criticals`), []);
+
+export const addMyCritical = (
+  projectId: string,
+  issueName: string,
+): Promise<void> =>
+  silentVoid(
+    client.post(`${base(projectId)}/my-criticals`, { issue: issueName }),
+  );
+
+export const removeMyCritical = (
+  projectId: string,
+  issueName: string,
+): Promise<void> =>
+  silentVoid(
+    client.delete(`${base(projectId)}/my-criticals`, { issue: issueName }),
+  );
