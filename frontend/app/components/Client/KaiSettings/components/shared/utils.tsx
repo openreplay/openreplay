@@ -16,6 +16,7 @@ import {
   Resolution,
   Schedule,
   ScheduleFreq,
+  TestCase,
   TestLifecycle,
   UiRunStatus,
 } from './types';
@@ -32,30 +33,43 @@ export const RESOLUTION_ICON: Record<Resolution, LucideIcon> = {
   mobile: Smartphone,
 };
 
+// The API stores regions as a strict enum (`config.regions`); values here match it 1:1.
 // `country` is an ISO code for the shared CountryFlagIcon (country-flag-icons).
 export const REGION_OPTIONS: {
   value: string;
   label: string;
   country: string;
 }[] = [
-  { value: 'paris', label: 'Paris', country: 'FR' },
-  { value: 'ny', label: 'New York', country: 'US' },
-  { value: 'sao-paulo', label: 'São Paulo', country: 'BR' },
+  { value: 'eu-central-1', label: 'Frankfurt', country: 'DE' },
+  { value: 'us-east-1', label: 'N. Virginia', country: 'US' },
 ];
 
 export const resolutionLabel = (r?: Resolution): string =>
   RESOLUTION_OPTIONS.find((o) => o.value === r)?.label ?? 'Desktop';
 
 export const regionLabel = (r?: string): string =>
-  REGION_OPTIONS.find((o) => o.value === r)?.label ?? 'Paris';
+  REGION_OPTIONS.find((o) => o.value === r)?.label ?? r ?? '';
 
 export const regionCountry = (r?: string): string =>
-  REGION_OPTIONS.find((o) => o.value === r)?.country ?? 'FR';
+  REGION_OPTIONS.find((o) => o.value === r)?.country ?? 'DE';
+
+// What the table shows as the status. When Settings → "Pause tests on new
+// revisions" is on, a pending revision overrides the lifecycle: the test reads
+// "Needs review" and its scheduled runs pause until the proposed version is
+// reviewed. With the setting off, the test keeps its real status (and keeps
+// running) — the review is signalled by the blue dot and the Needs review tab.
+export type DisplayStatus = TestLifecycle | 'needs_review';
+
+export const displayStatus = (
+  tc: TestCase,
+  reviewPauses = true,
+): DisplayStatus =>
+  tc.pendingRevision && reviewPauses ? 'needs_review' : tc.status;
 
 // Status chip for the tests table — a filled <Tag> tinted with brand tokens. Draft
-// stays neutral; approved indigo (idle), active green, paused orange.
+// stays neutral; approved indigo (idle), active green, paused orange, needs-review blue.
 export const getStatusTag = (
-  status: TestLifecycle,
+  status: DisplayStatus,
   t: TFunction,
   className?: string,
 ) => {
@@ -79,11 +93,19 @@ export const getStatusTag = (
             background: 'rgba(97, 95, 255, 0.12)',
             color: 'var(--color-indigo)',
           }
-        : {
-            label: t('Paused'),
-            background: 'rgba(226, 137, 64, 0.14)',
-            color: 'var(--color-orange-dark)',
-          };
+        : status === 'needs_review'
+          ? {
+              // brand blue — same language as the "new draft" dot: something new
+              // from the agent is waiting for the user
+              label: t('Needs review'),
+              background: 'rgba(57, 78, 255, 0.1)',
+              color: 'var(--color-main)',
+            }
+          : {
+              label: t('Paused'),
+              background: 'rgba(226, 137, 64, 0.14)',
+              color: 'var(--color-orange-dark)',
+            };
   return (
     <Tag
       variant="filled"
@@ -136,6 +158,27 @@ export const getRunResult = (
         {cfg.label}
       </span>
     </Tag>
+  );
+};
+
+// Muted version tag next to a test's title — only from v2 up ("v1" everywhere would
+// be noise; a version only becomes interesting once the steps have actually changed).
+// `always` shows v1 too — for places comparing versions (the review's v1 → v2).
+export const VersionLabel = ({
+  version,
+  always,
+}: {
+  version?: number;
+  always?: boolean;
+}) => {
+  if (!version || (!always && version < 2)) return null;
+  return (
+    <span
+      className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium"
+      style={{ borderColor: 'var(--color-gray-light)' }}
+    >
+      v{version}
+    </span>
   );
 };
 
