@@ -31,7 +31,10 @@ func (b *pageEventBuilder) MessageTypes() []int {
 func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 	switch message.TypeID() {
 	case MsgSetPageLocation:
-		msg := message.Decode().(*SetPageLocation)
+		msg, ok := message.Decode().(*SetPageLocation)
+		if !ok {
+			return nil
+		}
 		if msg.NavigationStart == 0 { // routing without new page loading
 			return &PageEvent{
 				URL:       msg.URL,
@@ -55,7 +58,10 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 		if b.pageEvent == nil {
 			break
 		}
-		msg := message.Decode().(*PageLoadTiming)
+		msg, ok := message.Decode().(*PageLoadTiming)
+		if !ok {
+			return nil
+		}
 		if msg.RequestStart <= 30000 {
 			b.pageEvent.RequestStart = msg.RequestStart
 		}
@@ -88,13 +94,19 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 		if b.pageEvent == nil {
 			break
 		}
-		msg := message.Decode().(*PageRenderTiming)
+		msg, ok := message.Decode().(*PageRenderTiming)
+		if !ok {
+			return nil
+		}
 		b.pageEvent.SpeedIndex = msg.SpeedIndex
 		b.pageEvent.VisuallyComplete = msg.VisuallyComplete
 		b.pageEvent.TimeToInteractive = msg.TimeToInteractive
 		return nil
 	case MsgWebVitals:
-		msg := message.Decode().(*WebVitals)
+		msg, ok := message.Decode().(*WebVitals)
+		if !ok {
+			return nil
+		}
 		if b.webVitals == nil {
 			b.webVitals = make(map[string]string)
 		}

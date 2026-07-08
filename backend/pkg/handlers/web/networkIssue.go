@@ -15,7 +15,10 @@ func (f *NetworkIssueDetector) Build() Message {
 }
 
 func (f *NetworkIssueDetector) Handle(message Message, timestamp uint64) Message {
-	msg := message.Decode().(*NetworkRequest)
+	msg, ok := message.Decode().(*NetworkRequest)
+	if !ok {
+		return nil
+	}
 	if msg.Status >= 400 {
 		return &IssueEvent{
 			Type:          "bad_request",

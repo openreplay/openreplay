@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/logger"
@@ -16,6 +17,12 @@ import (
 )
 
 var ErrUserNotFound = errors.New("user not found")
+
+var asyncInsertCtx = clickhouse.Context(context.Background(),
+	clickhouse.WithSettings(clickhouse.Settings{
+		"async_insert":          1,
+		"wait_for_async_insert": 0,
+	}))
 
 type Users interface {
 	Add(session *sessions.Session, user *model.User) error
@@ -79,7 +86,7 @@ func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 
 func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 	u.log.Debug(context.Background(), "sess: %d,user to insert: %+v", session.SessionID, user)
-	if err := u.conn.Exec(context.Background(), insertQuery,
+	if err := u.conn.Exec(asyncInsertCtx, insertQuery,
 		session.ProjectID,
 		user.UserID,
 		user.Email,              // $email
@@ -114,7 +121,7 @@ func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 		return fmt.Errorf("can't insert user to users table: %s", err)
 	}
 	query := `INSERT INTO product_analytics.users_distinct_id (project_id, distinct_id, "$user_id") VALUES (?, ?, ?)`
-	if err := u.conn.Exec(context.Background(), query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
+	if err := u.conn.Exec(asyncInsertCtx, query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
 		return fmt.Errorf("can't insert user to users_distinct_id table: %s", err)
 	}
 	return nil
@@ -122,7 +129,7 @@ func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 
 func (u *usersImpl) addUserDistinctID(session *sessions.Session, user *model.User) error {
 	query := `INSERT INTO product_analytics.users_distinct_id (project_id, distinct_id, "$user_id") VALUES (?, ?, ?)`
-	if err := u.conn.Exec(context.Background(), query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
+	if err := u.conn.Exec(asyncInsertCtx, query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
 		return fmt.Errorf("can't insert user to users_distinct_id table: %s", err)
 	}
 	return nil
@@ -159,7 +166,7 @@ func (u *usersImpl) Create(session *sessions.Session, user *model.User) error {
 
 func (u *usersImpl) Update(user *model.User) error {
 	u.log.Debug(context.Background(), "user to update: %+v", user)
-	if err := u.conn.Exec(context.Background(), insertQuery,
+	if err := u.conn.Exec(asyncInsertCtx, insertQuery,
 		user.ProjectID,
 		user.UserID,
 		user.Email,              // $email
@@ -198,5 +205,5 @@ func (u *usersImpl) Update(user *model.User) error {
 
 func (u *usersImpl) Delete(projectID uint32, userID string) error {
 	query := `INSERT INTO product_analytics.users (project_id, "$user_id", _deleted_at) VALUES (?, ?, ?)`
-	return u.conn.Exec(context.Background(), query, projectID, userID, time.Now())
+	return u.conn.Exec(asyncInsertCtx, query, projectID, userID, time.Now())
 }

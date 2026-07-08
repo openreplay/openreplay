@@ -67,7 +67,10 @@ func (f *CpuIssueDetector) Build() Message {
 func (f *CpuIssueDetector) Handle(message Message, timestamp uint64) Message {
 	switch message.TypeID() {
 	case MsgPerformanceTrack:
-		msg := message.Decode().(*PerformanceTrack)
+		msg, ok := message.Decode().(*PerformanceTrack)
+		if !ok {
+			return nil
+		}
 		if timestamp < f.lastTimestamp {
 			return nil
 		}
@@ -84,7 +87,10 @@ func (f *CpuIssueDetector) Handle(message Message, timestamp uint64) Message {
 			f.maxRate = cpuRate
 		}
 	case MsgSetPageLocation:
-		msg := message.Decode().(*SetPageLocation)
+		msg, ok := message.Decode().(*SetPageLocation)
+		if !ok {
+			return nil
+		}
 		f.contextString = msg.URL
 	}
 	return nil

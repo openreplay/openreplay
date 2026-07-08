@@ -71,7 +71,7 @@ func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logge
 
 func (l *loggerImpl) Debug(ctx context.Context, message string, args ...interface{}) {
 	logStr := fmt.Sprintf(message, args...)
-	l.prepare(ctx, l.l.With(zap.String("level", "debug"))).Debug(logStr)
+	l.prepare(ctx, l.l).Debug(logStr)
 	if l.useExtra {
 		l.extra.Log(ctx, logStr)
 	}
@@ -79,7 +79,7 @@ func (l *loggerImpl) Debug(ctx context.Context, message string, args ...interfac
 
 func (l *loggerImpl) Info(ctx context.Context, message string, args ...interface{}) {
 	logStr := fmt.Sprintf(message, args...)
-	l.prepare(ctx, l.l.With(zap.String("level", "info"))).Info(logStr)
+	l.prepare(ctx, l.l).Info(logStr)
 	if l.useExtra {
 		l.extra.Log(ctx, logStr)
 	}
@@ -87,7 +87,7 @@ func (l *loggerImpl) Info(ctx context.Context, message string, args ...interface
 
 func (l *loggerImpl) Warn(ctx context.Context, message string, args ...interface{}) {
 	logStr := fmt.Sprintf(message, args...)
-	l.prepare(ctx, l.l.With(zap.String("level", "warn"))).Warn(logStr)
+	l.prepare(ctx, l.l).Warn(logStr)
 	if l.useExtra {
 		l.extra.Log(ctx, logStr)
 	}
@@ -95,7 +95,7 @@ func (l *loggerImpl) Warn(ctx context.Context, message string, args ...interface
 
 func (l *loggerImpl) Error(ctx context.Context, message string, args ...interface{}) {
 	logStr := fmt.Sprintf(message, args...)
-	l.prepare(ctx, l.l.With(zap.String("level", "error"))).Error(logStr)
+	l.prepare(ctx, l.l).Error(logStr)
 	if l.useExtra {
 		l.extra.Log(ctx, logStr)
 	}
@@ -103,7 +103,7 @@ func (l *loggerImpl) Error(ctx context.Context, message string, args ...interfac
 
 func (l *loggerImpl) Fatal(ctx context.Context, message string, args ...interface{}) {
 	logStr := fmt.Sprintf(message, args...)
-	l.prepare(ctx, l.l.With(zap.String("level", "fatal"))).Fatal(logStr)
+	l.prepare(ctx, l.l).Fatal(logStr)
 	if l.useExtra {
 		l.extra.Log(ctx, logStr)
 	}

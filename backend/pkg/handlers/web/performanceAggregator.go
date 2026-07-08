@@ -41,7 +41,10 @@ func (b *PerformanceAggregator) reset() {
 }
 
 func (b *PerformanceAggregator) Handle(message Message, timestamp uint64) Message {
-	msg := message.Decode().(*PerformanceTrack)
+	msg, ok := message.Decode().(*PerformanceTrack)
+	if !ok {
+		return nil
+	}
 	if b.PerformanceTrackAggr == nil || msg.Frames == -1 || msg.Ticks == -1 {
 		pta := b.Build()
 		b.start(timestamp)

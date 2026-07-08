@@ -66,17 +66,26 @@ func (h *AppCrashDetector) build() messages.Message {
 func (h *AppCrashDetector) Handle(message messages.Message, timestamp uint64) messages.Message {
 	switch message.TypeID() {
 	case messages.MsgUnbindNodes:
-		msg := message.Decode().(*messages.UnbindNodes)
+		msg, ok := message.Decode().(*messages.UnbindNodes)
+		if !ok {
+			return nil
+		}
 		if msg.TotalRemovedPercent < CrashThreshold {
 			return nil
 		}
 		h.dropTimestamp = timestamp
 		h.dropMessageID = msg.MsgID()
 	case messages.MsgJSException:
-		msg := message.Decode().(*messages.JSException)
+		msg, ok := message.Decode().(*messages.JSException)
+		if !ok {
+			return nil
+		}
 		h.updateLastIssueTimestamp(msg.Timestamp)
 	case messages.MsgNetworkRequest:
-		msg := message.Decode().(*messages.NetworkRequest)
+		msg, ok := message.Decode().(*messages.NetworkRequest)
+		if !ok {
+			return nil
+		}
 		if msg.Status >= 400 {
 			h.updateLastIssueTimestamp(msg.Timestamp)
 		}

@@ -14,11 +14,17 @@ type MessageIterator interface {
 	Iterate(batchData []byte, batchInfo *BatchInfo)
 }
 
+var preFilterTypes = []int{
+	MsgBatchMetadata, MsgTimestamp, MsgSessionStart,
+	MsgSessionEnd, MsgSetPageLocation, MsgMobileBatchMeta,
+}
+
 type messageIteratorImpl struct {
 	log           logger.Logger
-	filter        map[int]struct{} // union(preFilter, handlerFilter)
-	handlerFilter map[int]struct{}
-	preFilter     map[int]struct{}
+	filter        *TypeFilter // union(preFilter, handlerFilter)
+	handlerFilter *TypeFilter
+	preFilter     *TypeFilter
+	reader        *messageReaderImpl
 	handler       MessageHandler
 	autoDecode    bool
 	version       uint64
@@ -36,27 +42,16 @@ func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messag
 		log:         log,
 		handler:     messageHandler,
 		autoDecode:  autoDecode,
+		reader:      &messageReaderImpl{reader: NewBytesReader(nil)},
 		urls:        NewPageLocations(),
 		brokenStats: NewBrokenBatches(),
 	}
-	iter.preFilter = map[int]struct{}{
-		MsgBatchMetadata: {}, MsgTimestamp: {}, MsgSessionStart: {},
-		MsgSessionEnd: {}, MsgSetPageLocation: {}, MsgMobileBatchMeta: {},
-	}
+	iter.preFilter = NewTypeFilter(preFilterTypes)
 	if len(messageFilter) != 0 {
-		handlerFilter := make(map[int]struct{}, len(messageFilter))
-		for _, msgType := range messageFilter {
-			handlerFilter[msgType] = struct{}{}
-		}
-		iter.handlerFilter = handlerFilter
+		iter.handlerFilter = NewTypeFilter(messageFilter)
 
-		filter := make(map[int]struct{}, len(messageFilter)+len(iter.preFilter))
-		for msgType := range iter.preFilter {
-			filter[msgType] = struct{}{}
-		}
-		for _, msgType := range messageFilter {
-			filter[msgType] = struct{}{}
-		}
+		filter := NewTypeFilter(preFilterTypes)
+		filter.Add(messageFilter)
 		iter.filter = filter
 	}
 	return iter
@@ -74,8 +69,8 @@ func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
 func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.sessionID)
 
-	reader := NewMessageReader(batchData)
-	if err := reader.Parse(i.filter); err != nil {
+	i.reader.Reset(batchData)
+	if err := i.reader.Parse(i.filter); err != nil {
 		i.brokenStats.Inc(batchInfo.sessionID, err.Error())
 		return
 	}
@@ -83,12 +78,12 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	// Prepare iterator before processing messages in batch
 	i.prepareVars(batchInfo)
 
-	for reader.Next() {
-		msg := reader.Message()
+	for i.reader.Next() {
+		msg := i.reader.Message()
 		msgType := msg.TypeID()
 
 		// Preprocess "system" messages
-		if _, ok := i.preFilter[msg.TypeID()]; ok {
+		if i.preFilter.Has(msgType) {
 			decoded := msg.Decode()
 			if decoded == nil {
 				i.log.Error(ctx, "decode error, type: %d, reason: %s, info: %s",
@@ -102,10 +97,8 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 			}
 		}
 
-		if i.handlerFilter != nil {
-			if _, ok := i.handlerFilter[msg.TypeID()]; !ok {
-				continue
-			}
+		if i.handlerFilter != nil && !i.handlerFilter.Has(msg.TypeID()) {
+			continue
 		}
 
 		if i.autoDecode {
@@ -134,6 +127,9 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 }
 
 func (i *messageIteratorImpl) getMobileTimestamp(msg Message) uint64 {
+	if raw, ok := msg.(*RawMessage); ok {
+		return raw.MobileTimestamp()
+	}
 	return GetTimestamp(msg)
 }
 
