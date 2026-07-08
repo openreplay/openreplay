@@ -471,6 +471,7 @@ export { default as Speedometer2 } from './speedometer2';
 export { default as Spinner } from './spinner';
 export { default as Square_mouse_pointer } from './square_mouse_pointer';
 export { default as Star } from './star';
+export { default as Stars } from './stars';
 export { default as Step_forward } from './step_forward';
 export { default as Stickies } from './stickies';
 export { default as Stop_record_circle } from './stop_record_circle';

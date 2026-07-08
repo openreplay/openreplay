@@ -36,6 +36,7 @@ const components: any = {
   IssueDetailPure: lazy(() => import('Components/Issues/IssueDetail')),
   IssueSessionPure: lazy(() => import('Components/Issues/IssueSessionPlayer')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
+  TestAgentsPure: lazy(() => import('Components/Client/KaiSettings/StandalonePage')),
   ActivityPure: lazy(
     () => import('Components/DataManagement/Activity/ActivityPage'),
   ),
@@ -72,6 +73,7 @@ const enhancedComponents: any = {
   IssueDetail: withSiteIdUpdater(components.IssueDetailPure),
   IssueSession: withSiteIdUpdater(components.IssueSessionPure),
   Kai: withSiteIdUpdater(components.KaiPure),
+  TestAgents: withSiteIdUpdater(components.TestAgentsPure),
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
   UserPage: withSiteIdUpdater(components.UserPage),
@@ -120,6 +122,7 @@ const ISSUES_PATH = routes.issues();
 const ISSUE_DETAIL_PATH = routes.issue();
 const ISSUE_SESSION_PATH = routes.issueSession();
 const KAI_PATH = routes.kai();
+const TEST_AGENTS_PATH = routes.testAgents();
 
 function PrivateRoutes() {
   const {
@@ -360,6 +363,10 @@ function PrivateRoutes() {
         <Route
           path={withSiteId(ISSUES_PATH, siteIdList)}
           element={<enhancedComponents.Issues />}
+        />
+        <Route
+          path={withSiteId(TEST_AGENTS_PATH, siteIdList)}
+          element={<enhancedComponents.TestAgents />}
         />
 
         <Route

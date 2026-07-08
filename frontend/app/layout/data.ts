@@ -14,6 +14,7 @@ export interface MenuItem {
   leading?: any;
   isEnterprise?: boolean;
   isAdmin?: boolean;
+  tag?: { label: string; color: string; border?: boolean };
 }
 
 interface Category {
@@ -57,6 +58,8 @@ export const enum MENU {
   EXIT = 'exit',
   SPOTS = 'spots',
   KAI = 'kai',
+  AGENTS = 'agents',
+  TEST_AGENTS = 'agents-tests',
   ACTIVITY = 'activity',
   USER = 'user-page',
   USERS = 'data-users',
@@ -73,11 +76,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     key: 'replays',
     items: [
       { label: t('Sessions'), key: MENU.SESSIONS, icon: 'collection-play' },
-      {
-        label: t('Issues'),
-        key: MENU.ISSUES,
-        icon: 'info-circle',
-      },
       {
         label: t('Recommendations'),
         key: MENU.RECOMMENDATIONS,
@@ -100,6 +98,25 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         label: t('Highlights'),
         key: MENU.HIGHLIGHTS,
         icon: 'chat-square-quote',
+      },
+    ],
+  },
+  {
+    title: t('Agents'),
+    key: 'agents',
+    items: [
+      {
+        label: t('Agents'),
+        key: MENU.AGENTS,
+        icon: 'stars',
+        tag: {
+          label: t('New'),
+          color: '#394DFE',
+        },
+        children: [
+          { label: t('Issues'), key: MENU.ISSUES },
+          { label: t('Tests'), key: MENU.TEST_AGENTS },
+        ],
       },
     ],
   },
@@ -256,10 +273,12 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         hidden: menuHidden.videoExport,
       },
       {
+        // moved to the main left nav ("Agents" section); route kept for
+        // old /client/test-agents links
         label: t('Test Agents'),
         key: PREFERENCES_MENU.TEST_AGENTS,
         icon: 'analytics',
-        hidden: false,
+        hidden: true,
       },
     ],
   },
