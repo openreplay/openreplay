@@ -10,18 +10,28 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { RotateCw } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
 
 import FullPagination from 'Shared/FullPagination';
 
-import { useAllRuns, useRun, useTests } from '../queries';
+import {
+  useAllRuns,
+  useRun,
+  useRunCounts,
+  useTriggerRun,
+} from '../queries';
 import RunDrawer from './drawers/RunDrawer';
 import './kai-table.css';
 import { apiRunDetailToVM, apiRunToVM } from './shared/adapters';
-import { RunData, UiRunStatus } from './shared/types';
+import {
+  ListAllRunsParams,
+  RunData,
+  RunStatus,
+  UiRunStatus,
+} from './shared/types';
 import { useKaiUi } from './shared/uiStore';
 import {
   RESOLUTION_OPTIONS,
@@ -32,22 +42,24 @@ import {
 } from './shared/utils';
 
 type StatusTab = 'all' | UiRunStatus;
-const RESULT_ORDER: Record<UiRunStatus, number> = {
-  running: 0,
-  failed: 1,
-  passed: 2,
+const PAGE_SIZE = 20;
+// antd column dataIndex → API sortField (only these two are server-sortable).
+const SORT_FIELD: Record<string, ListAllRunsParams['sortField']> = {
+  duration: 'duration_ms',
+  date: 'started_at',
 };
-// The runs list is fetched once and filtered/sorted/paginated client-side; the API
-// clamps `limit` to 100, so lists larger than this show a "first N" note (see below).
-const LOOKUP_LIMIT = 100;
-
-// Client-side sort over the whole filtered list (then paginated), keyed by dataIndex.
-const RUN_COMPARATORS: Record<string, (a: RunData, b: RunData) => number> = {
-  status: (a, b) => RESULT_ORDER[a.status] - RESULT_ORDER[b.status],
-  testName: (a, b) => a.testName.localeCompare(b.testName),
-  envName: (a, b) => (a.envName ?? '').localeCompare(b.envName ?? ''),
-  duration: (a, b) => (a.duration ?? Infinity) - (b.duration ?? Infinity),
-  date: (a, b) => a.date - b.date,
+// The 3 coarse UI buckets over the 6 API run statuses. Counts collapse all of them
+// (accurate badges); the status *filter* can only send one value, so it sends the
+// representative — dispatched/error/timeout show under All only (see todo.md).
+const BUCKET_STATUSES: Record<UiRunStatus, RunStatus[]> = {
+  running: ['dispatched', 'running'],
+  failed: ['failed', 'error', 'timeout'],
+  passed: ['passed'],
+};
+const STATUS_PARAM: Record<UiRunStatus, RunStatus> = {
+  running: 'running',
+  failed: 'failed',
+  passed: 'passed',
 };
 
 // Live elapsed counter for an in-flight run — ticks each second from its start time.
@@ -70,16 +82,14 @@ function LiveDuration({ start }: { start: number }) {
 
 function RunsTab() {
   const { t } = useTranslation();
-  const { data: runsData, isPending } = useAllRuns({ limit: LOOKUP_LIMIT });
-  const { data: testsData } = useTests({ limit: LOOKUP_LIMIT });
+  const triggerMut = useTriggerRun();
 
-  // A test drawer's "View all runs" / "View" shortcut sets a handoff on the ui store
-  // (a fresh `handoffId`) and switches to this tab. Adopt it as the search / open run:
-  // at mount for a handoff that arrived with the switch, and — since this pane stays
-  // mounted between visits — again whenever `handoffId` changes (React's supported
-  // "adjust state on external change during render" pattern, no effect).
+  // A test drawer's "View all runs" / "View" shortcut sets a handoff (fresh handoffId)
+  // and switches here. Adopt it as the search / open run — at mount and again whenever
+  // handoffId changes (this pane stays mounted between visits).
   const { runsTestFilter, runsOpenRunKey, handoffId } = useKaiUi();
   const [query, setQuery] = useState(runsTestFilter ?? '');
+  const [search, setSearch] = useState(runsTestFilter ?? '');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [resFilter, setResFilter] = useState('all');
   const [sortBy, setSortBy] = useState<{
@@ -93,31 +103,46 @@ function RunsTab() {
   if (handoffId !== seenHandoff) {
     setSeenHandoff(handoffId);
     setQuery(runsTestFilter ?? '');
+    setSearch(runsTestFilter ?? '');
     setStatusTab('all');
     setOpenKey(runsOpenRunKey ?? null);
   }
 
-  const PAGE_SIZE = 20;
-  // Reset to page 1 when a filter changes — during render, not in an effect.
-  const filterKey = `${query}|${statusTab}|${resFilter}`;
+  // debounce the search box (setState in a timer callback, not sync in the effect body)
+  useEffect(() => {
+    const id = window.setTimeout(() => setSearch(query.trim()), 300);
+    return () => window.clearTimeout(id);
+  }, [query]);
+
+  const sortField = sortBy.field ? SORT_FIELD[sortBy.field] : undefined;
+  const listParams: ListAllRunsParams = {
+    page,
+    limit: PAGE_SIZE,
+    name: search || undefined,
+    screenType: resFilter !== 'all' ? resFilter : undefined,
+    status: statusTab !== 'all' ? STATUS_PARAM[statusTab] : undefined,
+    ...(sortField && sortBy.order
+      ? { sortField, sortOrder: sortBy.order === 'ascend' ? 'asc' : 'desc' }
+      : {}),
+  };
+
+  const { data: runsData, isPending } = useAllRuns(listParams);
+  // status counts ignore the active status tab so every tab shows its own total
+  const { data: statusCounts } = useRunCounts('status', {
+    name: search || undefined,
+    screenType: resFilter !== 'all' ? resFilter : undefined,
+  });
+
+  // reset to page 1 whenever a filter changes (sort resets page in onChange)
+  const filterKey = `${search}|${statusTab}|${resFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
     setPage(1);
   }
 
-  const testNameById = useMemo(
-    () => new Map((testsData?.items ?? []).map((tc) => [tc.testId, tc.name])),
-    [testsData],
-  );
-
-  const runs = useMemo(
-    () =>
-      (runsData?.items ?? []).map((run) =>
-        apiRunToVM(run, testNameById.get(run.testId)),
-      ),
-    [runsData, testNameById],
-  );
+  const runs = (runsData?.items ?? []).map((run) => apiRunToVM(run));
+  const total = runsData?.total ?? 0;
 
   const { data: detail } = useRun(openKey ?? undefined);
   const openRun: RunData | null = openKey
@@ -126,76 +151,37 @@ function RunsTab() {
       : (runs.find((r) => r.key === openKey) ?? null)
     : null;
 
-  const runningCount = runs.filter((r) => r.status === 'running').length;
-  const failedCount = runs.filter((r) => r.status === 'failed').length;
-  const passedCount = runs.filter((r) => r.status === 'passed').length;
+  const bucketCount = (bucket: UiRunStatus) =>
+    BUCKET_STATUSES[bucket].reduce(
+      (n, s) =>
+        n + (statusCounts?.buckets.find((b) => b.value === s)?.count ?? 0),
+      0,
+    );
+  const runningCount = bucketCount('running');
+  const failedCount = bucketCount('failed');
+  const passedCount = bucketCount('passed');
+  const allCount = runningCount + failedCount + passedCount;
 
-  const visible = useMemo(() => {
-    let arr = runs;
-    if (query.trim())
-      arr = arr.filter((r) =>
-        r.testName.toLowerCase().includes(query.toLowerCase()),
-      );
-    if (statusTab !== 'all') arr = arr.filter((r) => r.status === statusTab);
-    if (resFilter !== 'all')
-      arr = arr.filter((r) => (r.resolution ?? 'desktop') === resFilter);
-    return arr;
-  }, [runs, query, statusTab, resFilter]);
-
-  const sorted = useMemo(() => {
-    const cmp = sortBy.field ? RUN_COMPARATORS[sortBy.field] : undefined;
-    if (!cmp || !sortBy.order) return visible;
-    const arr = [...visible].sort(cmp);
-    return sortBy.order === 'descend' ? arr.reverse() : arr;
-  }, [visible, sortBy]);
-
-  const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  // The API caps a page at LOOKUP_LIMIT; warn when more runs exist than we loaded.
-  const truncated = (runsData?.total ?? 0) > runs.length;
-
-  const rerun = (run: RunData) =>
-    message.success(`${run.testName} — ${t('rerun started, see Runs')}`);
+  const rerun = (run: RunData) => {
+    if (!run.testId) return;
+    triggerMut.mutate(run.testId, {
+      onSuccess: () =>
+        message.success(`${run.testName} — ${t('rerun started, see Runs')}`),
+      onError: () => message.error(t('Failed to start run')),
+    });
+  };
 
   const faded = (n: number) => (
     <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
   );
   const statusOptions = [
-    {
-      value: 'all',
-      label: (
-        <span>
-          {t('All')}
-          {faded(runs.length)}
-        </span>
-      ),
-    },
+    { value: 'all', label: <span>{t('All')}{faded(allCount)}</span> },
     {
       value: 'running',
-      label: (
-        <span>
-          {t('Running')}
-          {faded(runningCount)}
-        </span>
-      ),
+      label: <span>{t('Running')}{faded(runningCount)}</span>,
     },
-    {
-      value: 'failed',
-      label: (
-        <span>
-          {t('Failed')}
-          {faded(failedCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'passed',
-      label: (
-        <span>
-          {t('Passed')}
-          {faded(passedCount)}
-        </span>
-      ),
-    },
+    { value: 'failed', label: <span>{t('Failed')}{faded(failedCount)}</span> },
+    { value: 'passed', label: <span>{t('Passed')}{faded(passedCount)}</span> },
   ];
 
   const columns: TableColumnsType<RunData> = [
@@ -203,14 +189,12 @@ function RunsTab() {
       title: t('Result'),
       dataIndex: 'status',
       width: 130,
-      sorter: true,
       showSorterTooltip: false,
       render: (status: UiRunStatus) => getRunResult(status, t),
     },
     {
       title: t('Test'),
       dataIndex: 'testName',
-      sorter: true,
       showSorterTooltip: false,
       render: (name: string) => (
         <span className="font-medium truncate">{name}</span>
@@ -221,19 +205,6 @@ function RunsTab() {
       dataIndex: 'tags',
       width: 190,
       render: (tags: string[]) => <RowTags tags={tags} />,
-    },
-    {
-      title: t('Environment'),
-      dataIndex: 'envName',
-      width: 150,
-      sorter: true,
-      showSorterTooltip: false,
-      render: (env?: string) =>
-        env ? (
-          <span className="text-gray-dark">{env}</span>
-        ) : (
-          <span className="text-disabled-text">—</span>
-        ),
     },
     {
       title: t('Duration'),
@@ -328,27 +299,17 @@ function RunsTab() {
         </div>
       </div>
 
-      {truncated && (
-        <div className="px-4 py-2 text-xs text-disabled-text border-b">
-          {t(
-            'Showing the {{count}} most recent runs — refine with search or filters.',
-            {
-              count: runs.length,
-            },
-          )}
-        </div>
-      )}
-
       <Table<RunData>
         className="kai-table"
         rowKey="key"
         columns={columns}
-        dataSource={pageItems}
+        dataSource={runs}
         pagination={false}
         rowClassName="cursor-pointer"
         onChange={(_p, _f, sorter) => {
           const s = Array.isArray(sorter) ? sorter[0] : sorter;
           setSortBy({ field: s.field as string, order: s.order ?? undefined });
+          setPage(1);
         }}
         onRow={(run) => ({
           onClick: (e) => {
@@ -360,12 +321,12 @@ function RunsTab() {
         locale={{ emptyText: t('No runs match these filters.') }}
       />
 
-      {visible.length > 0 && (
+      {total > 0 && (
         <FullPagination
           page={page}
           limit={PAGE_SIZE}
-          total={visible.length}
-          listLen={pageItems.length}
+          total={total}
+          listLen={runs.length}
           onPageChange={setPage}
           entity="runs"
         />

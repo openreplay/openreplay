@@ -13,6 +13,10 @@ export type KaiTab = 'tests' | 'runs' | 'settings';
 interface KaiUiState {
   activeTab: KaiTab;
   defaults: RunDefaults;
+  // Settings → pause tests while a new step revision waits for review (all tests).
+  // Off = they keep running on the current version until reviewed. Mirrors the
+  // project setting `pauseOnNewRevisions`; the store is the session copy the UI reads.
+  pauseOnRevision: boolean;
   // set by the test drawer's "View all runs" / "View" (last failed run), read by RunsTab.
   // `handoffId` bumps on each handoff so RunsTab can adopt it exactly once (a new id,
   // not a cleared flag — RunsTab's pane stays mounted between visits).
@@ -23,7 +27,8 @@ interface KaiUiState {
 
 let state: KaiUiState = {
   activeTab: 'tests',
-  defaults: { resolution: 'desktop', region: 'paris' },
+  defaults: { resolution: 'desktop', region: 'eu-central-1' },
+  pauseOnRevision: true,
   runsTestFilter: null,
   runsOpenRunKey: null,
   handoffId: 0,
@@ -47,6 +52,7 @@ export const kaiUi = {
   setActiveTab: (activeTab: KaiTab) => set({ activeTab }),
   setDefaults: (patch: Partial<RunDefaults>) =>
     set({ defaults: { ...state.defaults, ...patch } }),
+  setPauseOnRevision: (pauseOnRevision: boolean) => set({ pauseOnRevision }),
 
   /** "View all runs" on a test — jump to the Runs tab filtered to that test. */
   showRunsForTest: (testName: string) =>

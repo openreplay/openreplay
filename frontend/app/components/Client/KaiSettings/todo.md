@@ -1,120 +1,137 @@
 # Test Agents — follow-up work
 
-The redesigned UI is fully in place. This lists what's still open: mostly missing
-backend (rendered as empty states or local-only until the API/agent supports it), plus
-a few frontend follow-ups where data exists but isn't surfaced yet. Adapters live in
-`components/shared/adapters.ts` — that's where new fields plug in.
+The redesigned UI is in place and wired to the **api2** schema (`api2.yaml`): native
+`draft`/`active`/`paused` statuses, real `tags`, `config.resolutions`/`config.regions`,
+`needsReview` + version suggestions, project settings, notifications, manual trigger,
+bulk ops, and run HAR. Adapters live in `components/shared/adapters.ts` — new/changed
+fields plug in there. This lists what's still open.
 
-## Test lifecycle
-- **Native `draft` / `active` status.** UI models `draft → approved → active → paused`,
-  but the API only stores `pending | approved | rejected | paused`. `adapters.ts` maps
-  `pending↔draft` and derives `active` from an approved test carrying a `cron`. Consider
-  adding real `draft`/`active` statuses server-side so the state isn't inferred.
-- **Dismiss vs. reject.** Dismissing a draft calls `deleteTest`. The old "rejected" state
-  is filtered out of the list; decide whether dismiss should soft-reject instead.
-- **`isNew` unreviewed dot.** Currently derived as `pending && !lastRunAt`. No per-user
-  "seen" tracking, so the dot can't clear on open without a persisted flag.
+## Status transitions (biggest constraint)
+- **Pause / Resume aren't writable.** api2 makes `active`/`paused` scheduler-owned — the
+  only client-settable transition is `draft → approved/rejected`. So the drawer/row
+  **Pause & Resume** actions update the VM optimistically but don't persist (the next
+  refetch reverts them). Needs a real pause/resume endpoint (or a writable pause flag).
+- **Schedule / Unschedule** persist as a `cron` change only (no status write); the
+  scheduler promotes an approved+cron test to `active` and demotes it on clear. If the
+  scheduler is slow, the row can read `approved` briefly after scheduling.
+- **Draft approve** works (`draft → approved`, via `vmApproveRequest`); a manually-created
+  test is created (`draft`) then approved with a follow-up update — a single
+  create-with-status would drop the extra round-trip.
 
-## Tags
-- No API field. `TestCase.tags` / `RunData.tags` are UI-only; the tag editor and table
-  column render but edits don't persist (`vmToUpdateRequest` drops them). The Runs tag
-  filter was removed (runs carry no tags); the Tests tag filter stays but is empty until
-  a `tags` field exists on tests (and ideally runs).
+## Versions / review
+- **Version history + switcher + per-step history** are UI-complete but unpopulated: the
+  adapter fills `pendingRevision` from `Test.suggestion` and the review diff from
+  `GET /versions/diff`, but `TestCase.history` (older snapshots) isn't loaded. Wire
+  `GET /versions` (list) + `GET /versions/{id}` (per-version steps) into `apiTestToVM`/a
+  hook to light up the version dropdown and the step-history popover.
+- **Partial-accept decisions**: `saveRevision` sends `{ steps, decisions }` to
+  `POST /versions/{id}/activate`; `decisions` is our own `{text,kind,decision}[]` shape
+  (opaque to the backend). Confirm the runner/LLM wants that exact shape.
 
-## Run matrix (resolution / region)
-- **Resolution — partly backed.** Runs carry `screenType` (mobile/tablet/desktop) → the
-  Runs resolution column/filter and the run drawer are real. Tests persist a *single*
-  resolution via `config.screen_type` (`adapters.ts`), but the UI offers a multi-select
-  matrix — only the first value is saved. Needs a real `resolutions[]` on tests for the
-  full matrix.
-- **Region — not backed.** No API field on tests or runs; the run-settings region
-  multi-select stays non-persistent and the Runs region filter was removed (runs carry
-  no region). The Runs env filter was likewise removed (runs have no environment link);
-  only the resolution filter works there now (via `screenType`).
-
-## Runs — DevTools capture
-- **Network (HAR) panel**: parsing is done — `harToNetworkRequests` (`adapters.ts`, backed
-  by `shared/harParser.ts`) turns a `.har` file into the `NetworkRequest[]` the panel
-  renders. Still needs the run to expose its captured HAR (a field/URL on `RunDetail`);
-  then feed it through `apiRunDetailToVM` → `network`.
-- **Console panel** in `RunDrawer` shows an empty state — the run detail API returns no
-  `console`. Wire it in `apiRunDetailToVM` once captured.
-- **Per-step multiple screenshots** (`TestStep.shots`): API exposes a single `screenshot`
-  per step; the carousel supports many.
-- **Per-run environment / tags**: runs carry no `envName`/`tags`, so the Runs env & tag
-  filters and the run drawer meta line stay blank.
-
-## Actions with no endpoint
-- **Run now** (tests) and **Rerun** (runs) only show a toast — no dispatch endpoint.
-- **Bulk approve/pause/resume/delete** fan out to individual `updateTest`/`deleteTest`
-  calls. A batch endpoint would be cheaper.
-- **Manual test creation** ("Add test"): `POST /tests` takes no `status`, so a hand-made
-  test is created (lands `pending`) and then a follow-up `PUT` lifts it to `approved`
-  (see `TestsTab.commitCreate` + `vmToCreateRequest`). A single create-with-status would
-  drop the extra round-trip.
+## Runs — capture & detail
+- **`results.json` is wired** to the runner's real shape: `agent_steps` (index/action/
+  status/`screenshot`/`user_step_text`/`failed_requests`), `final_result` (→ the Result
+  summary), `errors` + `js_errors` (→ Console). Steps, screenshots, result and console now
+  render (`apiRunDetailToVM`). Remaining:
+  - **Console is error-only** — `errors`/`js_errors` map to error rows; there's no full
+    console stream (info/warn/log) in `results.json`.
+  - **Per-step network** — `agent_steps[].failed_requests` / `network_requests` and
+    `unmatched_network` aren't surfaced; the Network panel is driven by the streamed HAR
+    instead. Consider showing per-step request counts / failures inline.
+  - **Run "failed" with no failed step** — the agent steps can all be `success` while the
+    run fails on a semantic assertion (only `final_result` + a 4xx in `failed_requests`
+    signal it). We show the summary; there's no per-step failure marker to highlight.
+- **Screenshots render** — fetched as authed blobs → object URLs (`getRunScreenshot`),
+  one per step. `results` exposes a single screenshot per step, so the multi-image
+  carousel (`TestStep.shots`) is still one-per-step.
+- **Run step version**: `RunListItem` carries no version, so the Runs table version chip
+  and the version filter stay hidden. Add a version to the run row to light them up.
 
 ## Settings
-- **Default run configuration** (`Defaults.tsx`: default environment / viewport / region)
-  now pre-fills new drafts and manually-created tests (shown as "(default)" in the run
-  settings until changed) — but it lives in `shared/uiStore.ts` (in-memory, per session)
-  because there's no endpoint to persist per-project run defaults. Wire it once the API
-  can store/return them.
-- **Notifications** (Daily / Weekly summary switches) are local-only — no
-  notification-preference endpoint.
-- **Environment headers & "ignore HTTPS errors"** are stored in the environment's
-  `variables` record (so they persist), but the test agent must actually honour them.
-- **Delete environment**: the API 409s when a test still references it (no cascade). The
-  confirm dialog lists the referencing tests and asks the user to reassign them first; a
-  cascade "pause tests & delete" would need backend support.
-- **Download .HAR** (run drawer network panel) is a stub toast — no HAR export endpoint
-  (and no captured network to export yet).
+- **Default environment** (Defaults picker) is session-local. The "default" is the
+  environment with `isDefault: true` — wire the picker to `PUT /environments/{id}` with
+  `isDefault` instead of only the ui store.
+- **Notifications have no GET.** Only `PATCH /notifications` exists, so the daily/weekly
+  switches start from a local default and can't reflect the saved value on load. Add a
+  read (or fold the flags into `GET /settings`).
+- **Project settings ↔ ui store**: `pauseOnRevision` + run defaults are read from the ui
+  store (seeded when the Settings tab mounts). A project whose Settings tab was never
+  opened uses the defaults (`pauseOnNewRevisions: true`, viewport/region null) — usually
+  correct, but read `GET /settings` in Tests/TestDrawer directly to be exact.
+- **Environment headers & "ignore HTTPS errors"** persist in the environment's
+  `variables` record; the agent still has to honour them.
+- **Delete environment** 409s while a test references it (no cascade). The confirm dialog
+  lists the referencing tests and asks the user to reassign first.
 
-## Available but not yet surfaced
-- **Per-test models** (`llmModel` / `extractionModel` / `fallbackModel`) and **`config`**
-  (auth / screen_type / ssl_enforce / locale) exist on the Test model and are carried
-  through updates (`config` is preserved; only `screen_type` is written from the
-  resolution picker). No dedicated UI to edit models / auth / locale yet.
-- **Run `batchId` / `dispatchMode`**: returned on runs (fan-out grouping, launch mode)
-  but not shown in the Runs table or drawer.
+## Available but not surfaced
+- **Counts endpoints** (`/tests/counts`, `/runs/counts`) are wired in `api.ts` but unused
+  — the tabs still count client-side over the loaded page. Swap in for exact totals on
+  large projects.
+- **"New" dot / `seenAt`**: the dot derives from `seenAt == null`, which the backend
+  stamps on `GET /tests/{id}`. The list doesn't fetch a single test on open, so the dot
+  won't clear until the test is fetched individually — call `getTest` on open to stamp it.
+- **Run `batchId` / `dispatchMode`**: returned on runs but not shown in the table/drawer.
+- **Per-test models** (`llmModel`/`extractionModel`/`fallbackModel`) are runner-managed
+  (read-only); no UI.
 
-## Agent insights
-- **Alternatives** (`TestCase.alternatives`): agent-observed branch notes rendered under a
-  step in `EditableSteps`. No API field yet.
-- **Trend dots + most-recent-failure** (test drawer "Runs" section): now derived
-  client-side from `useAllRuns` filtered by `testId` (last 10 completed runs). Works, but
-  it loads the project-wide runs page and filters in memory; a per-test recent-runs
-  endpoint (or `lastResult` / `recent` on the tests response) would avoid that.
+## Agent insights (no API yet)
+- **Alternatives** (`TestCase.alternatives`): agent-observed branches under a step — no
+  API field.
+- **Trend dots** in the test drawer's Runs section derive from `useAllRuns` filtered by
+  `testId` (client-side over the loaded page); a per-test recent-runs endpoint would avoid
+  loading the project-wide page.
 
-## Known limitations
-- Tests/Runs load one API page (`limit` capped at 100) and filter/sort/paginate
-  client-side; past 100 a "showing first N" note appears. Move to server-side
-  pagination/sort/filter for large projects.
+## Server-side lists (now wired) — remaining rough edges
+Tests & Runs paginate / filter / sort **server-side**, and the tab badges come from the
+`/tests/counts` + `/runs/counts` aggregates (absolute totals). What the API can't express:
+- **Tests sort**: only `name` is column-sortable (server `sortField` = name/date only);
+  the Environment / Schedule / Status columns are no longer sortable.
+- **Runs sort**: only Duration (`duration_ms`) + When (`started_at`); Result / Test aren't
+  server-sortable.
+- **Runs status filter is coarse**: the 3 UI buckets map to a single server status each
+  (`running`/`failed`/`passed`), so `dispatched` / `error` / `timeout` runs show under
+  **All** only. Counts collapse correctly (accurate badges); the filter needs the API to
+  accept multiple statuses (or the UI to expose the 6 raw statuses).
+- **Drafts-first ordering** is gone (server default is `created_at desc`); "float drafts /
+  needs-review to the top" would need a server sort option.
+- **Rejected tests**: no "not rejected" filter, so the `All` tab hides them client-side
+  (rare — our dismiss soft-deletes rather than rejecting).
+- Selection clears on filter/page change (it only spans the current page).
 
-## API gaps (checklist for backend)
-- Status transitions too strict: only `pending → approved/rejected/paused` (+ no-op) is
-  allowed, so the redesign's Pause/Resume/Unschedule on an approved test
-  (`approved ↔ paused`) returns 400. Need the full transition matrix.
-- Missing `draft` + `active` values in `TestStatus` enum.
-- Missing `tags: string[]` prop in `Test` / `TestCreateRequest` / `TestUpdateRequest`.
-- Missing `tags: string[]` prop in `Run` / `RunListItem`.
-- Missing `resolutions: string[]` prop in `Test` (only single `config.screen_type` today).
-- Missing `regions: string[]` prop in `Test`; missing `region` prop in `Run` / `RunListItem`.
-- Missing `environmentId` (+ resolved `environmentName`) prop in `Run` / `RunListItem`.
-- Missing `network` (HAR) prop in `RunDetail`.
-- Missing `console` logs prop in `RunDetail`.
-- Missing multi-screenshot support: `RunStep.screenshot` is single, no `screenshots[]`.
-- Missing `seenAt` / `reviewedAt` prop in `Test` (to clear the "new draft" dot per user).
-- Missing `alternatives` prop in `Test` (agent-observed branches).
-- Missing `lastResult` + `recent: RunStatus[]` props in `Test` (health/trend).
-- Missing `POST /tests/{testId}/runs` (or `/runs`) request to trigger a run now / rerun.
-- Missing bulk `PUT /tests` (or `PATCH`) request to update/delete many tests at once.
-- Missing `status` on `POST /tests` (create seeds `pending`; manual "Add test" needs a
-  second `PUT` to reach `approved` — see `TestsTab.commitCreate`).
-- Missing per-project run-defaults persistence (e.g. `GET`/`PUT /browser-tests/defaults`
-  for default environment / viewport / region — currently in-memory `shared/uiStore.ts`).
-- Missing environment-delete cascade: `DELETE /environments/{id}` 409s while a test
-  references it (no server-side detach / "pause tests & delete"), so the UI asks the user
-  to reassign first.
-- Missing per-test recent-runs (or `lastResult` + `recent`) so the test-drawer trend strip
-  doesn't have to load & filter the project-wide runs page client-side.
-- Missing notification-preferences request (e.g. `GET`/`PUT /browser-tests/settings`).
+## API gaps — must add to fully support the current UI
+The UI already renders/attempts these; the backend doesn't support them yet.
+
+- **Pause / Resume**: a writable pause — either allow `active ↔ paused` on `PUT /tests`
+  or add a `paused` flag / `POST /tests/{id}/pause|resume`. The drawer + row + bulk
+  Pause/Resume controls are non-persistent without it (revert on refetch).
+- **`GET /browser-tests/notifications`**: only `PATCH` exists, so the Daily/Weekly
+  switches can't load their saved state (start from a local default). Add a read, or fold
+  the flags into `GET /settings`.
+- **Per-version steps for the switcher/history**: `Test` should carry `history`
+  (or `GET /versions` should return each version's `steps`, not just the lean list) so the
+  version dropdown + per-step history popover can populate. Today only the pending
+  suggestion's diff is fetched.
+- **`RunListItem.version`**: the step version a run executed — needed for the Runs table
+  version chip and the version filter (both stay hidden without it).
+- **`POST /tests` accepting `status`** (or a create-as-`approved`): manual "Add test"
+  currently creates a `draft` then fires a second `PUT` to approve.
+- **Default environment**: expose it as a settings field, or the Defaults picker must
+  write `PUT /environments/{id}` `isDefault` — it's session-local today.
+- **Full console stream** in `results.json` (info/warn/log, not just `errors`/`js_errors`)
+  and **multi-screenshot per step** (`screenshots[]`) — the carousel + Console render what
+  the runner provides today (one shot/step, error-only console).
+- **Agent insights**: `alternatives` on a test, and per-test recent-runs / `lastResult`
+  trend (the drawer trend strip loads the project-wide runs page client-side).
+
+## api2 capabilities the UI does NOT use (yet)
+Available server-side; noted so they aren't mistaken for gaps.
+
+- **`from` / `to` date-range filters** (tests + runs) and the runs `dispatchMode` /
+  `batchId` filters — the list endpoints accept them, but there's no UI control yet.
+- **Run `batchId` / `dispatchMode`** — returned on runs, not shown in the table/drawer.
+- **Per-test models** (`llmModel`/`extractionModel`/`fallbackModel`) — runner-managed,
+  read-only; no UI.
+- **Version metadata** — `source` (runner/user), `originRunId`, `reviewedFrom`,
+  `reviewDecisions`, and the full `GET /versions` history aren't surfaced.
+- **Environment `isActive`** — not exposed in the environment form.
+- **Run `containerId` / `s3Prefix`** — internal plumbing, unused.

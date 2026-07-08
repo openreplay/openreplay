@@ -1,8 +1,19 @@
-// Types mirror the Browser Tests API (see ../../api.yaml).
+// Types mirror the Browser Tests API (see ../../api2.yaml).
 
-export type TestStatus = 'pending' | 'approved' | 'rejected' | 'paused';
+// Full status set as stored/returned. `active`/`paused` are scheduler/runner-owned and
+// never writable via the API; whether a test awaits review is the separate `needsReview`
+// flag, not a status.
+export type TestStatus =
+  | 'draft'
+  | 'approved'
+  | 'rejected'
+  | 'active'
+  | 'paused';
+// Statuses a client may set: only draft → approved / rejected (plus same-status no-op).
+export type TestStatusSettable = 'draft' | 'approved' | 'rejected';
 export type RunStatus =
   | 'dispatched'
+  | 'running'
   | 'passed'
   | 'failed'
   | 'error'
@@ -42,11 +53,19 @@ export interface EnvironmentRequest {
   isActive?: boolean;
 }
 
+/** Pending-suggestion badge embedded in `Test.suggestion`. */
+export interface SuggestionSummary {
+  versionId: string;
+  version: number;
+  createdAt: string;
+}
+
 export interface Test {
   testId: string;
   projectId: number;
   /** Environment IDs this test runs against. */
   environments: string[];
+  tags?: string[];
   name: string;
   scenario: string;
   /** Free-form JSON (array or object). */
@@ -61,10 +80,19 @@ export interface Test {
   /** Per-test extraction-model override; null ⇒ env default. */
   extractionModel?: string | null;
   fallbackModel?: string | null;
-  /** Opaque per-test config (auth, screen_type, ssl_enforce, locale). */
+  /** Opaque per-test config; plus validated `resolutions` (desktop|tablet|mobile[]) and
+   *  `regions` (eu-central-1|us-east-1[]) keys. */
   config?: Record<string, unknown>;
+  /** Runner-owned: a new version is proposed and the project pauses on new revisions. */
+  needsReview?: boolean;
+  activeVersion?: number | null;
+  latestVersion?: number | null;
+  /** Non-null when a version awaits review. */
+  suggestion?: SuggestionSummary | null;
   nextRunAt?: string | null;
   lastRunAt?: string | null;
+  /** Null until first GET /tests/{id}; then stamped write-once. Marks unviewed as new. */
+  seenAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,35 +105,35 @@ export interface TestCreateRequest {
   cron?: string | null;
   timeoutSecs?: number;
   environments?: string[];
-  llmModel?: string | null;
-  extractionModel?: string | null;
-  fallbackModel?: string | null;
+  tags?: string[];
+  /** `resolutions`/`regions` keys are enum-validated (invalid → 400). */
   config?: Record<string, unknown>;
 }
 
+// Only these fields are updatable (everything else is create-time only). `status`
+// accepts only draft → approved/rejected (active/paused are scheduler-owned).
 export interface TestUpdateRequest {
   name?: string;
-  scenario?: string;
-  steps?: unknown;
-  expectedResult?: string;
-  cron?: string | null;
-  timeoutSecs?: number;
+  status?: TestStatusSettable;
+  tags?: string[];
   environments?: string[];
-  status?: TestStatus;
-  llmModel?: string | null;
-  extractionModel?: string | null;
-  fallbackModel?: string | null;
+  cron?: string | null;
   /** Send the full object to replace it. */
   config?: Record<string, unknown>;
 }
 
-export interface Run {
+/** A runs-list item (project-wide and per-test lists): a lean run summary sourced from
+ *  PostgreSQL — appears immediately on dispatch. Full detail via GET /runs/{runId}. */
+export interface RunListItem {
   runId: string;
   testId: string;
+  testName?: string;
+  /** The owning test's tags (joined). */
+  tags?: string[];
   status: RunStatus;
   containerId?: string | null;
   s3Prefix?: string | null;
-  /** Viewport the run executed against (mobile/desktop/tablet). */
+  /** Viewport the run executed against (mobile/desktop/tablet); defaults to desktop. */
   screenType: string;
   /** Groups fan-out runs from the same trigger; null if standalone. */
   batchId?: string | null;
@@ -113,57 +141,55 @@ export interface Run {
   dispatchMode?: string | null;
   startedAt?: string | null;
   finishedAt?: string | null;
+  /** finishedAt - startedAt; 0 while the run hasn't finished. */
   durationMs: number;
-  costUsd: number;
-  finalResult: string;
-  stepsCount: number;
 }
 
-export interface RunStep {
-  stepIndex: number;
-  action: string;
-  status: string;
-  durationMs: number;
-  costUsd: number;
-  error?: string;
-  extractedContent?: string;
-  /** URL or storage key. */
-  screenshot?: string;
-  startedAt?: string | null;
-  finishedAt?: string | null;
+// A network request the runner flagged as failed on a step (from results.json).
+export interface RunResultFailedRequest {
+  timestamp: number;
+  method: string;
+  url: string;
+  status: number;
+  time_ms: number;
 }
 
-/** Project-wide runs-list item: a lean summary — omits `steps` and `finalResult`
- *  (fetch those via GET /runs/{runId}). */
-export interface RunListItem {
-  runId: string;
-  testId: string;
-  status: RunStatus;
-  containerId?: string | null;
-  s3Prefix?: string | null;
-  screenType: string;
-  batchId?: string | null;
-  dispatchMode?: string | null;
-  startedAt?: string | null;
-  finishedAt?: string | null;
-  durationMs: number;
-  costUsd: number;
-  stepsCount: number;
+// One agent step inside the runner's results.json. `status` is the action outcome
+// ("success"/"failed"), `screenshot` a run-relative path ("screenshots/step-2-0.png"),
+// and `user_step_text` the human step it maps to when present.
+export interface RunResultStep {
+  index?: number;
+  action?: string;
+  status?: string;
+  duration_ms?: number;
+  error?: string | null;
+  screenshot?: string | null;
+  user_step_index?: number | null;
+  user_step_text?: string | null;
+  network_requests?: number;
+  failed_requests?: RunResultFailedRequest[];
 }
 
-export interface RunDetail extends Run {
-  model?: string;
-  testName?: string;
-  tokensInput?: number;
-  tokensOutput?: number;
-  tokensCached?: number;
-  tokensTotal?: number;
-  /** Null when the run did not fail on a step. */
-  failedStepIndex?: number | null;
-  failedStepText?: string | null;
-  failedStepError?: string | null;
+// The runner's results.json, attached verbatim. Snake_case (runner-authored); read
+// defensively — only the fields the drawer uses are typed.
+export interface RunResults {
+  success?: boolean;
+  status?: string;
+  duration_ms?: number;
+  /** Human summary, one line per step + an "Overall:" line. */
+  final_result?: string;
   errors?: string[];
-  steps?: RunStep[];
+  js_errors?: string[];
+  agent_steps?: RunResultStep[];
+  user_steps?: unknown[];
+  [k: string]: unknown;
+}
+
+/** Single-run response: the lifecycle row plus the runner's results.json from S3. All
+ *  result detail (steps, screenshots, errors, final result) lives inside `results`. */
+export interface RunDetail extends RunListItem {
+  /** The runner's results.json, attached verbatim; null when absent/unreadable. */
+  results?: RunResults | null;
 }
 
 // ---- List query params ----
@@ -183,6 +209,10 @@ export interface ListTestsParams {
   name?: string;
   status?: TestStatus;
   environmentId?: string;
+  /** Comma-separated tags; matches tests having any of them. */
+  tags?: string;
+  from?: string;
+  to?: string;
 }
 
 export interface ListEnvironmentsParams {
@@ -196,9 +226,16 @@ export interface ListEnvironmentsParams {
 export interface ListRunsParams {
   page?: number;
   limit?: number;
-  sortField?: 'started_at' | 'duration_ms' | 'cost_usd';
+  sortField?: 'started_at' | 'duration_ms';
   sortOrder?: SortOrder;
   status?: RunStatus;
+  /** Partial (case-insensitive) match on the owning test's name. */
+  name?: string;
+  /** Comma-separated tags; matches runs whose test has any of them. */
+  tags?: string;
+  screenType?: string;
+  dispatchMode?: string;
+  batchId?: string;
   /** RFC3339 lower bound on startedAt (inclusive). */
   from?: string;
   /** RFC3339 upper bound on startedAt (inclusive). */
@@ -209,6 +246,106 @@ export interface ListRunsParams {
 export interface ListAllRunsParams extends ListRunsParams {
   /** Narrow the list to runs of a single test. */
   testId?: string;
+}
+
+export interface ListVersionsParams {
+  page?: number;
+  limit?: number;
+}
+
+// ---- Counts / Settings / Notifications / Trigger / Bulk / Versions ----
+
+export interface CountBucket {
+  value: string;
+  count: number;
+}
+export interface CountResult {
+  aggregator: string;
+  buckets: CountBucket[];
+}
+
+export interface TriggerRunResult {
+  testId: string;
+  status: string;
+}
+
+export interface NotificationSettings {
+  dailySummary: boolean;
+  weeklySummary: boolean;
+}
+export interface NotificationSettingsRequest {
+  dailySummary?: boolean;
+  weeklySummary?: boolean;
+}
+
+export interface ProjectSettings {
+  defaultViewport?: string | null;
+  defaultRegion?: string | null;
+  pauseOnNewRevisions: boolean;
+}
+export interface ProjectSettingsRequest {
+  /** One of desktop|tablet|mobile ("" clears to null). */
+  defaultViewport?: string;
+  /** One of eu-central-1|us-east-1 ("" clears to null). */
+  defaultRegion?: string;
+  pauseOnNewRevisions?: boolean;
+}
+
+export interface TestsBulkRequest {
+  testIds: string[];
+  action: 'update' | 'delete';
+  update?: TestUpdateRequest;
+}
+export interface BulkResult {
+  succeeded: string[];
+  failed: { testId: string; error: string }[];
+}
+
+// A test's content version (API shape — distinct from the UI `TestVersion` snapshot).
+export type VersionStatus =
+  | 'pending'
+  | 'active'
+  | 'previous'
+  | 'superseded'
+  | 'rejected'
+  | 'reviewed';
+export interface TestVersionItem {
+  versionId: string;
+  testId: string;
+  version: number;
+  status: VersionStatus;
+  source: 'runner' | 'user';
+  originRunId?: string | null;
+  reviewedFrom?: string | null;
+  createdAt: string;
+  activatedAt?: string | null;
+}
+export interface TestVersionDetail extends TestVersionItem {
+  scenario: string;
+  steps?: unknown;
+  expectedResult: string;
+  reviewDecisions?: unknown;
+}
+export interface VersionSide {
+  versionId: string;
+  version: number;
+  status: string;
+  scenario: string;
+  steps?: unknown;
+  expectedResult: string;
+  createdAt: string;
+}
+export interface VersionDiff {
+  active: VersionSide;
+  latest: VersionSide;
+  changed: { scenario: boolean; steps: boolean; expectedResult: boolean };
+}
+/** Body of POST .../activate — empty = full accept; non-empty = partial accept. */
+export interface ActivateVersionRequest {
+  scenario?: string;
+  steps?: unknown;
+  expectedResult?: string;
+  decisions?: unknown;
 }
 
 // ---- UI view models ----
@@ -268,6 +405,30 @@ export interface TestAlternative {
   note: string;
 }
 
+// One proposed step change in a pending revision, authored against the CURRENT step
+// list (indices refer to positions in `TestCase.steps`), so applying is order-stable.
+// There is no "updated" kind — a reworded step is a remove + an add, git-style.
+export type StepChange =
+  | { type: 'added'; afterIndex: number; text: string } // -1 = before the first step
+  | { type: 'removed'; index: number };
+
+// A saved snapshot of the steps as they were at `version` — powers the version
+// switcher and per-step history. Oldest → newest; the current steps are NOT in here.
+export interface TestVersion {
+  version: number;
+  savedAt: number; // epoch ms
+  steps: string[];
+}
+
+// The flow changed: a new version of the steps is proposed and waits for review.
+// While pending, the test reads "Needs review" and (if enabled) scheduled runs pause.
+export interface PendingRevision {
+  toVersion: number;
+  detectedAt: number; // epoch ms
+  changes: StepChange[];
+  versionId?: string; // API version id backing this suggestion (for activate/dismiss)
+}
+
 export interface TestCase {
   key: string;
   title: string;
@@ -288,6 +449,12 @@ export interface TestCase {
   expectedResult?: string;
   // opaque per-test config, carried through so partial updates don't drop it
   config?: Record<string, unknown>;
+  // step versioning — steps carry a version (default 1); saved snapshots of older
+  // versions live in `history`, and a detected flow change sits in `pendingRevision`
+  // until the user reviews it (accept/discard/edit per change → save as vN).
+  version?: number;
+  history?: TestVersion[];
+  pendingRevision?: PendingRevision;
 }
 
 export interface TestStep {
@@ -333,13 +500,17 @@ export interface NetworkRequest {
 
 export interface RunData {
   key: string;
+  testId?: string; // owning test — for Rerun (POST /tests/{testId}/trigger)
   testName: string;
+  version?: number; // which step version the run executed (default 1)
   date: number; // when the run started (epoch ms)
   duration?: number; // omitted while running
   status: UiRunStatus;
   steps: TestStep[];
   failedStep?: number;
   error?: string;
+  /** The runner's human result summary (`results.final_result`). */
+  summary?: string;
   envName?: string;
   resolution?: Resolution;
   region?: string;
