@@ -108,7 +108,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
       {
         label: t('Agents'),
         key: MENU.AGENTS,
-        icon: 'stars',
+        icon: 'scan-pulse',
         tag: {
           label: t('New'),
           color: '#394DFE',

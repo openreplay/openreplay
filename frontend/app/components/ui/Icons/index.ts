@@ -452,6 +452,7 @@ export { default as Remote_control } from './remote_control';
 export { default as Resources_icon } from './resources_icon';
 export { default as Safe } from './safe';
 export { default as Sandglass } from './sandglass';
+export { default as Scan_pulse } from './scan_pulse';
 export { default as Search } from './search';
 export { default as Server } from './server';
 export { default as Share_alt } from './share_alt';
