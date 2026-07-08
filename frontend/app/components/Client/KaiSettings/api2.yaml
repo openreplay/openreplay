@@ -1,0 +1,1640 @@
+openapi: 3.0.3
+info:
+  title: Browser Tests API
+  version: "1.0.0"
+  description: |
+    Project-scoped REST API for **Browser Tests**, **Environments**, and **Runs**.
+
+    - **Base path:** `/v2/{projectId}/browser-tests`
+    - **Auth:** same as all other `/v2` endpoints — send the logged-in user's auth
+      header. Every route is scoped to `{projectId}`; a resource owned by another
+      project responds `404` (never leaks existence).
+    - **EE-only:** endpoints require the `BROWSER_TESTS` permission on enterprise tenants.
+
+    **List responses** are always `{ "items": [...], "total": 123 }`.
+    **Mutation responses:** `POST`/`PUT` return the full resource; `PATCH /tests`
+    (bulk) returns per-id outcomes; `DELETE` (soft delete) returns `{ "success": true }`.
+    **Errors** return `{ "errors": ["human readable message"] }`.
+    **Run artifacts** (screenshots, HAR) are streamed as binary from the run's S3
+    folder via dedicated endpoints.
+
+servers:
+  - url: /v2
+    description: API v2 base
+
+security:
+  - sessionAuth: []
+
+tags:
+  - name: Tests
+  - name: Environments
+  - name: Runs
+  - name: Settings
+  - name: Notifications
+  - name: Versions
+
+paths:
+  /{projectId}/browser-tests/tests:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Tests]
+      summary: List tests
+      operationId: listTests
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at, updated_at, last_run_at, next_run_at]
+            default: created_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on test name.
+          schema: { type: string }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/TestStatus"
+        - name: environmentId
+          in: query
+          description: Matches tests whose `environments` array contains this id.
+          schema: { type: string, format: uuid }
+        - name: tags
+          in: query
+          description: Comma-separated tags; matches tests having **any** of them.
+          schema: { type: string, example: "smoke,auth" }
+        - name: from
+          in: query
+          description: RFC3339 lower bound on `createdAt` (inclusive).
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: RFC3339 upper bound on `createdAt` (inclusive).
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Paged list of tests.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TestList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      tags: [Tests]
+      summary: Create a test
+      description: |
+        Strict allow-list body — see `TestCreateRequest`. Model overrides
+        (`llmModel`/`extractionModel`/`fallbackModel`) are runner-managed and not
+        client-settable; unknown keys are ignored. New tests start as `draft`.
+      operationId: createTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TestCreateRequest" }
+      responses:
+        "200":
+          description: The created test.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Test" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    patch:
+      tags: [Tests]
+      summary: Bulk update or delete tests
+      description: |
+        Applies one action to up to 100 tests. For `action: update`, the `update`
+        object (same shape as the single `PUT` body) is applied to every id; for
+        `action: delete`, each test is soft-deleted. Ids are processed
+        **independently** — one failing id (not found, invalid status transition,
+        ...) doesn't abort the rest, and the call returns `200` with per-id
+        outcomes even when some (or all) ids fail. `400` only for a malformed
+        request (bad `action`, missing `update` for `action: update`, invalid
+        shared `cron`/`config`, >100 ids). Duplicate ids are processed once.
+        Bulk operations do **not** stamp `seenAt`.
+      operationId: bulkTests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TestsBulkRequest" }
+      responses:
+        "200":
+          description: Per-id outcomes.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BulkResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/counts:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Tests]
+      summary: Aggregate test counts
+      description: |
+        Returns test counts grouped by an aggregator. Accepts the **same
+        filters** as `List tests` (`name`, `status`, `environmentId`, `tags`,
+        `from`, `to`), so the counts describe exactly the same set the list
+        endpoint would return under those filters. Buckets are ordered by
+        descending count. For `aggregator=tags`, each tag a test carries yields
+        a bucket, so a single test contributes to several buckets and tests with
+        no tags are omitted; counts therefore do not sum to the number of tests.
+      operationId: testCounts
+      parameters:
+        - name: aggregator
+          in: query
+          required: true
+          description: Dimension to group by.
+          schema:
+            type: string
+            enum: [status, tags]
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on test name.
+          schema: { type: string }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/TestStatus"
+        - name: environmentId
+          in: query
+          description: Matches tests whose `environments` array contains this id.
+          schema: { type: string, format: uuid }
+        - name: tags
+          in: query
+          description: Comma-separated tags; matches tests having **any** of them.
+          schema: { type: string, example: "smoke,auth" }
+        - name: from
+          in: query
+          description: RFC3339 lower bound on `createdAt` (inclusive).
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: RFC3339 upper bound on `createdAt` (inclusive).
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Count buckets for the requested aggregator.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+    get:
+      tags: [Tests]
+      summary: Get a test
+      description: |
+        Returns a single test. `environments` is returned as the array of
+        environment IDs — resolve names/details via the Environments endpoints.
+        The **first** fetch stamps `seenAt` server-side (write-once; `null` until
+        then). Only this endpoint stamps it — list/update/delete/bulk never do.
+      operationId: getTest
+      responses:
+        "200":
+          description: The test.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Test" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    put:
+      tags: [Tests]
+      summary: Update a test
+      description: |
+        Partial update — send only the fields to change. **Updatable fields
+        only**: `name`, `status`, `tags`, `environments`, `cron`, `config` (incl.
+        its validated `resolutions`/`regions` keys). Everything else (`scenario`,
+        `steps`, `expectedResult`, `timeoutSecs`, model overrides) is create-time
+        only; unknown keys are ignored. Via the API only `draft` → `approved` /
+        `rejected` is settable (same-status no-op allowed; anything else → `400`);
+        `active`/`paused` are scheduler-owned and never writable here. Content
+        fields (`scenario`/`steps`/`expectedResult`) only ever change via version
+        activation — see `POST .../versions/{versionId}/activate`.
+      operationId: updateTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TestUpdateRequest" }
+      responses:
+        "200":
+          description: The updated test.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Test" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      tags: [Tests]
+      summary: Delete a test (soft)
+      operationId: deleteTest
+      responses:
+        "200": { $ref: "#/components/responses/DeleteSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/environments:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Environments]
+      summary: List environments
+      operationId: listEnvironments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at]
+            default: created_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on environment name.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paged list of environments.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnvironmentList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      tags: [Environments]
+      summary: Create an environment
+      operationId: createEnvironment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnvironmentRequest" }
+      responses:
+        "200":
+          description: The created environment.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Environment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/environments/{environmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/EnvironmentId"
+    get:
+      tags: [Environments]
+      summary: Get an environment
+      operationId: getEnvironment
+      responses:
+        "200":
+          description: The environment.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Environment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    put:
+      tags: [Environments]
+      summary: Update an environment
+      description: >-
+        Replaces `name`, `baseUrl`, and `variables`. `isDefault` / `isActive`
+        are applied only when present (omitted → unchanged). Setting
+        `isDefault: true` demotes the prior default.
+      operationId: updateEnvironment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnvironmentRequest" }
+      responses:
+        "200":
+          description: The updated environment.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Environment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      tags: [Environments]
+      summary: Delete an environment (soft)
+      description: Returns `409` if a test still references this environment.
+      operationId: deleteEnvironment
+      responses:
+        "200": { $ref: "#/components/responses/DeleteSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/notifications:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    patch:
+      tags: [Notifications]
+      summary: Update the user's browser-tests notification settings
+      description: |
+        Partial update of the **authenticated user's** notification preferences,
+        stored in `public.users.settings` (jsonb) under
+        `browser_tests.notifications`. Provided flags are merged — every other
+        settings key (e.g. `modules`) is preserved. At least one flag is
+        required (`400` otherwise). Returns the resulting settings; absent
+        flags read as `false`.
+      operationId: updateBrowserTestsNotifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationSettingsRequest" }
+      responses:
+        "200":
+          description: The resulting notification settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/settings:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Settings]
+      summary: Get project browser-tests settings
+      description: |
+        Project-level run defaults and revision policy. A project that has never
+        saved settings reads the defaults: `defaultViewport`/`defaultRegion`
+        null, `pauseOnNewRevisions` true. The **default environment** is not part
+        of this object — it is the environment with `isDefault: true` (see the
+        Environments endpoints).
+      operationId: getBrowserTestsSettings
+      responses:
+        "200":
+          description: The project settings (defaults when none saved yet).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    patch:
+      tags: [Settings]
+      summary: Update project browser-tests settings
+      description: |
+        Partial update, creating the settings row (with defaults) on first write.
+        Provided fields are changed; omitted fields are unchanged. For
+        `defaultViewport`/`defaultRegion` an empty string clears the value back
+        to null; both are enum-checked (`400` on an unsupported value).
+      operationId: updateBrowserTestsSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectSettingsRequest" }
+      responses:
+        "200":
+          description: The resulting project settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/trigger:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+    post:
+      tags: [Runs]
+      summary: Trigger a manual run
+      description: |
+        Requests an immediate, manual run of the test. The response only
+        **acknowledges** the request (no `runId` is returned) — the run row is
+        created by the runner on dispatch and then shows up in the runs lists
+        like any other run. Dispatch is asynchronous; a `200` does not mean the
+        run has started. No request body. `404` on cross-tenant/missing test.
+      operationId: triggerRun
+      responses:
+        "200":
+          description: Trigger request accepted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TriggerRunResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+    get:
+      tags: [Versions]
+      summary: List a test's version history
+      description: |
+        Paged, newest-first history of the test's content versions (scenario/
+        steps/expectedResult snapshots). Items are lean — no content fields;
+        fetch one version via `GET .../versions/{versionId}` for its full
+        content. Only `page`/`limit` apply here (no `sortField`/`sortOrder` —
+        always ordered by `version` descending).
+      operationId: listVersions
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paged version history, newest first.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TestVersionList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/versions/diff:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+    get:
+      tags: [Versions]
+      summary: Diff the active vs latest version
+      description: |
+        Compares the test's active version against its latest (highest-version)
+        version so the UI can render what a proposed revision would change.
+        Returns both sides' content plus a `changed` flag per field. When the
+        latest version is the active one, both sides are equal and every
+        `changed` flag is false. `404` if the test has no active version to
+        compare (e.g. no version rows yet). Typically called when the test's
+        `latestVersion` exceeds its `activeVersion`.
+      operationId: diffVersions
+      responses:
+        "200":
+          description: The active-vs-latest comparison.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VersionDiff" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/versions/{versionId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+      - name: versionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Versions]
+      summary: Get one version's full content
+      description: >-
+        Returns the full content (`scenario`/`steps`/`expectedResult`) of one
+        version, for client-side diffing against the current test.
+        `reviewDecisions` is the reviewer's per-change accept/reject metadata,
+        stored verbatim; null unless this row came from a partial accept.
+      operationId: getVersion
+      responses:
+        "200":
+          description: The version, with full content.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TestVersionDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/versions/{versionId}/activate:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+      - name: versionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Versions]
+      summary: Activate (accept) a pending version
+      description: |
+        Adopts the pending suggestion into the test. **Empty body = full
+        accept** of the suggestion as-is. **Non-empty body = partial accept**:
+        the client sends its client-merged `steps` (required) and per-change
+        `decisions` (required); `scenario`/`expectedResult` default to the
+        suggestion's own values when omitted. Either way, the previously
+        active version is superseded and the response is the updated `Test`.
+        `409` when `versionId` is not the test's current pending suggestion
+        (already reviewed, dismissed, or stale). `400` (`ErrInvalidReview`)
+        when a non-empty body is missing `steps` or `decisions`.
+      operationId: activateVersion
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActivateVersionRequest" }
+      responses:
+        "200":
+          description: The updated test.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Test" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/versions/{versionId}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+      - name: versionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Versions]
+      summary: Dismiss (reject) a pending version
+      description: >-
+        Rejects the pending suggestion without changing the test. No request
+        body. `409` when `versionId` is not the test's current pending
+        suggestion.
+      operationId: dismissVersion
+      responses:
+        "200": { $ref: "#/components/responses/DeleteSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/runs:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Runs]
+      summary: List runs across the project
+      description: |
+        Read-only, project-wide list of runs, sourced from PostgreSQL — runs
+        appear **immediately on dispatch** (status dispatched/running, summary
+        fields 0 until finish). Each item is a lean run summary; step-level
+        detail lives in the `results` object returned by `GET /runs/{runId}`.
+        Optionally narrow to a single test with the `testId` filter.
+      operationId: listAllRuns
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [started_at, duration_ms]
+            default: started_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: testId
+          in: query
+          description: Narrow the list to runs of a single test.
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RunStatus"
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on the owning test's name.
+          schema: { type: string }
+        - name: tags
+          in: query
+          description: >-
+            Comma-separated tags; matches runs whose owning test has **any**
+            of them.
+          schema: { type: string, example: "smoke,auth" }
+        - name: screenType
+          in: query
+          description: Exact match on the run's screen type.
+          schema: { type: string, example: "desktop" }
+        - name: dispatchMode
+          in: query
+          description: Exact match on the run's dispatch mode.
+          schema: { type: string, example: "scheduled" }
+        - name: batchId
+          in: query
+          description: Exact match on the run's batch id.
+          schema: { type: string }
+        - name: from
+          in: query
+          description: RFC3339 lower bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: RFC3339 upper bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Paged list of lean run summaries (no finalResult).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunListItemList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/runs/counts:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Runs]
+      summary: Aggregate run counts
+      description: |
+        Returns run counts grouped by an aggregator. Accepts the **same filters**
+        as `List runs across the project` (`testId`, `status`, `name`, `tags`,
+        `screenType`, `dispatchMode`, `batchId`, `from`, `to`), so the counts
+        describe exactly the same set that list would return under those filters,
+        with **no pagination**. Buckets are ordered by descending count. Nullable
+        run columns (`screenType`, `dispatchMode`) bucket their unset value as an
+        empty string. For `aggregator=tags`, each tag the owning test carries
+        yields a bucket, so a run contributes to several buckets and runs whose
+        test has no tags are omitted; counts therefore do not sum to the number
+        of runs. `404` when a supplied `testId` is cross-tenant/missing.
+      operationId: runCounts
+      parameters:
+        - name: aggregator
+          in: query
+          required: true
+          description: Dimension to group by.
+          schema:
+            type: string
+            enum: [status, screenType, dispatchMode, tags]
+        - name: testId
+          in: query
+          description: Narrow the counts to runs of a single test.
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RunStatus"
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on the owning test's name.
+          schema: { type: string }
+        - name: tags
+          in: query
+          description: >-
+            Comma-separated tags; matches runs whose owning test has **any**
+            of them.
+          schema: { type: string, example: "smoke,auth" }
+        - name: screenType
+          in: query
+          description: Exact match on the run's screen type.
+          schema: { type: string, example: "desktop" }
+        - name: dispatchMode
+          in: query
+          description: Exact match on the run's dispatch mode.
+          schema: { type: string, example: "scheduled" }
+        - name: batchId
+          in: query
+          description: Exact match on the run's batch id.
+          schema: { type: string }
+        - name: from
+          in: query
+          description: RFC3339 lower bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: RFC3339 upper bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Count buckets for the requested aggregator.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/tests/{testId}/runs:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TestId"
+    get:
+      tags: [Runs]
+      summary: List runs for a test
+      description: |
+        Read-only. Same item shape and semantics as the project-wide list —
+        runs appear immediately on dispatch. `404` on cross-tenant/missing test.
+      operationId: listRuns
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sortField
+          in: query
+          schema:
+            type: string
+            enum: [started_at, duration_ms]
+            default: started_at
+        - $ref: "#/components/parameters/SortOrder"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RunStatus"
+        - name: name
+          in: query
+          description: Partial (case-insensitive) match on the owning test's name.
+          schema: { type: string }
+        - name: tags
+          in: query
+          description: >-
+            Comma-separated tags; matches runs whose owning test has **any**
+            of them.
+          schema: { type: string, example: "smoke,auth" }
+        - name: screenType
+          in: query
+          description: Exact match on the run's screen type.
+          schema: { type: string, example: "desktop" }
+        - name: dispatchMode
+          in: query
+          description: Exact match on the run's dispatch mode.
+          schema: { type: string, example: "scheduled" }
+        - name: batchId
+          in: query
+          description: Exact match on the run's batch id.
+          schema: { type: string }
+        - name: from
+          in: query
+          description: RFC3339 lower bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: RFC3339 upper bound on `startedAt` (inclusive).
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Paged list of runs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunListItemList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/runs/{runId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - name: runId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Runs]
+      summary: Get a run (lifecycle + results.json)
+      description: |
+        Returns the run's lifecycle fields plus `results` — the runner's
+        `results.json` fetched verbatim from the root of the run's S3 folder
+        (`scenario/<runId>/results.json`); `null` when absent/unreadable.
+        Nothing is read from the results database: steps, per-step screenshots
+        (run-relative names — fetch images via the screenshots endpoint), token
+        counts, errors and the final result all live inside `results`.
+        Cost, step counts, and `finalResult` also live in `results`; list items
+        carry only the lifecycle summary plus computed `durationMs`.
+      operationId: getRun
+      responses:
+        "200":
+          description: The run lifecycle with attached results.json.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/runs/{runId}/screenshots/{name}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - name: runId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: name
+        in: path
+        required: true
+        description: >-
+          Screenshot file name — the last path segment of an entry in the run's
+          results (e.g. "2.png" for "screenshots/2.png"). Resolved server-side to
+          scenario/<runId>/screenshots/<name>; path separators/traversal → 404.
+        schema: { type: string, example: "step-1-0.png" }
+    get:
+      tags: [Runs]
+      summary: Stream one screenshot image
+      description: |
+        Streams the image bytes from the run's S3 folder. Replaces the old
+        behavior of presigning every screenshot in the run response — fetch
+        images one by one, on demand.
+      operationId: getRunScreenshot
+      responses:
+        "200":
+          description: The image (content type derived from the file extension).
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/webp:
+              schema: { type: string, format: binary }
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /{projectId}/browser-tests/runs/{runId}/har:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - name: runId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Runs]
+      summary: Stream the run's network.har
+      description: |
+        Streams `scenario/<runId>/network.har` from the run's S3 folder as
+        `application/json` with `Content-Disposition: attachment;
+        filename="network.har"`. `404` when the runner didn't capture one.
+        Only `screenshots/*` and `network.har` are exposed from the run folder —
+        other files (e.g. `config.json`) are not reachable through the API.
+      operationId: getRunHAR
+      responses:
+        "200":
+          description: The HAR file.
+          content:
+            application/json:
+              schema: { type: string, format: binary }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: The logged-in user's auth header, as used by all `/v2` endpoints.
+
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: { type: integer }
+    TestId:
+      name: testId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    EnvironmentId:
+      name: environmentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      name: page
+      in: query
+      description: 1-based page number.
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      description: Page size (clamped to 100).
+      schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+    SortOrder:
+      name: sortOrder
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+
+  responses:
+    BadRequest:
+      description: >-
+        Invalid body, bad `sortField`/`sortOrder`, invalid `cron`/`config`,
+        invalid status transition, invalid environment defaults, malformed bulk
+        request, or malformed id.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not found, or owned by another project.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Deleting an environment still referenced by a test.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ServerError:
+      description: Server / database error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    DeleteSuccess:
+      description: Resource soft-deleted.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DeleteSuccess" }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items: { type: string }
+      required: [errors]
+      example:
+        errors: ["test not found"]
+
+    DeleteSuccess:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+      required: [success]
+
+    TestStatus:
+      type: string
+      description: >-
+        Full status set as stored/returned. `active`/`paused` are
+        scheduler/runner-owned (never writable via the API). Whether a test is
+        awaiting review is a separate boolean flag (`needsReview`), not a status.
+      enum: [draft, approved, rejected, active, paused]
+
+    TestStatusSettable:
+      type: string
+      description: >-
+        Statuses a client may set via the API. Only `draft` → `approved` /
+        `rejected` transitions (plus same-status no-ops) are accepted.
+      enum: [draft, approved, rejected]
+
+    RunStatus:
+      type: string
+      enum: [dispatched, running, passed, failed, error, timeout]
+
+    TriggerRunResult:
+      type: object
+      description: >-
+        Acknowledgement of a manual run request. Carries no runId — the run
+        row is created by the runner on dispatch.
+      properties:
+        testId: { type: string, format: uuid }
+        status: { type: string, example: accepted }
+      required: [testId, status]
+
+    Environment:
+      type: object
+      properties:
+        environmentId: { type: string, format: uuid }
+        projectId: { type: integer }
+        name: { type: string }
+        baseUrl: { type: string, format: uri }
+        variables:
+          type: object
+          additionalProperties: true
+          description: Non-secret key/value variables.
+        isDefault:
+          type: boolean
+          description: At most one default environment per project; promoting one demotes the previous default.
+        isActive:
+          type: boolean
+          description: Soft on/off toggle, independent of soft-delete.
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [environmentId, projectId, name, baseUrl, variables, isDefault, isActive, createdAt, updatedAt]
+      example:
+        environmentId: "11111111-1111-1111-1111-111111111111"
+        projectId: 65
+        name: "Staging"
+        baseUrl: "https://staging.example.com"
+        variables: { USERNAME: "demo", REGION: "eu" }
+        isDefault: false
+        isActive: true
+        createdAt: "2026-06-22T10:00:00Z"
+        updatedAt: "2026-06-22T10:00:00Z"
+
+    EnvironmentRequest:
+      type: object
+      properties:
+        name: { type: string }
+        baseUrl:
+          type: string
+          format: uri
+          description: Must be a valid URL.
+        variables:
+          type: object
+          additionalProperties: true
+        isDefault:
+          type: boolean
+          description: >-
+            On create, defaults to false; setting true demotes any existing default.
+            On update, omitted means leave unchanged.
+        isActive:
+          type: boolean
+          description: >-
+            On create, defaults to true. On update, omitted means leave unchanged.
+      required: [name, baseUrl]
+
+    Test:
+      type: object
+      properties:
+        testId: { type: string, format: uuid }
+        projectId: { type: integer }
+        environments:
+          type: array
+          description: Environment IDs this test runs against.
+          items: { type: string, format: uuid }
+        tags:
+          type: array
+          items: { type: string }
+        name: { type: string }
+        scenario: { type: string }
+        steps:
+          description: Free-form JSON (array or object).
+          nullable: true
+        expectedResult: { type: string }
+        cron:
+          type: string
+          nullable: true
+          description: Standard 5-field cron string, or empty/null. The API does not schedule or run anything — an external scheduler reads this.
+        status: { $ref: "#/components/schemas/TestStatus" }
+        timeoutSecs: { type: integer }
+        llmModel:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Runner-managed; never accepted in request bodies. Null ⇒ runner env default (DEFAULT_LLM_MODEL).
+        extractionModel:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Runner-managed; never accepted in request bodies. Null ⇒ env default (DEFAULT_EXTRACTION_MODEL).
+        fallbackModel: { type: string, nullable: true, readOnly: true }
+        config:
+          type: object
+          additionalProperties: true
+          description: >-
+            Opaque per-test config (auth, screen_type, ssl_enforce, locale) plus
+            the validated keys `resolutions` (array of desktop|tablet|mobile) and
+            `regions` (array of eu-central-1|us-east-1). Stored/returned verbatim;
+            defaults to {}.
+        needsReview:
+          type: boolean
+          readOnly: true
+          description: >-
+            Runner-owned flag, independent of `status`: true when the agent
+            proposed a new version and the project pauses tests on new revisions,
+            so this test is blocked awaiting review. Cleared when the pending
+            suggestion is activated or dismissed. Never accepted in request bodies.
+        activeVersion:
+          type: integer
+          nullable: true
+          readOnly: true
+          description: Currently-active version number; null when the test has no version rows yet.
+        latestVersion:
+          type: integer
+          nullable: true
+          readOnly: true
+          description: >-
+            Highest version number in the test's history; null when none exist.
+            `latestVersion > activeVersion` means a newer version exists — fetch
+            `GET .../versions/diff` to see what it changes.
+        suggestion:
+          nullable: true
+          description: >-
+            Pending-suggestion badge: non-null when the test has a version
+            awaiting review. See `GET .../versions/{versionId}` for the full
+            content and `POST .../activate` / `.../dismiss` to review it.
+          allOf:
+            - $ref: "#/components/schemas/SuggestionSummary"
+        nextRunAt: { type: string, format: date-time, nullable: true }
+        lastRunAt: { type: string, format: date-time, nullable: true }
+        seenAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: >-
+            Null until the test is fetched via GET /tests/{testId} for the first
+            time; then stamped server-side (write-once). Lets clients mark
+            unviewed tests as "new".
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        - testId
+        - projectId
+        - environments
+        - name
+        - scenario
+        - expectedResult
+        - status
+        - timeoutSecs
+        - createdAt
+        - updatedAt
+      example:
+        testId: "22222222-2222-2222-2222-222222222222"
+        projectId: 65
+        environments: ["11111111-1111-1111-1111-111111111111"]
+        tags: ["smoke", "auth"]
+        name: "Login smoke test"
+        scenario: "User can log in"
+        steps: ["Go to homepage", "Click Login", "Submit credentials"]
+        expectedResult: "Dashboard loads"
+        cron: "0 9 * * *"
+        status: "draft"
+        timeoutSecs: 300
+        suggestion: null
+        nextRunAt: "2026-06-23T09:00:00Z"
+        lastRunAt: null
+        seenAt: null
+        createdAt: "2026-06-22T10:00:00Z"
+        updatedAt: "2026-06-22T10:00:00Z"
+
+    TestCreateRequest:
+      type: object
+      description: >-
+        Strict allow-list — only these fields are accepted; model overrides are
+        runner-managed and unknown keys are ignored.
+      properties:
+        name: { type: string }
+        scenario: { type: string }
+        steps:
+          description: Free-form JSON (array or object).
+          nullable: true
+        expectedResult: { type: string }
+        cron:
+          type: string
+          nullable: true
+          description: Standard 5-field cron string. Optional; validated when present.
+        timeoutSecs: { type: integer }
+        environments:
+          type: array
+          items: { type: string, format: uuid }
+        tags:
+          type: array
+          items: { type: string }
+        config:
+          type: object
+          additionalProperties: true
+          description: >-
+            Opaque per-test config; defaults to {} when omitted. `resolutions`
+            and `regions` keys are enum-validated (invalid → 400).
+      required: [name]
+      example:
+        name: "Login smoke test"
+        scenario: "User can log in and reach the dashboard"
+        steps: ["Go to homepage", "Click Login", "Submit credentials"]
+        expectedResult: "Dashboard visible"
+        cron: "0 9 * * *"
+        timeoutSecs: 300
+        environments: ["11111111-1111-1111-1111-111111111111"]
+        tags: ["smoke", "auth"]
+
+    TestUpdateRequest:
+      type: object
+      description: >-
+        Partial update — only the provided fields are changed, and only these
+        fields are updatable (everything else is create-time only; unknown keys
+        are ignored).
+      properties:
+        name: { type: string }
+        status: { $ref: "#/components/schemas/TestStatusSettable" }
+        tags:
+          type: array
+          description: Full replacement array; omit to leave unchanged.
+          items: { type: string }
+        environments:
+          type: array
+          description: Full replacement array; omit to leave unchanged.
+          items: { type: string, format: uuid }
+        cron: { type: string, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+          description: >-
+            Opaque per-test config; send the full object to replace it.
+            `resolutions`/`regions` keys are enum-validated (invalid → 400).
+      example:
+        status: "approved"
+
+    NotificationSettings:
+      type: object
+      description: Browser-tests notification preferences of the authenticated user.
+      properties:
+        dailySummary: { type: boolean }
+        weeklySummary: { type: boolean }
+      required: [dailySummary, weeklySummary]
+      example: { dailySummary: true, weeklySummary: false }
+
+    NotificationSettingsRequest:
+      type: object
+      description: Partial update — at least one flag required.
+      properties:
+        dailySummary: { type: boolean }
+        weeklySummary: { type: boolean }
+      example: { dailySummary: true }
+
+    ProjectSettings:
+      type: object
+      description: Project-level browser-tests run defaults and revision policy.
+      properties:
+        defaultViewport:
+          type: string
+          nullable: true
+          enum: [desktop, tablet, mobile, null]
+          description: Default viewport new tests inherit; null = runner default.
+        defaultRegion:
+          type: string
+          nullable: true
+          enum: [eu-central-1, us-east-1, null]
+          description: Default region new tests inherit; null = runner default.
+        pauseOnNewRevisions:
+          type: boolean
+          description: >-
+            When true, the runner sets a test's `needsReview` flag when it
+            proposes a new version (blocking it until reviewed); when false, the
+            test keeps running on its current version.
+      required: [pauseOnNewRevisions]
+      example: { defaultViewport: "desktop", defaultRegion: "eu-central-1", pauseOnNewRevisions: true }
+
+    ProjectSettingsRequest:
+      type: object
+      description: >-
+        Partial update — omitted fields are unchanged. For
+        defaultViewport/defaultRegion an empty string clears the value to null.
+      properties:
+        defaultViewport:
+          type: string
+          description: One of desktop|tablet|mobile (invalid → 400); "" clears to null.
+        defaultRegion:
+          type: string
+          description: One of eu-central-1|us-east-1 (invalid → 400); "" clears to null.
+        pauseOnNewRevisions: { type: boolean }
+      example: { pauseOnNewRevisions: false }
+
+    TestsBulkRequest:
+      type: object
+      description: One action applied to many tests at once.
+      properties:
+        testIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { type: string, format: uuid }
+        action:
+          type: string
+          enum: [update, delete]
+        update:
+          $ref: "#/components/schemas/TestUpdateRequest"
+      required: [testIds, action]
+      example:
+        testIds: ["22222222-2222-2222-2222-222222222222"]
+        action: "update"
+        update: { status: "approved" }
+
+    BulkResult:
+      type: object
+      description: Per-id outcomes of a bulk request; failing ids don't abort the rest.
+      properties:
+        succeeded:
+          type: array
+          items: { type: string, format: uuid }
+        failed:
+          type: array
+          items:
+            type: object
+            properties:
+              testId: { type: string, format: uuid }
+              error: { type: string }
+            required: [testId, error]
+      required: [succeeded, failed]
+      example:
+        succeeded: ["22222222-2222-2222-2222-222222222222"]
+        failed: [{ testId: "33333333-3333-3333-3333-333333333333", error: "test not found" }]
+
+    RunListItem:
+      type: object
+      description: >-
+        A runs-list item (both the project-wide and per-test lists): a lean run
+        summary sourced from PostgreSQL — runs appear immediately on dispatch.
+        For full run detail use GET /runs/{runId} and read `results`.
+      properties:
+        runId: { type: string, format: uuid }
+        testId: { type: string, format: uuid }
+        testName: { type: string }
+        tags:
+          type: array
+          description: The owning test's tags (joined; always the current values).
+          items: { type: string }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        containerId: { type: string, nullable: true }
+        s3Prefix: { type: string, nullable: true }
+        screenType:
+          type: string
+          description: Viewport the run executed against (mobile/desktop/tablet); defaults to desktop.
+        batchId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Groups fan-out runs from the same trigger; null if standalone.
+        dispatchMode:
+          type: string
+          nullable: true
+          description: How the run was launched (docker/ecs/k8s); null until set.
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        durationMs:
+          type: integer
+          format: int64
+          description: Computed as finishedAt - startedAt; 0 while the run hasn't finished.
+      required: [runId, testId, status, screenType, durationMs]
+      example:
+        runId: "33333333-3333-3333-3333-333333333333"
+        testId: "22222222-2222-2222-2222-222222222222"
+        testName: "Login smoke test"
+        tags: ["smoke", "auth"]
+        status: "passed"
+        containerId: null
+        s3Prefix: null
+        screenType: "desktop"
+        startedAt: "2026-06-22T09:00:00Z"
+        finishedAt: "2026-06-22T09:00:42Z"
+        durationMs: 42000
+
+    RunDetail:
+      type: object
+      description: >-
+        Single-run response: the lifecycle row plus the runner's results.json
+        from S3. All result detail (steps, screenshots, tokens, errors, final
+        result) lives inside `results` — nothing is re-read from the results DB.
+      properties:
+        runId: { type: string, format: uuid }
+        testId: { type: string, format: uuid }
+        testName: { type: string }
+        tags:
+          type: array
+          description: The owning test's tags (joined; always the current values).
+          items: { type: string }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        containerId: { type: string, nullable: true }
+        s3Prefix: { type: string, nullable: true }
+        screenType: { type: string }
+        batchId: { type: string, format: uuid, nullable: true }
+        dispatchMode: { type: string, nullable: true }
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        results:
+          nullable: true
+          description: >-
+            The runner's results.json (scenario/<runId>/results.json), attached
+            verbatim; null when absent (e.g. older runs) or unreadable.
+            Screenshot entries inside are run-relative names — fetch images via
+            GET /runs/{runId}/screenshots/{name}.
+      required: [runId, testId, status, screenType]
+      example:
+        runId: "33333333-3333-3333-3333-333333333333"
+        testId: "22222222-2222-2222-2222-222222222222"
+        testName: "Login smoke test"
+        tags: ["smoke", "auth"]
+        status: "passed"
+        containerId: null
+        s3Prefix: null
+        screenType: "desktop"
+        batchId: null
+        dispatchMode: "ecs"
+        startedAt: "2026-06-22T09:00:00Z"
+        finishedAt: "2026-06-22T09:00:42Z"
+        results: { finalResult: "All steps passed", steps: [] }
+
+    TestList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Test" }
+        total: { type: integer }
+      required: [items, total]
+
+    CountResult:
+      type: object
+      description: Aggregate counts for a single grouping dimension.
+      properties:
+        aggregator:
+          type: string
+          description: The dimension the buckets are grouped by (echoes the request).
+        buckets:
+          type: array
+          description: (value, count) pairs ordered by descending count.
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+                description: The grouped value this bucket counts (e.g. a status or tag).
+              count: { type: integer }
+            required: [value, count]
+      required: [aggregator, buckets]
+
+    EnvironmentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Environment" }
+        total: { type: integer }
+      required: [items, total]
+
+    RunListItemList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RunListItem" }
+        total: { type: integer }
+      required: [items, total]
+
+    SuggestionSummary:
+      type: object
+      description: The pending-suggestion badge embedded in `Test.suggestion`.
+      properties:
+        versionId: { type: string, format: uuid }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [versionId, version, createdAt]
+
+    TestVersion:
+      type: object
+      description: >-
+        A lean version-history item — no content fields (steps can be large);
+        fetch `GET .../versions/{versionId}` for the full content.
+      properties:
+        versionId: { type: string, format: uuid }
+        testId: { type: string, format: uuid }
+        version: { type: integer, description: Creation-order sequence number (not content age). }
+        status:
+          type: string
+          description: >-
+            `pending` awaits review; `active` is the test's current content;
+            `previous` was superseded by a later activation; `superseded` /
+            `rejected` / `reviewed` are terminal states for a suggestion that
+            was replaced, dismissed, or partially accepted (spawning a new
+            `active` row) respectively.
+          enum: [pending, active, previous, superseded, rejected, reviewed]
+        source:
+          type: string
+          description: Who created this version — the runner (a suggestion) or a user (a manual activation/edit).
+          enum: [runner, user]
+        originRunId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The run that produced this suggestion, when `source` is `runner`.
+        reviewedFrom:
+          type: string
+          format: uuid
+          nullable: true
+          description: The suggestion this row was merged from, when it came from a partial accept.
+        createdAt: { type: string, format: date-time }
+        activatedAt: { type: string, format: date-time, nullable: true }
+      required: [versionId, testId, version, status, source, originRunId, reviewedFrom, createdAt, activatedAt]
+      example:
+        versionId: "44444444-4444-4444-4444-444444444444"
+        testId: "22222222-2222-2222-2222-222222222222"
+        version: 3
+        status: "pending"
+        source: "runner"
+        originRunId: "33333333-3333-3333-3333-333333333333"
+        reviewedFrom: null
+        createdAt: "2026-06-25T09:00:00Z"
+        activatedAt: null
+
+    TestVersionDetail:
+      description: >-
+        One version with full content, for client-side diffing against the
+        current test.
+      allOf:
+        - $ref: "#/components/schemas/TestVersion"
+        - type: object
+          properties:
+            scenario: { type: string }
+            steps:
+              type: array
+              description: Free-form JSON (array or object).
+              nullable: true
+            expectedResult: { type: string }
+            reviewDecisions:
+              nullable: true
+              description: >-
+                The reviewer's per-change accept/reject metadata, stored
+                verbatim (opaque to the backend); null unless this row came
+                from a partial accept.
+          required: [scenario, steps, expectedResult, reviewDecisions]
+      example:
+        versionId: "44444444-4444-4444-4444-444444444444"
+        testId: "22222222-2222-2222-2222-222222222222"
+        version: 3
+        status: "pending"
+        source: "runner"
+        originRunId: "33333333-3333-3333-3333-333333333333"
+        reviewedFrom: null
+        createdAt: "2026-06-25T09:00:00Z"
+        activatedAt: null
+        scenario: "User can log in"
+        steps: ["Go to homepage", "Click Login", "Submit credentials", "Verify welcome banner"]
+        expectedResult: "Dashboard loads with welcome banner"
+        reviewDecisions: null
+
+    VersionSide:
+      type: object
+      description: One side of a version diff — content fields, no review metadata.
+      properties:
+        versionId: { type: string, format: uuid }
+        version: { type: integer }
+        status: { type: string }
+        scenario: { type: string }
+        steps:
+          description: Free-form JSON (array or object).
+          nullable: true
+        expectedResult: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [versionId, version, status, scenario, steps, expectedResult, createdAt]
+
+    VersionDiff:
+      type: object
+      description: Active-vs-latest version comparison for a test.
+      properties:
+        active: { $ref: "#/components/schemas/VersionSide" }
+        latest: { $ref: "#/components/schemas/VersionSide" }
+        changed:
+          type: object
+          description: Which content fields differ between active and latest.
+          properties:
+            scenario: { type: boolean }
+            steps: { type: boolean }
+            expectedResult: { type: boolean }
+          required: [scenario, steps, expectedResult]
+      required: [active, latest, changed]
+
+    TestVersionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TestVersion" }
+        total: { type: integer }
+      required: [items, total]
+
+    ActivateVersionRequest:
+      type: object
+      description: >-
+        OPTIONAL body of the activate endpoint. Absent/empty body = full
+        accept of the suggestion as-is. A non-empty body = partial accept:
+        `steps` is the client-merged final steps array and `decisions` the
+        per-change accept/reject metadata (opaque to the backend, kept for the
+        runner/LLM) — both are required together. `scenario`/`expectedResult`
+        default to the suggestion's own values when omitted.
+      properties:
+        scenario: { type: string }
+        steps:
+          description: Client-merged final steps (free-form JSON array or object). Required for a partial accept.
+          nullable: true
+        expectedResult: { type: string }
+        decisions:
+          description: Per-change accept/reject metadata, opaque to the backend. Required for a partial accept.
+          nullable: true
+      example:
+        steps: ["Go to homepage", "Click Login", "Submit credentials", "Verify welcome banner"]
+        decisions: [{ change: 0, accepted: true }]

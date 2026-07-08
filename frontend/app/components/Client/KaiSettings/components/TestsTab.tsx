@@ -14,7 +14,7 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { Calendar, EllipsisVertical, Play, Plus, Radar } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
@@ -22,29 +22,34 @@ import FullPagination from 'Shared/FullPagination';
 
 import {
   createTest as apiCreateTest,
-  deleteTest as apiDeleteTest,
   updateTest as apiUpdateTest,
 } from '../api';
 import {
   browserTestsKeys,
+  useBulkTests,
   useDeleteTest,
   useEnvironments,
   useProjectId,
+  useTestCounts,
   useTests,
+  useTriggerRun,
   useUpdateTest,
 } from '../queries';
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
 import './kai-table.css';
+import { needsReview } from './shared/revisions';
 import {
   apiTestToVM,
+  vmApproveRequest,
   vmToCreateRequest,
   vmToUpdateRequest,
 } from './shared/adapters';
-import { RunData, TestCase, TestLifecycle } from './shared/types';
+import { ListTestsParams, RunData, TestCase, TestStatus } from './shared/types';
 import { kaiUi } from './shared/uiStore';
 import {
   RowTags,
+  VersionLabel,
   getStatusTag,
   hasNoEnvironment,
   isScheduled,
@@ -52,39 +57,31 @@ import {
   scheduleShort,
 } from './shared/utils';
 
-type StatusTab = 'all' | TestLifecycle;
-const STATUS_ORDER: Record<string, number> = {
-  draft: 0,
-  approved: 1,
-  active: 2,
-  paused: 3,
-};
-// Tests are fetched once and filtered/sorted/paginated client-side; the API clamps
-// `limit` to 100, so larger lists show a "first N" note.
-const LOOKUP_LIMIT = 100;
-
-// Sort is done client-side over the whole filtered list (then paginated), so the
-// column comparators live here rather than on the antd columns (which would only see
-// the current page). Keyed by column dataIndex.
-const TEST_COMPARATORS: Record<string, (a: TestCase, b: TestCase) => number> = {
-  title: (a, b) => a.title.localeCompare(b.title),
-  envNames: (a, b) =>
-    (a.envNames?.[0] ?? '').localeCompare(b.envNames?.[0] ?? ''),
-  schedule: (a, b) =>
-    scheduleLabel(a.schedule).localeCompare(scheduleLabel(b.schedule)),
-  status: (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status],
+// The list is now server-driven: filters / sort / pagination are query params, and the
+// tab badges come from the /tests/counts aggregate — so they stay absolute even past one
+// page. Only the columns the API can sort (Test → name) are sortable.
+type StatusTab = 'all' | TestStatus;
+const PAGE_SIZE = 20;
+// antd column dataIndex → API sortField (only these are server-sortable).
+const SORT_FIELD: Record<string, ListTestsParams['sortField']> = {
+  title: 'name',
 };
 
 function TestsTab() {
   const { t } = useTranslation();
-  const { data, isPending } = useTests({ limit: LOOKUP_LIMIT });
-  const { data: envData } = useEnvironments({ limit: LOOKUP_LIMIT });
   const updateMut = useUpdateTest();
   const deleteMut = useDeleteTest();
+  const bulkMut = useBulkTests();
+  const triggerMut = useTriggerRun();
   const projectId = useProjectId();
   const queryClient = useQueryClient();
+  const invalidateAll = () =>
+    queryClient.invalidateQueries({
+      queryKey: browserTestsKeys.all(projectId),
+    });
 
   const [query, setQuery] = useState('');
+  const [search, setSearch] = useState(''); // debounced query → the actual filter
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
@@ -95,21 +92,56 @@ function TestsTab() {
   }>({});
   const [page, setPage] = useState(1);
   const [openKey, setOpenKey] = useState<string | null>(null);
-  // when a drawer is opened via the "Schedule" action, jump straight to the schedule
   const [focusSchedule, setFocusSchedule] = useState(false);
-  // manual creation: a placeholder test edited in the drawer, not yet persisted. It
-  // lives here (not in the query cache) until "Create test" commits it.
   const [draftTest, setDraftTest] = useState<TestCase | null>(null);
   const creating = draftTest != null;
 
-  const PAGE_SIZE = 20;
-  // Reset to page 1 when a filter changes — done during render (React's supported
-  // "adjust state on prop/state change" pattern) rather than in an effect.
-  const filterKey = `${query}|${statusTab}|${envFilter}|${tagFilter}`;
+  // debounce the search box so typing isn't one request per keystroke (the setState
+  // runs in a timer callback, not synchronously in the effect body)
+  useEffect(() => {
+    const id = window.setTimeout(() => setSearch(query.trim()), 300);
+    return () => window.clearTimeout(id);
+  }, [query]);
+
+  // shared filter set (no pagination/sort) — reused for the list and the count aggregates
+  const filters = useMemo(
+    () => ({
+      name: search || undefined,
+      environmentId: envFilter !== 'all' ? envFilter : undefined,
+      tags: tagFilter !== 'all' ? tagFilter : undefined,
+    }),
+    [search, envFilter, tagFilter],
+  );
+
+  const sortField = sortBy.field ? SORT_FIELD[sortBy.field] : undefined;
+  const listParams: ListTestsParams = {
+    page,
+    limit: PAGE_SIZE,
+    ...filters,
+    status: statusTab !== 'all' ? statusTab : undefined,
+    ...(sortField && sortBy.order
+      ? { sortField, sortOrder: sortBy.order === 'ascend' ? 'asc' : 'desc' }
+      : {}),
+  };
+
+  const { data, isPending } = useTests(listParams);
+  const { data: envData } = useEnvironments({ limit: 100 });
+  // status buckets ignore the active status tab (so every tab shows its own total);
+  // tag buckets drive the tag filter's full option list.
+  const { data: statusCounts } = useTestCounts('status', filters);
+  const { data: tagCounts } = useTestCounts('tags', {
+    ...filters,
+    tags: undefined,
+    status: statusTab !== 'all' ? statusTab : undefined,
+  });
+
+  // reset to page 1 (and clear the selection) whenever the filter set changes
+  const filterKey = `${search}|${statusTab}|${envFilter}|${tagFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
     setPage(1);
+    setSelectedKeys([]);
   }
 
   const envNameById = useMemo(
@@ -117,7 +149,8 @@ function TestsTab() {
     [envData],
   );
 
-  // Rejected tests are dismissed drafts — they have no place in the redesign.
+  // Rejected tests are dismissed drafts — defensively hidden (our dismiss soft-deletes,
+  // so these are rare); the server has no "not rejected" filter.
   const tests = useMemo(
     () =>
       (data?.items ?? [])
@@ -125,13 +158,36 @@ function TestsTab() {
         .map((tc) => apiTestToVM(tc, envNameById)),
     [data, envNameById],
   );
+  const total = data?.total ?? 0;
 
-  // ---- persistence (each edit is an update/delete mutation) -----------------
-  const updateTest = (updated: TestCase) =>
+  const countByStatus = (s: string) =>
+    statusCounts?.buckets.find((b) => b.value === s)?.count ?? 0;
+  const draftCount = countByStatus('draft');
+  const approvedCount = countByStatus('approved');
+  const activeCount = countByStatus('active');
+  const pausedCount = countByStatus('paused');
+  const allCount = draftCount + approvedCount + activeCount + pausedCount;
+
+  const envOptions = (envData?.items ?? []).map((e) => ({
+    value: e.environmentId,
+    label: e.name,
+  }));
+  const allTags = (tagCounts?.buckets ?? []).map((b) => b.value);
+
+  // ---- persistence -----------------------------------------------------
+  // Approving a draft (draft → approved) is the one status write the API allows; every
+  // other edit omits status (active/paused are scheduler-owned — see todo.md).
+  const updateTest = (updated: TestCase) => {
+    const prev = tests.find((tc) => tc.key === updated.key);
+    const approving = prev?.status === 'draft' && updated.status !== 'draft';
     updateMut.mutate(
-      { testId: updated.key, body: vmToUpdateRequest(updated) },
+      {
+        testId: updated.key,
+        body: approving ? vmApproveRequest(updated) : vmToUpdateRequest(updated),
+      },
       { onError: () => toast.error(t('Failed to update test')) },
     );
+  };
   const removeTest = (key: string) => {
     deleteMut.mutate(key, {
       onError: () => toast.error(t('Failed to delete test')),
@@ -148,77 +204,15 @@ function TestsTab() {
     setOpenKey(tc.key);
     setFocusSchedule(true);
   };
-  // drop the schedule → the test goes back to "approved" (ready, not scheduled)
   const unschedule = (tc: TestCase) =>
     updateTest({ ...tc, status: 'approved', schedule: null });
 
-  const openTest = tests.find((tc) => tc.key === openKey) ?? null;
-
-  const draftCount = tests.filter((tc) => tc.status === 'draft').length;
-  const approvedCount = tests.filter((tc) => tc.status === 'approved').length;
-  const activeCount = tests.filter((tc) => tc.status === 'active').length;
-  const pausedCount = tests.filter((tc) => tc.status === 'paused').length;
-
-  const envOptions = (envData?.items ?? []).map((e) => ({
-    value: e.environmentId,
-    label: e.name,
-  }));
-  const allTags = Array.from(
-    new Set(tests.flatMap((tc) => tc.tags ?? [])),
-  ).sort();
-
-  const visible = useMemo(() => {
-    let arr = tests;
-    if (query.trim())
-      arr = arr.filter((tc) =>
-        tc.title.toLowerCase().includes(query.toLowerCase()),
-      );
-    if (statusTab !== 'all') arr = arr.filter((tc) => tc.status === statusTab);
-    if (envFilter !== 'all')
-      arr = arr.filter((tc) => (tc.environments ?? []).includes(envFilter));
-    if (tagFilter !== 'all')
-      arr = arr.filter((tc) => (tc.tags ?? []).includes(tagFilter));
-    // drafts float to the top by default; column sort overrides this on click
-    const drafts = arr.filter((tc) => tc.status === 'draft');
-    const rest = arr.filter((tc) => tc.status !== 'draft');
-    return [...drafts, ...rest];
-  }, [tests, query, statusTab, envFilter, tagFilter]);
-
-  // Column sort applies to the whole filtered list; without an active sort the
-  // drafts-first order from `visible` is kept.
-  const sorted = useMemo(() => {
-    const cmp = sortBy.field ? TEST_COMPARATORS[sortBy.field] : undefined;
-    if (!cmp || !sortBy.order) return visible;
-    const arr = [...visible].sort(cmp);
-    return sortBy.order === 'descend' ? arr.reverse() : arr;
-  }, [visible, sortBy]);
-
-  const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  // The API caps a page at LOOKUP_LIMIT; warn when more tests exist than we loaded.
-  const truncated = (data?.total ?? 0) > tests.length;
-
-  // ---- bulk actions over the current selection -------------------------
-  const selected = tests.filter((tc) => selectedKeys.includes(tc.key));
-  const selDrafts = selected.filter((tc) => tc.status === 'draft').length;
-  const selActive = selected.filter((tc) => tc.status === 'active').length;
-  // paused tests with no environment left can't resume — nothing to run against
-  const selPaused = selected.filter(
-    (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
-  ).length;
-
-  const invalidateAll = () =>
-    queryClient.invalidateQueries({
-      queryKey: browserTestsKeys.all(projectId),
-    });
-
-  // Manual creation — writing steps by hand is easy, so a hand-made test skips the
-  // draft/approve flow and starts life `approved` (ready, unscheduled), drawer open.
-  // The placeholder is only persisted when the user commits it.
+  // Manual creation — a hand-made test skips the draft flow and starts life `approved`.
   const addTest = () => {
     const { defaults } = kaiUi.get();
     setFocusSchedule(false);
     setDraftTest({
-      key: `new-${Date.now()}`, // temp; replaced by the server id on create
+      key: `new-${Date.now()}`,
       title: t('Untitled test'),
       steps: [],
       status: 'approved',
@@ -231,8 +225,6 @@ function TestsTab() {
     setOpenKey(null);
   };
   const cancelCreate = () => setDraftTest(null);
-  // Create seeds a `pending` test (the endpoint takes no status), so lift it to the
-  // intended lifecycle with a follow-up update, then invalidate once — see todo.md.
   const commitCreate = async () => {
     if (!draftTest) return;
     const intended = draftTest;
@@ -242,10 +234,11 @@ function TestsTab() {
         projectId,
         vmToCreateRequest(intended),
       );
+      // create seeds `draft`; lift the manual test to approved (draft → approved)
       await apiUpdateTest(
         projectId,
         created.testId,
-        vmToUpdateRequest({ ...intended, key: created.testId }),
+        vmApproveRequest({ ...intended, key: created.testId }),
       );
       message.success(t('Test created'));
     } catch {
@@ -254,121 +247,88 @@ function TestsTab() {
     invalidateAll();
   };
 
-  // jump to the Runs tab pre-filtered to this test ("View all runs")
+  // Duplicate: copies the steps only, landing as a new draft.
+  const duplicateTest = (tc: TestCase) => {
+    apiCreateTest(
+      projectId,
+      vmToCreateRequest({
+        key: '',
+        title: `${tc.title} (copy)`,
+        steps: [...tc.steps],
+        status: 'draft',
+      }),
+    )
+      .then(() => message.success(t('Duplicated as a draft')))
+      .catch(() => toast.error(t('Failed to duplicate test')))
+      .finally(invalidateAll);
+  };
+
   const viewRuns = (tc: TestCase) => {
     setOpenKey(null);
     kaiUi.showRunsForTest(tc.title);
   };
-  // jump to the Runs tab with one exact run's drawer open ("View" on last failed run)
   const viewRun = (run: RunData) => {
     setOpenKey(null);
     kaiUi.openRunInRunsTab(run);
   };
 
-  // Bulk actions fire the mutations directly (not via the single-item hooks) so the
-  // whole batch runs, then the list is invalidated once instead of per item.
-  const bulkUpdate = async (
+  const openTest = tests.find((tc) => tc.key === openKey) ?? null;
+
+  // ---- bulk actions over the current page's selection ------------------
+  // No bulk approve — activating a draft untested is what review is for.
+  const selected = tests.filter((tc) => selectedKeys.includes(tc.key));
+  const selActive = selected.filter((tc) => tc.status === 'active').length;
+  const selPaused = selected.filter(
+    (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
+  ).length;
+
+  const bulkUpdate = (
     predicate: (tc: TestCase) => boolean,
     patch: (tc: TestCase) => Partial<TestCase>,
   ) => {
     const targets = selected.filter(predicate);
     setSelectedKeys([]);
-    if (!targets.length) return;
-    const results = await Promise.allSettled(
-      targets.map((tc) =>
-        apiUpdateTest(
-          projectId,
-          tc.key,
-          vmToUpdateRequest({ ...tc, ...patch(tc) }),
-        ),
-      ),
-    );
-    if (results.some((r) => r.status === 'rejected'))
-      toast.error(t('Some tests could not be updated'));
-    invalidateAll();
-  };
-  // Bulk approve can't gather a schedule per test, so drafts land in `approved`.
-  const approveSelected = () => {
-    void bulkUpdate(
-      (tc) => tc.status === 'draft',
-      () => ({ status: 'approved' }),
-    );
-    message.success(t('Drafts approved'));
+    targets.forEach((tc) => updateTest({ ...tc, ...patch(tc) }));
   };
   const pauseSelected = () =>
-    void bulkUpdate(
+    bulkUpdate(
       (tc) => tc.status === 'active',
       () => ({ status: 'paused' }),
     );
   const resumeSelected = () =>
-    void bulkUpdate(
+    bulkUpdate(
       (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
       (tc) => ({ status: isScheduled(tc.schedule) ? 'active' : 'approved' }),
     );
-  const deleteSelected = async () => {
-    const keys = selectedKeys.map(String);
+  const deleteSelected = () => {
+    const testIds = selectedKeys.map(String);
     setSelectedKeys([]);
-    setOpenKey((k) => (k && keys.includes(k) ? null : k));
-    const results = await Promise.allSettled(
-      keys.map((k) => apiDeleteTest(projectId, k)),
+    setOpenKey((k) => (k && testIds.includes(k) ? null : k));
+    bulkMut.mutate(
+      { testIds, action: 'delete' },
+      { onError: () => toast.error(t('Failed to delete test')) },
     );
-    if (results.some((r) => r.status === 'rejected'))
-      toast.error(t('Failed to delete test'));
-    invalidateAll();
   };
 
   const runNow = (tc: TestCase) =>
-    message.success(`${tc.title} — ${t('run started, see Runs')}`);
+    triggerMut.mutate(tc.key, {
+      onSuccess: () =>
+        message.success(`${tc.title} — ${t('run started, see Runs')}`),
+      onError: () => toast.error(t('Failed to start run')),
+    });
 
   const faded = (n: number) => (
     <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
   );
   const statusOptions = [
-    {
-      value: 'all',
-      label: (
-        <span>
-          {t('All')}
-          {faded(tests.length)}
-        </span>
-      ),
-    },
-    {
-      value: 'draft',
-      label: (
-        <span>
-          {t('Drafts')}
-          {faded(draftCount)}
-        </span>
-      ),
-    },
+    { value: 'all', label: <span>{t('All')}{faded(allCount)}</span> },
+    { value: 'draft', label: <span>{t('Drafts')}{faded(draftCount)}</span> },
     {
       value: 'approved',
-      label: (
-        <span>
-          {t('Approved')}
-          {faded(approvedCount)}
-        </span>
-      ),
+      label: <span>{t('Approved')}{faded(approvedCount)}</span>,
     },
-    {
-      value: 'active',
-      label: (
-        <span>
-          {t('Active')}
-          {faded(activeCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'paused',
-      label: (
-        <span>
-          {t('Paused')}
-          {faded(pausedCount)}
-        </span>
-      ),
-    },
+    { value: 'active', label: <span>{t('Active')}{faded(activeCount)}</span> },
+    { value: 'paused', label: <span>{t('Paused')}{faded(pausedCount)}</span> },
   ];
 
   const rowMenu = (tc: TestCase) => {
@@ -388,7 +348,6 @@ function TestsTab() {
       if (tc.status === 'active')
         controls.push({ key: 'pause', label: t('Pause') });
       if (tc.status === 'paused') {
-        // no environment → nothing to run against; Resume unlocks once one is set
         const blocked = hasNoEnvironment(tc);
         controls.push({
           key: 'resume',
@@ -411,7 +370,12 @@ function TestsTab() {
         controls.push({ key: 'unschedule', label: t('Unschedule') });
       items = [
         ...controls,
-        { key: 'open', label: t('Settings') },
+        // the drawer opens straight into the review while one is pending
+        {
+          key: 'open',
+          label: needsReview(tc) ? t('Review changes') : t('Settings'),
+        },
+        { key: 'duplicate', label: t('Duplicate') },
         { type: 'divider' as const },
         { key: 'delete', label: t('Delete'), danger: true },
       ];
@@ -423,6 +387,7 @@ function TestsTab() {
         if (key === 'open') openRow(tc);
         else if (key === 'schedule') openSchedule(tc);
         else if (key === 'unschedule') unschedule(tc);
+        else if (key === 'duplicate') duplicateTest(tc);
         else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
         else if (key === 'resume')
           updateTest({
@@ -443,8 +408,16 @@ function TestsTab() {
       render: (title: string, tc) => (
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-medium truncate">{title}</span>
-          {tc.status === 'draft' && tc.isNew && (
-            <Tooltip title={t('New — not reviewed yet')}>
+          <VersionLabel version={tc.version} />
+          {/* a pending revision (or an unopened new draft) waits for the user */}
+          {(needsReview(tc) || (tc.status === 'draft' && tc.isNew)) && (
+            <Tooltip
+              title={
+                needsReview(tc)
+                  ? t('New version — not reviewed yet')
+                  : t('New — not reviewed yet')
+              }
+            >
               <span className="shrink-0 flex items-center">
                 <Badge color="var(--color-main)" />
               </span>
@@ -463,7 +436,6 @@ function TestsTab() {
       title: t('Environment'),
       dataIndex: 'envNames',
       width: 150,
-      sorter: true,
       showSorterTooltip: false,
       render: (envNames?: string[]) => {
         if (!envNames || envNames.length === 0)
@@ -487,7 +459,6 @@ function TestsTab() {
       title: t('Schedule'),
       dataIndex: 'schedule',
       width: 180,
-      sorter: true,
       showSorterTooltip: false,
       render: (_: unknown, tc) =>
         !isScheduled(tc.schedule) ? (
@@ -506,10 +477,9 @@ function TestsTab() {
     {
       title: t('Status'),
       dataIndex: 'status',
-      width: 110,
-      sorter: true,
+      width: 120,
       showSorterTooltip: false,
-      render: (status: TestLifecycle) => getStatusTag(status, t),
+      render: (_: unknown, tc) => getStatusTag(tc.status, t),
     },
     {
       title: '',
@@ -556,8 +526,9 @@ function TestsTab() {
     );
   }
 
-  // first-run / empty state (still show the drawer if a manual test is being created)
-  if (tests.length === 0 && !creating) {
+  // first-run / empty state — only when there are genuinely no tests (no filter active)
+  const noTests = total === 0 && statusTab === 'all' && !search;
+  if (noTests && !creating) {
     return (
       <div className="flex flex-col items-center text-center gap-3 py-16 px-4">
         <div className="w-12 h-12 rounded-full bg-gray-lightest flex items-center justify-center">
@@ -596,17 +567,11 @@ function TestsTab() {
           onChange={(v) => setStatusTab(v as StatusTab)}
           options={statusOptions}
         />
-        {/* selecting rows swaps the filters out for bulk actions */}
         {selectedKeys.length > 0 ? (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-disabled-text">
               {selectedKeys.length} {t('selected')}
             </span>
-            {selDrafts > 0 && (
-              <Button size="small" onClick={approveSelected}>
-                {t('Approve')} ({selDrafts})
-              </Button>
-            )}
             {selActive > 0 && (
               <Button size="small" onClick={pauseSelected}>
                 {t('Pause')} ({selActive})
@@ -620,11 +585,7 @@ function TestsTab() {
             <Button size="small" danger onClick={deleteSelected}>
               {t('Delete')} ({selectedKeys.length})
             </Button>
-            <Button
-              size="small"
-              type="text"
-              onClick={() => setSelectedKeys([])}
-            >
+            <Button size="small" type="text" onClick={() => setSelectedKeys([])}>
               {t('Clear')}
             </Button>
           </div>
@@ -658,8 +619,6 @@ function TestsTab() {
                 ...allTags.map((tag) => ({ value: tag, label: tag })),
               ]}
             />
-            {/* manual creation — the agent drafts most tests, but writing steps by
-                hand is easy enough to deserve a first-class button */}
             <Button
               size="small"
               type="primary"
@@ -672,22 +631,11 @@ function TestsTab() {
         )}
       </div>
 
-      {truncated && (
-        <div className="px-4 py-2 text-xs text-disabled-text border-b">
-          {t(
-            'Showing the first {{count}} tests — refine with search or filters.',
-            {
-              count: tests.length,
-            },
-          )}
-        </div>
-      )}
-
       <Table<TestCase>
         className="kai-table"
         rowKey="key"
         columns={columns}
-        dataSource={pageItems}
+        dataSource={tests}
         pagination={false}
         rowSelection={{
           selectedRowKeys: selectedKeys,
@@ -700,6 +648,7 @@ function TestsTab() {
         onChange={(_p, _f, sorter) => {
           const s = Array.isArray(sorter) ? sorter[0] : sorter;
           setSortBy({ field: s.field as string, order: s.order ?? undefined });
+          setPage(1);
         }}
         onRow={(tc) => ({
           onClick: (e) => {
@@ -717,19 +666,17 @@ function TestsTab() {
         locale={{ emptyText: t('No tests match these filters.') }}
       />
 
-      {visible.length > 0 && (
+      {total > 0 && (
         <FullPagination
           page={page}
           limit={PAGE_SIZE}
-          total={visible.length}
-          listLen={pageItems.length}
+          total={total}
+          listLen={tests.length}
           onPageChange={setPage}
           entity="tests"
         />
       )}
 
-      {/* one drawer instance; draft vs test is decided by the opened row's status. The
-          `key` remounts the drawer per opened test so its local draft state resets fresh. */}
       <DraftDrawer
         key={`draft-${openKey ?? 'none'}`}
         test={openTest?.status === 'draft' ? openTest : null}
@@ -739,9 +686,6 @@ function TestsTab() {
         onChange={updateTest}
         onRemove={removeTest}
       />
-      {/* one TestDrawer for both live tests and manual creation. Creating edits the
-          local placeholder (`draftTest`) and commits on "Create test"; otherwise it
-          edits the opened row live. */}
       <TestDrawer
         key={
           creating ? `test-new-${draftTest?.key}` : `test-${openKey ?? 'none'}`

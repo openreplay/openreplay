@@ -339,11 +339,14 @@ function NetworkPanel({
   reqs,
   startedAt,
   fillHeight,
+  onDownload,
 }: {
   reqs?: NetworkRequest[];
   startedAt?: number;
   /** fill the parent's fixed height (expand modal) — list/detail scroll inside */
   fillHeight?: boolean;
+  /** download the captured .HAR — omitted when the run captured none */
+  onDownload?: () => void;
 }) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState('all');
@@ -425,13 +428,13 @@ function NetworkPanel({
             );
           })}
         </div>
-        {/* TODO: no HAR export endpoint yet — see todo.md */}
         <Tooltip title={t('Download the captured network as a .HAR file')}>
           <Button
             size="small"
             icon={<Download size={14} />}
             className="shrink-0"
-            onClick={() => message.success(t('Downloading network.har…'))}
+            disabled={!onDownload}
+            onClick={onDownload}
           >
             {t('Download')} .HAR
           </Button>
