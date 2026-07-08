@@ -42,6 +42,30 @@ export default function MenuContent({
     return keys;
   }, [menu, isMenuItemActive]);
 
+  // antd inline menus don't auto-expand the submenu holding the selected
+  // item, so reveal parents of the active route (manual collapse still wins)
+  const [openKeys, setOpenKeys] = React.useState<string[]>([]);
+  const activeParents = React.useMemo(
+    () =>
+      menu.flatMap((category) =>
+        category?.hidden
+          ? []
+          : (category.items ?? [])
+              .filter((it: any) =>
+                (it.children ?? []).some((child: any) =>
+                  isMenuItemActive(child.key),
+                ),
+              )
+              .map((it: any) => it.key),
+      ),
+    [menu, isMenuItemActive],
+  );
+  React.useEffect(() => {
+    if (activeParents.length) {
+      setOpenKeys((prev) => Array.from(new Set([...prev, ...activeParents])));
+    }
+  }, [activeParents.join(',')]);
+
   const items: MenuProps['items'] = React.useMemo(() => {
     return menu.flatMap((category, idx) => {
       if (category?.hidden) return [];
@@ -177,6 +201,8 @@ export default function MenuContent({
       onClick={handleClick}
       style={{ marginTop: 8, border: 'none' }}
       selectedKeys={selectedKeys}
+      openKeys={openKeys}
+      onOpenChange={setOpenKeys}
       items={items}
     />
   );

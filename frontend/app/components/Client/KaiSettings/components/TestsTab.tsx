@@ -582,7 +582,7 @@ function TestsTab() {
               placeholder={t('Search tests')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              style={{ width: 200 }}
+              style={{ width: 170 }}
             />
             <Select
               size="small"
@@ -598,7 +598,7 @@ function TestsTab() {
               size="small"
               value={tagFilter}
               onChange={setTagFilter}
-              style={{ width: 130 }}
+              style={{ width: 120 }}
               options={[
                 { value: 'all', label: t('All tags') },
                 ...allTags.map((tag) => ({ value: tag, label: tag })),

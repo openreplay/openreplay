@@ -61,10 +61,6 @@ const ENV_NAMES = Array.from(
 const TAG_NAMES = Array.from(
   new Set(MOCK_RUNS.flatMap((r) => r.tags ?? [])),
 ).sort();
-// step versions the runs executed (no version recorded = V1)
-const VERSIONS = Array.from(
-  new Set(MOCK_RUNS.map((r) => r.version ?? 1)),
-).sort((a, b) => a - b);
 
 function RunsTab() {
   const { t } = useTranslation();
@@ -74,7 +70,6 @@ function RunsTab() {
   const [tagFilter, setTagFilter] = useState('all');
   const [resFilter, setResFilter] = useState('all');
   const [regionFilter, setRegionFilter] = useState('all');
-  const [versionFilter, setVersionFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [openKey, setOpenKey] = useState<string | null>(null);
 
@@ -82,7 +77,7 @@ function RunsTab() {
   // any filter change resets to page 1
   useEffect(() => {
     setPage(1);
-  }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter, versionFilter]);
+  }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter]);
 
   // a test drawer's "View all runs" shortcut lands here: adopt the test as the search
   // query (one-shot — clearing the search shows everything again)
@@ -124,10 +119,8 @@ function RunsTab() {
       arr = arr.filter((r) => (r.resolution ?? 'desktop') === resFilter);
     if (regionFilter !== 'all')
       arr = arr.filter((r) => r.region === regionFilter);
-    if (versionFilter !== 'all')
-      arr = arr.filter((r) => (r.version ?? 1) === Number(versionFilter));
     return arr;
-  }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter, versionFilter]);
+  }, [query, statusTab, envFilter, tagFilter, resFilter, regionFilter]);
 
   const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const rangeStart = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
@@ -285,7 +278,7 @@ function RunsTab() {
             placeholder={t('Search runs')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ width: 200 }}
+            style={{ width: 170 }}
           />
           <Select
             size="small"
@@ -301,7 +294,7 @@ function RunsTab() {
             size="small"
             value={tagFilter}
             onChange={setTagFilter}
-            style={{ width: 130 }}
+            style={{ width: 120 }}
             options={[
               { value: 'all', label: t('All tags') },
               ...TAG_NAMES.map((tag) => ({ value: tag, label: tag })),
@@ -311,7 +304,7 @@ function RunsTab() {
             size="small"
             value={resFilter}
             onChange={setResFilter}
-            style={{ width: 140 }}
+            style={{ width: 130 }}
             options={[
               { value: 'all', label: t('All viewports') },
               ...RESOLUTION_OPTIONS.map((o) => ({
@@ -324,24 +317,13 @@ function RunsTab() {
             size="small"
             value={regionFilter}
             onChange={setRegionFilter}
-            style={{ width: 140 }}
+            style={{ width: 130 }}
             options={[
               { value: 'all', label: t('All regions') },
               ...REGION_OPTIONS.map((o) => ({
                 value: o.value,
                 label: o.label,
               })),
-            ]}
-          />
-          {/* see the runs of one step version (no version recorded = V1) */}
-          <Select
-            size="small"
-            value={versionFilter}
-            onChange={setVersionFilter}
-            style={{ width: 120 }}
-            options={[
-              { value: 'all', label: t('All versions') },
-              ...VERSIONS.map((v) => ({ value: String(v), label: `v${v}` })),
             ]}
           />
         </div>

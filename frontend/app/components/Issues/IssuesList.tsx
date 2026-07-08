@@ -369,9 +369,6 @@ function IssuesList() {
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-lg">Issues</span>
-          <Tag color="#394DFE" style={{ borderRadius: 4, fontSize: 10, fontWeight: 700, lineHeight: '16px' }}>
-            BETA
-          </Tag>
           <Tooltip
             placement="bottom"
             title="Issues our agents found while reviewing session replays for this project, ranked by impact. Open one to read the journey and jump straight to the moment it happened, with no need to watch the full recording."
