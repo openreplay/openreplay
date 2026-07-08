@@ -19,16 +19,20 @@ import {
   TriangleAlert,
   XCircle,
 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
 
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
+import { getRunScreenshot } from '../../api';
+import { useProjectId, useRunHar, useTriggerRun } from '../../queries';
+import { harToNetworkRequests } from '../shared/adapters';
 import { ConsoleLog, NetworkRequest, RunData, TestStep } from '../shared/types';
 import {
   RESOLUTION_ICON,
+  VersionLabel,
   formatDuration,
   regionCountry,
   regionLabel,
@@ -44,10 +48,53 @@ interface Props {
   onClose: () => void;
 }
 
-// A step is worth a screenshot once it has actually executed.
-const hasShot = (s: TestStep) => s.status === 'passed' || s.status === 'failed';
+// A step is worth showing in the carousel once it captured a screenshot.
+const hasShot = (s: TestStep) => !!s.screenshot;
 
 const isNetError = (r: NetworkRequest) => r.status === 0 || r.status >= 400;
+
+/** One run screenshot, fetched as an authed blob → object URL (a bare authed path
+ *  can't be an <img src>). Falls back to a muted placeholder while loading / on error. */
+function RunShot({ runId, name }: { runId: string; name: string }) {
+  const { t } = useTranslation();
+  const projectId = useProjectId();
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    let obj: string | undefined;
+    setUrl(null);
+    setFailed(false);
+    getRunScreenshot(projectId, runId, name)
+      .then((blob) => {
+        if (!alive) return;
+        obj = URL.createObjectURL(blob);
+        setUrl(obj);
+      })
+      .catch(() => alive && setFailed(true));
+    return () => {
+      alive = false;
+      if (obj) URL.revokeObjectURL(obj);
+    };
+  }, [projectId, runId, name]);
+
+  if (url)
+    return (
+      <img
+        src={url}
+        alt={t('Run screenshot')}
+        className="max-w-full max-h-full object-contain"
+      />
+    );
+  return (
+    <div className="flex flex-col items-center gap-1 text-disabled-text">
+      <ImageIcon size={36} />
+      <span className="text-xs">
+        {failed ? t('Screenshot unavailable') : `${t('Loading')}…`}
+      </span>
+    </div>
+  );
+}
 
 function DevEmpty({ text, fill }: { text: string; fill?: boolean }) {
   return (
@@ -200,21 +247,27 @@ function ScreenshotsView({
             <XCircle size={12} /> {t('Failed')}
           </span>
         )}
-        <div className="flex flex-col items-center gap-1 text-disabled-text">
-          <ImageIcon size={36} />
-          <span className="text-xs">
-            {failed
-              ? t('Screenshot at failure')
-              : `${t('Step')} ${cur.i + 1} · ${t('screenshot')} ${safeShot + 1}`}
-          </span>
-        </div>
+        {curStep.screenshot ? (
+          <RunShot runId={run.key} name={curStep.screenshot} />
+        ) : (
+          <div className="flex flex-col items-center gap-1 text-disabled-text">
+            <ImageIcon size={36} />
+            <span className="text-xs">
+              {failed
+                ? t('Screenshot at failure')
+                : `${t('Step')} ${cur.i + 1}`}
+            </span>
+          </div>
+        )}
         {/* explicit image counter, bottom-right — clearly about screenshots, not steps */}
-        <span
-          className="absolute bottom-2 right-2 text-xs font-medium rounded px-1.5 py-0.5 bg-white/90 border text-gray-dark"
-          style={{ borderColor: 'var(--color-gray-light)' }}
-        >
-          {t('Screenshot')} {safeShot + 1} {t('of')} {shotCount}
-        </span>
+        {shotCount > 1 && (
+          <span
+            className="absolute bottom-2 right-2 text-xs font-medium rounded px-1.5 py-0.5 bg-white/90 border text-gray-dark"
+            style={{ borderColor: 'var(--color-gray-light)' }}
+          >
+            {t('Screenshot')} {safeShot + 1} {t('of')} {shotCount}
+          </span>
+        )}
         {onExpand && (
           <span className="absolute bottom-2 left-2 w-7 h-7 rounded bg-white/90 border shadow-sm flex items-center justify-center text-gray-dark opacity-0 group-hover:opacity-100 transition-opacity">
             <Maximize2 size={14} />
@@ -309,6 +362,25 @@ function RunDrawer({ run, open, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [modalTab, setModalTab] = useState<DevTab>('screenshots');
   const activityRef = useRef<HTMLDivElement>(null);
+  const triggerMut = useTriggerRun();
+  // the run's network comes from its streamed network.har (parsed into requests); the
+  // detail response carries no network of its own.
+  const { data: harText } = useRunHar(run?.key);
+  const network = useMemo(
+    () => (harText ? harToNetworkRequests(harText) : (run?.network ?? [])),
+    [harText, run],
+  );
+  const downloadHar = () => {
+    if (!harText) return;
+    const url = URL.createObjectURL(
+      new Blob([harText], { type: 'application/json' }),
+    );
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'network.har';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // a per-step "View …" link selects the tab and scrolls the Activity panel into view
   const jumpToActivity = (tab: DevTab) => {
@@ -338,10 +410,16 @@ function RunDrawer({ run, open, onClose }: Props) {
   const consoleErrors = (run.console ?? []).filter(
     (l) => l.level === 'error',
   ).length;
-  const netErrors = (run.network ?? []).filter(isNetError).length;
+  const netErrors = network.filter(isNetError).length;
 
-  const rerun = () =>
-    message.success(`${run.testName} — ${t('rerun started, see Runs')}`);
+  const rerun = () => {
+    if (!run.testId) return;
+    triggerMut.mutate(run.testId, {
+      onSuccess: () =>
+        message.success(`${run.testName} — ${t('rerun started, see Runs')}`),
+      onError: () => message.error(t('Failed to start run')),
+    });
+  };
 
   const renderStep = (step: TestStep, idx: number) => {
     // For a running run we can't know per-step status (we only know the run is
@@ -569,7 +647,29 @@ function RunDrawer({ run, open, onClose }: Props) {
     >
       {banner}
 
-      <Section title={`${t('Steps')} · ${total}`}>
+      {/* the runner's human result summary (Step N: PASS/FAIL … Overall: …) */}
+      {run.summary && (
+        <div className="px-5 py-3 border-b bg-white">
+          <div className="text-xs font-medium uppercase tracking-wide text-disabled-text mb-1">
+            {t('Result')}
+          </div>
+          <div className="text-sm text-gray-darkest whitespace-pre-line">
+            {run.summary}
+          </div>
+        </div>
+      )}
+
+      <Section
+        title={
+          // which step version this run executed — same chip as the tests table
+          <span className="flex items-center gap-1.5">
+            {t('Steps')}
+            <span className="text-gray-medium font-normal">·</span>
+            {total}
+            <VersionLabel version={run.version} always />
+          </span>
+        }
+      >
         {/* bounded like the test drawer — Activity stays reachable on long runs */}
         <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
           {run.steps.map((step, idx) => renderStep(step, idx))}
@@ -608,7 +708,11 @@ function RunDrawer({ run, open, onClose }: Props) {
             />
           )}
           {devTab === 'network' && (
-            <NetworkPanel reqs={run.network} startedAt={run.date} />
+            <NetworkPanel
+              reqs={network}
+              startedAt={run.date}
+              onDownload={harText ? downloadHar : undefined}
+            />
           )}
           {devTab === 'console' && <ConsoleView logs={run.console} />}
         </div>
@@ -646,9 +750,10 @@ function RunDrawer({ run, open, onClose }: Props) {
             {modalTab === 'screenshots' && <ScreenshotsView run={run} fill />}
             {modalTab === 'network' && (
               <NetworkPanel
-                reqs={run.network}
+                reqs={network}
                 startedAt={run.date}
                 fillHeight
+                onDownload={harText ? downloadHar : undefined}
               />
             )}
             {modalTab === 'console' && (
