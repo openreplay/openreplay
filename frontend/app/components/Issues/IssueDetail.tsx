@@ -657,7 +657,8 @@ function IssueDetail() {
             options={suggestions}
             onSelect={runSearch}
             listHeight={160} // ~5 rows visible, the rest by scroll
-            style={{ width: 440 }}
+            // aligns with the third card of the 3-column grid below (gap-4)
+            style={{ width: 'calc((100% - 2rem) / 3)', minWidth: 280 }}
           >
             <Input.Search
               size="small"

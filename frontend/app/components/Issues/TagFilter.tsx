@@ -5,7 +5,7 @@ import {
   Tag as TagIcon,
   ChevronDown,
   CircleUser,
-  Focus as FocusIcon,
+  Split,
   Globe,
 } from 'lucide-react';
 import type { IssueOrigin } from 'App/mstore/issuesStore';
@@ -16,8 +16,9 @@ import type { IssueOrigin } from 'App/mstore/issuesStore';
    happens in the panel, so nothing in the toolbar reflows.
 
    It also hosts the FOUND IN section — where an issue was surfaced (full traffic
-   or a focus) is an attribute of the issue, same species as its labels, and the
-   rows even wear it as a chip in the Tags column. Display stays visibility-only. */
+   or a traffic segment) is an attribute of the issue, same species as its tags,
+   and the rows even wear it as a chip in the Tags column. Display stays
+   visibility-only. */
 
 function CheckRow({
   on,
@@ -62,7 +63,7 @@ export default function TagFilter({
   allTags,
   labels,
   match,
-  focuses,
+  segments,
   origins,
   onToggle,
   onToggleOrigin,
@@ -72,9 +73,9 @@ export default function TagFilter({
   allTags: string[];
   labels: string[];
   match: 'all' | 'any';
-  /** focuses available as "found in" options; `mine` powers the aggregate
+  /** segments available as "found in" options; `mine` powers the aggregate
       "My segments" row */
-  focuses: { id: number; name: string; mine?: boolean }[];
+  segments: { id: number; name: string; mine?: boolean }[];
   origins: IssueOrigin[];
   onToggle: (t: string) => void;
   onToggleOrigin: (o: IssueOrigin) => void;
@@ -89,7 +90,7 @@ export default function TagFilter({
   const shown = allTags.filter((t) => t.toLowerCase().includes(ql));
   // aggregate "mine" shortcut over the segments I own (Mehdi 07-07): on when
   // every one of my segments is selected; a click toggles them as a set
-  const myIds = focuses.filter((f) => f.mine).map((f) => f.id);
+  const myIds = segments.filter((s) => s.mine).map((s) => s.id);
   const mineOn = myIds.length > 0 && myIds.every((id) => origins.includes(id));
   const toggleMine = () => {
     (mineOn ? myIds : myIds.filter((id) => !origins.includes(id))).forEach(
@@ -118,20 +119,20 @@ export default function TagFilter({
             My segments
           </CheckRow>
         )}
-        {focuses.map((f) => (
+        {segments.map((s) => (
           <CheckRow
-            key={f.id}
-            on={origins.includes(f.id)}
-            onClick={() => onToggleOrigin(f.id)}
-            icon={<FocusIcon size={14} style={{ color: 'var(--color-main)' }} />}
+            key={s.id}
+            on={origins.includes(s.id)}
+            onClick={() => onToggleOrigin(s.id)}
+            icon={<Split size={14} style={{ color: 'var(--color-main)' }} />}
           >
-            {f.name}
+            {s.name}
           </CheckRow>
         ))}
       </div>
 
       {sectionLabel(
-        'Labels',
+        'Tags',
         <Segmented
           size="small"
           value={match}

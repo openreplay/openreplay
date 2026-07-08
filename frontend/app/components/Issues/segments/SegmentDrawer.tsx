@@ -1,24 +1,24 @@
 import React from 'react';
-import { Button, Drawer, Input, Tooltip } from 'antd';
-import { Check, Info } from 'lucide-react';
+import { Alert, Button, Drawer, Input, Tooltip } from 'antd';
+import { Check, Info, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { searchStore, filterStore } from 'App/mstore';
 import { filterPool, MOCK_SESSION_POOL } from 'App/dev/mockSessions';
 import SessionFilters from 'Shared/SessionFilters';
-import type { Focus, FocusFilterSeed } from 'App/mstore/issuesStore';
+import type { TrafficSegment, SegmentFilterSeed } from 'App/mstore/issuesStore';
 
-/* The create/edit surface for a focus. The query editor is the LITERAL Sessions
-   omni-search (<SessionFilters/>, bound to the global searchStore) — identical
-   behavior by construction. While the drawer is open we borrow the searchStore:
-   its filters are snapshotted on open and restored on close, so the Sessions
-   page never notices. */
+/* The create/edit surface for a traffic segment. The query editor is the
+   LITERAL Sessions omni-search (<SessionFilters/>, bound to the global
+   searchStore) — identical behavior by construction. While the drawer is open
+   we borrow the searchStore: its filters are snapshotted on open and restored
+   on close, so the Sessions page never notices. */
 
 // how much the agent samples per day, project-wide (Mehdi: ~100 of ~2,000)
 const DAILY_TRAFFIC = 2000;
 
 /** serialize the live omni-search filters into a plain, re-hydratable shape */
-function serialize(filters: any[]): FocusFilterSeed[] {
+function serialize(filters: any[]): SegmentFilterSeed[] {
   return filters.map((f) => ({
     name: f.name,
     isEvent: !!f.isEvent,
@@ -29,7 +29,7 @@ function serialize(filters: any[]): FocusFilterSeed[] {
 }
 
 /** rebuild real catalog filters from seeds (the mockBootstrap findEvent pattern) */
-function hydrate(seeds: FocusFilterSeed[]): any[] {
+function hydrate(seeds: SegmentFilterSeed[]): any[] {
   return seeds
     .map((s) => {
       const found = filterStore.findEvent({
@@ -62,32 +62,36 @@ function summarize(filters: any[]): string {
 
 interface Props {
   open: boolean;
-  /** editing an existing focus; null = creating a new one */
-  focus: Focus | null;
+  /** editing an existing segment; null = creating a new one */
+  segment: TrafficSegment | null;
   onClose: () => void;
 }
 
-function FocusDrawer({ open, focus, onClose }: Props) {
+function SegmentDrawer({ open, segment, onClose }: Props) {
   const { issuesStore } = useStore();
   const [name, setName] = React.useState('');
   const [instructions, setInstructions] = React.useState('');
+  // instructions hidden behind a blue "Add instructions" link (Mehdi 07-07);
+  // auto-expanded when editing a segment that already has some
+  const [showInstructions, setShowInstructions] = React.useState(false);
   // bump to re-read the live estimate as the user edits the query
   const [, setTick] = React.useState(0);
   const snapshot = React.useRef<any[] | null>(null);
 
-  // borrow the searchStore while open: snapshot → load this focus's query (or
-  // empty) → hand the keys back on close
+  // borrow the searchStore while open: snapshot → load this segment's query
+  // (or empty) → hand the keys back on close
   React.useEffect(() => {
     if (open) {
       snapshot.current = searchStore.instance.filters;
-      searchStore.edit({ filters: focus ? hydrate(focus.seeds) : [] });
-      setName(focus?.name ?? '');
-      setInstructions(focus?.instructions ?? '');
+      searchStore.edit({ filters: segment ? hydrate(segment.seeds) : [] });
+      setName(segment?.name ?? '');
+      setInstructions(segment?.instructions ?? '');
+      setShowInstructions(Boolean(segment?.instructions));
     } else if (snapshot.current) {
       searchStore.edit({ filters: snapshot.current });
       snapshot.current = null;
     }
-  }, [open, focus]);
+  }, [open, segment]);
 
   // live estimate: run the query over the same in-memory pool the Sessions page
   // searches, scaled to the project's daily traffic
@@ -102,10 +106,10 @@ function FocusDrawer({ open, focus, onClose }: Props) {
 
   const save = () => {
     const live = searchStore.instance.filters;
-    issuesStore.saveFocus({
-      id: focus?.id,
-      name: name.trim() || 'Untitled focus',
-      active: focus?.active ?? true,
+    issuesStore.saveSegment({
+      id: segment?.id,
+      name: name.trim() || 'Untitled segment',
+      active: segment?.active ?? true,
       seeds: serialize(live),
       summary: summarize(live),
       trafficPct: pct,
@@ -120,7 +124,7 @@ function FocusDrawer({ open, focus, onClose }: Props) {
       open={open}
       onClose={onClose}
       placement="right"
-      title={focus ? 'Edit focus' : 'New focus'}
+      title={segment ? 'Edit segment' : 'New segment'}
       styles={{ wrapper: { width: 560 }, footer: { padding: '12px 24px' } }}
       footer={
         <div className="flex items-center justify-between">
@@ -128,7 +132,7 @@ function FocusDrawer({ open, focus, onClose }: Props) {
             Cancel
           </Button>
           <Button type="primary" icon={<Check size={15} />} onClick={save}>
-            {focus ? 'Save focus' : 'Create focus'}
+            {segment ? 'Save segment' : 'Create segment'}
           </Button>
         </div>
       }
@@ -139,7 +143,7 @@ function FocusDrawer({ open, focus, onClose }: Props) {
             Name
           </span>
           <Input
-            autoFocus={!focus}
+            autoFocus={!segment}
             placeholder="e.g. Billing & checkout"
             value={name}
             maxLength={60}
@@ -150,9 +154,9 @@ function FocusDrawer({ open, focus, onClose }: Props) {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium" style={{ color: 'var(--color-gray-darkest)' }}>
-              What to watch
+              What to capture
             </span>
-            <Tooltip title="Define the portion of traffic with the same events and filters as the Sessions search. The agent concentrates its analysis on sessions matching this.">
+            <Tooltip title="Define the portion of traffic with the same events and filters as the Sessions search. In segment capture, the agent records only sessions matching active segments.">
               <span className="flex items-center cursor-help" style={{ color: 'var(--color-gray-medium)' }}>
                 <Info size={13} />
               </span>
@@ -162,44 +166,50 @@ function FocusDrawer({ open, focus, onClose }: Props) {
           <SessionFilters />
         </div>
 
-        {/* live share of traffic this query matches */}
-        <div
-          className="text-sm rounded-lg border px-3 py-2"
-          style={{
-            borderColor: 'var(--color-gray-light)',
-            background: 'var(--color-gray-lightest)',
-            color: 'var(--color-gray-dark)',
-          }}
-        >
-          {narrowed ? (
-            <>
-              ≈ <span className="font-medium">{pct}%</span> of your traffic ·{' '}
-              <span className="font-medium">~{perDay.toLocaleString()}</span>{' '}
-              sessions analysed per day
-            </>
-          ) : (
-            <>Add events or filters to narrow the focus — right now it matches all traffic.</>
-          )}
-        </div>
+        {/* the estimate (Mehdi 07-07: "make it nice") — the app's standard
+            info banner (antd Alert, as in NoSessionsMessage), uniform text */}
+        <Alert
+          type="info"
+          showIcon
+          className="border-transparent rounded-lg"
+          title={
+            narrowed
+              ? `Captures ≈${pct}% of your traffic · ~${perDay.toLocaleString()} sessions analysed per day`
+              : 'Add events or filters to narrow the segment — right now it matches all traffic.'
+          }
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium" style={{ color: 'var(--color-gray-darkest)' }}>
-            Instructions{' '}
-            <span className="font-normal" style={{ color: 'var(--color-gray-medium)' }}>
-              (optional)
+        {showInstructions ? (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium" style={{ color: 'var(--color-gray-darkest)' }}>
+              Instructions{' '}
+              <span className="font-normal" style={{ color: 'var(--color-gray-medium)' }}>
+                (optional)
+              </span>
             </span>
-          </span>
-          <Input.TextArea
-            rows={3}
-            maxLength={500}
-            placeholder='Extra context for the agent — e.g. "pay special attention to coupon and card-validation errors"'
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
-          />
-        </div>
+            <Input.TextArea
+              rows={3}
+              maxLength={500}
+              autoFocus={!segment?.instructions}
+              placeholder='Extra context for the agent — e.g. "pay special attention to coupon and card-validation errors"'
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+            />
+          </div>
+        ) : (
+          <Button
+            type="link"
+            size="small"
+            icon={<Plus size={14} />}
+            onClick={() => setShowInstructions(true)}
+            className="self-start px-0!"
+          >
+            Add instructions
+          </Button>
+        )}
       </div>
     </Drawer>
   );
 }
 
-export default observer(FocusDrawer);
+export default observer(SegmentDrawer);
