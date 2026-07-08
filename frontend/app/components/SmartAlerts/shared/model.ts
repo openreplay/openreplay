@@ -32,6 +32,8 @@ export interface Issue {
   lastSeen: number | null;
   /** minutes since `lastSeen`, derived for the relative "last seen" labels */
   seenAgoMin: number | null;
+  /** which focus surfaced this issue (NOT-YET-BACKED) — absent = full traffic */
+  focusId?: number;
   /** issue-level problem text — only populated from GET …/issue (detail/player) */
   problem: string;
   /** suggested fix — still not provided by the backend (see TODO.md); the UI

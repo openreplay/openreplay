@@ -17,10 +17,13 @@ import type { TableColumnsType, TablePaginationConfig } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import {
   Album,
+  AlertTriangle,
   ArrowUpRight,
   ChevronDown,
   Eye,
   EyeOff,
+  Focus as FocusIcon,
+  Globe,
   Info,
   MoreVertical,
   Pencil,
@@ -39,12 +42,13 @@ import { smartIssueDetails, withSiteId } from 'App/saasComponents';
 import FullPagination from 'Shared/FullPagination';
 import SelectDateRange from 'Shared/SelectDateRange';
 
-import type { SortDir } from '../api';
+import type { IssueOrigin, SortDir } from '../api';
 import {
   CAT_COLOR,
   CAT_ICON,
   CAT_ORDER,
   type CategoryName,
+  CriticalReasonPanel,
   CriticalToggle,
   HideIssueModal,
   ImpactGauge,
@@ -57,6 +61,7 @@ import {
 } from '../shared';
 import type { SortMode } from '../shared/model';
 import TagFilter from './TagFilter';
+import FocusButton from './focus/FocusButton';
 
 /* antd header-sort order -> our SortMode, per sortable column. */
 const SORT_FIELD: Record<string, SortMode> = {
@@ -74,6 +79,7 @@ function IssuesList() {
 
   const [dispOpen, setDispOpen] = React.useState(false);
   const [hideTarget, setHideTarget] = React.useState<Issue | null>(null);
+  const [critTarget, setCritTarget] = React.useState<Issue | null>(null);
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
   const [period, setPeriod] = React.useState<any>(
     Period({ rangeName: LAST_7_DAYS }),
@@ -144,33 +150,55 @@ function IssuesList() {
     {
       title: t('Issue'),
       dataIndex: 'head',
-      render: (head: string, r: Issue) => (
-        <div className="flex items-center gap-2 min-w-0">
-          <CriticalToggle
-            critical={r.critical}
-            reasons={issuesStore.reasons.criticality}
-            stopPropagation
-            onSet={(val, reasons, note) =>
-              issuesStore.setCritical(r.id, val, reasons, note)
-            }
-          />
-          <span className="truncate font-medium color-gray-darkest">
-            {head}
-          </span>
-          {r.hidden && (
-            <Tooltip title={t('Hidden')}>
-              <Tag className="rounded">{t('Hidden')}</Tag>
-            </Tooltip>
-          )}
-          {issuesStore.viewingDeleted && (
-            <Tooltip title={t('Deleted')}>
-              <Tag color="red" className="rounded">
-                {t('Deleted')}
-              </Tag>
-            </Tooltip>
-          )}
-        </div>
-      ),
+      render: (head: string, r: Issue) => {
+        // origin chip only makes sense once focuses exist (NOT-YET-BACKED)
+        const focus = issuesStore.focusById(r.focusId);
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <CriticalToggle
+              state={issuesStore.critState(r.id)}
+              onMark={() => issuesStore.markMine(r.id)}
+              onRemoveMine={() => issuesStore.removeMine(r.id)}
+              stopPropagation
+            />
+            {issuesStore.focuses.length > 0 && (
+              <Tooltip
+                title={
+                  focus
+                    ? t('Found in focus: {{name}}', { name: focus.name })
+                    : t('Found in full traffic')
+                }
+              >
+                <span
+                  className="inline-flex items-center shrink-0"
+                  style={{
+                    color: focus
+                      ? 'var(--color-main)'
+                      : 'var(--color-gray-medium)',
+                  }}
+                >
+                  {focus ? <FocusIcon size={13} /> : <Globe size={13} />}
+                </span>
+              </Tooltip>
+            )}
+            <span className="truncate font-medium color-gray-darkest">
+              {head}
+            </span>
+            {r.hidden && (
+              <Tooltip title={t('Hidden')}>
+                <Tag className="rounded">{t('Hidden')}</Tag>
+              </Tooltip>
+            )}
+            {issuesStore.viewingDeleted && (
+              <Tooltip title={t('Deleted')}>
+                <Tag color="red" className="rounded">
+                  {t('Deleted')}
+                </Tag>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: t('Tags'),
@@ -232,6 +260,17 @@ function IssuesList() {
             label: t('Open'),
           },
           { key: 'rename', icon: <Pencil size={14} />, label: t('Rename') },
+          // removing the project-wide (agent) flag lives here — the triangle
+          // only cycles my personal layer
+          ...(issuesStore.agentCritical(r.id)
+            ? [
+                {
+                  key: 'notCritical',
+                  icon: <AlertTriangle size={14} />,
+                  label: t('Mark as not critical'),
+                },
+              ]
+            : []),
           { type: 'divider' as const },
           ...(visibility === 'deleted'
             ? [
@@ -270,6 +309,7 @@ function IssuesList() {
                 domEvent.stopPropagation();
                 if (key === 'detail') openDetail(r.id);
                 else if (key === 'rename') setRenameTarget(r);
+                else if (key === 'notCritical') setCritTarget(r);
                 else if (key === 'hide') setHideTarget(r);
                 else if (key === 'unhide') issuesStore.unhide(r.id);
                 else if (key === 'restore') issuesStore.restore(r.id);
@@ -319,10 +359,12 @@ function IssuesList() {
   };
 
   const dispCount =
-    (issuesStore.critOnly ? 1 : 0) + (visibility === 'hidden' ? 1 : 0);
+    (issuesStore.critOnly ? 1 : 0) +
+    (visibility === 'hidden' ? 1 : 0) +
+    (issuesStore.relevantToMe ? 1 : 0);
 
   const displayContent = (
-    <div className="flex flex-col gap-2 p-1" style={{ minWidth: 170 }}>
+    <div className="flex flex-col gap-2 p-1" style={{ minWidth: 190 }}>
       <Checkbox
         checked={issuesStore.critOnly}
         onChange={(e) => issuesStore.setCritOnly(e.target.checked)}
@@ -336,6 +378,15 @@ function IssuesList() {
         }
       >
         {t('Hidden')}
+      </Checkbox>
+      {/* "what's mine": my criticals ∪ my segments' finds (Mehdi 07-07),
+          labeled around critical per Gabriel 07-07 */}
+      <Checkbox
+        checked={issuesStore.relevantToMe}
+        onChange={(e) => issuesStore.setRelevantToMe(e.target.checked)}
+      >
+        {t('Critical to me')}
+        {issuesStore.relevantCount ? ` (${issuesStore.relevantCount})` : ''}
       </Checkbox>
     </div>
   );
@@ -406,10 +457,22 @@ function IssuesList() {
               allTags={issuesStore.allTags}
               labels={issuesStore.labels}
               match={issuesStore.match}
+              focuses={issuesStore.focuses.map((f) => ({
+                id: f.id,
+                name: f.name,
+                mine: f.mine,
+              }))}
+              origins={issuesStore.origins}
               onToggle={issuesStore.toggleLabel}
+              onToggleOrigin={issuesStore.toggleOrigin}
               onSetMatch={issuesStore.setMatch}
-              onClear={() => issuesStore.setLabels([])}
+              onClear={() => {
+                issuesStore.setLabels([]);
+                issuesStore.clearOrigins();
+              }}
             />
+
+            <FocusButton />
 
             <Popover
               open={dispOpen}
@@ -447,7 +510,14 @@ function IssuesList() {
             `cursor-pointer${r.hidden || visibility === 'deleted' ? ' opacity-60' : ''}`
           }
           onRow={(r) => ({ onClick: () => openDetail(r.id) })}
-          locale={{ emptyText: t('No issues match these filters.') }}
+          locale={{
+            emptyText:
+              issuesStore.relevantToMe && issuesStore.total === 0
+                ? t(
+                    'Nothing relevant yet — mark issues critical for you, or create a traffic segment, and they’ll show up here.',
+                  )
+                : t('No issues match these filters.'),
+          }}
         />
       </div>
 
@@ -480,6 +550,35 @@ function IssuesList() {
           setRenameTarget(null);
         }}
       />
+
+      {/* project-wide critical removal — teaching reason (the triangle only
+          touches my personal layer) */}
+      <Modal
+        title={t('Mark as not critical')}
+        open={critTarget != null}
+        onCancel={() => setCritTarget(null)}
+        footer={null}
+        width={340}
+      >
+        {critTarget && (
+          <div className="flex flex-col gap-3">
+            <p className="color-gray-dark m-0">
+              {t(
+                '“{{head}}” will no longer be critical for anyone. Your reason helps the agent learn.',
+                { head: critTarget.head },
+              )}
+            </p>
+            <CriticalReasonPanel
+              reasons={issuesStore.reasons.criticality}
+              onCancel={() => setCritTarget(null)}
+              onConfirm={(reasons, note) => {
+                issuesStore.setCritical(critTarget.id, false, reasons, note);
+                setCritTarget(null);
+              }}
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
