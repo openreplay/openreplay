@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
@@ -76,6 +77,12 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType, contentE
 		},
 		Tags: s.tags,
 	})
+	if err != nil {
+		var respErr *azcore.ResponseError
+		if errors.As(err, &respErr) && objectstorage.IsFatalStatusCode(respErr.StatusCode) {
+			return &objectstorage.FatalUploadError{StatusCode: respErr.StatusCode, Cause: err}
+		}
+	}
 	return err
 }
 

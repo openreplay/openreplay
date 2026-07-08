@@ -99,6 +99,11 @@ func main() {
 			srv.Wait()
 			consumer.Close()
 			os.Exit(0)
+		case err := <-srv.FatalCh():
+			log.Error(ctx, "fatal upload error, shutting down: %v", err)
+			srv.Wait()
+			consumer.Close()
+			os.Exit(1)
 		case <-counterTick:
 			log.Info(ctx, "count: %d", counter)
 			counter = 0

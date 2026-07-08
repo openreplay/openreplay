@@ -24,6 +24,7 @@ type Uploader interface {
 	Upload(ctx context.Context, sessionID uint64, encryptionKey string) error
 	Clean(ctx context.Context, sessionID uint64) error
 	Wait()
+	FatalCh() <-chan error
 }
 
 type uploadTask struct {
@@ -39,6 +40,7 @@ type uploaderImpl struct {
 	objStorage   objectstorage.ObjectStorage
 	uploaderPool pool.WorkerPool
 	metrics      storageMetrics.Storage
+	fatalCh      chan error
 }
 
 func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, metrics storageMetrics.Storage) (Uploader, error) {
@@ -53,6 +55,7 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 		log:        log,
 		objStorage: objStorage,
 		metrics:    metrics,
+		fatalCh:    make(chan error, 1),
 	}
 	s.uploaderPool = pool.NewPool(cfg.NumberOfWorkers, cfg.NumberOfWorkers, s.uploadSession)
 	return s, nil
@@ -129,6 +132,15 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 		u.metrics.RecordSessionUploadDuration(float64(time.Since(start).Milliseconds()), fileType, mode)
 		if err == nil {
 			u.metrics.IncreaseStorageTotalSessions(fileType)
+		}
+		if err != nil {
+			var fatalErr *objectstorage.FatalUploadError
+			if errors.As(err, &fatalErr) {
+				select {
+				case u.fatalCh <- err:
+				default:
+				}
+			}
 		}
 		return err
 	}
@@ -214,6 +226,10 @@ func (u *uploaderImpl) Clean(ctx context.Context, sessionID uint64) (err error) 
 
 func (u *uploaderImpl) Wait() {
 	u.uploaderPool.Pause()
+}
+
+func (u *uploaderImpl) FatalCh() <-chan error {
+	return u.fatalCh
 }
 
 func (u *uploaderImpl) streamZstdToS3(name, srcPath string) error {

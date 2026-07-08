@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	_session "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -93,6 +94,13 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType, contentE
 		ContentEncoding: encoding,
 		Tagging:         s.fileTag,
 	})
+	if err != nil {
+		if reqErr, ok := err.(awserr.RequestFailure); ok {
+			if objectstorage.IsFatalStatusCode(reqErr.StatusCode()) {
+				return &objectstorage.FatalUploadError{StatusCode: reqErr.StatusCode(), Cause: err}
+			}
+		}
+	}
 	return err
 }
 
