@@ -1,0 +1,27 @@
+package assist
+
+import (
+	"errors"
+
+	config "openreplay/backend/internal/config/api"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/sessionmanager"
+)
+
+func NewAssist(log logger.Logger, cfg *config.Config, pgconn pool.Pool, redisClient *redis.Client, projects projects.Projects) (Assist, error) {
+	if redisClient == nil || redisClient.Redis == nil {
+		return nil, errors.New("redis connection is required for assist")
+	}
+	sessManager, err := sessionmanager.New(log, cfg.AssistCacheTTL, cfg.AssistBatchSize, cfg.AssistScanSize, redisClient.Redis)
+	if err != nil {
+		return nil, err
+	}
+	sessManager.Start()
+	if _, err := NewAssistStats(log, pgconn, redisClient.Redis); err != nil {
+		return nil, err
+	}
+	return newDirect(log, cfg, projects, sessManager), nil
+}

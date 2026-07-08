@@ -22,12 +22,13 @@ import (
 	"openreplay/backend/pkg/analytics/users"
 	usersAPI "openreplay/backend/pkg/analytics/users/api"
 	"openreplay/backend/pkg/api_key"
-	"openreplay/backend/pkg/assist/proxy"
+	"openreplay/backend/pkg/assist"
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/conditions"
 	conditionsApi "openreplay/backend/pkg/conditions/projects_api"
 	chdb "openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/events"
 	eventAPI "openreplay/backend/pkg/events/api"
 	"openreplay/backend/pkg/favorite"
@@ -73,7 +74,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, redisClient *redis.Client, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 
 	reqValidator := validator.New()
@@ -85,9 +86,9 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, fmt.Errorf("failed to create view service: %s", err)
 	}
 
-	assistProxy, err := proxy.New(log, cfg, projects)
+	assistService, err := assist.NewAssist(log, cfg, pgconn, redisClient, projects)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create assist proxy: %s", err)
+		return nil, fmt.Errorf("failed to create assist service: %s", err)
 	}
 
 	files, err := service.New(log, cfg, objStore, canvases)
@@ -99,7 +100,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	if err != nil {
 		return nil, fmt.Errorf("can't init session service: %s", err)
 	}
-	sessionHandlers, err := sessionAPI.NewHandlers(log, cfg, responser, sessionService, assistProxy, files)
+	sessionHandlers, err := sessionAPI.NewHandlers(log, cfg, responser, sessionService, assistService, files)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +162,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	apiKeyHandlers, err := api_key.NewHandlers(log, requestHandler, projects, usersService, analyticsEventsService, jobsService, assistProxy, cfg)
+	apiKeyHandlers, err := api_key.NewHandlers(log, requestHandler, projects, usersService, analyticsEventsService, jobsService, assistService, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	}
 
 	filtersCatalogService := filtersCatalog.New(log, chconn, projects, savedSearchesService, tagAdminService)
-	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects, assistProxy)
+	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects, assistService)
 	if err != nil {
 		return nil, err
 	}

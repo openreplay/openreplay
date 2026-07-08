@@ -234,8 +234,8 @@ jobs:
                     cd backend
                     foss_build_args="nil $service"
                     ee_build_args="ee $service"
-                    # EE-only services: no FOSS build
-                    [[ $service == "assist-api" ]] && is_ee_only=true
+                    # EE-only services (not in backend/cmd): no FOSS build
+                    grep -qx "$service" "$BACKEND_SERVICES_FILE" || is_ee_only=true
                 else
                     # Non-backend service
                     case "$service" in
@@ -259,7 +259,7 @@ jobs:
                 local version
                 version=$(image_version "$service")
 
-                # Build FOSS and EE versions (skip FOSS for assist-api)
+                # Build FOSS and EE versions (skip FOSS for EE-only services)
                 if [[ $is_ee_only == false ]]; then
                     build_service "$service" "$version" "$foss_build_args" "$build_script"
                     build_service "$service" "$version" "$foss_build_args" "$build_script" "$DOCKER_REPO_ARM" "arm64"

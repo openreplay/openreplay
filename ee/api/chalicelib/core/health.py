@@ -22,7 +22,7 @@ def app_connection_string(name, port, path):
 HEALTH_ENDPOINTS = {
     "alerts": app_connection_string("alerts-openreplay", 8888, "health"),
     "assets": app_connection_string("assets-openreplay", 8888, "metrics"),
-    "assist": app_connection_string("assist-api-openreplay", 8888, "metrics"),
+    "assist": app_connection_string("api-openreplay", 8888, "metrics"),
     "chalice": app_connection_string("chalice-openreplay", 8888, "metrics"),
     "db": app_connection_string("db-openreplay", 8888, "metrics"),
     "ender": app_connection_string("ender-openreplay", 8888, "metrics"),

@@ -23,7 +23,7 @@ type Config struct {
 	SpotsDir              string        `env:"SPOTS_DIR,default=spots"`
 	ProjectExpiration     time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	MinimumStreamDuration int           `env:"MINIMUM_STREAM_DURATION,default=15000"` // 15s
-	AssistUrl             string        `env:"ASSIST_URL,required"`
+	AssistUrl             string        `env:"ASSIST_URL"`
 	AssistKey             string        `env:"ASSIST_KEY,default=assist-secret-key"`
 	AssistLiveSuffix      string        `env:"ASSIST_LIVE_SUFFIX,default=/sockets-live"`
 	AssistListSuffix      string        `env:"ASSIST_LIST_SUFFIX,default=/sockets-list"`
@@ -34,6 +34,9 @@ type Config struct {
 	AssistJwtExpiration   int64         `env:"ASSIST_JWT_EXPIRATION,default=144000"`
 	AssistSecret          string        `env:"ASSIST_SECRET"`
 	AssistTTL             int           `env:"ASSIST_TTL,default=48"`
+	AssistCacheTTL        time.Duration `env:"REDIS_CACHE_TTL,default=5s"`
+	AssistBatchSize       int           `env:"REDIS_BATCH_SIZE,default=1000"`
+	AssistScanSize        int64         `env:"REDIS_SCAN_SIZE,default=1000"`
 	WorkerID              uint16
 }
 

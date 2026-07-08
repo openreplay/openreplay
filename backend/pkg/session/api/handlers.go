@@ -7,7 +7,7 @@ import (
 	"time"
 
 	sessionCfg "openreplay/backend/internal/config/api"
-	"openreplay/backend/pkg/assist/proxy"
+	"openreplay/backend/pkg/assist"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/replays/service"
 	"openreplay/backend/pkg/server/api"
@@ -19,11 +19,11 @@ type handlersImpl struct {
 	jsonSizeLimit int64
 	responser     api.Responser
 	sessions      session.Service
-	assist        proxy.Assist
+	assist        assist.Assist
 	files         service.Files
 }
 
-func NewHandlers(log logger.Logger, cfg *sessionCfg.Config, responser api.Responser, sessions session.Service, assist proxy.Assist, files service.Files) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *sessionCfg.Config, responser api.Responser, sessions session.Service, assist assist.Assist, files service.Files) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		jsonSizeLimit: cfg.JsonSizeLimit,
@@ -73,7 +73,7 @@ func (e *handlersImpl) getReplay(w http.ResponseWriter, r *http.Request) {
 		e.log.Info(r.Context(), "stored session not found, checking assist for live session")
 		liveData, liveErr := e.assist.GetLiveSessionByID(projID, sessID)
 		if liveErr != nil {
-			if errors.Is(liveErr, proxy.ErrNoLiveSession) {
+			if errors.Is(liveErr, assist.ErrNoLiveSession) {
 				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, errors.New("session not found"), startTime, r.URL.Path, bodySize)
 				return
 			}
@@ -116,7 +116,7 @@ func (e *handlersImpl) getLiveSessions(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &proxy.GetLiveSessionsRequest{}
+	req := &assist.GetLiveSessionsRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -156,7 +156,7 @@ func (e *handlersImpl) getLiveSession(w http.ResponseWriter, r *http.Request) {
 
 	data, err := e.assist.GetLiveSessionByID(projID, sessionID)
 	if err != nil {
-		if !errors.Is(err, proxy.ErrNoLiveSession) {
+		if !errors.Is(err, assist.ErrNoLiveSession) {
 			e.log.Error(r.Context(), "Error getting live session: %v", err)
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("failed to load session"), startTime, r.URL.Path, bodySize)
 			return

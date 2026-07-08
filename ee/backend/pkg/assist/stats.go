@@ -1,4 +1,4 @@
-package service
+package assist
 
 import (
 	"context"
@@ -99,7 +99,7 @@ func (as *assistStatsImpl) loadData() {
 		if errors.Is(err, redis.Nil) {
 			as.log.Debug(ctx, "No data to load from redis")
 		} else {
-			as.log.Error(ctx, "Failed to load data from redis: ", err)
+			as.log.Error(ctx, "Failed to load data from redis: %v", err)
 		}
 		return
 	}
@@ -113,7 +113,7 @@ func (as *assistStatsImpl) loadData() {
 		e := &AssistStatsEvent{}
 		err := json.Unmarshal([]byte(event), &e)
 		if err != nil {
-			as.log.Error(ctx, "Failed to unmarshal event: ", err)
+			as.log.Error(ctx, "Failed to unmarshal event: %v", err)
 			continue
 		}
 		switch e.EventState {
@@ -125,7 +125,7 @@ func (as *assistStatsImpl) loadData() {
 			as.log.Warn(ctx, "Unknown event type: %s", e.EventType)
 		}
 		if err != nil {
-			as.log.Error(ctx, "Failed to process event: ", err)
+			as.log.Error(ctx, "Failed to process event: %v", err)
 			continue
 		}
 	}

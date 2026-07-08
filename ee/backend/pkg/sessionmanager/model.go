@@ -35,3 +35,8 @@ type Filter struct {
 	Operator FilterOperator
 	Source   string // for metadata only
 }
+
+type AutocompleteEntry struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
