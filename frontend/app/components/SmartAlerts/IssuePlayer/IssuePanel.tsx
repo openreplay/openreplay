@@ -5,12 +5,12 @@ import { useTranslation } from 'react-i18next';
 
 import {
   CategoryLabel,
+  type CritState,
   CriticalToggle,
   Eyebrow,
   ImpactGauge,
   type Issue,
   type IssueSessionCard,
-  PLAYER_POPUP_Z,
   impactLevel,
 } from '../shared';
 import IssueContextTabs from './IssueContextTabs';
@@ -21,14 +21,16 @@ export default function IssuePanel({
   issue,
   card,
   onClose,
-  onSetCritical,
-  criticalReasons,
+  critState,
+  onMarkCritical,
+  onRemoveMineCritical,
 }: {
   issue: Issue;
   card?: IssueSessionCard;
   onClose: () => void;
-  onSetCritical: (val: boolean, reasons?: string[], note?: string) => void;
-  criticalReasons?: string[];
+  critState: CritState;
+  onMarkCritical: () => void;
+  onRemoveMineCritical: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -75,10 +77,9 @@ export default function IssuePanel({
             </Tooltip>
             <span className="color-gray-light">|</span>
             <CriticalToggle
-              critical={issue.critical}
-              onSet={onSetCritical}
-              reasons={criticalReasons}
-              zIndex={PLAYER_POPUP_Z}
+              state={critState}
+              onMark={onMarkCritical}
+              onRemoveMine={onRemoveMineCritical}
             />
           </div>
         </div>

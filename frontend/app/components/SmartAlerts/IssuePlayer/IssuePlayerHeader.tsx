@@ -25,6 +25,7 @@ import MetaItem from 'Shared/SessionItem/MetaItem';
 import {
   CAT_AVATAR_COLOR,
   CAT_ICON,
+  type CritState,
   CriticalToggle,
   type Issue,
   type IssueSessionCard,
@@ -52,8 +53,9 @@ export default function IssuePlayerHeader({
   tab,
   setTab,
   onBack,
-  onSetCritical,
-  criticalReasons,
+  critState,
+  onMarkCritical,
+  onRemoveMineCritical,
   prevId,
   nextId,
   onGoSession,
@@ -72,8 +74,9 @@ export default function IssuePlayerHeader({
   tab: SideTab;
   setTab: (t: SideTab) => void;
   onBack: () => void;
-  onSetCritical: (val: boolean, reasons?: string[], note?: string) => void;
-  criticalReasons?: string[];
+  critState: CritState;
+  onMarkCritical: () => void;
+  onRemoveMineCritical: () => void;
   prevId: string | null;
   nextId: string | null;
   onGoSession: (sid: string) => void;
@@ -167,10 +170,9 @@ export default function IssuePlayerHeader({
         <div className="flex items-center gap-2 min-w-0">
           {issue && (
             <CriticalToggle
-              critical={issue.critical}
-              onSet={onSetCritical}
-              reasons={criticalReasons}
-              zIndex={PLAYER_POPUP_Z}
+              state={critState}
+              onMark={onMarkCritical}
+              onRemoveMine={onRemoveMineCritical}
             />
           )}
           <Tooltip title={variation}>

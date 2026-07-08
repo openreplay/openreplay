@@ -1,19 +1,28 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import {
+  type Focus,
+  type IssueOrigin,
   type LabelsMatch,
   type Reasons,
   type SortDir,
   type Visibility,
+  addMyCritical,
+  deleteFocus as apiDeleteFocus,
+  saveFocus as apiSaveFocus,
   deleteIssue,
+  getFocuses,
   getIssue,
   getIssueSessions,
   getIssues,
   getLabels,
+  getMyCriticals,
   getReasons,
   hideIssue,
+  removeMyCritical,
   renameIssue,
   restoreIssue,
+  setFocusActive,
   setIssueCritical,
   unhideIssue,
 } from 'App/components/SmartAlerts/api';
@@ -104,6 +113,16 @@ export default class IssuesStore {
   range: [number, number] | null = null; // null => server default (last 7 days)
   minImpact = 0;
 
+  /* ---- per-user critical + focus/origins (NOT-YET-BACKED, see TODO.md) ----
+     `mine` = issue names the user marked "critical for me" (personal layer,
+     never the project flag). `focuses` = traffic segments the agent concentrates
+     on; `origins` = the focus/full-traffic filter. All hydrated from stub API
+     calls that resolve empty until the backend ships. */
+  mine: string[] = [];
+  relevantToMe = false;
+  focuses: Focus[] = [];
+  origins: IssueOrigin[] = [];
+
   // ---- vocabulary / lookups ----
   labelsAll: { issueLabels: string[]; journeyLabels: string[] } = {
     issueLabels: [],
@@ -146,6 +165,8 @@ export default class IssuesStore {
     // project, not on every list load
     void this.fetchLabels();
     void this.fetchReasons();
+    void this.fetchFocuses();
+    void this.fetchMyCriticals();
   };
 
   private reset = () => {
@@ -164,6 +185,10 @@ export default class IssuesStore {
     this.visibility = 'active';
     this.range = null;
     this.minImpact = 0;
+    this.mine = [];
+    this.relevantToMe = false;
+    this.focuses = [];
+    this.origins = [];
     this.labelsAll = { issueLabels: [], journeyLabels: [] };
     this.reasons = { hide: [], criticality: [] };
     this.issueCache = {};
@@ -192,6 +217,9 @@ export default class IssuesStore {
         hidden: this.visibility,
         // "Critical only" is a dedicated request flag, not a label filter
         critical: this.critOnly,
+        // NOT-YET-BACKED — server ignores until implemented
+        origins: this.origins,
+        relevantToMe: this.relevantToMe,
         minImpact: this.minImpact,
         query: this.query.trim(),
       });
@@ -238,6 +266,22 @@ export default class IssuesStore {
     } catch (e) {
       console.error('Failed to load reasons', e);
     }
+  };
+
+  // NOT-YET-BACKED: both resolve empty until the endpoints ship
+  fetchFocuses = async () => {
+    if (!this.projectId) return;
+    const focuses = await getFocuses(this.projectId);
+    runInAction(() => {
+      this.focuses = focuses;
+    });
+  };
+  fetchMyCriticals = async () => {
+    if (!this.projectId) return;
+    const mine = await getMyCriticals(this.projectId);
+    runInAction(() => {
+      this.mine = mine;
+    });
   };
 
   /* Refetch the list after a filter change: resets to page 1; sort changes pass
@@ -342,6 +386,85 @@ export default class IssuesStore {
     return this.visibility === 'deleted';
   }
 
+  // ---- per-user critical ("critical for me") + focus (NOT-YET-BACKED) ----
+  /** the project/agent critical flag (server-owned), independent of my layer */
+  agentCritical(id: string): boolean {
+    return Boolean(this.byId(id)?.critical);
+  }
+  /** three-state critical: none -> project -> mine */
+  critState(id: string): 'none' | 'project' | 'mine' {
+    if (this.mine.includes(id)) return 'mine';
+    return this.agentCritical(id) ? 'project' : 'none';
+  }
+  /** relevant = critical for me, or surfaced by a segment I own */
+  isRelevant = (i: Issue): boolean =>
+    this.mine.includes(i.id) ||
+    (i.focusId != null && Boolean(this.focusById(i.focusId)?.mine));
+  /** count next to "Critical to me" — my personal criticals (segment finds are
+      NOT-YET-BACKED, so not included yet) */
+  get relevantCount(): number {
+    return this.mine.length;
+  }
+
+  /** mark critical for me — personal layer only, never the project flag */
+  markMine = (id: string) => {
+    if (!this.mine.includes(id)) this.mine.push(id);
+    if (this.projectId) void addMyCritical(this.projectId, id);
+  };
+  removeMine = (id: string) => {
+    this.mine = this.mine.filter((x) => x !== id);
+    if (this.projectId) void removeMyCritical(this.projectId, id);
+  };
+
+  get activeFocusCount(): number {
+    return this.focuses.filter((f) => f.active).length;
+  }
+  focusById(id?: number): Focus | undefined {
+    return id == null ? undefined : this.focuses.find((f) => f.id === id);
+  }
+  setRelevantToMe = (v: boolean) => {
+    this.relevantToMe = v;
+    this.refetch();
+  };
+  toggleOrigin = (o: IssueOrigin) => {
+    this.origins = this.origins.includes(o)
+      ? this.origins.filter((x) => x !== o)
+      : [...this.origins, o];
+    this.refetch();
+  };
+  clearOrigins = () => {
+    this.origins = [];
+    this.refetch();
+  };
+  /** anyone can toggle any focus — it's the project's shared analysis budget */
+  toggleFocus = (id: number, active: boolean) => {
+    this.focuses = this.focuses.map((f) =>
+      f.id === id ? { ...f, active } : f,
+    );
+    if (this.projectId) void setFocusActive(this.projectId, id, active);
+  };
+  saveFocus = (
+    focus: Omit<Focus, 'id' | 'createdBy' | 'mine'> & { id?: number },
+  ) => {
+    if (focus.id != null) {
+      this.focuses = this.focuses.map((f) =>
+        f.id === focus.id ? { ...f, ...focus, id: f.id } : f,
+      );
+    } else {
+      const id = Math.max(0, ...this.focuses.map((f) => f.id)) + 1;
+      this.focuses = [
+        { ...focus, id, createdBy: 'You', mine: true },
+        ...this.focuses,
+      ];
+    }
+    if (this.projectId) void apiSaveFocus(this.projectId, focus);
+  };
+  deleteFocus = (id: number) => {
+    this.focuses = this.focuses.filter((f) => f.id !== id);
+    this.origins = this.origins.filter((o) => o !== id);
+    if (this.projectId) void apiDeleteFocus(this.projectId, id);
+  };
+
   // ---- filter setters ----
   setQuery = (q: string) => {
     this.query = q;
@@ -431,6 +554,9 @@ export default class IssuesStore {
       .catch((e) => console.error('Failed to unhide issue', e));
   };
 
+  /** Marking is my personal layer only (never the project flag). Unmarking
+      clears my layer, and lifts the project flag only where one exists — that
+      removal carries the reason so the agent can learn. */
   setCritical = (
     id: string,
     val: boolean,
@@ -438,10 +564,17 @@ export default class IssuesStore {
     note = '',
   ) => {
     if (!this.projectId) return;
-    this.afterMutation(id, { critical: val });
-    void setIssueCritical(this.projectId, id, val, reasons, note)
-      .then(() => this.refetch({ resetPage: false }))
-      .catch((e) => console.error('Failed to set critical', e));
+    if (val) {
+      this.markMine(id);
+      return;
+    }
+    this.removeMine(id);
+    if (this.agentCritical(id)) {
+      this.afterMutation(id, { critical: false });
+      void setIssueCritical(this.projectId, id, false, reasons, note)
+        .then(() => this.refetch({ resetPage: false }))
+        .catch((e) => console.error('Failed to set critical', e));
+    }
   };
 
   remove = (id: string) => {

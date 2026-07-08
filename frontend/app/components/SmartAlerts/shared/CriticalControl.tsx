@@ -20,11 +20,15 @@ export default function CriticalControl({
   critical,
   onSet,
   reasons,
+  personalOnly,
 }: {
   critical: boolean;
   onSet?: (val: boolean, reasons?: string[], note?: string) => void;
   /** reason vocabulary for the un-mark popover (server-provided) */
   reasons?: string[];
+  /** the flag exists only in my personal layer (no agent flag) — removal is
+      instant instead of the teaching popover */
+  personalOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -32,7 +36,7 @@ export default function CriticalControl({
   if (!critical) {
     if (!onSet) return null;
     return (
-      <Tooltip title={t('Mark as critical')}>
+      <Tooltip title={t('Mark critical for me')}>
         <Tag
           bordered
           onClick={() => onSet(true)}
@@ -49,6 +53,22 @@ export default function CriticalControl({
       <Tag color="red" bordered className="m-0">
         {critContent(t('Critical'))}
       </Tag>
+    );
+  }
+
+  // my personal mark (no agent flag): remove instantly, no teaching popover
+  if (personalOnly) {
+    return (
+      <Tooltip title={t('Remove from my criticals')}>
+        <Tag
+          color="red"
+          bordered
+          onClick={() => onSet(false)}
+          className="crit-tag cursor-pointer transition-[filter] hover:brightness-95 m-0"
+        >
+          {critContent(t('Critical for me'), true)}
+        </Tag>
+      </Tooltip>
     );
   }
 

@@ -206,8 +206,14 @@ function IssuePlayer() {
     history.push(
       withSiteId(issue ? smartIssueDetails(idParam) : smartIssues(), siteId),
     );
-  const onSetCritical = (val: boolean, reasons?: string[], note?: string) => {
-    if (issue) issuesStore.setCritical(issue.id, val, reasons, note);
+  // player critical is personal-only (Mehdi 07-07): mark/unmark my layer,
+  // silently; project-flag removal (with a reason) lives on the detail page
+  const critState = issue ? issuesStore.critState(issue.id) : 'none';
+  const onMarkCritical = () => {
+    if (issue) issuesStore.markMine(issue.id);
+  };
+  const onRemoveMineCritical = () => {
+    if (issue) issuesStore.removeMine(issue.id);
   };
 
   const playerActiveTab =
@@ -248,8 +254,9 @@ function IssuePlayer() {
             tab={view === 'activity' || view === 'issue' ? view : null}
             setTab={(t) => setView(t)}
             onBack={back}
-            onSetCritical={onSetCritical}
-            criticalReasons={issuesStore.reasons.criticality}
+            critState={critState}
+            onMarkCritical={onMarkCritical}
+            onRemoveMineCritical={onRemoveMineCritical}
             prevId={prevId}
             nextId={nextId}
             onGoSession={goSession}
@@ -277,8 +284,9 @@ function IssuePlayer() {
                 issue={issue}
                 card={card}
                 onClose={() => setView(null)}
-                onSetCritical={onSetCritical}
-                criticalReasons={issuesStore.reasons.criticality}
+                critState={critState}
+                onMarkCritical={onMarkCritical}
+                onRemoveMineCritical={onRemoveMineCritical}
               />
             )}
           </div>

@@ -168,6 +168,7 @@ function IssueDetail() {
             issuesStore.setCritical(issue.id, val, reasons, note)
           }
           criticalReasons={issuesStore.reasons.criticality}
+          criticalPersonalOnly={!issuesStore.agentCritical(issue.id)}
           actions={
             <>
               <Button
