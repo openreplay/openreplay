@@ -444,7 +444,7 @@ function SegmentsIndicator() {
           onClick={startCreate}
           className="w-full"
         >
-          New segment
+          Create new
         </Button>
       </div>
     </>
