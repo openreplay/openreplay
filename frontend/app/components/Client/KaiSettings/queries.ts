@@ -13,6 +13,8 @@ import {
   ListTestsParams,
   NotificationSettingsRequest,
   ProjectSettingsRequest,
+  Resolution,
+  RunDefaults,
   TestCreateRequest,
   TestUpdateRequest,
   TestsBulkRequest,
@@ -55,6 +57,8 @@ export const browserTestsKeys = {
     ['browser-tests', projectId, 'version-diff', testId] as const,
   settings: (projectId: string) =>
     ['browser-tests', projectId, 'settings'] as const,
+  notifications: (projectId: string) =>
+    ['browser-tests', projectId, 'notifications'] as const,
 };
 
 // ---- Tests ----
@@ -343,10 +347,36 @@ export function useUpdateSettings() {
   });
 }
 
+export function useNotifications() {
+  const projectId = useProjectId();
+  return useQuery({
+    queryKey: browserTestsKeys.notifications(projectId),
+    queryFn: () => api.getNotifications(projectId),
+    enabled: !!projectId,
+  });
+}
+
+/** Project run defaults that pre-fill new drafts / manual tests: default viewport +
+ *  region from project settings, default environment from the env flagged `isDefault`. */
+export function useRunDefaults(): RunDefaults {
+  const { data: settings } = useSettings();
+  const { data: envs } = useEnvironments({ limit: 100 });
+  const defaultEnv = (envs?.items ?? []).find((e) => e.isDefault);
+  return {
+    envId: defaultEnv?.environmentId,
+    resolution: (settings?.defaultViewport as Resolution) || undefined,
+    region: settings?.defaultRegion || undefined,
+  };
+}
+
 export function useUpdateNotifications() {
   const projectId = useProjectId();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: NotificationSettingsRequest) =>
       api.updateNotifications(projectId, body),
+    onSuccess: (data) => {
+      queryClient.setQueryData(browserTestsKeys.notifications(projectId), data);
+    },
   });
 }

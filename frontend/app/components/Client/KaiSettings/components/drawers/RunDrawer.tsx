@@ -1,9 +1,11 @@
 import { Button, Modal, Segmented, Select, Tooltip, message } from 'antd';
 import {
+  Boxes,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Cpu,
   Image as ImageIcon,
   Images,
   Info,
@@ -458,6 +460,20 @@ function RunDrawer({ run, open, onClose }: Props) {
             {step.step}
             {skipped && <span className="ml-2 text-xs">({t('skipped')})</span>}
           </div>
+          {/* per-step network activity from results.json (counts) */}
+          {(step.networkRequests || step.failedRequests) && (
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-disabled-text">
+              <Network size={11} className="shrink-0" />
+              <span>
+                {step.networkRequests ?? 0} {t('requests')}
+              </span>
+              {!!step.failedRequests && (
+                <span className="text-red">
+                  · {step.failedRequests} {t('failed')}
+                </span>
+              )}
+            </div>
+          )}
           {stepFailed && run.error && (
             <div className="mt-1.5 flex flex-col gap-1.5 items-start">
               <div className="text-sm text-red">{run.error}</div>
@@ -572,6 +588,20 @@ function RunDrawer({ run, open, onClose }: Props) {
             <span className="flex items-center gap-1.5 cursor-default">
               <TagIcon size={14} /> {run.tags.length}{' '}
               {run.tags.length === 1 ? t('tag') : t('tags')}
+            </span>
+          </Tooltip>
+        )}
+        {run.dispatchMode && (
+          <Tooltip title={t('How this run was launched')}>
+            <span className="flex items-center gap-1.5 cursor-default uppercase">
+              <Cpu size={14} /> {run.dispatchMode}
+            </span>
+          </Tooltip>
+        )}
+        {run.batchId && (
+          <Tooltip title={t('Part of a batch of runs from one trigger')}>
+            <span className="flex items-center gap-1.5 cursor-default">
+              <Boxes size={14} /> {t('Batch')}
             </span>
           </Tooltip>
         )}

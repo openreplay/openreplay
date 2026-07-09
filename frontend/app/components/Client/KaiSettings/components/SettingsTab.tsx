@@ -1,68 +1,74 @@
 import { Divider, Switch, Typography } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  useEnvironments,
+  useNotifications,
   useSettings,
+  useUpdateEnvironment,
   useUpdateNotifications,
   useUpdateSettings,
 } from '../queries';
 import Defaults from './Defaults';
 import Environments from './Environments';
-import { Resolution } from './shared/types';
-import { kaiUi, useKaiUi } from './shared/uiStore';
+import { Resolution, RunDefaults } from './shared/types';
 
-// Project run defaults + revision policy persist via GET/PATCH /settings; the default
-// environment is the one flagged isDefault (Environments). Notifications persist via
-// PATCH /notifications (per-user; no GET, so the switches start from a local default).
+// Everything here persists to its real source: run defaults + revision policy to
+// GET/PATCH /settings, the default environment to the env flagged `isDefault`, and
+// notifications to GET/PATCH /notifications.
 function SettingsTab() {
   const { t } = useTranslation();
-  const { defaults, pauseOnRevision } = useKaiUi();
   const { data: settings } = useSettings();
+  const { data: envData } = useEnvironments({ limit: 100 });
+  const { data: notifications } = useNotifications();
   const updateSettings = useUpdateSettings();
+  const updateEnv = useUpdateEnvironment();
   const updateNotifications = useUpdateNotifications();
-  const [dailySummary, setDailySummary] = useState(false);
-  const [weeklySummary, setWeeklySummary] = useState(false);
+  const dailySummary = !!notifications?.dailySummary;
+  const weeklySummary = !!notifications?.weeklySummary;
+  const pauseOnRevision = settings?.pauseOnNewRevisions ?? true;
 
-  // mirror the saved project settings into the ui store, which the Tests tab / drawers
-  // read for pre-fill + the needs-review pause behaviour (external-store sync, not React
-  // state — so it stays out of render).
-  useEffect(() => {
-    if (!settings) return;
-    kaiUi.setDefaults({
-      resolution: (settings.defaultViewport as Resolution) || undefined,
-      region: settings.defaultRegion || undefined,
-    });
-    kaiUi.setPauseOnRevision(settings.pauseOnNewRevisions);
-  }, [settings]);
+  const defaultEnv = (envData?.items ?? []).find((e) => e.isDefault);
+  const defaults: RunDefaults = {
+    envId: defaultEnv?.environmentId,
+    resolution: (settings?.defaultViewport as Resolution) || undefined,
+    region: settings?.defaultRegion || undefined,
+  };
 
-  const changeDefaults = (patch: {
-    envId?: string;
-    resolution?: Resolution;
-    region?: string;
-  }) => {
-    kaiUi.setDefaults(patch);
-    // viewport / region persist to the project settings ("" clears to null); the default
-    // environment is a per-environment flag, kept session-local here (see todo.md).
+  const changeDefaults = (patch: Partial<RunDefaults>) => {
+    // viewport / region → project settings ("" clears to null)
     if ('resolution' in patch)
       updateSettings.mutate({ defaultViewport: patch.resolution ?? '' });
     if ('region' in patch)
       updateSettings.mutate({ defaultRegion: patch.region ?? '' });
+    // default environment → the env's `isDefault` flag (PUT replaces name/baseUrl/
+    // variables, so send them back unchanged; setting one true demotes the prior).
+    if ('envId' in patch) {
+      const target = (envData?.items ?? []).find(
+        (e) => e.environmentId === patch.envId,
+      );
+      const demote = patch.envId == null && defaultEnv ? defaultEnv : undefined;
+      const env = target ?? demote;
+      if (env)
+        updateEnv.mutate({
+          environmentId: env.environmentId,
+          body: {
+            name: env.name,
+            baseUrl: env.baseUrl,
+            variables: env.variables,
+            isDefault: !!target,
+          },
+        });
+    }
   };
 
-  const setPause = (v: boolean) => {
-    kaiUi.setPauseOnRevision(v);
+  const setPause = (v: boolean) =>
     updateSettings.mutate({ pauseOnNewRevisions: v });
-  };
 
-  const setDaily = (v: boolean) => {
-    setDailySummary(v);
-    updateNotifications.mutate({ dailySummary: v });
-  };
-  const setWeekly = (v: boolean) => {
-    setWeeklySummary(v);
+  const setDaily = (v: boolean) => updateNotifications.mutate({ dailySummary: v });
+  const setWeekly = (v: boolean) =>
     updateNotifications.mutate({ weeklySummary: v });
-  };
 
   return (
     <div className="flex flex-col p-5 max-w-3xl">
