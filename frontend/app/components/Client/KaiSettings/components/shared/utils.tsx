@@ -44,6 +44,20 @@ export const REGION_OPTIONS: {
   { value: 'us-east-1', label: 'N. Virginia', country: 'US' },
 ];
 
+// Preset date ranges for the list filters. `value` is a day count ('all' = no bound);
+// `periodFrom` turns it into the RFC3339 `from` the API takes (lower bound on
+// createdAt/startedAt). Presets keep it a one-click Select — no date-picker dependency.
+export const PERIOD_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'All time' },
+  { value: '1', label: 'Last 24h' },
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+];
+export const periodFrom = (value: string): string | undefined =>
+  value === 'all'
+    ? undefined
+    : new Date(Date.now() - Number(value) * 86400000).toISOString();
+
 export const resolutionLabel = (r?: Resolution): string =>
   RESOLUTION_OPTIONS.find((o) => o.value === r)?.label ?? 'Desktop';
 

@@ -18,6 +18,7 @@ import {
   useActivateVersion,
   useAllRuns,
   useDismissVersion,
+  useSettings,
   useTriggerRun,
   useVersionDiff,
 } from '../../queries';
@@ -30,7 +31,6 @@ import {
   testVersion,
 } from '../shared/revisions';
 import { RunData, TestCase } from '../shared/types';
-import { useKaiUi } from '../shared/uiStore';
 import {
   VersionLabel,
   formatDuration,
@@ -88,7 +88,8 @@ function TestDrawer({
   const { data: runsData } = useAllRuns({ limit: LOOKUP_LIMIT });
   // Settings → "Pause tests on new revisions": decides whether a pending revision
   // pauses the test (Needs review status, run controls off) or it keeps running.
-  const { pauseOnRevision } = useKaiUi();
+  const { data: projectSettings } = useSettings();
+  const pauseOnRevision = projectSettings?.pauseOnNewRevisions ?? true;
   const triggerMut = useTriggerRun();
   const activateMut = useActivateVersion();
   const dismissMut = useDismissVersion();

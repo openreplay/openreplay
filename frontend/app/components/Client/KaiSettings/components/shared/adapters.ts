@@ -23,6 +23,7 @@ import {
   TestCreateRequest,
   TestLifecycle,
   TestStatus,
+  TestStatusSettable,
   TestStep,
   TestUpdateRequest,
   UiRunStatus,
@@ -128,23 +129,36 @@ export function vmToCreateRequest(vm: TestCase): TestCreateRequest {
   };
 }
 
-// Only name / tags / environments / cron / config are updatable. `status` is NOT sent
-// here: the sole client-settable transition is draft → approved/rejected (see
-// `vmApprove`); active/paused are scheduler-owned, so writing them would 400.
-export function vmToUpdateRequest(vm: TestCase): TestUpdateRequest {
+// Updatable fields: name / tags / environments / cron / config, plus an optional
+// `status` — pass it ONLY for a client-settable transition (see `settableTransition`).
+// `approved → active` is runner-promoted (scheduling sets cron; the runner flips status),
+// so schedule/unschedule must call this WITHOUT a status.
+export function vmToUpdateRequest(
+  vm: TestCase,
+  status?: TestStatusSettable,
+): TestUpdateRequest {
   return {
     name: vm.title,
     tags: vm.tags,
     cron: scheduleToCron(vm.schedule),
     environments: vm.environments,
     config: withMatrixConfig(vm),
+    ...(status ? { status } : {}),
   };
 }
 
-// Approving a draft — the one status write the API allows (draft → approved). Carries
-// the reviewed content/matrix alongside so the approve and the edits persist together.
-export function vmApproveRequest(vm: TestCase): TestUpdateRequest {
-  return { ...vmToUpdateRequest(vm), status: 'approved' };
+// The status to actually write for a UI status change, or undefined when the API won't
+// accept it as a client transition (api3: draft→approved/rejected, and active⇄paused).
+// approved↔active (schedule/unschedule) is runner-owned → undefined (cron only).
+export function settableTransition(
+  prev: TestLifecycle,
+  next: TestLifecycle,
+): TestStatusSettable | undefined {
+  if (prev === next) return undefined;
+  if (prev === 'draft' && next === 'approved') return 'approved';
+  if (prev === 'active' && next === 'paused') return 'paused';
+  if (prev === 'paused' && next === 'active') return 'active';
+  return undefined; // approved↔active (schedule/unschedule) is runner-owned
 }
 
 // A client-computed git-style diff between the active steps and the proposed (latest)
@@ -208,6 +222,8 @@ const resultStepToVM = (step: RunResultStep): TestStep => ({
   step: step.user_step_text || step.action || '',
   status: stepStatusFromApi(step.status),
   screenshot: step.screenshot ? lastSegment(step.screenshot) : undefined,
+  networkRequests: step.network_requests || undefined,
+  failedRequests: step.failed_requests?.length || undefined,
 });
 
 const runDate = (run: {
@@ -225,12 +241,15 @@ export function apiRunToVM(run: RunListItem, testName?: string): RunData {
     key: run.runId,
     testId: run.testId,
     testName: testName ?? run.testName ?? run.testId,
+    version: run.version ?? undefined,
     date: runDate(run),
     duration: run.durationMs || undefined,
     status: runStatusFromApi(run.status),
     steps: [],
     resolution: toResolution(run.screenType),
     tags: run.tags,
+    dispatchMode: run.dispatchMode ?? undefined,
+    batchId: run.batchId ?? undefined,
   };
 }
 
@@ -255,6 +274,7 @@ export function apiRunDetailToVM(detail: RunDetail): RunData {
     key: detail.runId,
     testId: detail.testId,
     testName: detail.testName ?? detail.testId,
+    version: detail.version ?? undefined,
     date: runDate(detail),
     duration:
       detail.durationMs || (results?.duration_ms as number) || undefined,
@@ -266,6 +286,8 @@ export function apiRunDetailToVM(detail: RunDetail): RunData {
     summary: results?.final_result,
     error: results?.errors?.length ? results.errors.join('\n') : undefined,
     console: logs.length ? logs : undefined,
+    dispatchMode: detail.dispatchMode ?? undefined,
+    batchId: detail.batchId ?? undefined,
   };
 }
 
@@ -282,6 +304,7 @@ export function apiEnvToVM(env: Environment): EnvironmentVM {
     headers: (vars.headers as HttpHeader[] | undefined) ?? undefined,
     ignoreHttpsErrors: vars.ignoreHttpsErrors as boolean | undefined,
     isDefault: env.isDefault,
+    isActive: env.isActive,
     variables: env.variables,
   };
 }
@@ -311,6 +334,8 @@ export function envFormToRequest(
     baseUrl: vm.url.trim(),
     variables,
     isDefault: vm.isDefault,
+    // omit when undefined so a create defaults to active and an edit leaves it unchanged
+    ...(vm.isActive === undefined ? {} : { isActive: vm.isActive }),
   };
 }
 
