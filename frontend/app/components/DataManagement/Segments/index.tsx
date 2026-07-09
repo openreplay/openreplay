@@ -1,30 +1,63 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Input } from 'antd';
+import { Button, Input, Tabs } from 'antd';
 import { Album } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
+import type { SavedSegment } from 'App/mstore/issuesStore';
 import { dataManagement, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import { debounce } from 'App/utils';
+import SegmentDrawer from 'Components/Issues/segments/SegmentDrawer';
 
 import SegmentsList from './SegmentsList';
+import TrafficSegmentsTab from './TrafficSegmentsTab';
 import { fetchSegments } from './api';
+
+/* Segments home (Mehdi 07-07, Data Management integration):
+   · tab menu — Session segments (the classic saved-search list) / Traffic
+     segments (capture management, same set the Issues popover drives);
+   · create/edit happens in the shared SegmentDrawer (the same slide-out used
+     in Issues — instructions only exist there); the old full-page editor
+     stays routed but nothing links to it anymore.
+   In the mock demo the list is the shared issuesStore dataset, so a segment
+   created from Issues appears here immediately; outside mock the session tab
+   keeps its original API path. */
+
+const IS_MOCK = process.env.MOCK === '1';
 
 type SortBy = 'name' | 'createdAt' | 'updatedAt';
 type SortOrder = 'asc' | 'desc';
+
+/** shape a SavedSegment like the API's Segment for the existing table */
+const toRow = (s: SavedSegment) => ({
+  id: String(s.id),
+  name: s.name,
+  isPublic: s.isPublic,
+  // the mock account id is '1'; any other value = a teammate's segment
+  userId: s.mine ? 1 : 900 + s.id,
+  filters: s.seeds,
+  sessionsCount: s.sessionsCount,
+  usersCount: s.usersCount,
+  updatedAt: s.updatedAt,
+  createdAt: s.updatedAt,
+});
 
 function SegmentsListPage() {
   const { t } = useTranslation();
   const [query, setQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState('');
-  const { projectsStore } = useStore();
+  const { projectsStore, issuesStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
+
+  const [tab, setTab] = React.useState<'session' | 'traffic'>('session');
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState<SavedSegment | null>(null);
 
   const limit = 10;
   const [page, setPage] = React.useState(1);
@@ -45,7 +78,7 @@ function SegmentsListPage() {
     applySearch(value);
   };
 
-  const { data = { segments: [], total: 0 }, isPending } = useQuery({
+  const { data: apiData = { segments: [], total: 0 }, isPending } = useQuery({
     queryKey: [
       'segments-list',
       siteId,
@@ -63,7 +96,29 @@ function SegmentsListPage() {
         sortBy,
         sortOrder,
       }),
+    enabled: !IS_MOCK,
   });
+
+  // mock path: the shared store, filtered/sorted/paged client-side with the
+  // exact same controls the API path uses
+  const q = debouncedQuery.trim().toLowerCase();
+  const sign = sortOrder === 'asc' ? 1 : -1;
+  const mockAll = issuesStore.visibleSegments
+    .filter((s) => !q || s.name.toLowerCase().includes(q))
+    .slice()
+    .sort((a, b) =>
+      sortBy === 'name'
+        ? a.name.localeCompare(b.name) * sign
+        : (a.updatedAt - b.updatedAt) * sign,
+    );
+  const data = IS_MOCK
+    ? {
+        segments: mockAll
+          .slice((page - 1) * limit, page * limit)
+          .map(toRow) as any[],
+        total: mockAll.length,
+      }
+    : apiData;
 
   const onPageChange = (newPage: number) => {
     setPage(newPage);
@@ -74,11 +129,26 @@ function SegmentsListPage() {
     setPage(1);
   };
 
+  const openSegment = (segment: SavedSegment) => {
+    setEditing(segment);
+    setDrawerOpen(true);
+  };
+
   const toSegment = (id: string) => {
+    if (IS_MOCK) {
+      const segment = issuesStore.segmentById(Number(id));
+      if (segment) openSegment(segment);
+      return;
+    }
     history.push(withSiteId(dataManagement.segmentPage(id), siteId!));
   };
 
   const toCreate = () => {
+    if (IS_MOCK) {
+      setEditing(null);
+      setDrawerOpen(true);
+      return;
+    }
     history.push(withSiteId(dataManagement.segmentPage('new'), siteId!));
   };
 
@@ -123,17 +193,45 @@ function SegmentsListPage() {
           </div>
         </div>
       </div>
-      <SegmentsList
-        list={data.segments}
-        page={page}
-        limit={limit}
-        total={data.total}
-        listLen={data.segments.length}
-        isPending={isPending}
-        onPageChange={onPageChange}
-        onSortChange={onSortChange}
-        toSegment={toSegment}
-        toCreate={toCreate}
+
+      <Tabs
+        activeKey={tab}
+        onChange={(k) => setTab(k as 'session' | 'traffic')}
+        tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
+        items={[
+          {
+            key: 'session',
+            label: t('Session segments'),
+            children: (
+              <SegmentsList
+                list={data.segments}
+                page={page}
+                limit={limit}
+                total={data.total}
+                listLen={data.segments.length}
+                isPending={IS_MOCK ? false : isPending}
+                onPageChange={onPageChange}
+                onSortChange={onSortChange}
+                toSegment={toSegment}
+                toCreate={toCreate}
+              />
+            ),
+          },
+          {
+            key: 'traffic',
+            label: t('Traffic segments'),
+            children: (
+              <TrafficSegmentsTab query={debouncedQuery} onOpen={openSegment} />
+            ),
+          },
+        ]}
+      />
+
+      <SegmentDrawer
+        open={drawerOpen}
+        segment={editing}
+        source="dm"
+        onClose={() => setDrawerOpen(false)}
       />
     </div>
   );
