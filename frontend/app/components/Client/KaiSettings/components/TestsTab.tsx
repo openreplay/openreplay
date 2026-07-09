@@ -22,6 +22,7 @@ import FullPagination from 'Shared/FullPagination';
 
 import {
   createTest as apiCreateTest,
+  getTest as apiGetTest,
   updateTest as apiUpdateTest,
 } from '../api';
 import {
@@ -30,6 +31,7 @@ import {
   useDeleteTest,
   useEnvironments,
   useProjectId,
+  useRunDefaults,
   useTestCounts,
   useTests,
   useTriggerRun,
@@ -41,18 +43,20 @@ import './kai-table.css';
 import { needsReview } from './shared/revisions';
 import {
   apiTestToVM,
-  vmApproveRequest,
+  settableTransition,
   vmToCreateRequest,
   vmToUpdateRequest,
 } from './shared/adapters';
 import { ListTestsParams, RunData, TestCase, TestStatus } from './shared/types';
 import { kaiUi } from './shared/uiStore';
 import {
+  PERIOD_OPTIONS,
   RowTags,
   VersionLabel,
   getStatusTag,
   hasNoEnvironment,
   isScheduled,
+  periodFrom,
   scheduleLabel,
   scheduleShort,
 } from './shared/utils';
@@ -75,6 +79,7 @@ function TestsTab() {
   const triggerMut = useTriggerRun();
   const projectId = useProjectId();
   const queryClient = useQueryClient();
+  const defaults = useRunDefaults();
   const invalidateAll = () =>
     queryClient.invalidateQueries({
       queryKey: browserTestsKeys.all(projectId),
@@ -85,6 +90,7 @@ function TestsTab() {
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [sortBy, setSortBy] = useState<{
     field?: string;
@@ -109,8 +115,9 @@ function TestsTab() {
       name: search || undefined,
       environmentId: envFilter !== 'all' ? envFilter : undefined,
       tags: tagFilter !== 'all' ? tagFilter : undefined,
+      from: periodFrom(periodFilter),
     }),
-    [search, envFilter, tagFilter],
+    [search, envFilter, tagFilter, periodFilter],
   );
 
   const sortField = sortBy.field ? SORT_FIELD[sortBy.field] : undefined;
@@ -136,7 +143,7 @@ function TestsTab() {
   });
 
   // reset to page 1 (and clear the selection) whenever the filter set changes
-  const filterKey = `${search}|${statusTab}|${envFilter}|${tagFilter}`;
+  const filterKey = `${search}|${statusTab}|${envFilter}|${tagFilter}|${periodFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
@@ -175,16 +182,16 @@ function TestsTab() {
   const allTags = (tagCounts?.buckets ?? []).map((b) => b.value);
 
   // ---- persistence -----------------------------------------------------
-  // Approving a draft (draft → approved) is the one status write the API allows; every
-  // other edit omits status (active/paused are scheduler-owned — see todo.md).
+  // Persist an edited test. `status` is written only for a client-settable transition
+  // (draft→approved, active⇄paused); schedule/unschedule change `cron` only and let the
+  // runner promote/demote active (see `settableTransition`).
   const updateTest = (updated: TestCase) => {
     const prev = tests.find((tc) => tc.key === updated.key);
-    const approving = prev?.status === 'draft' && updated.status !== 'draft';
+    const status = prev
+      ? settableTransition(prev.status, updated.status)
+      : undefined;
     updateMut.mutate(
-      {
-        testId: updated.key,
-        body: approving ? vmApproveRequest(updated) : vmToUpdateRequest(updated),
-      },
+      { testId: updated.key, body: vmToUpdateRequest(updated, status) },
       { onError: () => toast.error(t('Failed to update test')) },
     );
   };
@@ -199,6 +206,12 @@ function TestsTab() {
   const openRow = (tc: TestCase) => {
     setFocusSchedule(false);
     setOpenKey(tc.key);
+    // opening a test stamps `seenAt` server-side (GET /tests/{id}), which clears the
+    // "new" dot; refresh the list once so it reflects. Only needed while unseen.
+    if (tc.isNew)
+      apiGetTest(projectId, tc.key)
+        .then(invalidateAll)
+        .catch(() => {});
   };
   const openSchedule = (tc: TestCase) => {
     setOpenKey(tc.key);
@@ -209,7 +222,6 @@ function TestsTab() {
 
   // Manual creation — a hand-made test skips the draft flow and starts life `approved`.
   const addTest = () => {
-    const { defaults } = kaiUi.get();
     setFocusSchedule(false);
     setDraftTest({
       key: `new-${Date.now()}`,
@@ -238,7 +250,7 @@ function TestsTab() {
       await apiUpdateTest(
         projectId,
         created.testId,
-        vmApproveRequest({ ...intended, key: created.testId }),
+        vmToUpdateRequest({ ...intended, key: created.testId }, 'approved'),
       );
       message.success(t('Test created'));
     } catch {
@@ -298,7 +310,7 @@ function TestsTab() {
   const resumeSelected = () =>
     bulkUpdate(
       (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
-      (tc) => ({ status: isScheduled(tc.schedule) ? 'active' : 'approved' }),
+      () => ({ status: 'active' }),
     );
   const deleteSelected = () => {
     const testIds = selectedKeys.map(String);
@@ -389,11 +401,7 @@ function TestsTab() {
         else if (key === 'unschedule') unschedule(tc);
         else if (key === 'duplicate') duplicateTest(tc);
         else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
-        else if (key === 'resume')
-          updateTest({
-            ...tc,
-            status: isScheduled(tc.schedule) ? 'active' : 'approved',
-          });
+        else if (key === 'resume') updateTest({ ...tc, status: 'active' });
         else if (key === 'dismiss' || key === 'delete') removeTest(tc.key);
       },
     };
@@ -619,6 +627,16 @@ function TestsTab() {
                 ...allTags.map((tag) => ({ value: tag, label: tag })),
               ]}
             />
+            <Select
+              size="small"
+              value={periodFilter}
+              onChange={setPeriodFilter}
+              style={{ width: 130 }}
+              options={PERIOD_OPTIONS.map((o) => ({
+                value: o.value,
+                label: t(o.label),
+              }))}
+            />
             <Button
               size="small"
               type="primary"
@@ -681,7 +699,7 @@ function TestsTab() {
         key={`draft-${openKey ?? 'none'}`}
         test={openTest?.status === 'draft' ? openTest : null}
         open={openTest?.status === 'draft'}
-        defaults={kaiUi.get().defaults}
+        defaults={defaults}
         onClose={() => setOpenKey(null)}
         onChange={updateTest}
         onRemove={removeTest}

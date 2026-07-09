@@ -252,6 +252,14 @@ export function updateSettings(
     .then(toJson<ProjectSettings>);
 }
 
+export function getNotifications(
+  projectId: string | number,
+): Promise<NotificationSettings> {
+  return client
+    .get(`${base(projectId)}/notifications`)
+    .then(toJson<NotificationSettings>);
+}
+
 export function updateNotifications(
   projectId: string | number,
   body: NotificationSettingsRequest,

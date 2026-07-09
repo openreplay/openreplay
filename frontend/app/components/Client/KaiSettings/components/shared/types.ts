@@ -139,6 +139,8 @@ export interface RunListItem {
   batchId?: string | null;
   /** How the run was launched (docker/ecs/k8s); null until set. */
   dispatchMode?: string | null;
+  /** Test version this run executed against; null for runs predating versioning. */
+  version?: number | null;
   startedAt?: string | null;
   finishedAt?: string | null;
   /** finishedAt - startedAt; 0 while the run hasn't finished. */
@@ -463,6 +465,9 @@ export interface TestStep {
   // a step can capture several screenshots; the run drawer shows a carousel.
   shots?: number;
   screenshot?: string;
+  // per-step network activity from the run's results.json (counts only).
+  networkRequests?: number;
+  failedRequests?: number;
 }
 
 export type ConsoleLevel = 'info' | 'warn' | 'error';
@@ -511,6 +516,10 @@ export interface RunData {
   error?: string;
   /** The runner's human result summary (`results.final_result`). */
   summary?: string;
+  /** How the run was launched (docker/ecs/k8s). */
+  dispatchMode?: string;
+  /** Fan-out group id — non-null when part of a batch trigger. */
+  batchId?: string;
   envName?: string;
   resolution?: Resolution;
   region?: string;
@@ -529,6 +538,8 @@ export interface EnvironmentVM {
   headers?: HttpHeader[];
   ignoreHttpsErrors?: boolean;
   isDefault?: boolean;
+  /** Soft on/off toggle, independent of soft-delete. */
+  isActive?: boolean;
   // The full stored variables record, carried through edits so keys the form doesn't
   // model aren't wiped by the wholesale-replace PUT.
   variables?: Record<string, unknown>;

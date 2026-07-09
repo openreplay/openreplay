@@ -23,6 +23,8 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
   const [name, setName] = useState(env?.name ?? '');
   const [url, setUrl] = useState(env?.url ?? 'https://');
   const [isDefault, setIsDefault] = useState(!!env?.isDefault);
+  // new environments default to active; existing ones keep their flag
+  const [isActive, setIsActive] = useState(env?.isActive ?? true);
   const [username, setUsername] = useState(env?.username ?? '');
   const [password, setPassword] = useState(env?.password ?? '');
   const [headers, setHeaders] = useState<HttpHeader[]>(env?.headers ?? []);
@@ -44,6 +46,7 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
       name: name.trim(),
       url: url.trim(),
       isDefault,
+      isActive,
       username: username.trim() || undefined,
       password: password.trim() || undefined,
       headers: headers.filter((h) => h.name.trim()),
@@ -86,6 +89,14 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
         <Switch size="small" checked={isDefault} onChange={setIsDefault} />
         <Typography.Text className="text-sm!">
           {t('Set as default')}
+        </Typography.Text>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Switch size="small" checked={isActive} onChange={setIsActive} />
+        <Typography.Text className="text-sm!">{t('Active')}</Typography.Text>
+        <Typography.Text type="secondary" className="text-sm!">
+          {t('— tests can run against this environment')}
         </Typography.Text>
       </div>
 

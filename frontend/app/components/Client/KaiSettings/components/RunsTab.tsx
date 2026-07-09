@@ -34,10 +34,13 @@ import {
 } from './shared/types';
 import { useKaiUi } from './shared/uiStore';
 import {
+  PERIOD_OPTIONS,
   RESOLUTION_OPTIONS,
   RowTags,
+  VersionLabel,
   formatDuration,
   getRunResult,
+  periodFrom,
   relativeTime,
 } from './shared/utils';
 
@@ -92,6 +95,8 @@ function RunsTab() {
   const [search, setSearch] = useState(runsTestFilter ?? '');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [resFilter, setResFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [dispatchFilter, setDispatchFilter] = useState('all');
   const [sortBy, setSortBy] = useState<{
     field?: string;
     order?: 'ascend' | 'descend';
@@ -114,12 +119,20 @@ function RunsTab() {
     return () => window.clearTimeout(id);
   }, [query]);
 
+  // filters shared by the list + the count aggregates (everything except the status tab)
+  const from = periodFrom(periodFilter);
+  const filters = {
+    name: search || undefined,
+    screenType: resFilter !== 'all' ? resFilter : undefined,
+    dispatchMode: dispatchFilter !== 'all' ? dispatchFilter : undefined,
+    from,
+  };
+
   const sortField = sortBy.field ? SORT_FIELD[sortBy.field] : undefined;
   const listParams: ListAllRunsParams = {
     page,
     limit: PAGE_SIZE,
-    name: search || undefined,
-    screenType: resFilter !== 'all' ? resFilter : undefined,
+    ...filters,
     status: statusTab !== 'all' ? STATUS_PARAM[statusTab] : undefined,
     ...(sortField && sortBy.order
       ? { sortField, sortOrder: sortBy.order === 'ascend' ? 'asc' : 'desc' }
@@ -128,13 +141,18 @@ function RunsTab() {
 
   const { data: runsData, isPending } = useAllRuns(listParams);
   // status counts ignore the active status tab so every tab shows its own total
-  const { data: statusCounts } = useRunCounts('status', {
-    name: search || undefined,
-    screenType: resFilter !== 'all' ? resFilter : undefined,
+  const { data: statusCounts } = useRunCounts('status', filters);
+  // dispatch-mode options come from the count buckets (excludes the unset "" bucket)
+  const { data: dispatchCounts } = useRunCounts('dispatchMode', {
+    name: filters.name,
+    from,
   });
+  const dispatchModes = (dispatchCounts?.buckets ?? [])
+    .map((b) => b.value)
+    .filter(Boolean);
 
   // reset to page 1 whenever a filter changes (sort resets page in onChange)
-  const filterKey = `${search}|${statusTab}|${resFilter}`;
+  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${dispatchFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
@@ -196,8 +214,11 @@ function RunsTab() {
       title: t('Test'),
       dataIndex: 'testName',
       showSorterTooltip: false,
-      render: (name: string) => (
-        <span className="font-medium truncate">{name}</span>
+      render: (name: string, run) => (
+        <span className="flex items-center gap-2 min-w-0">
+          <span className="font-medium truncate">{name}</span>
+          <VersionLabel version={run.version ?? undefined} />
+        </span>
       ),
     },
     {
@@ -295,6 +316,28 @@ function RunsTab() {
                 label: t(o.label),
               })),
             ]}
+          />
+          {dispatchModes.length > 0 && (
+            <Select
+              size="small"
+              value={dispatchFilter}
+              onChange={setDispatchFilter}
+              style={{ width: 130 }}
+              options={[
+                { value: 'all', label: t('Any launch') },
+                ...dispatchModes.map((m) => ({ value: m, label: m })),
+              ]}
+            />
+          )}
+          <Select
+            size="small"
+            value={periodFilter}
+            onChange={setPeriodFilter}
+            style={{ width: 130 }}
+            options={PERIOD_OPTIONS.map((o) => ({
+              value: o.value,
+              label: t(o.label),
+            }))}
           />
         </div>
       </div>
