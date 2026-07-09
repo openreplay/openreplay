@@ -12,7 +12,14 @@ import (
 )
 
 func NewAssist(log logger.Logger, cfg *config.Config, pgconn pool.Pool, redisClient *redis.Client, projects projects.Projects) (Assist, error) {
-	if redisClient == nil || redisClient.Redis == nil {
+	switch {
+	case log == nil:
+		return nil, errors.New("logger is nil")
+	case cfg == nil:
+		return nil, errors.New("config is nil")
+	case projects == nil:
+		return nil, errors.New("projects is nil")
+	case redisClient == nil || redisClient.Redis == nil:
 		return nil, errors.New("redis connection is required for assist")
 	}
 	sessManager, err := sessionmanager.New(log, cfg.AssistCacheTTL, cfg.AssistBatchSize, cfg.AssistScanSize, redisClient.Redis)
