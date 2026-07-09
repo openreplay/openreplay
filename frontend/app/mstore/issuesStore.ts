@@ -493,12 +493,37 @@ export default class IssuesStore {
   criticalOverride: Record<number, boolean> = {};
   criticalReasons: Record<number, string> = {};
   /* ---- per-user critical ("critical for me") ----
-     Red encodes project criticality; the FILL encodes my relationship to it.
-     `mine` is my personal layer and STAYS personal: marking — fresh from gray
-     or re-marking something un-flagged earlier — never touches the project-
+     Red encodes project criticality; the CHIP BACKGROUND encodes my
+     relationship to it (icon stays the same red outline for everyone —
+     ownership is a different visual axis than severity). `mine` is my
+     personal layer and STAYS personal: marking — fresh from gray or
+     re-marking something un-flagged earlier — never touches the project-
      wide flag; teammates don't see it (Mehdi 07-07, "keep it simple: for me
      only"). Seeded: #3 = an agent-critical I adopted, #5 = my own personal
-     mark. */
+     mark.
+
+     BACKEND CONTRACT (for Nikita — this is mock/local-only today):
+     two independent flags per issue, both need persistence:
+       1. `critical: boolean` — PROJECT-WIDE. Set by the agent, or by any
+          user's manual mark on an issue with no existing source (see
+          `criticalOverride`/`criticalReasons` below). Visible to everyone.
+       2. `mine: boolean`, PER USER — this issue is critical *for me*.
+          Purely personal curation; never visible to teammates. A user can
+          have `mine=true` on an issue that is NOT project-critical (their
+          own manual mark) or on one that IS (they adopted an agent/teammate
+          critical as their own) — the two flags are independent, not a
+          hierarchy.
+     Today this is simulated client-side with three maps, which is the
+     shape the backend needs to replace:
+       - `criticalOverride: Record<issueId, boolean>` — explicit override of
+         the agent-authored `critical` flag (Gmail-style toggle: a user can
+         mark not-critical even if the agent flagged it, via the reason
+         modal below).
+       - `criticalReasons: Record<issueId, string>` — the free-text reason
+         captured when removing a critical (teaching moment for the agent).
+       - `mine: number[]` (this array) — per-user set of issue ids marked
+         critical-for-me. In the real backend this is naturally a per-user
+         table/relation, not a project-wide array like the mock. */
   mine: number[] = [3, 5];
   /** Display filter: my criticals ∪ issues surfaced by segments I own */
   relevantToMe = false;
