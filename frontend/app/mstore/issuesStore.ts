@@ -156,37 +156,64 @@ export interface SegmentFilterSeed {
   value: string[];
 }
 
-export interface TrafficSegment {
+/* ONE entity across the whole app (Mehdi 07-07, Data Management integration):
+   a saved segment (the classic "saved search" in Data Management) that CAN be
+   used as a traffic segment. Two independent capture flags:
+     · isTrafficSegment — picked into the capture set (listed in the Issues
+       popover and in DM's Traffic tab controls);
+     · active           — its capture switch is on.
+   Only team-visible (isPublic) segments are eligible for capture — everyone
+   must be able to stop them. Segments created from Issues are forced
+   team-visible; instructions only exist when created from Issues. */
+export interface SavedSegment {
   id: number;
   name: string;
   /** display name of the creator; `mine` gates edit/delete (anyone toggles) */
   createdBy: string;
   mine: boolean;
+  /** team-visible vs private-to-owner; capture eligibility requires team */
+  isPublic: boolean;
+  /** picked as a traffic segment (in the capture set) */
+  isTrafficSegment: boolean;
+  /** capture switch — meaningful while isTrafficSegment */
   active: boolean;
   /** serialized omni-search query (rebuilt into real filters on edit) */
   seeds: SegmentFilterSeed[];
   /** human-readable one-liner of the query, shown in the popover */
   summary: string;
-  /** share of daily traffic this query matches (computed at save time) */
+  /** share of daily traffic this query matches (computed at save/enable time) */
   trafficPct: number;
   /** ~sessions analysed per day for this segment */
   sessionsPerDay: number;
   instructions?: string;
+  /** DM-table stats (mock values, the real ones come from the backend) */
+  sessionsCount: number;
+  usersCount: number;
+  updatedAt: number;
 }
+
 
 /** One origin an issue can come from: the full-traffic baseline, or a specific
     segment (by id). Filtering is multi-select, like tag labels — an empty
     selection means "everywhere". */
 export type IssueOrigin = 'full' | number;
 
-/* Seeded segments — one of mine (edit/delete), two from teammates (toggle only).
-   Filter names/values match the mock omni-search catalog (dev/mockSessions). */
-export const MOCK_SEGMENTS: TrafficSegment[] = [
+/* Seeded segments — the SAME list Data Management shows (session segments) and
+   the Issues popover draws its traffic set from. Mix: three in the capture set
+   (two on, one off), three team-visible candidates to enable, one private (of
+   mine — ineligible until made team-visible), plus a teammate's spare. Filter
+   names/values match the mock omni-search catalog (dev/mockSessions). */
+const JUL = (day: number, hour = 12) =>
+  new Date(2026, 6, day, hour).getTime();
+
+export const MOCK_SEGMENTS: SavedSegment[] = [
   {
     id: 1,
     name: 'Billing & checkout',
     createdBy: 'You',
     mine: true,
+    isPublic: true,
+    isTrafficSegment: true,
     active: true,
     seeds: [
       { name: 'LOCATION', isEvent: true, autoCaptured: true, operator: 'contains', value: ['/checkout'] },
@@ -197,12 +224,17 @@ export const MOCK_SEGMENTS: TrafficSegment[] = [
     sessionsPerDay: 40,
     instructions:
       'Watch for silent payment failures and anything around coupons or card validation.',
+    sessionsCount: 1240,
+    usersCount: 830,
+    updatedAt: JUL(6),
   },
   {
     id: 2,
     name: 'Pricing · France',
     createdBy: 'Mehdi',
     mine: false,
+    isPublic: true,
+    isTrafficSegment: true,
     active: true,
     seeds: [
       { name: 'LOCATION', isEvent: true, autoCaptured: true, operator: 'contains', value: ['/pricing'] },
@@ -211,12 +243,17 @@ export const MOCK_SEGMENTS: TrafficSegment[] = [
     summary: 'Path contains /pricing · Country = FR',
     trafficPct: 6,
     sessionsPerDay: 120,
+    sessionsCount: 3480,
+    usersCount: 2100,
+    updatedAt: JUL(5),
   },
   {
     id: 3,
     name: 'Mobile visitors',
     createdBy: 'Nikita',
     mine: false,
+    isPublic: true,
+    isTrafficSegment: true,
     active: false,
     seeds: [
       { name: 'userDevice', isEvent: false, operator: 'is', value: ['mobile'] },
@@ -224,6 +261,100 @@ export const MOCK_SEGMENTS: TrafficSegment[] = [
     summary: 'Device = mobile',
     trafficPct: 38,
     sessionsPerDay: 760,
+    sessionsCount: 21600,
+    usersCount: 9400,
+    updatedAt: JUL(2),
+  },
+  {
+    id: 4,
+    name: 'Checkout drop-off',
+    createdBy: 'Sarah',
+    mine: false,
+    isPublic: true,
+    isTrafficSegment: false,
+    active: false,
+    seeds: [
+      { name: 'LOCATION', isEvent: true, autoCaptured: true, operator: 'contains', value: ['/cart'] },
+    ],
+    summary: 'Path contains /cart',
+    trafficPct: 4,
+    sessionsPerDay: 80,
+    sessionsCount: 2350,
+    usersCount: 1400,
+    updatedAt: JUL(4),
+  },
+  {
+    id: 5,
+    name: 'Power users',
+    createdBy: 'You',
+    mine: true,
+    isPublic: true,
+    isTrafficSegment: false,
+    active: false,
+    seeds: [
+      { name: 'CLICK', isEvent: true, autoCaptured: true, value: [''] },
+      { name: 'INPUT', isEvent: true, autoCaptured: true, value: [''] },
+    ],
+    summary: 'Click · Input',
+    trafficPct: 12,
+    sessionsPerDay: 240,
+    sessionsCount: 6800,
+    usersCount: 1900,
+    updatedAt: JUL(7),
+  },
+  {
+    id: 6,
+    name: 'Signup funnel',
+    createdBy: 'You',
+    mine: true,
+    isPublic: false,
+    isTrafficSegment: false,
+    active: false,
+    seeds: [
+      { name: 'LOCATION', isEvent: true, autoCaptured: true, operator: 'contains', value: ['/signup'] },
+    ],
+    summary: 'Path contains /signup',
+    trafficPct: 3,
+    sessionsPerDay: 60,
+    sessionsCount: 940,
+    usersCount: 880,
+    updatedAt: JUL(1),
+  },
+  {
+    id: 7,
+    name: 'German traffic',
+    createdBy: 'Mehdi',
+    mine: false,
+    isPublic: true,
+    isTrafficSegment: false,
+    active: false,
+    seeds: [
+      { name: 'userCountry', isEvent: false, operator: 'is', value: ['DE'] },
+    ],
+    summary: 'Country = DE',
+    trafficPct: 9,
+    sessionsPerDay: 180,
+    sessionsCount: 5200,
+    usersCount: 3100,
+    updatedAt: JUL(3),
+  },
+  {
+    id: 8,
+    name: 'Safari sessions',
+    createdBy: 'Nikita',
+    mine: false,
+    isPublic: true,
+    isTrafficSegment: false,
+    active: false,
+    seeds: [
+      { name: 'userBrowser', isEvent: false, operator: 'is', value: ['Safari'] },
+    ],
+    summary: 'Browser = Safari',
+    trafficPct: 17,
+    sessionsPerDay: 340,
+    sessionsCount: 9700,
+    usersCount: 4300,
+    updatedAt: JUL(6, 9),
   },
 ];
 
@@ -528,8 +659,8 @@ export default class IssuesStore {
   /** Display filter: my criticals ∪ issues surfaced by segments I own */
   relevantToMe = false;
 
-  // ---- traffic segments (what the agent captures) ----
-  segments: TrafficSegment[] = MOCK_SEGMENTS;
+  // ---- saved segments (shared with Data Management) ----
+  segments: SavedSegment[] = MOCK_SEGMENTS;
   /** capture mode: active segments REPLACE full traffic when on (Mehdi 07-07) */
   captureMode: 'full' | 'segments' = 'segments';
   /** "found in" filter — lives in the Tags dropdown next to the labels, because
@@ -737,9 +868,30 @@ export default class IssuesStore {
     this.mine = this.mine.filter((x) => x !== id);
   };
 
-  // ---- traffic segments ----
+  // ---- saved / traffic segments ----
+  /** the capture set — what the Issues popover lists */
+  get trafficSegments(): SavedSegment[] {
+    return this.segments.filter((s) => s.isTrafficSegment);
+  }
+
+  /** what I can see in Data Management: everything team-visible + my private */
+  get visibleSegments(): SavedSegment[] {
+    return this.segments.filter((s) => s.isPublic || s.mine);
+  }
+
+  /** DM Traffic tab: every capture-eligible segment (team-visible only —
+      everyone must be able to stop a capture) */
+  get captureEligible(): SavedSegment[] {
+    return this.segments.filter((s) => s.isPublic);
+  }
+
+  /** the Issues "Add segment" picker: eligible but not yet in the capture set */
+  get enableCandidates(): SavedSegment[] {
+    return this.segments.filter((s) => s.isPublic && !s.isTrafficSegment);
+  }
+
   get activeSegmentCount(): number {
-    return this.segments.filter((f) => f.active).length;
+    return this.segments.filter((s) => s.isTrafficSegment && s.active).length;
   }
 
   /** guarded in the UI too: segments mode needs at least one active segment */
@@ -759,7 +911,7 @@ export default class IssuesStore {
     return false;
   }
 
-  segmentById(id?: number): TrafficSegment | undefined {
+  segmentById(id?: number): SavedSegment | undefined {
     return id == null ? undefined : this.segments.find((f) => f.id === id);
   }
 
@@ -771,26 +923,76 @@ export default class IssuesStore {
 
   clearOrigins = () => { this.origins = []; };
 
-  /** anyone can toggle any segment — it's the project's shared capture setting */
+  /** anyone can toggle any segment — it's the project's shared capture setting.
+      Switching ON a segment that wasn't in the capture set (DM Traffic tab)
+      also adds it to the set, so the Issues popover picks it up. */
   toggleSegment = (id: number, active: boolean): boolean => {
-    this.segments = this.segments.map((f) => (f.id === id ? { ...f, active } : f));
+    this.segments = this.segments.map((f) =>
+      f.id === id
+        ? { ...f, active, isTrafficSegment: f.isTrafficSegment || active }
+        : f,
+    );
+    return this.fallBackIfEmpty();
+  };
+
+  /** "Add segment" picker — pull an existing team-visible segment into the
+      capture set, switched on, with a freshly computed estimate. */
+  enableTraffic = (id: number, est?: { pct: number; perDay: number }) => {
+    this.segments = this.segments.map((f) =>
+      f.id === id
+        ? {
+            ...f,
+            isTrafficSegment: true,
+            active: true,
+            trafficPct: est?.pct ?? f.trafficPct,
+            sessionsPerDay: est?.perDay ?? f.sessionsPerDay,
+          }
+        : f,
+    );
+  };
+
+  /** drop a segment from the capture set (it stays a saved segment in DM) */
+  removeFromTraffic = (id: number): boolean => {
+    this.segments = this.segments.map((f) =>
+      f.id === id ? { ...f, isTrafficSegment: false, active: false } : f,
+    );
     return this.fallBackIfEmpty();
   };
 
   /** create (no id) or update (id) — editing is gated to `mine` in the UI */
   saveSegment = (
-    segment: Omit<TrafficSegment, 'id' | 'createdBy' | 'mine'> & { id?: number },
+    segment: Omit<
+      SavedSegment,
+      'id' | 'createdBy' | 'mine' | 'sessionsCount' | 'usersCount' | 'updatedAt'
+    > & { id?: number },
   ) => {
+    const now = Date.now();
     if (segment.id != null) {
       this.segments = this.segments.map((f) =>
         f.id === segment.id
-          ? { ...f, ...segment, id: f.id, createdBy: f.createdBy, mine: f.mine }
+          ? {
+              ...f,
+              ...segment,
+              id: f.id,
+              createdBy: f.createdBy,
+              mine: f.mine,
+              updatedAt: now,
+            }
           : f,
       );
     } else {
       const id = Math.max(0, ...this.segments.map((f) => f.id)) + 1;
       this.segments = [
-        { ...segment, id, createdBy: 'You', mine: true },
+        {
+          ...segment,
+          id,
+          createdBy: 'You',
+          mine: true,
+          // mock stats — a fresh segment scaled off its daily estimate
+          sessionsCount: segment.sessionsPerDay * 7,
+          usersCount: Math.round(segment.sessionsPerDay * 4),
+          updatedAt: now,
+        },
         ...this.segments,
       ];
     }
