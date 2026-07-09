@@ -1017,6 +1017,18 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 107: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const length = this.readUint(); if (length === null) { return resetPointer() }
+      const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
+      return {
+        tp: MType.MobileBatchMeta,
+        timestamp,
+        length,
+        firstIndex,
+      };
+    }
+
     case 109: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }

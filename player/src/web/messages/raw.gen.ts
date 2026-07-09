@@ -1,7 +1,7 @@
 // Auto-generated, do not edit
 /* eslint-disable */
 
-export enum MType {
+export const enum MType {
   Timestamp = 0,
   SetPageLocationDeprecated = 4,
   SetViewportSize = 5,
@@ -79,6 +79,7 @@ export enum MType {
   MobileInternalError = 104,
   MobileNetworkCall = 105,
   MobileSwipeEvent = 106,
+  MobileBatchMeta = 107,
   MobileGraphQl = 109,
   MobileIssueEvent = 111,
 }
@@ -660,6 +661,13 @@ export interface RawMobileSwipeEvent {
   direction: string,
 }
 
+export interface RawMobileBatchMeta {
+  tp: MType.MobileBatchMeta,
+  timestamp: number,
+  length: number,
+  firstIndex: number,
+}
+
 export interface RawMobileGraphQl {
   tp: MType.MobileGraphQl,
   timestamp: number,
@@ -681,8 +689,8 @@ export interface RawMobileIssueEvent {
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawStringDictGlobal | RawSetNodeAttributeDictGlobal | RawNodeAnimationResult | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQlDeprecated | RawPerformanceTrack | RawStringDictDeprecated | RawSetNodeAttributeDictDeprecated | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecatedDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawSetNodeSlot | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawResourceTiming | RawIncident | RawLongAnimationTask | RawSelectionChange | RawMouseThrashing | RawResourceTimingDeprecated | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawGraphQl | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileGraphQl | RawMobileIssueEvent;
+export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawStringDictGlobal | RawSetNodeAttributeDictGlobal | RawNodeAnimationResult | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQlDeprecated | RawPerformanceTrack | RawStringDictDeprecated | RawSetNodeAttributeDictDeprecated | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecatedDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawSetNodeSlot | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawResourceTiming | RawIncident | RawLongAnimationTask | RawSelectionChange | RawMouseThrashing | RawResourceTimingDeprecated | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawGraphQl | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileBatchMeta | RawMobileGraphQl | RawMobileIssueEvent;
 
 export const MAX_KNOWN_TP = 123;
 
-export const VALID_TP_SET: ReadonlySet<number> = new Set([0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 34, 35, 36, 40, 41, 44, 45, 46, 47, 48, 49, 50, 51, 43, 52, 53, 54, 55, 57, 58, 60, 61, 65, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 79, 83, 84, 85, 87, 89, 113, 114, 116, 117, 118, 119, 120, 121, 122, 123, 93, 96, 100, 101, 102, 103, 104, 105, 106, 109, 111]);
+export const VALID_TP_SET: ReadonlySet<number> = new Set([0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 34, 35, 36, 40, 41, 44, 45, 46, 47, 48, 49, 50, 51, 43, 52, 53, 54, 55, 57, 58, 60, 61, 65, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 79, 83, 84, 85, 87, 89, 113, 114, 116, 117, 118, 119, 120, 121, 122, 123, 93, 96, 100, 101, 102, 103, 104, 105, 106, 107, 109, 111]);

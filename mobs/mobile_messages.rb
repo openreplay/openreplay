@@ -138,7 +138,7 @@ message 106, 'MobileSwipeEvent', :replayer => true do
     string 'Direction'
 end
 
-message 107, 'MobileBatchMeta' do
+message 107, 'MobileBatchMeta', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     uint 'FirstIndex'
