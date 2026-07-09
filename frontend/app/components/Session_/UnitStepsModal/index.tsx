@@ -49,6 +49,21 @@ interface MultiInputEntry {
   elements: { parentSelector: string; index: number; value: string }[];
 }
 
+function normalizeSelector(selector: string): string {
+  return selector.replace(
+    /\[\s*([-\w:]+)\s*([~|^$*]?=)\s*([^\]]*?)\s*\]/g,
+    (_full, attr, op, rawValue) => {
+      const value = rawValue.trim();
+      const alreadyQuoted =
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"));
+      if (alreadyQuoted) return `[${attr}${op}${value}]`;
+      const escaped = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      return `[${attr}${op}"${escaped}"]`;
+    },
+  );
+}
+
 function getParentSelector(el: Element): string {
   const parent = el.parentElement;
   if (!parent || parent === el.ownerDocument.body) return '';
@@ -208,7 +223,7 @@ function UnitStepsModal({ onClose }: Props) {
 
         try {
           const allEls = Array.from(
-            doc.querySelectorAll(ev.label),
+            doc.querySelectorAll(normalizeSelector(ev.label)),
           ) as HTMLInputElement[];
 
           if (allEls.length > 1) {
@@ -300,7 +315,7 @@ function UnitStepsModal({ onClose }: Props) {
       const doc = screenObj?.document;
       if (!doc) return;
       try {
-        const els = doc.querySelectorAll(selector);
+        const els = doc.querySelectorAll(normalizeSelector(selector));
         const el = els[index] as HTMLElement | undefined;
         if (el) {
           screenObj?.highlightElement(el);
