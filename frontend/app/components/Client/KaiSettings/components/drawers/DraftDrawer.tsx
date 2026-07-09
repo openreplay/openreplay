@@ -81,13 +81,11 @@ function DraftDrawer({
   const patch = (p: Partial<TestCase>) =>
     setDraft((d) => (d ? { ...d, ...p } : d));
 
-  // commit the test into the table with its resolved status
+  // Approve the draft. The one client-settable transition is draft → approved; the cron
+  // (from the schedule) rides along and the runner promotes it to `active` — sending
+  // `active` here would not be a valid transition and wouldn't persist.
   const finalize = () => {
-    onChange({
-      ...draft,
-      status: scheduled ? 'active' : 'approved',
-      isNew: false,
-    });
+    onChange({ ...draft, status: 'approved', isNew: false });
     onClose();
   };
   const approveSteps = () => {

@@ -1,22 +1,15 @@
 import { useSyncExternalStore } from 'react';
 
-import { RunData, RunDefaults } from './types';
+import { RunData } from './types';
 
 export type KaiTab = 'tests' | 'runs' | 'settings';
 
-// Ephemeral, cross-tab UI state — the bits that interact *between* tabs and so can't
-// live inside a single tab's local state: the active tab (drawers deep-link across
-// tabs), the Settings → Default run configuration (pre-fills new drafts / manual
-// tests), and one-shot handoffs from a test drawer to the Runs tab. Server data stays
-// in react-query; this holds none of it. Defaults are local-only until a backend
-// endpoint exists (see todo.md).
+// Ephemeral, cross-tab UI state — only the bits that interact *between* tabs: the active
+// tab (drawers deep-link across tabs) and one-shot handoffs from a test drawer to the
+// Runs tab. Everything with a real source (run defaults, pause-on-revision) reads from
+// react-query (`useSettings` / `useEnvironments`), not here.
 interface KaiUiState {
   activeTab: KaiTab;
-  defaults: RunDefaults;
-  // Settings → pause tests while a new step revision waits for review (all tests).
-  // Off = they keep running on the current version until reviewed. Mirrors the
-  // project setting `pauseOnNewRevisions`; the store is the session copy the UI reads.
-  pauseOnRevision: boolean;
   // set by the test drawer's "View all runs" / "View" (last failed run), read by RunsTab.
   // `handoffId` bumps on each handoff so RunsTab can adopt it exactly once (a new id,
   // not a cleared flag — RunsTab's pane stays mounted between visits).
@@ -27,8 +20,6 @@ interface KaiUiState {
 
 let state: KaiUiState = {
   activeTab: 'tests',
-  defaults: { resolution: 'desktop', region: 'eu-central-1' },
-  pauseOnRevision: true,
   runsTestFilter: null,
   runsOpenRunKey: null,
   handoffId: 0,
@@ -50,9 +41,6 @@ export const kaiUi = {
   },
 
   setActiveTab: (activeTab: KaiTab) => set({ activeTab }),
-  setDefaults: (patch: Partial<RunDefaults>) =>
-    set({ defaults: { ...state.defaults, ...patch } }),
-  setPauseOnRevision: (pauseOnRevision: boolean) => set({ pauseOnRevision }),
 
   /** "View all runs" on a test — jump to the Runs tab filtered to that test. */
   showRunsForTest: (testName: string) =>
