@@ -12,7 +12,6 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"openreplay/backend/internal/config/assist"
 	"openreplay/backend/pkg/logger"
 )
 
@@ -45,7 +44,7 @@ type SessionManager interface {
 	Stop()
 	GetByID(projectID, sessionID string) (interface{}, error)
 	GetAll(projectID string, filters []*Filter, sort SortOrder, page, limit int) ([]interface{}, int, map[string]map[string]int, error)
-	Autocomplete(projectID string, key FilterType, value string) ([]interface{}, error)
+	Autocomplete(projectID string, key FilterType, value string) ([]AutocompleteEntry, error)
 }
 
 type sessionManagerImpl struct {
@@ -62,12 +61,16 @@ type sessionManagerImpl struct {
 	scanSize  int64
 }
 
-func New(log logger.Logger, cfg *assist.Config, redis *redis.Client) (SessionManager, error) {
+func New(log logger.Logger, cacheTTL time.Duration, batchSize int, scanSize int64, redis *redis.Client) (SessionManager, error) {
 	switch {
-	case cfg == nil:
-		return nil, fmt.Errorf("config is required")
 	case log == nil:
 		return nil, fmt.Errorf("logger is required")
+	case cacheTTL < 1:
+		return nil, fmt.Errorf("cache TTL is required")
+	case batchSize < 1:
+		return nil, fmt.Errorf("batch size is required")
+	case scanSize < 1:
+		return nil, fmt.Errorf("scan size is required")
 	case redis == nil:
 		return nil, fmt.Errorf("redis client is required")
 	}
@@ -75,14 +78,14 @@ func New(log logger.Logger, cfg *assist.Config, redis *redis.Client) (SessionMan
 		ctx:       context.Background(),
 		log:       log,
 		client:    redis,
-		ticker:    time.NewTicker(cfg.CacheTTL),
+		ticker:    time.NewTicker(cacheTTL),
 		wg:        &sync.WaitGroup{},
 		stopChan:  make(chan struct{}),
 		mutex:     &sync.RWMutex{},
 		cache:     make(map[string]*SessionData),
 		sorted:    make([]*SessionData, 0),
-		batchSize: cfg.BatchSize,
-		scanSize:  cfg.ScanSize,
+		batchSize: batchSize,
+		scanSize:  scanSize,
 	}
 	return sm, nil
 }
@@ -108,9 +111,6 @@ func (sm *sessionManagerImpl) Stop() {
 	close(sm.stopChan)
 	sm.ticker.Stop()
 	sm.wg.Wait()
-	if err := sm.client.Close(); err != nil {
-		sm.log.Debug(sm.ctx, "Error closing Redis connection: %v", err)
-	}
 	sm.log.Debug(sm.ctx, "Session manager stopped")
 }
 
@@ -523,7 +523,7 @@ func matchesFilters(session *SessionData, filters []*Filter, counter map[string]
 	return true
 }
 
-func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, value string) ([]interface{}, error) {
+func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, value string) ([]AutocompleteEntry, error) {
 	matches := make(map[string]struct{}) // To ensure uniqueness
 	lowerValue := strings.ToLower(value)
 
@@ -576,14 +576,10 @@ func (sm *sessionManagerImpl) Autocomplete(projectID string, key FilterType, val
 		}
 	}
 
-	results := make([]interface{}, 0, len(matches))
+	results := make([]AutocompleteEntry, 0, len(matches))
 	keyName := strings.ToUpper(string(key))
-	type pair struct {
-		Type  string `json:"type"`
-		Value string `json:"value"`
-	}
 	for k := range matches {
-		results = append(results, pair{Type: keyName, Value: k})
+		results = append(results, AutocompleteEntry{Type: keyName, Value: k})
 	}
 	return results, nil
 }

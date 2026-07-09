@@ -186,7 +186,7 @@ jobs:
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
             # EE-only services (not in backend/cmd) - skip FOSS build
-            # These include: assist-api, video-replays, connector
+            # These include: video-replays, connector
             if ! grep -q $SERVICE /tmp/backend.txt; then
               is_ee_only=true
             fi
@@ -196,7 +196,7 @@ jobs:
             ee_build_args="ee"
           fi  
           version=$(image_version $SERVICE)
-          # Build FOSS version (skip for EE-only services like assist-api)
+          # Build FOSS version (skip for EE-only services)
           if [[ "$is_ee_only" == "false" ]]; then
             echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
             IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args

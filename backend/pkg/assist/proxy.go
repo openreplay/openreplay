@@ -1,4 +1,4 @@
-package proxy
+package assist
 
 import (
 	"bytes"
@@ -11,9 +11,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 
 	"openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/db/postgres"
@@ -21,31 +18,24 @@ import (
 	"openreplay/backend/pkg/projects"
 )
 
-var ErrNoLiveSession = errors.New("no live session")
-
-type Assist interface {
-	GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error)
-	GetLiveSessionsWS(projID uint32, req *GetLiveSessionsRequest) (interface{}, error)
-	IsLive(projID uint32, sessID uint64) (bool, error)
-	Autocomplete(projID uint32, q, key string) ([]map[string]interface{}, error)
-}
-
-type assistImpl struct {
+type proxyImpl struct {
 	cfg      *api.Config
 	log      logger.Logger
 	projects projects.Projects
 }
 
-func New(log logger.Logger, cfg *api.Config, projects projects.Projects) (Assist, error) {
+func newProxy(log logger.Logger, cfg *api.Config, projects projects.Projects) (Assist, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("logger is nil")
 	case cfg == nil:
 		return nil, errors.New("config is nil")
+	case cfg.AssistUrl == "":
+		return nil, errors.New("assist url is not set")
 	case projects == nil:
 		return nil, errors.New("projects is nil")
 	}
-	return &assistImpl{
+	return &proxyImpl{
 		log:      log,
 		cfg:      cfg,
 		projects: projects,
@@ -53,7 +43,7 @@ func New(log logger.Logger, cfg *api.Config, projects projects.Projects) (Assist
 }
 
 // assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
-func (a *assistImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error) {
+func (a *proxyImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error) {
 	switch {
 	case projID == 0:
 		return nil, errors.New("projID is 0")
@@ -100,7 +90,7 @@ func (a *assistImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface
 	}
 
 	response.Data["live"] = true
-	if token, err := a.getAgentToken(projID, proj.ProjectKey, sessID); err != nil {
+	if token, err := agentToken(a.cfg, projID, proj.ProjectKey, sessID); err != nil {
 		a.log.Error(context.Background(), "[proxy] GetLiveSessionByID: %v", err)
 	} else {
 		response.Data["agentToken"] = token
@@ -108,45 +98,8 @@ func (a *assistImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface
 	return response.Data, nil
 }
 
-func (a *assistImpl) getAgentToken(projectID uint32, projectKey string, sessionID uint64) (string, error) {
-	var method jwt.SigningMethod
-	switch a.cfg.AssistJwtAlgorithm {
-	case "HS256":
-		method = jwt.SigningMethodHS256
-	case "HS384":
-		method = jwt.SigningMethodHS384
-	case "HS512":
-		method = jwt.SigningMethodHS512
-	default:
-		return "", errors.New("unsupported JWT_ALGORITHM: " + a.cfg.AssistJwtAlgorithm)
-	}
-
-	// iat in seconds since epoch (UTC), like iat // 1000 in Python
-	iat := time.Now().UTC().Unix()
-	// local UTC offset in seconds (TimeUTC.get_utc_offset() // 1000 in Python)
-	_, offsetSeconds := time.Now().Zone()
-	exp := iat + a.cfg.AssistJwtExpiration + int64(offsetSeconds)
-
-	claims := jwt.MapClaims{
-		"projectKey": projectKey,
-		"projectId":  projectID,
-		"sessionId":  fmt.Sprintf("%d", sessionID),
-		"iat":        iat,
-		"exp":        exp,
-		"iss":        a.cfg.AssistJwtIssuer,
-		"aud":        "openreplay:agent",
-	}
-
-	token := jwt.NewWithClaims(method, claims)
-	signed, err := token.SignedString([]byte(a.cfg.AssistJwtSecret))
-	if err != nil {
-		return "", err
-	}
-	return signed, nil
-}
-
 // assist.get_live_sessions_ws(...)
-func (a *assistImpl) GetLiveSessionsWS(projID uint32, req *GetLiveSessionsRequest) (interface{}, error) {
+func (a *proxyImpl) GetLiveSessionsWS(projID uint32, req *GetLiveSessionsRequest) (interface{}, error) {
 	switch {
 	case projID == 0:
 		return nil, errors.New("projID is 0")
@@ -161,7 +114,7 @@ func (a *assistImpl) GetLiveSessionsWS(projID uint32, req *GetLiveSessionsReques
 	assistUrl := fmt.Sprintf(a.cfg.AssistUrl, a.cfg.AssistKey) + a.cfg.AssistLiveSuffix + "/" + proj.ProjectKey
 
 	// Transformation from frontend request to assist request payload
-	payload, err := json.Marshal(req.Parse())
+	payload, err := json.Marshal(req.parse())
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +128,7 @@ func (a *assistImpl) GetLiveSessionsWS(projID uint32, req *GetLiveSessionsReques
 }
 
 // assist.is_live(project_id=project_id, session_id=session_id, project_key=data["projectKey"])
-func (a *assistImpl) IsLive(projID uint32, sessID uint64) (bool, error) {
+func (a *proxyImpl) IsLive(projID uint32, sessID uint64) (bool, error) {
 	switch {
 	case projID == 0:
 		return false, errors.New("projID is 0")
@@ -211,43 +164,7 @@ func (a *assistImpl) IsLive(projID uint32, sessID uint64) (bool, error) {
 	return false, nil
 }
 
-type GetLiveSessionsRequest struct {
-	Filters []interface{} `json:"filters"`
-	Sort    string        `json:"sort"`  // "userId", "timestamp" default
-	Order   string        `json:"order"` // "asc" or "desc", default "desc"
-	Limit   int           `json:"limit"` // default 10
-	Page    int           `json:"page"`  // default 1
-}
-
-type GetAssistSessionsPayload struct {
-	Filter     map[string]interface{} `json:"filter"`
-	Pagination map[string]int         `json:"pagination"`
-	Sort       map[string]string      `json:"sort"`
-}
-
-func (r *GetLiveSessionsRequest) Parse() *GetAssistSessionsPayload {
-	if r == nil {
-		return nil
-	}
-	res := &GetAssistSessionsPayload{
-		Filter:     make(map[string]interface{}),
-		Pagination: map[string]int{"limit": r.Limit, "page": r.Page},
-		Sort:       map[string]string{"key": r.Sort, "order": r.Order},
-	}
-	for _, filter := range r.Filters {
-		switch f := filter.(type) {
-		case map[string]interface{}:
-			filterType := f["name"].(string) // it was 'type'
-			if strings.HasPrefix(filterType, "metadata_") {
-				filterType = f["source"].(string) // temp hack with a frontend support
-			}
-			res.Filter[filterType] = map[string]interface{}{"values": f["value"], "operator": f["operator"]}
-		}
-	}
-	return res
-}
-
-func (a *assistImpl) Autocomplete(projID uint32, q, key string) ([]map[string]interface{}, error) {
+func (a *proxyImpl) Autocomplete(projID uint32, q, key string) ([]map[string]interface{}, error) {
 	if projID == 0 {
 		return nil, errors.New("projID is 0")
 	}
@@ -294,6 +211,36 @@ func (a *assistImpl) Autocomplete(projID uint32, q, key string) ([]map[string]in
 	return parsed.Data, nil
 }
 
+// getAssistSessionsPayload is the wire format of the live sessions search
+// request to the assist node.js service.
+type getAssistSessionsPayload struct {
+	Filter     map[string]interface{} `json:"filter"`
+	Pagination map[string]int         `json:"pagination"`
+	Sort       map[string]string      `json:"sort"`
+}
+
+func (r *GetLiveSessionsRequest) parse() *getAssistSessionsPayload {
+	if r == nil {
+		return nil
+	}
+	res := &getAssistSessionsPayload{
+		Filter:     make(map[string]interface{}),
+		Pagination: map[string]int{"limit": r.Limit, "page": r.Page},
+		Sort:       map[string]string{"key": r.Sort, "order": r.Order},
+	}
+	for _, filter := range r.Filters {
+		switch f := filter.(type) {
+		case map[string]interface{}:
+			filterType := f["name"].(string) // it was 'type'
+			if strings.HasPrefix(filterType, "metadata_") {
+				filterType = f["source"].(string) // temp hack with a frontend support
+			}
+			res.Filter[filterType] = map[string]interface{}{"values": f["value"], "operator": f["operator"]}
+		}
+	}
+	return res
+}
+
 func changeAssistKey(key string) string {
 	switch strings.ToUpper(key) {
 	case "PAGETITLE":
@@ -338,7 +285,7 @@ func changeAssistKey(key string) string {
 	return key
 }
 
-func (a *assistImpl) requestAssistData(assistURL string, payload []byte) (interface{}, error) {
+func (a *proxyImpl) requestAssistData(assistURL string, payload []byte) (interface{}, error) {
 	assistReq, err := http.NewRequest("POST", assistURL, bytes.NewBuffer(payload))
 	if err != nil {
 		fmt.Println("Error creating request:", err)

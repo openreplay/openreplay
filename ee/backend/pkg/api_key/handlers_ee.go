@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"openreplay/backend/pkg/assist/proxy"
+	"openreplay/backend/pkg/assist"
 	"openreplay/backend/pkg/server/api"
 )
 
@@ -79,7 +79,7 @@ func (h *handlersImpl) getAssistSessions(r *api.RequestContext) (any, int, error
 
 	userId := r.Request.URL.Query().Get("userId")
 
-	req := &proxy.GetLiveSessionsRequest{
+	req := &assist.GetLiveSessionsRequest{
 		Sort:  "timestamp",
 		Order: "desc",
 		Limit: 10,
@@ -111,7 +111,7 @@ func (h *handlersImpl) searchAssistSessions(r *api.RequestContext) (any, int, er
 		return nil, statusCode, err
 	}
 
-	req := &proxy.GetLiveSessionsRequest{}
+	req := &assist.GetLiveSessionsRequest{}
 	if err := json.Unmarshal(r.Body, req); err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid JSON body")
 	}

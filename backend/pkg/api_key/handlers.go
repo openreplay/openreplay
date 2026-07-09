@@ -12,7 +12,7 @@ import (
 	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/users"
 	usersModel "openreplay/backend/pkg/analytics/users/model"
-	"openreplay/backend/pkg/assist/proxy"
+	"openreplay/backend/pkg/assist"
 	"openreplay/backend/pkg/jobs"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
@@ -27,12 +27,12 @@ type handlersImpl struct {
 	users    users.Users
 	events   events.Events
 	jobs     jobs.Jobs
-	assist   proxy.Assist
+	assist   assist.Assist
 	cfg      *config.Config
 	handlers []*api.Description
 }
 
-func NewHandlers(log logger.Logger, req api.RequestHandler, projects projects.Projects, users users.Users, events events.Events, jobsService jobs.Jobs, assist proxy.Assist, cfg *config.Config) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, req api.RequestHandler, projects projects.Projects, users users.Users, events events.Events, jobsService jobs.Jobs, assist assist.Assist, cfg *config.Config) (api.Handlers, error) {
 	h := &handlersImpl{
 		log:      log,
 		projects: projects,

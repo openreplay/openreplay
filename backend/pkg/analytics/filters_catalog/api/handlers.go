@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	filters_catalog "openreplay/backend/pkg/analytics/filters_catalog"
-	"openreplay/backend/pkg/assist/proxy"
+	"openreplay/backend/pkg/analytics/filters_catalog"
+	"openreplay/backend/pkg/assist"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server/api"
@@ -17,11 +17,11 @@ type handlersImpl struct {
 	log      logger.Logger
 	service  filters_catalog.FiltersCatalog
 	projects projects.Projects
-	assist   proxy.Assist
+	assist   assist.Assist
 	handlers []*api.Description
 }
 
-func NewHandlers(log logger.Logger, req api.RequestHandler, service filters_catalog.FiltersCatalog, p projects.Projects, assist proxy.Assist) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, req api.RequestHandler, service filters_catalog.FiltersCatalog, p projects.Projects, assist assist.Assist) (api.Handlers, error) {
 	h := &handlersImpl{log: log, service: service, projects: p, assist: assist}
 	h.handlers = []*api.Description{
 		{"/{project}/filters", "GET", req.Handle(h.getAllFilters), []string{api.DATA_MANAGEMENT}, api.DoNotTrack},

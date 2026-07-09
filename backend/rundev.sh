@@ -73,7 +73,7 @@ prepare() {
   )
 
   APP_SERVICES=(
-    "assist-api:9005:9001"
+    "assist:9005:9001"
   )
 
   : > "$STATE_FILE"

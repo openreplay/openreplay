@@ -26,5 +26,8 @@ func (c *Client) Ping(ctx context.Context) error {
 }
 
 func (c *Client) Close() error {
+	if c == nil || c.Redis == nil {
+		return nil
+	}
 	return c.Redis.Close()
 }
