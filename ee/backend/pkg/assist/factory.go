@@ -26,9 +26,9 @@ func NewAssist(log logger.Logger, cfg *config.Config, pgconn pool.Pool, redisCli
 	if err != nil {
 		return nil, err
 	}
-	sessManager.Start()
 	if _, err := NewAssistStats(log, pgconn, redisClient.Redis); err != nil {
 		return nil, err
 	}
+	sessManager.Start()
 	return newDirect(log, cfg, projects, sessManager), nil
 }
