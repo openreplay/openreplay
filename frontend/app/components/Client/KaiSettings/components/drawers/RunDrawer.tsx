@@ -62,11 +62,11 @@ function RunShot({ runId, name }: { runId: string; name: string }) {
   const projectId = useProjectId();
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  // keyed by name at the call site, so a new screenshot mounts a fresh instance — no need
+  // to reset url/failed here (which would be a sync setState in an effect).
   useEffect(() => {
     let alive = true;
     let obj: string | undefined;
-    setUrl(null);
-    setFailed(false);
     getRunScreenshot(projectId, runId, name)
       .then((blob) => {
         if (!alive) return;
@@ -251,7 +251,11 @@ function ScreenshotsView({
           </span>
         )}
         {shots[safeShot] ? (
-          <RunShot runId={run.key} name={shots[safeShot]} />
+          <RunShot
+            key={`${run.key}-${shots[safeShot]}`}
+            runId={run.key}
+            name={shots[safeShot]}
+          />
         ) : (
           <div className="flex flex-col items-center gap-1 text-disabled-text">
             <ImageIcon size={36} />
@@ -471,10 +475,15 @@ function RunDrawer({ run, open, onClose }: Props) {
             >
               <Network size={11} className="shrink-0" />
               <span>
-                {step.networkRequests ?? 0} {t('requests')}
+                {step.networkRequests ?? 0}{' '}
+                {(step.networkRequests ?? 0) === 1
+                  ? t('request')
+                  : t('requests')}
               </span>
+              {/* a failed request only means the STEP failed when the step itself did;
+                  on a passed step it's a network warning (amber), not a failure (red) */}
               {!!step.failedRequests && (
-                <span className="text-red">
+                <span className={stepFailed ? 'text-red' : 'text-orange-dark'}>
                   · {step.failedRequests} {t('failed')}
                 </span>
               )}
