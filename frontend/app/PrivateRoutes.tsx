@@ -37,6 +37,8 @@ const components: any = {
   IssueSessionPure: lazy(() => import('Components/Issues/IssueSessionPlayer')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
   TestAgentsPure: lazy(() => import('Components/Client/KaiSettings/StandalonePage')),
+  AuditsPure: lazy(() => import('Components/Audits/AuditsList')),
+  AuditReportPure: lazy(() => import('Components/Audits/AuditReport')),
   ActivityPure: lazy(
     () => import('Components/DataManagement/Activity/ActivityPage'),
   ),
@@ -74,6 +76,8 @@ const enhancedComponents: any = {
   IssueSession: withSiteIdUpdater(components.IssueSessionPure),
   Kai: withSiteIdUpdater(components.KaiPure),
   TestAgents: withSiteIdUpdater(components.TestAgentsPure),
+  Audits: withSiteIdUpdater(components.AuditsPure),
+  AuditReport: withSiteIdUpdater(components.AuditReportPure),
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
   UserPage: withSiteIdUpdater(components.UserPage),
@@ -123,6 +127,8 @@ const ISSUE_DETAIL_PATH = routes.issue();
 const ISSUE_SESSION_PATH = routes.issueSession();
 const KAI_PATH = routes.kai();
 const TEST_AGENTS_PATH = routes.testAgents();
+const AUDITS_PATH = routes.audits();
+const AUDIT_REPORT_PATH = routes.auditReport();
 
 function PrivateRoutes() {
   const {
@@ -367,6 +373,14 @@ function PrivateRoutes() {
         <Route
           path={withSiteId(TEST_AGENTS_PATH, siteIdList)}
           element={<enhancedComponents.TestAgents />}
+        />
+        <Route
+          path={withSiteId(AUDIT_REPORT_PATH, siteIdList)}
+          element={<enhancedComponents.AuditReport />}
+        />
+        <Route
+          path={withSiteId(AUDITS_PATH, siteIdList)}
+          element={<enhancedComponents.Audits />}
         />
 
         <Route

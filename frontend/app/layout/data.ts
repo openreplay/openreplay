@@ -60,6 +60,7 @@ export const enum MENU {
   KAI = 'kai',
   AGENTS = 'agents',
   TEST_AGENTS = 'agents-tests',
+  AUDITS = 'agents-audits',
   ACTIVITY = 'activity',
   USER = 'user-page',
   USERS = 'data-users',
@@ -116,6 +117,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         children: [
           { label: t('Issues'), key: MENU.ISSUES },
           { label: t('Tests'), key: MENU.TEST_AGENTS },
+          { label: t('Audits'), key: MENU.AUDITS },
         ],
       },
     ],
