@@ -9,8 +9,16 @@ export type TestStatus =
   | 'rejected'
   | 'active'
   | 'paused';
-// Statuses a client may set: only draft → approved / rejected (plus same-status no-op).
-export type TestStatusSettable = 'draft' | 'approved' | 'rejected';
+// Statuses a client may set (api3 `TestStatusSettable` enum): draft → approved / rejected,
+// and the active ⇄ paused pause/resume toggle (plus same-status no-op). NOTE: the PUT
+// /tests/{id} prose contradicts this and says active/paused aren't writable — pending
+// backend reconciliation (see todo.md "Status-transition contract").
+export type TestStatusSettable =
+  | 'draft'
+  | 'approved'
+  | 'rejected'
+  | 'active'
+  | 'paused';
 export type RunStatus =
   | 'dispatched'
   | 'running'
@@ -172,6 +180,18 @@ export interface RunResultStep {
   failed_requests?: RunResultFailedRequest[];
 }
 
+// One human-authored ("user") step from results.json. Expands into one or more
+// `agent_steps` (indices into RunResults.agent_steps); `screenshots` gathers every shot
+// captured across those actions (run-relative paths).
+export interface RunResultUserStep {
+  index?: number;
+  description?: string;
+  status?: string;
+  agent_steps?: number[];
+  error?: string | null;
+  screenshots?: string[];
+}
+
 // The runner's results.json, attached verbatim. Snake_case (runner-authored); read
 // defensively — only the fields the drawer uses are typed.
 export interface RunResults {
@@ -183,7 +203,11 @@ export interface RunResults {
   errors?: string[];
   js_errors?: string[];
   agent_steps?: RunResultStep[];
-  user_steps?: unknown[];
+  user_steps?: RunResultUserStep[];
+  /** Index of the failed step (into `user_steps`), plus its text/error. */
+  failed_step_index?: number;
+  failed_step_text?: string;
+  failed_step_error?: string;
   [k: string]: unknown;
 }
 
@@ -466,9 +490,9 @@ export interface TestCase {
 export interface TestStep {
   step: string;
   status: StepStatus;
-  // a step can capture several screenshots; the run drawer shows a carousel.
-  shots?: number;
-  screenshot?: string;
+  // a step can capture several screenshots (run-relative names); the drawer shows a
+  // carousel over them.
+  screenshots?: string[];
   // per-step network activity from the run's results.json (counts only).
   networkRequests?: number;
   failedRequests?: number;
