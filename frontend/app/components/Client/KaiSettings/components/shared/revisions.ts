@@ -5,7 +5,10 @@ import { StepChange, TestCase, TestVersion } from './types';
 
 export const testVersion = (tc: TestCase): number => tc.version ?? 1;
 
-export const needsReview = (tc: TestCase): boolean => !!tc.pendingRevision;
+// The agent flagged this test for review — the authoritative API `needsReview` flag,
+// which can be set before a reviewable version diff (`pendingRevision`) exists.
+export const needsReview = (tc: TestCase): boolean =>
+  !!tc.needsReview || !!tc.pendingRevision;
 
 // One row of the review list. During a review the whole list stays a live,
 // editable step list (same as drafts) — proposed rows just carry a marker:

@@ -107,6 +107,7 @@ export function apiTestToVM(
     expectedResult: test.expectedResult,
     timeoutSecs: test.timeoutSecs,
     config: test.config,
+    needsReview: test.needsReview,
     version: test.activeVersion ?? undefined,
     pendingRevision,
     lastRunAt: test.lastRunAt ? new Date(test.lastRunAt).getTime() : undefined,
