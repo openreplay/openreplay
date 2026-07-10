@@ -123,6 +123,7 @@ function SideMenu(props: Props) {
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(), siteId),
     [MENU.KAI]: () => withSiteId(routes.kai(), siteId),
     [MENU.TEST_AGENTS]: () => withSiteId(routes.testAgents(), siteId),
+    [MENU.AUDITS]: () => withSiteId(routes.audits(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
     [PREFERENCES_MENU.TEST_AGENTS]: () => client(CLIENT_TABS.TEST_AGENTS),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
