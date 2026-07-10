@@ -594,13 +594,17 @@ function RunDrawer({ run, open, onClose }: Props) {
         <span className="flex items-center gap-1.5">
           <ResIcon size={14} /> {resolutionLabel(run.resolution)}
         </span>
-        <span className="flex items-center gap-1.5">
-          <CountryFlagIcon
-            countryCode={regionCountry(run.region)}
-            style={{ width: 16, borderRadius: 2 }}
-          />{' '}
-          {regionLabel(run.region)}
-        </span>
+        {/* region is null until the runner backfills the column — hide rather than show a
+            misleading default flag */}
+        {run.region && (
+          <span className="flex items-center gap-1.5">
+            <CountryFlagIcon
+              countryCode={regionCountry(run.region)}
+              style={{ width: 16, borderRadius: 2 }}
+            />{' '}
+            {regionLabel(run.region)}
+          </span>
+        )}
         {run.tags && run.tags.length > 0 && (
           <Tooltip title={run.tags.join(', ')}>
             <span className="flex items-center gap-1.5 cursor-default">
@@ -757,6 +761,7 @@ function RunDrawer({ run, open, onClose }: Props) {
           )}
           {devTab === 'network' && (
             <NetworkPanel
+              key={`net-${network.length}`}
               reqs={network}
               startedAt={run.date}
               onDownload={harText ? downloadHar : undefined}
@@ -798,6 +803,7 @@ function RunDrawer({ run, open, onClose }: Props) {
             {modalTab === 'screenshots' && <ScreenshotsView run={run} fill />}
             {modalTab === 'network' && (
               <NetworkPanel
+                key={`net-${network.length}`}
                 reqs={network}
                 startedAt={run.date}
                 fillHeight

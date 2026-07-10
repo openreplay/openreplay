@@ -115,9 +115,8 @@ export function apiTestToVM(
   };
 }
 
-// Create accepts name/steps/cron/environments/tags/config; the backend seeds status
-// `draft`, so a manual test is lifted to `approved` with a follow-up update (see
-// TestsTab.commitCreate).
+// Create accepts name/steps/cron/environments/tags/config plus an optional seed status.
+// A manual test starts `approved` (skips the draft flow); a duplicate lands as a `draft`.
 export function vmToCreateRequest(vm: TestCase): TestCreateRequest {
   return {
     name: vm.title,
@@ -128,6 +127,7 @@ export function vmToCreateRequest(vm: TestCase): TestCreateRequest {
     environments: vm.environments,
     tags: vm.tags,
     config: withMatrixConfig(vm),
+    status: vm.status === 'draft' ? 'draft' : 'approved',
   };
 }
 
@@ -292,8 +292,13 @@ const runDate = (run: {
 };
 
 // A lean list item — no steps. network/console aren't captured in the list; resolution
-// comes from `screenType`, tags ride along from the owning test.
-export function apiRunToVM(run: RunListItem, testName?: string): RunData {
+// comes from `screenType`, tags ride along from the owning test, env name is resolved via
+// the optional id→name map (the run carries only environmentId).
+export function apiRunToVM(
+  run: RunListItem,
+  testName?: string,
+  envNameById?: Map<string, string>,
+): RunData {
   return {
     key: run.runId,
     testId: run.testId,
@@ -304,6 +309,10 @@ export function apiRunToVM(run: RunListItem, testName?: string): RunData {
     status: runStatusFromApi(run.status),
     steps: [],
     resolution: toResolution(run.screenType),
+    region: run.region ?? undefined,
+    envName: run.environmentId
+      ? (envNameById?.get(run.environmentId) ?? undefined)
+      : undefined,
     tags: run.tags,
     dispatchMode: run.dispatchMode ?? undefined,
     batchId: run.batchId ?? undefined,
@@ -312,7 +321,10 @@ export function apiRunToVM(run: RunListItem, testName?: string): RunData {
 
 // The single-run detail: all step-level detail lives inside the runner's results.json
 // (`results`); network comes from the streamed HAR (wired in the drawer, not here).
-export function apiRunDetailToVM(detail: RunDetail): RunData {
+export function apiRunDetailToVM(
+  detail: RunDetail,
+  envNameById?: Map<string, string>,
+): RunData {
   const results = detail.results ?? undefined;
   const agentSteps = Array.isArray(results?.agent_steps)
     ? results!.agent_steps
@@ -348,6 +360,10 @@ export function apiRunDetailToVM(detail: RunDetail): RunData {
     status: runStatusFromApi(detail.status),
     steps,
     resolution: toResolution(detail.screenType),
+    region: detail.region ?? undefined,
+    envName: detail.environmentId
+      ? (envNameById?.get(detail.environmentId) ?? undefined)
+      : undefined,
     tags: detail.tags,
     failedStep: failed >= 0 && failed < steps.length ? failed : undefined,
     summary: results?.final_result,
