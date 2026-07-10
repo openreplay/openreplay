@@ -22,13 +22,13 @@ func NewAssetsBatchIterator(log logger.Logger, batchHandler BatchHandler, messag
 func (b *assetsBatchIteratorImpl) Iterate(batchData []byte, batch *BatchInfo) {
 	ctx := context.WithValue(context.Background(), "sessionID", batch.sessionID)
 
-	batchType, batchTimestamp, err := getBatchType(batchData)
+	meta, err := getBatchType(batchData)
 	if err != nil {
 		b.log.Error(ctx, "failed to read batch meta: %s", err)
 		return
 	}
-	batch.version = batchType
-	batch.dataTs = batchTimestamp
+	batch.version = meta.batchType
+	batch.dataTs = meta.timestamp
 
 	switch batch.Type() {
 	case RawData, FullBatch:
@@ -36,6 +36,6 @@ func (b *assetsBatchIteratorImpl) Iterate(batchData []byte, batch *BatchInfo) {
 	case AssetsBatch:
 		b.batchHandler(batchData, batch)
 	default:
-		b.log.Error(ctx, "unknown batch type: %d, info: %s", batchType, batch.Info())
+		b.log.Error(ctx, "unknown batch type: %d, info: %s", meta.batchType, batch.Info())
 	}
 }
