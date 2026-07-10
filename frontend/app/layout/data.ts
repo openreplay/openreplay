@@ -14,6 +14,7 @@ export interface MenuItem {
   leading?: any;
   isEnterprise?: boolean;
   isAdmin?: boolean;
+  tag?: { label: string; color: string; border?: boolean };
 }
 
 interface Category {
@@ -54,6 +55,8 @@ export const enum MENU {
   SUPPORT = 'support',
   EXIT = 'exit',
   SPOTS = 'spots',
+  AGENTS = 'agents',
+  TEST_AGENTS = 'agents-tests',
   ACTIVITY = 'activity',
   USER = 'user-page',
   USERS = 'data-users',
@@ -78,12 +81,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         hidden: true,
       },
       {
-        label: t('Issues'),
-        key: MENU.ISSUES,
-        icon: 'info-circle',
-        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
-      },
-      {
         label: t('Vault'),
         key: MENU.VAULT,
         icon: 'safe',
@@ -99,6 +96,22 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         label: t('Highlights'),
         key: MENU.HIGHLIGHTS,
         icon: 'chat-square-quote',
+      },
+    ],
+  },
+  {
+    title: t('Agents'),
+    key: 'agents',
+    hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+    items: [
+      {
+        label: t('Agents'),
+        key: MENU.AGENTS,
+        icon: 'sparkles',
+        tag: { label: t('New'), color: '#394DFE' },
+        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+        // Tests joins as a second child when the kai-testing-ui branch merges
+        children: [{ label: t('Issues'), key: MENU.ISSUES }],
       },
     ],
   },
