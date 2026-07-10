@@ -16,18 +16,19 @@ import { useTranslation } from 'react-i18next';
 
 import {
   useActivateVersion,
-  useAllRuns,
   useDismissVersion,
+  useRuns,
   useSettings,
   useTriggerRun,
+  useVersion,
   useVersionDiff,
+  useVersions,
 } from '../../queries';
 import { apiRunToVM, stepsToChanges } from '../shared/adapters';
 import {
   StepItem,
   buildReviewItems,
   resolveItems,
-  stepHistory,
   testVersion,
 } from '../shared/revisions';
 import { RunData, TestCase } from '../shared/types';
@@ -43,7 +44,8 @@ import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
 
-// The runs list is fetched once and filtered client-side; the API clamps `limit` to 100.
+// This test's runs (GET /tests/{testId}/runs); the API clamps `limit` to 100. The trend
+// strip only needs the last 10, so one page of 100 is plenty.
 const LOOKUP_LIMIT = 100;
 
 const versionDate = (ts: number): string =>
@@ -85,7 +87,7 @@ function TestDrawer({
 }: Props) {
   const { t } = useTranslation();
   const settingsRef = useRef<HTMLDivElement>(null);
-  const { data: runsData } = useAllRuns({ limit: LOOKUP_LIMIT });
+  const { data: runsData } = useRuns(test?.key, { limit: LOOKUP_LIMIT });
   // Settings → "Pause tests on new revisions": decides whether a pending revision
   // pauses the test (Needs review status, run controls off) or it keeps running.
   const { data: projectSettings } = useSettings();
@@ -97,6 +99,16 @@ function TestDrawer({
   const { data: versionDiff } = useVersionDiff(
     test?.key,
     !!test?.pendingRevision,
+  );
+  // version history (newest first) → the switcher dropdown; pending/rejected rows are
+  // owned by the review flow, not the switcher. The viewed version's steps load lazily.
+  const { data: versionsData } = useVersions(test?.key, open && !creating);
+  const versionItems = useMemo(
+    () =>
+      (versionsData?.items ?? []).filter(
+        (v) => v.status !== 'pending' && v.status !== 'rejected',
+      ),
+    [versionsData],
   );
 
   // Steps edit locally; nothing is sent until "Save steps". Seeded once per mount — the
@@ -118,6 +130,12 @@ function TestDrawer({
   const [reviewItems, setReviewItems] = useState<StepItem[] | null>(null);
   // version switcher: non-null = viewing an older read-only snapshot
   const [viewVersion, setViewVersion] = useState<number | null>(null);
+  // the versionId backing the viewed older version → its read-only steps
+  const viewVersionId =
+    viewVersion != null
+      ? versionItems.find((v) => v.version === viewVersion)?.versionId
+      : undefined;
+  const { data: viewedVersionDetail } = useVersion(test?.key, viewVersionId);
   // Build the review list once the diff arrives (active vs proposed steps → git-style
   // add/remove markers over the active steps). No pending suggestion → no review.
   useEffect(() => {
@@ -169,10 +187,21 @@ function TestDrawer({
   const paused = test.status === 'paused';
   const revision = test.pendingRevision;
   const version = testVersion(test);
-  const history = test.history ?? [];
+  // older versions available to switch to (excludes the current one)
+  const pastVersions = versionItems
+    .filter((v) => v.version !== version)
+    .sort((a, b) => b.version - a.version);
   const viewedSnapshot =
     viewVersion != null
-      ? history.find((h) => h.version === viewVersion)
+      ? {
+          version: viewVersion,
+          savedAt: viewedVersionDetail
+            ? new Date(viewedVersionDetail.createdAt).getTime()
+            : 0,
+          steps: viewedVersionDetail
+            ? stepsToLines(viewedVersionDetail.steps)
+            : [],
+        }
       : undefined;
   // a paused test with no environment can't resume until one is set below
   const resumeBlocked = paused && hasNoEnvironment(test);
@@ -287,12 +316,10 @@ function TestDrawer({
   const versionMenu = {
     items: [
       { key: String(version), label: `v${version} · ${t('Current')}` },
-      ...[...history]
-        .sort((a, b) => b.version - a.version)
-        .map((h) => ({
-          key: String(h.version),
-          label: `v${h.version} · ${versionDate(h.savedAt)}`,
-        })),
+      ...pastVersions.map((v) => ({
+        key: String(v.version),
+        label: `v${v.version} · ${versionDate(new Date(v.createdAt).getTime())}`,
+      })),
     ],
     selectedKeys: [String(viewVersion ?? version)],
     onClick: ({ key }: { key: string }) =>
@@ -300,7 +327,7 @@ function TestDrawer({
   };
   // the version chip + dropdown next to the Steps title — only once v2 exists
   const versionSwitcher =
-    history.length > 0 ? (
+    pastVersions.length > 0 ? (
       <Dropdown menu={versionMenu} trigger={['click']} placement="bottomRight">
         <button
           type="button"
@@ -487,9 +514,6 @@ function TestDrawer({
           steps={stepsDraft}
           bounded
           headerAction={versionSwitcher}
-          historyFor={
-            history.length > 0 ? (idx) => stepHistory(test, idx) : undefined
-          }
           onStepsChange={setSteps}
           dirty={stepsDirty}
           onSave={() => onChange({ ...test, steps: stepsRef.current })}
