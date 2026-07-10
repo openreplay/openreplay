@@ -47,7 +47,7 @@ export const REPORT = {
   generatedAt: 'Jul 7, 2026',
   healthScore: 67,
   verdict:
-    'The checkout is structurally sound. Users reach payment without hesitation, and the order summary keeps them oriented at every step. The lost ground is concentrated in one place: payment. A silent card-decline failure and a cluster of form-validation friction account for most of the gap, and both are cheap to fix relative to the sessions they cost. Fix the two payment findings first; they sit exactly where users currently give up.',
+    'The checkout is structurally sound. Users reach payment without hesitation, and the order summary keeps them oriented at every step. The lost ground is concentrated in one place: payment. A consent banner that covers the primary button on mobile, a silent card-decline failure, and a cluster of form-validation friction account for most of the gap. All three are cheap to fix relative to the sessions they cost, and all three sit exactly where users currently give up.',
 
   dimensions: [
     {
@@ -90,6 +90,21 @@ export const REPORT = {
 
   findings: [
     {
+      id: 3,
+      severity: 'P0',
+      title: 'The cookie banner covers "Place order" on mobile',
+      where: 'Checkout → Payment · mobile viewports',
+      evidence:
+        'On screens narrower than 400px the consent banner overlays the primary button. Taps land on the banner, not the button: the average affected session shows six rapid taps in the same spot before the user pinch-zooms or leaves. The defect is purely visual. The button works the moment the banner is dismissed, but the banner\u2019s close control is a 12px icon at 2.1:1 contrast, and most users never find it.',
+      sessions: 128,
+      pctOfSample: 6,
+      tags: ['Payment', 'Mobile'],
+      recommendation:
+        'Reserve layout space for the banner instead of overlaying the page (or anchor it to the top), enlarge its close control to a 44px touch target, and raise the contrast above 4.5:1. No logic changes needed.',
+      relatedIssueId: 2,
+      relatedIssueName: '"Place order" button unresponsive on mobile',
+    },
+    {
       id: 1,
       severity: 'P0',
       title: 'Cards decline silently at the payment step',
@@ -123,9 +138,9 @@ export const REPORT = {
 
   /** exec-summary shortlist — the two spreads above + the next one down */
   topFindings: [
+    { severity: 'P0', title: 'The cookie banner covers "Place order" on mobile' },
     { severity: 'P0', title: 'Cards decline silently at the payment step' },
     { severity: 'P1', title: 'Valid expiry dates rejected by the card form' },
-    { severity: 'P1', title: 'Checkout page takes ~8s to load on first visit' },
   ],
 
   positives: [
@@ -145,7 +160,7 @@ export const REPORT = {
 
   /** opportunity sizing for the roadmap slide — the consulting "so what" */
   sizing:
-    '310 of the 2,000 sampled sessions hit an avoidable payment failure. At full traffic that is roughly 1,260 recoverable sessions per month.',
+    '438 of the 2,000 sampled sessions hit an avoidable payment failure. At full traffic that is roughly 1,780 recoverable sessions per month.',
 
   /** the journey exhibit — where sampled sessions drop, payment highlighted */
   funnel: {
@@ -157,12 +172,13 @@ export const REPORT = {
     ],
     highlightStep: 3,
     highlightNote:
-      'Two thirds of the payment drop (310 of 470 sessions) traces to findings 1 and 2.',
+      'Most of the payment drop (438 of 470 sessions) traces to the three findings in this report.',
     description:
-      'Sessions move cleanly through cart and address. Both steps lose less than a fifth of their traffic, which is within the normal range for guest checkouts. The cliff is at payment: 470 of the 1,560 sessions that reached the payment page never placed an order. The evidence on the next two slides accounts for two thirds of that loss. Recover those sessions and the funnel converts at roughly 70% instead of 55%.',
+      'Sessions move cleanly through cart and address. Both steps lose less than a fifth of their traffic, which is within the normal range for guest checkouts. The cliff is at payment: 470 of the 1,560 sessions that reached the payment page never placed an order. The evidence on the next three slides accounts for most of that loss. Recover those sessions and the funnel converts at roughly 70% instead of 55%.',
   },
 
   roadmap: [
+    { severity: 'P0', item: 'Stop the consent banner covering the primary button on mobile', effort: 'S' },
     { severity: 'P0', item: 'Inline decline reason + retry at payment', effort: 'S' },
     { severity: 'P1', item: 'Expiry field: accept & auto-format all common formats', effort: 'S' },
     { severity: 'P1', item: 'First-load performance on /checkout (~8s → <2s)', effort: 'M' },

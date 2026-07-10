@@ -346,7 +346,7 @@ function AuditReport() {
       <Slide
         page={2}
         label="Executive summary"
-        headline={`Checkout scores ${health} of 100. Two payment findings account for most of the gap.`}
+        headline={`Checkout scores ${health} of 100. Three payment findings account for most of the gap.`}
       >
         <div className="flex gap-10 flex-1 items-start mt-1">
           <div className="shrink-0 flex flex-col items-start">
@@ -438,14 +438,14 @@ function AuditReport() {
       {/* ---- slide 4: the journey exhibit ---- */}
       <FunnelSlide page={4} />
 
-      {/* ---- slides 5–6: finding spreads ---- */}
+      {/* ---- slides 5–7: finding spreads ---- */}
       {REPORT.findings.map((f, i) => (
         <FindingSlide key={f.id} page={5 + i} index={i + 1} finding={f} siteId={siteId} />
       ))}
 
-      {/* ---- slide 7: what's working + roadmap ---- */}
+      {/* ---- slide 8: what's working + roadmap ---- */}
       <Slide
-        page={7}
+        page={8}
         label="What's working · Roadmap"
         headline="Fix payment first; protect what already orients users"
       >
@@ -494,8 +494,8 @@ function AuditReport() {
         </div>
       </Slide>
 
-      {/* ---- slide 8: method appendix ---- */}
-      <Slide page={8} label="Method">
+      {/* ---- slide 9: method appendix ---- */}
+      <Slide page={9} label="Method">
         <div className="grid grid-cols-2 gap-x-10 gap-y-6 flex-1 content-center">
           {(
             [
