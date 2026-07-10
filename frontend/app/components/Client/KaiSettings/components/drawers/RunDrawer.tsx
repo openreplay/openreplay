@@ -50,8 +50,8 @@ interface Props {
   onClose: () => void;
 }
 
-// A step is worth showing in the carousel once it captured a screenshot.
-const hasShot = (s: TestStep) => !!s.screenshot;
+// A step is worth showing in the carousel once it captured at least one screenshot.
+const hasShot = (s: TestStep) => !!s.screenshots?.length;
 
 const isNetError = (r: NetworkRequest) => r.status === 0 || r.status >= 400;
 
@@ -189,7 +189,8 @@ function ScreenshotsView({
   const cur = shotSteps[Math.min(stepPos, shotSteps.length - 1)];
   const curStep = run.steps[cur.i];
   const failed = curStep.status === 'failed';
-  const shotCount = Math.max(1, curStep.shots ?? 1);
+  const shots = curStep.screenshots ?? [];
+  const shotCount = Math.max(1, shots.length);
   const safeShot = Math.min(shotIdx, shotCount - 1);
 
   const pickStep = (pos: number) => {
@@ -249,8 +250,8 @@ function ScreenshotsView({
             <XCircle size={12} /> {t('Failed')}
           </span>
         )}
-        {curStep.screenshot ? (
-          <RunShot runId={run.key} name={curStep.screenshot} />
+        {shots[safeShot] ? (
+          <RunShot runId={run.key} name={shots[safeShot]} />
         ) : (
           <div className="flex flex-col items-center gap-1 text-disabled-text">
             <ImageIcon size={36} />
@@ -460,9 +461,14 @@ function RunDrawer({ run, open, onClose }: Props) {
             {step.step}
             {skipped && <span className="ml-2 text-xs">({t('skipped')})</span>}
           </div>
-          {/* per-step network activity from results.json (counts) */}
+          {/* per-step network activity from results.json (counts) — click opens the
+              Network tab below (where the failed requests are listed) */}
           {(step.networkRequests || step.failedRequests) && (
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-disabled-text">
+            <button
+              type="button"
+              onClick={() => jumpToActivity('network')}
+              className="mt-0.5 flex items-center gap-1.5 text-xs text-disabled-text hover:text-main transition-colors"
+            >
               <Network size={11} className="shrink-0" />
               <span>
                 {step.networkRequests ?? 0} {t('requests')}
@@ -472,11 +478,14 @@ function RunDrawer({ run, open, onClose }: Props) {
                   · {step.failedRequests} {t('failed')}
                 </span>
               )}
-            </div>
+            </button>
           )}
-          {stepFailed && run.error && (
+          {stepFailed && (
             <div className="mt-1.5 flex flex-col gap-1.5 items-start">
-              <div className="text-sm text-red">{run.error}</div>
+              {/* the step error often repeats the result summary — only show it when it adds something */}
+              {run.error && run.error !== run.summary && (
+                <div className="text-sm text-red">{run.error}</div>
+              )}
               <div className="flex items-center gap-3 text-xs">
                 <button
                   type="button"

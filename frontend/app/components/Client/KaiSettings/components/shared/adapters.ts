@@ -15,6 +15,7 @@ import {
   RunDetail,
   RunListItem,
   RunResultStep,
+  RunResultUserStep,
   RunStatus,
   StepChange,
   StepStatus,
@@ -216,16 +217,71 @@ const stepStatusFromApi = (status?: string): StepStatus => {
   return 'pending';
 };
 
-// An agent step from results.json → the UI step. Prefer the human step text when the
-// agent action maps to one; the screenshot is a run-relative path, reduced to the file
-// name the screenshots endpoint takes (GET /runs/{runId}/screenshots/{name}).
-const resultStepToVM = (step: RunResultStep): TestStep => ({
-  step: step.user_step_text || step.action || '',
-  status: stepStatusFromApi(step.status),
-  screenshot: step.screenshot ? lastSegment(step.screenshot) : undefined,
-  networkRequests: step.network_requests || undefined,
-  failedRequests: step.failed_requests?.length || undefined,
-});
+// A human-authored ("user") step → one UI row. A user step expands into one or more agent
+// actions, each with its own screenshot, so the row's `screenshots` is the union and its
+// network counts are summed across those actions. Screenshot paths are run-relative and
+// reduced to the file name the screenshots endpoint takes
+// (GET /runs/{runId}/screenshots/{name}). This is the source of truth when the runner
+// provides `user_steps`; `groupAgentSteps` is the legacy fallback.
+const userStepToVM = (
+  us: RunResultUserStep,
+  agentSteps: RunResultStep[],
+): TestStep => {
+  const actions = (us.agent_steps ?? [])
+    .map((i) => agentSteps[i])
+    .filter((a): a is RunResultStep => !!a);
+  const shots = (
+    us.screenshots?.length
+      ? us.screenshots
+      : actions.map((a) => a.screenshot).filter((s): s is string => !!s)
+  ).map(lastSegment);
+  return {
+    step: us.description || '',
+    status: stepStatusFromApi(us.status),
+    screenshots: shots.length ? shots : undefined,
+    networkRequests:
+      actions.reduce((n, a) => n + (a.network_requests ?? 0), 0) || undefined,
+    failedRequests:
+      actions.reduce((n, a) => n + (a.failed_requests?.length ?? 0), 0) ||
+      undefined,
+  };
+};
+
+// Legacy runs without `user_steps`: group the flat agent steps by their `user_step_index`
+// so the several agent actions of one human step collapse into a single row (this avoids
+// the duplicate-row artefact of mapping agent steps 1:1).
+const groupAgentSteps = (agentSteps: RunResultStep[]): TestStep[] => {
+  const order: (number | string)[] = [];
+  const groups = new Map<number | string, RunResultStep[]>();
+  agentSteps.forEach((a, i) => {
+    const key = a.user_step_index ?? `agent-${a.index ?? i}`;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      order.push(key);
+    }
+    groups.get(key)!.push(a);
+  });
+  return order.map((key) => {
+    const actions = groups.get(key)!;
+    const shots = actions
+      .map((a) => a.screenshot)
+      .filter((s): s is string => !!s)
+      .map(lastSegment);
+    const failed = actions.some(
+      (a) => stepStatusFromApi(a.status) === 'failed',
+    );
+    return {
+      step: actions[0].user_step_text || actions[0].action || '',
+      status: failed ? 'failed' : stepStatusFromApi(actions[0].status),
+      screenshots: shots.length ? shots : undefined,
+      networkRequests:
+        actions.reduce((n, a) => n + (a.network_requests ?? 0), 0) || undefined,
+      failedRequests:
+        actions.reduce((n, a) => n + (a.failed_requests?.length ?? 0), 0) ||
+        undefined,
+    };
+  });
+};
 
 const runDate = (run: {
   startedAt?: string | null;
@@ -258,12 +314,22 @@ export function apiRunToVM(run: RunListItem, testName?: string): RunData {
 // (`results`); network comes from the streamed HAR (wired in the drawer, not here).
 export function apiRunDetailToVM(detail: RunDetail): RunData {
   const results = detail.results ?? undefined;
-  const steps = Array.isArray(results?.agent_steps)
-    ? results!.agent_steps.map(resultStepToVM)
+  const agentSteps = Array.isArray(results?.agent_steps)
+    ? results!.agent_steps
     : [];
-  // the run can fail without any single step being marked failed (e.g. a semantic
-  // assertion) — the failed step is only highlighted when one actually reports it.
-  const failed = steps.findIndex((s) => s.status === 'failed');
+  // Prefer the human `user_steps` (one row per authored step); fall back to grouping the
+  // flat agent steps for older runs that predate it.
+  const steps: TestStep[] =
+    results?.user_steps && results.user_steps.length
+      ? results.user_steps.map((us) => userStepToVM(us, agentSteps))
+      : groupAgentSteps(agentSteps);
+  // the runner reports the failed step index directly (into user_steps); otherwise fall
+  // back to the first row that reports failed. A run can also fail with no single step
+  // marked failed (a semantic assertion) — then nothing is highlighted.
+  const failed =
+    typeof results?.failed_step_index === 'number'
+      ? results.failed_step_index
+      : steps.findIndex((s) => s.status === 'failed');
   // runner-captured errors + page JS errors surface in the Console panel
   const logs: ConsoleLog[] = [
     ...(results?.errors ?? []),
@@ -283,9 +349,12 @@ export function apiRunDetailToVM(detail: RunDetail): RunData {
     steps,
     resolution: toResolution(detail.screenType),
     tags: detail.tags,
-    failedStep: failed >= 0 ? failed : undefined,
+    failedStep: failed >= 0 && failed < steps.length ? failed : undefined,
     summary: results?.final_result,
-    error: results?.errors?.length ? results.errors.join('\n') : undefined,
+    // the failed step's error (errors[] is often empty now); joined errors as a fallback
+    error:
+      results?.failed_step_error ||
+      (results?.errors?.length ? results.errors.join('\n') : undefined),
     console: logs.length ? logs : undefined,
     dispatchMode: detail.dispatchMode ?? undefined,
     batchId: detail.batchId ?? undefined,
