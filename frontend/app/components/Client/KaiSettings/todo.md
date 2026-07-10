@@ -3,37 +3,42 @@
 The redesign is built and wired to `api3.yaml`. This lists only what's still to add or
 fix. Adapters live in `components/shared/adapters.ts`; data hooks in `queries.ts`.
 
-## Needs backend (API missing)
-- **Version steps / history** — the version switcher + per-step history popover are built
-  but unpopulated: `GET /versions` is lean (no `steps`) and `Test` carries no `history`.
-  Need per-version `steps` (on the test, or a fetch) — today only the pending-suggestion
-  diff (`GET /versions/diff`) is loaded.
-- **`POST /tests` `status`** — create seeds `draft`, so manual "Add test" fires a second
-  `PUT` to approve. A create-with-status (or create-as-`approved`) drops the round-trip.
-- **`needs_review` list filter** — `tests/counts` buckets it, but the list `status` filter
-  enum has no `needs_review`, so a Needs-review tab can't server-filter (badge only).
-- **Multi-value run status filter** — the runs `status` param takes one value, so the
-  coarse UI buckets (running = dispatched+running, failed = failed+error+timeout) can't
-  filter server-side. Needs a multi-status filter (or expose the 6 raw statuses).
-- **Full console stream** in `results.json` — only `errors`/`js_errors` (error rows)
-  today; no info/warn/log stream for the Console panel.
-- **Multi-screenshot per step** (`screenshots[]`) — `results` gives one screenshot/step;
-  the carousel supports many.
-- **Agent `alternatives`** — no API field for agent-observed branches (rendered per step).
-- **Per-test recent-runs / `lastResult` trend** — the drawer trend strip loads the
-  project-wide runs page and filters client-side; a per-test endpoint would avoid that.
-- **Delete-environment cascade** — `DELETE /environments/{id}` 409s while a test references
-  it (no cascade); the dialog asks the user to reassign first.
-- **Runner must honour** env `headers` / "ignore HTTPS errors" (stored in `variables`).
+## Ask backend — API changes
+- **`needs_review` as a list filter.** `tests/counts?aggregator=status` buckets it, but the
+  list `status` param enum (`draft|approved|rejected|active|paused`) has no `needs_review`,
+  so the Needs-review count can't drive a filterable tab. Need a `needsReview=true` query
+  param (or `needs_review` accepted by the status filter).
+- **Multi-value run status filter.** `GET /runs` `status` takes one value. The UI's coarse
+  buckets — running = `dispatched`+`running`, failed = `failed`+`error`+`timeout` — can't
+  be filtered server-side. Need a multi-status filter (comma list) or accept coarse.
+- **Delete-environment cascade.** `DELETE /environments/{id}` returns `409` while a test
+  references it; there's no server-side detach or "pause tests & delete". Today the UI
+  lists the referencing tests and asks the user to reassign first.
+- **(optional) `POST /tests` `status`.** Create seeds `draft`, so manual "Add test" fires a
+  second `PUT` to approve. A create-with-status (or create-as-`approved`) drops the extra
+  call. Not blocking.
+- **(optional) Inline `history` and `lastResult`/`recent` on `Test`.** Both are already
+  fetchable (`GET /versions/{id}`, `GET /tests/{id}/runs`); inlining a summary would save
+  the extra round-trips the version switcher + drawer trend otherwise make.
 
-## Frontend to do
-- **Version switcher / metadata** — the switcher dropdown + per-step history are built but
-  the version list isn't loaded. Wire `useVersions` (`GET /versions`) to populate the
-  dropdown + metadata (`source`/`originRunId`/dates). The read-only snapshot of an old
-  version additionally needs per-version `steps` (backend — see "Version steps / history").
-- **`to` (range end) + `batchId` filters** — the date filter is presets only (`from` lower
-  bound); an explicit end date and a `batchId` drill-down aren't built. `batchId` is a
-  fan-out group id — better as a "show sibling runs" action than a filter box.
+## Ask backend — runner / results.json
+- **Full console stream.** `results.json` exposes only `errors` + `js_errors` (error rows);
+  no info/warn/log stream for the run Console panel.
+- **Multiple screenshots per step** (`agent_steps[].screenshots[]`) — one screenshot per
+  step today; the carousel supports many.
+- **Agent `alternatives`** — no field for agent-observed branches (the UI renders them per
+  step when present).
+- **Honour env `headers` + "ignore HTTPS errors"** — stored in the environment's
+  `variables`; the runner has to actually apply them.
+
+## Frontend to do (no backend needed — endpoints exist)
+- **Version switcher / history** — wire `GET /versions` (list → dropdown + `source`/dates)
+  and `GET /versions/{id}` (steps → the read-only old-version snapshot). Built, unwired.
+- **Per-test trend** — the drawer trend strip filters the project-wide runs page
+  client-side; switch it to `GET /tests/{testId}/runs`.
+- **`to` end-date + `batchId` filters** — the date filter is presets only (`from` lower
+  bound); an end date and a `batchId` drill-down aren't built (`batchId` is better as a
+  "show sibling runs" action than a filter box).
 
 ## Known limitations (accepted, from server-side lists)
 - Tests are column-sortable by name only; Runs by Duration / When only (server `sortField`
