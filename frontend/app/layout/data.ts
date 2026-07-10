@@ -83,12 +83,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         hidden: true,
       },
       {
-        label: t('Issues'),
-        key: MENU.ISSUES,
-        icon: 'info-circle',
-        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
-      },
-      {
         label: t('Vault'),
         key: MENU.VAULT,
         icon: 'safe',
@@ -110,6 +104,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
   {
     title: t('Agents'),
     key: 'agents',
+    hidden: window.localStorage.getItem('__test_agents__') !== 'true',
     items: [
       {
         label: t('Agents'),
@@ -120,7 +115,10 @@ export const categories: (t: TFunction) => Category[] = (t) => [
           color: '#394DFE',
         },
         hidden: window.localStorage.getItem('__test_agents__') !== 'true',
-        children: [{ label: t('Tests'), key: MENU.TEST_AGENTS }],
+        children: [
+          { label: t('Issues'), key: MENU.ISSUES },
+          { label: t('Tests'), key: MENU.TEST_AGENTS },
+        ],
       },
     ],
   },
