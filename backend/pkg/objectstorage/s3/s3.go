@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/request"
 	_session "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -93,6 +95,15 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType, contentE
 		ContentEncoding: encoding,
 		Tagging:         s.fileTag,
 	})
+	if err != nil {
+		if isFatalS3Error(err) {
+			statusCode := 0
+			if reqErr, ok := err.(awserr.RequestFailure); ok {
+				statusCode = reqErr.StatusCode()
+			}
+			return &objectstorage.FatalUploadError{StatusCode: statusCode, Cause: err}
+		}
+	}
 	return err
 }
 
@@ -248,4 +259,13 @@ func (s *storageImpl) Tag(fileKey, tagKey, tagValue string) error {
 		},
 	})
 	return err
+}
+
+// isFatalS3Error returns true if the error indicates a non-recoverable auth failure.
+// Covers HTTP 401/403 and expired credentials (SDK already exhausted retry+refresh).
+func isFatalS3Error(err error) bool {
+	if reqErr, ok := err.(awserr.RequestFailure); ok && objectstorage.IsFatalStatusCode(reqErr.StatusCode()) {
+		return true
+	}
+	return request.IsErrorExpiredCreds(err)
 }

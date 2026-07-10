@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -129,6 +130,12 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 		u.metrics.RecordSessionUploadDuration(float64(time.Since(start).Milliseconds()), fileType, mode)
 		if err == nil {
 			u.metrics.IncreaseStorageTotalSessions(fileType)
+		}
+		if err != nil {
+			var fatalErr *objectstorage.FatalUploadError
+			if errors.As(err, &fatalErr) {
+				log.Fatalf("fatal S3 upload error (HTTP %d), terminating: %v", fatalErr.StatusCode, fatalErr.Cause)
+			}
 		}
 		return err
 	}
