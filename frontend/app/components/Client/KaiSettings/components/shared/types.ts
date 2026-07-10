@@ -352,9 +352,10 @@ export interface ActivateVersionRequest {
 
 // ---- UI view models ----
 // The redesigned UI works with a richer model than the API stores. Adapters in
-// ./adapters map between the two. Fields with no API backing (tags, resolutions,
-// regions, alternatives, per-step screenshots, network/console) are UI-only for
-// now — see ../../todo.md.
+// ./adapters map between the two. Most fields persist (tags, and resolutions/regions
+// via the test's `config`); the ones still without API backing are agent
+// `alternatives`, per-step multi-screenshots and the full console stream — see
+// ../../todo.md.
 
 // draft → approved → active (scheduled) → paused. `active` is derived from an
 // approved test carrying a cron; the API doesn't store these two states natively.
@@ -377,8 +378,8 @@ export interface HttpHeader {
 export type Resolution = 'mobile' | 'tablet' | 'desktop';
 
 // The preset environment / viewport / region (Settings → Default run configuration)
-// that pre-fill a new draft's or manually-created test's run settings. Local-only —
-// no endpoint to persist per-project run defaults yet (see todo.md).
+// that pre-fill a new draft's or manually-created test's run settings. Persisted:
+// viewport/region on project settings, the default environment via its `isDefault` flag.
 export interface RunDefaults {
   envId?: string;
   resolution?: Resolution;
@@ -451,6 +452,9 @@ export interface TestCase {
   expectedResult?: string;
   // opaque per-test config, carried through so partial updates don't drop it
   config?: Record<string, unknown>;
+  // API `needsReview` flag — the agent flagged this test as awaiting review. Set even
+  // when there's no pending version diff (`suggestion`) to review yet.
+  needsReview?: boolean;
   // step versioning — steps carry a version (default 1); saved snapshots of older
   // versions live in `history`, and a detected flow change sits in `pendingRevision`
   // until the user reviews it (accept/discard/edit per change → save as vN).

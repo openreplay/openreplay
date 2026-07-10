@@ -1,12 +1,12 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions';
-import { Tabs } from 'antd';
+import { Button, Tabs, Tooltip } from 'antd';
+import { Album, Info } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
-import { PageTitle } from 'UI';
 
 import SiteDropdown from 'Shared/SiteDropdown';
 
@@ -47,14 +47,41 @@ function KaiSettings() {
   return (
     <BrowserTestsProjectProvider value={siteId}>
       <div className="bg-white rounded-lg border shadow-xs overflow-hidden">
-        <div className="flex items-center gap-2 px-4 pt-4">
-          <PageTitle title={t('Test Agents')} />
-          <SiteDropdown
-            value={siteId}
-            onChange={({ value }: any) =>
-              setSelectedSiteId(String(value.value))
-            }
-          />
+        {/* header — title + info, project selector + docs (mirrors the app's list pages) */}
+        <div className="flex items-center justify-between border-b px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-lg">{t('Test Agents')}</span>
+            <Tooltip
+              placement="bottom"
+              title={t(
+                'End-to-end tests our agents write and maintain from your real user journeys. Review a draft, approve it, and schedule it — the agent runs it and reports every regression here.',
+              )}
+            >
+              <span
+                className="flex items-center cursor-help"
+                style={{ color: 'var(--color-gray-medium)' }}
+              >
+                <Info size={15} />
+              </span>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2">
+            <SiteDropdown
+              value={siteId}
+              onChange={({ value }: any) =>
+                setSelectedSiteId(String(value.value))
+              }
+            />
+            <a
+              href="https://docs.openreplay.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Button type="text" icon={<Album size={14} />}>
+                {t('Docs')}
+              </Button>
+            </a>
+          </div>
         </div>
         <Tabs
           activeKey={activeTab}
@@ -67,6 +94,6 @@ function KaiSettings() {
   );
 }
 
-export default withPageTitle('Test Agents - OpenReplay Preferences')(
+export default withPageTitle('Test Agents - OpenReplay')(
   withPermissions(['BROWSER_TESTS'], '')(observer(KaiSettings)),
 );

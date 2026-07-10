@@ -111,8 +111,10 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         icon: 'sparkles',
         tag: { label: t('New'), color: '#394DFE' },
         hidden: window.localStorage.getItem('__test_agents__') !== 'true',
-        // Tests joins as a second child when the kai-testing-ui branch merges
-        children: [{ label: t('Issues'), key: MENU.ISSUES }],
+        children: [
+          { label: t('Issues'), key: MENU.ISSUES },
+          { label: t('Tests'), key: MENU.TEST_AGENTS },
+        ],
       },
     ],
   },

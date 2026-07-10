@@ -32,6 +32,7 @@ import {
   useEnvironments,
   useProjectId,
   useRunDefaults,
+  useSettings,
   useTestCounts,
   useTests,
   useTriggerRun,
@@ -80,6 +81,11 @@ function TestsTab() {
   const projectId = useProjectId();
   const queryClient = useQueryClient();
   const defaults = useRunDefaults();
+  // Settings → "Pause tests on new revisions": when on, a needs-review test can't run and
+  // its run controls are withheld here (the drawer honours the same rule).
+  const { data: projectSettings } = useSettings();
+  const pauseOnRevision = projectSettings?.pauseOnNewRevisions ?? true;
+  const reviewBlocked = (tc: TestCase) => needsReview(tc) && pauseOnRevision;
   const invalidateAll = () =>
     queryClient.invalidateQueries({
       queryKey: browserTestsKeys.all(projectId),
@@ -322,12 +328,14 @@ function TestsTab() {
     );
   };
 
-  const runNow = (tc: TestCase) =>
+  const runNow = (tc: TestCase) => {
+    if (reviewBlocked(tc)) return;
     triggerMut.mutate(tc.key, {
       onSuccess: () =>
         message.success(`${tc.title} — ${t('run started, see Runs')}`),
       onError: () => toast.error(t('Failed to start run')),
     });
+  };
 
   const faded = (n: number) => (
     <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
@@ -357,29 +365,35 @@ function TestsTab() {
         label: React.ReactNode;
         disabled?: boolean;
       }[] = [];
-      if (tc.status === 'active')
-        controls.push({ key: 'pause', label: t('Pause') });
-      if (tc.status === 'paused') {
-        const blocked = hasNoEnvironment(tc);
-        controls.push({
-          key: 'resume',
-          disabled: blocked,
-          label: blocked ? (
-            <Tooltip
-              title={t('Set an environment in this test’s settings to resume.')}
-              placement="left"
-            >
-              <span>{t('Resume')}</span>
-            </Tooltip>
-          ) : (
-            t('Resume')
-          ),
-        });
+      // a needs-review test (with pause-on-revision) is frozen until reviewed — no run
+      // controls, just the review-first "open" entry below
+      if (!reviewBlocked(tc)) {
+        if (tc.status === 'active')
+          controls.push({ key: 'pause', label: t('Pause') });
+        if (tc.status === 'paused') {
+          const blocked = hasNoEnvironment(tc);
+          controls.push({
+            key: 'resume',
+            disabled: blocked,
+            label: blocked ? (
+              <Tooltip
+                title={t(
+                  'Set an environment in this test’s settings to resume.',
+                )}
+                placement="left"
+              >
+                <span>{t('Resume')}</span>
+              </Tooltip>
+            ) : (
+              t('Resume')
+            ),
+          });
+        }
+        if (tc.status === 'approved')
+          controls.push({ key: 'schedule', label: t('Schedule') });
+        if (tc.status === 'active' || tc.status === 'paused')
+          controls.push({ key: 'unschedule', label: t('Unschedule') });
       }
-      if (tc.status === 'approved')
-        controls.push({ key: 'schedule', label: t('Schedule') });
-      if (tc.status === 'active' || tc.status === 'paused')
-        controls.push({ key: 'unschedule', label: t('Unschedule') });
       items = [
         ...controls,
         // the drawer opens straight into the review while one is pending
@@ -487,7 +501,8 @@ function TestsTab() {
       dataIndex: 'status',
       width: 120,
       showSorterTooltip: false,
-      render: (_: unknown, tc) => getStatusTag(tc.status, t),
+      render: (_: unknown, tc) =>
+        getStatusTag(reviewBlocked(tc) ? 'needs_review' : tc.status, t),
     },
     {
       title: '',
@@ -497,11 +512,18 @@ function TestsTab() {
       render: (_: unknown, tc) => (
         <div className="flex items-center justify-end">
           {tc.status !== 'draft' && (
-            <Tooltip title={t('Run now')}>
+            <Tooltip
+              title={
+                reviewBlocked(tc)
+                  ? t('Runs are paused until the new version is reviewed.')
+                  : t('Run now')
+              }
+            >
               <Button
                 type="text"
                 icon={<Play size={16} />}
                 aria-label={t('Run now')}
+                disabled={reviewBlocked(tc)}
                 onClick={(e) => {
                   e.stopPropagation();
                   runNow(tc);
@@ -605,7 +627,7 @@ function TestsTab() {
               placeholder={t('Search tests')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              style={{ width: 200 }}
+              style={{ width: 170 }}
             />
             <Select
               size="small"

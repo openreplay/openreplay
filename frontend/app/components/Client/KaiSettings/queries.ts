@@ -55,6 +55,10 @@ export const browserTestsKeys = {
     ['browser-tests', projectId, 'run-counts', aggregator, params ?? {}] as const,
   versionDiff: (projectId: string, testId: string) =>
     ['browser-tests', projectId, 'version-diff', testId] as const,
+  versions: (projectId: string, testId: string) =>
+    ['browser-tests', projectId, 'versions', testId] as const,
+  version: (projectId: string, testId: string, versionId: string) =>
+    ['browser-tests', projectId, 'version', testId, versionId] as const,
   settings: (projectId: string) =>
     ['browser-tests', projectId, 'settings'] as const,
   notifications: (projectId: string) =>
@@ -285,6 +289,32 @@ export function useVersionDiff(testId: string | undefined, enabled: boolean) {
     queryKey: browserTestsKeys.versionDiff(projectId, testId ?? ''),
     queryFn: () => api.diffVersions(projectId, testId as string),
     enabled: !!projectId && !!testId && enabled,
+    retry: false,
+  });
+}
+
+/** A test's version history (newest first) — powers the drawer version switcher. */
+export function useVersions(testId: string | undefined, enabled = true) {
+  const projectId = useProjectId();
+  return useQuery({
+    queryKey: browserTestsKeys.versions(projectId, testId ?? ''),
+    queryFn: () => api.listVersions(projectId, testId as string, { limit: 100 }),
+    enabled: !!projectId && !!testId && enabled,
+    retry: false,
+  });
+}
+
+/** One version's full content (steps) — fetched lazily when an older version is viewed. */
+export function useVersion(
+  testId: string | undefined,
+  versionId: string | undefined,
+) {
+  const projectId = useProjectId();
+  return useQuery({
+    queryKey: browserTestsKeys.version(projectId, testId ?? '', versionId ?? ''),
+    queryFn: () =>
+      api.getVersion(projectId, testId as string, versionId as string),
+    enabled: !!projectId && !!testId && !!versionId,
     retry: false,
   });
 }
