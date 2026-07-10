@@ -49,7 +49,7 @@ import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
 
 
-function RowTagChip({ label }: { label: string }) {
+export function RowTagChip({ label }: { label: string }) {
   return (
     <span
       className="text-xs px-2 py-0.5 rounded-md border whitespace-nowrap"
