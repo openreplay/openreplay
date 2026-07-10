@@ -1,7 +1,7 @@
 import { Button, Dropdown, MenuProps, Typography } from 'antd';
+import { ChevronDown } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown } from 'lucide-react';
 
 const langs = [
   { code: 'en', label: 'English' },
@@ -9,6 +9,7 @@ const langs = [
   { code: 'es', label: 'Español' },
   { code: 'ru', label: 'Русский' },
   { code: 'zh', label: '简体中文' },
+  { code: 'ko', label: '한국어' },
 ];
 const langLabels = {
   en: 'English',
@@ -16,6 +17,7 @@ const langLabels = {
   es: 'Español',
   ru: 'Русский',
   zh: '中國人',
+  ko: '한국어',
 };
 
 function LanguageSwitcher() {
