@@ -19,6 +19,7 @@ import FullPagination from 'Shared/FullPagination';
 
 import {
   useAllRuns,
+  useEnvironments,
   useRun,
   useRunCounts,
   useTriggerRun,
@@ -36,6 +37,7 @@ import { useKaiUi } from './shared/uiStore';
 import { useUrlState } from './shared/useUrlState';
 import {
   PERIOD_OPTIONS,
+  REGION_OPTIONS,
   RESOLUTION_OPTIONS,
   RowTags,
   VersionLabel,
@@ -53,17 +55,12 @@ const SORT_FIELD: Record<string, ListAllRunsParams['sortField']> = {
   date: 'started_at',
 };
 // The 3 coarse UI buckets over the 6 API run statuses. Counts collapse all of them
-// (accurate badges); the status *filter* can only send one value, so it sends the
-// representative — dispatched/error/timeout show under All only (see todo.md).
+// (accurate badges); the status filter sends the bucket as a comma list (api4 any-of), so
+// running/failed filter every underlying status server-side.
 const BUCKET_STATUSES: Record<UiRunStatus, RunStatus[]> = {
   running: ['dispatched', 'running'],
   failed: ['failed', 'error', 'timeout'],
   passed: ['passed'],
-};
-const STATUS_PARAM: Record<UiRunStatus, RunStatus> = {
-  running: 'running',
-  failed: 'failed',
-  passed: 'passed',
 };
 
 // Live elapsed counter for an in-flight run — ticks each second from its start time.
@@ -87,6 +84,14 @@ function LiveDuration({ start }: { start: number }) {
 function RunsTab() {
   const { t } = useTranslation();
   const triggerMut = useTriggerRun();
+  const { data: envData } = useEnvironments({ limit: 100 });
+  const envNameById = new Map(
+    (envData?.items ?? []).map((e) => [e.environmentId, e.name]),
+  );
+  const envOptions = (envData?.items ?? []).map((e) => ({
+    value: e.environmentId,
+    label: e.name,
+  }));
 
   // A test drawer's "View all runs" / "View" shortcut sets a handoff (fresh handoffId)
   // and switches here. Adopt it as the search / open run — at mount and again whenever
@@ -99,6 +104,8 @@ function RunsTab() {
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [resFilter, setResFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
+  const [envFilter, setEnvFilter] = useState('all');
+  const [regionFilter, setRegionFilter] = useState('all');
   const [periodFilter, setPeriodFilter] = useState('all');
   const [dispatchFilter, setDispatchFilter] = useState('all');
   const [sortBy, setSortBy] = useState<{
@@ -137,6 +144,8 @@ function RunsTab() {
     screenType: resFilter !== 'all' ? resFilter : undefined,
     dispatchMode: dispatchFilter !== 'all' ? dispatchFilter : undefined,
     tags: tagFilter !== 'all' ? tagFilter : undefined,
+    environmentId: envFilter !== 'all' ? envFilter : undefined,
+    region: regionFilter !== 'all' ? regionFilter : undefined,
     from,
   };
 
@@ -145,7 +154,8 @@ function RunsTab() {
     page,
     limit: PAGE_SIZE,
     ...filters,
-    status: statusTab !== 'all' ? STATUS_PARAM[statusTab] : undefined,
+    status:
+      statusTab !== 'all' ? BUCKET_STATUSES[statusTab].join(',') : undefined,
     ...(sortField && sortBy.order
       ? { sortField, sortOrder: sortBy.order === 'ascend' ? 'asc' : 'desc' }
       : {}),
@@ -170,20 +180,22 @@ function RunsTab() {
     .filter(Boolean);
 
   // reset to page 1 whenever a filter changes (sort resets page in onChange)
-  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${dispatchFilter}|${tagFilter}`;
+  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${dispatchFilter}|${tagFilter}|${envFilter}|${regionFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
     setPage(1);
   }
 
-  const runs = (runsData?.items ?? []).map((run) => apiRunToVM(run));
+  const runs = (runsData?.items ?? []).map((run) =>
+    apiRunToVM(run, undefined, envNameById),
+  );
   const total = runsData?.total ?? 0;
 
   const { data: detail } = useRun(openKey ?? undefined);
   const openRun: RunData | null = openKey
     ? detail
-      ? apiRunDetailToVM(detail)
+      ? apiRunDetailToVM(detail, envNameById)
       : (runs.find((r) => r.key === openKey) ?? null)
     : null;
 
@@ -242,8 +254,19 @@ function RunsTab() {
     {
       title: t('Tags'),
       dataIndex: 'tags',
-      width: 190,
+      width: 160,
       render: (tags: string[]) => <RowTags tags={tags} />,
+    },
+    {
+      title: t('Environment'),
+      dataIndex: 'envName',
+      width: 140,
+      render: (envName?: string) =>
+        envName ? (
+          <span className="text-gray-dark truncate">{envName}</span>
+        ) : (
+          <span className="text-disabled-text italic">{t('Not set')}</span>
+        ),
     },
     {
       title: t('Duration'),
@@ -359,6 +382,28 @@ function RunsTab() {
               ]}
             />
           )}
+          {envOptions.length > 0 && (
+            <Select
+              size="small"
+              value={envFilter}
+              onChange={setEnvFilter}
+              style={{ width: 150 }}
+              options={[
+                { value: 'all', label: t('All environments') },
+                ...envOptions,
+              ]}
+            />
+          )}
+          <Select
+            size="small"
+            value={regionFilter}
+            onChange={setRegionFilter}
+            style={{ width: 140 }}
+            options={[
+              { value: 'all', label: t('All regions') },
+              ...REGION_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+            ]}
+          />
           <Select
             size="small"
             value={periodFilter}

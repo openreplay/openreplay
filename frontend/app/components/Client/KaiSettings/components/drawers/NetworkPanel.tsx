@@ -55,6 +55,13 @@ const FILTERS: { key: string; label: string }[] = [
 // Thin wrappers over the shared formatters that keep the panel's "—" for missing values.
 const fmtBytes = (n?: number) => (n == null ? '—' : formatBytes(n));
 const fmtMs = (n?: number) => (n == null ? '—' : formatMs(n));
+// When a request started, relative to the run start (offset ms → "+1.2s" / "+320ms").
+const fmtOffset = (ms?: number) =>
+  ms == null
+    ? '—'
+    : ms < 1000
+      ? `+${Math.round(ms)}ms`
+      : `+${(ms / 1000).toFixed(1)}s`;
 
 const hostOf = (url: string) => {
   try {
@@ -156,12 +163,14 @@ function Detail({
   const [tab, setTab] = useState<DetailTab>('reqHeaders');
   const errored = isNetError(req);
 
-  const started =
+  // when it fired, relative to the run start; absolute clock time on hover
+  const offset = fmtOffset(req.time);
+  const absoluteStart =
     startedAt != null
       ? new Date(startedAt + req.time).toLocaleTimeString(undefined, {
           hour12: false,
         })
-      : `+${Math.round(req.time)}ms`;
+      : null;
 
   const tabs: { key: DetailTab; label: string; count?: number }[] = [
     {
@@ -261,7 +270,16 @@ function Detail({
           {stat(t('Size'), fmtBytes(req.size))}
           {stat(t('Total time'), fmtMs(req.duration))}
           {stat(t('Type'), req.type)}
-          {stat(t('Started'), started)}
+          {stat(
+            t('Started'),
+            absoluteStart ? (
+              <Tooltip title={absoluteStart}>
+                <span>{offset}</span>
+              </Tooltip>
+            ) : (
+              offset
+            ),
+          )}
         </div>
 
         {/* tabs */}
@@ -333,7 +351,7 @@ function Detail({
 
 /** Grid columns shared by the request list header + rows. */
 const NET_GRID =
-  'grid items-center gap-2 grid-cols-[52px_56px_minmax(0,1fr)_64px_60px]';
+  'grid items-center gap-2 grid-cols-[52px_56px_minmax(0,1fr)_58px_64px_60px]';
 
 function NetworkPanel({
   reqs,
@@ -349,7 +367,10 @@ function NetworkPanel({
   onDownload?: () => void;
 }) {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState('all');
+  // default to the Errors filter when the run has failures, so they're front-and-centre
+  const [filter, setFilter] = useState(() =>
+    (reqs ?? []).some(isNetError) ? 'errors' : 'all',
+  );
   const [selected, setSelected] = useState<number | null>(null);
 
   const errorCount = useMemo(
@@ -455,6 +476,9 @@ function NetworkPanel({
           <span>{t('Status')}</span>
           <span>{t('Method')}</span>
           <span>{t('Request')}</span>
+          <Tooltip title={t('When it fired, relative to the run start')}>
+            <span className="text-right">{t('At')}</span>
+          </Tooltip>
           <span className="text-right">{t('Size')}</span>
           <span className="text-right">{t('Time')}</span>
         </div>
@@ -485,6 +509,9 @@ function NetworkPanel({
                 <span className="min-w-0 truncate">
                   <span className="text-disabled-text">{hostOf(r.url)}</span>
                   <span className="text-gray-darkest"> {pathOf(r.url)}</span>
+                </span>
+                <span className="text-right text-disabled-text tabular-nums">
+                  {fmtOffset(r.time)}
                 </span>
                 <span className="text-right text-disabled-text">
                   {fmtBytes(r.size)}

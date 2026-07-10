@@ -49,31 +49,31 @@ function Environments() {
       { onError: () => toast.error(t('Failed to save environment')) },
     );
 
-  const remove = (id: string) =>
-    deleteEnv.mutate(id, {
-      onError: () =>
-        toast.error(
-          t('Failed to delete environment. It may still be used by a test.'),
-        ),
-    });
+  const remove = (id: string, force?: boolean) =>
+    deleteEnv.mutate(
+      { environmentId: id, force },
+      { onError: () => toast.error(t('Failed to delete environment.')) },
+    );
 
-  // Surface the tests that reference this environment before deleting — the API rejects
-  // deleting a referenced environment (409), so warn to reassign them first.
+  // Surface the tests that reference this environment before deleting. With referencing
+  // tests we force-delete (api4 `?force=true`): one call detaches the env from them, pauses
+  // any that were active, and deletes. With none, a plain delete.
   const confirmDelete = (env: EnvironmentVM) => {
     const affected = (testsData?.items ?? []).filter((tc) =>
       tc.environments?.includes(env.id),
     );
+    const hasAffected = affected.length > 0;
     modal.confirm({
       title: t('Delete environment?'),
-      okText: t('Delete'),
+      okText: hasAffected ? t('Pause tests & delete') : t('Delete'),
       okButtonProps: { danger: true },
       cancelText: t('Cancel'),
       width: 460,
-      content: affected.length ? (
+      content: hasAffected ? (
         <div className="flex flex-col gap-2">
           <Typography.Text>
             {t(
-              '“{{name}}” is used by the tests below. Remove it from them first — deleting a referenced environment will fail.',
+              '“{{name}}” is used by the tests below. Deleting it removes it from them and pauses any that are active.',
               { name: env.name },
             )}
           </Typography.Text>
@@ -90,7 +90,7 @@ function Environments() {
           })}
         </Typography.Text>
       ),
-      onOk: () => remove(env.id),
+      onOk: () => remove(env.id, hasAffected),
     });
   };
 
@@ -187,7 +187,8 @@ function Environments() {
                     danger
                     className="invisible group-hover:visible"
                     loading={
-                      deleteEnv.isPending && deleteEnv.variables === env.id
+                      deleteEnv.isPending &&
+                      deleteEnv.variables?.environmentId === env.id
                     }
                     icon={<Trash2 size={16} />}
                     aria-label={t('Delete')}
