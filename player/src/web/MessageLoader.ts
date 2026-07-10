@@ -54,6 +54,12 @@ export default class MessageLoader {
    * V3 = 7x 0xff + 0xfd (new or old tracker without indexes)
    */
   checkProtoFormat = (binary: Uint8Array) => {
+    // Mobile sessions are always legacy v1 (MFileReader). Their header byte can
+    // be 0xfe/0xfd (which would otherwise route to the web TrackerReader) and
+    // their bodies are not size-prefixed, so force v1 regardless of the header.
+    if (this.messageManager instanceof IOSMessageManager) {
+      return 1;
+    }
     console.debug(
       'Checking protocol format from header',
       binary.slice(0, 24).join(' '),

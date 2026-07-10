@@ -321,6 +321,9 @@ export default class IOSMessageManager implements IMessageManager {
       case MType.MobileGraphQl:
         this.lists.lists.graphql.insert(msg);
         break;
+      case MType.MobileBatchMeta:
+          console.log('batch meta', msg);
+          break;
       default:
         console.log('unrecognized', msg);
         // stuff
