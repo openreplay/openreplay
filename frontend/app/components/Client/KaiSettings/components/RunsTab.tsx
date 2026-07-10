@@ -33,6 +33,7 @@ import {
   UiRunStatus,
 } from './shared/types';
 import { useKaiUi } from './shared/uiStore';
+import { useUrlState } from './shared/useUrlState';
 import {
   PERIOD_OPTIONS,
   RESOLUTION_OPTIONS,
@@ -91,6 +92,8 @@ function RunsTab() {
   // and switches here. Adopt it as the search / open run — at mount and again whenever
   // handoffId changes (this pane stays mounted between visits).
   const { runsTestFilter, runsOpenRunKey, handoffId } = useKaiUi();
+  // opened run persists in the URL (?run=)
+  const { get, set } = useUrlState();
   const [query, setQuery] = useState(runsTestFilter ?? '');
   const [search, setSearch] = useState(runsTestFilter ?? '');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
@@ -103,7 +106,9 @@ function RunsTab() {
     order?: 'ascend' | 'descend';
   }>({ field: 'date', order: 'descend' });
   const [page, setPage] = useState(1);
-  const [openKey, setOpenKey] = useState<string | null>(runsOpenRunKey ?? null);
+  const [openKey, setOpenKey] = useState<string | null>(
+    () => get('run') ?? runsOpenRunKey ?? null,
+  );
 
   const [seenHandoff, setSeenHandoff] = useState(handoffId);
   if (handoffId !== seenHandoff) {
@@ -119,6 +124,11 @@ function RunsTab() {
     const id = window.setTimeout(() => setSearch(query.trim()), 300);
     return () => window.clearTimeout(id);
   }, [query]);
+
+  // keep ?run= in sync with the open drawer (removed when nothing is open)
+  useEffect(() => {
+    set('run', openKey ?? undefined);
+  }, [openKey, set]);
 
   // filters shared by the list + the count aggregates (everything except the status tab)
   const from = periodFrom(periodFilter);
