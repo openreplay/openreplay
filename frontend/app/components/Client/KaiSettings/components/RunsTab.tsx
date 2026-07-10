@@ -95,6 +95,7 @@ function RunsTab() {
   const [search, setSearch] = useState(runsTestFilter ?? '');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [resFilter, setResFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('all');
   const [periodFilter, setPeriodFilter] = useState('all');
   const [dispatchFilter, setDispatchFilter] = useState('all');
   const [sortBy, setSortBy] = useState<{
@@ -125,6 +126,7 @@ function RunsTab() {
     name: search || undefined,
     screenType: resFilter !== 'all' ? resFilter : undefined,
     dispatchMode: dispatchFilter !== 'all' ? dispatchFilter : undefined,
+    tags: tagFilter !== 'all' ? tagFilter : undefined,
     from,
   };
 
@@ -150,9 +152,15 @@ function RunsTab() {
   const dispatchModes = (dispatchCounts?.buckets ?? [])
     .map((b) => b.value)
     .filter(Boolean);
+  // tag options come from the tag count buckets (owning test's tags), sharing the
+  // name/period filters so the list stays honest
+  const { data: tagCounts } = useRunCounts('tags', { name: filters.name, from });
+  const tagOptions = (tagCounts?.buckets ?? [])
+    .map((b) => b.value)
+    .filter(Boolean);
 
   // reset to page 1 whenever a filter changes (sort resets page in onChange)
-  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${dispatchFilter}`;
+  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${dispatchFilter}|${tagFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
@@ -302,7 +310,7 @@ function RunsTab() {
             placeholder={t('Search runs')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ width: 200 }}
+            style={{ width: 170 }}
           />
           <Select
             size="small"
@@ -326,6 +334,18 @@ function RunsTab() {
               options={[
                 { value: 'all', label: t('Any launch') },
                 ...dispatchModes.map((m) => ({ value: m, label: m })),
+              ]}
+            />
+          )}
+          {tagOptions.length > 0 && (
+            <Select
+              size="small"
+              value={tagFilter}
+              onChange={setTagFilter}
+              style={{ width: 130 }}
+              options={[
+                { value: 'all', label: t('All tags') },
+                ...tagOptions.map((tag) => ({ value: tag, label: tag })),
               ]}
             />
           )}

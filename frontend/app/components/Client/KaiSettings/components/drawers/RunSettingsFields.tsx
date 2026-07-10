@@ -16,7 +16,7 @@ import {
 } from '../shared/utils';
 import { Field } from './EntityDrawer';
 
-// Environments persist (ids); resolutions/regions are UI-only for now — see todo.md.
+// All persist: environments as ids, resolutions/regions into the test's `config`.
 export interface RunSettings {
   environments?: string[];
   resolutions?: Resolution[];
