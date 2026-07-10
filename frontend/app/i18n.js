@@ -1,12 +1,13 @@
 import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { initReactI18next } from 'react-i18next';
 
 // Import translation files
 import en from './locales/en.json';
-import fr from './locales/fr.json';
-import ru from './locales/ru.json';
 import es from './locales/es.json';
+import fr from './locales/fr.json';
+import ko from './locales/ko.json';
+import ru from './locales/ru.json';
 import zh from './locales/zh.json';
 
 i18n
@@ -19,6 +20,7 @@ i18n
       ru: { translation: ru },
       es: { translation: es },
       zh: { translation: zh },
+      ko: { translation: ko },
     },
     lng: localStorage.getItem('i18nextLng') || 'en',
     fallbackLng: 'en',
