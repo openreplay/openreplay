@@ -4,15 +4,16 @@ The redesign is built and wired to `api3.yaml`. This lists only what's still to 
 fix. Adapters live in `components/shared/adapters.ts`; data hooks in `queries.ts`.
 
 ## Ask backend — API changes
-- **Status-transition contract is self-contradictory (blocker).** The `TestStatusSettable`
+- **Status-transition contract — confirm pause/resume persists.** The `TestStatusSettable`
   schema says accepted transitions are `draft → approved/rejected` **and the `active ⇄
-  paused` pause/resume toggle**; but the `PUT /tests/{testId}` description says the opposite
-  — *"only `draft → approved/rejected` is settable … `active`/`paused` are scheduler-owned
-  and never writable here."* The whole Pause/Resume UI (test drawer + row menu + bulk) writes
-  `status: paused`/`active` through this PUT, so we need a definitive answer. Assuming the
-  schema is the truth (pause/resume IS settable), we widen our `TestStatusSettable` type to
-  the 5 values so it compiles and persists; if the PUT prose is the truth instead, pause/
-  resume has **no backend** and needs a dedicated endpoint. Please reconcile the two.
+  paused` pause/resume toggle**; but the `PUT /tests/{testId}` description contradicts it —
+  *"only `draft → approved/rejected` is settable … `active`/`paused` are scheduler-owned and
+  never writable here."* The whole Pause/Resume UI (test drawer + row menu + bulk) writes
+  `status: paused`/`active` through this PUT. We've taken the schema as truth and widened
+  our `TestStatusSettable` type to the 5 values (frontend compiles and sends them). Backend:
+  confirm the endpoint honours `active ⇄ paused`; if the PUT prose is right instead (those
+  are rejected → 400), pause/resume has **no backend** and needs a dedicated endpoint, and
+  the PUT description should be fixed to match the schema either way.
 - **Run environment + region aren't exposed.** `RunListItem` / `RunDetail` carry neither the
   environment the run used nor its region (only `screenType` → viewport). So the run drawer's
   env + region meta line is always blank, and we had to drop the Runs-table **Environment
