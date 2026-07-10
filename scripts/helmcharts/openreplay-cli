@@ -174,7 +174,7 @@ function install_packages() {
     log info Installing helm
     sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-${pkg_type}.tar.gz -f helm
     log info Installing kubectl
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.25.0/bin/linux/${pkg_type}/kubectl
+    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.31.5/bin/linux/${pkg_type}/kubectl
     command -v busybox || {
         [[ $pkg_type != "arm64" ]] && {
             log info Installing Busybox
@@ -240,7 +240,7 @@ function status() {
     awk '(NR<2)' </etc/os-release
     echo "CPU Count: $(nproc)"
     log info Kubernetes
-    kubecolor version --short
+    kubecolor version --short 2>/dev/null || kubecolor version
     log info Openreplay Component
     kubecolor get po -n "${APP_NS}"
     kubecolor get po -n "${DB_NS}"
