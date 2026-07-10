@@ -20,11 +20,7 @@ import { toast } from 'react-toastify';
 
 import FullPagination from 'Shared/FullPagination';
 
-import {
-  createTest as apiCreateTest,
-  getTest as apiGetTest,
-  updateTest as apiUpdateTest,
-} from '../api';
+import { createTest as apiCreateTest, getTest as apiGetTest } from '../api';
 import {
   browserTestsKeys,
   useBulkTests,
@@ -67,7 +63,8 @@ import {
 // The list is now server-driven: filters / sort / pagination are query params, and the
 // tab badges come from the /tests/counts aggregate — so they stay absolute even past one
 // page. Only the columns the API can sort (Test → name) are sortable.
-type StatusTab = 'all' | TestStatus;
+// needs_review is a flag, not a stored status — its tab sends ?needsReview=true.
+type StatusTab = 'all' | 'needs_review' | TestStatus;
 const PAGE_SIZE = 20;
 // antd column dataIndex → API sortField (only these are server-sortable).
 const SORT_FIELD: Record<string, ListTestsParams['sortField']> = {
@@ -140,7 +137,11 @@ function TestsTab() {
     page,
     limit: PAGE_SIZE,
     ...filters,
-    status: statusTab !== 'all' ? statusTab : undefined,
+    status:
+      statusTab === 'all' || statusTab === 'needs_review'
+        ? undefined
+        : statusTab,
+    ...(statusTab === 'needs_review' ? { needsReview: true } : {}),
     ...(sortField && sortBy.order
       ? { sortField, sortOrder: sortBy.order === 'ascend' ? 'asc' : 'desc' }
       : {}),
@@ -188,7 +189,11 @@ function TestsTab() {
   const approvedCount = countByStatus('approved');
   const activeCount = countByStatus('active');
   const pausedCount = countByStatus('paused');
-  const allCount = draftCount + approvedCount + activeCount + pausedCount;
+  // needs_review is an effective-status bucket — a flagged test counts here instead of its
+  // stored status, so it's a separate addend for the All total.
+  const needsReviewCount = countByStatus('needs_review');
+  const allCount =
+    draftCount + approvedCount + activeCount + pausedCount + needsReviewCount;
 
   const envOptions = (envData?.items ?? []).map((e) => ({
     value: e.environmentId,
@@ -257,16 +262,8 @@ function TestsTab() {
     const intended = draftTest;
     setDraftTest(null);
     try {
-      const created = await apiCreateTest(
-        projectId,
-        vmToCreateRequest(intended),
-      );
-      // create seeds `draft`; lift the manual test to approved (draft → approved)
-      await apiUpdateTest(
-        projectId,
-        created.testId,
-        vmToUpdateRequest({ ...intended, key: created.testId }, 'approved'),
-      );
+      // create seeds the status directly (approved for a manual test) — no follow-up PUT
+      await apiCreateTest(projectId, vmToCreateRequest(intended));
       message.success(t('Test created'));
     } catch {
       toast.error(t('Failed to create test'));
@@ -345,6 +342,14 @@ function TestsTab() {
     );
   };
 
+  // Escape hatch for a test stuck "needs review" with no suggestion to activate/dismiss —
+  // clears the runner-owned flag (api4 PUT needsReview:false).
+  const clearReview = (tc: TestCase) =>
+    updateMut.mutate(
+      { testId: tc.key, body: { needsReview: false } },
+      { onError: () => toast.error(t('Failed to update test')) },
+    );
+
   const runNow = (tc: TestCase) => {
     if (reviewBlocked(tc)) return;
     triggerMut.mutate(tc.key, {
@@ -359,6 +364,20 @@ function TestsTab() {
   );
   const statusOptions = [
     { value: 'all', label: <span>{t('All')}{faded(allCount)}</span> },
+    // only when something awaits review — no point in an always-empty tab
+    ...(needsReviewCount > 0
+      ? [
+          {
+            value: 'needs_review',
+            label: (
+              <span>
+                {t('Needs review')}
+                {faded(needsReviewCount)}
+              </span>
+            ),
+          },
+        ]
+      : []),
     { value: 'draft', label: <span>{t('Drafts')}{faded(draftCount)}</span> },
     {
       value: 'approved',
@@ -418,6 +437,10 @@ function TestsTab() {
           key: 'open',
           label: needsReview(tc) ? t('Review changes') : t('Settings'),
         },
+        // stuck "needs review" with no suggestion to act on → clear the flag directly
+        ...(tc.needsReview && !tc.pendingRevision
+          ? [{ key: 'markReviewed', label: t('Mark as reviewed') }]
+          : []),
         { key: 'duplicate', label: t('Duplicate') },
         { type: 'divider' as const },
         { key: 'delete', label: t('Delete'), danger: true },
@@ -433,6 +456,7 @@ function TestsTab() {
         else if (key === 'duplicate') duplicateTest(tc);
         else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
         else if (key === 'resume') updateTest({ ...tc, status: 'active' });
+        else if (key === 'markReviewed') clearReview(tc);
         else if (key === 'dismiss' || key === 'delete') removeTest(tc.key);
       },
     };

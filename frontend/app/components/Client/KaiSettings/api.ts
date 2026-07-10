@@ -140,12 +140,16 @@ export function updateEnvironment(
     .then(toJson<Environment>);
 }
 
+// `force=true` detaches + pauses referencing tests and deletes in one transaction;
+// without it a referenced environment returns 409 (the reassign-first flow).
 export function deleteEnvironment(
   projectId: string | number,
   environmentId: string,
+  force?: boolean,
 ): Promise<DeleteSuccess> {
+  const query = force ? '?force=true' : '';
   return client
-    .delete(`${base(projectId)}/environments/${environmentId}`)
+    .delete(`${base(projectId)}/environments/${environmentId}${query}`)
     .then(toJson<DeleteSuccess>);
 }
 
