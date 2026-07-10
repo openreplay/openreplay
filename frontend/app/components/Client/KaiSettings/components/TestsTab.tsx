@@ -33,6 +33,7 @@ import {
   useProjectId,
   useRunDefaults,
   useSettings,
+  useTest,
   useTestCounts,
   useTests,
   useTriggerRun,
@@ -50,6 +51,7 @@ import {
 } from './shared/adapters';
 import { ListTestsParams, RunData, TestCase, TestStatus } from './shared/types';
 import { kaiUi } from './shared/uiStore';
+import { useUrlState } from './shared/useUrlState';
 import {
   PERIOD_OPTIONS,
   RowTags,
@@ -103,7 +105,9 @@ function TestsTab() {
     order?: 'ascend' | 'descend';
   }>({});
   const [page, setPage] = useState(1);
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  // opened test persists in the URL (?test=) — seed from it on first render
+  const { get, set } = useUrlState();
+  const [openKey, setOpenKey] = useState<string | null>(() => get('test') ?? null);
   const [focusSchedule, setFocusSchedule] = useState(false);
   const [draftTest, setDraftTest] = useState<TestCase | null>(null);
   const creating = draftTest != null;
@@ -114,6 +118,11 @@ function TestsTab() {
     const id = window.setTimeout(() => setSearch(query.trim()), 300);
     return () => window.clearTimeout(id);
   }, [query]);
+
+  // keep ?test= in sync with the open drawer (removed when nothing is open)
+  useEffect(() => {
+    set('test', openKey ?? undefined);
+  }, [openKey, set]);
 
   // shared filter set (no pagination/sort) — reused for the list and the count aggregates
   const filters = useMemo(
@@ -290,7 +299,15 @@ function TestsTab() {
     kaiUi.openRunInRunsTab(run);
   };
 
-  const openTest = tests.find((tc) => tc.key === openKey) ?? null;
+  // Normally the open test is on the current page; on a deep link (?test=) it may live on
+  // another page or under a filter, so fetch it by id as a fallback.
+  const inList = tests.some((tc) => tc.key === openKey);
+  const { data: openTestData } = useTest(
+    !inList ? (openKey ?? undefined) : undefined,
+  );
+  const openTest =
+    tests.find((tc) => tc.key === openKey) ??
+    (openTestData ? apiTestToVM(openTestData, envNameById) : null);
 
   // ---- bulk actions over the current page's selection ------------------
   // No bulk approve — activating a draft untested is what review is for.

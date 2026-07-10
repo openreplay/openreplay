@@ -3,7 +3,7 @@ import withPermissions from 'HOCs/withPermissions';
 import { Button, Tabs, Tooltip } from 'antd';
 import { Album, Info } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
@@ -14,6 +14,7 @@ import RunsTab from './components/RunsTab';
 import SettingsTab from './components/SettingsTab';
 import TestsTab from './components/TestsTab';
 import { KaiTab, kaiUi, useKaiUi } from './components/shared/uiStore';
+import { useUrlState } from './components/shared/useUrlState';
 import { BrowserTestsProjectProvider } from './queries';
 
 function KaiSettings() {
@@ -21,6 +22,26 @@ function KaiSettings() {
   const { projectsStore } = useStore();
   // controlled by the ui store so drawers can deep-link across tabs ("View runs")
   const { activeTab } = useKaiUi();
+  // active tab persists in the URL (?tab=) so a reload / shared link restores it
+  const { get, set } = useUrlState();
+  const seededRef = useRef(false);
+  useEffect(() => {
+    const urlTab = get('tab');
+    const valid =
+      urlTab === 'tests' || urlTab === 'runs' || urlTab === 'settings';
+    if (valid && urlTab !== activeTab) {
+      kaiUi.setActiveTab(urlTab as KaiTab);
+      seededRef.current = true; // swallow the stale sync write that follows the seed
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (seededRef.current) {
+      seededRef.current = false;
+      return;
+    }
+    set('tab', activeTab);
+  }, [activeTab, set]);
   // Local project selection, defaulting to the globally-active project. Kept
   // local so changing it here doesn't change the project elsewhere in the app.
   const [selectedSiteId, setSelectedSiteId] = useState<string | undefined>();
