@@ -87,12 +87,6 @@ function KaiSettings() {
             </Tooltip>
           </div>
           <div className="flex items-center gap-2">
-            <SiteDropdown
-              value={siteId}
-              onChange={({ value }: any) =>
-                setSelectedSiteId(String(value.value))
-              }
-            />
             <a
               href="https://docs.openreplay.com/"
               target="_blank"

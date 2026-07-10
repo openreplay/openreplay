@@ -192,11 +192,17 @@ export function useDeleteEnvironment() {
   const projectId = useProjectId();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (environmentId: string) =>
-      api.deleteEnvironment(projectId, environmentId),
+    mutationFn: ({
+      environmentId,
+      force,
+    }: {
+      environmentId: string;
+      force?: boolean;
+    }) => api.deleteEnvironment(projectId, environmentId, force),
     onSuccess: () => {
+      // force-delete also pauses referencing tests, so refresh everything
       queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.environments(projectId),
+        queryKey: browserTestsKeys.all(projectId),
       });
     },
   });

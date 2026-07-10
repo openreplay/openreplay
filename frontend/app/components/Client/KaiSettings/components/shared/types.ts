@@ -9,10 +9,9 @@ export type TestStatus =
   | 'rejected'
   | 'active'
   | 'paused';
-// Statuses a client may set (api3 `TestStatusSettable` enum): draft → approved / rejected,
-// and the active ⇄ paused pause/resume toggle (plus same-status no-op). NOTE: the PUT
-// /tests/{id} prose contradicts this and says active/paused aren't writable — pending
-// backend reconciliation (see todo.md "Status-transition contract").
+// Statuses a client may set (api4 `TestStatusSettable`): draft → approved / rejected, and
+// the active ⇄ paused pause/resume toggle (plus same-status no-op). `active` is otherwise
+// runner-promoted from `approved`.
 export type TestStatusSettable =
   | 'draft'
   | 'approved'
@@ -68,6 +67,15 @@ export interface SuggestionSummary {
   createdAt: string;
 }
 
+/** Lean last-run badge inlined on `Test.lastRun` — saves the drawer a runs round-trip. */
+export interface RunSummary {
+  runId: string;
+  status: RunStatus;
+  version?: number | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+}
+
 export interface Test {
   testId: string;
   projectId: number;
@@ -97,6 +105,8 @@ export interface Test {
   latestVersion?: number | null;
   /** Non-null when a version awaits review. */
   suggestion?: SuggestionSummary | null;
+  /** Inlined summary of the most recent run; null when the test has never run. */
+  lastRun?: RunSummary | null;
   nextRunAt?: string | null;
   lastRunAt?: string | null;
   /** Null until first GET /tests/{id}; then stamped write-once. Marks unviewed as new. */
@@ -116,6 +126,8 @@ export interface TestCreateRequest {
   tags?: string[];
   /** `resolutions`/`regions` keys are enum-validated (invalid → 400). */
   config?: Record<string, unknown>;
+  /** Optional seed status; omitted → draft. Only 'draft' or 'approved' accepted. */
+  status?: 'draft' | 'approved';
 }
 
 // Only these fields are updatable (everything else is create-time only). `status`
@@ -128,6 +140,9 @@ export interface TestUpdateRequest {
   cron?: string | null;
   /** Send the full object to replace it. */
   config?: Record<string, unknown>;
+  /** Escape hatch: send `false` to clear a runner-owned review block with no
+   *  activatable/dismissable suggestion. Only `false` is accepted (true → 400). */
+  needsReview?: false;
 }
 
 /** A runs-list item (project-wide and per-test lists): a lean run summary sourced from
@@ -141,6 +156,10 @@ export interface RunListItem {
   status: RunStatus;
   containerId?: string | null;
   s3Prefix?: string | null;
+  /** Environment the run executed against; null for runs predating this column. */
+  environmentId?: string | null;
+  /** Region the run executed in (e.g. eu-central-1); null for older runs. */
+  region?: string | null;
   /** Viewport the run executed against (mobile/desktop/tablet); defaults to desktop. */
   screenType: string;
   /** Groups fan-out runs from the same trigger; null if standalone. */
@@ -237,6 +256,8 @@ export interface ListTestsParams {
   environmentId?: string;
   /** Comma-separated tags; matches tests having any of them. */
   tags?: string;
+  /** true → only tests awaiting review; false → only those not awaiting review. */
+  needsReview?: boolean;
   from?: string;
   to?: string;
 }
@@ -254,13 +275,16 @@ export interface ListRunsParams {
   limit?: number;
   sortField?: 'started_at' | 'duration_ms';
   sortOrder?: SortOrder;
-  status?: RunStatus;
+  /** One RunStatus, or a comma-separated any-of set (e.g. "failed,error,timeout"). */
+  status?: string;
   /** Partial (case-insensitive) match on the owning test's name. */
   name?: string;
   /** Comma-separated tags; matches runs whose test has any of them. */
   tags?: string;
   screenType?: string;
   dispatchMode?: string;
+  environmentId?: string;
+  region?: string;
   batchId?: string;
   /** RFC3339 lower bound on startedAt (inclusive). */
   from?: string;
