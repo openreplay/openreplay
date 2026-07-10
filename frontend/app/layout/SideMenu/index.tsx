@@ -178,7 +178,7 @@ function SideMenu(props: Props) {
                 menu={menu}
                 isMenuItemActive={isMenuItemActive}
                 handleClick={handleClick}
-                isCollapsed={isCollapsed}
+                isCollapsed={false}
               />
             }
           </Drawer>
