@@ -1,0 +1,79 @@
+/* Traffic-segments capture control — shared by the Issues title pill
+   (SegmentsIndicator) and the Data Management → Traffic segments banner
+   (TrafficSegmentsTab), so it lives with the segments module instead of
+   issues.css (which only Issues pages load). */
+
+/* Capture switch, segments mode — the "alive" cue (Mehdi 07-07: animated).
+   A soft ring expands OUTWARD from the switch (box-shadow spread, so it
+   follows the rounded track) and dissolves — a clear pulse in motion,
+   subtle in color. Reduced motion keeps just the checked-blue switch. */
+.seg-live-border {
+  animation: seg-ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes seg-ring-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(57, 78, 255, 0.3);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px rgba(57, 78, 255, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seg-live-border {
+    animation: none;
+  }
+}
+
+/* Traffic-segments pill — one control that both switches capture and opens
+   its settings. Hover matches the antd outlined-button idiom the other
+   header triggers use (border steps to blue), the switch stays its own hit
+   area, and the pulse stills under the cursor so the control reads calm
+   while you aim at it. */
+.capture-pill {
+  border-color: var(--color-gray-light);
+  background: #fff;
+  transition: border-color 0.15s ease;
+}
+.capture-pill:hover,
+.capture-pill:focus-visible {
+  border-color: var(--color-main);
+}
+.capture-pill:hover .seg-live-border {
+  animation: none;
+  box-shadow: none;
+}
+
+/* Mode icons inside the capture switch. antd slides its two label spans by
+   stacking them and pulling the hidden one up by exactly one track height
+   (margin-top: -trackHeightSM = -16px); the spans have only a min-height,
+   so anything that changes their content height breaks the stack and the
+   off-state icon peeks out of the track. Two hazards, two pins — WITHOUT
+   restyling the spans' display (antd's runtime-injected CSS ties our
+   specificity and loads later, so e.g. display:flex here silently loses):
+   1. pin the spans to exactly 16px so the -16px register always holds;
+   2. the SVG is a block at the span's top (Tailwind preflight), and no one
+      else margins it — offset it (16 - 10) / 2 to sit optically centered. */
+.capture-switch .ant-switch-inner-checked,
+.capture-switch .ant-switch-inner-unchecked {
+  height: 16px;
+  padding-top: 3px;
+}
+.capture-switch .ant-switch-inner-checked svg,
+.capture-switch .ant-switch-inner-unchecked svg {
+  display: block;
+}
+
+/* Off-state contrast (Gabriel 07-13): antd's resting track is too light for
+   the white 10px icon, but its hover shade reads perfectly — so promote the
+   hover shade (colorTextTertiary, rgba(0,0,0,0.45)) to the resting look and
+   step hover slightly darker. Extra :not() classes lift specificity above
+   antd's runtime-injected rules, which win plain ties. Disabled keeps the
+   darker track too (antd's 0.65 opacity still greys it out), so the icon
+   stays readable there as well. */
+.ant-switch.capture-switch:not(.ant-switch-checked) {
+  background: rgba(0, 0, 0, 0.45);
+}
+.ant-switch.capture-switch:not(.ant-switch-checked):not(.ant-switch-disabled):hover {
+  background: rgba(0, 0, 0, 0.57);
+}

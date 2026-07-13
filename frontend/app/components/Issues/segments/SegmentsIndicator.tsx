@@ -6,6 +6,7 @@ import {
   EllipsisVertical,
   Globe,
   Info,
+  ListX,
   Lock,
   Pencil,
   Plus,
@@ -18,10 +19,14 @@ import { useStore } from 'App/mstore';
 import type { SavedSegment } from 'App/mstore/issuesStore';
 import SegmentDrawer from './SegmentDrawer';
 import { estimateFromSeeds } from './segmentUtils';
+import './captureSwitch.css';
 
-/* The Traffic Segments entry point (Mehdi 07-07): a live mode badge by the
-   "Issues" title (CaptureModeBadge) + this management dropdown in the filter
-   bar. The popover has two views:
+/* The Traffic Segments entry point (Gabriel 07-13): ONE pill by the "Issues"
+   title that is both the on/off control and the door to settings — a real
+   Switch flips capture mode in place, clicking the rest of the pill opens
+   this management popover. It deliberately does NOT live in the filter row:
+   capture is a project-wide setting, not a view filter, and sitting next to
+   Tags/Display made it read as one. The popover has two views:
    · main — the big capture-mode toggle (segments REPLACE full traffic), then
      the capture set: Yours / Team, a switch per segment (anyone can toggle:
      it's the project's shared capture setting), edit/remove/delete on your
@@ -34,66 +39,6 @@ import { estimateFromSeeds } from './segmentUtils';
 
 const FELL_BACK_MSG =
   'No active segments left — capture switched to full traffic.';
-
-/* Tiny mode cue by the "Issues" title — which mode am I in, on page load,
-   without eating header space. Same 22px chip form as the origin chips in the
-   rows; in segments mode a soft ring pulses outward. Clicking flips the
-   capture mode (the same shared setting as the dropdown's big toggle); with
-   no active segment there is nothing to capture, so the click explains
-   instead of switching. */
-export const CaptureModeBadge = observer(() => {
-  const { issuesStore } = useStore();
-  const segmentsMode = issuesStore.captureMode === 'segments';
-  const activeCount = issuesStore.activeSegmentCount;
-  const canSegment = activeCount > 0;
-
-  const flip = () => {
-    if (segmentsMode) {
-      issuesStore.setCaptureMode('full');
-    } else if (canSegment) {
-      issuesStore.setCaptureMode('segments');
-    } else {
-      message.info(
-        'Turn on at least one segment first — see Traffic Segments on the right.',
-      );
-    }
-  };
-
-  return (
-    <Tooltip
-      placement="bottom"
-      title={
-        segmentsMode
-          ? `Capturing only active segments (${activeCount}) — click for full traffic`
-          : canSegment
-            ? 'Capturing full traffic — click to capture only active segments'
-            : 'Capturing full traffic — create a segment under Traffic Segments to capture less'
-      }
-    >
-      <button
-        type="button"
-        onClick={flip}
-        aria-pressed={segmentsMode}
-        aria-label={`Capture mode: ${segmentsMode ? 'segments' : 'full traffic'} — click to switch`}
-        // backgrounds + hover live in issues.css (.capture-badge) — per-mode
-        // hover needs to win over the resting background; the "alive" cue in
-        // segments mode is the outward ring pulse (seg-live-border)
-        className={`capture-badge rounded-md border flex items-center justify-center shrink-0 cursor-pointer${segmentsMode ? ' seg-live-border' : ''}`}
-        style={{
-          width: 22,
-          height: 22,
-          padding: 0,
-          borderColor: segmentsMode
-            ? 'rgba(57, 78, 255, 0.6)'
-            : 'var(--color-gray-light)',
-          color: segmentsMode ? 'var(--color-main)' : 'var(--color-gray-medium)',
-        }}
-      >
-        {segmentsMode ? <Split size={13} /> : <Globe size={13} />}
-      </button>
-    </Tooltip>
-  );
-});
 
 function SegmentRow({
   segment,
@@ -150,9 +95,12 @@ function SegmentRow({
               items: [
                 { key: 'edit', icon: <Pencil size={14} />, label: 'Edit' },
                 {
+                  // NOT about stopping capture (the row switch does that) —
+                  // this just declutters: the saved segment lives on in
+                  // Data Management and can be re-added via "Add segment"
                   key: 'remove',
-                  icon: <Split size={14} />,
-                  label: 'Remove from capture',
+                  icon: <ListX size={14} />,
+                  label: 'Remove from list',
                 },
                 { type: 'divider' as const },
                 {
@@ -369,7 +317,12 @@ function SegmentsIndicator() {
           Add one to capture only the part you care about.
         </div>
       ) : (
-        <>
+        /* in Full traffic mode the capture set is dormant — fade the list so
+           it reads as "takes effect when you pick Segments" (still editable:
+           you can stage the set before switching) */
+        <div
+          className={`transition-opacity duration-200${segmentsMode ? '' : ' opacity-50'}`}
+        >
           {mine.length > 0 && sectionTitle('Yours')}
           {mine.map((s) => (
             <SegmentRow key={s.id} segment={s} onEdit={startEdit} />
@@ -378,7 +331,7 @@ function SegmentsIndicator() {
           {team.map((s) => (
             <SegmentRow key={s.id} segment={s} onEdit={startEdit} />
           ))}
-        </>
+        </div>
       )}
 
       <div className="border-t mt-2.5 pt-2 -mx-1 px-1">
@@ -456,28 +409,96 @@ function SegmentsIndicator() {
     </div>
   );
 
+  // the pill's switch is the capture-mode control; with nothing to capture it
+  // sits disabled and the pill (still clickable) is where you fix that
+  const canSegment = activeCount > 0;
+  const onSwitch = (on: boolean) => {
+    issuesStore.setCaptureMode(on ? 'segments' : 'full');
+  };
+
   return (
     <>
       <Popover
         open={open}
         onOpenChange={onOpenChange}
         trigger="click"
-        placement="bottomRight"
+        placement="bottomLeft"
         content={content}
       >
-        {/* the management dropdown — a plain trigger button like Tags/Display
-            (border, native hover, chevron). The label states the mode; the
-            blue "live" signal belongs to CaptureModeBadge by the title alone */}
-        <Button
-          size="small"
-          icon={segmentsMode ? <Split size={14} /> : <Globe size={14} />}
-          aria-label={`Capture mode: ${segmentsMode ? `${activeCount} segments` : 'full traffic'}`}
+        {/* the switcher-that-opens: a real Switch (flips capture in place,
+            click stops there) inside a pill whose remaining surface opens the
+            popover — same height/idiom as the small trigger buttons, but the
+            embedded switch keeps it from reading as a list filter. Mehdi's
+            "alive" cue (07-07) now pulses from the switch itself when on. */}
+        <Tooltip
+          placement="bottom"
+          title={
+            open
+              ? ''
+              : segmentsMode
+                ? `Capturing only active segments (${activeCount}) — switch off for full traffic`
+                : canSegment
+                  ? 'Capturing full traffic — switch on to capture only active segments'
+                  : 'Capturing full traffic — open to add a segment and capture less'
+          }
         >
-          {segmentsMode
-            ? `${activeCount} segment${activeCount === 1 ? '' : 's'}`
-            : 'Full traffic'}
-          <ChevronDown size={13} style={{ marginLeft: 2, opacity: 0.6 }} />
-        </Button>
+          <div
+            role="button"
+            tabIndex={0}
+            aria-expanded={open}
+            aria-label={`Traffic segments — ${segmentsMode ? `capturing ${activeCount} active` : 'off, capturing full traffic'}. Opens settings`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setOpen(!open);
+              }
+            }}
+            className="capture-pill border rounded-md flex items-center gap-2 pl-1.5 pr-2 shrink-0 cursor-pointer select-none"
+            style={{ height: 24 }}
+          >
+            {/* live switch owns its clicks; a disabled one passes them
+                through, so tapping it still opens the popover (the only way
+                to make it enableable) */}
+            <span
+              className="flex items-center"
+              onClick={
+                segmentsMode || canSegment
+                  ? (e) => e.stopPropagation()
+                  : undefined
+              }
+            >
+              <Switch
+                size="small"
+                checked={segmentsMode}
+                disabled={!segmentsMode && !canSegment}
+                // capture-switch pins the label spans to the track height so
+                // the SVG icons can't break antd's stacked-span slide
+                className={`capture-switch${segmentsMode ? ' seg-live-border' : ''}`}
+                style={
+                  !segmentsMode && !canSegment
+                    ? { pointerEvents: 'none' }
+                    : undefined
+                }
+                // mode icons ride the switch: Split when capturing segments,
+                // Globe when on full traffic — the same pair the popover's
+                // Segmented uses
+                checkedChildren={<Split size={10} />}
+                unCheckedChildren={<Globe size={10} />}
+                aria-label={`Segment capture ${segmentsMode ? 'on' : 'off'}`}
+                onChange={onSwitch}
+              />
+            </span>
+            <span className="text-sm" style={{ color: 'var(--color-gray-darkest)' }}>
+              Traffic segments
+              {segmentsMode && (
+                <span style={{ color: 'var(--color-gray-dark)' }}>
+                  {' '}· {activeCount} active
+                </span>
+              )}
+            </span>
+            <ChevronDown size={13} style={{ opacity: 0.6 }} />
+          </div>
+        </Tooltip>
       </Popover>
 
       <SegmentDrawer

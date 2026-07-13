@@ -106,44 +106,6 @@
 }
 
 
-/* Capture-mode badge, segments mode — the "alive" cue (Mehdi 07-07: animated).
-   A soft ring expands OUTWARD from the chip (box-shadow spread) and dissolves —
-   a clear pulse in motion, subtle in color. The border itself stays steady
-   blue; reduced motion keeps only that. */
-.seg-live-border {
-  animation: seg-ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-@keyframes seg-ring-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(57, 78, 255, 0.3);
-  }
-  70%,
-  100% {
-    box-shadow: 0 0 0 7px rgba(57, 78, 255, 0);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .seg-live-border {
-    animation: none;
-  }
-}
-
-/* Capture-mode badge — it's a button, so it hovers: one subtle step darker
-   in each mode (gray family at rest / blue family in segments mode). */
-.capture-badge {
-  background: var(--color-gray-lightest);
-  transition: background 0.15s ease;
-}
-.capture-badge:hover {
-  background: var(--color-gray-lighter);
-}
-.capture-badge.seg-live-border {
-  background: rgba(57, 78, 255, 0.06);
-}
-/* hovering the live badge stills it: the pulse pauses and the outline reads
-   as a regular static blue border — the button becomes calm under the cursor */
-.capture-badge.seg-live-border:hover {
-  animation: none;
-  border-color: var(--color-main) !important;
-  box-shadow: none;
-}
+/* Traffic-segments pill + capture-switch styles live with the component in
+   segments/captureSwitch.css — Data Management shares them, issues.css only
+   loads with the Issues pages. */

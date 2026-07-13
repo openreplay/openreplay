@@ -1,15 +1,15 @@
 import { Switch, Table, Tag, Tooltip, message } from 'antd';
 import type { TableProps } from 'antd';
-import { Star } from 'lucide-react';
+import { Globe, Split, Star } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import type { SavedSegment } from 'App/mstore/issuesStore';
-import { CaptureModeBadge } from 'Components/Issues/segments/SegmentsIndicator';
 import { estimateFromSeeds } from 'Components/Issues/segments/segmentUtils';
 import { TextEllipsis } from 'UI';
+import 'Components/Issues/segments/captureSwitch.css';
 
 /* Data Management → Segments → "Traffic segments" tab (Mehdi 07-07).
    Every capture-ELIGIBLE segment — team-visible only, since everyone must be
@@ -115,13 +115,26 @@ function TrafficSegmentsTab({
 
   return (
     <>
-      {/* which capture mode the project is in — the same live badge as the
-          Issues title; clicking it flips the shared mode */}
+      {/* which capture mode the project is in — the same shared switch as
+          the Issues-title pill (this page already speaks in switches);
+          with no active segment there is nothing to capture, so it waits
+          disabled until a row below is switched on */}
       <div
         className="flex items-center gap-2 px-4 py-3 border-b text-sm"
         style={{ color: 'var(--color-gray-dark)' }}
       >
-        <CaptureModeBadge />
+        <Switch
+          size="small"
+          checked={segmentsMode}
+          disabled={!segmentsMode && activeCount === 0}
+          className={`capture-switch${segmentsMode ? ' seg-live-border' : ''}`}
+          checkedChildren={<Split size={10} />}
+          unCheckedChildren={<Globe size={10} />}
+          aria-label={`Segment capture ${segmentsMode ? 'on' : 'off'}`}
+          onChange={(on) =>
+            issuesStore.setCaptureMode(on ? 'segments' : 'full')
+          }
+        />
         {segmentsMode
           ? t(
               `Capture mode: Segments — only sessions matching the ${activeCount} active segment${activeCount === 1 ? '' : 's'} are captured.`,

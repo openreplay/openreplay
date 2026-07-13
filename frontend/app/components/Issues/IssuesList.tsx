@@ -44,7 +44,7 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { Pagination } from 'UI';
 import TagFilter from './TagFilter';
-import SegmentsIndicator, { CaptureModeBadge } from './segments/SegmentsIndicator';
+import SegmentsIndicator from './segments/SegmentsIndicator';
 import { ImpactGauge, ReasonChip } from './ProblemCard';
 import './issues.css';
 
@@ -377,9 +377,10 @@ function IssuesList() {
               <Info size={15} />
             </span>
           </Tooltip>
-          {/* compact capture-mode cue (Mehdi 07-07) — which mode am I in,
-              readable on page load; management lives in the dropdown on the right */}
-          <CaptureModeBadge />
+          {/* capture control (Gabriel 07-13) — page-level, so it lives with
+              the title, NOT in the filter row: the switch flips segment
+              capture, the rest of the pill opens management */}
+          <SegmentsIndicator />
         </div>
         <div className="flex items-center gap-2">
           <a
@@ -415,9 +416,6 @@ function IssuesList() {
         />
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* capture management — out of the search-bar area (Mehdi 07-07),
-              among the other list controls; the live cue stays by the title */}
-          <SegmentsIndicator />
           <TagFilter
             allTags={issuesStore.allTags}
             labels={issuesStore.labels}
