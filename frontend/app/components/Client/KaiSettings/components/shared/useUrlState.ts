@@ -1,30 +1,41 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useHistory, useLocation } from 'App/routing';
 
-// Mirrors KaiSettings UI state (active tab, opened test/run) into the URL query string so a
-// reload or shared link restores it. Each writer merges into the *live* query (reads
-// window.location.search, not a render-time snapshot) so the tabs never clobber one
-// another's params, and skips the write when nothing changed — no history spam, no loop.
-// Uses history.replace({ search }) — the app's v5-compat idiom, which preserves the path.
-export function useUrlState() {
-  const location = useLocation();
+// Track a single URL query param — the shape the Activity page uses for `event_id`. Returns
+// the current value (read natively from window.location.search) and a setter. The drawer/
+// modal open state is DERIVED from this value (open iff present); there is NO separate React
+// state syncing back to the URL, which is what created the back/forward feedback loop.
+//
+// `set(value, push)` writes through the router's history so it stays in sync: push=true adds
+// a history entry (so the browser Back button closes the drawer), push=false replaces (used
+// for close / tab, to not spam entries). The setter is reference-stable (key is constant per
+// call site; history is read through a ref) so effects keyed on it can't re-fire on a bare
+// navigation.
+export function useQueryParam(
+  key: string,
+): [string | null, (value?: string | null, push?: boolean) => void] {
+  // subscribe to location so the component re-renders on navigation (our writes + back/fwd)
+  useLocation();
   const history = useHistory();
-  const params = new URLSearchParams(location.search);
+  const historyRef = useRef(history);
+  useEffect(() => {
+    historyRef.current = history;
+  }, [history]);
 
-  const get = (key: string): string | undefined => params.get(key) ?? undefined;
+  const value = new URLSearchParams(window.location.search).get(key);
 
-  const set = useCallback(
-    (key: string, value?: string | null) => {
-      const next = new URLSearchParams(window.location.search);
-      if (value == null || value === '') next.delete(key);
-      else next.set(key, value);
-      const search = next.toString();
-      if (search === window.location.search.replace(/^\?/, '')) return;
-      history.replace({ search });
+  const setParam = useCallback(
+    (next?: string | null, push = false) => {
+      const params = new URLSearchParams(window.location.search);
+      if (next == null || next === '') params.delete(key);
+      else params.set(key, next);
+      const to = { search: params.toString() };
+      if (push) historyRef.current.push(to);
+      else historyRef.current.replace(to);
     },
-    [history],
+    [key],
   );
 
-  return { get, set };
+  return [value, setParam];
 }

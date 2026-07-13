@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { RotateCw } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
@@ -34,7 +34,7 @@ import {
   UiRunStatus,
 } from './shared/types';
 import { useKaiUi } from './shared/uiStore';
-import { useUrlState } from './shared/useUrlState';
+import { useQueryParam } from './shared/useUrlState';
 import {
   PERIOD_OPTIONS,
   REGION_OPTIONS,
@@ -97,8 +97,9 @@ function RunsTab() {
   // and switches here. Adopt it as the search / open run — at mount and again whenever
   // handoffId changes (this pane stays mounted between visits).
   const { runsTestFilter, runsOpenRunKey, handoffId } = useKaiUi();
-  // opened run persists in the URL (?run=)
-  const { get, set } = useUrlState();
+  // the opened run drawer IS the ?run= param — open iff present. No separate state, so
+  // browser back/forward just open/close it (no state↔URL sync loop).
+  const [openKey, setOpenKey] = useQueryParam('run');
   const [query, setQuery] = useState(runsTestFilter ?? '');
   const [search, setSearch] = useState(runsTestFilter ?? '');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
@@ -113,29 +114,27 @@ function RunsTab() {
     order?: 'ascend' | 'descend';
   }>({ field: 'date', order: 'descend' });
   const [page, setPage] = useState(1);
-  const [openKey, setOpenKey] = useState<string | null>(
-    () => get('run') ?? runsOpenRunKey ?? null,
-  );
 
-  const [seenHandoff, setSeenHandoff] = useState(handoffId);
-  if (handoffId !== seenHandoff) {
-    setSeenHandoff(handoffId);
+  // adopt a cross-tab handoff ("View all runs" / "View run") exactly once when handoffId
+  // bumps — reset the filters and open the handed-off run in the URL (this pane stays
+  // mounted between visits, so a fresh id is the signal).
+  const seenHandoffRef = useRef(handoffId);
+  useEffect(() => {
+    if (seenHandoffRef.current === handoffId) return;
+    seenHandoffRef.current = handoffId;
     setQuery(runsTestFilter ?? '');
     setSearch(runsTestFilter ?? '');
     setStatusTab('all');
-    setOpenKey(runsOpenRunKey ?? null);
-  }
+    // opening a handed-off run pushes an entry so Back returns to the list
+    setOpenKey(runsOpenRunKey ?? undefined, !!runsOpenRunKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handoffId]);
 
   // debounce the search box (setState in a timer callback, not sync in the effect body)
   useEffect(() => {
     const id = window.setTimeout(() => setSearch(query.trim()), 300);
     return () => window.clearTimeout(id);
   }, [query]);
-
-  // keep ?run= in sync with the open drawer (removed when nothing is open)
-  useEffect(() => {
-    set('run', openKey ?? undefined);
-  }, [openKey, set]);
 
   // filters shared by the list + the count aggregates (everything except the status tab)
   const from = periodFrom(periodFilter);
@@ -421,7 +420,7 @@ function RunsTab() {
           onClick: (e) => {
             const el = e.target as HTMLElement;
             if (el.closest('button')) return;
-            setOpenKey(run.key);
+            setOpenKey(run.key, true);
           },
         })}
         locale={{ emptyText: t('No runs match these filters.') }}
