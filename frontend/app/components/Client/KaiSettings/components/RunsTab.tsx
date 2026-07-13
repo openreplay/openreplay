@@ -358,18 +358,6 @@ function RunsTab() {
               })),
             ]}
           />
-          {dispatchModes.length > 0 && (
-            <Select
-              size="small"
-              value={dispatchFilter}
-              onChange={setDispatchFilter}
-              style={{ width: 130 }}
-              options={[
-                { value: 'all', label: t('Any launch') },
-                ...dispatchModes.map((m) => ({ value: m, label: m })),
-              ]}
-            />
-          )}
           {tagOptions.length > 0 && (
             <Select
               size="small"
