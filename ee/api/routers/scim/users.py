@@ -117,8 +117,9 @@ def search_existing(tenant_id: int, resource: Resource) -> dict | None:
                 SELECT *
                 FROM public.users
                 WHERE email = %(email)s
+                  AND tenant_id = %(tenant_id)s
                 """,
-                {"email": resource.user_name},
+                {"email": resource.user_name, "tenant_id": tenant_id},
             )
         )
         item = cur.fetchone()
@@ -144,7 +145,8 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
                     jwt_iat       = NULL,
                     weekly_report = default
                 WHERE email = %(email)s
-                  AND role!='owner' 
+                  AND tenant_id = %(tenant_id)s
+                  AND role!='owner'
                 RETURNING *
                 """,
                 {
@@ -218,7 +220,7 @@ def update_resource(tenant_id: int, resource: Resource) -> dict | None:
                    "email       = %(email)s",
                    "internal_id = %(internal_id)s",
                    "updated_at  = now()"]
-        constraints = ["user_id = %(user_id)s"]
+        constraints = ["user_id = %(user_id)s", "tenant_id = %(tenant_id)s"]
         if resource.active is False:
             updates.append("deleted_at = now()")
             constraints.append("role!='owner'")
