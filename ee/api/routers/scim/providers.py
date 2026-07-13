@@ -21,6 +21,7 @@ from scim2_models import (
 )
 from scim2_server import provider
 from scim2_server.utils import SCIMException, merge_resources
+from fastapi import HTTPException as FastAPIHTTPException
 from werkzeug import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, PreconditionFailed
 from werkzeug.routing.exceptions import RequestRedirect
@@ -35,18 +36,22 @@ class MultiTenantProvider(provider.SCIMProvider):
     def check_auth(self, request: Request):
         logger.debug(f"call processed by check_auth: {request.method} {request.path}")
         auth = request.headers.get("Authorization")
-        if not auth or not auth.startswith("Bearer "):
-            return None
-        token = auth[len("Bearer "):]
+        token = auth[len("Bearer "):] if auth and auth.startswith("Bearer ") else None
         if not token:
             return Response(
                 "Missing or invalid Authorization header",
                 status=401,
                 headers={"WWW-Authenticate": 'Bearer realm="login required"'},
             )
-        payload = verify_access_token(token)
-        tenant_id = payload["tenant_id"]
-        return tenant_id
+        try:
+            payload = verify_access_token(token)
+        except FastAPIHTTPException as e:
+            return Response(
+                e.detail,
+                status=e.status_code,
+                headers={"WWW-Authenticate": 'Bearer realm="login required"'},
+            )
+        return payload["tenant_id"]
 
     def get_service_provider_config(self):
         auth_schemes = [
@@ -258,6 +263,8 @@ class MultiTenantProvider(provider.SCIMProvider):
             if endpoint != "service_provider_config":
                 # RFC7643, Section 5: skip authentication for ServiceProviderConfig
                 tenant_id = self.check_auth(request)
+                if isinstance(tenant_id, Response):
+                    return tenant_id
 
             # Wrap the entire call in a transaction. Should probably be optimized (use transaction only when necessary).
             with self.backend:
