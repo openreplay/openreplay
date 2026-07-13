@@ -112,17 +112,14 @@ function TestDrawer({
   );
 
   // Steps edit locally; nothing is sent until "Save steps". Seeded once per mount — the
-  // parent keys this drawer by the test id, so opening a different test remounts it fresh
-  // (no prop→state sync effect). The ref mirrors state so a click that commits an open
-  // input (via blur) then saves reads the just-committed value.
-  const savedSteps = test?.steps ?? [];
-  const [stepsDraft, setStepsDraft] = useState<string[]>(savedSteps);
-  const stepsRef = useRef<string[]>(savedSteps);
-  const setSteps = (steps: string[]) => {
-    stepsRef.current = steps;
+  // parent keys this drawer by the test id, so opening a different test remounts it fresh.
+  // stepsDraft is a local mirror shown by the editor (authoritative) so edits don't snap
+  // back during the persist round-trip; every committed edit also persists immediately.
+  const [stepsDraft, setStepsDraft] = useState<string[]>(test?.steps ?? []);
+  const saveSteps = (steps: string[]) => {
     setStepsDraft(steps);
+    onChange({ ...(test as TestCase), steps });
   };
-  const stepsDirty = JSON.stringify(stepsDraft) !== JSON.stringify(savedSteps);
 
   // review state: the proposal materialised as a live, fully-editable step list
   // (plain rows + marked add/remove rows) — rebuilt when another test or another
@@ -508,16 +505,13 @@ function TestDrawer({
           onStepsChange={(steps) => onChange({ ...test, steps })}
         />
       ) : (
-        // plain editing: local draft + Save bar; version switcher / step history ride
-        // the header once older versions exist
+        // plain editing: each committed change persists immediately (no Save/Cancel gate);
+        // version switcher rides the header once older versions exist
         <EditableSteps
           steps={stepsDraft}
           bounded
           headerAction={versionSwitcher}
-          onStepsChange={setSteps}
-          dirty={stepsDirty}
-          onSave={() => onChange({ ...test, steps: stepsRef.current })}
-          onCancel={() => setSteps(savedSteps)}
+          onStepsChange={saveSteps}
         />
       )}
 

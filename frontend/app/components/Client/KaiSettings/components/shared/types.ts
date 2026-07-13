@@ -442,12 +442,14 @@ export type ScheduleFreq =
   | 'custom';
 
 // days: 0=Sun … 6=Sat; dayOfMonth: 1–28 or 0 = "last day" (monthly); time: "HH:mm".
-// A null schedule means run-manually-only. `freq` is inferred when absent.
+// A null schedule means run-manually-only. `freq` is inferred when absent. When freq is
+// 'custom' the schedule is a raw 5-field cron string in `cron` (days/time unused).
 export interface Schedule {
   days: number[];
   time: string;
   freq?: ScheduleFreq;
   dayOfMonth?: number;
+  cron?: string;
 }
 
 // An alternative branch the agent observed — rendered as a fork under its step.
