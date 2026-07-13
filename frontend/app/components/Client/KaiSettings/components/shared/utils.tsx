@@ -250,16 +250,8 @@ export function ordinal(n: number): string {
   return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
 }
 
-// Day-of-month options for the monthly schedule (1–28, plus "last day").
-export const DOM_OPTIONS = [
-  ...Array.from({ length: 28 }, (_, i) => ({
-    value: i + 1,
-    label: `the ${ordinal(i + 1)}`,
-  })),
-  { value: 0, label: 'the last day' },
-];
-
-// The frequency picker. "Custom…" falls back to the day-by-day chooser.
+// The frequency picker. Presets cover the day-of-week + monthly cases; 'custom' isn't
+// offered here (a non-preset cron, if one ever arrives, round-trips as a read-only chip).
 export const FREQ_OPTIONS: { value: ScheduleFreq | 'never'; label: string }[] =
   [
     { value: 'never', label: 'Never' },
@@ -267,28 +259,37 @@ export const FREQ_OPTIONS: { value: ScheduleFreq | 'never'; label: string }[] =
     { value: 'weekdays', label: 'Weekdays' },
     { value: 'weekly', label: 'Weekly' },
     { value: 'monthly', label: 'Monthly' },
-    { value: 'custom', label: 'Custom…' },
   ];
 
-// Infer the frequency from a schedule's days/dayOfMonth when `freq` is absent.
+// Infer the frequency from a schedule's days/dayOfMonth when `freq` is absent. Custom is
+// cron-based (not day-based), so a multi-day set with no explicit freq isn't inferable here.
 const inferFreq = (s: Schedule): ScheduleFreq | null => {
   if (s.dayOfMonth != null) return 'monthly';
   if (!s.days || s.days.length === 0) return null;
   if (s.days.length === 7) return 'daily';
   if (s.days.length === 5 && WEEKDAY_DAYS.every((d) => s.days.includes(d)))
     return 'weekdays';
-  if (s.days.length === 1) return 'weekly';
-  return 'custom';
+  // one day or an arbitrary set → weekly (runs on the selected day(s) each week)
+  return 'weekly';
 };
 
-// Classify a schedule into a frequency. A day-based frequency (weekly/custom) with no
-// days selected is treated as "not scheduled" so it never produces a malformed cron.
+// Classify a schedule into a frequency. weekly with no day, or custom with no cron, reads
+// as "not scheduled" so it never produces a malformed cron.
 export const scheduleFreq = (s?: Schedule | null): ScheduleFreq | null => {
   if (!s) return null;
   const freq = s.freq ?? inferFreq(s);
   if (!freq) return null;
-  if ((freq === 'weekly' || freq === 'custom') && !s.days?.length) return null;
+  if (freq === 'custom') return s.cron?.trim() ? 'custom' : null;
+  if (freq === 'weekly' && !s.days?.length) return null;
   return freq;
+};
+
+// A light structural check on a 5-field cron string (backend does full validation). Blocks
+// obvious garbage so we never persist an unparseable cron.
+export const isValidCron = (cron?: string): boolean => {
+  if (!cron) return false;
+  const parts = cron.trim().split(/\s+/);
+  return parts.length === 5 && parts.every((p) => /^[\d*/,\-lw?]+$/i.test(p));
 };
 
 export const isScheduled = (s?: Schedule | null): boolean =>
@@ -311,9 +312,16 @@ export const scheduleLabel = (schedule?: Schedule | null): string => {
     case 'weekdays':
       return `Weekdays · ${at}`;
     case 'weekly':
-      return `Every ${DAY_SHORT[schedule.days[0] ?? 1]} · ${at}`;
+      return schedule.days.length > 1
+        ? `${[...schedule.days]
+            .sort((a, b) => a - b)
+            .map((d) => DAY_SHORT[d])
+            .join(', ')} · ${at}`
+        : `Every ${DAY_SHORT[schedule.days[0] ?? 1]} · ${at}`;
     case 'monthly':
       return `Monthly on ${domLabel(schedule.dayOfMonth)} · ${at}`;
+    case 'custom':
+      return `Cron · ${schedule.cron}`;
     default:
       return `${[...schedule.days]
         .sort((a, b) => a - b)
@@ -336,9 +344,19 @@ export const scheduleShort = (schedule?: Schedule | null): string => {
       return `Weekly · ${at}`;
     case 'monthly':
       return `Monthly · ${at}`;
+    case 'custom':
+      return 'Custom';
     default:
       return `${schedule.days.length} days · ${at}`;
   }
+};
+
+// The runner's result blob is a step-by-step log that (often) ends in a "Summary: …" line.
+// When that section is present, show only what follows it; otherwise the full text.
+export const resultSummary = (text?: string): string | undefined => {
+  if (!text) return text;
+  const m = text.match(/^\s*summary:\s*([\s\S]*)$/im);
+  return (m ? m[1] : text).trim();
 };
 
 export const formatDuration = (ms: number): string => {
@@ -363,47 +381,69 @@ export const relativeTime = (ts?: number): string => {
 // The API stores schedules as standard 5-field cron strings. The Schedule object the
 // UI edits round-trips through cron so a schedule persists as a `cron` on the test.
 
+// Parse a cron day-of-week field into weekday numbers (0–6), or null if it isn't a plain
+// list/range of single digits (steps, names, etc. → not a preset, handled as custom).
+const parseDow = (dow: string): number[] | null => {
+  const out: number[] = [];
+  for (const token of dow.split(',')) {
+    const range = token.match(/^(\d)-(\d)$/);
+    if (range) {
+      const [, a, b] = range.map(Number);
+      if (a > b) return null;
+      for (let d = a; d <= b; d += 1) out.push(d);
+    } else if (/^\d$/.test(token)) {
+      out.push(Number(token));
+    } else {
+      return null;
+    }
+  }
+  return out.every((d) => d >= 0 && d <= 6) ? Array.from(new Set(out)) : null;
+};
+
 export function cronToSchedule(cron?: string | null): Schedule | null {
   if (!cron) return null;
-  const parts = cron.trim().split(/\s+/);
+  const raw = cron.trim();
+  const parts = raw.split(/\s+/);
   if (parts.length < 5) return null;
-  const [min, hour, dom, , dow] = parts;
+  const [min, hour, dom, mon, dow] = parts;
   const h = Number(hour);
   const m = Number(min);
-  const time =
-    Number.isFinite(h) && Number.isFinite(m)
-      ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-      : '09:00';
+  // presets need a simple HH:MM and every-month; anything else is a raw custom cron
+  const simpleTime =
+    /^\d+$/.test(min) && /^\d+$/.test(hour) && h <= 23 && m <= 59;
+  const time = simpleTime
+    ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    : '09:00';
+  const custom: Schedule = { freq: 'custom', days: [], time, cron: raw };
 
-  // Monthly — a concrete day-of-month with no weekday constraint.
-  if (dom !== '*' && dom !== '?' && (dow === '*' || dow === '?')) {
-    const dayOfMonth =
-      dom.toUpperCase() === 'L' ? 0 : Number(dom.split(',')[0]) || 1;
-    return { freq: 'monthly', days: [], dayOfMonth, time };
+  if (mon !== '*' || !simpleTime) return custom;
+
+  // Monthly — a concrete single day-of-month (1–31), no weekday constraint.
+  if ((dow === '*' || dow === '?') && dom !== '*' && dom !== '?') {
+    if (/^\d+$/.test(dom)) {
+      const d = Number(dom);
+      if (d >= 1 && d <= 31) return { freq: 'monthly', days: [], dayOfMonth: d, time };
+    }
+    return custom;
   }
 
-  if (dow === '*' || dow === '?')
-    return { freq: 'daily', days: ALL_DAYS, time };
+  // Day-of-week schedule — every day-of-month, dow is a plain day list. No explicit freq:
+  // inferFreq classifies the day set (daily / weekdays / weekly) so the pills round-trip.
+  if (dom === '*' || dom === '?') {
+    if (dow === '*' || dow === '?') return { days: ALL_DAYS, time };
+    const days = parseDow(dow);
+    if (days && days.length) return { days, time };
+  }
 
-  const days = dow
-    .split(',')
-    .flatMap((token) => {
-      const range = token.match(/^(\d)-(\d)$/);
-      if (range) {
-        const [, a, b] = range.map(Number);
-        return Array.from({ length: b - a + 1 }, (_, i) => a + i);
-      }
-      return [Number(token)];
-    })
-    .filter((d) => Number.isFinite(d) && d >= 0 && d <= 6);
-
-  if (days.length === 0) return { freq: 'daily', days: ALL_DAYS, time };
-  return { days, time, freq: scheduleFreq({ days, time }) ?? 'custom' };
+  // stepped hours, sub-daily, anything not a plain day schedule → raw custom cron
+  return custom;
 }
 
 export function scheduleToCron(schedule?: Schedule | null): string | null {
   const freq = scheduleFreq(schedule);
   if (!freq || !schedule) return null;
+  if (freq === 'custom')
+    return isValidCron(schedule.cron) ? (schedule.cron as string).trim() : null;
   const [h, m] = schedule.time.split(':').map(Number);
   switch (freq) {
     case 'daily':
@@ -411,7 +451,7 @@ export function scheduleToCron(schedule?: Schedule | null): string | null {
     case 'weekdays':
       return `${m} ${h} * * 1-5`;
     case 'monthly':
-      return `${m} ${h} ${schedule.dayOfMonth === 0 ? 'L' : (schedule.dayOfMonth ?? 1)} * *`;
+      return `${m} ${h} ${schedule.dayOfMonth ?? 1} * *`;
     case 'weekly':
     default:
       return `${m} ${h} * * ${[...schedule.days].sort((a, b) => a - b).join(',')}`;

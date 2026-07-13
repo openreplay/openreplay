@@ -1,11 +1,9 @@
 import { Button, Modal, Segmented, Select, Tooltip, message } from 'antd';
 import {
-  Boxes,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
-  Cpu,
   Image as ImageIcon,
   Images,
   Info,
@@ -40,6 +38,7 @@ import {
   regionLabel,
   relativeTime,
   resolutionLabel,
+  resultSummary,
 } from '../shared/utils';
 import { EntityDrawer, Section } from './EntityDrawer';
 import NetworkPanel from './NetworkPanel';
@@ -197,8 +196,22 @@ function ScreenshotsView({
     setStepPos(pos);
     setShotIdx(0);
   };
-  const prevShot = () => setShotIdx((safeShot - 1 + shotCount) % shotCount);
-  const nextShot = () => setShotIdx((safeShot + 1) % shotCount);
+  const stepShots = (pos: number) =>
+    Math.max(1, run.steps[shotSteps[pos].i].screenshots?.length ?? 0);
+  // advance within the step, then spill into the next / previous step (wrapping at the
+  // ends) so the arrows walk the whole run's screenshots, not just this step's.
+  const nextShot = () => {
+    if (safeShot < shotCount - 1) return setShotIdx(safeShot + 1);
+    pickStep(stepPos < shotSteps.length - 1 ? stepPos + 1 : 0);
+  };
+  const prevShot = () => {
+    if (safeShot > 0) return setShotIdx(safeShot - 1);
+    const prevPos = stepPos > 0 ? stepPos - 1 : shotSteps.length - 1;
+    setStepPos(prevPos);
+    setShotIdx(stepShots(prevPos) - 1);
+  };
+  // arrows are useful whenever there's anywhere to go — more steps or more shots
+  const canNavigate = shotSteps.length > 1 || shotCount > 1;
 
   return (
     <div className={`flex flex-col gap-2 ${fill ? 'h-full min-h-0' : ''}`}>
@@ -280,7 +293,7 @@ function ScreenshotsView({
             <Maximize2 size={14} />
           </span>
         )}
-        {shotCount > 1 && (
+        {canNavigate && (
           <>
             <button
               type="button"
@@ -466,28 +479,45 @@ function RunDrawer({ run, open, onClose }: Props) {
             {skipped && <span className="ml-2 text-xs">({t('skipped')})</span>}
           </div>
           {/* per-step network activity from results.json (counts) — click opens the
-              Network tab below (where the failed requests are listed) */}
+              Network tab. Disabled when no HAR was captured (nothing to open). */}
           {(step.networkRequests || step.failedRequests) && (
-            <button
-              type="button"
-              onClick={() => jumpToActivity('network')}
-              className="mt-0.5 flex items-center gap-1.5 text-xs text-disabled-text hover:text-main transition-colors"
+            <Tooltip
+              title={
+                network.length
+                  ? undefined
+                  : t('No network capture available for this run.')
+              }
             >
-              <Network size={11} className="shrink-0" />
-              <span>
-                {step.networkRequests ?? 0}{' '}
-                {(step.networkRequests ?? 0) === 1
-                  ? t('request')
-                  : t('requests')}
+              <span className="inline-flex mt-0.5">
+                <button
+                  type="button"
+                  disabled={!network.length}
+                  onClick={() => jumpToActivity('network')}
+                  className={`flex items-center gap-1.5 text-xs text-disabled-text transition-colors ${
+                    network.length
+                      ? 'hover:text-main'
+                      : 'cursor-not-allowed opacity-60'
+                  }`}
+                >
+                  <Network size={11} className="shrink-0" />
+                  <span>
+                    {step.networkRequests ?? 0}{' '}
+                    {(step.networkRequests ?? 0) === 1
+                      ? t('request')
+                      : t('requests')}
+                  </span>
+                  {/* a failed request only means the STEP failed when the step itself did;
+                      on a passed step it's a network warning (amber), not a failure (red) */}
+                  {!!step.failedRequests && (
+                    <span
+                      className={stepFailed ? 'text-red' : 'text-orange-dark'}
+                    >
+                      · {step.failedRequests} {t('failed')}
+                    </span>
+                  )}
+                </button>
               </span>
-              {/* a failed request only means the STEP failed when the step itself did;
-                  on a passed step it's a network warning (amber), not a failure (red) */}
-              {!!step.failedRequests && (
-                <span className={stepFailed ? 'text-red' : 'text-orange-dark'}>
-                  · {step.failedRequests} {t('failed')}
-                </span>
-              )}
-            </button>
+            </Tooltip>
           )}
           {stepFailed && (
             <div className="mt-1.5 flex flex-col gap-1.5 items-start">
@@ -613,20 +643,6 @@ function RunDrawer({ run, open, onClose }: Props) {
             </span>
           </Tooltip>
         )}
-        {run.dispatchMode && (
-          <Tooltip title={t('How this run was launched')}>
-            <span className="flex items-center gap-1.5 cursor-default uppercase">
-              <Cpu size={14} /> {run.dispatchMode}
-            </span>
-          </Tooltip>
-        )}
-        {run.batchId && (
-          <Tooltip title={t('Part of a batch of runs from one trigger')}>
-            <span className="flex items-center gap-1.5 cursor-default">
-              <Boxes size={14} /> {t('Batch')}
-            </span>
-          </Tooltip>
-        )}
       </div>
     </>
   );
@@ -699,14 +715,14 @@ function RunDrawer({ run, open, onClose }: Props) {
     >
       {banner}
 
-      {/* the runner's human result summary (Step N: PASS/FAIL … Overall: …) */}
-      {run.summary && (
+      {/* the runner's human result — show only the "Summary: …" tail when present */}
+      {resultSummary(run.summary) && (
         <div className="px-5 py-3 border-b bg-white">
           <div className="text-xs font-medium uppercase tracking-wide text-disabled-text mb-1">
             {t('Result')}
           </div>
           <div className="text-sm text-gray-darkest whitespace-pre-line">
-            {run.summary}
+            {resultSummary(run.summary)}
           </div>
         </div>
       )}
