@@ -203,6 +203,7 @@ def _set_users_role(tenant_id: int, user_ids: list[int], new_role_id: int | None
             constraints.append("users.user_id IN %(user_ids)s")
         if len(constraints) == 1:
             return
+        constraints.append("users.tenant_id = %(tenant_id)s")
         cur.execute(
             cur.mogrify(
                 f"""\
@@ -225,6 +226,7 @@ def _set_users_admin_privilege(tenant_id: int, user_ids: list[int],
         constraints.append("users.user_id IN %(user_ids)s")
     if len(constraints) == 1:
         return
+    constraints.append("users.tenant_id = %(tenant_id)s")
     with pg_client.PostgresClient() as cur:
         params = {
             "tenant_id": tenant_id,
@@ -293,7 +295,8 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
                 UPDATE public.roles
                 SET deleted_at = NULL
                 WHERE role_id = %(role_id)s
-                  AND NOT protected RETURNING roles.*, 
+                  AND tenant_id = %(tenant_id)s
+                  AND NOT protected RETURNING roles.*,
                         COALESCE(
                         (SELECT json_agg(users)
                          FROM public.users
@@ -308,7 +311,7 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
                         '[]'
                     ) AS project_keys
                 """,
-                {"role_id": resource.id},
+                {"role_id": resource.id, "tenant_id": tenant_id},
             )
         )
         item = cur.fetchone()
