@@ -20,7 +20,7 @@ if len(ACCESS_SECRET_KEY) == 0:
 
 
 def create_tokens(tenant_id):
-    if len(ACCESS_SECRET_KEY) == 0:
+    if len(ACCESS_SECRET_KEY) == 0 or len(REFRESH_SECRET_KEY) == 0:
         logger.warning("!!! SCIM not configured")
         raise HTTPException(status_code=401, detail="SCIM not configured")
 

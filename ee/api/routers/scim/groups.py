@@ -299,14 +299,17 @@ def restore_resource(tenant_id: int, resource: Resource) -> dict | None:
                         COALESCE(
                         (SELECT json_agg(users)
                          FROM public.users
-                         WHERE users.role_id = roles.role_id),
+                         WHERE users.tenant_id = %(tenant_id)s
+                            AND (users.role_id = roles.role_id
+                                    OR users.admin_privilege_role_id = roles.role_id)),
                         '[]'
                     ) AS users,
                     COALESCE(
                         (SELECT json_agg(projects.project_key)
                          FROM public.projects
                          LEFT JOIN public.roles_projects USING (project_id)
-                         WHERE roles_projects.role_id = roles.role_id),
+                         WHERE tenant_id = %(tenant_id)s
+                            AND roles_projects.role_id = roles.role_id),
                         '[]'
                     ) AS project_keys
                 """,
