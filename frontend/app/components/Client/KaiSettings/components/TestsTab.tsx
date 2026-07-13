@@ -47,7 +47,7 @@ import {
 } from './shared/adapters';
 import { ListTestsParams, RunData, TestCase, TestStatus } from './shared/types';
 import { kaiUi } from './shared/uiStore';
-import { useUrlState } from './shared/useUrlState';
+import { useQueryParam } from './shared/useUrlState';
 import {
   PERIOD_OPTIONS,
   RowTags,
@@ -102,9 +102,9 @@ function TestsTab() {
     order?: 'ascend' | 'descend';
   }>({});
   const [page, setPage] = useState(1);
-  // opened test persists in the URL (?test=) — seed from it on first render
-  const { get, set } = useUrlState();
-  const [openKey, setOpenKey] = useState<string | null>(() => get('test') ?? null);
+  // the opened test drawer IS the ?test= param — open iff present. No separate state, so
+  // browser back/forward just open/close it (no state↔URL sync loop).
+  const [openKey, setOpenKey] = useQueryParam('test');
   const [focusSchedule, setFocusSchedule] = useState(false);
   const [draftTest, setDraftTest] = useState<TestCase | null>(null);
   const creating = draftTest != null;
@@ -115,11 +115,6 @@ function TestsTab() {
     const id = window.setTimeout(() => setSearch(query.trim()), 300);
     return () => window.clearTimeout(id);
   }, [query]);
-
-  // keep ?test= in sync with the open drawer (removed when nothing is open)
-  useEffect(() => {
-    set('test', openKey ?? undefined);
-  }, [openKey, set]);
 
   // shared filter set (no pagination/sort) — reused for the list and the count aggregates
   const filters = useMemo(
@@ -220,12 +215,12 @@ function TestsTab() {
       onError: () => toast.error(t('Failed to delete test')),
     });
     setSelectedKeys((prev) => prev.filter((k) => k !== key));
-    setOpenKey((k) => (k === key ? null : k));
+    if (openKey === key) setOpenKey(null);
   };
 
   const openRow = (tc: TestCase) => {
     setFocusSchedule(false);
-    setOpenKey(tc.key);
+    setOpenKey(tc.key, true); // push so Back closes the drawer
     // opening a test stamps `seenAt` server-side (GET /tests/{id}), which clears the
     // "new" dot; refresh the list once so it reflects. Only needed while unseen.
     if (tc.isNew)
@@ -234,7 +229,7 @@ function TestsTab() {
         .catch(() => {});
   };
   const openSchedule = (tc: TestCase) => {
-    setOpenKey(tc.key);
+    setOpenKey(tc.key, true);
     setFocusSchedule(true);
   };
   const unschedule = (tc: TestCase) =>
@@ -335,7 +330,7 @@ function TestsTab() {
   const deleteSelected = () => {
     const testIds = selectedKeys.map(String);
     setSelectedKeys([]);
-    setOpenKey((k) => (k && testIds.includes(k) ? null : k));
+    if (openKey && testIds.includes(openKey)) setOpenKey(null);
     bulkMut.mutate(
       { testIds, action: 'delete' },
       { onError: () => toast.error(t('Failed to delete test')) },
