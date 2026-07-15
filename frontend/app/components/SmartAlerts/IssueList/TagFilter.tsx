@@ -2,9 +2,9 @@ import { Button, Checkbox, Input, Popover, Segmented } from 'antd';
 import {
   ChevronDown,
   CircleUser,
-  Focus as FocusIcon,
   Globe,
   Search,
+  Split,
   Tag as TagIcon,
 } from 'lucide-react';
 import React from 'react';
@@ -40,13 +40,13 @@ function CheckRow({
 }
 
 /* Tags + "found in" origins in one stable-width popover. Origins (full traffic
-   + focuses) are an issue attribute, filtered like tags. The aggregate "My
-   segments" toggles all focuses I own as a set. */
+   + segments) are an issue attribute, filtered like tags. The aggregate "My
+   segments" toggles all segments I own as a set. */
 export default function TagFilter({
   allTags,
   labels,
   match,
-  focuses,
+  segments,
   origins,
   onToggle,
   onToggleOrigin,
@@ -56,8 +56,8 @@ export default function TagFilter({
   allTags: string[];
   labels: string[];
   match: MatchMode;
-  /** focuses available as "found in" options; `mine` powers "My segments" */
-  focuses: { id: number; name: string; mine?: boolean }[];
+  /** segments available as "found in" options; `mine` powers "My segments" */
+  segments: { id: string; name: string; mine?: boolean }[];
   origins: IssueOrigin[];
   onToggle: (t: string) => void;
   onToggleOrigin: (o: IssueOrigin) => void;
@@ -71,7 +71,7 @@ export default function TagFilter({
   const ql = q.toLowerCase().trim();
   const shown = allTags.filter((tag) => tag.toLowerCase().includes(ql));
 
-  const myIds = focuses.filter((f) => f.mine).map((f) => f.id);
+  const myIds = segments.filter((s) => s.mine).map((s) => s.id);
   const mineOn = myIds.length > 0 && myIds.every((id) => origins.includes(id));
   const toggleMine = () =>
     (mineOn ? myIds : myIds.filter((id) => !origins.includes(id))).forEach(
@@ -94,7 +94,7 @@ export default function TagFilter({
       </div>
 
       {/* FOUND IN — origin is an issue attribute, filtered like a tag */}
-      {focuses.length > 0 && (
+      {segments.length > 0 && (
         <div className="flex flex-col -mx-1 px-1">
           <span className="text-xs color-gray-medium px-2 mb-0.5">
             {t('Found in')}
@@ -117,16 +117,14 @@ export default function TagFilter({
               {t('My segments')}
             </CheckRow>
           )}
-          {focuses.map((f) => (
+          {segments.map((s) => (
             <CheckRow
-              key={f.id}
-              on={origins.includes(f.id)}
-              onClick={() => onToggleOrigin(f.id)}
-              icon={
-                <FocusIcon size={14} style={{ color: 'var(--color-main)' }} />
-              }
+              key={s.id}
+              on={origins.includes(s.id)}
+              onClick={() => onToggleOrigin(s.id)}
+              icon={<Split size={14} style={{ color: 'var(--color-main)' }} />}
             >
-              {f.name}
+              {s.name}
             </CheckRow>
           ))}
         </div>

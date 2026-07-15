@@ -78,22 +78,46 @@ grep -rn "NOT-YET-BACKED" app/components/SmartAlerts app/mstore/issuesStore.ts
 - "Critical to me" Display checkbox → `relevantToMe` list param (server ignores
   it for now, so the filter is inert until backed).
 
-### Focus (traffic segments the agent concentrates on)
-- `FocusButton` (header) + `FocusDrawer` (create/edit, uses the real Sessions
-  `<SessionFilters/>` omni-search) + TagFilter "Found in" origins (Full traffic /
-  My segments / per-focus) + a per-row origin chip (shown only once focuses exist).
-- Store: `focuses: Focus[]`, `origins: IssueOrigin[]`, `activeFocusCount`,
-  `focusById`, `toggleFocus`, `saveFocus`, `deleteFocus`, `toggleOrigin`,
-  `clearOrigins`. Hydrated by `getFocuses` (stub → `[]`), so the whole subsystem
-  is dormant/empty until the backend ships.
-- Endpoints needed: `GET/POST …/focuses`, `PUT/DELETE …/focuses/{id}`; the list
-  request should honour `origins` (full-traffic + focus ids) and issues should
-  carry `focusId` (surfacing focus). `saveFocus` sends the serialized Sessions
-  filter `seeds`; `trafficPct`/`sessionsPerDay` are `0` until the backend
-  estimates them.
+### Traffic segments (agent capture over saved searches)
+The old per-Issues "Focus" concept is gone: a segment is now a **Data
+Management saved search** (`/sessions/search/saved`) with an agent-capture
+layer on top, shared by the Issues pill and the DM Segments list. The saved
+search itself is real; only the capture layer is stubbed.
+
+- UI: `segments/SegmentsIndicator` (the Issues title pill — capture-mode switch
+  + manage/picker popover), `segments/SegmentDrawer` (shared create/edit
+  slide-out, real `<SessionFilters/>` omni-search, used from both Issues and
+  DM), `segments/SegmentConditions` (query hover card), plus the DM Segments
+  list's "Issues Agent" capture column + creator meta line, TagFilter "Found in"
+  origins, and the per-row origin chip (shown once segments exist).
+- Store (`issuesStore`): `segments: SavedSegment[]` (real saved searches merged
+  with the capture layer), `captureMode`, `origins`, `segmentById`,
+  `visibleSegments`, `capturingSegments`, `activeSegmentCount`, `setCaptureMode`,
+  `enableCapture`, `toggleSegment`, `saveSegment`, `deleteSegment`. The list is
+  real (`fetchSegments` in DataManagement/Segments/api); the capture layer is
+  hydrated by `getSegmentCapture` (stub → empty), so capture is dormant until
+  the backend ships.
+
+Endpoints needed (under `/v2/smart-issues/{projectId}`, keyed by saved-search id):
+- `GET …/segment-capture` → `{ mode: 'full'|'segments', active: string[]
+  (segment ids the agent captures), instructions: Record<segmentId, string> }`.
+- `PUT …/segment-capture` `{ mode }` — set the project capture mode.
+- `PUT …/segment-capture/{segmentId}` `{ active?, instructions? }` — per-segment
+  capture flag + agent instructions.
+- The issue list request should honour `origins` (full-traffic + segment ids),
+  and issues should carry `segmentId` (which segment surfaced them).
+
+Also required on the segment (saved-search) side:
+- **Traffic estimate** — `trafficPct` / `sessionsPerDay` per segment. Both are
+  `0` today; the DM "Traffic" column and the drawer's estimate banner stay
+  hidden/neutral until the backend computes them.
+- **Creator name** — `/sessions/search/saved` returns only `userId`. The store
+  resolves the name from the members list and falls back to "a teammate" when it
+  isn't loaded; returning a creator name/handle on the segment removes that
+  fallback.
 
 ### Notes
 - "Critical to me" count = `mine.length` (personal criticals only); segment
-  finds aren't included until `focusId`/focuses are backed.
-- Focuses created via the drawer are optimistic (in-memory) and vanish on reload
-  while `getFocuses` returns `[]`.
+  finds aren't included until `segmentId`/capture are backed.
+- Capture toggles, capture mode and instructions persist via stubs (no-ops), so
+  they're optimistic and revert on reload until the endpoints ship.

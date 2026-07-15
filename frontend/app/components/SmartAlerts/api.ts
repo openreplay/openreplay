@@ -1,4 +1,5 @@
 import { client } from 'App/mstore';
+import type FilterItem from 'App/mstore/types/filterItem';
 
 /* Smart Issues REST client — the Go `api` service under /v2/smart-issues
    (migrated from the Python `kai` service). See api.yaml for the full contract.
@@ -23,33 +24,47 @@ export interface RawLabelRatio {
   ratio: number;
 }
 
-/* ---- focus (portions of traffic the agent concentrates on) ----
-   NOT-YET-BACKED: the endpoints below are stubs (silent-empty) until the
-   backend ships them — see TODO.md. */
-export interface FocusFilterSeed {
+/* ---- traffic segments (a saved search the agent can capture/analyse) ----
+   A segment is a Data Management saved search (name + query + visibility) with
+   an agent-capture layer on top. The saved search itself is real (see
+   DataManagement/Segments/api.ts); the capture layer — which segments the
+   agent analyses, their instructions, and the project capture mode — is
+   NOT-YET-BACKED (the stubs below resolve empty / no-op until it ships). */
+export type CaptureMode = 'full' | 'segments';
+
+export interface SavedSegment {
+  id: string;
   name: string;
-  isEvent: boolean;
-  autoCaptured?: boolean;
-  operator?: string;
-  value: any[];
-}
-export interface Focus {
-  id: number;
-  name: string;
-  active: boolean;
+  /** team-visible (capture-eligible) vs private */
+  isPublic: boolean;
   /** owned by the current user (edit/delete) vs a teammate's (toggle only) */
   mine: boolean;
   createdBy: string;
-  seeds: FocusFilterSeed[];
+  filters: FilterItem[];
+  /** one-line human summary of the query */
   summary: string;
-  /** ~share of traffic this focus matches (0-100) */
-  trafficPct: number;
-  /** ~sessions analysed per day for this focus */
-  sessionsPerDay: number;
+  sessionsCount: number;
+  usersCount: number;
+  updatedAt: number;
+  /** the agent is capturing/analysing this segment (NOT-YET-BACKED) */
+  active: boolean;
   instructions?: string;
+  /** ~share of traffic this segment matches (NOT-YET-BACKED, 0 until estimated) */
+  trafficPct: number;
+  /** ~sessions analysed per day (NOT-YET-BACKED, 0 until estimated) */
+  sessionsPerDay: number;
 }
-/** origin an issue can come from: the full-traffic baseline, or a focus id */
-export type IssueOrigin = 'full' | number;
+/** origin an issue can come from: the full-traffic baseline, or a segment id */
+export type IssueOrigin = 'full' | string;
+
+/** the project's capture configuration (NOT-YET-BACKED) */
+export interface SegmentCaptureState {
+  mode: CaptureMode;
+  /** segment ids the agent captures */
+  active: string[];
+  /** per-segment extra instructions for the agent */
+  instructions: Record<string, string>;
+}
 
 /* Issue row from POST /smart-issues/{projectId} (and GET …/issue, which
    additionally carries `issueDescription`). */
@@ -66,8 +81,8 @@ export interface RawIssue {
   issueDescription?: string;
   issueLabels: RawLabelRatio[];
   journeyLabels: RawLabelRatio[];
-  /** which focus surfaced this issue (NOT-YET-BACKED) — absent = full traffic */
-  focusId?: number;
+  /** which segment surfaced this issue (NOT-YET-BACKED) — absent = full traffic */
+  segmentId?: string;
 }
 
 /* Session row from POST /smart-issues/{projectId}/search — replay metadata
@@ -296,8 +311,8 @@ export const deleteIssue = (projectId: string, issueName: string) =>
   client.delete(base(projectId), { issue: issueName });
 
 /* ===========================================================================
-   NOT-YET-BACKED endpoints — focus (traffic segments) + per-user "critical for
-   me". The routes don't exist server-side yet, so reads swallow errors and
+   NOT-YET-BACKED endpoints — the segment-capture layer + per-user "critical
+   for me". The routes don't exist server-side yet, so reads swallow errors and
    resolve empty, and writes are best-effort no-ops. This keeps the UI wired to
    the real client so shipping the backend needs no frontend change. See TODO.md.
    =========================================================================== */
@@ -319,29 +334,33 @@ const silentVoid = async (p: Promise<Response>): Promise<void> => {
   }
 };
 
-/** GET …/focuses — the project's traffic focuses. */
-export const getFocuses = (projectId: string): Promise<Focus[]> =>
-  silent<Focus[]>(client.get(`${base(projectId)}/focuses`), []);
-
-export const saveFocus = (
+/** GET …/segment-capture — the project capture mode + which segments the agent
+    analyses (and their instructions). */
+export const getSegmentCapture = (
   projectId: string,
-  focus: Partial<Focus> & { id?: number },
-): Promise<void> =>
-  silentVoid(
-    focus.id != null
-      ? client.put(`${base(projectId)}/focuses/${focus.id}`, focus)
-      : client.post(`${base(projectId)}/focuses`, focus),
+): Promise<SegmentCaptureState> =>
+  silent<SegmentCaptureState>(
+    client.get(`${base(projectId)}/segment-capture`),
+    { mode: 'full', active: [], instructions: {} },
   );
 
-export const setFocusActive = (
+/** PUT …/segment-capture — set the project capture mode. */
+export const setCaptureMode = (
   projectId: string,
-  id: number,
-  active: boolean,
+  mode: CaptureMode,
 ): Promise<void> =>
-  silentVoid(client.put(`${base(projectId)}/focuses/${id}`, { active }));
+  silentVoid(client.put(`${base(projectId)}/segment-capture`, { mode }));
 
-export const deleteFocus = (projectId: string, id: number): Promise<void> =>
-  silentVoid(client.delete(`${base(projectId)}/focuses/${id}`));
+/** PUT …/segment-capture/{segmentId} — set a segment's capture flag and/or
+    the agent instructions for it. */
+export const setSegmentCapture = (
+  projectId: string,
+  segmentId: string,
+  patch: { active?: boolean; instructions?: string },
+): Promise<void> =>
+  silentVoid(
+    client.put(`${base(projectId)}/segment-capture/${segmentId}`, patch),
+  );
 
 /** GET …/my-criticals — issue names the current user marked critical for them. */
 export const getMyCriticals = (projectId: string): Promise<string[]> =>
