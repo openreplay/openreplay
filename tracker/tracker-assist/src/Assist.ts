@@ -60,6 +60,17 @@ export interface Options {
    * @default 5000
    */
   compressionMinBatchSize: number;
+  /**
+   * Show only the first part of an agent's name in the call popup
+   * (e.g. "One Two" -> "One").
+   * @default false
+   */
+  agentShortNames: boolean;
+  /**
+   * Postpone assist start until a userID is set on the session.
+   * @default false
+   */
+  ignoreAnonymous: boolean;
 }
 
 enum CallingState {
@@ -84,6 +95,8 @@ export default class Assist {
   private canvasPeers: Map<string, RTCPeerConnection> = new Map();
   private canvasNodeCheckers: Map<number, any> = new Map();
   private assistDemandedRestart = false;
+  private userStopped = false;
+  private pendingStart: (() => void) | null = null;
   private callingState: CallingState = CallingState.False;
   private remoteControl: RemoteControl | null = null;
   private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -122,6 +135,8 @@ export default class Assist {
         socketHost: "",
         compressionEnabled: false,
         compressionMinBatchSize: 5000,
+        agentShortNames: false,
+        ignoreAnonymous: false,
       },
       options,
     );
@@ -151,22 +166,34 @@ export default class Assist {
       new MutationObserver(() => {
         this.emit("UPDATE_SESSION", { pageTitle: document.title });
       });
-    app.attachStartCallback(() => {
-      if (this.assistDemandedRestart) {
-        return;
-      }
+    const beginAssist = () => {
       this.onStart();
-      this.publishState({ type: "assist_state_check" })
+      this.publishState({ type: "assist_state_check" });
       observer &&
         observer.observe(titleNode, {
           childList: true,
         });
+    };
+    app.attachStartCallback(() => {
+      if (this.assistDemandedRestart || this.userStopped) {
+        return;
+      }
+      // postpone start until a userID is attached to the session
+      if (this.options.ignoreAnonymous && !this.app.getSessionInfo().userID) {
+        this.pendingStart = beginAssist;
+        return;
+      }
+      beginAssist();
     });
     app.attachStopCallback(() => {
       if (this.assistDemandedRestart) {
         return;
       }
       this.clean();
+      // tracker stop => kill the connection completely; a genuine tracker
+      // restart must reconnect with a fresh socket (new session/tab identity)
+      // via onStart, not reuse this one.
+      this.socket = null;
       observer && observer.disconnect();
     });
     app.attachCommitCallback((messages) => {
@@ -213,9 +240,46 @@ export default class Assist {
         }
       }
     });
-    app.session.attachUpdateCallback((sessInfo) =>
-      this.emit("UPDATE_SESSION", sessInfo),
-    );
+    app.session.attachUpdateCallback((sessInfo) => {
+      // ignoreAnonymous: fire the postponed start once a userID arrives
+      if (this.pendingStart && sessInfo.userID) {
+        const begin = this.pendingStart;
+        this.pendingStart = null;
+        begin();
+      }
+      this.emit("UPDATE_SESSION", sessInfo);
+    });
+  }
+
+  /**
+   * Stops assist: disconnects the socket and cleans up all connections.
+   * Assist won't restart automatically on the next tracker start until
+   * start() is called.
+   */
+  public stop = () => {
+    this.userStopped = true;
+    this.pendingStart = null;
+    this.clean();
+  }
+
+  /**
+   * (Re)starts assist after a manual stop(). No-op if the tracker itself
+   * isn't active yet (assist will start together with the tracker).
+   * Reuses the existing socket (and its handlers) when possible instead of
+   * re-running onStart, to avoid duplicating node/socket callbacks.
+   */
+  public start = () => {
+    this.userStopped = false;
+    // an explicit start supersedes any ignoreAnonymous postponement
+    this.pendingStart = null;
+    if (!this.app.active()) {
+      return;
+    }
+    if (this.socket) {
+      this.socket.connect();
+      return;
+    }
+    this.onStart();
   }
 
   private emit(ev: string, args?: any): void {
@@ -303,7 +367,7 @@ export default class Assist {
 
     const onGrand = (id: string) => {
       if (!this.callUI) {
-        this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+        this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate, this.options.agentShortNames);
       }
       if (this.remoteControl) {
         this.callUI?.showRemoteControl(this.remoteControl.releaseControl);
@@ -760,7 +824,7 @@ export default class Assist {
         this.calls.set(from, pc);
 
         if (!this.callUI) {
-          this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+          this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate, this.options.agentShortNames);
           this.callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
             this.emit("videofeed", { streamId: from, enabled: args.enabled });
           });
@@ -1052,7 +1116,7 @@ export default class Assist {
       if (msg.data.update === "call") {
         if (msg.data.isCallActive) {
           if (!this.callUI) {
-            this.callUI = new CallWindow(this.app.debug.error, this.options.callUITemplate);
+            this.callUI = new CallWindow(this.app.debug.error, this.options.callUITemplate, this.options.agentShortNames);
           }
           const initiateCallEnd = () => {
             this.emit("call_end");

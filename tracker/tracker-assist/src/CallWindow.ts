@@ -40,7 +40,7 @@ export default class CallWindow {
 
 	private readonly load: Promise<void>
 
-	constructor(private readonly logError: (...args: any[]) => void, private readonly callUITemplate?: string) {
+	constructor(private readonly logError: (...args: any[]) => void, private readonly callUITemplate?: string, private readonly agentShortNames = false) {
 		const iframe = (this.iframe = document.createElement('iframe'))
 		Object.assign(iframe.style, {
 			position: 'fixed',
@@ -241,7 +241,10 @@ export default class CallWindow {
 		this.load
 			.then(() => {
 				if (this.agentNameElem) {
-					const nameString = Array.from(callingAgents.values()).join(', ')
+					const names = Array.from(callingAgents.values()).map((name) =>
+						this.agentShortNames ? name.split(' ')[0] : name,
+					)
+					const nameString = names.join(', ')
 					const safeNames =
 						nameString.length > 20 ? nameString.substring(0, 20) + '...' : nameString
 					this.agentNameElem.innerText = safeNames
