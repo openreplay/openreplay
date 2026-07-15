@@ -42,8 +42,17 @@ class ORRoute(APIRoute):
                 if e.status_code // 100 == 4:
                     return JSONResponse(content={"errors": e.detail if isinstance(e.detail, list) else [e.detail]},
                                         status_code=e.status_code)
+                elif e.status_code // 100 == 5:
+                    logger.error(f"!!! status code:{e.status_code}")
+                    logger.exception(e)
+                    return JSONResponse(content={"errors": ["Internal server error."]},
+                                        status_code=e.status_code)
                 else:
                     raise e
+            except Exception as e:
+                logger.exception(e)
+                return JSONResponse(content={"errors": ["Internal server error."]},
+                                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             if isinstance(response, JSONResponse):
                 response: JSONResponse = response
