@@ -43,10 +43,10 @@ services:
       ALLOW_EMPTY_PASSWORD: "yes"
 
   minio:
-    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
+    image: docker.io/rustfs/rustfs:${MINIO_VERSION}
     container_name: minio
     volumes:
-      - miniodata:/bitnami/minio/data
+      - miniodata:/data
     networks:
       openreplay-net:
         aliases:
@@ -54,8 +54,12 @@ services:
     ports:
       - 9001:9001
     environment:
-      MINIO_ROOT_USER: {{.Values.minio.global.minio.accessKey}}
-      MINIO_ROOT_PASSWORD: {{.Values.minio.global.minio.secretKey}}
+      RUSTFS_ACCESS_KEY: {{.Values.minio.global.minio.accessKey}}
+      RUSTFS_SECRET_KEY: {{.Values.minio.global.minio.secretKey}}
+      RUSTFS_ADDRESS: "0.0.0.0:9000"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+      RUSTFS_VOLUMES: "/data"
 
   fs-permission:
     image: debian:stable-slim

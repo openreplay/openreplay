@@ -43,7 +43,7 @@ services:
       ALLOW_EMPTY_PASSWORD: "yes"
 
   minio:
-    image: rustfs/rustfs:${RUSTFS_VERSION}
+    image: docker.io/rustfs/rustfs:${MINIO_VERSION}
     container_name: minio
     volumes:
       - miniodata:/data
@@ -59,7 +59,7 @@ services:
       RUSTFS_ADDRESS: "0.0.0.0:9000"
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
-      RUSTFS_VOLUMES: /data
+      RUSTFS_VOLUMES: "/data"
 
   fs-permission:
     image: debian:stable-slim
@@ -78,7 +78,7 @@ services:
     restart: on-failure
 
   minio-migration:
-    image: minio/mc:latest
+    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
     container_name: minio-migration
     profiles:
       - "migration"
@@ -98,9 +98,10 @@ services:
       - /bin/bash
       - -c
       - |
-          # Wait for RustFS to be ready
-          until bash -c 'echo > /dev/tcp/minio/9000' 2>/dev/null; do
-              echo "Waiting for RustFS server to be ready..."
+          apt update && apt install netcat -y
+          # Wait for Minio to be ready
+          until nc -z -v -w30 minio 9000; do
+              echo "Waiting for Minio server to be ready..."
               sleep 1
           done
           bash /tmp/minio.sh init || exit 100
