@@ -1,7 +1,5 @@
 {{/* # vim: ft=helm: */}}
 # vim: ft=yaml
-version: '3'
-
 services:
 
   postgresql:
@@ -15,6 +13,11 @@ services:
           - postgresql.db.svc.cluster.local
     environment:
       POSTGRESQL_PASSWORD: "{{.Values.global.postgresql.postgresqlPassword}}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
@@ -29,6 +32,11 @@ services:
       CLICKHOUSE_USER: "default"
       CLICKHOUSE_PASSWORD: ""
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: ghcr.io/openreplay/valkey:${REDIS_VERSION}
@@ -41,6 +49,11 @@ services:
           - redis-master.db.svc.cluster.local
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   minio:
     image: docker.io/rustfs/rustfs:${MINIO_VERSION}
@@ -60,6 +73,11 @@ services:
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
       RUSTFS_VOLUMES: "/data"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -so /dev/null http://localhost:9000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   fs-permission:
     image: debian:stable-slim
@@ -74,21 +92,24 @@ services:
       - /bin/bash
       - -c
       - |
-        chown -R 1001:1001 /mnt/{efs,minio,postgres}
+        chown -R 1001:1001 /mnt/{efs,postgres}
+        chown -R 10001:10001 /mnt/minio
     restart: on-failure
 
   minio-migration:
-    image: ghcr.io/openreplay/minio:${MINIO_VERSION}
+    image: ghcr.io/openreplay/minio:2025
     container_name: minio-migration
     profiles:
       - "migration"
     depends_on:
-      - minio
-      - fs-permission
+      minio:
+        condition: service_healthy
+      fs-permission:
+        condition: service_completed_successfully
     networks:
       - openreplay-net
     volumes:
-      - ../helmcharts/openreplay/files/minio.sh:/tmp/minio.sh
+      - ./migration-files/minio.sh:/tmp/minio.sh
     environment:
       MINIO_HOST: http://minio.db.svc.cluster.local:9000
       MINIO_ACCESS_KEY: {{.Values.minio.global.minio.accessKey}}
@@ -98,9 +119,8 @@ services:
       - /bin/bash
       - -c
       - |
-          apt update && apt install netcat -y
           # Wait for Minio to be ready
-          until nc -z -v -w30 minio 9000; do
+          until bash -c 'echo > /dev/tcp/minio/9000' 2>/dev/null; do
               echo "Waiting for Minio server to be ready..."
               sleep 1
           done
@@ -112,12 +132,14 @@ services:
     profiles:
       - "migration"
     depends_on:
-      - postgresql
-      - minio-migration
+      postgresql:
+        condition: service_healthy
+      minio-migration:
+        condition: service_completed_successfully
     networks:
       - openreplay-net
     volumes:
-      - ../schema/db/init_dbs/postgresql/init_schema.sql:/tmp/init_schema.sql
+      - ./migration-files/init_pg_schema.sql:/tmp/init_schema.sql
     environment:
       PGHOST: postgresql
       PGPORT: 5432
@@ -141,12 +163,14 @@ services:
     profiles:
       - "migration"
     depends_on:
-      - clickhouse
-      - minio-migration
+      clickhouse:
+        condition: service_healthy
+      minio-migration:
+        condition: service_completed_successfully
     networks:
       - openreplay-net
     volumes:
-      - ../schema/db/init_dbs/clickhouse/create/init_schema.sql:/tmp/init_schema.sql
+      - ./migration-files/init_ch_schema.sql:/tmp/init_schema.sql
     environment:
       CH_HOST: "{{.Values.global.clickhouse.chHost}}"
       CH_PORT: "{{.Values.global.clickhouse.service.dataPort}}"
@@ -183,6 +207,15 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/{{print $container_name}}.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   {{ end -}}

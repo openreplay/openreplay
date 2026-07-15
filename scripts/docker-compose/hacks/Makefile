@@ -30,8 +30,15 @@ create-envs: create-yamls ## Create envs from deployment
 	@# Replace all http/https for COMMON_DOMAIN_NAME with COMMON_PROTOCOL
 	@find ../docker-envs/ -type f -name "*.env" -exec sed -i 's|http[s]\?://\$${COMMON_DOMAIN_NAME}|\$${COMMON_PROTOCOL}://\$${COMMON_DOMAIN_NAME}|g' {} \;
 
+.PHONY: copy-migration-files
+copy-migration-files: ## Copy migration files for bind mounts
+	@mkdir -p ../migration-files
+	@cp ../../helmcharts/openreplay/files/minio.sh ../migration-files/minio.sh
+	@cp ../../schema/db/init_dbs/postgresql/init_schema.sql ../migration-files/init_pg_schema.sql
+	@cp ../../schema/db/init_dbs/clickhouse/create/init_schema.sql ../migration-files/init_ch_schema.sql
+
 .PHONY: create-compose
-create-compose: create-envs ## Create docker-compose.yml
+create-compose: create-envs copy-migration-files ## Create docker-compose.yml
 	@echo creating docker-compose yaml
 	$(eval FILES := $(shell find yamls/ -type f -name "*-openreplay.yaml" -exec basename {} .yaml \; | tr '\n' ',' | sed 's/,$$//'))
 	@#echo "Files found: $(FILES)"
