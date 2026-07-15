@@ -26,6 +26,10 @@ DROP TABLE IF EXISTS public.errors;
 DROP TYPE IF EXISTS error_source;
 DROP TYPE IF EXISTS error_status;
 
+
+ALTER TABLE IF EXISTS public.scim_auth_codes
+    ADD COLUMN IF NOT EXISTS used_for_jwt bool DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next

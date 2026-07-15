@@ -83,16 +83,19 @@ async def post_token(r: Request):
         code = form.get("code")
         with pg_client.PostgresClient() as cur:
             cur.execute(
+                # @formatter:off
                 cur.mogrify(
                     """ \
                     SELECT *
                     FROM public.scim_auth_codes
                     WHERE auth_code = %(auth_code)s
                       AND tenant_id = %(tenant_id)s
-                      AND NOT used LIMIT 1;
+                      AND NOT used 
+                    LIMIT 1;
                     """,
                     {"auth_code": code, "tenant_id": tenant["tenant_id"]},
                 )
+                # @formatter:on
             )
             row = cur.fetchone()
             if row is None:
@@ -103,7 +106,8 @@ async def post_token(r: Request):
                 cur.mogrify(
                     """
                     UPDATE public.scim_auth_codes
-                    SET used= TRUE
+                    SET used= TRUE,
+                        used_for_jwt= TRUE
                     WHERE auth_code = %(auth_code)s
                       AND tenant_id = %(tenant_id)s
                       AND used IS FALSE
@@ -136,14 +140,17 @@ async def get_authorize(
 ):
     with pg_client.PostgresClient() as cur:
         cur.execute(
+            # @formatter:off
             cur.mogrify(
                 """ \
                 SELECT tenant_id
                 FROM public.tenants
-                WHERE tenant_key = %(tenant_key)s LIMIT 1
+                WHERE tenant_key = %(tenant_key)s 
+                LIMIT 1
                 """,
                 {"tenant_key": client_id},
             )
+            # @formatter:on
         )
         tenant_id = cur.fetchone()
         if tenant_id is None:
@@ -151,18 +158,19 @@ async def get_authorize(
         tenant_id = tenant_id["tenant_id"]
 
         cur.execute(
+            # @formatter:off
             cur.mogrify(
                 """ \
-                WITH u AS (
-                UPDATE public.scim_auth_codes
-                SET used= TRUE
-                WHERE tenant_id = %(tenant_id)s )
-                INSERT
-                INTO public.scim_auth_codes (tenant_id)
-                VALUES (%(tenant_id)s) RETURNING auth_code
+                WITH u AS (UPDATE public.scim_auth_codes
+                           SET used= TRUE
+                           WHERE tenant_id = %(tenant_id)s )
+                INSERT INTO public.scim_auth_codes (tenant_id)
+                VALUES (%(tenant_id)s) 
+                RETURNING auth_code
                 """,
                 {"tenant_id": tenant_id},
             )
+            # @formatter:on
         )
         code = cur.fetchone()
     helpers.set_scim_available()

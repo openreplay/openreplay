@@ -115,7 +115,8 @@ CREATE TABLE public.scim_auth_codes
     tenant_id    integer                     NOT NULL REFERENCES public.tenants (tenant_id) ON DELETE CASCADE,
     auth_code    text                        NOT NULL UNIQUE DEFAULT generate_api_key(20),
     created_at   timestamp without time zone NOT NULL        DEFAULT (now() at time zone 'utc'),
-    used         bool                        NOT NULL        DEFAULT FALSE
+    used         bool                        NOT NULL        DEFAULT FALSE,
+    used_for_jwt bool                                        DEFAULT NULL
 );
 
 
@@ -1310,7 +1311,7 @@ CREATE UNIQUE INDEX sessions_videos_session_id_project_id_key ON public.sessions
 
 CREATE TABLE public.actions
 (
-    action_id   uuid                        PRIMARY KEY DEFAULT gen_random_uuid(),
+    action_id   uuid PRIMARY KEY                     DEFAULT gen_random_uuid(),
     project_id  integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
     user_id     integer                     NULL REFERENCES public.users (user_id) ON DELETE SET NULL,
     name        varchar(255)                NOT NULL,
