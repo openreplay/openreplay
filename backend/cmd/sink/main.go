@@ -93,8 +93,10 @@ func main() {
 		cfg.MessageSizeLimit,
 		func(t types.RebalanceType, partitions []uint64) {
 			stats := mobWriter.Sync()
-			log.Info(ctx, "manual sync finished, fds=%d/%d, synced=%d, size=%.2fMB, dur=%dms",
-				stats.OpenFiles, stats.FilesLimit, stats.FilesSynced,
+			sinkMetrics.RecordOpenFiles(float64(stats.OpenFiles), float64(stats.FilesLimit))
+			sinkMetrics.IncreaseFileEvictions(float64(stats.Evicted))
+			log.Info(ctx, "manual sync finished, fds=%d/%d, synced=%d, evicted=%d, size=%.2fMB, dur=%dms",
+				stats.OpenFiles, stats.FilesLimit, stats.FilesSynced, stats.Evicted,
 				float64(stats.BytesSynced)/(1024*1024), stats.Duration.Milliseconds())
 		},
 		types.NoReadBackGap,
@@ -126,8 +128,10 @@ func main() {
 			os.Exit(0)
 		case <-tickInfo:
 			stats := mobWriter.Sync()
-			log.Info(ctx, "sync: fds=%d/%d, synced=%d, size=%.2fMB, dur=%dms",
-				stats.OpenFiles, stats.FilesLimit, stats.FilesSynced,
+			sinkMetrics.RecordOpenFiles(float64(stats.OpenFiles), float64(stats.FilesLimit))
+			sinkMetrics.IncreaseFileEvictions(float64(stats.Evicted))
+			log.Info(ctx, "sync: fds=%d/%d, synced=%d, evicted=%d, size=%.2fMB, dur=%dms",
+				stats.OpenFiles, stats.FilesLimit, stats.FilesSynced, stats.Evicted,
 				float64(stats.BytesSynced)/(1024*1024), stats.Duration.Milliseconds())
 			mobWriter.EvictStale(cfg.SessionTTL)
 			if err := consumer.Commit(); err != nil {

@@ -20,6 +20,7 @@ type SyncStats struct {
 	BytesSynced int64
 	OpenFiles   int
 	FilesLimit  int
+	Evicted     int
 }
 
 type fileEntry struct {
@@ -70,6 +71,7 @@ type FilePool struct {
 	lastUse     map[string]int64
 	maxFileSize int64
 	syncWorkers int
+	evicted     int
 }
 
 func NewFilePool(log logger.Logger, limit, bufSize int, maxFileSize int64, syncWorkers int) *FilePool {
@@ -153,6 +155,7 @@ func (p *FilePool) evictOne() {
 	}
 	delete(p.entries, evictPath)
 	delete(p.lastUse, evictPath)
+	p.evicted++
 }
 
 func (p *FilePool) Sync() SyncStats {
@@ -166,6 +169,8 @@ func (p *FilePool) Sync() SyncStats {
 		}
 	}
 	openFiles := len(p.entries)
+	evicted := p.evicted
+	p.evicted = 0
 	p.mu.Unlock()
 
 	if len(dirty) == 0 {
@@ -173,6 +178,7 @@ func (p *FilePool) Sync() SyncStats {
 			Duration:   time.Since(start),
 			OpenFiles:  openFiles,
 			FilesLimit: p.limit,
+			Evicted:    evicted,
 		}
 	}
 
@@ -213,6 +219,7 @@ func (p *FilePool) Sync() SyncStats {
 		BytesSynced: bytesSynced,
 		OpenFiles:   openFiles,
 		FilesLimit:  p.limit,
+		Evicted:     evicted,
 	}
 }
 

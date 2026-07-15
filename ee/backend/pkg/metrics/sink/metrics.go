@@ -20,6 +20,8 @@ type Sink interface {
 	IncreaseTotalAssets()
 	RecordAssetSize(size float64)
 	RecordProcessAssetDuration(durMillis float64)
+	RecordOpenFiles(count, limit float64)
+	IncreaseFileEvictions(count float64)
 	List() []prometheus.Collector
 }
 
@@ -36,6 +38,9 @@ type sinkImpl struct {
 	totalAssets          prometheus.Counter
 	assetSize            prometheus.Histogram
 	processAssetDuration prometheus.Histogram
+	openFiles            prometheus.Gauge
+	openFilesLimit       prometheus.Gauge
+	fileEvictions        prometheus.Counter
 }
 
 func New(serviceName string) Sink {
@@ -52,6 +57,9 @@ func New(serviceName string) Sink {
 		totalAssets:          newTotalAssets(serviceName),
 		assetSize:            newAssetSize(serviceName),
 		processAssetDuration: newProcessAssetDuration(serviceName),
+		openFiles:            newOpenFiles(serviceName),
+		openFilesLimit:       newOpenFilesLimit(serviceName),
+		fileEvictions:        newFileEvictions(serviceName),
 	}
 }
 
@@ -69,6 +77,9 @@ func (s *sinkImpl) List() []prometheus.Collector {
 		s.totalAssets,
 		s.assetSize,
 		s.processAssetDuration,
+		s.openFiles,
+		s.openFilesLimit,
+		s.fileEvictions,
 	}
 }
 
@@ -256,4 +267,46 @@ func newProcessAssetDuration(serviceName string) prometheus.Histogram {
 
 func (s *sinkImpl) RecordProcessAssetDuration(durMillis float64) {
 	s.processAssetDuration.Observe(durMillis / 1000.0)
+}
+
+func newOpenFiles(serviceName string) prometheus.Gauge {
+	return prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: serviceName,
+			Name:      "open_files",
+			Help:      "A gauge displaying the current number of open session files in the file pool.",
+		},
+	)
+}
+
+func newOpenFilesLimit(serviceName string) prometheus.Gauge {
+	return prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: serviceName,
+			Name:      "open_files_limit",
+			Help:      "A gauge displaying the maximum number of open session files in the file pool (FS_ULIMIT).",
+		},
+	)
+}
+
+func (s *sinkImpl) RecordOpenFiles(count, limit float64) {
+	s.openFiles.Set(count)
+	s.openFilesLimit.Set(limit)
+}
+
+func newFileEvictions(serviceName string) prometheus.Counter {
+	return prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "file_evictions_total",
+			Help:      "A counter displaying the total number of session files evicted from the file pool due to the open files limit.",
+		},
+	)
+}
+
+func (s *sinkImpl) IncreaseFileEvictions(count float64) {
+	if count == 0 {
+		return
+	}
+	s.fileEvictions.Add(count)
 }

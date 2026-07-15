@@ -18,6 +18,8 @@ type Sink interface {
 	IncreaseTotalAssets()
 	RecordAssetSize(size float64)
 	RecordProcessAssetDuration(durMillis float64)
+	RecordOpenFiles(count, limit float64)
+	IncreaseFileEvictions(count float64)
 	List() []prometheus.Collector
 }
 
@@ -39,3 +41,5 @@ func (s *sinkImpl) IncreaseSkippedAssets()                                  {}
 func (s *sinkImpl) IncreaseTotalAssets()                                    {}
 func (s *sinkImpl) RecordAssetSize(size float64)                            {}
 func (s *sinkImpl) RecordProcessAssetDuration(durMillis float64)            {}
+func (s *sinkImpl) RecordOpenFiles(count, limit float64)                    {}
+func (s *sinkImpl) IncreaseFileEvictions(count float64)                     {}
