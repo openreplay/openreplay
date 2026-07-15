@@ -22,13 +22,13 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
-  Focus as FocusIcon,
   Globe,
   Info,
   MoreVertical,
   Pencil,
   RotateCcw,
   SlidersHorizontal,
+  Split,
   Trash2,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -42,7 +42,8 @@ import { smartIssueDetails, withSiteId } from 'App/saasComponents';
 import FullPagination from 'Shared/FullPagination';
 import SelectDateRange from 'Shared/SelectDateRange';
 
-import type { IssueOrigin, SortDir } from '../api';
+import type { SortDir } from '../api';
+import SegmentsIndicator from '../segments/SegmentsIndicator';
 import {
   CAT_COLOR,
   CAT_ICON,
@@ -61,7 +62,6 @@ import {
 } from '../shared';
 import type { SortMode } from '../shared/model';
 import TagFilter from './TagFilter';
-import FocusButton from './focus/FocusButton';
 
 /* antd header-sort order -> our SortMode, per sortable column. */
 const SORT_FIELD: Record<string, SortMode> = {
@@ -151,8 +151,8 @@ function IssuesList() {
       title: t('Issue'),
       dataIndex: 'head',
       render: (head: string, r: Issue) => {
-        // origin chip only makes sense once focuses exist (NOT-YET-BACKED)
-        const focus = issuesStore.focusById(r.focusId);
+        // origin chip only makes sense once segments exist (NOT-YET-BACKED)
+        const segment = issuesStore.segmentById(r.segmentId);
         return (
           <div className="flex items-center gap-2 min-w-0">
             <CriticalToggle
@@ -161,23 +161,23 @@ function IssuesList() {
               onRemoveMine={() => issuesStore.removeMine(r.id)}
               stopPropagation
             />
-            {issuesStore.focuses.length > 0 && (
+            {issuesStore.segments.length > 0 && (
               <Tooltip
                 title={
-                  focus
-                    ? t('Found in focus: {{name}}', { name: focus.name })
+                  segment
+                    ? t('Found in segment: {{name}}', { name: segment.name })
                     : t('Found in full traffic')
                 }
               >
                 <span
                   className="inline-flex items-center shrink-0"
                   style={{
-                    color: focus
+                    color: segment
                       ? 'var(--color-main)'
                       : 'var(--color-gray-medium)',
                   }}
                 >
-                  {focus ? <FocusIcon size={13} /> : <Globe size={13} />}
+                  {segment ? <Split size={13} /> : <Globe size={13} />}
                 </span>
               </Tooltip>
             )}
@@ -450,10 +450,10 @@ function IssuesList() {
               allTags={issuesStore.allTags}
               labels={issuesStore.labels}
               match={issuesStore.match}
-              focuses={issuesStore.focuses.map((f) => ({
-                id: f.id,
-                name: f.name,
-                mine: f.mine,
+              segments={issuesStore.visibleSegments.map((s) => ({
+                id: s.id,
+                name: s.name,
+                mine: s.mine,
               }))}
               origins={issuesStore.origins}
               onToggle={issuesStore.toggleLabel}
@@ -465,7 +465,7 @@ function IssuesList() {
               }}
             />
 
-            <FocusButton />
+            <SegmentsIndicator />
 
             <Popover
               open={dispOpen}
