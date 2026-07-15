@@ -134,7 +134,7 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 	}
 
 	var wg sync.WaitGroup
-	var failedUpload [2]bool
+	var mobsFailed bool
 	var uploadErrors [4]string
 
 	wg.Add(1)
@@ -159,7 +159,7 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 		go func() {
 			defer wg.Done()
 			if err := uploadFn(sid+DOM+"s", filePath+"s", "doms"); err != nil {
-				failedUpload[1] = true
+				mobsFailed = true
 				if !IsNotExist(err) {
 					uploadErrors[1] = err.Error()
 				}
@@ -176,7 +176,7 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 		go func() {
 			defer wg.Done()
 			if err := uploadFn(sid+DOM+"s", filePath, "doms"); err != nil {
-				failedUpload[0] = true
+				mobsFailed = true
 				if !IsNotExist(err) {
 					uploadErrors[0] = err.Error()
 				}
@@ -185,8 +185,19 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 	}
 
 	wg.Wait()
-	if failedUpload[0] && failedUpload[1] {
-		u.log.Error(ctx, "failed to upload session %d, errors: %s", task.sessionID, strings.Join(uploadErrors[:], ","))
+	if mobsFailed {
+		errs := make([]string, 0, len(uploadErrors))
+		for _, e := range uploadErrors {
+			if e != "" {
+				errs = append(errs, e)
+			}
+		}
+		if len(errs) > 0 {
+			u.log.Error(ctx, "failed to upload session %d, errors: %s", task.sessionID, strings.Join(errs, ","))
+		} else {
+			u.log.Debug(ctx, "failed to upload session %d", task.sessionID)
+		}
+
 	}
 }
 
