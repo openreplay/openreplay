@@ -1,35 +1,44 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import {
-  type Focus,
+  type Segment,
+  deleteSegment as apiDeleteSegment,
+  createSegment,
+  fetchSegments as fetchDmSegments,
+  updateSegment,
+} from 'App/components/DataManagement/Segments/api';
+import {
+  type CaptureMode,
   type IssueOrigin,
   type LabelsMatch,
   type Reasons,
+  type SavedSegment,
+  type SegmentCaptureState,
   type SortDir,
   type Visibility,
   addMyCritical,
-  deleteFocus as apiDeleteFocus,
-  saveFocus as apiSaveFocus,
+  setCaptureMode as apiSetCaptureMode,
   deleteIssue,
-  getFocuses,
   getIssue,
   getIssueSessions,
   getIssues,
   getLabels,
   getMyCriticals,
   getReasons,
+  getSegmentCapture,
   hideIssue,
   removeMyCritical,
   renameIssue,
   restoreIssue,
-  setFocusActive,
   setIssueCritical,
+  setSegmentCapture,
   unhideIssue,
 } from 'App/components/SmartAlerts/api';
 import {
   makeIssue,
   makeIssueSessionCard,
 } from 'App/components/SmartAlerts/factories';
+import { summarize } from 'App/components/SmartAlerts/segments/segmentUtils';
 import {
   CAT_ORDER,
   type CategoryName,
@@ -38,6 +47,8 @@ import {
   type MatchMode,
   type SortMode,
 } from 'App/components/SmartAlerts/shared/model';
+import { userStore } from 'App/mstore';
+import type FilterItem from 'App/mstore/types/filterItem';
 
 /* Store behind the AI Issues surface. Issues + example sessions come from the
    /v2/smart-issues Go endpoints (see SmartAlerts/api.ts + api.yaml), mapped
@@ -87,6 +98,37 @@ const writeStr = (key: string, value: string) => {
 const toLabelsMatch = (m: MatchMode): LabelsMatch =>
   m === 'any' ? 'or' : 'and';
 
+/** Merge a Data Management saved search with the (NOT-YET-BACKED) capture layer
+    into the view model the segment UI reads. `mine`/`createdBy` are resolved
+    from the members list — until the segment API returns a creator name, a
+    teammate whose name isn't loaded falls back to a generic label. */
+function toSavedSegment(
+  s: Segment,
+  capture: SegmentCaptureState,
+): SavedSegment {
+  const currentUserId = userStore.account.id;
+  const mine = s.userId != null && String(s.userId) === String(currentUserId);
+  const member = userStore.list.find(
+    (u) => String(u.userId) === String(s.userId),
+  );
+  return {
+    id: s.id,
+    name: s.name,
+    isPublic: s.isPublic,
+    mine,
+    createdBy: mine ? 'You' : member?.name || 'a teammate',
+    filters: s.filters,
+    summary: summarize(s.filters),
+    sessionsCount: s.sessionsCount,
+    usersCount: s.usersCount,
+    updatedAt: s.updatedAt,
+    active: capture.active.includes(s.id),
+    instructions: capture.instructions[s.id],
+    trafficPct: 0 /* NOT-YET-BACKED: backend estimates the traffic share */,
+    sessionsPerDay: 0 /* NOT-YET-BACKED */,
+  };
+}
+
 export default class IssuesStore {
   projectId = '';
   issues: Issue[] = [];
@@ -113,14 +155,17 @@ export default class IssuesStore {
   range: [number, number] | null = null; // null => server default (last 7 days)
   minImpact = 0;
 
-  /* ---- per-user critical + focus/origins (NOT-YET-BACKED, see TODO.md) ----
+  /* ---- per-user critical + traffic segments (NOT-YET-BACKED, see TODO.md) ----
      `mine` = issue names the user marked "critical for me" (personal layer,
-     never the project flag). `focuses` = traffic segments the agent concentrates
-     on; `origins` = the focus/full-traffic filter. All hydrated from stub API
-     calls that resolve empty until the backend ships. */
+     never the project flag). `segments` = the project's saved searches with the
+     agent-capture layer merged in; `captureMode` = whether the agent samples
+     full traffic or only active segments; `origins` = the segment/full-traffic
+     "found in" filter. The capture layer hydrates from stub calls that resolve
+     empty until the backend ships. */
   mine: string[] = [];
   relevantToMe = false;
-  focuses: Focus[] = [];
+  segments: SavedSegment[] = [];
+  captureMode: CaptureMode = 'full';
   origins: IssueOrigin[] = [];
 
   // ---- vocabulary / lookups ----
@@ -165,7 +210,7 @@ export default class IssuesStore {
     // project, not on every list load
     void this.fetchLabels();
     void this.fetchReasons();
-    void this.fetchFocuses();
+    void this.fetchSegments();
     void this.fetchMyCriticals();
   };
 
@@ -187,7 +232,8 @@ export default class IssuesStore {
     this.minImpact = 0;
     this.mine = [];
     this.relevantToMe = false;
-    this.focuses = [];
+    this.segments = [];
+    this.captureMode = 'full';
     this.origins = [];
     this.labelsAll = { issueLabels: [], journeyLabels: [] };
     this.reasons = { hide: [], criticality: [] };
@@ -268,13 +314,34 @@ export default class IssuesStore {
     }
   };
 
-  // NOT-YET-BACKED: both resolve empty until the endpoints ship
-  fetchFocuses = async () => {
+  /* The segment list is real (Data Management saved searches); the capture
+     layer is NOT-YET-BACKED and resolves empty until the endpoints ship. */
+  fetchSegments = async () => {
     if (!this.projectId) return;
-    const focuses = await getFocuses(this.projectId);
-    runInAction(() => {
-      this.focuses = focuses;
-    });
+    try {
+      const [{ segments }, capture] = await Promise.all([
+        fetchDmSegments({
+          limit: 200,
+          page: 1,
+          sortBy: 'updatedAt',
+          sortOrder: 'desc',
+        }),
+        getSegmentCapture(this.projectId),
+      ]);
+      runInAction(() => {
+        this.captureMode = capture.mode;
+        this.segments = segments.map((s) => toSavedSegment(s, capture));
+      });
+    } catch (e) {
+      console.error('Failed to load segments', e);
+    }
+  };
+
+  /** Load just the segments for a project — used by the Data Management page,
+      which needs the capture layer without the full Issues init. */
+  ensureSegments = (projectId: string) => {
+    if (this.projectId !== projectId) this.projectId = projectId;
+    void this.fetchSegments();
   };
   fetchMyCriticals = async () => {
     if (!this.projectId) return;
@@ -386,7 +453,7 @@ export default class IssuesStore {
     return this.visibility === 'deleted';
   }
 
-  // ---- per-user critical ("critical for me") + focus (NOT-YET-BACKED) ----
+  // ---- per-user critical ("critical for me") + segments (NOT-YET-BACKED) ----
   /** the project/agent critical flag (server-owned), independent of my layer */
   agentCritical(id: string): boolean {
     return Boolean(this.byId(id)?.critical);
@@ -399,7 +466,7 @@ export default class IssuesStore {
   /** relevant = critical for me, or surfaced by a segment I own */
   isRelevant = (i: Issue): boolean =>
     this.mine.includes(i.id) ||
-    (i.focusId != null && Boolean(this.focusById(i.focusId)?.mine));
+    (i.segmentId != null && Boolean(this.segmentById(i.segmentId)?.mine));
   /** count next to "Critical to me" — my personal criticals (segment finds are
       NOT-YET-BACKED, so not included yet) */
   get relevantCount(): number {
@@ -416,12 +483,22 @@ export default class IssuesStore {
     if (this.projectId) void removeMyCritical(this.projectId, id);
   };
 
-  get activeFocusCount(): number {
-    return this.focuses.filter((f) => f.active).length;
+  // ---- segments + capture ----
+  segmentById(id?: string): SavedSegment | undefined {
+    return id == null ? undefined : this.segments.find((s) => s.id === id);
   }
-  focusById(id?: number): Focus | undefined {
-    return id == null ? undefined : this.focuses.find((f) => f.id === id);
+  /** segments I can see: mine or team-visible (teammates' private ones hidden) */
+  get visibleSegments(): SavedSegment[] {
+    return this.segments.filter((s) => s.mine || s.isPublic);
   }
+  /** segments the agent is currently capturing */
+  get capturingSegments(): SavedSegment[] {
+    return this.segments.filter((s) => s.active);
+  }
+  get activeSegmentCount(): number {
+    return this.capturingSegments.length;
+  }
+
   setRelevantToMe = (v: boolean) => {
     this.relevantToMe = v;
     this.refetch();
@@ -436,33 +513,90 @@ export default class IssuesStore {
     this.origins = [];
     this.refetch();
   };
-  /** anyone can toggle any focus — it's the project's shared analysis budget */
-  toggleFocus = (id: number, active: boolean) => {
-    this.focuses = this.focuses.map((f) =>
-      f.id === id ? { ...f, active } : f,
+
+  /** switch the project between full-traffic and segment capture. */
+  setCaptureMode = (mode: CaptureMode) => {
+    this.captureMode = mode;
+    if (this.projectId) void apiSetCaptureMode(this.projectId, mode);
+  };
+
+  /** turn a segment's capture on (anyone can — it's the shared capture set). */
+  enableCapture = (id: string) => {
+    this.segments = this.segments.map((s) =>
+      s.id === id ? { ...s, active: true } : s,
     );
-    if (this.projectId) void setFocusActive(this.projectId, id, active);
+    if (this.projectId)
+      void setSegmentCapture(this.projectId, id, { active: true });
   };
-  saveFocus = (
-    focus: Omit<Focus, 'id' | 'createdBy' | 'mine'> & { id?: number },
-  ) => {
-    if (focus.id != null) {
-      this.focuses = this.focuses.map((f) =>
-        f.id === focus.id ? { ...f, ...focus, id: f.id } : f,
-      );
-    } else {
-      const id = Math.max(0, ...this.focuses.map((f) => f.id)) + 1;
-      this.focuses = [
-        { ...focus, id, createdBy: 'You', mine: true },
-        ...this.focuses,
-      ];
+
+  /** toggle a segment's capture; returns true when turning the last one off
+      dropped the project back to full traffic. */
+  toggleSegment = (id: string, on: boolean): boolean => {
+    this.segments = this.segments.map((s) =>
+      s.id === id ? { ...s, active: on } : s,
+    );
+    if (this.projectId)
+      void setSegmentCapture(this.projectId, id, { active: on });
+    if (
+      !on &&
+      this.captureMode === 'segments' &&
+      this.activeSegmentCount === 0
+    ) {
+      this.setCaptureMode('full');
+      return true;
     }
-    if (this.projectId) void apiSaveFocus(this.projectId, focus);
+    return false;
   };
-  deleteFocus = (id: number) => {
-    this.focuses = this.focuses.filter((f) => f.id !== id);
+
+  /** create or update a segment — persists the saved search through Data
+      Management, then its capture flag + agent instructions. Returns true when
+      the save dropped capture back to full traffic. */
+  saveSegment = async (input: {
+    id?: string;
+    name: string;
+    isPublic: boolean;
+    filters: FilterItem[];
+    active: boolean;
+    instructions?: string;
+  }): Promise<boolean> => {
+    if (!this.projectId) return false;
+    const payload = {
+      name: input.name,
+      isPublic: input.isPublic,
+      filters: input.filters,
+    };
+    let saved: Segment;
+    try {
+      saved = input.id
+        ? await updateSegment(input.id, payload)
+        : await createSegment(payload);
+    } catch (e) {
+      console.error('Failed to save segment', e);
+      return false;
+    }
+    // private segments can't capture — eligibility follows visibility
+    await setSegmentCapture(this.projectId, saved.id, {
+      active: input.active && input.isPublic,
+      instructions: input.instructions ?? '',
+    });
+    await this.fetchSegments();
+    if (this.captureMode === 'segments' && this.activeSegmentCount === 0) {
+      this.setCaptureMode('full');
+      return true;
+    }
+    return false;
+  };
+
+  deleteSegment = async (id: string) => {
+    if (!this.projectId) return;
+    this.segments = this.segments.filter((s) => s.id !== id);
     this.origins = this.origins.filter((o) => o !== id);
-    if (this.projectId) void apiDeleteFocus(this.projectId, id);
+    try {
+      await apiDeleteSegment(id);
+    } catch (e) {
+      console.error('Failed to delete segment', e);
+    }
+    void this.fetchSegments();
   };
 
   // ---- filter setters ----
