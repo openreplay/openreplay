@@ -76,11 +76,14 @@ export default class Cursor {
     }, 500);
   }
 
-  click() {
+  click(showTimerRing = true) {
     if (this.highlightCursor) {
+      this.onClick?.();
+      // In highlight mode the clicked element gets red brackets; the cursor ring
+      // is only a fallback for when no element could be resolved.
+      if (!showTimerRing) return;
       const styleList = styles.timerClicked;
       this.cursor.classList.add(styleList);
-      this.onClick?.();
       setTimeout(() => {
         this.cursor.classList.remove(styleList);
       }, 510);

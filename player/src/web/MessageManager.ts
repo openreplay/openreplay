@@ -121,6 +121,8 @@ export default class MessageManager {
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
   private lastSelectClickTime = -1;
+  private highlightClickHasTarget = false;
+  private onClickPause?: (ms: number) => void;
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
   private activityManager: ActivityManager | null = null;
   private mouseMoveManager: MouseMoveManager;
@@ -330,21 +332,27 @@ export default class MessageManager {
       const lastClick = this.clickManager.moveGetLast(t);
       // getting clicks happened during last 600ms
       if (!!lastClick && t - lastClick.time < 600) {
-        this.screen.cursor.click();
+        const highlight = this.screen.cursor.highlightMode;
         // Fire once per click: a native <select> picker can't be reopened during
         // replay (needs a user gesture), so approximate it with a synthetic list.
         if (lastClick.time !== this.lastSelectClickTime) {
           this.lastSelectClickTime = lastClick.time;
           const clickedNode = this.getNode(lastClick.id)?.node;
           this.screen.showSelectMenu(clickedNode);
-          if (this.screen.cursor.highlightMode) {
+          if (highlight) {
             const target =
               this.screen.getElementFromInternalPoint(
                 this.screen.cursor.position,
               ) ?? clickedNode;
+            this.highlightClickHasTarget = !!target;
             this.screen.highlightClick(target);
+            // Hold the replay briefly so the highlighted click is unmistakable.
+            this.onClickPause?.(750);
           }
         }
+        // In highlight mode the brackets mark the click, so the cursor ring is
+        // only drawn as a fallback when no element could be resolved.
+        this.screen.cursor.click(!highlight || !this.highlightClickHasTarget);
       }
       const lastThrashing = this.mouseThrashingManager.moveGetLast(t);
       if (!!lastThrashing && t - lastThrashing.time < 300) {
@@ -395,6 +403,11 @@ export default class MessageManager {
 
   public getNode(id: number) {
     return this.tabs[this.activeTab]?.getNode(id);
+  }
+
+  /** Hook to briefly pause playback on a highlighted click (timer mode). */
+  public setOnClickPause(cb: (ms: number) => void) {
+    this.onClickPause = cb;
   }
 
   public changeTab(tabId: string) {

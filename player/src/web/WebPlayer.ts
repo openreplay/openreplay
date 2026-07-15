@@ -35,7 +35,6 @@ export default class WebPlayer extends Player {
     public readonly uiErrorHandler?: { error: (msg: string) => void },
     private readonly prefetched?: boolean,
   ) {
-    console.log('tttt')
     const initialLists = live
       ? {}
       : {
@@ -74,6 +73,8 @@ export default class WebPlayer extends Player {
     this.screen = screen;
     this.messageManager = messageManager;
     this.messageLoader = messageLoader;
+    // timer/highlight mode: hold the replay for a moment on each highlighted click
+    messageManager.setOnClickPause((ms) => this.pauseFor(ms));
 
     if (!live && !prefetched) {
       // hack. TODO: split OfflinePlayer class

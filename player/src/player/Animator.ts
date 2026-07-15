@@ -180,6 +180,24 @@ export default class Animator {
     this.store.update({ playing: false });
   };
 
+  private resumeTimeout?: ReturnType<typeof setTimeout>;
+
+  /**
+   * Briefly pause playback, then resume (used to hold on a highlighted click).
+   * No-op when not currently playing so it never starts a paused/stepped replay.
+   */
+  pauseFor = (ms: number) => {
+    if (!this.store.get().playing) return;
+    this.pause();
+    if (this.resumeTimeout) clearTimeout(this.resumeTimeout);
+    this.resumeTimeout = setTimeout(() => {
+      this.resumeTimeout = undefined;
+      const { playing, completed } = this.store.get();
+      // resume only if the user hasn't manually played/finished in the meantime
+      if (!playing && !completed) this.play();
+    }, ms);
+  };
+
   freeze = () => {
     return new Promise<void>((res) => {
       if (this.store.get().ready) {

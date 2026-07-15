@@ -420,7 +420,7 @@ export default class Screen {
       box.remove();
       this.clickHighlightBox = null;
       this.clickHighlightTimeout = undefined;
-    }, 500);
+    }, 750);
   }
 
   private highlightedElement: HTMLElement | null = null;
