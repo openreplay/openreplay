@@ -19,8 +19,25 @@ create-yamls: helm-template
 	@rm yamls/deployment.yaml
 	@bash process-secrets.sh
 
+.PHONY: extract-versions
+extract-versions: create-yamls ## Extract per-service image versions from helm yamls into common.env
+	@echo "Extracting service versions..."
+	@for f in yamls/*-openreplay.yaml; do \
+		svc=$$(basename $$f -openreplay.yaml); \
+		ver=$$(grep -oP 'image:\s*"[^:]+:\K[^"]+' $$f 2>/dev/null || true); \
+		if [ -n "$$ver" ]; then \
+			key=$$(echo $$svc | tr '[:lower:]' '[:upper:]')_VERSION; \
+			if grep -q "^$$key=" ../common.env; then \
+				sed -i "s|^$$key=.*|$$key=$$ver|" ../common.env; \
+			else \
+				sed -i "/^## Service image versions/a $$key=$$ver" ../common.env; \
+			fi; \
+			echo "  $$key=$$ver"; \
+		fi; \
+	done
+
 .PHONY: create-envs
-create-envs: create-yamls ## Create envs from deployment
+create-envs: extract-versions ## Create envs from deployment
 	@echo Creating env vars...
 	@rm -rf ../docker-envs
 	@mkdir ../docker-envs

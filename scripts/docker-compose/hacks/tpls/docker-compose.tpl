@@ -195,7 +195,8 @@ services:
   {{- $service_name := . }}
   {{- $container_name := (splitList "-" $service_name) | first | printf "%s" }}
   {{print $service_name}}:
-    image: public.ecr.aws/p1t3u8a3/{{$container_name}}:${COMMON_VERSION}
+    {{- $version_var := printf "${%s_VERSION}" ($container_name | upper) }}
+    image: public.ecr.aws/p1t3u8a3/{{$container_name}}:{{$version_var}}
     domainname: app.svc.cluster.local
     container_name: {{print $container_name}}
     networks:
