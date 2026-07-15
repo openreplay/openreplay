@@ -114,4 +114,14 @@ export default class Cursor {
   setOnClickHook(callback: () => void) {
     this.onClick = callback;
   }
+
+  /** timer/screenshot mode (URL `timer=true`) — click gets a static red marker */
+  get highlightMode(): boolean {
+    return this.highlightCursor;
+  }
+
+  /** current cursor coords (viewport space) — matches the last mouse move */
+  get position(): Point {
+    return this.coords;
+  }
 }

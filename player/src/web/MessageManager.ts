@@ -335,7 +335,15 @@ export default class MessageManager {
         // replay (needs a user gesture), so approximate it with a synthetic list.
         if (lastClick.time !== this.lastSelectClickTime) {
           this.lastSelectClickTime = lastClick.time;
-          this.screen.showSelectMenu(this.getNode(lastClick.id)?.node);
+          const clickedNode = this.getNode(lastClick.id)?.node;
+          this.screen.showSelectMenu(clickedNode);
+          if (this.screen.cursor.highlightMode) {
+            const target =
+              this.screen.getElementFromInternalPoint(
+                this.screen.cursor.position,
+              ) ?? clickedNode;
+            this.screen.highlightClick(target);
+          }
         }
       }
       const lastThrashing = this.mouseThrashingManager.moveGetLast(t);

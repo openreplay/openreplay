@@ -146,6 +146,11 @@ export default class Screen {
   }
 
   clean() {
+    if (this.clickHighlightTimeout) {
+      clearTimeout(this.clickHighlightTimeout);
+      this.clickHighlightTimeout = undefined;
+    }
+    this.clickHighlightBox = null;
     this.selectMenu.remove(); // clears its pending timer + scroll listener
     this.iframe?.remove?.();
     this.overlay?.remove?.();
@@ -342,6 +347,80 @@ export default class Screen {
   public clearSelection() {
     this.selectionTargets?.forEach((el) => el.remove());
     this.selectionTargets = [];
+  }
+
+  private clickHighlightBox: HTMLDivElement | null = null;
+  private clickHighlightTimeout?: ReturnType<typeof setTimeout>;
+
+  /**
+   * Timer/screenshot mode only: draw red corner brackets around the clicked
+   * element for ~500ms so the click target is captured by a 2fps frame.
+   * Rendered in the overlay (not the iframe doc — vdom patches would wipe it).
+   * The overlay shares the cursor's coordinate space (viewport px, scaled by the
+   * screen transform), so element viewport rects map straight through; only
+   * nested-iframe offsets need adding.
+   */
+  public highlightClick(node?: Node | null): void {
+    if (!(node instanceof HTMLElement)) return;
+
+    const rect = node.getBoundingClientRect();
+    if (!rect.width && !rect.height) return;
+
+    // Add each ancestor iframe's offset until we reach the replay root window,
+    // so a click inside a nested iframe still lines up in the overlay.
+    let left = rect.left;
+    let top = rect.top;
+    let win: Window | null = node.ownerDocument.defaultView;
+    while (win && win !== this.window && win.frameElement) {
+      const frameRect = win.frameElement.getBoundingClientRect();
+      left += frameRect.left;
+      top += frameRect.top;
+      win = win.parent === win ? null : win.parent;
+    }
+
+    if (this.clickHighlightTimeout) {
+      clearTimeout(this.clickHighlightTimeout);
+    }
+    this.clickHighlightBox?.remove();
+
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      position: 'absolute',
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      pointerEvents: 'none',
+      zIndex: '2147483647',
+    });
+
+    const arm = 12; // bracket arm length, px
+    const thick = 3; // border thickness, px
+    const red = `${thick}px solid #cc0000`;
+    const corners: Array<Partial<CSSStyleDeclaration>> = [
+      { top: '0', left: '0', borderTop: red, borderLeft: red },
+      { top: '0', right: '0', borderTop: red, borderRight: red },
+      { bottom: '0', left: '0', borderBottom: red, borderLeft: red },
+      { bottom: '0', right: '0', borderBottom: red, borderRight: red },
+    ];
+    corners.forEach((pos) => {
+      const corner = document.createElement('div');
+      Object.assign(corner.style, {
+        position: 'absolute',
+        width: `${arm}px`,
+        height: `${arm}px`,
+        ...pos,
+      });
+      box.appendChild(corner);
+    });
+
+    this.overlay.appendChild(box);
+    this.clickHighlightBox = box;
+    this.clickHighlightTimeout = setTimeout(() => {
+      box.remove();
+      this.clickHighlightBox = null;
+      this.clickHighlightTimeout = undefined;
+    }, 500);
   }
 
   private highlightedElement: HTMLElement | null = null;
