@@ -65,11 +65,18 @@ export const browserTestsKeys = {
     ['browser-tests', projectId, 'notifications'] as const,
 };
 
+// Every GET in this section caches for 10 minutes — fresh (no refetch) and retained while
+// unused — so switching tabs / reopening a drawer serves from cache. Mutations still
+// invalidate the relevant keys, so writes show up immediately.
+const CACHE_MS = 5 * 60 * 1000;
+const cacheOpts = { staleTime: CACHE_MS, gcTime: CACHE_MS };
+
 // ---- Tests ----
 
 export function useTests(params?: ListTestsParams) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.tests(projectId, params),
     queryFn: () => api.listTests(projectId, params),
     enabled: !!projectId,
@@ -84,6 +91,7 @@ export function useTestCounts(
 ) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.testCounts(projectId, aggregator, params),
     queryFn: () => api.testCounts(projectId, { aggregator, ...params }),
     enabled: !!projectId,
@@ -93,6 +101,7 @@ export function useTestCounts(
 export function useTest(testId: string | undefined) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.test(projectId, testId ?? ''),
     queryFn: () => api.getTest(projectId, testId as string),
     enabled: !!projectId && !!testId,
@@ -149,6 +158,7 @@ export function useDeleteTest() {
 export function useEnvironments(params?: ListEnvironmentsParams) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.environments(projectId, params),
     queryFn: () => api.listEnvironments(projectId, params),
     enabled: !!projectId,
@@ -214,6 +224,7 @@ export function useDeleteEnvironment() {
 export function useAllRuns(params?: ListAllRunsParams) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.allRuns(projectId, params),
     queryFn: () => api.listAllRuns(projectId, params),
     enabled: !!projectId,
@@ -227,6 +238,7 @@ export function useRunCounts(
 ) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.runCounts(projectId, aggregator, params),
     queryFn: () => api.runCounts(projectId, { aggregator, ...params }),
     enabled: !!projectId,
@@ -236,6 +248,7 @@ export function useRunCounts(
 export function useRuns(testId: string | undefined, params?: ListRunsParams) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.runs(projectId, testId ?? '', params),
     queryFn: () => api.listRuns(projectId, testId as string, params),
     enabled: !!projectId && !!testId,
@@ -245,6 +258,7 @@ export function useRuns(testId: string | undefined, params?: ListRunsParams) {
 export function useRun(runId: string | undefined) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.run(projectId, runId ?? ''),
     queryFn: () => api.getRun(projectId, runId as string),
     enabled: !!projectId && !!runId,
@@ -256,6 +270,7 @@ export function useRun(runId: string | undefined) {
 export function useRunHar(runId: string | undefined) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.runHar(projectId, runId ?? ''),
     queryFn: () =>
       api.getRunHar(projectId, runId as string).catch(() => null),
@@ -292,6 +307,7 @@ export function useBulkTests() {
 export function useVersionDiff(testId: string | undefined, enabled: boolean) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.versionDiff(projectId, testId ?? ''),
     queryFn: () => api.diffVersions(projectId, testId as string),
     enabled: !!projectId && !!testId && enabled,
@@ -303,6 +319,7 @@ export function useVersionDiff(testId: string | undefined, enabled: boolean) {
 export function useVersions(testId: string | undefined, enabled = true) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.versions(projectId, testId ?? ''),
     queryFn: () => api.listVersions(projectId, testId as string, { limit: 100 }),
     enabled: !!projectId && !!testId && enabled,
@@ -317,6 +334,7 @@ export function useVersion(
 ) {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.version(projectId, testId ?? '', versionId ?? ''),
     queryFn: () =>
       api.getVersion(projectId, testId as string, versionId as string),
@@ -365,6 +383,7 @@ export function useDismissVersion() {
 export function useSettings() {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.settings(projectId),
     queryFn: () => api.getSettings(projectId),
     enabled: !!projectId,
@@ -386,6 +405,7 @@ export function useUpdateSettings() {
 export function useNotifications() {
   const projectId = useProjectId();
   return useQuery({
+    ...cacheOpts,
     queryKey: browserTestsKeys.notifications(projectId),
     queryFn: () => api.getNotifications(projectId),
     enabled: !!projectId,
