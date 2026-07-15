@@ -1,5 +1,4 @@
 import logging
-import traceback
 from typing import Union
 
 from pydantic import ValidationError
@@ -291,5 +290,4 @@ class MultiTenantProvider(provider.SCIMProvider):
             return self.make_error(Error(status=400, detail=str(e)))
         except Exception as e:
             self.log.exception(e)
-            tb = traceback.format_exc()
-            return self.make_error(Error(status=500, detail=str(e) + "\n" + tb))
+            return self.make_error(Error(status=500, detail="Internal server error."))

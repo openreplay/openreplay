@@ -171,8 +171,14 @@ def get_landing_URL(query_params: dict = None, redirect_to_link2=False):
 environ["hastSAML2"] = str(is_saml2_available())
 
 
+def is_scim_configured():
+    return len(config("SCIM_ACCESS_SECRET_KEY", default="")) > 4 \
+        and len(config("SCIM_REFRESH_SECRET_KEY", default="")) > 4
+
+
 def is_scim_available():
-    return __scim_helpers.is_scim_available()
+    return is_scim_configured() \
+        and __scim_helpers.is_scim_available()
 
 
 def group_name_to_role_name(group_name: str) -> str:

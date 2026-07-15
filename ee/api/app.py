@@ -33,6 +33,7 @@ if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
     from routers.scim import api as scim
     from routers.scim.middlewares import PrefixMiddleware
+    from chalicelib.utils import SAML2_helper
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
@@ -200,5 +201,7 @@ if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(scim.app)
     app.include_router(scim.app_apikey)
 
-    SCIM_MOUNT_PATH = "/sso/scim/v2"
-    app.mount(SCIM_MOUNT_PATH, WSGIMiddleware(PrefixMiddleware(scim.scim_app, SCIM_MOUNT_PATH)))
+    if SAML2_helper.is_scim_configured():
+        logger.info("SCIM configured, mounting endpoints...")
+        SCIM_MOUNT_PATH = "/sso/scim/v2"
+        app.mount(SCIM_MOUNT_PATH, WSGIMiddleware(PrefixMiddleware(scim.scim_app, SCIM_MOUNT_PATH)))
