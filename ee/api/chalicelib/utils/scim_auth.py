@@ -6,6 +6,7 @@ from decouple import config
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from chalicelib.core import users
+from chalicelib.utils import SAML2_helper
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ if len(ACCESS_SECRET_KEY) == 0:
 
 
 def create_tokens(tenant_id):
-    if len(ACCESS_SECRET_KEY) == 0 or len(REFRESH_SECRET_KEY) == 0:
+    if not SAML2_helper.is_scim_configured():
         logger.warning("!!! SCIM not configured")
         raise HTTPException(status_code=401, detail="SCIM not configured")
 
@@ -42,7 +43,7 @@ def create_tokens(tenant_id):
 
 
 def verify_access_token(token: str):
-    if len(ACCESS_SECRET_KEY) == 0:
+    if not SAML2_helper.is_scim_configured():
         raise HTTPException(status_code=401, detail="SCIM not configured")
     try:
         payload = jwt.decode(
@@ -56,7 +57,7 @@ def verify_access_token(token: str):
 
 
 def verify_refresh_token(token: str):
-    if len(REFRESH_SECRET_KEY) == 0:
+    if not SAML2_helper.is_scim_configured():
         raise HTTPException(status_code=401, detail="SCIM not configured")
     try:
         payload = jwt.decode(
