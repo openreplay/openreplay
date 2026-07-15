@@ -62,7 +62,7 @@ export function makeIssue(d: RawIssue): Issue {
     cat: dominantCategory(d.issueLabels ?? []),
     categories: memberCategories(d.issueLabels ?? []),
 
-    focusId: d.focusId,
+    segmentId: d.segmentId,
     impactedSessions: d.impactedSessions ?? 0,
     count: d.count ?? 0,
     firstSeen: d.firstSeen ?? null,

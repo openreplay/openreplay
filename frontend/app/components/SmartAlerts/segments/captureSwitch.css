@@ -1,0 +1,55 @@
+/* Traffic-segments capture control — shared by the Issues title pill
+   (SegmentsIndicator) and the Data Management segments list. */
+
+.seg-live-border {
+  animation: seg-ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes seg-ring-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(57, 78, 255, 0.3);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px rgba(57, 78, 255, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seg-live-border {
+    animation: none;
+  }
+}
+
+.capture-pill {
+  border-color: var(--color-gray-light);
+  background: #fff;
+  transition: border-color 0.15s ease;
+}
+.capture-pill:hover,
+.capture-pill:focus-visible {
+  border-color: var(--color-main);
+}
+.capture-pill:hover .seg-live-border {
+  animation: none;
+  box-shadow: none;
+}
+
+/* Keep the mode icons inside the switch aligned with antd's stacked-span slide
+   (which offsets the hidden label by exactly one track height, -16px). */
+.capture-switch .ant-switch-inner-checked,
+.capture-switch .ant-switch-inner-unchecked {
+  height: 16px;
+  padding-top: 3px;
+}
+.capture-switch .ant-switch-inner-checked svg,
+.capture-switch .ant-switch-inner-unchecked svg {
+  display: block;
+}
+
+/* Darken the resting/hover track so the white 10px icon stays readable. Extra
+   :not() classes lift specificity above antd's runtime-injected rules. */
+.ant-switch.capture-switch:not(.ant-switch-checked) {
+  background: rgba(0, 0, 0, 0.45);
+}
+.ant-switch.capture-switch:not(.ant-switch-checked):not(.ant-switch-disabled):hover {
+  background: rgba(0, 0, 0, 0.57);
+}

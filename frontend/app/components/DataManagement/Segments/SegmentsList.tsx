@@ -1,12 +1,22 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import { PlusOutlined } from '@ant-design/icons';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Empty, Table, type TableProps, Tag, Tooltip } from 'antd';
+import {
+  Button,
+  Empty,
+  Switch,
+  Table,
+  type TableProps,
+  Tag,
+  Tooltip,
+} from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
-import { Lock, Star, Users } from 'lucide-react';
+import { Lock, Users } from 'lucide-react';
+import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { sessions } from 'App/routes';
@@ -16,7 +26,6 @@ import { CopyButton, TextEllipsis } from 'UI';
 import FullPagination from 'Shared/FullPagination';
 
 import ENV from '../../../../env';
-
 import type { Segment } from './api';
 
 type SortBy = 'name' | 'createdAt' | 'updatedAt';
@@ -24,8 +33,14 @@ type SortOrder = 'asc' | 'desc';
 
 const columnKeyToSortBy: Record<string, SortBy> = {
   name: 'name',
-  updatedAt: 'updatedAt',
 };
+
+// compact notation (matches the Events page): tables read in K, exact numbers
+// live in the detail view
+const numberFormatter = Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  compactDisplay: 'short',
+});
 
 function SegmentsList({
   list,
@@ -51,11 +66,11 @@ function SegmentsList({
   toCreate: () => void;
 }) {
   const { t } = useTranslation();
-  const { projectsStore, userStore } = useStore();
+  const { projectsStore, issuesStore } = useStore();
   const siteId = projectsStore.activeSiteId;
-  const currentUserId = userStore.account.id;
   const buildShareUrl = (id: string) =>
     `https://${ENV.ORIGIN}/${siteId}${sessions()}?sid=${id}`;
+
   const columns: TableProps<Segment>['columns'] = [
     {
       title: t('Name'),
@@ -64,80 +79,103 @@ function SegmentsList({
       sorter: true,
       showSorterTooltip: false,
       className: 'cursor-pointer!',
-      render: (text: string) => (
-        <TextEllipsis maxWidth={'320px'} text={text} className="link" />
-      ),
-    },
-    {
-      title: t('Visibility'),
-      key: 'visibility',
-      render: (_: unknown, record: Segment) => {
-        const isOwner =
-          record.userId !== undefined &&
-          String(record.userId) === String(currentUserId);
+      // one meta line replaces the old Conditions and Updated At columns —
+      // creator (teammates' segments only) + relative update time
+      render: (text: string, record: Segment) => {
+        const s = issuesStore.segmentById(record.id);
+        const rel = record.updatedAt
+          ? DateTime.fromMillis(record.updatedAt).toRelative()
+          : null;
+        const meta = [
+          s && !s.mine ? s.createdBy : null,
+          rel ? t('updated {{rel}}', { rel }) : null,
+        ]
+          .filter(Boolean)
+          .join(' · ');
         return (
-          <div className="flex items-center gap-1">
-            {/* @ts-ignore */}
-            <Tooltip
-              title={
-                record.isPublic
-                  ? t('Visible to everyone on your team')
-                  : t('Only visible to the segment owner')
-              }
-            >
-              <Tag
-                icon={
-                  record.isPublic ? <Users size={12} /> : <Lock size={12} />
-                }
-                color="default"
-                className="text-xs! px-2! py-0.5! m-0! whitespace-nowrap inline-flex! items-center! gap-1! cursor-help"
-              >
-                {record.isPublic ? t('Team') : t('Private')}
-              </Tag>
-            </Tooltip>
-            {isOwner && (
-              // @ts-ignore
-              <Tooltip title={t("You're this segment's owner")}>
-                <Tag
-                  icon={<Star size={12} />}
-                  color="gold"
-                  className="text-xs! px-2! py-0.5! m-0! whitespace-nowrap inline-flex! items-center! gap-1! cursor-help"
-                >
-                  {t('Owner')}
-                </Tag>
-              </Tooltip>
-            )}
+          <div className="flex flex-col">
+            <TextEllipsis maxWidth={'320px'} text={text} className="link" />
+            {meta && <span className="text-xs color-gray-medium">{meta}</span>}
           </div>
         );
       },
     },
     {
-      title: t('Conditions'),
-      dataIndex: 'filters',
-      key: 'complexity',
-      render: (filters: any[]) => (filters ? filters.length : 0),
+      title: t('Visibility'),
+      key: 'visibility',
+      render: (_: unknown, record: Segment) => (
+        <div className="flex items-center gap-1">
+          {/* @ts-ignore */}
+          <Tooltip
+            title={
+              record.isPublic
+                ? t('Visible to everyone on your team')
+                : t('Only visible to its creator')
+            }
+          >
+            <Tag
+              icon={record.isPublic ? <Users size={12} /> : <Lock size={12} />}
+              color="default"
+              className="text-xs! px-2! py-0.5! m-0! whitespace-nowrap inline-flex! items-center! gap-1! cursor-help"
+            >
+              {record.isPublic ? t('Team') : t('Private')}
+            </Tag>
+          </Tooltip>
+        </div>
+      ),
     },
     {
       title: t('# Sessions'),
       dataIndex: 'sessionsCount',
       key: 'sessionsCount',
-      render: (count: number) => (count ?? 0).toLocaleString(),
+      render: (count: number) => numberFormatter.format(count ?? 0),
     },
     {
       title: t('# Users'),
       dataIndex: 'usersCount',
       key: 'usersCount',
-      render: (count: number) => (count ?? 0).toLocaleString(),
+      render: (count: number) => numberFormatter.format(count ?? 0),
     },
     {
-      title: t('Updated At'),
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
-      sorter: true,
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-      render: (text: number) =>
-        text ? new Date(text).toLocaleDateString() : '—',
+      // the shared capture flag the Issues popover also toggles; only
+      // team-visible segments are eligible (everyone must be able to stop one)
+      title: t('Issues Agent'),
+      key: 'capture',
+      width: 110,
+      render: (_: unknown, record: Segment) => {
+        const s = issuesStore.segmentById(record.id);
+        if (!s) return <span className="color-gray-medium">—</span>;
+        const control = (
+          <div onClick={(e) => e.stopPropagation()} className="inline-flex">
+            <Switch
+              size="small"
+              checked={s.active}
+              disabled={!s.isPublic}
+              aria-label={`${s.name} — ${s.active ? t('on') : t('off')}`}
+              onChange={(on) => {
+                if (on) issuesStore.enableCapture(s.id);
+                else if (issuesStore.toggleSegment(s.id, false))
+                  toast.info(
+                    t(
+                      'No active segments left — capture switched to full traffic.',
+                    ),
+                  );
+              }}
+            />
+          </div>
+        );
+        return s.isPublic ? (
+          control
+        ) : (
+          <Tooltip
+            title={t(
+              'Private segments can’t enable the agent — only team-visible ones are eligible.',
+            )}
+          >
+            {control}
+          </Tooltip>
+        );
+      },
     },
     {
       title: '',
@@ -221,5 +259,10 @@ function SegmentsList({
 }
 
 export default withPageTitle('Segments')(
-  withPermissions(['DATA_MANAGEMENT'], '', false, false)(observer(SegmentsList)),
+  withPermissions(
+    ['DATA_MANAGEMENT'],
+    '',
+    false,
+    false,
+  )(observer(SegmentsList)),
 );
