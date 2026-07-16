@@ -19,19 +19,43 @@ create-yamls: helm-template
 	@rm yamls/deployment.yaml
 	@bash process-secrets.sh
 
+.PHONY: extract-versions
+extract-versions: create-yamls ## Extract per-service image versions from helm yamls into common.env
+	@echo "Extracting service versions..."
+	@for f in yamls/*-openreplay.yaml; do \
+		svc=$$(basename $$f -openreplay.yaml); \
+		ver=$$(grep -oP 'image:\s*"[^:]+:\K[^"]+' $$f 2>/dev/null || true); \
+		if [ -n "$$ver" ]; then \
+			key=$$(echo $$svc | tr '[:lower:]' '[:upper:]')_VERSION; \
+			if grep -q "^$$key=" ../common.env; then \
+				sed -i "s|^$$key=.*|$$key=$$ver|" ../common.env; \
+			else \
+				sed -i "/^## Service image versions/a $$key=$$ver" ../common.env; \
+			fi; \
+			echo "  $$key=$$ver"; \
+		fi; \
+	done
+
 .PHONY: create-envs
-create-envs: create-yamls ## Create envs from deployment
+create-envs: extract-versions ## Create envs from deployment
 	@echo Creating env vars...
 	@rm -rf ../docker-envs
 	@mkdir ../docker-envs
 	@# @find ./ -type f -iname "Deployment" -exec templater -i env.tpl -f ../deployment.yaml {} > {}.env \;
-	@find yamls/ -type f -name "*.yaml" -exec sh -c 'filename=$$(basename {} -openreplay.yaml); \
+	@find yamls/ -type f -name "*-openreplay.yaml" -exec sh -c 'filename=$$(basename {} -openreplay.yaml); \
 				templater -i tpls/env.tpl -f {} > ../docker-envs/$${filename}.env' \;
 	@# Replace all http/https for COMMON_DOMAIN_NAME with COMMON_PROTOCOL
 	@find ../docker-envs/ -type f -name "*.env" -exec sed -i 's|http[s]\?://\$${COMMON_DOMAIN_NAME}|\$${COMMON_PROTOCOL}://\$${COMMON_DOMAIN_NAME}|g' {} \;
 
+.PHONY: copy-migration-files
+copy-migration-files: ## Copy migration files for bind mounts
+	@mkdir -p ../migration-files
+	@cp ../../helmcharts/openreplay/files/minio.sh ../migration-files/minio.sh
+	@cp ../../schema/db/init_dbs/postgresql/init_schema.sql ../migration-files/init_pg_schema.sql
+	@cp ../../schema/db/init_dbs/clickhouse/create/init_schema.sql ../migration-files/init_ch_schema.sql
+
 .PHONY: create-compose
-create-compose: create-envs ## Create docker-compose.yml
+create-compose: create-envs copy-migration-files ## Create docker-compose.yml
 	@echo creating docker-compose yaml
 	$(eval FILES := $(shell find yamls/ -type f -name "*-openreplay.yaml" -exec basename {} .yaml \; | tr '\n' ',' | sed 's/,$$//'))
 	@#echo "Files found: $(FILES)"
