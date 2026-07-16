@@ -2,7 +2,10 @@ import './_slim.js'
 
 import type { App, } from '@openreplay/tracker'
 import type { Options, } from './Assist.js'
-import Assist from './Assist.js'
+import Assist, { Autostart, } from './Assist.js'
+
+export { Autostart, }
+export type { Options, }
 
 
 export default function(opts?: Partial<Options>) {

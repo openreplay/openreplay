@@ -81,7 +81,40 @@ trackerAssist({
   config: RTCConfiguration;
   serverURL: string
   callUITemplate?: string;
+  agentShortNames?: boolean;
+  ignoreAnonymous?: boolean;
+  autostart?: Autostart; // 'disabled' | 'continuation' | 'auto'
 })
+```
+
+- `agentShortNames`: When `true`, only the first part of an agent's name is shown in the call popup (e.g. `"John Doe"` → `"John"`). Defaults to `false`.
+- `ignoreAnonymous`: When `true`, assist postpones connecting until a `userID` is set on the session (via `tracker.setUserID(...)`). Anonymous sessions won't appear as live until identified. Defaults to `false`.
+- `autostart`: Controls when assist connects. Import the `Autostart` enum from the package. Defaults to `Autostart.Auto`.
+  - `Autostart.Auto`: always connect on `tracker.start()` (legacy behavior).
+  - `Autostart.Disabled`: never connect automatically; call `assist.start()` yourself.
+  - `Autostart.Continuation`: connect only after `assist.start()` is called, but remember that choice in `sessionStorage` so assist auto-continues across page reloads until `assist.stop()` is called.
+
+#### Public methods
+
+`tracker.use(trackerAssist(options))` returns the assist instance (or `undefined` when assist can't load — e.g. inside an iframe, unsupported browser, or tracker version mismatch), which exposes:
+
+- `start()`: connect assist. In `Autostart.Continuation` mode this also persists the flag used to auto-continue after reloads. No-op until the tracker itself is active.
+- `stop()`: disconnect assist and tear down all live connections. It won't reconnect automatically until `start()` is called again; in `Autostart.Continuation` mode it clears the persisted flag.
+
+```js
+import Tracker from '@openreplay/tracker';
+import trackerAssist, { Autostart } from '@openreplay/tracker-assist';
+
+const tracker = new Tracker({ projectKey: PROJECT_KEY });
+const assist = tracker.use(trackerAssist({ autostart: Autostart.Continuation }));
+
+tracker.start().then(() => {
+  // enable assist on demand; it will resume automatically on reload
+  assist?.start();
+});
+
+// later, to fully turn it off:
+assist?.stop();
 ```
 
 ```js

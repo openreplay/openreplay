@@ -1,3 +1,9 @@
+## 11.0.18
+
+- autostart options
+- start/stop methods
+- options to ignore anonymous sessions
+
 ## 11.0.17
 
 - improvements for rc interaction with select els

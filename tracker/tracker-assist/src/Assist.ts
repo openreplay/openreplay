@@ -19,6 +19,24 @@ import { gzip } from "fflate";
 
 const textEncoder = new TextEncoder();
 
+// sessionStorage flag used by Autostart.Continuation to survive page reloads
+const SS_CONTINUE_KEY = "__openreplay_assist_continue";
+
+/**
+ * Controls when assist connects to the server.
+ */
+export enum Autostart {
+  /** Never auto-connect; assist starts only via an explicit start() call. */
+  Disabled = "disabled",
+  /**
+   * Auto-connect on reload only if start() was called earlier in this
+   * browser session (persisted in sessionStorage). stop() cancels it.
+   */
+  Continuation = "continuation",
+  /** Always auto-connect on tracker start (default, legacy behavior). */
+  Auto = "auto",
+}
+
 type StartEndCallback = (agentInfo?: Record<string, any>) => (() => any) | void;
 
 interface AgentInfo {
@@ -71,6 +89,15 @@ export interface Options {
    * @default false
    */
   ignoreAnonymous: boolean;
+  /**
+   * When assist connects to the server:
+   * - Autostart.Auto (default): always on tracker start.
+   * - Autostart.Disabled: only via an explicit start() call.
+   * - Autostart.Continuation: only via start(), but the choice is remembered
+   *   in sessionStorage so it auto-continues across page reloads until stop().
+   * @default Autostart.Auto
+   */
+  autostart: Autostart;
 }
 
 enum CallingState {
@@ -97,6 +124,8 @@ export default class Assist {
   private assistDemandedRestart = false;
   private userStopped = false;
   private pendingStart: (() => void) | null = null;
+  private titleNode: HTMLTitleElement | null = null;
+  private titleObserver: MutationObserver | null = null;
   private callingState: CallingState = CallingState.False;
   private remoteControl: RemoteControl | null = null;
   private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -137,6 +166,7 @@ export default class Assist {
         compressionMinBatchSize: 5000,
         agentShortNames: false,
         ignoreAnonymous: false,
+        autostart: Autostart.Auto,
       },
       options,
     );
@@ -160,30 +190,27 @@ export default class Assist {
       "BroadcastChannel" in window ? new BroadcastChannel("or-assist") : null;
     this.tabBus?.addEventListener("message", this.handleTabStateMessage);
 
-    const titleNode = document.querySelector("title");
-    const observer =
-      titleNode &&
-      new MutationObserver(() => {
-        this.emit("UPDATE_SESSION", { pageTitle: document.title });
-      });
-    const beginAssist = () => {
-      this.onStart();
-      this.publishState({ type: "assist_state_check" });
-      observer &&
-        observer.observe(titleNode, {
-          childList: true,
-        });
-    };
+    this.titleNode = document.querySelector("title");
+    this.titleObserver = this.titleNode
+      ? new MutationObserver(() => {
+          this.emit("UPDATE_SESSION", { pageTitle: document.title });
+        })
+      : null;
     app.attachStartCallback(() => {
       if (this.assistDemandedRestart || this.userStopped) {
         return;
       }
-      // postpone start until a userID is attached to the session
-      if (this.options.ignoreAnonymous && !this.app.getSessionInfo().userID) {
-        this.pendingStart = beginAssist;
+      // autostart gate: disabled never auto-connects, continuation only when
+      // start() was called earlier this browser session
+      if (!this.shouldAutoStart()) {
         return;
       }
-      beginAssist();
+      // postpone start until a userID is attached to the session
+      if (this.options.ignoreAnonymous && !this.app.getSessionInfo().userID) {
+        this.pendingStart = this.beginAssist;
+        return;
+      }
+      this.beginAssist();
     });
     app.attachStopCallback(() => {
       if (this.assistDemandedRestart) {
@@ -194,7 +221,7 @@ export default class Assist {
       // restart must reconnect with a fresh socket (new session/tab identity)
       // via onStart, not reuse this one.
       this.socket = null;
-      observer && observer.disconnect();
+      this.titleObserver?.disconnect();
     });
     app.attachCommitCallback((messages) => {
       if (this.agentsConnected) {
@@ -251,27 +278,61 @@ export default class Assist {
     });
   }
 
+  /** Connects assist and wires up the title/cross-tab state watchers. */
+  private beginAssist = () => {
+    this.onStart();
+    this.publishState({ type: "assist_state_check" });
+    if (this.titleObserver && this.titleNode) {
+      this.titleObserver.observe(this.titleNode, { childList: true });
+    }
+  };
+
+  private get continuationEnabled(): boolean {
+    return this.options.autostart === Autostart.Continuation;
+  }
+
+  /** Whether assist should connect automatically on tracker start. */
+  private shouldAutoStart(): boolean {
+    switch (this.options.autostart) {
+      case Autostart.Disabled:
+        return false;
+      case Autostart.Continuation:
+        return sessionStorage.getItem(SS_CONTINUE_KEY) === "1";
+      case Autostart.Auto:
+      default:
+        return true;
+    }
+  }
+
   /**
    * Stops assist: disconnects the socket and cleans up all connections.
    * Assist won't restart automatically on the next tracker start until
-   * start() is called.
+   * start() is called. In Autostart.Continuation mode this also clears the
+   * persisted flag, so a reload won't auto-continue.
    */
   public stop = () => {
     this.userStopped = true;
     this.pendingStart = null;
+    if (this.continuationEnabled) {
+      sessionStorage.removeItem(SS_CONTINUE_KEY);
+    }
     this.clean();
   }
 
   /**
-   * (Re)starts assist after a manual stop(). No-op if the tracker itself
-   * isn't active yet (assist will start together with the tracker).
-   * Reuses the existing socket (and its handlers) when possible instead of
-   * re-running onStart, to avoid duplicating node/socket callbacks.
+   * (Re)starts assist. No-op if the tracker itself isn't active yet (assist
+   * will start together with the tracker). Reuses the existing socket (and
+   * its handlers) when possible instead of re-running onStart, to avoid
+   * duplicating node/socket callbacks. In Autostart.Continuation mode it
+   * persists a flag so assist auto-continues across page reloads.
    */
   public start = () => {
     this.userStopped = false;
     // an explicit start supersedes any ignoreAnonymous postponement
     this.pendingStart = null;
+    if (this.continuationEnabled) {
+      sessionStorage.setItem(SS_CONTINUE_KEY, "1");
+    }
     if (!this.app.active()) {
       return;
     }
@@ -279,7 +340,7 @@ export default class Assist {
       this.socket.connect();
       return;
     }
-    this.onStart();
+    this.beginAssist();
   }
 
   private emit(ev: string, args?: any): void {
