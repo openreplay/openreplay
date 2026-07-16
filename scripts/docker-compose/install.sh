@@ -133,6 +133,7 @@ info "Starting the application with Docker... 🐳"
 # Load variables from common.env into the current shell's environment
 set -a # automatically export all variables
 source common.env
+ln -sf common.env .env
 set +a
 
 # Use envsubst to substitute the shell environment variables into *.env and docker-compose.yaml.

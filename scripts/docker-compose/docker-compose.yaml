@@ -1,7 +1,5 @@
 
 # vim: ft=yaml
-version: '3'
-
 services:
 
   postgresql:
@@ -15,6 +13,11 @@ services:
           - postgresql.db.svc.cluster.local
     environment:
       POSTGRESQL_PASSWORD: "${COMMON_PG_PASSWORD}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   clickhouse:
     image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
@@ -29,6 +32,11 @@ services:
       CLICKHOUSE_USER: "default"
       CLICKHOUSE_PASSWORD: ""
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: ghcr.io/openreplay/valkey:${REDIS_VERSION}
@@ -41,9 +49,14 @@ services:
           - redis-master.db.svc.cluster.local
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   minio:
-    image: rustfs/rustfs:${RUSTFS_VERSION}
+    image: docker.io/rustfs/rustfs:${MINIO_VERSION}
     container_name: minio
     volumes:
       - miniodata:/data
@@ -59,7 +72,12 @@ services:
       RUSTFS_ADDRESS: "0.0.0.0:9000"
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
-      RUSTFS_VOLUMES: /data
+      RUSTFS_VOLUMES: "/data"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -so /dev/null http://localhost:9000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   fs-permission:
     image: debian:stable-slim
@@ -74,21 +92,24 @@ services:
       - /bin/bash
       - -c
       - |
-        chown -R 1001:1001 /mnt/{efs,minio,postgres}
+        chown -R 1001:1001 /mnt/{efs,postgres}
+        chown -R 10001:10001 /mnt/minio
     restart: on-failure
 
   minio-migration:
-    image: minio/mc:latest
+    image: ghcr.io/openreplay/minio:2025
     container_name: minio-migration
     profiles:
       - "migration"
     depends_on:
-      - minio
-      - fs-permission
+      minio:
+        condition: service_healthy
+      fs-permission:
+        condition: service_completed_successfully
     networks:
       - openreplay-net
     volumes:
-      - ../helmcharts/openreplay/files/minio.sh:/tmp/minio.sh
+      - ./migration-files/minio.sh:/tmp/minio.sh
     environment:
       MINIO_HOST: http://minio.db.svc.cluster.local:9000
       MINIO_ACCESS_KEY: ${COMMON_S3_KEY}
@@ -98,9 +119,9 @@ services:
       - /bin/bash
       - -c
       - |
-          # Wait for RustFS to be ready
+          # Wait for Minio to be ready
           until bash -c 'echo > /dev/tcp/minio/9000' 2>/dev/null; do
-              echo "Waiting for RustFS server to be ready..."
+              echo "Waiting for Minio server to be ready..."
               sleep 1
           done
           bash /tmp/minio.sh init || exit 100
@@ -111,12 +132,14 @@ services:
     profiles:
       - "migration"
     depends_on:
-      - postgresql
-      - minio-migration
+      postgresql:
+        condition: service_healthy
+      minio-migration:
+        condition: service_completed_successfully
     networks:
       - openreplay-net
     volumes:
-      - ../schema/db/init_dbs/postgresql/init_schema.sql:/tmp/init_schema.sql
+      - ./migration-files/init_pg_schema.sql:/tmp/init_schema.sql
     environment:
       PGHOST: postgresql
       PGPORT: 5432
@@ -140,12 +163,14 @@ services:
     profiles:
       - "migration"
     depends_on:
-      - clickhouse
-      - minio-migration
+      clickhouse:
+        condition: service_healthy
+      minio-migration:
+        condition: service_completed_successfully
     networks:
       - openreplay-net
     volumes:
-      - ../schema/db/init_dbs/clickhouse/create/init_schema.sql:/tmp/init_schema.sql
+      - ./migration-files/init_ch_schema.sql:/tmp/init_schema.sql
     environment:
       CH_HOST: "clickhouse-openreplay-clickhouse.db.svc.cluster.local"
       CH_PORT: "9000"
@@ -167,7 +192,7 @@ services:
           clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 9000 --multiquery < /tmp/init_schema.sql || true
   
   alerts-openreplay:
-    image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/alerts:${ALERTS_VERSION}
     domainname: app.svc.cluster.local
     container_name: alerts
     networks:
@@ -179,12 +204,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/alerts.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   api-openreplay:
-    image: public.ecr.aws/p1t3u8a3/api:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/api:${API_VERSION}
     domainname: app.svc.cluster.local
     container_name: api
     networks:
@@ -196,12 +230,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/api.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   http-openreplay:
-    image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/http:${HTTP_VERSION}
     domainname: app.svc.cluster.local
     container_name: http
     networks:
@@ -213,12 +256,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/http.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   images-openreplay:
-    image: public.ecr.aws/p1t3u8a3/images:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/images:${IMAGES_VERSION}
     domainname: app.svc.cluster.local
     container_name: images
     networks:
@@ -230,12 +282,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/images.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   integrations-openreplay:
-    image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/integrations:${INTEGRATIONS_VERSION}
     domainname: app.svc.cluster.local
     container_name: integrations
     networks:
@@ -247,12 +308,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/integrations.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   sink-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/sink:${SINK_VERSION}
     domainname: app.svc.cluster.local
     container_name: sink
     networks:
@@ -264,12 +334,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/sink.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   sourcemapreader-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${SOURCEMAPREADER_VERSION}
     domainname: app.svc.cluster.local
     container_name: sourcemapreader
     networks:
@@ -281,12 +360,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/sourcemapreader.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   spot-openreplay:
-    image: public.ecr.aws/p1t3u8a3/spot:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/spot:${SPOT_VERSION}
     domainname: app.svc.cluster.local
     container_name: spot
     networks:
@@ -298,12 +386,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/spot.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   storage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/storage:${STORAGE_VERSION}
     domainname: app.svc.cluster.local
     container_name: storage
     networks:
@@ -315,12 +412,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/storage.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   assets-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/assets:${ASSETS_VERSION}
     domainname: app.svc.cluster.local
     container_name: assets
     networks:
@@ -332,12 +438,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/assets.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   assist-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/assist:${ASSIST_VERSION}
     domainname: app.svc.cluster.local
     container_name: assist
     networks:
@@ -349,12 +464,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/assist.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   canvases-openreplay:
-    image: public.ecr.aws/p1t3u8a3/canvases:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/canvases:${CANVASES_VERSION}
     domainname: app.svc.cluster.local
     container_name: canvases
     networks:
@@ -366,12 +490,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/canvases.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   chalice-openreplay:
-    image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/chalice:${CHALICE_VERSION}
     domainname: app.svc.cluster.local
     container_name: chalice
     networks:
@@ -383,12 +516,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/chalice.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   db-openreplay:
-    image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/db:${DB_VERSION}
     domainname: app.svc.cluster.local
     container_name: db
     networks:
@@ -400,12 +542,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/db.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   ender-openreplay:
-    image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/ender:${ENDER_VERSION}
     domainname: app.svc.cluster.local
     container_name: ender
     networks:
@@ -417,12 +568,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/ender.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   frontend-openreplay:
-    image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/frontend:${FRONTEND_VERSION}
     domainname: app.svc.cluster.local
     container_name: frontend
     networks:
@@ -434,12 +594,21 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/frontend.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
   
   heuristics-openreplay:
-    image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/heuristics:${HEURISTICS_VERSION}
     domainname: app.svc.cluster.local
     container_name: heuristics
     networks:
@@ -451,6 +620,15 @@ services:
       - shared-volume:/mnt/efs
     env_file:
       - docker-envs/heuristics.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment: {}  # Fallback empty environment if env_file is missing
     restart: unless-stopped
   
