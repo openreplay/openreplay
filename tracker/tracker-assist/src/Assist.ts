@@ -19,6 +19,24 @@ import { gzip } from "fflate";
 
 const textEncoder = new TextEncoder();
 
+// sessionStorage flag used by Autostart.Continuation to survive page reloads
+const SS_CONTINUE_KEY = "__openreplay_assist_continue";
+
+/**
+ * Controls when assist connects to the server.
+ */
+export enum Autostart {
+  /** Never auto-connect; assist starts only via an explicit start() call. */
+  Disabled = "disabled",
+  /**
+   * Auto-connect on reload only if start() was called earlier in this
+   * browser session (persisted in sessionStorage). stop() cancels it.
+   */
+  Continuation = "continuation",
+  /** Always auto-connect on tracker start (default, legacy behavior). */
+  Auto = "auto",
+}
+
 type StartEndCallback = (agentInfo?: Record<string, any>) => (() => any) | void;
 
 interface AgentInfo {
@@ -60,6 +78,26 @@ export interface Options {
    * @default 5000
    */
   compressionMinBatchSize: number;
+  /**
+   * Show only the first part of an agent's name in the call popup
+   * (e.g. "One Two" -> "One").
+   * @default false
+   */
+  agentShortNames: boolean;
+  /**
+   * Postpone assist start until a userID is set on the session.
+   * @default false
+   */
+  ignoreAnonymous: boolean;
+  /**
+   * When assist connects to the server:
+   * - Autostart.Auto (default): always on tracker start.
+   * - Autostart.Disabled: only via an explicit start() call.
+   * - Autostart.Continuation: only via start(), but the choice is remembered
+   *   in sessionStorage so it auto-continues across page reloads until stop().
+   * @default Autostart.Auto
+   */
+  autostart: Autostart;
 }
 
 enum CallingState {
@@ -84,6 +122,10 @@ export default class Assist {
   private canvasPeers: Map<string, RTCPeerConnection> = new Map();
   private canvasNodeCheckers: Map<number, any> = new Map();
   private assistDemandedRestart = false;
+  private userStopped = false;
+  private pendingStart: (() => void) | null = null;
+  private titleNode: HTMLTitleElement | null = null;
+  private titleObserver: MutationObserver | null = null;
   private callingState: CallingState = CallingState.False;
   private remoteControl: RemoteControl | null = null;
   private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -122,6 +164,9 @@ export default class Assist {
         socketHost: "",
         compressionEnabled: false,
         compressionMinBatchSize: 5000,
+        agentShortNames: false,
+        ignoreAnonymous: false,
+        autostart: Autostart.Auto,
       },
       options,
     );
@@ -145,29 +190,38 @@ export default class Assist {
       "BroadcastChannel" in window ? new BroadcastChannel("or-assist") : null;
     this.tabBus?.addEventListener("message", this.handleTabStateMessage);
 
-    const titleNode = document.querySelector("title");
-    const observer =
-      titleNode &&
-      new MutationObserver(() => {
-        this.emit("UPDATE_SESSION", { pageTitle: document.title });
-      });
+    this.titleNode = document.querySelector("title");
+    this.titleObserver = this.titleNode
+      ? new MutationObserver(() => {
+          this.emit("UPDATE_SESSION", { pageTitle: document.title });
+        })
+      : null;
     app.attachStartCallback(() => {
-      if (this.assistDemandedRestart) {
+      if (this.assistDemandedRestart || this.userStopped) {
         return;
       }
-      this.onStart();
-      this.publishState({ type: "assist_state_check" })
-      observer &&
-        observer.observe(titleNode, {
-          childList: true,
-        });
+      // autostart gate: disabled never auto-connects, continuation only when
+      // start() was called earlier this browser session
+      if (!this.shouldAutoStart()) {
+        return;
+      }
+      // postpone start until a userID is attached to the session
+      if (this.options.ignoreAnonymous && !this.app.getSessionInfo().userID) {
+        this.pendingStart = this.beginAssist;
+        return;
+      }
+      this.beginAssist();
     });
     app.attachStopCallback(() => {
       if (this.assistDemandedRestart) {
         return;
       }
       this.clean();
-      observer && observer.disconnect();
+      // tracker stop => kill the connection completely; a genuine tracker
+      // restart must reconnect with a fresh socket (new session/tab identity)
+      // via onStart, not reuse this one.
+      this.socket = null;
+      this.titleObserver?.disconnect();
     });
     app.attachCommitCallback((messages) => {
       if (this.agentsConnected) {
@@ -213,9 +267,80 @@ export default class Assist {
         }
       }
     });
-    app.session.attachUpdateCallback((sessInfo) =>
-      this.emit("UPDATE_SESSION", sessInfo),
-    );
+    app.session.attachUpdateCallback((sessInfo) => {
+      // ignoreAnonymous: fire the postponed start once a userID arrives
+      if (this.pendingStart && sessInfo.userID) {
+        const begin = this.pendingStart;
+        this.pendingStart = null;
+        begin();
+      }
+      this.emit("UPDATE_SESSION", sessInfo);
+    });
+  }
+
+  /** Connects assist and wires up the title/cross-tab state watchers. */
+  private beginAssist = () => {
+    this.onStart();
+    this.publishState({ type: "assist_state_check" });
+    if (this.titleObserver && this.titleNode) {
+      this.titleObserver.observe(this.titleNode, { childList: true });
+    }
+  };
+
+  private get continuationEnabled(): boolean {
+    return this.options.autostart === Autostart.Continuation;
+  }
+
+  /** Whether assist should connect automatically on tracker start. */
+  private shouldAutoStart(): boolean {
+    switch (this.options.autostart) {
+      case Autostart.Disabled:
+        return false;
+      case Autostart.Continuation:
+        return sessionStorage.getItem(SS_CONTINUE_KEY) === "1";
+      case Autostart.Auto:
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * Stops assist: disconnects the socket and cleans up all connections.
+   * Assist won't restart automatically on the next tracker start until
+   * start() is called. In Autostart.Continuation mode this also clears the
+   * persisted flag, so a reload won't auto-continue.
+   */
+  public stop = () => {
+    this.userStopped = true;
+    this.pendingStart = null;
+    if (this.continuationEnabled) {
+      sessionStorage.removeItem(SS_CONTINUE_KEY);
+    }
+    this.clean();
+  }
+
+  /**
+   * (Re)starts assist. No-op if the tracker itself isn't active yet (assist
+   * will start together with the tracker). Reuses the existing socket (and
+   * its handlers) when possible instead of re-running onStart, to avoid
+   * duplicating node/socket callbacks. In Autostart.Continuation mode it
+   * persists a flag so assist auto-continues across page reloads.
+   */
+  public start = () => {
+    this.userStopped = false;
+    // an explicit start supersedes any ignoreAnonymous postponement
+    this.pendingStart = null;
+    if (this.continuationEnabled) {
+      sessionStorage.setItem(SS_CONTINUE_KEY, "1");
+    }
+    if (!this.app.active()) {
+      return;
+    }
+    if (this.socket) {
+      this.socket.connect();
+      return;
+    }
+    this.beginAssist();
   }
 
   private emit(ev: string, args?: any): void {
@@ -303,7 +428,7 @@ export default class Assist {
 
     const onGrand = (id: string) => {
       if (!this.callUI) {
-        this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+        this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate, this.options.agentShortNames);
       }
       if (this.remoteControl) {
         this.callUI?.showRemoteControl(this.remoteControl.releaseControl);
@@ -760,7 +885,7 @@ export default class Assist {
         this.calls.set(from, pc);
 
         if (!this.callUI) {
-          this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate);
+          this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate, this.options.agentShortNames);
           this.callUI.setVideoToggleCallback((args: { enabled: boolean }) => {
             this.emit("videofeed", { streamId: from, enabled: args.enabled });
           });
@@ -1052,7 +1177,7 @@ export default class Assist {
       if (msg.data.update === "call") {
         if (msg.data.isCallActive) {
           if (!this.callUI) {
-            this.callUI = new CallWindow(this.app.debug.error, this.options.callUITemplate);
+            this.callUI = new CallWindow(this.app.debug.error, this.options.callUITemplate, this.options.agentShortNames);
           }
           const initiateCallEnd = () => {
             this.emit("call_end");
