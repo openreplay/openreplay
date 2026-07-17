@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 
 interface Props {
-  userDisplayName: string;
   getWindowType: () => WindowType | null;
 }
 
@@ -17,12 +16,14 @@ export enum WindowType {
   Call,
   Control,
   Record,
+  SessionConfirm,
 }
 
 enum Actions {
   CallEnd,
   ControlEnd,
   RecordingEnd,
+  None,
 }
 
 const WIN_VARIANTS = (t: TFunction) => ({
@@ -44,6 +45,12 @@ const WIN_VARIANTS = (t: TFunction) => ({
     iconColor: 'red',
     action: Actions.RecordingEnd,
   },
+  [WindowType.SessionConfirm]: {
+    text: t('to allow viewing this session'),
+    icon: 'eye' as const,
+    iconColor: 'teal',
+    action: Actions.None,
+  },
 });
 
 function RequestingWindow({ getWindowType }: Props) {
@@ -63,6 +70,7 @@ function RequestingWindow({ getWindowType }: Props) {
     [Actions.CallEnd]: initiateCallEnd,
     [Actions.ControlEnd]: releaseRemoteControl,
     [Actions.RecordingEnd]: stopRecording,
+    [Actions.None]: undefined,
   };
   return (
     <div
@@ -85,12 +93,14 @@ function RequestingWindow({ getWindowType }: Props) {
         </div>
         <span>{WIN_VARIANTS(t)[windowType].text}</span>
         <Loader size={30} style={{ minHeight: 60 }} />
-        <Button
-          variant="text"
-          onClick={actions[WIN_VARIANTS(t)[windowType].action]}
-        >
-          {t('Cancel')}
-        </Button>
+        {actions[WIN_VARIANTS(t)[windowType].action] ? (
+          <Button
+            variant="text"
+            onClick={actions[WIN_VARIANTS(t)[windowType].action]}
+          >
+            {t('Cancel')}
+          </Button>
+        ) : null}
       </div>
     </div>
   );
