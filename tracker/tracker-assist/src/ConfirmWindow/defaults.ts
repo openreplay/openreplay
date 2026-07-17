@@ -6,6 +6,7 @@ const TEXT_GRANT_REMORTE_ACCESS = 'Grant Remote Control'
 const TEXT_REJECT = 'Reject'
 const TEXT_ANSWER_CALL = 'Answer'
 const TEXT_ACCEPT_RECORDING = 'Allow Recording'
+const TEXT_ALLOW_SESSION = 'Allow'
 
 export type Options = string | Partial<ConfirmWindowOptions>;
 
@@ -48,4 +49,12 @@ export const recordRequestDefault = (opts: Options) =>
       TEXT_ACCEPT_RECORDING,
       TEXT_REJECT,
       'Agent requested to record activity in this browser tab.'
+    )
+
+export const sessionConfirmDefault = (opts: Options) =>
+    confirmDefault(
+      opts,
+      TEXT_ALLOW_SESSION,
+      TEXT_REJECT,
+      'Agent requested to view this session live. Allow?'
     )

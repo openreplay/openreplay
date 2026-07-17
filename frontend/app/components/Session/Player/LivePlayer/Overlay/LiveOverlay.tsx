@@ -5,6 +5,7 @@ import {
   CallingState,
   ConnectionStatus,
   RemoteControlStatus,
+  SessionConfirmStatus,
 } from 'Player';
 
 import Loader from 'Components/Session_/Player/Overlay/Loader';
@@ -33,6 +34,7 @@ function Overlay({ closedLive }: Props) {
     calling,
     remoteControl,
     recordingState,
+    sessionConfirmation,
     tabStates,
     currentTab,
   } = store.get();
@@ -45,11 +47,15 @@ function Overlay({ closedLive }: Props) {
   const showLiveStatusText = livePlay && liveStatusText && !loading;
 
   const showRequestWindow =
+    sessionConfirmation === SessionConfirmStatus.Requesting ||
     calling === CallingState.Connecting ||
     remoteControl === RemoteControlStatus.Requesting ||
     recordingState === SessionRecordingStatus.Requesting;
 
   const getRequestWindowType = () => {
+    if (sessionConfirmation === SessionConfirmStatus.Requesting) {
+      return WindowType.SessionConfirm;
+    }
     if (calling === CallingState.Connecting) {
       return WindowType.Call;
     }

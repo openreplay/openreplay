@@ -72,11 +72,14 @@ trackerAssist({
   onCallDeny?: () => any;
   onRemoteControlDeny?: (agentInfo: Record<string, any>) => any;
   onRecordingDeny?: (agentInfo: Record<string, any>) => any;
+  onSessionConfirmApprove?: (agentInfo: Record<string, any>) => any;
+  onSessionConfirmDeny?: (agentInfo: Record<string, any>) => any;
   session_calling_peer_key: string;
   session_control_peer_key: string;
   callConfirm: ConfirmOptions;
   controlConfirm: ConfirmOptions;
   recordingConfirm: ConfirmOptions;
+  sessionConfirm: ConfirmOptions;
   socketHost?: string;
   config: RTCConfiguration;
   serverURL: string
@@ -84,6 +87,7 @@ trackerAssist({
   agentShortNames?: boolean;
   ignoreAnonymous?: boolean;
   autostart?: Autostart; // 'disabled' | 'continuation' | 'auto'
+  requestConfirm?: boolean;
 })
 ```
 
@@ -93,6 +97,7 @@ trackerAssist({
   - `Autostart.Auto`: always connect on `tracker.start()` (legacy behavior).
   - `Autostart.Disabled`: never connect automatically; call `assist.start()` yourself.
   - `Autostart.Continuation`: connect only after `assist.start()` is called, but remember that choice in `sessionStorage` so assist auto-continues across page reloads until `assist.stop()` is called.
+- `requestConfirm`: When `true`, assist connects as usual but sends nothing to the agents until the user approves a confirmation popup, shown as soon as the first agent connects to the session. On approval, tracking restarts so agents receive a full snapshot; the approval is remembered per-tab (`sessionStorage`) until `assist.stop()` is called. On denial, the session stays connected but silent, and the popup is shown again on the next agent connection. Use `sessionConfirm` to customize the popup and `onSessionConfirmApprove`/`onSessionConfirmDeny` for callbacks. Defaults to `false`.
 
 #### Public methods
 
@@ -133,6 +138,7 @@ type ButtonOptions = HTMLButtonElement | string | {
 
 - `callConfirm`: Customize the text and/or layout of the call request popup.
 - `controlConfirm`: Customize the text and/or layout of the remote control request popup.
+- `sessionConfirm`: Customize the text and/or layout of the session view confirmation popup (`requestConfirm` mode).
 - `config`: Contains any custom ICE/TURN server configuration. Defaults to `{ 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }], 'sdpSemantics': 'unified-plan' }`.
 - `onAgentConnect: () => (()=>void | void)`: This callback function is fired when someone from OpenReplay UI connects to the current live session. It can return another function. In this case, returned callback will be called when the same agent connection gets closed.
 

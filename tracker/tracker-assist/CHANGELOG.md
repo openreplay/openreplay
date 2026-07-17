@@ -1,6 +1,9 @@
 ## 11.0.19
 
 - add an option to require user permission to view assist session
+- `requestConfirm` option: require user confirmation before anything is sent to agents; popup shown when first agent connects, approval remembered per-tab until `stop()`
+- `sessionConfirm` option to customize the confirmation popup text/style
+- `onSessionConfirmApprove`/`onSessionConfirmDeny` callbacks
 
 ## 11.0.18
 
