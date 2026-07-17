@@ -10,7 +10,10 @@ import RemoteControl, { RCStatus } from "./RemoteControl.js";
 import CallWindow from "./CallWindow.js";
 import AnnotationCanvas from "./AnnotationCanvas.js";
 import ConfirmWindow from "./ConfirmWindow/ConfirmWindow.js";
-import { callConfirmDefault } from "./ConfirmWindow/defaults.js";
+import {
+  callConfirmDefault,
+  sessionConfirmDefault,
+} from "./ConfirmWindow/defaults.js";
 import type { Options as ConfirmOptions } from "./ConfirmWindow/defaults.js";
 import ScreenRecordingState from "./ScreenRecordingState.js";
 import { pkgVersion } from "./version.js";
@@ -37,12 +40,18 @@ export interface Options {
   onCallDeny?: () => any;
   onRemoteControlDeny?: (agentInfo: Record<string, any>) => any;
   onRecordingDeny?: (agentInfo: Record<string, any>) => any;
+  /** Called when the user approves session viewing (requestConfirm mode). */
+  onSessionConfirmApprove?: (agentInfo: Record<string, any>) => any;
+  /** Called when the user denies session viewing (requestConfirm mode). */
+  onSessionConfirmDeny?: (agentInfo: Record<string, any>) => any;
   onDragCamera?: (dx: number, dy: number) => void;
   session_calling_peer_key: string;
   session_control_peer_key: string;
   callConfirm: ConfirmOptions;
   controlConfirm: ConfirmOptions;
   recordingConfirm: ConfirmOptions;
+  /** Text/style customization for the session view confirmation popup. */
+  sessionConfirm: ConfirmOptions;
   socketHost?: string;
 
   // @deprecated
@@ -87,6 +96,8 @@ export default class Assist {
   private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private agents: Record<string, Agent> = {};
   private config: RTCIceServer[] | undefined;
+  private sessionConfirmed = false;
+  private sessionConfirmWindow: ConfirmWindow | null = null;
   private readonly options: Options;
   private readonly canvasMap: Map<number, Canvas> = new Map();
   private iceCandidatesBuffer: Map<string, RTCIceCandidateInit[]> = new Map();
@@ -117,6 +128,8 @@ export default class Assist {
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overwriting
         recordingConfirm: {},
+        sessionConfirm: {},
+        requestConfirm: false,
         socketHost: "",
         compressionEnabled: false,
         compressionMinBatchSize: 5000,
@@ -126,6 +139,10 @@ export default class Assist {
 
     if (this.app.options.assistSocketHost) {
       this.options.socketHost = this.app.options.assistSocketHost;
+    }
+
+    if (this.options.requestConfirm) {
+      this.sessionConfirmed = sessionStorage.getItem(SS_CONFIRM_KEY) === "1";
     }
 
     if (document.hidden !== undefined) {
@@ -170,7 +187,7 @@ export default class Assist {
       observer && observer.disconnect();
     });
     app.attachCommitCallback((messages) => {
-      if (this.agentsConnected) {
+      if (this.agentsConnected && this.canSendMessages) {
         const batchSize = messages.length;
         // @ts-ignore No need in statistics messages. TODO proper filter
         if (
@@ -218,12 +235,149 @@ export default class Assist {
     );
   }
 
-  private emit(ev: string, args?: any): void {
+  private emit(ev: string, args?: any, force = false): void {
+    // requestConfirm mode: nothing leaves the socket until the user approves,
+    // except the confirmation-state events themselves (force)
+    if (!force && !this.canSendMessages) {
+      return;
+    }
     this.socket &&
       this.socket.emit(ev, {
         meta: { tabId: this.app.getTabId() },
         data: args,
       });
+  }
+
+  /** False only in requestConfirm mode while the user hasn't approved yet. */
+  private get canSendMessages(): boolean {
+    return !this.options.requestConfirm || this.sessionConfirmed;
+  }
+
+  /**
+   * requestConfirm mode: shows the confirmation popup (once) and tells the
+   * connected agents the session is waiting for the user's approval.
+   */
+  private requestSessionConfirm = (agentInfo?: AgentInfo) => {
+    if (this.canSendMessages) {
+      return;
+    }
+    // let every agent (including ones connecting while the popup is already
+    // shown) know the session is waiting for user confirmation
+    this.emit("session_confirm_pending", undefined, true);
+    if (this.sessionConfirmWindow) {
+      return;
+    }
+    this.sessionConfirmWindow = new ConfirmWindow(
+      sessionConfirmDefault(this.options.sessionConfirm),
+    );
+    this.playNotificationSound();
+    this.sessionConfirmWindow
+      .mount()
+      .then((answer) => this.answerSessionConfirm(answer, agentInfo))
+      .catch(() => {}); // window removed without an answer
+  };
+
+  private answerSessionConfirm = (
+    answer: boolean,
+    agentInfo?: AgentInfo,
+    fromAnotherTab = false,
+  ) => {
+    this.closeSessionConfirmWindow();
+    if (answer) {
+      if (this.sessionConfirmed) {
+        return;
+      }
+      this.sessionConfirmed = true;
+      sessionStorage.setItem(SS_CONFIRM_KEY, "1");
+      this.emit("session_confirm_accepted", undefined, true);
+      try {
+        this.options.onSessionConfirmApprove?.(agentInfo || {});
+      } catch (e) {
+        this.app.debug.error(e);
+      }
+      // everything before the approval was suppressed; restart tracking so
+      // the agents receive a full snapshot
+      this.restartTracking(() =>
+        this.remoteControl?.reconnect(Object.keys(this.agents)),
+      );
+    } else {
+      this.emit("session_confirm_rejected", undefined, true);
+      try {
+        this.options.onSessionConfirmDeny?.(agentInfo || {});
+      } catch (e) {
+        this.app.debug.error(e);
+      }
+    }
+    if (!fromAnotherTab) {
+      this.publishState({
+        type: "assist_state",
+        update: "confirm",
+        confirmAnswer: answer,
+      });
+    }
+  };
+
+  private closeSessionConfirmWindow = () => {
+    this.sessionConfirmWindow?.remove();
+    this.sessionConfirmWindow = null;
+  };
+
+  private restartInProgress = false;
+  private pendingRestartCallbacks: (() => void)[] = [];
+
+  /**
+   * Restarts the tracker app so agents receive a full DOM snapshot.
+   * Requests arriving while a restart is in flight (e.g. a second agent
+   * connecting during the stop phase, when app.active() is false) don't
+   * start another one — their callbacks run when the current restart ends.
+   */
+  private restartTracking(onRestarted?: () => void) {
+    if (this.restartInProgress) {
+      if (onRestarted) {
+        this.pendingRestartCallbacks.push(onRestarted);
+      }
+      return;
+    }
+    if (!this.app.active()) {
+      return;
+    }
+    this.restartInProgress = true;
+    if (onRestarted) {
+      this.pendingRestartCallbacks.push(onRestarted);
+    }
+    const finish = () => {
+      this.restartInProgress = false;
+      const callbacks = this.pendingRestartCallbacks;
+      this.pendingRestartCallbacks = [];
+      return callbacks;
+    };
+    this.assistDemandedRestart = true;
+    this.app.stop(false);
+    this.app.clearBuffers();
+    this.app.waitStatus(0).then(() => {
+      this.app.allowAppStart();
+      setTimeout(() => {
+        this.app
+          .start()
+          .then(() => {
+            this.assistDemandedRestart = false;
+          })
+          .then(() => {
+            finish().forEach((cb) => {
+              try {
+                cb();
+              } catch (e) {
+                this.app.debug.error(e);
+              }
+            });
+          })
+          .catch((e) => {
+            this.assistDemandedRestart = false;
+            finish();
+            this.app.debug.error(e);
+          });
+      }, 100);
+    });
   }
 
   private get agentsConnected(): boolean {
@@ -377,6 +531,7 @@ export default class Assist {
     }
     if (this.remoteControl !== null) {
       socket.on("request_control", (agentId, dataObj) => {
+        if (!this.canSendMessages) return;
         processEvent(agentId, dataObj, this.remoteControl?.requestControl);
       });
       socket.on("release_control", (agentId, dataObj) => {
@@ -441,28 +596,13 @@ export default class Assist {
         onDisconnect: this.options.onAgentConnect?.(info),
         agentInfo: info, // TODO ?
       };
-      if (this.app.active()) {
-        this.assistDemandedRestart = true;
-        this.app.stop(false);
-        this.app.clearBuffers();
-        this.app.waitStatus(0).then(() => {
-          this.app.allowAppStart();
-          setTimeout(() => {
-            this.app
-              .start()
-              .then(() => {
-                this.assistDemandedRestart = false;
-              })
-              .then(() => {
-                this.remoteControl?.reconnect([id]);
-              })
-              .catch((e) => {
-                this.assistDemandedRestart = false;
-                app.debug.error(e);
-              });
-          }, 100);
-        });
+      if (!this.canSendMessages) {
+        // nothing goes out until the user approves; the restart (and full
+        // snapshot) happens on approval instead
+        this.requestSessionConfirm(info);
+        return;
       }
+      this.restartTracking(() => this.remoteControl?.reconnect([id]));
     });
 
     socket.on("AGENTS_INFO_CONNECTED", (agentsInfo: AgentInfo[]) => {
@@ -474,28 +614,13 @@ export default class Assist {
           onDisconnect: this.options.onAgentConnect?.(agentInfo),
         };
       });
-      if (this.app.active()) {
-        this.assistDemandedRestart = true;
-        this.app.stop(false);
-        this.app.clearBuffers();
-        this.app.waitStatus(0).then(() => {
-          this.app.allowAppStart();
-          setTimeout(() => {
-            this.app
-              .start()
-              .then(() => {
-                this.assistDemandedRestart = false;
-              })
-              .then(() => {
-                this.remoteControl?.reconnect(Object.keys(this.agents));
-              })
-              .catch((e) => {
-                this.assistDemandedRestart = false;
-                app.debug.error(e);
-              });
-          }, 100);
-        });
+      if (!this.canSendMessages) {
+        this.requestSessionConfirm(agentsInfo[0]);
+        return;
       }
+      this.restartTracking(() =>
+        this.remoteControl?.reconnect(Object.keys(this.agents)),
+      );
     });
 
     socket.on("AGENT_DISCONNECTED", (id) => {
@@ -509,6 +634,10 @@ export default class Assist {
 
       recordingState.stopAgentRecording(id);
       endAgentCall({ socketId: id });
+      if (!this.agentsConnected) {
+        // no one left waiting for an answer
+        this.closeSessionConfirmWindow();
+      }
     });
 
     socket.on("NO_AGENT", () => {
@@ -516,6 +645,7 @@ export default class Assist {
       this.cleanCanvasConnections();
       this.agents = {};
       if (recordingState.isActive) recordingState.stopRecording();
+      this.closeSessionConfirmWindow();
     });
 
     socket.on("call_end", (socketId, msg) => {
@@ -575,6 +705,7 @@ export default class Assist {
     });
 
     socket.on("request_recording", (id, info) => {
+      if (!this.canSendMessages) return;
       if (app.getTabId() !== info.meta.tabId) return;
       const agentData = info.data;
       if (!recordingState.isActive) {
@@ -596,6 +727,7 @@ export default class Assist {
     socket.on(
       "webrtc_call_offer",
       async (_, data: { from: string; offer: RTCSessionDescriptionInit }) => {
+        if (!this.canSendMessages) return;
         if (!this.calls.has(data.from)) {
           await handleIncomingCallOffer(data.from, data.offer);
         }
@@ -897,6 +1029,9 @@ export default class Assist {
     };
 
     const startCanvasStream = async (stream: MediaStream, id: number) => {
+      // canvas streams go over WebRTC, not this.emit — gate them explicitly;
+      // the restart on approval re-triggers the node callbacks
+      if (!this.canSendMessages) return;
       for (const agent of Object.values(this.agents)) {
         if (!agent.agentInfo) return;
 
@@ -978,6 +1113,7 @@ export default class Assist {
 
   // clear all data
   private clean() {
+    this.closeSessionConfirmWindow();
     // sometimes means new agent connected, so we keep id for control
     this.remoteControl?.releaseControl(false, true);
     if (this.peerReconnectTimeout) {
@@ -1075,6 +1211,16 @@ export default class Assist {
           this.remoteControl?.grantControl(msg.data.rcActive, true);
         } else {
           this.remoteControl?.releaseControl(false, false, true);
+        }
+      }
+      if (msg.data.update === "confirm" && this.options.requestConfirm) {
+        // the user answered the session confirm popup in another tab
+        if (msg.data.confirmAnswer) {
+          if (!this.sessionConfirmed) {
+            this.answerSessionConfirm(true, undefined, true);
+          }
+        } else if (this.sessionConfirmWindow) {
+          this.answerSessionConfirm(false, undefined, true);
         }
       }
       Object.assign(this.tabState, msg.data);
