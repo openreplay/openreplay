@@ -84,7 +84,7 @@ function build_api() {
     done
 
     mv Dockerfile.dockerignore .dockerignore
-    docker build -f ./Dockerfile --platform ${ARCH} --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/${IMAGE_NAME:-'chalice'}:${image_tag} .
+    docker build -f ./Dockerfile --platform ${ARCH} --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/${IMAGE_NAME:-'chalice'}:${image_tag} . || exit_err $?
     cd ../api || exit_err 100
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
