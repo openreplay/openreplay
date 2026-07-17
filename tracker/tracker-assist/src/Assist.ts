@@ -432,7 +432,11 @@ export default class Assist {
       this.sessionConfirmed = true;
       sessionStorage.setItem(SS_CONFIRM_KEY, "1");
       this.emit("session_confirm_accepted", undefined, true);
-      this.options.onSessionConfirmApprove?.(agentInfo || {});
+      try {
+        this.options.onSessionConfirmApprove?.(agentInfo || {});
+      } catch (e) {
+        this.app.debug.error(e);
+      }
       // everything before the approval was suppressed; restart tracking so
       // the agents receive a full snapshot
       this.restartTracking(() =>
@@ -440,7 +444,11 @@ export default class Assist {
       );
     } else {
       this.emit("session_confirm_rejected", undefined, true);
-      this.options.onSessionConfirmDeny?.(agentInfo || {});
+      try {
+        this.options.onSessionConfirmDeny?.(agentInfo || {});
+      } catch (e) {
+        this.app.debug.error(e);
+      }
     }
     if (!fromAnotherTab) {
       this.publishState({
@@ -456,11 +464,35 @@ export default class Assist {
     this.sessionConfirmWindow = null;
   };
 
-  /** Restarts the tracker app so agents receive a full DOM snapshot. */
+  private restartInProgress = false;
+  private pendingRestartCallbacks: (() => void)[] = [];
+
+  /**
+   * Restarts the tracker app so agents receive a full DOM snapshot.
+   * Requests arriving while a restart is in flight (e.g. a second agent
+   * connecting during the stop phase, when app.active() is false) don't
+   * start another one — their callbacks run when the current restart ends.
+   */
   private restartTracking(onRestarted?: () => void) {
+    if (this.restartInProgress) {
+      if (onRestarted) {
+        this.pendingRestartCallbacks.push(onRestarted);
+      }
+      return;
+    }
     if (!this.app.active()) {
       return;
     }
+    this.restartInProgress = true;
+    if (onRestarted) {
+      this.pendingRestartCallbacks.push(onRestarted);
+    }
+    const finish = () => {
+      this.restartInProgress = false;
+      const callbacks = this.pendingRestartCallbacks;
+      this.pendingRestartCallbacks = [];
+      return callbacks;
+    };
     this.assistDemandedRestart = true;
     this.app.stop(false);
     this.app.clearBuffers();
@@ -473,10 +505,17 @@ export default class Assist {
             this.assistDemandedRestart = false;
           })
           .then(() => {
-            onRestarted?.();
+            finish().forEach((cb) => {
+              try {
+                cb();
+              } catch (e) {
+                this.app.debug.error(e);
+              }
+            });
           })
           .catch((e) => {
             this.assistDemandedRestart = false;
+            finish();
             this.app.debug.error(e);
           });
       }, 100);

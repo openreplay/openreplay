@@ -503,6 +503,41 @@ describe('Assist — requestConfirm popup flow (socket)', () => {
     expect(wrapper()).toBe(null)
   })
 
+  test('a throwing approve callback does not block the restart', async () => {
+    startAssist({
+      onSessionConfirmApprove: () => { throw new Error('boom') },
+    })
+    handlers.NEW_AGENT('agent-1', agentInfo)
+
+    clickConfirm()
+    await flush()
+
+    expect(fakeSocket.emit).toHaveBeenCalledWith('session_confirm_accepted', expect.anything())
+    expect(app.stop).toHaveBeenCalledWith(false)
+    expect(app.debug.error).toHaveBeenCalled()
+  })
+
+  test('NEW_AGENT during an in-flight restart queues its reconnect instead of dropping it', async () => {
+    let finishWait: () => void = () => {}
+    app.waitStatus = jest.fn(() => new Promise<void>((resolve) => { finishWait = resolve }))
+    startAssist({ requestConfirm: false, })
+    const reconnectSpy = jest
+      .spyOn(assist.remoteControl, 'reconnect')
+      .mockImplementation(() => {})
+
+    handlers.NEW_AGENT('agent-1', agentInfo)
+    // stop phase of the first restart: app is no longer active
+    app.active.mockReturnValue(false)
+    handlers.NEW_AGENT('agent-2', agentInfo)
+    expect(app.stop).toHaveBeenCalledTimes(1)
+
+    finishWait()
+    await new Promise((resolve) => setTimeout(resolve, 150)) // restart's 100ms delay
+
+    expect(reconnectSpy).toHaveBeenCalledWith(['agent-1',])
+    expect(reconnectSpy).toHaveBeenCalledWith(['agent-2',])
+  })
+
   test('pre-approval agent interactions are ignored while unconfirmed', () => {
     startAssist()
     handlers.NEW_AGENT('agent-1', agentInfo)
