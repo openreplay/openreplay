@@ -22,7 +22,9 @@ export const needsReview = (tc: TestCase): boolean =>
 export type StepDecision = 'accepted' | 'rejected';
 export interface StepItem {
   text: string;
-  kind?: 'added' | 'removed';
+  /** 'group' = a merge-review group label (text = the source test's title):
+   *  unnumbered, not editable inline, and dragging it moves its whole block. */
+  kind?: 'added' | 'removed' | 'group';
   decision?: StepDecision;
 }
 

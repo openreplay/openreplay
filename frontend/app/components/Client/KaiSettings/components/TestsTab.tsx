@@ -13,14 +13,25 @@ import {
   message,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { Calendar, EllipsisVertical, Play, Plus, Radar } from 'lucide-react';
+import {
+  Calendar,
+  EllipsisVertical,
+  Merge,
+  Play,
+  Plus,
+  Radar,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 import FullPagination from 'Shared/FullPagination';
 
-import { createTest as apiCreateTest, getTest as apiGetTest } from '../api';
+import {
+  bulkTests as apiBulkTests,
+  createTest as apiCreateTest,
+  getTest as apiGetTest,
+} from '../api';
 import {
   browserTestsKeys,
   useBulkTests,
@@ -108,6 +119,9 @@ function TestsTab() {
   const [focusSchedule, setFocusSchedule] = useState(false);
   const [draftTest, setDraftTest] = useState<TestCase | null>(null);
   const creating = draftTest != null;
+  // merge-in-review: the base test (first selected) carrying a client-only pendingMerge;
+  // opens the TestDrawer in merge mode. Nothing persists until "Combine".
+  const [mergeTest, setMergeTest] = useState<TestCase | null>(null);
 
   // debounce the search box so typing isn't one request per keystroke (the setState
   // runs in a timer callback, not synchronously in the effect body)
@@ -337,6 +351,55 @@ function TestsTab() {
     );
   };
 
+  // ---- merge (UI-driven) -----------------------------------------------
+  // A merge with a review pending can't start (resolve it first). Base = first selected.
+  const mergeBlocked = selected.some((tc) => needsReview(tc));
+  const startMerge = async () => {
+    const sel = selected;
+    if (sel.length < 2) return;
+    setSelectedKeys([]);
+    setOpenKey(null); // close any open edit drawer so only the merge review shows
+    try {
+      // pull each test's data one by one so the groups carry full, current steps
+      const full = await Promise.all(
+        sel.map((tc) => apiGetTest(projectId, tc.key)),
+      );
+      const vms = full.map((tt) => apiTestToVM(tt, envNameById));
+      const [base] = vms;
+      setMergeTest({
+        ...base,
+        pendingMerge: {
+          groups: vms.map((v) => ({ title: v.title, steps: [...v.steps] })),
+          sourceKeys: vms.map((v) => v.key),
+        },
+      });
+    } catch {
+      toast.error(t('Failed to load tests to merge'));
+    }
+  };
+  // accept: create ONE test — first test's settings + all steps squashed together — then
+  // delete the originals it folded in.
+  const commitMerge = async (steps: string[]) => {
+    const base = mergeTest;
+    if (!base?.pendingMerge) return;
+    const { sourceKeys } = base.pendingMerge;
+    setMergeTest(null);
+    try {
+      await apiCreateTest(
+        projectId,
+        vmToCreateRequest({ ...base, steps, pendingMerge: undefined }),
+      );
+      await apiBulkTests(projectId, {
+        testIds: sourceKeys,
+        action: 'delete',
+      });
+      message.success(t('Merged {{n}} tests', { n: sourceKeys.length }));
+    } catch {
+      toast.error(t('Failed to merge tests'));
+    }
+    invalidateAll();
+  };
+
   // Escape hatch for a test stuck "needs review" with no suggestion to activate/dismiss —
   // clears the runner-owned flag (api4 PUT needsReview:false).
   const clearReview = (tc: TestCase) =>
@@ -387,6 +450,7 @@ function TestsTab() {
     if (tc.status === 'draft') {
       items = [
         { key: 'open', label: t('Review draft') },
+        { key: 'merge', label: t('Merge with…') },
         { type: 'divider' as const },
         { key: 'dismiss', label: t('Dismiss'), danger: true },
       ];
@@ -437,6 +501,7 @@ function TestsTab() {
           ? [{ key: 'markReviewed', label: t('Mark as reviewed') }]
           : []),
         { key: 'duplicate', label: t('Duplicate') },
+        { key: 'merge', label: t('Merge with…') },
         { type: 'divider' as const },
         { key: 'delete', label: t('Delete'), danger: true },
       ];
@@ -449,7 +514,14 @@ function TestsTab() {
         else if (key === 'schedule') openSchedule(tc);
         else if (key === 'unschedule') unschedule(tc);
         else if (key === 'duplicate') duplicateTest(tc);
-        else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
+        else if (key === 'merge') {
+          setSelectedKeys((prev) =>
+            prev.includes(tc.key) ? prev : [...prev, tc.key],
+          );
+          message.info(
+            t('Select the tests to merge with, then hit Merge in the toolbar.'),
+          );
+        } else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
         else if (key === 'resume') updateTest({ ...tc, status: 'active' });
         else if (key === 'markReviewed') clearReview(tc);
         else if (key === 'dismiss' || key === 'delete') removeTest(tc.key);
@@ -648,6 +720,24 @@ function TestsTab() {
                 {t('Resume')} ({selPaused})
               </Button>
             )}
+            {selectedKeys.length >= 2 && (
+              <Tooltip
+                title={
+                  mergeBlocked
+                    ? t('A selected test has a review pending — resolve it first.')
+                    : undefined
+                }
+              >
+                <Button
+                  size="small"
+                  disabled={mergeBlocked}
+                  icon={<Merge size={13} />}
+                  onClick={startMerge}
+                >
+                  {t('Merge')} ({selectedKeys.length})
+                </Button>
+              </Tooltip>
+            )}
             <Button size="small" danger onClick={deleteSelected}>
               {t('Delete')} ({selectedKeys.length})
             </Button>
@@ -789,6 +879,19 @@ function TestsTab() {
         }}
         onChange={creating ? setDraftTest : updateTest}
         onRemove={removeTest}
+      />
+      {/* merge review — a client-only base test carrying pendingMerge; edits (title, run
+          settings, tags) stay local until "Combine", which creates one test + deletes the
+          sources. Never persists mid-review. */}
+      <TestDrawer
+        key={mergeTest ? `merge-${mergeTest.key}` : 'merge-none'}
+        test={mergeTest}
+        open={!!mergeTest}
+        onClose={() => setMergeTest(null)}
+        onChange={setMergeTest}
+        onRemove={() => setMergeTest(null)}
+        onMergeAccept={commitMerge}
+        onCancelMerge={() => setMergeTest(null)}
       />
     </div>
   );

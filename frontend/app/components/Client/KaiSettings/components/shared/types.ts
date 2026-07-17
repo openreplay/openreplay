@@ -482,6 +482,20 @@ export interface PendingRevision {
   versionId?: string; // API version id backing this suggestion (for activate/dismiss)
 }
 
+// Merging tests (UI-only, client-side until accepted): each participant's steps are held
+// as a reorderable GROUP labelled by its source test. Accepting flattens the arranged
+// groups into one plain step list and saves it as a single new test (base settings), then
+// deletes the sources. `base`/`sources` are the VMs pulled one-by-one on merge start.
+export interface MergeGroup {
+  title: string;
+  steps: string[];
+}
+export interface PendingMerge {
+  groups: MergeGroup[];
+  /** the source test ids folded into the merge (deleted on accept) */
+  sourceKeys: string[];
+}
+
 export interface TestCase {
   key: string;
   title: string;
@@ -511,6 +525,9 @@ export interface TestCase {
   version?: number;
   history?: TestVersion[];
   pendingRevision?: PendingRevision;
+  // a merge waiting to be arranged + accepted (see PendingMerge). Client-only — never
+  // read back from the API; set when the user starts a merge from the list.
+  pendingMerge?: PendingMerge;
 }
 
 export interface TestStep {
