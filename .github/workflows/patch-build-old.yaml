@@ -122,6 +122,22 @@ jobs:
         git config --local user.name "GitHub Action"
         git checkout $BRANCH_NAME
         working_dir=$(pwd)
+        # Old-tag build.sh scripts may swallow docker build failures and
+        # still exit 0. Wrap every build so a non-zero exit or a buildkit
+        # ERROR line fails the step regardless of the checked-out script.
+        run_build() {
+          local out
+          if ! out=$( "$@" 2>&1 ); then
+            echo "$out"
+            echo "::error::build command failed: $*"
+            return 1
+          fi
+          echo "$out"
+          if grep -qE '^#[0-9]+ ERROR:|ERROR: process|ERROR: failed to|error: failed to' <<<"$out"; then
+            echo "::error::docker build reported an error: $*"
+            return 1
+          fi
+        }
         function image_version(){
           local service=$1
           chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$service/Chart.yaml"
@@ -153,13 +169,13 @@ jobs:
                  "$MSAAS_REPO_FOLDER/openreplay/backend/"
             fi
             cd "$MSAAS_REPO_FOLDER/openreplay/backend"
-            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh nil $service
+            run_build env IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh nil $service
           elif [[ $service == 'chalice' ]]; then
             cd $MSAAS_REPO_FOLDER/openreplay/api
-            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
+            run_build env IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
           else
             cd $MSAAS_REPO_FOLDER/openreplay/$service
-            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
+            run_build env IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
           fi
         }
         # Checking for backend images
@@ -201,15 +217,15 @@ jobs:
           # Build FOSS version (skip for EE-only services like assist-api)
           if [[ "$is_ee_only" == "false" ]]; then
             echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
-            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+            run_build env IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
           fi
           # Build EE version
           echo IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
-          IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
+          run_build env IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
           # Build ARM version (skip for chalice/frontend which use managed builds, and skip FOSS for EE-only)
           if [[ "$SERVICE" != "chalice" && "$SERVICE" != "frontend" ]]; then
             if [[ "$is_ee_only" == "false" ]]; then
-              IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+              run_build env IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
               echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
             fi
           else
