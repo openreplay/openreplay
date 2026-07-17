@@ -1,3 +1,7 @@
+## 11.0.19
+
+- add an option to require user permission to view assist session
+
 ## 11.0.18
 
 - autostart options
