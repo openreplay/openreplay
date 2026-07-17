@@ -650,7 +650,7 @@
   "Cannot save funnel metric without at least 2 events": "No se puede guardar la métrica del embudo sin al menos 2 eventos",
   "Create & Add to Dashboard": "Crear y añadir al panel",
   "Undo": "Deshacer",
-  "Maximum of 3 series reached.": "Máximo de 3 series alcanzado.",
+  "Maximum of {{limit}} series reached.": "Máximo de {{limit}} series alcanzado.",
   "Add Series": "Añadir serie",
   "Expand": "Expandir",
   "Collapse": "Colapsar",

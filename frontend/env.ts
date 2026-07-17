@@ -24,6 +24,7 @@ const ENV = {
     : process.env.TEST_FOSS_PASSWORD,
   STRIPE_KEY: process.env.STRIPE_KEY,
   CRISP_KEY: process.env.CRISP_KEY,
+  DASHBOARD_SERIES_LIMIT: process.env.DASHBOARD_SERIES_LIMIT,
 };
 
 export default ENV;
