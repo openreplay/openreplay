@@ -31,6 +31,7 @@ import Tabs from './modules/tabs.js'
 import LongAnimationTask from './modules/longAnimationTask.js'
 import WebAnimations from './modules/webAnimations.js'
 import AnalyticsSDK from './modules/analytics/index.js'
+import setupDetectors from './detectors/index.js'
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
 
@@ -239,6 +240,9 @@ export default class API {
       Performance(app, options)
       // no tabs in iframes yet
       Tabs(app)
+      // Heuristic detectors (dead click / click rage / cpu / memory). Main window
+      // only, since cpu/memory feed off the Performance module. Log-only for now.
+      setupDetectors(app)
     }
     Mouse(app, { ...options.mouse, customAttributes: options.customAttributes })
     // inside iframe, we ignore viewport scroll
