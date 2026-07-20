@@ -110,7 +110,12 @@ def get_record(project_id, record_id, context: schemas.CurrentContext):
 
 def update_record(project_id, record_id, data: schemas.AssistRecordUpdatePayloadSchema,
                   context: schemas.CurrentContext):
-    conditions = ["assist_records.record_id=%(record_id)s", "assist_records.deleted_at ISNULL"]
+    conditions = ["assist_records.record_id=%(record_id)s",
+                  "assist_records.deleted_at ISNULL",
+                  "assist_records.project_id=%(project_id)s",
+                  "projects.project_id=%(project_id)s",
+                  "projects.tenant_id=%(tenant_id)s",
+                  "projects.deleted_at ISNULL"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id, "name": data.name}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE assist_records
@@ -119,9 +124,9 @@ def update_record(project_id, record_id, data: schemas.AssistRecordUpdatePayload
                                       FROM assist_records INNER JOIN users USING (user_id)
                                       WHERE record_id = %(record_id)s
                                         AND assist_records.deleted_at ISNULL
-                                      LIMIT 1) AS users
+                                      LIMIT 1) AS users, projects
                                 WHERE {" AND ".join(conditions)}
-                                RETURNING record_id, user_id, session_id, assist_records.created_at, 
+                                RETURNING record_id, user_id, session_id, assist_records.created_at,
                                        assist_records.name, duration, created_by, file_key;""", params)
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
@@ -135,11 +140,16 @@ def update_record(project_id, record_id, data: schemas.AssistRecordUpdatePayload
 
 
 def delete_record(project_id, record_id, context: schemas.CurrentContext):
-    conditions = ["assist_records.record_id=%(record_id)s"]
+    conditions = ["assist_records.record_id=%(record_id)s",
+                  "assist_records.project_id=%(project_id)s",
+                  "projects.project_id=%(project_id)s",
+                  "projects.tenant_id=%(tenant_id)s",
+                  "projects.deleted_at ISNULL"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE assist_records
                                 SET deleted_at= (now() at time zone 'utc')
+                                FROM projects
                                 WHERE {" AND ".join(conditions)}
                                 RETURNING file_key;""", params)
         cur.execute(query)
