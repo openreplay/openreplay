@@ -1,4 +1,4 @@
-import { Button, Input, Switch, Typography } from 'antd';
+import { Button, Input, Switch } from 'antd';
 import { ChevronDown, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,9 +22,6 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
 
   const [name, setName] = useState(env?.name ?? '');
   const [url, setUrl] = useState(env?.url ?? 'https://');
-  const [isDefault, setIsDefault] = useState(!!env?.isDefault);
-  // new environments default to active; existing ones keep their flag
-  const [isActive, setIsActive] = useState(env?.isActive ?? true);
   const [username, setUsername] = useState(env?.username ?? '');
   const [password, setPassword] = useState(env?.password ?? '');
   const [headers, setHeaders] = useState<HttpHeader[]>(env?.headers ?? []);
@@ -45,8 +42,10 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
     onSubmit({
       name: name.trim(),
       url: url.trim(),
-      isDefault,
-      isActive,
+      // default env is chosen in Settings, and the active flag isn't user-managed here —
+      // preserve whatever the env already had (undefined on create → backend defaults)
+      isDefault: env?.isDefault,
+      isActive: env?.isActive,
       username: username.trim() || undefined,
       password: password.trim() || undefined,
       headers: headers.filter((h) => h.name.trim()),
@@ -85,21 +84,6 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
         />
       </Field>
 
-      <div className="flex items-center gap-2">
-        <Switch size="small" checked={isDefault} onChange={setIsDefault} />
-        <Typography.Text className="text-sm!">
-          {t('Set as default')}
-        </Typography.Text>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Switch size="small" checked={isActive} onChange={setIsActive} />
-        <Typography.Text className="text-sm!">{t('Active')}</Typography.Text>
-        <Typography.Text type="secondary" className="text-sm!">
-          {t('— tests can run against this environment')}
-        </Typography.Text>
-      </div>
-
       <button
         type="button"
         className="flex items-center gap-1 text-sm text-disabled-text self-start"
@@ -113,7 +97,7 @@ function EnvironmentForm({ env, onSubmit, onDelete }: Props) {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium text-gray-darkest">
-              {t('HTTP Credentials')}
+              {t('Login credentials')}
             </span>
             {/* these are the test target's creds, not the user's — keep browsers /
                 password managers from autofilling the logged-in user's own login */}

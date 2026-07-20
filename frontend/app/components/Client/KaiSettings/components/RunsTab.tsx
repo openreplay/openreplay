@@ -357,18 +357,16 @@ function RunsTab() {
               })),
             ]}
           />
-          {tagOptions.length > 0 && (
-            <Select
-              size="small"
-              value={tagFilter}
-              onChange={setTagFilter}
-              style={{ width: 130 }}
-              options={[
-                { value: 'all', label: t('All tags') },
-                ...tagOptions.map((tag) => ({ value: tag, label: tag })),
-              ]}
-            />
-          )}
+          <Select
+            size="small"
+            value={tagFilter}
+            onChange={setTagFilter}
+            style={{ width: 130 }}
+            options={[
+              { value: 'all', label: t('All tags') },
+              ...tagOptions.map((tag) => ({ value: tag, label: tag })),
+            ]}
+          />
           {envOptions.length > 0 && (
             <Select
               size="small"
