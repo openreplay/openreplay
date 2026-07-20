@@ -1,7 +1,9 @@
-import React from 'react';
-import { CopyButton, CodeBlock } from 'UI';
-import { trackerUrl } from './url';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+
+import { CodeBlock, CopyButton } from 'UI';
+
+import { trackerUrl } from './url';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
@@ -64,7 +66,11 @@ function CodeSnippet(props: Props) {
   return (
     <div className="relative">
       <div className="absolute top-0 right-0 mt-2 mr-2 z-10">
-        <CopyButton content={codeSnippet} className="uppercase" />
+        <CopyButton
+          content={codeSnippet}
+          styles={{ color: 'black' }}
+          className="uppercase font-medium"
+        />
       </div>
       <CodeBlock code={codeSnippet} language="html" />
     </div>

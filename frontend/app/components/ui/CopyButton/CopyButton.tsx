@@ -27,6 +27,7 @@ function CopyButton({
   isIcon = false,
   format = 'text/plain',
   copyText = ['Copy', 'Copied!'],
+  styles = {},
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -127,6 +128,7 @@ function CopyButton({
       onClick={copyHandler}
       size={size}
       className={className}
+      style={styles}
     >
       {copied ? copyText[1] : btnText}
     </Button>

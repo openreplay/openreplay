@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { Loader } from 'UI';
-import { Switch, Checkbox, Tag } from 'antd';
-import GDPR from 'App/mstore/types/gdpr';
-import cn from 'classnames';
-import Select from 'Shared/Select';
-import CodeSnippet from 'Shared/CodeSnippet';
-import CircleNumber from 'Components/Onboarding/components/CircleNumber';
 import Project from '@/mstore/types/project';
-import stl from './projectCodeSnippet.module.css';
-import { useTranslation } from 'react-i18next';
+import { Checkbox, Switch, Tag } from 'antd';
+import cn from 'classnames';
 import { TFunction } from 'i18next';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import GDPR from 'App/mstore/types/gdpr';
+import CircleNumber from 'Components/Onboarding/components/CircleNumber';
+import { Loader } from 'UI';
+
+import CodeSnippet from 'Shared/CodeSnippet';
+import Select from 'Shared/Select';
+
+import stl from './projectCodeSnippet.module.css';
 
 interface InputModeOption {
   label: string;
@@ -73,7 +76,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
   }, [isAssistEnabled]);
 
   return (
-    <div className="flex flex-col gap-8 mt-4">
+    <div className="flex flex-col gap-4 mt-4">
       <div>
         <div className="font-medium mb-2 flex gap-2 items-center">
           <CircleNumber text="1" />
@@ -124,18 +127,13 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
         </div>
       </div>
 
-      <div
-        className={cn(
-          stl.instructions,
-          'flex flex-col items-start! justify-start!',
-        )}
-      >
-        <div className="font-medium flex gap-1 items-center">
+      <div>
+        <div className="font-medium mb-2 flex gap-2 items-center">
           <CircleNumber text="2" />
           <span>{t('Enable Assist (Optional)')}</span>
         </div>
 
-        <div className="ml-7">
+        <div className="ml-8">
           <div className="flex gap-2 items-center">
             <Switch
               checked={isAssistEnabled}
@@ -154,46 +152,43 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
         </div>
       </div>
 
-      <div className={cn(stl.instructions, '')}>
-        <div className="flex flex-col w-full">
-          <div className="flex flex-col items-start justify-start gap-2">
-            <div className="font-medium flex gap-2 items-center">
-              <CircleNumber text="3" />
-              <span>{t('Install SDK')}</span>
-            </div>
+      <div>
+        <div className="font-medium mb-2 flex gap-2 items-center">
+          <CircleNumber text="3" />
+          <span>{t('Install SDK')}</span>
+        </div>
 
-            <div className="ml-8 flex gap-1 items-center">
-              <div>
-                {t('Paste this snippet')}&nbsp;
-                <span>{t('before the')}&nbsp;</span>
-              </div>
-              <Tag
-                color="red"
-                variant="filled"
-                className="rounded-lg text-base mr-0"
-              >
-                {'</head>'}
-              </Tag>
-              <span>&nbsp;{t('tag of your page.')}&nbsp;</span>
+        <div className="ml-8 mb-2 flex gap-1 items-center flex-wrap">
+          <div>
+            {t('Paste this snippet')}&nbsp;
+            <span>{t('before the')}&nbsp;</span>
+          </div>
+          <Tag
+            color="red"
+            variant="filled"
+            className="rounded-lg text-base mr-0"
+          >
+            {'</head>'}
+          </Tag>
+          <span>&nbsp;{t('tag of your page.')}&nbsp;</span>
+        </div>
+
+        <div className={cn(stl.snippetsWrapper, 'ml-8')}>
+          {showLoader ? (
+            <div style={{ height: '474px' }}>
+              <Loader loading />
             </div>
-          </div>
-          <div className={cn(stl.snippetsWrapper, 'ml-8')}>
-            {showLoader ? (
-              <div style={{ height: '474px' }}>
-                <Loader loading />
-              </div>
-            ) : (
-              <CodeSnippet
-                isAssistEnabled={isAssistEnabled}
-                host={site?.host}
-                projectKey={site?.projectKey!}
-                ingestPoint={`"https://${window.location.hostname}/ingest"`}
-                defaultInputMode={gdpr.defaultInputMode}
-                obscureTextNumbers={gdpr.maskNumbers}
-                obscureTextEmails={gdpr.maskEmails}
-              />
-            )}
-          </div>
+          ) : (
+            <CodeSnippet
+              isAssistEnabled={isAssistEnabled}
+              host={site?.host}
+              projectKey={site?.projectKey!}
+              ingestPoint={`"https://${window.location.hostname}/ingest"`}
+              defaultInputMode={gdpr.defaultInputMode}
+              obscureTextNumbers={gdpr.maskNumbers}
+              obscureTextEmails={gdpr.maskEmails}
+            />
+          )}
         </div>
       </div>
     </div>
