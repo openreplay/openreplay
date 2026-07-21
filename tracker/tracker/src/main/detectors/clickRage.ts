@@ -3,7 +3,7 @@ import Message, {
   MouseClick,
   SetPageLocation,
 } from '../../common/messages.gen.js'
-import type { Detector, DetectorLogger } from './types.js'
+import type { Detector, ReportIssue } from './types.js'
 
 /**
  * Port of backend/pkg/handlers/web/clickRage.go.
@@ -27,7 +27,7 @@ export default class ClickRageDetector implements Detector {
   private countsInARow = 0
   private currentUrl = ''
 
-  constructor(private readonly log: DetectorLogger) {}
+  constructor(private readonly report: ReportIssue) {}
 
   private reset(): void {
     this.lastTimestamp = 0
@@ -47,10 +47,11 @@ export default class ClickRageDetector implements Detector {
     if (count < MIN_CLICKS_IN_A_ROW) {
       return
     }
-    this.log('click_rage', {
-      label,
-      selector,
-      count,
+    this.report({
+      type: 'click_rage',
+      contextString: label,
+      context: selector, // used by the tags filter
+      payload: JSON.stringify({ Count: count }),
       url: this.currentUrl,
       timestamp: firstTs,
     })

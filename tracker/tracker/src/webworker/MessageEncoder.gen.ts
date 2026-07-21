@@ -330,6 +330,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2])
     break
 
+    case Messages.Type.IssueEvent:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.string(msg[5]) && this.string(msg[6]) && this.string(msg[7])
+    break
+
     }
   }
 

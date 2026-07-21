@@ -3,7 +3,7 @@ import Message, {
   MouseClick,
   SetInputTarget,
 } from '../../common/messages.gen.js'
-import type { Detector, DetectorLogger } from './types.js'
+import type { Detector, ReportIssue } from './types.js'
 
 /**
  * Port of backend/pkg/handlers/web/deadClick.go.
@@ -40,7 +40,7 @@ export default class DeadClickDetector implements Detector {
   private lastClickTimestamp = 0
   private readonly inputIDSet = new Set<number>()
 
-  constructor(private readonly log: DetectorLogger) {}
+  constructor(private readonly report: ReportIssue) {}
 
   private reset(): void {
     this.lastMouseClick = null
@@ -58,11 +58,11 @@ export default class DeadClickDetector implements Detector {
       // reaction was instant (or nothing pending) -> not a dead click
       return
     }
-    this.log('dead_click', {
-      label: click[3],
-      selector: click[4],
+    this.report({
+      type: 'dead_click',
+      contextString: click[3], // label
+      context: click[4], // selector (used by the tags filter)
       timestamp: clickTs,
-      msSinceClick: lastTs - clickTs,
     })
   }
 
