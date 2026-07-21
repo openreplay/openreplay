@@ -3,7 +3,7 @@ import Message, {
   PerformanceTrack,
   SetPageLocation,
 } from '../../common/messages.gen.js'
-import type { Detector, DetectorLogger } from './types.js'
+import type { Detector, ReportIssue } from './types.js'
 
 /**
  * Port of backend/pkg/handlers/web/memoryIssue.go.
@@ -23,7 +23,7 @@ export default class MemoryIssueDetector implements Detector {
   private sum = 0
   private contextString = ''
 
-  constructor(private readonly log: DetectorLogger) {}
+  constructor(private readonly report: ReportIssue) {}
 
   private reset(): void {
     this.startTimestamp = 0
@@ -34,9 +34,10 @@ export default class MemoryIssueDetector implements Detector {
     if (this.startTimestamp === 0) {
       return
     }
-    this.log('memory', {
-      rate: this.rate - 100,
-      context: this.contextString,
+    this.report({
+      type: 'memory',
+      contextString: this.contextString,
+      payload: JSON.stringify({ Rate: this.rate - 100 }),
       timestamp: this.startTimestamp,
     })
     this.reset()

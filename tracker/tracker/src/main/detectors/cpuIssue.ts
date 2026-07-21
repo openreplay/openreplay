@@ -3,7 +3,7 @@ import Message, {
   PerformanceTrack,
   SetPageLocation,
 } from '../../common/messages.gen.js'
-import type { Detector, DetectorLogger } from './types.js'
+import type { Detector, ReportIssue } from './types.js'
 import { cpuRate, timeDiff } from './performance.js'
 
 /**
@@ -26,7 +26,7 @@ export default class CpuIssueDetector implements Detector {
   private maxRate = 0
   private contextString = ''
 
-  constructor(private readonly log: DetectorLogger) {}
+  constructor(private readonly report: ReportIssue) {}
 
   private duration(): number {
     return this.lastTimestamp - this.startTimestamp
@@ -46,10 +46,10 @@ export default class CpuIssueDetector implements Detector {
     if (start === 0 || duration < CPU_MIN_DURATION_TRIGGER) {
       return
     }
-    this.log('cpu', {
-      duration,
-      rate,
-      context: this.contextString,
+    this.report({
+      type: 'cpu',
+      contextString: this.contextString,
+      payload: JSON.stringify({ Duration: duration, Rate: rate }),
       timestamp: start,
     })
   }

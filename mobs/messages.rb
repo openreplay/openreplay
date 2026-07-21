@@ -563,8 +563,9 @@ message 124, 'WebVitals', :replayer => false, :pipeline => 'b' do
     string 'Value'
 end
 
-## Backend-only
-message 125, 'IssueEvent', :replayer => false, :tracker => false do
+# Produced by backend heuristics AND (since tracker-side heuristics) by the tracker.
+# Routed through the analytics pipeline ('b').
+message 125, 'IssueEvent', :replayer => false, :pipeline => 'b' do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Type'

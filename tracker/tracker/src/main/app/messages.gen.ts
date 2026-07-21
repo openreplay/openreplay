@@ -1081,3 +1081,24 @@ export function WebVitals(
   ]
 }
 
+export function IssueEvent(
+  messageID: number,
+  timestamp: number,
+  type: string,
+  contextString: string,
+  context: string,
+  payload: string,
+  url: string,
+): Messages.IssueEvent {
+  return [
+    Messages.Type.IssueEvent,
+    messageID,
+    timestamp,
+    type,
+    contextString,
+    context,
+    payload,
+    url,
+  ]
+}
+
