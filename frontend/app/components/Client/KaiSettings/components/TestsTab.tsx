@@ -34,6 +34,7 @@ import {
 } from '../api';
 import {
   browserTestsKeys,
+  invalidateTestData,
   useBulkTests,
   useDeleteTest,
   useEnvironments,
@@ -60,13 +61,11 @@ import { ListTestsParams, RunData, TestCase, TestStatus } from './shared/types';
 import { kaiUi } from './shared/uiStore';
 import { useQueryParam } from './shared/useUrlState';
 import {
-  PERIOD_OPTIONS,
   RowTags,
   VersionLabel,
   getStatusTag,
   hasNoEnvironment,
   isScheduled,
-  periodFrom,
   scheduleLabel,
   scheduleShort,
 } from './shared/utils';
@@ -96,17 +95,14 @@ function TestsTab() {
   const { data: projectSettings } = useSettings();
   const pauseOnRevision = projectSettings?.pauseOnNewRevisions ?? true;
   const reviewBlocked = (tc: TestCase) => needsReview(tc) && pauseOnRevision;
-  const invalidateAll = () =>
-    queryClient.invalidateQueries({
-      queryKey: browserTestsKeys.all(projectId),
-    });
+  // refresh the tests/runs/versions families (not env/settings/notifications)
+  const invalidateAll = () => invalidateTestData(queryClient, projectId);
 
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState(''); // debounced query → the actual filter
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
-  const [periodFilter, setPeriodFilter] = useState('all');
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [sortBy, setSortBy] = useState<{
     field?: string;
@@ -136,9 +132,8 @@ function TestsTab() {
       name: search || undefined,
       environmentId: envFilter !== 'all' ? envFilter : undefined,
       tags: tagFilter !== 'all' ? tagFilter : undefined,
-      from: periodFrom(periodFilter),
     }),
-    [search, envFilter, tagFilter, periodFilter],
+    [search, envFilter, tagFilter],
   );
 
   const sortField = sortBy.field ? SORT_FIELD[sortBy.field] : undefined;
@@ -168,7 +163,7 @@ function TestsTab() {
   });
 
   // reset to page 1 (and clear the selection) whenever the filter set changes
-  const filterKey = `${search}|${statusTab}|${envFilter}|${tagFilter}|${periodFilter}`;
+  const filterKey = `${search}|${statusTab}|${envFilter}|${tagFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
@@ -484,10 +479,12 @@ function TestsTab() {
             ),
           });
         }
-        if (tc.status === 'approved')
+        // gate on the actual schedule, not status: an unscheduled test can be scheduled,
+        // an already-scheduled one (active, paused, or approved-with-cron) can only be
+        // unscheduled
+        if (!isScheduled(tc.schedule))
           controls.push({ key: 'schedule', label: t('Schedule') });
-        if (tc.status === 'active' || tc.status === 'paused')
-          controls.push({ key: 'unschedule', label: t('Unschedule') });
+        else controls.push({ key: 'unschedule', label: t('Unschedule') });
       }
       items = [
         ...controls,
@@ -774,16 +771,6 @@ function TestsTab() {
                 { value: 'all', label: t('All tags') },
                 ...allTags.map((tag) => ({ value: tag, label: tag })),
               ]}
-            />
-            <Select
-              size="small"
-              value={periodFilter}
-              onChange={setPeriodFilter}
-              style={{ width: 130 }}
-              options={PERIOD_OPTIONS.map((o) => ({
-                value: o.value,
-                label: t(o.label),
-              }))}
             />
             <Button
               size="small"

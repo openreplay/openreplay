@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
@@ -65,6 +70,24 @@ export const browserTestsKeys = {
     ['browser-tests', projectId, 'notifications'] as const,
 };
 
+// A test / run / version change touches the tests, runs and versions families — but NOT
+// environments, settings or notifications. Invalidate everything under the project key
+// except those, so editing a test doesn't needlessly refetch env/settings/notifications.
+export function invalidateTestData(
+  queryClient: QueryClient,
+  projectId: string,
+) {
+  queryClient.invalidateQueries({
+    queryKey: browserTestsKeys.all(projectId),
+    predicate: (q) => {
+      const seg = q.queryKey[2];
+      return (
+        seg !== 'environments' && seg !== 'settings' && seg !== 'notifications'
+      );
+    },
+  });
+}
+
 // Every GET in this section caches for 10 minutes — fresh (no refetch) and retained while
 // unused — so switching tabs / reopening a drawer serves from cache. Mutations still
 // invalidate the relevant keys, so writes show up immediately.
@@ -113,11 +136,7 @@ export function useCreateTest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: TestCreateRequest) => api.createTest(projectId, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.all(projectId),
-      });
-    },
+    onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
 
@@ -132,11 +151,7 @@ export function useUpdateTest() {
       testId: string;
       body: TestUpdateRequest;
     }) => api.updateTest(projectId, testId, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.all(projectId),
-      });
-    },
+    onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
 
@@ -145,11 +160,7 @@ export function useDeleteTest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (testId: string) => api.deleteTest(projectId, testId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.all(projectId),
-      });
-    },
+    onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
 
@@ -293,11 +304,7 @@ export function useBulkTests() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: TestsBulkRequest) => api.bulkTests(projectId, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.all(projectId),
-      });
-    },
+    onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
 
@@ -356,11 +363,7 @@ export function useActivateVersion() {
       versionId: string;
       body?: ActivateVersionRequest;
     }) => api.activateVersion(projectId, testId, versionId, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.all(projectId),
-      });
-    },
+    onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
 
@@ -370,11 +373,7 @@ export function useDismissVersion() {
   return useMutation({
     mutationFn: ({ testId, versionId }: { testId: string; versionId: string }) =>
       api.dismissVersion(projectId, testId, versionId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.all(projectId),
-      });
-    },
+    onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
 
