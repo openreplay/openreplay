@@ -15,6 +15,11 @@ export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 import io from 'socket.io-client';
 import ENV from '../../../../env';
 
+export enum SessionConfirmStatus {
+  None,
+  Requesting,
+}
+
 export enum ConnectionStatus {
   Connecting,
   WaitingMessages,
@@ -67,6 +72,7 @@ export default class AssistManager {
   static readonly INITIAL_STATE = {
     peerConnectionStatus: ConnectionStatus.Connecting,
     assistStart: 0,
+    sessionConfirmation: SessionConfirmStatus.None,
     ...Call.INITIAL_STATE,
     ...RemoteControl.INITIAL_STATE,
     ...ScreenRecording.INITIAL_STATE,
@@ -308,6 +314,18 @@ export default class AssistManager {
         );
         this.agentIds = filteredAgentIds;
       }
+    });
+    socket.on('session_confirm_pending', () => {
+      this.store.update({
+        sessionConfirmation: SessionConfirmStatus.Requesting,
+      });
+    });
+    socket.on('session_confirm_accepted', () => {
+      this.store.update({ sessionConfirmation: SessionConfirmStatus.None });
+    });
+    socket.on('session_confirm_rejected', () => {
+      this.store.update({ sessionConfirmation: SessionConfirmStatus.None });
+      this.uiErrorHandler?.error('User denied the live session view request');
     });
     socket.on('SESSION_DISCONNECTED', (e) => {
       waitingForMessages = true;
