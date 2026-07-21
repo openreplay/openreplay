@@ -170,8 +170,18 @@ jobs:
             fi
 
             echo "Executing: $build_cmd"
-            if ! eval "$build_cmd" 2>&1; then
+            # Old-tag build.sh scripts may swallow docker build failures and
+            # still exit 0. Fail the step on a non-zero exit or a buildkit
+            # ERROR line regardless of the checked-out script.
+            local build_output
+            if ! build_output=$(eval "$build_cmd" 2>&1); then
+                echo "$build_output"
                 echo "Managed build failed for $service"
+                exit 1
+            fi
+            echo "$build_output"
+            if grep -qE '^#[0-9]+ ERROR:|ERROR: process|ERROR: failed to|error: failed to' <<<"$build_output"; then
+                echo "Managed build reported an error for $service"
                 exit 1
             fi
         }
@@ -187,8 +197,18 @@ jobs:
 
             local command="IMAGE_TAG=$version DOCKER_RUNTIME=depot DOCKER_BUILD_ARGS=--push ARCH=$docker_arch DOCKER_REPO=$docker_repo PUSH_IMAGE=0 bash $build_script $build_args"
             echo "Executing: $command"
-            if ! eval "$command"; then
+            # Old-tag build.sh scripts may swallow docker build failures and
+            # still exit 0. Fail the step on a non-zero exit or a buildkit
+            # ERROR line regardless of the checked-out script.
+            local build_output
+            if ! build_output=$(eval "$command" 2>&1); then
+                echo "$build_output"
                 echo "Build failed for $service with args: $build_args"
+                exit 1
+            fi
+            echo "$build_output"
+            if grep -qE '^#[0-9]+ ERROR:|ERROR: process|ERROR: failed to|error: failed to' <<<"$build_output"; then
+                echo "Build reported an error for $service with args: $build_args"
                 exit 1
             fi
         }
