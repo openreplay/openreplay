@@ -9,9 +9,8 @@ import (
 const PageEventTimeout = 1 * 60 * 1000
 
 type pageEventBuilder struct {
-	pageEvent          *PageEvent
-	firstTimingHandled bool
-	webVitals          map[string]string
+	pageEvent *PageEvent
+	webVitals map[string]string
 }
 
 func NewPageEventBuilder() *pageEventBuilder {
@@ -125,13 +124,13 @@ func (b *pageEventBuilder) Build() Message {
 	}
 	pageEvent := b.pageEvent
 	b.pageEvent = nil
-	b.firstTimingHandled = false
 	if b.webVitals != nil {
 		if vitals, err := json.Marshal(b.webVitals); err == nil {
 			pageEvent.WebVitals = string(vitals)
 		} else {
 			fmt.Printf("Error marshalling web vitals: %v\n", err)
 		}
+		b.webVitals = nil
 	}
 	return pageEvent
 }

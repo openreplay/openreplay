@@ -213,9 +213,9 @@ EOF
                     [ -e | --edit ]
                     [ -p | --install-packages ]
                     [ -l | --logs SERVICE ] 
-         Services: alerts assets assist chalice 
-                   db ender frontend heuristics 
-                   http integrations nginx-controller 
+         Services: alerts assets assist chalice
+                   db ender frontend
+                   http integrations nginx-controller
                    peers sink sourcemapreader storage 
     "
     return

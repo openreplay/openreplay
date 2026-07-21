@@ -104,6 +104,7 @@ func main() {
 		messages.MsgMobileClickEvent, messages.MsgMobileSwipeEvent, messages.MsgMobileInputEvent,
 		messages.MsgMobileCrash, messages.MsgMobileIssueEvent,
 	}
+	msgFilter = append(msgFilter, datasaver.HeuristicsInputTypes()...)
 
 	// Init consumer
 	consumer, err := queue.NewConsumer(

@@ -2,7 +2,6 @@ charts/alerts/values.yaml
 charts/assets/values.yaml
 charts/db/values.yaml
 charts/ender/values.yaml
-charts/heuristics/values.yaml
 charts/integrations/values.yaml
 charts/sink/values.yaml
 charts/storage/values.yaml
