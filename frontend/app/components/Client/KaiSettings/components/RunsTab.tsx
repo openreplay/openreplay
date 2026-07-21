@@ -107,7 +107,7 @@ function RunsTab() {
   const [tagFilter, setTagFilter] = useState('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [regionFilter, setRegionFilter] = useState('all');
-  const [periodFilter, setPeriodFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('7'); // default: Last 7 days
   const [dispatchFilter, setDispatchFilter] = useState('all');
   const [sortBy, setSortBy] = useState<{
     field?: string;
@@ -369,18 +369,16 @@ function RunsTab() {
               ...tagOptions.map((tag) => ({ value: tag, label: tag })),
             ]}
           />
-          {envOptions.length > 0 && (
-            <Select
-              size="small"
-              value={envFilter}
-              onChange={setEnvFilter}
-              style={{ width: 150 }}
-              options={[
-                { value: 'all', label: t('All environments') },
-                ...envOptions,
-              ]}
-            />
-          )}
+          <Select
+            size="small"
+            value={envFilter}
+            onChange={setEnvFilter}
+            style={{ width: 150 }}
+            options={[
+              { value: 'all', label: t('All environments') },
+              ...envOptions,
+            ]}
+          />
           <Select
             size="small"
             value={regionFilter}

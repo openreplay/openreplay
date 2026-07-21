@@ -67,8 +67,10 @@ export function updateTest(
   testId: string,
   body: TestUpdateRequest,
 ): Promise<Test> {
+  // clean:false so an empty `cron` ("" = unschedule) survives — the client's default
+  // body-cleaner strips '' (and undefined; JSON.stringify still drops undefined anyway).
   return client
-    .put(`${base(projectId)}/tests/${testId}`, body)
+    .put(`${base(projectId)}/tests/${testId}`, body, { clean: false })
     .then(toJson<Test>);
 }
 
