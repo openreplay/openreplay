@@ -21,7 +21,7 @@ import {
   Plus,
   Radar,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
@@ -227,16 +227,34 @@ function TestsTab() {
     if (openKey === key) setOpenKey(null);
   };
 
+  // set when we open an unseen test — its list dot refreshes on CLOSE (see closeDrawer),
+  // not on open, so the list doesn't reload out from under the open drawer
+  const seenRefreshRef = useRef(false);
   const openRow = (tc: TestCase) => {
     setFocusSchedule(false);
     setOpenKey(tc.key, true); // push so Back closes the drawer
-    // opening a test stamps `seenAt` server-side (GET /tests/{id}), which clears the
-    // "new" dot; refresh the list once so it reflects. Only needed while unseen.
-    if (tc.isNew)
-      apiGetTest(projectId, tc.key)
-        .then(invalidateAll)
-        .catch(() => {});
+    // opening stamps `seenAt` server-side (GET /tests/{id}), clearing the "new" dot — but
+    // DON'T refetch now; refreshing the list here reloads the open drawer (flicker).
+    if (tc.isNew) {
+      seenRefreshRef.current = true;
+      apiGetTest(projectId, tc.key).catch(() => {});
+    }
   };
+  const closeDrawer = () => {
+    setOpenKey(null);
+    setFocusSchedule(false);
+  };
+  // once the drawer is closed (via the X, the mask, or browser back), if we stamped a
+  // seenAt on open, refresh just the tests list so the "new" dot clears — nothing else.
+  useEffect(() => {
+    if (!openKey && seenRefreshRef.current) {
+      seenRefreshRef.current = false;
+      queryClient.invalidateQueries({
+        queryKey: browserTestsKeys.all(projectId),
+        predicate: (q) => q.queryKey[2] === 'tests',
+      });
+    }
+  }, [openKey, projectId, queryClient]);
   const openSchedule = (tc: TestCase) => {
     setOpenKey(tc.key, true);
     setFocusSchedule(true);
@@ -835,7 +853,7 @@ function TestsTab() {
         test={openTest?.status === 'draft' ? openTest : null}
         open={openTest?.status === 'draft'}
         defaults={defaults}
-        onClose={() => setOpenKey(null)}
+        onClose={closeDrawer}
         onChange={updateTest}
         onRemove={removeTest}
       />
@@ -861,8 +879,7 @@ function TestsTab() {
             cancelCreate();
             return;
           }
-          setOpenKey(null);
-          setFocusSchedule(false);
+          closeDrawer();
         }}
         onChange={creating ? setDraftTest : updateTest}
         onRemove={removeTest}
