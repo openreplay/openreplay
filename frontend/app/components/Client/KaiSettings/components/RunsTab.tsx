@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { RotateCw } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
@@ -136,8 +136,10 @@ function RunsTab() {
     return () => window.clearTimeout(id);
   }, [query]);
 
-  // filters shared by the list + the count aggregates (everything except the status tab)
-  const from = periodFrom(periodFilter);
+  // filters shared by the list + the count aggregates (everything except the status tab).
+  // Memoize `from` per period — periodFrom() is Date.now()-based, so recomputing it every
+  // render produced a new value → new query key → refetch → re-render → request loop (429).
+  const from = useMemo(() => periodFrom(periodFilter), [periodFilter]);
   const filters = {
     name: search || undefined,
     screenType: resFilter !== 'all' ? resFilter : undefined,
