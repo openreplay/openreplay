@@ -614,9 +614,11 @@ func (t *TableQueryBuilder) buildPrewhereConditions(r *Payload, eventsOrder mode
 // The list of session properties and its column names
 var sessionProperties = map[string]string{
 	"user_os":              "user_os",
+	"user_os_version":      "user_os_version",
 	"user_browser":         "user_browser",
 	"user_browser_version": "user_browser_version",
 	"user_device":          "user_device",
+	"user_device_type":     "user_device_type",
 	"user_country":         "user_country",
 	"user_city":            "user_city",
 	"user_state":           "user_state",
