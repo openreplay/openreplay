@@ -142,7 +142,8 @@ export function vmToUpdateRequest(
   return {
     name: vm.title,
     tags: vm.tags,
-    cron: scheduleToCron(vm.schedule),
+    // no schedule → clear the cron with an empty string (not null) so unscheduling sticks
+    cron: scheduleToCron(vm.schedule) ?? '',
     environments: vm.environments,
     config: withMatrixConfig(vm),
     ...(status ? { status } : {}),

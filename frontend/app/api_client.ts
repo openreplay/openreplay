@@ -365,7 +365,7 @@ export default class APIClient {
     abortSignal?: AbortSignal,
   ): Promise<Response> {
     this.init.method = 'PUT';
-    return this.fetch(path, params, 'PUT');
+    return this.fetch(path, params, 'PUT', options, undefined, abortSignal);
   }
 
   delete(
