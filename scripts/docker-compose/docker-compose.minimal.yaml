@@ -78,7 +78,7 @@ services:
         aliases:
           - minio.db.svc.cluster.local
     ports:
-      - 9001:9001
+      - ${MINIO_CONSOLE_PORT:-9001}:9001
     environment:
       RUSTFS_ACCESS_KEY: ${COMMON_S3_KEY}
       RUSTFS_SECRET_KEY: ${COMMON_S3_SECRET}
@@ -214,7 +214,7 @@ services:
           - http-openreplay
           - http-openreplay.app.svc.cluster.local
     ports:
-      - 8080:8080
+      - ${HTTP_PORT:-8080}:8080
     volumes:
       - shared-volume:/mnt/efs
     env_file:
