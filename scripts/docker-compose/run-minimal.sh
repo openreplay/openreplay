@@ -27,6 +27,7 @@ compose() { docker compose --env-file "${WORK_DIR}/common.env" -f "${WORK_DIR}/d
 build_workdir() {
   rm -rf "$WORK_DIR"; mkdir -p "$WORK_DIR"
   cp "${SRC_DIR}/docker-compose.minimal.yaml" "${WORK_DIR}/docker-compose.yaml"
+  cp "${SRC_DIR}/minimal.Caddyfile" "${WORK_DIR}/minimal.Caddyfile"
   cp -r "${SRC_DIR}/docker-envs" "${SRC_DIR}/migration-files" "$WORK_DIR/"
   cp "$ENV_FILE" "${WORK_DIR}/common.env"
   # Expand ${COMMON_*} placeholders in each worker env file, as install.sh does.

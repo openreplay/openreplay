@@ -1,0 +1,25 @@
+# CORS proxy for the minimal ingest stack.
+#
+# The full stack terminates browser traffic at nginx, which injects the
+# Access-Control-* headers the OpenReplay tracker needs. The minimal stack drops
+# nginx, so this tiny Caddy sidecar replicates exactly those headers and reverse
+# proxies to the http ingest worker. Point the tracker's ingestPoint at this
+# service's published port.
+:8095 {
+	@options method OPTIONS
+	handle @options {
+		header Access-Control-Allow-Origin "*"
+		header Access-Control-Allow-Methods "POST, PATCH, DELETE, OPTIONS"
+		header Access-Control-Allow-Headers "Content-Type, Authorization, Content-Encoding, X-Openreplay-Batch, datatype"
+		header Access-Control-Max-Age "1728000"
+		respond 204
+	}
+
+	handle {
+		header Access-Control-Allow-Origin "*"
+		header Access-Control-Allow-Methods "POST, PATCH, DELETE, OPTIONS"
+		header Access-Control-Allow-Headers "Content-Type, Authorization, Content-Encoding, X-Openreplay-Batch, datatype"
+		header Access-Control-Expose-Headers "Content-Length"
+		reverse_proxy http:8080
+	}
+}

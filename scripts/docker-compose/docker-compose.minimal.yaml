@@ -202,6 +202,23 @@ services:
         echo "clickhouse is up - executing command"
         clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 9000 --multiquery < /tmp/init_schema.sql || true
 
+  ###############################  PROXY  ###############################
+
+  # CORS proxy: replaces the nginx CORS headers the tracker needs. Point the
+  # tracker's ingestPoint at http://<host>:${INGEST_PORT}.
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    networks:
+      - openreplay-net
+    ports:
+      - ${INGEST_PORT:-8095}:8095
+    volumes:
+      - ./minimal.Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - http-openreplay
+    restart: unless-stopped
+
   #############################  WORKERS  #############################
 
   http-openreplay:
