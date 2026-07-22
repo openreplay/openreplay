@@ -14,3 +14,4 @@ export const IFRAME = '__$session-iframe$__';
 export const JWT_PARAM = '__$session-jwt-param$__';
 export const MENU_COLLAPSED = '__$global-menuCollapsed$__';
 export const SPOT_ONBOARDING = '__$spot-onboarding$__';
+export const DASHBOARD_TIME_RANGE = '__$dashboard-timeRange$__';
