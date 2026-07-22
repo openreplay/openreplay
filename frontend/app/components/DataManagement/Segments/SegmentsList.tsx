@@ -83,9 +83,15 @@ function SegmentsList({
       // creator (teammates' segments only) + relative update time
       render: (text: string, record: Segment) => {
         const s = issuesStore.segmentById(record.id);
-        const rel = record.updatedAt
-          ? DateTime.fromMillis(record.updatedAt).toRelative()
-          : null;
+        const hasDate = record.updatedAt;
+        let rel: any = null;
+        if (hasDate) {
+          if (typeof record.updatedAt === 'number') {
+            rel = DateTime.fromMillis(record.updatedAt).toRelative();
+          } else {
+            rel = DateTime.fromJSDate(new Date(record.updatedAt)).toRelative();
+          }
+        }
         const meta = [
           s && !s.mine ? s.createdBy : null,
           rel ? t('updated {{rel}}', { rel }) : null,
