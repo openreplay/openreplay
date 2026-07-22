@@ -46,7 +46,7 @@
   on the same host (hit `8080`/`9001` already-allocated during the proof)
 - [x] 4.2 Seed a default `projects` row (with a known `project_key`) — the
   minimal stack has no api/chalice to create one, so ingest 403s on an empty DB
-  until a project exists. Implemented as `min-stack/run.sh seed` (idempotent
+  until a project exists. Implemented as `make seed` in min-stack (idempotent
   INSERT ... ON CONFLICT DO NOTHING); fold into a compose one-shot job later if
   a pure `compose up` bootstrap is wanted
 - [x] 4.3 CORS: added a `caddy` sidecar (min-stack/Caddyfile) that replicates the
