@@ -47,6 +47,24 @@ the queue so downstream workers can consume them.
 - **AND** subsequent batches POSTed to `/v1/web/i` are produced to the
   `TOPIC_RAW_WEB` topic keyed by session id
 
+### Requirement: Default project bootstrap
+
+Because the minimal stack excludes the services that create projects (`api`,
+`chalice`, `frontend`), it SHALL provide a bootstrap step that seeds one
+`projects` row so `http` accepts ingest.
+
+#### Scenario: Ingest is rejected on an empty database
+
+- **WHEN** no `projects` row exists
+- **AND** an SDK POSTs to `/v1/web/start` with a project key
+- **THEN** `http` rejects the request (no matching project)
+
+#### Scenario: Seeded project unblocks ingest
+
+- **WHEN** the bootstrap seeds a `projects` row with a known `project_key`
+- **AND** an SDK POSTs to `/v1/web/start` with that key
+- **THEN** `http` accepts the request and returns a session token
+
 ### Requirement: Replay staging to filesystem
 
 The `sink` service SHALL consume raw web messages and write per-session `.mob`

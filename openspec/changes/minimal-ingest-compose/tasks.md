@@ -44,9 +44,11 @@
 - [ ] 4.1 Make host ports configurable — `${HTTP_PORT:-8080}` and the minio
   console `${MINIO_CONSOLE_PORT:-9001}` — to avoid collisions with a full stack
   on the same host (hit `8080`/`9001` already-allocated during the proof)
-- [ ] 4.2 Add a bootstrap seed job that inserts a default `projects` row (with a
-  known `project_key`) — the minimal stack has no api/chalice to create one, so
-  ingest 403s on an empty DB until a project exists
+- [x] 4.2 Seed a default `projects` row (with a known `project_key`) — the
+  minimal stack has no api/chalice to create one, so ingest 403s on an empty DB
+  until a project exists. Implemented as `run-minimal.sh seed` (idempotent
+  INSERT ... ON CONFLICT DO NOTHING); fold into a compose one-shot job later if
+  a pure `compose up` bootstrap is wanted
 - [ ] 4.3 Decide CORS strategy: the `http` worker emits no `Access-Control-*`
   headers (nginx did in the full stack), so browser tracker calls are blocked
   cross-origin. Either add a minimal CORS shim or document the same-origin /
