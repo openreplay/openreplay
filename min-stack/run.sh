@@ -4,21 +4,23 @@
 #   source common env -> envsubst the worker env files -> compose up.
 #
 # Usage:
-#   ./run-minimal.sh up        # build workdir + start (default)
-#   ./run-minimal.sh down      # stop and remove volumes
-#   ./run-minimal.sh seed      # insert a default project so ingest works
+#   ./run.sh up        # build workdir + start (default)
+#   ./run.sh down      # stop and remove volumes
+#   ./run.sh seed      # insert a default project so ingest works
 #
-# Env values come from minimal.common.env (copy from the .example first).
+# Env values come from common.env (copy from the .example first).
 set -Eeuo pipefail
 
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# docker-envs/ and migration-files/ are the tracked full-stack assets we reuse.
+COMPOSE_DIR="${SRC_DIR}/../scripts/docker-compose"
 WORK_DIR="${OR_MINIMAL_WORKDIR:-/tmp/or-minimal}"
-ENV_FILE="${SRC_DIR}/minimal.common.env"
+ENV_FILE="${SRC_DIR}/common.env"
 PROJECT_KEY="${OR_PROJECT_KEY:-testkey0000000000001}"
 
 [ -f "$ENV_FILE" ] || {
   echo "Missing $ENV_FILE — copy it first:"
-  echo "  cp ${SRC_DIR}/minimal.common.env.example ${ENV_FILE}"
+  echo "  cp ${SRC_DIR}/common.env.example ${ENV_FILE}"
   exit 1
 }
 
@@ -26,9 +28,9 @@ compose() { docker compose --env-file "${WORK_DIR}/common.env" -f "${WORK_DIR}/d
 
 build_workdir() {
   rm -rf "$WORK_DIR"; mkdir -p "$WORK_DIR"
-  cp "${SRC_DIR}/docker-compose.minimal.yaml" "${WORK_DIR}/docker-compose.yaml"
-  cp "${SRC_DIR}/minimal.Caddyfile" "${WORK_DIR}/minimal.Caddyfile"
-  cp -r "${SRC_DIR}/docker-envs" "${SRC_DIR}/migration-files" "$WORK_DIR/"
+  cp "${SRC_DIR}/docker-compose.yaml" "${WORK_DIR}/docker-compose.yaml"
+  cp "${SRC_DIR}/Caddyfile" "${WORK_DIR}/Caddyfile"
+  cp -r "${COMPOSE_DIR}/docker-envs" "${COMPOSE_DIR}/migration-files" "$WORK_DIR/"
   cp "$ENV_FILE" "${WORK_DIR}/common.env"
   # Expand ${COMMON_*} placeholders in each worker env file, as install.sh does.
   set -a; . "${WORK_DIR}/common.env"; set +a

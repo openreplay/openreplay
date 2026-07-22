@@ -17,7 +17,7 @@
 
 ## 2. Author the minimal compose
 
-- [x] 2.1 Create `scripts/docker-compose/docker-compose.minimal.yaml` with the 4
+- [x] 2.1 Create `min-stack/docker-compose.yaml` with the 4
   infra services, 4 migration jobs, and 6 workers only
 - [x] 2.2 Wire `depends_on` so migrations gate on infra health and workers gate
   on infra health (workers self-heal via `restart: unless-stopped` until schemas
@@ -46,10 +46,10 @@
   on the same host (hit `8080`/`9001` already-allocated during the proof)
 - [x] 4.2 Seed a default `projects` row (with a known `project_key`) — the
   minimal stack has no api/chalice to create one, so ingest 403s on an empty DB
-  until a project exists. Implemented as `run-minimal.sh seed` (idempotent
+  until a project exists. Implemented as `min-stack/run.sh seed` (idempotent
   INSERT ... ON CONFLICT DO NOTHING); fold into a compose one-shot job later if
   a pure `compose up` bootstrap is wanted
-- [x] 4.3 CORS: added a `caddy` sidecar (minimal.Caddyfile) that replicates the
+- [x] 4.3 CORS: added a `caddy` sidecar (min-stack/Caddyfile) that replicates the
   nginx `Access-Control-*` headers and reverse proxies to `http:8080`. Tracker
   points `ingestPoint` at `caddy` on `${INGEST_PORT}`. Verified against a real
   Firefox recording end-to-end (session lands in CH + dom.mobs in S3)

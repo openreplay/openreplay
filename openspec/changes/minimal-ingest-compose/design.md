@@ -34,7 +34,7 @@ render without live external origins.
 ## Goals / Non-Goals
 
 **Goals:**
-- Ship `docker-compose.minimal.yaml` that boots the 6-worker FOSS ingest path.
+- Ship `min-stack/docker-compose.yaml` that boots the 6-worker FOSS ingest path.
 - Reuse existing images, env files, and migration jobs from the full compose.
 - Provide an end-to-end smoke test that ingests a session and asserts the replay
   object lands in minio and a row lands in ClickHouse.
@@ -49,7 +49,7 @@ render without live external origins.
 ## Decisions
 
 **Separate file, not a compose override/profile.**
-A standalone `docker-compose.minimal.yaml` is the clearest contract and easiest
+A standalone `min-stack/docker-compose.yaml` is the clearest contract and easiest
 to test in CI. Alternative considered: compose `profiles:` on the existing file
 — rejected because it keeps all 19 service definitions in scope and makes the
 "only these run" assertion harder to verify. Alternative: a `-f base -f override`
@@ -93,12 +93,12 @@ excluded service (e.g. any var pointing at `nginx`).
 
 Additive only — new file, no changes to the existing compose or Go code.
 Rollback = delete the new file(s). Deploy: `docker compose -f
-scripts/docker-compose/docker-compose.minimal.yaml up`, wait for migrations to
+min-stack/docker-compose.yaml up`, wait for migrations to
 complete, then run the smoke test.
 
 ## Validation (proven on a live run)
 
-The stack was booted from `docker-compose.minimal.yaml` (FOSS/redisstream) and a
+The stack was booted from `min-stack/docker-compose.yaml` (FOSS/redisstream) and a
 real session was recorded end-to-end with openreplay.js 18.1.0 in headless
 chromium:
 

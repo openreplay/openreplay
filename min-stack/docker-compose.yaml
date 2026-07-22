@@ -214,7 +214,7 @@ services:
     ports:
       - ${INGEST_PORT:-8095}:8095
     volumes:
-      - ./minimal.Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
       - http-openreplay
     restart: unless-stopped

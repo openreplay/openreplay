@@ -10,14 +10,14 @@ MUST NOT include any of the excluded services (`alerts`, `api`, `images`,
 
 #### Scenario: Only core workers are defined
 
-- **WHEN** `docker-compose.minimal.yaml` is parsed
+- **WHEN** `min-stack/docker-compose.yaml` is parsed
 - **THEN** its `services` keys for application workers are exactly `http`,
   `ender`, `sink`, `storage`, `db`, `assets`
 - **AND** none of the excluded service names appear as keys
 
 #### Scenario: Required infrastructure is present
 
-- **WHEN** `docker-compose.minimal.yaml` is parsed
+- **WHEN** `min-stack/docker-compose.yaml` is parsed
 - **THEN** it defines infrastructure services `postgresql`, `clickhouse`,
   `redis`, and `minio`
 - **AND** it defines bootstrap jobs `fs-permission`, `minio-migration`,
@@ -31,7 +31,7 @@ kafka broker or an EE license service.
 
 #### Scenario: No kafka or license service
 
-- **WHEN** `docker-compose.minimal.yaml` is parsed
+- **WHEN** `min-stack/docker-compose.yaml` is parsed
 - **THEN** no service uses a kafka image
 - **AND** no service references an EE license endpoint
 - **AND** workers connect to the `redis` service for queue transport

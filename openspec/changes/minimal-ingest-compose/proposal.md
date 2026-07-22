@@ -10,7 +10,7 @@ and easier to reason about.
 
 ## What Changes
 
-- Add a new `docker-compose.minimal.yaml` that runs only the core ingest
+- Add a new `min-stack/docker-compose.yaml` that runs only the core ingest
   pipeline (FOSS / redisstream, no kafka, no license).
 - Included application services: `http`, `ender`, `sink`, `storage`, `db`,
   `assets`.
@@ -39,7 +39,7 @@ and easier to reason about.
 
 ## Impact
 
-- **New file**: `scripts/docker-compose/docker-compose.minimal.yaml` (plus any
+- **New file**: `min-stack/docker-compose.yaml` (plus any
   minimal env files under `scripts/docker-compose/docker-envs/`).
 - **Services**: cmd/http, cmd/ender, cmd/sink, cmd/storage, cmd/db, cmd/assets
   (FOSS images).
