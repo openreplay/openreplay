@@ -49,10 +49,10 @@
   until a project exists. Implemented as `run-minimal.sh seed` (idempotent
   INSERT ... ON CONFLICT DO NOTHING); fold into a compose one-shot job later if
   a pure `compose up` bootstrap is wanted
-- [ ] 4.3 Decide CORS strategy: the `http` worker emits no `Access-Control-*`
-  headers (nginx did in the full stack), so browser tracker calls are blocked
-  cross-origin. Either add a minimal CORS shim or document the same-origin /
-  `__DISABLE_SECURE_MODE` local-testing path
+- [x] 4.3 CORS: added a `caddy` sidecar (minimal.Caddyfile) that replicates the
+  nginx `Access-Control-*` headers and reverse proxies to `http:8080`. Tracker
+  points `ingestPoint` at `caddy` on `${INGEST_PORT}`. Verified against a real
+  Firefox recording end-to-end (session lands in CH + dom.mobs in S3)
 - [ ] 4.4 Document in `scripts/docker-compose/readme.md`: what the minimal stack
   runs and excludes, how to seed a project, the `__DISABLE_SECURE_MODE: true`
   requirement for non-SSL localhost tracker testing, and the

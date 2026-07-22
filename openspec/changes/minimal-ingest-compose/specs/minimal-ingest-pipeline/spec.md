@@ -3,10 +3,10 @@
 ### Requirement: Minimal service set
 
 The minimal stack SHALL run exactly six application services — `http`,
-`ender`, `sink`, `storage`, `db`, and `assets` — and MUST NOT include any of the
-excluded services (`alerts`, `api`, `images`, `integrations`, `sourcemapreader`,
-`spot`, `assist`, `canvases`, `chalice`, `frontend`, `heuristics`, `nginx`,
-`caddy`).
+`ender`, `sink`, `storage`, `db`, and `assets` — plus a `caddy` CORS proxy, and
+MUST NOT include any of the excluded services (`alerts`, `api`, `images`,
+`integrations`, `sourcemapreader`, `spot`, `assist`, `canvases`, `chalice`,
+`frontend`, `heuristics`, `nginx`).
 
 #### Scenario: Only core workers are defined
 
@@ -22,6 +22,7 @@ excluded services (`alerts`, `api`, `images`, `integrations`, `sourcemapreader`,
   `redis`, and `minio`
 - **AND** it defines bootstrap jobs `fs-permission`, `minio-migration`,
   `db-migration`, `clickhouse-migration`
+- **AND** it defines a `caddy` CORS proxy in front of `http`
 
 ### Requirement: FOSS queue backend only
 
@@ -34,6 +35,25 @@ kafka broker or an EE license service.
 - **THEN** no service uses a kafka image
 - **AND** no service references an EE license endpoint
 - **AND** workers connect to the `redis` service for queue transport
+
+### Requirement: Browser CORS support
+
+Because the minimal stack excludes the nginx reverse proxy that injects CORS
+headers in the full stack, it SHALL provide a proxy that adds the
+`Access-Control-*` headers the tracker needs and forwards ingest to `http`.
+
+#### Scenario: Preflight is answered
+
+- **WHEN** a browser sends an `OPTIONS` preflight to the ingest endpoint from a
+  different origin
+- **THEN** the proxy responds `204` with `Access-Control-Allow-Origin`,
+  `Access-Control-Allow-Methods`, and `Access-Control-Allow-Headers`
+
+#### Scenario: Cross-origin ingest succeeds
+
+- **WHEN** a browser POSTs to `/v1/web/start` from a different origin
+- **THEN** the response carries `Access-Control-Allow-Origin`
+- **AND** the request is forwarded to `http` and returns a session token
 
 ### Requirement: Session ingest to queue
 

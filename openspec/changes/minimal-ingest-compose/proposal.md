@@ -18,9 +18,11 @@ and easier to reason about.
   `minio` (S3-compatible object store).
 - Included one-shot bootstrap jobs: `fs-permission`, `minio-migration`,
   `db-migration`, `clickhouse-migration`.
+- Included a `caddy` CORS proxy in front of `http` (replaces the CORS headers
+  the full-stack nginx injects for browser tracker traffic).
 - Excluded (relative to full compose): `alerts`, `api`, `images`,
   `integrations`, `sourcemapreader`, `spot`, `assist`, `canvases`,
-  `chalice`, `frontend`, `heuristics`, `nginx`, `caddy`.
+  `chalice`, `frontend`, `heuristics`, `nginx`.
 - Document the ingest data-flow contract (topics, filesystem staging, S3
   layout) so the minimal stack has a verifiable behavior spec.
 
@@ -44,6 +46,6 @@ and easier to reason about.
 - **Infra images**: reuses existing postgres, clickhouse, valkey, minio images
   and migration jobs from the full compose.
 - **Queue**: redisstream backend only (no kafka broker, no EE license service).
-- **Networking**: HTTP ingest port exposed directly (no nginx/caddy reverse
-  proxy in the minimal profile).
+- **Networking**: browser traffic goes through a minimal `caddy` CORS proxy to
+  `http` (no nginx); the proxy port is exposed to the host.
 - **No changes** to Go source; this is a deployment/packaging change.
