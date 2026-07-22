@@ -1,0 +1,370 @@
+# vim: ft=yaml
+#
+# Minimal FOSS ingest stack: http -> ender/sink/db -> assets -> storage -> S3.
+# Six workers + four infra services + four one-shot migration jobs.
+# No kafka, no license, no nginx/caddy, no dashboard.
+#
+# Run:  COMPOSE_PROFILES=migration docker compose \
+#         -f docker-compose.minimal.yaml up -d
+#
+# The `assets`, `storage`, and `http` workers reach S3 directly at
+# minio.db.svc.cluster.local:9000 (no reverse proxy), overriding the
+# AWS_ENDPOINT baked into the shared env files.
+
+services:
+
+  ##############################  INFRA  ##############################
+
+  postgresql:
+    image: ghcr.io/openreplay/postgres:${POSTGRES_VERSION}
+    container_name: postgres
+    volumes:
+      - pgdata:/bitnami/postgresql
+    networks:
+      openreplay-net:
+        aliases:
+          - postgresql.db.svc.cluster.local
+    environment:
+      POSTGRESQL_PASSWORD: "${COMMON_PG_PASSWORD}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
+    container_name: clickhouse
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+    networks:
+      openreplay-net:
+        aliases:
+          - clickhouse-openreplay-clickhouse.db.svc.cluster.local
+    environment:
+      CLICKHOUSE_USER: "default"
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: ghcr.io/openreplay/valkey:${REDIS_VERSION}
+    container_name: redis
+    volumes:
+      - redisdata:/data
+    networks:
+      openreplay-net:
+        aliases:
+          - redis-master.db.svc.cluster.local
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: docker.io/rustfs/rustfs:${MINIO_VERSION}
+    container_name: minio
+    volumes:
+      - miniodata:/data
+    networks:
+      openreplay-net:
+        aliases:
+          - minio.db.svc.cluster.local
+    ports:
+      - 9001:9001
+    environment:
+      RUSTFS_ACCESS_KEY: ${COMMON_S3_KEY}
+      RUSTFS_SECRET_KEY: ${COMMON_S3_SECRET}
+      RUSTFS_ADDRESS: "0.0.0.0:9000"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+      RUSTFS_VOLUMES: "/data"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -so /dev/null http://localhost:9000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ###########################  MIGRATIONS  ###########################
+
+  fs-permission:
+    image: debian:stable-slim
+    container_name: fs-permission
+    profiles:
+      - "migration"
+    volumes:
+      - shared-volume:/mnt/efs
+      - miniodata:/mnt/minio
+      - pgdata:/mnt/postgres
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        chown -R 1001:1001 /mnt/{efs,postgres}
+        chown -R 10001:10001 /mnt/minio
+    restart: on-failure
+
+  minio-migration:
+    image: ghcr.io/openreplay/minio:2025
+    container_name: minio-migration
+    profiles:
+      - "migration"
+    depends_on:
+      minio:
+        condition: service_healthy
+      fs-permission:
+        condition: service_completed_successfully
+    networks:
+      - openreplay-net
+    volumes:
+      - ./migration-files/minio.sh:/tmp/minio.sh
+    environment:
+      MINIO_HOST: http://minio.db.svc.cluster.local:9000
+      MINIO_ACCESS_KEY: ${COMMON_S3_KEY}
+      MINIO_SECRET_KEY: ${COMMON_S3_SECRET}
+    user: root
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        until bash -c 'echo > /dev/tcp/minio/9000' 2>/dev/null; do
+            echo "Waiting for Minio server to be ready..."
+            sleep 1
+        done
+        bash /tmp/minio.sh init || exit 100
+
+  db-migration:
+    image: ghcr.io/openreplay/postgres:${POSTGRES_VERSION}
+    container_name: db-migration
+    profiles:
+      - "migration"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      minio-migration:
+        condition: service_completed_successfully
+    networks:
+      - openreplay-net
+    volumes:
+      - ./migration-files/init_pg_schema.sql:/tmp/init_schema.sql
+    environment:
+      PGHOST: postgresql
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: ${COMMON_PG_PASSWORD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        until psql -c '\q'; do
+        echo "PostgreSQL is unavailable - sleeping"
+        sleep 1
+        done
+        echo "PostgreSQL is up - executing command"
+        psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
+
+  clickhouse-migration:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
+    container_name: clickhouse-migration
+    profiles:
+      - "migration"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      minio-migration:
+        condition: service_completed_successfully
+    networks:
+      - openreplay-net
+    volumes:
+      - ./migration-files/init_ch_schema.sql:/tmp/init_schema.sql
+    environment:
+      CH_HOST: "clickhouse-openreplay-clickhouse.db.svc.cluster.local"
+      CH_PORT: "9000"
+      CH_PORT_HTTP: "8123"
+      CH_USERNAME: "default"
+      CH_PASSWORD: ""
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        until nc -z -v -w30 clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000; do
+            echo "Waiting for ClickHouse server to be ready..."
+            sleep 1
+        done
+        echo "clickhouse is up - executing command"
+        clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 9000 --multiquery < /tmp/init_schema.sql || true
+
+  #############################  WORKERS  #############################
+
+  http-openreplay:
+    image: public.ecr.aws/p1t3u8a3/http:${HTTP_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: http
+    networks:
+      openreplay-net:
+        aliases:
+          - http-openreplay
+          - http-openreplay.app.svc.cluster.local
+    ports:
+      - 8080:8080
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/http.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      AWS_ENDPOINT: "http://minio.db.svc.cluster.local:9000"
+    restart: unless-stopped
+
+  ender-openreplay:
+    image: public.ecr.aws/p1t3u8a3/ender:${ENDER_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: ender
+    networks:
+      openreplay-net:
+        aliases:
+          - ender-openreplay
+          - ender-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/ender.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment: {}
+    restart: unless-stopped
+
+  sink-openreplay:
+    image: public.ecr.aws/p1t3u8a3/sink:${SINK_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: sink
+    networks:
+      openreplay-net:
+        aliases:
+          - sink-openreplay
+          - sink-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/sink.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment: {}
+    restart: unless-stopped
+
+  storage-openreplay:
+    image: public.ecr.aws/p1t3u8a3/storage:${STORAGE_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: storage
+    networks:
+      openreplay-net:
+        aliases:
+          - storage-openreplay
+          - storage-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/storage.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      AWS_ENDPOINT: "http://minio.db.svc.cluster.local:9000"
+    restart: unless-stopped
+
+  db-openreplay:
+    image: public.ecr.aws/p1t3u8a3/db:${DB_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: db
+    networks:
+      openreplay-net:
+        aliases:
+          - db-openreplay
+          - db-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/db.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment: {}
+    restart: unless-stopped
+
+  assets-openreplay:
+    image: public.ecr.aws/p1t3u8a3/assets:${ASSETS_VERSION}
+    domainname: app.svc.cluster.local
+    container_name: assets
+    networks:
+      openreplay-net:
+        aliases:
+          - assets-openreplay
+          - assets-openreplay.app.svc.cluster.local
+    volumes:
+      - shared-volume:/mnt/efs
+    env_file:
+      - docker-envs/assets.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      AWS_ENDPOINT: "http://minio.db.svc.cluster.local:9000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  clickhouse:
+  redisdata:
+  miniodata:
+  shared-volume:
+
+networks:
+  openreplay-net:
