@@ -10,7 +10,7 @@
 
 SHELL := /bin/bash
 .ONESHELL:
-.DEFAULT_GOAL := up
+.DEFAULT_GOAL := help
 
 # Absolute path to this Makefile's directory.
 SRC_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
@@ -22,7 +22,13 @@ PROJECT_KEY ?= testkey0000000000001
 
 COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/docker-compose.yaml
 
-.PHONY: up down seed logs ps check-env build-workdir
+.PHONY: up down seed logs ps check-env build-workdir help
+
+
+help: ## Prints help for targets with comments
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Minimal ingest stack
 
 check-env:
 	@if [ ! -f "$(ENV_FILE)" ]; then \
@@ -45,7 +51,7 @@ build-workdir: check-env
 		envsubst < "$$f" > "$$f.tmp" && mv "$$f.tmp" "$$f"; \
 	done
 
-up: build-workdir
+up: build-workdir ## Build workdir, boot the stack, wait for migrations, seed a project
 	@set -Eeuo pipefail
 	COMPOSE_PROFILES=migration $(COMPOSE) up -d
 	echo "Waiting for Postgres schema (db-migration) ..."
@@ -54,7 +60,7 @@ up: build-workdir
 	set -a; . "$(WORK_DIR)/common.env"; set +a
 	echo "Up. http ingest on host port $${HTTP_PORT:-8080} (tracker ingestPoint: caddy on $${INGEST_PORT:-8095})."
 
-seed:
+seed: ## Insert a default project so ingest works
 	@set -Eeuo pipefail
 	set -a; . "$(WORK_DIR)/common.env"; set +a
 	echo "Seeding project_key=$(PROJECT_KEY) ..."
@@ -65,11 +71,11 @@ seed:
 		 ON CONFLICT (project_key) DO NOTHING \
 		 RETURNING project_id, project_key;"
 
-down:
+down: ## Stop the stack and remove all volumes
 	@COMPOSE_PROFILES=migration $(COMPOSE) down -v
 
-logs:
+logs: ## Tail logs from all services
 	@$(COMPOSE) logs -f
 
-ps:
+ps: ## Show container status
 	@$(COMPOSE) ps
