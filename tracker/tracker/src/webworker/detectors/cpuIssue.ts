@@ -14,7 +14,7 @@ import { cpuRate, timeDiff } from './performance.js'
  *
  * NOTE: the Go version overwrites lastTimestamp *before* computing the interval,
  * so its dt is always 0 (cpuRate always 0 -> effectively disabled). We compute
- * dt against the previous sample so the rate is meaningful for debugging.
+ * dt against the previous sample so the rate is meaningful.
  */
 
 const CPU_THRESHOLD = 70 // % out of 100
@@ -22,6 +22,7 @@ const CPU_MIN_DURATION_TRIGGER = 6 * 1000
 
 export default class CpuIssueDetector implements Detector {
   private startTimestamp = 0
+  private startMessageId = 0
   private lastTimestamp = 0
   private maxRate = 0
   private contextString = ''
@@ -34,11 +35,13 @@ export default class CpuIssueDetector implements Detector {
 
   private reset(): void {
     this.startTimestamp = 0
+    this.startMessageId = 0
     this.maxRate = 0
   }
 
   private build(): void {
     const start = this.startTimestamp
+    const messageId = this.startMessageId
     const rate = this.maxRate
     const duration = this.duration()
     // matches Go `defer f.reset()`
@@ -51,10 +54,11 @@ export default class CpuIssueDetector implements Detector {
       contextString: this.contextString,
       payload: JSON.stringify({ Duration: duration, Rate: rate }),
       timestamp: start,
+      messageId,
     })
   }
 
-  handle(message: Message, timestamp: number): void {
+  handle(message: Message, index: number, timestamp: number): void {
     const type = message[0]
     if (type === Type.SetPageLocation) {
       this.contextString = (message as SetPageLocation)[1]
@@ -82,6 +86,7 @@ export default class CpuIssueDetector implements Detector {
     }
     if (this.startTimestamp === 0) {
       this.startTimestamp = timestamp
+      this.startMessageId = index
     }
     if (this.maxRate < rate) {
       this.maxRate = rate

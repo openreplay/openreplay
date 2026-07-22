@@ -6,6 +6,7 @@ import { FromWorkerData } from '../common/interaction.js'
 
 import QueueSender from './QueueSender.js'
 import BatchWriter from './BatchWriter.js'
+import Detectors from './detectors/index.js'
 
 declare function postMessage(message: FromWorkerData, transfer?: any[]): void
 
@@ -76,6 +77,9 @@ const KEEPALIVE_SAFE_RANGE = Math.floor((64 << 10) * 0.8)
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
+let detectors: Detectors | null = null
+// Running batch timestamp, tracked from Timestamp messages and fed to detectors.
+let detectorsTimestamp = 0
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
 
@@ -113,6 +117,8 @@ function reset(): Promise<any> {
     }
     resetWriter()
     resetSender()
+    detectors = null
+    detectorsTimestamp = 0
     setTimeout(() => {
       workerStatus = WorkerStatus.NotActive
       res(null)
@@ -169,7 +175,17 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
             clearTimeout(restartTimeoutID)
           }
         }
+        if (message[0] === MType.Timestamp) {
+          detectorsTimestamp = message[1]
+        }
+        // Feed the just-written message (with its assigned stream index) to the
+        // heuristic detectors. Index advances only when the message is actually
+        // written, so control signals that don't push are skipped.
+        const messageIndex = w.currentIndex
         w.writeMessage(message)
+        if (detectors && w.currentIndex > messageIndex) {
+          detectors.handle(message, messageIndex, detectorsTimestamp)
+        }
       })
     } else {
       postMessage('not_init')
@@ -212,6 +228,10 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
         postMessage({ type: 'local_save', name, batch }, [batch.buffer])
       },
     )
+    // Tracker-side heuristics. Emitted IssueEvents are written back to the batch
+    // so they get a real stream index and are routed via the analytics pipeline.
+    detectors = new Detectors((msg) => writer?.writeMessage(msg), data.localDebug ?? false)
+    detectorsTimestamp = 0
     if (sendIntervalID === null) {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)
     }

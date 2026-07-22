@@ -1,7 +1,6 @@
 import Message, {
   Type,
   MouseClick,
-  SetPageLocation,
 } from '../../common/messages.gen.js'
 import type { Detector, ReportIssue } from './types.js'
 
@@ -11,9 +10,8 @@ import type { Detector, ReportIssue } from './types.js'
  * Fires when the same element is clicked >= MIN_CLICKS_IN_A_ROW times, each
  * within MAX_TIME_DIFF ms of the previous one.
  *
- * The backend reads the URL off the MouseClick message; the tracker's
- * MouseClick has no URL field, so we track the current page URL from
- * SetPageLocation instead (kept across resets, unlike the Go `url` field).
+ * URL is stamped centrally by the Detectors layer (latest SetPageLocation), so
+ * this detector doesn't track it.
  */
 
 const MAX_TIME_DIFF = 300
@@ -24,8 +22,8 @@ export default class ClickRageDetector implements Detector {
   private lastLabel = ''
   private lastSelector = ''
   private firstInARowTimestamp = 0
+  private firstInARowMessageId = 0
   private countsInARow = 0
-  private currentUrl = ''
 
   constructor(private readonly report: ReportIssue) {}
 
@@ -34,6 +32,7 @@ export default class ClickRageDetector implements Detector {
     this.lastLabel = ''
     this.lastSelector = ''
     this.firstInARowTimestamp = 0
+    this.firstInARowMessageId = 0
     this.countsInARow = 0
   }
 
@@ -42,6 +41,7 @@ export default class ClickRageDetector implements Detector {
     const label = this.lastLabel
     const selector = this.lastSelector
     const firstTs = this.firstInARowTimestamp
+    const messageId = this.firstInARowMessageId
     // matches Go `defer crd.reset()`
     this.reset()
     if (count < MIN_CLICKS_IN_A_ROW) {
@@ -52,17 +52,13 @@ export default class ClickRageDetector implements Detector {
       contextString: label,
       context: selector, // used by the tags filter
       payload: JSON.stringify({ Count: count }),
-      url: this.currentUrl,
       timestamp: firstTs,
+      messageId,
     })
   }
 
-  handle(message: Message, timestamp: number): void {
+  handle(message: Message, index: number, timestamp: number): void {
     const type = message[0]
-    if (type === Type.SetPageLocation) {
-      this.currentUrl = (message as SetPageLocation)[1]
-      return
-    }
     if (type !== Type.MouseClick) {
       return
     }
@@ -83,6 +79,7 @@ export default class ClickRageDetector implements Detector {
     this.lastLabel = label
     this.lastSelector = selector
     this.firstInARowTimestamp = timestamp
+    this.firstInARowMessageId = index
     this.countsInARow = 1
   }
 }

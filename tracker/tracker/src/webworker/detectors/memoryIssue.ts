@@ -18,6 +18,7 @@ const MEM_RATE_THRESHOLD = 300 // % of the running average
 
 export default class MemoryIssueDetector implements Detector {
   private startTimestamp = 0
+  private startMessageId = 0
   private rate = 0
   private count = 0
   private sum = 0
@@ -27,6 +28,7 @@ export default class MemoryIssueDetector implements Detector {
 
   private reset(): void {
     this.startTimestamp = 0
+    this.startMessageId = 0
     this.rate = 0
   }
 
@@ -39,11 +41,12 @@ export default class MemoryIssueDetector implements Detector {
       contextString: this.contextString,
       payload: JSON.stringify({ Rate: this.rate - 100 }),
       timestamp: this.startTimestamp,
+      messageId: this.startMessageId,
     })
     this.reset()
   }
 
-  handle(message: Message, timestamp: number): void {
+  handle(message: Message, index: number, timestamp: number): void {
     const type = message[0]
     if (type === Type.SetPageLocation) {
       this.contextString = (message as SetPageLocation)[1]
@@ -69,6 +72,7 @@ export default class MemoryIssueDetector implements Detector {
     if (rate >= MEM_RATE_THRESHOLD) {
       if (this.startTimestamp === 0) {
         this.startTimestamp = timestamp
+        this.startMessageId = index
       }
       if (this.rate < rate) {
         this.rate = rate

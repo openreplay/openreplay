@@ -38,6 +38,7 @@ export default class DeadClickDetector implements Detector {
   private lastMouseClick: MouseClick | null = null
   private lastTimestamp = 0
   private lastClickTimestamp = 0
+  private lastMessageId = 0
   private readonly inputIDSet = new Set<number>()
 
   constructor(private readonly report: ReportIssue) {}
@@ -45,12 +46,14 @@ export default class DeadClickDetector implements Detector {
   private reset(): void {
     this.lastMouseClick = null
     this.lastClickTimestamp = 0
+    this.lastMessageId = 0
     this.inputIDSet.clear()
   }
 
   private build(): void {
     const click = this.lastMouseClick
     const clickTs = this.lastClickTimestamp
+    const messageId = this.lastMessageId
     const lastTs = this.lastTimestamp
     // matches Go `defer d.reset()`
     this.reset()
@@ -63,10 +66,11 @@ export default class DeadClickDetector implements Detector {
       contextString: click[3], // label
       context: click[4], // selector (used by the tags filter)
       timestamp: clickTs,
+      messageId,
     })
   }
 
-  handle(message: Message, timestamp: number): void {
+  handle(message: Message, index: number, timestamp: number): void {
     const type = message[0]
     const isMutation = DOM_MUTATION_TYPES.has(type)
     if (
@@ -94,6 +98,7 @@ export default class DeadClickDetector implements Detector {
         }
         this.lastMouseClick = msg
         this.lastClickTimestamp = timestamp
+        this.lastMessageId = index
         return
       }
       case Type.SetInputTarget: {
