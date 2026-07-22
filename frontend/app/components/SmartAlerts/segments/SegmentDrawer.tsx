@@ -180,7 +180,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
         )}
 
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
+          {/* <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium color-gray-darkest">
               {t('Issues Agent')}
             </span>
@@ -193,8 +193,8 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
                 <Info size={13} />
               </span>
             </Tooltip>
-          </div>
-          <div className="flex items-center gap-2">
+          </div> */}
+          {/* <div className="flex items-center gap-2">
             <Switch
               size="small"
               checked={captureNow}
@@ -205,7 +205,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
             <span className="text-sm color-gray-darkest">
               {t('Identify issues in this segment')}
             </span>
-          </div>
+          </div> */}
           {!publicNow && (
             <span className="text-xs color-gray-medium">
               {t('Private — make it team-visible to enable the agent.')}
@@ -235,7 +235,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
           </div>
         </div>
 
-        <Alert
+        {/* <Alert
           type="info"
           showIcon
           className="border-transparent rounded-lg"
@@ -246,9 +246,9 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
                   'Add events or filters to narrow the segment — right now it matches all traffic.',
                 )
           }
-        />
+        /> */}
 
-        {showInstructions ? (
+        {/* {showInstructions ? (
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium color-gray-darkest">
               {t('Instructions')}{' '}
@@ -280,7 +280,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
               {t('Add instructions')}
             </Button>
           )
-        )}
+        )} */}
       </div>
     </Drawer>
   );
