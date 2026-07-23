@@ -54,6 +54,25 @@ Each worker becomes an `s6-rc` service dir under
 `/etc/s6-overlay/s6-rc.d/<name>/` with `type=longrun` and a `run` script that
 `exec`s the binary. `s6-overlay` provides `/init` as PID 1; no `tini` needed.
 
+### Per-service env via s6-envdir (not one merged env)
+
+The workers do NOT share a single env: `BUCKET_NAME` differs per worker
+(`http`=uxtesting-records, `storage`=mobs, `assets`=sessions-assets), so merging
+all worker envs into one container env would collide. s6 gives per-service env
+exactly like systemd's `Environment=`. Each service's `run` script reads its own
+envdir:
+
+```
+run:  exec s6-envdir /work/env/<name> /work/bin/<name>
+```
+
+An envdir is a directory where each filename is a variable and the file content
+is its value. We reuse the existing per-worker `docker-envs/<name>.env` files:
+after the Makefile's existing `envsubst` expands `${COMMON_*}`, a build/init step
+converts each expanded `.env` into `/work/env/<name>/`. Every worker then sees
+the identical env it gets in the multi-container stack — the `BUCKET_NAME`
+conflict never arises because envs are never merged.
+
 ### Restart semantics
 s6 restarts any longrun that exits (default behavior). A crashed `sink` comes
 back automatically — the property the current bundle lacks. This is the key
@@ -83,5 +102,6 @@ the caddy CORS proxy from the multi-container stack.
   each `run` to a one-line `exec`; document the layout.
 - **Coupled lifecycle**: `docker stop` stops all workers together. Acceptable —
   matches the "single artifact" intent.
-- **Env sprawl**: all workers share one env in one container; a var meant for one
-  worker is visible to all. Low risk (names are already global COMMON_*).
+- **Env isolation**: resolved by per-service `s6-envdir` (see Decisions) — each
+  worker reads only its own envdir, so conflicting vars like `BUCKET_NAME` stay
+  separate exactly as in the multi-container stack.

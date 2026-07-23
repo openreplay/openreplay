@@ -15,8 +15,11 @@
   tarballs (arch-matched), installs runtime deps (librdkafka, sasl, ca-certs),
   downloads uaparser + geoip data.
 - [ ] 2.2 Create one `s6-rc` longrun service dir per worker under
-  `min-stack/bundle/s6-rc.d/<name>/` (type + run script `exec /work/bin/<name>`)
-  and add each to the `user` bundle contents.
+  `min-stack/bundle/s6-rc.d/<name>/` (type + run script
+  `exec s6-envdir /work/env/<name> /work/bin/<name>`) and add each to the `user`
+  bundle contents. Add an init oneshot (or build step) that converts each
+  expanded `docker-envs/<name>.env` into the envdir `/work/env/<name>/` so each
+  worker gets its own env (resolves the per-worker `BUCKET_NAME` difference).
 - [ ] 2.3 Set `/init` (s6-overlay) as ENTRYPOINT; remove tini/nohup.
 - [ ] 2.4 Build the image locally and confirm all 6 binaries + s6 tree present.
 
