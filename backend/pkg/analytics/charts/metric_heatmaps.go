@@ -106,6 +106,7 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if p.SampleRate > 0 && p.SampleRate < 100 {
 		base = append(base, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
 	}
+	base = append(base, buildLocationConditions(filter.Filters, "e")...)
 
 	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
 
