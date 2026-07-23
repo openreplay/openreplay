@@ -88,6 +88,11 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 		isPublic = *req.IsPublic
 	}
 
+	isCapture := false
+	if req.IsCapture != nil {
+		isCapture = *req.IsCapture
+	}
+
 	var expiresAt *time.Time
 	if isShare {
 		exp := time.Now().AddDate(0, expiryMonths, 0)
@@ -96,8 +101,8 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 
 	const insertQuery = `
 		INSERT INTO public.saved_searches (
-			project_id, user_id, name, is_public, is_share, search_data, expires_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7)
+			project_id, user_id, name, is_public, is_share, is_capture, search_data, expires_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING search_id, created_at
 	`
 
@@ -110,6 +115,7 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 		req.Name,
 		isPublic,
 		isShare,
+		isCapture,
 		searchDataJSON,
 		expiresAt,
 	).Scan(&searchID, &createdAt)
@@ -124,6 +130,7 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 		Name:      req.Name,
 		IsPublic:  isPublic,
 		IsShare:   isShare,
+		IsCapture: isCapture,
 		Data:      req.Data,
 		CreatedAt: createdAt,
 	}, nil
@@ -133,8 +140,8 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 	ctx := context.Background()
 
 	const selectQuery = `
-		SELECT 
-			search_id, project_id, user_id, name, is_public, is_share, search_data, created_at, expires_at, deleted_at
+		SELECT
+			search_id, project_id, user_id, name, is_public, is_share, is_capture, search_data, created_at, expires_at, deleted_at
 		FROM public.saved_searches
 		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
 			AND (expires_at IS NULL OR expires_at > NOW())
@@ -150,6 +157,7 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 		&savedSearch.Name,
 		&savedSearch.IsPublic,
 		&savedSearch.IsShare,
+		&savedSearch.IsCapture,
 		&searchDataJSON,
 		&savedSearch.CreatedAt,
 		&savedSearch.ExpiresAt,
@@ -193,7 +201,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 
 	selectQuery := fmt.Sprintf(`
 		SELECT
-			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share,
+			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share, ss.is_capture,
 			ss.search_data, ss.created_at, ss.expires_at, ss.deleted_at,
 			COUNT(*) OVER() AS total_count
 		FROM public.saved_searches ss
@@ -227,6 +235,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 			&savedSearch.Name,
 			&savedSearch.IsPublic,
 			&savedSearch.IsShare,
+			&savedSearch.IsCapture,
 			&searchDataJSON,
 			&savedSearch.CreatedAt,
 			&savedSearch.ExpiresAt,
@@ -323,10 +332,15 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 		isPublic = *req.IsPublic
 	}
 
+	isCapture := false
+	if req.IsCapture != nil {
+		isCapture = *req.IsCapture
+	}
+
 	const updateQuery = `
 		UPDATE public.saved_searches
-		SET name=$1, is_public=$2, search_data=$3
-		WHERE search_id=$4 AND project_id=$5 AND deleted_at IS NULL
+		SET name=$1, is_public=$2, is_capture=$3, search_data=$4
+		WHERE search_id=$5 AND project_id=$6 AND deleted_at IS NULL
 		RETURNING is_share, created_at
 	`
 
@@ -336,6 +350,7 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 		updateQuery,
 		req.Name,
 		isPublic,
+		isCapture,
 		searchDataJSON,
 		searchID,
 		projectID,
@@ -354,6 +369,7 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 		Name:      req.Name,
 		IsPublic:  isPublic,
 		IsShare:   isShare,
+		IsCapture: isCapture,
 		Data:      req.Data,
 		CreatedAt: createdAt,
 	}, nil
