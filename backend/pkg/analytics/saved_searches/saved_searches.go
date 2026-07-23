@@ -38,7 +38,7 @@ type SegmentsListItem struct {
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Get(projectID int, searchID string) (*model.SavedSearch, error)
-	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error)
+	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, int64, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
 	ListForFilters(projectID, userID int) ([]SegmentsListItem, error)
@@ -189,7 +189,7 @@ var sortColumns = map[string]string{
 	"userName":  "u.name",
 }
 
-func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error) {
+func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, int64, error) {
 	column, ok := sortColumns[sort]
 	if !ok {
 		column = sortColumns["createdAt"]
@@ -216,7 +216,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 	rows, err := s.pgconn.Query(selectQuery, projectID, userID, limit, offset)
 	if err != nil {
 		s.log.Error(ctx, "list saved searches: %v", err)
-		return nil, 0, fmt.Errorf("list saved searches: %w", err)
+		return nil, 0, 0, fmt.Errorf("list saved searches: %w", err)
 	}
 	defer rows.Close()
 
@@ -245,11 +245,11 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 
 		if err != nil {
 			s.log.Error(ctx, "scan saved search: %v", err)
-			return nil, 0, fmt.Errorf("scan saved search: %w", err)
+			return nil, 0, 0, fmt.Errorf("scan saved search: %w", err)
 		}
 
 		if err := json.Unmarshal(searchDataJSON, &savedSearch.Data); err != nil {
-			return nil, 0, fmt.Errorf("unmarshal search data: %w", err)
+			return nil, 0, 0, fmt.Errorf("unmarshal search data: %w", err)
 		}
 
 		searches = append(searches, &savedSearch)
@@ -257,7 +257,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 
 	if err := rows.Err(); err != nil {
 		s.log.Error(ctx, "rows error: %v", err)
-		return nil, 0, fmt.Errorf("rows error: %w", err)
+		return nil, 0, 0, fmt.Errorf("rows error: %w", err)
 	}
 
 	for _, ss := range searches {
@@ -269,7 +269,40 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 		ss.UsersCount = stats.UsersCount
 	}
 
-	return searches, total, nil
+	totalSessions := s.getTotalSessions(ctx, projectID)
+
+	return searches, total, totalSessions, nil
+}
+
+func (s *savedSearchesImpl) getTotalSessions(ctx context.Context, projectID int) int64 {
+	if s.search == nil {
+		return 0
+	}
+
+	cacheKey := fmt.Sprintf("saved_search_stats:%d:total", projectID)
+	if cached, ok := s.statsCache.GetAndRefresh(cacheKey); ok {
+		if v, ok := cached.(searchStats); ok && time.Since(v.ComputedAt) < statsFreshnessWindow {
+			return v.SessionsCount
+		}
+	}
+
+	now := time.Now()
+	req := &model.SessionsSearchRequest{
+		StartDate: now.AddDate(0, 0, -statsWindowDays).UnixMilli(),
+		EndDate:   now.UnixMilli(),
+	}
+
+	qctx, cancel := context.WithTimeout(ctx, statsQueryTimeout)
+	defer cancel()
+
+	sessionsCount, _, err := s.search.GetCounts(qctx, projectID, req)
+	if err != nil {
+		s.log.Warn(ctx, "saved search total sessions: %.200s", err)
+		return 0
+	}
+
+	s.statsCache.Set(cacheKey, searchStats{SessionsCount: sessionsCount, ComputedAt: time.Now()})
+	return sessionsCount
 }
 
 func (s *savedSearchesImpl) getSearchStats(ctx context.Context, projectID int, data *model.SavedSearchData) searchStats {
