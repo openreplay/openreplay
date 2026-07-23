@@ -19,11 +19,13 @@ STOP_GRACE="${STOP_GRACE:-20}"
 S3_POLL_SECS="${S3_POLL_SECS:-240}"
 WORKERS=(http ender sink storage db assets)
 SVC_DIR="/run/service"
+S6_SVSTAT="/command/s6-svstat"   # s6 tools live in /command, not on docker-exec PATH
 
 pass=0; fail=0
 ok(){ echo "  PASS: $1"; pass=$((pass+1)); }
 no(){ echo "  FAIL: $1"; fail=$((fail+1)); }
-svpid(){ docker exec "$CONTAINER" s6-svstat "$SVC_DIR/$1" 2>/dev/null | grep -oE 'pid [0-9]+' | grep -oE '[0-9]+'; }
+svstat(){ docker exec "$CONTAINER" "$S6_SVSTAT" "$SVC_DIR/$1" 2>/dev/null; }
+svpid(){ svstat "$1" | grep -oE 'pid [0-9]+' | grep -oE '[0-9]+'; }
 
 echo "== Scenario 1: exactly one app container running =="
 running=$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null || echo missing)
@@ -31,7 +33,7 @@ running=$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null || ech
 
 echo "== Scenario 2: all six worker processes supervised & up =="
 for w in "${WORKERS[@]}"; do
-  st=$(docker exec "$CONTAINER" s6-svstat "$SVC_DIR/$w" 2>/dev/null | awk '{print $1}')
+  st=$(svstat "$w" | awk '{print $1}')
   [ "$st" = "up" ] && ok "worker '$w' is up" || no "worker '$w' not up ($st)"
 done
 

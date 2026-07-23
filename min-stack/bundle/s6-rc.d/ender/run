@@ -1,0 +1,5 @@
+#!/command/execlineb -P
+with-contenv
+s6-envdir /work/env/ender
+fdmove -c 2 1
+/work/bin/ender
