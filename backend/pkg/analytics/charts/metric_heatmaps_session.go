@@ -150,14 +150,14 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 	filters := []model.Filter{}
 	hasLocationFilter := false
-	var urlPath string
+	var locationFilter model.Filter
 
 	for _, filter := range series.Filter.Filters {
 		if filter.Name == "LOCATION" {
 			for _, nested := range filter.Filters {
 				if nested.Name == "url_path" && len(nested.Value) > 0 && nested.Value[0] != "" {
 					hasLocationFilter = true
-					urlPath = nested.Value[0]
+					locationFilter = nested
 					filters = append(filters, filter)
 				}
 			}
@@ -180,7 +180,9 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 			fmt.Sprintf("e.project_id = %d", projectId),
 			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 			"e.`$event_name` = 'CLICK'",
-			fmt.Sprintf("$current_path = '%s'", urlPath),
+		}
+		if cond := buildCond(`e."$current_path"`, locationFilter.Value, locationFilter.Operator, false, "singleColumn"); cond != "" {
+			eventsWhere = append(eventsWhere, cond)
 		}
 		if p.SampleRate > 0 && p.SampleRate < 100 {
 			eventsWhere = append(eventsWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
