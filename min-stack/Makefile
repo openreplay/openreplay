@@ -27,7 +27,8 @@ REPO_ROOT   := $(SRC_DIR)/..
 COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/$(CF)
 
 .PHONY: up down seed logs ps check-env build-workdir help \
-        build-image up-bundle down-bundle logs-bundle ps-bundle smoke _boot
+        build-image up-bundle down-bundle logs-bundle ps-bundle smoke _boot \
+        capture e2e test-bundle
 
 
 help: ## Prints help for targets with comments
@@ -112,3 +113,17 @@ smoke: ## Run the bundle smoke test against a booted bundle stack
 	set -a; . "$(WORK_DIR)/common.env"; set +a
 	OR_BUNDLE_NET=$$(basename "$(WORK_DIR)")_openreplay-net \
 	  bash "$(SRC_DIR)/bundle/smoke.sh"
+
+capture: ## Drive the real tracker with Playwright to record one session
+	@bash "$(SRC_DIR)/bundle/e2e.sh"
+
+e2e: ## End-to-end: record a session and prove it lands in object storage
+	@$(MAKE) --no-print-directory capture
+
+test-bundle: ## Full run: build + boot + e2e capture + smoke, then tear down
+	@set -Eeuo pipefail
+	$(MAKE) --no-print-directory up-bundle
+	if $(MAKE) --no-print-directory e2e; then RESULT=PASS; else RESULT=FAIL; fi; \
+	  echo ""; echo "======== BUNDLE TEST RESULT: $$RESULT ========"; \
+	  $(MAKE) --no-print-directory down-bundle; \
+	  [ "$$RESULT" = PASS ]
