@@ -19,10 +19,15 @@ COMPOSE_DIR := $(SRC_DIR)/../scripts/docker-compose
 WORK_DIR    ?= /tmp/or-minimal
 ENV_FILE    := $(SRC_DIR)/common.env
 PROJECT_KEY ?= testkey0000000000001
+# Compose file to act on (overridden by the *-bundle targets).
+CF          ?= docker-compose.yaml
+BUNDLE_IMAGE ?= openreplay-min-bundle:local
+REPO_ROOT   := $(SRC_DIR)/..
 
-COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/docker-compose.yaml
+COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/$(CF)
 
-.PHONY: up down seed logs ps check-env build-workdir help
+.PHONY: up down seed logs ps check-env build-workdir help \
+        build-image up-bundle down-bundle logs-bundle ps-bundle smoke _boot
 
 
 help: ## Prints help for targets with comments
@@ -41,6 +46,7 @@ build-workdir: check-env
 	@set -Eeuo pipefail
 	rm -rf "$(WORK_DIR)"; mkdir -p "$(WORK_DIR)"
 	cp "$(SRC_DIR)/docker-compose.yaml" "$(WORK_DIR)/docker-compose.yaml"
+	cp "$(SRC_DIR)/docker-compose.bundle.yaml" "$(WORK_DIR)/docker-compose.bundle.yaml"
 	cp "$(SRC_DIR)/Caddyfile" "$(WORK_DIR)/Caddyfile"
 	cp -r "$(COMPOSE_DIR)/docker-envs" "$(COMPOSE_DIR)/migration-files" "$(WORK_DIR)/"
 	cp "$(ENV_FILE)" "$(WORK_DIR)/common.env"
@@ -51,12 +57,15 @@ build-workdir: check-env
 		envsubst < "$$f" > "$$f.tmp" && mv "$$f.tmp" "$$f"; \
 	done
 
-up: build-workdir ## Build workdir, boot the stack, wait for migrations, seed a project
+up: build-workdir ## Build workdir, boot the six-container stack, seed a project
+	@$(MAKE) --no-print-directory _boot CF=$(CF)
+
+_boot:
 	@set -Eeuo pipefail
 	COMPOSE_PROFILES=migration $(COMPOSE) up -d
 	echo "Waiting for Postgres schema (db-migration) ..."
 	until COMPOSE_PROFILES=migration $(COMPOSE) ps -a db-migration --format '{{.State}}' 2>/dev/null | grep -q exited; do sleep 2; done
-	$(MAKE) --no-print-directory seed || true
+	$(MAKE) --no-print-directory seed CF=$(CF) || true
 	set -a; . "$(WORK_DIR)/common.env"; set +a
 	echo "Up. http ingest on host port $${HTTP_PORT:-8080} (tracker ingestPoint: caddy on $${INGEST_PORT:-8095})."
 
@@ -79,3 +88,27 @@ logs: ## Tail logs from all services
 
 ps: ## Show container status
 	@$(COMPOSE) ps
+
+##@ Single-container bundle (all six workers under s6-overlay)
+
+build-image: ## Build the s6-overlay bundle image (all six workers)
+	@set -Eeuo pipefail
+	docker build -f "$(SRC_DIR)/bundle/Dockerfile" -t "$(BUNDLE_IMAGE)" "$(REPO_ROOT)"
+
+up-bundle: build-image build-workdir ## Build image + boot the single supervised container, seed a project
+	@$(MAKE) --no-print-directory _boot CF=docker-compose.bundle.yaml
+
+down-bundle: ## Stop the bundle stack and remove all volumes
+	@$(MAKE) --no-print-directory down CF=docker-compose.bundle.yaml
+
+logs-bundle: ## Tail logs from the bundle stack (all workers prefixed by s6)
+	@$(MAKE) --no-print-directory logs CF=docker-compose.bundle.yaml
+
+ps-bundle: ## Show bundle container status
+	@$(MAKE) --no-print-directory ps CF=docker-compose.bundle.yaml
+
+smoke: ## Run the bundle smoke test against a booted bundle stack
+	@set -Eeuo pipefail
+	set -a; . "$(WORK_DIR)/common.env"; set +a
+	OR_BUNDLE_NET=$$(basename "$(WORK_DIR)")_openreplay-net \
+	  bash "$(SRC_DIR)/bundle/smoke.sh"

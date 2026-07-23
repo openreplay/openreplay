@@ -37,34 +37,13 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp/
 RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && rm -f /tmp/*.tar.xz
 
-# Container-wide worker config shared by all six (per-worker secrets come from
-# the s6 envdirs built at start). Mirrors the values baked into the per-worker
-# images used by the multi-container minimal stack.
+# Only what the image build itself needs; the full shared worker config lives in
+# shared.env and is loaded per-service via the _shared s6 envdir at start, and
+# per-worker secrets come from the individual envdirs.
 ENV TZ=UTC \
     FS_DIR=/mnt/efs \
-    FS_ULIMIT=10000 \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
     UAPARSER_FILE=/home/openreplay/regexes.yaml \
-    HTTP_PORT=8080 \
-    BEACON_SIZE_LIMIT=7000000 \
-    KAFKA_USE_SSL=false \
-    KAFKA_USE_KERBEROS=false \
-    REDIS_STREAMS_MAX_LEN=3000 \
-    TOPIC_RAW_WEB=raw \
-    TOPIC_RAW_IOS=raw-ios \
-    TOPIC_CACHE=cache \
-    TOPIC_ANALYTICS=analytics \
-    TOPIC_TRIGGER=trigger \
-    GROUP_SINK=sink \
-    GROUP_STORAGE=storage \
-    GROUP_DB=db \
-    GROUP_ENDER=ender \
-    GROUP_CACHE=cache \
-    CACHE_ASSETS=true \
-    ASSETS_SIZE_LIMIT=6291456 \
-    FS_CLEAN_HRS=12 \
-    FILE_SPLIT_SIZE=300000 \
-    LOG_QUEUE_STATS_INTERVAL_SEC=60 \
     S6_KEEP_ENV=1 \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
@@ -76,6 +55,7 @@ COPY --from=assets-src /home/openreplay/regexes.yaml "$UAPARSER_FILE"
 WORKDIR /work
 COPY --from=build /out ./bin
 COPY min-stack/bundle/build-envdirs.sh ./build-envdirs.sh
+COPY min-stack/bundle/shared.env ./shared.env
 COPY min-stack/bundle/s6-rc.d /etc/s6-overlay/s6-rc.d
 RUN chmod +x ./build-envdirs.sh ./bin/* /etc/s6-overlay/s6-rc.d/*/run 2>/dev/null || true
 
