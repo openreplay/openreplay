@@ -203,7 +203,7 @@ type LocationEvent struct {
 	Url       *string   `json:"url"`
 	Referrer  *string   `json:"referrer"`
 	Host      *string   `json:"host"`
-	WebVitals *string   `json:"webvitals"`
+	WebVitals *string   `json:"webVitals"`
 	CreatedAt time.Time `json:"createdAt"`
 	Timestamp int64     `json:"timestamp"`
 }
