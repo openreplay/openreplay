@@ -169,7 +169,6 @@ prepare() {
   echo "GROUP_DB=db" >> "$ENV_FILE"
   echo "GROUP_ENDER=ender" >> "$ENV_FILE"
   echo "GROUP_CACHE=cache" >> "$ENV_FILE"
-  echo "GROUP_HEURISTICS=heuristics" >> "$ENV_FILE"
   echo "GROUP_IMAGE_STORAGE=image-storage" >> "$ENV_FILE"
   echo "GROUP_CANVAS_IMAGE=canvas-image" >> "$ENV_FILE"
   echo "GROUP_CANVAS_VIDEO=canvas-video" >> "$ENV_FILE"

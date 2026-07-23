@@ -95,7 +95,6 @@ func main() {
 		messages.MsgJSException, messages.MsgResourceTiming, messages.MsgCustomEvent, messages.MsgCustomIssue,
 		messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction, messages.MsgMouseClick,
 		messages.MsgMouseClickDeprecated, messages.MsgSetPageLocation, messages.MsgSetPageLocationDeprecated,
-		messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
 		messages.MsgPageEvent, messages.MsgPageEventDeprecated, messages.MsgMouseThrashing, messages.MsgInputChange,
 		messages.MsgUnbindNodes, messages.MsgTagTrigger, messages.MsgIncident, messages.MsgCanvasNode,
 		// Mobile messages
@@ -104,6 +103,7 @@ func main() {
 		messages.MsgMobileClickEvent, messages.MsgMobileSwipeEvent, messages.MsgMobileInputEvent,
 		messages.MsgMobileCrash, messages.MsgMobileIssueEvent,
 	}
+	msgFilter = append(msgFilter, datasaver.HeuristicsInputTypes()...)
 
 	// Init consumer
 	consumer, err := queue.NewConsumer(

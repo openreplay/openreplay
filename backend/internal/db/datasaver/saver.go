@@ -34,13 +34,14 @@ type saverImpl struct {
 	tags     tags.Tags
 	canvases canvas.Canvases
 	users    service.Users
+	builders *builders
 }
 
 func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session sessions.Sessions, issues issues.Issues, tags tags.Tags, canvases canvas.Canvases, users service.Users) Saver {
 	if ch == nil {
 		log.Fatal(context.Background(), "ch pool is empty")
 	}
-	return &saverImpl{
+	s := &saverImpl{
 		log:      log,
 		cfg:      cfg,
 		ch:       ch,
@@ -50,9 +51,13 @@ func New(log logger.Logger, cfg *db.Config, ch clickhouse.Connector, session ses
 		canvases: canvases,
 		users:    users,
 	}
+	s.builders = newBuilders(log, s.Handle)
+	return s
 }
 
 func (s *saverImpl) Handle(msg Message) {
+	s.builders.Handle(msg)
+
 	var (
 		sessCtx = context.WithValue(context.Background(), "sessionID", msg.SessionID())
 		session *sessions.Session
@@ -61,7 +66,7 @@ func (s *saverImpl) Handle(msg Message) {
 	if msg.TypeID() == MsgSessionEnd || msg.TypeID() == MsgMobileSessionEnd {
 		issueTypes, err := s.issues.Get(msg.SessionID())
 		if err != nil {
-			s.log.Warn(sessCtx, "issue types get error", err)
+			s.log.Warn(sessCtx, "issue types get error: %s", err)
 		}
 		session, err = s.sessions.GetWithUpdatedIssueTypes(msg.SessionID(), issueTypes)
 	} else {
