@@ -198,43 +198,26 @@ func NewInputEvent(event *event) *InputEvent {
 }
 
 type LocationEvent struct {
-	Type                     string    `json:"type"`
-	Label                    *string   `json:"label"`
-	Url                      *string   `json:"url"`
-	Referrer                 *string   `json:"referrer"`
-	Host                     *string   `json:"host"`
-	PageLoad                 *int64    `json:"pageLoad"`
-	FcpTime                  *int64    `json:"fcpTime"`
-	LoadTime                 *int64    `json:"loadTime"`
-	DomContentLoadedTime     *int64    `json:"domContentLoadedTime"`
-	DomBuildingTime          *int64    `json:"domBuildingTime"`
-	SpeedIndex               *int64    `json:"speedIndex"`
-	VisuallyComplete         *int64    `json:"visuallyComplete"`
-	TimeToInteractive        *int64    `json:"timeToInteractive"`
-	FirstContentfulPaintTime *int64    `json:"firstContentfulPaintTime"`
-	FirstPaintTime           *int64    `json:"firstPaintTime"`
-	CreatedAt                time.Time `json:"createdAt"`
-	Timestamp                int64     `json:"timestamp"`
+	Type      string    `json:"type"`
+	Label     *string   `json:"label"`
+	Url       *string   `json:"url"`
+	Referrer  *string   `json:"referrer"`
+	Host      *string   `json:"host"`
+	WebVitals *string   `json:"webvitals"`
+	CreatedAt time.Time `json:"createdAt"`
+	Timestamp int64     `json:"timestamp"`
 }
 
 func NewLocationEvent(event *event) *LocationEvent {
 	return &LocationEvent{
-		Type:                     event.Type,
-		Label:                    getString(event, "label"),
-		Url:                      event.Url,
-		Referrer:                 event.Referrer,
-		Host:                     getHostFromUrl(*event.Url),
-		FcpTime:                  getInt64(event, "first_contentful_paint_time"),
-		LoadTime:                 getDiffInt64(event, "load_event_start", "load_event_end"),
-		DomContentLoadedTime:     getDiffInt64(event, "dom_content_loaded_event_start", "dom_content_loaded_event_end"),
-		DomBuildingTime:          getInt64(event, "dom_building_time"),
-		SpeedIndex:               getInt64(event, "speed_index"),
-		VisuallyComplete:         getInt64(event, "visually_complete"),
-		TimeToInteractive:        getInt64(event, "time_to_interactive"),
-		FirstContentfulPaintTime: getInt64(event, "first_contentful_paint_time"),
-		FirstPaintTime:           getInt64(event, "first_paint"),
-		CreatedAt:                event.CreatedAt,
-		Timestamp:                event.CreatedAt.UnixMilli(),
+		Type:      event.Type,
+		Label:     getString(event, "label"),
+		Url:       event.Url,
+		Referrer:  event.Referrer,
+		Host:      getHostFromUrl(*event.Url),
+		WebVitals: getString(event, "web_vitals"),
+		CreatedAt: event.CreatedAt,
+		Timestamp: event.CreatedAt.UnixMilli(),
 	}
 }
 
