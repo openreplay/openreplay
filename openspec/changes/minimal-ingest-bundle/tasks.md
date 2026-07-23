@@ -1,11 +1,11 @@
 ## 1. TDD contract (tests FIRST — must fail before any image exists)
 
-- [ ] 1.1 Write a smoke test script `min-stack/bundle/smoke.sh` that asserts the
+- [x] 1.1 Write a smoke test script `min-stack/bundle/smoke.sh` that asserts the
   spec scenarios: (a) one app container running, (b) all 6 worker processes
   present inside it, (c) `POST /v1/web/start` returns 200 + token, (d) a session
   uploads a `.mob` object to minio, (e) killing a worker PID → s6 respawns it,
   (f) `docker stop` exits gracefully within grace period (no SIGKILL).
-- [ ] 1.2 Run the smoke test against nothing / a stub and confirm it FAILS for
+- [x] 1.2 Run the smoke test against nothing / a stub and confirm it FAILS for
   the right reason (no bundle image yet).
 
 ## 2. Build the supervised bundle image
