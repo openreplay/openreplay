@@ -10,18 +10,18 @@
 
 ## 2. Build the supervised bundle image
 
-- [x] 2.1 `min-stack/bundle/Dockerfile`: repackage the published `*:v1.27.x`
-  worker binaries (not a from-source build — HEAD's `split` requirement for
-  visual batches is incompatible with the released tracker). Base on the release
-  http image (runtime deps + geoip/uaparser present), extract s6-overlay v3
-  tarballs, copy the other five worker binaries, `mkdir /mnt/efs`.
+- [x] 2.1 `min-stack/bundle/Dockerfile`: multi-stage build from source mirroring
+  `backend/Dockerfile` (go 1.26, `-tags dynamic`) for the 6 core binaries; final
+  alpine stage extracts s6-overlay v3 tarballs, installs runtime deps
+  (librdkafka/sasl/ca-certs), fetches geoip + uaparser data, `mkdir /mnt/efs`,
+  and bakes the shared worker ENV.
 - [x] 2.2 One `s6-rc` longrun per worker under `min-stack/bundle/s6-rc.d/<name>/`
-  (run: `with-contenv` → `s6-envdir /work/env/_shared` → `s6-envdir
-  /work/env/<name>` → `/work/bin/<name>`). An init oneshot (`build-envdirs.sh`)
-  builds a `_shared` envdir from `shared.env` (union of the six images' baked
-  env) plus a per-worker envdir from each expanded `docker-envs/<name>.env`,
-  adding `SERVICE_NAME` and an in-network `AWS_ENDPOINT`. Per-worker wins over
-  `_shared`, resolving the `BUCKET_NAME` difference.
+  (run: `with-contenv` → `s6-envdir /work/env/<name>` → `/work/bin/<name>`).
+  Shared config is the baked container ENV via `with-contenv`; an init oneshot
+  (`build-envdirs.sh`) builds each per-worker envdir from the expanded
+  `docker-envs/<name>.env`, adding `SERVICE_NAME` and an in-network
+  `AWS_ENDPOINT`. Per-worker envdir overrides the shared ENV, resolving the
+  `BUCKET_NAME` difference.
 - [x] 2.3 Set `/init` (s6-overlay) as ENTRYPOINT; no tini/nohup.
 - [x] 2.4 Build the image locally and confirm all 6 binaries + s6 tree present.
 
@@ -37,11 +37,17 @@
 ## 4. Prove with real data
 
 - [x] 4.1 Bundle boots all six workers under s6; `smoke.sh` passes (200 + token,
-  worker respawn on SIGKILL, graceful stop). `make e2e` records a real
-  Playwright-driven session and confirms `mobs/<sessionID>/dom.mobs` lands in
-  object storage (proven: session `3939439628068007425`).
+  worker respawn on SIGKILL, graceful stop). A real browser session driven
+  through the caddy CORS proxy (`:8095`) is accepted on every batch type and,
+  after the tab is closed, lands in object storage as
+  `mobs/<sessionID>/dom.mobs` (proven: session `3939466903324859650`).
+- [ ] 4.1a Fix the automated Playwright harness (`bundle/e2e.sh` +
+  `browtest/drive.mjs`): it posts to the worker directly via chromium
+  `--disable-web-security`, which mis-shapes `visual` batches (400). Route it
+  through the caddy proxy and drive session end so `make e2e` matches the
+  proven manual flow.
 - [x] 4.2 `make down-bundle` tears down clean (no leftover
   containers/volumes/networks).
-- [x] 4.3 No Go source changed — bundle repackages released binaries
-  (deployment/packaging only).
+- [x] 4.3 No Go source changed — the bundle builds the workers from the repo
+  source unmodified; only deployment/packaging is added.
 - [x] 4.4 Document steps, learnings and gotchas (`min-stack/bundle/README.md`).

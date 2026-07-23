@@ -7,13 +7,12 @@ clickhouse, valkey/redis, minio/rustfs) still runs alongside.
 ```
 ┌──────────────── openreplay (ONE container) ─────────────────┐
 │  /init  s6-overlay  (PID 1: supervise + restart + reap)      │
-│    init-envdirs (oneshot) → /work/env/{_shared,<worker>}     │
+│    init-envdirs (oneshot) → /work/env/<worker>              │
 │    ┌──────┬───────┬──────┬─────────┬──────┬────────┐         │
 │    │ http │ ender │ sink │ storage │  db  │ assets │  longruns│
 │    └──────┴───────┴──────┴─────────┴──────┴────────┘         │
-│    each run: with-contenv                                    │
-│              s6-envdir /work/env/_shared    (shared config)  │
-│              s6-envdir /work/env/<worker>   (own secrets)    │
+│    each run: with-contenv                 (shared baked ENV) │
+│              s6-envdir /work/env/<worker> (own secrets, wins)│
 │              /work/bin/<worker>                              │
 └──────────────────────────────────────────────────────────────┘
         caddy :8095 ──▶ openreplay(http):8080     (CORS proxy)
@@ -37,7 +36,34 @@ make test-bundle
 Other targets: `make smoke` (fast checks + restart/shutdown proof),
 `make logs-bundle`, `make ps-bundle`, `make capture` (Playwright only).
 
-## How the end-to-end test works
+> The automated Playwright harness (`make e2e` / `bundle/e2e.sh`) currently
+> drives the tracker over a `--disable-web-security` shortcut straight to the
+> http worker, which mis-shapes `visual` batches. Prefer the manual browser flow
+> below until that harness is fixed to go through the caddy proxy.
+
+## Manual browser capture (recommended)
+
+Caddy serves a ready-made test page and the CORS ingest proxy:
+
+```
+make up-bundle                     # boots caddy with :8095 (ingest) and :8096 (page)
+# open in a real browser:
+http://localhost:8096/
+```
+
+1. Interact with the page (click, type, add rows) to generate DOM activity.
+2. **Close the tab** — the session only ends once beacons stop (see gotchas).
+3. Wait ~2.5 min, then verify the upload:
+
+```sh
+docker exec minio sh -c 'find /data/mobs -name dom.mobs -type d'
+#   /data/mobs/<sessionID>/dom.mobs   ← proof the session was recorded
+```
+
+The page (`session.html`) uses the standard tracker snippet with
+`ingestPoint: http://localhost:8095` and `__DISABLE_SECURE_MODE: true`.
+
+## How the automated end-to-end test works
 
 `make e2e` (→ `bundle/e2e.sh`) proves the full ingest path with real data:
 
@@ -61,33 +87,37 @@ Playwright + tracker snippet          openreplay (bundle)
 
 ## Design notes / learnings
 
-### Repackage released binaries, do NOT build from source
-The bundle copies the published `*:v1.27.x` worker binaries
-(`/home/openreplay/service` in each image) and runs them under s6. It does not
-compile the workers from the repo `HEAD`.
+### Built from source (this repo's HEAD)
+The bundle compiles the six workers from `backend/cmd/<worker>` (go 1.26,
+`-tags dynamic`), mirroring `backend/Dockerfile`, and runs them under s6. It is
+not a repackage of a published image.
 
-Why: `HEAD` is newer than the released JS tracker. `HEAD`'s http worker requires
-a `split` query param for `visual` batches; the CDN `/latest` tracker does not
-send one, so every `/v1/web/i` returned **400 "split value is empty"** and no
-data ever reached the queue. Repackaging the released binaries keeps the ingest
-protocol in lockstep with the released tracker. It is also a truer "bundle" —
-supervise proven artifacts rather than rebuild them.
+This was proven with a real browser session: the CDN `/latest` tracker posting
+through the caddy CORS proxy is accepted by the HEAD `http` worker on every
+batch type (`visual`, `player`, `assets`, `analytics`, `devtools`) and the
+session lands in object storage.
+
+> Note: an earlier attempt saw `400 "split value is empty"` on `visual` batches
+> and we briefly repackaged released binaries to work around it. That 400 turned
+> out to be a **test-harness artifact**, not a version skew — see
+> "Local capture caveat" below. Building from source is correct.
 
 ### Per-service env via s6 envdirs (not one merged env)
 Workers disagree on some vars (notably `BUCKET_NAME`: http=`uxtesting-records`,
 storage=`mobs`, assets=`sessions-assets`). Merging into one container env would
-collide. Instead each worker reads its own envdir:
+collide. The bundle splits shared vs per-worker config:
 
-- `/work/env/_shared` — the union of all six images' baked config (topics,
-  groups, tunables), generated into `shared.env`.
-- `/work/env/<worker>` — the per-worker `docker-envs/<worker>.env` (secrets,
-  connection strings) plus `SERVICE_NAME` and an `AWS_ENDPOINT` pointed at the
-  in-network object store.
+- **Shared config** (topics, groups, tunables) is baked as container `ENV` in
+  the Dockerfile, mirroring `backend/Dockerfile`, and reaches every worker via
+  `with-contenv`.
+- **Per-worker env** (`/work/env/<worker>`) comes from the per-worker
+  `docker-envs/<worker>.env` (secrets, connection strings, `BUCKET_NAME`) plus
+  `SERVICE_NAME` and an `AWS_ENDPOINT` pointed at the in-network object store.
 
-`build-envdirs.sh` (an s6 oneshot) builds these at start from the mounted,
-already-`envsubst`'d `docker-envs/`. Since the per-worker envdir is applied
-after `_shared`, worker-specific values win — the `BUCKET_NAME` conflict never
-arises.
+`build-envdirs.sh` (an s6 oneshot) builds each per-worker envdir at start from
+the mounted, already-`envsubst`'d `docker-envs/`. Each service's `run` applies
+`with-contenv` (shared ENV) then `s6-envdir /work/env/<worker>`, so per-worker
+values override the shared ones — the `BUCKET_NAME` conflict never arises.
 
 ## Gotchas
 
@@ -99,19 +129,25 @@ arises.
 - **The store is rustfs, not classic minio.** Small objects are inlined into
   `xl.meta` (no separate `part.*` file), so a recorded `dom.mobs` shows up as
   `/data/mobs/<sid>/dom.mobs/xl.meta` — that is the object, present is proof.
-- **CORS / secure mode for local capture.** The released http worker ships with
-  `USE_CORS=false` (relies on the edge proxy). For the Playwright capture we set
-  `__DISABLE_SECURE_MODE: true` in the tracker init and launch chromium with
-  `--disable-web-security`, then post straight to `:8090`. In a real deployment
-  the caddy CORS proxy on `:8095` fronts ingest instead.
+- **Always post through the caddy CORS proxy (`:8095`), not the worker
+  directly.** The http worker runs `USE_CORS=false` and relies on the edge proxy
+  for CORS. The tracker also sends a `split` query param on `visual` batches; the
+  worker requires it. Posting straight to `:8090` and bypassing CORS with
+  chromium `--disable-web-security` skips the normal request shaping and yields
+  `400 "split value is empty"` on `visual` batches. Through caddy from a real
+  browser it works. Set `__DISABLE_SECURE_MODE: true` in the tracker init so it
+  starts on plain http/localhost (see `src/main/index.ts:141`), and point
+  `ingestPoint` at `http://localhost:8095`.
 - **`common.env` must define the signing secrets.** `COMMON_JWT_SECRET`,
   `COMMON_JWT_SPOT_SECRET` and `COMMON_TOKEN_SECRET` must be non-empty — the
   http worker treats `TOKEN_SECRET` as required. They are in
   `common.env.example`.
 - **`/mnt/efs` must exist.** sink/storage stage the `.mob` there before upload;
   the Dockerfile creates it.
-- **Session upload is not instant.** `storage` only uploads once `ender` decides
-  the session ended (idle after the last beacon), typically ~2 min. `e2e.sh`
-  polls up to 240s.
+- **A session only ends after the tab is CLOSED.** The tracker sends a heartbeat
+  every 2 min, so an open tab keeps the session alive forever. `ender` ends a
+  session only after `EVENTS_SESSION_END_TIMEOUT` = 2 min + 30s of no beacons
+  (`internal/ender/intervals.go`), and `storage` uploads only then. To capture:
+  interact, **close the tab**, wait ~2.5 min for `dom.mobs` to appear.
 
 [s6-overlay]: https://github.com/just-containers/s6-overlay

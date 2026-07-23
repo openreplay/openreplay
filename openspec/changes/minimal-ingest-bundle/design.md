@@ -59,11 +59,13 @@ Each worker becomes an `s6-rc` service dir under
 The workers do NOT share a single env: `BUCKET_NAME` differs per worker
 (`http`=uxtesting-records, `storage`=mobs, `assets`=sessions-assets), so merging
 all worker envs into one container env would collide. s6 gives per-service env
-exactly like systemd's `Environment=`. Each service's `run` script reads its own
-envdir:
+exactly like systemd's `Environment=`. Each service's `run` layers the baked
+shared ENV (`with-contenv`) then its own envdir, so per-worker values override:
 
 ```
-run:  exec s6-envdir /work/env/<name> /work/bin/<name>
+run:  with-contenv                      # shared config baked as container ENV
+      s6-envdir /work/env/<name>        # per-worker secrets + BUCKET_NAME (wins)
+      /work/bin/<name>
 ```
 
 An envdir is a directory where each filename is a variable and the file content
@@ -78,24 +80,26 @@ s6 restarts any longrun that exits (default behavior). A crashed `sink` comes
 back automatically — the property the current bundle lacks. This is the key
 verifiable behavior (test: kill a worker PID, assert s6 respawns it).
 
-### Image build: repackage released binaries, do NOT build from source
-The image copies the published `*:v1.27.x` worker binaries
-(`/home/openreplay/service` in each release image) and runs them under s6. It
-does not compile the workers from the repo `HEAD`.
+### Image build: from source (this repo's HEAD)
+The image compiles the six workers from `backend/cmd/<worker>` (go 1.26,
+`-tags dynamic`), mirroring `backend/Dockerfile`, then runs them under s6. Only
+the 6 core workers are built (no `integrations`).
 
-Why: `HEAD` is newer than the released JS tracker. The `HEAD` http worker
-requires a `split` query param for `visual` batches; the CDN `/latest` tracker
-does not send one, so every `/v1/web/i` returned 400 "split value is empty" and
-no data reached the queue (verified with Playwright). Repackaging the released
-binaries keeps the ingest protocol in lockstep with the released tracker, and is
-a truer "bundle" — supervise proven artifacts rather than rebuild them.
+A multi-stage build: the golang stage compiles the binaries; the final alpine
+stage extracts the s6-overlay tarballs, installs the runtime deps
+(`librdkafka`/sasl/ca-certs), downloads the geoip + uaparser data, and drops in
+the s6 service tree. Shared worker config (topics, groups, tunables) is baked as
+container `ENV` mirroring `backend/Dockerfile` and reaches each worker via
+`with-contenv`; per-worker secrets come from the `docker-envs/<worker>.env`
+envdirs.
 
-The image bases on the release `http` image (which already carries the alpine
-runtime deps `librdkafka`/sasl/ca-certs plus the geoip and uaparser data),
-extracts the s6-overlay tarballs, copies the other five worker binaries, and
-drops in the s6 service tree. Only the 6 core workers are included (no
-`integrations`). Shared config comes from `shared.env` (the union of all six
-images' baked env) loaded as the `_shared` envdir.
+> An earlier iteration repackaged the published `*:v1.27.x` binaries to dodge a
+> `400 "split value is empty"` on `visual` batches. That 400 was a test-harness
+> artifact (Playwright bypassing the caddy CORS proxy via
+> `--disable-web-security` and posting straight to the worker), not a
+> tracker/server version skew. A real browser posting through caddy is accepted
+> by the HEAD workers and the session lands in S3, so building from source is
+> correct.
 
 ### Compose wiring
 `min-stack/docker-compose.bundle.yaml`: one `openreplay` service from the bundle
