@@ -78,12 +78,24 @@ s6 restarts any longrun that exits (default behavior). A crashed `sink` comes
 back automatically — the property the current bundle lacks. This is the key
 verifiable behavior (test: kill a worker PID, assert s6 respawns it).
 
-### Image build
-Multi-stage: reuse the existing golang build stage to compile the 6 binaries,
-then a final alpine stage that extracts the s6-overlay tarballs, installs the
-runtime deps (`librdkafka`, sasl, ca-certificates), and drops in the s6 service
-tree. Only the 6 core workers are built (drop `integrations` from the existing
-bundle's 7).
+### Image build: repackage released binaries, do NOT build from source
+The image copies the published `*:v1.27.x` worker binaries
+(`/home/openreplay/service` in each release image) and runs them under s6. It
+does not compile the workers from the repo `HEAD`.
+
+Why: `HEAD` is newer than the released JS tracker. The `HEAD` http worker
+requires a `split` query param for `visual` batches; the CDN `/latest` tracker
+does not send one, so every `/v1/web/i` returned 400 "split value is empty" and
+no data reached the queue (verified with Playwright). Repackaging the released
+binaries keeps the ingest protocol in lockstep with the released tracker, and is
+a truer "bundle" — supervise proven artifacts rather than rebuild them.
+
+The image bases on the release `http` image (which already carries the alpine
+runtime deps `librdkafka`/sasl/ca-certs plus the geoip and uaparser data),
+extracts the s6-overlay tarballs, copies the other five worker binaries, and
+drops in the s6 service tree. Only the 6 core workers are included (no
+`integrations`). Shared config comes from `shared.env` (the union of all six
+images' baked env) loaded as the `_shared` envdir.
 
 ### Compose wiring
 `min-stack/docker-compose.bundle.yaml`: one `openreplay` service from the bundle

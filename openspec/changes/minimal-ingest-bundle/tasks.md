@@ -10,30 +10,38 @@
 
 ## 2. Build the supervised bundle image
 
-- [ ] 2.1 `min-stack/bundle/Dockerfile`: multi-stage — reuse golang build stage
-  to compile only the 6 core binaries; final alpine stage extracts s6-overlay v3
-  tarballs (arch-matched), installs runtime deps (librdkafka, sasl, ca-certs),
-  downloads uaparser + geoip data.
-- [ ] 2.2 Create one `s6-rc` longrun service dir per worker under
-  `min-stack/bundle/s6-rc.d/<name>/` (type + run script
-  `exec s6-envdir /work/env/<name> /work/bin/<name>`) and add each to the `user`
-  bundle contents. Add an init oneshot (or build step) that converts each
-  expanded `docker-envs/<name>.env` into the envdir `/work/env/<name>/` so each
-  worker gets its own env (resolves the per-worker `BUCKET_NAME` difference).
-- [ ] 2.3 Set `/init` (s6-overlay) as ENTRYPOINT; remove tini/nohup.
-- [ ] 2.4 Build the image locally and confirm all 6 binaries + s6 tree present.
+- [x] 2.1 `min-stack/bundle/Dockerfile`: repackage the published `*:v1.27.x`
+  worker binaries (not a from-source build — HEAD's `split` requirement for
+  visual batches is incompatible with the released tracker). Base on the release
+  http image (runtime deps + geoip/uaparser present), extract s6-overlay v3
+  tarballs, copy the other five worker binaries, `mkdir /mnt/efs`.
+- [x] 2.2 One `s6-rc` longrun per worker under `min-stack/bundle/s6-rc.d/<name>/`
+  (run: `with-contenv` → `s6-envdir /work/env/_shared` → `s6-envdir
+  /work/env/<name>` → `/work/bin/<name>`). An init oneshot (`build-envdirs.sh`)
+  builds a `_shared` envdir from `shared.env` (union of the six images' baked
+  env) plus a per-worker envdir from each expanded `docker-envs/<name>.env`,
+  adding `SERVICE_NAME` and an in-network `AWS_ENDPOINT`. Per-worker wins over
+  `_shared`, resolving the `BUCKET_NAME` difference.
+- [x] 2.3 Set `/init` (s6-overlay) as ENTRYPOINT; no tini/nohup.
+- [x] 2.4 Build the image locally and confirm all 6 binaries + s6 tree present.
 
 ## 3. Compose wiring + Makefile
 
-- [ ] 3.1 `min-stack/docker-compose.bundle.yaml`: one `openreplay` service from
-  the bundle image, all COMMON_* + worker env, only http port exposed, plus the
-  same infra + migration jobs + caddy CORS proxy as the multi-container stack.
-- [ ] 3.2 Add `up-bundle` / `down-bundle` targets to `min-stack/Makefile`
-  (build workdir, envsubst, compose up with migration profile, seed, wait).
+- [x] 3.1 `min-stack/docker-compose.bundle.yaml`: one `openreplay` service from
+  the bundle image (aliased `http` for the Caddyfile), all COMMON_* + worker
+  env, only http port exposed, plus the same infra + migration jobs + caddy CORS
+  proxy as the multi-container stack.
+- [x] 3.2 Add `up-bundle` / `down-bundle` / `logs-bundle` / `ps-bundle` /
+  `smoke` / `capture` / `e2e` / `test-bundle` targets to `min-stack/Makefile`.
 
 ## 4. Prove with real data
 
-- [ ] 4.1 Boot the bundle stack; run `smoke.sh` and confirm every scenario PASSES
-  (200 + token, .mob in S3, worker respawn, graceful stop).
-- [ ] 4.2 Tear down clean (no leftover containers/volumes/networks).
-- [ ] 4.3 Confirm no Go source changed (deployment/packaging only).
+- [x] 4.1 Bundle boots all six workers under s6; `smoke.sh` passes (200 + token,
+  worker respawn on SIGKILL, graceful stop). `make e2e` records a real
+  Playwright-driven session and confirms `mobs/<sessionID>/dom.mobs` lands in
+  object storage (proven: session `3939439628068007425`).
+- [x] 4.2 `make down-bundle` tears down clean (no leftover
+  containers/volumes/networks).
+- [x] 4.3 No Go source changed — bundle repackages released binaries
+  (deployment/packaging only).
+- [x] 4.4 Document steps, learnings and gotchas (`min-stack/bundle/README.md`).
