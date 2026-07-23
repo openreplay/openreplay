@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>OpenReplay minimal - manual session</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 40px auto; }
+    button { padding: 10px 16px; font-size: 15px; margin: 6px 0; }
+    #log { white-space: pre-wrap; background: #f4f4f4; padding: 12px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1 id="title">OpenReplay minimal ingest - manual session</h1>
+  <p>Interact with the controls below to generate a recordable session, then
+     leave the tab open ~2 min so the session ends and uploads.</p>
+  <button id="btn">Click me</button>
+  <button id="add">Add a row</button>
+  <input id="txt" placeholder="type something"/>
+  <div id="out"></div>
+  <div id="log"></div>
+  <script>
+  var initOpts = {
+    projectKey: "testkey0000000000001",
+    ingestPoint: "http://localhost:8095",
+    __DISABLE_SECURE_MODE: true,
+    defaultInputMode: 2,
+    obscureTextNumbers: false,
+    obscureTextEmails: true,
+  };
+  var startOpts = { userID: "manual@test.local" };
+  (function(A,s,a,y,e,r){
+    r=window.OpenReplay=[e,r,y,[s-1, e]];
+    s=document.createElement('script');s.src=A;s.async=!a;
+    document.getElementsByTagName('head')[0].appendChild(s);
+    r.start=function(v){r.push([0])};
+    r.stop=function(v){r.push([1])};
+    r.setUserID=function(id){r.push([2,id])};
+    r.setUserAnonymousID=function(id){r.push([3,id])};
+    r.setMetadata=function(k,v){r.push([4,k,v])};
+    r.event=function(k,p,i){r.push([5,k,p,i])};
+    r.issue=function(k,p){r.push([6,k,p])};
+    r.isActive=function(){return false};
+    r.getSessionToken=function(){};
+  })("//static.openreplay.com/latest/openreplay.js",1,0,initOpts,startOpts);
+
+  var n = 0;
+  document.getElementById('btn').onclick = function(){
+    document.getElementById('log').textContent += 'clicked ' + (++n) + '\n';
+  };
+  document.getElementById('add').onclick = function(){
+    var d = document.createElement('div');
+    d.textContent = 'row ' + Date.now();
+    document.getElementById('out').appendChild(d);
+  };
+  </script>
+</body>
+</html>

@@ -23,3 +23,10 @@
 		reverse_proxy http:8080
 	}
 }
+
+# Static test page for manually triggering a session from a browser. Open
+# http://localhost:8096/ ; its tracker posts to the ingest proxy on :8095.
+:8096 {
+	root * /srv/testpage
+	file_server browse
+}

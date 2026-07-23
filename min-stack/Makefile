@@ -49,6 +49,8 @@ build-workdir: check-env
 	cp "$(SRC_DIR)/docker-compose.yaml" "$(WORK_DIR)/docker-compose.yaml"
 	cp "$(SRC_DIR)/docker-compose.bundle.yaml" "$(WORK_DIR)/docker-compose.bundle.yaml"
 	cp "$(SRC_DIR)/Caddyfile" "$(WORK_DIR)/Caddyfile"
+	mkdir -p "$(WORK_DIR)/testpage"
+	cp "$(SRC_DIR)/bundle/browtest/session.html" "$(WORK_DIR)/testpage/index.html"
 	cp -r "$(COMPOSE_DIR)/docker-envs" "$(COMPOSE_DIR)/migration-files" "$(WORK_DIR)/"
 	cp "$(ENV_FILE)" "$(WORK_DIR)/common.env"
 	# Expand $${COMMON_*} placeholders in each worker env file, as install.sh does.

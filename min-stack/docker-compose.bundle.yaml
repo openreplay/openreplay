@@ -207,8 +207,10 @@ services:
       - openreplay-net
     ports:
       - ${INGEST_PORT:-8095}:8095
+      - ${TESTPAGE_PORT:-8096}:8096
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./testpage:/srv/testpage:ro
     depends_on:
       - openreplay
     restart: unless-stopped
