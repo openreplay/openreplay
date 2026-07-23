@@ -39,7 +39,6 @@ type builder struct {
 	processors []handlers.MessageProcessor
 	dispatch   map[int][]handlers.MessageProcessor
 	timestamp  uint64
-	lastMsgID  uint64
 	lastSeen   time.Time
 }
 
@@ -87,10 +86,6 @@ func (bs *builders) Handle(msg messages.Message) {
 		b = newBuilder()
 		bs.sessions[sessionID] = b
 	}
-	if msg.MsgID() < b.lastMsgID {
-		return
-	}
-	b.lastMsgID = msg.MsgID()
 	if msg.Time() <= 0 {
 		bs.log.Debug(context.Background(), "skip heuristics message with incorrect timestamp, session: %d, msgID: %d, msgType: %d",
 			sessionID, msg.MsgID(), msg.TypeID())
