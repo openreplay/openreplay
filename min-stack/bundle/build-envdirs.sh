@@ -7,7 +7,6 @@ set -eu
 
 SRC="${OR_ENVS_DIR:-/work/docker-envs}"
 DST=/work/env
-SHARED_ENV="${OR_SHARED_ENV:-/work/shared.env}"
 # S3-using workers must reach minio inside the compose network, not the
 # browser-facing COMMON_DOMAIN_NAME baked into the .env files.
 MINIO_ENDPOINT="${OR_MINIO_ENDPOINT:-http://minio.db.svc.cluster.local:9000}"
@@ -26,12 +25,9 @@ envfile_to_dir() {
   done < "$_f"
 }
 
-# Shared constants (topics, groups, tunables) every worker needs.
-if [ -f "$SHARED_ENV" ]; then
-  envfile_to_dir "$SHARED_ENV" "$DST/_shared"
-  echo "[init-envdirs] built _shared envdir ($(ls "$DST/_shared" | wc -l) vars)"
-fi
-
+# Shared config (topics, groups, tunables) is baked as container ENV in the
+# Dockerfile and reaches each worker via `with-contenv`; the per-worker envdir
+# below is applied AFTER it and overrides where they differ (BUCKET_NAME etc).
 for w in http ender sink storage db assets; do
   f="$SRC/$w.env"
   [ -f "$f" ] || { echo "[init-envdirs] missing $f, skipping"; continue; }

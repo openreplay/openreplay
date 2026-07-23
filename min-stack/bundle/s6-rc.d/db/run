@@ -1,6 +1,5 @@
 #!/command/execlineb -P
 with-contenv
-s6-envdir /work/env/_shared
 s6-envdir /work/env/db
 fdmove -c 2 1
 /work/bin/db
