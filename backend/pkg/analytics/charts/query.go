@@ -711,6 +711,31 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 	return conds, rest
 }
 
+// buildLocationConditions extracts the url_path properties of LOCATION filters
+// and turns them into `$current_path` conditions on the given table alias.
+func buildLocationConditions(filters []model.Filter, tableAlias string) []string {
+	var conds []string
+	for _, f := range filters {
+		if f.Name != "LOCATION" {
+			continue
+		}
+		for _, nested := range f.Filters {
+			name := nested.Name
+			if nested.AutoCaptured {
+				name = CamelToSnake(name)
+			}
+			if name != "url_path" || len(nested.Value) == 0 || nested.Value[0] == "" {
+				continue
+			}
+			expr := fmt.Sprintf("%s.\"$current_path\"", tableAlias)
+			if c := buildCond(expr, nested.Value, nested.Operator, false, "singleColumn"); c != "" {
+				conds = append(conds, c)
+			}
+		}
+	}
+	return conds
+}
+
 func FilterOutTypes(filters []model.Filter, typesToRemove []string) (kept []model.Filter, removed []model.Filter) {
 	removeMap := make(map[string]struct{}, len(typesToRemove))
 	for _, t := range typesToRemove {
