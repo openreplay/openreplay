@@ -1,14 +1,19 @@
 import { chromium } from 'playwright';
 
-const URL = process.env.TEST_URL || 'http://localhost:8091/index.html';
+// The self-tracking test page is served by caddy on :8096 (same page you open
+// manually in a browser). Driving it via caddy keeps the CORS request-shaping
+// identical to a real browser session.
+const URL = process.env.TEST_URL || 'http://localhost:8096/';
 const runMs = parseInt(process.env.RUN_MS || '20000', 10);
 
 const logs = [];
-// --disable-web-security lets the localhost test page POST cross-origin to the
-// ingest worker without the CORS headers nginx/caddy would normally inject.
+// Normal browser CORS: the tracker posts cross-origin to the caddy ingest proxy
+// (:8095), which returns the Access-Control-Allow-Origin headers. This is the
+// real request-shaping path; do NOT use --disable-web-security, which bypasses
+// it and mis-shapes visual batches (split value is empty -> 400).
 const browser = await chromium.launch({
   headless: true,
-  args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-web-security', '--disable-site-isolation-trials'],
+  args: ['--no-sandbox', '--disable-dev-shm-usage'],
 });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 const page = await ctx.newPage();
@@ -39,4 +44,7 @@ await page.waitForTimeout(runMs);
 
 console.log(logs.join('\n'));
 console.log(`--- captured ${logs.length} ingest events ---`);
+// Closing the browser stops the tracker's beacons/heartbeats; ender then ends
+// the session after its idle timeout, which triggers the storage upload.
 await browser.close();
+console.log('browser closed - session will end after ender idle timeout (~2.5m)');

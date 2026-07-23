@@ -25,15 +25,19 @@ HTTPD=$!
 trap 'kill $HTTPD 2>/dev/null' EXIT
 sleep 2
 
-echo "== driving tracker (Playwright, real session) =="
-TEST_URL="http://localhost:${PAGE_PORT}/index.html" RUN_MS="$RUN_MS" \
-  node "$BROWTEST/drive.mjs" 2>&1 | grep -E "RESP|captured" || true
+# Snapshot the ingest log length so we only read the session we are about to
+# create, not a stale one from an earlier run on the same stack.
+LOG_BEFORE=$(docker logs "$APP_CONTAINER" 2>&1 | grep -c '"url":"/v1/web/i"')
 
-# Session id from the http worker's ingest log (the /v1/web/i "response ok").
-SID=$(docker logs "$APP_CONTAINER" 2>&1 \
-  | grep '"url":"/v1/web/i"' | grep -oE '"sessionID":"[0-9]+"' \
+echo "== driving tracker (Playwright, real session, via caddy :8095) =="
+TEST_URL="http://localhost:${PAGE_PORT}/index.html" RUN_MS="$RUN_MS" \
+  node "$BROWTEST/drive.mjs" 2>&1 | grep -E "RESP|captured|closed" || true
+
+# Session id from the NEW /v1/web/i lines (those appended after LOG_BEFORE).
+SID=$(docker logs "$APP_CONTAINER" 2>&1 | grep '"url":"/v1/web/i"' \
+  | tail -n +$((LOG_BEFORE + 1)) | grep -oE '"sessionID":"[0-9]+"' \
   | tail -1 | grep -oE '[0-9]+')
-[ -n "${SID:-}" ] || fail "no session id found in http ingest log (did beacons return 200?)"
+[ -n "${SID:-}" ] || fail "no new session id in http ingest log (did beacons return 200 via caddy?)"
 echo "== captured sessionID=$SID =="
 
 echo "== polling object storage for mobs/$SID/dom.mobs (up to ${S3_POLL_SECS}s) =="
