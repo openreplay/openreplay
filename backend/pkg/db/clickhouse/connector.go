@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -716,59 +717,60 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 	if err != nil {
 		return fmt.Errorf("can't extract url parts: %s", err)
 	}
-	ttfb := nullableUint16(0)
-	if msg.ResponseStart >= msg.RequestStart {
-		ttfb = nullableUint16(uint16(msg.ResponseStart - msg.RequestStart))
-	}
-	ttlb := nullableUint16(0)
-	if msg.ResponseEnd >= msg.RequestStart {
-		ttlb = nullableUint16(uint16(msg.ResponseEnd - msg.RequestStart))
-	}
-	responseTime := nullableUint16(0)
-	if msg.ResponseEnd >= msg.ResponseStart {
-		responseTime = nullableUint16(uint16(msg.ResponseEnd - msg.ResponseStart))
-	}
-	domBuildingTime := nullableUint16(0)
-	if msg.DomContentLoadedEventStart >= msg.ResponseEnd {
-		domBuildingTime = nullableUint16(uint16(msg.DomContentLoadedEventStart - msg.ResponseEnd))
-	}
-	domContentLoadedEventTime := nullableUint16(0)
-	if msg.DomContentLoadedEventEnd >= msg.DomContentLoadedEventStart {
-		domContentLoadedEventTime = nullableUint16(uint16(msg.DomContentLoadedEventEnd - msg.DomContentLoadedEventStart))
-	}
-	loadEventTime := nullableUint16(0)
-	if msg.LoadEventEnd >= msg.LoadEventStart {
-		loadEventTime = nullableUint16(uint16(msg.LoadEventEnd - msg.LoadEventStart))
-	}
+	//ttfb := nullableUint16(0)
+	//if msg.ResponseStart >= msg.RequestStart {
+	//	ttfb = nullableUint16(uint16(msg.ResponseStart - msg.RequestStart))
+	//}
+	//ttlb := nullableUint16(0)
+	//if msg.ResponseEnd >= msg.RequestStart {
+	//	ttlb = nullableUint16(uint16(msg.ResponseEnd - msg.RequestStart))
+	//}
+	//responseTime := nullableUint16(0)
+	//if msg.ResponseEnd >= msg.ResponseStart {
+	//	responseTime = nullableUint16(uint16(msg.ResponseEnd - msg.ResponseStart))
+	//}
+	//domBuildingTime := nullableUint16(0)
+	//if msg.DomContentLoadedEventStart >= msg.ResponseEnd {
+	//	domBuildingTime = nullableUint16(uint16(msg.DomContentLoadedEventStart - msg.ResponseEnd))
+	//}
+	//domContentLoadedEventTime := nullableUint16(0)
+	//if msg.DomContentLoadedEventEnd >= msg.DomContentLoadedEventStart {
+	//	domContentLoadedEventTime = nullableUint16(uint16(msg.DomContentLoadedEventEnd - msg.DomContentLoadedEventStart))
+	//}
+	//loadEventTime := nullableUint16(0)
+	//if msg.LoadEventEnd >= msg.LoadEventStart {
+	//	loadEventTime = nullableUint16(uint16(msg.LoadEventEnd - msg.LoadEventStart))
+	//}
 	payload := map[string]interface{}{
-		"request_start":                  nullableUint16(uint16(msg.RequestStart)),
-		"response_start":                 nullableUint16(uint16(msg.ResponseStart)),
-		"response_end":                   nullableUint16(uint16(msg.ResponseEnd)),
-		"dom_content_loaded_event_start": nullableUint16(uint16(msg.DomContentLoadedEventStart)),
-		"dom_content_loaded_event_end":   nullableUint16(uint16(msg.DomContentLoadedEventEnd)),
-		"load_event_start":               nullableUint16(uint16(msg.LoadEventStart)),
-		"load_event_end":                 nullableUint16(uint16(msg.LoadEventEnd)),
-		"first_paint":                    nullableUint16(uint16(msg.FirstPaint)),
-		"first_contentful_paint_time":    nullableUint16(uint16(msg.FirstContentfulPaint)),
-		"speed_index":                    nullableUint16(uint16(msg.SpeedIndex)),
-		"visually_complete":              nullableUint16(uint16(msg.VisuallyComplete)),
-		"time_to_interactive":            nullableUint16(uint16(msg.TimeToInteractive)),
-		"url":                            cropString(msg.URL),
-		"url_host":                       host,
-		"url_path":                       path,
-		"url_hostpath":                   hostpath,
-		"ttfb":                           ttfb,
-		"ttlb":                           ttlb,
-		"response_time":                  responseTime,
-		"dom_building_time":              domBuildingTime,
-		"dom_content_loaded_event_time":  domContentLoadedEventTime,
-		"load_event_time":                loadEventTime,
-		"user_device":                    session.UserDevice,
-		"user_device_type":               session.UserDeviceType,
-		"page_title":                     strings.TrimSpace(msg.PageTitle),
-		"web_vitals":                     msg.WebVitals,
+		//"request_start":                  nullableUint16(uint16(msg.RequestStart)),
+		//"response_start":                 nullableUint16(uint16(msg.ResponseStart)),
+		//"response_end":                   nullableUint16(uint16(msg.ResponseEnd)),
+		//"dom_content_loaded_event_start": nullableUint16(uint16(msg.DomContentLoadedEventStart)),
+		//"dom_content_loaded_event_end":   nullableUint16(uint16(msg.DomContentLoadedEventEnd)),
+		//"load_event_start":               nullableUint16(uint16(msg.LoadEventStart)),
+		//"load_event_end":                 nullableUint16(uint16(msg.LoadEventEnd)),
+		//"first_paint":                    nullableUint16(uint16(msg.FirstPaint)),
+		//"first_contentful_paint_time":    nullableUint16(uint16(msg.FirstContentfulPaint)),
+		//"speed_index":                    nullableUint16(uint16(msg.SpeedIndex)),
+		//"visually_complete":              nullableUint16(uint16(msg.VisuallyComplete)),
+		//"time_to_interactive":            nullableUint16(uint16(msg.TimeToInteractive)),
+		"url":          cropString(msg.URL),
+		"url_host":     host,
+		"url_path":     path,
+		"url_hostpath": hostpath,
+		//"ttfb":                           ttfb,
+		//"ttlb":                           ttlb,
+		//"response_time":                  responseTime,
+		//"dom_building_time":              domBuildingTime,
+		//"dom_content_loaded_event_time":  domContentLoadedEventTime,
+		//"load_event_time":                loadEventTime,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
+		"page_title":       strings.TrimSpace(msg.PageTitle),
+		"web_vitals":       msg.WebVitals,
 	}
 	if len(msg.WebVitals) > 0 {
+		c.log.Info(context.Background(), "pageEvent with webVitals, sessID: %d, payload: %s", session.SessionID, msg.WebVitals)
 		webVitals := map[string]interface{}{}
 		if err := json.Unmarshal([]byte(msg.WebVitals), &webVitals); err == nil {
 			for key, value := range webVitals {
