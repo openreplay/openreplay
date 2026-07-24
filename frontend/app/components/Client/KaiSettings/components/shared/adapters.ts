@@ -416,6 +416,20 @@ export function apiRunDetailToVM(
 
 // ---- Environments ----
 
+// Headers ride in `variables.headers` as a `{ name: value }` object (the runner reads a
+// map, not an ordered list). Old environments may still hold the legacy `HttpHeader[]`
+// array, so tolerate both on the way in.
+function headersFromVar(raw: unknown): HttpHeader[] | undefined {
+  if (Array.isArray(raw)) return raw as HttpHeader[];
+  if (raw && typeof raw === 'object') {
+    return Object.entries(raw as Record<string, unknown>).map(([name, value]) => ({
+      name,
+      value: String(value ?? ''),
+    }));
+  }
+  return undefined;
+}
+
 export function apiEnvToVM(env: Environment): EnvironmentVM {
   const vars = env.variables ?? {};
   return {
@@ -424,7 +438,7 @@ export function apiEnvToVM(env: Environment): EnvironmentVM {
     url: env.baseUrl,
     username: vars.login as string | undefined,
     password: vars.password as string | undefined,
-    headers: (vars.headers as HttpHeader[] | undefined) ?? undefined,
+    headers: headersFromVar(vars.headers),
     ignoreHttpsErrors: vars.ignoreHttpsErrors as boolean | undefined,
     isDefault: env.isDefault,
     isActive: env.isActive,
@@ -449,8 +463,13 @@ export function envFormToRequest(
   };
   setOrDelete('login', vm.username?.trim() || undefined);
   setOrDelete('password', vm.password?.trim() || undefined);
-  const headers = (vm.headers ?? []).filter((h) => h.name.trim());
-  setOrDelete('headers', headers.length ? headers : undefined);
+  // headers → `{ name: value }` object (last write wins on duplicate names)
+  const headers = (vm.headers ?? []).reduce<Record<string, string>>((acc, h) => {
+    const name = h.name.trim();
+    if (name) acc[name] = h.value;
+    return acc;
+  }, {});
+  setOrDelete('headers', Object.keys(headers).length ? headers : undefined);
   setOrDelete('ignoreHttpsErrors', vm.ignoreHttpsErrors || undefined);
   return {
     name: vm.name.trim(),
