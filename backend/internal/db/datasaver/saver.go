@@ -126,5 +126,6 @@ func (s *saverImpl) Close() error {
 	if err := s.ch.Stop(); err != nil {
 		s.log.Error(context.Background(), "ch.Close error: %s", err)
 	}
+	s.sessions.Commit()
 	return nil
 }
