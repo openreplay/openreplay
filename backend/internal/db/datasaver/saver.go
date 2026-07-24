@@ -111,6 +111,7 @@ func (s *saverImpl) Handle(msg Message) {
 }
 
 func (s *saverImpl) Commit() error {
+	s.builders.maybeSweep()
 	if err := s.canvases.Commit(); err != nil {
 		s.log.Error(context.Background(), "canvas commit error: %v", err)
 	}
@@ -118,6 +119,7 @@ func (s *saverImpl) Commit() error {
 }
 
 func (s *saverImpl) Close() error {
+	s.builders.flushAll()
 	if err := s.issues.Flush(); err != nil {
 		s.log.Error(context.Background(), "issues flush error: %s", err)
 	}

@@ -71,15 +71,20 @@ func newBuilders(log logger.Logger, emit func(messages.Message)) *builders {
 	}
 }
 
-func (bs *builders) Handle(msg messages.Message) {
+func (bs *builders) maybeSweep() {
 	now := time.Now()
 	if now.Sub(bs.lastSweep) > builderSweepPeriod {
 		bs.lastSweep = now
 		bs.sweep(now)
 	}
+}
+
+func (bs *builders) Handle(msg messages.Message) {
+	bs.maybeSweep()
 	if !bs.inputs.Has(msg.TypeID()) {
 		return
 	}
+	now := time.Now()
 	sessionID := msg.SessionID()
 	b := bs.sessions[sessionID]
 	if b == nil {
@@ -125,5 +130,12 @@ func (bs *builders) sweep(now time.Time) {
 			bs.flush(sessionID, b)
 			delete(bs.sessions, sessionID)
 		}
+	}
+}
+
+func (bs *builders) flushAll() {
+	for sessionID, b := range bs.sessions {
+		bs.flush(sessionID, b)
+		delete(bs.sessions, sessionID)
 	}
 }
