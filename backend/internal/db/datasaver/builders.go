@@ -40,6 +40,7 @@ type builder struct {
 	dispatch   map[int][]handlers.MessageProcessor
 	timestamp  uint64
 	lastSeen   time.Time
+	lastMsg    messages.Message // source of meta (url, page title) for flush-emitted events
 }
 
 func newBuilder() *builder {
@@ -100,6 +101,7 @@ func (bs *builders) Handle(msg messages.Message) {
 		b.timestamp = msg.Time()
 	}
 	b.lastSeen = now
+	b.lastMsg = msg
 
 	for _, p := range b.dispatch[msg.TypeID()] {
 		if rm := p.Handle(msg, b.timestamp); rm != nil {
@@ -118,6 +120,10 @@ func (bs *builders) Handle(msg messages.Message) {
 func (bs *builders) flush(sessionID uint64, b *builder) {
 	for _, p := range b.processors {
 		if rm := p.Build(); rm != nil {
+			if b.lastMsg != nil {
+				// attribute the event to the session's last known page
+				rm.Meta().SetMeta(b.lastMsg.Meta())
+			}
 			rm.Meta().SetSessionID(sessionID)
 			bs.emit(rm)
 		}
