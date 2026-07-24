@@ -405,6 +405,27 @@ export default abstract class Observer {
       }
       return
     }
+    // Native <dialog> top-layer state. The raw `open` attribute is identical for
+    // showModal() (modal, top layer) and show()/`<dialog open>` (non-modal), so
+    // the player can't tell them apart and never re-enters the top layer, losing
+    // backdrop/stacking. Emit the recorded mode next to the normal `open` attr so
+    // the player can replay showModal()/show()/close() (see DOMManager). Sent in
+    // addition to `open` to keep older players on their current behaviour.
+    if (name === 'open' && hasTag(node, 'dialog')) {
+      let mode: 'modal' | 'nonmodal' | 'closed'
+      if (value === null) {
+        mode = 'closed'
+      } else {
+        let isModal = false
+        try {
+          isModal = (node as HTMLDialogElement).matches('dialog:modal')
+        } catch (e) {
+          /* :modal pseudo-class unsupported on this browser */
+        }
+        mode = isModal ? 'modal' : 'nonmodal'
+      }
+      this.app.send(SetNodeAttribute(id, '__openreplay_dialog', mode))
+    }
     if (
       name === 'src' ||
       name === 'srcset' ||
