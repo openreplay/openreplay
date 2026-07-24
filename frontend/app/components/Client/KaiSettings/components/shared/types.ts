@@ -101,6 +101,11 @@ export interface Test {
   config?: Record<string, unknown>;
   /** Runner-owned: a new version is proposed and the project pauses on new revisions. */
   needsReview?: boolean;
+  /** Runner-owned (read-only): executing this test has real-world side effects
+   *  (orders/accounts/payments). Sourced from the generated scenario's metadata. */
+  hasSideEffects?: boolean;
+  /** Read-only: content authored/edited by a human (create/merge) vs runner-proposed. */
+  userModified?: boolean;
   activeVersion?: number | null;
   latestVersion?: number | null;
   /** Non-null when a version awaits review. */
@@ -128,6 +133,23 @@ export interface TestCreateRequest {
   config?: Record<string, unknown>;
   /** Optional seed status; omitted → draft. Only 'draft' or 'approved' accepted. */
   status?: 'draft' | 'approved';
+}
+
+/** Merge 2+ tests into one new test — atomic server-side (`POST /tests/merge`): creates
+ *  the new test and soft-deletes the sources in one transaction. Same shape as create
+ *  (minus status; a merge is always a draft) plus the source ids. `steps` is the final,
+ *  already-arranged step list — the backend doesn't concatenate. */
+export interface TestMergeRequest {
+  testIds: string[];
+  name: string;
+  scenario?: string;
+  steps?: unknown;
+  expectedResult?: string;
+  cron?: string | null;
+  timeoutSecs?: number;
+  environments?: string[];
+  tags?: string[];
+  config?: Record<string, unknown>;
 }
 
 // Only these fields are updatable (everything else is create-time only). `status`
@@ -501,7 +523,11 @@ export interface TestCase {
   title: string;
   steps: string[];
   status: TestLifecycle;
+  createdAt?: number; // epoch ms — the Created column + its sort
   isNew?: boolean;
+  // read-only: executing this test has real-world side effects (orders/payments)
+  hasSideEffects?: boolean;
+  userModified?: boolean;
   environments?: string[]; // environment ids (source of truth for writes)
   envNames?: string[]; // resolved names, for display
   resolutions?: Resolution[];

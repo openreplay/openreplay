@@ -22,6 +22,7 @@ import {
   Test,
   TestCase,
   TestCreateRequest,
+  TestMergeRequest,
   TestLifecycle,
   TestStatus,
   TestStatusSettable,
@@ -109,8 +110,11 @@ export function apiTestToVM(
     timeoutSecs: test.timeoutSecs,
     config: test.config,
     needsReview: test.needsReview,
+    hasSideEffects: test.hasSideEffects,
+    userModified: test.userModified,
     version: test.activeVersion ?? undefined,
     pendingRevision,
+    createdAt: test.createdAt ? new Date(test.createdAt).getTime() : undefined,
     lastRunAt: test.lastRunAt ? new Date(test.lastRunAt).getTime() : undefined,
   };
 }
@@ -128,6 +132,26 @@ export function vmToCreateRequest(vm: TestCase): TestCreateRequest {
     tags: vm.tags,
     config: withMatrixConfig(vm),
     status: vm.status === 'draft' ? 'draft' : 'approved',
+  };
+}
+
+// Merge the base VM's settings + the final (already-arranged) steps + the source ids into
+// the atomic merge request. Base = first selected; the new test is always a draft.
+export function vmToMergeRequest(
+  vm: TestCase,
+  testIds: string[],
+  steps: string[],
+): TestMergeRequest {
+  return {
+    testIds,
+    name: vm.title,
+    steps,
+    expectedResult: vm.expectedResult,
+    cron: scheduleToCron(vm.schedule),
+    timeoutSecs: vm.timeoutSecs,
+    environments: vm.environments,
+    tags: vm.tags,
+    config: withMatrixConfig(vm),
   };
 }
 
@@ -336,6 +360,18 @@ export function apiRunDetailToVM(
     results?.user_steps && results.user_steps.length
       ? results.user_steps.map((us) => userStepToVM(us, agentSteps))
       : groupAgentSteps(agentSteps);
+  // Display rule (Mehdi, 07-20): a "skipped" step whose next step passed can't really have
+  // failed or been left out — the flow reached past it — so show it as passed. Applied
+  // backward so it cascades through a run of skips before a passed step. Pure display; it
+  // also makes the step counts read N/N instead of "M passed, K skipped".
+  {
+    let nextPassed = false;
+    for (let i = steps.length - 1; i >= 0; i -= 1) {
+      if (steps[i].status === 'skipped' && nextPassed)
+        steps[i] = { ...steps[i], status: 'passed' };
+      nextPassed = steps[i].status === 'passed';
+    }
+  }
   // the runner reports the failed step index directly (into user_steps); otherwise fall
   // back to the first row that reports failed. A run can also fail with no single step
   // marked failed (a semantic assertion) — then nothing is highlighted.
