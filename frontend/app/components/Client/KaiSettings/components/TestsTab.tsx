@@ -20,6 +20,7 @@ import {
   Play,
   Plus,
   Radar,
+  TriangleAlert,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,9 +29,9 @@ import { toast } from 'react-toastify';
 import FullPagination from 'Shared/FullPagination';
 
 import {
-  bulkTests as apiBulkTests,
   createTest as apiCreateTest,
   getTest as apiGetTest,
+  mergeTests as apiMergeTests,
 } from '../api';
 import {
   browserTestsKeys,
@@ -55,6 +56,7 @@ import {
   apiTestToVM,
   settableTransition,
   vmToCreateRequest,
+  vmToMergeRequest,
   vmToUpdateRequest,
 } from './shared/adapters';
 import { ListTestsParams, RunData, TestCase, TestStatus } from './shared/types';
@@ -66,6 +68,7 @@ import {
   getStatusTag,
   hasNoEnvironment,
   isScheduled,
+  relativeTime,
   scheduleLabel,
   scheduleShort,
 } from './shared/utils';
@@ -79,6 +82,7 @@ const PAGE_SIZE = 20;
 // antd column dataIndex → API sortField (only these are server-sortable).
 const SORT_FIELD: Record<string, ListTestsParams['sortField']> = {
   title: 'name',
+  createdAt: 'created_at',
 };
 
 function TestsTab() {
@@ -159,7 +163,11 @@ function TestsTab() {
   const { data: tagCounts } = useTestCounts('tags', {
     ...filters,
     tags: undefined,
-    status: statusTab !== 'all' ? statusTab : undefined,
+    status:
+      statusTab === 'all' || statusTab === 'needs_review'
+        ? undefined
+        : statusTab,
+    ...(statusTab === 'needs_review' ? { needsReview: true } : {}),
   });
 
   // reset to page 1 (and clear the selection) whenever the filter set changes
@@ -398,14 +406,8 @@ function TestsTab() {
     const { sourceKeys } = base.pendingMerge;
     setMergeTest(null);
     try {
-      await apiCreateTest(
-        projectId,
-        vmToCreateRequest({ ...base, steps, pendingMerge: undefined }),
-      );
-      await apiBulkTests(projectId, {
-        testIds: sourceKeys,
-        action: 'delete',
-      });
+      // one atomic call: creates the merged test + soft-deletes the sources
+      await apiMergeTests(projectId, vmToMergeRequest(base, sourceKeys, steps));
       message.success(t('Merged {{n}} tests', { n: sourceKeys.length }));
     } catch {
       toast.error(t('Failed to merge tests'));
@@ -539,7 +541,11 @@ function TestsTab() {
         } else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
         else if (key === 'resume') updateTest({ ...tc, status: 'active' });
         else if (key === 'markReviewed') clearReview(tc);
-        else if (key === 'dismiss' || key === 'delete') removeTest(tc.key);
+        else if (key === 'dismiss') {
+          // announce it — a row that vanishes silently reads as lost
+          removeTest(tc.key);
+          message.success(t('Draft dismissed'));
+        } else if (key === 'delete') removeTest(tc.key);
       },
     };
   };
@@ -554,6 +560,18 @@ function TestsTab() {
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-medium truncate">{title}</span>
           <VersionLabel version={tc.version} />
+          {/* real side effects — running this touches orders/accounts/payments */}
+          {tc.hasSideEffects && (
+            <Tooltip
+              title={t(
+                'Has side effects — running this test affects real data (orders / accounts / payments).',
+              )}
+            >
+              <span className="shrink-0 flex items-center text-orange-dark">
+                <TriangleAlert size={14} />
+              </span>
+            </Tooltip>
+          )}
           {/* a pending revision (or an unopened new draft) waits for the user */}
           {(needsReview(tc) || (tc.status === 'draft' && tc.isNew)) && (
             <Tooltip
@@ -617,6 +635,27 @@ function TestsTab() {
               <span className="truncate">{scheduleShort(tc.schedule)}</span>
             </span>
           </Tooltip>
+        ),
+    },
+    {
+      title: t('Created'),
+      dataIndex: 'createdAt',
+      width: 120,
+      sorter: true, // server-sorted via created_at (see SORT_FIELD)
+      showSorterTooltip: false,
+      render: (ts?: number) =>
+        ts ? (
+          <Tooltip
+            title={new Date(ts).toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          >
+            <span className="text-disabled-text">{relativeTime(ts)}</span>
+          </Tooltip>
+        ) : (
+          <span className="text-disabled-text">—</span>
         ),
     },
     {
