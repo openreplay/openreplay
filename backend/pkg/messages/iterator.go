@@ -33,7 +33,6 @@ type messageIteratorImpl struct {
 	broken        bool
 	messageInfo   *message
 	batchInfo     *BatchInfo
-	urls          *pageLocations
 	brokenStats   *brokenBatches
 }
 
@@ -43,7 +42,6 @@ func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messag
 		handler:     messageHandler,
 		autoDecode:  autoDecode,
 		reader:      &messageReaderImpl{reader: NewBytesReader(nil)},
-		urls:        NewPageLocations(),
 		brokenStats: NewBrokenBatches(),
 	}
 	iter.preFilter = NewTypeFilter(preFilterTypes)
@@ -177,8 +175,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionEnd")
 		}
-		// Delete session from urls cache layer
-		i.urls.Delete(i.messageInfo.batch.sessionID)
 		// Report and clear broken-batch stats accumulated for this session.
 		if count, firstErr, ok := i.brokenStats.Pop(i.messageInfo.batch.sessionID); ok {
 			ctx := context.WithValue(context.Background(), "sessionID", i.messageInfo.batch.sessionID)
@@ -189,8 +185,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
 		i.messageInfo.PageTitle = m.DocumentTitle
-		// Save session page url in cache for using in next batches
-		i.urls.Set(i.messageInfo.batch.sessionID, m.URL)
 
 	case *MobileBatchMeta:
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
