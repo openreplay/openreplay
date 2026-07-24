@@ -3,7 +3,6 @@ package custom
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -61,7 +60,6 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 			b.webVitals = make(map[string]string)
 		}
 		b.webVitals[msg.Name] = msg.Value
-		log.Printf("WebVitals: name: %v, value: %v, sessID: %d", msg.Name, msg.Value, msg.SessionID())
 	}
 
 	if b.pageEvent != nil && b.pageEvent.Timestamp+PageEventTimeout < timestamp {
