@@ -21,6 +21,7 @@ import {
   RunListItem,
   Test,
   TestCreateRequest,
+  TestMergeRequest,
   TestUpdateRequest,
   TestVersionDetail,
   TestVersionItem,
@@ -60,6 +61,14 @@ export function createTest(
   body: TestCreateRequest,
 ): Promise<Test> {
   return client.post(`${base(projectId)}/tests`, body).then(toJson<Test>);
+}
+
+// Merge 2+ tests into one new test, soft-deleting the sources — atomic server-side.
+export function mergeTests(
+  projectId: string | number,
+  body: TestMergeRequest,
+): Promise<Test> {
+  return client.post(`${base(projectId)}/tests/merge`, body).then(toJson<Test>);
 }
 
 export function updateTest(
