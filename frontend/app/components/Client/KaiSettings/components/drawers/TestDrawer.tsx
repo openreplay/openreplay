@@ -9,6 +9,7 @@ import {
   Pause,
   Play,
   Trash2,
+  TriangleAlert,
   XCircle,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -382,6 +383,7 @@ function TestDrawer({
       onClose={onClose}
       title={test.title}
       onTitleChange={(title) => onChange({ ...test, title })}
+      autoEditTitle={creating}
       eyebrow={
         creating
           ? `${t('Test')} · ${t('New')}`
@@ -505,6 +507,21 @@ function TestDrawer({
         )
       }
     >
+      {/* side-effect tests touch real data (orders / accounts / payments) when they run —
+          the runner flags this so nobody triggers one without knowing */}
+      {test.hasSideEffects && (
+        <div
+          className="flex items-start gap-2 mb-4 px-3 py-2 rounded text-sm text-orange-dark"
+          style={{ backgroundColor: 'var(--color-orange-lightest, #fff7ed)' }}
+        >
+          <TriangleAlert size={16} className="shrink-0 mt-0.5" />
+          <span>
+            {t(
+              'This test has side effects — running it changes real data (orders, accounts, payments). Review its steps before triggering a run.',
+            )}
+          </span>
+        </div>
+      )}
       {/* the steps section wears several hats: arranging a pending merge (group labels +
           steps), reviewing a proposed version (git-style diff), viewing an older snapshot
           (read-only), or plain editing. */}

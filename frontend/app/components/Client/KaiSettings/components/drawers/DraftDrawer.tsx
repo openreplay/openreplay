@@ -1,5 +1,5 @@
-import { Button } from 'antd';
-import { ArrowLeft, ArrowRight, CalendarClock, Check } from 'lucide-react';
+import { Button, message } from 'antd';
+import { ArrowLeft, ArrowRight, CalendarClock, Check, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -98,6 +98,7 @@ function DraftDrawer({
   };
   const dismiss = () => {
     onRemove(draft.key);
+    message.success(t('Draft dismissed'));
     onClose();
   };
   // X / mask: if the steps were approved, persist as approved (or active if scheduled)
@@ -117,8 +118,9 @@ function DraftDrawer({
   const footer =
     step === 0 ? (
       <div className="flex items-center justify-between">
-        {/* dismiss is a quiet gray — red is reserved for Delete */}
-        <Button type="text" onClick={dismiss}>
+        {/* Dismiss rejects the proposal → red, with the X ("reject a suggestion")
+            rather than the bin ("delete something you built") */}
+        <Button type="text" danger icon={<X size={15} />} onClick={dismiss}>
           {t('Dismiss')}
         </Button>
         <div className="flex items-center gap-2">

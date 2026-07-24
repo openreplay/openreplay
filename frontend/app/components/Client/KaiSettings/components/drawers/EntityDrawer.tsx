@@ -1,14 +1,8 @@
-import { Drawer, Tooltip } from 'antd';
-import {
-  FlaskConical,
-  LucideIcon,
-  Play,
-  Plus,
-  Sparkles,
-  SquarePen,
-  X,
-} from 'lucide-react';
-import React, { useState } from 'react';
+import { EditOutlined } from '@ant-design/icons';
+import { Button, Drawer, Input, Tooltip } from 'antd';
+import type { InputRef } from 'antd';
+import { FlaskConical, LucideIcon, Play, Plus, Sparkles, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // The three things a user can open from the tables. They share one shell so they read
@@ -64,6 +58,9 @@ interface DrawerProps {
   eyebrow?: string;
   /** when set, the title becomes inline-editable (rename) */
   onTitleChange?: (title: string) => void;
+  /** creation flow: mount the title already editing, empty, with a placeholder —
+   *  naming becomes the first step of the flow instead of a discovery */
+  autoEditTitle?: boolean;
   /** small line under the title */
   statusLine?: React.ReactNode;
   /** actions rendered top-right in the header, before the close icon */
@@ -79,6 +76,7 @@ export function EntityDrawer({
   title,
   eyebrow,
   onTitleChange,
+  autoEditTitle,
   statusLine,
   headerActions,
   footer,
@@ -101,7 +99,11 @@ export function EntityDrawer({
             {eyebrow ?? meta.eyebrow}
           </div>
           {onTitleChange ? (
-            <EditableTitle title={title} onChange={onTitleChange} />
+            <EditableTitle
+              title={title}
+              onChange={onTitleChange}
+              autoEdit={autoEditTitle}
+            />
           ) : (
             <div className="text-xl font-semibold text-black leading-tight mt-1 break-words">
               {title}
@@ -125,18 +127,27 @@ export function EntityDrawer({
   );
 }
 
-/** The drawer title as a click-to-rename field. Pencil appears on hover; Enter/blur
- *  commits, Escape reverts. Keeps the big semibold title styling while editing. */
+/** The drawer title as a click-to-rename field — the same interaction as the issue
+ *  detail title (ProblemCard's EditableTitle): the whole title is the click target
+ *  (hover tint + pencil), editing shows an input with Cancel/Save, Enter saves,
+ *  Escape cancels. `autoEdit` (creation) mounts it already editing, empty, with a
+ *  placeholder, so naming is part of the flow. An empty commit keeps the current
+ *  title ("Untitled test" during creation). */
 function EditableTitle({
   title,
   onChange,
+  autoEdit,
 }: {
   title: string;
   onChange: (title: string) => void;
+  autoEdit?: boolean;
 }) {
   const { t } = useTranslation();
-  const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(title);
+  const [editing, setEditing] = useState(!!autoEdit);
+  // creation starts from an empty field (the placeholder carries the hint) —
+  // typing the name directly beats editing a preselected "Untitled test"
+  const [val, setVal] = useState(autoEdit ? '' : title);
+  const ref = useRef<InputRef>(null);
 
   // Sync the field to an external title change (render-time, not an effect), but never
   // clobber what the user is currently typing.
@@ -146,54 +157,69 @@ function EditableTitle({
     setVal(title);
   }
 
-  const commit = () => {
+  // the drawer animates in — on autoEdit, focus only after it settles (an early
+  // focus gets stolen by the Drawer's own focus management)
+  useEffect(() => {
+    if (!editing) return undefined;
+    const id = window.setTimeout(() => ref.current?.focus(), autoEdit ? 250 : 0);
+    return () => window.clearTimeout(id);
+  }, [editing, autoEdit]);
+
+  const save = () => {
     const v = val.trim();
     if (v && v !== title) onChange(v);
     else setVal(title);
     setEditing(false);
   };
+  const cancel = () => {
+    setVal(title);
+    setEditing(false);
+  };
 
   // both states live in the same fixed-height row so toggling edit never grows the
-  // header; mr-4 keeps the input clear of the header action buttons
+  // header; mr-4 keeps the row clear of the header action buttons
   if (editing) {
     return (
-      <div className="mt-1 h-8 flex items-center min-w-0 mr-4">
-        <input
-          autoFocus
+      <div className="mt-1 h-8 flex items-center gap-2 min-w-0 mr-4">
+        <Input
+          ref={ref}
+          size="small"
           value={val}
+          maxLength={120}
           aria-label={t('Test name')}
+          placeholder={autoEdit ? t('Name this test') : undefined}
           onChange={(e) => setVal(e.target.value)}
-          onBlur={commit}
+          onPressEnter={save}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') commit();
-            if (e.key === 'Escape') {
-              setVal(title);
-              setEditing(false);
-            }
+            if (e.key === 'Escape') cancel();
           }}
-          className="text-xl font-semibold text-black leading-tight w-full h-8 rounded border px-2 -mx-2 py-0 outline-none"
-          style={{ borderColor: 'var(--color-gray-light)' }}
+          className="flex-1 min-w-0"
         />
+        <Button size="small" type="text" className="shrink-0" onClick={cancel}>
+          {t('Cancel')}
+        </Button>
+        <Button size="small" type="primary" className="shrink-0" onClick={save}>
+          {t('Save')}
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="group mt-1 h-8 flex items-center gap-2 min-w-0 mr-4">
-      <span className="text-xl font-semibold text-black leading-tight truncate">
-        {title}
-      </span>
-      <Tooltip title={t('Rename')}>
-        <button
-          type="button"
-          aria-label={t('Rename')}
-          onClick={() => setEditing(true)}
-          className="shrink-0 text-disabled-text hover:text-gray-dark opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <SquarePen size={15} />
-        </button>
-      </Tooltip>
-    </div>
+    <Tooltip mouseEnterDelay={0.4} title={t('Click to edit')}>
+      <div
+        onClick={() => setEditing(true)}
+        // w-fit: the tint hugs the title + pencil instead of filling the header row
+        className="group mt-1 h-8 w-fit max-w-full flex items-center gap-2 min-w-0 mr-4 cursor-pointer select-none rounded-lg px-2 -mx-2 hover:bg-teal/10 transition"
+      >
+        <span className="text-xl font-semibold text-black leading-tight truncate">
+          {title}
+        </span>
+        <span className="shrink-0 text-main opacity-0 group-hover:opacity-100 transition-opacity">
+          <EditOutlined />
+        </span>
+      </div>
+    </Tooltip>
   );
 }
 
