@@ -56,6 +56,29 @@ function IssueDetail() {
     if (issue) void issuesStore.loadSessions(issue.id, searchQuery);
   }, [issue?.id, searchQuery]);
 
+  // canned journey phrases filtered by the typed text, matching part bolded.
+  // NB: this hook must stay above the early `!issue` return — moving it below
+  // makes the hook count differ between renders ("Rendered more hooks…").
+  const ql = query.trim().toLowerCase();
+  const suggestions = React.useMemo(() => {
+    if (!ql) return [];
+    return JOURNEY_SEARCH_SUGGESTIONS.filter((s) =>
+      s.toLowerCase().includes(ql),
+    ).map((s) => {
+      const at = s.toLowerCase().indexOf(ql);
+      return {
+        value: s,
+        label: (
+          <span>
+            {s.slice(0, at)}
+            <b>{s.slice(at, at + ql.length)}</b>
+            {s.slice(at + ql.length)}
+          </span>
+        ),
+      };
+    });
+  }, [ql]);
+
   const back = () => history.push(withSiteId(smartIssues(), siteId));
   const openReplay = (s: IssueSessionCard) => {
     const q = s.issueTimestamp ? `?jumpto=${s.issueTimestamp}` : '';
@@ -102,27 +125,6 @@ function IssueDetail() {
   };
   const loadMore = () =>
     setVisibleCount((c) => Math.min(maxExamples, c + SHOWN_LIMIT));
-
-  // canned journey phrases filtered by the typed text, matching part bolded
-  const ql = query.trim().toLowerCase();
-  const suggestions = React.useMemo(() => {
-    if (!ql) return [];
-    return JOURNEY_SEARCH_SUGGESTIONS.filter((s) =>
-      s.toLowerCase().includes(ql),
-    ).map((s) => {
-      const at = s.toLowerCase().indexOf(ql);
-      return {
-        value: s,
-        label: (
-          <span>
-            {s.slice(0, at)}
-            <b>{s.slice(at, at + ql.length)}</b>
-            {s.slice(at + ql.length)}
-          </span>
-        ),
-      };
-    });
-  }, [ql]);
 
   const search = (
     <AutoComplete

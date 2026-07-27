@@ -89,6 +89,22 @@ function IssuesList() {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
 
+  // an empty *filtered* list: fetch the unfiltered baseline for the reset hint
+  React.useEffect(() => {
+    if (
+      !issuesStore.loading &&
+      issuesStore.total === 0 &&
+      issuesStore.hasActiveFilters
+    ) {
+      void issuesStore.fetchUnfilteredTotal();
+    }
+  }, [issuesStore.loading, issuesStore.total, issuesStore.hasActiveFilters]);
+
+  const resetFilters = () => {
+    setPeriod(Period({ rangeName: LAST_7_DAYS }));
+    issuesStore.resetFilters();
+  };
+
   const openDetail = (id: string) =>
     history.push(withSiteId(smartIssueDetails(encodeURIComponent(id)), siteId));
 
@@ -363,6 +379,34 @@ function IssuesList() {
     (visibility === 'hidden' ? 1 : 0) +
     (issuesStore.relevantToMe ? 1 : 0);
 
+  const emptyText = !issuesStore.hasActiveFilters ? (
+    t('No issues yet.')
+  ) : (
+    <div className="flex flex-col items-center gap-3 py-6">
+      <span
+        className="text-sm color-gray-medium text-center"
+        style={{ maxWidth: 420 }}
+      >
+        {issuesStore.relevantToMe
+          ? t(
+              'Nothing relevant yet — mark issues critical for you, or create a traffic segment, and they’ll show up here.',
+            )
+          : t('No issues match these filters.')}
+      </span>
+      <Button
+        size="small"
+        icon={<RotateCcw size={14} />}
+        onClick={resetFilters}
+      >
+        {issuesStore.unfilteredTotal
+          ? t('Reset filters to show {{n}} issues', {
+              n: issuesStore.unfilteredTotal,
+            })
+          : t('Reset filters')}
+      </Button>
+    </div>
+  );
+
   const displayContent = (
     <div className="flex flex-col gap-2 p-1" style={{ minWidth: 190 }}>
       <Checkbox
@@ -503,14 +547,7 @@ function IssuesList() {
             `cursor-pointer${r.hidden || visibility === 'deleted' ? ' opacity-60' : ''}`
           }
           onRow={(r) => ({ onClick: () => openDetail(r.id) })}
-          locale={{
-            emptyText:
-              issuesStore.relevantToMe && issuesStore.total === 0
-                ? t(
-                    'Nothing relevant yet — mark issues critical for you, or create a traffic segment, and they’ll show up here.',
-                  )
-                : t('No issues match these filters.'),
-          }}
+          locale={{ emptyText }}
         />
       </div>
 

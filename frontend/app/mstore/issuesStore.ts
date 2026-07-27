@@ -168,6 +168,10 @@ export default class IssuesStore {
   captureMode: CaptureMode = 'full';
   origins: IssueOrigin[] = [];
 
+  /* baseline count with no filters, for the empty-state "reset to show N" hint.
+     lazy: fetched only when an empty filtered list is shown. */
+  unfilteredTotal: number | null = null;
+
   // ---- vocabulary / lookups ----
   labelsAll: { issueLabels: string[]; journeyLabels: string[] } = {
     issueLabels: [],
@@ -235,6 +239,7 @@ export default class IssuesStore {
     this.segments = [];
     this.captureMode = 'full';
     this.origins = [];
+    this.unfilteredTotal = null;
     this.labelsAll = { issueLabels: [], journeyLabels: [] };
     this.reasons = { hide: [], criticality: [] };
     this.issueCache = {};
@@ -355,7 +360,53 @@ export default class IssuesStore {
      resetPage:false to keep the current page. */
   private refetch = (opts: { resetPage?: boolean } = {}) => {
     if (opts.resetPage !== false) this.page = 1;
+    this.unfilteredTotal = null;
     void this.fetchIssues();
+  };
+
+  /** Any narrowing filter active (excludes sort). Drives the empty-state reset. */
+  get hasActiveFilters(): boolean {
+    return Boolean(
+      this.query.trim() ||
+      this.cats.length ||
+      this.labels.length ||
+      this.critOnly ||
+      this.relevantToMe ||
+      this.origins.length ||
+      this.visibility !== 'active' ||
+      this.range !== null,
+    );
+  }
+
+  /** Lazily fetch the unfiltered baseline count (for the reset hint). */
+  fetchUnfilteredTotal = async () => {
+    if (!this.projectId || this.unfilteredTotal !== null) return;
+    try {
+      const { total } = await getIssues(this.projectId, { limit: 1 });
+      runInAction(() => {
+        this.unfilteredTotal = total;
+      });
+    } catch (e) {
+      console.error('Failed to load unfiltered total', e);
+    }
+  };
+
+  /** Clear every narrowing filter back to defaults (keeps sort) and refetch. */
+  resetFilters = () => {
+    this.query = '';
+    this.cats = [];
+    this.labels = [];
+    this.match = 'all';
+    this.critOnly = false;
+    this.relevantToMe = false;
+    this.origins = [];
+    this.visibility = 'active';
+    this.range = null;
+    if (this.projectId) {
+      writeFlag(critOnlyKey(this.projectId), false);
+      writeStr(visibilityKey(this.projectId), 'active');
+    }
+    this.refetch();
   };
 
   // ---- single-issue lookup (detail / player) ----
