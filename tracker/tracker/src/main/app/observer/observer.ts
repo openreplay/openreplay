@@ -369,6 +369,23 @@ export default abstract class Observer {
       }
       return
     }
+    // `open` alone can't tell showModal() (modal/top-layer) from show()/`<dialog open>`
+    // (non-modal); emit the mode alongside it so the player replays the right call (see DOMManager).
+    if (name === 'open' && hasTag(node, 'dialog')) {
+      let mode: 'modal' | 'nonmodal' | 'closed'
+      if (value === null) {
+        mode = 'closed'
+      } else {
+        let isModal = false
+        try {
+          isModal = (node as HTMLDialogElement).matches('dialog:modal')
+        } catch (e) {
+          /* :modal pseudo-class unsupported on this browser */
+        }
+        mode = isModal ? 'modal' : 'nonmodal'
+      }
+      this.app.send(SetNodeAttribute(id, '__openreplay_dialog', mode))
+    }
     if (
       name === 'src' ||
       name === 'srcset' ||

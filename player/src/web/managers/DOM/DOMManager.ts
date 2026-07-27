@@ -57,6 +57,9 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly vElements: Map<number, VElement> = new Map();
   private readonly olVRoots: Map<number, OnloadVRoot> = new Map();
   private readonly pendingSelectValues: Map<number, string> = new Map();
+  /** nodeId -> desired <dialog> top-layer mode; re-asserted every flush (see reconcileDialogModes). */
+  private readonly dialogModes: Map<number, string> = new Map();
+  private dialogFlushScheduled = false;
   private flushScheduled = false;
   /** required to keep track of iframes, frameId : vnodeId */
   private readonly iframeRoots: Record<number, number> = {};
@@ -236,6 +239,19 @@ export default class DOMManager extends ListWalker<Message> {
       return;
     }
 
+    // Synthetic <dialog> top-layer state, not a real attribute (see reconcileDialogModes).
+    if (name === '__openreplay_dialog') {
+      this.dialogModes.set(msg.id, value);
+      return;
+    }
+
+    // Synthetic marker: force recorded color-scheme on the root (inherits) so UA-painted
+    // surfaces (e.g. <dialog> Canvas bg) don't follow the replayer's OS theme.
+    if (name === '__openreplay_color_scheme') {
+      (vn.node as HTMLElement).style.colorScheme = value;
+      return;
+    }
+
     // Untrusted stream: drop event handlers, script-scheme URLs and iframe
     // navigation sources before they ever reach the real element (see sanitize.ts).
     const sanitized = sanitizeAttribute(vn.tagName, name, value);
@@ -320,6 +336,8 @@ export default class DOMManager extends ListWalker<Message> {
         this.olStyleSheets.clear();
         this.pendingStyleRules.clear();
         this.pendingSelectValues.clear();
+        this.dialogModes.clear();
+        this.dialogFlushScheduled = false;
         this.flushScheduled = false;
         this.stylesManager.reset();
         return;
@@ -734,6 +752,46 @@ export default class DOMManager extends ListWalker<Message> {
     }
   };
 
+  /** Re-assert recorded <dialog> top-layer state (showModal/show/close) once the node is connected. */
+  private reconcileDialogModes = (): void => {
+    this.dialogFlushScheduled = false;
+    if (this.dialogModes.size === 0) return;
+    this.dialogModes.forEach((mode, id) => {
+      const vElem = this.vElements.get(id);
+      if (!vElem) {
+        this.dialogModes.delete(id);
+        return;
+      }
+      const node = vElem.node;
+      if (!(node instanceof HTMLDialogElement) || !node.isConnected) {
+        return; // not mounted yet — retry next flush
+      }
+      // `:modal` is the only reliable read of top-layer membership (`open` is set for both).
+      let isModal = false;
+      try {
+        isModal = node.matches('dialog:modal');
+      } catch (e) {
+        /* :modal unsupported */
+      }
+      try {
+        if (mode === 'modal') {
+          if (!isModal) {
+            if (node.hasAttribute('open')) node.removeAttribute('open'); // showModal() throws if already open
+            node.showModal();
+          }
+        } else if (mode === 'nonmodal') {
+          if (isModal) node.close();
+          if (!node.open) node.show();
+        } else {
+          if (node.open || isModal) node.close();
+          this.dialogModes.delete(id); // 'closed' is terminal
+        }
+      } catch (e) {
+        logger.log('Dialog top-layer replay failed', id, mode, e);
+      }
+    });
+  };
+
   private flushPendingSelectValues = (): void => {
     this.flushScheduled = false;
     if (this.pendingSelectValues.size === 0) return;
@@ -770,6 +828,11 @@ export default class DOMManager extends ListWalker<Message> {
   async moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage);
     this.olVRoots.forEach((rt) => rt.applyChanges());
+    // applyChanges() mutates the DOM on a microtask; reconcile dialogs after it (macrotask).
+    if (this.dialogModes.size > 0 && !this.dialogFlushScheduled) {
+      this.dialogFlushScheduled = true;
+      setTimeout(this.reconcileDialogModes, 0);
+    }
     if (this.pendingSelectValues.size > 0 && !this.flushScheduled) {
       this.flushScheduled = true;
       setTimeout(this.flushPendingSelectValues, 0);
