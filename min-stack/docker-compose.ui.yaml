@@ -1,0 +1,61 @@
+# vim: ft=yaml
+#
+# UI overlay for the minimal stack. Use ON TOP of the bundle compose:
+#   docker compose -f docker-compose.bundle.yaml -f docker-compose.ui.yaml ...
+#
+# Adds a single nginx edge (the frontend image + our routing nginx.conf) and the
+# chalice API, and moves caddy to an unused profile (the edge replaces it: ingest
+# is same-origin under /ingest, so no CORS proxy is needed).
+
+services:
+
+  # Neutralise the bundle's caddy CORS proxy: park it on a profile that the UI
+  # stack never activates, so it does not start.
+  caddy:
+    profiles: ["legacy-caddy"]
+
+  # Single edge: serves the UI (static, baked in the image) and routes API /
+  # ingest / asset traffic. Our nginx.conf overrides the image's default.conf;
+  # the stock nginx.default.conf is blanked (both otherwise listen 8080).
+  frontend:
+    image: public.ecr.aws/p1t3u8a3/frontend:${FRONTEND_VERSION:-v1.27.17}
+    container_name: frontend
+    networks:
+      openreplay-net:
+        aliases:
+          - frontend
+          - frontend-openreplay
+          - frontend-openreplay.app.svc.cluster.local
+    ports:
+      - ${EDGE_PORT:-9000}:8080
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/nginx.default.blank.conf:/etc/nginx/conf.d/nginx.default.conf:ro
+      - ./testpage:/var/www/openreplay/testpage:ro
+    depends_on:
+      - openreplay
+      - chalice
+    restart: unless-stopped
+
+  # Core OSS API (Python, FastAPI/uvicorn) on :8000, served under /api/.
+  chalice:
+    image: public.ecr.aws/p1t3u8a3/chalice:${CHALICE_VERSION:-v1.27.14}
+    container_name: chalice
+    networks:
+      openreplay-net:
+        aliases:
+          - chalice
+          - chalice-openreplay
+          - chalice-openreplay.app.svc.cluster.local
+    env_file:
+      - ./docker-envs/chalice.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped

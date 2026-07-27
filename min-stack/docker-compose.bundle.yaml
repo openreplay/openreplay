@@ -226,6 +226,7 @@ services:
     networks:
       openreplay-net:
         aliases:
+          - openreplay
           - http
           - http-openreplay
           - http-openreplay.app.svc.cluster.local

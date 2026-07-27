@@ -21,7 +21,9 @@
   <script>
   var initOpts = {
     projectKey: "testkey0000000000001",
-    ingestPoint: "http://localhost:8095",
+    // Same-origin ingest through the nginx edge (/ingest is proxied to the http
+    // worker). No CORS proxy needed.
+    ingestPoint: window.location.origin + "/ingest",
     __DISABLE_SECURE_MODE: true,
     defaultInputMode: 2,
     obscureTextNumbers: false,

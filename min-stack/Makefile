@@ -24,11 +24,11 @@ CF          ?= docker-compose.yaml
 BUNDLE_IMAGE ?= openreplay-min-bundle:local
 REPO_ROOT   := $(SRC_DIR)/..
 
-COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/$(CF)
+COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/$(CF) $(if $(CF2),-f $(WORK_DIR)/$(CF2),)
 
 .PHONY: up down seed logs ps check-env build-workdir help \
         build-image up-bundle down-bundle logs-bundle ps-bundle smoke _boot \
-        capture e2e test-bundle
+        capture e2e test-bundle up-ui down-ui logs-ui ps-ui smoke-ui
 
 
 help: ## Prints help for targets with comments
@@ -48,8 +48,10 @@ build-workdir: check-env
 	rm -rf "$(WORK_DIR)"; mkdir -p "$(WORK_DIR)"
 	cp "$(SRC_DIR)/docker-compose.yaml" "$(WORK_DIR)/docker-compose.yaml"
 	cp "$(SRC_DIR)/docker-compose.bundle.yaml" "$(WORK_DIR)/docker-compose.bundle.yaml"
+	cp "$(SRC_DIR)/docker-compose.ui.yaml" "$(WORK_DIR)/docker-compose.ui.yaml"
 	cp "$(SRC_DIR)/Caddyfile" "$(WORK_DIR)/Caddyfile"
 	cp -r "$(SRC_DIR)/bundle/testpage" "$(WORK_DIR)/testpage"
+	cp -r "$(SRC_DIR)/frontend" "$(WORK_DIR)/frontend"
 	cp -r "$(COMPOSE_DIR)/docker-envs" "$(COMPOSE_DIR)/migration-files" "$(WORK_DIR)/"
 	cp "$(ENV_FILE)" "$(WORK_DIR)/common.env"
 	# Expand $${COMMON_*} placeholders in each worker env file, as install.sh does.
@@ -108,6 +110,25 @@ logs-bundle: ## Tail logs from the bundle stack (all workers prefixed by s6)
 
 ps-bundle: ## Show bundle container status
 	@$(MAKE) --no-print-directory ps CF=docker-compose.bundle.yaml
+
+##@ UI stack (bundle + nginx edge + chalice, single host port)
+
+up-ui: build-image build-workdir ## Build image + boot the UI stack (UI on :9000), seed a project
+	@$(MAKE) --no-print-directory _boot CF=docker-compose.bundle.yaml CF2=docker-compose.ui.yaml
+	set -a; . "$(WORK_DIR)/common.env"; set +a; \
+	  echo "UI: http://localhost:$${EDGE_PORT:-9000}/  (tracker test page: /testpage/)"
+
+down-ui: ## Stop the UI stack and remove all volumes
+	@$(MAKE) --no-print-directory down CF=docker-compose.bundle.yaml CF2=docker-compose.ui.yaml
+
+logs-ui: ## Tail logs from the UI stack
+	@$(MAKE) --no-print-directory logs CF=docker-compose.bundle.yaml CF2=docker-compose.ui.yaml
+
+ps-ui: ## Show UI stack container status
+	@$(MAKE) --no-print-directory ps CF=docker-compose.bundle.yaml CF2=docker-compose.ui.yaml
+
+smoke-ui: ## Run the UI-stack smoke test against a booted UI stack
+	@bash "$(SRC_DIR)/frontend/smoke.sh"
 
 smoke: ## Run the bundle smoke test against a booted bundle stack
 	@set -Eeuo pipefail
