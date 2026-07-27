@@ -46,6 +46,7 @@ type TagTypeMap = {
   link: HTMLLinkElement
   canvas: HTMLCanvasElement
   slot: HTMLSlotElement
+  dialog: HTMLDialogElement
 }
 export function hasTag<T extends keyof TagTypeMap>(
   el: Node,
