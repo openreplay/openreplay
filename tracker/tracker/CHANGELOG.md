@@ -1,3 +1,7 @@
+## 18.1.1
+
+- improve native dialog support
+
 ## 18.1.0
 
 - restart or resume the session when a page is restored from back-forward cache (bfcache)
