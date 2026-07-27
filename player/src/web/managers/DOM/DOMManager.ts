@@ -57,9 +57,9 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly vElements: Map<number, VElement> = new Map();
   private readonly olVRoots: Map<number, OnloadVRoot> = new Map();
   private readonly pendingSelectValues: Map<number, string> = new Map();
-  /** nodeId -> native <dialog> top-layer mode ('modal' | 'nonmodal' | 'closed'),
-   * applied after the tree is flushed so the node is connected (see flushPendingDialogModes) */
-  private readonly pendingDialogModes: Map<number, string> = new Map();
+  /** nodeId -> desired <dialog> top-layer mode; re-asserted every flush (see reconcileDialogModes). */
+  private readonly dialogModes: Map<number, string> = new Map();
+  private dialogFlushScheduled = false;
   private flushScheduled = false;
   /** required to keep track of iframes, frameId : vnodeId */
   private readonly iframeRoots: Record<number, number> = {};
@@ -239,11 +239,16 @@ export default class DOMManager extends ListWalker<Message> {
       return;
     }
 
-    // Synthetic marker for native <dialog> top-layer state (see tracker observer).
-    // Not a real attribute: defer it until the tree is flushed and the node is
-    // connected, then replay showModal()/show()/close() in flushPendingDialogModes.
+    // Synthetic <dialog> top-layer state, not a real attribute (see reconcileDialogModes).
     if (name === '__openreplay_dialog') {
-      this.pendingDialogModes.set(msg.id, value);
+      this.dialogModes.set(msg.id, value);
+      return;
+    }
+
+    // Synthetic marker: force recorded color-scheme on the root (inherits) so UA-painted
+    // surfaces (e.g. <dialog> Canvas bg) don't follow the replayer's OS theme.
+    if (name === '__openreplay_color_scheme') {
+      (vn.node as HTMLElement).style.colorScheme = value;
       return;
     }
 
@@ -331,7 +336,8 @@ export default class DOMManager extends ListWalker<Message> {
         this.olStyleSheets.clear();
         this.pendingStyleRules.clear();
         this.pendingSelectValues.clear();
-        this.pendingDialogModes.clear();
+        this.dialogModes.clear();
+        this.dialogFlushScheduled = false;
         this.flushScheduled = false;
         this.stylesManager.reset();
         return;
@@ -751,32 +757,38 @@ export default class DOMManager extends ListWalker<Message> {
    * the VDOM is flushed so the element is connected (showModal() throws otherwise).
    * Entries whose node isn't connected yet are kept and retried on the next flush.
    */
-  private flushPendingDialogModes = (): void => {
-    if (this.pendingDialogModes.size === 0) return;
-    this.pendingDialogModes.forEach((mode, id) => {
+  private reconcileDialogModes = (): void => {
+    this.dialogFlushScheduled = false;
+    if (this.dialogModes.size === 0) return;
+    this.dialogModes.forEach((mode, id) => {
       const vElem = this.vElements.get(id);
       if (!vElem) {
-        this.pendingDialogModes.delete(id);
+        this.dialogModes.delete(id);
         return;
       }
       const node = vElem.node;
       if (!(node instanceof HTMLDialogElement) || !node.isConnected) {
-        // Not mounted yet — leave it queued for the next flush.
-        return;
+        return; // not mounted yet — retry next flush
       }
-      this.pendingDialogModes.delete(id);
+      // `:modal` is the only reliable read of top-layer membership (`open` is set for both).
+      let isModal = false;
+      try {
+        isModal = node.matches('dialog:modal');
+      } catch (e) {
+        /* :modal unsupported */
+      }
       try {
         if (mode === 'modal') {
-          // showModal() throws if the `open` attribute is already set (the tracker
-          // also replays it as a plain attribute), so clear it first.
-          if (node.hasAttribute('open')) node.removeAttribute('open');
-          node.showModal();
+          if (!isModal) {
+            if (node.hasAttribute('open')) node.removeAttribute('open'); // showModal() throws if already open
+            node.showModal();
+          }
         } else if (mode === 'nonmodal') {
+          if (isModal) node.close();
           if (!node.open) node.show();
-        } else if (node.open) {
-          // 'closed' — removing the `open` attribute alone does not exit the top
-          // layer; only close() does.
-          node.close();
+        } else {
+          if (node.open || isModal) node.close();
+          this.dialogModes.delete(id); // 'closed' is terminal
         }
       } catch (e) {
         logger.log('Dialog top-layer replay failed', id, mode, e);
@@ -820,8 +832,11 @@ export default class DOMManager extends ListWalker<Message> {
   async moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage);
     this.olVRoots.forEach((rt) => rt.applyChanges());
-    // Tree is now connected — safe to (re-)enter the <dialog> top layer.
-    this.flushPendingDialogModes();
+    // applyChanges() mutates the DOM on a microtask; reconcile dialogs after it (macrotask).
+    if (this.dialogModes.size > 0 && !this.dialogFlushScheduled) {
+      this.dialogFlushScheduled = true;
+      setTimeout(this.reconcileDialogModes, 0);
+    }
     if (this.pendingSelectValues.size > 0 && !this.flushScheduled) {
       this.flushScheduled = true;
       setTimeout(this.flushPendingSelectValues, 0);
