@@ -37,6 +37,11 @@ func (s *saverImpl) handleMobileMessage(session *sessions.Session, msg messages.
 		return s.ch.InsertMobileRequest(session, m, session.SaveRequestPayload)
 	case *messages.MobileCrash:
 		return s.ch.InsertMobileCrash(session, m)
+	case *messages.MobileIssueEvent:
+		if err := s.ch.InsertMobileIssue(session, m); err != nil {
+			return err
+		}
+		return s.issues.Add(session.SessionID, m.Type)
 	}
 	return nil
 }

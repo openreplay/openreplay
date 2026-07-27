@@ -69,7 +69,6 @@ ENV TZ=UTC \
   GROUP_DB=db \
   GROUP_ENDER=ender \
   GROUP_CACHE=cache \
-  GROUP_HEURISTICS=heuristics \
   GROUP_IMAGE_STORAGE=image-storage \
   GROUP_CANVAS_IMAGE=canvas-image \
   GROUP_CANVAS_VIDEO=canvas-video \

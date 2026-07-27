@@ -607,32 +607,6 @@ services:
     restart: unless-stopped
   
   
-  heuristics-openreplay:
-    image: public.ecr.aws/p1t3u8a3/heuristics:${HEURISTICS_VERSION}
-    domainname: app.svc.cluster.local
-    container_name: heuristics
-    networks:
-      openreplay-net:
-        aliases:
-          - heuristics-openreplay
-          - heuristics-openreplay.app.svc.cluster.local
-    volumes:
-      - shared-volume:/mnt/efs
-    env_file:
-      - docker-envs/heuristics.env
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      clickhouse:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    environment: {}  # Fallback empty environment if env_file is missing
-    restart: unless-stopped
-  
-
   nginx-openreplay:
     image: nginx:latest
     container_name: nginx

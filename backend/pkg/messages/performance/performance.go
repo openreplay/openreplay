@@ -26,7 +26,3 @@ func TickRate(ticks int64, dt uint64) float64 {
 func CPURateFromTickRate(tickRate float64) uint64 {
 	return 100 - uint64(math.Round(tickRate*100))
 }
-
-func CPURate(ticks int64, dt uint64) uint64 {
-	return CPURateFromTickRate(TickRate(ticks, dt))
-}

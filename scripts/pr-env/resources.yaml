@@ -66,10 +66,6 @@ frontend:
   resources:
     requests:
       cpu: 50m
-heuristics:
-  resources:
-    requests:
-      cpu: 50m
 http:
   resources:
     requests:
