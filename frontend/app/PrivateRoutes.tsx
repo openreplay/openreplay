@@ -172,7 +172,12 @@ function PrivateRoutes() {
         'userCity',
         'meta_',
       ];
-      const parsedFilters = supportedFilters.filter((f) => searchParams.has(f));
+      const searchParamsKeys = Array.from(searchParams.keys());
+      const parsedFilters = searchParamsKeys.filter((key) =>
+        supportedFilters.some((f) =>
+          f === 'meta_' ? key.startsWith('meta_') : key === f,
+        ),
+      );
 
       if (searchId) {
         searchStore
@@ -202,7 +207,10 @@ function PrivateRoutes() {
           const value = searchParams.get(f) as string;
           const isMeta = f.startsWith('meta_');
           const filterName = isMeta ? f.replace('meta_', '') : f;
-          const filter = filterStore.findEvent({ name: filterName });
+          const searchPayload = isMeta
+            ? { displayName: filterName }
+            : { name: filterName };
+          const filter = filterStore.findEvent(searchPayload);
           if (filter) {
             filter.value = [value];
           }
