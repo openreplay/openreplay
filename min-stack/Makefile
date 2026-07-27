@@ -28,7 +28,7 @@ COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/$(CF) 
 
 .PHONY: up down seed logs ps check-env build-workdir help \
         build-image up-bundle down-bundle logs-bundle ps-bundle smoke _boot \
-        capture e2e test-bundle up-ui down-ui logs-ui ps-ui smoke-ui
+        capture e2e test-bundle up-ui down-ui logs-ui ps-ui smoke-ui e2e-ui
 
 
 help: ## Prints help for targets with comments
@@ -129,6 +129,9 @@ ps-ui: ## Show UI stack container status
 
 smoke-ui: ## Run the UI-stack smoke test against a booted UI stack
 	@bash "$(SRC_DIR)/frontend/smoke.sh"
+
+e2e-ui: ## End-to-end: signup, capture a session, prove replay recording via the edge
+	@bash "$(SRC_DIR)/frontend/e2e.sh"
 
 smoke: ## Run the bundle smoke test against a booted bundle stack
 	@set -Eeuo pipefail
