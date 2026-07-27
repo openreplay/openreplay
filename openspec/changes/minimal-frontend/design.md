@@ -63,9 +63,23 @@ replay.
 
 ### Same-origin ingest, retire caddy
 With everything behind one nginx, the tracker's `ingestPoint` = the app origin
-and beacons go to `/ingest` on the same origin — no CORS, no
-`__DISABLE_SECURE_MODE` hack, no caddy. This matches production (where caddy only
-did TLS/ACME, not CORS).
+(`http://<host>:<port>/ingest`) and beacons go to `/ingest` on the same origin —
+no CORS, no `__DISABLE_SECURE_MODE` hack, no caddy. nginx strips the `/ingest`
+prefix (`rewrite ^/ingest/(.*) /$1 break;`) so the http worker receives
+`/v1/web/start` as usual. This matches production (where caddy only did
+TLS/ACME, not CORS).
+
+### `/` served locally; test page under `/testpage/`
+Our nginx runs *inside* the frontend image, so `location /` serves the static UI
+directly from `/var/www/openreplay` (SPA fallback to `/index.html`) rather than
+proxying to a separate frontend container as the full-stack edge does. We
+override `conf.d/default.conf` with the merged config and blank out the stock
+`conf.d/nginx.default.conf` (both otherwise `listen 8080`). To capture a session
+for replay we still need a tracker-instrumented page, so nginx also serves
+`min-stack/frontend/testpage/` at `/testpage/`; its tracker posts same-origin to
+`/ingest`. Dynamic upstreams use `resolver 127.0.0.11` (Docker DNS). Routes for
+EE/extra workers (canvases, images, integrations, spot, ws-assist) and the
+`/script/` CDN passthrough are dropped for the minimal stack.
 
 ### Published images for frontend + chalice, source build for api
 Per direction: `frontend` and `chalice` are used as published images (UI static
