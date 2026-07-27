@@ -243,12 +243,13 @@ export default class TopObserver extends Observer {
       window.document.documentElement,
     )
 
+    // Send before `orloaded` so it lands in the initial visual batch (see sendColorScheme).
+    this.sendColorScheme()
+
     // "DOM parsed" signal: observeRoot sent the full initial tree synchronously above.
     // The worker keys on this attribute (BatchWriter) to finalize the visual batch.
     this.app.send(SetNodeAttribute(0, 'orloaded', 'true'))
 
-    // Record used color-scheme so the player can force it on replay (see sendColorScheme).
-    this.sendColorScheme()
     if (IN_BROWSER && window.matchMedia) {
       this.colorSchemeMQL = window.matchMedia('(prefers-color-scheme: dark)')
       this.colorSchemeListener = this.app.safe(() => this.sendColorScheme())

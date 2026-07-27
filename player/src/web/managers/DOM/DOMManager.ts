@@ -752,11 +752,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
   };
 
-  /**
-   * Restores native <dialog> top-layer state recorded by the tracker. Runs after
-   * the VDOM is flushed so the element is connected (showModal() throws otherwise).
-   * Entries whose node isn't connected yet are kept and retried on the next flush.
-   */
+  /** Re-assert recorded <dialog> top-layer state (showModal/show/close) once the node is connected. */
   private reconcileDialogModes = (): void => {
     this.dialogFlushScheduled = false;
     if (this.dialogModes.size === 0) return;
