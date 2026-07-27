@@ -19,7 +19,7 @@ COPY backend/pkg pkg
 COPY backend/internal internal
 ARG ARCH=amd64
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
-    for name in http ender sink storage db assets; do \
+    for name in http ender sink storage db assets api; do \
       echo "building $name" && \
       CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o /out/$name -tags dynamic \
         openreplay/backend/cmd/$name; \

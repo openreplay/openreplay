@@ -28,7 +28,7 @@ envfile_to_dir() {
 # Shared config (topics, groups, tunables) is baked as container ENV in the
 # Dockerfile and reaches each worker via `with-contenv`; the per-worker envdir
 # below is applied AFTER it and overrides where they differ (BUCKET_NAME etc).
-for w in http ender sink storage db assets; do
+for w in http ender sink storage db assets api; do
   f="$SRC/$w.env"
   [ -f "$f" ] || { echo "[init-envdirs] missing $f, skipping"; continue; }
   d="$DST/$w"
@@ -38,5 +38,13 @@ for w in http ender sink storage db assets; do
   case "$w" in
     http|storage|assets) printf '%s' "$MINIO_ENDPOINT" > "$d/AWS_ENDPOINT" ;;
   esac
+  if [ "$w" = api ]; then
+    # api is an HTTP server like http; give it its own port to avoid the
+    # 8080 collision inside the shared container. minio endpoint + an assist
+    # placeholder (assist is out of scope; only live features would need it).
+    printf '%s' "8081" > "$d/HTTP_PORT"
+    printf '%s' "$MINIO_ENDPOINT" > "$d/AWS_ENDPOINT"
+    [ -f "$d/ASSIST_URL" ] || printf '%s' "http://127.0.0.1:9001/assist/%%s" > "$d/ASSIST_URL"
+  fi
   echo "[init-envdirs] built envdir for $w ($(ls "$d" | wc -l) vars)"
 done
