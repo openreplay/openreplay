@@ -50,7 +50,11 @@
 - Replay is served by the Go `api` worker (`/v2/api/.../first-mob`), matching the
   HEAD storage worker's nested mob layout. Published chalice's flat mob-key
   default is not on the web replay path.
-- The api signs presigned asset URLs with its `AWS_ENDPOINT` (the object store's
-  internal host). The browser fetches them same-origin through the edge, so the
-  nginx asset location must forward `Host` = that internal host or the S3 v4
-  signature (SignedHeaders=host) fails with 403.
+- The api signs presigned asset URLs with its `AWS_ENDPOINT`, and presigning is
+  a local no-network op, so `AWS_ENDPOINT` for the api worker is set to the
+  public edge origin (`OR_PUBLIC_ORIGIN`) rather than the object store's internal
+  service name (which a browser cannot resolve). The nginx asset location
+  forwards the browser `Host` (`$http_host`) to the store so the S3 v4 signature
+  (SignedHeaders=host) validates. Upload workers keep the internal endpoint.
+  This mirrors the full stack, where `api.env` sets
+  `AWS_ENDPOINT=${COMMON_PROTOCOL}://${COMMON_DOMAIN_NAME}`.

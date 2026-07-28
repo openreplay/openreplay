@@ -12,7 +12,7 @@ the s6 bundle; adds the Go `api` worker into the bundle and the published
  │              │             │  /api/      → chalice:8000   (published)      │
  │  tracker on  │──/api ──────▶│  /v2/api/   → openreplay:8081 (api, bundle)  │
  │  /testpage/  │──/v2/api────▶│  /ingest/   → openreplay:8080 (http, bundle) │
- │              │──/ingest────▶│  /mobs …    → minio:9000 (Host forwarded)    │
+ │              │──/ingest────▶│  /mobs …    → minio:9000 ($http_host fwd)    │
  └──────────────┘             └──────────────────────────────────────────────┘
    bundle (s6, one container): http:8080 ender sink storage db assets api:8081
    published: chalice:8000, frontend(edge+UI) ;  infra: pg · ch · redis · minio
@@ -45,9 +45,9 @@ make down-ui     # teardown + volumes
 
 ```
 frontend player ──▶ GET /v2/api/<proj>/sessions/<sid>/first-mob   (Go api worker)
-                 ◀── { domURL: [ <presigned>/mobs/<sid>/dom.mobs?X-Amz-... ] }
-frontend player ──▶ GET /mobs/<sid>/dom.mobs?X-Amz-...  (same origin, via edge)
-                    nginx forwards Host = object-store internal host
+                 ◀── { domURL: [ http://<edge-origin>/mobs/<sid>/dom.mobs?X-Amz-... ] }
+frontend player ──▶ GET that URL verbatim (it is already on the edge origin)
+                    nginx forwards the browser Host ($http_host) to the store
                  ◀── zstd dom.mobs recording  (S3 v4 signature validates)
 ```
 
@@ -73,11 +73,15 @@ frontend player ──▶ GET /mobs/<sid>/dom.mobs?X-Amz-...  (same origin, via 
 
 ## Gotchas
 
-- **Presigned asset Host (403 if wrong).** The api signs `/mobs` URLs with its
-  `AWS_ENDPOINT` = the object store's *internal* host. The browser fetches them
-  same-origin through the edge, so the nginx asset location does
-  `proxy_set_header Host <internal-host>` — otherwise the S3 v4 signature
-  (`SignedHeaders=host`) fails with 403.
+- **Presigned asset URLs must use the public edge origin.** The api worker's
+  `AWS_ENDPOINT` is the host it *signs* URLs with (presigning is a local,
+  no-network op), so it is set to the browser-facing edge origin
+  (`OR_PUBLIC_ORIGIN`, e.g. `http://localhost:9000`) — NOT the object store's
+  internal service name, which a browser cannot resolve. The nginx asset
+  location forwards the browser `Host` (`$http_host`) to the store so the S3 v4
+  signature (`SignedHeaders=host`) validates. Upload workers (`http`, `storage`,
+  `assets`) keep the internal endpoint because they actually connect. This
+  mirrors the full stack (`api.env: AWS_ENDPOINT=${COMMON_PROTOCOL}://${COMMON_DOMAIN_NAME}`).
 - **Signup email domain.** `.local` and other reserved domains are rejected by
   the API's email validator; use e.g. `example.com`.
 - **Single-tenant OSS.** `get_projects` has no tenant filter, so every project
