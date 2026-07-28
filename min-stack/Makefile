@@ -28,7 +28,7 @@ COMPOSE = docker compose --env-file $(WORK_DIR)/common.env -f $(WORK_DIR)/$(CF) 
 
 .PHONY: up down seed logs ps check-env build-workdir help \
         build-image up-bundle down-bundle logs-bundle ps-bundle smoke _boot \
-        capture e2e test-bundle up-ui down-ui logs-ui ps-ui smoke-ui e2e-ui
+        capture e2e test-bundle up-ui down-ui logs-ui ps-ui smoke-ui e2e-ui seed-user
 
 
 help: ## Prints help for targets with comments
@@ -71,7 +71,9 @@ _boot:
 	until COMPOSE_PROFILES=migration $(COMPOSE) ps -a db-migration --format '{{.State}}' 2>/dev/null | grep -q exited; do sleep 2; done
 	$(MAKE) --no-print-directory seed CF=$(CF) || true
 	set -a; . "$(WORK_DIR)/common.env"; set +a
-	echo "Up. http ingest on host port $${HTTP_PORT:-8080} (tracker ingestPoint: caddy on $${INGEST_PORT:-8095})."
+	if [ -z "$(QUIET_BOOT)" ]; then \
+	  echo "Up. http ingest on host port $${HTTP_PORT:-8080} (tracker ingestPoint: caddy on $${INGEST_PORT:-8095})."; \
+	fi
 
 seed: ## Insert a default project so ingest works
 	@set -Eeuo pipefail
@@ -114,9 +116,27 @@ ps-bundle: ## Show bundle container status
 ##@ UI stack (bundle + nginx edge + chalice, single host port)
 
 up-ui: build-image build-workdir ## Build image + boot the UI stack (UI on :9000), seed a project
-	@$(MAKE) --no-print-directory _boot CF=docker-compose.bundle.yaml CF2=docker-compose.ui.yaml
-	set -a; . "$(WORK_DIR)/common.env"; set +a; \
-	  echo "UI: http://localhost:$${EDGE_PORT:-9000}/  (tracker test page: /testpage/)"
+	@$(MAKE) --no-print-directory _boot CF=docker-compose.bundle.yaml CF2=docker-compose.ui.yaml QUIET_BOOT=1
+	@set -a; . "$(WORK_DIR)/common.env"; set +a; P=$${EDGE_PORT:-9000}; \
+	 printf '\n'; \
+	 printf '========================================================================\n'; \
+	 printf '  OpenReplay minimal UI stack is up  (single edge, one host port)\n'; \
+	 printf '========================================================================\n'; \
+	 printf '  Web UI ............ http://localhost:%s/\n' "$$P"; \
+	 printf '  Record a session . http://localhost:%s/testpage/\n' "$$P"; \
+	 printf '                     (caddy :8095/:8096 are RETIRED here; ingest is\n'; \
+	 printf '                      same-origin under /testpage -> /ingest)\n'; \
+	 printf '\n'; \
+	 printf '  LOGIN: there is NO default user. Create the first account via\n'; \
+	 printf '         Sign up at http://localhost:%s/  (first signup = owner).\n' "$$P"; \
+	 printf '         Use a real email domain (e.g. admin@example.com);\n'; \
+	 printf '         reserved domains like .local are rejected.\n'; \
+	 printf '         Or run:  make seed-user   (creates a known login via API)\n'; \
+	 printf '\n'; \
+	 printf '  Seeded PROJECT key (already present): testkey0000000000001\n'; \
+	 printf '  Verify:  make smoke-ui     End-to-end:  make e2e-ui\n'; \
+	 printf '  Logs:    make logs-ui      Teardown:    make down-ui\n'; \
+	 printf '========================================================================\n\n'
 
 down-ui: ## Stop the UI stack and remove all volumes
 	@$(MAKE) --no-print-directory down CF=docker-compose.bundle.yaml CF2=docker-compose.ui.yaml
@@ -132,6 +152,28 @@ smoke-ui: ## Run the UI-stack smoke test against a booted UI stack
 
 e2e-ui: ## End-to-end: signup, capture a session, prove replay recording via the edge
 	@bash "$(SRC_DIR)/frontend/e2e.sh"
+
+UI_EMAIL ?= admin@example.com
+UI_PASSWORD ?= Password123!
+seed-user: ## Create a known login on a booted UI stack (UI_EMAIL/UI_PASSWORD override)
+	@set -Eeuo pipefail; . "$(WORK_DIR)/common.env"; P=$${EDGE_PORT:-9000}; \
+	 code=$$(curl -s -o /tmp/or-seed-user.json -w '%{http_code}' \
+	   -X POST "http://localhost:$$P/api/signup" -H 'Content-Type: application/json' \
+	   -d '{"email":"$(UI_EMAIL)","password":"$(UI_PASSWORD)","fullname":"Admin","organizationName":"MinStack"}'); \
+	 if grep -q '"jwt"' /tmp/or-seed-user.json 2>/dev/null; then \
+	   printf '  created login: %s / %s\n' '$(UI_EMAIL)' '$(UI_PASSWORD)'; \
+	 else \
+	   lcode=$$(curl -s -o /tmp/or-seed-login.json -w '%{http_code}' \
+	     -X POST "http://localhost:$$P/api/login" -H 'Content-Type: application/json' \
+	     -d '{"email":"$(UI_EMAIL)","password":"$(UI_PASSWORD)"}'); \
+	   if grep -q '"jwt"' /tmp/or-seed-login.json 2>/dev/null; then \
+	     printf '  signup closed (HTTP %s: a tenant already exists). Existing login works:\n' "$$code"; \
+	     printf '    %s / %s\n' '$(UI_EMAIL)' '$(UI_PASSWORD)'; \
+	   else \
+	     printf '  signup HTTP %s, login HTTP %s. A different account owns this tenant;\n' "$$code" "$$lcode"; \
+	     printf '  run make down-ui then up-ui to reset, or sign up in the browser.\n'; \
+	   fi; \
+	 fi
 
 smoke: ## Run the bundle smoke test against a booted bundle stack
 	@set -Eeuo pipefail
