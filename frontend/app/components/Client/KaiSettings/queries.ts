@@ -1,5 +1,6 @@
 import {
   QueryClient,
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -103,6 +104,10 @@ export function useTests(params?: ListTestsParams) {
     queryKey: browserTestsKeys.tests(projectId, params),
     queryFn: () => api.listTests(projectId, params),
     enabled: !!projectId,
+    // search/filter/page changes re-key this query. Keep the previous page's rows
+    // on screen while the new key loads so `isPending` (→ skeleton) fires only on
+    // the genuine first load, not on every keystroke.
+    placeholderData: keepPreviousData,
   });
 }
 
