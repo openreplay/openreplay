@@ -40,10 +40,20 @@ for w in http ender sink storage db assets api; do
   esac
   if [ "$w" = api ]; then
     # api is an HTTP server like http; give it its own port to avoid the
-    # 8080 collision inside the shared container. minio endpoint + an assist
-    # placeholder (assist is out of scope; only live features would need it).
+    # 8080 collision inside the shared container.
     printf '%s' "8081" > "$d/HTTP_PORT"
-    printf '%s' "$MINIO_ENDPOINT" > "$d/AWS_ENDPOINT"
+    # The api only SIGNS presigned asset URLs (GetPreSignedDownloadUrl is a
+    # local, no-network operation), so its AWS_ENDPOINT is the host the browser
+    # will use, NOT the internal object store. Sign with the public edge origin
+    # so replay URLs are directly fetchable; nginx forwards the browser Host to
+    # minio and the S3 v4 signature validates. Fall back to the internal
+    # endpoint when there is no edge (headless bundle), where replay is moot.
+    if [ -n "${OR_PUBLIC_ORIGIN:-}" ]; then
+      printf '%s' "$OR_PUBLIC_ORIGIN" > "$d/AWS_ENDPOINT"
+    else
+      printf '%s' "$MINIO_ENDPOINT" > "$d/AWS_ENDPOINT"
+    fi
+    # assist is out of scope; only live features would need a real URL.
     [ -f "$d/ASSIST_URL" ] || printf '%s' "http://127.0.0.1:9001/assist/%%s" > "$d/ASSIST_URL"
   fi
   echo "[init-envdirs] built envdir for $w ($(ls "$d" | wc -l) vars)"

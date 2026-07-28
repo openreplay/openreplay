@@ -14,6 +14,15 @@ services:
   caddy:
     profiles: ["legacy-caddy"]
 
+  # With the edge present, the api worker must sign presigned asset URLs with
+  # the browser-facing edge origin (see bundle/build-envdirs.sh), so it hands
+  # the openreplay container the public origin. The api never connects to the
+  # object store (presigning is local), so this host need not be reachable from
+  # inside the container.
+  openreplay:
+    environment:
+      OR_PUBLIC_ORIGIN: ${COMMON_PROTOCOL:-http}://${COMMON_DOMAIN_NAME:-localhost}:${EDGE_PORT:-9000}
+
   # Single edge: serves the UI (static, baked in the image) and routes API /
   # ingest / asset traffic. Our nginx.conf overrides the image's default.conf;
   # the stock nginx.default.conf is blanked (both otherwise listen 8080).

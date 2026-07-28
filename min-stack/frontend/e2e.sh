@@ -12,7 +12,6 @@ BROWTEST="$SRC_DIR/../bundle/browtest"
 EDGE="${OR_EDGE_URL:-http://localhost:9000}"
 APP_CONTAINER="${OR_BUNDLE_CONTAINER:-openreplay}"
 S3_CONTAINER="${OR_S3_CONTAINER:-minio}"
-S3_INTERNAL_HOST="${OR_S3_INTERNAL_HOST:-minio.db.svc.cluster.local:9000}"
 EMAIL="${OR_EMAIL:-admin@example.com}"
 PASSWORD="${OR_PASSWORD:-Password123!}"
 PROJECT_ID="${OR_PROJECT_ID:-1}"
@@ -56,11 +55,15 @@ echo "== replay data path: first-mob -> presigned -> fetch via edge =="
 URL=$(curl -s "$EDGE/v2/api/$PROJECT_ID/sessions/$SID/first-mob" -H "Authorization: Bearer $JWT" \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['data']['domURL'][0])" 2>/dev/null)
 [ -n "$URL" ] || fail "first-mob returned no domURL"
-# the api signs with the internal object-store host; the player fetches it
-# same-origin through the edge, which forwards that Host so the S3 signature holds.
-EDGEURL=$(printf '%s' "$URL" | sed "s#http://$S3_INTERNAL_HOST#$EDGE#")
-code=$(curl -s -o /tmp/or-e2e-dom.mobs -w '%{http_code}' "$EDGEURL")
-[ "$code" = "200" ] || fail "presigned dom.mobs fetch via edge returned $code"
+# The presigned URL MUST be directly browser-fetchable: its host must be the
+# public edge origin, not the object store's internal service name. The player
+# fetches domURL verbatim (no host rewriting), so assert that and fetch as-is.
+case "$URL" in
+  "$EDGE"/*) : ;;
+  *) fail "domURL is not on the edge origin ($EDGE); got: ${URL%%\?*}" ;;
+esac
+code=$(curl -s -o /tmp/or-e2e-dom.mobs -w '%{http_code}' "$URL")
+[ "$code" = "200" ] || fail "presigned dom.mobs fetch (verbatim) returned $code"
 if file /tmp/or-e2e-dom.mobs | grep -qi "Zstandard"; then
   echo ""
   echo "==== E2E-UI PASS ===="
