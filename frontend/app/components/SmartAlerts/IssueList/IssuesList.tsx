@@ -61,7 +61,8 @@ import {
   lastSeenLabel,
 } from '../shared';
 import type { SortMode } from '../shared/model';
-import TagFilter from './TagFilter';
+import TagFilter, { SegmentFilter } from './TagFilter';
+import './issues.css';
 
 /* antd header-sort order -> our SortMode, per sortable column. */
 const SORT_FIELD: Record<string, SortMode> = {
@@ -167,8 +168,6 @@ function IssuesList() {
       title: t('Issue'),
       dataIndex: 'head',
       render: (head: string, r: Issue) => {
-        // origin chip only makes sense once segments exist (NOT-YET-BACKED)
-        const segment = issuesStore.segmentById(r.segmentId);
         return (
           <div className="flex items-center gap-2 min-w-0">
             <CriticalToggle
@@ -177,26 +176,6 @@ function IssuesList() {
               onRemoveMine={() => issuesStore.removeMine(r.id)}
               stopPropagation
             />
-            {issuesStore.segments.length > 0 && (
-              <Tooltip
-                title={
-                  segment
-                    ? t('Found in segment: {{name}}', { name: segment.name })
-                    : t('Found in full traffic')
-                }
-              >
-                <span
-                  className="inline-flex items-center shrink-0"
-                  style={{
-                    color: segment
-                      ? 'var(--color-main)'
-                      : 'var(--color-gray-medium)',
-                  }}
-                >
-                  {segment ? <Split size={13} /> : <Globe size={13} />}
-                </span>
-              </Tooltip>
-            )}
             <span className="truncate font-medium color-gray-darkest">
               {head}
             </span>
@@ -220,23 +199,56 @@ function IssuesList() {
       title: t('Tags'),
       dataIndex: 'journeyLabels',
       width: 260,
-      render: (labels: string[]) => {
-        if (!labels?.length) return null;
-        const shown = labels.slice(0, 2);
-        const rest = labels.length - shown.length;
+      render: (labels: string[], r: Issue) => {
+        // origin is a kind of tag, not an action (Gabriel 07-27): a segment find
+        // shows the fork icon in blue, a full-traffic find the globe in gray. The
+        // chip stays a normal tag (gray border/bg); only the icon carries meaning
+        // and it's not clickable. Pairs with the "Found in" segment filter.
+        const showOrigin =
+          Boolean(r.segmentId) || issuesStore.segments.length > 0;
+        const segName = issuesStore.segmentName(r.segmentId);
+        const tags = labels ?? [];
+        const shown = tags.slice(0, 2);
+        const rest = tags.length - shown.length;
+        if (!showOrigin && !tags.length) return null;
         return (
-          <Tooltip title={rest > 0 ? labels.join(' · ') : undefined}>
-            <div className="flex items-center gap-1.5 overflow-hidden">
-              {shown.map((t) => (
-                <TagChip key={t} label={t} />
-              ))}
-              {rest > 0 && (
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            {showOrigin && (
+              <Tooltip
+                placement="top"
+                title={
+                  r.segmentId
+                    ? t('Found in segment: {{name}}', {
+                        name: segName ?? r.segmentId,
+                      })
+                    : t('Found in full traffic')
+                }
+              >
+                <span
+                  className="rounded-md border border-gray-light bg-gray-lightest flex items-center justify-center shrink-0 cursor-default"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    color: r.segmentId
+                      ? 'var(--color-main)'
+                      : 'var(--color-gray-medium)',
+                  }}
+                >
+                  {r.segmentId ? <Split size={13} /> : <Globe size={13} />}
+                </span>
+              </Tooltip>
+            )}
+            {shown.map((tag) => (
+              <TagChip key={tag} label={tag} />
+            ))}
+            {rest > 0 && (
+              <Tooltip title={tags.join(' · ')} placement="top">
                 <span className="text-xs color-gray-medium shrink-0">
                   +{rest}
                 </span>
-              )}
-            </div>
-          </Tooltip>
+              </Tooltip>
+            )}
+          </div>
         );
       },
     },
@@ -379,7 +391,10 @@ function IssuesList() {
     (visibility === 'hidden' ? 1 : 0) +
     (issuesStore.relevantToMe ? 1 : 0);
 
-  const emptyText = !issuesStore.hasActiveFilters ? (
+  const emptyText = issuesStore.loading ? (
+    // suppress the empty state while the loader overlay is up
+    <span />
+  ) : !issuesStore.hasActiveFilters ? (
     t('No issues yet.')
   ) : (
     <div className="flex flex-col items-center gap-3 py-6">
@@ -430,7 +445,7 @@ function IssuesList() {
         onChange={(e) => issuesStore.setRelevantToMe(e.target.checked)}
       >
         {t('Critical to me')}
-        {issuesStore.relevantCount ? ` (${issuesStore.relevantCount})` : ''}
+        {issuesStore.relevantCount ? ` · ${issuesStore.relevantCount}` : ''}
       </Checkbox>
     </div>
   );
@@ -451,6 +466,9 @@ function IssuesList() {
                 <Info size={15} />
               </span>
             </Tooltip>
+            {/* capture control (Gabriel 07-13) — page-level, so it lives with
+                the title, NOT in the filter row */}
+            <SegmentsIndicator />
           </div>
           <div className="flex items-center gap-2">
             <a
@@ -490,26 +508,27 @@ function IssuesList() {
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* tags and segments are separate dropdowns (Gabriel 07-27): what
+                happened vs where it was captured, each scaling on its own */}
             <TagFilter
               allTags={issuesStore.allTags}
               labels={issuesStore.labels}
               match={issuesStore.match}
-              segments={issuesStore.visibleSegments.map((s) => ({
+              onToggle={issuesStore.toggleLabel}
+              onSetMatch={issuesStore.setMatch}
+              onClear={() => issuesStore.setLabels([])}
+              onCreateTag={issuesStore.addCustomTag}
+            />
+            <SegmentFilter
+              segments={issuesStore.originSegments.map((s) => ({
                 id: s.id,
                 name: s.name,
                 mine: s.mine,
               }))}
               origins={issuesStore.origins}
-              onToggle={issuesStore.toggleLabel}
               onToggleOrigin={issuesStore.toggleOrigin}
-              onSetMatch={issuesStore.setMatch}
-              onClear={() => {
-                issuesStore.setLabels([]);
-                issuesStore.clearOrigins();
-              }}
+              onClear={() => issuesStore.clearOrigins()}
             />
-
-            <SegmentsIndicator />
 
             <Popover
               open={dispOpen}
@@ -525,13 +544,17 @@ function IssuesList() {
               </Button>
             </Popover>
 
-            <SelectDateRange
-              isAnt
-              right
-              useButtonStyle
-              period={period}
-              onChange={onPeriodChange}
-            />
+            {/* outlined trigger to match Tags / Segments / Display (Gabriel
+                07-27) — the shared control renders as bare text otherwise */}
+            <span className="issues-date-range">
+              <SelectDateRange
+                isAnt
+                right
+                useButtonStyle
+                period={period}
+                onChange={onPeriodChange}
+              />
+            </span>
           </div>
         </div>
 

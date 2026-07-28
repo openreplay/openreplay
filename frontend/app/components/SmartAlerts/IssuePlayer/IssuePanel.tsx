@@ -3,6 +3,7 @@ import { Button, Tooltip } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { SegmentChip } from '../segments/SegmentScope';
 import {
   CategoryLabel,
   type CritState,
@@ -24,6 +25,7 @@ export default function IssuePanel({
   critState,
   onMarkCritical,
   onRemoveMineCritical,
+  segmentName,
 }: {
   issue: Issue;
   card?: IssueSessionCard;
@@ -31,6 +33,8 @@ export default function IssuePanel({
   critState: CritState;
   onMarkCritical: () => void;
   onRemoveMineCritical: () => void;
+  /** the segment that surfaced this issue, if any (one-line chip) */
+  segmentName?: string;
 }) {
   const { t } = useTranslation();
   return (
@@ -95,6 +99,14 @@ export default function IssuePanel({
             >
               {card.variation}
             </span>
+          </div>
+        )}
+
+        {/* segment that surfaced this issue — one line (Mehdi 07-27) */}
+        {segmentName && (
+          <div className="flex items-center gap-2 text-sm min-w-0">
+            <span className="color-gray-medium shrink-0">{t('Segments:')}</span>
+            <SegmentChip name={segmentName} />
           </div>
         )}
 

@@ -45,8 +45,10 @@ export interface SavedSegment {
   summary: string;
   sessionsCount: number;
   usersCount: number;
+  /** total sessions the segment has matched (windowless) */
+  totalSessionCount: number;
   updatedAt: number;
-  /** the agent is capturing/analysing this segment (NOT-YET-BACKED) */
+  /** the agent is capturing/analysing this segment (server `isCapture`) */
   active: boolean;
   instructions?: string;
   /** ~share of traffic this segment matches (NOT-YET-BACKED, 0 until estimated) */
@@ -124,8 +126,8 @@ export interface ListParams {
   hidden?: Visibility;
   /** filter to critical issues only */
   critical?: boolean;
-  /** filter to origins (full traffic + focus ids); NOT-YET-BACKED */
-  origins?: IssueOrigin[];
+  /** filter to specific traffic segments (saved-search ids); [] = full traffic */
+  segmentIds?: string[];
   /** filter to what's relevant to me (my criticals + my segments); NOT-YET-BACKED */
   relevantToMe?: boolean;
   minImpact?: number;
@@ -137,6 +139,8 @@ export interface SearchParams {
   query?: string | null;
   issueLabels?: string[];
   journeyLabels?: string[];
+  /** scope the sample to specific traffic segments (saved-search ids) */
+  segmentIds?: string[];
   sortBy?: SearchSortBy;
   sortDir?: SortDir;
   range?: [number, number];
@@ -185,8 +189,9 @@ export async function getIssues(
     query: params.query ?? '',
     // only include when filtering to criticals; omit means no critical filter
     ...(params.critical ? { critical: true } : {}),
-    // NOT-YET-BACKED filters — server ignores until implemented
-    ...(params.origins?.length ? { origins: params.origins } : {}),
+    // scope to specific traffic segments; omit/[] means full traffic
+    ...(params.segmentIds?.length ? { segmentIds: params.segmentIds } : {}),
+    // NOT-YET-BACKED filter — server ignores until implemented
     ...(params.relevantToMe ? { relevantToMe: true } : {}),
   });
   const json = await res.json();
@@ -250,6 +255,7 @@ export async function getIssueSessions(
     query: opts.query ?? null,
     issueLabels: opts.issueLabels ?? [],
     journeyLabels: opts.journeyLabels ?? [],
+    ...(opts.segmentIds?.length ? { segmentIds: opts.segmentIds } : {}),
     sortBy: opts.sortBy ?? 'time',
     sortDir: opts.sortDir ?? 'desc',
     range: opts.range ?? defaultRange(),
@@ -311,73 +317,54 @@ export const deleteIssue = (projectId: string, issueName: string) =>
   client.delete(base(projectId), { issue: issueName });
 
 /* ===========================================================================
-   NOT-YET-BACKED endpoints — the segment-capture layer + per-user "critical
-   for me". The routes don't exist server-side yet, so reads swallow errors and
-   resolve empty, and writes are best-effort no-ops. This keeps the UI wired to
-   the real client so shipping the backend needs no frontend change. See TODO.md.
-   =========================================================================== */
+   MOCKS — these routes DO NOT EXIST server-side.
 
-const silent = async <T>(p: Promise<Response>, empty: T): Promise<T> => {
-  try {
-    const res = await p;
-    const json = await res.json();
-    return (json.data ?? empty) as T;
-  } catch {
-    return empty;
-  }
-};
-const silentVoid = async (p: Promise<Response>): Promise<void> => {
-  try {
-    await p;
-  } catch {
-    /* endpoint not shipped yet — no-op */
-  }
-};
+   Never shipped: `/segment-capture` (project capture MODE + per-segment agent
+   INSTRUCTIONS) and `/my-criticals` (per-user "critical for me"). To avoid 404
+   network noise we DON'T call the client at all — each resolves a default /
+   no-op. The features work optimistically in-session via the store but DO NOT
+   persist across reload. Swap each body for a real `client.*` call once the
+   backend ships. See TODO.md § MOCKS.
 
-/** GET …/segment-capture — the project capture mode + which segments the agent
-    analyses (and their instructions). */
+   NB: the per-segment capture flag ("Identify issues in this segment") IS real
+   — it persists as `isCapture` on the saved search (see createSegment /
+   updateSegment). Only the capture MODE and INSTRUCTIONS here are unbacked, so
+   `active` is left empty (it's derived from each segment's `isCapture`). */
+
+/** MOCK (no endpoint): project capture mode + per-segment instructions. */
 export const getSegmentCapture = (
-  projectId: string,
+  _projectId: string,
 ): Promise<SegmentCaptureState> =>
-  silent<SegmentCaptureState>(
-    client.get(`${base(projectId)}/segment-capture`),
-    { mode: 'full', active: [], instructions: {} },
-  );
+  Promise.resolve({ mode: 'full', active: [], instructions: {} });
 
-/** PUT …/segment-capture — set the project capture mode. */
+/** MOCK (no endpoint): set the project capture mode. No-op. */
 export const setCaptureMode = (
-  projectId: string,
-  mode: CaptureMode,
-): Promise<void> =>
-  silentVoid(client.put(`${base(projectId)}/segment-capture`, { mode }));
+  _projectId: string,
+  _mode: CaptureMode,
+): Promise<void> => Promise.resolve();
 
-/** PUT …/segment-capture/{segmentId} — set a segment's capture flag and/or
-    the agent instructions for it. */
+/** MOCK (no endpoint): per-segment capture flag + instructions. No-op — the
+    capture flag persists via the saved search's `isCapture`; instructions have
+    no backing yet. */
 export const setSegmentCapture = (
-  projectId: string,
-  segmentId: string,
-  patch: { active?: boolean; instructions?: string },
-): Promise<void> =>
-  silentVoid(
-    client.put(`${base(projectId)}/segment-capture/${segmentId}`, patch),
-  );
+  _projectId: string,
+  _segmentId: string,
+  _patch: { active?: boolean; instructions?: string },
+): Promise<void> => Promise.resolve();
 
-/** GET …/my-criticals — issue names the current user marked critical for them. */
-export const getMyCriticals = (projectId: string): Promise<string[]> =>
-  silent<string[]>(client.get(`${base(projectId)}/my-criticals`), []);
+/** MOCK (no endpoint): issue names the user marked "critical for me". Empty —
+    the personal layer lives only in-session (store.mine). */
+export const getMyCriticals = (_projectId: string): Promise<string[]> =>
+  Promise.resolve([]);
 
+/** MOCK (no endpoint): mark "critical for me". No-op. */
 export const addMyCritical = (
-  projectId: string,
-  issueName: string,
-): Promise<void> =>
-  silentVoid(
-    client.post(`${base(projectId)}/my-criticals`, { issue: issueName }),
-  );
+  _projectId: string,
+  _issueName: string,
+): Promise<void> => Promise.resolve();
 
+/** MOCK (no endpoint): unmark "critical for me". No-op. */
 export const removeMyCritical = (
-  projectId: string,
-  issueName: string,
-): Promise<void> =>
-  silentVoid(
-    client.delete(`${base(projectId)}/my-criticals`, { issue: issueName }),
-  );
+  _projectId: string,
+  _issueName: string,
+): Promise<void> => Promise.resolve();
