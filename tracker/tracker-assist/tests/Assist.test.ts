@@ -6,6 +6,7 @@ jest.mock('fflate', () => ({ gzip: jest.fn(), }))
 
 import { connect } from 'socket.io-client'
 import Assist from '../src/Assist'
+import { RCStatus } from '../src/RemoteControl'
 
 const SS_CONFIRM_KEY = '__openreplay_session_confirm'
 
@@ -548,5 +549,393 @@ describe('Assist — requestConfirm popup flow (socket)', () => {
     // no control/recording confirm popups on top of the session confirm one
     expect(document.querySelectorAll('#openreplay-confirm-window-wrapper').length).toBe(1)
     expect(fakeSocket.emit).not.toHaveBeenCalledWith('recording_busy', expect.anything())
+  })
+})
+
+/** commit callback is gated on agentsConnected, so both announce events must work */
+describe('Assist — session reconnect with agents already watching', () => {
+  let assist: any
+  let app: any
+  let handlers: Record<string, (...args: any[]) => void>
+  let fakeSocket: any
+
+  const agentInfo = {
+    config: '', email: 'a@a', id: 1, name: 'Agent', peerId: 'p', query: '',
+  }
+  const withSocket = (socketId: string) => ({ ...agentInfo, socketId, })
+
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
+  const wrapper = () => document.getElementById('openreplay-confirm-window-wrapper')
+
+  const makeSocketApp = () => ({
+    ...makeApp(),
+    active: jest.fn(() => true),
+    getSessionID: jest.fn(() => 'session-1'),
+    getProjectKey: jest.fn(() => 'project-1'),
+    getTabId: jest.fn(() => 'tab-1'),
+    getSessionInfo: jest.fn(() => ({})),
+    getHost: jest.fn(() => 'app.local'),
+    socketMode: false,
+    stop: jest.fn(),
+    start: jest.fn(() => Promise.resolve()),
+    clearBuffers: jest.fn(),
+    // freeze the restart before it reaches timers/app.start
+    waitStatus: jest.fn(() => new Promise(() => {})),
+    allowAppStart: jest.fn(),
+    nodes: { attachNodeCallback: jest.fn(), getID: jest.fn(), getNode: jest.fn(), },
+    sanitizer: { isHidden: jest.fn(() => false), },
+  })
+
+  const startAssist = (options: Record<string, any> = {}) => {
+    assist = new Assist(app as any, options)
+    assist.onStart()
+    return assist
+  }
+
+  const commit = (messages: any[]) => {
+    const cb = (app.attachCommitCallback as any).mock.calls[0][0]
+    cb(messages)
+  }
+
+  beforeEach(() => {
+    sessionStorage.clear()
+    document.body.innerHTML = ''
+    app = makeSocketApp()
+    handlers = {}
+    fakeSocket = {
+      on: jest.fn((ev: string, cb: any) => { handlers[ev] = cb }),
+      onAny: jest.fn(),
+      emit: jest.fn(),
+      disconnect: jest.fn(),
+      connect: jest.fn(),
+    }
+    ;(connect as unknown as jest.Mock).mockReturnValue(fakeSocket)
+    jest
+      .spyOn(Assist.prototype as any, 'playNotificationSound')
+      .mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+    jest.restoreAllMocks()
+    jest.clearAllMocks()
+  })
+
+  test('nothing is sent while no agent is registered', () => {
+    startAssist()
+
+    commit([[1, 2,],])
+
+    expect(fakeSocket.emit).not.toHaveBeenCalledWith('messages', expect.anything())
+  })
+
+  test('AGENTS_INFO_CONNECTED registers agents, resends the snapshot and resumes sending', () => {
+    startAssist()
+
+    handlers.AGENTS_INFO_CONNECTED([withSocket('s-1'),])
+
+    expect(assist.agents['s-1'].agentInfo).toEqual(withSocket('s-1'))
+    expect(app.stop).toHaveBeenCalledWith(false)
+
+    commit([[1, 2,],])
+    expect(fakeSocket.emit).toHaveBeenCalledWith('messages', {
+      meta: { tabId: 'tab-1', },
+      data: [[1, 2,],],
+    })
+  })
+
+  test('AGENTS_CONNECTED alone is enough on servers that never send agent info', async () => {
+    startAssist()
+
+    handlers.AGENTS_CONNECTED(['s-1',])
+    await flush()
+
+    expect(Object.keys(assist.agents)).toEqual(['s-1',])
+    expect(app.stop).toHaveBeenCalledWith(false)
+
+    commit([[1, 2,],])
+    expect(fakeSocket.emit).toHaveBeenCalledWith('messages', {
+      meta: { tabId: 'tab-1', },
+      data: [[1, 2,],],
+    })
+  })
+
+  test('both events register each agent once and keep the richer payload', async () => {
+    const onAgentConnect = jest.fn()
+    startAssist({ onAgentConnect, })
+
+    handlers.AGENTS_CONNECTED(['s-1',])
+    handlers.AGENTS_INFO_CONNECTED([withSocket('s-1'),])
+    await flush()
+
+    expect(onAgentConnect).toHaveBeenCalledTimes(1)
+    expect(onAgentConnect).toHaveBeenCalledWith(withSocket('s-1'))
+    expect(assist.agents['s-1'].agentInfo).toEqual(withSocket('s-1'))
+    expect(app.stop).toHaveBeenCalledTimes(1)
+  })
+
+  test('AGENTS_CONNECTED does not re-announce an agent already known from NEW_AGENT', async () => {
+    const onAgentConnect = jest.fn()
+    startAssist({ onAgentConnect, })
+    handlers.NEW_AGENT('s-1', agentInfo)
+
+    handlers.AGENTS_CONNECTED(['s-1',])
+    await flush()
+
+    expect(onAgentConnect).toHaveBeenCalledTimes(1)
+    expect(app.stop).toHaveBeenCalledTimes(1)
+  })
+
+  test('an empty announcement does not restart tracking', async () => {
+    startAssist()
+
+    handlers.AGENTS_CONNECTED([])
+    handlers.AGENTS_INFO_CONNECTED([])
+    await flush()
+
+    expect(assist.agents).toEqual({})
+    expect(app.stop).not.toHaveBeenCalled()
+  })
+
+  test('agent info without a socketId is ignored', () => {
+    startAssist()
+
+    handlers.AGENTS_INFO_CONNECTED([agentInfo,])
+
+    expect(assist.agents).toEqual({})
+    expect(app.stop).not.toHaveBeenCalled()
+  })
+
+  test('a reconnect while unconfirmed prompts instead of restarting', async () => {
+    startAssist({ requestConfirm: true, })
+
+    handlers.AGENTS_CONNECTED(['s-1',])
+    await flush()
+
+    expect(wrapper()).not.toBe(null)
+    expect(app.stop).not.toHaveBeenCalled()
+    commit([[1, 2,],])
+    expect(fakeSocket.emit).not.toHaveBeenCalledWith('messages', expect.anything())
+  })
+})
+
+describe('Assist — socket refused by the server', () => {
+  let assist: any
+  let app: any
+  let handlers: Record<string, (...args: any[]) => void>
+  let fakeSocket: any
+
+  const makeSocketApp = () => ({
+    ...makeApp(),
+    active: jest.fn(() => true),
+    getSessionID: jest.fn(() => 'session-1'),
+    getProjectKey: jest.fn(() => 'project-1'),
+    getTabId: jest.fn(() => 'tab-1'),
+    getSessionInfo: jest.fn(() => ({})),
+    getHost: jest.fn(() => 'app.local'),
+    socketMode: false,
+    stop: jest.fn(),
+    start: jest.fn(() => Promise.resolve()),
+    clearBuffers: jest.fn(),
+    waitStatus: jest.fn(() => new Promise(() => {})),
+    allowAppStart: jest.fn(),
+    nodes: { attachNodeCallback: jest.fn(), getID: jest.fn(), getNode: jest.fn(), },
+    sanitizer: { isHidden: jest.fn(() => false), },
+  })
+
+  beforeEach(() => {
+    jest.useFakeTimers()
+    sessionStorage.clear()
+    document.body.innerHTML = ''
+    app = makeSocketApp()
+    handlers = {}
+    fakeSocket = {
+      on: jest.fn((ev: string, cb: any) => { handlers[ev] = cb }),
+      onAny: jest.fn(),
+      emit: jest.fn(),
+      disconnect: jest.fn(),
+      connect: jest.fn(),
+      connected: false,
+    }
+    ;(connect as unknown as jest.Mock).mockReturnValue(fakeSocket)
+    assist = new Assist(app as any, {})
+    assist.onStart()
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+    jest.restoreAllMocks()
+    jest.clearAllMocks()
+  })
+
+  test('SESSION_ALREADY_CONNECTED reconnects manually after a backoff', () => {
+    handlers.SESSION_ALREADY_CONNECTED()
+    expect(fakeSocket.connect).not.toHaveBeenCalled()
+
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(1)
+  })
+
+  // every retry emits `connect` before the refusal; budget must survive that
+  test('the retry backs off and eventually gives up', () => {
+    for (let i = 0; i < 8; i++) {
+      handlers.connect()
+      handlers.SESSION_ALREADY_CONNECTED()
+      jest.advanceTimersByTime(10000)
+    }
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(5)
+  })
+
+  test('a refused connection does not refill the retry budget', () => {
+    handlers.connect()
+    handlers.SESSION_ALREADY_CONNECTED()
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(1)
+
+    // refused again: still attempt 2, so 2s not 1s
+    handlers.connect()
+    handlers.SESSION_ALREADY_CONNECTED()
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(1)
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(2)
+  })
+
+  test('a connection that stays up refills the retry budget', () => {
+    handlers.connect()
+    handlers.SESSION_ALREADY_CONNECTED()
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(1)
+
+    // not refused, outlives the stability window
+    handlers.connect()
+    jest.advanceTimersByTime(10000)
+
+    handlers.SESSION_ALREADY_CONNECTED()
+    jest.advanceTimersByTime(1000) // back to the first delay
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(2)
+  })
+
+  test('a disconnect cancels a pending stability reset', () => {
+    handlers.connect()
+    handlers.SESSION_ALREADY_CONNECTED()
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(1)
+
+    // dropped before proving itself, budget stays spent
+    handlers.connect()
+    handlers.disconnect()
+    jest.advanceTimersByTime(10000)
+
+    handlers.connect()
+    handlers.SESSION_ALREADY_CONNECTED()
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(1)
+    jest.advanceTimersByTime(1000)
+    expect(fakeSocket.connect).toHaveBeenCalledTimes(2)
+  })
+
+  test('stop() cancels a pending reconnect', () => {
+    handlers.SESSION_ALREADY_CONNECTED()
+    assist.stop()
+
+    jest.advanceTimersByTime(10000)
+    expect(fakeSocket.connect).not.toHaveBeenCalled()
+  })
+})
+
+describe('Assist — teardown when the last agent leaves', () => {
+  let assist: any
+  let app: any
+  let handlers: Record<string, (...args: any[]) => void>
+  let fakeSocket: any
+
+  const agentInfo = {
+    config: '', email: 'a@a', id: 1, name: 'Agent', peerId: 'p', query: '',
+  }
+
+  const makeSocketApp = () => ({
+    ...makeApp(),
+    active: jest.fn(() => true),
+    getSessionID: jest.fn(() => 'session-1'),
+    getProjectKey: jest.fn(() => 'project-1'),
+    getTabId: jest.fn(() => 'tab-1'),
+    getSessionInfo: jest.fn(() => ({})),
+    getHost: jest.fn(() => 'app.local'),
+    socketMode: false,
+    stop: jest.fn(),
+    start: jest.fn(() => Promise.resolve()),
+    clearBuffers: jest.fn(),
+    waitStatus: jest.fn(() => new Promise(() => {})),
+    allowAppStart: jest.fn(),
+    nodes: { attachNodeCallback: jest.fn(), getID: jest.fn(), getNode: jest.fn(), },
+    sanitizer: { isHidden: jest.fn(() => false), },
+  })
+
+  beforeEach(() => {
+    sessionStorage.clear()
+    document.body.innerHTML = ''
+    app = makeSocketApp()
+    handlers = {}
+    fakeSocket = {
+      on: jest.fn((ev: string, cb: any) => { handlers[ev] = cb }),
+      onAny: jest.fn(),
+      emit: jest.fn(),
+      disconnect: jest.fn(),
+      connect: jest.fn(),
+    }
+    ;(connect as unknown as jest.Mock).mockReturnValue(fakeSocket)
+    assist = new Assist(app as any, {})
+    assist.onStart()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+    jest.clearAllMocks()
+  })
+
+  test('NO_AGENT releases remote control so the agent cursor does not stay on the page', () => {
+    const releaseSpy = jest.spyOn(assist.remoteControl, 'releaseControl')
+    handlers.NEW_AGENT('s-1', agentInfo)
+
+    handlers.NO_AGENT()
+
+    expect(releaseSpy).toHaveBeenCalled()
+    expect(assist.remoteControl.status).toBe(RCStatus.Disabled)
+    expect(assist.agents).toEqual({})
+  })
+
+  test('NO_AGENT runs the remote-control cleanup callback of the controlling agent', () => {
+    const onControlReleased = jest.fn()
+    handlers.NEW_AGENT('s-1', agentInfo)
+    assist.agents['s-1'].onControlReleased = onControlReleased
+    assist.remoteControl.agentID = 's-1'
+
+    handlers.NO_AGENT()
+
+    expect(onControlReleased).toHaveBeenCalledTimes(1)
+  })
+
+  test('releasing control of an agent that is already gone does not throw', () => {
+    handlers.NEW_AGENT('s-1', agentInfo)
+    assist.remoteControl.agentID = 's-1'
+
+    // NO_AGENT wipes the agents map before RemoteControl hands the id back
+    expect(() => handlers.NO_AGENT()).not.toThrow()
+    expect(fakeSocket.emit).toHaveBeenCalledWith('control_rejected', {
+      meta: { tabId: 'tab-1', },
+      data: 's-1',
+    })
+  })
+
+  test('a throwing app.stop does not wedge every later restart', () => {
+    app.stop.mockImplementationOnce(() => { throw new Error('boom') })
+
+    handlers.NEW_AGENT('s-1', agentInfo)
+    expect(assist.restartInProgress).toBe(false)
+    expect(assist.assistDemandedRestart).toBe(false)
+
+    handlers.NEW_AGENT('s-2', agentInfo)
+    expect(app.stop).toHaveBeenCalledTimes(2)
   })
 })

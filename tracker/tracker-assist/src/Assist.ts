@@ -150,6 +150,9 @@ export default class Assist {
   private callingState: CallingState = CallingState.False;
   private remoteControl: RemoteControl | null = null;
   private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private socketReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private socketStableTimeout: ReturnType<typeof setTimeout> | null = null;
+  private socketReconnectAttempts = 0;
   private agents: Record<string, Agent> = {};
   private config: RTCIceServer[] | undefined;
   private sessionConfirmed = false;
@@ -464,6 +467,75 @@ export default class Assist {
     this.sessionConfirmWindow = null;
   };
 
+  private static readonly MAX_SOCKET_RECONNECT_ATTEMPTS = 5;
+  private static readonly SOCKET_STABLE_MS = 10000;
+
+  /** `connect` alone proves nothing: the server refuses only after accepting */
+  private armSocketStableReset = () => {
+    this.clearSocketStableReset();
+    this.socketStableTimeout = setTimeout(() => {
+      this.socketStableTimeout = null;
+      this.socketReconnectAttempts = 0;
+    }, Assist.SOCKET_STABLE_MS);
+  };
+
+  private clearSocketStableReset = () => {
+    if (this.socketStableTimeout) {
+      clearTimeout(this.socketStableTimeout);
+      this.socketStableTimeout = null;
+    }
+  };
+
+  private scheduleSocketReconnect = () => {
+    if (
+      this.userStopped ||
+      this.socketReconnectAttempts >= Assist.MAX_SOCKET_RECONNECT_ATTEMPTS
+    ) {
+      this.app.debug.warn("Assist: giving up on reconnecting the socket");
+      return;
+    }
+    if (this.socketReconnectTimeout) {
+      clearTimeout(this.socketReconnectTimeout);
+    }
+    const delay = Math.min(1000 * 2 ** this.socketReconnectAttempts, 10000);
+    this.socketReconnectAttempts++;
+    this.socketReconnectTimeout = setTimeout(() => {
+      this.socketReconnectTimeout = null;
+      if (this.userStopped || !this.socket || this.socket.connected) {
+        return;
+      }
+      this.socket.connect();
+    }, delay);
+  };
+
+  /** socket reconnected with agents already watching: register, resend snapshot */
+  private registerConnectedAgents = (
+    connected: { socketId: string; agentInfo?: AgentInfo }[],
+  ) => {
+    if (connected.length === 0) {
+      return;
+    }
+    this.cleanCanvasConnections();
+    connected.forEach(({ socketId, agentInfo }) => {
+      const known = this.agents[socketId];
+      this.agents[socketId] = {
+        ...known,
+        agentInfo: agentInfo ?? known?.agentInfo,
+        onDisconnect: known
+          ? known.onDisconnect
+          : this.options.onAgentConnect?.(agentInfo),
+      };
+    });
+    if (!this.canSendMessages) {
+      // restart (and snapshot) happens on approval instead
+      this.requestSessionConfirm(connected[0].agentInfo);
+      return;
+    }
+    this.restartTracking(() =>
+      this.remoteControl?.reconnect(Object.keys(this.agents)),
+    );
+  };
+
   private restartInProgress = false;
   private pendingRestartCallbacks: (() => void)[] = [];
 
@@ -494,8 +566,16 @@ export default class Assist {
       return callbacks;
     };
     this.assistDemandedRestart = true;
-    this.app.stop(false);
-    this.app.clearBuffers();
+    try {
+      this.app.stop(false);
+      this.app.clearBuffers();
+    } catch (e) {
+      // a throwing stop must not leave restartInProgress set forever
+      this.assistDemandedRestart = false;
+      finish();
+      this.app.debug.error(e);
+      return;
+    }
     this.app.waitStatus(0).then(() => {
       this.app.allowAppStart();
       setTimeout(() => {
@@ -597,6 +677,21 @@ export default class Assist {
       app.debug.warn("Socket closed:", e);
     });
 
+    socket.on("connect", () => {
+      this.armSocketStableReset();
+    });
+
+    socket.on("disconnect", () => {
+      this.clearSocketStableReset();
+    });
+
+    // stale socket with our tabId still in the room (page reload); socket.io
+    // never auto-reconnects after a server-side disconnect
+    socket.on("SESSION_ALREADY_CONNECTED", () => {
+      this.clearSocketStableReset();
+      this.scheduleSocketReconnect();
+    });
+
     const onGrand = (id: string) => {
       if (!this.callUI) {
         this.callUI = new CallWindow(app.debug.error, this.options.callUITemplate, this.options.agentShortNames);
@@ -617,8 +712,12 @@ export default class Assist {
     };
     const onRelease = (id?: string | null, isDenied?: boolean) => {
       if (id) {
-        const cb = this.agents[id].onControlReleased;
-        delete this.agents[id].onControlReleased;
+        // agent may already be gone while RemoteControl still holds its id
+        const agent = this.agents[id];
+        const cb = agent?.onControlReleased;
+        if (agent) {
+          delete agent.onControlReleased;
+        }
         typeof cb === "function" && cb();
         this.emit("control_rejected", id);
       }
@@ -748,21 +847,27 @@ export default class Assist {
     });
 
     socket.on("AGENTS_INFO_CONNECTED", (agentsInfo: AgentInfo[]) => {
-      this.cleanCanvasConnections();
-      agentsInfo.forEach((agentInfo) => {
-        if (!agentInfo.socketId) return;
-        this.agents[agentInfo.socketId] = {
-          agentInfo,
-          onDisconnect: this.options.onAgentConnect?.(agentInfo),
-        };
-      });
-      if (!this.canSendMessages) {
-        this.requestSessionConfirm(agentsInfo[0]);
-        return;
-      }
-      this.restartTracking(() =>
-        this.remoteControl?.reconnect(Object.keys(this.agents)),
+      this.registerConnectedAgents(
+        (agentsInfo || [])
+          .filter((agentInfo) => agentInfo?.socketId)
+          .map((agentInfo) => ({
+            socketId: agentInfo.socketId as string,
+            agentInfo,
+          })),
       );
+    });
+
+    // servers without AGENTS_INFO_CONNECTED send socket ids only; deferred a
+    // tick so the richer event wins where both are sent
+    socket.on("AGENTS_CONNECTED", (ids: string[]) => {
+      const announced = ids || [];
+      setTimeout(() => {
+        const unknown = announced.filter((id) => id && !this.agents[id]);
+        if (unknown.length === 0) return;
+        this.registerConnectedAgents(
+          unknown.map((socketId) => ({ socketId })),
+        );
+      }, 0);
     });
 
     socket.on("AGENT_DISCONNECTED", (id) => {
@@ -783,10 +888,15 @@ export default class Assist {
     });
 
     socket.on("NO_AGENT", () => {
+      // before the agents wipe: onRelease needs the agent to run its callback
+      this.remoteControl?.releaseControl();
       Object.values(this.agents).forEach((a) => a.onDisconnect?.());
       this.cleanCanvasConnections();
       this.agents = {};
       if (recordingState.isActive) recordingState.stopRecording();
+      if (this.callingState !== CallingState.False || this.calls.size > 0) {
+        handleCallEnd();
+      }
       this.closeSessionConfirmWindow();
     });
 
@@ -1261,6 +1371,11 @@ export default class Assist {
       clearTimeout(this.peerReconnectTimeout);
       this.peerReconnectTimeout = null;
     }
+    if (this.socketReconnectTimeout) {
+      clearTimeout(this.socketReconnectTimeout);
+      this.socketReconnectTimeout = null;
+    }
+    this.clearSocketStableReset();
     this.cleanCanvasConnections();
     this.calls.forEach((pc) => pc.close());
     this.calls.clear();

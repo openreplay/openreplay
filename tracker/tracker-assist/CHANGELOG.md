@@ -1,3 +1,7 @@
+## 11.0.20
+
+- fixes towards stability of connection on restarts, page visits etc
+
 ## 11.0.19
 
 - add an option to require user permission to view assist session
