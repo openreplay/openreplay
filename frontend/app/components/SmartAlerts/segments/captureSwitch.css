@@ -21,7 +21,8 @@
 
 .capture-pill {
   border-color: var(--color-gray-light);
-  background: #fff;
+  /* themed token so the pill follows dark mode (.dark remaps --color-white) */
+  background: var(--color-white);
   transition: border-color 0.15s ease;
 }
 .capture-pill:hover,
@@ -45,11 +46,12 @@
   display: block;
 }
 
-/* Darken the resting/hover track so the white 10px icon stays readable. Extra
-   :not() classes lift specificity above antd's runtime-injected rules. */
+/* Resting/hover track uses a themed mid-gray so the white 10px icon stays
+   readable in both light and dark. Extra :not() classes lift specificity above
+   antd's runtime-injected rules. */
 .ant-switch.capture-switch:not(.ant-switch-checked) {
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--color-gray-medium);
 }
 .ant-switch.capture-switch:not(.ant-switch-checked):not(.ant-switch-disabled):hover {
-  background: rgba(0, 0, 0, 0.57);
+  background: var(--color-gray-dark);
 }

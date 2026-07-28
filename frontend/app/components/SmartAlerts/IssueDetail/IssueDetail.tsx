@@ -1,6 +1,6 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
-import { AutoComplete, Button, Input, Tooltip, Typography } from 'antd';
+import { AutoComplete, Button, Input, Tooltip } from 'antd';
 import {
   ArrowLeft,
   ExternalLink,
@@ -17,6 +17,11 @@ import { useStore } from 'App/mstore';
 import { useHistory, useParams } from 'App/routing';
 import { smartIssueSession, smartIssues, withSiteId } from 'App/saasComponents';
 
+import {
+  FoundInChips,
+  SegmentScopeFilter,
+  syncScopeToUrl,
+} from '../segments/SegmentScope';
 import {
   HideIssueModal,
   type IssueSessionCard,
@@ -46,15 +51,25 @@ function IssueDetail() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [visibleCount, setVisibleCount] = React.useState(SHOWN_LIMIT);
 
+  // segment scope for the example-sessions sample, mirrored to ?seg=
+  const scopeKey = issuesStore.detailScope.join(',');
+
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
   React.useEffect(() => {
     if (name) void issuesStore.loadIssue(name);
   }, [name]);
+  // hydrate scope from the URL on entry; clear it when leaving the issue so it
+  // never leaks into the next one
+  React.useEffect(() => {
+    const seg = new URLSearchParams(window.location.search).get('seg');
+    issuesStore.setDetailScope(seg ? seg.split(',').filter(Boolean) : []);
+    return () => issuesStore.clearDetailScope();
+  }, [name]);
   React.useEffect(() => {
     if (issue) void issuesStore.loadSessions(issue.id, searchQuery);
-  }, [issue?.id, searchQuery]);
+  }, [issue?.id, searchQuery, scopeKey]);
 
   // canned journey phrases filtered by the typed text, matching part bolded.
   // NB: this hook must stay above the early `!issue` return — moving it below
@@ -133,7 +148,7 @@ function IssueDetail() {
       options={suggestions}
       onSelect={runSearch}
       listHeight={160}
-      style={{ width: 360 }}
+      style={{ width: '100%' }}
     >
       <Input.Search
         allowClear
@@ -208,21 +223,33 @@ function IssueDetail() {
             </>
           }
         />
+        {(issue.segmentId != null || issuesStore.segments.length > 0) && (
+          <div className="px-4 pb-4 -mt-1">
+            <FoundInChips issue={issue} />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <span className="text-base font-semibold color-gray-darkest">
-              {t('Example sessions')}
-            </span>
-            <Tooltip
-              title={t(
-                'A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.',
-              )}
-            >
-              <Info size={15} className="color-gray-medium" />
-            </Tooltip>
+        {/* the toolbar shares the cards' 3-column grid, so the search sits on
+            the third column and grows with the viewport, ending flush with the
+            cards below (Mehdi 07-27) */}
+        <div className="grid items-center gap-x-4 gap-y-2 md:grid-cols-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap md:col-span-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-semibold color-gray-darkest">
+                {t('Example sessions')}
+              </span>
+              <Tooltip
+                title={t(
+                  'A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.',
+                )}
+              >
+                <Info size={15} className="color-gray-medium" />
+              </Tooltip>
+            </div>
+            {/* sessions-only scope (Gabriel 07-21): headline stats stay global */}
+            <SegmentScopeFilter />
           </div>
           {search}
         </div>
@@ -242,10 +269,27 @@ function IssueDetail() {
             </span>
           </div>
         ) : shown.length === 0 ? (
-          <div className="p-6 text-center rounded-lg border bg-white text-sm color-gray-medium">
-            {searchQuery
-              ? t('No sessions match this search.')
-              : t('No example sessions.')}
+          <div className="p-6 text-center rounded-lg border bg-white text-sm color-gray-medium flex flex-col items-center gap-2">
+            {issuesStore.detailScope.length > 0 ? (
+              <>
+                <span>
+                  {t('No sampled sessions match the selected segments.')}
+                </span>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    issuesStore.clearDetailScope();
+                    syncScopeToUrl([]);
+                  }}
+                >
+                  {t('Clear segment filter')}
+                </Button>
+              </>
+            ) : searchQuery ? (
+              t('No sessions match this search.')
+            ) : (
+              t('No example sessions.')
+            )}
           </div>
         ) : (
           <>
@@ -258,17 +302,32 @@ function IssueDetail() {
                 />
               ))}
             </div>
-            {/* footer: quiet sample total left, Load more truly centered */}
-            <div className="grid grid-cols-3 items-center min-h-8">
-              <Typography.Text type="secondary" className="text-sm">
-                {t('Sample of {{total}} matching sessions', { total })}
-              </Typography.Text>
-              <div className="flex justify-center">
-                {canLoadMore && (
-                  <Button onClick={loadMore}>{t('Load more examples')}</Button>
+            {/* footer in the Spots grammar: count left, quiet show-more right
+                (examples are a SAMPLE, not pages) */}
+            <div className="flex items-center justify-between px-4 py-3 shadow-xs w-full bg-white rounded-lg">
+              <span className="text-sm color-gray-dark">
+                {t('Showing')}{' '}
+                <span className="font-medium">{shown.length}</span>{' '}
+                {shown.length === 1 ? t('example') : t('examples')} {t('of')}{' '}
+                <span className="font-medium">{total.toLocaleString()}</span>{' '}
+                {t('sessions')}
+                {issuesStore.detailScope.length > 0 && (
+                  <>
+                    {' · '}
+                    {t('shown for {{names}}', {
+                      names: issuesStore.detailScope
+                        .map((id) => issuesStore.segmentById(id)?.name)
+                        .filter(Boolean)
+                        .join(', '),
+                    })}
+                  </>
                 )}
-              </div>
-              <span />
+              </span>
+              {canLoadMore && (
+                <Button size="small" onClick={loadMore}>
+                  {t('Load more')}
+                </Button>
+              )}
             </div>
           </>
         )}

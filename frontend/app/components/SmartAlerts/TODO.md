@@ -30,18 +30,15 @@ Now **provided** by the contract (previously stubbed): real `critical` flag,
 
 ## 2. Filter-semantics caveats (server-side)
 
-The API exposes a **single** `labelsMatch` that applies to *both* the issue-label
-and journey-label filters, and there is **no dedicated critical-only param**:
-
-- **Category tab** → sent as `issueLabels` (single category).
-- **Critical only** → appends the `'critical'` pseudo-label to `issueLabels`.
-  This matches issues *labelled* critical; issues made critical purely via the
-  `critical` override (no label) may be missed. Confirm the server includes
-  override-critical issues in `issueLabels:['critical']`, or add a real
-  `critical` filter param.
-- **Journey labels** → `journeyLabels` with `labelsMatch = AND/OR` (the match
-  toggle). Because `labelsMatch` is shared, mixing an OR journey-label filter
-  with category+critical isn't perfectly expressible — acceptable for beta.
+- **Category tab** → sent as `issueLabels` (single category), `issueLabelsMatch: 'and'`.
+- **Critical only** → dedicated `critical: true` request flag (real param), not a
+  label. Covers override-critical issues too.
+- **Journey labels** → `journeyLabels` with `journeyLabelsMatch = AND/OR` (the
+  match toggle) — separate from `issueLabelsMatch`.
+- **Segments ("Found in")** → real `segmentIds: string[]` on the list (and on
+  `/search` for the detail example-sessions scope). `[]` / omitted = full traffic.
+- **`relevantToMe`** (Critical-to-me checkbox) is still sent but **server-ignored**
+  — see § MOCKS (personal criticals aren't backed).
 - **Category tabs have no counts.** A list load is a **single** request; the
   faded per-tab counts were removed because they'd need one `limit:1` query per
   category (a 4-request fan-out per filter change). To bring them back cheaply,
@@ -54,17 +51,28 @@ and journey-label filters, and there is **no dedicated critical-only param**:
 
 ---
 
-## NOT-YET-BACKED — designer features shipped ahead of the backend
+## MOCKS — routes that DO NOT EXIST server-side
 
-The UI is fully built and wired to the **real `client`**, but the endpoints
-below don't exist yet. Reads swallow errors and resolve empty; writes are
-best-effort no-ops (`silent`/`silentVoid` in `api.ts`). So the features render
-and behave locally (optimistic), just don't persist — shipping the backend needs
-**no frontend change**. Grep:
+The UI is fully built, but two route groups were **never shipped** and are
+**mocked in `api.ts`** — they do NOT call the network (no 404s), they resolve a
+default / no-op. Features behave optimistically in-session via the store but
+**do not persist across reload**. Swap each mock body for a real `client.*`
+call when the backend ships — no other frontend change needed. Grep:
 
 ```
-grep -rn "NOT-YET-BACKED" app/components/SmartAlerts app/mstore/issuesStore.ts
+grep -rn "MOCK (no endpoint)" app/components/SmartAlerts/api.ts
+grep -rn "NOT-YET-BACKED"     app/components/SmartAlerts app/mstore/issuesStore.ts
 ```
+
+| Route (does not exist) | Mock in `api.ts` | Effect |
+|---|---|---|
+| `GET/POST/DELETE …/my-criticals` | `getMyCriticals`→`[]`, `addMyCritical`/`removeMyCritical`→no-op | "critical for me" (store `mine`) resets on reload |
+| `GET/PUT …/segment-capture`, `PUT …/segment-capture/{id}` | `getSegmentCapture`→`{mode:'full',…}`, `setCaptureMode`/`setSegmentCapture`→no-op | capture **mode** (full/segments) + per-segment **instructions** reset on reload |
+
+**Real, not mocked** (don't confuse with the above): the per-segment capture
+flag "Identify issues in this segment" persists as **`isCapture`** on the saved
+search (`createSegment`/`updateSegment`), and `segmentIds` filtering on the list
++ `/search`. Only capture *mode*, *instructions* and *my-criticals* are unbacked.
 
 ### Per-user "critical for me" (three-state critical)
 - Triangle is three-state: **none → project (agent) → mine**. Clicking cycles
@@ -72,9 +80,10 @@ grep -rn "NOT-YET-BACKED" app/components/SmartAlerts app/mstore/issuesStore.ts
   Removing the project-wide flag (with a teaching reason) lives in the list row
   ellipsis + the detail chip.
 - Store: `mine: string[]`, `critState()`, `agentCritical()`, `isRelevant()`,
-  `relevantCount`. Hydrated by `getMyCriticals` (stub → `[]`).
-- Endpoints needed: `GET …/my-criticals` → `string[]` (issue names);
-  `POST …/my-criticals {issue}`; `DELETE …/my-criticals {issue}`.
+  `relevantCount`. Hydrated by `getMyCriticals` — **MOCK → `[]`** (no endpoint),
+  so `mine` is in-session only.
+- Endpoints needed (DO NOT EXIST): `GET …/my-criticals` → `string[]` (issue
+  names); `POST …/my-criticals {issue}`; `DELETE …/my-criticals {issue}`.
 - "Critical to me" Display checkbox → `relevantToMe` list param (server ignores
   it for now, so the filter is inert until backed).
 
@@ -82,7 +91,8 @@ grep -rn "NOT-YET-BACKED" app/components/SmartAlerts app/mstore/issuesStore.ts
 The old per-Issues "Focus" concept is gone: a segment is now a **Data
 Management saved search** (`/sessions/search/saved`) with an agent-capture
 layer on top, shared by the Issues pill and the DM Segments list. The saved
-search itself is real; only the capture layer is stubbed.
+search itself is real, and the per-segment capture flag persists as `isCapture`
+on it; only the capture **mode** + per-segment **instructions** are MOCK.
 
 - UI: `segments/SegmentsIndicator` (the Issues title pill — capture-mode switch
   + manage/picker popover), `segments/SegmentDrawer` (shared create/edit
@@ -94,18 +104,22 @@ search itself is real; only the capture layer is stubbed.
   with the capture layer), `captureMode`, `origins`, `segmentById`,
   `visibleSegments`, `capturingSegments`, `activeSegmentCount`, `setCaptureMode`,
   `enableCapture`, `toggleSegment`, `saveSegment`, `deleteSegment`. The list is
-  real (`fetchSegments` in DataManagement/Segments/api); the capture layer is
-  hydrated by `getSegmentCapture` (stub → empty), so capture is dormant until
-  the backend ships.
+  real (`fetchSegments` in DataManagement/Segments/api). Per-segment capture
+  persists via `isCapture` (real). `getSegmentCapture` is **MOCK → empty**, so
+  capture **mode** + **instructions** are in-session only.
 
-Endpoints needed (under `/v2/smart-issues/{projectId}`, keyed by saved-search id):
-- `GET …/segment-capture` → `{ mode: 'full'|'segments', active: string[]
-  (segment ids the agent captures), instructions: Record<segmentId, string> }`.
+Endpoints needed — capture MODE + INSTRUCTIONS (these routes DO NOT EXIST; mocked
+in `api.ts`, keyed by saved-search id):
+- `GET …/segment-capture` → `{ mode: 'full'|'segments', instructions:
+  Record<segmentId, string> }` (per-segment `active` is redundant — read it from
+  each saved search's `isCapture`).
 - `PUT …/segment-capture` `{ mode }` — set the project capture mode.
-- `PUT …/segment-capture/{segmentId}` `{ active?, instructions? }` — per-segment
-  capture flag + agent instructions.
-- The issue list request should honour `origins` (full-traffic + segment ids),
-  and issues should carry `segmentId` (which segment surfaced them).
+- `PUT …/segment-capture/{segmentId}` `{ instructions? }` — per-segment agent
+  instructions.
+
+Real, already wired: issues carry `segmentId` (surfacing segment); the list +
+`/search` honour `segmentIds`; per-segment capture flag is `isCapture` on the
+saved search.
 
 Also required on the segment (saved-search) side:
 - **Traffic estimate** — `trafficPct` / `sessionsPerDay` per segment. Both are
@@ -119,5 +133,6 @@ Also required on the segment (saved-search) side:
 ### Notes
 - "Critical to me" count = `mine.length` (personal criticals only); segment
   finds aren't included until `segmentId`/capture are backed.
-- Capture toggles, capture mode and instructions persist via stubs (no-ops), so
+- Capture mode + instructions persist via MOCK no-ops (capture flag itself is
+  real via `isCapture`), so
   they're optimistic and revert on reload until the endpoints ship.

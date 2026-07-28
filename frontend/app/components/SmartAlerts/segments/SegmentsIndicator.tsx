@@ -459,7 +459,11 @@ function SegmentsIndicator() {
                 onChange={onSwitch}
               />
             </span>
-            <span className="text-sm color-gray-darkest">
+            {/* text-base, NOT text-sm: reset.css sets the html root to 14px, so
+                text-sm ≈ 12.25px while the antd filter controls next to the pill
+                render at the 14px token — text-base (1rem = 14px) matches them
+                (Gabriel 07-27) */}
+            <span className="text-base color-gray-darkest">
               {t('Traffic segments')}
               {segmentsMode && (
                 <span className="color-gray-dark">

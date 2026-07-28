@@ -287,6 +287,7 @@ function IssuePlayer() {
                 critState={critState}
                 onMarkCritical={onMarkCritical}
                 onRemoveMineCritical={onRemoveMineCritical}
+                segmentName={issuesStore.segmentName(issue.segmentId)}
               />
             )}
           </div>

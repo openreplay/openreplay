@@ -47,7 +47,7 @@ import {
   type MatchMode,
   type SortMode,
 } from 'App/components/SmartAlerts/shared/model';
-import { userStore } from 'App/mstore';
+import { filterStore, userStore } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
 /* Store behind the AI Issues surface. Issues + example sessions come from the
@@ -121,8 +121,10 @@ function toSavedSegment(
     summary: summarize(s.filters),
     sessionsCount: s.sessionsCount,
     usersCount: s.usersCount,
+    totalSessionCount: s.totalSessionCount,
     updatedAt: s.updatedAt,
-    active: capture.active.includes(s.id),
+    // real server flag; fall back to the capture stub until it's everywhere
+    active: s.isCapture || capture.active.includes(s.id),
     instructions: capture.instructions[s.id],
     trafficPct: 0 /* NOT-YET-BACKED: backend estimates the traffic share */,
     sessionsPerDay: 0 /* NOT-YET-BACKED */,
@@ -171,6 +173,10 @@ export default class IssuesStore {
   /* baseline count with no filters, for the empty-state "reset to show N" hint.
      lazy: fetched only when an empty filtered list is shown. */
   unfilteredTotal: number | null = null;
+
+  /* detail page: segment ids scoping the example-sessions sample (SESSIONS
+     ONLY — headline stats stay global). Mirrored to ?seg= by the view. */
+  detailScope: string[] = [];
 
   // ---- vocabulary / lookups ----
   labelsAll: { issueLabels: string[]; journeyLabels: string[] } = {
@@ -248,6 +254,7 @@ export default class IssuesStore {
     this.sessions = {};
     this.sessionsTotal = {};
     this.sessionsLoading = {};
+    this.detailScope = [];
   };
 
   fetchIssues = async () => {
@@ -268,8 +275,9 @@ export default class IssuesStore {
         hidden: this.visibility,
         // "Critical only" is a dedicated request flag, not a label filter
         critical: this.critOnly,
+        // scope to chosen segments (origins minus the "full traffic" sentinel)
+        segmentIds: this.segmentIds,
         // NOT-YET-BACKED — server ignores until implemented
-        origins: this.origins,
         relevantToMe: this.relevantToMe,
         minImpact: this.minImpact,
         query: this.query.trim(),
@@ -442,9 +450,28 @@ export default class IssuesStore {
     return Boolean(this.issueLoading[name]);
   }
 
+  // ---- detail example-sessions segment scope (sessions only) ----
+  setDetailScope = (ids: string[]) => {
+    this.detailScope = ids;
+  };
+  toggleDetailScope = (id: string) => {
+    this.detailScope = this.detailScope.includes(id)
+      ? this.detailScope.filter((x) => x !== id)
+      : [...this.detailScope, id];
+  };
+  clearDetailScope = () => {
+    this.detailScope = [];
+  };
+
   // ---- example sessions ----
-  private sessKey = (id: string, query = '') =>
-    query.trim() ? `${id} ${query.trim()}` : id;
+  // key by issue + query + the active detail segment scope, so a scoped view
+  // caches separately and refetches when the scope changes
+  private sessKey = (id: string, query = '') => {
+    const scope = this.detailScope.length
+      ? ` #${[...this.detailScope].sort().join(',')}`
+      : '';
+    return `${query.trim() ? `${id} ${query.trim()}` : id}${scope}`;
+  };
 
   loadSessions = async (id: string, query = '') => {
     const key = this.sessKey(id, query);
@@ -454,6 +481,8 @@ export default class IssuesStore {
       const { rows, total } = await getIssueSessions(this.projectId, id, {
         query: query.trim() || null,
         range: this.range ?? undefined,
+        // scope the sample to the chosen segments (search supports segmentIds)
+        segmentIds: this.detailScope,
       });
       runInAction(() => {
         this.sessions[key] = rows.map(makeIssueSessionCard);
@@ -535,13 +564,34 @@ export default class IssuesStore {
   };
 
   // ---- segments + capture ----
+  /** segment ids to scope the list to (origins minus the full-traffic sentinel) */
+  get segmentIds(): string[] {
+    return this.origins.filter((o) => o !== 'full');
+  }
   segmentById(id?: string): SavedSegment | undefined {
     return id == null ? undefined : this.segments.find((s) => s.id === id);
+  }
+  /** Segment display name — prefer the globally-loaded filter vocabulary (saved
+      searches carry `searchId` + name), fall back to the loaded segment list. */
+  segmentName(searchId?: string): string | undefined {
+    if (!searchId) return undefined;
+    // segment filters carry searchId at runtime; the Filter type doesn't list it
+    const f = filterStore.findEvent({ searchId } as any);
+    return f?.name || this.segmentById(searchId)?.name;
   }
   /** segments I can see: mine or team-visible (teammates' private ones hidden) */
   get visibleSegments(): SavedSegment[] {
     return this.segments.filter((s) => s.mine || s.isPublic);
   }
+  /** segments offered as "Found in" origins in the list filter */
+  get originSegments(): SavedSegment[] {
+    return this.visibleSegments;
+  }
+  /** Create a customer-defined journey tag (name + NL description the agent
+      matches). NOT-YET-BACKED — no write endpoint yet; kept wired as a no-op. */
+  addCustomTag = (_name: string, _description: string) => {
+    /* NOT-YET-BACKED: POST a custom journey-label definition */
+  };
   /** segments the agent is currently capturing */
   get capturingSegments(): SavedSegment[] {
     return this.segments.filter((s) => s.active);
@@ -571,13 +621,28 @@ export default class IssuesStore {
     if (this.projectId) void apiSetCaptureMode(this.projectId, mode);
   };
 
+  /* Persist a segment's capture flag — the saved search's real `isCapture`
+     ("Identify issues in this segment"), with a best-effort mirror to the
+     NOT-YET-BACKED capture endpoint. */
+  private persistCapture = (id: string, on: boolean) => {
+    if (!this.projectId) return;
+    const seg = this.segmentById(id);
+    if (seg)
+      void updateSegment(id, {
+        name: seg.name,
+        isPublic: seg.isPublic,
+        filters: seg.filters,
+        isCapture: on && seg.isPublic,
+      }).catch((e) => console.error('Failed to persist capture', e));
+    void setSegmentCapture(this.projectId, id, { active: on });
+  };
+
   /** turn a segment's capture on (anyone can — it's the shared capture set). */
   enableCapture = (id: string) => {
     this.segments = this.segments.map((s) =>
       s.id === id ? { ...s, active: true } : s,
     );
-    if (this.projectId)
-      void setSegmentCapture(this.projectId, id, { active: true });
+    this.persistCapture(id, true);
   };
 
   /** toggle a segment's capture; returns true when turning the last one off
@@ -586,8 +651,7 @@ export default class IssuesStore {
     this.segments = this.segments.map((s) =>
       s.id === id ? { ...s, active: on } : s,
     );
-    if (this.projectId)
-      void setSegmentCapture(this.projectId, id, { active: on });
+    this.persistCapture(id, on);
     if (
       !on &&
       this.captureMode === 'segments' &&
@@ -611,10 +675,15 @@ export default class IssuesStore {
     instructions?: string;
   }): Promise<boolean> => {
     if (!this.projectId) return false;
+    // private segments can't capture — eligibility follows visibility. The
+    // capture flag is the saved search's real `isCapture` prop ("Identify
+    // issues in this segment").
+    const capture = input.active && input.isPublic;
     const payload = {
       name: input.name,
       isPublic: input.isPublic,
       filters: input.filters,
+      isCapture: capture,
     };
     let saved: Segment;
     try {
@@ -625,9 +694,10 @@ export default class IssuesStore {
       console.error('Failed to save segment', e);
       return false;
     }
-    // private segments can't capture — eligibility follows visibility
+    // best-effort: mirror capture + per-segment instructions to the (still
+    // NOT-YET-BACKED) capture endpoint until it's the single source of truth
     await setSegmentCapture(this.projectId, saved.id, {
-      active: input.active && input.isPublic,
+      active: capture,
       instructions: input.instructions ?? '',
     });
     await this.fetchSegments();

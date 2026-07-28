@@ -1,0 +1,18 @@
+/* Consistent date-range trigger (Gabriel 07-27): the shared SelectDateRange
+   renders its trigger as a bare text button, which reads as a different species
+   next to the outlined Tags / Segments / Display controls. Force the outlined
+   look here so the whole filter bar matches. Themed tokens keep it dark-safe. */
+.issues-date-range .btn-card-period-range,
+.issues-date-range .btn-card-period-range:hover,
+.issues-date-range .btn-card-period-range:focus,
+.issues-date-range .btn-card-period-range:focus-visible {
+  background: var(--color-white) !important;
+  border: 1px solid var(--color-gray-light) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016) !important;
+  color: var(--color-gray-darkest) !important;
+}
+.issues-date-range .btn-card-period-range:hover {
+  border-color: var(--color-main) !important;
+  color: var(--color-main) !important;
+}
