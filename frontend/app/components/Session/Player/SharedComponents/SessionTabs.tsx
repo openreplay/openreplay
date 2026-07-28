@@ -46,7 +46,7 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
   const { showModal, hideModal } = useModal();
   const { player, store } = React.useContext(PlayerContext);
   const {
-    tabs = new Set('back-compat'),
+    tabs = new Set(['back-compat']),
     currentTab,
     closedTabs,
     tabNames,
@@ -60,14 +60,13 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
   const shouldTruncate = tabsArr.length > DISPLAY_LIMIT;
   const actualTabs = shouldTruncate ? tabsArr.slice(0, DISPLAY_LIMIT) : tabsArr;
 
+  // currentTab is briefly unknown while assist re-adopts a reconnected session;
+  // appending it then would render a tab at index -1 ("Tab 0")
+  const currentTabIdx = tabsArr.findIndex((el) => el.tab === currentTab);
   const shownTabs =
-    actualTabs.findIndex((el) => el.tab === currentTab) !== -1
+    currentTabIdx === -1 || actualTabs.some((el) => el.tab === currentTab)
       ? actualTabs
-      : actualTabs.concat({
-          tab: currentTab,
-          isClosed: false,
-          idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
-        });
+      : actualTabs.concat(tabsArr[currentTabIdx]);
   const changeTab = (tab: string) => {
     if (isLive) return;
     player.changeTab(tab);
