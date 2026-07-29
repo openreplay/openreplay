@@ -259,6 +259,7 @@ export default class TabSessionManager {
             [tarball, mp4file, framesFile],
             this.getNode as (id: number) => VElement | undefined,
             this.sessionStart,
+            !this.screen.scriptingEnabled,
           );
           this.canvasManagers[managerId] = {
             manager,

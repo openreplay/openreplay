@@ -24,6 +24,7 @@ import {
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
 import {
+  REPLAY_CSP,
   REPLAY_IFRAME_SANDBOX,
   isForbiddenTag,
   sanitizeAttribute,
@@ -318,7 +319,11 @@ export default class DOMManager extends ListWalker<Message> {
           return;
         }
         doc.open();
-        doc.write('<!DOCTYPE html><html></html>');
+        // we write it here since otherwise it will be destroyyed on VDOM update
+        doc.write(
+          '<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" ' +
+            `content="${REPLAY_CSP}"></head></html>`,
+        );
         doc.close();
         const fRoot = doc.documentElement;
         fRoot.innerText = '';
