@@ -244,12 +244,15 @@ export function SegmentFilter({
   origins,
   onToggleOrigin,
   onClear,
+  showFullTraffic = true,
 }: {
   /** `mine` powers the aggregate "My segments" row */
   segments: { id: string; name: string; mine?: boolean }[];
   origins: IssueOrigin[];
   onToggleOrigin: (o: IssueOrigin) => void;
   onClear: () => void;
+  /** the issue page scopes sessions to segments only — no "Full traffic" row */
+  showFullTraffic?: boolean;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -263,7 +266,7 @@ export function SegmentFilter({
     : segments;
   const rest = ql ? shown : shown.slice(0, SEG_CAP);
   const hidden = shown.length - rest.length;
-  const showFull = !ql || 'full traffic'.includes(ql);
+  const showFull = showFullTraffic && (!ql || 'full traffic'.includes(ql));
   const myIds = segments.filter((s) => s.mine).map((s) => s.id);
   const mineOn = myIds.length > 0 && myIds.every((id) => origins.includes(id));
   const showMine = myIds.length > 0 && (!ql || 'my segments'.includes(ql));

@@ -1,5 +1,5 @@
 import { PlayCircleOutlined } from '@ant-design/icons';
-import { Popover } from 'antd';
+import { Popover, Tooltip } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,20 +9,103 @@ import { capitalize } from 'App/utils';
 import SessionInfoItem from 'Components/Session_/SessionInfoItem';
 import { CountryFlag } from 'UI';
 
-import { type IssueSessionCard, TagChip } from '../shared';
+import { type IssueSessionCard } from '../shared';
+import TagsRow from './TagsRow';
+
+const LINE = 1.35; // title line-height (em)
+
+/* The variation title, clamped to the grid-agreed number of lines. A hidden
+   unclamped clone reports its natural line count up so the grid can slot every
+   card at the max the visible cards need (≤3). Truncated text shows in full on
+   hover. */
+function ClampedTitle({
+  text,
+  lines,
+  onNaturalLines,
+}: {
+  text: string;
+  /** the grid-agreed slot height, in lines */
+  lines: number;
+  /** reports how many lines this title would take unclamped */
+  onNaturalLines: (n: number) => void;
+}) {
+  const measureRef = React.useRef<HTMLSpanElement>(null);
+  const [natural, setNatural] = React.useState(1);
+  React.useLayoutEffect(() => {
+    const el = measureRef.current;
+    if (!el) return undefined;
+    const report = () => {
+      // re-read the ref and skip detached nodes: ResizeObserver fires a final
+      // 0-size event for removed elements, which would reset the count
+      const node = measureRef.current;
+      if (!node || !node.isConnected) return;
+      const lineHeight = parseFloat(getComputedStyle(node).lineHeight) || 1;
+      const n = Math.max(1, Math.round(node.scrollHeight / lineHeight));
+      setNatural(n);
+      onNaturalLines(n);
+    };
+    report();
+    const ro = new ResizeObserver(report);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [text, onNaturalLines]);
+
+  const styleBase: React.CSSProperties = {
+    color: 'var(--color-gray-darkest)',
+    lineHeight: LINE,
+  };
+  return (
+    <Tooltip title={natural > lines ? text : ''}>
+      <span className="relative block">
+        {/* hidden unclamped clone — the line-count measurement */}
+        <span
+          ref={measureRef}
+          aria-hidden
+          className="text-sm font-medium invisible absolute inset-x-0 top-0"
+          style={styleBase}
+        >
+          {text}
+        </span>
+        <span
+          className="text-sm font-medium"
+          style={{
+            ...styleBase,
+            display: '-webkit-box',
+            WebkitLineClamp: lines,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            height: `${lines * LINE}em`,
+          }}
+        >
+          {text}
+        </span>
+      </span>
+    </Tooltip>
+  );
+}
 
 /* A session card titled by its variation of the issue (not user metadata). The
    environment specs sit behind "More" so the card stays clean. No real preview
    image is available outside the player, so the thumbnail is a neutral play
-   surface. */
+   surface. Every footer row has a grid-agreed fixed height (shared title slot +
+   one-line tags row), so all cards in the grid are the same size. */
 export default function SessionCard({
   s,
   onClick,
+  titleLines,
+  onTitleLines,
 }: {
   s: IssueSessionCard;
   onClick: () => void;
+  /** grid-agreed title slot, in lines (max the visible cards need, ≤3) */
+  titleLines: number;
+  onTitleLines: (sessionId: string, n: number) => void;
 }) {
   const { t } = useTranslation();
+  const reportLines = React.useCallback(
+    (n: number) => onTitleLines(s.sessionId, n),
+    [onTitleLines, s.sessionId],
+  );
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-xs border transition hover:border-teal">
       <button
@@ -43,16 +126,15 @@ export default function SessionCard({
       </button>
 
       <div className="border-t px-3 py-3 flex flex-col gap-2">
-        <span className="text-sm font-medium color-gray-darkest leading-snug">
-          {s.variation || s.journey || s.email}
-        </span>
-        {s.tags.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {s.tags.slice(0, 3).map((t) => (
-              <TagChip key={t} label={t} />
-            ))}
-          </div>
-        )}
+        <ClampedTitle
+          text={s.variation || s.journey || s.email}
+          lines={titleLines}
+          onNaturalLines={reportLines}
+        />
+        {/* fixed-height row so tags (always one line) never shift the footer */}
+        <div className="flex items-center" style={{ height: 24 }}>
+          <TagsRow tags={s.tags} />
+        </div>
         <div className="flex items-center justify-between text-xs color-gray-medium">
           <span className="whitespace-nowrap">{s.date}</span>
           <Popover
