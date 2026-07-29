@@ -78,6 +78,10 @@ export default class Screen {
     iframe.className = styles.iframe;
     // These flags are fixed when the browsing
     // context is created, so this MUST be set before the iframe is attached.
+    // No allow-scripts: a crafted recording then can never execute JS in the
+    // app origin, whatever slips past sanitize.ts. That also disables scripting
+    // for the document, which stops <canvas> from painting its bitmap — see
+    // CanvasManager#paintFrame for how replayed canvases are rendered instead.
     iframe.setAttribute('sandbox', 'allow-same-origin');
     this.iframe = iframe;
 
@@ -192,6 +196,16 @@ export default class Screen {
 
   get window(): WindowProxy | null {
     return this.iframe.contentWindow;
+  }
+
+  /**
+   * Whether scripting is enabled for the replay document — i.e. whether a
+   * <canvas> in it will paint its bitmap at all. False under the sandbox above.
+   * See CanvasManager#paintFrame for why canvas replay needs to know.
+   */
+  get scriptingEnabled(): boolean {
+    const sandbox = this.iframe.getAttribute('sandbox');
+    return sandbox === null || sandbox.split(/\s+/).includes('allow-scripts');
   }
 
   get document(): Document | null {
