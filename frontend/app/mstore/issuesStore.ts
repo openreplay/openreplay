@@ -177,6 +177,11 @@ export default class IssuesStore {
   /* detail page: segment ids scoping the example-sessions sample (SESSIONS
      ONLY — headline stats stay global). Mirrored to ?seg= by the view. */
   detailScope: string[] = [];
+  /* issue-page tag filter (Mehdi 07-28): example sessions filtered by their
+     journey tags, same grammar as the list's Tags dropdown. Sessions-only —
+     headline stats stay global. Sent to /search as journeyLabels. */
+  detailLabels: string[] = [];
+  detailMatch: MatchMode = 'all';
 
   // ---- vocabulary / lookups ----
   labelsAll: { issueLabels: string[]; journeyLabels: string[] } = {
@@ -255,6 +260,8 @@ export default class IssuesStore {
     this.sessionsTotal = {};
     this.sessionsLoading = {};
     this.detailScope = [];
+    this.detailLabels = [];
+    this.detailMatch = 'all';
   };
 
   fetchIssues = async () => {
@@ -463,14 +470,33 @@ export default class IssuesStore {
     this.detailScope = [];
   };
 
+  // ---- issue-page tag filter (same shape as the list's labels/match) ----
+  setDetailLabels = (l: string[]) => {
+    this.detailLabels = l;
+  };
+  toggleDetailLabel = (t: string) => {
+    this.detailLabels = this.detailLabels.includes(t)
+      ? this.detailLabels.filter((x) => x !== t)
+      : [...this.detailLabels, t];
+  };
+  setDetailMatch = (m: MatchMode) => {
+    this.detailMatch = m;
+  };
+  clearDetailLabels = () => {
+    this.detailLabels = [];
+  };
+
   // ---- example sessions ----
-  // key by issue + query + the active detail segment scope, so a scoped view
-  // caches separately and refetches when the scope changes
+  // key by issue + query + the active detail scope (segments) + tag filter, so
+  // each scoped/filtered view caches separately and refetches when it changes
   private sessKey = (id: string, query = '') => {
     const scope = this.detailScope.length
       ? ` #${[...this.detailScope].sort().join(',')}`
       : '';
-    return `${query.trim() ? `${id} ${query.trim()}` : id}${scope}`;
+    const tags = this.detailLabels.length
+      ? ` @${this.detailMatch}:${[...this.detailLabels].sort().join(',')}`
+      : '';
+    return `${query.trim() ? `${id} ${query.trim()}` : id}${scope}${tags}`;
   };
 
   loadSessions = async (id: string, query = '') => {
@@ -483,6 +509,9 @@ export default class IssuesStore {
         range: this.range ?? undefined,
         // scope the sample to the chosen segments (search supports segmentIds)
         segmentIds: this.detailScope,
+        // issue-page tag filter → journeyLabels on the sample
+        journeyLabels: this.detailLabels,
+        journeyLabelsMatch: toLabelsMatch(this.detailMatch),
       });
       runInAction(() => {
         this.sessions[key] = rows.map(makeIssueSessionCard);

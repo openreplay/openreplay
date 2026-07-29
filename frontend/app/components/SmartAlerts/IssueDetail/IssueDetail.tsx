@@ -17,11 +17,8 @@ import { useStore } from 'App/mstore';
 import { useHistory, useParams } from 'App/routing';
 import { smartIssueSession, smartIssues, withSiteId } from 'App/saasComponents';
 
-import {
-  FoundInChips,
-  SegmentScopeFilter,
-  syncScopeToUrl,
-} from '../segments/SegmentScope';
+import TagFilter, { SegmentFilter } from '../IssueList/TagFilter';
+import { FoundInChips, syncScopeToUrl } from '../segments/SegmentScope';
 import {
   HideIssueModal,
   type IssueSessionCard,
@@ -50,9 +47,21 @@ function IssueDetail() {
   const [query, setQuery] = React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [visibleCount, setVisibleCount] = React.useState(SHOWN_LIMIT);
+  // shared title slot: cards report their natural line counts here; the grid
+  // slots every title at the max the visible cards need (capped at 3)
+  const [titleLineCounts, setTitleLineCounts] = React.useState<
+    Record<string, number>
+  >({});
+  const reportTitleLines = React.useCallback((id: string, n: number) => {
+    setTitleLineCounts((prev) =>
+      prev[id] === n ? prev : { ...prev, [id]: n },
+    );
+  }, []);
 
-  // segment scope for the example-sessions sample, mirrored to ?seg=
-  const scopeKey = issuesStore.detailScope.join(',');
+  // sessions-only detail filters (segment scope + tag filter), mirrored to ?seg=
+  const filterKey = `${issuesStore.detailScope.join(',')}|${
+    issuesStore.detailMatch
+  }:${issuesStore.detailLabels.join(',')}`;
 
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
@@ -60,16 +69,33 @@ function IssueDetail() {
   React.useEffect(() => {
     if (name) void issuesStore.loadIssue(name);
   }, [name]);
-  // hydrate scope from the URL on entry; clear it when leaving the issue so it
-  // never leaks into the next one
+  // seed the detail filters on arrival: a shared ?seg= URL wins, otherwise the
+  // list's "Found in" + tag filters propagate in (removable here either way).
+  // Cleared when leaving so nothing leaks into the next issue.
   React.useEffect(() => {
     const seg = new URLSearchParams(window.location.search).get('seg');
-    issuesStore.setDetailScope(seg ? seg.split(',').filter(Boolean) : []);
-    return () => issuesStore.clearDetailScope();
-  }, [name]);
+    if (seg) {
+      issuesStore.setDetailScope(seg.split(',').filter(Boolean));
+    } else {
+      issuesStore.setDetailScope(
+        issuesStore.origins.filter((o): o is string => o !== 'full'),
+      );
+      syncScopeToUrl(issuesStore.detailScope);
+    }
+    issuesStore.setDetailMatch(issuesStore.match);
+    issuesStore.setDetailLabels(
+      issue
+        ? issuesStore.labels.filter((tg) => issue.journeyLabels.includes(tg))
+        : [],
+    );
+    return () => {
+      issuesStore.clearDetailScope();
+      issuesStore.clearDetailLabels();
+    };
+  }, [issue?.id]);
   React.useEffect(() => {
     if (issue) void issuesStore.loadSessions(issue.id, searchQuery);
-  }, [issue?.id, searchQuery, scopeKey]);
+  }, [issue?.id, searchQuery, filterKey]);
 
   // canned journey phrases filtered by the typed text, matching part bolded.
   // NB: this hook must stay above the early `!issue` return — moving it below
@@ -133,6 +159,13 @@ function IssueDetail() {
   const maxExamples = Math.min(MAX_EXAMPLES, sessions.length);
   const shown = sessions.slice(0, Math.min(visibleCount, maxExamples));
   const canLoadMore = shown.length < maxExamples;
+
+  // title slot only counts CURRENTLY VISIBLE cards, so it shrinks back when a
+  // long-titled card loads out / filters away (capped at 3 lines)
+  const titleLines = Math.min(
+    3,
+    Math.max(1, ...shown.map((s) => titleLineCounts[s.sessionId] ?? 1)),
+  );
 
   const runSearch = (v: string) => {
     setSearchQuery(v);
@@ -248,8 +281,40 @@ function IssueDetail() {
                 <Info size={15} className="color-gray-medium" />
               </Tooltip>
             </div>
-            {/* sessions-only scope (Gabriel 07-21): headline stats stay global */}
-            <SegmentScopeFilter />
+            {/* sessions-only filters (Gabriel 07-21): headline stats stay
+                global. Tags + Segments are the list page's exact two dropdowns
+                (Mehdi 07-28), wired to the detail scope/tag filter. */}
+            <div className="flex items-center gap-2">
+              <TagFilter
+                allTags={issuesStore.allTags}
+                labels={issuesStore.detailLabels}
+                match={issuesStore.detailMatch}
+                onToggle={issuesStore.toggleDetailLabel}
+                onSetMatch={issuesStore.setDetailMatch}
+                onClear={issuesStore.clearDetailLabels}
+                onCreateTag={issuesStore.addCustomTag}
+              />
+              {issuesStore.originSegments.length > 0 && (
+                <SegmentFilter
+                  segments={issuesStore.originSegments.map((s) => ({
+                    id: s.id,
+                    name: s.name,
+                    mine: s.mine,
+                  }))}
+                  origins={issuesStore.detailScope}
+                  onToggleOrigin={(o) => {
+                    if (o === 'full') return; // no full-traffic row here
+                    issuesStore.toggleDetailScope(o);
+                    syncScopeToUrl(issuesStore.detailScope);
+                  }}
+                  onClear={() => {
+                    issuesStore.clearDetailScope();
+                    syncScopeToUrl([]);
+                  }}
+                  showFullTraffic={false}
+                />
+              )}
+            </div>
           </div>
           {search}
         </div>
@@ -270,19 +335,21 @@ function IssueDetail() {
           </div>
         ) : shown.length === 0 ? (
           <div className="p-6 text-center rounded-lg border bg-white text-sm color-gray-medium flex flex-col items-center gap-2">
-            {issuesStore.detailScope.length > 0 ? (
+            {issuesStore.detailScope.length > 0 ||
+            issuesStore.detailLabels.length > 0 ? (
               <>
                 <span>
-                  {t('No sampled sessions match the selected segments.')}
+                  {t('No sampled sessions match the selected filters.')}
                 </span>
                 <Button
                   size="small"
                   onClick={() => {
                     issuesStore.clearDetailScope();
+                    issuesStore.clearDetailLabels();
                     syncScopeToUrl([]);
                   }}
                 >
-                  {t('Clear segment filter')}
+                  {t('Clear filters')}
                 </Button>
               </>
             ) : searchQuery ? (
@@ -299,6 +366,8 @@ function IssueDetail() {
                   key={s.sessionId}
                   s={s}
                   onClick={() => openReplay(s)}
+                  titleLines={titleLines}
+                  onTitleLines={reportTitleLines}
                 />
               ))}
             </div>
@@ -319,6 +388,16 @@ function IssueDetail() {
                         .map((id) => issuesStore.segmentById(id)?.name)
                         .filter(Boolean)
                         .join(', '),
+                    })}
+                  </>
+                )}
+                {issuesStore.detailLabels.length > 0 && (
+                  <>
+                    {' · '}
+                    {t('tagged {{tags}}', {
+                      tags: issuesStore.detailLabels.join(
+                        issuesStore.detailMatch === 'any' ? ' or ' : ' and ',
+                      ),
                     })}
                   </>
                 )}

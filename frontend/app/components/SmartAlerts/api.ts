@@ -139,6 +139,7 @@ export interface SearchParams {
   query?: string | null;
   issueLabels?: string[];
   journeyLabels?: string[];
+  journeyLabelsMatch?: LabelsMatch;
   /** scope the sample to specific traffic segments (saved-search ids) */
   segmentIds?: string[];
   sortBy?: SearchSortBy;
@@ -255,6 +256,7 @@ export async function getIssueSessions(
     query: opts.query ?? null,
     issueLabels: opts.issueLabels ?? [],
     journeyLabels: opts.journeyLabels ?? [],
+    journeyLabelsMatch: opts.journeyLabelsMatch ?? 'and',
     ...(opts.segmentIds?.length ? { segmentIds: opts.segmentIds } : {}),
     sortBy: opts.sortBy ?? 'time',
     sortDir: opts.sortDir ?? 'desc',
