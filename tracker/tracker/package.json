@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "18.1.1",
+  "version": "18.1.2",
   "keywords": [
     "logging",
     "replay"
@@ -75,8 +75,7 @@
   },
   "dependencies": {
     "@openreplay/network-proxy": "^1.2.5",
-    "error-stack-parser": "^2.1.4",
-    "error-stack-parser-es": "^0.1.5",
+    "error-stack-parser-es": "2.0.1",
     "web-vitals": "^5.1.0"
   },
   "engines": {

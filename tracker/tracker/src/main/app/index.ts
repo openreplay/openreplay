@@ -95,10 +95,12 @@ type RickRoll = {
   | {
       line: 'never-gonna-let-you-down'
       token: string
+      version?: string
     }
   | {
       line: 'never-gonna-run-around-and-desert-you'
       token: string
+      version?: string
     }
   | {
       line: 'reset-your-session-please'
@@ -453,12 +455,14 @@ export default class App {
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken, this.projectKey)
+          this.adoptSessionVersion(ev.data.version)
           this.allowAppStart()
         }
         if (ev.data.line === proto.reg) {
           const sessionToken = ev.data.token
           this.session.regenerateTabId()
           this.session.setSessionToken(sessionToken, this.projectKey)
+          this.adoptSessionVersion(ev.data.version)
           this.allowAppStart()
         }
         if (ev.data.line === proto.ask) {
@@ -467,6 +471,7 @@ export default class App {
             this.bc.postMessage({
               line: ev.data.source === thisTab ? proto.reg : proto.resp,
               token,
+              version: this.getSessionVersionHash(),
               source: thisTab,
               context: this.contextId,
               projectKey: this.projectKey,
@@ -1580,15 +1585,32 @@ export default class App {
     return `${PROTO_VERSION}x${this.version}`
   }
 
+  private get sessionVersionKey() {
+    return `${this.options.session_token_key}_version`
+  }
+
+  private storeSessionVersion(version: string) {
+    this.sessionStorage.setItem(this.sessionVersionKey, version)
+  }
+
+  /** a tab adopting a session over BroadcastChannel inherits its version too */
+  private adoptSessionVersion(version?: string) {
+    if (version) {
+      this.storeSessionVersion(version)
+    }
+  }
+
   private checkSessionToken(forceNew?: boolean) {
     const versionHash = this.getSessionVersionHash()
     const needReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
-    let needNewSessionID = forceNew || needReset
+    let needNewSessionID = Boolean(forceNew || needReset)
     const sessionToken = this.session.getSessionToken(this.projectKey)
     if (sessionToken) {
-      const storedVersion = this.sessionStorage.getItem(`${this.options.session_token_key}_version`)
-      needNewSessionID = !storedVersion || storedVersion !== versionHash
-      this.sessionStorage.setItem(`${this.options.session_token_key}_version`, versionHash)
+      const storedVersion = this.sessionStorage.getItem(this.sessionVersionKey)
+      if (!storedVersion || storedVersion !== versionHash) {
+        needNewSessionID = true
+      }
+      this.storeSessionVersion(versionHash)
     }
     return needNewSessionID || !sessionToken
   }
@@ -1981,10 +2003,7 @@ export default class App {
 
       this.delay = delay
       this.session.setSessionToken(token, this.projectKey)
-      this.sessionStorage.setItem(
-        `${this.options.session_token_key}_version`,
-        this.getSessionVersionHash(),
-      )
+      this.storeSessionVersion(this.getSessionVersionHash())
       if (sessionToken && sessionToken !== token) {
         this.bc?.postMessage({
           type: proto.reset,

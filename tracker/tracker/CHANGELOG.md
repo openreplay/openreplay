@@ -1,3 +1,7 @@
+## 18.1.2
+
+- pass proto version in tab communication to prevent session break off
+
 ## 18.1.1
 
 - improve native dialog support
