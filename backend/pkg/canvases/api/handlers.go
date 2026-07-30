@@ -16,6 +16,7 @@ import (
 
 	config "openreplay/backend/internal/config/canvases"
 	"openreplay/backend/internal/http/util"
+	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/api"
@@ -24,22 +25,24 @@ import (
 )
 
 type handlersImpl struct {
-	log       logger.Logger
-	cfg       *config.Config
-	responser api.Responser
-	tokenizer *token.Tokenizer
-	sessions  sessions.Sessions
-	producer  types.Producer
+	log        logger.Logger
+	cfg        *config.Config
+	responser  api.Responser
+	tokenizer  *token.Tokenizer
+	sessions   sessions.Sessions
+	producer   types.Producer
+	cleanupReg registry.Registry
 }
 
-func NewHandlers(cfg *config.Config, log logger.Logger, responser api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, producer types.Producer) (api.Handlers, error) {
+func NewHandlers(cfg *config.Config, log logger.Logger, responser api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, producer types.Producer, cleanupReg registry.Registry) (api.Handlers, error) {
 	return &handlersImpl{
-		log:       log,
-		cfg:       cfg,
-		responser: responser,
-		tokenizer: tokenizer,
-		sessions:  sessions,
-		producer:  producer,
+		log:        log,
+		cfg:        cfg,
+		responser:  responser,
+		tokenizer:  tokenizer,
+		sessions:   sessions,
+		producer:   producer,
+		cleanupReg: cleanupReg,
 	}, nil
 }
 
@@ -86,6 +89,10 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	isFrames := false
 	if len(r.MultipartForm.Value["type"]) > 0 && r.MultipartForm.Value["type"][0] == "frames" {
 		isFrames = true
+	}
+
+	if len(r.MultipartForm.File) > 0 {
+		h.cleanupReg.Register(sessionData.ID, false, sessionData.ExpTime+registry.DeadlineGraceMs)
 	}
 
 	frames := bytes.NewBuffer([]byte{})

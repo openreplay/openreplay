@@ -3,6 +3,7 @@ package canvases
 import (
 	"openreplay/backend/internal/config/canvases"
 	canvasAPI "openreplay/backend/pkg/canvases/api"
+	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
@@ -31,7 +32,8 @@ func NewServiceBuilder(log logger.Logger, cfg *canvases.Config, webMetrics web.W
 	sessions := sessions.New(log, pgconn, projs, redis, dbMetrics, sessions.DoNotIgnoreInactiveProjects)
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
 	responser := api.NewResponser(webMetrics)
-	if builder.api, err = canvasAPI.NewHandlers(cfg, log, responser, tokenizer, sessions, producer); err != nil {
+	cleanupReg := registry.New(log, redis)
+	if builder.api, err = canvasAPI.NewHandlers(cfg, log, responser, tokenizer, sessions, producer, cleanupReg); err != nil {
 		return nil, err
 	}
 	return builder, nil

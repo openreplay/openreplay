@@ -17,6 +17,7 @@ import (
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/internal/http/uuid"
+	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/conditions"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/flakeid"
@@ -43,11 +44,12 @@ type handlersImpl struct {
 	conditions      conditions.Conditions
 	flaker          *flakeid.Flaker
 	beaconSizeCache *beacons.BeaconCache
+	cleanupReg      registry.Registry
 }
 
 func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, producer types.Producer, projects projects.Projects,
 	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
-	conditions conditions.Conditions, flaker *flakeid.Flaker) (api.Handlers, error) {
+	conditions conditions.Conditions, flaker *flakeid.Flaker, cleanupReg registry.Registry) (api.Handlers, error) {
 	return &handlersImpl{
 		log:             log,
 		cfg:             cfg,
@@ -61,6 +63,7 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser
 		conditions:      conditions,
 		flaker:          flaker,
 		beaconSizeCache: beacons.NewBeaconCache(cfg.BeaconSizeLimit),
+		cleanupReg:      cleanupReg,
 	}, nil
 }
 
@@ -351,6 +354,10 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 		return
 	}
 	bodySize = len(bodyBytes)
+
+	if len(bodyBytes) > 0 {
+		e.cleanupReg.Register(sessionData.ID, false, sessionData.ExpTime+registry.DeadlineGraceMs)
+	}
 
 	if batchType == "visual" {
 		// parse split url parameter

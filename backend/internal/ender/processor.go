@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	config "openreplay/backend/internal/config/ender"
+	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
@@ -22,6 +23,7 @@ func ProcessEndedSessions(
 	cfg *config.Config,
 	log logger.Logger,
 	details *LogDetails,
+	cleanupReg registry.Registry,
 ) map[uint64]bool {
 	completed := make(map[uint64]bool, len(candidates))
 	toUpdate := make(map[uint64]uint64, len(candidates)) // sessionID -> timestamp
@@ -40,9 +42,12 @@ func ProcessEndedSessions(
 		}
 		newDur := timestamp - sess.Timestamp
 		if currDuration == newDur {
-			details.Duplicated[sessionID] = currDuration
-			completed[sessionID] = true
-			continue
+			if currDuration != 0 {
+				details.Duplicated[sessionID] = currDuration
+				completed[sessionID] = true
+				continue
+			}
+			log.Info(ctx, "ending zero-duration session, sessID: %d", sessionID)
 		}
 		if currDuration > newDur {
 			details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
@@ -62,7 +67,7 @@ func ProcessEndedSessions(
 		log.Error(ctx, "batch duration update failed, falling back per-session: %s", err)
 		for sessionID, timestamp := range toUpdate {
 			sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
-			if ProcessEndedSession(sessCtx, sessionID, timestamp, loaded[sessionID], sessManager, producer, cfg, log, details) {
+			if ProcessEndedSession(sessCtx, sessionID, timestamp, loaded[sessionID], sessManager, producer, cfg, log, details, cleanupReg) {
 				completed[sessionID] = true
 			}
 		}
@@ -78,7 +83,7 @@ func ProcessEndedSessions(
 			continue
 		}
 		sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
-		if emitSessionEnd(sessCtx, sessionID, timestamp, loaded[sessionID], prevDur[sessionID], newDuration, sessManager, producer, cfg, log, details) {
+		if emitSessionEnd(sessCtx, sessionID, timestamp, loaded[sessionID], prevDur[sessionID], newDuration, sessManager, producer, cfg, log, details, cleanupReg) {
 			completed[sessionID] = true
 		}
 	}
@@ -95,6 +100,7 @@ func ProcessEndedSession(
 	cfg *config.Config,
 	log logger.Logger,
 	details *LogDetails,
+	cleanupReg registry.Registry,
 ) bool {
 	if sess == nil {
 		details.NotFound[sessionID] = timestamp
@@ -107,8 +113,11 @@ func ProcessEndedSession(
 	}
 	newDur := timestamp - sess.Timestamp
 	if currDuration == newDur {
-		details.Duplicated[sessionID] = currDuration
-		return true
+		if currDuration != 0 {
+			details.Duplicated[sessionID] = currDuration
+			return true
+		}
+		log.Info(ctx, "ending zero-duration session, sessID: %d", sessionID)
 	}
 	if currDuration > newDur {
 		details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
@@ -131,7 +140,7 @@ func ProcessEndedSession(
 		log.Error(ctx, "can't update session duration, err: %s", err)
 		return false
 	}
-	return emitSessionEnd(ctx, sessionID, timestamp, sess, currDuration, newDuration, sessManager, producer, cfg, log, details)
+	return emitSessionEnd(ctx, sessionID, timestamp, sess, currDuration, newDuration, sessManager, producer, cfg, log, details, cleanupReg)
 }
 
 func emitSessionEnd(
@@ -146,9 +155,10 @@ func emitSessionEnd(
 	cfg *config.Config,
 	log logger.Logger,
 	details *LogDetails,
+	cleanupReg registry.Registry,
 ) bool {
 	// Re-check after the update — could have raced with another path.
-	if currDuration == newDuration {
+	if currDuration == newDuration && currDuration != 0 {
 		details.Duplicated[sessionID] = currDuration
 		return true
 	}
@@ -182,6 +192,8 @@ func emitSessionEnd(
 			log.Error(ctx, "can't send sessionEnd signal to canvas topic: %s", err)
 		}
 	}
+
+	cleanupReg.Done(sessionID)
 
 	if currDuration != 0 {
 		details.Diff[sessionID] = int64(newDuration) - int64(currDuration)
