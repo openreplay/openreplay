@@ -42,7 +42,7 @@ func ProcessEndedSessions(
 		}
 		newDur := timestamp - sess.Timestamp
 		if currDuration == newDur {
-			if currDuration != 0 {
+			if sess.Duration != nil {
 				details.Duplicated[sessionID] = currDuration
 				completed[sessionID] = true
 				continue
@@ -113,7 +113,7 @@ func ProcessEndedSession(
 	}
 	newDur := timestamp - sess.Timestamp
 	if currDuration == newDur {
-		if currDuration != 0 {
+		if sess.Duration != nil {
 			details.Duplicated[sessionID] = currDuration
 			return true
 		}

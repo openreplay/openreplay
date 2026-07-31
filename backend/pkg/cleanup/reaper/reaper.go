@@ -143,10 +143,11 @@ func (r *Reaper) Tick(nowMs int64) {
 
 func (r *Reaper) clean(sessionID uint64, isMobile bool) error {
 	msg := &messages.CleanSession{}
+	imagesTopic := r.cfg.TopicCanvasImages
 	if isMobile {
-		return r.producer.Produce(r.cfg.TopicRawImages, sessionID, msg.Encode())
+		imagesTopic = r.cfg.TopicRawImages
 	}
-	if err := r.producer.Produce(r.cfg.TopicCanvasImages, sessionID, msg.Encode()); err != nil {
+	if err := r.producer.Produce(imagesTopic, sessionID, msg.Encode()); err != nil {
 		return err
 	}
 	return r.producer.Produce(r.cfg.TopicTrigger, sessionID, msg.Encode())

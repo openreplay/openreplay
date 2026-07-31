@@ -135,7 +135,7 @@ type scannable interface {
 }
 
 const sessionColumns = `session_id, platform,
-	CASE WHEN duration IS NULL OR duration < 0 THEN 0 ELSE duration END,
+	CASE WHEN duration < 0 THEN 0 ELSE duration END, -- keep NULL: it marks a session that was never ended
 	project_id, start_ts, timezone,
 	user_uuid, user_os, user_os_version,
 	user_device, user_device_type, user_country, user_state, user_city,
