@@ -10,6 +10,7 @@ import (
 	config "openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/ender"
 	"openreplay/backend/pkg/cleanup"
+	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/health"
@@ -67,6 +68,13 @@ func main() {
 	h.Register("producer", func(ctx context.Context) error {
 		return producer.Ping(ctx)
 	})
+
+	cleanupRegistry := registry.New(log, redisClient)
+	cleanupDispatcher, err := cleanup.NewDispatcher(log, cfg, producer, pgConn, redisClient)
+	if err != nil {
+		log.Fatal(ctx, "can't init cleanup dispatcher: %s", err)
+	}
+
 	consumer, err := queue.NewConsumer(
 		log,
 		cfg.GroupEnder,
@@ -84,9 +92,11 @@ func main() {
 		func(t types.RebalanceType, partitions []uint64) {
 			if t == types.RebalanceTypeRevoke {
 				sessionEndGenerator.Disable()
+				cleanupDispatcher.ActivePartitions(nil)
 			} else {
 				sessionEndGenerator.ActivePartitions(partitions)
 				sessionEndGenerator.Enable()
+				cleanupDispatcher.ActivePartitions(partitions)
 			}
 		},
 		-ender.EVENTS_BACK_COMMIT_GAP,
@@ -97,11 +107,6 @@ func main() {
 	h.Register("consumer", func(ctx context.Context) error {
 		return consumer.Ping(ctx)
 	})
-
-	cleanupDispatcher, err := cleanup.NewDispatcher(log, cfg, producer)
-	if err != nil {
-		log.Fatal(ctx, "can't init cleanup dispatcher: %s", err)
-	}
 
 	log.Info(ctx, "Ender service started")
 
@@ -123,7 +128,7 @@ func main() {
 		case <-tick:
 			details := ender.NewLogDetails()
 			sessionEndGenerator.HandleEndedSessions(func(candidates map[uint64]uint64) map[uint64]bool {
-				return processEndedBatch(ctx, candidates, sessManager, producer, cfg, log, details)
+				return processEndedBatch(ctx, candidates, sessManager, producer, cfg, log, details, cleanupRegistry)
 			})
 			details.Log(log, ctx)
 			producer.Flush(cfg.ProducerTimeout)
@@ -146,6 +151,7 @@ func processEndedBatch(
 	cfg *config.Config,
 	log logger.Logger,
 	details *ender.LogDetails,
+	cleanupReg registry.Registry,
 ) map[uint64]bool {
 	if len(candidates) == 0 {
 		return map[uint64]bool{}
@@ -159,5 +165,5 @@ func processEndedBatch(
 		log.Error(ctx, "can't get sessions from database: %s", err)
 		return map[uint64]bool{}
 	}
-	return ender.ProcessEndedSessions(ctx, candidates, loaded, sessManager, producer, cfg, log, details)
+	return ender.ProcessEndedSessions(ctx, candidates, loaded, sessManager, producer, cfg, log, details, cleanupReg)
 }

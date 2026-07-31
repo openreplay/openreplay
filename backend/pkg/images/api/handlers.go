@@ -18,6 +18,7 @@ import (
 	gzip "github.com/klauspost/pgzip"
 
 	config "openreplay/backend/internal/config/images"
+	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/api"
@@ -26,22 +27,24 @@ import (
 )
 
 type handlersImpl struct {
-	log       logger.Logger
-	cfg       *config.Config
-	responser api.Responser
-	tokenizer *token.Tokenizer
-	sessions  sessions.Sessions
-	producer  types.Producer
+	log        logger.Logger
+	cfg        *config.Config
+	responser  api.Responser
+	tokenizer  *token.Tokenizer
+	sessions   sessions.Sessions
+	producer   types.Producer
+	cleanupReg registry.Registry
 }
 
-func NewHandlers(cfg *config.Config, log logger.Logger, responser api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, producer types.Producer) (api.Handlers, error) {
+func NewHandlers(cfg *config.Config, log logger.Logger, responser api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, producer types.Producer, cleanupReg registry.Registry) (api.Handlers, error) {
 	return &handlersImpl{
-		log:       log,
-		cfg:       cfg,
-		responser: responser,
-		tokenizer: tokenizer,
-		sessions:  sessions,
-		producer:  producer,
+		log:        log,
+		cfg:        cfg,
+		responser:  responser,
+		tokenizer:  tokenizer,
+		sessions:   sessions,
+		producer:   producer,
+		cleanupReg: cleanupReg,
 	}, nil
 }
 
@@ -89,6 +92,10 @@ func (e *handlersImpl) imagesUploaderHandlerMobile(w http.ResponseWriter, r *htt
 	isFrames := false
 	if len(r.MultipartForm.Value["type"]) > 0 && r.MultipartForm.Value["type"][0] == "frames" {
 		isFrames = true
+	}
+
+	if len(r.MultipartForm.File) > 0 {
+		e.cleanupReg.Register(sessionData.ID, true, sessionData.ExpTime+registry.DeadlineGraceMs)
 	}
 
 	for _, fileHeaderList := range r.MultipartForm.File {

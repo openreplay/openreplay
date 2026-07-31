@@ -23,6 +23,7 @@ type Config struct {
 	TopicRawAssets    string        `env:"TOPIC_RAW_ASSETS,required"`
 	GroupCleanup      string        `env:"GROUP_CLEANUP,required"`
 	CleanupReadGap    time.Duration `env:"CLEANUP_READ_GAP,default=24h"`
+	CleanupReaperTick time.Duration `env:"CLEANUP_REAPER_TICK,default=2m"`
 	ProducerTimeout   int           `env:"PRODUCER_TIMEOUT,default=2000"`
 	PartitionsNumber  int           `env:"PARTITIONS_NUMBER,required"`
 	UseEncryption     bool          `env:"USE_ENCRYPTION,default=false"`

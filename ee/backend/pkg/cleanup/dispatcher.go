@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	config "openreplay/backend/internal/config/ender"
+	"openreplay/backend/pkg/cleanup/reaper"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
@@ -17,13 +21,16 @@ type dispatcherImpl struct {
 	cfg      *config.Config
 	consumer types.Consumer
 	producer types.Producer
+	reaper   *reaper.Reaper
+	stop     chan struct{}
 }
 
 type Dispatcher interface {
+	ActivePartitions(parts []uint64)
 	Close()
 }
 
-func NewDispatcher(log logger.Logger, cfg *config.Config, producer types.Producer) (Dispatcher, error) {
+func NewDispatcher(log logger.Logger, cfg *config.Config, producer types.Producer, db pool.Pool, redisClient *redis.Client) (Dispatcher, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("nil logger")
@@ -36,6 +43,7 @@ func NewDispatcher(log logger.Logger, cfg *config.Config, producer types.Produce
 		log:      log,
 		cfg:      cfg,
 		producer: producer,
+		stop:     make(chan struct{}),
 	}
 	consumer, err := queue.NewConsumer(
 		log,
@@ -58,6 +66,20 @@ func NewDispatcher(log logger.Logger, cfg *config.Config, producer types.Produce
 	d.consumer = consumer
 	go d.run()
 	log.Info(context.Background(), "cleanup dispatcher started with readGap=%s", cfg.CleanupReadGap)
+
+	if store := reaper.NewRedisStore(redisClient); store != nil && db != nil {
+		d.reaper = reaper.New(log, store, reaper.NewPGSource(db), producer, reaper.Config{
+			TopicTrigger:      cfg.TopicTrigger,
+			TopicRawImages:    cfg.TopicRawImages,
+			TopicCanvasImages: cfg.TopicCanvasImages,
+			PartitionsNumber:  uint64(cfg.PartitionsNumber),
+			ProducerTimeout:   cfg.ProducerTimeout,
+		})
+		go d.reap()
+		log.Info(context.Background(), "cleanup reaper started with tick=%s", cfg.CleanupReaperTick)
+	} else {
+		log.Warn(context.Background(), "cleanup reaper is disabled: no redis connection")
+	}
 	return d, nil
 }
 
@@ -93,6 +115,26 @@ func (d *dispatcherImpl) run() {
 	}
 }
 
+func (d *dispatcherImpl) reap() {
+	ticker := time.NewTicker(d.cfg.CleanupReaperTick)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-d.stop:
+			return
+		case <-ticker.C:
+			d.reaper.Tick(time.Now().UnixMilli())
+		}
+	}
+}
+
+func (d *dispatcherImpl) ActivePartitions(parts []uint64) {
+	if d.reaper != nil {
+		d.reaper.ActivePartitions(parts)
+	}
+}
+
 func (d *dispatcherImpl) Close() {
+	close(d.stop)
 	d.consumer.Close()
 }

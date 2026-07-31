@@ -20,6 +20,7 @@ import (
 	"openreplay/backend/internal/http/ios"
 	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/internal/http/uuid"
+	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/conditions"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/flakeid"
@@ -61,11 +62,12 @@ type handlersImpl struct {
 	tokenizer  *token.Tokenizer
 	conditions conditions.Conditions
 	flaker     *flakeid.Flaker
+	cleanupReg registry.Registry
 }
 
 func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, producer types.Producer, projects projects.Projects,
 	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
-	conditions conditions.Conditions, flaker *flakeid.Flaker) (api.Handlers, error) {
+	conditions conditions.Conditions, flaker *flakeid.Flaker, cleanupReg registry.Registry) (api.Handlers, error) {
 	return &handlersImpl{
 		log:        log,
 		cfg:        cfg,
@@ -78,6 +80,7 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser
 		tokenizer:  tokenizer,
 		conditions: conditions,
 		flaker:     flaker,
+		cleanupReg: cleanupReg,
 	}, nil
 }
 
@@ -256,7 +259,7 @@ func (e *handlersImpl) pushMobileMessagesHandler(w http.ResponseWriter, r *http.
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
-	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawMobile)
+	e.pushMessages(w, r, sessionData, e.cfg.TopicRawMobile)
 }
 
 func (e *handlersImpl) pushMobileLateMessagesHandler(w http.ResponseWriter, r *http.Request) {
@@ -271,10 +274,10 @@ func (e *handlersImpl) pushMobileLateMessagesHandler(w http.ResponseWriter, r *h
 		return
 	}
 	// Check timestamps here?
-	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawMobile)
+	e.pushMessages(w, r, sessionData, e.cfg.TopicRawMobile)
 }
 
-func (e *handlersImpl) pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
+func (e *handlersImpl) pushMessages(w http.ResponseWriter, r *http.Request, sessionData *token.TokenData, topicName string) {
 	start := time.Now()
 	body := http.MaxBytesReader(w, r.Body, e.cfg.BeaconSizeLimit)
 	defer body.Close()
@@ -298,7 +301,10 @@ func (e *handlersImpl) pushMessages(w http.ResponseWriter, r *http.Request, sess
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 		return
 	}
-	if err := e.producer.Produce(topicName, sessionID, buf); err != nil {
+	if len(buf) > 0 {
+		e.cleanupReg.Register(sessionData.ID, true, sessionData.ExpTime+registry.DeadlineGraceMs)
+	}
+	if err := e.producer.Produce(topicName, sessionData.ID, buf); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 		return
 	}
