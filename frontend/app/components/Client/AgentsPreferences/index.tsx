@@ -1,6 +1,6 @@
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button, Divider, Switch, Tabs, Tooltip, Typography } from 'antd';
-import { ArrowLeft, Info } from 'lucide-react';
+import { Divider, Switch, Tabs, Tooltip, Typography } from 'antd';
+import { Info } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -225,43 +225,30 @@ function AgentsPreferences() {
   ];
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* the Settings shortcut on the agent pages lands here mid-flow — the
-          same back button as the issue detail page returns the user */}
-      <Button
-        type="text"
-        size="small"
-        icon={<ArrowLeft size={15} />}
-        onClick={() => history.goBack()}
-        className="self-start -ml-2"
-      >
-        {t('Back')}
-      </Button>
-      <div className="flex flex-col rounded-lg border bg-white">
-        {/* header — mirrors the agent pages' header grammar */}
-        <div className="flex items-center gap-2 border-b px-4 py-2">
-          <span className="font-semibold text-lg">{t('Agents')}</span>
-          <Tooltip
-            placement="bottom"
-            title={t(
-              'Journey tags, critical rules, notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
-            )}
+    <div className="flex flex-col rounded-lg border bg-white">
+      {/* header — mirrors the agent pages' header grammar */}
+      <div className="flex items-center gap-2 border-b px-4 py-2">
+        <span className="font-semibold text-lg">{t('Agents')}</span>
+        <Tooltip
+          placement="bottom"
+          title={t(
+            'Journey tags, critical rules, notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
+          )}
+        >
+          <span
+            className="flex items-center cursor-help"
+            style={{ color: 'var(--color-gray-medium)' }}
           >
-            <span
-              className="flex items-center cursor-help"
-              style={{ color: 'var(--color-gray-medium)' }}
-            >
-              <Info size={15} />
-            </span>
-          </Tooltip>
-        </div>
-        <Tabs
-          activeKey={agent}
-          onChange={openTab}
-          items={tabItems}
-          tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
-        />
+            <Info size={15} />
+          </span>
+        </Tooltip>
       </div>
+      <Tabs
+        activeKey={agent}
+        onChange={openTab}
+        items={tabItems}
+        tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
+      />
     </div>
   );
 }
