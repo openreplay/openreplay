@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
+import { URL, fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const tsJest = require.resolve('ts-jest');

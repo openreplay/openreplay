@@ -6,10 +6,12 @@ on:
     branches: [ "main", "dev" ]
     paths:
       - spot/**
+      - .github/workflows/spot-tests.yaml
   pull_request:
     branches: [ "dev", "main" ]
     paths:
       - spot/**
+      - .github/workflows/spot-tests.yaml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

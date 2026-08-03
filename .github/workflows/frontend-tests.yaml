@@ -27,7 +27,9 @@ jobs:
 
       - name: Install player dependencies
         working-directory: player
-        run: npm install --no-audit --no-fund
+        # player is pinned by a committed player/yarn.lock and has no
+        # package-lock.json; this matches build-mcpb.yaml.
+        run: yarn install --frozen-lockfile
 
       - name: Install dependencies
         working-directory: frontend
