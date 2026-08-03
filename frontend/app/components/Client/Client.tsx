@@ -7,6 +7,7 @@ import { CLIENT_TABS } from 'App/utils/routeUtils';
 import Modules from 'Components/Client/Modules';
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 
+import AgentsPreferences from './AgentsPreferences';
 import AuditView from './Audit/AuditView';
 import Billing from './Billing/Billing';
 import ClientSaas from './ClientSaas';
@@ -55,6 +56,14 @@ class Client extends React.PureComponent<any> {
         return <Roles />;
       case CLIENT_TABS.AUDIT:
         return <AuditView />;
+      case CLIENT_TABS.AGENTS:
+        // gated behind the same in-progress flag as the rest of the Agents
+        // section (menu item + Smart Issues routes)
+        return window.localStorage.getItem('__test_agents__') === 'true' ? (
+          <AgentsPreferences />
+        ) : (
+          <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />
+        );
       case CLIENT_TABS.MODULES:
         return <Modules />;
       case CLIENT_TABS.VIDEOS:

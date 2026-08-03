@@ -148,11 +148,22 @@ Issues. `isCapture` + `totalSessionCount` already added. Still needed:
 
 ---
 
-## G. Deferred to the kai-testing-ui merge
+## G. Agents Preferences panel (ported; merge-compatible with kai-testing-ui)
 
-The **Agents Preferences** panel (`AgentsPreferences/{index,CriticalRules,JourneyTags}`)
-lives in the kai-testing-ui branch's shared settings surface (needs
-`KaiSettings/.../confirms` + chrome). The Issues-side pieces it imports —
-`CriticalDialog`/`NotCriticalDialog`/`TagDialog`, `CriticalRuleFields`, the store
-model above, and `Shared/CountSuffix` — are ported here so it slots in on merge.
-The critical-definitions + journey-tag endpoints (§C.1, §C.2) back both surfaces.
+The **Agents Preferences** page (`Client/AgentsPreferences/`) is now on this
+branch with the **Issues** tab — the journey-tag manager (`JourneyTags`) + the
+critical-rules manager (`CriticalRules`), both wired to the store model in §C.
+Route: Preferences → **Agents** (`/client/agents`), gated behind the same
+`__test_agents__` flag as the rest of the Agents section (menu + Smart Issues
+routes).
+
+Kept deliberately merge-compatible with **kai-testing-ui** (which owns the shared
+panel + Tests tab): `index.tsx` copies that branch's chrome/helpers verbatim and
+differs only in the tab list (`AGENTS = ['issues']`) and panel content, so the
+two merge to one page with `['issues','tests','audits']`. `CriticalRules`/
+`JourneyTags` are new files (no conflict). `confirms.tsx` is a local Issues-side
+subset of kai-testing-ui's `KaiSettings/.../confirms` — repoint the import at the
+shared one on merge if the teams consolidate.
+
+All of it is **client-side only** until §C.1 (critical-definitions) and §C.2
+(journey-tags) endpoints ship — CRUD persists in the store, resets on reload.

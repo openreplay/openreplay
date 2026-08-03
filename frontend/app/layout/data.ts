@@ -261,10 +261,10 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         hidden: window.localStorage.getItem('__test_agents__') !== 'true',
       },
       {
-        // shared preferences for the agents (Mehdi 07-27): notifications by
-        // category + behaviour toggles. Core config (environments, run defaults)
-        // stays with each agent's page. Gated behind the same flag as the Tests
-        // agent page while it's in progress.
+        // shared preferences for the agents: journey tags, critical rules,
+        // notifications by category + behaviour toggles. Core config
+        // (environments, run defaults) stays with each agent's page. Gated
+        // behind the same flag as the rest of the Agents section.
         label: t('Agents'),
         key: PREFERENCES_MENU.AGENTS,
         icon: 'scan-pulse',
