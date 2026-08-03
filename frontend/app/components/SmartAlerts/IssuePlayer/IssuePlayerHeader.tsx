@@ -54,8 +54,7 @@ export default function IssuePlayerHeader({
   setTab,
   onBack,
   critState,
-  onMarkCritical,
-  onRemoveMineCritical,
+  onOpenCritical,
   prevId,
   nextId,
   onGoSession,
@@ -75,8 +74,7 @@ export default function IssuePlayerHeader({
   setTab: (t: SideTab) => void;
   onBack: () => void;
   critState: CritState;
-  onMarkCritical: () => void;
-  onRemoveMineCritical: () => void;
+  onOpenCritical: () => void;
   prevId: string | null;
   nextId: string | null;
   onGoSession: (sid: string) => void;
@@ -169,11 +167,7 @@ export default function IssuePlayerHeader({
       <div className="leading-tight min-w-0 flex-1">
         <div className="flex items-center gap-2 min-w-0">
           {issue && (
-            <CriticalToggle
-              state={critState}
-              onMark={onMarkCritical}
-              onRemoveMine={onRemoveMineCritical}
-            />
+            <CriticalToggle state={critState} onOpen={onOpenCritical} />
           )}
           <Tooltip title={variation}>
             <span

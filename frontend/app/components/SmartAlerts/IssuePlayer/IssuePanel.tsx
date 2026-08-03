@@ -23,16 +23,14 @@ export default function IssuePanel({
   card,
   onClose,
   critState,
-  onMarkCritical,
-  onRemoveMineCritical,
+  onOpenCritical,
   segmentName,
 }: {
   issue: Issue;
   card?: IssueSessionCard;
   onClose: () => void;
   critState: CritState;
-  onMarkCritical: () => void;
-  onRemoveMineCritical: () => void;
+  onOpenCritical: () => void;
   /** the segment that surfaced this issue, if any (one-line chip) */
   segmentName?: string;
 }) {
@@ -80,11 +78,7 @@ export default function IssuePanel({
               </span>
             </Tooltip>
             <span className="color-gray-light">|</span>
-            <CriticalToggle
-              state={critState}
-              onMark={onMarkCritical}
-              onRemoveMine={onRemoveMineCritical}
-            />
+            <CriticalToggle state={critState} onOpen={onOpenCritical} />
           </div>
         </div>
 

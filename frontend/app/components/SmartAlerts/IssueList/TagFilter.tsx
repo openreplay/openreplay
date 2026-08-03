@@ -1,12 +1,4 @@
-import {
-  Button,
-  Checkbox,
-  Input,
-  Modal,
-  Popover,
-  Segmented,
-  message,
-} from 'antd';
+import { Button, Checkbox, Input, Popover, Segmented, message } from 'antd';
 import {
   ChevronDown,
   CircleUser,
@@ -20,6 +12,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { IssueOrigin } from '../api';
+import TagDialog from '../shared/TagDialog';
 import type { MatchMode } from '../shared/model';
 
 /* The list's attribute filters, modeled on OpenReplay's FilterSelection: STABLE
@@ -93,30 +86,27 @@ export default function TagFilter({
   onToggle: (t: string) => void;
   onSetMatch: (m: MatchMode) => void;
   onClear: () => void;
-  /** creates a customer-defined journey tag (name + NL description) */
-  onCreateTag?: (name: string, description: string) => void;
+  /** creates a customer-defined journey tag (name + NL description); returns
+      false when the name is already taken */
+  onCreateTag?: (name: string, description: string) => boolean;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
   const [creating, setCreating] = React.useState(false);
-  const [newName, setNewName] = React.useState('');
-  const [newDesc, setNewDesc] = React.useState('');
   const n = labels.length;
   const ql = q.toLowerCase().trim();
   const shown = allTags.filter((tag) => tag.toLowerCase().includes(ql));
 
-  const closeCreate = () => {
-    setCreating(false);
-    setNewName('');
-    setNewDesc('');
-  };
-  const createTag = () => {
-    onCreateTag?.(newName.trim(), newDesc.trim());
+  const createTag = (name: string, description: string) => {
+    if (onCreateTag?.(name, description) === false) {
+      message.error(t('A tag with that name already exists.'));
+      return;
+    }
     message.success(
       t('Tag created. The agent starts applying it to new sessions.'),
     );
-    closeCreate();
+    setCreating(false);
   };
 
   const panel = (
@@ -193,43 +183,11 @@ export default function TagFilter({
         </Button>
       </Popover>
 
-      <Modal
-        title={t('New journey tag')}
+      <TagDialog
         open={creating}
-        onCancel={closeCreate}
-        onOk={createTag}
-        okText={t('Create tag')}
-        okButtonProps={{ disabled: !newName.trim() || !newDesc.trim() }}
-      >
-        <p className="mb-3 color-gray-dark">
-          {t(
-            'Describe the journey in plain words. The agent reads every captured session and applies the tag automatically when it matches.',
-          )}
-        </p>
-        <div className="flex flex-col gap-3">
-          <Input
-            autoFocus
-            maxLength={40}
-            placeholder={t('Name, e.g. Offer scheduling')}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-          />
-          <Input.TextArea
-            rows={3}
-            maxLength={300}
-            placeholder={t(
-              'e.g. Any session where the user schedules or reschedules an offer, from the offers page or the email link.',
-            )}
-            value={newDesc}
-            onChange={(e) => setNewDesc(e.target.value)}
-          />
-          <span className="text-xs color-gray-medium">
-            {t(
-              'Applies to sessions captured from now on; existing sessions are not re-scanned.',
-            )}
-          </span>
-        </div>
-      </Modal>
+        onCancel={() => setCreating(false)}
+        onSave={createTag}
+      />
     </>
   );
 }

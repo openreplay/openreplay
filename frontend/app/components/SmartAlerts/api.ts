@@ -322,11 +322,10 @@ export const deleteIssue = (projectId: string, issueName: string) =>
    MOCKS — these routes DO NOT EXIST server-side.
 
    Never shipped: `/segment-capture` (project capture MODE + per-segment agent
-   INSTRUCTIONS) and `/my-criticals` (per-user "critical for me"). To avoid 404
-   network noise we DON'T call the client at all — each resolves a default /
-   no-op. The features work optimistically in-session via the store but DO NOT
-   persist across reload. Swap each body for a real `client.*` call once the
-   backend ships. See TODO.md § MOCKS.
+   INSTRUCTIONS). To avoid 404 network noise we DON'T call the client at all —
+   each resolves a default / no-op. Capture mode + instructions work
+   optimistically in-session via the store but DO NOT persist across reload.
+   Swap each body for a real `client.*` call once the backend ships. See TODO.md.
 
    NB: the per-segment capture flag ("Identify issues in this segment") IS real
    — it persists as `isCapture` on the saved search (see createSegment /
@@ -352,21 +351,4 @@ export const setSegmentCapture = (
   _projectId: string,
   _segmentId: string,
   _patch: { active?: boolean; instructions?: string },
-): Promise<void> => Promise.resolve();
-
-/** MOCK (no endpoint): issue names the user marked "critical for me". Empty —
-    the personal layer lives only in-session (store.mine). */
-export const getMyCriticals = (_projectId: string): Promise<string[]> =>
-  Promise.resolve([]);
-
-/** MOCK (no endpoint): mark "critical for me". No-op. */
-export const addMyCritical = (
-  _projectId: string,
-  _issueName: string,
-): Promise<void> => Promise.resolve();
-
-/** MOCK (no endpoint): unmark "critical for me". No-op. */
-export const removeMyCritical = (
-  _projectId: string,
-  _issueName: string,
 ): Promise<void> => Promise.resolve();

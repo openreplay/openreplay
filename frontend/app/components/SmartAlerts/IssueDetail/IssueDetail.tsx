@@ -20,6 +20,7 @@ import { smartIssueSession, smartIssues, withSiteId } from 'App/saasComponents';
 import TagFilter, { SegmentFilter } from '../IssueList/TagFilter';
 import { FoundInChips, syncScopeToUrl } from '../segments/SegmentScope';
 import {
+  CriticalDialog,
   HideIssueModal,
   type IssueSessionCard,
   JOURNEY_SEARCH_SUGGESTIONS,
@@ -44,6 +45,7 @@ function IssueDetail() {
 
   const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
+  const [critOpen, setCritOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [visibleCount, setVisibleCount] = React.useState(SHOWN_LIMIT);
@@ -151,6 +153,8 @@ function IssueDetail() {
     );
   }
 
+  const critState = issuesStore.critState(issue.id);
+
   // examples are a sample: show a few, "load more" reveals up to MAX_EXAMPLES;
   // the footer reports the full matched-session total from the search
   const sessions = issuesStore.exampleSessions(issue.id, searchQuery);
@@ -211,14 +215,14 @@ function IssueDetail() {
       <div className="rounded-lg border bg-white">
         <ProblemCard
           framed
-          issue={issue}
+          issue={{ ...issue, critical: critState !== 'none' }}
           editable
           onRename={(newName) => issuesStore.rename(issue.id, newName)}
-          onSetCritical={(val, reasons, note) =>
-            issuesStore.setCritical(issue.id, val, reasons, note)
+          onOpenCritical={() => setCritOpen(true)}
+          criticalMine={critState === 'mine'}
+          criticalBy={
+            issuesStore.matchedRules(issue.id).find((r) => !r.mine)?.createdBy
           }
-          criticalReasons={issuesStore.reasons.criticality}
-          criticalPersonalOnly={!issuesStore.agentCritical(issue.id)}
           actions={
             <>
               <Button
@@ -421,6 +425,12 @@ function IssueDetail() {
           issuesStore.hide(issue.id, reasons, note);
           setHideOpen(false);
         }}
+      />
+
+      <CriticalDialog
+        issueId={critOpen ? issue.id : null}
+        issueHead={issue.head}
+        onClose={() => setCritOpen(false)}
       />
     </div>
   );

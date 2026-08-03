@@ -49,11 +49,12 @@ import {
   CAT_ICON,
   CAT_ORDER,
   type CategoryName,
-  CriticalReasonPanel,
+  CriticalDialog,
   CriticalToggle,
   HideIssueModal,
   ImpactGauge,
   type Issue,
+  NotCriticalDialog,
   RenameIssueModal,
   TagChip,
   impactLevel,
@@ -81,6 +82,7 @@ function IssuesList() {
   const [dispOpen, setDispOpen] = React.useState(false);
   const [hideTarget, setHideTarget] = React.useState<Issue | null>(null);
   const [critTarget, setCritTarget] = React.useState<Issue | null>(null);
+  const [notCritTarget, setNotCritTarget] = React.useState<Issue | null>(null);
   const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
   const [period, setPeriod] = React.useState<any>(
     Period({ rangeName: LAST_7_DAYS }),
@@ -172,8 +174,7 @@ function IssuesList() {
           <div className="flex items-center gap-2 min-w-0">
             <CriticalToggle
               state={issuesStore.critState(r.id)}
-              onMark={() => issuesStore.markMine(r.id)}
-              onRemoveMine={() => issuesStore.removeMine(r.id)}
+              onOpen={() => setCritTarget(r)}
               stopPropagation
             />
             <span className="truncate font-medium color-gray-darkest">
@@ -288,17 +289,25 @@ function IssuesList() {
             label: t('Open'),
           },
           { key: 'rename', icon: <Pencil size={14} />, label: t('Rename') },
-          // removing the project-wide (agent) flag lives here — the triangle
-          // only cycles my personal layer
-          ...(issuesStore.agentCritical(r.id)
+          // the way out of / back into critical, with a reason (the triangle
+          // itself opens the describe/explain dialog)
+          ...(issuesStore.notCritical[r.id] != null
             ? [
                 {
-                  key: 'notCritical',
+                  key: 'restoreCritical',
                   icon: <AlertTriangle size={14} />,
-                  label: t('Mark as not critical'),
+                  label: t('Show as critical again'),
                 },
               ]
-            : []),
+            : issuesStore.critState(r.id) !== 'none'
+              ? [
+                  {
+                    key: 'notCritical',
+                    icon: <AlertTriangle size={14} />,
+                    label: t('Not critical for me'),
+                  },
+                ]
+              : []),
           { type: 'divider' as const },
           ...(visibility === 'deleted'
             ? [
@@ -337,7 +346,9 @@ function IssuesList() {
                 domEvent.stopPropagation();
                 if (key === 'detail') openDetail(r.id);
                 else if (key === 'rename') setRenameTarget(r);
-                else if (key === 'notCritical') setCritTarget(r);
+                else if (key === 'notCritical') setNotCritTarget(r);
+                else if (key === 'restoreCritical')
+                  issuesStore.restoreCritical(r.id);
                 else if (key === 'hide') setHideTarget(r);
                 else if (key === 'unhide') issuesStore.unhide(r.id);
                 else if (key === 'restore') issuesStore.restore(r.id);
@@ -604,34 +615,19 @@ function IssuesList() {
         }}
       />
 
-      {/* project-wide critical removal — teaching reason (the triangle only
-          touches my personal layer) */}
-      <Modal
-        title={t('Mark as not critical')}
-        open={critTarget != null}
-        onCancel={() => setCritTarget(null)}
-        footer={null}
-        width={340}
-      >
-        {critTarget && (
-          <div className="flex flex-col gap-3">
-            <p className="color-gray-dark m-0">
-              {t(
-                '“{{head}}” will no longer be critical for anyone. Your reason helps the agent learn.',
-                { head: critTarget.head },
-              )}
-            </p>
-            <CriticalReasonPanel
-              reasons={issuesStore.reasons.criticality}
-              onCancel={() => setCritTarget(null)}
-              onConfirm={(reasons, note) => {
-                issuesStore.setCritical(critTarget.id, false, reasons, note);
-                setCritTarget(null);
-              }}
-            />
-          </div>
-        )}
-      </Modal>
+      {/* the triangle's intermediary: describe / explain / drop from critical */}
+      <CriticalDialog
+        issueId={critTarget?.id ?? null}
+        issueHead={critTarget?.head ?? ''}
+        onClose={() => setCritTarget(null)}
+      />
+
+      {/* "not critical for me" with a teaching reason (row menu) */}
+      <NotCriticalDialog
+        issue={notCritTarget}
+        reasons={issuesStore.reasons.criticality}
+        onClose={() => setNotCritTarget(null)}
+      />
     </div>
   );
 }

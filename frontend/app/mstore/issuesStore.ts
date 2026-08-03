@@ -16,21 +16,17 @@ import {
   type SegmentCaptureState,
   type SortDir,
   type Visibility,
-  addMyCritical,
   setCaptureMode as apiSetCaptureMode,
   deleteIssue,
   getIssue,
   getIssueSessions,
   getIssues,
   getLabels,
-  getMyCriticals,
   getReasons,
   getSegmentCapture,
   hideIssue,
-  removeMyCritical,
   renameIssue,
   restoreIssue,
-  setIssueCritical,
   setSegmentCapture,
   unhideIssue,
 } from 'App/components/SmartAlerts/api';
@@ -49,6 +45,88 @@ import {
 } from 'App/components/SmartAlerts/shared/model';
 import { filterStore, userStore } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
+
+/* Critical is a DESCRIBED RULE, not a per-issue flag (§14, Mehdi 07-28/29):
+   the customer writes what "critical" means to them, one description per line,
+   each carrying its author; the agent flags issues that match. So criticality
+   in the UI is always DERIVED (matchedRules) — every control is an explanation
+   or a way to author a description.
+
+   NOT-YET-BACKED on this branch: the definitions + per-issue attribution
+   (`criticalBy`) + per-user `notCritical` are client-side only (no endpoints —
+   see TODO). The server still returns a per-issue `critical` boolean (the
+   agent's own flag); we treat that as one anonymous "agent" match so flagged
+   issues keep reading as critical until real attribution lands. */
+export type CriticalRule = {
+  id: number;
+  description: string;
+  createdBy: string;
+  /** description authored by the current user (drives "Critical to me") */
+  mine: boolean;
+};
+
+export type JourneyTag = { name: string; description: string };
+
+/* The agent's own flag (server `critical`) shown as a rule when no user
+   description is attached yet — so a server-flagged issue still reads critical. */
+const AGENT_RULE: CriticalRule = {
+  id: 0,
+  description: 'Detected by the agent',
+  createdBy: 'the agent',
+  mine: false,
+};
+
+/* Seed journey tags (Mehdi 07-28): editable state, not a constant — the
+   customer can rename/remove them like any custom tag. */
+export const PREDEFINED_JOURNEY_TAGS: JourneyTag[] = [
+  {
+    name: 'Navigation',
+    description:
+      'The user browses across pages or sections without a transactional goal.',
+  },
+  {
+    name: 'Onboarding',
+    description:
+      'First-run steps: signup, initial setup, tutorials or welcome flows.',
+  },
+  {
+    name: 'Checkout',
+    description:
+      'The user moves through a cart or order flow toward placing an order.',
+  },
+  {
+    name: 'Payment',
+    description:
+      'Entering or confirming payment details, or completing a charge.',
+  },
+  {
+    name: 'Form submission',
+    description: 'Filling and submitting any form, including multi-step ones.',
+  },
+  {
+    name: 'Workflow completed',
+    description: 'A multi-step task reaches its intended end state.',
+  },
+  {
+    name: 'Drop off',
+    description: 'The user abandons a flow before reaching its end state.',
+  },
+  {
+    name: 'Back and forth',
+    description:
+      'Repeated switching between the same pages or steps, suggesting hesitation.',
+  },
+  {
+    name: 'Error encountered',
+    description:
+      'The session hits a visible error state, message or broken page.',
+  },
+  {
+    name: 'Frustration',
+    description:
+      'Rage clicks, dead clicks or rapid repeated actions on the same element.',
+  },
+];
 
 /* Store behind the AI Issues surface. Issues + example sessions come from the
    /v2/smart-issues Go endpoints (see SmartAlerts/api.ts + api.yaml), mapped
@@ -157,18 +235,23 @@ export default class IssuesStore {
   range: [number, number] | null = null; // null => server default (last 7 days)
   minImpact = 0;
 
-  /* ---- per-user critical + traffic segments (NOT-YET-BACKED, see TODO.md) ----
-     `mine` = issue names the user marked "critical for me" (personal layer,
-     never the project flag). `segments` = the project's saved searches with the
-     agent-capture layer merged in; `captureMode` = whether the agent samples
-     full traffic or only active segments; `origins` = the segment/full-traffic
-     "found in" filter. The capture layer hydrates from stub calls that resolve
-     empty until the backend ships. */
-  mine: string[] = [];
+  /* ---- critical definitions + traffic segments (NOT-YET-BACKED, see TODO.md)
+     `criticalRules` = the customer's "what critical means" descriptions;
+     `criticalBy` = ruleIds that flagged each issue (server-derived in the real
+     API; here only what the user authors via the dialog); `notCritical` = my
+     per-user suppression + its reason. `segments`/`captureMode`/`origins` are
+     the traffic-segment layer. All hydrate from stubs until the backend ships. */
+  criticalRules: CriticalRule[] = [];
+  criticalBy: Record<string, number[]> = {};
+  notCritical: Record<string, string> = {};
   relevantToMe = false;
   segments: SavedSegment[] = [];
   captureMode: CaptureMode = 'full';
   origins: IssueOrigin[] = [];
+
+  // ---- journey tags (NOT-YET-BACKED) — predefined set is editable state ----
+  customTags: JourneyTag[] = [];
+  predefinedTags: JourneyTag[] = PREDEFINED_JOURNEY_TAGS.map((t) => ({ ...t }));
 
   /* baseline count with no filters, for the empty-state "reset to show N" hint.
      lazy: fetched only when an empty filtered list is shown. */
@@ -226,7 +309,6 @@ export default class IssuesStore {
     void this.fetchLabels();
     void this.fetchReasons();
     void this.fetchSegments();
-    void this.fetchMyCriticals();
   };
 
   private reset = () => {
@@ -245,7 +327,11 @@ export default class IssuesStore {
     this.visibility = 'active';
     this.range = null;
     this.minImpact = 0;
-    this.mine = [];
+    this.criticalRules = [];
+    this.criticalBy = {};
+    this.notCritical = {};
+    this.customTags = [];
+    this.predefinedTags = PREDEFINED_JOURNEY_TAGS.map((t) => ({ ...t }));
     this.relevantToMe = false;
     this.segments = [];
     this.captureMode = 'full';
@@ -362,13 +448,6 @@ export default class IssuesStore {
   ensureSegments = (projectId: string) => {
     if (this.projectId !== projectId) this.projectId = projectId;
     void this.fetchSegments();
-  };
-  fetchMyCriticals = async () => {
-    if (!this.projectId) return;
-    const mine = await getMyCriticals(this.projectId);
-    runInAction(() => {
-      this.mine = mine;
-    });
   };
 
   /* Refetch the list after a filter change: resets to page 1; sort changes pass
@@ -562,34 +641,95 @@ export default class IssuesStore {
     return this.visibility === 'deleted';
   }
 
-  // ---- per-user critical ("critical for me") + segments (NOT-YET-BACKED) ----
-  /** the project/agent critical flag (server-owned), independent of my layer */
-  agentCritical(id: string): boolean {
+  // ---- critical (derived from descriptions, §14) ----
+  /** the server/agent flag on the raw issue (its own anonymous "rule") */
+  private serverCritical(id: string): boolean {
     return Boolean(this.byId(id)?.critical);
   }
-  /** three-state critical: none -> project -> mine */
-  critState(id: string): 'none' | 'project' | 'mine' {
-    if (this.mine.includes(id)) return 'mine';
-    return this.agentCritical(id) ? 'project' : 'none';
+  /** the descriptions IGNORING my suppression — client rules the user attached,
+      plus the agent's own flag as a synthetic rule when nothing else matched */
+  rulesFor(id: string): CriticalRule[] {
+    const attached = (this.criticalBy[id] ?? [])
+      .map((ruleId) => this.criticalRules.find((r) => r.id === ruleId))
+      .filter(Boolean) as CriticalRule[];
+    if (attached.length) return attached;
+    return this.serverCritical(id) ? [AGENT_RULE] : [];
   }
-  /** relevant = critical for me, or surfaced by a segment I own */
+  /** the descriptions that made this issue critical — the whole truth. Empty
+      once I have said it is not critical for me. */
+  matchedRules(id: string): CriticalRule[] {
+    if (this.notCritical[id] != null) return [];
+    return this.rulesFor(id);
+  }
+  /** three states, about WHOSE description matched: none, a teammate's/agent's
+      only, or one of mine (what "Critical to me" filters on) */
+  critState(id: string): 'none' | 'team' | 'mine' {
+    const matched = this.matchedRules(id);
+    if (!matched.length) return 'none';
+    return matched.some((r) => r.mine) ? 'mine' : 'team';
+  }
+  /** relevant = one of MY descriptions flagged it, or a segment I own surfaced it */
   isRelevant = (i: Issue): boolean =>
-    this.mine.includes(i.id) ||
+    this.critState(i.id) === 'mine' ||
     (i.segmentId != null && Boolean(this.segmentById(i.segmentId)?.mine));
-  /** count next to "Critical to me" — my personal criticals (segment finds are
-      NOT-YET-BACKED, so not included yet) */
+  /** count next to "Critical to me" — issues my own descriptions flagged */
   get relevantCount(): number {
-    return this.mine.length;
+    return this.issues.filter((i) => this.critState(i.id) === 'mine').length;
   }
 
-  /** mark critical for me — personal layer only, never the project flag */
-  markMine = (id: string) => {
-    if (!this.mine.includes(id)) this.mine.push(id);
-    if (this.projectId) void addMyCritical(this.projectId, id);
+  // ---- critical definitions (NOT-YET-BACKED, client-side) ----
+  /** Author a description. When it comes from an issue (the triangle's
+      intermediary), that issue is flagged straight away. */
+  addCriticalRule = (
+    description: string,
+    forIssueId?: string,
+  ): CriticalRule => {
+    const rule: CriticalRule = {
+      id: Math.max(0, ...this.criticalRules.map((r) => r.id)) + 1,
+      description,
+      createdBy: userStore.account.name || 'You',
+      mine: true,
+    };
+    this.criticalRules.push(rule);
+    if (forIssueId != null) {
+      const { [forIssueId]: _dropped, ...rest } = this.notCritical;
+      this.notCritical = rest;
+      this.criticalBy = {
+        ...this.criticalBy,
+        [forIssueId]: [...(this.criticalBy[forIssueId] ?? []), rule.id],
+      };
+    }
+    return rule;
   };
-  removeMine = (id: string) => {
-    this.mine = this.mine.filter((x) => x !== id);
-    if (this.projectId) void removeMyCritical(this.projectId, id);
+  updateCriticalRule = (id: number, description: string) => {
+    this.criticalRules = this.criticalRules.map((r) =>
+      r.id === id ? { ...r, description } : r,
+    );
+  };
+  /** Removing a description un-flags everything it was the only match for. */
+  removeCriticalRule = (id: number) => {
+    this.criticalRules = this.criticalRules.filter((r) => r.id !== id);
+    const next: Record<string, number[]> = {};
+    Object.keys(this.criticalBy).forEach((key) => {
+      next[key] = this.criticalBy[key].filter((r) => r !== id);
+    });
+    this.criticalBy = next;
+  };
+  /** how many issues would stop being critical if this description went away */
+  rulesOnlyMatch(id: number): number {
+    return Object.keys(this.criticalBy).filter((key) => {
+      const ids = this.criticalBy[key];
+      return ids.includes(id) && ids.length === 1;
+    }).length;
+  }
+  /** MY not-critical: suppresses the flag for me only; the reason teaches the
+      agent. Replace, never mutate a key (MobX tracks the object identity). */
+  setNotCriticalForMe = (id: string, reason: string) => {
+    this.notCritical = { ...this.notCritical, [id]: reason };
+  };
+  restoreCritical = (id: string) => {
+    const { [id]: _dropped, ...rest } = this.notCritical;
+    this.notCritical = rest;
   };
 
   // ---- segments + capture ----
@@ -618,8 +758,30 @@ export default class IssuesStore {
   }
   /** Create a customer-defined journey tag (name + NL description the agent
       matches). NOT-YET-BACKED — no write endpoint yet; kept wired as a no-op. */
-  addCustomTag = (_name: string, _description: string) => {
-    /* NOT-YET-BACKED: POST a custom journey-label definition */
+  // ---- journey tags (NOT-YET-BACKED, client-side) ----
+  /** Author a custom journey tag. Returns false when the name is already taken
+      (across predefined + custom), so the caller can say so. */
+  addCustomTag = (name: string, description: string): boolean => {
+    const taken = [...this.predefinedTags, ...this.customTags].some(
+      (t) => t.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (taken) return false;
+    this.customTags = [...this.customTags, { name, description }];
+    return true;
+  };
+  /** Rename/redescribe either list; an active filter follows the rename. */
+  updateTag = (oldName: string, name: string, description: string) => {
+    const rename = (t: JourneyTag) =>
+      t.name === oldName ? { name, description } : t;
+    this.predefinedTags = this.predefinedTags.map(rename);
+    this.customTags = this.customTags.map(rename);
+    this.labels = this.labels.map((l) => (l === oldName ? name : l));
+  };
+  removeTag = (name: string) => {
+    const keep = (t: JourneyTag) => t.name !== name;
+    this.predefinedTags = this.predefinedTags.filter(keep);
+    this.customTags = this.customTags.filter(keep);
+    this.labels = this.labels.filter((l) => l !== name);
   };
   /** segments the agent is currently capturing */
   get capturingSegments(): SavedSegment[] {
@@ -836,29 +998,6 @@ export default class IssuesStore {
     void unhideIssue(this.projectId, id)
       .then(() => this.refetch({ resetPage: false }))
       .catch((e) => console.error('Failed to unhide issue', e));
-  };
-
-  /** Marking is my personal layer only (never the project flag). Unmarking
-      clears my layer, and lifts the project flag only where one exists — that
-      removal carries the reason so the agent can learn. */
-  setCritical = (
-    id: string,
-    val: boolean,
-    reasons: string[] = [],
-    note = '',
-  ) => {
-    if (!this.projectId) return;
-    if (val) {
-      this.markMine(id);
-      return;
-    }
-    this.removeMine(id);
-    if (this.agentCritical(id)) {
-      this.afterMutation(id, { critical: false });
-      void setIssueCritical(this.projectId, id, false, reasons, note)
-        .then(() => this.refetch({ resetPage: false }))
-        .catch((e) => console.error('Failed to set critical', e));
-    }
   };
 
   remove = (id: string) => {

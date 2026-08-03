@@ -24,7 +24,7 @@ import {
 } from 'Components/Session/playerContext';
 import { Loader } from 'UI';
 
-import { PLAYER_OVERLAY_Z, fmtDate } from '../shared';
+import { CriticalDialog, PLAYER_OVERLAY_Z, fmtDate } from '../shared';
 import IssuePanel from './IssuePanel';
 import IssuePlayerHeader from './IssuePlayerHeader';
 
@@ -206,15 +206,10 @@ function IssuePlayer() {
     history.push(
       withSiteId(issue ? smartIssueDetails(idParam) : smartIssues(), siteId),
     );
-  // player critical is personal-only (Mehdi 07-07): mark/unmark my layer,
-  // silently; project-flag removal (with a reason) lives on the detail page
+  // criticality is a described rule now (§14): the triangle opens the shared
+  // dialog (describe / explain / not-critical), it sets nothing itself
   const critState = issue ? issuesStore.critState(issue.id) : 'none';
-  const onMarkCritical = () => {
-    if (issue) issuesStore.markMine(issue.id);
-  };
-  const onRemoveMineCritical = () => {
-    if (issue) issuesStore.removeMine(issue.id);
-  };
+  const [critOpen, setCritOpen] = React.useState(false);
 
   const playerActiveTab =
     view === 'activity' ? 'EVENTS' : view === 'highlight' ? 'HIGHLIGHT' : '';
@@ -255,8 +250,7 @@ function IssuePlayer() {
             setTab={(t) => setView(t)}
             onBack={back}
             critState={critState}
-            onMarkCritical={onMarkCritical}
-            onRemoveMineCritical={onRemoveMineCritical}
+            onOpenCritical={() => setCritOpen(true)}
             prevId={prevId}
             nextId={nextId}
             onGoSession={goSession}
@@ -285,12 +279,21 @@ function IssuePlayer() {
                 card={card}
                 onClose={() => setView(null)}
                 critState={critState}
-                onMarkCritical={onMarkCritical}
-                onRemoveMineCritical={onRemoveMineCritical}
+                onOpenCritical={() => setCritOpen(true)}
                 segmentName={issuesStore.segmentName(issue.segmentId)}
               />
             )}
           </div>
+
+          {/* sibling of the header/panel, never nested in a Tooltip (antd
+              Children.only) — the describe/explain/not-critical dialog */}
+          {issue && (
+            <CriticalDialog
+              issueId={critOpen ? issue.id : null}
+              issueHead={issue.head}
+              onClose={() => setCritOpen(false)}
+            />
+          )}
         </div>
       </PlayerContext.Provider>
     </ConfigProvider>

@@ -1,9 +1,7 @@
-import { Popover, Tag, Tooltip } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { AlertTriangle, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
-import CriticalReasonPanel from './CriticalReasonPanel';
 
 const critContent = (text: string, withClose = false) => (
   <span className="inline-flex items-center gap-1">
@@ -13,34 +11,34 @@ const critContent = (text: string, withClose = false) => (
   </span>
 );
 
-/* The critical flag rendered as an antd Tag (detail page). With `onSet` it's a
-   two-way toggle: a removable red tag opening a reason popover, or a faint
-   "Mark critical" tag (instant). Without `onSet` it's a static red tag. */
+/* The critical flag on the detail page (antd Tag). Criticality is derived now
+   (§14): the chip reports state and OPENS the shared CriticalDialog — which
+   explains which description matched and whose, lets you add your own, and holds
+   the "not critical for me" step. It sets nothing itself. Without `onOpen` it's
+   a static red tag. */
 export default function CriticalControl({
   critical,
-  onSet,
-  reasons,
-  personalOnly,
+  mine,
+  by,
+  onOpen,
 }: {
   critical: boolean;
-  onSet?: (val: boolean, reasons?: string[], note?: string) => void;
-  /** reason vocabulary for the un-mark popover (server-provided) */
-  reasons?: string[];
-  /** the flag exists only in my personal layer (no agent flag) — removal is
-      instant instead of the teaching popover */
-  personalOnly?: boolean;
+  /** one of MY descriptions matched */
+  mine?: boolean;
+  /** who wrote the matching description, when it isn't mine */
+  by?: string;
+  onOpen?: () => void;
 }) {
   const { t } = useTranslation();
-  const [open, setOpen] = React.useState(false);
 
   if (!critical) {
-    if (!onSet) return null;
+    if (!onOpen) return null;
     return (
-      <Tooltip title={t('Mark critical for me')}>
+      <Tooltip title={t('Describe what’s critical')}>
         <Tag
           bordered
-          onClick={() => onSet(true)}
-          className="crit-tag cursor-pointer transition-[filter] hover:brightness-95 m-0 color-gray-medium"
+          onClick={onOpen}
+          className="crit-tag cursor-pointer m-0 color-gray-medium"
         >
           {critContent(t('Mark critical'))}
         </Tag>
@@ -48,54 +46,31 @@ export default function CriticalControl({
     );
   }
 
-  if (!onSet) {
-    return (
-      <Tag color="red" bordered className="m-0">
-        {critContent(t('Critical'))}
-      </Tag>
-    );
-  }
+  const tag = (
+    <Tag
+      color="red"
+      bordered
+      onClick={onOpen}
+      className={`crit-tag m-0${onOpen ? ' cursor-pointer' : ''}`}
+    >
+      {critContent(
+        mine ? t('Critical for me') : t('Critical'),
+        Boolean(onOpen),
+      )}
+    </Tag>
+  );
 
-  // my personal mark (no agent flag): remove instantly, no teaching popover
-  if (personalOnly) {
-    return (
-      <Tooltip title={t('Remove from my criticals')}>
-        <Tag
-          color="red"
-          bordered
-          onClick={() => onSet(false)}
-          className="crit-tag cursor-pointer transition-[filter] hover:brightness-95 m-0"
-        >
-          {critContent(t('Critical for me'), true)}
-        </Tag>
-      </Tooltip>
-    );
-  }
+  if (!onOpen) return tag;
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={setOpen}
-      trigger="click"
-      placement="bottomLeft"
-      content={
-        <CriticalReasonPanel
-          reasons={reasons}
-          onCancel={() => setOpen(false)}
-          onConfirm={(rs, note) => {
-            onSet(false, rs, note);
-            setOpen(false);
-          }}
-        />
+    <Tooltip
+      title={
+        mine
+          ? t('Matches your description')
+          : t('Matches {{name}}’s description', { name: by ?? t('a teammate') })
       }
     >
-      <Tag
-        color="red"
-        bordered
-        className="crit-tag cursor-pointer transition-[filter] hover:brightness-95 m-0"
-      >
-        {critContent(t('Critical'), true)}
-      </Tag>
-    </Popover>
+      {tag}
+    </Tooltip>
   );
 }
