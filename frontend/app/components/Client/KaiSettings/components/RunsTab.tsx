@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
 
+import CountSuffix from 'Shared/CountSuffix';
 import FullPagination from 'Shared/FullPagination';
 
 import {
@@ -220,9 +221,7 @@ function RunsTab() {
     });
   };
 
-  const faded = (n: number) => (
-    <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
-  );
+  const faded = (n: number) => <CountSuffix n={n} />;
   const statusOptions = [
     { value: 'all', label: <span>{t('All')}{faded(allCount)}</span> },
     {
