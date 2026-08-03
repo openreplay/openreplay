@@ -599,13 +599,11 @@ SELECT
 FROM experimental.sessions AS s
 	%s
 	%s
-	%s
 WHERE %s
 ORDER BY %s %s
 LIMIT %d OFFSET %d;`,
 		qc.eventsInnerJoin,
 		qc.leftAntiJoin,
-		qc.viewedJoin,
 		strings.Join(qc.sessionsWhere, " AND "),
 		qc.sortField,
 		qc.sortOrder,
