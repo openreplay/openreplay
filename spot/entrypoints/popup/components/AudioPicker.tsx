@@ -1,9 +1,9 @@
-import { Component } from "solid-js";
+import type { Component } from "solid-js";
 import micOff from "~/assets/mic-off-red.svg";
 import micOn from "~/assets/mic-on-dark.svg";
 import Dropdown from "~/entrypoints/popup/Dropdown";
 import { ChevronSvg } from "../Icons";
-import { AudioDevice } from "../types";
+import type { AudioDevice } from "../types";
 
 interface AudioPickerProps {
   mic: () => boolean;

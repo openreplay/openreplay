@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
-import ListWalker from '../../app/player/common/ListWalker';
-import type { Timed } from '../../app/player/common/types';
+import ListWalker from '../../../player/src/common/ListWalker';
+import type { Timed } from '../../../player/src/common/types';
 
 interface Item extends Timed {
   value?: string;

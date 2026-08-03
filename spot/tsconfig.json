@@ -13,5 +13,6 @@
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "noImplicitAny": false,
+    "noUncheckedIndexedAccess": false,
   },
 }

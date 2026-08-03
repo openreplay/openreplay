@@ -24,29 +24,24 @@ export default async () => {
 
   const entryPoints = ['build/main/index.js', 'build/main/entry.js']
 
-  const esmBuilds = entryPoints.map((input) => ({
+  return entryPoints.map((input) => ({
     input,
-    output: {
-      dir: 'dist/lib',
-      format: 'es',
-      sourcemap: true,
-      entryFileNames: '[name].js',
-    },
-    plugins: [...commonPlugins],
-  }))
-
-  const cjsBuilds = entryPoints.map((input) => ({
-    input,
-    output: {
-      dir: 'dist/cjs',
-      format: 'cjs',
-      sourcemap: true,
-      entryFileNames: '[name].js',
-    },
+    output: [
+      {
+        dir: 'dist/lib',
+        format: 'es',
+        sourcemap: true,
+        entryFileNames: '[name].js',
+      },
+      {
+        dir: 'dist/cjs',
+        format: 'cjs',
+        sourcemap: true,
+        entryFileNames: '[name].js',
+      },
+    ],
     plugins: [...commonPlugins, commonjs()],
   }))
-
-  return [...esmBuilds, ...cjsBuilds]
 }
 
 async function buildWebWorker() {

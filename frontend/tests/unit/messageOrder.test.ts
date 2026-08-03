@@ -5,17 +5,17 @@ jest.mock('Player/common/unpack', () => ({ __esModule: true, default: jest.fn() 
 jest.mock('Player/mobile/IOSMessageManager', () => ({ __esModule: true, default: jest.fn() }));
 jest.mock('Player/web/MessageManager', () => ({ __esModule: true, default: jest.fn() }));
 jest.mock('App/logger', () => ({ __esModule: true, default: { info: jest.fn() } }));
-jest.mock('../../app/player/web/messages/MFileReader', () => ({ __esModule: true, default: jest.fn() }));
-jest.mock('../../app/player/web/network/loadFiles', () => ({ __esModule: true, loadFiles: jest.fn(), requestTarball: jest.fn(), requestEFSDom: jest.fn(), requestEFSDevtools: jest.fn() }));
-jest.mock('../../app/player/web/network/crypto', () => ({ __esModule: true, decryptSessionBytes: jest.fn() }));
+jest.mock('../../../player/src/web/messages/MFileReader', () => ({ __esModule: true, default: jest.fn() }));
+jest.mock('../../../player/src/web/network/loadFiles', () => ({ __esModule: true, loadFiles: jest.fn(), requestTarball: jest.fn(), requestEFSDom: jest.fn(), requestEFSDevtools: jest.fn() }));
+jest.mock('../../../player/src/web/network/crypto', () => ({ __esModule: true, decryptSessionBytes: jest.fn() }));
 
 import {
   getMsgPriority,
   needsSorting,
   sortTimeGroup,
   fixMessageOrder,
-} from '../../app/player/web/MessageLoader';
-import { MType } from '../../app/player/web/messages';
+} from '../../../player/src/web/MessageLoader';
+import { MType } from '../../../player/src/web/messages';
 
 type Msg = { tp: number; time: number; tabId: string; [k: string]: any };
 

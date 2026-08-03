@@ -6,11 +6,11 @@ import {
   Resource,
   getResourceFromResourceTiming,
   getResourceFromNetworkRequest,
-} from '../../app/player/web/types/resource';
+} from '../../../player/src/web/types/resource';
 import type {
   ResourceTiming,
   NetworkRequest,
-} from '../../app/player/web/messages';
+} from '../../../player/src/web/messages';
 import { test, describe, expect } from '@jest/globals';
 
 describe('getURLExtention', () => {

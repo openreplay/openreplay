@@ -18,23 +18,24 @@
   "dependencies": {
     "@neodrag/solid": "^2.3.1",
     "@openreplay/network-proxy": "^1.2.5",
-    "@webext-core/messaging": "^3.0.2",
-    "solid-js": "^1.9.13",
+    "@webext-core/messaging": "^3.0.3",
+    "solid-js": "^1.9.14",
     "web-vitals": "^5.3.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.1",
-    "@tailwindcss/vite": "^4.3.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
     "@types/chrome": "^0.1.43",
     "@wxt-dev/module-solid": "^1.1.4",
-    "autoprefixer": "^10.5.0",
+    "autoprefixer": "^10.5.4",
     "daisyui": "5.5.23",
-    "postcss": "^8.5.15",
-    "prettier": "^3.8.4",
-    "tailwindcss": "4.2.4",
+    "postcss": "^8.5.25",
+    "prettier": "^3.9.6",
+    "tailwindcss": "4.3.3",
     "typescript": "^5.9.3",
-    "wxt": "0.20.26"
+    "web-ext": "^10.5.0",
+    "wxt": "0.21.2"
   },
-  "packageManager": "yarn@4.5.3"
+  "packageManager": "bun@1.2.7"
 }

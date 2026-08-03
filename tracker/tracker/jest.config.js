@@ -1,4 +1,4 @@
-/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
@@ -8,14 +8,19 @@ const config = {
   moduleNameMapper: {
     '(.+)\\.js': '$1',
   },
-  globals: {
-    'ts-jest': {
-      tsConfig: {
-        target: 'es2020',
-        lib: ['DOM', 'ES2022'],
+  transform: {
+    '^.+\\.m?[tj]sx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          target: 'es2020',
+          lib: ['DOM', 'ES2022'],
+          allowJs: true,
+        },
       },
-    },
+    ],
   },
+  transformIgnorePatterns: ['/node_modules/(?!error-stack-parser-es/)'],
 }
 
 export default config

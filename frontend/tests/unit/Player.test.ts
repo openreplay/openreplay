@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import SimpleStore from '../../app/player/common/SimpleStore';
-import Player, { SPEED_OPTIONS } from '../../app/player/player/Player';
+import SimpleStore from '../../../player/src/common/SimpleStore';
+import Player, { SPEED_OPTIONS } from '../../../player/src/player/Player';
 
 class DummyMM {
   move = jest.fn();

@@ -11,6 +11,18 @@
     "helm-values",
     "docker-compose",
     "github-actions",
-    "helm-requirements"
-  ]
+    "helm-requirements",
+    "npm"
+  ],
+  "packageRules": [
+    {
+      "description": "JS dependencies: security fixes only, no routine update PRs.",
+      "matchManagers": ["npm"],
+      "enabled": false
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"]
+  }
 }

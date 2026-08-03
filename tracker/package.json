@@ -4,5 +4,12 @@
   "workspaces": [
     "tracker",
     "tracker-assist"
-  ]
+  ],
+  "packageManager": "bun@1.2.7",
+  "overrides": {
+    "socket.io-parser": "^4.2.7",
+    "ws": "^8.21.1",
+    "flatted": "^3.4.4",
+    "@babel/core": "^7.29.7"
+  }
 }

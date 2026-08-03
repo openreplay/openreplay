@@ -5,12 +5,19 @@ on:
     branches: [ "main" ]
     paths:
       - frontend/**
+      - player/**
       - tracker/**
   pull_request:
     branches: [ "dev", "main" ]
     paths:
       - frontend/**
+      - player/**
       - tracker/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   API: ${{ secrets.E2E_API_ORIGIN }}
   ASSETS: ${{ secrets.E2E_ASSETS_ORIGIN }}
@@ -19,63 +26,80 @@ env:
   CY_PASS: ${{ secrets.CYPRESS_PASSWORD }}
   FOSS_PROJECT_KEY: ${{ secrets.FOSS_PROJECT_KEY }}
   FOSS_INGEST: ${{ secrets.FOSS_INGEST }}
+
 jobs:
   build-and-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     name: Build and test Tracker plus Replayer
-    strategy:
-      matrix:
-        node-version: [ 20.x ]
     steps:
+      - uses: actions/checkout@v5
+
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-      - uses: actions/checkout@v5
-      - name: Use Node.js ${{ matrix.node-version }}
+          bun-version: 1.2.7
+
+      - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: Cache tracker modules
+          node-version-file: frontend/.nvmrc
+
+      - name: Cache tracker bun cache and modules
         uses: actions/cache@v4
         with:
-          path: tracker/tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('tracker/tracker/bun.lockb') }}
+          path: |
+            ~/.bun/install/cache
+            tracker/node_modules
+          key: ${{ runner.os }}-tracker-bun-${{ hashFiles('tracker/bun.lock') }}
           restore-keys: |
-            test_tracker_build-{{ runner.OS }}-build-
-            test_tracker_build-{{ runner.OS }}-
-      - name: Setup Testing packages
+            ${{ runner.os }}-tracker-bun-
+
+      - name: Setup tracker packages
         run: |
-          cd tracker/tracker
-          bun install
+          cd tracker
+          bun install --frozen-lockfile
+
       - name: Build tracker inst
         run: |
           cd tracker/tracker
           bun run build
+
       - name: Setup Testing UI Env
         run: |
           cd tracker/tracker-testing-playground
           echo "REACT_APP_KEY=$FOSS_PROJECT_KEY" >> .env
           echo "REACT_APP_INGEST=$FOSS_INGEST" >> .env
+
       - name: Cache testing UI node modules
         uses: actions/cache@v4
         with:
           path: tracker/tracker-testing-playground/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-playground-yarn-${{ hashFiles('tracker/tracker-testing-playground/yarn.lock') }}
           restore-keys: |
-            ${{ runner.OS }}-build-
-            ${{ runner.OS }}-
+            ${{ runner.os }}-playground-yarn-
+
       - name: Setup Testing packages
         run: |
           cd tracker/tracker-testing-playground
           yarn
-      - name: Cache node modules
+
+      - name: Cache frontend yarn cache and modules
         uses: actions/cache@v4
         with:
-          path: frontend/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('frontend/yarn.lock') }}
+          path: |
+            ~/.yarn/berry/cache
+            frontend/node_modules
+          key: ${{ runner.os }}-frontend-yarn-${{ hashFiles('frontend/yarn.lock') }}
           restore-keys: |
-            ${{ runner.OS }}-build-
-            ${{ runner.OS }}-
+            ${{ runner.os }}-frontend-yarn-
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-${{ hashFiles('frontend/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cypress-
+
       - name: Setup env
         run: |
           cd frontend
@@ -91,53 +115,48 @@ jobs:
           echo "VERSION = '1.15.0'" >> .env
           echo "TRACKER_VERSION = '10.0.0'" >> .env
           echo "COMMIT_HASH = 'dev'" >> .env
-          echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" >> cypress.env.json
+          echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" > cypress.env.json
+
+      - name: Install player dependencies
+        working-directory: player
+        run: npm install --no-audit --no-fund
+
       - name: Setup packages
         run: |
           cd frontend
-          yarn
-      - name: Run unit tests
-        run: |
-          cd frontend
-          yarn test:ci
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ui
-          name: ui
+          yarn --immutable
+
       - name: Run testing frontend
         run: |
           cd tracker/tracker-testing-playground
           yarn start &> testing.log &
-          echo "Started"
-          npm i -g wait-on
-          echo "Got wait on"
-          sleep 30
-          cat testing.log
           npx wait-on http://localhost:3000
-          echo "Done"
         timeout-minutes: 4
+
       - name: Run Frontend
         run: |
           cd frontend
-          bun start &> frontend.log &
-          echo "Started"
-          sleep 30
-          cat frontend.log
+          yarn dev &> frontend.log &
           npx wait-on http://0.0.0.0:3333
-          echo "Done"
         timeout-minutes: 4
+
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
           yarn cy:test
+        timeout-minutes: 5
 #        firefox have different viewport somehow
 #      - name: (Firefox) Run visual tests
 #        run: yarn cy:test-firefox
 #      - name: (Edge) Run visual tests
 #        run: yarn cy:test-edge
-        timeout-minutes: 5
+
+      - name: Dump server logs
+        if: ${{ failure() }}
+        run: |
+          echo "--- frontend ---"; cat frontend/frontend.log || true
+          echo "--- playground ---"; cat tracker/tracker-testing-playground/testing.log || true
+
       - name: Upload Debug
         if: ${{ failure() }}
         uses: actions/upload-artifact@v5

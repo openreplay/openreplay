@@ -6,9 +6,8 @@ on:
       - dev
     paths:
       - frontend/**
-# Disable previous workflows for this action.
 concurrency:
-  group: ${{ github.workflow }} #-${{ github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
@@ -22,12 +21,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            /home/runner/work/openreplay/openreplay/frontend/node_modules
-            /home/runner/work/openreplay/openreplay/frontend/.yarn
-          key: ${{ runner.OS }}-build-${{ hashFiles('frontend/yarn.lock') }}
+            ${{ github.workspace }}/frontend/node_modules
+            ~/.yarn/berry/cache
+          key: ${{ runner.os }}-frontend-yarn-${{ hashFiles('frontend/yarn.lock') }}
           restore-keys: |
-            ${{ runner.OS }}-build-
-            ${{ runner.OS }}-
+            ${{ runner.os }}-frontend-yarn-
 
       - uses: ./.github/composite-actions/update-keys
         with:
@@ -47,7 +45,7 @@ jobs:
 
       - name: Docker login
         run: |
-          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
+          echo "${{ secrets.EE_REGISTRY_TOKEN }}" | docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} --password-stdin
 
       - name: Set image tag
         run: echo "IMAGE_TAG=${GITHUB_REF_NAME//\//-}_${GITHUB_SHA}" >> $GITHUB_ENV
@@ -67,12 +65,12 @@ jobs:
         run: |
           set -x
           cd frontend
-          mv .env.sample .env
+          cp .env.sample .env
           # @openreplay/player is a `portal:../player` dependency, so the sibling
           # player/ dir must be present inside the container at /home/<user>/../player.
           PLAYER_DIR=$(cd ../player && pwd)
           # player is its own project: install its deps so its source imports (fflate, fzstd, …) resolve when frontend bundles it.
-          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -v ${PLAYER_DIR}:/home/player -w /home/${USER} --name node_build node:20-slim /bin/bash -c "cd /home/player && npm install --no-audit --no-fund && cd /home/${USER} && yarn && yarn build"
+          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -v ${PLAYER_DIR}:/home/player -w /home/${USER} --name node_build node:24-slim /bin/bash -c "cd /home/player && npm install --no-audit --no-fund && cd /home/${USER} && yarn --immutable && yarn build"
           # https://github.com/docker/cli/issues/1134#issuecomment-613516912
           # Build context is the repo root (..) so the Dockerfile can reach player/; -f is relative to cwd (frontend).
           DOCKER_BUILDKIT=1 docker build --target=cicd -f Dockerfile -t $DOCKER_REPO/frontend:${IMAGE_TAG} ..
@@ -85,14 +83,11 @@ jobs:
           cd scripts/helmcharts/
 
           set -x
-          cat <<EOF>>/tmp/image_override.yaml
+          cat <<EOF>/tmp/image_override.yaml
           frontend:
             image:
               tag: ${IMAGE_TAG}
           EOF
-
-          # Update changed image tag
-          sed -i "/frontend/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
           cat /tmp/image_override.yaml
           # Deploy command
@@ -139,9 +134,6 @@ jobs:
               # We've to strip off the -ee, as helm will append it.
               tag: ${IMAGE_TAG}
           EOF
-
-          # Update changed image tag
-          sed -i "/frontend/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
           cat /tmp/image_override.yaml
           # Deploy command

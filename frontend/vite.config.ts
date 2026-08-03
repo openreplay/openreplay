@@ -151,7 +151,7 @@ export default defineConfig(({ mode }) => {
       exclude: ['@openreplay/player'],
     },
     build: {
-      outDir: 'dist',
+      outDir: 'public',
       emptyOutDir: true,
       sourcemap: env.SOURCEMAP === 'true',
       target: 'es2022',

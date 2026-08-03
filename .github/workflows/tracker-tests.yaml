@@ -10,46 +10,60 @@ on:
     branches: [ "dev", "main" ]
     paths:
       - tracker/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     name: Build and test Tracker
     steps:
+      - uses: actions/checkout@v5
+
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-      - uses: actions/checkout@v5
-      - name: Cache tracker modules
+          bun-version: 1.2.7
+
+      - name: Cache bun install cache and modules
         uses: actions/cache@v4
         with:
-          path: tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lock') }}
+          path: |
+            ~/.bun/install/cache
+            tracker/node_modules
+          key: ${{ runner.os }}-tracker-bun-${{ hashFiles('tracker/bun.lock') }}
           restore-keys: |
-            test_tracker_build{{ runner.OS }}-build-
-            test_tracker_build{{ runner.OS }}-
+            ${{ runner.os }}-tracker-bun-
+
       - name: Setup Testing packages
         run: |
           cd tracker
-          bun install
+          bun install --frozen-lockfile
+
       - name: Jest tests
         run: |
           cd tracker/tracker
           bun run test:ci
+
       - name: Building test
         run: |
           cd tracker/tracker
           bun run build
+
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
           bun run test:ci
+
       - name: (TA) Building test
         run: |
           cd tracker/tracker-assist
           bun run build
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: tracker
-          iame: tracker
+          name: tracker

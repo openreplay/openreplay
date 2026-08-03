@@ -4,7 +4,7 @@ import spotPlayerStore, {
   PANELS,
 } from '../../app/components/Spots/SpotPlayer/spotPlayerStore';
 
-jest.mock('App/player', () => ({
+jest.mock('Player', () => ({
   getResourceFromNetworkRequest: jest.fn(),
   Log: jest.fn((log: Record<string, any>) => ({
     isRed: log.level === 'exception' || log.level === 'error',

@@ -4,10 +4,8 @@ import {
   getFinalRequests,
   stopTrackingNetwork,
 } from "~/utils/networkTracking";
-import {
-  mergeRequests,
-  SpotNetworkRequest,
-} from "~/utils/networkTrackingUtils";
+import { mergeRequests } from "~/utils/networkTrackingUtils";
+import type { SpotNetworkRequest } from "~/utils/networkTrackingUtils";
 import { safeApiUrl, base64ToBlob } from "~/utils/smallUtils";
 import {
   attachDebuggerToTab,
