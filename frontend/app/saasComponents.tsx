@@ -34,7 +34,20 @@ export const withSiteId = (
   siteId: string | string[] | null | undefined = ':siteId',
 ): string => `/${siteIdToUrl(siteId)}${route}`;
 
-export const saasRoutes: Route[] = [
+/* Smart Issues rides the same in-progress gate as the rest of the Agents
+   section (Tests menu + Preferences > Agents in layout/data.ts): the
+   `__test_agents__` localStorage flag. Off => no route registered and no menu
+   URL, so the surface is fully hidden, not just permission-guarded. Toggle +
+   reload to flip it (read at module load, like the menu categories). */
+export const agentsEnabled = (): boolean => {
+  try {
+    return window.localStorage.getItem('__test_agents__') === 'true';
+  } catch {
+    return false;
+  }
+};
+
+const smartIssuesRoutes: Route[] = [
   {
     path: smartIssues(),
     component: React.lazy(
@@ -61,6 +74,9 @@ export const saasRoutes: Route[] = [
   },
 ];
 
-export const extraMenuItems = (siteId: string | null) => ({
-  [MENU.ISSUES]: () => withSiteId(smartIssues(), siteId),
-});
+export const saasRoutes: Route[] = agentsEnabled() ? smartIssuesRoutes : [];
+
+export const extraMenuItems = (siteId: string | null) =>
+  agentsEnabled()
+    ? { [MENU.ISSUES]: () => withSiteId(smartIssues(), siteId) }
+    : {};
