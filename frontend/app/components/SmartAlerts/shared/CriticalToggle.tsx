@@ -3,31 +3,30 @@ import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type CritState = 'none' | 'project' | 'mine';
+export type CritState = 'none' | 'team' | 'mine';
 
-/* Three-state critical triangle used in the issue-list row and the player.
-   Red outline icon = project criticality; the red chip = "mine". Clicking only
-   cycles my personal layer (Mehdi 07-07): gray→mine, project→adopt as mine,
-   mine→step back — always silent. Removing the project-wide flag (with a
-   teaching reason) lives on the detail page / list ellipsis, not here. */
+/* The critical triangle used in the issue-list row and the player. Criticality
+   is a described RULE now (§14): the triangle no longer flags the issue, it
+   OPENS the CriticalDialog — the one place that explains which description
+   matched and whose, lets you add your own, and holds the "not critical for me"
+   step. State only drives the look: gray = none, red outline = a teammate's/
+   agent's description, red fill = one of mine. */
 export default function CriticalToggle({
   state,
-  onMark,
-  onRemoveMine,
+  onOpen,
   stopPropagation,
 }: {
   state: CritState;
-  onMark: () => void;
-  onRemoveMine: () => void;
+  onOpen: () => void;
   stopPropagation?: boolean;
 }) {
   const { t } = useTranslation();
   const tip =
     state === 'mine'
-      ? t('Remove from my criticals')
-      : state === 'project'
-        ? t('Add to my criticals')
-        : t('Mark critical for me');
+      ? t('Critical for you')
+      : state === 'team'
+        ? t('Critical — see why')
+        : t('Describe what’s critical');
 
   return (
     <Tooltip title={tip}>
@@ -50,14 +49,14 @@ export default function CriticalToggle({
                 state === 'none'
                   ? 'var(--color-gray-medium)'
                   : 'var(--color-red)',
-              fill: 'none',
+              // red fill marks "mine"; outline for a teammate's/agent's
+              fill: state === 'mine' ? 'var(--color-red)' : 'none',
             }}
           />
         }
         onClick={(e) => {
           if (stopPropagation) e.stopPropagation();
-          if (state === 'mine') onRemoveMine();
-          else onMark();
+          onOpen();
         }}
       />
     </Tooltip>

@@ -1,138 +1,158 @@
-# AI Issues (SmartAlerts) — remaining work
+# Smart Issues — UI ↔ API gaps (for the backend team)
 
-The redesign is now wired to the **real** Go `/v2/smart-issues` endpoints
-(see `api.yaml` for the contract and `api.ts` for the client). Filtering,
-sorting and pagination are **server-side**; mutations persist and then refetch.
+The Smart Issues UI is wired to the Go `/v2/smart-issues` endpoints (contract in
+`api.yaml`, client in `api.ts`). Filtering, sorting and pagination are
+server-side; mutations persist then refetch.
 
-Backend→view-model mapping lives in **`factories.ts`** (`makeIssue`,
-`makeIssueSessionCard`) — the single place to update when fields change.
-
-Remaining backend gaps are still tagged in code:
+This doc lists **everything the UI needs that the API does not provide yet** —
+missing fields, unhonoured params, and endpoints that don't exist (currently
+mocked client-side so the UI works in-session but does not persist). Grep the
+code for the markers:
 
 ```
-grep -rn "WAITING BACKEND" app/components/SmartAlerts
+grep -rn "WAITING BACKEND"   app/components/SmartAlerts        # defaulted fields
+grep -rn "MOCK (no endpoint)" app/components/SmartAlerts/api.ts # fake endpoints
+grep -rn "NOT-YET-BACKED"    app/components/SmartAlerts app/mstore/issuesStore.ts
 ```
+
+Backend → view-model mapping is centralised in `factories.ts` (`makeIssue`,
+`makeIssueSessionCard`) — the one place to update when fields land.
 
 ---
 
-## 1. Backend — remaining data-contract gaps
+## A. Missing fields on existing endpoints
 
-| Field we need | Default now | UI effect while missing |
-|---|---|---|
-| `suggestedFix` (per-issue) | `fix = ''` in `makeIssue` | "Suggested fix" section hidden on the player Details tab |
-| short per-session `variation` headline | falls back to `description` → `journey` | redesign wants a 1-line headline distinct from the longer journey (`makeIssueSessionCard`) |
-| per-row **hidden / deleted flag** on `Issue` | inferred from the active `visibility` filter | when `visibility='all'` we can't mark which rows are hidden/deleted; the "Hidden"/"Deleted" row tags only show under the matching single-visibility view |
-| explicit **per-issue category** | derived locally from `issueLabels` ratios | `cat`/`categories` computed in `factories.ts` (Errors/UI/UX/Slowness by ratio); replace with server categories when available |
+`POST /smart-issues/{projectId}` (list) and `GET …/issue` return an `Issue`.
+The UI needs these fields added:
 
-Now **provided** by the contract (previously stubbed): real `critical` flag,
-`lastSeen`/`firstSeen`, `count`, `impactedSessions`, and `issueDescription`
-(problem text, via `GET …/issue`).
+| Field | Type | Used for | Fallback today |
+|---|---|---|---|
+| `suggestedFix` | string | Player "Suggested fix" section (hidden until present) | `''` |
+| `category` | `'Errors' \| 'UI/UX' \| 'Slowness'` (+ optional multi) | Category avatar/column + tab filter | **derived client-side** from `issueLabels` ratios in `factories.ts` — replace with a server value |
+| `hidden` / `deleted` | boolean per row | Row "Hidden"/"Deleted" tags when `visibility='all'` | inferred from the active `visibility` filter, so tags only show under a single-visibility view |
 
-## 2. Filter-semantics caveats (server-side)
+`POST …/search` (example sessions) → `SearchResultItem`:
 
-- **Category tab** → sent as `issueLabels` (single category), `issueLabelsMatch: 'and'`.
-- **Critical only** → dedicated `critical: true` request flag (real param), not a
-  label. Covers override-critical issues too.
-- **Journey labels** → `journeyLabels` with `journeyLabelsMatch = AND/OR` (the
-  match toggle) — separate from `issueLabelsMatch`.
-- **Segments ("Found in")** → real `segmentIds: string[]` on the list (and on
-  `/search` for the detail example-sessions scope). `[]` / omitted = full traffic.
-- **`relevantToMe`** (Critical-to-me checkbox) is still sent but **server-ignored**
-  — see § MOCKS (personal criticals aren't backed).
-- **Category tabs have no counts.** A list load is a **single** request; the
-  faded per-tab counts were removed because they'd need one `limit:1` query per
-  category (a 4-request fan-out per filter change). To bring them back cheaply,
-  add a server counts-by-category endpoint (or a `categoryCounts` field on the
-  list response) and render it on the tabs.
-- **Create ticket (Jira)** — the button on the detail page is UI-only. Wire it to
-  the Jira/ticket integration (project/issue-type mapping TBD).
-- **Session thumbnails** — the detail `SessionCard` shows a neutral play surface;
-  wire a thumbnail URL if one exists, otherwise the placeholder is intended.
+| Field | Type | Used for | Fallback today |
+|---|---|---|---|
+| `variation` | string (short, 1 line) | Session-card headline, distinct from the longer `journey` | falls back to `description` → `journey` |
+| `metadata.plan` | string | Plan chip on the card | hidden when absent |
+
+Already provided (no action): `critical`, `impact`, `impactedSessions`, `count`,
+`firstSeen`, `lastSeen`, `issueDescription` (GET …/issue), `segmentId`.
 
 ---
 
-## MOCKS — routes that DO NOT EXIST server-side
+## B. Request params the server should honour
 
-The UI is fully built, but two route groups were **never shipped** and are
-**mocked in `api.ts`** — they do NOT call the network (no 404s), they resolve a
-default / no-op. Features behave optimistically in-session via the store but
-**do not persist across reload**. Swap each mock body for a real `client.*`
-call when the backend ships — no other frontend change needed. Grep:
+Sent by the UI today; confirm/implement server-side:
 
-```
-grep -rn "MOCK (no endpoint)" app/components/SmartAlerts/api.ts
-grep -rn "NOT-YET-BACKED"     app/components/SmartAlerts app/mstore/issuesStore.ts
-```
-
-| Route (does not exist) | Mock in `api.ts` | Effect |
+| Param | Endpoint | Status |
 |---|---|---|
-| `GET/POST/DELETE …/my-criticals` | `getMyCriticals`→`[]`, `addMyCritical`/`removeMyCritical`→no-op | "critical for me" (store `mine`) resets on reload |
-| `GET/PUT …/segment-capture`, `PUT …/segment-capture/{id}` | `getSegmentCapture`→`{mode:'full',…}`, `setCaptureMode`/`setSegmentCapture`→no-op | capture **mode** (full/segments) + per-segment **instructions** reset on reload |
+| `critical: boolean` | list | confirm it covers issues made critical via a definition, not only a label |
+| `segmentIds: string[]` | list **and** `/search` | scope to saved-search segments; `[]`/omitted = full traffic |
+| `journeyLabelsMatch: 'and'\|'or'` | `/search` | mirror the list's param on the sessions search |
+| `relevantToMe: boolean` | list | **ignored today** — needs the critical attribution in §C.1 (filter to issues flagged by the current user's own descriptions) |
 
-**Real, not mocked** (don't confuse with the above): the per-segment capture
-flag "Identify issues in this segment" persists as **`isCapture`** on the saved
-search (`createSegment`/`updateSegment`), and `segmentIds` filtering on the list
-+ `/search`. Only capture *mode*, *instructions* and *my-criticals* are unbacked.
+**Category tab counts** — the tabs render without counts. A count needs either a
+`categoryCounts` map on the list response, or a counts-by-category endpoint. (We
+refuse to fan out N `limit:1` requests per filter change.)
 
-### Per-user "critical for me" (three-state critical)
-- Triangle is three-state: **none → project (agent) → mine**. Clicking cycles
-  only my personal layer (`markMine`/`removeMine`) — never the project flag.
-  Removing the project-wide flag (with a teaching reason) lives in the list row
-  ellipsis + the detail chip.
-- Store: `mine: string[]`, `critState()`, `agentCritical()`, `isRelevant()`,
-  `relevantCount`. Hydrated by `getMyCriticals` — **MOCK → `[]`** (no endpoint),
-  so `mine` is in-session only.
-- Endpoints needed (DO NOT EXIST): `GET …/my-criticals` → `string[]` (issue
-  names); `POST …/my-criticals {issue}`; `DELETE …/my-criticals {issue}`.
-- "Critical to me" Display checkbox → `relevantToMe` list param (server ignores
-  it for now, so the filter is inert until backed).
+---
 
-### Traffic segments (agent capture over saved searches)
-The old per-Issues "Focus" concept is gone: a segment is now a **Data
-Management saved search** (`/sessions/search/saved`) with an agent-capture
-layer on top, shared by the Issues pill and the DM Segments list. The saved
-search itself is real, and the per-segment capture flag persists as `isCapture`
-on it; only the capture **mode** + per-segment **instructions** are MOCK.
+## C. Endpoints that DO NOT EXIST (implement these)
 
-- UI: `segments/SegmentsIndicator` (the Issues title pill — capture-mode switch
-  + manage/picker popover), `segments/SegmentDrawer` (shared create/edit
-  slide-out, real `<SessionFilters/>` omni-search, used from both Issues and
-  DM), `segments/SegmentConditions` (query hover card), plus the DM Segments
-  list's "Issues Agent" capture column + creator meta line, TagFilter "Found in"
-  origins, and the per-row origin chip (shown once segments exist).
-- Store (`issuesStore`): `segments: SavedSegment[]` (real saved searches merged
-  with the capture layer), `captureMode`, `origins`, `segmentById`,
-  `visibleSegments`, `capturingSegments`, `activeSegmentCount`, `setCaptureMode`,
-  `enableCapture`, `toggleSegment`, `saveSegment`, `deleteSegment`. The list is
-  real (`fetchSegments` in DataManagement/Segments/api). Per-segment capture
-  persists via `isCapture` (real). `getSegmentCapture` is **MOCK → empty**, so
-  capture **mode** + **instructions** are in-session only.
+All mocked in `api.ts` / `issuesStore.ts` — the UI is fully built and will work
+with **no frontend change** once these ship.
 
-Endpoints needed — capture MODE + INSTRUCTIONS (these routes DO NOT EXIST; mocked
-in `api.ts`, keyed by saved-search id):
-- `GET …/segment-capture` → `{ mode: 'full'|'segments', instructions:
-  Record<segmentId, string> }` (per-segment `active` is redundant — read it from
-  each saved search's `isCapture`).
-- `PUT …/segment-capture` `{ mode }` — set the project capture mode.
-- `PUT …/segment-capture/{segmentId}` `{ instructions? }` — per-segment agent
-  instructions.
+### C.1 Critical definitions (the "critical is a described rule" model, §14)
 
-Real, already wired: issues carry `segmentId` (surfacing segment); the list +
-`/search` honour `segmentIds`; per-segment capture flag is `isCapture` on the
-saved search.
+Criticality is no longer a per-issue flag. The customer writes descriptions of
+what "critical" means (each with an author); the agent flags issues that match,
+per user. The UI derives everything from that attribution.
 
-Also required on the segment (saved-search) side:
-- **Traffic estimate** — `trafficPct` / `sessionsPerDay` per segment. Both are
-  `0` today; the DM "Traffic" column and the drawer's estimate banner stay
-  hidden/neutral until the backend computes them.
-- **Creator name** — `/sessions/search/saved` returns only `userId`. The store
-  resolves the name from the members list and falls back to "a teammate" when it
-  isn't loaded; returning a creator name/handle on the segment removes that
-  fallback.
+- `GET/POST/PATCH/DELETE …/critical-definitions`
+  → `{ id, description, createdBy: { id, name }, createdAt }`.
+  (No name field on the rule — the description *is* the rule.)
+- **Per-issue attribution** on every `Issue`: `criticalBy: [{ definitionId, userId }]`
+  — which descriptions matched, and whose. **Cannot be recomputed client-side**;
+  the UI needs it to (a) show *why* a row is critical, (b) power the three states
+  none/team/mine, (c) filter "Critical to me" (`relevantToMe`, §B).
+- `POST …/issues/:id/not-critical { reason }` — **per-user** suppression + the
+  reason as agent feedback (never changes a teammate's view). Plus a way to
+  reverse it (e.g. `DELETE …/issues/:id/not-critical`).
 
-### Notes
-- "Critical to me" count = `mine.length` (personal criticals only); segment
-  finds aren't included until `segmentId`/capture are backed.
-- Capture mode + instructions persist via MOCK no-ops (capture flag itself is
-  real via `isCapture`), so
-  they're optimistic and revert on reload until the endpoints ship.
+Client stand-ins today (in `issuesStore.ts`): `criticalRules`, `criticalBy`,
+`notCritical`, and the derivations `matchedRules`/`rulesFor`/`critState`
+(`none`|`team`|`mine`). The server `critical` boolean is currently treated as one
+anonymous "agent" match so flagged issues still read critical.
+
+### C.2 Journey tags (CRUD)
+
+Journey tags are LLM-matched descriptions applied to sessions. The manager +
+the "New tag" flow need:
+
+- `GET/POST/PATCH/DELETE …/journey-tags` → `{ name, description, source }`
+  (`source` = predefined vs custom, provenance only — predefined tags are still
+  renamable/removable). Name must be unique (the UI surfaces a "name taken"
+  error). New/edited tags apply to sessions captured from then on.
+
+Client stand-ins: `predefinedTags`, `customTags`, `addCustomTag`/`updateTag`/
+`removeTag`, seeded from `PREDEFINED_JOURNEY_TAGS`.
+
+### C.3 Segment capture (mode + instructions)
+
+The per-segment capture flag itself is **already real** — it persists as
+`isCapture` on the saved search (`/sessions/search/saved`, via `createSegment`/
+`updateSegment`). Only these two are missing, keyed by saved-search id:
+
+- `GET …/segment-capture` → `{ mode: 'full'|'segments', instructions: Record<segmentId, string> }`
+  (per-segment `active` is redundant — read it from each saved search's `isCapture`).
+- `PUT …/segment-capture { mode }` — project capture mode.
+- `PUT …/segment-capture/{segmentId} { instructions }` — per-segment agent instructions.
+
+---
+
+## D. Saved-search (segment) additions
+
+Segments are Data Management saved searches (`/sessions/search/saved`) reused by
+Issues. `isCapture` + `totalSessionCount` already added. Still needed:
+
+- **Traffic estimate**: `trafficPct` and/or `sessionsPerDay` per segment — the DM
+  "Traffic" column + the drawer estimate banner stay neutral until these exist
+  (`0` today).
+- **Creator name**: the payload returns only `userId`; the store resolves the
+  name from the members list and falls back to "a teammate" when it isn't
+  loaded. Returning a creator name/handle removes that fallback.
+
+---
+
+## E. Verify against a running backend (couldn't here)
+
+- **Base-path routing** — `/v2/smart-issues` is routed via the `noChalice` branch
+  in `api_client.ts` (like `/kai`). Confirm the resolved URL on **both**
+  self-hosted (`origin/v2/smart-issues/…`) and the SaaS gateway.
+- `critical` / `segmentIds` filters + `journeyLabelsMatch` on `/search` round-trip.
+- `isCapture` write path (saved-search PUT carries it) persists on reload.
+- `GET …/issue?name=` deep-link resolves issues off the current page.
+- `?jumpto=` / `issueTimestamp` seeks the player to the issue moment.
+
+---
+
+## F. Frontend-only follow-ups (no backend needed)
+
+- **Create ticket (Jira)** — detail-page button is UI-only; wire to the ticket
+  integration (project/issue-type mapping TBD).
+- **Session thumbnails** — the detail card shows a neutral play surface; wire a
+  thumbnail URL if one exists (otherwise the placeholder is intended).
+
+---
+
+## G. Deferred to the kai-testing-ui merge
+
+The **Agents Preferences** panel (`AgentsPreferences/{index,CriticalRules,JourneyTags}`)
+lives in the kai-testing-ui branch's shared settings surface (needs
+`KaiSettings/.../confirms` + chrome). The Issues-side pieces it imports —
+`CriticalDialog`/`NotCriticalDialog`/`TagDialog`, `CriticalRuleFields`, the store
+model above, and `Shared/CountSuffix` — are ported here so it slots in on merge.
+The critical-definitions + journey-tag endpoints (§C.1, §C.2) back both surfaces.

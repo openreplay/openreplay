@@ -16,13 +16,12 @@ interface Props {
   /** when set, the title is click-to-rename */
   editable?: boolean;
   onRename?: (name: string) => void;
-  /** when set, the Critical chip becomes a two-way toggle */
-  onSetCritical?: (val: boolean, reasons?: string[], note?: string) => void;
-  /** reason vocabulary for the un-mark popover (server-provided) */
-  criticalReasons?: string[];
-  /** the critical flag is only in my personal layer (no agent flag) — removal
-      is instant instead of the teaching popover */
-  criticalPersonalOnly?: boolean;
+  /** opens the shared CriticalDialog (explain / describe / not-critical) */
+  onOpenCritical?: () => void;
+  /** one of MY descriptions matched, not just a teammate's/agent's */
+  criticalMine?: boolean;
+  /** who wrote the matching description, when it isn't mine */
+  criticalBy?: string;
   /** right-aligned actions on the title row (e.g. Create ticket / Hide) */
   actions?: React.ReactNode;
   /** title+actions header, full-width divider, then body */
@@ -36,9 +35,9 @@ export default function ProblemCard({
   issue,
   editable,
   onRename,
-  onSetCritical,
-  criticalReasons,
-  criticalPersonalOnly,
+  onOpenCritical,
+  criticalMine,
+  criticalBy,
   actions,
   framed,
   hideProblem,
@@ -64,13 +63,13 @@ export default function ProblemCard({
       </span>
     </span>,
   );
-  if (onSetCritical || issue.critical)
+  if (onOpenCritical || issue.critical)
     cells.push(
       <CriticalControl
         critical={issue.critical}
-        onSet={onSetCritical}
-        reasons={criticalReasons}
-        personalOnly={criticalPersonalOnly}
+        mine={criticalMine}
+        by={criticalBy}
+        onOpen={onOpenCritical}
       />,
     );
   if (issue.seenAgoMin != null)
