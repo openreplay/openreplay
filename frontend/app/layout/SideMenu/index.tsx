@@ -120,6 +120,7 @@ function SideMenu(props: Props) {
     [MENU.TEST_AGENTS]: () => withSiteId(routes.testAgents(), siteId),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
     [PREFERENCES_MENU.TEST_AGENTS]: () => client(CLIENT_TABS.TEST_AGENTS),
+    [PREFERENCES_MENU.AGENTS]: () => client(CLIENT_TABS.AGENTS),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
     [MENU.USERS]: () => withSiteId(routes.dataManagement.usersList(), siteId),
     [MENU.EVENTS]: () => withSiteId(routes.dataManagement.eventsList(), siteId),

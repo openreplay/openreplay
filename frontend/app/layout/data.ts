@@ -38,6 +38,7 @@ export const enum PREFERENCES_MENU {
   BILLING = 'billing',
   EXPORTED_VIDEOS = 'exported-videos',
   TEST_AGENTS = 'test-agents',
+  AGENTS = 'agents',
 }
 
 export const enum MENU {
@@ -260,6 +261,16 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         label: t('Test Agents'),
         key: PREFERENCES_MENU.TEST_AGENTS,
         icon: 'analytics',
+        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+      },
+      {
+        // shared preferences for the agents (Mehdi 07-27): notifications by
+        // category + behaviour toggles. Core config (environments, run defaults)
+        // stays with each agent's page. Gated behind the same flag as the Tests
+        // agent page while it's in progress.
+        label: t('Agents'),
+        key: PREFERENCES_MENU.AGENTS,
+        icon: 'sparkles',
         hidden: window.localStorage.getItem('__test_agents__') !== 'true',
       },
     ],

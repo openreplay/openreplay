@@ -26,6 +26,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
+import CountSuffix from 'Shared/CountSuffix';
 import FullPagination from 'Shared/FullPagination';
 
 import {
@@ -432,9 +433,7 @@ function TestsTab() {
     });
   };
 
-  const faded = (n: number) => (
-    <span style={{ opacity: 0.5, marginLeft: 5 }}>{n}</span>
-  );
+  const faded = (n: number) => <CountSuffix n={n} />;
   const statusOptions = [
     { value: 'all', label: <span>{t('All')}{faded(allCount)}</span> },
     // only when something awaits review — no point in an always-empty tab

@@ -1,12 +1,13 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions';
 import { Button, Tabs, Tooltip } from 'antd';
-import { Album, Info } from 'lucide-react';
+import { Album, Info, Settings as SettingsIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
+import { useHistory } from 'App/routing';
 
 import SiteDropdown from 'Shared/SiteDropdown';
 
@@ -20,6 +21,7 @@ import { BrowserTestsProjectProvider } from './queries';
 function KaiSettings() {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
+  const history = useHistory();
   // controlled by the ui store so drawers can deep-link across tabs ("View runs")
   const { activeTab } = useKaiUi();
   // active tab persists in the URL (?tab=) so a reload / shared link restores it
@@ -58,8 +60,10 @@ function KaiSettings() {
       children: <RunsTab />,
     },
     {
+      // renamed from "Settings" (Mehdi 07-27): only core config lives here;
+      // behaviour toggles + notifications moved to Preferences > Agents
       key: 'settings',
-      label: t('Settings'),
+      label: t('Environments'),
       children: <SettingsTab />,
     },
   ];
@@ -86,6 +90,15 @@ function KaiSettings() {
             </Tooltip>
           </div>
           <div className="flex items-center gap-2">
+            {/* shortcut to the shared agent preferences (Mehdi 07-27):
+                notifications + behaviour live there, not on this page */}
+            <Button
+              type="text"
+              icon={<SettingsIcon size={14} />}
+              onClick={() => history.push('/client/agents?agent=tests')}
+            >
+              {t('Settings')}
+            </Button>
             <a
               href="https://docs.openreplay.com/"
               target="_blank"
