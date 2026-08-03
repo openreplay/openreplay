@@ -252,6 +252,9 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         hidden: menuHidden.videoExport,
       },
       {
+        // shared agent preferences (journey tags, critical rules, behaviour).
+        // Gated behind the same in-progress flag as the rest of the Agents
+        // section (main-nav Agents + Smart Issues routes).
         label: t('Agents'),
         key: PREFERENCES_MENU.AGENTS,
         icon: 'sparkles',

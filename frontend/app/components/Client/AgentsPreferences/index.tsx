@@ -13,20 +13,25 @@ import {
   useUpdateNotifications,
   useUpdateSettings,
 } from '../KaiSettings/queries';
+import CriticalRules from './CriticalRules';
+import JourneyTags from './JourneyTags';
 
 /* Preferences > Agents (Mehdi 07-27): the formula is MAIN components stay as
    tabs in each agent's page (Tests keeps Environments + run defaults), while
-   preferences, notifications and behaviour toggles live HERE — otherwise every
-   agent grows a Settings tab that competes with Preferences.
+   preferences, journey tags, critical rules, notifications and behaviour
+   toggles live HERE — otherwise every agent grows a Settings tab that competes
+   with Preferences.
 
    ONE TAB PER AGENT. The tab says which agent, so the sections inside are free
-   to say what they are — Notifications, Behaviour. The chrome mirrors the Tests
-   agent page (KaiSettings/index.tsx): bordered white card, one border-b header
-   row with the 18px semibold title, then antd Tabs at the same 16px tab-bar
-   padding, each panel `p-5` with Title level 5 sections split by Dividers.
+   to say what they are — Journey tags, What's critical, Notifications,
+   Behaviour. The chrome mirrors the Tests agent page (KaiSettings/index.tsx):
+   bordered white card, one border-b header row with the 18px semibold title,
+   then antd Tabs at the same 16px tab-bar padding, each panel `p-5` with Title
+   level 5 sections split by Dividers.
 
-   Only the Tests tab ships here; the Issues (journey tags + critical rules) and
-   Audits tabs land on their own branches. See todo.md. */
+   Both tabs ship here (merged from kai-testing-ui + smart-issues-ui): Tests
+   (notifications + behaviour) and Issues (journey tags + critical rules). The
+   Audits tab lands on its own branch. See todo.md. */
 
 /* full width is for tables and controls, never for a line of prose: hints stay
    at a readable measure so they wrap where the eye expects, not at 1300px.
@@ -34,8 +39,8 @@ import {
    does nothing to an inline element. */
 const PROSE = { display: 'block', maxWidth: '72ch' } as const;
 
-type AgentKey = 'tests';
-const AGENTS: AgentKey[] = ['tests'];
+type AgentKey = 'tests' | 'issues';
+const AGENTS: AgentKey[] = ['tests', 'issues'];
 
 /** one preference: label, hint, then its controls DIRECTLY BENEATH, left
     aligned (Mehdi 07-30). A label on the left with its control pinned right puts
@@ -122,7 +127,7 @@ function AgentsPreferences() {
   const weeklySummary = !!notifications?.weeklySummary;
 
   // the agent pages' Settings buttons deep-link to their own tab, the same
-  // query-param pattern Data Management's Properties page uses (?view=)
+  // query-param pattern Data Management's Properties page uses (?agent=)
   const requested = new URLSearchParams(location.search).get(
     'agent',
   ) as AgentKey | null;
@@ -192,6 +197,31 @@ function AgentsPreferences() {
         </div>
       ),
     },
+    {
+      key: 'issues',
+      label: t('Issues'),
+      children: (
+        <div className="flex flex-col gap-8 p-5">
+          <PrefSection
+            title={t('Journey tags')}
+            hint={t(
+              'Plain-words descriptions the agent matches against each session’s journey. Rename or remove any of them; new tags apply to sessions captured from now on.',
+            )}
+          >
+            <JourneyTags />
+          </PrefSection>
+
+          <PrefSection
+            title={t('What’s critical')}
+            hint={t(
+              'Describe what critical means to you. The agent flags issues that match, per author, so “Critical to me” filters by whose description matched.',
+            )}
+          >
+            <CriticalRules />
+          </PrefSection>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -214,7 +244,7 @@ function AgentsPreferences() {
           <Tooltip
             placement="bottom"
             title={t(
-              'Notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
+              'Journey tags, critical rules, notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
             )}
           >
             <span
