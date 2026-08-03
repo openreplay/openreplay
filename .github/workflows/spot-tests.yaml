@@ -1,0 +1,58 @@
+name: Spot build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "dev" ]
+    paths:
+      - spot/**
+      - .github/workflows/spot-tests.yaml
+  pull_request:
+    branches: [ "dev", "main" ]
+    paths:
+      - spot/**
+      - .github/workflows/spot-tests.yaml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Typecheck and build Spot
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.7
+
+      - name: Cache bun install cache and modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            spot/node_modules
+          key: ${{ runner.os }}-spot-bun-${{ hashFiles('spot/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-spot-bun-
+
+      - name: Install
+        working-directory: spot
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        working-directory: spot
+        run: bun run compile
+
+      - name: Build (chrome)
+        working-directory: spot
+        run: bun run build
+
+      - name: Build (firefox)
+        working-directory: spot
+        run: bun run build:firefox

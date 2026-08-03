@@ -142,7 +142,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3333,
-      open: true,
+      open: !process.env.CI,
       fs: {
         allow: [path.resolve(__dirname), PLAYER_DIR],
       },
@@ -151,7 +151,7 @@ export default defineConfig(({ mode }) => {
       exclude: ['@openreplay/player'],
     },
     build: {
-      outDir: 'dist',
+      outDir: 'public',
       emptyOutDir: true,
       sourcemap: env.SOURCEMAP === 'true',
       target: 'es2022',

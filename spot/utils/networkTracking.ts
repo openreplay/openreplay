@@ -1,10 +1,12 @@
 import {
-  SpotNetworkRequest,
   filterBody,
   filterHeaders,
   tryFilterUrl,
-  TrackedRequest,
   getNetworkRequestType,
+} from "./networkTrackingUtils";
+import type {
+  SpotNetworkRequest,
+  TrackedRequest,
 } from "./networkTrackingUtils";
 
 export const rawRequests: Array<

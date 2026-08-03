@@ -1,7 +1,7 @@
 import logger from '../logger';
 import { TarFile } from 'js-untar';
 import { FrameSnapshot } from '../common/parseFrames';
-import { getResourceFromNetworkRequest } from '../';
+import { getResourceFromNetworkRequest } from '../web/types/resource';
 import ListWalker from '../common/ListWalker'
 import type { Store } from '../index';
 import { IMessageManager } from '../player/Animator';

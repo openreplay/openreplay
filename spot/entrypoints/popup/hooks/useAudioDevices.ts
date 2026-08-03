@@ -1,5 +1,5 @@
 import { createSignal, createEffect, onCleanup } from "solid-js";
-import { AudioDevice } from "../types";
+import type { AudioDevice } from "../types";
 import { getAudioDevices } from "../utils/audio";
 import { onMessage, sendMessage } from "~/utils/messaging";
 import {

@@ -1,5 +1,6 @@
 import { createSignal, onMount } from "solid-js";
-import { AppState, RecordingArea } from "../types";
+import { AppState } from "../types";
+import type { RecordingArea } from "../types";
 import { onMessage, sendMessage } from "~/utils/messaging";
 
 export function useAppState() {

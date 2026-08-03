@@ -6,7 +6,7 @@ import { searchStore } from '../../app/mstore/index';
 import { checkEventWithFilters } from '../../app/components/Session_/Player/Controls/checkEventWithFilters';
 import { mockSession } from '../mocks/sessionData';
 
-jest.mock('../../app/player', () => ({
+jest.mock('../../../player/src', () => ({
   createWebPlayer: jest.fn(),
   createIOSPlayer: jest.fn(),
   createClickMapPlayer: jest.fn(),
@@ -30,7 +30,7 @@ jest.mock('../../app/services', () => ({
   },
 }));
 
-jest.mock('App/player/web/network/loadFiles', () => ({
+jest.mock('Player/web/network/loadFiles', () => ({
   loadFile: jest.fn(),
 }));
 

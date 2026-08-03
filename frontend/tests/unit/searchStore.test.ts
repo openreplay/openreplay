@@ -83,9 +83,16 @@ jest.mock('App/services', () => ({
     getSessions: jest.fn().mockResolvedValue({ sessions: [], total: 0 }),
   },
 }));
+const mockFilterStore = {
+  checkDefaultSubfilters: jest.fn(() => false),
+  getEventFilters: jest.fn(async () => [] as any[]),
+  findEvent: jest.fn(),
+};
+
 jest.mock('App/mstore', () => ({
   sessionStore: mockSessionStore,
   settingsStore: mockSettingsStore,
+  filterStore: mockFilterStore,
 }));
 
 import SearchStore, {

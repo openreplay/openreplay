@@ -10,6 +10,20 @@ if (typeof globalThis.TextDecoder === 'undefined') {
   globalThis.TextDecoder = TextDecoder;
 }
 
+if (typeof URL.createObjectURL === 'undefined') {
+  Object.defineProperty(URL, 'createObjectURL', {
+    writable: true,
+    value: jest.fn(() => 'blob:mock'),
+  });
+}
+
+if (typeof URL.revokeObjectURL === 'undefined') {
+  Object.defineProperty(URL, 'revokeObjectURL', {
+    writable: true,
+    value: jest.fn(),
+  });
+}
+
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   value: jest.fn(() => ({
     canvas: {

@@ -5,5 +5,7 @@
     "lib": ["es2022", "dom"],
     "declaration": true,
     "declarationDir": "../../dist/types",
+    "incremental": true,
+    "tsBuildInfoFile": "../../build/.tsbuildinfo-main",
   }
 }

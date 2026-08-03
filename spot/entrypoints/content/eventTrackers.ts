@@ -1,4 +1,5 @@
-import { onCLS, onINP, onLCP, Metric } from "web-vitals";
+import { onCLS, onINP, onLCP } from "web-vitals";
+import type { Metric } from "web-vitals";
 import { sendMessage } from "~/utils/messaging";
 
 export const clicksArray: { time: number; label: string }[] = [];

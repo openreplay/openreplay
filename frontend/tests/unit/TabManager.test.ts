@@ -1,8 +1,8 @@
 import { it, expect, beforeEach, jest } from '@jest/globals';
-import TabSessionManager from '../../app/player/web/TabManager';
-import SimpleStore from '../../app/player/common/SimpleStore';
+import TabSessionManager from '../../../player/src/web/TabManager';
+import SimpleStore from '../../../player/src/common/SimpleStore';
 import { TYPES as EVENT_TYPES } from '../../app/types/session/event';
-import { MType } from '../../app/player/web/messages/raw.gen';
+import { MType } from '../../../player/src/web/messages/raw.gen';
 
 jest.mock('@medv/finder', () => ({
   default: jest.fn(() => 'mocked network-proxy content'),
@@ -98,8 +98,9 @@ it('onFileReadSuccess should update store with lists and performance data', () =
 it('decodeMessage should delegate to decoder', () => {
   const msg = { tp: MType.Timestamp, time: 0 } as any;
   const decoder = (manager as any).decoder;
+  const decodeSpy = jest.spyOn(decoder, 'decode').mockReturnValue(msg);
   manager.decodeMessage(msg);
-  expect(decoder.decode).toHaveBeenCalledWith(msg);
+  expect(decodeSpy).toHaveBeenCalledWith(msg);
 });
 
 it('sortDomRemoveMessages comparator should prioritize head nodes', () => {

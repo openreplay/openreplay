@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import SimpleStore from '../../app/player/common/SimpleStore';
+import SimpleStore from '../../../player/src/common/SimpleStore';
 
 interface State {
   value: number;

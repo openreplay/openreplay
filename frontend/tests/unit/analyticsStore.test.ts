@@ -24,11 +24,14 @@ jest.mock('../../app/services', () => ({
 
 const mockGetEventFilters = jest.fn();
 const mockFindEvent = jest.fn();
+const mockCheckDefaultSubfilters = jest.fn(() => false);
 
 jest.mock('../../app/mstore', () => ({
   filterStore: {
     getEventFilters: (...args: any[]) => mockGetEventFilters(...args),
     findEvent: (...args: any[]) => mockFindEvent(...args),
+    checkDefaultSubfilters: (...args: any[]) =>
+      mockCheckDefaultSubfilters(...args),
   },
 }));
 

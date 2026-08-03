@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { isRootNode } from '../../app/player/guards';
+import { isRootNode } from '../../../player/src/guards';
 
 describe('isRootNode', () => {
   it('returns true for document', () => {

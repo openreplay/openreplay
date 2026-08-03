@@ -1,4 +1,4 @@
-import { Component } from "solid-js";
+import type { Component } from "solid-js";
 import orLogo from "~/assets/orSpot.svg";
 import {
   HomePageSvg,

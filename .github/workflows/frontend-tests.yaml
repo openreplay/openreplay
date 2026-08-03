@@ -4,7 +4,15 @@ on:
   pull_request:
     paths:
       - 'frontend/**'
-      - '.github/workflows/frontend-test.yaml'
+      - 'player/**'
+      - '.github/workflows/frontend-tests.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -16,11 +24,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: frontend/.nvmrc
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install player dependencies
+        working-directory: player
+        # player is pinned by a committed player/yarn.lock and has no
+        # package-lock.json; this matches build-mcpb.yaml.
+        run: yarn install --frozen-lockfile
 
       - name: Install dependencies
         working-directory: frontend
-        run: yarn
+        run: yarn --immutable
 
       - name: Run tests
         working-directory: frontend
@@ -29,4 +45,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           directory: frontend/coverage/
+          flags: ui
+          name: ui

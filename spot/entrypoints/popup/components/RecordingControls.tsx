@@ -1,7 +1,8 @@
-import { Component } from "solid-js";
+import type { Component } from "solid-js";
 import { RecordTabSvg, RecordDesktopSvg } from "../Icons";
 import Button from "~/entrypoints/popup/Button";
-import { AppState, RecordingArea } from "../types";
+import { AppState } from "../types";
+import type { RecordingArea } from "../types";
 
 interface RecordingControlsProps {
   state: AppState;

@@ -1,9 +1,10 @@
-import createNetworkProxy, { INetworkMessage } from "@openreplay/network-proxy";
+import createNetworkProxy from "@openreplay/network-proxy";
+import type { INetworkMessage } from "@openreplay/network-proxy";
 import {
-  SpotNetworkRequest,
   getTopWindow,
   getNetworkRequestType,
 } from "./networkTrackingUtils";
+import type { SpotNetworkRequest } from "./networkTrackingUtils";
 import { pageMessages } from "~/utils/pageMessages";
 
 let defaultFetch: typeof fetch | undefined;

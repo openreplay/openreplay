@@ -1,5 +1,5 @@
 import { test, describe, expect } from '@jest/globals';
-import { resolveCSS } from '../../app/player/web/messages/rewriter/urlResolve';
+import { resolveCSS } from '../../../player/src/web/messages/rewriter/urlResolve';
 
 const strings = [
   `@import "custom.css";`,

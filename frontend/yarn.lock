@@ -1581,13 +1581,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emnapi/core@npm:^1.10.0":
-  version: 1.11.1
-  resolution: "@emnapi/core@npm:1.11.1"
+"@emnapi/core@npm:2.0.0-alpha.3":
+  version: 2.0.0-alpha.3
+  resolution: "@emnapi/core@npm:2.0.0-alpha.3"
   dependencies:
-    "@emnapi/wasi-threads": "npm:1.2.2"
+    "@emnapi/wasi-threads": "npm:2.0.1"
     tslib: "npm:^2.4.0"
-  checksum: 10c1/383b82d2d84a6b97036e15d11a5f5c3ea5541febb67e3ff9ad228de9e2f66c3f26f76547d8c8dee0aa43ab807b0008ab9863a28b497c1ed022cb12e20754dbea
+  checksum: 10c1/5c9cebeb4814dd25c3333986b3c3cce3724e4796059bbe76d51af6e22d17437569ac05957a29c7830d3af91486343d3cc571bbc22e4f06160d305e8e0d638b73
+  languageName: node
+  linkType: hard
+
+"@emnapi/core@npm:^1.11.1":
+  version: 1.11.3
+  resolution: "@emnapi/core@npm:1.11.3"
+  dependencies:
+    "@emnapi/wasi-threads": "npm:1.2.3"
+    tslib: "npm:^2.4.0"
+  checksum: 10c1/6f9805e44716a56cf3f1a264a981fd4723bd508a4b7f5eb878cd65052f270037845a7fe3b278ea4952bf2915e2ba6be46ba1cae27d6075f8384edde97fab8bfd
   languageName: node
   linkType: hard
 
@@ -1600,12 +1610,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emnapi/runtime@npm:^1.10.0":
-  version: 1.11.1
-  resolution: "@emnapi/runtime@npm:1.11.1"
+"@emnapi/runtime@npm:2.0.0-alpha.3":
+  version: 2.0.0-alpha.3
+  resolution: "@emnapi/runtime@npm:2.0.0-alpha.3"
   dependencies:
     tslib: "npm:^2.4.0"
-  checksum: 10c1/e8d9f629ba02a674c6217fd445dcdaf0cd0c29bdb4b73f265a3e929422073d401c653b2f2caab44b1e6dff37ef008c2addfc57045903a28043164697afcb977d
+  checksum: 10c1/91942cab63bc4da1ca06685162e939ac708ad636e415af46a021cd4468a968f62dd2daab0ccdf2abb316c0996cc75e66e720c1526d08c93baf4d318153c21ff1
+  languageName: node
+  linkType: hard
+
+"@emnapi/runtime@npm:^1.11.1":
+  version: 1.11.3
+  resolution: "@emnapi/runtime@npm:1.11.3"
+  dependencies:
+    tslib: "npm:^2.4.0"
+  checksum: 10c1/9c22735f288134072a0e86d3d291a17b2741d025155edcc6ddbd2cfc1f19707a91b89aa09dbbbfcb7118370453e7323756cb130f705358cf4459e005d672a539
   languageName: node
   linkType: hard
 
@@ -1618,12 +1637,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emnapi/wasi-threads@npm:1.2.2, @emnapi/wasi-threads@npm:^1.2.1":
-  version: 1.2.2
-  resolution: "@emnapi/wasi-threads@npm:1.2.2"
+"@emnapi/wasi-threads@npm:1.2.3, @emnapi/wasi-threads@npm:^1.2.2":
+  version: 1.2.3
+  resolution: "@emnapi/wasi-threads@npm:1.2.3"
   dependencies:
     tslib: "npm:^2.4.0"
-  checksum: 10c1/1315624c1f0ce33ceb94d7abd45b3075fd5daf3ab4e464eb9a4688bfa2fb1c0d415a9316063b8b5705aadfb24078fa68f29ba1cd98c6f638cc17ebf04b47d279
+  checksum: 10c1/1bccbc30b2af78e996b89faa67ecf7c513aad35d1bdd791320589a654c9fd2bbd65c702a42acf62b8b2baf5d6d26db4d3cfea30967778f6698d89aa6044a0617
+  languageName: node
+  linkType: hard
+
+"@emnapi/wasi-threads@npm:2.0.1":
+  version: 2.0.1
+  resolution: "@emnapi/wasi-threads@npm:2.0.1"
+  dependencies:
+    tslib: "npm:^2.4.0"
+  checksum: 10c1/c5031992b3c10d636030de8e768641e06f70eec430fa2323551fef79e122d680c09d73706d52a06baa19120ca93469f326a49dfba07cf5222e0346bf410a32bf
   languageName: node
   linkType: hard
 
@@ -2289,15 +2317,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/wasm-runtime@npm:^1.1.4":
-  version: 1.1.5
-  resolution: "@napi-rs/wasm-runtime@npm:1.1.5"
+"@napi-rs/wasm-runtime@npm:^1.1.4, @napi-rs/wasm-runtime@npm:^1.2.0":
+  version: 1.2.2
+  resolution: "@napi-rs/wasm-runtime@npm:1.2.2"
   dependencies:
-    "@tybys/wasm-util": "npm:^0.10.2"
+    "@tybys/wasm-util": "npm:^0.10.3"
   peerDependencies:
-    "@emnapi/core": ^1.7.1
-    "@emnapi/runtime": ^1.7.1
-  checksum: 10c1/039fb473f638039e4a0e9d7a112db78fab01aeae573b22ce4d16c25b392e81e2e11c1c6affd9e384445a254fdf86831567e565043c460d9659eac17318a01407
+    "@emnapi/core": ^1.7.1 || ^2.0.0-alpha.3
+    "@emnapi/runtime": ^1.7.1 || ^2.0.0-alpha.3
+  checksum: 10c1/04835d4f834d04ecff3257613ecfe46e235374e564df63daec16a0a82f257d1668866ce48b4a5912412f638c65fa84c55ffda492cd79e13acff2f64a52ef17ef
   languageName: node
   linkType: hard
 
@@ -2368,10 +2396,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oxc-project/types@npm:=0.133.0":
-  version: 0.133.0
-  resolution: "@oxc-project/types@npm:0.133.0"
-  checksum: 10c1/44e92a953d3df3bf95b57cedac6e435cf0681f8c88db8489d91a3f07555e25f6d6f96d0eae4217225132e72999ead3d2c3eb6d85a0cfeabd31e7f5715fe97cf0
+"@oxc-project/types@npm:=0.142.0":
+  version: 0.142.0
+  resolution: "@oxc-project/types@npm:0.142.0"
+  checksum: 10c1/d648207d17e4aa37ce05e8aaa6a48699e8b494bd746ef88a35a5782257c9f735ebf4f9af7350621a8d369a51bff8674284d44bd8ffe0a969de76a13abc5cbc5e
   languageName: node
   linkType: hard
 
@@ -3163,111 +3191,111 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rolldown/binding-android-arm64@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-android-arm64@npm:1.0.3"
+"@rolldown/binding-android-arm64@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-android-arm64@npm:1.2.1"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-darwin-arm64@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-darwin-arm64@npm:1.0.3"
+"@rolldown/binding-darwin-arm64@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-darwin-arm64@npm:1.2.1"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-darwin-x64@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-darwin-x64@npm:1.0.3"
+"@rolldown/binding-darwin-x64@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-darwin-x64@npm:1.2.1"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-freebsd-x64@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-freebsd-x64@npm:1.0.3"
+"@rolldown/binding-freebsd-x64@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-freebsd-x64@npm:1.2.1"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-arm-gnueabihf@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-linux-arm-gnueabihf@npm:1.0.3"
+"@rolldown/binding-linux-arm-gnueabihf@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-linux-arm-gnueabihf@npm:1.2.1"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-arm64-gnu@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-linux-arm64-gnu@npm:1.0.3"
+"@rolldown/binding-linux-arm64-gnu@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-linux-arm64-gnu@npm:1.2.1"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-arm64-musl@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-linux-arm64-musl@npm:1.0.3"
+"@rolldown/binding-linux-arm64-musl@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-linux-arm64-musl@npm:1.2.1"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-ppc64-gnu@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-linux-ppc64-gnu@npm:1.0.3"
+"@rolldown/binding-linux-ppc64-gnu@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-linux-ppc64-gnu@npm:1.2.1"
   conditions: os=linux & cpu=ppc64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-s390x-gnu@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-linux-s390x-gnu@npm:1.0.3"
+"@rolldown/binding-linux-s390x-gnu@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-linux-s390x-gnu@npm:1.2.1"
   conditions: os=linux & cpu=s390x & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-x64-gnu@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-linux-x64-gnu@npm:1.0.3"
+"@rolldown/binding-linux-x64-gnu@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-linux-x64-gnu@npm:1.2.1"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-x64-musl@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-linux-x64-musl@npm:1.0.3"
+"@rolldown/binding-linux-x64-musl@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-linux-x64-musl@npm:1.2.1"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rolldown/binding-openharmony-arm64@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-openharmony-arm64@npm:1.0.3"
+"@rolldown/binding-openharmony-arm64@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-openharmony-arm64@npm:1.2.1"
   conditions: os=openharmony & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-wasm32-wasi@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-wasm32-wasi@npm:1.0.3"
+"@rolldown/binding-wasm32-wasi@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-wasm32-wasi@npm:1.2.1"
   dependencies:
-    "@emnapi/core": "npm:1.10.0"
-    "@emnapi/runtime": "npm:1.10.0"
-    "@napi-rs/wasm-runtime": "npm:^1.1.4"
-  conditions: cpu=wasm32
+    "@emnapi/core": "npm:2.0.0-alpha.3"
+    "@emnapi/runtime": "npm:2.0.0-alpha.3"
+    "@napi-rs/wasm-runtime": "npm:^1.2.0"
+  checksum: 10c1/4b6536be99056f672da36d62a293e0b753e7689ac211b3f3538909a20dcd2d963cc9c277d9178d8f21906da230d6204ce6051f582de7483d5a26b9229f000003
   languageName: node
   linkType: hard
 
-"@rolldown/binding-win32-arm64-msvc@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-win32-arm64-msvc@npm:1.0.3"
+"@rolldown/binding-win32-arm64-msvc@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-win32-arm64-msvc@npm:1.2.1"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-win32-x64-msvc@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@rolldown/binding-win32-x64-msvc@npm:1.0.3"
+"@rolldown/binding-win32-x64-msvc@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@rolldown/binding-win32-x64-msvc@npm:1.2.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -3463,91 +3491,91 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tailwindcss/node@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/node@npm:4.3.1"
+"@tailwindcss/node@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/node@npm:4.3.3"
   dependencies:
     "@jridgewell/remapping": "npm:^2.3.5"
-    enhanced-resolve: "npm:5.21.6"
+    enhanced-resolve: "npm:^5.24.1"
     jiti: "npm:^2.7.0"
     lightningcss: "npm:1.32.0"
     magic-string: "npm:^0.30.21"
     source-map-js: "npm:^1.2.1"
-    tailwindcss: "npm:4.3.1"
-  checksum: 10c1/3764f2e59edea6b3da571e7710b47a49b0a06b1e4736ae317dccc35017c1d30d1cfacf6414a5c8d8701789deafb529ddb056190aa7ffa0aa0b1d95bbde7138b7
+    tailwindcss: "npm:4.3.3"
+  checksum: 10c1/0838af5d93d1d45731004e4e2f8d340adebbe39dd163db46b95bcf5db88e1ab6f8e2101aeca020778a720302f3cd048d5f5e944cda1a10a18c05acd24774bb3b
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-android-arm64@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-android-arm64@npm:4.3.1"
+"@tailwindcss/oxide-android-arm64@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-android-arm64@npm:4.3.3"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-darwin-arm64@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-darwin-arm64@npm:4.3.1"
+"@tailwindcss/oxide-darwin-arm64@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-darwin-arm64@npm:4.3.3"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-darwin-x64@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-darwin-x64@npm:4.3.1"
+"@tailwindcss/oxide-darwin-x64@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-darwin-x64@npm:4.3.3"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-freebsd-x64@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-freebsd-x64@npm:4.3.1"
+"@tailwindcss/oxide-freebsd-x64@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-freebsd-x64@npm:4.3.3"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.3.1"
+"@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-linux-arm-gnueabihf@npm:4.3.3"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-arm64-gnu@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-linux-arm64-gnu@npm:4.3.1"
+"@tailwindcss/oxide-linux-arm64-gnu@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-linux-arm64-gnu@npm:4.3.3"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-arm64-musl@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-linux-arm64-musl@npm:4.3.1"
+"@tailwindcss/oxide-linux-arm64-musl@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-linux-arm64-musl@npm:4.3.3"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-x64-gnu@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-linux-x64-gnu@npm:4.3.1"
+"@tailwindcss/oxide-linux-x64-gnu@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-linux-x64-gnu@npm:4.3.3"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-linux-x64-musl@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-linux-x64-musl@npm:4.3.1"
+"@tailwindcss/oxide-linux-x64-musl@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-linux-x64-musl@npm:4.3.3"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-wasm32-wasi@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-wasm32-wasi@npm:4.3.1"
+"@tailwindcss/oxide-wasm32-wasi@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-wasm32-wasi@npm:4.3.3"
   dependencies:
-    "@emnapi/core": "npm:^1.10.0"
-    "@emnapi/runtime": "npm:^1.10.0"
-    "@emnapi/wasi-threads": "npm:^1.2.1"
+    "@emnapi/core": "npm:^1.11.1"
+    "@emnapi/runtime": "npm:^1.11.1"
+    "@emnapi/wasi-threads": "npm:^1.2.2"
     "@napi-rs/wasm-runtime": "npm:^1.1.4"
     "@tybys/wasm-util": "npm:^0.10.2"
     tslib: "npm:^2.8.1"
@@ -3555,36 +3583,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-win32-arm64-msvc@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-win32-arm64-msvc@npm:4.3.1"
+"@tailwindcss/oxide-win32-arm64-msvc@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-win32-arm64-msvc@npm:4.3.3"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide-win32-x64-msvc@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide-win32-x64-msvc@npm:4.3.1"
+"@tailwindcss/oxide-win32-x64-msvc@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide-win32-x64-msvc@npm:4.3.3"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@tailwindcss/oxide@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@tailwindcss/oxide@npm:4.3.1"
+"@tailwindcss/oxide@npm:4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/oxide@npm:4.3.3"
   dependencies:
-    "@tailwindcss/oxide-android-arm64": "npm:4.3.1"
-    "@tailwindcss/oxide-darwin-arm64": "npm:4.3.1"
-    "@tailwindcss/oxide-darwin-x64": "npm:4.3.1"
-    "@tailwindcss/oxide-freebsd-x64": "npm:4.3.1"
-    "@tailwindcss/oxide-linux-arm-gnueabihf": "npm:4.3.1"
-    "@tailwindcss/oxide-linux-arm64-gnu": "npm:4.3.1"
-    "@tailwindcss/oxide-linux-arm64-musl": "npm:4.3.1"
-    "@tailwindcss/oxide-linux-x64-gnu": "npm:4.3.1"
-    "@tailwindcss/oxide-linux-x64-musl": "npm:4.3.1"
-    "@tailwindcss/oxide-wasm32-wasi": "npm:4.3.1"
-    "@tailwindcss/oxide-win32-arm64-msvc": "npm:4.3.1"
-    "@tailwindcss/oxide-win32-x64-msvc": "npm:4.3.1"
+    "@tailwindcss/oxide-android-arm64": "npm:4.3.3"
+    "@tailwindcss/oxide-darwin-arm64": "npm:4.3.3"
+    "@tailwindcss/oxide-darwin-x64": "npm:4.3.3"
+    "@tailwindcss/oxide-freebsd-x64": "npm:4.3.3"
+    "@tailwindcss/oxide-linux-arm-gnueabihf": "npm:4.3.3"
+    "@tailwindcss/oxide-linux-arm64-gnu": "npm:4.3.3"
+    "@tailwindcss/oxide-linux-arm64-musl": "npm:4.3.3"
+    "@tailwindcss/oxide-linux-x64-gnu": "npm:4.3.3"
+    "@tailwindcss/oxide-linux-x64-musl": "npm:4.3.3"
+    "@tailwindcss/oxide-wasm32-wasi": "npm:4.3.3"
+    "@tailwindcss/oxide-win32-arm64-msvc": "npm:4.3.3"
+    "@tailwindcss/oxide-win32-x64-msvc": "npm:4.3.3"
   dependenciesMeta:
     "@tailwindcss/oxide-android-arm64":
       optional: true
@@ -3610,20 +3638,20 @@ __metadata:
       optional: true
     "@tailwindcss/oxide-win32-x64-msvc":
       optional: true
-  checksum: 10c1/eb37c4c91cca96e43298a60483365ae348380b05219b7c6fcf803b158b9fb0e1135a5cbc23f89558f1e6d51c01d73bd6ea2949b53a7a172e13ba0bf41e46d9b7
+  checksum: 10c1/21fe8344991e38dd161ec60627c25fb53f06f72871dbe80f7aa597ffcbc4816c81876bd995732b0c74c39ca7a10340c49b4d254f34e430b5bff2348f1f16ac03
   languageName: node
   linkType: hard
 
-"@tailwindcss/postcss@npm:^4.2.3":
-  version: 4.3.1
-  resolution: "@tailwindcss/postcss@npm:4.3.1"
+"@tailwindcss/postcss@npm:^4.3.3":
+  version: 4.3.3
+  resolution: "@tailwindcss/postcss@npm:4.3.3"
   dependencies:
     "@alloc/quick-lru": "npm:^5.2.0"
-    "@tailwindcss/node": "npm:4.3.1"
-    "@tailwindcss/oxide": "npm:4.3.1"
-    postcss: "npm:8.5.15"
-    tailwindcss: "npm:4.3.1"
-  checksum: 10c1/f9b3ae3b38e7b370313ee7296525b495b5c0b392771d51fe4696ab7a5d7b2e7c53c923dcdc2641e4a75bb54f8632793b6393a4ba2611591da42f7bd0080f5427
+    "@tailwindcss/node": "npm:4.3.3"
+    "@tailwindcss/oxide": "npm:4.3.3"
+    postcss: "npm:^8.5.16"
+    tailwindcss: "npm:4.3.3"
+  checksum: 10c1/f8c1e6235c9b16ce7ee0e9e91070fbf6ea3ca65c53b2dbea967d18db754d37d1ce05e9e5aca91083bdfe0e48f03627415def583fe17eae2735d7c17ef7a77bfe
   languageName: node
   linkType: hard
 
@@ -3706,12 +3734,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tybys/wasm-util@npm:^0.10.2":
-  version: 0.10.2
-  resolution: "@tybys/wasm-util@npm:0.10.2"
+"@tybys/wasm-util@npm:^0.10.2, @tybys/wasm-util@npm:^0.10.3":
+  version: 0.10.3
+  resolution: "@tybys/wasm-util@npm:0.10.3"
   dependencies:
     tslib: "npm:^2.4.0"
-  checksum: 10c1/d2f72281f3c9e97ad016907812911eaba713ccf5594108d7938d705415298257385527f73c0795c114bbc7d3eaf0fed7a4ccc96c75831770bcc438654a673e8e
+  checksum: 10c1/c027a440f6b8c2f6d32950ea5ecf3e45d884e54af4af8a3571266df3fe11950e2c1549f720f0f8526159b6f8eed2790b1121570ab5f64d259b88f1cfbbcc5287
   languageName: node
   linkType: hard
 
@@ -5268,30 +5296,30 @@ __metadata:
   linkType: hard
 
 "brace-expansion@npm:^1.1.7":
-  version: 1.1.15
-  resolution: "brace-expansion@npm:1.1.15"
+  version: 1.1.18
+  resolution: "brace-expansion@npm:1.1.18"
   dependencies:
     balanced-match: "npm:^1.0.0"
     concat-map: "npm:0.0.1"
-  checksum: 10c1/e9277fe61a0cca2d2fe05931a51f4749ea54ab7f91db96491c0de1e5fbdb759c8d388d390039324c563e2f9152442b1fa9d8c90e408552c7be0efb300cae9693
+  checksum: 10c1/9aca0b8102d5ae06207f0dd3a0d7143c8965f4791cb8175f4afecf2ea28f76c76e5bf2fd9323c471bef26c2cf33ea601f487f28d6a214965a2c3b17d2dfc803c
   languageName: node
   linkType: hard
 
 "brace-expansion@npm:^2.0.1":
-  version: 2.1.1
-  resolution: "brace-expansion@npm:2.1.1"
+  version: 2.1.4
+  resolution: "brace-expansion@npm:2.1.4"
   dependencies:
     balanced-match: "npm:^1.0.0"
-  checksum: 10c1/7bdd9cf720a0282b38086dec3eccfa56bc11b0c1afa3d358df9bca409d730f3332ab397c3e0424f0b9bd3190ee8786b6b0c1acf7c96bd1cc22bb33134329f91a
+  checksum: 10c1/91988a64d02f2746890ea924d3ef3ffb64a4d5e3546563f54df2d34df3d68d39f5142af1f6baddbc5fda9bf4c9ccab7173e7ac79b8a399f40efd6bcaa299cb06
   languageName: node
   linkType: hard
 
-"brace-expansion@npm:^5.0.5":
-  version: 5.0.6
-  resolution: "brace-expansion@npm:5.0.6"
+"brace-expansion@npm:^5.0.8":
+  version: 5.0.9
+  resolution: "brace-expansion@npm:5.0.9"
   dependencies:
     balanced-match: "npm:^4.0.2"
-  checksum: 10c1/8d7e0a7ccb4ad320d09a6247694c5674ba10ece9fd0ba8309035bcdbed6863f2605ca4d245b7b6ec5ad23201eef1c8b6804c2265e1f3ffb386e43c50b988ede8
+  checksum: 10c1/faae243b456a0666fad7b21f8ae8d68842cf2516a592cada2b50e7d9b3b3f83f939f5421874c91b712004589e0a4658710298b99b3f0d38a3b5436bb6a01d4da
   languageName: node
   linkType: hard
 
@@ -6686,14 +6714,14 @@ __metadata:
   linkType: hard
 
 "dompurify@npm:^3.3.1":
-  version: 3.4.10
-  resolution: "dompurify@npm:3.4.10"
+  version: 3.4.12
+  resolution: "dompurify@npm:3.4.12"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10c1/0855200020bbc3643838cfc55596d085eab8083976bb2f6f2ea83eef90d4bd60632153b7b47c3978bc12c325d3b49161d0b6c2ceca26972e7d55376eaccfc0a1
+  checksum: 10c1/4759f917a6be63979827eeb87c66fa438e862c7192bc54f89ae5be160179d4239f9c0b296ad7268e11de5caceb68596e7b5c20d5f5e7b9f89f53a1c4b39f5aa7
   languageName: node
   linkType: hard
 
@@ -6814,13 +6842,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enhanced-resolve@npm:5.21.6":
-  version: 5.21.6
-  resolution: "enhanced-resolve@npm:5.21.6"
+"enhanced-resolve@npm:^5.24.1":
+  version: 5.24.5
+  resolution: "enhanced-resolve@npm:5.24.5"
   dependencies:
     graceful-fs: "npm:^4.2.4"
     tapable: "npm:^2.3.3"
-  checksum: 10c1/556a481506cd7b30fa2e96ee566026a2c4bea7eafd507b8a5d38e1e4141164cfa7feea6a4d7a3a1364e1f640d8d37d74c4500f7d9514e6d996e1f1f5d25a56f2
+  checksum: 10c1/ecd42722cc80fff5a5b746af1b3394efadbfd38ebacc011679539de883cdfa176ffed13c06b74f980bb348fd0c8ff2ce57a2e1729480658f6a7c163ec5c377c2
   languageName: node
   linkType: hard
 
@@ -8506,9 +8534,9 @@ __metadata:
   linkType: hard
 
 "immutable@npm:^5.1.5":
-  version: 5.1.6
-  resolution: "immutable@npm:5.1.6"
-  checksum: 10c1/f4b043af7a9366065ef0df8d8ec2280f7245705fb17aba0d00fcd8a8a86941517a507350c8452abdf81aa8b705e218edf68757c473587d7169fc11042e7ce5bd
+  version: 5.1.9
+  resolution: "immutable@npm:5.1.9"
+  checksum: 10c1/77e79a689a3087952ce456839ab8e04b8cf5a86475170e6dbb2ecf479d57d6f943507ef8b67774ea7f6b02aa279f94c125a1ef74a7204453e6ba9cbcaf94aedd
   languageName: node
   linkType: hard
 
@@ -9674,25 +9702,25 @@ __metadata:
   linkType: hard
 
 "js-yaml@npm:^3.13.1":
-  version: 3.14.2
-  resolution: "js-yaml@npm:3.14.2"
+  version: 3.15.0
+  resolution: "js-yaml@npm:3.15.0"
   dependencies:
     argparse: "npm:^1.0.7"
     esprima: "npm:^4.0.0"
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 10c1/10199e3cd1939a7afb6b78ad9da5c326dba949bccb048cbd99acb7e01d387132fc638cd128a1e635b96f3a7c904903075e7a34130ed0c16b1ef1bcc1bb0f87ac
+  checksum: 10c1/36d0136be808603b5f82918f635444bbfe43ee21c3d2dd8637279f7435416c552de8d223ed315f5c8472821cc5ea9a8d4bbaa094c9ebd1dce9e479dc965f59e7
   languageName: node
   linkType: hard
 
 "js-yaml@npm:^4.1.1":
-  version: 4.2.0
-  resolution: "js-yaml@npm:4.2.0"
+  version: 4.3.0
+  resolution: "js-yaml@npm:4.3.0"
   dependencies:
     argparse: "npm:^2.0.1"
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 10c1/54660575617b49178d8d1ba40e5925d6c3c932e80b10dea580440d1dd5b3585156282275b3cd2a260c40333b433dd241a74097073c07e4d1262256fc25bdb7e3
+  checksum: 10c1/574f132aaa3ddc7430f63eb44ae6974979b25987a8c6ceeed085c5dc1451dcde911b2a0c2ecc518dcf524f5f9128e08fcc017982d728793cfd814bbb6aaf7459
   languageName: node
   linkType: hard
 
@@ -9967,9 +9995,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lightningcss-android-arm64@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-android-arm64@npm:1.33.0"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
 "lightningcss-darwin-arm64@npm:1.32.0":
   version: 1.32.0
   resolution: "lightningcss-darwin-arm64@npm:1.32.0"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"lightningcss-darwin-arm64@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-darwin-arm64@npm:1.33.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
@@ -9981,9 +10023,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lightningcss-darwin-x64@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-darwin-x64@npm:1.33.0"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
 "lightningcss-freebsd-x64@npm:1.32.0":
   version: 1.32.0
   resolution: "lightningcss-freebsd-x64@npm:1.32.0"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"lightningcss-freebsd-x64@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-freebsd-x64@npm:1.33.0"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
@@ -9995,9 +10051,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lightningcss-linux-arm-gnueabihf@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-linux-arm-gnueabihf@npm:1.33.0"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
 "lightningcss-linux-arm64-gnu@npm:1.32.0":
   version: 1.32.0
   resolution: "lightningcss-linux-arm64-gnu@npm:1.32.0"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"lightningcss-linux-arm64-gnu@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-linux-arm64-gnu@npm:1.33.0"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
@@ -10009,9 +10079,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lightningcss-linux-arm64-musl@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-linux-arm64-musl@npm:1.33.0"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
 "lightningcss-linux-x64-gnu@npm:1.32.0":
   version: 1.32.0
   resolution: "lightningcss-linux-x64-gnu@npm:1.32.0"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"lightningcss-linux-x64-gnu@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-linux-x64-gnu@npm:1.33.0"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
@@ -10023,9 +10107,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lightningcss-linux-x64-musl@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-linux-x64-musl@npm:1.33.0"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
 "lightningcss-win32-arm64-msvc@npm:1.32.0":
   version: 1.32.0
   resolution: "lightningcss-win32-arm64-msvc@npm:1.32.0"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"lightningcss-win32-arm64-msvc@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-win32-arm64-msvc@npm:1.33.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
@@ -10037,7 +10135,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lightningcss@npm:1.32.0, lightningcss@npm:^1.32.0":
+"lightningcss-win32-x64-msvc@npm:1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss-win32-x64-msvc@npm:1.33.0"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"lightningcss@npm:1.32.0":
   version: 1.32.0
   resolution: "lightningcss@npm:1.32.0"
   dependencies:
@@ -10077,6 +10182,49 @@ __metadata:
     lightningcss-win32-x64-msvc:
       optional: true
   checksum: 10c1/a4cb79b97552c28341803d23c91ff6168af96a8a4afcc805afd124252fd9c83c3de4f489cb89d5c7bdf34fdf2195ab408f391707c7ced39943e72863a1b912aa
+  languageName: node
+  linkType: hard
+
+"lightningcss@npm:^1.33.0":
+  version: 1.33.0
+  resolution: "lightningcss@npm:1.33.0"
+  dependencies:
+    detect-libc: "npm:^2.0.3"
+    lightningcss-android-arm64: "npm:1.33.0"
+    lightningcss-darwin-arm64: "npm:1.33.0"
+    lightningcss-darwin-x64: "npm:1.33.0"
+    lightningcss-freebsd-x64: "npm:1.33.0"
+    lightningcss-linux-arm-gnueabihf: "npm:1.33.0"
+    lightningcss-linux-arm64-gnu: "npm:1.33.0"
+    lightningcss-linux-arm64-musl: "npm:1.33.0"
+    lightningcss-linux-x64-gnu: "npm:1.33.0"
+    lightningcss-linux-x64-musl: "npm:1.33.0"
+    lightningcss-win32-arm64-msvc: "npm:1.33.0"
+    lightningcss-win32-x64-msvc: "npm:1.33.0"
+  dependenciesMeta:
+    lightningcss-android-arm64:
+      optional: true
+    lightningcss-darwin-arm64:
+      optional: true
+    lightningcss-darwin-x64:
+      optional: true
+    lightningcss-freebsd-x64:
+      optional: true
+    lightningcss-linux-arm-gnueabihf:
+      optional: true
+    lightningcss-linux-arm64-gnu:
+      optional: true
+    lightningcss-linux-arm64-musl:
+      optional: true
+    lightningcss-linux-x64-gnu:
+      optional: true
+    lightningcss-linux-x64-musl:
+      optional: true
+    lightningcss-win32-arm64-msvc:
+      optional: true
+    lightningcss-win32-x64-msvc:
+      optional: true
+  checksum: 10c1/01e674057fb59625efd27600f821c22c01d479804d6aa6cada23b6bf164bebb5bcbb47c1e1745235d305ab2837d4e02507aeffeb83e44777507e136938793d9d
   languageName: node
   linkType: hard
 
@@ -10952,11 +11100,11 @@ __metadata:
   linkType: hard
 
 "minimatch@npm:^10.2.2":
-  version: 10.2.5
-  resolution: "minimatch@npm:10.2.5"
+  version: 10.2.6
+  resolution: "minimatch@npm:10.2.6"
   dependencies:
-    brace-expansion: "npm:^5.0.5"
-  checksum: 10c1/3e133bedb6d8aead591bcc5c54628319825b1469bc1709b0fc78a5336cd33a9ea00c3c6faa85c282d0cea00d7323c36b060c8c57b4918f91bca843923371cf5f
+    brace-expansion: "npm:^5.0.8"
+  checksum: 10c1/389ee4a7ea392087d2d7d8f3e4e627ea15c113d0cf067678382782b9acbbe8faebf848f5a2e8ee798cd509f40583538a377cf3ea978610e0f206061f31a6ac9f
   languageName: node
   linkType: hard
 
@@ -11066,12 +11214,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.12":
-  version: 3.3.12
-  resolution: "nanoid@npm:3.3.12"
+"nanoid@npm:^3.3.16":
+  version: 3.3.16
+  resolution: "nanoid@npm:3.3.16"
   bin:
     nanoid: bin/nanoid.cjs
-  checksum: 10c1/2ac920ae0957e34ce68ad297b4478537d262181714c04527880224b3a664ac8eec6ba1167e591d180871894afb1aeb2110631fbb637d47e55b9f2d24bfd05b4f
+  checksum: 10c1/a542bccee7b0cfefc2ae0e6433ee3e82b6265fc796a0c006ba606c8ef3b9a96aa797d63a1d2c5ae6e6a8e42f52d4d24ce942d0bbe03744466690fe811fbf6c80
   languageName: node
   linkType: hard
 
@@ -11331,7 +11479,7 @@ __metadata:
     "@playwright/test": "npm:^1.60.0"
     "@sentry/browser": "npm:^9.47.1"
     "@svg-maps/world": "npm:^1.0.1"
-    "@tailwindcss/postcss": "npm:^4.2.3"
+    "@tailwindcss/postcss": "npm:^4.3.3"
     "@tanstack/react-query": "npm:^5.100.11"
     "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
     "@types/babel__core": "npm:^7.20.5"
@@ -11393,7 +11541,7 @@ __metadata:
     mobx-persist-store: "npm:^1.1.8"
     mobx-react-lite: "npm:^4.1.1"
     playwright: "npm:^1.60.0"
-    postcss: "npm:^8.5.15"
+    postcss: "npm:^8.5.25"
     postcss-import: "npm:^16.1.1"
     postcss-mixins: "npm:^12.1.2"
     postcss-nesting: "npm:^13.0.2"
@@ -11410,25 +11558,25 @@ __metadata:
     react-i18next: "npm:^15.7.4"
     react-intersection-observer: "npm:^9.16.0"
     react-markdown: "npm:^10.1.0"
-    react-router: "npm:^7.15.1"
+    react-router: "npm:^7.18.2"
     react-select: "npm:^5.10.2"
     react-svg-map: "npm:^2.2.0"
     react-toastify: "npm:^11.1.0"
     react18-json-view: "npm:^0.2.10"
     recharts: "npm:^2.15.4"
     remark-gfm: "npm:^4.0.1"
-    sass: "npm:^1.100.0"
+    sass: "npm:^1.102.0"
     sirv: "npm:^3.0.0"
     socket.io-client: "npm:^4.8.3"
-    svgo: "npm:^2.8.0"
+    svgo: "npm:^2.8.3"
     syncod: "npm:^0.0.1"
-    tailwindcss: "npm:^4.3.0"
+    tailwindcss: "npm:^4.3.3"
     ts-jest: "npm:^29.4.11"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.9.3"
     typescript-eslint: "npm:^8.59.4"
     virtua: "npm:^0.49.1"
-    vite: "npm:8.0.16"
+    vite: "npm:8.2.0"
     vite-plugin-static-copy: "npm:^2.2.0"
     vite-tsconfig-paths: "npm:^5.1.4"
   languageName: unknown
@@ -11677,10 +11825,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picomatch@npm:^4.0.3, picomatch@npm:^4.0.4":
-  version: 4.0.4
-  resolution: "picomatch@npm:4.0.4"
-  checksum: 10c1/76f848a326344b11c0541f69d033103d8ff6d949b7dcd7d91c405a82bc1fcbc6756af87aec4c6d8c934bf5ef610275542c8c7ad035aa77e7e0464adc4fb33846
+"picomatch@npm:^4.0.3, picomatch@npm:^4.0.4, picomatch@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "picomatch@npm:4.0.5"
+  checksum: 10c1/94e11eacecb84786ccc3525085475dab909a055468eac19777d34933dbaaed53bf93991002b8dd1f26b484fea65ced933469b72a3447e33859a621cb59f37792
   languageName: node
   linkType: hard
 
@@ -12169,14 +12317,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.5.15, postcss@npm:^8.5.15":
-  version: 8.5.15
-  resolution: "postcss@npm:8.5.15"
+"postcss@npm:^8.5.16, postcss@npm:^8.5.23, postcss@npm:^8.5.25":
+  version: 8.5.25
+  resolution: "postcss@npm:8.5.25"
   dependencies:
-    nanoid: "npm:^3.3.12"
+    nanoid: "npm:^3.3.16"
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
-  checksum: 10c1/6ce94ffe585b891c991f3e5402ed7f8c0a4c09b0f582512fa091ce8ca1c70234b3a1260fdd7e96b300b38a7228566cec73e64bf92096fb052713353b1e31f314
+  checksum: 10c1/8ea5468c79dea0bc877cc2f04cb06b84200a25a03c3342235c051549284e35e0c6bd0cd2e654988fabae5dddd43644189875a7fb92b1808b5d01626a538bf0dc
   languageName: node
   linkType: hard
 
@@ -12634,9 +12782,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@npm:^7.15.1":
-  version: 7.17.0
-  resolution: "react-router@npm:7.17.0"
+"react-router@npm:^7.18.2":
+  version: 7.18.2
+  resolution: "react-router@npm:7.18.2"
   dependencies:
     cookie: "npm:^1.0.1"
     set-cookie-parser: "npm:^2.6.0"
@@ -12646,7 +12794,7 @@ __metadata:
   peerDependenciesMeta:
     react-dom:
       optional: true
-  checksum: 10c1/5915130593ff9507ebab7a7dc36c3e61df7cb2164e4fd78e2282494e1f62e170730be3642bce17b7492de6a2a341de9f9ac85541984f83cddb92498d06c7cbe9
+  checksum: 10c1/3ac6f1ad2546debc8f78f785742b7fd1dc35fedfe6672da1017fbeb9ea116cc080953de172d97bbd0d1035bb9cad90fa523d6e52979394c00e416a4116e1f839
   languageName: node
   linkType: hard
 
@@ -13114,26 +13262,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rolldown@npm:1.0.3":
-  version: 1.0.3
-  resolution: "rolldown@npm:1.0.3"
+"rolldown@npm:~1.2.0":
+  version: 1.2.1
+  resolution: "rolldown@npm:1.2.1"
   dependencies:
-    "@oxc-project/types": "npm:=0.133.0"
-    "@rolldown/binding-android-arm64": "npm:1.0.3"
-    "@rolldown/binding-darwin-arm64": "npm:1.0.3"
-    "@rolldown/binding-darwin-x64": "npm:1.0.3"
-    "@rolldown/binding-freebsd-x64": "npm:1.0.3"
-    "@rolldown/binding-linux-arm-gnueabihf": "npm:1.0.3"
-    "@rolldown/binding-linux-arm64-gnu": "npm:1.0.3"
-    "@rolldown/binding-linux-arm64-musl": "npm:1.0.3"
-    "@rolldown/binding-linux-ppc64-gnu": "npm:1.0.3"
-    "@rolldown/binding-linux-s390x-gnu": "npm:1.0.3"
-    "@rolldown/binding-linux-x64-gnu": "npm:1.0.3"
-    "@rolldown/binding-linux-x64-musl": "npm:1.0.3"
-    "@rolldown/binding-openharmony-arm64": "npm:1.0.3"
-    "@rolldown/binding-wasm32-wasi": "npm:1.0.3"
-    "@rolldown/binding-win32-arm64-msvc": "npm:1.0.3"
-    "@rolldown/binding-win32-x64-msvc": "npm:1.0.3"
+    "@oxc-project/types": "npm:=0.142.0"
+    "@rolldown/binding-android-arm64": "npm:1.2.1"
+    "@rolldown/binding-darwin-arm64": "npm:1.2.1"
+    "@rolldown/binding-darwin-x64": "npm:1.2.1"
+    "@rolldown/binding-freebsd-x64": "npm:1.2.1"
+    "@rolldown/binding-linux-arm-gnueabihf": "npm:1.2.1"
+    "@rolldown/binding-linux-arm64-gnu": "npm:1.2.1"
+    "@rolldown/binding-linux-arm64-musl": "npm:1.2.1"
+    "@rolldown/binding-linux-ppc64-gnu": "npm:1.2.1"
+    "@rolldown/binding-linux-s390x-gnu": "npm:1.2.1"
+    "@rolldown/binding-linux-x64-gnu": "npm:1.2.1"
+    "@rolldown/binding-linux-x64-musl": "npm:1.2.1"
+    "@rolldown/binding-openharmony-arm64": "npm:1.2.1"
+    "@rolldown/binding-wasm32-wasi": "npm:1.2.1"
+    "@rolldown/binding-win32-arm64-msvc": "npm:1.2.1"
+    "@rolldown/binding-win32-x64-msvc": "npm:1.2.1"
     "@rolldown/pluginutils": "npm:^1.0.0"
   dependenciesMeta:
     "@rolldown/binding-android-arm64":
@@ -13168,7 +13316,7 @@ __metadata:
       optional: true
   bin:
     rolldown: ./bin/cli.mjs
-  checksum: 10c1/01088f7a60fe500430added9d84b94f82b7ca58cf5065eef5df65c527954faf4578c5a01ae144abc115d2b9957d56de0f8b7e2f2c847956318002aee43d96b75
+  checksum: 10c1/06b414e9591e4fd5f05a92ca5a41932ea6e8dcb5a1ec847c7294021bcb6997315593cd7a4fab47444afdb2866ff1ae91c9321b12e312aba131bdf4d6f60bbd65
   languageName: node
   linkType: hard
 
@@ -13238,9 +13386,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:^1.100.0":
-  version: 1.101.0
-  resolution: "sass@npm:1.101.0"
+"sass@npm:^1.102.0":
+  version: 1.102.0
+  resolution: "sass@npm:1.102.0"
   dependencies:
     "@parcel/watcher": "npm:^2.4.1"
     chokidar: "npm:^5.0.0"
@@ -13251,7 +13399,7 @@ __metadata:
       optional: true
   bin:
     sass: sass.js
-  checksum: 10c1/dddf605110a76e5a8f9ce858a0652a8b6f9dedeaf8c2113215f173879cfc953e47afec4fb08b4c2078ef249e474126f1a6d8d32f2b46c6ed5d2cae913bdfc29c
+  checksum: 10c1/57b6dd2fbd6b859c93173b7c7e98dfa45597e544e61d24a16505679585070532cb240d92f46e688dd3652552febd03989a34a6a4c0f10076d66fd054a62efee9
   languageName: node
   linkType: hard
 
@@ -13921,9 +14069,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"svgo@npm:^2.8.0":
-  version: 2.8.2
-  resolution: "svgo@npm:2.8.2"
+"svgo@npm:^2.8.3":
+  version: 2.8.3
+  resolution: "svgo@npm:2.8.3"
   dependencies:
     commander: "npm:^7.2.0"
     css-select: "npm:^4.1.3"
@@ -13934,13 +14082,13 @@ __metadata:
     stable: "npm:^0.1.8"
   bin:
     svgo: ./bin/svgo
-  checksum: 10c1/85939723b394731a7e8fdf4cb86fbdd441a90375814f93eef0685856b36206f1ca76fe68deac56dbdb7d03b707df5ce60e2d0aa9777eb38278318bb28baef2f9
+  checksum: 10c1/9b73e4e615ebf5b489ac3a556956441d6373871401d2685f87739d042604e49894e8bbf21c8be0808c4315f73692ee3d92e4a0a0ce2f1dd2eea0b5c9ebbe322e
   languageName: node
   linkType: hard
 
 "svgo@npm:^4.0.1":
-  version: 4.0.1
-  resolution: "svgo@npm:4.0.1"
+  version: 4.0.2
+  resolution: "svgo@npm:4.0.2"
   dependencies:
     commander: "npm:^11.1.0"
     css-select: "npm:^5.1.0"
@@ -13951,7 +14099,7 @@ __metadata:
     sax: "npm:^1.5.0"
   bin:
     svgo: ./bin/svgo.js
-  checksum: 10c1/6e537b64a023bb89ba2a95a18d35cff52670b14680857c44cd1e4316cc1f2a11faee5da94b83cac321e3c7d582ca7e56fe940fe7f212a11e27d28f888fc477b7
+  checksum: 10c1/9cdecc0e2315a1f167e4a6ad62401a235f4b6ba77282c5fe17628abf4f1fb11e01973d89e9d07fd7213b8439f02da1ccb4d18e7777f364c1f9d6d6cff725442a
   languageName: node
   linkType: hard
 
@@ -13978,10 +14126,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:4.3.1, tailwindcss@npm:^4.3.0":
-  version: 4.3.1
-  resolution: "tailwindcss@npm:4.3.1"
-  checksum: 10c1/71f42b0977025f68f66ae5ab024e3a696be74e8b8181c34a99adf5b5b48e56a402e5697da5eb37b691d351c8e87bf12c06580628c50599d7527cd7bec185aaac
+"tailwindcss@npm:4.3.3, tailwindcss@npm:^4.3.3":
+  version: 4.3.3
+  resolution: "tailwindcss@npm:4.3.3"
+  checksum: 10c1/4adf9447a594af82094772bf89d22352ff0a524821f2f07c599d4524d75230e4bf13bcc0fed2f232dcab55097db61e269b7fb7c1615b971c0a015a9bbb842bc5
   languageName: node
   linkType: hard
 
@@ -13993,15 +14141,15 @@ __metadata:
   linkType: hard
 
 "tar@npm:^7.5.4":
-  version: 7.5.16
-  resolution: "tar@npm:7.5.16"
+  version: 7.5.22
+  resolution: "tar@npm:7.5.22"
   dependencies:
     "@isaacs/fs-minipass": "npm:^4.0.0"
     chownr: "npm:^3.0.0"
     minipass: "npm:^7.1.2"
     minizlib: "npm:^3.1.0"
     yallist: "npm:^5.0.0"
-  checksum: 10c1/30623f3f55d5e651abd45f96a4e418d41f9c15a06bbb5c5c276692688dd798a22c062096768c508bc8947e0c503a2a715f07825577fb08ac1556261802739e10
+  checksum: 10c1/21fe3efebec035310518827e20b1b7b32ec4ed70abd9658714c557e5e86e8db92db6030a51413cc0c9b27c637b67815abc71519e1e67ce0e1866a45206906b0d
   languageName: node
   linkType: hard
 
@@ -14894,19 +15042,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:8.0.16":
-  version: 8.0.16
-  resolution: "vite@npm:8.0.16"
+"vite@npm:8.2.0":
+  version: 8.2.0
+  resolution: "vite@npm:8.2.0"
   dependencies:
     fsevents: "npm:~2.3.3"
-    lightningcss: "npm:^1.32.0"
-    picomatch: "npm:^4.0.4"
-    postcss: "npm:^8.5.15"
-    rolldown: "npm:1.0.3"
+    lightningcss: "npm:^1.33.0"
+    picomatch: "npm:^4.0.5"
+    postcss: "npm:^8.5.23"
+    rolldown: "npm:~1.2.0"
     tinyglobby: "npm:^0.2.17"
   peerDependencies:
     "@types/node": ^20.19.0 || >=22.12.0
-    "@vitejs/devtools": ^0.1.18
+    "@vitejs/devtools": ^0.4.0
     esbuild: ^0.27.0 || ^0.28.0
     jiti: ">=1.21.0"
     less: ^4.0.0
@@ -14947,7 +15095,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c1/9a13e5de2105f77e0669294bcead58b59acada431b0801b0490afb5ae780114711f22f3065f9da8d342df0f86e0a01fd2c4b9c32dd7a27df7d0077bea5158b32
+  checksum: 10c1/b9ac9a17635b77bfaf2ccb268b60a605b34259309c8a07cf98721f55cf14d2814cafecdd50b682ccc4c270da5a5bc5c18f68a434b3896fbabcb98eabc091f287
   languageName: node
   linkType: hard
 
