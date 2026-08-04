@@ -10,6 +10,8 @@ import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
 import DashboardHeader from '../DashboardHeader';
+import DashboardMetrics from '../DashboardMetrics';
+import DashboardSessions from '../DashboardSessions';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
 import { PANEL_SIZES } from 'App/constants/panelSizes';
 
@@ -32,6 +34,9 @@ function DashboardView(props: Props) {
   const dashboard: any = dashboardStore.selectedDashboard;
 
   const queryParams = new URLSearchParams(location.search);
+
+  // Which issue the metric cards are filtering the session list by, if any.
+  const [issue, setIssue] = React.useState<string[] | null>(null);
 
   const trimQuery = () => {
     if (!queryParams.has('modal')) return;
@@ -91,19 +96,42 @@ function DashboardView(props: Props) {
     <Loader loading={loading}>
       <div
         style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}
-        className="rounded-lg shadow-xs overflow-hidden bg-white border"
+        className="flex flex-col gap-4"
       >
-        {/* @ts-ignore */}
-        <DashboardHeader
-          renderReport={props.renderReport}
-          siteId={siteId}
-          dashboardId={dashboardId}
-        />
-        <DashboardWidgetGrid
-          siteId={siteId}
-          dashboardId={dashboardId}
-          id="report"
-        />
+        <div className="rounded-lg shadow-xs bg-white border">
+          {/* @ts-ignore */}
+          <DashboardHeader
+            renderReport={props.renderReport}
+            siteId={siteId}
+            dashboardId={dashboardId}
+          />
+
+          {/*
+            Left: core metrics — is it recording, is anything broken.
+            Right: the sessions themselves, which are what the user actually came for.
+            Clicking a metric filters the list rather than navigating away.
+          */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 px-4 pb-4 pt-2">
+            <div className="lg:col-span-4 xl:col-span-3">
+              <DashboardMetrics
+                siteId={siteId}
+                activeFilter={issue}
+                onFilter={setIssue}
+              />
+            </div>
+            <div className="lg:col-span-8 xl:col-span-9">
+              <DashboardSessions siteId={siteId} issue={issue} />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg shadow-xs bg-white border overflow-hidden">
+          <DashboardWidgetGrid
+            siteId={siteId}
+            dashboardId={dashboardId}
+            id="report"
+          />
+        </div>
       </div>
     </Loader>
   );
