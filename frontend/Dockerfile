@@ -6,10 +6,14 @@ ARG NODE_OPTIONS="--max-old-space-size=10240"
 ENV NODE_OPTIONS=$NODE_OPTIONS
 RUN yarn 
 RUN yarn build
+# Normalize mtimes so ETag/Last-Modified are deterministic across replicas
+# and builds instead of drifting with build wall-clock time.
+RUN find public -exec touch -t 202001010000 {} +
 
 FROM nginx:alpine as cicd
 LABEL maintainer=Rajesh<rajesh@openreplay.com>
 COPY public /var/www/openreplay
+RUN find /var/www/openreplay -exec touch -t 202001010000 {} +
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 
