@@ -1,10 +1,13 @@
+import * as React from 'react';
 import {
   NativeModules,
   Platform,
   requireNativeComponent,
+  StyleSheet,
   TurboModuleRegistry,
   type TextInputProps,
   UIManager,
+  View,
   type ViewProps,
 } from 'react-native';
 import type { TurboModule } from 'react-native';
@@ -81,24 +84,87 @@ const ORTrackedInput =
         throw new Error('RnTrackedInput; ' + LINKING_ERROR);
       };
 
-const ORSanitizedView =
+const RnSanitizedMarker =
   UIManager.getViewManagerConfig('RnSanitizedView') != null
     ? requireNativeComponent<ViewProps>('RnSanitizedView')
-    : () => {
-        throw new Error('RnSanitizedView; ' + LINKING_ERROR);
-      };
+    : null;
+
+/**
+ * Marks its subtree as sensitive so it gets masked in the replay.
+ *
+ * The native view is rendered as an invisible, absolutely positioned sibling
+ * *behind* the children instead of as their parent, and the wrapper is marked
+ * `collapsable={false}`.
+ *
+ * `RnSanitizedView` is a legacy (paper) ViewManager, so on the new architecture
+ * RN mounts it through the Fabric interop layer. When one interop view ends up
+ * as the direct view-child of another interop view,
+ * `RCTLegacyViewManagerInteropComponentView` re-parents the inner paper view
+ * into the outer paper view, while the inner view's frame keeps being driven by
+ * `layoutMetrics.getContentFrame()` - origin (0, 0) of the outer region, size
+ * shrunk by the inner content insets. Everything inside the inner region is
+ * then drawn at the wrong offset and with the wrong width. Fabric flattens
+ * layout-only `View`s, so an intermediate plain `View` is not enough to keep the
+ * two native views apart - hence a childless native view (never an interop
+ * parent) plus a non-collapsable wrapper (never flattened away).
+ */
+const ORSanitizedView = React.forwardRef<View, ViewProps>(
+  ({ children, ...rest }, ref) => {
+    if (RnSanitizedMarker == null) {
+      throw new Error('RnSanitizedView; ' + LINKING_ERROR);
+    }
+    return (
+      <View ref={ref} collapsable={false} {...rest}>
+        <RnSanitizedMarker style={styles.marker} pointerEvents="none" />
+        {children}
+      </View>
+    );
+  }
+);
+ORSanitizedView.displayName = 'ORSanitizedView';
+
+const styles = StyleSheet.create({
+  marker: StyleSheet.absoluteFillObject,
+});
 
 interface ORTrackedViewProps extends ViewProps {
   screenName: string;
   viewName: string;
 }
 
-const ORTrackedView =
+const RnTrackedViewMarker =
   UIManager.getViewManagerConfig('RnTrackerView') != null
-    ? requireNativeComponent<ORTrackedViewProps>('RnTrackerView')
-    : () => {
-        throw new Error('RnTrackerView; ' + LINKING_ERROR);
-      };
+    ? requireNativeComponent<Omit<ORTrackedViewProps, 'children'>>(
+        'RnTrackerView'
+      )
+    : null;
+
+/**
+ * Reports its region to the tracker as a named, observable view.
+ *
+ * Rendered the same way as {@link ORSanitizedView} - a childless native marker
+ * behind the children instead of around them - because it hits the same Fabric
+ * interop layout bug. See the note on `ORSanitizedView`.
+ */
+const ORTrackedView = React.forwardRef<View, ORTrackedViewProps>(
+  ({ children, screenName, viewName, ...rest }, ref) => {
+    if (RnTrackedViewMarker == null) {
+      throw new Error('RnTrackerView; ' + LINKING_ERROR);
+    }
+    return (
+      <View ref={ref} collapsable={false} {...rest}>
+        <RnTrackedViewMarker
+          screenName={screenName}
+          viewName={viewName}
+          style={styles.marker}
+          pointerEvents="none"
+        />
+        {children}
+      </View>
+    );
+  }
+);
+ORTrackedView.displayName = 'ORTrackedView';
 
 export function setMetadata(key: string, value: string) {
   ORTrackerConnector.setMetadata(key, value);

@@ -3,6 +3,8 @@ package com.openreplay.reactnative
 import android.content.Context
 import android.view.View
 import android.widget.FrameLayout
+import com.facebook.react.uimanager.PointerEvents
+import com.facebook.react.uimanager.ReactPointerEventsView
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewGroupManager
 import com.facebook.react.uimanager.annotations.ReactProp
@@ -42,9 +44,18 @@ class RnTrackerViewManager : ViewGroupManager<FrameLayout>() {
   }
 }
 
-class TrackingFrameLayout(context: Context) : FrameLayout(context) {
+/**
+ * Invisible marker that reports the frame of a tracked region to the analytics
+ * listener. It is rendered as an absolutely positioned sibling behind the tracked
+ * subtree (see `ORTrackedView` in src/index.tsx), so it must never become a touch
+ * target for the content it covers.
+ */
+class TrackingFrameLayout(context: Context) :
+  FrameLayout(context), ReactPointerEventsView {
   var viewName: String? = null
   var screenName: String? = null
+
+  override fun getPointerEvents(): PointerEvents = PointerEvents.NONE
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
