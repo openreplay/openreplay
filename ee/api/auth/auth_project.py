@@ -31,7 +31,6 @@ class ProjectAuthorizer:
         elif self.project_identifier == "projectKey":
             current_project = projects.get_by_project_key(project_key=value)
             if current_project is not None \
-                    and request.state.authorizer_identity == "jwt" \
                     and not projects.is_authorized(project_id=current_project["projectId"],
                                                    tenant_id=current_user.tenant_id,
                                                    user_id=user_id):
