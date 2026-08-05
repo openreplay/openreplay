@@ -169,6 +169,16 @@ const TestsPanel = observer(() => {
 
 const IssuesPanel = observer(() => {
   const { t } = useTranslation();
+  const { issuesStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
+
+  /* This page is reachable without ever opening Issues, and issuesStore only
+     hydrates from IssuesList/IssueDetail/IssuePlayer. Without this the tag
+     manager renders empty AND its writes silently no-op, because every mutation
+     guards on a `projectId` the store never received. */
+  React.useEffect(() => {
+    if (siteId) issuesStore.ensureJourneyTags(String(siteId));
+  }, [siteId]);
 
   return (
     <div className="flex flex-col gap-8 p-5">
@@ -195,6 +205,7 @@ const IssuesPanel = observer(() => {
 
 function AgentsPreferences() {
   const { t } = useTranslation();
+  const { issuesStore, projectsStore } = useStore();
   const history = useHistory();
   const location = useLocation();
   const permitted = usePermittedAgents();

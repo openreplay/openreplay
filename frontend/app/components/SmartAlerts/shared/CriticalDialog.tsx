@@ -81,7 +81,8 @@ export default observer(function CriticalDialog({
 
   const removeFromCritical = () => {
     if (issueId == null) return;
-    issuesStore.setNotCriticalForMe(issueId, '');
+    // no reason prompt on this path — that's what NotCriticalDialog is for
+    issuesStore.setNotCriticalForMe(issueId);
     onClose();
   };
   const save = () => {

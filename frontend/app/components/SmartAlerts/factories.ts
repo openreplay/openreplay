@@ -1,4 +1,8 @@
-import { type RawIssue, type RawIssueSession } from './api';
+import {
+  type RawIssue,
+  type RawIssueSession,
+  type RawLabelRatio,
+} from './api';
 import {
   CAT_ORDER,
   type CategoryName,
@@ -9,42 +13,32 @@ import {
 } from './shared/model';
 
 /* Factories mapping raw /v2/smart-issues payloads to our view-model shapes.
-   Categories are still derived locally from label ratios (the backend has no
-   explicit per-issue category); `fix` (suggested fix) is the only field the
-   contract still doesn't provide — see TODO.md. */
+   `fix` (suggested fix) is the only field the contract still doesn't provide —
+   see TODO.md. */
 
 /* The backend's critical label is a real issue label whose stored name contains
    "critical" (e.g. "Critical") — match by substring, case-insensitive. */
 export const isCriticalLabel = (name: string) =>
   name.toLowerCase().includes('critical');
 
-const CATEGORY_SET = new Set<string>(CAT_ORDER);
-/* A category label counts as a real membership above this ratio — an issue can
-   belong to several categories at once (e.g. UI/UX 99 + Errors 56). */
-const CATEGORY_RATIO_MIN = 25;
+const CAT_SET = new Set<string>(CAT_ORDER);
+const asCategories = (v?: string[]): CategoryName[] =>
+  (v ?? []).filter((c): c is CategoryName => CAT_SET.has(c));
 
-/* Until the backend sends explicit categories, derive them locally from the
-   issueLabels ratios for the three fixed categories (Errors/UI/UX/Slowness). */
-function dominantCategory(
-  labels: { name: string; ratio: number }[],
-): CategoryName | undefined {
-  const cats = labels.filter((l) => CATEGORY_SET.has(l.name));
-  if (!cats.length) return undefined;
-  return cats.reduce((a, b) => (b.ratio > a.ratio ? b : a))
-    .name as CategoryName;
-}
-
-function memberCategories(
-  labels: { name: string; ratio: number }[],
-): CategoryName[] {
-  return labels
-    .filter((l) => CATEGORY_SET.has(l.name) && l.ratio > CATEGORY_RATIO_MIN)
-    .map((l) => l.name as CategoryName);
-}
+/* Labels come with a `ratio` — the share of the issue's sessions they apply to
+   (0-100). Below this floor the label describes a minority variation, not the
+   issue, so showing it reads as a property of every session when it isn't. Keep
+   only the labels that hold for most of the issue. */
+const LABEL_RATIO_MIN = 70;
+const strongLabels = (labels?: RawLabelRatio[]): string[] =>
+  (labels ?? [])
+    .filter((l) => (l.ratio ?? 0) >= LABEL_RATIO_MIN)
+    .map((l) => l.name);
 
 /** RawIssue (POST /smart-issues/{projectId}, GET …/issue) -> Issue */
 export function makeIssue(d: RawIssue): Issue {
   const lastSeen = d.lastSeen ?? null;
+  const categories = asCategories(d.categories);
   return {
     // identity — issueName is the stable key the backend keys on
     id: d.issueName,
@@ -53,16 +47,17 @@ export function makeIssue(d: RawIssue): Issue {
     // critical is the server's own flag — not inferred from labels
     critical: Boolean(d.critical),
     hidden: Boolean(d.hidden),
-    tags: (d.issueLabels ?? [])
-      .map((l) => l.name)
-      .filter((n) => !isCriticalLabel(n)),
-    journeyLabels: (d.journeyLabels ?? []).map((l) => l.name),
-    // derived locally from label ratios (see dominantCategory/memberCategories);
-    // replace with server-provided categories when available
-    cat: dominantCategory(d.issueLabels ?? []),
-    categories: memberCategories(d.issueLabels ?? []),
+    deleted: Boolean(d.deleted),
+    deletedAt: d.deletedAt ?? null,
+    tags: strongLabels(d.issueLabels).filter((n) => !isCriticalLabel(n)),
+    journeyLabels: strongLabels(d.journeyLabels),
+    // server-assigned category; `cat` is the dominant one for the column/avatar
+    cat: (CAT_SET.has(d.category ?? '') ? d.category : categories[0]) as
+      | CategoryName
+      | undefined,
+    categories,
 
-    segmentId: d.segmentId,
+    segmentIds: d.segmentIds ?? [],
     impactedSessions: d.impactedSessions ?? 0,
     count: d.count ?? 0,
     firstSeen: d.firstSeen ?? null,
@@ -98,12 +93,14 @@ export function makeIssueSessionCard(s: RawIssueSession): IssueSessionCard {
     tags: (s.journeyLabels ?? [])
       .map((l) => (typeof l === 'string' ? l : l?.name))
       .filter((n): n is string => Boolean(n)),
-    // backend returns a per-session description; the redesign wants a short
-    // "variation" headline — we fall back to the description until one exists
-    variation:
-      s.description ??
-      s.journey ??
-      '' /* WAITING BACKEND: short per-session variation headline */,
+    // the one-line journey summary is the variation headline; fall back to the
+    // longer description/journey when a session has no summary
+    variation: s.journeySummary || s.description || s.journey || '',
     issueTimestamp: s.issueTimestamp ?? null,
+    thumbnail: s.thumbnail,
+    journeySteps: (s.journeySteps ?? []).map((st) => ({
+      name: st.name,
+      relativeTimestamp: st.relativeTimestamp,
+    })),
   };
 }

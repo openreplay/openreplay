@@ -45,11 +45,9 @@ export default function NotCriticalDialog({
       open={issue != null}
       onCancel={onClose}
       onOk={() => {
-        if (issue)
-          issuesStore.setNotCriticalForMe(
-            issue.id,
-            [...reasons, note.trim()].filter(Boolean).join(' · '),
-          );
+        // reasons stay a list: the server validates them against its own enum
+        // (GET …/reasons) and the note rides along as free text
+        if (issue) issuesStore.setNotCriticalForMe(issue.id, reasons, note);
         onClose();
       }}
       okText={t('Not critical for me')}

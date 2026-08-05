@@ -122,8 +122,20 @@ function IssuesList() {
 
   const catValue: 'All' | CategoryName =
     issuesStore.cats.length === 1 ? issuesStore.cats[0] : 'All';
+  // faded per-tab counts from the list response's categoryCounts (each issue
+  // counted once under its primary category, so they sum to the "All" count)
+  const hasCounts = issuesStore.hasCategoryCounts;
+  const faded = (n: number) => <span className="opacity-50 ml-1.5">{n}</span>;
   const catTabOptions = [
-    { value: 'All', label: t('All') },
+    {
+      value: 'All',
+      label: (
+        <span>
+          {t('All')}
+          {hasCounts && faded(issuesStore.allCategoryCount)}
+        </span>
+      ),
+    },
     ...CAT_ORDER.map((c) => {
       const Ic = CAT_ICON[c];
       return {
@@ -135,7 +147,12 @@ function IssuesList() {
             style={{ color: c === catValue ? CAT_COLOR[c] : undefined }}
           />
         ),
-        label: t(c),
+        label: (
+          <span>
+            {t(c)}
+            {hasCounts && faded(issuesStore.catCount(c))}
+          </span>
+        ),
       };
     }),
   ];
@@ -185,7 +202,7 @@ function IssuesList() {
                 <Tag className="rounded">{t('Hidden')}</Tag>
               </Tooltip>
             )}
-            {issuesStore.viewingDeleted && (
+            {r.deleted && (
               <Tooltip title={t('Deleted')}>
                 <Tag color="red" className="rounded">
                   {t('Deleted')}
@@ -205,9 +222,11 @@ function IssuesList() {
         // shows the fork icon in blue, a full-traffic find the globe in gray. The
         // chip stays a normal tag (gray border/bg); only the icon carries meaning
         // and it's not clickable. Pairs with the "Found in" segment filter.
-        const showOrigin =
-          Boolean(r.segmentId) || issuesStore.segments.length > 0;
-        const segName = issuesStore.segmentName(r.segmentId);
+        const inSegments = r.segmentIds.length > 0;
+        const showOrigin = inSegments || issuesStore.segments.length > 0;
+        const segNames = r.segmentIds
+          .map((id) => issuesStore.segmentName(id))
+          .filter(Boolean);
         const tags = labels ?? [];
         const shown = tags.slice(0, 2);
         const rest = tags.length - shown.length;
@@ -218,9 +237,9 @@ function IssuesList() {
               <Tooltip
                 placement="top"
                 title={
-                  r.segmentId
-                    ? t('Found in segment: {{name}}', {
-                        name: segName ?? r.segmentId,
+                  inSegments
+                    ? t('Found in: {{names}}', {
+                        names: segNames.join(', ') || r.segmentIds.join(', '),
                       })
                     : t('Found in full traffic')
                 }
@@ -230,12 +249,12 @@ function IssuesList() {
                   style={{
                     width: 22,
                     height: 22,
-                    color: r.segmentId
+                    color: inSegments
                       ? 'var(--color-main)'
                       : 'var(--color-gray-medium)',
                   }}
                 >
-                  {r.segmentId ? <Split size={13} /> : <Globe size={13} />}
+                  {inSegments ? <Split size={13} /> : <Globe size={13} />}
                 </span>
               </Tooltip>
             )}
@@ -309,33 +328,16 @@ function IssuesList() {
                 ]
               : []),
           { type: 'divider' as const },
-          ...(visibility === 'deleted'
-            ? [
-                {
-                  key: 'restore',
-                  icon: <RotateCcw size={14} />,
-                  label: t('Restore'),
-                },
-              ]
-            : [
-                r.hidden
-                  ? {
-                      key: 'unhide',
-                      icon: <Eye size={14} />,
-                      label: t('Unhide'),
-                    }
-                  : {
-                      key: 'hide',
-                      icon: <EyeOff size={14} />,
-                      label: t('Hide'),
-                    },
-                {
-                  key: 'delete',
-                  icon: <Trash2 size={14} />,
-                  label: t('Delete'),
-                  danger: true,
-                },
-              ]),
+          // hide/unhide follows the ROW, not the view: `all` mixes both kinds
+          r.hidden
+            ? { key: 'unhide', icon: <Eye size={14} />, label: t('Unhide') }
+            : { key: 'hide', icon: <EyeOff size={14} />, label: t('Hide') },
+          {
+            key: 'delete',
+            icon: <Trash2 size={14} />,
+            label: t('Delete'),
+            danger: true,
+          },
         ];
         return (
           <Dropdown
@@ -351,7 +353,6 @@ function IssuesList() {
                   issuesStore.restoreCritical(r.id);
                 else if (key === 'hide') setHideTarget(r);
                 else if (key === 'unhide') issuesStore.unhide(r.id);
-                else if (key === 'restore') issuesStore.restore(r.id);
                 else if (key === 'delete') confirmDelete(r);
               },
               items,
@@ -374,10 +375,9 @@ function IssuesList() {
   const confirmDelete = (r: Issue) =>
     Modal.confirm({
       title: t('Delete this issue?'),
-      content: t(
-        '“{{head}}” will be removed. You can restore it later from the Deleted view.',
-        { head: r.head },
-      ),
+      content: t('“{{head}}” will be removed from the list.', {
+        head: r.head,
+      }),
       okText: t('Delete'),
       okButtonProps: { danger: true },
       onOk: () => issuesStore.remove(r.id),
@@ -538,6 +538,7 @@ function IssuesList() {
               }))}
               origins={issuesStore.origins}
               onToggleOrigin={issuesStore.toggleOrigin}
+              onSetOrigins={issuesStore.setOrigins}
               onClear={() => issuesStore.clearOrigins()}
             />
 
@@ -578,7 +579,7 @@ function IssuesList() {
           onChange={onTableChange}
           pagination={false}
           rowClassName={(r) =>
-            `cursor-pointer${r.hidden || visibility === 'deleted' ? ' opacity-60' : ''}`
+            `cursor-pointer${r.hidden || r.deleted ? ' opacity-60' : ''}`
           }
           onRow={(r) => ({ onClick: () => openDetail(r.id) })}
           locale={{ emptyText }}

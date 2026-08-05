@@ -280,7 +280,11 @@ function IssuePlayer() {
                 onClose={() => setView(null)}
                 critState={critState}
                 onOpenCritical={() => setCritOpen(true)}
-                segmentName={issuesStore.segmentName(issue.segmentId)}
+                // fall back to the raw id when the name isn't loaded, so a
+                // segment find never silently reads as full traffic
+                segmentNames={issue.segmentIds.map(
+                  (id) => issuesStore.segmentName(id) ?? id,
+                )}
               />
             )}
           </div>
