@@ -8,6 +8,11 @@ import { mergeRequests } from "~/utils/networkTrackingUtils";
 import type { SpotNetworkRequest } from "~/utils/networkTrackingUtils";
 import { safeApiUrl, base64ToBlob } from "~/utils/smallUtils";
 import {
+  getSenderOrigin,
+  isTrustedWebappSender,
+  trustedWebappOrigins,
+} from "~/utils/trustedOrigin";
+import {
   attachDebuggerToTab,
   stopDebugger,
   getRequests as getDebuggerRequests,
@@ -499,14 +504,31 @@ export default defineBackground(() => {
 
   onMessage("audio:audio-perm", () => notifyPopup("popup:audio-perm"));
 
-  onMessage("ort:login-token", async ({ data }) => {
-    setJWTToken(data.token);
-    if (data.ingest) {
-      settingsCache = await patchSettings({ ingestPoint: data.ingest });
+  onMessage("ort:login-token", async ({ data, sender }) => {
+    const settings = await settingsStore.getValue();
+    const senderOrigin = getSenderOrigin(sender);
+    if (!isTrustedWebappSender(sender, settings.ingestPoint)) {
+      console.warn(
+        `Spot: refused a login token from untrusted origin ${senderOrigin ?? "unknown"}. ` +
+          `Trusted: ${trustedWebappOrigins(settings.ingestPoint).join(", ") || "none"}. ` +
+          "A self-hosted instance has to be set as the Ingest Point in Spot settings first.",
+      );
+      return false;
     }
+    if (typeof data.token !== "string" || !data.token.length) return false;
+    setJWTToken(data.token);
+    // The verified origin is the deployment the token belongs to, so keep the
+    // ingest point pointed at it (app.openreplay.com <-> api.openreplay.com).
+    settingsCache =
+      senderOrigin && senderOrigin !== settings.ingestPoint
+        ? await patchSettings({ ingestPoint: senderOrigin })
+        : settings;
+    return true;
   });
 
-  onMessage("ort:invalidate-token", () => {
+  onMessage("ort:invalidate-token", async ({ sender }) => {
+    const settings = await settingsStore.getValue();
+    if (!isTrustedWebappSender(sender, settings.ingestPoint)) return;
     setJWTToken("");
   });
 

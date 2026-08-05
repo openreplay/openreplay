@@ -40,7 +40,9 @@ function RecordingControls({
   const [time, setTime] = createSignal(0);
   const [timeStr, setTimeStr] = createSignal(formatMsToTime(0));
 
-  const onMsg = (e: any) => {
+  const onMsg = (e: MessageEvent) => {
+    if (e.source !== window) return;
+    if (!e.data || typeof e.data !== "object") return;
     if (e.data.type === pageMessages.controls.triggerStop) {
       void onEnd();
     }

@@ -1,5 +1,12 @@
 :host {
   all: initial;
+  /* This rule is unlayered, so it also wins over Tailwind's preflight
+     `html, :host { font-family: ... }` (that one lives in @layer base) and
+     `all: initial` leaves the whole UI in the UA default serif. Re-apply the
+     theme font here, after the reset. */
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 spot-ui {

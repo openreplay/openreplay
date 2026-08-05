@@ -68,7 +68,8 @@ export interface ProtocolMap {
   "ort:countend"(data: { area: RecArea; mic: boolean; audioId: string }): boolean;
   "ort:stop"(): { status: string; duration?: number };
   "ort:getMicStatus"(): { micStatus: boolean };
-  "ort:login-token"(data: { token: string; ingest: string }): void;
+  /** Returns false when the sender's origin is not the configured OpenReplay app. */
+  "ort:login-token"(data: { token: string }): boolean;
   "ort:invalidate-token"(): void;
   "ort:save-spot"(data: { spot: SpotMeta }): "pong";
   "ort:check-new-tab"(): boolean;

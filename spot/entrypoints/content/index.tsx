@@ -188,17 +188,24 @@ export default defineContentScript({
     };
 
     const { webapp, injected, notifications, controls } = pageMessages;
-    window.addEventListener("message", (event) => {
+    window.addEventListener("message", async (event) => {
+      // Every peer on this channel (the OpenReplay app, injected.js) posts from
+      // this same window, so anything arriving from a frame, an opener or
+      // another window is a spoof attempt and gets dropped.
+      if (event.source !== window) return;
+      if (!event.data || typeof event.data !== "object") return;
       if (event.data.type === webapp.ping) {
         window.postMessage({ type: webapp.pong }, "*");
       }
       if (event.data.type === webapp.token) {
-        window.postMessage({ type: webapp.logged }, "*");
-        const ingest = window.location.origin;
-        void sendMessage("ort:login-token", {
+        // The background checks this tab's real origin against the configured
+        // ingest point, so a token is only acked once it was actually accepted.
+        const accepted = await sendMessage("ort:login-token", {
           token: event.data.token,
-          ingest,
-        }).catch(() => {});
+        }).catch(() => false);
+        if (accepted) {
+          window.postMessage({ type: webapp.logged }, "*");
+        }
       }
       if (event.data.type === webapp.invalidate) {
         void sendMessage("ort:invalidate-token").catch(() => {});
