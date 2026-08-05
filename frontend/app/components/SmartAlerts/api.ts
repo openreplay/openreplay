@@ -2,16 +2,17 @@ import { client } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
 /* Smart Issues REST client — the Go `api` service under /v2/smart-issues
-   (migrated from the Python `kai` service). See api.yaml for the full contract.
+   (migrated from the Python `kai` service). See api2.yaml for the full contract
+   (api.yaml is the earlier revision — see TODO.md).
 
    NOTE(base-path): /smart-issues is added to `noChalice` in api_client.ts so the
    path resolves at the origin root (…/v2/smart-issues/{projectId}) on
    self-hosted, mirroring how /kai was routed. The exact SaaS gateway prefix
-   still needs a smoke-test against a live backend — see HANDOFF.md. */
+   still needs a smoke-test against a live backend — see TODO.md §7. */
 
 const base = (projectId: string | number) => `/v2/smart-issues/${projectId}`;
 
-// ---- shared enums (mirror api.yaml) ----
+// ---- shared enums (mirror api2.yaml) ----
 export type Visibility = 'active' | 'hidden' | 'deleted' | 'all';
 export type ListSortBy = 'impact' | 'count' | 'recency' | 'firstSeen';
 export type SearchSortBy = 'time' | 'events';
@@ -83,8 +84,15 @@ export interface RawIssue {
   issueDescription?: string;
   issueLabels: RawLabelRatio[];
   journeyLabels: RawLabelRatio[];
-  /** which segment surfaced this issue (NOT-YET-BACKED) — absent = full traffic */
-  segmentId?: string;
+  /** capture segments (saved-search ids) the issue was found in, in the window;
+      [] = full traffic only */
+  segmentIds: string[];
+  /** server-assigned category + every category the issue is significant in */
+  category?: string;
+  categories?: string[];
+  /** soft-delete flag + timestamp (epoch-ms) */
+  deleted?: boolean;
+  deletedAt?: number;
 }
 
 /* Session row from POST /smart-issues/{projectId}/search — replay metadata
@@ -100,9 +108,20 @@ export interface RawIssueSession {
   userUuid?: string;
   description?: string;
   journey?: string;
+  /** one-line journey summary — the session-card variation headline */
+  journeySummary?: string;
   issueLabels?: (string | { name: string })[];
   journeyLabels?: (string | { name: string })[];
   issueTimestamp?: number | null;
+  /** ordered journey steps, `relativeTimestamp` anchored to startTs ([] when
+      none / aged past the 1-month TTL) */
+  journeySteps?: RawJourneyStep[];
+  /** capture segments this session's issue was recorded under */
+  segmentIds?: string[];
+  /** presigned URL for the thumbnail nearest the issue moment (absent if none) */
+  thumbnail?: string;
+  /** the thumbnail's offset from session start, ms (only with `thumbnail`) */
+  thumbnailTimestamp?: number;
   // replay extras (not enumerated in the schema, present via additionalProperties)
   userBrowser?: string;
   userOs?: string;
@@ -113,6 +132,34 @@ export interface RawIssueSession {
   metadata?: Record<string, any> | null;
 }
 
+/* One vision-extracted journey step (finetuning.user_journey_steps). */
+export interface RawJourneyStep {
+  name: string;
+  timestamp: number;
+  /** offset from session start, ms — what the player seeks to (clamped ≥ 0) */
+  relativeTimestamp: number;
+}
+
+/* GET …/session/{sessionId}/journey — one session's journey + ordered steps. */
+export interface SessionJourney {
+  sessionId: number;
+  journey: string;
+  journeySummary: string;
+  journeyLabels: string[];
+  startTs: number;
+  journeySteps: RawJourneyStep[];
+}
+
+/* GET …/journey-tags — a project journey tag (LLM-matched session descriptor). */
+export interface RawJourneyTag {
+  id: number;
+  name: string;
+  description: string;
+  source: 'predefined' | 'custom';
+  createdBy: number | null;
+  createdAt: string;
+}
+
 export interface ListParams {
   limit?: number;
   page?: number;
@@ -120,6 +167,8 @@ export interface ListParams {
   journeyLabels?: string[];
   issueLabelsMatch?: LabelsMatch;
   journeyLabelsMatch?: LabelsMatch;
+  /** primary-category tab filter (Errors / UI/UX / Slowness) */
+  category?: string;
   sortBy?: ListSortBy;
   sortDir?: SortDir;
   range?: [number, number];
@@ -128,6 +177,8 @@ export interface ListParams {
   critical?: boolean;
   /** filter to specific traffic segments (saved-search ids); [] = full traffic */
   segmentIds?: string[];
+  /** `or` => hasAny (default), `and` => hasAll — applied to segmentIds */
+  segmentsMatch?: LabelsMatch;
   /** filter to what's relevant to me (my criticals + my segments); NOT-YET-BACKED */
   relevantToMe?: boolean;
   minImpact?: number;
@@ -142,6 +193,8 @@ export interface SearchParams {
   journeyLabelsMatch?: LabelsMatch;
   /** scope the sample to specific traffic segments (saved-search ids) */
   segmentIds?: string[];
+  /** `or` => hasAny (default), `and` => hasAll — applied to segmentIds */
+  segmentsMatch?: LabelsMatch;
   sortBy?: SearchSortBy;
   sortDir?: SortDir;
   range?: [number, number];
@@ -173,7 +226,11 @@ const defaultRange = (): [number, number] => [
 export async function getIssues(
   projectId: string,
   params: ListParams = {},
-): Promise<{ rows: RawIssue[]; total: number }> {
+): Promise<{
+  rows: RawIssue[];
+  total: number;
+  categoryCounts: Record<string, number> | null;
+}> {
   const res = await client.post(base(projectId), {
     limit: params.limit ?? 20,
     page: params.page ?? 1,
@@ -188,16 +245,27 @@ export async function getIssues(
     minImpact: params.minImpact ?? 0,
     minCount: params.minCount ?? 0,
     query: params.query ?? '',
+    // primary-category tab filter (own param — NOT an issueLabels match)
+    ...(params.category ? { category: params.category } : {}),
     // only include when filtering to criticals; omit means no critical filter
     ...(params.critical ? { critical: true } : {}),
     // scope to specific traffic segments; omit/[] means full traffic
-    ...(params.segmentIds?.length ? { segmentIds: params.segmentIds } : {}),
+    ...(params.segmentIds?.length
+      ? {
+          segmentIds: params.segmentIds,
+          segmentsMatch: params.segmentsMatch ?? 'or',
+        }
+      : {}),
     // NOT-YET-BACKED filter — server ignores until implemented
     ...(params.relevantToMe ? { relevantToMe: true } : {}),
   });
   const json = await res.json();
   const rows: RawIssue[] = json.data ?? [];
-  return { rows, total: json.total ?? rows.length };
+  return {
+    rows,
+    total: json.total ?? rows.length,
+    categoryCounts: json.categoryCounts ?? null,
+  };
 }
 
 /** GET /smart-issues/{projectId}/issue?name=… — one issue by name (returns it
@@ -244,6 +312,60 @@ export async function getReasons(projectId: string): Promise<Reasons> {
   return { hide: data.hide ?? [], criticality: data.criticality ?? [] };
 }
 
+/* ---- journey tags (real CRUD; Postgres-gated on the server) ---- */
+
+/** GET /smart-issues/{projectId}/journey-tags — the project's live journey tags. */
+export async function listJourneyTags(
+  projectId: string,
+): Promise<RawJourneyTag[]> {
+  const res = await client.get(`${base(projectId)}/journey-tags`);
+  const json = await res.json();
+  return json.data ?? [];
+}
+
+/** POST …/journey-tags — create a tag (409 when the name is taken). Resolves to
+    null on 409 so the caller can surface "name taken". */
+export async function createJourneyTag(
+  projectId: string,
+  name: string,
+  description: string,
+): Promise<RawJourneyTag | null> {
+  try {
+    const res = await client.post(`${base(projectId)}/journey-tags`, {
+      name,
+      description,
+    });
+    const json = await res.json();
+    return json.data ?? null;
+  } catch (e: any) {
+    if ((e?.cause as Response)?.status === 409) return null;
+    throw e;
+  }
+}
+
+/** PATCH …/journey-tags/{tagId} — rename / re-describe (omitted fields kept). */
+export async function updateJourneyTag(
+  projectId: string,
+  tagId: number,
+  patch: { name?: string; description?: string },
+): Promise<RawJourneyTag | null> {
+  try {
+    const res = await client.patch(
+      `${base(projectId)}/journey-tags/${tagId}`,
+      patch,
+    );
+    const json = await res.json();
+    return json.data ?? null;
+  } catch (e: any) {
+    if ((e?.cause as Response)?.status === 409) return null;
+    throw e;
+  }
+}
+
+/** DELETE …/journey-tags/{tagId} — soft-delete (labelled sessions keep it). */
+export const deleteJourneyTag = (projectId: string, tagId: number) =>
+  client.delete(`${base(projectId)}/journey-tags/${tagId}`);
+
 /** POST /smart-issues/{projectId}/search — sessions for an issue, replay-enriched.
     A non-null `query` triggers the AI vector + LLM re-rank branch. */
 export async function getIssueSessions(
@@ -257,7 +379,12 @@ export async function getIssueSessions(
     issueLabels: opts.issueLabels ?? [],
     journeyLabels: opts.journeyLabels ?? [],
     journeyLabelsMatch: opts.journeyLabelsMatch ?? 'and',
-    ...(opts.segmentIds?.length ? { segmentIds: opts.segmentIds } : {}),
+    ...(opts.segmentIds?.length
+      ? {
+          segmentIds: opts.segmentIds,
+          segmentsMatch: opts.segmentsMatch ?? 'or',
+        }
+      : {}),
     sortBy: opts.sortBy ?? 'time',
     sortDir: opts.sortDir ?? 'desc',
     range: opts.range ?? defaultRange(),
@@ -267,6 +394,25 @@ export async function getIssueSessions(
   const json = await res.json();
   const rows: RawIssueSession[] = json.data ?? [];
   return { rows, total: json.total ?? rows.length };
+}
+
+/** GET /smart-issues/{projectId}/session/{sessionId}/journey — one session's
+    journey narrative + ordered steps. Resolves to null on 404 (no journey row,
+    or aged past the 1-month TTL). */
+export async function getSessionJourney(
+  projectId: string,
+  sessionId: string,
+): Promise<SessionJourney | null> {
+  try {
+    const res = await client.get(
+      `${base(projectId)}/session/${sessionId}/journey`,
+    );
+    const json = await res.json();
+    return json.data ?? null;
+  } catch (e: any) {
+    if ((e?.cause as Response)?.status === 404) return null;
+    throw e;
+  }
 }
 
 /** PUT /smart-issues/{projectId} — dispatches on `operation`. `reasons`/`note`

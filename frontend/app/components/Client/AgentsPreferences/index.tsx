@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useStore } from 'App/mstore';
 import { useHistory, useLocation } from 'App/routing';
 
 import {
@@ -113,8 +114,18 @@ function PrefSection({
 
 function AgentsPreferences() {
   const { t } = useTranslation();
+  const { issuesStore, projectsStore } = useStore();
   const history = useHistory();
   const location = useLocation();
+  const siteId = projectsStore.activeSiteId;
+
+  /* This page is reachable without ever opening Issues, and issuesStore only
+     hydrates from IssuesList/IssueDetail/IssuePlayer. Without this the tag
+     manager renders empty AND its writes silently no-op, because every mutation
+     guards on a `projectId` the store never received. */
+  React.useEffect(() => {
+    if (siteId) issuesStore.ensureJourneyTags(String(siteId));
+  }, [siteId]);
 
   // real project settings + notifications (same sources the Tests page used
   // before these controls moved here)

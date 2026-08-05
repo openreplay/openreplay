@@ -1,0 +1,801 @@
+openapi: 3.0.3
+info:
+  title: Smart Issues API
+  version: "1.0.0"
+  description: |
+    Project-scoped REST API for **Smart Issues** — an AI-assisted view of
+    ClickHouse-derived issues and the sessions they impact (migrated from the
+    Python `kai` service into the Go `api` service).
+
+    - **Base path:** `/v2/smart-issues/{projectId}`
+    - **Auth:** same as all other `/v2` endpoints — send the logged-in user's
+      bearer token (`Authorization: Bearer <JWT>`). Every route is scoped to
+      `{projectId}`.
+    - **EE-only:** routes require the `SMART_ISSUES` permission on enterprise
+      tenants. The handler set is registered only when `SMART_ISSUES_ENABLED=true`.
+    - **AI paths:** the text-query branch of `/search` and the AI auto-rename
+      (`PUT` with an empty `operation`) additionally require AWS Bedrock to be
+      configured (Titan v2 embeddings + Claude via the task role).
+
+    **Responses** are JSON wrapped as `{ "data": ... }`. `POST /smart-issues/{projectId}`
+    additionally carries a sibling `total`. Mutations (`PUT`/`DELETE`) return
+    `{ "data": { "status": "ok" } }`. **Errors** return `{ "errors": ["message"] }`.
+
+servers:
+  - url: /v2
+    description: API v2 base
+
+security:
+  - sessionAuth: []
+
+tags:
+  - name: Issues
+  - name: Labels
+  - name: Search
+  - name: Journeys
+  - name: Journey tags
+
+paths:
+  /smart-issues/{projectId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      tags: [Issues]
+      summary: List issues
+      description: |
+        Paginated, sorted, label-filtered list of issues with their windowed
+        impact %. The optional `range` scopes both the issue set and the
+        impact-% denominator; omitting it defaults to the last 7 days.
+
+        The response also carries `categoryCounts` for the category tab strip, so the
+        tabs never need one request per category.
+      operationId: listIssues
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IssuesListRequest" }
+      responses:
+        "200":
+          description: A page of issues, the total distinct-issue count, and the per-category tab counts.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IssuesListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    put:
+      tags: [Issues]
+      summary: Update an issue (hide / rename / criticality / AI-rename)
+      description: |
+        Dispatches on the `operation` object:
+          * `{ "hide": true|false }` — hide or un-hide the issue.
+          * `{ "rename": "<new name>" }` — rename (re-keys the issue; re-shows it).
+          * `{ "critical": true|false }` — set criticality + record feedback.
+          * `{ "restore": true }` — reverse a soft-delete (un-delete + un-hide).
+          * `{}` (or no recognized key) — AI auto-rename: Bedrock proposes a
+            non-generic snake_case label and applies it (best-effort; a parse/LLM
+            failure leaves the name unchanged and still returns 200).
+      operationId: updateIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PutRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/StatusOk" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      tags: [Issues]
+      summary: Soft-delete an issue
+      description: |
+        Soft-deletes the issue named in the body (ClickHouse `hidden=true`,
+        `is_deleted=1`, `deleted_at=now()`). Reversible with
+        `PUT` + `{"restore": true}`. Soft-deleted issues are returned by the
+        `deleted` and `all` list views, flagged with `deleted: true`.
+      operationId: deleteIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeleteRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/StatusOk" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /smart-issues/{projectId}/issue:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Issues]
+      summary: Get a single issue's details
+      description: |
+        One issue's impact + labels — the List aggregation scoped to a single
+        issue by name — for deep-linking to an issue without loading the whole
+        list. Returns the issue even if it is hidden.
+      operationId: getIssue
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Issue name (display or stored form; normalized server-side).
+          schema: { type: string }
+        - name: startMs
+          in: query
+          required: false
+          description: Window start, epoch-millis. Use with `endMs`; omit both for the last 7 days.
+          schema: { type: integer, format: int64 }
+        - name: endMs
+          in: query
+          required: false
+          description: Window end, epoch-millis.
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: The issue's impact and labels.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Issue" }
+                required: [data]
+        "400":
+          description: Missing required `name` query parameter.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: No such issue in the window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /smart-issues/{projectId}/labels:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Labels]
+      summary: Get the label vocabulary
+      description: |
+        The distinct issue labels and journey labels available for the project,
+        used to populate the List filter controls. Journey labels are returned in
+        display form (e.g. `Blank screen`); the journey-label filter on `List`
+        normalizes them back to storage form. Issue labels are returned as stored
+        (e.g. `UI/UX`).
+      operationId: getLabels
+      responses:
+        "200":
+          description: Issue and journey label vocabularies.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LabelsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /smart-issues/{projectId}/search:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      tags: [Search]
+      summary: Search sessions for an issue
+      description: |
+        Finds sessions for a given issue within a time range and enriches each
+        with its replay metadata. A non-null `query` triggers the **AI vector
+        branch**: the query is embedded (Bedrock Titan), ranked by
+        `cosineDistance`, then re-ranked by the LLM. A null/empty `query` runs a
+        plain time/events-ordered search. Sessions without a replay are dropped.
+      operationId: searchIssueSessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SearchRequest" }
+      responses:
+        "200":
+          description: Matched, replay-enriched sessions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/SearchResultItem" }
+                  total:
+                    type: integer
+                    description: "Matching-session count (plain branch, for pagination) or the LLM-re-ranked result count (vector branch)."
+                required: [data, total]
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /smart-issues/{projectId}/reasons:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Issues]
+      summary: Reason vocabularies for hide/criticality feedback prompts.
+      description: |
+        Returns the canonical reason lists for hide and criticality feedback.
+        These are validated server-side enums used by PUT operations.
+      operationId: getReasons
+      responses:
+        "200":
+          description: Canonical reason lists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      hide: { type: array, items: { type: string } }
+                      criticality: { type: array, items: { type: string } }
+                    required: [hide, criticality]
+                required: [data]
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /smart-issues/{projectId}/session/{sessionId}/journey:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [Journeys]
+      summary: Get one session's journey and its steps
+      description: |
+        The vision-extracted user journey for a single session: the narrative, its
+        one-line summary, its journey labels (display form) and the ordered
+        **journey steps** — the major actions the vision pass extracted from the
+        replay, each with a timestamp.
+
+        Steps live in `finetuning.user_journey_steps`, which carries a **1-month
+        TTL**, so a session older than that returns its journey with an empty
+        `journeySteps` list. `404` means the session has no journey row at all
+        (never vision-processed, or aged out).
+      operationId: getSessionJourney
+      responses:
+        "200":
+          description: The session's journey and ordered steps.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/SessionJourney" }
+                required: [data]
+        "400":
+          description: Non-numeric `projectId` or `sessionId`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: No journey row for this session.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /smart-issues/{projectId}/journey-tags:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [Journey tags]
+      summary: List the project's journey tags
+      description: |
+        The project's live journey tags — LLM-matched descriptions the vision pass
+        applies to sessions. Soft-deleted tags are excluded.
+
+        These routes exist only when the API has a Postgres pool; the rest of Smart
+        Issues works without them.
+      operationId: listJourneyTags
+      responses:
+        "200":
+          description: The project's journey tags.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/JourneyTag" }
+                required: [data]
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      tags: [Journey tags]
+      summary: Create a journey tag
+      description: |
+        Both `name` and `description` are required. The description is the rule the
+        vision model matches against, so a new tag applies to sessions captured from
+        then on — it never relabels sessions already processed.
+
+        **Propagation delay:** the vision prompt caches a project's tags for up to
+        5 hours, so a new tag may not affect capture immediately.
+      operationId: createJourneyTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JourneyTagRequest" }
+      responses:
+        "200":
+          description: The created tag.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/JourneyTag" }
+                required: [data]
+        "400":
+          description: Missing name or description.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { $ref: "#/components/responses/NameTaken" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /smart-issues/{projectId}/journey-tags/{tagId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/TagId"
+    patch:
+      tags: [Journey tags]
+      summary: Rename or re-describe a journey tag
+      description: |
+        Omitted (or empty) fields keep their stored value, so `name` and
+        `description` can be changed independently. Predefined tags are editable like
+        any other; the tag keeps its original `source`, which records where the text
+        came from rather than who last edited it. Edits affect future captures only.
+      operationId: updateJourneyTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JourneyTagRequest" }
+      responses:
+        "200":
+          description: The updated tag.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/JourneyTag" }
+                required: [data]
+        "400":
+          description: Non-numeric `tagId`, or neither field supplied.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/TagNotFound" }
+        "409": { $ref: "#/components/responses/NameTaken" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      tags: [Journey tags]
+      summary: Delete a journey tag
+      description: |
+        Soft-deletes the tag: sessions already labelled with it keep that label, and
+        the vision prompt stops offering it. Predefined tags can be removed too.
+
+        Deleting a project's last tag leaves it with none — melonade treats
+        "all tags deleted" as deliberate and does not re-seed the base set.
+      operationId: deleteJourneyTag
+      responses:
+        "200": { $ref: "#/components/responses/StatusOk" }
+        "400":
+          description: Non-numeric `tagId`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/TagNotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Logged-in user's session JWT, sent as `Authorization: Bearer <token>`."
+
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      description: Project id the request is scoped to.
+      schema: { type: integer, format: int64 }
+    TagId:
+      name: tagId
+      in: path
+      required: true
+      description: Journey-tag id.
+      schema: { type: integer }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Session id (unsigned 64-bit).
+      schema: { type: integer, format: int64 }
+
+  responses:
+    Unauthorized:
+      description: Missing/invalid auth, or the user lacks the SMART_ISSUES permission.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    ServerError:
+      description: Server/dependency error (ClickHouse, Bedrock, …).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NameTaken:
+      description: A live journey tag in this project already uses that name.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    TagNotFound:
+      description: No such journey tag in this project (or it was already deleted).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    StatusOk:
+      description: Mutation acknowledged.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  schemas:
+    IssuesListRequest:
+      type: object
+      description: All fields optional; defaults shown.
+      properties:
+        limit: { type: integer, default: 20, description: Page size. }
+        page: { type: integer, default: 1, description: 1-based page index. }
+        issueLabels:
+          type: array
+          items: { type: string }
+          description: Filter on issue labels, matched as stored (e.g. "UI/UX").
+        journeyLabels:
+          type: array
+          items: { type: string }
+          description: Filter on journey labels in display form (e.g. "Blank screen"); normalized to storage form server-side.
+        issueLabelsMatch:
+          type: string
+          enum: [and, or]
+          default: and
+          description: "`and` => hasAll, `or` => hasAny — applied to issueLabels."
+        journeyLabelsMatch:
+          type: string
+          enum: [and, or]
+          default: and
+          description: "`and` => hasAll, `or` => hasAny — applied to journeyLabels."
+        sortBy: { type: string, enum: [impact, count, recency, firstSeen], default: impact }
+        sortDir: { type: string, enum: [asc, desc], default: desc }
+        range:
+          type: array
+          description: "[startMs, endMs] epoch-millis window. Omitted => last 7 days."
+          items: { type: integer, format: int64 }
+          minItems: 2
+          maxItems: 2
+        hidden:
+          type: string
+          enum: [active, hidden, deleted, all]
+          default: active
+          description: |
+            Visibility filter — `active` (non-hidden, not deleted, default), `hidden` (only
+            hidden), `deleted` (only soft-deleted), or `all`. `all` returns **everything,
+            deleted included**: it is the view that renders per-row `hidden`/`deleted` tags,
+            which requires both kinds of row to come back.
+        minImpact: { type: number, format: double, default: 0, description: "Keep issues with impact% >= this (0 = no filter)." }
+        minCount: { type: integer, default: 0, description: "Keep issues with occurrences >= this (0 = no filter)." }
+        query: { type: string, description: "Case-insensitive issue-name substring filter." }
+        critical:
+          type: boolean
+          nullable: true
+          description: "Filter by the override-aware critical flag. Omit => all, true => only critical, false => only non-critical."
+        category:
+          type: string
+          enum: ["Errors", "UI/UX", "Slowness"]
+          description: |
+            Keep only issues whose **primary** category matches — the category tabs.
+            Accepted case-insensitively; an unrecognized value is ignored (no filter)
+            rather than matching nothing.
+
+            This is deliberately not the same as filtering `issueLabels` on a category
+            name: an issue labelled both `Errors` and `UI/UX` belongs to exactly one tab
+            (its primary), which is what makes the tab counts add up to the total.
+        segmentIds:
+          type: array
+          items: { type: string }
+          description: "Scope to capture segments (saved-search UUIDs). Omitted/empty => no segment filter."
+        segmentsMatch:
+          type: string
+          enum: [and, or]
+          default: or
+          description: "`or` => hasAny (default), `and` => hasAll — applied to segmentIds."
+    LabelRatio:
+      type: object
+      properties:
+        name: { type: string }
+        ratio: { type: integer, description: Per-label share of the issue's session count (0-100). }
+      required: [name, ratio]
+    Issue:
+      type: object
+      properties:
+        issueName: { type: string, description: Display-formatted issue name. }
+        impact: { type: number, format: double, description: "100 * impacted_sessions / sessions_in_window." }
+        critical: { type: boolean, description: "Override if set, else derived from the 'critical' AI label." }
+        category:
+          type: string
+          enum: ["Errors", "UI/UX", "Slowness", ""]
+          description: |
+            Primary category: the most frequent label from the closed vocabulary the vision
+            prompt assigns. `""` when none of the issue's labels are recognized. "Critical" is a
+            severity, not a category, and is never returned here.
+
+            Ranked on how often each category label occurs (not on the rounded `ratio` in
+            `issueLabels`, which truncates), with ties broken in the order
+            Errors > UI/UX > Slowness. `categoryCounts` resolves it identically, so a row's
+            category always matches the tab it is counted under.
+        categories:
+          type: array
+          items: { type: string, enum: ["Errors", "UI/UX", "Slowness"] }
+          description: "All recognized categories, most-prevalent first (same ranking as `category`). Empty when none match."
+        deleted: { type: boolean, description: "Catalog soft-delete flag. Only ever true in the `deleted` and `all` views." }
+        deletedAt:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Epoch-ms the issue was soft-deleted, null when live."
+        hidden: { type: boolean, description: "Catalog hidden flag (always false in the 'active' view)." }
+        impactedSessions: { type: integer, description: "Distinct sessions affected within the window (impact% is derived from this)." }
+        count: { type: integer, description: "Total occurrences (session_issues rows) within the window." }
+        firstSeen: { type: integer, format: int64, description: "Epoch-ms of the earliest occurrence within the window." }
+        lastSeen: { type: integer, format: int64, description: "Epoch-ms of the most recent occurrence within the window." }
+        issueDescription:
+          type: string
+          description: "A representative description. Only returned by GET /issue; omitted from list items."
+        issueLabels: { type: array, items: { $ref: "#/components/schemas/LabelRatio" } }
+        journeyLabels: { type: array, items: { $ref: "#/components/schemas/LabelRatio" } }
+        segmentIds:
+          type: array
+          items: { type: string }
+          description: "Distinct capture segments (saved-search UUIDs) the issue was found in, within the window."
+      required: [issueName, impact, critical, category, categories, hidden, deleted, deletedAt, impactedSessions, count, firstSeen, lastSeen, issueLabels, journeyLabels, segmentIds]
+    IssuesListResponse:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Issue" } }
+        total: { type: integer, description: Distinct issues matching the filters (for pagination). }
+        categoryCounts:
+          type: object
+          nullable: true
+          additionalProperties: { type: integer }
+          description: |
+            Issue count per primary category, for the tab strip. Always carries every
+            known category (`0` when absent) plus `uncategorized`, so the client never
+            has to distinguish "no issues" from "bucket missing".
+
+            Each issue is counted **exactly once**, under its primary category, so with
+            no category filter the buckets sum to `total`. The counts are computed with
+            the `category` filter removed but every other filter applied — otherwise
+            selecting one tab would zero out all the others.
+
+            `null` when the count query failed: the list is still returned and the tabs
+            render without counts.
+          example: { "Errors": 12, "UI/UX": 3, "Slowness": 0, "uncategorized": 2 }
+      required: [data, total]
+    LabelsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            issueLabels: { type: array, items: { type: string } }
+            journeyLabels: { type: array, items: { type: string } }
+          required: [issueLabels, journeyLabels]
+      required: [data]
+    SearchRequest:
+      type: object
+      properties:
+        issue: { type: string, description: Issue name (normalized server-side). }
+        query:
+          type: string
+          nullable: true
+          description: Free-text query. Non-null triggers the Bedrock vector + LLM re-rank branch.
+        issueLabels: { type: array, items: { type: string } }
+        journeyLabels:
+          type: array
+          items: { type: string }
+          description: "Display form (e.g. `Blank screen`); normalized to storage form server-side."
+        issueLabelsMatch:
+          type: string
+          enum: [and, or]
+          default: and
+          description: "`and` => hasAll (default), `or` => hasAny — applied to issueLabels."
+        journeyLabelsMatch:
+          type: string
+          enum: [and, or]
+          default: and
+          description: "`and` => hasAll (default), `or` => hasAny — applied to journeyLabels."
+        sortBy: { type: string, enum: [time, events], default: time }
+        sortDir:
+          type: string
+          enum: [asc, desc]
+          default: asc
+          description: "Plain branch only; anything other than `desc` sorts ascending. The vector branch always orders by distance."
+        range:
+          type: array
+          description: "[startMs, endMs] epoch-millis window. Omitted (or [0,0]) => last 24 hours."
+          items: { type: integer, format: int64 }
+          minItems: 2
+          maxItems: 2
+        segmentIds:
+          type: array
+          items: { type: string }
+          description: "Scope to capture segments (saved-search UUIDs). Omitted/empty => no segment filter."
+        segmentsMatch:
+          type: string
+          enum: [and, or]
+          default: or
+          description: "`or` => hasAny (default), `and` => hasAll — applied to segmentIds."
+        limit: { type: integer, default: 20, description: Page size. }
+        page: { type: integer, default: 1, description: 1-based page index. }
+      required: [issue, range]
+    SearchResultItem:
+      type: object
+      description: |
+        Session replay metadata merged with the issue-specific fields below.
+        Additional replay properties (trackerVersion, platform, userOs, favorite,
+        viewed, metadata, …) are present but not all enumerated here.
+      properties:
+        sessionId: { type: string }
+        projectId: { type: integer }
+        startTs: { type: integer, format: int64 }
+        duration: { type: integer, format: int64, nullable: true }
+        userId: { type: string, nullable: true }
+        userUuid: { type: string }
+        description: { type: string, description: The issue description for this session. }
+        journey: { type: string }
+        journeySummary:
+          type: string
+          description: "One-line summary of the session's journey (the vision pass's `journeySummary`); empty when it produced none."
+        journeySteps:
+          type: array
+          items: { $ref: "#/components/schemas/JourneyStep" }
+          description: |
+            The session's ordered journey steps, with `relativeTimestamp` anchored to the
+            replay's `startTs`. `[]` when the session has no steps, when they aged past the
+            table's 1-month TTL, or when the step lookup failed (best-effort, like `thumbnail`).
+        issueLabels: { type: array, items: { type: string } }
+        journeyLabels: { type: array, items: { type: string } }
+        segmentIds:
+          type: array
+          items: { type: string }
+          description: "Capture-segment ids (saved-search UUIDs) the issue was recorded under for this session."
+        issueTimestamp:
+          type: integer
+          format: int64
+          nullable: true
+          description: Absolute epoch-ms of the issue within the replay, or null if out of range/unparseable.
+        thumbnail:
+          type: string
+          description: |
+            Presigned download URL for the exported thumbnail whose offset is closest to the
+            issue timestamp. Absent when the session has no exported thumbnail or presigning fails.
+        thumbnailTimestamp:
+          type: integer
+          format: int64
+          description: The chosen thumbnail's offset from session start, in ms. Present only alongside `thumbnail`.
+      additionalProperties: true
+    JourneyTag:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string, description: "Unique among the project's live tags." }
+        description: { type: string, description: "The rule the vision model matches sessions against." }
+        source:
+          type: string
+          enum: [predefined, custom]
+          description: |
+            Where the tag came from: `predefined` is melonade's seeded set, `custom` was
+            created by a user. Informational only — predefined tags are renamable and
+            removable like any other.
+        createdBy:
+          type: integer
+          nullable: true
+          description: "Creating user id; null for predefined tags, and also once that account is deleted."
+        createdAt: { type: string, format: date-time }
+      required: [id, name, description, source, createdBy, createdAt]
+    JourneyTagRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+      description: |
+        Both fields are required on create. On PATCH, an omitted or empty field leaves
+        the stored value unchanged.
+    JourneyStep:
+      type: object
+      description: |
+        One major action the vision pass extracted from the session
+        (`finetuning.user_journey_steps`), in chronological order.
+      properties:
+        name: { type: string, description: "Short human-readable action name, as produced by the vision model." }
+        timestamp: { type: integer, format: int64, description: "Absolute epoch-ms of the step." }
+        relativeTimestamp:
+          type: integer
+          format: int64
+          description: |
+            Offset from the session start in ms — what the player seeks to.
+            Clamped at 0 for steps that resolve before the session start (the
+            step time is a vision-reported offset, so it can drift slightly).
+      required: [name, timestamp, relativeTimestamp]
+    SessionJourney:
+      type: object
+      properties:
+        sessionId: { type: integer, format: int64 }
+        journey: { type: string, description: "The journey narrative for the session." }
+        journeySummary: { type: string, description: "One-line summary of the journey (empty when the vision pass produced none)." }
+        journeyLabels:
+          type: array
+          items: { type: string }
+          description: "Journey labels in display form (e.g. `Checkout flow`), matching the List endpoint."
+        startTs: { type: integer, format: int64, description: "Journey (session) start, epoch-ms." }
+        journeySteps:
+          type: array
+          items: { $ref: "#/components/schemas/JourneyStep" }
+          description: "Ordered steps; `[]` when the session has none or they aged past the 1-month TTL."
+      required: [sessionId, journey, journeySummary, journeyLabels, startTs, journeySteps]
+    PutRequest:
+      type: object
+      properties:
+        issue: { type: string }
+        operation:
+          type: object
+          description: |
+            One of `{hide: bool}`, `{rename: string}`, `{critical: bool}`, `{restore: true}` (un-delete),
+            or `{}` (AI auto-rename).
+          properties:
+            hide: { type: boolean }
+            rename: { type: string }
+            critical: { type: boolean }
+            restore: { type: boolean }
+        reasons:
+          type: array
+          items: { type: string }
+          description: "Captured with hide/criticality; validated against the server enum for the action (GET …/reasons)."
+        note: { type: string, description: "Optional free-text note." }
+      required: [issue, operation]
+    DeleteRequest:
+      type: object
+      properties:
+        issue: { type: string }
+      required: [issue]
+    StatusResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status: { type: string, example: ok }
+      required: [data]
+    ErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items: { type: string }
+      required: [errors]

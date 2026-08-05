@@ -201,6 +201,7 @@ export function SegmentFilter({
   segments,
   origins,
   onToggleOrigin,
+  onSetOrigins,
   onClear,
   showFullTraffic = true,
 }: {
@@ -208,6 +209,9 @@ export function SegmentFilter({
   segments: { id: string; name: string; mine?: boolean }[];
   origins: IssueOrigin[];
   onToggleOrigin: (o: IssueOrigin) => void;
+  /** replaces the whole selection — the aggregate rows flip several ids at
+      once, and toggling them one by one fires a refetch per id */
+  onSetOrigins: (o: IssueOrigin[]) => void;
   onClear: () => void;
   /** the issue page scopes sessions to segments only — no "Full traffic" row */
   showFullTraffic?: boolean;
@@ -229,8 +233,10 @@ export function SegmentFilter({
   const mineOn = myIds.length > 0 && myIds.every((id) => origins.includes(id));
   const showMine = myIds.length > 0 && (!ql || 'my segments'.includes(ql));
   const toggleMine = () =>
-    (mineOn ? myIds : myIds.filter((id) => !origins.includes(id))).forEach(
-      onToggleOrigin,
+    onSetOrigins(
+      mineOn
+        ? origins.filter((o) => !myIds.includes(o))
+        : [...origins, ...myIds.filter((id) => !origins.includes(id))],
     );
 
   const panel = (

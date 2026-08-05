@@ -24,15 +24,15 @@ export default function IssuePanel({
   onClose,
   critState,
   onOpenCritical,
-  segmentName,
+  segmentNames,
 }: {
   issue: Issue;
   card?: IssueSessionCard;
   onClose: () => void;
   critState: CritState;
   onOpenCritical: () => void;
-  /** the segment that surfaced this issue, if any (one-line chip) */
-  segmentName?: string;
+  /** the segments that surfaced this issue — one chip each, [] = full traffic */
+  segmentNames?: string[];
 }) {
   const { t } = useTranslation();
   return (
@@ -96,11 +96,13 @@ export default function IssuePanel({
           </div>
         )}
 
-        {/* segment that surfaced this issue — one line (Mehdi 07-27) */}
-        {segmentName && (
-          <div className="flex items-center gap-2 text-sm min-w-0">
+        {/* segments that surfaced this issue — one line (Mehdi 07-27) */}
+        {segmentNames && segmentNames.length > 0 && (
+          <div className="flex items-center gap-2 text-sm min-w-0 flex-wrap">
             <span className="color-gray-medium shrink-0">{t('Segments:')}</span>
-            <SegmentChip name={segmentName} />
+            {segmentNames.map((name) => (
+              <SegmentChip key={name} name={name} />
+            ))}
           </div>
         )}
 

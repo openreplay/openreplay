@@ -114,10 +114,25 @@ export default function SessionCard({
         className="relative group w-full block cursor-pointer bg-gray-lightest"
         style={{ height: 180 }}
       >
-        <div className="absolute inset-0 flex items-center justify-center transition-colors group-hover:bg-teal/10">
+        {/* real thumbnail nearest the issue moment when the backend has one;
+            otherwise the neutral play surface */}
+        {s.thumbnail && (
+          <img
+            src={s.thumbnail}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        <div
+          className={`absolute inset-0 flex items-center justify-center transition-colors ${
+            s.thumbnail
+              ? 'bg-black/10 opacity-0 group-hover:opacity-100'
+              : 'group-hover:bg-teal/10'
+          }`}
+        >
           <PlayCircleOutlined
-            className="color-gray-medium"
             style={{ fontSize: 44 }}
+            className={s.thumbnail ? 'text-white' : 'color-gray-medium'}
           />
         </div>
         <div className="absolute bottom-2 right-2 bg-gray-dark text-white py-1 px-2 text-xs rounded-lg">

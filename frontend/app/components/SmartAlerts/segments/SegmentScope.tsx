@@ -20,9 +20,9 @@ import type { Issue } from '../shared/model';
    Scope = SESSIONS ONLY: headline stats stay global. State lives in
    `issuesStore.detailScope`, mirrored to ?seg= so a scoped view is shareable.
 
-   NOTE(not-yet-backed): the backend returns a single surfacing `segmentId` per
-   issue, not full per-issue segment membership — so `FoundInChips` shows that
-   one segment. When membership lands, list every matching segment here. */
+   The issue's segment membership is real now (`Issue.segmentIds`), so
+   `FoundInChips` lists every segment the issue was found in; each chip toggles
+   that segment into the sessions scope. */
 
 /** THE segment chip — one look everywhere a segment is named. Interactive when
  *  `onClick` is given. */
@@ -76,8 +76,8 @@ export const syncScopeToUrl = (ids: string[]) => {
   window.history.replaceState(null, '', url.toString());
 };
 
-/** Issue header origin line — the segment that surfaced the issue, or full
- *  traffic. The segment chip is a toggle that scopes the example sessions. */
+/** Issue header origin line — the segments that surfaced the issue, or full
+ *  traffic. Each segment chip toggles it into the example-sessions scope. */
 export const FoundInChips = observer(function FoundInChips({
   issue,
 }: {
@@ -85,12 +85,9 @@ export const FoundInChips = observer(function FoundInChips({
 }) {
   const { issuesStore } = useStore();
   const { t } = useTranslation();
-  const id = issue.segmentId;
-  const name = issuesStore.segmentName(id);
-  const scoped = id != null && issuesStore.detailScope.includes(id);
+  const ids = issue.segmentIds;
 
-  const toggle = () => {
-    if (id == null) return;
+  const toggle = (id: string) => {
     issuesStore.toggleDetailScope(id);
     syncScopeToUrl(issuesStore.detailScope);
   };
@@ -98,12 +95,19 @@ export const FoundInChips = observer(function FoundInChips({
   return (
     <div className="flex items-center gap-2 flex-wrap text-sm">
       <span className="color-gray-medium">{t('Found in:')}</span>
-      {id == null ? (
+      {ids.length === 0 ? (
         <span className="inline-flex items-center gap-1.5 border rounded-full px-2.5 py-0.5 color-gray-medium">
           <Globe size={12} /> {t('full traffic')}
         </span>
       ) : (
-        <SegmentChip name={name ?? id} on={scoped} onClick={toggle} />
+        ids.map((id) => (
+          <SegmentChip
+            key={id}
+            name={issuesStore.segmentName(id) ?? id}
+            on={issuesStore.detailScope.includes(id)}
+            onClick={() => toggle(id)}
+          />
+        ))
       )}
     </div>
   );

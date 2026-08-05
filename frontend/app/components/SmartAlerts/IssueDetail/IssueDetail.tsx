@@ -240,7 +240,9 @@ function IssueDetail() {
               >
                 {t('Create ticket')}
               </Button>
-              {issuesStore.viewingHidden ? (
+              {/* follows the ISSUE's own flag, not the list's visibility
+                  filter — this page is deep-linkable and `all` mixes both */}
+              {issue.hidden ? (
                 <Button
                   size="small"
                   icon={<Eye size={14} />}
@@ -260,7 +262,7 @@ function IssueDetail() {
             </>
           }
         />
-        {(issue.segmentId != null || issuesStore.segments.length > 0) && (
+        {(issue.segmentIds.length > 0 || issuesStore.segments.length > 0) && (
           <div className="px-4 pb-4 -mt-1">
             <FoundInChips issue={issue} />
           </div>
@@ -309,6 +311,12 @@ function IssueDetail() {
                   onToggleOrigin={(o) => {
                     if (o === 'full') return; // no full-traffic row here
                     issuesStore.toggleDetailScope(o);
+                    syncScopeToUrl(issuesStore.detailScope);
+                  }}
+                  onSetOrigins={(ids) => {
+                    issuesStore.setDetailScope(
+                      ids.filter((o): o is string => o !== 'full'),
+                    );
                     syncScopeToUrl(issuesStore.detailScope);
                   }}
                   onClear={() => {

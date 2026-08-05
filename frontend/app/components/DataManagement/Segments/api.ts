@@ -9,6 +9,8 @@ export class Segment {
   createdAt: number;
   isPublic: boolean;
   userId?: number;
+  /** creator display name (server-provided; may be "") */
+  userName: string = '';
   sessionsCount: number = 0;
   usersCount: number = 0;
   /** the agent captures/analyses this segment (server-owned) */
@@ -16,6 +18,9 @@ export class Segment {
   /** total sessions the segment has matched (windowless), distinct from the
       windowed sessionsCount */
   totalSessionCount: number = 0;
+  /** traffic estimate — 0 means "no estimate", not "zero traffic" */
+  trafficPct: number = 0;
+  sessionsPerDay: number = 0;
 
   constructor(data?: Partial<ApiSegment>) {
     if (data) {
@@ -29,10 +34,13 @@ export class Segment {
       this.updatedAt = data.updatedAt || data.createdAt || 0;
       this.createdAt = data.createdAt || 0;
       this.userId = data.userId;
+      this.userName = data.userName ?? '';
       this.sessionsCount = data.sessionsCount ?? 0;
       this.usersCount = data.usersCount ?? 0;
       this.isCapture = Boolean(data.isCapture);
       this.totalSessionCount = data.totalSessionCount ?? 0;
+      this.trafficPct = data.trafficPct ?? 0;
+      this.sessionsPerDay = data.sessionsPerDay ?? 0;
     }
   }
 }
@@ -42,12 +50,15 @@ interface ApiSegment {
   name: string;
   isPublic: boolean;
   userId?: number;
+  userName?: string;
   createdAt?: number;
   updatedAt?: number;
   sessionsCount?: number;
   usersCount?: number;
   isCapture?: boolean;
   totalSessionCount?: number;
+  trafficPct?: number;
+  sessionsPerDay?: number;
   data?: { filters: Record<string, unknown>[] };
   filter?: { filters: Record<string, unknown>[] };
 }

@@ -13,6 +13,9 @@ export interface Issue {
   critical: boolean;
   /** server-persisted hidden flag (surfaced when viewing hidden/all) */
   hidden: boolean;
+  /** server soft-delete flag + timestamp (surfaced when viewing deleted/all) */
+  deleted: boolean;
+  deletedAt: number | null;
   impact: number;
   tags: string[];
   /** journey-level labels, kept distinct from issue tags for the detail page */
@@ -32,8 +35,9 @@ export interface Issue {
   lastSeen: number | null;
   /** minutes since `lastSeen`, derived for the relative "last seen" labels */
   seenAgoMin: number | null;
-  /** which segment surfaced this issue (NOT-YET-BACKED) — absent = full traffic */
-  segmentId?: string;
+  /** capture segments the issue was found in (saved-search ids); [] = full
+      traffic only */
+  segmentIds: string[];
   /** issue-level problem text — only populated from GET …/issue (detail/player) */
   problem: string;
   /** suggested fix — still not provided by the backend (see TODO.md); the UI
@@ -61,6 +65,10 @@ export interface IssueSessionCard {
   variation: string;
   /** ms offset the issue was detected at, used to seek the player */
   issueTimestamp: number | null;
+  /** presigned thumbnail URL nearest the issue moment (undefined => placeholder) */
+  thumbnail?: string;
+  /** ordered journey steps for this session, offset (ms) from session start */
+  journeySteps: { name: string; relativeTimestamp: number }[];
 }
 
 export const CAT_ORDER: CategoryName[] = ['Errors', 'UI/UX', 'Slowness'];

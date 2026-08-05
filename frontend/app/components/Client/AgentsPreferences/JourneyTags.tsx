@@ -42,9 +42,10 @@ function JourneyTags() {
       r.description.toLowerCase().includes(ql),
   );
 
-  const nameTaken = (name: string, except?: string) =>
-    [...issuesStore.predefinedTags, ...issuesStore.customTags].some(
-      (x) => x.name.toLowerCase() === name.toLowerCase() && x.name !== except,
+  // keyed on id, not name, so renaming a tag's casing isn't read as a clash
+  const nameTaken = (name: string, exceptId?: number) =>
+    issuesStore.journeyTags.some(
+      (x) => x.name.toLowerCase() === name.toLowerCase() && x.id !== exceptId,
     );
 
   const openCreate = () => {
@@ -53,15 +54,20 @@ function JourneyTags() {
   };
 
   const saveTag = (name: string, description: string) => {
-    if (nameTaken(name, editing?.name)) {
+    if (nameTaken(name, editing?.id)) {
       // the dialog stays open so the name can be fixed in place
       message.warning(t('A tag called “{{name}}” already exists.', { name }));
       return;
     }
     if (editing) {
-      issuesStore.updateTag(editing.name, name, description);
+      issuesStore.updateTag(editing.id, name, description);
     } else {
-      issuesStore.addCustomTag(name, description);
+      // the store refuses the write when it can't reach the project — never
+      // report success for something that didn't happen
+      if (!issuesStore.addCustomTag(name, description)) {
+        message.error(t('Couldn’t create the tag. Please try again.'));
+        return;
+      }
       // a tag you author is yours, so show the side it landed on
       setSource('yours');
       message.success(
@@ -115,7 +121,7 @@ function JourneyTags() {
                 consequence: t(
                   'The agent stops applying it to new sessions; sessions already tagged keep it.',
                 ),
-                onOk: () => issuesStore.removeTag(row.name),
+                onOk: () => issuesStore.removeTag(row.id),
               })
             }
           />
@@ -190,7 +196,7 @@ function JourneyTags() {
 
       <Table<JourneyTag>
         size="small"
-        rowKey="name"
+        rowKey="id"
         columns={columns}
         dataSource={shown}
         pagination={false}

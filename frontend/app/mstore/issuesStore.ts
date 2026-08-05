@@ -4,6 +4,7 @@ import {
   type Segment,
   deleteSegment as apiDeleteSegment,
   createSegment,
+  fetchSegment,
   fetchSegments as fetchDmSegments,
   updateSegment,
 } from 'App/components/DataManagement/Segments/api';
@@ -11,13 +12,16 @@ import {
   type CaptureMode,
   type IssueOrigin,
   type LabelsMatch,
+  type RawJourneyTag,
   type Reasons,
   type SavedSegment,
   type SegmentCaptureState,
   type SortDir,
   type Visibility,
   setCaptureMode as apiSetCaptureMode,
+  createJourneyTag,
   deleteIssue,
+  deleteJourneyTag,
   getIssue,
   getIssueSessions,
   getIssues,
@@ -25,10 +29,13 @@ import {
   getReasons,
   getSegmentCapture,
   hideIssue,
+  listJourneyTags,
   renameIssue,
   restoreIssue,
+  setIssueCritical,
   setSegmentCapture,
   unhideIssue,
+  updateJourneyTag,
 } from 'App/components/SmartAlerts/api';
 import {
   makeIssue,
@@ -52,11 +59,14 @@ import type FilterItem from 'App/mstore/types/filterItem';
    in the UI is always DERIVED (matchedRules) — every control is an explanation
    or a way to author a description.
 
-   NOT-YET-BACKED on this branch: the definitions + per-issue attribution
-   (`criticalBy`) + per-user `notCritical` are client-side only (no endpoints —
-   see TODO). The server still returns a per-issue `critical` boolean (the
-   agent's own flag); we treat that as one anonymous "agent" match so flagged
-   issues keep reading as critical until real attribution lands. */
+   NOT-YET-BACKED on this branch: the definitions themselves and the per-issue
+   attribution (`criticalBy`, `notCritical`) are client-side only — there are no
+   endpoints for the rule catalogue yet (see TODO). What IS backed is the
+   server's per-issue `critical` boolean plus its reason/note feedback
+   (`PUT` + `{critical}`): every place the user flags or unflags an issue writes
+   that through, so the decision and the reasons survive a reload even while the
+   attribution does not. The server flag is treated as one anonymous "agent"
+   match, so a flagged issue still reads critical. */
 export type CriticalRule = {
   id: number;
   description: string;
@@ -65,7 +75,15 @@ export type CriticalRule = {
   mine: boolean;
 };
 
-export type JourneyTag = { name: string; description: string };
+/* Journey tag (server-backed CRUD, GET/POST/PATCH/DELETE …/journey-tags).
+   `source` records where the text came from — predefined tags are editable and
+   removable like any custom one. */
+export type JourneyTag = {
+  id: number;
+  name: string;
+  description: string;
+  source: 'predefined' | 'custom';
+};
 
 /* The agent's own flag (server `critical`) shown as a rule when no user
    description is attached yet — so a server-flagged issue still reads critical. */
@@ -76,66 +94,14 @@ const AGENT_RULE: CriticalRule = {
   mine: false,
 };
 
-/* Seed journey tags (Mehdi 07-28): editable state, not a constant — the
-   customer can rename/remove them like any custom tag. */
-export const PREDEFINED_JOURNEY_TAGS: JourneyTag[] = [
-  {
-    name: 'Navigation',
-    description:
-      'The user browses across pages or sections without a transactional goal.',
-  },
-  {
-    name: 'Onboarding',
-    description:
-      'First-run steps: signup, initial setup, tutorials or welcome flows.',
-  },
-  {
-    name: 'Checkout',
-    description:
-      'The user moves through a cart or order flow toward placing an order.',
-  },
-  {
-    name: 'Payment',
-    description:
-      'Entering or confirming payment details, or completing a charge.',
-  },
-  {
-    name: 'Form submission',
-    description: 'Filling and submitting any form, including multi-step ones.',
-  },
-  {
-    name: 'Workflow completed',
-    description: 'A multi-step task reaches its intended end state.',
-  },
-  {
-    name: 'Drop off',
-    description: 'The user abandons a flow before reaching its end state.',
-  },
-  {
-    name: 'Back and forth',
-    description:
-      'Repeated switching between the same pages or steps, suggesting hesitation.',
-  },
-  {
-    name: 'Error encountered',
-    description:
-      'The session hits a visible error state, message or broken page.',
-  },
-  {
-    name: 'Frustration',
-    description:
-      'Rage clicks, dead clicks or rapid repeated actions on the same element.',
-  },
-];
-
 /* Store behind the AI Issues surface. Issues + example sessions come from the
    /v2/smart-issues Go endpoints (see SmartAlerts/api.ts + api.yaml), mapped
    through SmartAlerts/factories. Filtering, sorting and pagination are all
    server-side: changing a filter refetches. Mutations (critical / hide / unhide
    / rename / delete / restore) persist through the API, then we refetch.
 
-   Remaining contract gaps (defaulted in the factory, degrade gracefully): the
-   suggested-fix text, and a per-row hidden/deleted flag — see TODO.md. */
+   Remaining contract gap (defaulted in the factory, degrades gracefully): the
+   suggested-fix text — see TODO.md. */
 
 export const PAGE_SIZE = 20;
 
@@ -176,25 +142,23 @@ const writeStr = (key: string, value: string) => {
 const toLabelsMatch = (m: MatchMode): LabelsMatch =>
   m === 'any' ? 'or' : 'and';
 
-/** Merge a Data Management saved search with the (NOT-YET-BACKED) capture layer
-    into the view model the segment UI reads. `mine`/`createdBy` are resolved
-    from the members list — until the segment API returns a creator name, a
-    teammate whose name isn't loaded falls back to a generic label. */
+/** Merge a Data Management saved search with the (NOT-YET-BACKED) capture MODE +
+    instructions into the view model the segment UI reads. `mine` compares the
+    creator id to the current user; `createdBy` uses the server-provided
+    `userName` (blank falls back to a generic label). */
 function toSavedSegment(
   s: Segment,
   capture: SegmentCaptureState,
 ): SavedSegment {
   const currentUserId = userStore.account.id;
   const mine = s.userId != null && String(s.userId) === String(currentUserId);
-  const member = userStore.list.find(
-    (u) => String(u.userId) === String(s.userId),
-  );
   return {
     id: s.id,
     name: s.name,
     isPublic: s.isPublic,
     mine,
-    createdBy: mine ? 'You' : member?.name || 'a teammate',
+    // server-provided creator name (may be "")
+    createdBy: mine ? 'You' : s.userName || 'a teammate',
     filters: s.filters,
     summary: summarize(s.filters),
     sessionsCount: s.sessionsCount,
@@ -204,8 +168,9 @@ function toSavedSegment(
     // real server flag; fall back to the capture stub until it's everywhere
     active: s.isCapture || capture.active.includes(s.id),
     instructions: capture.instructions[s.id],
-    trafficPct: 0 /* NOT-YET-BACKED: backend estimates the traffic share */,
-    sessionsPerDay: 0 /* NOT-YET-BACKED */,
+    // server traffic estimate — 0 means "no estimate", not "zero traffic"
+    trafficPct: s.trafficPct,
+    sessionsPerDay: s.sessionsPerDay,
   };
 }
 
@@ -249,9 +214,11 @@ export default class IssuesStore {
   captureMode: CaptureMode = 'full';
   origins: IssueOrigin[] = [];
 
-  // ---- journey tags (NOT-YET-BACKED) — predefined set is editable state ----
-  customTags: JourneyTag[] = [];
-  predefinedTags: JourneyTag[] = PREDEFINED_JOURNEY_TAGS.map((t) => ({ ...t }));
+  // ---- journey tags (server-backed CRUD) ----
+  journeyTags: JourneyTag[] = [];
+
+  // ---- category tab counts (from the list response) ----
+  categoryCounts: Record<string, number> | null = null;
 
   /* baseline count with no filters, for the empty-state "reset to show N" hint.
      lazy: fetched only when an empty filtered list is shown. */
@@ -309,6 +276,7 @@ export default class IssuesStore {
     void this.fetchLabels();
     void this.fetchReasons();
     void this.fetchSegments();
+    void this.fetchJourneyTags();
   };
 
   private reset = () => {
@@ -330,8 +298,8 @@ export default class IssuesStore {
     this.criticalRules = [];
     this.criticalBy = {};
     this.notCritical = {};
-    this.customTags = [];
-    this.predefinedTags = PREDEFINED_JOURNEY_TAGS.map((t) => ({ ...t }));
+    this.journeyTags = [];
+    this.categoryCounts = null;
     this.relevantToMe = false;
     this.segments = [];
     this.captureMode = 'full';
@@ -354,14 +322,13 @@ export default class IssuesStore {
     if (!this.projectId) return;
     this.loading = true;
     try {
-      const { rows, total } = await getIssues(this.projectId, {
+      const { rows, total, categoryCounts } = await getIssues(this.projectId, {
         limit: this.limit,
         page: this.page,
-        issueLabels: [...this.cats],
         journeyLabels: this.labels,
-        // categories combine with AND; the journey-tag match honours the toggle
-        issueLabelsMatch: 'and',
         journeyLabelsMatch: toLabelsMatch(this.match),
+        // the category tab is its own primary-category filter (not a label match)
+        category: this.cats[0],
         sortBy: this.sort,
         sortDir: this.sortDir,
         range: this.range ?? undefined,
@@ -385,6 +352,9 @@ export default class IssuesStore {
             prev?.problem && !i.problem ? { ...i, problem: prev.problem } : i;
         });
         this.total = total;
+        // categoryCounts is computed with the category filter removed, so keep
+        // the last non-null value while a tab is selected (it returns null then)
+        if (categoryCounts) this.categoryCounts = categoryCounts;
         this.loaded = true;
       });
     } catch (e) {
@@ -420,6 +390,25 @@ export default class IssuesStore {
     }
   };
 
+  private toJourneyTag = (t: RawJourneyTag): JourneyTag => ({
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    source: t.source,
+  });
+
+  fetchJourneyTags = async () => {
+    if (!this.projectId) return;
+    try {
+      const tags = await listJourneyTags(this.projectId);
+      runInAction(() => {
+        this.journeyTags = tags.map(this.toJourneyTag);
+      });
+    } catch (e) {
+      console.error('Failed to load journey tags', e);
+    }
+  };
+
   /* The segment list is real (Data Management saved searches); the capture
      layer is NOT-YET-BACKED and resolves empty until the endpoints ship. */
   fetchSegments = async () => {
@@ -448,6 +437,14 @@ export default class IssuesStore {
   ensureSegments = (projectId: string) => {
     if (this.projectId !== projectId) this.projectId = projectId;
     void this.fetchSegments();
+  };
+
+  /** Load just the journey tags — used by Preferences > Agents, which manages
+      the tag vocabulary without ever touching the Issues list. Without this the
+      panel renders empty AND every write no-ops on the blank `projectId`. */
+  ensureJourneyTags = (projectId: string) => {
+    if (this.projectId !== projectId) this.projectId = projectId;
+    void this.fetchJourneyTags();
   };
 
   /* Refetch the list after a filter change: resets to page 1; sort changes pass
@@ -566,16 +563,19 @@ export default class IssuesStore {
   };
 
   // ---- example sessions ----
-  // key by issue + query + the active detail scope (segments) + tag filter, so
-  // each scoped/filtered view caches separately and refetches when it changes
+  // key by issue + query + time range + the active detail scope (segments) +
+  // tag filter, so each scoped/filtered view caches separately and refetches
+  // when it changes. The range is part of the REQUEST, so it has to be part of
+  // the key — otherwise changing the period replays the previous window's cache.
   private sessKey = (id: string, query = '') => {
+    const win = this.range ? ` ~${this.range[0]}-${this.range[1]}` : '';
     const scope = this.detailScope.length
       ? ` #${[...this.detailScope].sort().join(',')}`
       : '';
     const tags = this.detailLabels.length
       ? ` @${this.detailMatch}:${[...this.detailLabels].sort().join(',')}`
       : '';
-    return `${query.trim() ? `${id} ${query.trim()}` : id}${scope}${tags}`;
+    return `${query.trim() ? `${id} ${query.trim()}` : id}${win}${scope}${tags}`;
   };
 
   loadSessions = async (id: string, query = '') => {
@@ -621,11 +621,15 @@ export default class IssuesStore {
     return this.issues;
   }
 
-  /** Whether the project has any category labels (drives the category UI). */
+  /* Whether the project has any categorized issues (drives the category tabs).
+     Read from the server's own categorization — the per-issue `category` and
+     the `categoryCounts` buckets — NOT from the label vocabulary: categories
+     stopped being derived from issueLabels when the server started assigning a
+     primary category, so the vocabulary can lack them entirely. */
   get hasCategories(): boolean {
-    return this.labelsAll.issueLabels.some((l) =>
-      (CAT_ORDER as string[]).includes(l),
-    );
+    const counts = this.categoryCounts;
+    if (counts) return CAT_ORDER.some((c) => (counts[c] ?? 0) > 0);
+    return this.issues.some((i) => i.cat != null);
   }
 
   /** Journey-label options for the filter. */
@@ -633,12 +637,32 @@ export default class IssuesStore {
     return [...this.labelsAll.journeyLabels].sort();
   }
 
+  /** journey tags split by provenance (both editable) for the manager */
+  get predefinedTags(): JourneyTag[] {
+    return this.journeyTags.filter((t) => t.source === 'predefined');
+  }
+  get customTags(): JourneyTag[] {
+    return this.journeyTags.filter((t) => t.source === 'custom');
+  }
+
+  // ---- category tab counts (from the list response) ----
+  /** issues in a category (0 when the count query failed / bucket absent) */
+  catCount(c: CategoryName): number {
+    return this.categoryCounts?.[c] ?? 0;
+  }
+  /** total across every category bucket incl. uncategorized = "All" tab count */
+  get allCategoryCount(): number {
+    return this.categoryCounts
+      ? Object.values(this.categoryCounts).reduce((a, n) => a + n, 0)
+      : this.total;
+  }
+  get hasCategoryCounts(): boolean {
+    return this.categoryCounts != null;
+  }
+
   /** Rows are hidden when the visibility filter is scoped to hidden issues. */
   get viewingHidden(): boolean {
     return this.visibility === 'hidden';
-  }
-  get viewingDeleted(): boolean {
-    return this.visibility === 'deleted';
   }
 
   // ---- critical (derived from descriptions, §14) ----
@@ -671,7 +695,7 @@ export default class IssuesStore {
   /** relevant = one of MY descriptions flagged it, or a segment I own surfaced it */
   isRelevant = (i: Issue): boolean =>
     this.critState(i.id) === 'mine' ||
-    (i.segmentId != null && Boolean(this.segmentById(i.segmentId)?.mine));
+    i.segmentIds.some((id) => this.segmentById(id)?.mine);
   /** count next to "Critical to me" — issues my own descriptions flagged */
   get relevantCount(): number {
     return this.issues.filter((i) => this.critState(i.id) === 'mine').length;
@@ -698,6 +722,9 @@ export default class IssuesStore {
         ...this.criticalBy,
         [forIssueId]: [...(this.criticalBy[forIssueId] ?? []), rule.id],
       };
+      // the rule catalogue is client-side, but the flag + its reasoning are
+      // real: persist so the issue still reads critical after a reload
+      this.persistCritical(forIssueId, true, [], description);
     }
     return rule;
   };
@@ -722,14 +749,42 @@ export default class IssuesStore {
       return ids.includes(id) && ids.length === 1;
     }).length;
   }
-  /** MY not-critical: suppresses the flag for me only; the reason teaches the
-      agent. Replace, never mutate a key (MobX tracks the object identity). */
-  setNotCriticalForMe = (id: string, reason: string) => {
-    this.notCritical = { ...this.notCritical, [id]: reason };
+  /* Write the criticality decision + its feedback through to the server
+     (`PUT` + `{critical}` with the reason enum + free-text note). The per-user
+     scoping is still client-side, so this is the shared flag: it is what makes
+     the decision and the reasons outlive a reload. */
+  private persistCritical = (
+    id: string,
+    critical: boolean,
+    reasons: string[],
+    note: string,
+  ) => {
+    if (!this.projectId) return;
+    void setIssueCritical(
+      this.projectId,
+      id,
+      critical,
+      reasons,
+      note,
+    ).catch((e) => console.error('Failed to persist criticality', e));
+    // keep the row + cache in step so the UI doesn't wait on the round-trip
+    this.afterMutation(id, { critical });
+  };
+
+  /** MY not-critical: suppresses the flag for me only; the reasons + note teach
+      the agent and are sent with the flag. Replace, never mutate a key (MobX
+      tracks the object identity). */
+  setNotCriticalForMe = (id: string, reasons: string[] = [], note = '') => {
+    this.notCritical = {
+      ...this.notCritical,
+      [id]: [...reasons, note.trim()].filter(Boolean).join(' · '),
+    };
+    this.persistCritical(id, false, reasons, note.trim());
   };
   restoreCritical = (id: string) => {
     const { [id]: _dropped, ...rest } = this.notCritical;
     this.notCritical = rest;
+    this.persistCritical(id, true, [], '');
   };
 
   // ---- segments + capture ----
@@ -756,32 +811,46 @@ export default class IssuesStore {
   get originSegments(): SavedSegment[] {
     return this.visibleSegments;
   }
-  /** Create a customer-defined journey tag (name + NL description the agent
-      matches). NOT-YET-BACKED — no write endpoint yet; kept wired as a no-op. */
-  // ---- journey tags (NOT-YET-BACKED, client-side) ----
-  /** Author a custom journey tag. Returns false when the name is already taken
-      (across predefined + custom), so the caller can say so. */
+  // ---- journey tags (server-backed CRUD, persist then refetch) ----
+  /** Author a custom journey tag. Returns false synchronously when the name is
+      already taken locally (so the caller can say so without a round-trip); the
+      create request runs in the background and refetches. */
   addCustomTag = (name: string, description: string): boolean => {
-    const taken = [...this.predefinedTags, ...this.customTags].some(
+    const taken = this.journeyTags.some(
       (t) => t.name.toLowerCase() === name.toLowerCase(),
     );
-    if (taken) return false;
-    this.customTags = [...this.customTags, { name, description }];
+    if (taken || !this.projectId) return false;
+    // optimistic (temp negative id until the refetch replaces it)
+    this.journeyTags = [
+      ...this.journeyTags,
+      { id: -Date.now(), name, description, source: 'custom' },
+    ];
+    void createJourneyTag(this.projectId, name, description)
+      .then(() => this.fetchJourneyTags())
+      .catch((e) => console.error('Failed to create journey tag', e));
     return true;
   };
-  /** Rename/redescribe either list; an active filter follows the rename. */
-  updateTag = (oldName: string, name: string, description: string) => {
-    const rename = (t: JourneyTag) =>
-      t.name === oldName ? { name, description } : t;
-    this.predefinedTags = this.predefinedTags.map(rename);
-    this.customTags = this.customTags.map(rename);
-    this.labels = this.labels.map((l) => (l === oldName ? name : l));
+  /** Rename/redescribe a tag; an active journey-label filter follows the rename. */
+  updateTag = (id: number, name: string, description: string) => {
+    if (!this.projectId) return;
+    const oldName = this.journeyTags.find((t) => t.id === id)?.name;
+    this.journeyTags = this.journeyTags.map((t) =>
+      t.id === id ? { ...t, name, description } : t,
+    );
+    if (oldName)
+      this.labels = this.labels.map((l) => (l === oldName ? name : l));
+    void updateJourneyTag(this.projectId, id, { name, description })
+      .then(() => this.fetchJourneyTags())
+      .catch((e) => console.error('Failed to update journey tag', e));
   };
-  removeTag = (name: string) => {
-    const keep = (t: JourneyTag) => t.name !== name;
-    this.predefinedTags = this.predefinedTags.filter(keep);
-    this.customTags = this.customTags.filter(keep);
-    this.labels = this.labels.filter((l) => l !== name);
+  removeTag = (id: number) => {
+    if (!this.projectId) return;
+    const removed = this.journeyTags.find((t) => t.id === id);
+    this.journeyTags = this.journeyTags.filter((t) => t.id !== id);
+    if (removed) this.labels = this.labels.filter((l) => l !== removed.name);
+    void deleteJourneyTag(this.projectId, id)
+      .then(() => this.fetchJourneyTags())
+      .catch((e) => console.error('Failed to delete journey tag', e));
   };
   /** segments the agent is currently capturing */
   get capturingSegments(): SavedSegment[] {
@@ -796,9 +865,16 @@ export default class IssuesStore {
     this.refetch();
   };
   toggleOrigin = (o: IssueOrigin) => {
-    this.origins = this.origins.includes(o)
-      ? this.origins.filter((x) => x !== o)
-      : [...this.origins, o];
+    this.setOrigins(
+      this.origins.includes(o)
+        ? this.origins.filter((x) => x !== o)
+        : [...this.origins, o],
+    );
+  };
+  /** Set the whole origin selection at once — the aggregate rows ("My
+      segments") flip several ids together and must refetch ONCE, not per id. */
+  setOrigins = (o: IssueOrigin[]) => {
+    this.origins = o;
     this.refetch();
   };
   clearOrigins = () => {
@@ -814,17 +890,25 @@ export default class IssuesStore {
 
   /* Persist a segment's capture flag — the saved search's real `isCapture`
      ("Identify issues in this segment"), with a best-effort mirror to the
-     NOT-YET-BACKED capture endpoint. */
-  private persistCapture = (id: string, on: boolean) => {
+     NOT-YET-BACKED capture endpoint.
+
+     There is no capture-only write: `updateSegment` REPLACES the whole saved
+     search, query included. So re-read the segment first and write its own
+     stored query back — sending our view-model copy of `filters` would push a
+     round-tripped query over whatever the owner last saved. */
+  private persistCapture = async (id: string, on: boolean) => {
     if (!this.projectId) return;
-    const seg = this.segmentById(id);
-    if (seg)
-      void updateSegment(id, {
-        name: seg.name,
-        isPublic: seg.isPublic,
-        filters: seg.filters,
-        isCapture: on && seg.isPublic,
-      }).catch((e) => console.error('Failed to persist capture', e));
+    try {
+      const fresh = await fetchSegment(id);
+      await updateSegment(id, {
+        name: fresh.name,
+        isPublic: fresh.isPublic,
+        filters: fresh.filters,
+        isCapture: on && fresh.isPublic,
+      });
+    } catch (e) {
+      console.error('Failed to persist capture', e);
+    }
     void setSegmentCapture(this.projectId, id, { active: on });
   };
 
@@ -833,7 +917,7 @@ export default class IssuesStore {
     this.segments = this.segments.map((s) =>
       s.id === id ? { ...s, active: true } : s,
     );
-    this.persistCapture(id, true);
+    void this.persistCapture(id, true);
   };
 
   /** toggle a segment's capture; returns true when turning the last one off
@@ -842,7 +926,7 @@ export default class IssuesStore {
     this.segments = this.segments.map((s) =>
       s.id === id ? { ...s, active: on } : s,
     );
-    this.persistCapture(id, on);
+    void this.persistCapture(id, on);
     if (
       !on &&
       this.captureMode === 'segments' &&
@@ -1008,6 +1092,9 @@ export default class IssuesStore {
       .catch((e) => console.error('Failed to delete issue', e));
   };
 
+  /* Un-delete. Deliberately UNWIRED: there is no Deleted view to reach it from
+     and restoring isn't planned for now — kept because the endpoint is real
+     (`PUT` + `{restore: true}`) and this is all a Deleted view would need. */
   restore = (id: string) => {
     if (!this.projectId) return;
     this.issues = this.issues.filter((i) => i.id !== id);
