@@ -22,10 +22,13 @@ class RnTrackerSanitizedViewManager : ViewGroupManager<RnTrackerSanitizedView>()
  * never become a touch target for the content it covers.
  */
 class RnTrackerSanitizedView(context: Context) : ReactViewGroup(context) {
-  override fun getPointerEvents(): PointerEvents = PointerEvents.NONE
+  init {
+    pointerEvents = PointerEvents.NONE
+  }
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+    pointerEvents = PointerEvents.NONE
     ScreenshotManager.addSanitizedElement(this)
   }
 
