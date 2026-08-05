@@ -33,7 +33,6 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 		"batch.num.messages":                    1000,
 		"queue.buffering.max.messages":          50000,
 		"queue.buffering.max.kbytes":            131072, // 128 MiB un-acked buffer cap (default 1 GiB)
-		"retries":                               3,
 		"retry.backoff.ms":                      100,
 		"max.in.flight.requests.per.connection": 1,
 		"compression.type":                      env.String("COMPRESSION_TYPE"),
@@ -70,6 +69,10 @@ func (p *Producer) errorHandler() {
 			if ev.TopicPartition.Error != nil {
 				fmt.Printf("Delivery failed: topicPartition: %v, key: %d\n", ev.TopicPartition, decodeKey(ev.Key))
 			}
+		case kafka.Error:
+			if ev.IsFatal() {
+				log.Printf("kafka producer entered fatal state, all produce calls will fail until restart: %v\n", ev)
+			}
 		}
 	}
 }
@@ -82,6 +85,11 @@ func (p *Producer) produceWithRetry(msg *kafka.Message) error {
 		}
 		var kErr kafka.Error
 		if !errors.As(err, &kErr) || kErr.Code() != kafka.ErrQueueFull {
+			if kErr.Code() == kafka.ErrFatal {
+				if fatal := p.producer.GetFatalError(); fatal != nil {
+					return fatal
+				}
+			}
 			return err
 		}
 		time.Sleep(queueFullBackoff)
@@ -105,6 +113,9 @@ func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value
 }
 
 func (p *Producer) Ping(ctx context.Context) error {
+	if err := p.producer.GetFatalError(); err != nil {
+		return err
+	}
 	timeoutMs := 5000
 	if deadline, ok := ctx.Deadline(); ok {
 		if ms := int(time.Until(deadline).Milliseconds()); ms > 0 {
