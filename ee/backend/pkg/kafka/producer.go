@@ -84,12 +84,16 @@ func (p *Producer) produceWithRetry(msg *kafka.Message) error {
 			return nil
 		}
 		var kErr kafka.Error
-		if !errors.As(err, &kErr) || kErr.Code() != kafka.ErrQueueFull {
-			if kErr.Code() == kafka.ErrFatal {
-				if fatal := p.producer.GetFatalError(); fatal != nil {
-					return fatal
-				}
+		if !errors.As(err, &kErr) {
+			return err
+		}
+		if kErr.Code() == kafka.ErrFatal {
+			if fatal := p.producer.GetFatalError(); fatal != nil {
+				return fatal
 			}
+			return err
+		}
+		if kErr.Code() != kafka.ErrQueueFull {
 			return err
 		}
 		time.Sleep(queueFullBackoff)
