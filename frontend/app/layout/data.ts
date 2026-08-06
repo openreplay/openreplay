@@ -107,7 +107,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
       {
         label: t('Agents'),
         key: MENU.AGENTS,
-        icon: 'sparkles',
+        icon: 'scan-pulse',
         tag: {
           label: t('New'),
           color: '#394DFE',
@@ -270,7 +270,7 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         // agent page while it's in progress.
         label: t('Agents'),
         key: PREFERENCES_MENU.AGENTS,
-        icon: 'sparkles',
+        icon: 'scan-pulse',
         hidden: window.localStorage.getItem('__test_agents__') !== 'true',
       },
     ],
