@@ -34,5 +34,6 @@ type Config struct {
 func New(log logger.Logger) *Config {
 	cfg := &Config{}
 	configurator.Process(log, cfg)
+	cfg.Cache.Validate(log)
 	return cfg
 }

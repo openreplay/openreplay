@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"openreplay/backend/internal/assets/resolver"
 	config "openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/internal/sink/sessionwriter"
@@ -43,7 +44,17 @@ func main() {
 		return producer.Ping(ctx)
 	})
 
-	rewriter, err := assets.NewRewriter(cfg.AssetsOrigin)
+	var rewriterResolver assets.Resolver
+	if cfg.KeyScheme == assets.KeySchemeHash {
+		urlResolver, err := resolver.New(log, cfg.ConnectionURL, nil)
+		if err != nil {
+			log.Fatal(ctx, "can't init assets resolver: %s", err)
+		}
+		defer urlResolver.Close()
+		rewriterResolver = urlResolver
+	}
+
+	rewriter, err := assets.NewRewriterWithScheme(cfg.AssetsOrigin, cfg.KeyScheme, rewriterResolver)
 	if err != nil {
 		log.Fatal(ctx, "can't init rewriter: %s", err)
 	}

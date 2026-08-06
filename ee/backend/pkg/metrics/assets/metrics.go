@@ -16,6 +16,7 @@ type Assets interface {
 	IncreaseRetries()
 	IncreaseTerminalFailures(reason string)
 	RecordRetryQueueSize(size float64)
+	RecordAssetResolve(hit bool)
 	List() []prometheus.Collector
 }
 
@@ -27,6 +28,7 @@ type assetsImpl struct {
 	assetsRetries           prometheus.Counter
 	assetsTerminalFailures  *prometheus.CounterVec
 	assetsRetryQueueSize    prometheus.Gauge
+	assetsResolves          *prometheus.CounterVec
 }
 
 func New(serviceName string) Assets {
@@ -38,6 +40,7 @@ func New(serviceName string) Assets {
 		assetsRetries:           newRetries(serviceName),
 		assetsTerminalFailures:  newTerminalFailures(serviceName),
 		assetsRetryQueueSize:    newRetryQueueSize(serviceName),
+		assetsResolves:          newResolves(serviceName),
 	}
 }
 
@@ -50,6 +53,7 @@ func (a *assetsImpl) List() []prometheus.Collector {
 		a.assetsRetries,
 		a.assetsTerminalFailures,
 		a.assetsRetryQueueSize,
+		a.assetsResolves,
 	}
 }
 
@@ -158,4 +162,23 @@ func newRetryQueueSize(serviceName string) prometheus.Gauge {
 
 func (a *assetsImpl) RecordRetryQueueSize(size float64) {
 	a.assetsRetryQueueSize.Set(size)
+}
+
+func newResolves(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "resolver_lookups_total",
+			Help:      "A counter displaying url→content-hash resolver lookups under the hash key scheme, by result.",
+		},
+		[]string{"result"},
+	)
+}
+
+func (a *assetsImpl) RecordAssetResolve(hit bool) {
+	result := "miss"
+	if hit {
+		result = "hit"
+	}
+	a.assetsResolves.WithLabelValues(result).Inc()
 }

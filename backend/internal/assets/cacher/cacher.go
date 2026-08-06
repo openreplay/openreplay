@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"openreplay/backend/internal/assets/resolver"
 	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/logger"
 	metrics "openreplay/backend/pkg/metrics/assets"
@@ -47,13 +48,15 @@ type cacher struct {
 	workers        *WorkerPool
 	scheduler      *scheduler
 	hosts          *hostLimiter
+	hashKeys       bool
+	resolver       *resolver.Resolver
 }
 
 func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets) (*cacher, error) {
+func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets, urlResolver *resolver.Resolver) (*cacher, error) {
 	switch {
 	case cfg == nil:
 		return nil, errors.New("config is nil")
@@ -61,7 +64,11 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		return nil, errors.New("object storage is nil")
 	}
 
-	rewriter, err := assets.NewRewriter(cfg.AssetsOrigin)
+	var rewriterResolver assets.Resolver
+	if urlResolver != nil {
+		rewriterResolver = urlResolver
+	}
+	rewriter, err := assets.NewRewriterWithScheme(cfg.AssetsOrigin, cfg.KeyScheme, rewriterResolver)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't create rewriter")
 	}
@@ -125,6 +132,8 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		requestHeaders: cfg.AssetsRequestHeaders,
 		metrics:        metrics,
 		hosts:          newHostLimiter(cfg.AssetsPerHostLimit),
+		hashKeys:       cfg.KeyScheme == assets.KeySchemeHash,
+		resolver:       urlResolver,
 	}
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
 	c.scheduler = newScheduler(cfg.AssetsRetryHeapLimit, c.workers.tryAddTask, func(n int) {
@@ -206,11 +215,28 @@ func (c *cacher) cacheURL(t *Task) {
 
 	// TODO: implement in streams
 	start = time.Now()
-	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression)
-	if err != nil {
-		c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
-		c.retry(ctx, t, 0, "upload", err)
-		return
+	if c.hashKeys && !t.isJS {
+		hash := assets.HashBody(data)
+		contentPath := assets.GetCachePathWithHash(t.requestURL, hash)
+		if err := c.objStorage.Upload(strings.NewReader(strData), contentPath, contentType, contentEncoding, objectstorage.NoCompression); err != nil {
+			c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
+			c.retry(ctx, t, 0, "upload", err)
+			return
+		}
+		if err := c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression); err != nil {
+			c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
+			c.retry(ctx, t, 0, "upload", err)
+			return
+		}
+		if c.resolver != nil {
+			c.resolver.Set(t.requestURL, hash)
+		}
+	} else {
+		if err := c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression); err != nil {
+			c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
+			c.retry(ctx, t, 0, "upload", err)
+			return
+		}
 	}
 	c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), false)
 	c.metrics.IncreaseSavedSessions()
@@ -344,7 +370,7 @@ func (c *cacher) checkTask(newTask *Task, blocking bool) {
 	if newTask.isJS {
 		cachePath = assets.GetCachePathForJS(newTask.requestURL)
 	} else {
-		cachePath = assets.GetCachePathForAssets(newTask.sessionID, newTask.requestURL)
+		cachePath = c.rewriter.CachePathForAssets(newTask.sessionID, newTask.requestURL)
 	}
 	if !c.timeoutMap.claim(cachePath) {
 		return

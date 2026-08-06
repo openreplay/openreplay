@@ -1,10 +1,14 @@
 package assets
 
 import (
+	"context"
+
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
 	"openreplay/backend/internal/config/objectstorage"
+	"openreplay/backend/internal/config/redis"
 	"openreplay/backend/pkg/logger"
+	urlassets "openreplay/backend/pkg/url/assets"
 )
 
 type Cache struct {
@@ -13,12 +17,14 @@ type Cache struct {
 	CacheThreshold  int64  `env:"CACHE_THRESHOLD,default=5"`
 	CacheExpiration int64  `env:"CACHE_EXPIRATION,default=120"`
 	CacheBlackList  string `env:"CACHE_BLACK_LIST,default="`
+	KeyScheme       string `env:"ASSETS_KEY_SCHEME,default=daily"` // "hash" for a .<hash> suffix
 }
 
 type Config struct {
 	common.Config
 	objectstorage.ObjectsConfig
 	Cache
+	redis.Redis
 	GroupCache           string            `env:"GROUP_CACHE,required"`
 	TopicRawAssets       string            `env:"TOPIC_RAW_ASSETS,required"`
 	TopicRawWeb          string            `env:"TOPIC_RAW_WEB,required"`
@@ -46,5 +52,13 @@ type Config struct {
 func New(log logger.Logger) *Config {
 	cfg := &Config{}
 	configurator.Process(log, cfg)
+	cfg.Cache.Validate(log)
 	return cfg
+}
+
+func (c *Cache) Validate(log logger.Logger) {
+	if !urlassets.ValidKeyScheme(c.KeyScheme) {
+		log.Fatal(context.Background(), "invalid ASSETS_KEY_SCHEME %q (expected %q or %q)",
+			c.KeyScheme, urlassets.KeySchemeDaily, urlassets.KeySchemeHash)
+	}
 }

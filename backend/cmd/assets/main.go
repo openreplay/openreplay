@@ -11,6 +11,7 @@ import (
 
 	"openreplay/backend/internal/assets"
 	"openreplay/backend/internal/assets/cacher"
+	"openreplay/backend/internal/assets/resolver"
 	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/pkg/health"
@@ -42,7 +43,24 @@ func main() {
 		return producer.Ping(ctx)
 	})
 
-	rewriter, err := urlAssets.NewRewriter(cfg.AssetsOrigin)
+	var urlResolver *resolver.Resolver
+	var rewriterResolver urlAssets.Resolver
+	if cfg.KeyScheme == urlAssets.KeySchemeHash {
+		var err error
+		urlResolver, err = resolver.New(log, cfg.ConnectionURL, assetMetrics.RecordAssetResolve)
+		if err != nil {
+			log.Fatal(ctx, "can't init assets resolver: %s", err)
+		}
+		defer urlResolver.Close()
+		rewriterResolver = urlResolver
+		if cfg.ConnectionURL != "" {
+			h.Register("resolver", func(ctx context.Context) error {
+				return urlResolver.Ping(ctx)
+			})
+		}
+	}
+
+	rewriter, err := urlAssets.NewRewriterWithScheme(cfg.AssetsOrigin, cfg.KeyScheme, rewriterResolver)
 	if err != nil {
 		log.Fatal(ctx, "can't init rewriter: %s", err)
 	}
@@ -53,7 +71,7 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
-	cacher, err := cacher.NewCacher(log, cfg, objStore, assetMetrics)
+	cacher, err := cacher.NewCacher(log, cfg, objStore, assetMetrics, urlResolver)
 	if err != nil {
 		log.Fatal(ctx, "can't init cacher: %s", err)
 	}
