@@ -52,7 +52,7 @@ export default function ProblemCard({
       </span>
     );
 
-  // each present meta cell, joined by separators (cells degrade when absent)
+  // present meta cells, joined by separators
   const cells: React.ReactNode[] = [];
   if (issue.cat) cells.push(<CategoryLabel cat={issue.cat} />);
   cells.push(

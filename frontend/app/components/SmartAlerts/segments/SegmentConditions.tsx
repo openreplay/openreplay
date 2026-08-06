@@ -9,8 +9,7 @@ import { getIconForFilter } from 'Shared/Filters/FilterModal';
 import type { SavedSegment } from '../api';
 
 /* Read-only view of a segment's query for hover cards. Each condition reuses
-   the same chip FilterItem renders in the search bar (icon + "Category • Name"),
-   so the two surfaces can't drift apart; values follow as tags. */
+   the chip FilterItem renders in the search bar; values follow as tags. */
 
 function ConditionChip({ f }: { f: FilterItem }) {
   const categoryPart = f.subCategory || f.category;

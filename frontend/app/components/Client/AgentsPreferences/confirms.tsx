@@ -2,15 +2,11 @@ import { App } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-/* THE confirm dialog — one hook so every destructive question is the same
-   component (the app's dialog grammar: no exclamation icon, default width,
-   subject quoted in a gray body line). Rendered through App.useApp()'s modal,
-   NOT the static Modal.confirm, so it inherits the app theme.
+/* Confirm-dialog hook. Rendered through App.useApp()'s modal, NOT the static
+   Modal.confirm, so it inherits the app theme.
 
-   NB: kai-testing-ui carries a richer `confirms` for the Tests surface at
-   `KaiSettings/components/shared/confirms`; this is the Issues-side subset
-   (delete only). Kept local so it compiles on this branch; on merge, repoint the
-   imports at the shared one if the teams consolidate. */
+   A local Issues-side subset (delete only); kai-testing-ui carries a richer
+   `confirms` for the Tests surface. On merge, repoint imports if consolidated. */
 export function useConfirms() {
   const { modal } = App.useApp();
   const { t } = useTranslation();

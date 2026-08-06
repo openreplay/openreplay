@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Icon } from 'UI';
 
-/* Reusable "what happened" AI textbox. `primary` is the full tinted card used
-   for the issue description; `secondary` is just the text with a sparkles mark,
-   used inline per session. */
+/* AI summary textbox. `primary` is the full tinted card; `secondary` is inline
+   text with a sparkles mark. */
 export default function AiSummary({
   children,
   variant = 'primary',

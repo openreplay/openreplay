@@ -3,11 +3,10 @@ import React from 'react';
 
 import { TagChip } from '../shared';
 
-/* One-line tags row (Mehdi 07-28): wrapping tag rows made the session cards
-   misalign, so tags never wrap — the row shows as many chips as fit and folds
-   the rest behind a "+N" chip whose tooltip lists them. A hidden clone of the
-   full row (chips + the +N probe) is measured, so the visible row never clips a
-   chip mid-way. Re-measures on container resize. */
+/* One-line tags row: tags never wrap — the row shows as many chips as fit and
+   folds the rest behind a "+N" chip whose tooltip lists them. A hidden clone of
+   the full row (chips + the +N probe) is measured so the visible row never
+   clips a chip mid-way. Re-measures on container resize. */
 
 const GAP = 6; // = the row's gap-1.5
 

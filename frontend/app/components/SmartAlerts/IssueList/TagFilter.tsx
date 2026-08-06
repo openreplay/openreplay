@@ -15,15 +15,9 @@ import type { IssueOrigin } from '../api';
 import TagDialog from '../shared/TagDialog';
 import type { MatchMode } from '../shared/model';
 
-/* The list's attribute filters, modeled on OpenReplay's FilterSelection: STABLE
-   trigger buttons (they never resize as you select) opening Popovers where the
-   selection happens, so nothing in the toolbar reflows.
-
-   Tags and segments are SEPARATE dropdowns (Gabriel 07-27): they answer
-   different questions (what happened vs where it was captured) and each scales
-   on its own — predefined + custom tags, and any number of segments. "New tag"
-   opens a creation dialog: name + a natural-language description the agent
-   matches automatically. */
+/* The list's attribute filters: stable trigger buttons (they never resize as
+   you select) opening Popovers where the selection happens, so the toolbar
+   never reflows. */
 
 export function CheckRow({
   on,
@@ -86,8 +80,7 @@ export default function TagFilter({
   onToggle: (t: string) => void;
   onSetMatch: (m: MatchMode) => void;
   onClear: () => void;
-  /** creates a customer-defined journey tag (name + NL description); returns
-      false when the name is already taken */
+  /** creates a custom journey tag (name + NL description); returns false when the name is already taken */
   onCreateTag?: (name: string, description: string) => boolean;
 }) {
   const { t } = useTranslation();
@@ -194,9 +187,7 @@ export default function TagFilter({
 
 /* ─────────────────────────── Segments ─────────────────────────── */
 
-/** "Found in" filter as its own dropdown — origin is an issue attribute, but a
- *  different species from tags (where it was captured, not what happened).
- *  Rows follow the picker at rest: first 5 + "search to find them". */
+/** "Found in" filter dropdown: shows first 5 segments at rest, search to find the rest. */
 export function SegmentFilter({
   segments,
   origins,
@@ -209,8 +200,7 @@ export function SegmentFilter({
   segments: { id: string; name: string; mine?: boolean }[];
   origins: IssueOrigin[];
   onToggleOrigin: (o: IssueOrigin) => void;
-  /** replaces the whole selection — the aggregate rows flip several ids at
-      once, and toggling them one by one fires a refetch per id */
+  /** replaces the whole selection at once — toggling ids one by one fires a refetch per id */
   onSetOrigins: (o: IssueOrigin[]) => void;
   onClear: () => void;
   /** the issue page scopes sessions to segments only — no "Full traffic" row */

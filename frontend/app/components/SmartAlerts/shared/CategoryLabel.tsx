@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { CAT_AVATAR_COLOR, CAT_ICON, type CategoryName } from './model';
 
-/* Category as the teal circle + icon used on the Cards list: an antd Avatar
-   with the tealx-lightest fill and a tealx icon. */
+/* Category as a teal circle + icon (antd Avatar), used on the Cards list. */
 export default function CategoryLabel({ cat }: { cat: CategoryName }) {
   const { t } = useTranslation();
   const Ic = CAT_ICON[cat];

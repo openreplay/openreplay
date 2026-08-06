@@ -34,11 +34,9 @@ import JourneyTags from './JourneyTags';
    (notifications + behaviour) and Issues (journey tags + critical rules). The
    Audits tab lands on its own branch. See todo.md. */
 
-/* full width is for tables and controls, never for a line of prose: hints stay
-   at a readable measure so they wrap where the eye expects, not at 1300px.
-   display:block is load-bearing — Typography.Text renders a span, and max-width
-   does nothing to an inline element. */
-const PROSE = { display: 'block', maxWidth: '72ch' } as const;
+/* Hints run the full width of the card, so each must stay short — one or two
+   sentences that sit on one line. */
+const PROSE = { display: 'block' } as const;
 
 type AgentKey = 'tests' | 'issues';
 const AGENTS: AgentKey[] = ['tests', 'issues'];
@@ -87,7 +85,7 @@ function Channel({
   );
 }
 
-/** a titled group inside a panel — the Environments tab's section shape. */
+/** a titled group inside a panel. */
 function PrefSection({
   title,
   hint,
@@ -119,10 +117,9 @@ function AgentsPreferences() {
   const location = useLocation();
   const siteId = projectsStore.activeSiteId;
 
-  /* This page is reachable without ever opening Issues, and issuesStore only
-     hydrates from IssuesList/IssueDetail/IssuePlayer. Without this the tag
-     manager renders empty AND its writes silently no-op, because every mutation
-     guards on a `projectId` the store never received. */
+  /* This page is reachable without ever opening Issues, so issuesStore may have
+     no `projectId`. Without this the tag manager renders empty AND its writes
+     silently no-op (every mutation guards on `projectId`). */
   React.useEffect(() => {
     if (siteId) issuesStore.ensureJourneyTags(String(siteId));
   }, [siteId]);
@@ -137,8 +134,7 @@ function AgentsPreferences() {
   const dailySummary = !!notifications?.dailySummary;
   const weeklySummary = !!notifications?.weeklySummary;
 
-  // the agent pages' Settings buttons deep-link to their own tab, the same
-  // query-param pattern Data Management's Properties page uses (?agent=)
+  // the agent pages' Settings buttons deep-link to their own tab via ?agent=
   const requested = new URLSearchParams(location.search).get(
     'agent',
   ) as AgentKey | null;
@@ -237,7 +233,7 @@ function AgentsPreferences() {
 
   return (
     <div className="flex flex-col rounded-lg border bg-white">
-      {/* header — mirrors the agent pages' header grammar */}
+      {/* header */}
       <div className="flex items-center gap-2 border-b px-4 py-2">
         <span className="font-semibold text-lg">{t('Agents')}</span>
         <Tooltip

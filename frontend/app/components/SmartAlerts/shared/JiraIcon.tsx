@@ -1,9 +1,8 @@
 import React from 'react';
 
-/* Line-style Jira mark for the "Create ticket" action. The UI kit's
-   `integrations_jira` icon is the full-colour brand logo (hardcoded greys +
-   gradients) and can't inherit the primary button's text colour — this glyph
-   uses `currentColor` so it sits correctly on the blue button. */
+/* Line-style Jira mark for "Create ticket". The kit's `integrations_jira` icon
+   is the full-colour brand logo and can't inherit the button's text colour;
+   this glyph uses `currentColor` so it sits on the blue button. */
 export default function JiraIcon({ size = 15 }: { size?: number }) {
   return (
     <svg

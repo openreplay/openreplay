@@ -36,9 +36,7 @@ type SideTab = 'activity' | 'issue' | null;
 
 const Divider = () => <div className="h-6 border-l border-gray-light mx-1" />;
 
-/* Player header sourced from the session-replay subheader (share / highlight /
-   prev-next), but led by this session's variation of the issue. The parent
-   issue + environment metadata sit on the line below / behind "More". */
+/* Player header, adapted from the session-replay subheader. */
 export default function IssuePlayerHeader({
   issue,
   card,
@@ -126,7 +124,7 @@ export default function IssuePlayerHeader({
         value=""
         isLast={!card?.plan}
       />
-      {/* customer-defined metadata — wrapping pills so many fields stay compact */}
+      {/* customer-defined metadata */}
       {card?.plan && (
         <div className="pt-3" style={{ maxWidth: 320 }}>
           <div

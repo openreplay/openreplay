@@ -20,11 +20,10 @@ export interface Issue {
   tags: string[];
   /** journey-level labels, kept distinct from issue tags for the detail page */
   journeyLabels: string[];
-  /** dominant category (highest-ratio label) — the single value shown in the
-      column/avatar */
+  /** dominant category (highest-ratio label), shown in the column/avatar */
   cat?: CategoryName;
-  /** every category the issue is significant in (label ratio over threshold) —
-      drives the category tab filter + counts (an issue can be in several) */
+  /** every category the issue is significant in — drives the category tab
+      filter + counts (an issue can be in several) */
   categories: CategoryName[];
   /** distinct sessions affected within the window (impact% is derived from this) */
   impactedSessions: number;
@@ -40,8 +39,8 @@ export interface Issue {
   segmentIds: string[];
   /** issue-level problem text — only populated from GET …/issue (detail/player) */
   problem: string;
-  /** suggested fix — still not provided by the backend (see TODO.md); the UI
-      hides the "Suggested fix" section until it lands */
+  /** suggested fix — NOT yet provided by the backend; the UI hides the
+      "Suggested fix" section until it lands */
   fix: string;
 }
 
@@ -73,8 +72,8 @@ export interface IssueSessionCard {
 
 export const CAT_ORDER: CategoryName[] = ['Errors', 'UI/UX', 'Slowness'];
 
-/* Autocomplete hints for the natural-language journey search on the issue
-   detail page. Suggestions only — the typed text is what's sent to the search. */
+/* Autocomplete hints for the journey search. Suggestions only — the typed text
+   is what's sent to the search. */
 export const JOURNEY_SEARCH_SUGGESTIONS = [
   'users who add to cart then abandon at checkout',
   'users who hit "Place order" and watch the spinner end with nothing',
@@ -88,14 +87,13 @@ export const JOURNEY_SEARCH_SUGGESTIONS = [
   'users who wait on blank dashboard charts',
 ];
 
-/* Uniform teal used for the category avatar/icon (matches the `tealx` token in
-   app/theme/colors.js). The per-category CAT_COLOR below is only the tab-highlight. */
+/* Uniform teal for the category avatar/icon (the `tealx` token). The
+   per-category CAT_COLOR below is only the tab-highlight. */
 export const CAT_AVATAR_COLOR = 'var(--color-tealx)';
 
-/* The issue player renders as a `fixed inset-0` overlay above the whole app, so
-   it needs an extreme z-index. The overlay container sits just below the popup
-   layer, so its own popovers/tooltips/dropdowns (which carry PLAYER_POPUP_Z)
-   always stack above the player chrome. */
+/* The issue player is a `fixed inset-0` overlay above the whole app, so it
+   needs an extreme z-index. The overlay sits just below the popup layer so its
+   popovers/tooltips (PLAYER_POPUP_Z) stack above the player chrome. */
 export const PLAYER_OVERLAY_Z = 2147483000;
 export const PLAYER_POPUP_Z = 2147483647;
 
@@ -185,9 +183,8 @@ export function fmtDuration(ms: number): string {
   return m ? `${m}m${s}s` : `${s}s`;
 }
 
-/** Display label for a server reason key: snake_case → sentence case
-    (e.g. "not_a_real_issue" → "Not a real issue"). The original key is kept as
-    the value and sent back to the server; only the label is humanized. */
+/** Display label for a server reason key: snake_case → sentence case. The
+    original key is sent back to the server; only the label is humanized. */
 export function humanizeReason(reason: string): string {
   const words = reason.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
   return words ? words.charAt(0).toUpperCase() + words.slice(1) : '';

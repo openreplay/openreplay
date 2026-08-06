@@ -1,9 +1,7 @@
 import { Button } from 'antd';
 import React from 'react';
 
-/* Selectable reason chip — an antd small Button that toggles default (gray) →
-   muted active-blue (selected). Shared by the hide and remove-critical pickers
-   (the muted state must not compete with the primary CTA). */
+/* Selectable reason chip, shared by the hide and remove-critical pickers. */
 export default function ReasonChip({
   label,
   checked,

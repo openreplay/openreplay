@@ -1,7 +1,6 @@
 import React from 'react';
 
-/* Small uppercase section label used across the detail/player surfaces
-   ("The problem", "This session", …). */
+/* Small uppercase section label used across the detail/player surfaces. */
 export default function Eyebrow({ text }: { text: string }) {
   return (
     <span

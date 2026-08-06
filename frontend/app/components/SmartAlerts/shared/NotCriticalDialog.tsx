@@ -7,11 +7,8 @@ import { useStore } from 'App/mstore';
 import ReasonChip from './ReasonChip';
 import { CRITICAL_REASONS, humanizeReason } from './model';
 
-/* THE "not critical for me" dialog — one component for the list + detail, which
-   both offer the action from their own menu/button. Deliberately NOT part of
-   CriticalDialog (a dialog does one job, Gabriel 07-31). Per-user: it suppresses
-   the flag for me and the reason teaches the agent — a teammate's view is
-   untouched. */
+/* The "not critical for me" dialog (shared by list + detail). Per-user: it
+   suppresses the flag for me; a teammate's view is untouched. */
 export default function NotCriticalDialog({
   issue,
   reasons: options = CRITICAL_REASONS,
@@ -45,8 +42,8 @@ export default function NotCriticalDialog({
       open={issue != null}
       onCancel={onClose}
       onOk={() => {
-        // reasons stay a list: the server validates them against its own enum
-        // (GET …/reasons) and the note rides along as free text
+        // reasons are validated server-side against its enum (GET …/reasons);
+        // the note is free text
         if (issue) issuesStore.setNotCriticalForMe(issue.id, reasons, note);
         onClose();
       }}

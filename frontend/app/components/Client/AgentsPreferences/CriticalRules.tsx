@@ -13,14 +13,10 @@ import CountSuffix from 'Shared/CountSuffix';
 
 import { useConfirms } from './confirms';
 
-/* "What's critical" — the centralized list (Mehdi 07-28): one description per
-   line, each showing who wrote it, because the engine passes them to the LLM
-   with per-user attribution and that is what makes "Critical to me" filterable.
-
-   Same shell as the journey-tag manager next door (Segmented + search + add over
-   one table). Editing/deleting follow the segments rule: your own rows get the
-   pencil + trash, a teammate's shows a disabled pencil whose tooltip names who
-   can change it. */
+/* "What's critical" — the centralized list: one description per line with its
+   author, since the engine passes them to the LLM per-user and that is what
+   makes "Critical to me" filterable. Your own rows edit/delete; a teammate's
+   shows a disabled pencil naming who can change it. */
 
 type Scope = 'all' | 'mine';
 
@@ -245,7 +241,6 @@ function CriticalRules() {
             'Describe it in plain words. The agent reads your description and flags the issues that match, and only you can change it.',
           )}
         </p>
-        {/* the same field the issue-side dialog uses */}
         <CriticalRuleFields
           autoFocus
           value={desc}

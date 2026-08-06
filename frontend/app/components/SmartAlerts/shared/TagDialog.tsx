@@ -2,12 +2,8 @@ import { Input, Modal } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-/* THE journey-tag dialog — creating (from the Tags filter) and editing (from
-   Preferences > Agents) share it. App dialog grammar (Hide modal): no icon,
-   default width, explanation in a gray body line. The description IS the
-   matching rule; the caption sets expectations so a zero-match tag is never a
-   surprise. It IS the intermediary layer (Gabriel/Mehdi 07-28): a small control
-   never drops the user into a settings page — the tag is authored here. */
+/* The journey-tag dialog, shared by create and edit. The description IS the
+   matching rule the agent applies. */
 export default function TagDialog({
   open,
   initial,
@@ -23,8 +19,7 @@ export default function TagDialog({
   const { t } = useTranslation();
   const [name, setName] = React.useState('');
   const [desc, setDesc] = React.useState('');
-  // seed from `initial` on open — adjusting state during render (React's
-  // recommended alternative to an effect for prop-derived state)
+  // seed from `initial` on open — adjusting state during render (not an effect)
   const [wasOpen, setWasOpen] = React.useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);

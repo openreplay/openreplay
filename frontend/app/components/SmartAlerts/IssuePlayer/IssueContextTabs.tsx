@@ -6,8 +6,7 @@ import type { Issue, IssueSessionCard } from '../shared';
 import DetailsView from './DetailsView';
 import JourneyView from './JourneyView';
 
-/* Slide-out context as two tabs: Journey (the path, via tags + steps) and
-   Details (the plain-language problem + suggested fix). */
+/* Two tabs: Journey and Details. */
 export default function IssueContextTabs({
   issue,
   card,

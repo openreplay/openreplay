@@ -16,8 +16,7 @@ import {
 } from '../shared';
 import IssueContextTabs from './IssueContextTabs';
 
-/* The right-hand "Issue" context panel: issue identity → this session's
-   variation → Journey / Details tabs. */
+/* The right-hand "Issue" context panel. */
 export default function IssuePanel({
   issue,
   card,
@@ -51,8 +50,7 @@ export default function IssuePanel({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-5">
-        {/* 1 · the issue — labelled so the title is never confused with the
-            session variation below */}
+        {/* the issue */}
         <div className="flex flex-col gap-2.5">
           <Eyebrow text={t('Issue')} />
           <span
@@ -82,8 +80,7 @@ export default function IssuePanel({
           </div>
         </div>
 
-        {/* 2 · this session — its variation headline (tags + journey live in the
-            Journey tab; environment metadata lives in the header "More") */}
+        {/* this session — its variation headline */}
         {card?.variation && (
           <div className="flex flex-col gap-1.5">
             <Eyebrow text={t('This session')} />
@@ -96,7 +93,7 @@ export default function IssuePanel({
           </div>
         )}
 
-        {/* segments that surfaced this issue — one line (Mehdi 07-27) */}
+        {/* segments that surfaced this issue */}
         {segmentNames && segmentNames.length > 0 && (
           <div className="flex items-center gap-2 text-sm min-w-0 flex-wrap">
             <span className="color-gray-medium shrink-0">{t('Segments:')}</span>
@@ -106,7 +103,6 @@ export default function IssuePanel({
           </div>
         )}
 
-        {/* 3 · Journey (path via tags + steps) and Details (problem + fix) */}
         <IssueContextTabs issue={issue} card={card} />
       </div>
     </div>

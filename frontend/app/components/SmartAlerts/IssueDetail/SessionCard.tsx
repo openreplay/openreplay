@@ -15,9 +15,8 @@ import TagsRow from './TagsRow';
 const LINE = 1.35; // title line-height (em)
 
 /* The variation title, clamped to the grid-agreed number of lines. A hidden
-   unclamped clone reports its natural line count up so the grid can slot every
-   card at the max the visible cards need (≤3). Truncated text shows in full on
-   hover. */
+   unclamped clone reports its natural line count up so the grid can size every
+   title slot (≤3 lines). Truncated text shows in full on hover. */
 function ClampedTitle({
   text,
   lines,
@@ -84,11 +83,8 @@ function ClampedTitle({
   );
 }
 
-/* A session card titled by its variation of the issue (not user metadata). The
-   environment specs sit behind "More" so the card stays clean. No real preview
-   image is available outside the player, so the thumbnail is a neutral play
-   surface. Every footer row has a grid-agreed fixed height (shared title slot +
-   one-line tags row), so all cards in the grid are the same size. */
+/* A session card titled by its issue variation. Footer rows have fixed heights
+   (shared title slot + one-line tags row) so all cards in the grid match size. */
 export default function SessionCard({
   s,
   onClick,
@@ -114,8 +110,7 @@ export default function SessionCard({
         className="relative group w-full block cursor-pointer bg-gray-lightest"
         style={{ height: 180 }}
       >
-        {/* real thumbnail nearest the issue moment when the backend has one;
-            otherwise the neutral play surface */}
+        {/* real thumbnail when the backend has one; otherwise the neutral play surface */}
         {s.thumbnail && (
           <img
             src={s.thumbnail}
