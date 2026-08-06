@@ -18,6 +18,10 @@ import PreferencesPage from '../PreferencesPage';
 import CriticalRules from './CriticalRules';
 import JourneyTags from './JourneyTags';
 
+/* Preferences > Agents: one tab per agent; per-agent journey tags, critical
+   rules, notifications and behaviour toggles live here rather than as a
+   Settings tab on each agent page. */
+
 // display:block is load-bearing: Typography.Text renders a span, max-width does
 // nothing to an inline element
 const PROSE = { display: 'block', maxWidth: '72ch' } as const;
@@ -78,6 +82,7 @@ function Channel({
   );
 }
 
+/** a titled group inside a panel. */
 function PrefSection({
   title,
   hint,
@@ -172,10 +177,9 @@ const IssuesPanel = observer(() => {
   const { issuesStore, projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
 
-  /* This page is reachable without ever opening Issues, and issuesStore only
-     hydrates from IssuesList/IssueDetail/IssuePlayer. Without this the tag
-     manager renders empty AND its writes silently no-op, because every mutation
-     guards on a `projectId` the store never received. */
+  /* This page is reachable without ever opening Issues, so issuesStore may have
+     no `projectId`. Without this the tag manager renders empty AND its writes
+     silently no-op (every mutation guards on `projectId`). */
   React.useEffect(() => {
     if (siteId) issuesStore.ensureJourneyTags(String(siteId));
   }, [siteId]);
@@ -210,7 +214,7 @@ function AgentsPreferences() {
   const location = useLocation();
   const permitted = usePermittedAgents();
 
-  // agent pages' Settings buttons deep-link to their own tab
+  // agent pages' Settings buttons deep-link to their own tab via ?agent=
   const requested = new URLSearchParams(location.search).get(
     'agent',
   ) as AgentKey | null;

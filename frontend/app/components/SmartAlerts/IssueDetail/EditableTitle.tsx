@@ -3,8 +3,7 @@ import { Button, Input, Tooltip } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-/* Inline rename — a pencil appears on hover; editing shows a small input with
-   Cancel / Save (same interaction as Data Management's EditableField). */
+/* Inline rename — pencil on hover; editing shows a small input with Cancel / Save. */
 export default function EditableTitle({
   value,
   onSave,

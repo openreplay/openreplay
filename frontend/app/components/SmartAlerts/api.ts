@@ -1,18 +1,16 @@
 import { client } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
-/* Smart Issues REST client — the Go `api` service under /v2/smart-issues
-   (migrated from the Python `kai` service). See api2.yaml for the full contract
-   (api.yaml is the earlier revision — see TODO.md).
+/* Smart Issues REST client — the Go `api` service under /v2/smart-issues.
+   See api2.yaml for the full contract.
 
    NOTE(base-path): /smart-issues is added to `noChalice` in api_client.ts so the
-   path resolves at the origin root (…/v2/smart-issues/{projectId}) on
-   self-hosted, mirroring how /kai was routed. The exact SaaS gateway prefix
-   still needs a smoke-test against a live backend — see TODO.md §7. */
+   path resolves at the origin root (…/v2/smart-issues/{projectId}), not through
+   the chalice prefix. */
 
 const base = (projectId: string | number) => `/v2/smart-issues/${projectId}`;
 
-// ---- shared enums (mirror api2.yaml) ----
+// ---- shared enums ----
 export type Visibility = 'active' | 'hidden' | 'deleted' | 'all';
 export type ListSortBy = 'impact' | 'count' | 'recency' | 'firstSeen';
 export type SearchSortBy = 'time' | 'events';
@@ -26,11 +24,10 @@ export interface RawLabelRatio {
 }
 
 /* ---- traffic segments (a saved search the agent can capture/analyse) ----
-   A segment is a Data Management saved search (name + query + visibility) with
-   an agent-capture layer on top. The saved search itself is real (see
-   DataManagement/Segments/api.ts); the capture layer — which segments the
-   agent analyses, their instructions, and the project capture mode — is
-   NOT-YET-BACKED (the stubs below resolve empty / no-op until it ships). */
+   A segment is a Data Management saved search with an agent-capture layer. The
+   saved search is real; the capture layer — which segments the agent analyses,
+   their instructions, the project capture mode — is NOT-YET-BACKED (the stubs
+   below resolve empty / no-op until it ships). */
 export type CaptureMode = 'full' | 'segments';
 
 export interface SavedSegment {
@@ -96,9 +93,9 @@ export interface RawIssue {
 }
 
 /* Session row from POST /smart-issues/{projectId}/search — replay metadata
-   merged with the issue-specific fields. `additionalProperties: true` in the
-   schema means more replay props (userBrowser, userOs, metadata, …) ride along;
-   we read the ones the cards need and tolerate their absence. */
+   merged with issue-specific fields. The schema's `additionalProperties: true`
+   means more replay props ride along; we read what the cards need and tolerate
+   their absence. */
 export interface RawIssueSession {
   sessionId: string;
   projectId?: number;
@@ -312,7 +309,7 @@ export async function getReasons(projectId: string): Promise<Reasons> {
   return { hide: data.hide ?? [], criticality: data.criticality ?? [] };
 }
 
-/* ---- journey tags (real CRUD; Postgres-gated on the server) ---- */
+/* ---- journey tags (real CRUD) ---- */
 
 /** GET /smart-issues/{projectId}/journey-tags — the project's live journey tags. */
 export async function listJourneyTags(
@@ -467,16 +464,15 @@ export const deleteIssue = (projectId: string, issueName: string) =>
 /* ===========================================================================
    MOCKS — these routes DO NOT EXIST server-side.
 
-   Never shipped: `/segment-capture` (project capture MODE + per-segment agent
-   INSTRUCTIONS). To avoid 404 network noise we DON'T call the client at all —
-   each resolves a default / no-op. Capture mode + instructions work
-   optimistically in-session via the store but DO NOT persist across reload.
-   Swap each body for a real `client.*` call once the backend ships. See TODO.md.
+   `/segment-capture` (project capture MODE + per-segment agent INSTRUCTIONS) was
+   never shipped. To avoid 404 noise we don't call the client — each resolves a
+   default / no-op. Capture mode + instructions work optimistically in-session
+   but DO NOT persist across reload. Swap for real `client.*` calls once the
+   backend ships.
 
-   NB: the per-segment capture flag ("Identify issues in this segment") IS real
-   — it persists as `isCapture` on the saved search (see createSegment /
-   updateSegment). Only the capture MODE and INSTRUCTIONS here are unbacked, so
-   `active` is left empty (it's derived from each segment's `isCapture`). */
+   NB: the per-segment capture flag ("Identify issues in this segment") IS real —
+   it persists as `isCapture` on the saved search. Only the capture MODE +
+   INSTRUCTIONS here are unbacked, so `active` is left empty. */
 
 /** MOCK (no endpoint): project capture mode + per-segment instructions. */
 export const getSegmentCapture = (

@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Eyebrow, type Issue } from '../shared';
 
-/* Details tab — the issue described plainly, with the suggested fix folded in
-   below (not its own tab: many issues have no clean fix, so it lives here as a
-   secondary section). Both texts degrade to placeholders until the backend
-   provides them. */
+/* Details tab — the problem plainly, with the suggested fix below. Both degrade
+   to placeholders until the backend provides them. */
 export default function DetailsView({ issue }: { issue: Issue }) {
   const { t } = useTranslation();
   const text = 'color-gray-dark';

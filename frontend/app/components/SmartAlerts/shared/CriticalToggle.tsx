@@ -5,12 +5,9 @@ import { useTranslation } from 'react-i18next';
 
 export type CritState = 'none' | 'team' | 'mine';
 
-/* The critical triangle used in the issue-list row and the player. Criticality
-   is a described RULE now (§14): the triangle no longer flags the issue, it
-   OPENS the CriticalDialog — the one place that explains which description
-   matched and whose, lets you add your own, and holds the "not critical for me"
-   step. State only drives the look: gray = none, red outline = a teammate's/
-   agent's description, red fill = one of mine. */
+/* The critical triangle in the issue-list row and the player. Opens the
+   CriticalDialog; state only drives the look: gray = none, red outline =
+   teammate's/agent's, red fill = mine. */
 export default function CriticalToggle({
   state,
   onOpen,
@@ -49,7 +46,6 @@ export default function CriticalToggle({
                 state === 'none'
                   ? 'var(--color-gray-medium)'
                   : 'var(--color-red)',
-              // red fill marks "mine"; outline for a teammate's/agent's
               fill: state === 'mine' ? 'var(--color-red)' : 'none',
             }}
           />

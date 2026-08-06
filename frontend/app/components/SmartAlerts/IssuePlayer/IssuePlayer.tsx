@@ -30,9 +30,7 @@ import IssuePlayerHeader from './IssuePlayerHeader';
 
 type View = 'activity' | 'issue' | 'highlight' | null;
 
-/* Minimal-UI session replay for an issue: the real web player (PlayerContent +
-   its real Console/Network/Activity), wrapped in a stripped-down header and our
-   own Issue context panel. The player bootstrap mirrors WebPlayer.tsx. */
+/* Minimal-UI session replay for an issue. Player bootstrap mirrors WebPlayer.tsx. */
 function IssuePlayer() {
   const { sessionStore, issuesStore, projectsStore, integrationsStore } =
     useStore();
@@ -46,7 +44,7 @@ function IssuePlayer() {
 
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
-  // default value is a partial context, filled in once the player loads
+  // partial context, filled in once the player loads
   const [contextValue, setContextValue] = React.useState<IPlayerContext>(
     defaultContextValue as any,
   );
@@ -96,8 +94,7 @@ function IssuePlayer() {
       inst.preloadFirstFile(mobData.data, mobData.fileKey);
     }
     playerRef.current = inst;
-    // syncs the created player (an external system) into context — same
-    // bootstrap pattern as WebPlayer.tsx
+    // sync the created player into context (same bootstrap as WebPlayer.tsx)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setContextValue({ player: inst, store });
   }, [session.sessionId]);
@@ -206,8 +203,7 @@ function IssuePlayer() {
     history.push(
       withSiteId(issue ? smartIssueDetails(idParam) : smartIssues(), siteId),
     );
-  // criticality is a described rule now (§14): the triangle opens the shared
-  // dialog (describe / explain / not-critical), it sets nothing itself
+  // the triangle opens the shared dialog; it sets nothing itself
   const critState = issue ? issuesStore.critState(issue.id) : 'none';
   const [critOpen, setCritOpen] = React.useState(false);
 
@@ -280,8 +276,8 @@ function IssuePlayer() {
                 onClose={() => setView(null)}
                 critState={critState}
                 onOpenCritical={() => setCritOpen(true)}
-                // fall back to the raw id when the name isn't loaded, so a
-                // segment find never silently reads as full traffic
+                // fall back to raw id when name isn't loaded, so scope never
+                // silently reads as full traffic
                 segmentNames={issue.segmentIds.map(
                   (id) => issuesStore.segmentName(id) ?? id,
                 )}
@@ -289,8 +285,7 @@ function IssuePlayer() {
             )}
           </div>
 
-          {/* sibling of the header/panel, never nested in a Tooltip (antd
-              Children.only) — the describe/explain/not-critical dialog */}
+          {/* sibling of the header/panel, never nested in a Tooltip (antd Children.only) */}
           {issue && (
             <CriticalDialog
               issueId={critOpen ? issue.id : null}

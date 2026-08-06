@@ -18,11 +18,9 @@ const fmtTime = (ms: number): string => {
   return `${m}:${String(sec).padStart(2, '0')}`;
 };
 
-/* One step row. Memoized on purpose: the parent re-renders on every player time
-   tick (that's how the highlight tracks the playhead), and only ONE row's
-   `active` actually changes per tick — without this the whole timeline
-   re-renders at playback framerate. `onJump` must stay referentially stable for
-   the memo to hold, hence the useCallback in the parent. */
+/* One step row. Memoized: the parent re-renders every player time tick, so
+   without this the whole timeline re-renders at playback framerate. `onJump`
+   must be referentially stable (useCallback in parent) for the memo to hold. */
 const Step = React.memo(function Step({
   name,
   ms,
@@ -105,11 +103,10 @@ const Step = React.memo(function Step({
   );
 });
 
-/* The session's journey. With real per-step timings from the backend
-   (`card.journeySteps`, GET …/journey / search) it's a clickable step timeline —
-   each step seeks the player to its moment, and the step at the current playhead
-   is highlighted. Falls back to the single journey block when a session has no
-   steps (aged past the 1-month TTL, or never vision-processed). */
+/* The session's journey. With per-step timings (`card.journeySteps`) it's a
+   clickable step timeline — each step seeks the player to its moment and the
+   step at the current playhead is highlighted. Falls back to a single journey
+   block when a session has no steps. */
 const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
   const { t } = useTranslation();
   const { player, store } = React.useContext(PlayerContext);
@@ -124,8 +121,8 @@ const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
 
   // ---- stepped timeline (real timings) ----
   if (steps.length > 0) {
-    // -1 until the playhead actually reaches step 0, so nothing is highlighted
-    // during the lead-in rather than step 0 claiming time it didn't happen in
+    // -1 until the playhead reaches step 0, so nothing is highlighted during
+    // the lead-in
     let current = -1;
     steps.forEach((s, i) => {
       if (nowMs >= s.relativeTimestamp - 500) current = i;

@@ -11,12 +11,11 @@ import SessionFilters from 'Shared/SessionFilters';
 
 import type { SavedSegment } from '../api';
 
-/* Create/edit surface for a segment — the same slide-out used from Issues and
-   from Data Management. The query editor is the literal Sessions omni-search
-   (<SessionFilters/>, bound to the global searchStore): its filters are
-   snapshotted on open and restored on close, so the Sessions page never
-   notices. Segments created from Issues are forced team-visible — capture is a
-   shared setting, so everyone must be able to stop it. */
+/* Create/edit surface for a segment, shared by Issues and Data Management. The
+   query editor is the Sessions omni-search (<SessionFilters/>, bound to the
+   global searchStore): its filters are snapshotted on open and restored on
+   close, so the Sessions page never notices. Segments created from Issues are
+   forced team-visible (capture is a shared setting). */
 
 interface Props {
   open: boolean;
@@ -58,9 +57,8 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
   }
 
   // borrow the searchStore while open: snapshot -> load this segment's query
-  // (or empty) -> hand it back on close. Filters round-trip as FilterItem at
-  // runtime (Search types them loosely), so cast at the boundary like the rest
-  // of the search code does.
+  // -> hand it back on close. Filters round-trip as FilterItem at runtime
+  // (Search types them loosely), so cast at the boundary.
   React.useEffect(() => {
     if (open) {
       snapshot.current = searchStore.instance.filters;

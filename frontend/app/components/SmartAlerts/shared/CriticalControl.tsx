@@ -11,11 +11,9 @@ const critContent = (text: string, withClose = false) => (
   </span>
 );
 
-/* The critical flag on the detail page (antd Tag). Criticality is derived now
-   (§14): the chip reports state and OPENS the shared CriticalDialog — which
-   explains which description matched and whose, lets you add your own, and holds
-   the "not critical for me" step. It sets nothing itself. Without `onOpen` it's
-   a static red tag. */
+/* The critical flag on the detail page (antd Tag). Reports state and opens the
+   shared CriticalDialog; sets nothing itself. Without `onOpen` it's a static
+   red tag. */
 export default function CriticalControl({
   critical,
   mine,

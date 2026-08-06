@@ -12,12 +12,11 @@ import {
   fmtDuration,
 } from './shared/model';
 
-/* Factories mapping raw /v2/smart-issues payloads to our view-model shapes.
-   `fix` (suggested fix) is the only field the contract still doesn't provide —
-   see TODO.md. */
+/* Factories mapping raw /v2/smart-issues payloads to view-model shapes.
+   `fix` (suggested fix) is the only field the contract doesn't provide yet. */
 
 /* The backend's critical label is a real issue label whose stored name contains
-   "critical" (e.g. "Critical") — match by substring, case-insensitive. */
+   "critical" — match by substring, case-insensitive. */
 export const isCriticalLabel = (name: string) =>
   name.toLowerCase().includes('critical');
 
@@ -25,10 +24,9 @@ const CAT_SET = new Set<string>(CAT_ORDER);
 const asCategories = (v?: string[]): CategoryName[] =>
   (v ?? []).filter((c): c is CategoryName => CAT_SET.has(c));
 
-/* Labels come with a `ratio` — the share of the issue's sessions they apply to
-   (0-100). Below this floor the label describes a minority variation, not the
-   issue, so showing it reads as a property of every session when it isn't. Keep
-   only the labels that hold for most of the issue. */
+/* Labels carry a `ratio` — the share of the issue's sessions they apply to
+   (0-100). Below this floor a label describes a minority variation, not the
+   issue, so drop it; keep only labels that hold for most sessions. */
 const LABEL_RATIO_MIN = 70;
 const strongLabels = (labels?: RawLabelRatio[]): string[] =>
   (labels ?? [])

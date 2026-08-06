@@ -6,9 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 
-/** The description field + its expectation caption. Shared with the manager in
- *  Preferences so the two places you can author a description are the same
- *  field. */
+/** The description field + its expectation caption; shared with Preferences. */
 export function CriticalRuleFields({
   value,
   onChange,
@@ -38,15 +36,8 @@ export function CriticalRuleFields({
   );
 }
 
-/* THE critical dialog — criticality's intermediary layer (Mehdi 07-28).
-   Clicking critical no longer flags the issue; it takes you here to describe
-   what is critical for you, and every description carries its author. Four
-   states, each offering only what changes something (Gabriel 07-31):
-     · undescribed — nothing matched; the field, footer Cancel / Save.
-     · mine — my description matched; footer "Not critical for me" + Close.
-     · team — only a teammate's/agent's matched; offer to add mine, Cancel / Save.
-     · muted — I dropped it; names what flagged it, offers "Show as critical again".
-   One job, one footer. */
+/* The critical dialog: describe what's critical rather than just flagging it.
+   Four states drive title/footer — undescribed, mine, team, muted. */
 export default observer(function CriticalDialog({
   issueId,
   issueHead,

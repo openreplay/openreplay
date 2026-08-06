@@ -5,10 +5,9 @@ import { useTranslation } from 'react-i18next';
 import ReasonChip from './ReasonChip';
 import { HIDE_REASONS, humanizeReason } from './model';
 
-/* Shared hide-with-reason modal (issue list + detail). The reason teaches the
-   agent why an issue was dismissed. The reason vocabulary comes from the server
-   (GET …/reasons); we fall back to the built-in list until it loads. State is
-   reset on close so each open is clean. */
+/* Shared hide-with-reason modal (list + detail). Reason vocabulary comes from
+   the server (GET …/reasons), falling back to the built-in list until it
+   loads; state is reset on close. */
 export default function HideIssueModal({
   open,
   head,

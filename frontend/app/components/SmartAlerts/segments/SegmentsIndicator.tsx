@@ -22,12 +22,9 @@ import SegmentConditions from './SegmentConditions';
 import SegmentDrawer from './SegmentDrawer';
 import './captureSwitch.css';
 
-/* The Traffic Segments entry point: one pill by the "Issues" title that is
-   both the on/off control and the door to settings. A real switch flips
-   capture mode in place; clicking the rest of the pill opens this popover with
-   two views — the capturing segments (Mine / Team, a switch per segment,
-   edit on your own, "Add segment" at the bottom) and the picker (existing
-   segments to switch on; only team-visible ones are eligible). */
+/* The Traffic Segments entry point: a pill by the "Issues" title that is both
+   the capture on/off switch and the door to a popover with two views — the
+   capturing segments and the picker (only team-visible segments are eligible). */
 
 function SegmentRow({
   segment,
@@ -163,7 +160,7 @@ function SegmentsIndicator() {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<SavedSegment | null>(null);
   // pin rows listed on open so a switched-off row can be undone in place
-  // (capture is one flag — off rows drop from the list on the next open)
+  // (off rows drop from the list on the next open)
   const [pinned, setPinned] = React.useState<string[]>([]);
 
   const listed = issuesStore.segments.filter(
@@ -459,10 +456,9 @@ function SegmentsIndicator() {
                 onChange={onSwitch}
               />
             </span>
-            {/* text-base, NOT text-sm: reset.css sets the html root to 14px, so
-                text-sm ≈ 12.25px while the antd filter controls next to the pill
-                render at the 14px token — text-base (1rem = 14px) matches them
-                (Gabriel 07-27) */}
+            {/* text-base, NOT text-sm: reset.css sets html root to 14px, so
+                text-sm ≈ 12.25px; text-base (1rem = 14px) matches the antd
+                filter controls next to the pill */}
             <span className="text-base color-gray-darkest">
               {t('Traffic segments')}
               {segmentsMode && (

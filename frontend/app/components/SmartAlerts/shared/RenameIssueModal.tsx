@@ -15,8 +15,7 @@ export default function RenameIssueModal({
 }) {
   const { t } = useTranslation();
   const [value, setValue] = React.useState(initial);
-  // Re-seed from `initial` when the modal opens — adjusting state during render
-  // (React's recommended alternative to an effect for prop-derived state).
+  // re-seed from `initial` on open — adjusting state during render (not an effect)
   const [wasOpen, setWasOpen] = React.useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);

@@ -7,25 +7,13 @@ import { useStore } from 'App/mstore';
 
 import type { Issue } from '../shared/model';
 
-/* Segment identity on the issue page + replay panel (Mehdi 07-20, design
-   Gabriel 07-21).
+/* Segment identity on the issue page + replay panel.
+   · `SegmentChip` — the one look for a named segment, everywhere.
+   · `FoundInChips` — the issue's origin line: the segments that surfaced it
+     (or full traffic); each chip toggles that segment into the sessions scope.
+   Scope is sessions-only (state in `issuesStore.detailScope`, mirrored to ?seg=). */
 
-   · `SegmentChip` — THE one look for a named segment, everywhere.
-   · `FoundInChips` — the issue header's origin line: the segment that surfaced
-     the issue (or full traffic). Clicking the segment chip scopes the example
-     sessions to it (mirrored to ?seg=).
-   · The sessions-toolbar scope control is the list's own `SegmentFilter`
-     dropdown (TagFilter.tsx), reused verbatim (Mehdi 07-28) — same grammar.
-
-   Scope = SESSIONS ONLY: headline stats stay global. State lives in
-   `issuesStore.detailScope`, mirrored to ?seg= so a scoped view is shareable.
-
-   The issue's segment membership is real now (`Issue.segmentIds`), so
-   `FoundInChips` lists every segment the issue was found in; each chip toggles
-   that segment into the sessions scope. */
-
-/** THE segment chip — one look everywhere a segment is named. Interactive when
- *  `onClick` is given. */
+/** The segment chip — interactive when `onClick` is given. */
 export function SegmentChip({
   name,
   on = false,

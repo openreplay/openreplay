@@ -53,20 +53,15 @@ import {
 import { filterStore, userStore } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
-/* Critical is a DESCRIBED RULE, not a per-issue flag (§14, Mehdi 07-28/29):
-   the customer writes what "critical" means to them, one description per line,
-   each carrying its author; the agent flags issues that match. So criticality
-   in the UI is always DERIVED (matchedRules) — every control is an explanation
-   or a way to author a description.
+/* Critical is a DESCRIBED RULE, not a per-issue flag: the customer describes
+   what "critical" means, the agent flags matching issues, so criticality in the
+   UI is always DERIVED (matchedRules).
 
-   NOT-YET-BACKED on this branch: the definitions themselves and the per-issue
-   attribution (`criticalBy`, `notCritical`) are client-side only — there are no
-   endpoints for the rule catalogue yet (see TODO). What IS backed is the
-   server's per-issue `critical` boolean plus its reason/note feedback
-   (`PUT` + `{critical}`): every place the user flags or unflags an issue writes
-   that through, so the decision and the reasons survive a reload even while the
-   attribution does not. The server flag is treated as one anonymous "agent"
-   match, so a flagged issue still reads critical. */
+   NOT-YET-BACKED: the rule catalogue and per-issue attribution (`criticalBy`,
+   `notCritical`) are client-side only. What IS backed: the server's per-issue
+   `critical` boolean plus its reason/note feedback (`PUT` + `{critical}`) — the
+   decision and reasons survive a reload; the attribution does not. The server
+   flag reads as one anonymous "agent" match. */
 export type CriticalRule = {
   id: number;
   description: string;
@@ -75,9 +70,8 @@ export type CriticalRule = {
   mine: boolean;
 };
 
-/* Journey tag (server-backed CRUD, GET/POST/PATCH/DELETE …/journey-tags).
-   `source` records where the text came from — predefined tags are editable and
-   removable like any custom one. */
+/* Journey tag (server-backed CRUD). `source` is provenance only — predefined
+   tags are editable/removable like custom ones. */
 export type JourneyTag = {
   id: number;
   name: string;
@@ -95,18 +89,13 @@ const AGENT_RULE: CriticalRule = {
 };
 
 /* Store behind the AI Issues surface. Issues + example sessions come from the
-   /v2/smart-issues Go endpoints (see SmartAlerts/api.ts + api.yaml), mapped
-   through SmartAlerts/factories. Filtering, sorting and pagination are all
-   server-side: changing a filter refetches. Mutations (critical / hide / unhide
-   / rename / delete / restore) persist through the API, then we refetch.
-
-   Remaining contract gap (defaulted in the factory, degrades gracefully): the
-   suggested-fix text — see TODO.md. */
+   /v2/smart-issues endpoints, mapped through SmartAlerts/factories. Filtering,
+   sorting and pagination are server-side; mutations persist then refetch. */
 
 export const PAGE_SIZE = 20;
 
-/* Persist the light view preferences per project so a chosen view sticks across
-   reloads (the heavier filters reset — they refetch). */
+/* Persist light view preferences per project so a chosen view sticks across
+   reloads (heavier filters reset — they refetch). */
 const critOnlyKey = (p: string) => `${p}_issues_crit_only`;
 const visibilityKey = (p: string) => `${p}_issues_visibility`;
 const readFlag = (key: string) => {
@@ -142,10 +131,9 @@ const writeStr = (key: string, value: string) => {
 const toLabelsMatch = (m: MatchMode): LabelsMatch =>
   m === 'any' ? 'or' : 'and';
 
-/** Merge a Data Management saved search with the (NOT-YET-BACKED) capture MODE +
-    instructions into the view model the segment UI reads. `mine` compares the
-    creator id to the current user; `createdBy` uses the server-provided
-    `userName` (blank falls back to a generic label). */
+/** Merge a Data Management saved search with the (NOT-YET-BACKED) capture mode +
+    instructions into the segment view model. `mine` compares the creator id to
+    the current user; `createdBy` falls back to a generic label when blank. */
 function toSavedSegment(
   s: Segment,
   capture: SegmentCaptureState,
@@ -165,7 +153,7 @@ function toSavedSegment(
     usersCount: s.usersCount,
     totalSessionCount: s.totalSessionCount,
     updatedAt: s.updatedAt,
-    // real server flag; fall back to the capture stub until it's everywhere
+    // real server flag; fall back to the capture stub until it ships
     active: s.isCapture || capture.active.includes(s.id),
     instructions: capture.instructions[s.id],
     // server traffic estimate — 0 means "no estimate", not "zero traffic"
@@ -192,20 +180,19 @@ export default class IssuesStore {
   match: MatchMode = 'all';
   sort: SortMode = 'impact';
   sortDir: SortDir = 'desc';
-  // the default sort is applied silently; a column header only lights up once
-  // the user explicitly sorts
+  // default sort is applied silently; a column header only lights up once the
+  // user explicitly sorts
   sortTouched = false;
   critOnly = false;
   visibility: Visibility = 'active';
   range: [number, number] | null = null; // null => server default (last 7 days)
   minImpact = 0;
 
-  /* ---- critical definitions + traffic segments (NOT-YET-BACKED, see TODO.md)
-     `criticalRules` = the customer's "what critical means" descriptions;
-     `criticalBy` = ruleIds that flagged each issue (server-derived in the real
-     API; here only what the user authors via the dialog); `notCritical` = my
-     per-user suppression + its reason. `segments`/`captureMode`/`origins` are
-     the traffic-segment layer. All hydrate from stubs until the backend ships. */
+  /* ---- critical definitions + traffic segments (NOT-YET-BACKED) ----
+     `criticalRules` = the customer's descriptions; `criticalBy` = ruleIds that
+     flagged each issue (here only what the user authors); `notCritical` =
+     per-user suppression + reason. `segments`/`captureMode`/`origins` are the
+     traffic-segment layer. All hydrate from stubs until the backend ships. */
   criticalRules: CriticalRule[] = [];
   criticalBy: Record<string, number[]> = {};
   notCritical: Record<string, string> = {};
@@ -220,16 +207,16 @@ export default class IssuesStore {
   // ---- category tab counts (from the list response) ----
   categoryCounts: Record<string, number> | null = null;
 
-  /* baseline count with no filters, for the empty-state "reset to show N" hint.
-     lazy: fetched only when an empty filtered list is shown. */
+  /* baseline count with no filters, for the empty-state "reset to show N" hint;
+     fetched lazily only when an empty filtered list is shown. */
   unfilteredTotal: number | null = null;
 
-  /* detail page: segment ids scoping the example-sessions sample (SESSIONS
-     ONLY — headline stats stay global). Mirrored to ?seg= by the view. */
+  /* segment ids scoping the example-sessions sample (SESSIONS ONLY — headline
+     stats stay global). Mirrored to ?seg= by the view. */
   detailScope: string[] = [];
-  /* issue-page tag filter (Mehdi 07-28): example sessions filtered by their
-     journey tags, same grammar as the list's Tags dropdown. Sessions-only —
-     headline stats stay global. Sent to /search as journeyLabels. */
+  /* issue-page tag filter: example sessions filtered by journey tags, same
+     grammar as the list's Tags dropdown. Sessions-only — headline stats stay
+     global. Sent to /search as journeyLabels. */
   detailLabels: string[] = [];
   detailMatch: MatchMode = 'all';
 
@@ -271,8 +258,7 @@ export default class IssuesStore {
     )
       this.visibility = vis;
     void this.fetchIssues();
-    // vocabulary for the filter controls + reason prompts — fetched once per
-    // project, not on every list load
+    // vocabulary for filter controls + reason prompts — fetched once per project
     void this.fetchLabels();
     void this.fetchReasons();
     void this.fetchSegments();
@@ -409,8 +395,8 @@ export default class IssuesStore {
     }
   };
 
-  /* The segment list is real (Data Management saved searches); the capture
-     layer is NOT-YET-BACKED and resolves empty until the endpoints ship. */
+  /* The segment list is real (Data Management saved searches); the capture layer
+     is NOT-YET-BACKED and resolves empty until the endpoints ship. */
   fetchSegments = async () => {
     if (!this.projectId) return;
     try {
@@ -432,15 +418,14 @@ export default class IssuesStore {
     }
   };
 
-  /** Load just the segments for a project — used by the Data Management page,
-      which needs the capture layer without the full Issues init. */
+  /** Load just the segments — for the Data Management page, which needs the
+      capture layer without the full Issues init. */
   ensureSegments = (projectId: string) => {
     if (this.projectId !== projectId) this.projectId = projectId;
     void this.fetchSegments();
   };
 
-  /** Load just the journey tags — used by Preferences > Agents, which manages
-      the tag vocabulary without ever touching the Issues list. Without this the
+  /** Load just the journey tags — for Preferences > Agents. Without this the
       panel renders empty AND every write no-ops on the blank `projectId`. */
   ensureJourneyTags = (projectId: string) => {
     if (this.projectId !== projectId) this.projectId = projectId;
@@ -510,8 +495,8 @@ export default class IssuesStore {
   /** Ensure an issue is loaded by name (may be off the current page/filter). */
   loadIssue = async (name: string) => {
     if (!this.projectId || !name) return;
-    // a list row may already be cached, but it lacks issueDescription — fetch
-    // the full issue once so the detail page can show it
+    // a cached list row lacks issueDescription — fetch the full issue once so
+    // the detail page can show it
     if (this.issueDetailLoaded[name] || this.issueLoading[name]) return;
     this.issueLoading[name] = true;
     try {
@@ -563,9 +548,8 @@ export default class IssuesStore {
   };
 
   // ---- example sessions ----
-  // key by issue + query + time range + the active detail scope (segments) +
-  // tag filter, so each scoped/filtered view caches separately and refetches
-  // when it changes. The range is part of the REQUEST, so it has to be part of
+  // key by issue + query + range + detail scope + tag filter so each scoped view
+  // caches separately. The range is part of the REQUEST, so it must be part of
   // the key — otherwise changing the period replays the previous window's cache.
   private sessKey = (id: string, query = '') => {
     const win = this.range ? ` ~${this.range[0]}-${this.range[1]}` : '';
@@ -622,10 +606,8 @@ export default class IssuesStore {
   }
 
   /* Whether the project has any categorized issues (drives the category tabs).
-     Read from the server's own categorization — the per-issue `category` and
-     the `categoryCounts` buckets — NOT from the label vocabulary: categories
-     stopped being derived from issueLabels when the server started assigning a
-     primary category, so the vocabulary can lack them entirely. */
+     Read from the server's categorization (`category` / `categoryCounts`), NOT
+     the label vocabulary — the vocabulary can lack categories entirely. */
   get hasCategories(): boolean {
     const counts = this.categoryCounts;
     if (counts) return CAT_ORDER.some((c) => (counts[c] ?? 0) > 0);
@@ -665,7 +647,7 @@ export default class IssuesStore {
     return this.visibility === 'hidden';
   }
 
-  // ---- critical (derived from descriptions, §14) ----
+  // ---- critical (derived from descriptions) ----
   /** the server/agent flag on the raw issue (its own anonymous "rule") */
   private serverCritical(id: string): boolean {
     return Boolean(this.byId(id)?.critical);
@@ -679,8 +661,8 @@ export default class IssuesStore {
     if (attached.length) return attached;
     return this.serverCritical(id) ? [AGENT_RULE] : [];
   }
-  /** the descriptions that made this issue critical — the whole truth. Empty
-      once I have said it is not critical for me. */
+  /** the descriptions that made this issue critical; empty once I've marked it
+      not-critical for me. */
   matchedRules(id: string): CriticalRule[] {
     if (this.notCritical[id] != null) return [];
     return this.rulesFor(id);
@@ -702,8 +684,8 @@ export default class IssuesStore {
   }
 
   // ---- critical definitions (NOT-YET-BACKED, client-side) ----
-  /** Author a description. When it comes from an issue (the triangle's
-      intermediary), that issue is flagged straight away. */
+  /** Author a description. When authored from an issue, that issue is flagged
+      straight away. */
   addCriticalRule = (
     description: string,
     forIssueId?: string,
@@ -722,8 +704,8 @@ export default class IssuesStore {
         ...this.criticalBy,
         [forIssueId]: [...(this.criticalBy[forIssueId] ?? []), rule.id],
       };
-      // the rule catalogue is client-side, but the flag + its reasoning are
-      // real: persist so the issue still reads critical after a reload
+      // the rule catalogue is client-side, but the flag + reasoning are real:
+      // persist so the issue still reads critical after a reload
       this.persistCritical(forIssueId, true, [], description);
     }
     return rule;
@@ -749,10 +731,9 @@ export default class IssuesStore {
       return ids.includes(id) && ids.length === 1;
     }).length;
   }
-  /* Write the criticality decision + its feedback through to the server
-     (`PUT` + `{critical}` with the reason enum + free-text note). The per-user
-     scoping is still client-side, so this is the shared flag: it is what makes
-     the decision and the reasons outlive a reload. */
+  /* Write the criticality decision + feedback to the server (`PUT` + `{critical}`
+     with reason enum + note). Per-user scoping is still client-side, so this is
+     the shared flag that makes the decision + reasons outlive a reload. */
   private persistCritical = (
     id: string,
     critical: boolean,
@@ -771,9 +752,8 @@ export default class IssuesStore {
     this.afterMutation(id, { critical });
   };
 
-  /** MY not-critical: suppresses the flag for me only; the reasons + note teach
-      the agent and are sent with the flag. Replace, never mutate a key (MobX
-      tracks the object identity). */
+  /** Suppress the flag for me only; the reasons + note are sent with the flag.
+      Replace, never mutate a key (MobX tracks the object identity). */
   setNotCriticalForMe = (id: string, reasons: string[] = [], note = '') => {
     this.notCritical = {
       ...this.notCritical,
@@ -795,8 +775,8 @@ export default class IssuesStore {
   segmentById(id?: string): SavedSegment | undefined {
     return id == null ? undefined : this.segments.find((s) => s.id === id);
   }
-  /** Segment display name — prefer the globally-loaded filter vocabulary (saved
-      searches carry `searchId` + name), fall back to the loaded segment list. */
+  /** Segment display name — prefer the globally-loaded filter vocabulary, fall
+      back to the loaded segment list. */
   segmentName(searchId?: string): string | undefined {
     if (!searchId) return undefined;
     // segment filters carry searchId at runtime; the Filter type doesn't list it
@@ -813,8 +793,7 @@ export default class IssuesStore {
   }
   // ---- journey tags (server-backed CRUD, persist then refetch) ----
   /** Author a custom journey tag. Returns false synchronously when the name is
-      already taken locally (so the caller can say so without a round-trip); the
-      create request runs in the background and refetches. */
+      already taken locally; the create request runs in the background. */
   addCustomTag = (name: string, description: string): boolean => {
     const taken = this.journeyTags.some(
       (t) => t.name.toLowerCase() === name.toLowerCase(),
@@ -871,8 +850,8 @@ export default class IssuesStore {
         : [...this.origins, o],
     );
   };
-  /** Set the whole origin selection at once — the aggregate rows ("My
-      segments") flip several ids together and must refetch ONCE, not per id. */
+  /** Set the whole origin selection at once — the aggregate rows flip several
+      ids together and must refetch ONCE, not per id. */
   setOrigins = (o: IssueOrigin[]) => {
     this.origins = o;
     this.refetch();
@@ -888,14 +867,12 @@ export default class IssuesStore {
     if (this.projectId) void apiSetCaptureMode(this.projectId, mode);
   };
 
-  /* Persist a segment's capture flag — the saved search's real `isCapture`
-     ("Identify issues in this segment"), with a best-effort mirror to the
-     NOT-YET-BACKED capture endpoint.
+  /* Persist a segment's capture flag (the saved search's real `isCapture`), with
+     a best-effort mirror to the NOT-YET-BACKED capture endpoint.
 
-     There is no capture-only write: `updateSegment` REPLACES the whole saved
-     search, query included. So re-read the segment first and write its own
-     stored query back — sending our view-model copy of `filters` would push a
-     round-tripped query over whatever the owner last saved. */
+     `updateSegment` REPLACES the whole saved search, query included, so re-read
+     the segment first and write its own stored query back — sending our
+     view-model copy of `filters` would clobber what the owner last saved. */
   private persistCapture = async (id: string, on: boolean) => {
     if (!this.projectId) return;
     try {
@@ -938,9 +915,9 @@ export default class IssuesStore {
     return false;
   };
 
-  /** create or update a segment — persists the saved search through Data
-      Management, then its capture flag + agent instructions. Returns true when
-      the save dropped capture back to full traffic. */
+  /** create or update a segment — persists the saved search, then its capture
+      flag + agent instructions. Returns true when the save dropped capture back
+      to full traffic. */
   saveSegment = async (input: {
     id?: string;
     name: string;
@@ -950,9 +927,8 @@ export default class IssuesStore {
     instructions?: string;
   }): Promise<boolean> => {
     if (!this.projectId) return false;
-    // private segments can't capture — eligibility follows visibility. The
-    // capture flag is the saved search's real `isCapture` prop ("Identify
-    // issues in this segment").
+    // private segments can't capture — eligibility follows visibility; the
+    // capture flag is the saved search's real `isCapture` prop
     const capture = input.active && input.isPublic;
     const payload = {
       name: input.name,
@@ -969,8 +945,8 @@ export default class IssuesStore {
       console.error('Failed to save segment', e);
       return false;
     }
-    // best-effort: mirror capture + per-segment instructions to the (still
-    // NOT-YET-BACKED) capture endpoint until it's the single source of truth
+    // best-effort: mirror capture + instructions to the (NOT-YET-BACKED) capture
+    // endpoint until it's the single source of truth
     await setSegmentCapture(this.projectId, saved.id, {
       active: capture,
       instructions: input.instructions ?? '',
@@ -1092,9 +1068,8 @@ export default class IssuesStore {
       .catch((e) => console.error('Failed to delete issue', e));
   };
 
-  /* Un-delete. Deliberately UNWIRED: there is no Deleted view to reach it from
-     and restoring isn't planned for now — kept because the endpoint is real
-     (`PUT` + `{restore: true}`) and this is all a Deleted view would need. */
+  /* Un-delete. Deliberately UNWIRED — no Deleted view reaches it yet; kept
+     because the endpoint is real (`PUT` + `{restore: true}`). */
   restore = (id: string) => {
     if (!this.projectId) return;
     this.issues = this.issues.filter((i) => i.id !== id);

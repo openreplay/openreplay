@@ -2,8 +2,7 @@ import React from 'react';
 
 import { IMPACT_COLOR, IMPACT_FILLED, impactLevel } from './model';
 
-/* Impact as a horizontal three-level connected meter — one rounded pill split
-   into three parts, lit by level. Shared by the list and the detail header. */
+/* Impact as a horizontal three-level meter. Shared by list and detail header. */
 export default function ImpactGauge({ value }: { value: number }) {
   const filled = IMPACT_FILLED[impactLevel(value)];
   const color = IMPACT_COLOR[impactLevel(value)];

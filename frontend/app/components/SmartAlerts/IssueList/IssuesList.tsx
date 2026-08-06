@@ -3,7 +3,6 @@ import withPermissions from '@/components/hocs/withPermissions';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import {
   Button,
-  Checkbox,
   Dropdown,
   Input,
   Modal,
@@ -62,10 +61,10 @@ import {
   lastSeenLabel,
 } from '../shared';
 import type { SortMode } from '../shared/model';
-import TagFilter, { SegmentFilter } from './TagFilter';
+import TagFilter, { CheckRow, SegmentFilter } from './TagFilter';
 import './issues.css';
 
-/* antd header-sort order -> our SortMode, per sortable column. */
+/* antd header-sort order -> our SortMode */
 const SORT_FIELD: Record<string, SortMode> = {
   impact: 'impact',
   seenAgoMin: 'recency',
@@ -122,8 +121,7 @@ function IssuesList() {
 
   const catValue: 'All' | CategoryName =
     issuesStore.cats.length === 1 ? issuesStore.cats[0] : 'All';
-  // faded per-tab counts from the list response's categoryCounts (each issue
-  // counted once under its primary category, so they sum to the "All" count)
+  // faded per-tab counts: each issue counted once under its primary category, so they sum to "All"
   const hasCounts = issuesStore.hasCategoryCounts;
   const faded = (n: number) => <span className="opacity-50 ml-1.5">{n}</span>;
   const catTabOptions = [
@@ -218,10 +216,7 @@ function IssuesList() {
       dataIndex: 'journeyLabels',
       width: 260,
       render: (labels: string[], r: Issue) => {
-        // origin is a kind of tag, not an action (Gabriel 07-27): a segment find
-        // shows the fork icon in blue, a full-traffic find the globe in gray. The
-        // chip stays a normal tag (gray border/bg); only the icon carries meaning
-        // and it's not clickable. Pairs with the "Found in" segment filter.
+        // origin icon: segment find (fork, blue) vs full traffic (globe, gray) — not clickable
         const inSegments = r.segmentIds.length > 0;
         const showOrigin = inSegments || issuesStore.segments.length > 0;
         const segNames = r.segmentIds
@@ -308,8 +303,6 @@ function IssuesList() {
             label: t('Open'),
           },
           { key: 'rename', icon: <Pencil size={14} />, label: t('Rename') },
-          // the way out of / back into critical, with a reason (the triangle
-          // itself opens the describe/explain dialog)
           ...(issuesStore.notCritical[r.id] != null
             ? [
                 {
@@ -390,8 +383,7 @@ function IssuesList() {
   ) => {
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
     const field = SORT_FIELD[String(s?.field ?? '')];
-    // pagination changes also fire onChange with the sorter unchanged — the
-    // setter no-ops when nothing changed, and page is handled by pagination.onChange.
+    // pagination changes also fire onChange with the sorter unchanged; the setter no-ops when nothing changed
     if (field && s?.order) {
       issuesStore.setSortState(field, s.order === 'ascend' ? 'asc' : 'desc');
     }
@@ -433,31 +425,33 @@ function IssuesList() {
     </div>
   );
 
+  // Display rows reuse the shared CheckRow (same as the Tags / Segments popovers)
   const displayContent = (
-    <div className="flex flex-col gap-2 p-1" style={{ minWidth: 190 }}>
-      <Checkbox
-        checked={issuesStore.critOnly}
-        onChange={(e) => issuesStore.setCritOnly(e.target.checked)}
+    <div className="flex flex-col p-1" style={{ minWidth: 190 }}>
+      <CheckRow
+        on={issuesStore.critOnly}
+        onClick={() => issuesStore.setCritOnly(!issuesStore.critOnly)}
       >
         {t('Critical only')}
-      </Checkbox>
-      <Checkbox
-        checked={visibility === 'hidden'}
-        onChange={(e) =>
-          issuesStore.setVisibility(e.target.checked ? 'hidden' : 'active')
+      </CheckRow>
+      <CheckRow
+        on={visibility === 'hidden'}
+        onClick={() =>
+          issuesStore.setVisibility(
+            visibility === 'hidden' ? 'active' : 'hidden',
+          )
         }
       >
         {t('Hidden')}
-      </Checkbox>
-      {/* "what's mine": my criticals ∪ my segments' finds (Mehdi 07-07),
-          labeled around critical per Gabriel 07-07 */}
-      <Checkbox
-        checked={issuesStore.relevantToMe}
-        onChange={(e) => issuesStore.setRelevantToMe(e.target.checked)}
+      </CheckRow>
+      {/* "what's mine": my criticals ∪ my segments' finds */}
+      <CheckRow
+        on={issuesStore.relevantToMe}
+        onClick={() => issuesStore.setRelevantToMe(!issuesStore.relevantToMe)}
       >
         {t('Critical to me')}
         {issuesStore.relevantCount ? ` · ${issuesStore.relevantCount}` : ''}
-      </Checkbox>
+      </CheckRow>
     </div>
   );
 
@@ -477,8 +471,7 @@ function IssuesList() {
                 <Info size={15} />
               </span>
             </Tooltip>
-            {/* capture control (Gabriel 07-13) — page-level, so it lives with
-                the title, NOT in the filter row */}
+            {/* capture control — page-level, lives with the title, not the filter row */}
             <SegmentsIndicator />
           </div>
           <div className="flex items-center gap-2">
@@ -519,8 +512,6 @@ function IssuesList() {
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* tags and segments are separate dropdowns (Gabriel 07-27): what
-                happened vs where it was captured, each scaling on its own */}
             <TagFilter
               allTags={issuesStore.allTags}
               labels={issuesStore.labels}
@@ -556,8 +547,7 @@ function IssuesList() {
               </Button>
             </Popover>
 
-            {/* outlined trigger to match Tags / Segments / Display (Gabriel
-                07-27) — the shared control renders as bare text otherwise */}
+            {/* outlined trigger to match the other controls (renders as bare text otherwise) */}
             <span className="issues-date-range">
               <SelectDateRange
                 isAnt
@@ -616,14 +606,12 @@ function IssuesList() {
         }}
       />
 
-      {/* the triangle's intermediary: describe / explain / drop from critical */}
       <CriticalDialog
         issueId={critTarget?.id ?? null}
         issueHead={critTarget?.head ?? ''}
         onClose={() => setCritTarget(null)}
       />
 
-      {/* "not critical for me" with a teaching reason (row menu) */}
       <NotCriticalDialog
         issue={notCritTarget}
         reasons={issuesStore.reasons.criticality}

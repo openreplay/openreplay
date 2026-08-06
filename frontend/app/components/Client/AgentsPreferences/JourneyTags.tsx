@@ -13,10 +13,8 @@ import CountSuffix from 'Shared/CountSuffix';
 
 import { useConfirms } from './confirms';
 
-/* The journey-tag manager. Predefined tags CAN be renamed and removed like any
-   other (Mehdi 07-28), so `source` is provenance, not permission — every row
-   edits and deletes. Data Management > Events shape: a Segmented switcher over
-   one table with the controls beside it. */
+/* The journey-tag manager. Predefined tags can be renamed/removed like any
+   other, so `source` is provenance, not permission — every row edits/deletes. */
 
 type SourceKey = 'openreplay' | 'yours';
 
@@ -204,7 +202,6 @@ function JourneyTags() {
         locale={{ emptyText }}
       />
 
-      {/* THE tag dialog, the same one the Issues filter opens */}
       <TagDialog
         open={dialogOpen}
         initial={editing}
