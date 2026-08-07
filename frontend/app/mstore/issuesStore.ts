@@ -12,14 +12,18 @@ import {
   type CaptureMode,
   type IssueOrigin,
   type LabelsMatch,
+  type RawCriticalDefinition,
   type RawJourneyTag,
   type Reasons,
   type SavedSegment,
   type SegmentCaptureState,
+  type SessionJourney,
   type SortDir,
   type Visibility,
   setCaptureMode as apiSetCaptureMode,
+  createCriticalDefinition,
   createJourneyTag,
+  deleteCriticalDefinition,
   deleteIssue,
   deleteJourneyTag,
   getIssue,
@@ -28,13 +32,16 @@ import {
   getLabels,
   getReasons,
   getSegmentCapture,
+  getSessionJourney,
   hideIssue,
+  listCriticalDefinitions,
   listJourneyTags,
   renameIssue,
   restoreIssue,
   setIssueCritical,
   setSegmentCapture,
   unhideIssue,
+  updateCriticalDefinition,
   updateJourneyTag,
 } from 'App/components/SmartAlerts/api';
 import {
@@ -57,11 +64,11 @@ import type FilterItem from 'App/mstore/types/filterItem';
    what "critical" means, the agent flags matching issues, so criticality in the
    UI is always DERIVED (matchedRules).
 
-   NOT-YET-BACKED: the rule catalogue and per-issue attribution (`criticalBy`,
-   `notCritical`) are client-side only. What IS backed: the server's per-issue
-   `critical` boolean plus its reason/note feedback (`PUT` + `{critical}`) — the
-   decision and reasons survive a reload; the attribution does not. The server
-   flag reads as one anonymous "agent" match. */
+   The rule catalogue is server-backed (`/critical-definitions`). Per-issue
+   attribution comes from the issue's `criticalBy`, but the backend discards the
+   model's verdict before storage (a known limitation), so it is empty in
+   practice; the local `criticalBy`/`notCritical` maps give in-session feedback
+   over the real, persisted per-user `critical` boolean (`PUT` + `{critical}`). */
 export type CriticalRule = {
   id: number;
   description: string;
@@ -188,11 +195,13 @@ export default class IssuesStore {
   range: [number, number] | null = null; // null => server default (last 7 days)
   minImpact = 0;
 
-  /* ---- critical definitions + traffic segments (NOT-YET-BACKED) ----
-     `criticalRules` = the customer's descriptions; `criticalBy` = ruleIds that
-     flagged each issue (here only what the user authors); `notCritical` =
-     per-user suppression + reason. `segments`/`captureMode`/`origins` are the
-     traffic-segment layer. All hydrate from stubs until the backend ships. */
+  /* ---- critical definitions + traffic segments ----
+     `criticalRules` = the customer's descriptions (server `/critical-definitions`);
+     `criticalBy` = ruleIds that flagged each issue in-session (server attribution
+     is discarded before storage, so this holds only what the user authors here);
+     `notCritical` = per-user suppression + reason. `segments`/`captureMode`/
+     `origins` are the traffic-segment layer (mode + flag backed; per-segment
+     instructions still stubbed). */
   criticalRules: CriticalRule[] = [];
   criticalBy: Record<string, number[]> = {};
   notCritical: Record<string, string> = {};
@@ -200,6 +209,8 @@ export default class IssuesStore {
   segments: SavedSegment[] = [];
   captureMode: CaptureMode = 'full';
   origins: IssueOrigin[] = [];
+  /** AND/OR across the chosen segments ('any' => hasAny, the server default) */
+  segmentsMatch: MatchMode = 'any';
 
   // ---- journey tags (server-backed CRUD) ----
   journeyTags: JourneyTag[] = [];
@@ -238,6 +249,11 @@ export default class IssuesStore {
   sessionsTotal: Record<string, number> = {};
   sessionsLoading: Record<string, boolean> = {};
 
+  // ---- per-session journey (player fallback for sessions off the /search sample) ----
+  // undefined = not fetched; null = fetched, no journey row (404 / aged out)
+  sessionJourneys: Record<string, SessionJourney | null> = {};
+  sessionJourneyLoading: Record<string, boolean> = {};
+
   private queryTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -263,6 +279,7 @@ export default class IssuesStore {
     void this.fetchReasons();
     void this.fetchSegments();
     void this.fetchJourneyTags();
+    void this.fetchCriticalDefinitions();
   };
 
   private reset = () => {
@@ -290,6 +307,7 @@ export default class IssuesStore {
     this.segments = [];
     this.captureMode = 'full';
     this.origins = [];
+    this.segmentsMatch = 'any';
     this.unfilteredTotal = null;
     this.labelsAll = { issueLabels: [], journeyLabels: [] };
     this.reasons = { hide: [], criticality: [] };
@@ -299,6 +317,8 @@ export default class IssuesStore {
     this.sessions = {};
     this.sessionsTotal = {};
     this.sessionsLoading = {};
+    this.sessionJourneys = {};
+    this.sessionJourneyLoading = {};
     this.detailScope = [];
     this.detailLabels = [];
     this.detailMatch = 'all';
@@ -323,7 +343,8 @@ export default class IssuesStore {
         critical: this.critOnly,
         // scope to chosen segments (origins minus the "full traffic" sentinel)
         segmentIds: this.segmentIds,
-        // NOT-YET-BACKED — server ignores until implemented
+        segmentsMatch: toLabelsMatch(this.segmentsMatch),
+        // "Critical to me" — only issues the caller has marked critical
         relevantToMe: this.relevantToMe,
         minImpact: this.minImpact,
         query: this.query.trim(),
@@ -395,8 +416,32 @@ export default class IssuesStore {
     }
   };
 
-  /* The segment list is real (Data Management saved searches); the capture layer
-     is NOT-YET-BACKED and resolves empty until the endpoints ship. */
+  private toCriticalRule = (d: RawCriticalDefinition): CriticalRule => ({
+    id: d.id,
+    description: d.description,
+    // author-only edit/delete keys off `mine`; matches the server's 403
+    createdBy: d.createdBy?.name || 'a teammate',
+    mine:
+      d.createdBy?.id != null &&
+      String(d.createdBy.id) === String(userStore.account.id),
+  });
+
+  fetchCriticalDefinitions = async () => {
+    if (!this.projectId) return;
+    try {
+      const defs = await listCriticalDefinitions(this.projectId);
+      runInAction(() => {
+        this.criticalRules = defs.map(this.toCriticalRule);
+      });
+    } catch (e) {
+      console.error('Failed to load critical definitions', e);
+    }
+  };
+
+  /* The segment list is real (Data Management saved searches) and so is the
+     capture MODE (project settings → `captureSegmentsOnly`). The active set is
+     read from each saved search's `isCapture`; only per-segment instructions
+     are still unbacked. */
   fetchSegments = async () => {
     if (!this.projectId) return;
     try {
@@ -492,30 +537,30 @@ export default class IssuesStore {
     );
   }
 
-  /** Ensure an issue is loaded by name (may be off the current page/filter). */
-  loadIssue = async (name: string) => {
-    if (!this.projectId || !name) return;
+  /** Ensure an issue is loaded by id (may be off the current page/filter). */
+  loadIssue = async (id: string) => {
+    if (!this.projectId || !id) return;
     // a cached list row lacks issueDescription — fetch the full issue once so
     // the detail page can show it
-    if (this.issueDetailLoaded[name] || this.issueLoading[name]) return;
-    this.issueLoading[name] = true;
+    if (this.issueDetailLoaded[id] || this.issueLoading[id]) return;
+    this.issueLoading[id] = true;
     try {
-      const raw = await getIssue(this.projectId, name, this.range ?? undefined);
+      const raw = await getIssue(this.projectId, id, this.range ?? undefined);
       runInAction(() => {
-        if (raw) this.issueCache[name] = makeIssue(raw);
-        this.issueDetailLoaded[name] = true;
+        if (raw) this.issueCache[id] = makeIssue(raw);
+        this.issueDetailLoaded[id] = true;
       });
     } catch (e) {
       console.error('Failed to load issue', e);
     } finally {
       runInAction(() => {
-        this.issueLoading[name] = false;
+        this.issueLoading[id] = false;
       });
     }
   };
 
-  isLoadingIssue(name: string): boolean {
-    return Boolean(this.issueLoading[name]);
+  isLoadingIssue(id: string): boolean {
+    return Boolean(this.issueLoading[id]);
   }
 
   // ---- detail example-sessions segment scope (sessions only) ----
@@ -600,6 +645,35 @@ export default class IssuesStore {
     return Boolean(this.sessionsLoading[this.sessKey(id, query)]);
   }
 
+  /* Fetch a single session's journey for the player fallback — used when a
+     deep-linked session isn't in the issue's /search sample, so there's no card
+     to read the journey/steps/variation from. Cached; null on 404 / aged out. */
+  loadSessionJourney = async (sessionId: string) => {
+    if (!this.projectId || !sessionId) return;
+    if (
+      this.sessionJourneys[sessionId] !== undefined ||
+      this.sessionJourneyLoading[sessionId]
+    )
+      return;
+    this.sessionJourneyLoading[sessionId] = true;
+    try {
+      const j = await getSessionJourney(this.projectId, sessionId);
+      runInAction(() => {
+        this.sessionJourneys[sessionId] = j;
+      });
+    } catch (e) {
+      console.error('Failed to load session journey', e);
+    } finally {
+      runInAction(() => {
+        this.sessionJourneyLoading[sessionId] = false;
+      });
+    }
+  };
+
+  sessionJourney(sessionId: string): SessionJourney | null {
+    return this.sessionJourneys[sessionId] ?? null;
+  }
+
   // ---- derived ----
   get list(): Issue[] {
     return this.issues;
@@ -652,10 +726,17 @@ export default class IssuesStore {
   private serverCritical(id: string): boolean {
     return Boolean(this.byId(id)?.critical);
   }
-  /** the descriptions IGNORING my suppression — client rules the user attached,
-      plus the agent's own flag as a synthetic rule when nothing else matched */
+  /** the descriptions IGNORING my suppression — the definitions the server says
+      flagged it (issue `criticalBy`) unioned with what the user attached this
+      session, plus the agent's own flag as a synthetic rule when nothing matched */
   rulesFor(id: string): CriticalRule[] {
-    const attached = (this.criticalBy[id] ?? [])
+    const serverIds = (this.byId(id)?.criticalBy ?? []).map(
+      (m) => m.definitionId,
+    );
+    const ruleIds = Array.from(
+      new Set([...serverIds, ...(this.criticalBy[id] ?? [])]),
+    );
+    const attached = ruleIds
       .map((ruleId) => this.criticalRules.find((r) => r.id === ruleId))
       .filter(Boolean) as CriticalRule[];
     if (attached.length) return attached;
@@ -683,46 +764,71 @@ export default class IssuesStore {
     return this.issues.filter((i) => this.critState(i.id) === 'mine').length;
   }
 
-  // ---- critical definitions (NOT-YET-BACKED, client-side) ----
+  // ---- critical definitions (server-backed CRUD, optimistic + refetch) ----
   /** Author a description. When authored from an issue, that issue is flagged
-      straight away. */
-  addCriticalRule = (
-    description: string,
-    forIssueId?: string,
-  ): CriticalRule => {
-    const rule: CriticalRule = {
-      id: Math.max(0, ...this.criticalRules.map((r) => r.id)) + 1,
-      description,
-      createdBy: userStore.account.name || 'You',
-      mine: true,
-    };
-    this.criticalRules.push(rule);
+      for the caller straight away (optimistic attach + persisted `critical`). */
+  addCriticalRule = (description: string, forIssueId?: string) => {
+    if (!this.projectId) return;
+    // temp negative id until the refetch replaces it with the server's
+    const tempId = -Date.now();
+    this.criticalRules = [
+      ...this.criticalRules,
+      {
+        id: tempId,
+        description,
+        createdBy: userStore.account.name || 'You',
+        mine: true,
+      },
+    ];
     if (forIssueId != null) {
       const { [forIssueId]: _dropped, ...rest } = this.notCritical;
       this.notCritical = rest;
       this.criticalBy = {
         ...this.criticalBy,
-        [forIssueId]: [...(this.criticalBy[forIssueId] ?? []), rule.id],
+        [forIssueId]: [...(this.criticalBy[forIssueId] ?? []), tempId],
       };
-      // the rule catalogue is client-side, but the flag + reasoning are real:
-      // persist so the issue still reads critical after a reload
+      // server attribution isn't stored, but the per-user `critical` flag +
+      // reasoning are — persist so the issue still reads critical after reload
       this.persistCritical(forIssueId, true, [], description);
     }
-    return rule;
+    void createCriticalDefinition(this.projectId, description)
+      .then((created) => {
+        // swap the temp id for the real one in the in-session attachment
+        if (created && forIssueId != null) {
+          runInAction(() => {
+            this.criticalBy = {
+              ...this.criticalBy,
+              [forIssueId]: (this.criticalBy[forIssueId] ?? []).map((r) =>
+                r === tempId ? created.id : r,
+              ),
+            };
+          });
+        }
+        return this.fetchCriticalDefinitions();
+      })
+      .catch((e) => console.error('Failed to create critical definition', e));
   };
   updateCriticalRule = (id: number, description: string) => {
+    if (!this.projectId) return;
     this.criticalRules = this.criticalRules.map((r) =>
       r.id === id ? { ...r, description } : r,
     );
+    void updateCriticalDefinition(this.projectId, id, description)
+      .then(() => this.fetchCriticalDefinitions())
+      .catch((e) => console.error('Failed to update critical definition', e));
   };
   /** Removing a description un-flags everything it was the only match for. */
   removeCriticalRule = (id: number) => {
+    if (!this.projectId) return;
     this.criticalRules = this.criticalRules.filter((r) => r.id !== id);
     const next: Record<string, number[]> = {};
     Object.keys(this.criticalBy).forEach((key) => {
       next[key] = this.criticalBy[key].filter((r) => r !== id);
     });
     this.criticalBy = next;
+    void deleteCriticalDefinition(this.projectId, id)
+      .then(() => this.fetchCriticalDefinitions())
+      .catch((e) => console.error('Failed to delete critical definition', e));
   };
   /** how many issues would stop being critical if this description went away */
   rulesOnlyMatch(id: number): number {
@@ -860,11 +966,20 @@ export default class IssuesStore {
     this.origins = [];
     this.refetch();
   };
+  setSegmentsMatch = (m: MatchMode) => {
+    this.segmentsMatch = m;
+    // only affects the request when >1 segment is selected
+    if (this.segmentIds.length > 1) this.refetch();
+  };
 
-  /** switch the project between full-traffic and segment capture. */
+  /** switch the project between full-traffic and segment capture (persists as
+      the `captureSegmentsOnly` project setting). */
   setCaptureMode = (mode: CaptureMode) => {
     this.captureMode = mode;
-    if (this.projectId) void apiSetCaptureMode(this.projectId, mode);
+    if (this.projectId)
+      void apiSetCaptureMode(this.projectId, mode).catch((e) =>
+        console.error('Failed to set capture mode', e),
+      );
   };
 
   /* Persist a segment's capture flag (the saved search's real `isCapture`), with
@@ -1068,8 +1183,8 @@ export default class IssuesStore {
       .catch((e) => console.error('Failed to delete issue', e));
   };
 
-  /* Un-delete. Deliberately UNWIRED — no Deleted view reaches it yet; kept
-     because the endpoint is real (`PUT` + `{restore: true}`). */
+  /* Un-delete (un-delete + un-hide, `PUT` + `{restore: true}`); reached from the
+     row menu in the Deleted view. */
   restore = (id: string) => {
     if (!this.projectId) return;
     this.issues = this.issues.filter((i) => i.id !== id);

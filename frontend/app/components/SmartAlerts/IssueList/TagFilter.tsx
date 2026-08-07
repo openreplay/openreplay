@@ -195,6 +195,8 @@ export function SegmentFilter({
   onSetOrigins,
   onClear,
   showFullTraffic = true,
+  match,
+  onSetMatch,
 }: {
   /** `mine` powers the aggregate "My segments" row */
   segments: { id: string; name: string; mine?: boolean }[];
@@ -205,6 +207,9 @@ export function SegmentFilter({
   onClear: () => void;
   /** the issue page scopes sessions to segments only — no "Full traffic" row */
   showFullTraffic?: boolean;
+  /** AND/OR across selected segments — omit to hide the toggle (only bites with >1 selected) */
+  match?: MatchMode;
+  onSetMatch?: (m: MatchMode) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -229,17 +234,33 @@ export function SegmentFilter({
         : [...origins, ...myIds.filter((id) => !origins.includes(id))],
     );
 
+  const showMatch = match != null && onSetMatch != null;
   const panel = (
     <div style={{ width: 260 }} className="flex flex-col gap-2">
-      {segments.length > SEG_CAP && (
-        <Input
-          size="small"
-          allowClear
-          placeholder={t('Search segments')}
-          prefix={<Search size={15} className="color-gray-medium mr-0.5" />}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+      {(segments.length > SEG_CAP || showMatch) && (
+        <div className="flex items-center gap-2">
+          {segments.length > SEG_CAP && (
+            <Input
+              size="small"
+              allowClear
+              placeholder={t('Search segments')}
+              prefix={<Search size={15} className="color-gray-medium mr-0.5" />}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          )}
+          {showMatch && (
+            <Segmented
+              size="small"
+              value={match}
+              onChange={(v) => onSetMatch(v as MatchMode)}
+              options={[
+                { label: t('AND'), value: 'all' },
+                { label: t('OR'), value: 'any' },
+              ]}
+            />
+          )}
+        </div>
       )}
       <div className="-mx-1 px-1">
         {showFull && (

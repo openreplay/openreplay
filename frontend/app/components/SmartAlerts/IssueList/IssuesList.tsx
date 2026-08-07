@@ -118,6 +118,19 @@ function IssuesList() {
   const showCategory = issuesStore.hasCategories;
   const showLastSeen = issuesStore.list.some((i) => i.seenAgoMin != null);
   const { visibility } = issuesStore;
+  // Hidden + Deleted are two toggles over one visibility enum: both on => 'all'
+  const showHidden = visibility === 'hidden' || visibility === 'all';
+  const showDeleted = visibility === 'deleted' || visibility === 'all';
+  const applyVisibility = (hidden: boolean, deleted: boolean) =>
+    issuesStore.setVisibility(
+      hidden && deleted
+        ? 'all'
+        : hidden
+          ? 'hidden'
+          : deleted
+            ? 'deleted'
+            : 'active',
+    );
 
   const catValue: 'All' | CategoryName =
     issuesStore.cats.length === 1 ? issuesStore.cats[0] : 'All';
@@ -296,42 +309,60 @@ function IssuesList() {
       width: 48,
       align: 'center',
       render: (_: unknown, r: Issue) => {
-        const items = [
-          {
-            key: 'detail',
-            icon: <ArrowUpRight size={14} />,
-            label: t('Open'),
-          },
-          { key: 'rename', icon: <Pencil size={14} />, label: t('Rename') },
-          ...(issuesStore.notCritical[r.id] != null
-            ? [
-                {
-                  key: 'restoreCritical',
-                  icon: <AlertTriangle size={14} />,
-                  label: t('Show as critical again'),
-                },
-              ]
-            : issuesStore.critState(r.id) !== 'none'
-              ? [
-                  {
-                    key: 'notCritical',
-                    icon: <AlertTriangle size={14} />,
-                    label: t('Not critical for me'),
-                  },
-                ]
-              : []),
-          { type: 'divider' as const },
-          // hide/unhide follows the ROW, not the view: `all` mixes both kinds
-          r.hidden
-            ? { key: 'unhide', icon: <Eye size={14} />, label: t('Unhide') }
-            : { key: 'hide', icon: <EyeOff size={14} />, label: t('Hide') },
-          {
-            key: 'delete',
-            icon: <Trash2 size={14} />,
-            label: t('Delete'),
-            danger: true,
-          },
-        ];
+        // a soft-deleted row only offers Open + Restore
+        const items = r.deleted
+          ? [
+              {
+                key: 'detail',
+                icon: <ArrowUpRight size={14} />,
+                label: t('Open'),
+              },
+              {
+                key: 'restore',
+                icon: <RotateCcw size={14} />,
+                label: t('Restore'),
+              },
+            ]
+          : [
+              {
+                key: 'detail',
+                icon: <ArrowUpRight size={14} />,
+                label: t('Open'),
+              },
+              {
+                key: 'rename',
+                icon: <Pencil size={14} />,
+                label: t('Rename'),
+              },
+              ...(issuesStore.notCritical[r.id] != null
+                ? [
+                    {
+                      key: 'restoreCritical',
+                      icon: <AlertTriangle size={14} />,
+                      label: t('Show as critical again'),
+                    },
+                  ]
+                : issuesStore.critState(r.id) !== 'none'
+                  ? [
+                      {
+                        key: 'notCritical',
+                        icon: <AlertTriangle size={14} />,
+                        label: t('Not critical for me'),
+                      },
+                    ]
+                  : []),
+              { type: 'divider' as const },
+              // hide/unhide follows the ROW, not the view: `all` mixes both kinds
+              r.hidden
+                ? { key: 'unhide', icon: <Eye size={14} />, label: t('Unhide') }
+                : { key: 'hide', icon: <EyeOff size={14} />, label: t('Hide') },
+              {
+                key: 'delete',
+                icon: <Trash2 size={14} />,
+                label: t('Delete'),
+                danger: true,
+              },
+            ];
         return (
           <Dropdown
             trigger={['click']}
@@ -346,6 +377,7 @@ function IssuesList() {
                   issuesStore.restoreCritical(r.id);
                 else if (key === 'hide') setHideTarget(r);
                 else if (key === 'unhide') issuesStore.unhide(r.id);
+                else if (key === 'restore') issuesStore.restore(r.id);
                 else if (key === 'delete') confirmDelete(r);
               },
               items,
@@ -391,7 +423,8 @@ function IssuesList() {
 
   const dispCount =
     (issuesStore.critOnly ? 1 : 0) +
-    (visibility === 'hidden' ? 1 : 0) +
+    (showHidden ? 1 : 0) +
+    (showDeleted ? 1 : 0) +
     (issuesStore.relevantToMe ? 1 : 0);
 
   const emptyText = issuesStore.loading ? (
@@ -435,14 +468,16 @@ function IssuesList() {
         {t('Critical only')}
       </CheckRow>
       <CheckRow
-        on={visibility === 'hidden'}
-        onClick={() =>
-          issuesStore.setVisibility(
-            visibility === 'hidden' ? 'active' : 'hidden',
-          )
-        }
+        on={showHidden}
+        onClick={() => applyVisibility(!showHidden, showDeleted)}
       >
         {t('Hidden')}
+      </CheckRow>
+      <CheckRow
+        on={showDeleted}
+        onClick={() => applyVisibility(showHidden, !showDeleted)}
+      >
+        {t('Deleted')}
       </CheckRow>
       {/* "what's mine": my criticals ∪ my segments' finds */}
       <CheckRow
@@ -531,6 +566,8 @@ function IssuesList() {
               onToggleOrigin={issuesStore.toggleOrigin}
               onSetOrigins={issuesStore.setOrigins}
               onClear={() => issuesStore.clearOrigins()}
+              match={issuesStore.segmentsMatch}
+              onSetMatch={issuesStore.setSegmentsMatch}
             />
 
             <Popover
