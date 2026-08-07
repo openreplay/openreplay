@@ -30,7 +30,6 @@ tags:
   - name: Environments
   - name: Runs
   - name: Settings
-  - name: Notifications
   - name: Versions
 
 paths:
@@ -417,51 +416,10 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "500": { $ref: "#/components/responses/ServerError" }
 
-  /{projectId}/browser-tests/notifications:
-    parameters:
-      - $ref: "#/components/parameters/ProjectId"
-    get:
-      tags: [Notifications]
-      summary: Get the user's browser-tests notification settings
-      description: |
-        The **authenticated user's** notification preferences, read from
-        `public.users.settings` under `browser_tests.notifications`. Absent
-        flags (or a user who never saved settings) read as `false`.
-      operationId: getBrowserTestsNotifications
-      responses:
-        "200":
-          description: The user's notification settings.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/NotificationSettings" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "500": { $ref: "#/components/responses/ServerError" }
-    patch:
-      tags: [Notifications]
-      summary: Update the user's browser-tests notification settings
-      description: |
-        Partial update of the **authenticated user's** notification preferences,
-        stored in `public.users.settings` (jsonb) under
-        `browser_tests.notifications`. Provided flags are merged — every other
-        settings key (e.g. `modules`) is preserved. At least one flag is
-        required (`400` otherwise). Returns the resulting settings; absent
-        flags read as `false`.
-      operationId: updateBrowserTestsNotifications
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/NotificationSettingsRequest" }
-      responses:
-        "200":
-          description: The resulting notification settings.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/NotificationSettings" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "500": { $ref: "#/components/responses/ServerError" }
+  # Notifications moved out of browser-tests into the shared per-user agents
+  # notifications API (saas 3255a85): GET /{projectId}/notifications (whole tree)
+  # and PATCH /{projectId}/notifications/{agentKey}. The tests slice is
+  # `tests.failedRuns.{email,slack}`.
 
   /{projectId}/browser-tests/settings:
     parameters:
@@ -1433,23 +1391,6 @@ components:
             the flag is runner-owned). Omitted → unchanged.
       example:
         status: "approved"
-
-    NotificationSettings:
-      type: object
-      description: Browser-tests notification preferences of the authenticated user.
-      properties:
-        dailySummary: { type: boolean }
-        weeklySummary: { type: boolean }
-      required: [dailySummary, weeklySummary]
-      example: { dailySummary: true, weeklySummary: false }
-
-    NotificationSettingsRequest:
-      type: object
-      description: Partial update — at least one flag required.
-      properties:
-        dailySummary: { type: boolean }
-        weeklySummary: { type: boolean }
-      example: { dailySummary: true }
 
     ProjectSettings:
       type: object

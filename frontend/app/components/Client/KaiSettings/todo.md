@@ -1,14 +1,19 @@
-# Test Agents — backend gaps
+# Test Agents — backend notes
 
-API additions the frontend already expects (UI built, no field to bind to).
+## Wired to real API
 
-## Notifications (`/notifications`)
+- Tests list / runs / environments / versions / settings — `/{projectId}/browser-tests/*`.
+- Project settings (run defaults + `pauseOnNewRevisions`) — `GET/PATCH /{projectId}/browser-tests/settings`. Unchanged by the settings refactor.
+- Per-user notifications — moved OUT of browser-tests (saas commit `3255a85`):
+  - `GET /{projectId}/notifications` → whole tree (agents the caller may see).
+  - `PATCH /{projectId}/notifications/{agentKey}` → one agent's events.
+  - Tests slice: `tests.failedRuns.{email,slack}` (email defaults on). Now wired on Preferences > Agents > Tests.
 
-- `failedRunEmail: boolean` — per-event "test run failed" email, separate from the daily/weekly digest.
-- `failedRunSlack: boolean` — same event over Slack.
-- Slack as a delivery channel for test notifications (no Slack field exists today).
+## Not implemented server-side yet
 
-## Agents preferences
+- **Notification senders.** The `usernotifications` package is config-only — no cron reads these preferences yet, so toggles persist but nothing is delivered until the senders land.
 
-- Issues agent: journey-tag manager + critical-rules definitions (separate branch, separate endpoints).
-- Audits agent: notification prefs.
+## Other branches (not this scope)
+
+- Issues + Audits agent tabs on Preferences > Agents (their notification slices — `issues.newIssues`, `audits.auditReady` — already exist in the same tree).
+- Smart Issues project capture flag `captureSegmentsOnly` — `GET/PATCH /smart-issues/{projectId}/settings`. Belongs to the segments/issues surface.

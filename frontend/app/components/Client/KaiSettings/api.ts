@@ -13,8 +13,8 @@ import {
   ListRunsParams,
   ListTestsParams,
   ListVersionsParams,
-  NotificationSettings,
-  NotificationSettingsRequest,
+  NotificationEvents,
+  NotificationTree,
   ProjectSettings,
   ProjectSettingsRequest,
   RunDetail,
@@ -267,21 +267,25 @@ export function updateSettings(
     .then(toJson<ProjectSettings>);
 }
 
+// Per-user notifications are a shared agents endpoint, NOT under /browser-tests:
+// GET /{projectId}/notifications returns the whole tree (agents the user may
+// see), PATCH /{projectId}/notifications/{agentKey} updates one agent's events.
 export function getNotifications(
   projectId: string | number,
-): Promise<NotificationSettings> {
+): Promise<NotificationTree> {
   return client
-    .get(`${base(projectId)}/notifications`)
-    .then(toJson<NotificationSettings>);
+    .get(`/${projectId}/notifications`)
+    .then(toJson<NotificationTree>);
 }
 
 export function updateNotifications(
   projectId: string | number,
-  body: NotificationSettingsRequest,
-): Promise<NotificationSettings> {
+  agentKey: string,
+  patch: NotificationEvents,
+): Promise<NotificationEvents> {
   return client
-    .patch(`${base(projectId)}/notifications`, body)
-    .then(toJson<NotificationSettings>);
+    .patch(`/${projectId}/notifications/${agentKey}`, patch)
+    .then(toJson<NotificationEvents>);
 }
 
 // ---- Versions ----

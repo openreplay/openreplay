@@ -275,9 +275,15 @@ export default class APIClient {
 
     let fullUrl = edp + _path;
     if (useNewApi) {
+      // /{projectId}/notifications[/{agent}] — the agents' per-user notification
+      // routes are new-API (v2). Matched by shape rather than by adding
+      // `/notifications` to newApiUrls, because the legacy in-app notification
+      // centre lives at a bare `/notifications` and must stay on the old API.
+      const isAgentNotifications = /^\/\d+\/notifications(\/|$)/.test(_path);
       if (
-        newApiUrls.some((u) => _path.includes(u)) &&
-        !except.some((e) => _path.includes(e)) &&
+        ((newApiUrls.some((u) => _path.includes(u)) &&
+          !except.some((e) => _path.includes(e))) ||
+          isAgentNotifications) &&
         !edp.includes('/v2')
       ) {
         fullUrl = safeV2Replacer(fullUrl);

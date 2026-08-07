@@ -341,14 +341,16 @@ export interface TriggerRunResult {
   status: string;
 }
 
-export interface NotificationSettings {
-  dailySummary: boolean;
-  weeklySummary: boolean;
-}
-export interface NotificationSettingsRequest {
-  dailySummary?: boolean;
-  weeklySummary?: boolean;
-}
+// Per-user agent notification preferences. GET /{projectId}/notifications
+// returns the whole tree: agent -> event -> delivery -> enabled. Only agents the
+// user may see are present, and deliveries come back with the registry defaults
+// resolved. PATCH /{projectId}/notifications/{agentKey} takes one agent's Events.
+//   tests:  { failedRuns: { email, slack } }
+//   issues: { newIssues:  { emailDaily, emailWeekly, slack } }
+//   audits: { auditReady: { email, slack } }
+export type NotificationDeliveries = Record<string, boolean>;
+export type NotificationEvents = Record<string, NotificationDeliveries>;
+export type NotificationTree = Record<string, NotificationEvents>;
 
 export interface ProjectSettings {
   defaultViewport?: string | null;

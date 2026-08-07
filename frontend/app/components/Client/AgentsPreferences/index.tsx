@@ -118,8 +118,15 @@ function AgentsPreferences() {
   const updateSettings = useUpdateSettings();
   const updateNotifications = useUpdateNotifications();
   const pauseOnRevision = settings?.pauseOnNewRevisions ?? true;
-  const dailySummary = !!notifications?.dailySummary;
-  const weeklySummary = !!notifications?.weeklySummary;
+  // tests agent notifications: tests -> failedRuns -> { email, slack }
+  const failedRuns = notifications?.tests?.failedRuns;
+  const failedRunsEmail = !!failedRuns?.email;
+  const failedRunsSlack = !!failedRuns?.slack;
+  const setFailedRuns = (delivery: 'email' | 'slack', v: boolean) =>
+    updateNotifications.mutate({
+      agentKey: 'tests',
+      patch: { failedRuns: { [delivery]: v } },
+    });
 
   // the agent pages' Settings buttons deep-link to their own tab, the same
   // query-param pattern Data Management's Properties page uses (?view=)
@@ -144,22 +151,18 @@ function AgentsPreferences() {
             hint={t('How you hear from the Tests agent.')}
           >
             <PrefRow
-              label={t('Run summaries')}
-              hint={t('A digest of your test runs, sent to your email.')}
+              label={t('Failed test runs')}
+              hint={t('When a scheduled run fails.')}
             >
               <Channel
-                label={t('Daily email')}
-                checked={dailySummary}
-                onChange={(v) =>
-                  updateNotifications.mutate({ dailySummary: v })
-                }
+                label={t('Email')}
+                checked={failedRunsEmail}
+                onChange={(v) => setFailedRuns('email', v)}
               />
               <Channel
-                label={t('Weekly email')}
-                checked={weeklySummary}
-                onChange={(v) =>
-                  updateNotifications.mutate({ weeklySummary: v })
-                }
+                label={t('Slack')}
+                checked={failedRunsSlack}
+                onChange={(v) => setFailedRuns('slack', v)}
               />
             </PrefRow>
           </PrefSection>

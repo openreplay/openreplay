@@ -17,7 +17,7 @@ import {
   ListEnvironmentsParams,
   ListRunsParams,
   ListTestsParams,
-  NotificationSettingsRequest,
+  NotificationEvents,
   ProjectSettingsRequest,
   Resolution,
   RunDefaults,
@@ -433,10 +433,14 @@ export function useUpdateNotifications() {
   const projectId = useProjectId();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: NotificationSettingsRequest) =>
-      api.updateNotifications(projectId, body),
-    onSuccess: (data) => {
-      queryClient.setQueryData(browserTestsKeys.notifications(projectId), data);
+    // PATCH targets one agent and returns only that agent's events, so refetch
+    // the whole tree rather than trying to splice a partial back in.
+    mutationFn: (vars: { agentKey: string; patch: NotificationEvents }) =>
+      api.updateNotifications(projectId, vars.agentKey, vars.patch),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: browserTestsKeys.notifications(projectId),
+      });
     },
   });
 }
