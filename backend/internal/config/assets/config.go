@@ -31,6 +31,7 @@ type Config struct {
 	AssetsOrigin         string            `env:"ASSETS_ORIGIN,required"`
 	AssetsSizeLimit      int               `env:"ASSETS_SIZE_LIMIT,required"`
 	AssetsRequestHeaders map[string]string `env:"ASSETS_REQUEST_HEADERS"`
+	AssetsCompression    string            `env:"ASSETS_COMPRESSION,default=none"` // none|gzip
 	AssetsRetries        int               `env:"ASSETS_RETRIES,default=5"`
 	AssetsRetryBaseMs    int               `env:"ASSETS_RETRY_BASE_MS,default=2000"`
 	AssetsRetryMaxMs     int               `env:"ASSETS_RETRY_MAX_MS,default=60000"`
@@ -49,10 +50,19 @@ type Config struct {
 	ClientCertFilePath   string            `env:"CLIENT_CERT_FILE_PATH"`
 }
 
+const (
+	CompressionNone = "none"
+	CompressionGzip = "gzip"
+)
+
 func New(log logger.Logger) *Config {
 	cfg := &Config{}
 	configurator.Process(log, cfg)
 	cfg.Cache.Validate(log)
+	if cfg.AssetsCompression != CompressionNone && cfg.AssetsCompression != CompressionGzip {
+		log.Fatal(context.Background(), "invalid ASSETS_COMPRESSION %q (expected %q or %q)",
+			cfg.AssetsCompression, CompressionNone, CompressionGzip)
+	}
 	return cfg
 }
 

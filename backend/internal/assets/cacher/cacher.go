@@ -1,6 +1,8 @@
 package cacher
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -50,6 +52,7 @@ type cacher struct {
 	hosts          *hostLimiter
 	hashKeys       bool
 	resolver       *resolver.Resolver
+	gzipAssets     bool
 }
 
 func (c *cacher) CanCache() bool {
@@ -134,6 +137,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		hosts:          newHostLimiter(cfg.AssetsPerHostLimit),
 		hashKeys:       cfg.KeyScheme == assets.KeySchemeHash,
 		resolver:       urlResolver,
+		gzipAssets:     cfg.AssetsCompression == config.CompressionGzip,
 	}
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
 	c.scheduler = newScheduler(cfg.AssetsRetryHeapLimit, c.workers.tryAddTask, func(n int) {
@@ -207,10 +211,22 @@ func (c *cacher) cacheURL(t *Task) {
 
 	isCSS := strings.HasPrefix(contentType, "text/css")
 
-	strData := string(data)
+	uploadBody := data
 	var cssURLs []string
 	if isCSS {
-		strData, cssURLs = c.rewriter.RewriteCSSAndExtract(t.sessionID, t.requestURL, strData)
+		var rewritten string
+		rewritten, cssURLs = c.rewriter.RewriteCSSAndExtract(t.sessionID, t.requestURL, string(data))
+		uploadBody = []byte(rewritten)
+	}
+
+	compression := objectstorage.NoCompression
+	if shouldCompress(c.gzipAssets, contentType, contentEncoding, t.isJS) {
+		if gzipped, err := gzipBytes(uploadBody); err == nil {
+			uploadBody = gzipped
+			compression = objectstorage.Gzip
+		} else {
+			c.log.Warn(ctx, "asset gzip failed, storing uncompressed: %s", err)
+		}
 	}
 
 	// TODO: implement in streams
@@ -218,12 +234,12 @@ func (c *cacher) cacheURL(t *Task) {
 	if c.hashKeys && !t.isJS {
 		hash := assets.HashBody(data)
 		contentPath := assets.GetCachePathWithHash(t.requestURL, hash)
-		if err := c.objStorage.Upload(strings.NewReader(strData), contentPath, contentType, contentEncoding, objectstorage.NoCompression); err != nil {
+		if err := c.objStorage.Upload(bytes.NewReader(uploadBody), contentPath, contentType, contentEncoding, compression); err != nil {
 			c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 			c.retry(ctx, t, 0, "upload", err)
 			return
 		}
-		if err := c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression); err != nil {
+		if err := c.objStorage.Upload(bytes.NewReader(uploadBody), t.cachePath, contentType, contentEncoding, compression); err != nil {
 			c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 			c.retry(ctx, t, 0, "upload", err)
 			return
@@ -232,7 +248,7 @@ func (c *cacher) cacheURL(t *Task) {
 			c.resolver.Set(t.requestURL, hash)
 		}
 	} else {
-		if err := c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression); err != nil {
+		if err := c.objStorage.Upload(bytes.NewReader(uploadBody), t.cachePath, contentType, contentEncoding, compression); err != nil {
 			c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 			c.retry(ctx, t, 0, "upload", err)
 			return
@@ -351,6 +367,29 @@ func parseRetryAfter(h string) (time.Duration, bool) {
 		return 0, true
 	}
 	return 0, false
+}
+
+func shouldCompress(gzipEnabled bool, contentType, contentEncoding string, isJS bool) bool {
+	return gzipEnabled && !isJS && contentEncoding == "" && isCompressibleType(contentType)
+}
+
+func isCompressibleType(contentType string) bool {
+	return strings.HasPrefix(contentType, "text/") ||
+		strings.HasPrefix(contentType, "application/javascript") ||
+		strings.HasPrefix(contentType, "application/json") ||
+		strings.HasPrefix(contentType, "image/svg")
+}
+
+func gzipBytes(data []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := zw.Write(data); err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func hostOf(rawURL string) string {
