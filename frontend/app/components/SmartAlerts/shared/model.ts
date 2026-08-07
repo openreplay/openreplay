@@ -11,6 +11,9 @@ export interface Issue {
   id: string;
   head: string;
   critical: boolean;
+  /** critical-definitions the server says flagged this issue, with each rule's
+      author; empty until the backend persists the model's verdict */
+  criticalBy: { definitionId: number; userId: number | null }[];
   /** server-persisted hidden flag (surfaced when viewing hidden/all) */
   hidden: boolean;
   /** server soft-delete flag + timestamp (surfaced when viewing deleted/all) */

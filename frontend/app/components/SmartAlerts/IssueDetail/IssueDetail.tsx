@@ -38,10 +38,10 @@ function IssueDetail() {
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const params = useParams() as { issueId?: string };
-  // the URL carries the (encoded) issue name; resolve it from cache/list or fetch
-  const name = params.issueId ? decodeURIComponent(params.issueId) : '';
+  // the URL carries the (encoded) issue id; resolve it from cache/list or fetch
+  const id = params.issueId ? decodeURIComponent(params.issueId) : '';
   const idParam = params.issueId ?? '';
-  const issue = issuesStore.byId(name);
+  const issue = issuesStore.byId(id);
 
   const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
@@ -69,8 +69,8 @@ function IssueDetail() {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
   React.useEffect(() => {
-    if (name) void issuesStore.loadIssue(name);
-  }, [name]);
+    if (id) void issuesStore.loadIssue(id);
+  }, [id]);
   // seed the detail filters on arrival: a shared ?seg= URL wins, else the list's
   // "Found in" + tag filters propagate in. Cleared on leave so nothing leaks over.
   React.useEffect(() => {
@@ -142,7 +142,7 @@ function IssueDetail() {
             {t('Back to Issues')}
           </Button>
           <div className="p-8 text-center color-gray-medium">
-            {issuesStore.loading || issuesStore.isLoadingIssue(name)
+            {issuesStore.loading || issuesStore.isLoadingIssue(id)
               ? t('Loading…')
               : t('Issue not found.')}
           </div>

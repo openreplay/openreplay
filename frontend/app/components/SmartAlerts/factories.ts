@@ -2,6 +2,7 @@ import {
   type RawIssue,
   type RawIssueSession,
   type RawLabelRatio,
+  type SessionJourney,
 } from './api';
 import {
   CAT_ORDER,
@@ -38,12 +39,14 @@ export function makeIssue(d: RawIssue): Issue {
   const lastSeen = d.lastSeen ?? null;
   const categories = asCategories(d.categories);
   return {
-    // identity — issueName is the stable key the backend keys on
-    id: d.issueName,
+    // identity — issueId is the stable UUID; issueName is display only
+    id: d.issueId,
     head: d.issueName,
     impact: d.impact ?? 0,
     // critical is the server's own flag — not inferred from labels
     critical: Boolean(d.critical),
+    // which critical-definitions the server says flagged this issue
+    criticalBy: d.criticalBy ?? [],
     hidden: Boolean(d.hidden),
     deleted: Boolean(d.deleted),
     deletedAt: d.deletedAt ?? null,
@@ -97,6 +100,38 @@ export function makeIssueSessionCard(s: RawIssueSession): IssueSessionCard {
     issueTimestamp: s.issueTimestamp ?? null,
     thumbnail: s.thumbnail,
     journeySteps: (s.journeySteps ?? []).map((st) => ({
+      name: st.name,
+      relativeTimestamp: st.relativeTimestamp,
+    })),
+  };
+}
+
+/** SessionJourney (GET …/session/{id}/journey) -> a card carrying only the
+    journey fields, for the player fallback when the session isn't in the
+    /search sample. Replay metadata + the issue-moment seek aren't available
+    here — the player fills metadata from the loaded session, and there's no
+    issueTimestamp to seek to. */
+export function makeJourneyCard(j: SessionJourney): IssueSessionCard {
+  return {
+    sessionId: String(j.sessionId),
+    date: '',
+    email: '',
+    browser: '',
+    os: '',
+    device: 'desktop',
+    country: '',
+    city: '',
+    loc: '',
+    durMs: 0,
+    dur: '',
+    events: 0,
+    plan: '',
+    journey: j.journey ?? '',
+    tags: j.journeyLabels ?? [],
+    variation: j.journeySummary || j.journey || '',
+    issueTimestamp: null,
+    thumbnail: undefined,
+    journeySteps: (j.journeySteps ?? []).map((st) => ({
       name: st.name,
       relativeTimestamp: st.relativeTimestamp,
     })),

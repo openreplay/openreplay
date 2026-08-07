@@ -2,7 +2,10 @@ import { client } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
 /* Smart Issues REST client — the Go `api` service under /v2/smart-issues.
-   See api2.yaml for the full contract.
+   See api3.yaml for the full contract.
+
+   Issues are addressed by `issueId` (a stable UUID), never by name — names are
+   display text and can be renamed.
 
    NOTE(base-path): /smart-issues is added to `noChalice` in api_client.ts so the
    path resolves at the origin root (…/v2/smart-issues/{projectId}), not through
@@ -66,9 +69,19 @@ export interface SegmentCaptureState {
   instructions: Record<string, string>;
 }
 
+/* One critical-definition an issue matched: the rule id plus its author (null
+   once that account is removed — the rule outlives its author). */
+export interface RawCriticalMatch {
+  definitionId: number;
+  userId: number | null;
+}
+
 /* Issue row from POST /smart-issues/{projectId} (and GET …/issue, which
    additionally carries `issueDescription`). */
 export interface RawIssue {
+  /** stable UUID — the identity issues are addressed by */
+  issueId: string;
+  /** display-formatted name; presentation only, can be renamed */
   issueName: string;
   impact: number;
   critical: boolean;
@@ -79,6 +92,11 @@ export interface RawIssue {
   lastSeen: number;
   /** representative description — only returned by GET …/issue */
   issueDescription?: string;
+  /** which critical-definitions flagged this issue + who wrote each; empty until
+      the backend persists the model's verdict (a known limitation) */
+  criticalBy?: RawCriticalMatch[];
+  /** vision-model severity ("low"|"medium"|"high"|"critical"|"") */
+  level?: string;
   issueLabels: RawLabelRatio[];
   journeyLabels: RawLabelRatio[];
   /** capture segments (saved-search ids) the issue was found in, in the window;
@@ -157,6 +175,22 @@ export interface RawJourneyTag {
   createdAt: string;
 }
 
+/* Author of a critical-definition; null once that account is removed (the rule
+   outlives its author, so it can never become frozen). */
+export interface RawCriticalDefinitionAuthor {
+  id: number;
+  name: string;
+}
+
+/* GET …/critical-definitions — one description of what "critical" means. The
+   description IS the rule the vision model matches sessions against. */
+export interface RawCriticalDefinition {
+  id: number;
+  description: string;
+  createdBy: RawCriticalDefinitionAuthor | null;
+  createdAt: string;
+}
+
 export interface ListParams {
   limit?: number;
   page?: number;
@@ -176,7 +210,7 @@ export interface ListParams {
   segmentIds?: string[];
   /** `or` => hasAny (default), `and` => hasAll — applied to segmentIds */
   segmentsMatch?: LabelsMatch;
-  /** filter to what's relevant to me (my criticals + my segments); NOT-YET-BACKED */
+  /** "Critical to me" — keep only issues the caller has themselves marked critical */
   relevantToMe?: boolean;
   minImpact?: number;
   minCount?: number;
@@ -253,7 +287,7 @@ export async function getIssues(
           segmentsMatch: params.segmentsMatch ?? 'or',
         }
       : {}),
-    // NOT-YET-BACKED filter — server ignores until implemented
+    // keep only issues the caller has marked critical ("Critical to me")
     ...(params.relevantToMe ? { relevantToMe: true } : {}),
   });
   const json = await res.json();
@@ -265,16 +299,16 @@ export async function getIssues(
   };
 }
 
-/** GET /smart-issues/{projectId}/issue?name=… — one issue by name (returns it
-    even if hidden). Resolves to null on 404 so callers can render "not found". */
+/** GET /smart-issues/{projectId}/issue?id=… — one issue by id (returns it even
+    if hidden). Resolves to null on 404 so callers can render "not found". */
 export async function getIssue(
   projectId: string,
-  name: string,
+  issueId: string,
   range?: [number, number],
 ): Promise<RawIssue | null> {
   try {
     const res = await client.get(`${base(projectId)}/issue`, {
-      name,
+      id: issueId,
       startMs: range?.[0],
       endMs: range?.[1],
     });
@@ -363,15 +397,59 @@ export async function updateJourneyTag(
 export const deleteJourneyTag = (projectId: string, tagId: number) =>
   client.delete(`${base(projectId)}/journey-tags/${tagId}`);
 
+/* ---- critical definitions (real CRUD; author-only edit/delete) ---- */
+
+/** GET …/critical-definitions — the project's descriptions of what's critical. */
+export async function listCriticalDefinitions(
+  projectId: string,
+): Promise<RawCriticalDefinition[]> {
+  const res = await client.get(`${base(projectId)}/critical-definitions`);
+  const json = await res.json();
+  return json.data ?? [];
+}
+
+/** POST …/critical-definitions — author a rule (the author is the caller). */
+export async function createCriticalDefinition(
+  projectId: string,
+  description: string,
+): Promise<RawCriticalDefinition | null> {
+  const res = await client.post(`${base(projectId)}/critical-definitions`, {
+    description,
+  });
+  const json = await res.json();
+  return json.data ?? null;
+}
+
+/** PATCH …/critical-definitions/{id} — rewrite (403 for non-authors). */
+export async function updateCriticalDefinition(
+  projectId: string,
+  definitionId: number,
+  description: string,
+): Promise<RawCriticalDefinition | null> {
+  const res = await client.patch(
+    `${base(projectId)}/critical-definitions/${definitionId}`,
+    { description },
+  );
+  const json = await res.json();
+  return json.data ?? null;
+}
+
+/** DELETE …/critical-definitions/{id} — hard delete (403 for non-authors);
+    issues already flagged keep their flag. */
+export const deleteCriticalDefinition = (
+  projectId: string,
+  definitionId: number,
+) => client.delete(`${base(projectId)}/critical-definitions/${definitionId}`);
+
 /** POST /smart-issues/{projectId}/search — sessions for an issue, replay-enriched.
     A non-null `query` triggers the AI vector + LLM re-rank branch. */
 export async function getIssueSessions(
   projectId: string,
-  issueName: string,
+  issueId: string,
   opts: SearchParams = {},
 ): Promise<{ rows: RawIssueSession[]; total: number }> {
   const res = await client.post(`${base(projectId)}/search`, {
-    issue: issueName,
+    issueId,
     query: opts.query ?? null,
     issueLabels: opts.issueLabels ?? [],
     journeyLabels: opts.journeyLabels ?? [],
@@ -416,13 +494,13 @@ export async function getSessionJourney(
     are captured with hide + criticality changes. */
 export async function updateIssue(
   projectId: string,
-  issueName: string,
+  issueId: string,
   operation: IssueOperation,
   reasons?: string[],
   note?: string,
 ) {
   return client.put(base(projectId), {
-    issue: issueName,
+    issueId,
     operation,
     ...(reasons && reasons.length ? { reasons } : {}),
     ...(note ? { note } : {}),
@@ -431,64 +509,99 @@ export async function updateIssue(
 
 export const hideIssue = (
   projectId: string,
-  issueName: string,
+  issueId: string,
   reasons?: string[],
   note?: string,
-) => updateIssue(projectId, issueName, { hide: true }, reasons, note);
+) => updateIssue(projectId, issueId, { hide: true }, reasons, note);
 
-export const unhideIssue = (projectId: string, issueName: string) =>
-  updateIssue(projectId, issueName, { hide: false });
+export const unhideIssue = (projectId: string, issueId: string) =>
+  updateIssue(projectId, issueId, { hide: false });
 
 export const renameIssue = (
   projectId: string,
-  issueName: string,
+  issueId: string,
   newName: string,
-) => updateIssue(projectId, issueName, { rename: newName });
+) => updateIssue(projectId, issueId, { rename: newName });
 
 export const setIssueCritical = (
   projectId: string,
-  issueName: string,
+  issueId: string,
   critical: boolean,
   reasons?: string[],
   note?: string,
-) => updateIssue(projectId, issueName, { critical }, reasons, note);
+) => updateIssue(projectId, issueId, { critical }, reasons, note);
 
-export const restoreIssue = (projectId: string, issueName: string) =>
-  updateIssue(projectId, issueName, { restore: true });
+export const restoreIssue = (projectId: string, issueId: string) =>
+  updateIssue(projectId, issueId, { restore: true });
 
 /** DELETE /smart-issues/{projectId} — soft-delete (not reversible via the API;
     a `restore` un-deletes it). */
-export const deleteIssue = (projectId: string, issueName: string) =>
-  client.delete(base(projectId), { issue: issueName });
+export const deleteIssue = (projectId: string, issueId: string) =>
+  client.delete(base(projectId), { issueId });
 
-/* ===========================================================================
-   MOCKS — these routes DO NOT EXIST server-side.
+/* ---- project settings (real; stored in projects.melonade_config) ---- */
 
-   `/segment-capture` (project capture MODE + per-segment agent INSTRUCTIONS) was
-   never shipped. To avoid 404 noise we don't call the client — each resolves a
-   default / no-op. Capture mode + instructions work optimistically in-session
-   but DO NOT persist across reload. Swap for real `client.*` calls once the
-   backend ships.
+export interface ProjectSettings {
+  /** true => capture only sessions matching an active capture segment; false =>
+      full traffic while keeping the segments defined. Defaults true when unset. */
+  captureSegmentsOnly: boolean;
+}
 
-   NB: the per-segment capture flag ("Identify issues in this segment") IS real —
-   it persists as `isCapture` on the saved search. Only the capture MODE +
-   INSTRUCTIONS here are unbacked, so `active` is left empty. */
+/** GET …/settings — project-level capture knobs (defaults, never 404s on unset). */
+export async function getProjectSettings(
+  projectId: string,
+): Promise<ProjectSettings> {
+  const res = await client.get(`${base(projectId)}/settings`);
+  const json = await res.json();
+  return { captureSegmentsOnly: json.data?.captureSegmentsOnly ?? true };
+}
 
-/** MOCK (no endpoint): project capture mode + per-segment instructions. */
-export const getSegmentCapture = (
-  _projectId: string,
-): Promise<SegmentCaptureState> =>
-  Promise.resolve({ mode: 'full', active: [], instructions: {} });
+/** PATCH …/settings — partial update (omitted fields kept); returns the result. */
+export async function updateProjectSettings(
+  projectId: string,
+  patch: Partial<ProjectSettings>,
+): Promise<ProjectSettings> {
+  const res = await client.patch(`${base(projectId)}/settings`, patch);
+  const json = await res.json();
+  return { captureSegmentsOnly: json.data?.captureSegmentsOnly ?? true };
+}
 
-/** MOCK (no endpoint): set the project capture mode. No-op. */
+/* ---- capture state ----
+   Project capture MODE is now real: it maps to `captureSegmentsOnly` in the
+   project settings (segments-only <=> true). The per-segment capture FLAG is
+   also real (the saved search's `isCapture`). Only per-segment agent
+   INSTRUCTIONS are still unbacked — see the setSegmentCapture no-op below. */
+
+/** Project capture mode, derived from the real project settings. `active` /
+    `instructions` stay empty here — the active set is read from each saved
+    search's `isCapture`, and instructions have no backing yet. */
+export const getSegmentCapture = async (
+  projectId: string,
+): Promise<SegmentCaptureState> => {
+  try {
+    const { captureSegmentsOnly } = await getProjectSettings(projectId);
+    return {
+      mode: captureSegmentsOnly ? 'segments' : 'full',
+      active: [],
+      instructions: {},
+    };
+  } catch {
+    // don't let a settings error break the segment list it loads alongside
+    return { mode: 'full', active: [], instructions: {} };
+  }
+};
+
+/** Set the project capture mode → persists as `captureSegmentsOnly`. */
 export const setCaptureMode = (
-  _projectId: string,
-  _mode: CaptureMode,
-): Promise<void> => Promise.resolve();
+  projectId: string,
+  mode: CaptureMode,
+): Promise<void> =>
+  updateProjectSettings(projectId, {
+    captureSegmentsOnly: mode === 'segments',
+  }).then(() => undefined);
 
-/** MOCK (no endpoint): per-segment capture flag + instructions. No-op — the
-    capture flag persists via the saved search's `isCapture`; instructions have
-    no backing yet. */
+/** MOCK (no endpoint): per-segment agent instructions. No-op — the capture flag
+    itself persists via the saved search's `isCapture`; instructions are unbacked. */
 export const setSegmentCapture = (
   _projectId: string,
   _segmentId: string,

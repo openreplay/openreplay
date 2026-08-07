@@ -24,6 +24,7 @@ import {
 } from 'Components/Session/playerContext';
 import { Loader } from 'UI';
 
+import { makeJourneyCard } from '../factories';
 import { CriticalDialog, PLAYER_OVERLAY_Z, fmtDate } from '../shared';
 import IssuePanel from './IssuePanel';
 import IssuePlayerHeader from './IssuePlayerHeader';
@@ -39,7 +40,7 @@ function IssuePlayer() {
   const history = useHistory();
   const params = useParams<{ issueId: string; sessionId: string }>();
   const idParam = params.issueId ?? '';
-  const name = idParam ? decodeURIComponent(idParam) : '';
+  const id = idParam ? decodeURIComponent(idParam) : '';
   const sessionId = params.sessionId ?? '';
 
   const session = sessionStore.current;
@@ -54,22 +55,31 @@ function IssuePlayer() {
   const adjustedRef = React.useRef(false);
   const [view, setView] = React.useState<View>('issue');
 
-  const issue = issuesStore.byId(name);
-  const realId = issue?.id ?? name;
+  const issue = issuesStore.byId(id);
+  const realId = issue?.id ?? id;
   const sessions = issuesStore.exampleSessions(realId);
   const card = sessions.find((c) => c.sessionId === sessionId);
+  // a session outside the /search sample has no card — fall back to its journey
+  // so the journey panel / variation / steps still render (no issue-moment seek)
+  const fallbackJourney = issuesStore.sessionJourney(sessionId);
+  const effCard =
+    card ?? (fallbackJourney ? makeJourneyCard(fallbackJourney) : undefined);
 
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
   }, [siteId]);
 
   React.useEffect(() => {
-    if (name) void issuesStore.loadIssue(name);
-  }, [name]);
+    if (id) void issuesStore.loadIssue(id);
+  }, [id]);
 
   React.useEffect(() => {
     if (realId) void issuesStore.loadSessions(realId);
   }, [realId]);
+
+  React.useEffect(() => {
+    if (!card && sessionId) void issuesStore.loadSessionJourney(sessionId);
+  }, [card, sessionId]);
 
   React.useEffect(() => {
     if (sessionId) void sessionStore.fetchSessionData(sessionId);
@@ -222,7 +232,7 @@ function IssuePlayer() {
   const countryCode = card?.country ?? session.userCountry ?? '';
   const city = card?.city ?? session.userCity ?? '';
   const date = card?.date ?? fmtDate(session.startedAt);
-  const variation = card?.variation || card?.journey || issue?.head;
+  const variation = effCard?.variation || effCard?.journey || issue?.head;
 
   return (
     <ConfigProvider theme={{ token: { zIndexPopupBase: PLAYER_OVERLAY_Z } }}>
@@ -233,7 +243,7 @@ function IssuePlayer() {
         >
           <IssuePlayerHeader
             issue={issue}
-            card={card}
+            card={effCard}
             email={email}
             browser={browser}
             os={os}
@@ -272,7 +282,7 @@ function IssuePlayer() {
             {view === 'issue' && issue && (
               <IssuePanel
                 issue={issue}
-                card={card}
+                card={effCard}
                 onClose={() => setView(null)}
                 critState={critState}
                 onOpenCritical={() => setCritOpen(true)}
