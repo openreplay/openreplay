@@ -474,12 +474,6 @@ function IssuesList() {
       >
         {t('Hidden')}
       </CheckRow>
-      <CheckRow
-        on={showDeleted}
-        onClick={() => applyVisibility(showHidden, !showDeleted)}
-      >
-        {t('Deleted')}
-      </CheckRow>
       {/* "what's mine": my criticals ∪ my segments' finds */}
       <CheckRow
         on={issuesStore.relevantToMe}

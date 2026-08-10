@@ -25,6 +25,7 @@ import {
   type IssueSessionCard,
   JOURNEY_SEARCH_SUGGESTIONS,
   JiraIcon,
+  NotCriticalDialog,
 } from '../shared';
 import ProblemCard from './ProblemCard';
 import SessionCard from './SessionCard';
@@ -46,6 +47,10 @@ function IssueDetail() {
   const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
   const [critOpen, setCritOpen] = React.useState(false);
+  const [notCritTarget, setNotCritTarget] = React.useState<{
+    id: string;
+    head: string;
+  } | null>(null);
   const [query, setQuery] = React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [visibleCount, setVisibleCount] = React.useState(SHOWN_LIMIT);
@@ -214,6 +219,7 @@ function IssueDetail() {
           editable
           onRename={(newName) => issuesStore.rename(issue.id, newName)}
           onOpenCritical={() => setCritOpen(true)}
+          onRemoveCritical={() => setNotCritTarget(issue)}
           criticalMine={critState === 'mine'}
           criticalBy={
             issuesStore.matchedRules(issue.id).find((r) => !r.mine)?.createdBy
@@ -428,6 +434,12 @@ function IssueDetail() {
         issueId={critOpen ? issue.id : null}
         issueHead={issue.head}
         onClose={() => setCritOpen(false)}
+      />
+
+      <NotCriticalDialog
+        issue={notCritTarget}
+        reasons={issuesStore.reasons.criticality}
+        onClose={() => setNotCritTarget(null)}
       />
     </div>
   );

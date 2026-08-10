@@ -755,12 +755,16 @@ export default class IssuesStore {
     if (this.notCritical[id] != null) return [];
     return this.rulesFor(id);
   }
-  /** three states, about WHOSE description matched: none, a teammate's/agent's
-      only, or one of mine (what "Critical to me" filters on) */
+  /** triangle state. Personally critical (mine, red fill) reads straight off the
+      issue's own per-caller `critical` flag — that IS "critical to me". Otherwise
+      a team/author rule flags it (team, red outline) when `criticalBy` has
+      entries. `criticalBy` only drives the descriptions + who in the dialog and
+      the mark/remove actions — never the mine/team decision. */
   critState(id: string): 'none' | 'team' | 'mine' {
-    const matched = this.matchedRules(id);
-    if (!matched.length) return 'none';
-    return matched.some((r) => r.mine) ? 'mine' : 'team';
+    const issue = this.byId(id);
+    if (!issue) return 'none';
+    if (issue.critical) return 'mine';
+    return issue.criticalBy.length > 0 ? 'team' : 'none';
   }
   /** relevant = one of MY descriptions flagged it, or a segment I own surfaced it */
   isRelevant = (i: Issue): boolean =>
