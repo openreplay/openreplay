@@ -26,6 +26,7 @@ import {
   MoreVertical,
   Pencil,
   RotateCcw,
+  Settings,
   SlidersHorizontal,
   Split,
   Trash2,
@@ -510,6 +511,13 @@ function IssuesList() {
             <SegmentsIndicator />
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              type="text"
+              icon={<Settings size={14} />}
+              onClick={() => history.push('/client/agents?agent=issues')}
+            >
+              {t('Settings')}
+            </Button>
             <a
               href="https://docs.openreplay.com/"
               target="_blank"
