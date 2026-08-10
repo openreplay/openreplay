@@ -77,18 +77,7 @@ export const CAT_ORDER: CategoryName[] = ['Errors', 'UI/UX', 'Slowness'];
 
 /* Autocomplete hints for the journey search. Suggestions only — the typed text
    is what's sent to the search. */
-export const JOURNEY_SEARCH_SUGGESTIONS = [
-  'users who add to cart then abandon at checkout',
-  'users who hit "Place order" and watch the spinner end with nothing',
-  'users who tap the order button repeatedly with no response',
-  'users whose valid card expiry gets rejected as invalid',
-  'users who leave before the payment fields render',
-  'users who abandon the long onboarding form',
-  'users who scroll past empty image placeholders',
-  'users who retry a search after the spinner hangs',
-  'users who lose their filters when moving to the next page',
-  'users who wait on blank dashboard charts',
-];
+export const JOURNEY_SEARCH_SUGGESTIONS: string[] = [];
 
 /* Uniform teal for the category avatar/icon (the `tealx` token). The
    per-category CAT_COLOR below is only the tab-highlight. */

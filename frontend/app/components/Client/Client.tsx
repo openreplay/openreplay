@@ -56,8 +56,6 @@ class Client extends React.PureComponent<any> {
       case CLIENT_TABS.AUDIT:
         return <AuditView />;
       case CLIENT_TABS.AGENTS:
-        // gated behind the same in-progress flag as the rest of the Agents
-        // section (menu item + Smart Issues routes)
         return window.localStorage.getItem('__test_agents__') === 'true' ? (
           <AgentsPreferences />
         ) : (

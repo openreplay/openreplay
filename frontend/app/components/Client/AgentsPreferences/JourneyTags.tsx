@@ -10,6 +10,7 @@ import type { JourneyTag } from 'App/mstore/issuesStore';
 import { TagDialog } from 'Components/SmartAlerts/shared';
 
 import CountSuffix from 'Shared/CountSuffix';
+import FullPagination from 'Shared/FullPagination';
 
 import { useConfirms } from './confirms';
 
@@ -17,6 +18,7 @@ import { useConfirms } from './confirms';
    other, so `source` is provenance, not permission — every row edits/deletes. */
 
 type SourceKey = 'openreplay' | 'yours';
+const PAGE_SIZE = 10;
 
 function JourneyTags() {
   const { t } = useTranslation();
@@ -25,6 +27,7 @@ function JourneyTags() {
 
   const [source, setSource] = React.useState<SourceKey>('openreplay');
   const [q, setQ] = React.useState('');
+  const [page, setPage] = React.useState(1);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<JourneyTag | null>(null);
 
@@ -38,6 +41,14 @@ function JourneyTags() {
       !ql ||
       r.name.toLowerCase().includes(ql) ||
       r.description.toLowerCase().includes(ql),
+  );
+  // client-side paging over the filtered set; clamp so deleting the last row on
+  // a page doesn't strand the view on an empty page
+  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const pageRows = shown.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
   );
 
   // keyed on id, not name, so renaming a tag's casing isn't read as a clash
@@ -68,6 +79,7 @@ function JourneyTags() {
       }
       // a tag you author is yours, so show the side it landed on
       setSource('yours');
+      setPage(1);
       message.success(
         t('Tag created. The agent starts applying it to new sessions.'),
       );
@@ -173,6 +185,7 @@ function JourneyTags() {
           onChange={(v) => {
             setSource(v as SourceKey);
             setQ('');
+            setPage(1);
           }}
           options={sourceOptions}
         />
@@ -182,7 +195,10 @@ function JourneyTags() {
             allowClear
             maxLength={256}
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(1);
+            }}
             placeholder={t('Filter by name or description')}
             style={{ width: 264 }}
           />
@@ -196,11 +212,22 @@ function JourneyTags() {
         size="small"
         rowKey="id"
         columns={columns}
-        dataSource={shown}
+        dataSource={pageRows}
         pagination={false}
         rowClassName="group"
         locale={{ emptyText }}
       />
+
+      {shown.length > PAGE_SIZE && (
+        <FullPagination
+          page={safePage}
+          limit={PAGE_SIZE}
+          total={shown.length}
+          listLen={pageRows.length}
+          onPageChange={setPage}
+          entity={t('tags')}
+        />
+      )}
 
       <TagDialog
         open={dialogOpen}

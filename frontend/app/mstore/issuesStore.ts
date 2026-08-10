@@ -477,6 +477,13 @@ export default class IssuesStore {
     void this.fetchJourneyTags();
   };
 
+  /** Load just the critical definitions — for Preferences > Agents, reachable
+      without opening Issues (where init() would fetch them). */
+  ensureCriticalDefinitions = (projectId: string) => {
+    if (this.projectId !== projectId) this.projectId = projectId;
+    void this.fetchCriticalDefinitions();
+  };
+
   /* Refetch the list after a filter change: resets to page 1; sort changes pass
      resetPage:false to keep the current page. */
   private refetch = (opts: { resetPage?: boolean } = {}) => {
