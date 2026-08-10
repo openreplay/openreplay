@@ -1,12 +1,12 @@
 import logging
 
-import requests
 from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_base import BaseCollaboration
+from chalicelib.utils import ssrf
 from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,11 @@ class MSTeams(BaseCollaboration):
         if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
                                   webhook_type=schemas.WebhookType.MSTEAMS):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-        if cls.say_hello(data.url):
+        try:
+            hello = cls.say_hello(data.url)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        if hello:
             return webhook.add(tenant_id=tenant_id,
                                endpoint=data.url.unicode_string(),
                                webhook_type=schemas.WebhookType.MSTEAMS,
@@ -28,9 +32,9 @@ class MSTeams(BaseCollaboration):
     @classmethod
     def say_hello(cls, url):
         try:
-            r = requests.post(
-                url=url,
-                json={
+            r = ssrf.post_json(
+                endpoint=url,
+                json_data={
                     "@type": "MessageCard",
                     "@context": "https://schema.org/extensions",
                     "summary": "Welcome to OpenReplay",
@@ -41,6 +45,8 @@ class MSTeams(BaseCollaboration):
                 logger.warning("MSTeams integration failed")
                 logger.warning(sanitize(r.text))
                 return False
+        except ValueError:
+            raise
         except Exception as e:
             logger.warning("!!! MSTeams integration failed")
             logger.exception(e)
@@ -53,9 +59,9 @@ class MSTeams(BaseCollaboration):
         if integration is None:
             return {"errors": ["msteams integration not found"]}
         try:
-            r = requests.post(
-                url=integration["endpoint"],
-                json=body,
+            r = ssrf.post_json(
+                endpoint=integration["endpoint"],
+                json_data=body,
                 timeout=5)
             if r.status_code != 200:
                 logger.warning(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
@@ -81,13 +87,13 @@ class MSTeams(BaseCollaboration):
             for j in range(1, len(part), 2):
                 part.insert(j, {"text": "***"})
 
-            r = requests.post(url=integration["endpoint"],
-                              json={
-                                  "@type": "MessageCard",
-                                  "@context": "http://schema.org/extensions",
-                                  "summary": part[0]["activityTitle"],
-                                  "sections": part
-                              })
+            r = ssrf.post_json(endpoint=integration["endpoint"],
+                               json_data={
+                                   "@type": "MessageCard",
+                                   "@context": "http://schema.org/extensions",
+                                   "summary": part[0]["activityTitle"],
+                                   "sections": part
+                               })
             if r.status_code != 200:
                 logger.warning("!!!! something went wrong")
                 logger.warning(sanitize(r.text))
@@ -99,9 +105,9 @@ class MSTeams(BaseCollaboration):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["Microsoft Teams integration not found"]}
-        r = requests.post(
-            url=integration["endpoint"],
-            json={
+        r = ssrf.post_json(
+            endpoint=integration["endpoint"],
+            json_data={
                 "@type": "MessageCard",
                 "@context": "http://schema.org/extensions",
                 "sections": [attachement],
