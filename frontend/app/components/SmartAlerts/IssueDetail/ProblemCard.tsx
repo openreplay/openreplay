@@ -18,6 +18,8 @@ interface Props {
   onRename?: (name: string) => void;
   /** opens the shared CriticalDialog (explain / describe / not-critical) */
   onOpenCritical?: () => void;
+  /** mark not-critical for the current user — the critical tag's ✕ */
+  onRemoveCritical?: () => void;
   /** one of MY descriptions matched, not just a teammate's/agent's */
   criticalMine?: boolean;
   /** who wrote the matching description, when it isn't mine */
@@ -36,6 +38,7 @@ export default function ProblemCard({
   editable,
   onRename,
   onOpenCritical,
+  onRemoveCritical,
   criticalMine,
   criticalBy,
   actions,
@@ -70,6 +73,7 @@ export default function ProblemCard({
         mine={criticalMine}
         by={criticalBy}
         onOpen={onOpenCritical}
+        onRemove={onRemoveCritical}
       />,
     );
   if (issue.seenAgoMin != null)

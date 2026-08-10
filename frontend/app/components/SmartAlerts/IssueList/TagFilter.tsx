@@ -216,13 +216,10 @@ export function SegmentFilter({
   const [q, setQ] = React.useState('');
   const n = origins.length;
   const ql = q.toLowerCase().trim();
-  const SEG_CAP = 5;
 
   const shown = ql
     ? segments.filter((s) => s.name.toLowerCase().includes(ql))
     : segments;
-  const rest = ql ? shown : shown.slice(0, SEG_CAP);
-  const hidden = shown.length - rest.length;
   const showFull = showFullTraffic && (!ql || 'full traffic'.includes(ql));
   const myIds = segments.filter((s) => s.mine).map((s) => s.id);
   const mineOn = myIds.length > 0 && myIds.every((id) => origins.includes(id));
@@ -237,9 +234,9 @@ export function SegmentFilter({
   const showMatch = match != null && onSetMatch != null;
   const panel = (
     <div style={{ width: 260 }} className="flex flex-col gap-2">
-      {(segments.length > SEG_CAP || showMatch) && (
+      {(segments.length > 0 || showMatch) && (
         <div className="flex items-center gap-2">
-          {segments.length > SEG_CAP && (
+          {segments.length > 0 && (
             <Input
               size="small"
               allowClear
@@ -262,7 +259,7 @@ export function SegmentFilter({
           )}
         </div>
       )}
-      <div className="-mx-1 px-1">
+      <div className="overflow-y-auto -mx-1 px-1" style={{ maxHeight: 224 }}>
         {showFull && (
           <CheckRow
             on={origins.includes('full')}
@@ -283,7 +280,7 @@ export function SegmentFilter({
             {t('My segments')}
           </CheckRow>
         )}
-        {rest.map((s) => (
+        {shown.map((s) => (
           <CheckRow
             key={s.id}
             on={origins.includes(s.id)}
@@ -293,11 +290,6 @@ export function SegmentFilter({
             {s.name}
           </CheckRow>
         ))}
-        {hidden > 0 && (
-          <div className="text-xs px-2 py-1 color-gray-medium">
-            {t('{{n}} more · search to find them', { n: hidden })}
-          </div>
-        )}
         {ql && !showFull && !showMine && shown.length === 0 && (
           <div className="text-xs px-2 py-1 color-gray-medium">
             {t('No segments match “{{q}}”', { q })}
