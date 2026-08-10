@@ -19,6 +19,7 @@ from .transformers_validators import (
     NAME_PATTERN,
     check_account_name,
     check_alphanumeric,
+    check_property_name,
     check_regex,
     force_is_event,
     int_to_string,
@@ -654,6 +655,9 @@ class PropertyFilterSchema(BaseModel):
     def transform_name(self):
         if isinstance(self.name, Enum):
             self.name = self.name.value
+        # name is interpolated into ClickHouse SQL as a column identifier,
+        # so restrict it to a safe character set to prevent SQL injection.
+        check_property_name(self.name)
         return self
 
     @model_validator(mode="after")
