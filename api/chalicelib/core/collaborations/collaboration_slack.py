@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import requests
 from decouple import config
 from fastapi import HTTPException, status
 
@@ -9,6 +8,7 @@ from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_base import BaseCollaboration
 import logging
 
+from chalicelib.utils import ssrf
 from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,11 @@ class Slack(BaseCollaboration):
         if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
                                   webhook_type=schemas.WebhookType.SLACK):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-        if cls.say_hello(data.url):
+        try:
+            hello = cls.say_hello(data.url)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        if hello:
             return webhook.add(tenant_id=tenant_id,
                                endpoint=data.url.unicode_string(),
                                webhook_type=schemas.WebhookType.SLACK,
@@ -28,9 +32,9 @@ class Slack(BaseCollaboration):
 
     @classmethod
     def say_hello(cls, url):
-        r = requests.post(
-            url=url,
-            json={
+        r = ssrf.post_json(
+            endpoint=url,
+            json_data={
                 "attachments": [
                     {
                         "text": "Welcome to OpenReplay",
@@ -50,9 +54,9 @@ class Slack(BaseCollaboration):
         if integration is None:
             return {"errors": ["slack integration not found"]}
         try:
-            r = requests.post(
-                url=integration["endpoint"],
-                json=body,
+            r = ssrf.post_json(
+                endpoint=integration["endpoint"],
+                json_data=body,
                 timeout=5)
             if r.status_code != 200:
                 logger.warning(f"!! issue sending slack raw; webhookId:{webhook_id} code:{r.status_code}")
@@ -74,9 +78,9 @@ class Slack(BaseCollaboration):
             return {"errors": ["slack integration not found"]}
         logger.debug(f"====> sending slack batch notification: {len(attachments)}")
         for i in range(0, len(attachments), 100):
-            r = requests.post(
-                url=integration["endpoint"],
-                json={"attachments": attachments[i:i + 100]})
+            r = ssrf.post_json(
+                endpoint=integration["endpoint"],
+                json_data={"attachments": attachments[i:i + 100]})
             if r.status_code != 200:
                 logger.warning(f"!!!! something went wrong while sending slack batch; webhookId:{webhook_id} code:{r.status_code}")
                 logger.warning(sanitize(r.text))
@@ -89,7 +93,7 @@ class Slack(BaseCollaboration):
         if integration is None:
             return {"errors": ["slack integration not found"]}
         attachement["ts"] = datetime.now().timestamp()
-        r = requests.post(url=integration["endpoint"], json={"attachments": [attachement], **extra})
+        r = ssrf.post_json(endpoint=integration["endpoint"], json_data={"attachments": [attachement], **extra})
         return r.text
 
     @classmethod
