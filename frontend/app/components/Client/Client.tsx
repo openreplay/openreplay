@@ -4,6 +4,7 @@ import { PANEL_SIZES } from 'App/constants/panelSizes';
 import { client as clientRoute } from 'App/routes';
 import { Navigate, withRouter } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
+import { agentsEnabled } from 'App/utils/split-utils';
 import Modules from 'Components/Client/Modules';
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 
@@ -57,7 +58,7 @@ class Client extends React.PureComponent<any> {
       case CLIENT_TABS.AUDIT:
         return <AuditView />;
       case CLIENT_TABS.AGENTS:
-        return window.localStorage.getItem('__test_agents__') === 'true' ? (
+        return agentsEnabled() ? (
           <AgentsPreferences />
         ) : (
           <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />

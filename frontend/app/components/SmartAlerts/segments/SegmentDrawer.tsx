@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
+import { agentsEnabled } from 'App/utils/split-utils';
 
 import SessionFilters from 'Shared/SessionFilters';
 
@@ -32,6 +33,8 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
   const { issuesStore, searchStore } = useStore();
   const { t } = useTranslation();
   const fromIssues = source === 'issues';
+  // the capture toggle + agent instructions are agentic — gate behind the flag
+  const showAgent = agentsEnabled();
   // teammates' segments open read-only; anyone still toggles capture from the
   // list, just not the query
   const readOnly = Boolean(segment && !segment.mine);
@@ -177,39 +180,41 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
           </div>
         )}
 
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium color-gray-darkest">
-              {t('Issues Agent')}
-            </span>
-            <Tooltip
-              title={t(
-                'The agent reviews sessions matching this segment and reports what it finds on the Issues page. Anyone on the team can switch it off.',
-              )}
-            >
-              <span className="flex items-center cursor-help color-gray-medium">
-                <Info size={13} />
+        {showAgent && (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium color-gray-darkest">
+                {t('Issues Agent')}
               </span>
-            </Tooltip>
+              <Tooltip
+                title={t(
+                  'The agent reviews sessions matching this segment and reports what it finds on the Issues page. Anyone on the team can switch it off.',
+                )}
+              >
+                <span className="flex items-center cursor-help color-gray-medium">
+                  <Info size={13} />
+                </span>
+              </Tooltip>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                size="small"
+                checked={captureNow}
+                disabled={readOnly || !publicNow}
+                onChange={setCapture}
+                aria-label={t('Issues agent')}
+              />
+              <span className="text-sm color-gray-darkest">
+                {t('Identify issues in this segment')}
+              </span>
+            </div>
+            {!publicNow && (
+              <span className="text-xs color-gray-medium">
+                {t('Private — make it team-visible to enable the agent.')}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              size="small"
-              checked={captureNow}
-              disabled={readOnly || !publicNow}
-              onChange={setCapture}
-              aria-label={t('Issues agent')}
-            />
-            <span className="text-sm color-gray-darkest">
-              {t('Identify issues in this segment')}
-            </span>
-          </div>
-          {!publicNow && (
-            <span className="text-xs color-gray-medium">
-              {t('Private — make it team-visible to enable the agent.')}
-            </span>
-          )}
-        </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5">
@@ -217,9 +222,15 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
               {fromIssues ? t('What to capture') : t('Conditions')}
             </span>
             <Tooltip
-              title={t(
-                'Define the portion of traffic with the same events and filters as the Sessions search. In segment capture, the agent records only sessions matching active segments.',
-              )}
+              title={
+                showAgent
+                  ? t(
+                      'Define the portion of traffic with the same events and filters as the Sessions search. In segment capture, the agent records only sessions matching active segments.',
+                    )
+                  : t(
+                      'Define the portion of traffic with the same events and filters as the Sessions search.',
+                    )
+              }
             >
               <span className="flex items-center cursor-help color-gray-medium">
                 <Info size={13} />
@@ -233,52 +244,57 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
           </div>
         </div>
 
-        <Alert
-          type="info"
-          showIcon
-          className="border-transparent rounded-lg"
-          title={
-            narrowed
-              ? t('The agent will analyse the sessions matching this segment.')
-              : t(
-                  'Add events or filters to narrow the segment — right now it matches all traffic.',
-                )
-          }
-        />
-
-        {showInstructions ? (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium color-gray-darkest">
-              {t('Instructions')}{' '}
-              <span className="font-normal color-gray-medium">
-                {t('(optional)')}
-              </span>
-            </span>
-            <Input.TextArea
-              rows={3}
-              maxLength={500}
-              autoFocus={!readOnly && !segment?.instructions}
-              disabled={readOnly}
-              placeholder={t(
-                'Extra context for the agent — e.g. "pay special attention to coupon and card-validation errors"',
-              )}
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-            />
-          </div>
-        ) : (
-          !readOnly && (
-            <Button
-              type="link"
-              size="small"
-              icon={<Plus size={14} />}
-              onClick={() => setShowInstructions(true)}
-              className="self-start px-0!"
-            >
-              {t('Add instructions')}
-            </Button>
-          )
+        {showAgent && (
+          <Alert
+            type="info"
+            showIcon
+            className="border-transparent rounded-lg"
+            title={
+              narrowed
+                ? t(
+                    'The agent will analyse the sessions matching this segment.',
+                  )
+                : t(
+                    'Add events or filters to narrow the segment — right now it matches all traffic.',
+                  )
+            }
+          />
         )}
+
+        {showAgent &&
+          (showInstructions ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium color-gray-darkest">
+                {t('Instructions')}{' '}
+                <span className="font-normal color-gray-medium">
+                  {t('(optional)')}
+                </span>
+              </span>
+              <Input.TextArea
+                rows={3}
+                maxLength={500}
+                autoFocus={!readOnly && !segment?.instructions}
+                disabled={readOnly}
+                placeholder={t(
+                  'Extra context for the agent — e.g. "pay special attention to coupon and card-validation errors"',
+                )}
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+              />
+            </div>
+          ) : (
+            !readOnly && (
+              <Button
+                type="link"
+                size="small"
+                icon={<Plus size={14} />}
+                onClick={() => setShowInstructions(true)}
+                className="self-start px-0!"
+              >
+                {t('Add instructions')}
+              </Button>
+            )
+          ))}
       </div>
     </Drawer>
   );
