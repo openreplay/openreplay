@@ -71,24 +71,21 @@ function IssueDetail() {
   React.useEffect(() => {
     if (id) void issuesStore.loadIssue(id);
   }, [id]);
-  // seed the detail filters on arrival: a shared ?seg= URL wins, else the list's
-  // "Found in" + tag filters propagate in. Cleared on leave so nothing leaks over.
+  // seed the sessions-only filters from the issue itself — the issue fetch
+  // carries its journey labels + segments, so pre-select them and scope the
+  // sample to this issue's journeys/segments. OR-matched so several labels don't
+  // over-narrow. A shared ?seg= URL still wins for the segment scope. Cleared on
+  // leave so nothing leaks over.
   React.useEffect(() => {
     const seg = new URLSearchParams(window.location.search).get('seg');
     if (seg) {
       issuesStore.setDetailScope(seg.split(',').filter(Boolean));
     } else {
-      issuesStore.setDetailScope(
-        issuesStore.origins.filter((o): o is string => o !== 'full'),
-      );
+      issuesStore.setDetailScope(issue?.segmentIds ?? []);
       syncScopeToUrl(issuesStore.detailScope);
     }
-    issuesStore.setDetailMatch(issuesStore.match);
-    issuesStore.setDetailLabels(
-      issue
-        ? issuesStore.labels.filter((tg) => issue.journeyLabels.includes(tg))
-        : [],
-    );
+    issuesStore.setDetailMatch('any');
+    issuesStore.setDetailLabels(issue?.journeyLabels ?? []);
     return () => {
       issuesStore.clearDetailScope();
       issuesStore.clearDetailLabels();

@@ -178,10 +178,13 @@ const IssuesPanel = observer(() => {
   const siteId = projectsStore.activeSiteId;
 
   /* This page is reachable without ever opening Issues, so issuesStore may have
-     no `projectId`. Without this the tag manager renders empty AND its writes
-     silently no-op (every mutation guards on `projectId`). */
+     no `projectId`. Without these the tag + critical-rule managers render empty
+     AND their writes silently no-op (every mutation guards on `projectId`). */
   React.useEffect(() => {
-    if (siteId) issuesStore.ensureJourneyTags(String(siteId));
+    if (siteId) {
+      issuesStore.ensureJourneyTags(String(siteId));
+      issuesStore.ensureCriticalDefinitions(String(siteId));
+    }
   }, [siteId]);
 
   return (
