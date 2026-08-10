@@ -1,7 +1,7 @@
 import { TFunction } from 'i18next';
 import { IconNames } from '../components/ui/SVG';
 import React from 'react';
-import { menuHidden } from 'App/utils/split-utils';
+import { agentsEnabled, menuHidden } from 'App/utils/split-utils';
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -104,14 +104,14 @@ export const categories: (t: TFunction) => Category[] = (t) => [
   {
     title: t('Agents'),
     key: 'agents',
-    hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+    hidden: !agentsEnabled(),
     items: [
       {
         label: t('Agents'),
         key: MENU.AGENTS,
         icon: 'scan-pulse',
         tag: { label: t('New'), color: '#394DFE' },
-        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+        hidden: !agentsEnabled(),
         children: [
           { label: t('Issues'), key: MENU.ISSUES },
           { label: t('Tests'), key: MENU.TEST_AGENTS },
@@ -258,7 +258,7 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         label: t('Agents'),
         key: PREFERENCES_MENU.AGENTS,
         icon: 'scan-pulse',
-        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+        hidden: !agentsEnabled(),
       },
     ],
   },
