@@ -22,7 +22,7 @@ import {
   Radar,
   TriangleAlert,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
@@ -60,7 +60,14 @@ import {
   vmToMergeRequest,
   vmToUpdateRequest,
 } from './shared/adapters';
-import { ListTestsParams, RunData, TestCase, TestStatus } from './shared/types';
+import {
+  ListResponse,
+  ListTestsParams,
+  RunData,
+  Test,
+  TestCase,
+  TestStatus,
+} from './shared/types';
 import { kaiUi } from './shared/uiStore';
 import { useQueryParam } from './shared/useUrlState';
 import {
@@ -236,34 +243,41 @@ function TestsTab() {
     if (openKey === key) setOpenKey(null);
   };
 
-  // set when we open an unseen test — its list dot refreshes on CLOSE (see closeDrawer),
-  // not on open, so the list doesn't reload out from under the open drawer
-  const seenRefreshRef = useRef(false);
+  // Stamp seenAt on the opened test's cached rows so its "new" dot clears in place.
+  // We patch the cache instead of refetching the list: a refetch re-runs the query
+  // and re-sorts, which moves the row — this keeps it exactly where it was.
+  const markSeenLocally = (key: string) => {
+    const stamp = new Date().toISOString();
+    queryClient.setQueriesData<ListResponse<Test>>(
+      {
+        queryKey: browserTestsKeys.all(projectId),
+        predicate: (q) => q.queryKey[2] === 'tests',
+      },
+      (old) => {
+        if (!old?.items?.some((it) => it.testId === key && !it.seenAt)) return old;
+        return {
+          ...old,
+          items: old.items.map((it) =>
+            it.testId === key && !it.seenAt ? { ...it, seenAt: stamp } : it,
+          ),
+        };
+      },
+    );
+  };
   const openRow = (tc: TestCase) => {
     setFocusSchedule(false);
     setOpenKey(tc.key, true); // push so Back closes the drawer
-    // opening stamps `seenAt` server-side (GET /tests/{id}), clearing the "new" dot — but
-    // DON'T refetch now; refreshing the list here reloads the open drawer (flicker).
+    // opening stamps seenAt server-side (GET /tests/{id}); mirror it in the cache
+    // locally instead of refetching, so the row keeps its position in the list.
     if (tc.isNew) {
-      seenRefreshRef.current = true;
       apiGetTest(projectId, tc.key).catch(() => {});
+      markSeenLocally(tc.key);
     }
   };
   const closeDrawer = () => {
     setOpenKey(null);
     setFocusSchedule(false);
   };
-  // once the drawer is closed (via the X, the mask, or browser back), if we stamped a
-  // seenAt on open, refresh just the tests list so the "new" dot clears — nothing else.
-  useEffect(() => {
-    if (!openKey && seenRefreshRef.current) {
-      seenRefreshRef.current = false;
-      queryClient.invalidateQueries({
-        queryKey: browserTestsKeys.all(projectId),
-        predicate: (q) => q.queryKey[2] === 'tests',
-      });
-    }
-  }, [openKey, projectId, queryClient]);
   const openSchedule = (tc: TestCase) => {
     setOpenKey(tc.key, true);
     setFocusSchedule(true);
