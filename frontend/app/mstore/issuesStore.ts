@@ -244,6 +244,13 @@ export default class IssuesStore {
   // issues whose full detail (incl. issueDescription) has been fetched
   issueDetailLoaded: Record<string, boolean> = {};
 
+  /* ---- issue player panel (rendered inside the shared RightBlock) ----
+     Held globally so RightBlock can render the panel natively, without the
+     player prop-drilling into it. The player keeps these in sync. */
+  playerIssueId: string | null = null;
+  playerCard: IssueSessionCard | null = null;
+  criticalDialogId: string | null = null;
+
   // ---- example sessions per cache key (issue name + optional search query) ----
   sessions: Record<string, IssueSessionCard[]> = {};
   sessionsTotal: Record<string, number> = {};
@@ -314,6 +321,9 @@ export default class IssuesStore {
     this.issueCache = {};
     this.issueLoading = {};
     this.issueDetailLoaded = {};
+    this.playerIssueId = null;
+    this.playerCard = null;
+    this.criticalDialogId = null;
     this.sessions = {};
     this.sessionsTotal = {};
     this.sessionsLoading = {};
@@ -570,6 +580,26 @@ export default class IssuesStore {
     return Boolean(this.issueLoading[id]);
   }
 
+  // ---- issue player panel (global; read by RightBlock's ISSUE case) ----
+  get playerIssue(): Issue | undefined {
+    return this.playerIssueId ? this.byId(this.playerIssueId) : undefined;
+  }
+  setPlayerPanel = (issueId: string | null, card: IssueSessionCard | null) => {
+    this.playerIssueId = issueId;
+    this.playerCard = card;
+  };
+  clearPlayerPanel = () => {
+    this.playerIssueId = null;
+    this.playerCard = null;
+    this.criticalDialogId = null;
+  };
+  openCriticalDialog = (id: string) => {
+    this.criticalDialogId = id;
+  };
+  closeCriticalDialog = () => {
+    this.criticalDialogId = null;
+  };
+
   // ---- detail example-sessions segment scope (sessions only) ----
   setDetailScope = (ids: string[]) => {
     this.detailScope = ids;
@@ -755,16 +785,18 @@ export default class IssuesStore {
     if (this.notCritical[id] != null) return [];
     return this.rulesFor(id);
   }
-  /** triangle state. Personally critical (mine, red fill) reads straight off the
-      issue's own per-caller `critical` flag — that IS "critical to me". Otherwise
-      a team/author rule flags it (team, red outline) when `criticalBy` has
-      entries. `criticalBy` only drives the descriptions + who in the dialog and
-      the mark/remove actions — never the mine/team decision. */
+  /** triangle state, resolved per caller. `critical` is the gate — is it critical
+      for ME (false once I've muted it). When it is, `criticalBy` attributes it:
+      one of my own definitions matched (a match whose `userId` is mine) reads as
+      MINE (red fill); only teammates'/agent's definitions read as TEAM (red
+      outline, attributed by name in the dialog). */
   critState(id: string): 'none' | 'team' | 'mine' {
     const issue = this.byId(id);
-    if (!issue) return 'none';
-    if (issue.critical) return 'mine';
-    return issue.criticalBy.length > 0 ? 'team' : 'none';
+    if (!issue || !issue.critical) return 'none';
+    const me = String(userStore.account.id);
+    return (issue.criticalBy ?? []).some((m) => String(m.userId) === me)
+      ? 'mine'
+      : 'team';
   }
   /** relevant = one of MY descriptions flagged it, or a segment I own surfaced it */
   isRelevant = (i: Issue): boolean =>

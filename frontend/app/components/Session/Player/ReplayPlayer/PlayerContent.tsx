@@ -13,6 +13,8 @@ interface IProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   session: Session;
+  /** keep the SubHeader tabs but drop its duplicated actions (host has its own header) */
+  minimalSubHeader?: boolean;
 }
 
 function PlayerContent({
@@ -20,6 +22,7 @@ function PlayerContent({
   fullscreen,
   activeTab,
   setActiveTab,
+  minimalSubHeader,
 }: IProps) {
   const { store } = React.useContext(PlayerContext);
 
@@ -85,6 +88,7 @@ function PlayerContent({
             setActiveTab={setActiveTab}
             activeTab={activeTab}
             fullView={fullView}
+            minimalSubHeader={minimalSubHeader}
           />
         </div>
       </div>

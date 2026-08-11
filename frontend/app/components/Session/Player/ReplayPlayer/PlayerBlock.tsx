@@ -9,15 +9,24 @@ import styles from 'Components/Session_/playerBlock.module.css';
 import Player from './PlayerInst';
 
 interface IProps {
-  sessionId: string;
+  // read from the store below, not from props — optional so callers needn't pass them
+  sessionId?: string;
   activeTab: string;
-  jiraConfig: Record<string, any>;
+  jiraConfig?: Record<string, any>;
   fullView?: boolean;
+  /** hosts that carry their own header (e.g. the issue player) keep the SubHeader
+      tabs but drop its duplicated action cluster (share / menu / prev-next) */
+  minimalSubHeader?: boolean;
   setActiveTab: (tab: string) => void;
 }
 
 function PlayerBlock(props: IProps) {
-  const { activeTab, fullView = false, setActiveTab } = props;
+  const {
+    activeTab,
+    fullView = false,
+    minimalSubHeader = false,
+    setActiveTab,
+  } = props;
   const { uiPlayerStore, sessionStore, integrationsStore } = useStore();
   const jiraConfig = integrationsStore.issues.list[0];
   const { sessionId } = sessionStore.current;
@@ -30,6 +39,7 @@ function PlayerBlock(props: IProps) {
           setActiveTab={setActiveTab}
           sessionId={sessionId}
           jiraConfig={jiraConfig}
+          hideActions={minimalSubHeader}
         />
       ) : null}
       <Player

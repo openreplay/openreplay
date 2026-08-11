@@ -1,45 +1,38 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
 
 import { SegmentChip } from '../segments/SegmentScope';
 import {
   CategoryLabel,
-  type CritState,
   CriticalToggle,
   Eyebrow,
   ImpactGauge,
-  type Issue,
-  type IssueSessionCard,
   impactLevel,
 } from '../shared';
 import IssueContextTabs from './IssueContextTabs';
 
-/* The right-hand "Issue" context panel. */
-export default function IssuePanel({
-  issue,
-  card,
-  onClose,
-  critState,
-  onOpenCritical,
-  segmentNames,
-}: {
-  issue: Issue;
-  card?: IssueSessionCard;
-  onClose: () => void;
-  critState: CritState;
-  onOpenCritical: () => void;
-  /** the segments that surfaced this issue — one chip each, [] = full traffic */
-  segmentNames?: string[];
-}) {
+/* The right-hand "Issue" context panel. Rendered inside the shared RightBlock
+   (RightBlock provides the panel chrome — width, border, bg); its issue + session
+   data come from issuesStore, so only the close action is passed by the host. */
+function IssuePanel({ onClose }: { onClose: () => void }) {
+  const { issuesStore } = useStore();
   const { t } = useTranslation();
+  const issue = issuesStore.playerIssue;
+  if (!issue) return null;
+  const card = issuesStore.playerCard ?? undefined;
+  const critState = issuesStore.critState(issue.id);
+  const segmentNames = issue.segmentIds.map(
+    (id) => issuesStore.segmentName(id) ?? id,
+  );
+
   return (
-    <div
-      className="flex flex-col h-full bg-white border-l border-gray-light"
-      style={{ width: 320 }}
-    >
-      <div className="flex items-center justify-between p-3 border-b border-gray-light">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between p-3 border-b">
         <span className="font-medium text-lg">{t('Issue')}</span>
         <Button
           type="text"
@@ -76,7 +69,10 @@ export default function IssuePanel({
               </span>
             </Tooltip>
             <span className="color-gray-light">|</span>
-            <CriticalToggle state={critState} onOpen={onOpenCritical} />
+            <CriticalToggle
+              state={critState}
+              onOpen={() => issuesStore.openCriticalDialog(issue.id)}
+            />
           </div>
         </div>
 
@@ -94,7 +90,7 @@ export default function IssuePanel({
         )}
 
         {/* segments that surfaced this issue */}
-        {segmentNames && segmentNames.length > 0 && (
+        {segmentNames.length > 0 && (
           <div className="flex items-center gap-2 text-sm min-w-0 flex-wrap">
             <span className="color-gray-medium shrink-0">{t('Segments:')}</span>
             {segmentNames.map((name) => (
@@ -108,3 +104,5 @@ export default function IssuePanel({
     </div>
   );
 }
+
+export default observer(IssuePanel);
