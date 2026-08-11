@@ -433,6 +433,7 @@ function TestDrawer({
               type={paused ? 'default' : 'primary'}
               size="small"
               icon={<Play size={13} />}
+              loading={triggerMut.isPending}
               onClick={runNow}
             >
               {t('Run now')}
