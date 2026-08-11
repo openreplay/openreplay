@@ -222,7 +222,9 @@ function SubHeader(props: any) {
       <div className="w-full px-4 flex items-center border-b relative">
         <SessionTabs />
 
-        {!hideTools && (
+        {/* hosts with their own header (e.g. the issue player) hide this
+            duplicated action cluster via `hideActions`, keeping the tabs */}
+        {!hideTools && !props.hideActions && (
           <div
             className={cn(
               'ml-auto text-sm flex items-center color-gray-medium gap-2',

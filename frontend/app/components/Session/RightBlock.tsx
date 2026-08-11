@@ -3,6 +3,7 @@ import EventsBlock from '../Session_/EventsBlock';
 import HighlightPanel from '../Session_/Highlight/HighlightPanel';
 import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
 import UnitStepsModal from '../Session_/UnitStepsModal';
+import IssuePanel from 'Components/SmartAlerts/IssuePlayer/IssuePanel';
 import TagWatch from 'Components/Session/Player/TagWatch';
 import cn from 'classnames';
 
@@ -18,7 +19,9 @@ function RightBlock({
   switch (activeTab) {
     case 'EVENTS':
       return (
-        <div className={cn('flex flex-col border-l', stl.panel)}>
+        // bg-white to match the other panels — without it the events list shows
+        // the dark player backdrop and reads as a different theme
+        <div className={cn('flex flex-col bg-white border-l', stl.panel)}>
           <EventsBlock setActiveTab={setActiveTab} />
         </div>
       );
@@ -44,6 +47,13 @@ function RightBlock({
       return (
         <div className={cn('bg-white border-l', stl.extraPanel)}>
           <UnitStepsModal onClose={() => setActiveTab('EVENTS')} />
+        </div>
+      );
+    case 'ISSUE':
+      // the Smart Issues panel — reads its issue/session from issuesStore
+      return (
+        <div className={cn('flex flex-col bg-white border-l', stl.panel)}>
+          <IssuePanel onClose={() => setActiveTab('')} />
         </div>
       );
     default:

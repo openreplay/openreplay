@@ -26,7 +26,6 @@ import { Loader } from 'UI';
 
 import { makeJourneyCard } from '../factories';
 import { CriticalDialog, PLAYER_OVERLAY_Z, fmtDate } from '../shared';
-import IssuePanel from './IssuePanel';
 import IssuePlayerHeader from './IssuePlayerHeader';
 
 type View = 'activity' | 'issue' | 'highlight' | null;
@@ -80,6 +79,16 @@ function IssuePlayer() {
   React.useEffect(() => {
     if (!card && sessionId) void issuesStore.loadSessionJourney(sessionId);
   }, [card, sessionId]);
+
+  // keep the global panel state in sync so RightBlock's ISSUE case can render it
+  // (recomputed from the stable store refs, not effCard, to avoid a render loop)
+  React.useEffect(() => {
+    issuesStore.setPlayerPanel(
+      issue?.id ?? null,
+      card ?? (fallbackJourney ? makeJourneyCard(fallbackJourney) : null),
+    );
+  }, [issue?.id, card, fallbackJourney]);
+  React.useEffect(() => () => issuesStore.clearPlayerPanel(), []);
 
   React.useEffect(() => {
     if (sessionId) void sessionStore.fetchSessionData(sessionId);
@@ -213,15 +222,22 @@ function IssuePlayer() {
     history.push(
       withSiteId(issue ? smartIssueDetails(idParam) : smartIssues(), siteId),
     );
-  // the triangle opens the shared dialog; it sets nothing itself
+  // the triangle opens the shared dialog (state lives in issuesStore now)
   const critState = issue ? issuesStore.critState(issue.id) : 'none';
-  const [critOpen, setCritOpen] = React.useState(false);
 
+  // the Issue panel is a RightBlock tab now, so 'issue' maps to activeTab 'ISSUE'
   const playerActiveTab =
-    view === 'activity' ? 'EVENTS' : view === 'highlight' ? 'HIGHLIGHT' : '';
+    view === 'activity'
+      ? 'EVENTS'
+      : view === 'highlight'
+        ? 'HIGHLIGHT'
+        : view === 'issue'
+          ? 'ISSUE'
+          : '';
   const setPlayerActiveTab = (tab: string) => {
     if (tab === 'EVENTS') setView('activity');
     else if (tab === 'HIGHLIGHT') setView('highlight');
+    else if (tab === 'ISSUE') setView('issue');
     else if (tab === '') setView(null);
   };
 
@@ -256,7 +272,9 @@ function IssuePlayer() {
             setTab={(t) => setView(t)}
             onBack={back}
             critState={critState}
-            onOpenCritical={() => setCritOpen(true)}
+            onOpenCritical={() =>
+              issue && issuesStore.openCriticalDialog(issue.id)
+            }
             prevId={prevId}
             nextId={nextId}
             onGoSession={goSession}
@@ -271,6 +289,7 @@ function IssuePlayer() {
                   fullscreen={false}
                   activeTab={playerActiveTab}
                   setActiveTab={setPlayerActiveTab}
+                  minimalSubHeader
                 />
               ) : (
                 <div className="flex-1 flex items-center justify-center">
@@ -278,29 +297,16 @@ function IssuePlayer() {
                 </div>
               )}
             </div>
-
-            {view === 'issue' && issue && (
-              <IssuePanel
-                issue={issue}
-                card={effCard}
-                onClose={() => setView(null)}
-                critState={critState}
-                onOpenCritical={() => setCritOpen(true)}
-                // fall back to raw id when name isn't loaded, so scope never
-                // silently reads as full traffic
-                segmentNames={issue.segmentIds.map(
-                  (id) => issuesStore.segmentName(id) ?? id,
-                )}
-              />
-            )}
+            {/* the Issue panel now renders inside PlayerContent's RightBlock
+                (activeTab 'ISSUE'), so it shares the panel chrome natively */}
           </div>
 
           {/* sibling of the header/panel, never nested in a Tooltip (antd Children.only) */}
           {issue && (
             <CriticalDialog
-              issueId={critOpen ? issue.id : null}
+              issueId={issuesStore.criticalDialogId}
               issueHead={issue.head}
-              onClose={() => setCritOpen(false)}
+              onClose={issuesStore.closeCriticalDialog}
             />
           )}
         </div>
