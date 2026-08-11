@@ -31,9 +31,4 @@ RCT_EXTERN_METHOD(networkRequest:(NSString *)url
                            status:(nonnull NSNumber *)status
                          duration:(nonnull NSNumber *)duration)
 
-+ (BOOL)requiresMainQueueSetup
-{
-  return NO;
-}
-
 @end

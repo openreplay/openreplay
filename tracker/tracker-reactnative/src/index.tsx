@@ -66,28 +66,63 @@ const ORTrackerConnector: IORTrackerConnector =
   TurboModuleRegistry.get<IORTrackerConnector>('ORTrackerConnector') ??
   NativeModules.ORTrackerConnector;
 
-const RnTrackerTouchTrackingView =
-  UIManager.getViewManagerConfig('RnTrackerTouchView') != null
-    ? requireNativeComponent<ViewProps>('RnTrackerTouchView')
-    : () => {
-        throw new Error('RnTrackerTouchView; ' + LINKING_ERROR);
-      };
-
-interface ORTrackedInputProps extends TextInputProps {
-  trackingLabel?: string;
+/**
+ * Whether a native view manager is registered.
+ *
+ * `getViewManagerConfig` is the only probe that works on the old architecture,
+ * but on bridgeless it needs the native ViewConfig interop layer
+ * (`useNativeViewConfigsInBridgelessMode`, off by default) and otherwise logs a
+ * soft error and returns `null`. `hasViewManagerConfig` is the bridgeless
+ * answer, but it throws when the component registry global is missing. Try the
+ * bridgeless probe first, fall back to the paper one, and treat a throw from
+ * both as "not registered" rather than letting it escape at import time.
+ */
+function hasNativeComponent(name: string): boolean {
+  try {
+    if (typeof UIManager.hasViewManagerConfig === 'function') {
+      return UIManager.hasViewManagerConfig(name);
+    }
+  } catch {
+    // registry global not installed - fall through to the paper probe
+  }
+  try {
+    return UIManager.getViewManagerConfig(name) != null;
+  } catch {
+    return false;
+  }
 }
 
-const ORTrackedInput =
-  UIManager.getViewManagerConfig('RnTrackedInput') != null
-    ? requireNativeComponent<ORTrackedInputProps>('RnTrackedInput')
-    : () => {
-        throw new Error('RnTrackedInput; ' + LINKING_ERROR);
-      };
+const RnTrackerTouchTrackingView = hasNativeComponent('RnTrackerTouchView')
+  ? requireNativeComponent<ViewProps>('RnTrackerTouchView')
+  : () => {
+      throw new Error('RnTrackerTouchView; ' + LINKING_ERROR);
+    };
 
-const RnSanitizedMarker =
-  UIManager.getViewManagerConfig('RnSanitizedView') != null
-    ? requireNativeComponent<ViewProps>('RnSanitizedView')
-    : null;
+/**
+ * Only `trackingLabel` and `placeholder` reach the native input - it is a plain
+ * `EditText`/`UITextField`, not a `TextInput`, so no other `TextInputProps`
+ * (`value`, `onChangeText`, `secureTextEntry`, ...) are wired up.
+ */
+interface ORTrackedInputProps extends ViewProps {
+  /**
+   * Label reported with the input event.
+   *
+   * Android only - the iOS SDK derives the label from `placeholder`. Set
+   * `placeholder` for a label on both platforms.
+   */
+  trackingLabel?: string;
+  placeholder?: TextInputProps['placeholder'];
+}
+
+const ORTrackedInput = hasNativeComponent('RnTrackedInput')
+  ? requireNativeComponent<ORTrackedInputProps>('RnTrackedInput')
+  : () => {
+      throw new Error('RnTrackedInput; ' + LINKING_ERROR);
+    };
+
+const RnSanitizedMarker = hasNativeComponent('RnSanitizedView')
+  ? requireNativeComponent<ViewProps>('RnSanitizedView')
+  : null;
 
 /**
  * Marks its subtree as sensitive so it gets masked in the replay.
@@ -123,8 +158,16 @@ const ORSanitizedView = React.forwardRef<View, ViewProps>(
 );
 ORSanitizedView.displayName = 'ORSanitizedView';
 
+// Spelled out instead of `StyleSheet.absoluteFillObject`, which RN removed in
+// 0.85 - it silently became `undefined` there, leaving the marker unpositioned.
 const styles = StyleSheet.create({
-  marker: StyleSheet.absoluteFillObject,
+  marker: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
 });
 
 interface ORTrackedViewProps extends ViewProps {
@@ -132,12 +175,11 @@ interface ORTrackedViewProps extends ViewProps {
   viewName: string;
 }
 
-const RnTrackedViewMarker =
-  UIManager.getViewManagerConfig('RnTrackerView') != null
-    ? requireNativeComponent<Omit<ORTrackedViewProps, 'children'>>(
-        'RnTrackerView'
-      )
-    : null;
+const RnTrackedViewMarker = hasNativeComponent('RnTrackerView')
+  ? requireNativeComponent<Omit<ORTrackedViewProps, 'children'>>(
+      'RnTrackerView'
+    )
+  : null;
 
 /**
  * Reports its region to the tracker as a named, observable view.

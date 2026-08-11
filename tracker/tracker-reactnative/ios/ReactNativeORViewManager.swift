@@ -20,29 +20,37 @@ class RnTrackerViewManager: RCTViewManager {
 /// force-sets `userInteractionEnabled = YES` on every paper view it creates, so
 /// opting out of hit testing is the only way to stay transparent to touches.
 class RntrackerView : UIView {
-    var _orViewName: String = ""
-    var _orScreenName: String = ""
-
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         return nil
     }
 
     @objc var viewName: String = "" {
-        didSet {
-            self._orViewName = viewName
-        }
+        didSet { register() }
     }
     @objc var screenName: String = "" {
-        didSet {
-            self._orScreenName = screenName
+        didSet { register() }
+    }
+
+    /// `Analytics` keeps observed views in a strong array with no removal API,
+    /// and props can land either side of the view entering the window, so the
+    /// registration is (re)done on every change and always unwound first.
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+
+        if window != nil {
+            register()
+        } else {
+            unregister()
         }
     }
 
-    override func didMoveToSuperview() {
-        super.didMoveToSuperview()
+    private func register() {
+        guard window != nil, !screenName.isEmpty || !viewName.isEmpty else { return }
+        unregister()
+        Analytics.shared.addObservedView(view: self, screenName: screenName, viewName: viewName)
+    }
 
-        if superview != nil {
-            Analytics.shared.addObservedView(view: self, screenName: self._orScreenName, viewName: self._orViewName)
-        }
+    private func unregister() {
+        Analytics.shared.observedViews.removeAll { $0 === self }
     }
 }

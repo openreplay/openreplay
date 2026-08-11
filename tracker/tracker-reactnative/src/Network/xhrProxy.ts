@@ -16,9 +16,9 @@ import {
 } from './utils';
 import { RequestResponseData } from './types';
 
-export class XHRProxyHandler<T extends XMLHttpRequest>
-  implements ProxyHandler<T>
-{
+export class XHRProxyHandler<
+  T extends XMLHttpRequest,
+> implements ProxyHandler<T> {
   public XMLReq: XMLHttpRequest;
   public item: NetworkMessage;
 

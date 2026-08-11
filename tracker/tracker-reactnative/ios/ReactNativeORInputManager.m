@@ -2,12 +2,8 @@
 
 @interface RCT_EXTERN_MODULE(RnTrackedInputManager, RCTViewManager)
 
-// If your view manager needs to execute methods on the main thread:
-+ (BOOL)requiresMainQueueSetup
-{
-    return NO; // Return YES if the module needs to be initialized on the main thread
-}
-
-// Add any RCT_EXPORT_METHOD() here if your view manager exposes any methods to React Native
+// The iOS SDK derives the input label from `placeholder`, so `trackingLabel`
+// (Android only) is deliberately not exported here - see ORTrackedInputProps.
+RCT_EXPORT_VIEW_PROPERTY(placeholder, NSString)
 
 @end

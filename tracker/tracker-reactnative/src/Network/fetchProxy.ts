@@ -15,9 +15,9 @@ import {
 } from './utils';
 import { RequestResponseData } from './types';
 
-export class ResponseProxyHandler<T extends Response>
-  implements ProxyHandler<T>
-{
+export class ResponseProxyHandler<
+  T extends Response,
+> implements ProxyHandler<T> {
   public resp: Response;
   public item: NetworkMessage;
 
@@ -138,9 +138,9 @@ export class ResponseProxyHandler<T extends Response>
   }
 }
 
-export class FetchProxyHandler<T extends typeof fetch>
-  implements ProxyHandler<T>
-{
+export class FetchProxyHandler<
+  T extends typeof fetch,
+> implements ProxyHandler<T> {
   constructor(
     private readonly ignoredHeaders: boolean | string[],
     private readonly sanitize: (

@@ -12,7 +12,7 @@ export const genResponseByType = (
       if (typeof response === 'string') {
         try {
           result = JSON.parse(response);
-        } catch (e) {
+        } catch {
           // not a JSON string
           result = response.slice(0, 10000);
         }
@@ -136,7 +136,7 @@ export const genGetDataByUrl = (
       const kv = q.split('=');
       try {
         getData[kv[0]] = decodeURIComponent(kv[1]);
-      } catch (e) {
+      } catch {
         // "URIError: URI malformed" will be thrown when `kv[1]` contains "%", so just use raw data
         // @issue #470
         // @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Malformed_URI
@@ -157,7 +157,7 @@ export const genFormattedBody = (body?: BodyInit) => {
     try {
       // '{a:1}' =>
       result = JSON.parse(body);
-    } catch (e) {
+    } catch {
       // 'a=1&b=2' => try to parse as query
       const arr = body.split('&');
       result = {};

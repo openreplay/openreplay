@@ -42,7 +42,6 @@ function ActionButton({
 }
 
 export default function App() {
-  const [inputValue, onChangeInput] = React.useState('');
   const [status, setStatus] = React.useState('Not started');
   const [reproVisible, setReproVisible] = React.useState(false);
 
@@ -200,13 +199,14 @@ export default function App() {
         </Section>
 
         <Section title="Input Tracking">
+          {/*
+            ORTrackedInput is a bare native text field, not a TextInput - it is
+            uncontrolled and only `placeholder` and `trackingLabel` are wired.
+          */}
           <Openreplay.ORTrackedInput
             style={styles.input}
-            onChangeText={onChangeInput}
-            value={inputValue}
             placeholder="Type here (tracked)"
             trackingLabel="Search Field"
-            numberOfLines={1}
           />
         </Section>
 

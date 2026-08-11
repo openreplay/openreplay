@@ -15,7 +15,9 @@ function addPackageToMainApplication(src) {
 module.exports = function configPlugin(config) {
   return withMainApplication(config, (config) => {
     if (config.modResults.contents) {
-      config.modResults.contents = addPackageToMainApplication(config.modResults.contents);
+      config.modResults.contents = addPackageToMainApplication(
+        config.modResults.contents
+      );
     }
     return config;
   });

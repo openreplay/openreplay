@@ -10,23 +10,23 @@
     "build:ios": "cd ios && xcodebuild -workspace ReactNativeExample.xcworkspace -scheme ReactNativeExample -configuration Debug -sdk iphonesimulator -arch arm64 CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
   },
   "dependencies": {
-    "react": "18.3.1",
-    "react-native": "0.76.0",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
     "react-native-dotenv": "^3.4.11"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
     "@babel/runtime": "^7.20.0",
-    "@react-native-community/cli": "15.0.1",
-    "@react-native-community/cli-platform-android": "15.0.1",
-    "@react-native-community/cli-platform-ios": "15.0.1",
-    "@react-native/babel-preset": "0.76.0",
-    "@react-native/metro-config": "0.76.0",
-    "@react-native/typescript-config": "0.76.0",
+    "@react-native-community/cli": "20.1.0",
+    "@react-native-community/cli-platform-android": "20.1.0",
+    "@react-native-community/cli-platform-ios": "20.1.0",
+    "@react-native/babel-preset": "0.85.3",
+    "@react-native/metro-config": "0.85.3",
+    "@react-native/typescript-config": "0.85.3",
     "babel-plugin-module-resolver": "^5.0.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">= 22.11.0"
   }
 }
