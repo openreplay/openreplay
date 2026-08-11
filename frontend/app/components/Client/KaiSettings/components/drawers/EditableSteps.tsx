@@ -78,12 +78,15 @@ function DecisionButtons({
   const base =
     'shrink-0 w-6 h-6 rounded flex items-center justify-center transition-colors';
   const selected = 'bg-white text-gray-darkest border shadow-sm';
-  const idle = 'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest';
+  const idle =
+    'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest';
   return (
     <>
       <Tooltip
         title={
-          decision === 'accepted' ? t('Accepted — undo') : t('Accept suggestion')
+          decision === 'accepted'
+            ? t('Accepted — undo')
+            : t('Accept suggestion')
         }
       >
         <button
@@ -103,7 +106,9 @@ function DecisionButtons({
       </Tooltip>
       <Tooltip
         title={
-          decision === 'rejected' ? t('Rejected — undo') : t('Reject suggestion')
+          decision === 'rejected'
+            ? t('Rejected — undo')
+            : t('Reject suggestion')
         }
       >
         <button
@@ -249,10 +254,10 @@ function Gap({
       />
       <div
         className={`relative z-10 flex items-center gap-1 rounded-full bg-main text-[#fff] shadow-sm ${reveal} ${
-          label ? 'pl-1 pr-2 py-0.5' : 'p-1'
+          label ? 'pl-1 pr-2 py-0.5' : 'p-0.5'
         }`}
       >
-        <Plus size={13} />
+        <Plus size={12} />
         {label && <span className="text-xs font-medium">{label}</span>}
       </div>
     </div>
@@ -509,12 +514,14 @@ function StepRow({
               />
             ) : (
               <>
-                {historyEntries && historyEntries.length > 0 && onRestoreText && (
-                  <StepHistory
-                    entries={historyEntries}
-                    onRestore={(text) => onRestoreText(idx, text)}
-                  />
-                )}
+                {historyEntries &&
+                  historyEntries.length > 0 &&
+                  onRestoreText && (
+                    <StepHistory
+                      entries={historyEntries}
+                      onRestore={(text) => onRestoreText(idx, text)}
+                    />
+                  )}
                 <Tooltip
                   title={
                     isGroup
@@ -524,7 +531,9 @@ function StepRow({
                 >
                   <button
                     type="button"
-                    aria-label={isGroup ? t('Remove group label') : t('Delete step')}
+                    aria-label={
+                      isGroup ? t('Remove group label') : t('Delete step')
+                    }
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemove(idx);
@@ -866,8 +875,7 @@ function EditableSteps({
         >
           {items.map((item, idx) => {
             const isGroupRow = item.kind === 'group';
-            const number =
-              isGroupRow || isStruck(item) ? null : (liveNo += 1);
+            const number = isGroupRow || isStruck(item) ? null : (liveNo += 1);
             const count = isGroupRow ? (groupCounts.get(idx) ?? 0) : 0;
             // rows of a collapsed group (or of any group while a group is dragged) stay
             // mounted at 0 height — indices / numbering / drop-gap math never notice, and
@@ -947,11 +955,21 @@ function EditableSteps({
       {onSave && (
         <div className="flex items-center justify-end gap-2 mt-4">
           {onCancel && (
-            <Button size="small" type="text" onClick={onCancel} disabled={!dirty}>
+            <Button
+              size="small"
+              type="text"
+              onClick={onCancel}
+              disabled={!dirty}
+            >
               {t('Cancel')}
             </Button>
           )}
-          <Button size="small" type="primary" onClick={onSave} disabled={!dirty}>
+          <Button
+            size="small"
+            type="primary"
+            onClick={onSave}
+            disabled={!dirty}
+          >
             {t('Save steps')}
           </Button>
         </div>

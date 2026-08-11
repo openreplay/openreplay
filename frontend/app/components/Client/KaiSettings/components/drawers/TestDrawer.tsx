@@ -50,7 +50,10 @@ import RunSettingsFields, { RunSettings } from './RunSettingsFields';
 const LOOKUP_LIMIT = 100;
 
 const versionDate = (ts: number): string =>
-  new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  new Date(ts).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  });
 
 interface Props {
   test: TestCase | null;
@@ -263,7 +266,10 @@ function TestDrawer({
         prev &&
         prev.map((it, i) =>
           i === idx
-            ? { ...it, decision: it.decision === decision ? undefined : decision }
+            ? {
+                ...it,
+                decision: it.decision === decision ? undefined : decision,
+              }
             : it,
         ),
     );
@@ -392,14 +398,14 @@ function TestDrawer({
             : revision && pauseOnRevision
               ? `${t('Test')} · ${t('Needs review')}`
               : `${t('Test')} · ${
-                paused
-                  ? t('Paused')
-                  : test.status === 'approved'
-                    ? t('Approved')
-                    : t('Active')
-              }${version > 1 ? ` · v${version}` : ''}${
-                revision ? ` · ${t('Needs review')}` : ''
-              }`
+                  paused
+                    ? t('Paused')
+                    : test.status === 'approved'
+                      ? t('Approved')
+                      : t('Active')
+                }${version > 1 ? ` · v${version}` : ''}${
+                  revision ? ` · ${t('Needs review')}` : ''
+                }`
       }
       headerActions={
         creating ? undefined : merge ? (
@@ -413,7 +419,9 @@ function TestDrawer({
           </Tooltip>
         ) : revision && pauseOnRevision ? (
           // pause-on-revision is ON: nothing runs until the review is done
-          <Tooltip title={t('Runs are paused until the new version is reviewed.')}>
+          <Tooltip
+            title={t('Runs are paused until the new version is reviewed.')}
+          >
             <Button size="small" disabled icon={<Play size={13} />}>
               {t('Run now')}
             </Button>
@@ -459,7 +467,11 @@ function TestDrawer({
             <Button type="text" onClick={onClose}>
               {t('Discard')}
             </Button>
-            <Button type="primary" icon={<Check size={15} />} onClick={onCreate}>
+            <Button
+              type="primary"
+              icon={<Check size={15} />}
+              onClick={onCreate}
+            >
               {t('Create test')}
             </Button>
           </div>
@@ -510,10 +522,7 @@ function TestDrawer({
       {/* side-effect tests touch real data (orders / accounts / payments) when they run —
           the runner flags this so nobody triggers one without knowing */}
       {test.hasSideEffects && (
-        <div
-          className="flex items-start gap-2 mb-4 px-3 py-2 rounded text-sm text-orange-dark"
-          style={{ backgroundColor: 'var(--color-orange-lightest, #fff7ed)' }}
-        >
+        <div className="flex items-start gap-2 mb-4 px-3 py-2 rounded text-sm bg-warning-surface text-warning-text">
           <TriangleAlert size={16} className="shrink-0 mt-0.5" />
           <span>
             {t(
@@ -630,7 +639,9 @@ function TestDrawer({
         title={t('Tags')}
         className="py-3!"
         action={
-          <span className="text-sm text-disabled-text">{t('Up to 3 tags')}</span>
+          <span className="text-sm text-disabled-text">
+            {t('Up to 3 tags')}
+          </span>
         }
       >
         <TagEditor

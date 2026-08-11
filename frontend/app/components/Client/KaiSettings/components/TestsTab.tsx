@@ -580,7 +580,7 @@ function TestsTab() {
                 'Has side effects — running this test affects real data (orders / accounts / payments).',
               )}
             >
-              <span className="shrink-0 flex items-center text-orange-dark">
+              <span className="shrink-0 flex items-center text-warning-text">
                 <TriangleAlert size={14} />
               </span>
             </Tooltip>
