@@ -278,17 +278,16 @@ paths:
       summary: Update a test
       description: |
         Partial update — send only the fields to change. **Updatable fields
-        only**: `name`, `status`, `tags`, `environments`, `cron`, `config` (incl.
-        its validated `resolutions`/`regions` keys). Everything else (`scenario`,
-        `steps`, `expectedResult`, `timeoutSecs`, model overrides) is create-time
-        only; unknown keys are ignored. Settable `status` transitions are
-        `draft` → `approved` / `rejected` and the `active` ⇄ `paused`
-        pause/resume toggle (same-status no-op allowed; anything else → `400`).
-        `active` is otherwise runner-promoted from `approved` and not settable
-        from other states here. `needsReview` may be **cleared** here (send
-        `false`) — see that field. Content fields
-        (`scenario`/`steps`/`expectedResult`) only ever change via version
-        activation — see `POST .../versions/{versionId}/activate`.
+        only**: `name`, `status`, `tags`, `environments`, `cron`, `steps`,
+        `config` (incl. its validated `resolutions`/`regions` keys). The
+        remaining content fields (`scenario`, `expectedResult`, `timeoutSecs`,
+        model overrides) are create-time only; unknown keys are ignored.
+        Settable `status` transitions are `draft` → `approved` / `rejected` and
+        the `active` ⇄ `paused` pause/resume toggle (same-status no-op allowed;
+        anything else → `400`). `active` is otherwise runner-promoted from
+        `approved` and not settable from other states here. `needsReview` may be
+        **cleared** here (send `false`) — see that field. An agent-proposed
+        version is still adopted via `POST .../versions/{versionId}/activate`.
       operationId: updateTest
       requestBody:
         required: true
@@ -1376,6 +1375,11 @@ components:
           description: Full replacement array; omit to leave unchanged.
           items: { type: string, format: uuid }
         cron: { type: string, nullable: true }
+        steps:
+          type: array
+          description: >-
+            Full replacement of the test's step list; omit to leave unchanged.
+          items: { type: string }
         config:
           type: object
           additionalProperties: true
