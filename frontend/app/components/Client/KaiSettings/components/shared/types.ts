@@ -160,6 +160,8 @@ export interface TestUpdateRequest {
   tags?: string[];
   environments?: string[];
   cron?: string | null;
+  /** The edited step list — replaces the test's steps. */
+  steps?: string[];
   /** Send the full object to replace it. */
   config?: Record<string, unknown>;
   /** Escape hatch: send `false` to clear a runner-owned review block with no

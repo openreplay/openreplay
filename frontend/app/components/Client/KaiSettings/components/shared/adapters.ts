@@ -169,6 +169,10 @@ export function vmToUpdateRequest(
     // no schedule → clear the cron with an empty string (not null) so unscheduling sticks
     cron: scheduleToCron(vm.schedule) ?? '',
     environments: vm.environments,
+    // full replacement of the step list, same shape create sends (`string[]`).
+    // The VM always carries current steps (the list returns them too), so sending
+    // it on any update is a no-op unless the steps actually changed.
+    steps: vm.steps,
     config: withMatrixConfig(vm),
     ...(status ? { status } : {}),
   };
