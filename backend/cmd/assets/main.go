@@ -140,7 +140,6 @@ func main() {
 			}
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
-			assetMetrics.IncreaseProcessesSessions()
 		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)
 			if err != nil {
@@ -198,7 +197,9 @@ func main() {
 		default:
 			if !cacher.CanCache() {
 				// TODO: replace with a signal from the pool when a slot frees up.
+				pauseStart := time.Now()
 				time.Sleep(time.Millisecond)
+				assetMetrics.IncreaseConsumePausedTime(time.Since(pauseStart).Seconds())
 				continue
 			}
 			if err := msgConsumer.ConsumeNext(); err != nil {

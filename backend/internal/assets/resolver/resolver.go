@@ -26,15 +26,21 @@ type entry struct {
 	exp  time.Time
 }
 
+const (
+	ResolveHit   = "hit"
+	ResolveMiss  = "miss"
+	ResolveError = "error"
+)
+
 type Resolver struct {
 	log      logger.Logger
 	rdb      *redis.Client // nil -> local-only mode
-	onLookup func(hit bool)
+	onLookup func(result string)
 	mu       sync.RWMutex
 	m        map[string]entry
 }
 
-func New(log logger.Logger, connectionURL string, onLookup func(hit bool)) (*Resolver, error) {
+func New(log logger.Logger, connectionURL string, onLookup func(result string)) (*Resolver, error) {
 	r := &Resolver{
 		log:      log,
 		onLookup: onLookup,
@@ -58,23 +64,26 @@ func (r *Resolver) positiveTTL() time.Duration {
 }
 
 func (r *Resolver) Lookup(fullURL string) (string, bool) {
-	hash, ok := r.lookup(fullURL)
+	hash, result := r.lookup(fullURL)
 	if r.onLookup != nil {
-		r.onLookup(ok)
+		r.onLookup(result)
 	}
-	return hash, ok
+	return hash, result == ResolveHit
 }
 
-func (r *Resolver) lookup(fullURL string) (string, bool) {
+func (r *Resolver) lookup(fullURL string) (string, string) {
 	now := time.Now()
 	r.mu.RLock()
 	e, found := r.m[fullURL]
 	r.mu.RUnlock()
 	if found && now.Before(e.exp) {
-		return e.hash, e.ok
+		if e.ok {
+			return e.hash, ResolveHit
+		}
+		return "", ResolveMiss
 	}
 	if r.rdb == nil {
-		return "", false
+		return "", ResolveMiss
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), opTimeout)
@@ -83,14 +92,14 @@ func (r *Resolver) lookup(fullURL string) (string, bool) {
 	switch {
 	case err == nil:
 		r.store(fullURL, entry{hash: hash, ok: true, exp: now.Add(positiveTTL)})
-		return hash, true
+		return hash, ResolveHit
 	case err == redis.Nil:
 		r.store(fullURL, entry{exp: now.Add(negativeTTL)})
-		return "", false
+		return "", ResolveMiss
 	default:
 		r.store(fullURL, entry{exp: now.Add(negativeTTL)})
 		r.log.Warn(context.Background(), "assets resolver lookup failed: %s", err)
-		return "", false
+		return "", ResolveError
 	}
 }
 

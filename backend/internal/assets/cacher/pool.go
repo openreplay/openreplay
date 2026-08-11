@@ -31,6 +31,10 @@ func (p *WorkerPool) CanAddTask() bool {
 	return false
 }
 
+func (p *WorkerPool) QueueLen() int {
+	return len(p.tasks)
+}
+
 type Job func(task *Task)
 
 func NewPool(size, queueSize int, job Job) *WorkerPool {
