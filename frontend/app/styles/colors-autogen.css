@@ -58,6 +58,8 @@
 .fill-disabled-text { fill: var(--color-disabled-text) }
 .fill-indigo-lightest { fill: var(--color-indigo-lightest) }
 .fill-indigo { fill: var(--color-indigo) }
+.fill-warning-surface { fill: var(--color-warning-surface) }
+.fill-warning-text { fill: var(--color-warning-text) }
 .fill-figmaColors-accent-secondary { fill: var(--color-figmaColors-accent-secondary) }
 .fill-figmaColors-main { fill: var(--color-figmaColors-main) }
 .fill-figmaColors-primary-outlined-hover-background { fill: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -124,6 +126,8 @@
 .hover-fill-disabled-text:hover svg { fill: var(--color-disabled-text) }
 .hover-fill-indigo-lightest:hover svg { fill: var(--color-indigo-lightest) }
 .hover-fill-indigo:hover svg { fill: var(--color-indigo) }
+.hover-fill-warning-surface:hover svg { fill: var(--color-warning-surface) }
+.hover-fill-warning-text:hover svg { fill: var(--color-warning-text) }
 .hover-fill-figmaColors-accent-secondary:hover svg { fill: var(--color-figmaColors-accent-secondary) }
 .hover-fill-figmaColors-main:hover svg { fill: var(--color-figmaColors-main) }
 .hover-fill-figmaColors-primary-outlined-hover-background:hover svg { fill: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -192,6 +196,8 @@
 .color-disabled-text { color: var(--color-disabled-text) }
 .color-indigo-lightest { color: var(--color-indigo-lightest) }
 .color-indigo { color: var(--color-indigo) }
+.color-warning-surface { color: var(--color-warning-surface) }
+.color-warning-text { color: var(--color-warning-text) }
 .color-figmaColors-accent-secondary { color: var(--color-figmaColors-accent-secondary) }
 .color-figmaColors-main { color: var(--color-figmaColors-main) }
 .color-figmaColors-primary-outlined-hover-background { color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -260,6 +266,8 @@
 .hover-disabled-text:hover { color: var(--color-disabled-text) }
 .hover-indigo-lightest:hover { color: var(--color-indigo-lightest) }
 .hover-indigo:hover { color: var(--color-indigo) }
+.hover-warning-surface:hover { color: var(--color-warning-surface) }
+.hover-warning-text:hover { color: var(--color-warning-text) }
 .hover-figmaColors-accent-secondary:hover { color: var(--color-figmaColors-accent-secondary) }
 .hover-figmaColors-main:hover { color: var(--color-figmaColors-main) }
 .hover-figmaColors-primary-outlined-hover-background:hover { color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -328,6 +336,8 @@
 .border-disabled-text { border-color: var(--color-disabled-text) }
 .border-indigo-lightest { border-color: var(--color-indigo-lightest) }
 .border-indigo { border-color: var(--color-indigo) }
+.border-warning-surface { border-color: var(--color-warning-surface) }
+.border-warning-text { border-color: var(--color-warning-text) }
 .border-figmaColors-accent-secondary { border-color: var(--color-figmaColors-accent-secondary) }
 .border-figmaColors-main { border-color: var(--color-figmaColors-main) }
 .border-figmaColors-primary-outlined-hover-background { border-color: var(--color-figmaColors-primary-outlined-hover-background) }
@@ -396,6 +406,8 @@
 .bg-disabled-text { background-color: var(--color-disabled-text) }
 .bg-indigo-lightest { background-color: var(--color-indigo-lightest) }
 .bg-indigo { background-color: var(--color-indigo) }
+.bg-warning-surface { background-color: var(--color-warning-surface) }
+.bg-warning-text { background-color: var(--color-warning-text) }
 .bg-figmaColors-accent-secondary { background-color: var(--color-figmaColors-accent-secondary) }
 .bg-figmaColors-main { background-color: var(--color-figmaColors-main) }
 .bg-figmaColors-primary-outlined-hover-background { background-color: var(--color-figmaColors-primary-outlined-hover-background) }
