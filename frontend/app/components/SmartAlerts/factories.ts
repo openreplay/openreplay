@@ -89,6 +89,12 @@ export function makeIssueSessionCard(s: RawIssueSession): IssueSessionCard {
     events: s.eventsCount ?? 0,
     // the session metadata bag is free-form; "plan" may or may not be present
     plan: (s.metadata && (s.metadata as any).plan) ?? '',
+    // every metadata field as a label/value pair, blanks dropped
+    metadata: s.metadata
+      ? Object.entries(s.metadata)
+          .filter(([, v]) => v != null && v !== '')
+          .map(([label, value]) => ({ label, value: String(value) }))
+      : [],
     journey: s.journey ?? '',
     // /search returns journeyLabels as plain strings; tolerate { name } too
     tags: (s.journeyLabels ?? [])
@@ -126,6 +132,7 @@ export function makeJourneyCard(j: SessionJourney): IssueSessionCard {
     dur: '',
     events: 0,
     plan: '',
+    metadata: [],
     journey: j.journey ?? '',
     tags: j.journeyLabels ?? [],
     variation: j.journeySummary || j.journey || '',

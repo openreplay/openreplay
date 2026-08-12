@@ -61,6 +61,8 @@ export interface IssueSessionCard {
   device: string;
   events: number;
   plan: string;
+  /** all session metadata as label/value pairs (for the folding details row) */
+  metadata: { label: string; value: string }[];
   tags: string[];
   journey: string;
   /** short headline of this session's variation of the issue */
