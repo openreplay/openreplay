@@ -55,7 +55,7 @@ func main() {
 	})
 
 	projManager := projects.New(log, pgConn, redisClient, dbMetric)
-	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric, sessions.DoNotIgnoreInactiveProjects)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric, sessions.IgnoreInactiveProjects)
 
 	sessionEndGenerator, err := ender.New(log, enderMetric, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {

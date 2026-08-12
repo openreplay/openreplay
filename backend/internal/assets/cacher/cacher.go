@@ -1,6 +1,8 @@
 package cacher
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -17,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"openreplay/backend/internal/assets/resolver"
 	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/logger"
 	metrics "openreplay/backend/pkg/metrics/assets"
@@ -47,13 +50,17 @@ type cacher struct {
 	workers        *WorkerPool
 	scheduler      *scheduler
 	hosts          *hostLimiter
+	hashKeys       bool
+	resolver       *resolver.Resolver
+	gzipAssets     bool
+	samplerDone    chan struct{}
 }
 
 func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets) (*cacher, error) {
+func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.ObjectStorage, metrics metrics.Assets, urlResolver *resolver.Resolver) (*cacher, error) {
 	switch {
 	case cfg == nil:
 		return nil, errors.New("config is nil")
@@ -61,7 +68,11 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		return nil, errors.New("object storage is nil")
 	}
 
-	rewriter, err := assets.NewRewriter(cfg.AssetsOrigin)
+	var rewriterResolver assets.Resolver
+	if urlResolver != nil {
+		rewriterResolver = urlResolver
+	}
+	rewriter, err := assets.NewRewriterWithScheme(cfg.AssetsOrigin, cfg.KeyScheme, rewriterResolver)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't create rewriter")
 	}
@@ -125,12 +136,30 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		requestHeaders: cfg.AssetsRequestHeaders,
 		metrics:        metrics,
 		hosts:          newHostLimiter(cfg.AssetsPerHostLimit),
+		hashKeys:       cfg.KeyScheme == assets.KeySchemeHash,
+		resolver:       urlResolver,
+		gzipAssets:     cfg.AssetsCompression == config.CompressionGzip,
 	}
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
 	c.scheduler = newScheduler(cfg.AssetsRetryHeapLimit, c.workers.tryAddTask, func(n int) {
 		c.metrics.RecordRetryQueueSize(float64(n))
 	})
+	c.samplerDone = make(chan struct{})
+	go c.samplePoolQueue()
 	return c, nil
+}
+
+func (c *cacher) samplePoolQueue() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-c.samplerDone:
+			return
+		case <-ticker.C:
+			c.metrics.RecordPoolQueueSize(float64(c.workers.QueueLen()))
+		}
+	}
 }
 
 func (c *cacher) CacheFile(task *Task) {
@@ -149,6 +178,8 @@ func (c *cacher) cacheURL(t *Task) {
 
 	crTime := c.objStorage.GetCreationTime(t.cachePath)
 	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) {
+		c.metrics.IncreaseTasks(metrics.TaskFreshSkip)
+		c.timeoutMap.addFor(t.cachePath, time.Until(crTime.Add(MAX_STORAGE_TIME)))
 		return
 	}
 	start := time.Now()
@@ -179,6 +210,7 @@ func (c *cacher) cacheURL(t *Task) {
 		c.retry(ctx, t, 0, "read_body", err)
 		return
 	}
+	c.metrics.RecordDownloadBytes(float64(len(data)))
 	if len(data) > c.sizeLimit {
 		c.permanent(ctx, t, "size_exceeded", errors.New("maximum size exceeded"))
 		return
@@ -198,22 +230,52 @@ func (c *cacher) cacheURL(t *Task) {
 
 	isCSS := strings.HasPrefix(contentType, "text/css")
 
-	strData := string(data)
+	uploadBody := data
 	var cssURLs []string
 	if isCSS {
-		strData, cssURLs = c.rewriter.RewriteCSSAndExtract(t.sessionID, t.requestURL, strData)
+		var rewritten string
+		rewritten, cssURLs = c.rewriter.RewriteCSSAndExtract(t.sessionID, t.requestURL, string(data))
+		uploadBody = []byte(rewritten)
 	}
 
-	// TODO: implement in streams
-	start = time.Now()
-	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression)
-	if err != nil {
-		c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
-		c.retry(ctx, t, 0, "upload", err)
-		return
+	compression := objectstorage.NoCompression
+	encoding := "identity"
+	if shouldCompress(c.gzipAssets, contentType, contentEncoding, t.isJS) {
+		if gzipped, err := gzipBytes(uploadBody); err == nil {
+			uploadBody = gzipped
+			compression = objectstorage.Gzip
+			encoding = "gzip"
+		} else {
+			c.log.Warn(ctx, "asset gzip failed, storing uncompressed: %s", err)
+		}
 	}
-	c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), false)
-	c.metrics.IncreaseSavedSessions()
+
+	start = time.Now()
+	puts := 1
+	if c.hashKeys && !t.isJS {
+		puts = 2
+		hash := assets.HashBody(data)
+		contentPath := assets.GetCachePathWithHash(t.requestURL, hash)
+		if err := c.objStorage.Upload(bytes.NewReader(uploadBody), contentPath, contentType, contentEncoding, compression); err != nil {
+			c.retry(ctx, t, 0, "upload", err)
+			return
+		}
+		if err := c.objStorage.Upload(bytes.NewReader(uploadBody), t.cachePath, contentType, contentEncoding, compression); err != nil {
+			c.retry(ctx, t, 0, "upload", err)
+			return
+		}
+		if c.resolver != nil {
+			c.resolver.Set(t.requestURL, hash)
+		}
+	} else {
+		if err := c.objStorage.Upload(bytes.NewReader(uploadBody), t.cachePath, contentType, contentEncoding, compression); err != nil {
+			c.retry(ctx, t, 0, "upload", err)
+			return
+		}
+	}
+	c.metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()))
+	c.metrics.RecordStoredBytes(float64(len(uploadBody)*puts), encoding)
+	c.metrics.IncreaseTasks(metrics.TaskUploaded)
 
 	if isCSS {
 		if t.depth > 0 {
@@ -243,6 +305,7 @@ func (c *cacher) retry(ctx context.Context, t *Task, explicitDelay time.Duration
 		// final try: drop, record, and evict the dedup entry so a future asset can re-trigger the download.
 		c.timeoutMap.addFor(t.cachePath, c.failureTTL)
 		c.metrics.IncreaseTerminalFailures(reason)
+		c.metrics.IncreaseTasks(metrics.TaskTerminal)
 		c.log.Error(ctx, "Error while caching (terminal, attempts=%d, reason=%s): %s", t.attempt, reason, errors.Wrap(cause, t.urlContext))
 		return
 	}
@@ -251,23 +314,28 @@ func (c *cacher) retry(ctx context.Context, t *Task, explicitDelay time.Duration
 		delay = c.backoff(t.attempt)
 	}
 	if c.scheduler.schedule(t, time.Now().Add(delay)) {
-		c.metrics.IncreaseRetries()
+		c.metrics.IncreaseRetries(reason)
 	} else {
 		// retry heap is full: shed load (the entry stays deduped for now)
 		c.metrics.IncreaseTerminalFailures("retry_queue_full")
+		c.metrics.IncreaseTasks(metrics.TaskDropped)
 		c.log.Warn(ctx, "retry queue full, dropping asset: %s", errors.Wrap(cause, t.urlContext))
 	}
 }
 
 func (c *cacher) permanent(ctx context.Context, t *Task, reason string, cause error) {
 	c.metrics.IncreaseTerminalFailures(reason)
+	c.metrics.IncreaseTasks(metrics.TaskTerminal)
 	c.log.Error(ctx, "Error while caching (permanent, reason=%s): %s", reason, errors.Wrap(cause, t.urlContext))
 }
 
 func (c *cacher) scheduleThrottle(ctx context.Context, t *Task) {
 	delay := hostDeferDelay + time.Duration(rand.Int63n(int64(hostDeferDelay)))
-	if !c.scheduler.schedule(t, time.Now().Add(delay)) {
+	if c.scheduler.schedule(t, time.Now().Add(delay)) {
+		c.metrics.IncreaseThrottled()
+	} else {
 		c.metrics.IncreaseTerminalFailures("throttle_queue_full")
+		c.metrics.IncreaseTasks(metrics.TaskDropped)
 		c.log.Warn(ctx, "retry queue full, dropping throttled asset: %s", t.urlContext)
 	}
 }
@@ -327,6 +395,29 @@ func parseRetryAfter(h string) (time.Duration, bool) {
 	return 0, false
 }
 
+func shouldCompress(gzipEnabled bool, contentType, contentEncoding string, isJS bool) bool {
+	return gzipEnabled && !isJS && contentEncoding == "" && isCompressibleType(contentType)
+}
+
+func isCompressibleType(contentType string) bool {
+	return strings.HasPrefix(contentType, "text/") ||
+		strings.HasPrefix(contentType, "application/javascript") ||
+		strings.HasPrefix(contentType, "application/json") ||
+		strings.HasPrefix(contentType, "image/svg")
+}
+
+func gzipBytes(data []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := zw.Write(data); err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 func hostOf(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -344,9 +435,10 @@ func (c *cacher) checkTask(newTask *Task, blocking bool) {
 	if newTask.isJS {
 		cachePath = assets.GetCachePathForJS(newTask.requestURL)
 	} else {
-		cachePath = assets.GetCachePathForAssets(newTask.sessionID, newTask.requestURL)
+		cachePath = c.rewriter.CachePathForAssets(newTask.sessionID, newTask.requestURL)
 	}
 	if !c.timeoutMap.claim(cachePath) {
+		c.metrics.IncreaseTasks(metrics.TaskDedupSkip)
 		return
 	}
 	newTask.cachePath = cachePath
@@ -357,6 +449,7 @@ func (c *cacher) checkTask(newTask *Task, blocking bool) {
 	}
 	if !c.workers.tryAddTask(newTask) {
 		c.timeoutMap.delete(cachePath)
+		c.metrics.IncreaseTasks(metrics.TaskDropped)
 		ctx := context.WithValue(context.Background(), "sessionID", newTask.sessionID)
 		c.log.Warn(ctx, "cacher queue full, dropping asset task: %s", newTask.requestURL)
 	}
@@ -387,6 +480,7 @@ func (c *cacher) UpdateTimeouts() {
 }
 
 func (c *cacher) Stop() {
+	close(c.samplerDone)
 	c.scheduler.stop()
 	c.workers.Stop()
 }
