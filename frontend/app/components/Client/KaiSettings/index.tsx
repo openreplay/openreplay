@@ -1,7 +1,7 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Tabs, Tooltip } from 'antd';
-import { Album, Info, Settings as SettingsIcon } from 'lucide-react';
+import { Button } from 'antd';
+import { Album, Settings as SettingsIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,8 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
 
-import SiteDropdown from 'Shared/SiteDropdown';
-
+import PreferencesPage from '../PreferencesPage';
 import RunsTab from './components/RunsTab';
 import SettingsTab from './components/SettingsTab';
 import TestsTab from './components/TestsTab';
@@ -70,30 +69,18 @@ function KaiSettings() {
 
   return (
     <BrowserTestsProjectProvider value={siteId}>
-      <div className="bg-white rounded-lg border shadow-xs overflow-hidden">
-        {/* header — title + info, project selector + docs (mirrors the app's list pages) */}
-        <div className="flex items-center justify-between border-b px-4 py-2">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-lg">{t('Test Agents')}</span>
-            <Tooltip
-              placement="bottom"
-              title={t(
-                'End-to-end tests our agents write and maintain from your real user journeys. Review a draft, approve it, and schedule it — the agent runs it and reports every regression here.',
-              )}
-            >
-              <span
-                className="flex items-center cursor-help"
-                style={{ color: 'var(--color-gray-medium)' }}
-              >
-                <Info size={15} />
-              </span>
-            </Tooltip>
-          </div>
-          <div className="flex items-center gap-2">
+      <PreferencesPage
+        title={t('Test Agents')}
+        help={t(
+          'End-to-end tests our agents write and maintain from your real user journeys. Review a draft, approve it, and schedule it — the agent runs it and reports every regression here.',
+        )}
+        actions={
+          <>
             {/* shortcut to the shared agent preferences (Mehdi 07-27):
                 notifications + behaviour live there, not on this page */}
             <Button
               type="text"
+              size="small"
               icon={<SettingsIcon size={14} />}
               onClick={() => history.push('/client/agents?agent=tests')}
             >
@@ -104,19 +91,16 @@ function KaiSettings() {
               target="_blank"
               rel="noreferrer"
             >
-              <Button type="text" icon={<Album size={14} />}>
+              <Button type="text" size="small" icon={<Album size={14} />}>
                 {t('Docs')}
               </Button>
             </a>
-          </div>
-        </div>
-        <Tabs
-          activeKey={activeTab}
-          onChange={(k) => kaiUi.setActiveTab(k as KaiTab)}
-          items={tabItems}
-          tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
-        />
-      </div>
+          </>
+        }
+        tabs={tabItems}
+        activeTab={activeTab}
+        onTabChange={(k) => kaiUi.setActiveTab(k as KaiTab)}
+      />
     </BrowserTestsProjectProvider>
   );
 }

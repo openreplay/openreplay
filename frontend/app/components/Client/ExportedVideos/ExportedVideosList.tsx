@@ -6,11 +6,12 @@ import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import { session } from 'App/routes';
-import { Loader, NoContent, PageTitle, Pagination } from 'UI';
+import { Loader, NoContent, Pagination } from 'UI';
 
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import SiteDropdown from 'Shared/SiteDropdown';
 
+import PreferencesPage from '../PreferencesPage';
 import ExportedVideo from './ExportedVideoRow';
 
 function ExportedVideosList() {
@@ -54,18 +55,21 @@ function ExportedVideosList() {
     await recordingsStore.getRecordings();
   };
   return (
-    <div className="bg-white rounded-lg  border shadow-xs">
-      <div className="flex items-center gap-4 p-4">
-        <PageTitle title={t('Exported Videos')} />
-        <ReloadButton
-          label="Reload"
-          onClick={onRefresh}
-          loading={loading}
-          buttonSize="middle"
-        />
-        <div className="ml-auto" />
-        <SiteDropdown value={siteId} onChange={onSiteChange} />
-      </div>
+    <PreferencesPage
+      title={t('Exported Videos')}
+      flush
+      actions={
+        <>
+          <ReloadButton
+            label="Reload"
+            onClick={onRefresh}
+            loading={loading}
+            buttonSize="small"
+          />
+          <SiteDropdown value={siteId} onChange={onSiteChange} size="small" />
+        </>
+      }
+    >
       <div className="grid grid-cols-12 py-2 px-4 font-medium">
         <div className="col-span-3">{t('Session')}</div>
         <div className="col-span-3">{t('Date')}</div>
@@ -107,7 +111,7 @@ function ExportedVideosList() {
           </div>
         </NoContent>
       </Loader>
-    </div>
+    </PreferencesPage>
   );
 }
 

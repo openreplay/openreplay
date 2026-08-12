@@ -20,7 +20,7 @@ import {
   Play,
   Plus,
   Radar,
-  TriangleAlert,
+  ShieldAlert,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +52,6 @@ import {
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
 import './kai-table.css';
-import { needsReview } from './shared/revisions';
 import {
   apiTestToVM,
   settableTransition,
@@ -60,6 +59,7 @@ import {
   vmToMergeRequest,
   vmToUpdateRequest,
 } from './shared/adapters';
+import { needsReview } from './shared/revisions';
 import {
   ListResponse,
   ListTestsParams,
@@ -254,7 +254,8 @@ function TestsTab() {
         predicate: (q) => q.queryKey[2] === 'tests',
       },
       (old) => {
-        if (!old?.items?.some((it) => it.testId === key && !it.seenAt)) return old;
+        if (!old?.items?.some((it) => it.testId === key && !it.seenAt))
+          return old;
         return {
           ...old,
           items: old.items.map((it) =>
@@ -449,7 +450,15 @@ function TestsTab() {
 
   const faded = (n: number) => <CountSuffix n={n} />;
   const statusOptions = [
-    { value: 'all', label: <span>{t('All')}{faded(allCount)}</span> },
+    {
+      value: 'all',
+      label: (
+        <span>
+          {t('All')}
+          {faded(allCount)}
+        </span>
+      ),
+    },
     // only when something awaits review — no point in an always-empty tab
     ...(needsReviewCount > 0
       ? [
@@ -464,13 +473,42 @@ function TestsTab() {
           },
         ]
       : []),
-    { value: 'draft', label: <span>{t('Drafts')}{faded(draftCount)}</span> },
+    {
+      value: 'draft',
+      label: (
+        <span>
+          {t('Drafts')}
+          {faded(draftCount)}
+        </span>
+      ),
+    },
     {
       value: 'approved',
-      label: <span>{t('Approved')}{faded(approvedCount)}</span>,
+      label: (
+        <span>
+          {t('Approved')}
+          {faded(approvedCount)}
+        </span>
+      ),
     },
-    { value: 'active', label: <span>{t('Active')}{faded(activeCount)}</span> },
-    { value: 'paused', label: <span>{t('Paused')}{faded(pausedCount)}</span> },
+    {
+      value: 'active',
+      label: (
+        <span>
+          {t('Active')}
+          {faded(activeCount)}
+        </span>
+      ),
+    },
+    {
+      value: 'paused',
+      label: (
+        <span>
+          {t('Paused')}
+          {faded(pausedCount)}
+        </span>
+      ),
+    },
   ];
 
   const rowMenu = (tc: TestCase) => {
@@ -577,11 +615,11 @@ function TestsTab() {
           {tc.hasSideEffects && (
             <Tooltip
               title={t(
-                'Has side effects — running this test affects real data (orders / accounts / payments).',
+                'Has side effects. Running this test affects real data (orders / accounts / payments).',
               )}
             >
               <span className="shrink-0 flex items-center text-warning-text">
-                <TriangleAlert size={14} />
+                <ShieldAlert size={14} />
               </span>
             </Tooltip>
           )}
@@ -791,7 +829,9 @@ function TestsTab() {
               <Tooltip
                 title={
                   mergeBlocked
-                    ? t('A selected test has a review pending — resolve it first.')
+                    ? t(
+                        'A selected test has a review pending — resolve it first.',
+                      )
                     : undefined
                 }
               >
@@ -808,7 +848,11 @@ function TestsTab() {
             <Button size="small" danger onClick={deleteSelected}>
               {t('Delete')} ({selectedKeys.length})
             </Button>
-            <Button size="small" type="text" onClick={() => setSelectedKeys([])}>
+            <Button
+              size="small"
+              type="text"
+              onClick={() => setSelectedKeys([])}
+            >
               {t('Clear')}
             </Button>
           </div>

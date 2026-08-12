@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { Icon, Input } from 'UI';
+
 import { debounce } from 'App/utils';
+import { Icon, Input } from 'UI';
 
 let debounceUpdate: any = () => {};
 interface Props {
@@ -30,6 +31,8 @@ function AuditSearchField(props: Props) {
         placeholder="Filter by name"
         onChange={write}
         icon="search"
+        // UI/Input hardcodes its height, so size="small" would do nothing here
+        height={24}
       />
     </div>
   );

@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import LanguageSwitcher from 'App/components/LanguageSwitcher';
 import { useStore } from 'App/mstore';
-import { PageTitle } from 'UI';
 
+import PreferencesPage from '../PreferencesPage';
 import Api from './Api';
 import ChangePassword from './ChangePassword';
 import Dangerzone from './Dangerzone';
@@ -21,8 +21,7 @@ function ProfileSettings() {
   const { account } = userStore;
   const { isEnterprise } = userStore;
   return (
-    <div className="bg-white rounded-lg  border shadow-xs">
-      <PageTitle title={<div className="px-4 pt-4">{t('Account')}</div>} />
+    <PreferencesPage title={t('Account')} flush>
       <Section
         title={t('Profile')}
         description={t(
@@ -103,7 +102,7 @@ function ProfileSettings() {
       )}
 
       <Dangerzone />
-    </div>
+    </PreferencesPage>
   );
 }
 
