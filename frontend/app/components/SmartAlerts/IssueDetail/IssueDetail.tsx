@@ -129,6 +129,11 @@ function IssueDetail() {
       withSiteId(smartIssueSession(idParam, s.sessionId), siteId) + q,
     );
   };
+  const shareUrl = (s: IssueSessionCard) =>
+    `${window.location.origin}${withSiteId(
+      smartIssueSession(idParam, s.sessionId),
+      siteId,
+    )}`;
 
   if (!issue) {
     return (
@@ -377,6 +382,7 @@ function IssueDetail() {
                   onClick={() => openReplay(s)}
                   titleLines={titleLines}
                   onTitleLines={reportTitleLines}
+                  shareUrl={shareUrl(s)}
                 />
               ))}
             </div>

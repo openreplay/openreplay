@@ -6,7 +6,7 @@ import {
   UserSwitchOutlined,
 } from '@ant-design/icons';
 import { Button, Popover, Tooltip } from 'antd';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, Tags, User } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +20,7 @@ import SessionInfoItem from 'Components/Session_/SessionInfoItem';
 import SessionCopyLink from 'Components/shared/SharePopup/SessionCopyLink';
 import { CountryFlag } from 'UI';
 
-import MetaItem from 'Shared/SessionItem/MetaItem';
+import TagsRow from '../IssueDetail/TagsRow';
 
 import {
   CAT_AVATAR_COLOR,
@@ -122,21 +122,26 @@ export default function IssuePlayerHeader({
         icon={deviceTypeIcon(device)}
         label={capitalize(device)}
         value=""
-        isLast={!card?.plan}
+        isLast={!card?.metadata?.length}
       />
-      {/* customer-defined metadata */}
-      {card?.plan && (
-        <div className="pt-3" style={{ maxWidth: 320 }}>
-          <div
-            className="px-2 pb-2 text-xs font-semibold uppercase color-gray-medium"
-            style={{ letterSpacing: '0.05em' }}
-          >
-            {t('Metadata')}
-          </div>
-          <div className="px-2 flex flex-wrap gap-1">
-            <MetaItem label="plan" value={card.plan} />
-          </div>
-        </div>
+      {/* metadata is one more row in the list — the pills fold onto one line */}
+      {card?.metadata && card.metadata.length > 0 && (
+        <SessionInfoItem
+          comp={
+            <Tags
+              size={16}
+              strokeWidth={2}
+              style={{ color: 'var(--color-gray-medium)' }}
+            />
+          }
+          label={t('Metadata')}
+          isLast
+          value={
+            <div style={{ width: 280 }}>
+              <TagsRow pairs={card.metadata} />
+            </div>
+          }
+        />
       )}
     </div>
   );

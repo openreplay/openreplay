@@ -1,5 +1,6 @@
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { Popover, Tooltip } from 'antd';
+import { Link2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +14,9 @@ import { type IssueSessionCard } from '../shared';
 import TagsRow from './TagsRow';
 
 const LINE = 1.35; // title line-height (em)
+// same placeholder surface as the Spots card, so the 80%-opacity thumbnail on
+// top reads at full colour and the teal hover tint shows through
+const THUMB_BG = '/assets/img/spotThumbBg.svg';
 
 /* The variation title, clamped to the grid-agreed number of lines. A hidden
    unclamped clone reports its natural line count up so the grid can size every
@@ -90,48 +94,79 @@ export default function SessionCard({
   onClick,
   titleLines,
   onTitleLines,
+  shareUrl,
 }: {
   s: IssueSessionCard;
   onClick: () => void;
   /** grid-agreed title slot, in lines (max the visible cards need, ≤3) */
   titleLines: number;
   onTitleLines: (sessionId: string, n: number) => void;
+  /** full replay URL for the slide-in copy-link button (omit to hide it) */
+  shareUrl?: string;
 }) {
   const { t } = useTranslation();
   const reportLines = React.useCallback(
     (n: number) => onTitleLines(s.sessionId, n),
     [onTitleLines, s.sessionId],
   );
+  const [copyTip, setCopyTip] = React.useState(t('Copy link'));
+  const copyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!shareUrl) return;
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        setCopyTip(t('Link copied!'));
+        setTimeout(() => setCopyTip(t('Copy link')), 2000);
+      })
+      .catch(() => {});
+  };
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-xs border transition hover:border-teal">
+      {/* hover matches the Spots card: 80% thumbnail over the placeholder bg so a
+          teal tint shows through, a white play ring fading + scaling in on a
+          brand-tinted circle, and a copy-link sliding up beside the duration */}
       <button
         onClick={onClick}
         aria-label={t('Open session replay')}
-        className="relative group w-full block cursor-pointer bg-gray-lightest"
-        style={{ height: 180 }}
+        className="relative group w-full block cursor-pointer overflow-hidden"
+        style={{
+          height: 180,
+          backgroundImage: `url(${THUMB_BG})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
-        {/* real thumbnail when the backend has one; otherwise the neutral play surface */}
-        {s.thumbnail && (
-          <img
-            src={s.thumbnail}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-        <div
-          className={`absolute inset-0 flex items-center justify-center transition-colors ${
-            s.thumbnail
-              ? 'bg-black/10 opacity-0 group-hover:opacity-100'
-              : 'group-hover:bg-teal/10'
-          }`}
-        >
+        <div className="w-full h-full transition-colors group-hover:bg-teal/70">
+          {s.thumbnail && (
+            <img
+              src={s.thumbnail}
+              alt=""
+              className="w-full h-full object-cover opacity-80"
+            />
+          )}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 transition-all group-hover:opacity-100 group-hover:scale-100">
           <PlayCircleOutlined
-            style={{ fontSize: 44 }}
-            className={s.thumbnail ? 'text-white' : 'color-gray-medium'}
+            style={{ fontSize: 44, color: 'white' }}
+            className="bg-teal/50 rounded-full"
           />
         </div>
-        <div className="absolute bottom-2 right-2 bg-gray-dark text-white py-1 px-2 text-xs rounded-lg">
-          {s.dur}
+        <div className="absolute bottom-2 right-2 flex items-center gap-2">
+          {shareUrl && (
+            <Tooltip title={copyTip} className="capitalize!">
+              <div
+                aria-label={t('Copy link')}
+                onClick={copyLink}
+                className="bg-gray-dark text-white py-1 px-2 rounded-lg cursor-pointer flex items-center transition-transform translate-y-14 group-hover:translate-y-0"
+              >
+                <Link2 size={14} strokeWidth={1} />
+              </div>
+            </Tooltip>
+          )}
+          <div className="bg-gray-dark text-white py-1 px-2 text-xs rounded-lg">
+            {s.dur}
+          </div>
         </div>
       </button>
 
