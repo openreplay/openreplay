@@ -1,3 +1,7 @@
+## 18.1.3
+
+- fix for vizual batch recording preventing null split emits
+
 ## 18.1.2
 
 - pass proto version in tab communication to prevent session break off

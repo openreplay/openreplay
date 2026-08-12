@@ -463,15 +463,28 @@ describe('BatchWriter e2e', () => {
       expect(captured[captured.length - 1].dataType).toBe('player')
     })
 
-    test('player-only first frame yields a visual batch with no split', () => {
+    test('player-only first frame yields a plain player batch, never a split-less visual', () => {
       const writer = makeWriter({ protocolVersion: 2, exitInit: false })
       writer.writeMessage([T.MouseMove, 1, 2])
       writer.writeMessage(VISUAL_SIGNAL)
 
       expect(captured).toHaveLength(1)
-      expect(captured[0].dataType).toBe('visual')
+      // A `visual` batch without a split offset is rejected by ingestion.
+      expect(captured[0].dataType).toBe('player')
       expect(captured[0].split).toBeUndefined()
       expect(captured[0].batch[0]).toBe(T.BatchMetadata)
+    })
+
+    test('a visual batch is never emitted without a numeric split offset', () => {
+      const writer = makeWriter({ protocolVersion: 2, exitInit: false })
+      writer.writeMessage([T.MouseMove, 1, 2])
+      writer.writeMessage(VISUAL_SIGNAL)
+      writer.writeMessage([T.MouseMove, 3, 4])
+      writer.finaliseBatch()
+
+      for (const c of captured) {
+        if (c.dataType === 'visual') expect(typeof c.split).toBe('number')
+      }
     })
 
     test('hard cap reached before the signal force-flushes the visual batch', () => {
@@ -506,6 +519,7 @@ describe('BatchWriter e2e', () => {
     test('skipCompression propagates to the visual batch on closing', () => {
       const writer = makeWriter({ protocolVersion: 2, exitInit: false })
       writer.writeMessage([T.MouseMove, 1, 2])
+      writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])
       writer.finaliseBatch(true) // closing path
       expect(captured[0].dataType).toBe('visual')
       expect(captured[0].skipCompression).toBe(true)

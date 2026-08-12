@@ -214,7 +214,7 @@ export default class BatchWriter {
       visual.set(assetBatch, playerBatch.length)
       this.emitBatch(visual, 'visual', skipCompression, playerBatch.length)
     } else if (playerBatch) {
-      this.emitBatch(playerBatch, 'visual', skipCompression)
+      this.emitBatch(playerBatch, 'player', skipCompression)
     } else if (assetBatch) {
       // Defensive: assets without player shouldn't happen — ship as plain assets.
       this.emitBatch(assetBatch, 'assets', skipCompression)

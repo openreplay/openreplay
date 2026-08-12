@@ -9,6 +9,12 @@ const config = {
     '(.+)\\.js': '$1',
   },
   transform: {
+    // ESM-only deps (error-stack-parser-es) ship .mjs; tsc always emits ESM for
+    // .mjs regardless of `module`, so babel has to downlevel them to CJS.
+    '^.+\\.mjs$': [
+      'babel-jest',
+      { plugins: ['@babel/plugin-transform-modules-commonjs'], babelrc: false, configFile: false },
+    ],
     '^.+\\.m?[tj]sx?$': [
       'ts-jest',
       {
