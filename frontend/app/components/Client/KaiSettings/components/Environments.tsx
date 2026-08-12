@@ -120,7 +120,7 @@ function Environments() {
             {t('The URLs and credentials your tests run against.')}
           </Typography.Text>
         </div>
-        <Button type="primary" icon={<Plus size={16} />} onClick={openAdd}>
+        <Button icon={<Plus size={16} />} onClick={openAdd}>
           {t('Add environment')}
         </Button>
       </div>
@@ -151,7 +151,6 @@ function Environments() {
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium">{env.name}</span>
-                    {env.isDefault && <Tag color="gold">{t('Default')}</Tag>}
                     {env.username ? (
                       <Tag color="blue">{t('With credentials')}</Tag>
                     ) : (

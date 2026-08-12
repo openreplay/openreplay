@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
-import ModuleCard from 'Components/Client/Modules/ModuleCard';
 import withPageTitle from 'HOCs/withPageTitle';
-import { userService } from 'App/services';
-import { toast } from 'react-toastify';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { modules as list } from '.';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+
+import { useStore } from 'App/mstore';
+import { userService } from 'App/services';
+import ModuleCard from 'Components/Client/Modules/ModuleCard';
+
+import { modules as list } from '.';
+import PreferencesPage from '../PreferencesPage';
 
 function Modules() {
   const { t, i18n } = useTranslation();
@@ -53,9 +56,8 @@ function Modules() {
 
   return (
     <div>
-      <div className="bg-white rounded-lg border shadow-xs p-4">
-        <h3 className="text-2xl">{t('Modules')}</h3>
-        <ul className="mt-3 ml-4 list-disc">
+      <PreferencesPage title={t('Modules')}>
+        <ul className="ml-4 list-disc">
           <li>
             {t(
               "OpenReplay's modules are a collection of advanced features that provide enhanced functionality.",
@@ -67,7 +69,7 @@ function Modules() {
             )}
           </li>
         </ul>
-      </div>
+      </PreferencesPage>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {modulesState.map((module) => (

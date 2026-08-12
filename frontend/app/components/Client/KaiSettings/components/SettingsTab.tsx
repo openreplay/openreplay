@@ -59,23 +59,10 @@ function SettingsTab() {
   };
 
   return (
-    <div className="flex flex-col p-5 max-w-3xl">
-      {/* Defaults — pre-fill new tests' run settings */}
-      <section className="flex flex-col gap-3">
-        <div>
-          <Typography.Title level={5} style={{ marginBottom: 0 }}>
-            {t('Default run configuration')}
-          </Typography.Title>
-          <Typography.Text type="secondary" className="text-sm!">
-            {t('New tests start with these. You can override them per test.')}
-          </Typography.Text>
-        </div>
-        <Defaults value={defaults} onChange={changeDefaults} />
-      </section>
-
-      <Divider />
-
+    <div className="flex flex-col p-5 w-full">
       <Environments />
+      <Divider />
+      <Defaults value={defaults} onChange={changeDefaults} />
     </div>
   );
 }

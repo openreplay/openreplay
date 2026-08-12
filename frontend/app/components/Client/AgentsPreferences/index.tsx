@@ -1,6 +1,5 @@
 import withPageTitle from 'HOCs/withPageTitle';
-import { Divider, Switch, Tabs, Tooltip, Typography } from 'antd';
-import { Info } from 'lucide-react';
+import { Divider, Switch, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +13,7 @@ import {
   useUpdateNotifications,
   useUpdateSettings,
 } from '../KaiSettings/queries';
+import PreferencesPage from '../PreferencesPage';
 import CriticalRules from './CriticalRules';
 import JourneyTags from './JourneyTags';
 
@@ -25,10 +25,10 @@ import JourneyTags from './JourneyTags';
 
    ONE TAB PER AGENT. The tab says which agent, so the sections inside are free
    to say what they are — Journey tags, What's critical, Notifications,
-   Behaviour. The chrome mirrors the Tests agent page (KaiSettings/index.tsx):
-   bordered white card, one border-b header row with the 18px semibold title,
-   then antd Tabs at the same 16px tab-bar padding, each panel `p-5` with Title
-   level 5 sections split by Dividers.
+   Behaviour. The chrome comes from the shared Preferences shell
+   (Client/PreferencesPage.tsx) — card, header row and tab-bar padding —
+   leaving this file only the panels: `p-5` with Title level 5 sections split
+   by Dividers.
 
    Both tabs ship here (merged from kai-testing-ui + smart-issues-ui): Tests
    (notifications + behaviour) and Issues (journey tags + critical rules). The
@@ -238,32 +238,18 @@ function AgentsPreferences() {
   ];
 
   return (
-    <div className="flex flex-col rounded-lg border bg-white">
-      {/* header */}
-      <div className="flex items-center gap-2 border-b px-4 py-2">
-        <span className="font-semibold text-lg">{t('Agents')}</span>
-        <Tooltip
-          placement="bottom"
-          title={t(
-            'Journey tags, critical rules, notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
-          )}
-        >
-          <span
-            className="flex items-center cursor-help"
-            style={{ color: 'var(--color-gray-medium)' }}
-          >
-            <Info size={15} />
-          </span>
-        </Tooltip>
-      </div>
-      <Tabs
-        activeKey={agent}
-        onChange={openTab}
-        items={tabItems}
-        tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
-      />
-    </div>
+    <PreferencesPage
+      title={t('Agents')}
+      help={t(
+        'Journey tags, critical rules, notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
+      )}
+      tabs={tabItems}
+      activeTab={agent}
+      onTabChange={openTab}
+    />
   );
 }
 
-export default withPageTitle('Agents - OpenReplay')(observer(AgentsPreferences));
+export default withPageTitle('Agents - OpenReplay')(
+  observer(AgentsPreferences),
+);

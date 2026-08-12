@@ -1,17 +1,17 @@
 import withPageTitle from 'HOCs/withPageTitle';
+import { Button } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { Loader, NoContent, Tooltip, confirm } from 'UI';
-import { Button } from 'antd';
 
+import PreferencesPage from '../PreferencesPage';
 import RoleForm from './components/RoleForm';
 import RoleItem from './components/RoleItem';
-import stl from './roles.module.css';
-import { useTranslation } from 'react-i18next';
 
 function Roles() {
   const { t } = useTranslation();
@@ -61,25 +61,20 @@ function Roles() {
 
   return (
     <Loader loading={loading}>
-      <div className="bg-white rounded-lg shadow-xs border">
-        <div className={cn(stl.tabHeader, 'flex items-center')}>
-          <div className="flex items-center mr-auto px-5 pt-5">
-            <h3 className={cn(stl.tabTitle, 'text-2xl')}>
-              {t('Roles and Access')}
-            </h3>
-            <Tooltip
-              title={t(
-                'You don’t have the permissions to perform this action.',
-              )}
-              disabled={isAdmin}
-            >
-              <Button type="primary" onClick={() => editHandler({})}>
-                {t('Add')}
-              </Button>
-            </Tooltip>
-          </div>
-        </div>
-
+      <PreferencesPage
+        title={t('Roles and Access')}
+        flush
+        actions={
+          <Tooltip
+            title={t('You don’t have the permissions to perform this action.')}
+            disabled={isAdmin}
+          >
+            <Button type="primary" size="small" onClick={() => editHandler({})}>
+              {t('Add')}
+            </Button>
+          </Tooltip>
+        }
+      >
         <NoContent
           title={t('No roles are available')}
           size="small"
@@ -115,7 +110,7 @@ function Roles() {
             ))}
           </div>
         </NoContent>
-      </div>
+      </PreferencesPage>
     </Loader>
   );
 }

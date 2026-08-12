@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
-import { PageTitle } from 'UI';
-import { useStore } from 'App/mstore';
-import { useObserver, observer } from 'mobx-react-lite';
-import { useModal } from 'App/components/Modal';
 import withPageTitle from 'HOCs/withPageTitle';
-import UserSearch from './components/UserSearch';
-import UserForm from './components/UserForm';
-import AddUserButton from './components/AddUserButton';
-import UserList from './components/UserList';
+import { observer, useObserver } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'App/components/Modal';
+import { useStore } from 'App/mstore';
+
+import PreferencesPage from '../PreferencesPage';
+import AddUserButton from './components/AddUserButton';
+import UserForm from './components/UserForm';
+import UserList from './components/UserList';
+import UserSearch from './components/UserSearch';
 
 interface Props {
   isOnboarding?: boolean;
@@ -36,28 +38,23 @@ function UsersView({ isOnboarding = false }: Props) {
   }, []);
 
   return (
-    <div className="bg-white rounded-lg shadow-xs border">
-      <div className="flex flex-col md:flex-row gap-2 md:gap-0 md:items-center justify-between px-5 pt-5">
-        <PageTitle
-          title={
-            <div>
-              {t('Team')}&nbsp;
-              <span className="color-gray-medium">{userCount}</span>
-            </div>
-          }
-        />
-        <div className="flex items-center">
+    <PreferencesPage
+      title={t('Team')}
+      value={userCount}
+      flush
+      actions={
+        <>
           <AddUserButton
             btnVariant={isOnboarding ? 'outline' : 'primary'}
             isAdmin={isAdmin}
             onClick={() => editHandler(null)}
           />
-          <div className="mx-2" />
           {!isOnboarding && <UserSearch />}
-        </div>
-      </div>
+        </>
+      }
+    >
       <UserList isEnterprise={isEnterprise} isOnboarding={isOnboarding} />
-    </div>
+    </PreferencesPage>
   );
 }
 

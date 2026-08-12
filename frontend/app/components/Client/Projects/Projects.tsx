@@ -1,13 +1,14 @@
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { DownOutlined, KeyOutlined, PlusOutlined } from '@ant-design/icons';
-import { App, Button, Card, Dropdown, Layout, Tooltip, Typography } from 'antd';
+import { App, Button, Dropdown, Layout, Tooltip, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useHistory } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
+import PreferencesPage from 'Components/Client/PreferencesPage';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
@@ -64,82 +65,77 @@ function Projects() {
   }));
 
   return (
-    <Card
-      style={{ height: 'calc(100vh - 130px)' }}
-      className="rounded-lg! shadow-xs!"
-      classNames={{
-        header: 'border-b! px-4!',
-        body: 'p-0! border-t!',
-      }}
-      title={
-        <Typography.Title level={4} className="m-0!">
-          {t('Projects')}
-        </Typography.Title>
-      }
-      extra={
+    <PreferencesPage
+      title={t('Projects')}
+      flush
+      actions={
         <Button
           onClick={createProject}
           type="default"
-          size="middle"
+          size="small"
           icon={<PlusOutlined size={16} />}
         >
           {t('Add Project')}
         </Button>
       }
     >
-      <Layout>
-        <Layout.Sider
-          width={260}
-          trigger={null}
-          className="hidden! md:block! bg-white! border-r!"
-        >
-          <ProjectList />
-        </Layout.Sider>
-
+      {/* the page keeps the footprint the antd Card had: 48px header + this body
+          adds up to the same calc(100vh - 130px) */}
+      <div style={{ height: 'calc(100vh - 178px)' }}>
         <Layout>
-          <Layout.Header className="flex! flex-col! md:flex-row! md:gap-0! justify-between! md:items-center! p-4! bg-white! border-b! h-[92px]! md:h-[46px]!">
-            <div className="flex items-center gap-4">
-              {mobileScreen ? (
-                <Dropdown
-                  className="w-fit!"
-                  menu={{
-                    items: dropItems,
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Typography.Title
-                      level={5}
-                      className="capitalize m-0! whitespace-nowrap truncate font-medium!"
-                    >
-                      {project?.name}
-                    </Typography.Title>
-                    <DownOutlined />
-                  </div>
-                </Dropdown>
-              ) : (
-                <Typography.Title
-                  level={5}
-                  className="capitalize m-0! whitespace-nowrap truncate font-medium!"
-                >
-                  {project?.name}
-                </Typography.Title>
-              )}
-              <ProjectKeyButton project={project} />
-            </div>
-            <ProjectTabs />
-          </Layout.Header>
-          <Layout.Content
-            style={{
-              padding: '1.5rem 1rem',
-              height: 'calc(100vh - 260px)',
-            }}
-            className="bg-white! overflow-y-auto!"
+          <Layout.Sider
+            width={260}
+            trigger={null}
+            className="hidden! md:block! bg-white! border-r!"
           >
-            {project && <ProjectTabContent />}
-          </Layout.Content>
+            <ProjectList />
+          </Layout.Sider>
+
+          <Layout>
+            <Layout.Header className="flex! flex-col! md:flex-row! md:gap-0! justify-between! md:items-center! p-4! bg-white! border-b! h-[92px]! md:h-[46px]!">
+              <div className="flex items-center gap-4">
+                {mobileScreen ? (
+                  <Dropdown
+                    className="w-fit!"
+                    menu={{
+                      items: dropItems,
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Typography.Title
+                        level={5}
+                        className="capitalize m-0! whitespace-nowrap truncate font-medium!"
+                      >
+                        {project?.name}
+                      </Typography.Title>
+                      <DownOutlined />
+                    </div>
+                  </Dropdown>
+                ) : (
+                  <Typography.Title
+                    level={5}
+                    className="capitalize m-0! whitespace-nowrap truncate font-medium!"
+                  >
+                    {project?.name}
+                  </Typography.Title>
+                )}
+                <ProjectKeyButton project={project} />
+              </div>
+              <ProjectTabs />
+            </Layout.Header>
+            <Layout.Content
+              style={{
+                padding: '1.5rem 1rem',
+                height: 'calc(100vh - 260px)',
+              }}
+              className="bg-white! overflow-y-auto!"
+            >
+              {project && <ProjectTabContent />}
+            </Layout.Content>
+          </Layout>
         </Layout>
-      </Layout>
-    </Card>
+      </div>
+    </PreferencesPage>
   );
 }
 
