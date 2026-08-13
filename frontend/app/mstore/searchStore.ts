@@ -532,7 +532,12 @@ class SearchStore {
     this.instance = new Search(inst);
     this.currentPage = 1;
 
-    if (filter.value && filter.value[0] && filter.value[0] !== '') {
+    const hasValue = Boolean(
+      filter.value && filter.value[0] && filter.value[0] !== '',
+    );
+    const isCustomEvent = Boolean(filter.isEvent) && !filter.autoCaptured;
+
+    if (hasValue || isCustomEvent) {
       void this.fetchSessions();
     }
   };
