@@ -3,17 +3,6 @@ import { AlertTriangle, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const critContent = (text: string, close?: React.ReactNode) => (
-  <span className="inline-flex items-center gap-1">
-    <AlertTriangle size={12} strokeWidth={2} style={{ fill: 'none' }} />
-    <span>{text}</span>
-    {close}
-  </span>
-);
-
-/* The critical flag on the detail page (antd Tag). The tag body reports state
-   and opens the shared CriticalDialog (see why / describe); the trailing ✕ is a
-   direct "not critical for me". Without `onOpen` it's a static red tag. */
 export default function CriticalControl({
   critical,
   mine,
@@ -41,52 +30,61 @@ export default function CriticalControl({
           onClick={onOpen}
           className="crit-tag cursor-pointer m-0 color-gray-medium"
         >
-          {critContent(t('Mark critical'))}
+          <span className="inline-flex items-center gap-1">
+            <AlertTriangle size={12} strokeWidth={2} style={{ fill: 'none' }} />
+            <span>{t('Mark critical')}</span>
+          </span>
         </Tag>
       </Tooltip>
     );
   }
 
-  // stopPropagation so clicking ✕ doesn't also open the tag's CriticalDialog
-  const closeBtn = onRemove ? (
-    <Tooltip title={t('Not critical for me')}>
-      <span
-        role="button"
-        aria-label={t('Not critical for me')}
-        className="inline-flex items-center cursor-pointer"
-        style={{ marginLeft: 2, opacity: 0.65 }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-      >
-        <X size={12} />
-      </span>
-    </Tooltip>
-  ) : null;
-
-  const tag = (
-    <Tag
-      color="red"
-      bordered
+  const label = (
+    <span
+      className={`inline-flex items-center gap-1${onOpen ? ' cursor-pointer' : ''}`}
       onClick={onOpen}
-      className={`crit-tag m-0${onOpen ? ' cursor-pointer' : ''}`}
     >
-      {critContent(mine ? t('Critical for me') : t('Critical'), closeBtn)}
-    </Tag>
+      <AlertTriangle size={12} strokeWidth={2} style={{ fill: 'none' }} />
+      <span>{mine ? t('Critical for me') : t('Critical')}</span>
+    </span>
   );
 
-  if (!onOpen) return tag;
-
   return (
-    <Tooltip
-      title={
-        mine
-          ? t('Matches your description')
-          : t('Matches {{name}}’s description', { name: by ?? t('a teammate') })
-      }
-    >
-      {tag}
-    </Tooltip>
+    <Tag color="red" bordered className="crit-tag m-0">
+      <span className="inline-flex items-center gap-1">
+        {/* label region — explains the match, opens the dialog */}
+        {onOpen ? (
+          <Tooltip
+            title={
+              mine
+                ? t('Matches your description')
+                : t('Matches {{name}}’s description', {
+                    name: by ?? t('a teammate'),
+                  })
+            }
+          >
+            {label}
+          </Tooltip>
+        ) : (
+          label
+        )}
+        {/* cross region — its own hover + action, no overlap with the label */}
+        {onRemove && (
+          <Tooltip title={t('Not critical for me')}>
+            <span
+              aria-label={t('Not critical for me')}
+              className="inline-flex items-center cursor-pointer"
+              style={{ marginLeft: 2, opacity: 0.65 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            >
+              <X size={12} />
+            </span>
+          </Tooltip>
+        )}
+      </span>
+    </Tag>
   );
 }
