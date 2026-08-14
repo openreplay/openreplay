@@ -19,18 +19,15 @@ import {
 import EnvironmentForm from './EnvironmentForm';
 import { apiEnvToVM, envFormToRequest } from './shared/adapters';
 import { EnvironmentVM } from './shared/types';
+import { LOOKUP_LIMIT } from './shared/utils';
 
-// The API clamps `limit` to 100; the affected-tests lookup is best-effort within that.
-const LOOKUP_LIMIT = 100;
-
-// Environments list — same section pattern as the app's Webhooks / Projects settings:
-// a titled header with a primary add action, an antd List with a hover-reveal edit, and
-// a NoContent empty state. The add / edit form opens in the standard right drawer.
+// The add / edit form opens in the app's standard right drawer.
 function Environments() {
   const { t } = useTranslation();
   const { openModal } = useModal();
   const { modal } = App.useApp();
-  const { data, isPending } = useEnvironments();
+  const { data, isPending } = useEnvironments({ limit: LOOKUP_LIMIT });
+  // the affected-tests lookup is best-effort within one page
   const { data: testsData } = useTests({ limit: LOOKUP_LIMIT });
   const createEnv = useCreateEnvironment();
   const updateEnv = useUpdateEnvironment();
@@ -56,7 +53,7 @@ function Environments() {
     );
 
   // Surface the tests that reference this environment before deleting. With referencing
-  // tests we force-delete (api4 `?force=true`): one call detaches the env from them, pauses
+  // tests we force-delete (`?force=true`): one call detaches the env from them, pauses
   // any that were active, and deletes. With none, a plain delete.
   const confirmDelete = (env: EnvironmentVM) => {
     const affected = (testsData?.items ?? []).filter((tc) =>

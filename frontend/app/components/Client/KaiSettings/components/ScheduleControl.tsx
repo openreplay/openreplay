@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { Schedule, ScheduleFreq } from './shared/types';
 import {
   ALL_DAYS,
-  DAY_LABELS,
+  DAY_SHORT,
   FREQ_OPTIONS,
   TIME_OPTIONS,
   WEEKDAY_DAYS,
+  dayInitial,
   ordinal,
   scheduleFreq,
   scheduleLabel,
@@ -19,21 +20,18 @@ interface Props {
   onChange: (s: Schedule | null) => void;
 }
 
-/** Frequency-first scheduler: Never / Daily / Weekdays / Weekly / Monthly. Daily / Weekdays
- *  / Weekly share the day-of-week circles (multi-select); Monthly picks a day-of-month.
- *  Holds its own working state so the controls update instantly — the drawer persists each
- *  change through the server, and a purely controlled value would snap back during that
- *  round-trip. Seeded per mount (the drawer remounts this per test), then local-authoritative.
- *  A non-preset cron (should one ever exist) has no picker option — it shows read-only so
- *  it isn't silently overwritten. */
+/** Frequency-first scheduler: Never / Daily / Weekdays / Weekly / Monthly. Holds its own
+ *  working state so the controls update instantly — the drawer persists each change
+ *  through the server, and a purely controlled value would snap back during that
+ *  round-trip. Seeded per mount, then local-authoritative. A non-preset cron shows
+ *  read-only so it isn't silently overwritten. */
 function ScheduleControl({ value, onChange }: Props) {
   const { t } = useTranslation();
   const [sched, setSched] = useState<Schedule | null>(() => value ?? null);
 
   const freq = scheduleFreq(sched);
   const time = sched?.time ?? '09:00';
-  const showDays =
-    freq === 'daily' || freq === 'weekdays' || freq === 'weekly';
+  const showDays = freq === 'daily' || freq === 'weekdays' || freq === 'weekly';
 
   // update local state (instant) + notify the parent to persist
   const update = (s: Schedule | null) => {
@@ -127,16 +125,17 @@ function ScheduleControl({ value, onChange }: Props) {
         </span>
       )}
 
-      {/* day-of-week circles — the shared picker for daily / weekdays / weekly (multi-select) */}
+      {/* day-of-week circles — shared by daily / weekdays / weekly (multi-select) */}
       {showDays && (
         <span className="flex items-center gap-1">
-          {DAY_LABELS.map((label, d) => {
+          {DAY_SHORT.map((_, d) => {
             const on = sched?.days?.includes(d);
             return (
               <button
                 key={d}
                 type="button"
                 aria-pressed={on}
+                aria-label={t(DAY_SHORT[d])}
                 onClick={() => pickDay(d)}
                 className={`w-6 h-6 rounded-full text-xs border transition-colors ${
                   on
@@ -144,7 +143,7 @@ function ScheduleControl({ value, onChange }: Props) {
                     : 'border-gray-light text-disabled-text hover:border-gray-medium'
                 }`}
               >
-                {label}
+                {dayInitial(t, d)}
               </button>
             );
           })}
@@ -163,7 +162,7 @@ function ScheduleControl({ value, onChange }: Props) {
       {/* plain-language confirmation of the resolved schedule */}
       {freq && freq !== 'custom' && (
         <span className="text-xs text-disabled-text">
-          {scheduleLabel(sched)}
+          {scheduleLabel(t, sched)}
         </span>
       )}
     </div>

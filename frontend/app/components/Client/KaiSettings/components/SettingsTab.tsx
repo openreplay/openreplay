@@ -1,6 +1,5 @@
-import { Divider, Typography } from 'antd';
+import { Divider } from 'antd';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 import {
   useEnvironments,
@@ -11,16 +10,14 @@ import {
 import Defaults from './Defaults';
 import Environments from './Environments';
 import { Resolution, RunDefaults } from './shared/types';
+import { LOOKUP_LIMIT } from './shared/utils';
 
-// The Tests page's "Environments" tab: core config only — run defaults + the
-// environments list. Behaviour (pause-on-revision) and notifications moved to
-// Preferences > Agents > Tests (Mehdi 07-27). Everything here persists to its
-// real source: run defaults to GET/PATCH /settings, the default environment to
-// the env flagged `isDefault`.
+// The Tests page's "Environments" tab: run defaults + the environments list. Run
+// defaults persist to GET/PATCH /settings, the default environment to the env flagged
+// `isDefault`.
 function SettingsTab() {
-  const { t } = useTranslation();
   const { data: settings } = useSettings();
-  const { data: envData } = useEnvironments({ limit: 100 });
+  const { data: envData } = useEnvironments({ limit: LOOKUP_LIMIT });
   const updateSettings = useUpdateSettings();
   const updateEnv = useUpdateEnvironment();
 
@@ -37,8 +34,8 @@ function SettingsTab() {
       updateSettings.mutate({ defaultViewport: patch.resolution ?? '' });
     if ('region' in patch)
       updateSettings.mutate({ defaultRegion: patch.region ?? '' });
-    // default environment → the env's `isDefault` flag (PUT replaces name/baseUrl/
-    // variables, so send them back unchanged; setting one true demotes the prior).
+    // default environment → the env's `isDefault` flag. The PUT replaces name/baseUrl/
+    // variables, so send them back unchanged; setting one true demotes the prior.
     if ('envId' in patch) {
       const target = (envData?.items ?? []).find(
         (e) => e.environmentId === patch.envId,

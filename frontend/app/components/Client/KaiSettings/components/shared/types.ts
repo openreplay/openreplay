@@ -1,23 +1,16 @@
-// Types mirror the Browser Tests API (see ../../api2.yaml).
+// Types mirror the Browser Tests API (see ../../api.yaml).
 
-// Full status set as stored/returned. `active`/`paused` are scheduler/runner-owned and
-// never writable via the API; whether a test awaits review is the separate `needsReview`
-// flag, not a status.
+// `active`/`paused` are scheduler/runner-owned. Whether a test awaits review is the
+// separate `needsReview` flag, not a status.
 export type TestStatus =
   | 'draft'
   | 'approved'
   | 'rejected'
   | 'active'
   | 'paused';
-// Statuses a client may set (api4 `TestStatusSettable`): draft → approved / rejected, and
-// the active ⇄ paused pause/resume toggle (plus same-status no-op). `active` is otherwise
-// runner-promoted from `approved`.
-export type TestStatusSettable =
-  | 'draft'
-  | 'approved'
-  | 'rejected'
-  | 'active'
-  | 'paused';
+// Same union as TestStatus (the API accepts any of them on write); which transitions are
+// actually legal is enforced by `settableTransition` in ./adapters.
+export type TestStatusSettable = TestStatus;
 export type RunStatus =
   | 'dispatched'
   | 'running'
@@ -67,15 +60,6 @@ export interface SuggestionSummary {
   createdAt: string;
 }
 
-/** Lean last-run badge inlined on `Test.lastRun` — saves the drawer a runs round-trip. */
-export interface RunSummary {
-  runId: string;
-  status: RunStatus;
-  version?: number | null;
-  startedAt?: string | null;
-  finishedAt?: string | null;
-}
-
 export interface Test {
   testId: string;
   projectId: number;
@@ -91,9 +75,8 @@ export interface Test {
   cron?: string | null;
   status: TestStatus;
   timeoutSecs: number;
-  /** Per-test LLM override; null ⇒ runner env default. */
+  /** Per-test model overrides; null ⇒ runner env default. */
   llmModel?: string | null;
-  /** Per-test extraction-model override; null ⇒ env default. */
   extractionModel?: string | null;
   fallbackModel?: string | null;
   /** Opaque per-test config; plus validated `resolutions` (desktop|tablet|mobile[]) and
@@ -102,7 +85,7 @@ export interface Test {
   /** Runner-owned: a new version is proposed and the project pauses on new revisions. */
   needsReview?: boolean;
   /** Runner-owned (read-only): executing this test has real-world side effects
-   *  (orders/accounts/payments). Sourced from the generated scenario's metadata. */
+   *  (orders/accounts/payments). */
   hasSideEffects?: boolean;
   /** Read-only: content authored/edited by a human (create/merge) vs runner-proposed. */
   userModified?: boolean;
@@ -110,8 +93,6 @@ export interface Test {
   latestVersion?: number | null;
   /** Non-null when a version awaits review. */
   suggestion?: SuggestionSummary | null;
-  /** Inlined summary of the most recent run; null when the test has never run. */
-  lastRun?: RunSummary | null;
   nextRunAt?: string | null;
   lastRunAt?: string | null;
   /** Null until first GET /tests/{id}; then stamped write-once. Marks unviewed as new. */
@@ -135,10 +116,9 @@ export interface TestCreateRequest {
   status?: 'draft' | 'approved';
 }
 
-/** Merge 2+ tests into one new test — atomic server-side (`POST /tests/merge`): creates
- *  the new test and soft-deletes the sources in one transaction. Same shape as create
- *  (minus status; a merge is always a draft) plus the source ids. `steps` is the final,
- *  already-arranged step list — the backend doesn't concatenate. */
+/** POST /tests/merge — atomic server-side: creates the new test and soft-deletes the
+ *  sources in one transaction. `steps` is the final, already-arranged step list; the
+ *  backend doesn't concatenate. A merge is always a draft, hence no status. */
 export interface TestMergeRequest {
   testIds: string[];
   name: string;
@@ -152,8 +132,7 @@ export interface TestMergeRequest {
   config?: Record<string, unknown>;
 }
 
-// Only these fields are updatable (everything else is create-time only). `status`
-// accepts only draft → approved/rejected (active/paused are scheduler-owned).
+/** Only these fields are updatable; everything else is create-time only. */
 export interface TestUpdateRequest {
   name?: string;
   status?: TestStatusSettable;
@@ -164,13 +143,13 @@ export interface TestUpdateRequest {
   steps?: string[];
   /** Send the full object to replace it. */
   config?: Record<string, unknown>;
-  /** Escape hatch: send `false` to clear a runner-owned review block with no
-   *  activatable/dismissable suggestion. Only `false` is accepted (true → 400). */
+  /** Escape hatch: clears a runner-owned review block with no activatable/dismissable
+   *  suggestion. Only `false` is accepted (true → 400). */
   needsReview?: false;
 }
 
-/** A runs-list item (project-wide and per-test lists): a lean run summary sourced from
- *  PostgreSQL — appears immediately on dispatch. Full detail via GET /runs/{runId}. */
+/** A lean run summary (project-wide and per-test lists) — appears immediately on
+ *  dispatch. Full detail via GET /runs/{runId}. */
 export interface RunListItem {
   runId: string;
   testId: string;
@@ -180,9 +159,8 @@ export interface RunListItem {
   status: RunStatus;
   containerId?: string | null;
   s3Prefix?: string | null;
-  /** Environment the run executed against; null for runs predating this column. */
+  /** Null for runs predating these columns. */
   environmentId?: string | null;
-  /** Region the run executed in (e.g. eu-central-1); null for older runs. */
   region?: string | null;
   /** Viewport the run executed against (mobile/desktop/tablet); defaults to desktop. */
   screenType: string;
@@ -198,7 +176,6 @@ export interface RunListItem {
   durationMs: number;
 }
 
-// A network request the runner flagged as failed on a step (from results.json).
 export interface RunResultFailedRequest {
   timestamp: number;
   method: string;
@@ -207,9 +184,8 @@ export interface RunResultFailedRequest {
   time_ms: number;
 }
 
-// One agent step inside the runner's results.json. `status` is the action outcome
-// ("success"/"failed"), `screenshot` a run-relative path ("screenshots/step-2-0.png"),
-// and `user_step_text` the human step it maps to when present.
+/** One agent action inside the runner's results.json. `screenshot` is a run-relative
+ *  path ("screenshots/step-2-0.png"). */
 export interface RunResultStep {
   index?: number;
   action?: string;
@@ -223,9 +199,8 @@ export interface RunResultStep {
   failed_requests?: RunResultFailedRequest[];
 }
 
-// One human-authored ("user") step from results.json. Expands into one or more
-// `agent_steps` (indices into RunResults.agent_steps); `screenshots` gathers every shot
-// captured across those actions (run-relative paths).
+/** One human-authored step. Expands into one or more `agent_steps` (indices into
+ *  RunResults.agent_steps); `screenshots` gathers every shot across those actions. */
 export interface RunResultUserStep {
   index?: number;
   description?: string;
@@ -235,8 +210,8 @@ export interface RunResultUserStep {
   screenshots?: string[];
 }
 
-// The runner's results.json, attached verbatim. Snake_case (runner-authored); read
-// defensively — only the fields the drawer uses are typed.
+/** The runner's results.json, attached verbatim. Snake_case and read defensively —
+ *  only the fields the drawer uses are typed. */
 export interface RunResults {
   success?: boolean;
   status?: string;
@@ -254,10 +229,8 @@ export interface RunResults {
   [k: string]: unknown;
 }
 
-/** Single-run response: the lifecycle row plus the runner's results.json from S3. All
- *  result detail (steps, screenshots, errors, final result) lives inside `results`. */
 export interface RunDetail extends RunListItem {
-  /** The runner's results.json, attached verbatim; null when absent/unreadable. */
+  /** The runner's results.json from S3; null when absent/unreadable. */
   results?: RunResults | null;
 }
 
@@ -310,13 +283,11 @@ export interface ListRunsParams {
   environmentId?: string;
   region?: string;
   batchId?: string;
-  /** RFC3339 lower bound on startedAt (inclusive). */
+  /** RFC3339 bounds on startedAt (inclusive). */
   from?: string;
-  /** RFC3339 upper bound on startedAt (inclusive). */
   to?: string;
 }
 
-/** Project-wide runs list — same as ListRunsParams plus an optional test filter. */
 export interface ListAllRunsParams extends ListRunsParams {
   /** Narrow the list to runs of a single test. */
   testId?: string;
@@ -343,10 +314,8 @@ export interface TriggerRunResult {
   status: string;
 }
 
-// Per-user agent notification preferences. GET /{projectId}/notifications
-// returns the whole tree: agent -> event -> delivery -> enabled. Only agents the
-// user may see are present, and deliveries come back with the registry defaults
-// resolved. PATCH /{projectId}/notifications/{agentKey} takes one agent's Events.
+// Per-user agent notification preferences. GET /{projectId}/notifications returns the
+// whole tree: agent -> event -> delivery -> enabled, with registry defaults resolved.
 //   tests:  { failedRuns: { email, slack } }
 //   issues: { newIssues:  { emailDaily, emailWeekly, slack } }
 //   audits: { auditReady: { email, slack } }
@@ -377,7 +346,6 @@ export interface BulkResult {
   failed: { testId: string; error: string }[];
 }
 
-// A test's content version (API shape — distinct from the UI `TestVersion` snapshot).
 export type VersionStatus =
   | 'pending'
   | 'active'
@@ -425,17 +393,9 @@ export interface ActivateVersionRequest {
 }
 
 // ---- UI view models ----
-// The redesigned UI works with a richer model than the API stores. Adapters in
-// ./adapters map between the two. Most fields persist (tags, and resolutions/regions
-// via the test's `config`); the ones still without API backing are agent
-// `alternatives`, per-step multi-screenshots and the full console stream — see
-// ../../todo.md.
+// Adapters in ./adapters map between these and the API shapes above.
 
-// draft → approved → active (scheduled) → paused. `active` is derived from an
-// approved test carrying a cron; the API doesn't store these two states natively.
 export type TestLifecycle = 'draft' | 'approved' | 'active' | 'paused';
-export type RunResult = 'passed' | 'failed';
-// A run can still be in flight, hence `running`.
 export type UiRunStatus = 'running' | 'passed' | 'failed';
 export type StepStatus =
   | 'passed'
@@ -451,9 +411,8 @@ export interface HttpHeader {
 
 export type Resolution = 'mobile' | 'tablet' | 'desktop';
 
-// The preset environment / viewport / region (Settings → Default run configuration)
-// that pre-fill a new draft's or manually-created test's run settings. Persisted:
-// viewport/region on project settings, the default environment via its `isDefault` flag.
+/** Settings → Default run configuration; pre-fills a new draft's / manual test's run
+ *  settings. Persisted as project settings (viewport, region) + the env `isDefault` flag. */
 export interface RunDefaults {
   envId?: string;
   resolution?: Resolution;
@@ -467,9 +426,9 @@ export type ScheduleFreq =
   | 'monthly'
   | 'custom';
 
-// days: 0=Sun … 6=Sat; dayOfMonth: 1–28 or 0 = "last day" (monthly); time: "HH:mm".
-// A null schedule means run-manually-only. `freq` is inferred when absent. When freq is
-// 'custom' the schedule is a raw 5-field cron string in `cron` (days/time unused).
+/** days: 0=Sun … 6=Sat; dayOfMonth: 1–31 (0 = "last day", read-only — the picker can't
+ *  produce it); time: "HH:mm". `freq` is inferred when absent; when 'custom' the
+ *  schedule is a raw 5-field cron in `cron` (days/time unused). */
 export interface Schedule {
   days: number[];
   time: string;
@@ -478,40 +437,24 @@ export interface Schedule {
   cron?: string;
 }
 
-// An alternative branch the agent observed — rendered as a fork under its step.
-export interface TestAlternative {
-  afterStep: number;
-  note: string;
-}
-
-// One proposed step change in a pending revision, authored against the CURRENT step
-// list (indices refer to positions in `TestCase.steps`), so applying is order-stable.
-// There is no "updated" kind — a reworded step is a remove + an add, git-style.
+/** One proposed step change, authored against the CURRENT step list (indices refer to
+ *  positions in `TestCase.steps`), so applying is order-stable. There is no "updated"
+ *  kind — a reworded step is a remove + an add, git-style. */
 export type StepChange =
   | { type: 'added'; afterIndex: number; text: string } // -1 = before the first step
   | { type: 'removed'; index: number };
 
-// A saved snapshot of the steps as they were at `version` — powers the version
-// switcher and per-step history. Oldest → newest; the current steps are NOT in here.
-export interface TestVersion {
-  version: number;
-  savedAt: number; // epoch ms
-  steps: string[];
-}
-
-// The flow changed: a new version of the steps is proposed and waits for review.
-// While pending, the test reads "Needs review" and (if enabled) scheduled runs pause.
+/** A proposed new version of the steps, awaiting review. */
 export interface PendingRevision {
   toVersion: number;
   detectedAt: number; // epoch ms
   changes: StepChange[];
-  versionId?: string; // API version id backing this suggestion (for activate/dismiss)
+  versionId?: string; // API version id (for activate/dismiss)
 }
 
-// Merging tests (UI-only, client-side until accepted): each participant's steps are held
-// as a reorderable GROUP labelled by its source test. Accepting flattens the arranged
-// groups into one plain step list and saves it as a single new test (base settings), then
-// deletes the sources. `base`/`sources` are the VMs pulled one-by-one on merge start.
+/** Merging tests (client-side until accepted): each participant's steps are held as a
+ *  reorderable GROUP labelled by its source test. Accepting flattens the arranged groups
+ *  into one step list and posts it as a single merge request. */
 export interface MergeGroup {
   title: string;
   steps: string[];
@@ -527,9 +470,9 @@ export interface TestCase {
   title: string;
   steps: string[];
   status: TestLifecycle;
-  createdAt?: number; // epoch ms — the Created column + its sort
+  createdAt?: number; // epoch ms
   isNew?: boolean;
-  // read-only: executing this test has real-world side effects (orders/payments)
+  /** read-only: running this touches real data (orders/accounts/payments) */
   hasSideEffects?: boolean;
   userModified?: boolean;
   environments?: string[]; // environment ids (source of truth for writes)
@@ -538,35 +481,29 @@ export interface TestCase {
   regions?: string[];
   schedule?: Schedule | null;
   tags?: string[]; // up to 3
-  alternatives?: TestAlternative[];
-  lastResult?: RunResult;
   lastRunAt?: number; // epoch ms
-  recent?: RunResult[]; // most-recent-last
   timeoutSecs?: number;
   expectedResult?: string;
-  // opaque per-test config, carried through so partial updates don't drop it
+  /** opaque per-test config, carried through so partial updates don't drop it */
   config?: Record<string, unknown>;
-  // API `needsReview` flag — the agent flagged this test as awaiting review. Set even
-  // when there's no pending version diff (`suggestion`) to review yet.
+  /** API `needsReview` — set even when there's no pending version diff to review yet. */
   needsReview?: boolean;
-  // step versioning — steps carry a version (default 1); saved snapshots of older
-  // versions live in `history`, and a detected flow change sits in `pendingRevision`
-  // until the user reviews it (accept/discard/edit per change → save as vN).
   version?: number;
-  history?: TestVersion[];
   pendingRevision?: PendingRevision;
-  // a merge waiting to be arranged + accepted (see PendingMerge). Client-only — never
-  // read back from the API; set when the user starts a merge from the list.
+  /** Client-only, never read back from the API. */
   pendingMerge?: PendingMerge;
+  /** Client-only: the drawer sets this when the user actually edited the step list, so
+   *  an update PUT replaces `steps` only then — a rename / approve / pause must not
+   *  needlessly rewrite them. */
+  stepsChanged?: boolean;
 }
 
 export interface TestStep {
   step: string;
   status: StepStatus;
-  // a step can capture several screenshots (run-relative names); the drawer shows a
-  // carousel over them.
+  /** run-relative screenshot names; the drawer shows a carousel over them */
   screenshots?: string[];
-  // per-step network activity from the run's results.json (counts only).
+  /** per-step network activity from the run's results.json (counts only) */
   networkRequests?: number;
   failedRequests?: number;
 }
@@ -606,9 +543,9 @@ export interface NetworkRequest {
 
 export interface RunData {
   key: string;
-  testId?: string; // owning test — for Rerun (POST /tests/{testId}/trigger)
+  testId?: string; // owning test — for Rerun
   testName: string;
-  version?: number; // which step version the run executed (default 1)
+  version?: number;
   date: number; // when the run started (epoch ms)
   duration?: number; // omitted while running
   status: UiRunStatus;
@@ -626,10 +563,9 @@ export interface RunData {
   region?: string;
   tags?: string[];
   console?: ConsoleLog[];
-  network?: NetworkRequest[];
 }
 
-// Environment as the redesigned form edits it; maps to the API `Environment`.
+/** Environment as the redesigned form edits it; maps to the API `Environment`. */
 export interface EnvironmentVM {
   id: string;
   name: string;
@@ -639,9 +575,8 @@ export interface EnvironmentVM {
   headers?: HttpHeader[];
   ignoreHttpsErrors?: boolean;
   isDefault?: boolean;
-  /** Soft on/off toggle, independent of soft-delete. */
   isActive?: boolean;
-  // The full stored variables record, carried through edits so keys the form doesn't
-  // model aren't wiped by the wholesale-replace PUT.
+  /** The full stored variables record, carried through edits so keys the form doesn't
+   *  model aren't wiped by the wholesale-replace PUT. */
   variables?: Record<string, unknown>;
 }

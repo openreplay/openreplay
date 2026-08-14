@@ -1,4 +1,4 @@
-import { Button, Modal, Segmented, Select, Tooltip, message } from 'antd';
+import { Button, Modal, Segmented, Select, Tooltip } from 'antd';
 import {
   CheckCircle2,
   ChevronLeft,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 import { formatDateTimeDefault } from 'App/date';
 
@@ -32,6 +33,9 @@ import { harToNetworkRequests } from '../shared/adapters';
 import { ConsoleLog, NetworkRequest, RunData, TestStep } from '../shared/types';
 import {
   RESOLUTION_ICON,
+  TINT,
+  TINT_BORDER,
+  TINT_SOFT,
   VersionLabel,
   formatDuration,
   regionCountry,
@@ -49,20 +53,18 @@ interface Props {
   onClose: () => void;
 }
 
-// A step is worth showing in the carousel once it captured at least one screenshot.
 const hasShot = (s: TestStep) => !!s.screenshots?.length;
 
 const isNetError = (r: NetworkRequest) => r.status === 0 || r.status >= 400;
 
-/** One run screenshot, fetched as an authed blob → object URL (a bare authed path
- *  can't be an <img src>). Falls back to a muted placeholder while loading / on error. */
+/** One run screenshot, fetched as an authed blob → object URL (a bare authed path can't
+ *  be an <img src>). */
 function RunShot({ runId, name }: { runId: string; name: string }) {
   const { t } = useTranslation();
   const projectId = useProjectId();
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
-  // keyed by name at the call site, so a new screenshot mounts a fresh instance — no need
-  // to reset url/failed here (which would be a sync setState in an effect).
+  // keyed by name at the call site, so a new screenshot mounts a fresh instance
   useEffect(() => {
     let alive = true;
     let obj: string | undefined;
@@ -109,8 +111,7 @@ function DevEmpty({ text, fill }: { text: string; fill?: boolean }) {
   );
 }
 
-/** Console output captured during the run — mirrors the session console: level icon +
- *  monospace message, time on the right, error rows tinted. */
+/** Console output captured during the run — mirrors the session console. */
 function ConsoleView({ logs, fill }: { logs?: ConsoleLog[]; fill?: boolean }) {
   const { t } = useTranslation();
   if (!logs || logs.length === 0)
@@ -151,11 +152,10 @@ function ConsoleView({ logs, fill }: { logs?: ConsoleLog[]; fill?: boolean }) {
   );
 }
 
-/** Step screenshots. A step can capture several screenshots, so a Step Selector picks
- *  the step and the carousel arrows move between that step's screenshots. Opens on the
- *  failed step. When `onExpand` is set the preview is click-to-enlarge. With `fill`
- *  (expand modal) the image letterboxes into the fixed stage and a step filmstrip
- *  rides the bottom — the screenshot never dictates the modal's height. */
+/** Step screenshots: a selector picks the step, the carousel arrows move between that
+ *  step's screenshots (spilling into the next/previous step at the ends). Opens on the
+ *  failed step. With `fill` (expand modal) the image letterboxes into the fixed stage
+ *  and a step filmstrip rides the bottom. */
 function ScreenshotsView({
   run,
   onExpand,
@@ -198,8 +198,6 @@ function ScreenshotsView({
   };
   const stepShots = (pos: number) =>
     Math.max(1, run.steps[shotSteps[pos].i].screenshots?.length ?? 0);
-  // advance within the step, then spill into the next / previous step (wrapping at the
-  // ends) so the arrows walk the whole run's screenshots, not just this step's.
   const nextShot = () => {
     if (safeShot < shotCount - 1) return setShotIdx(safeShot + 1);
     pickStep(stepPos < shotSteps.length - 1 ? stepPos + 1 : 0);
@@ -210,12 +208,10 @@ function ScreenshotsView({
     setStepPos(prevPos);
     setShotIdx(stepShots(prevPos) - 1);
   };
-  // arrows are useful whenever there's anywhere to go — more steps or more shots
   const canNavigate = shotSteps.length > 1 || shotCount > 1;
 
   return (
     <div className={`flex flex-col gap-2 ${fill ? 'h-full min-h-0' : ''}`}>
-      {/* Step selector — pick the step; the carousel below holds that step's screenshots */}
       <Select
         size="small"
         value={stepPos}
@@ -239,9 +235,8 @@ function ScreenshotsView({
         }))}
       />
 
-      {/* Carousel — arrows move between the selected step's screenshots. In the fixed
-          modal stage the image letterboxes into the remaining height instead of the
-          aspect-ratio box driving the layout. */}
+      {/* in the fixed modal stage the image letterboxes into the remaining height
+          instead of the aspect-ratio box driving the layout */}
       <div
         className={`group relative w-full rounded-lg border bg-gray-lightest flex items-center justify-center ${
           failed ? 'border-red' : ''
@@ -251,14 +246,10 @@ function ScreenshotsView({
         role={onExpand ? 'button' : undefined}
         aria-label={onExpand ? t('Expand screenshot') : undefined}
       >
-        {/* floating "Failed" label, top-right — same tint/icon as the result tags */}
         {failed && (
           <span
             className="absolute top-2 right-2 inline-flex items-center gap-1 text-xs font-medium rounded px-1.5 py-0.5"
-            style={{
-              background: 'rgba(204, 0, 0, 0.1)',
-              color: 'var(--color-red)',
-            }}
+            style={{ background: TINT.red, color: 'var(--color-red)' }}
           >
             <XCircle size={12} /> {t('Failed')}
           </span>
@@ -279,13 +270,15 @@ function ScreenshotsView({
             </span>
           </div>
         )}
-        {/* explicit image counter, bottom-right — clearly about screenshots, not steps */}
         {shotCount > 1 && (
           <span
             className="absolute bottom-2 right-2 text-xs font-medium rounded px-1.5 py-0.5 bg-white/90 border text-gray-dark"
             style={{ borderColor: 'var(--color-gray-light)' }}
           >
-            {t('Screenshot')} {safeShot + 1} {t('of')} {shotCount}
+            {t('Screenshot {{n}} of {{total}}', {
+              n: safeShot + 1,
+              total: shotCount,
+            })}
           </span>
         )}
         {onExpand && (
@@ -321,15 +314,12 @@ function ScreenshotsView({
         )}
       </div>
 
-      {/* Filmstrip (modal only) — one thumb per step, faster than arrow-hopping;
-          the failed step is tinted red so it's findable at a glance */}
+      {/* filmstrip (modal only) — one thumb per step, the failed one tinted red */}
       {fill && shotSteps.length > 1 && (
         <div className="flex gap-1.5 overflow-x-auto py-0.5 shrink-0">
           {shotSteps.map((s, pos) => {
             const active = pos === Math.min(stepPos, shotSteps.length - 1);
             const isFailed = s.step.status === 'failed';
-            // selection mirrors the network filter chips: light-blue fill + 1px
-            // teal border — no shadow ring (it read heavy and clipped in scroll)
             return (
               <Tooltip
                 key={s.i}
@@ -342,7 +332,7 @@ function ScreenshotsView({
                   className="shrink-0 w-[72px] h-[45px] rounded border flex items-center justify-center text-xs font-medium transition outline-none focus:outline-none"
                   style={{
                     background: isFailed
-                      ? 'rgba(204, 0, 0, 0.08)'
+                      ? TINT_SOFT.red
                       : active
                         ? 'var(--color-active-blue)'
                         : 'var(--color-gray-lightest)',
@@ -356,7 +346,7 @@ function ScreenshotsView({
                         ? 'var(--color-red)'
                         : 'var(--color-teal)'
                       : isFailed
-                        ? 'rgba(204, 0, 0, 0.35)'
+                        ? TINT_BORDER.red
                         : 'var(--color-gray-light)',
                   }}
                 >
@@ -373,9 +363,8 @@ function ScreenshotsView({
 
 type DevTab = 'screenshots' | 'network' | 'console';
 
-/** One execution of a test. Read-only: outcome, a compact meta line, the step list
- *  (failed step shows its error inline), and a tabbed DevTools block — screenshots,
- *  network and console — mirroring what a session shows. */
+/** One execution of a test. Read-only: outcome, meta line, the step list (the failed
+ *  step shows its error inline), and a tabbed DevTools block. */
 function RunDrawer({ run, open, onClose }: Props) {
   const { t } = useTranslation();
   const [devTab, setDevTab] = useState<DevTab>('screenshots');
@@ -383,12 +372,11 @@ function RunDrawer({ run, open, onClose }: Props) {
   const [modalTab, setModalTab] = useState<DevTab>('screenshots');
   const activityRef = useRef<HTMLDivElement>(null);
   const triggerMut = useTriggerRun();
-  // the run's network comes from its streamed network.har (parsed into requests); the
-  // detail response carries no network of its own.
+  // the detail response carries no network of its own — it comes from the streamed HAR
   const { data: harText } = useRunHar(run?.key);
   const network = useMemo(
-    () => (harText ? harToNetworkRequests(harText) : (run?.network ?? [])),
-    [harText, run],
+    () => (harText ? harToNetworkRequests(harText) : []),
+    [harText],
   );
   const downloadHar = () => {
     if (!harText) return;
@@ -398,8 +386,11 @@ function RunDrawer({ run, open, onClose }: Props) {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'network.har';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    // revoke after the click has been dispatched, or the download can be cancelled
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
   // a per-step "View …" link selects the tab and scrolls the Activity panel into view
@@ -436,14 +427,14 @@ function RunDrawer({ run, open, onClose }: Props) {
     if (!run.testId) return;
     triggerMut.mutate(run.testId, {
       onSuccess: () =>
-        message.success(`${run.testName} — ${t('rerun started, see Runs')}`),
-      onError: () => message.error(t('Failed to start run')),
+        toast.success(`${run.testName} — ${t('rerun started, see Runs')}`),
+      onError: () => toast.error(t('Failed to start run')),
     });
   };
 
   const renderStep = (step: TestStep, idx: number) => {
-    // For a running run we can't know per-step status (we only know the run is
-    // running), so every step shows a neutral marker until the run finishes.
+    // for a running run we only know the run is in flight, so every step shows a
+    // neutral marker until it finishes
     const status = running ? 'unknown' : step.status;
     const stepFailed = status === 'failed';
     const skipped = status === 'skipped';
@@ -478,8 +469,8 @@ function RunDrawer({ run, open, onClose }: Props) {
             {step.step}
             {skipped && <span className="ml-2 text-xs">({t('skipped')})</span>}
           </div>
-          {/* per-step network activity from results.json (counts) — click opens the
-              Network tab. Disabled when no HAR was captured (nothing to open). */}
+          {/* per-step network counts from results.json; disabled when no HAR was
+              captured (nothing to open) */}
           {(step.networkRequests || step.failedRequests) && (
             <Tooltip
               title={
@@ -501,18 +492,17 @@ function RunDrawer({ run, open, onClose }: Props) {
                 >
                   <Network size={11} className="shrink-0" />
                   <span>
-                    {step.networkRequests ?? 0}{' '}
-                    {(step.networkRequests ?? 0) === 1
-                      ? t('request')
-                      : t('requests')}
+                    {t('{{count}} requests', {
+                      count: step.networkRequests ?? 0,
+                    })}
                   </span>
-                  {/* a failed request only means the STEP failed when the step itself did;
-                      on a passed step it's a network warning (amber), not a failure (red) */}
+                  {/* a failed request only means the STEP failed when the step itself
+                      did; on a passed step it's a warning, not a failure */}
                   {!!step.failedRequests && (
                     <span
                       className={stepFailed ? 'text-red' : 'text-orange-dark'}
                     >
-                      · {step.failedRequests} {t('failed')}
+                      · {t('{{n}} failed', { n: step.failedRequests })}
                     </span>
                   )}
                 </button>
@@ -521,7 +511,8 @@ function RunDrawer({ run, open, onClose }: Props) {
           )}
           {stepFailed && (
             <div className="mt-1.5 flex flex-col gap-1.5 items-start">
-              {/* the step error often repeats the result summary — only show it when it adds something */}
+              {/* the step error often repeats the result summary — only show it when it
+                  adds something */}
               {run.error && run.error !== run.summary && (
                 <div className="text-sm text-red">{run.error}</div>
               )}
@@ -555,28 +546,21 @@ function RunDrawer({ run, open, onClose }: Props) {
     );
   };
 
-  // Full-width outcome strip: subtle brand tint + coloured icon, dark high-contrast text.
   const bannerCfg = running
     ? {
-        bg: 'rgba(97, 95, 255, 0.1)',
+        bg: TINT.indigo,
         color: 'var(--color-indigo)',
         Icon: Loader,
         spin: true,
       }
     : failed
-      ? {
-          bg: 'rgba(204, 0, 0, 0.08)',
-          color: 'var(--color-red)',
-          Icon: XCircle,
-        }
+      ? { bg: TINT.red, color: 'var(--color-red)', Icon: XCircle }
       : {
-          bg: 'rgba(66, 174, 94, 0.1)',
+          bg: TINT.green,
           color: 'var(--color-green-dark)',
           Icon: CheckCircle2,
         };
   const BannerIcon = bannerCfg.Icon;
-  // Tinted outcome strip, then a meta line (when / duration / env / resolution / region /
-  // tags) shown by default beneath it.
   const banner = (
     <>
       <div
@@ -593,12 +577,15 @@ function RunDrawer({ run, open, onClose }: Props) {
         ) : failed ? (
           <span>
             {run.failedStep != null
-              ? `${t('Failed at step')} ${run.failedStep + 1} ${t('of')} ${total}`
+              ? t('Failed at step {{n}} of {{total}}', {
+                  n: run.failedStep + 1,
+                  total,
+                })
               : t('Failed')}
           </span>
         ) : (
           <span>
-            {t('Passed')} · {total} {t('steps')}
+            {t('Passed')} · {t('{{count}} steps', { count: total })}
           </span>
         )}
       </div>
@@ -611,21 +598,21 @@ function RunDrawer({ run, open, onClose }: Props) {
       <div className="px-5 py-3 border-b bg-white flex items-center gap-x-4 gap-y-1 flex-wrap text-sm text-disabled-text">
         <Tooltip title={formatDateTimeDefault(run.date)}>
           <span className="flex items-center gap-1.5">
-            <Clock size={14} /> {relativeTime(run.date)}
+            <Clock size={14} /> {relativeTime(t, run.date)}
           </span>
         </Tooltip>
         <span className="flex items-center gap-1.5">
           <Timer size={14} />{' '}
-          {run.duration ? formatDuration(run.duration) : t('Running…')}
+          {run.duration ? formatDuration(run.duration) : `${t('Running')}…`}
         </span>
         <span className="flex items-center gap-1.5">
           <Server size={14} /> {run.envName ?? '—'}
         </span>
         <span className="flex items-center gap-1.5">
-          <ResIcon size={14} /> {resolutionLabel(run.resolution)}
+          <ResIcon size={14} /> {resolutionLabel(t, run.resolution)}
         </span>
-        {/* region is null until the runner backfills the column — hide rather than show a
-            misleading default flag */}
+        {/* region is null until the runner backfills the column — hide rather than show
+            a misleading default flag */}
         {run.region && (
           <span className="flex items-center gap-1.5">
             <CountryFlagIcon
@@ -638,8 +625,8 @@ function RunDrawer({ run, open, onClose }: Props) {
         {run.tags && run.tags.length > 0 && (
           <Tooltip title={run.tags.join(', ')}>
             <span className="flex items-center gap-1.5 cursor-default">
-              <TagIcon size={14} /> {run.tags.length}{' '}
-              {run.tags.length === 1 ? t('tag') : t('tags')}
+              <TagIcon size={14} />{' '}
+              {t('{{count}} tags', { count: run.tags.length })}
             </span>
           </Tooltip>
         )}
@@ -647,13 +634,8 @@ function RunDrawer({ run, open, onClose }: Props) {
     </>
   );
 
-  // count chip shown on the Network / Console tab labels when there are failures
   const tabCount = (n: number) =>
     n > 0 ? <span className="ml-1.5 text-red font-medium">{n}</span> : null;
-
-  // passed runs capture no network/console — those tabs are disabled (not hidden,
-  // so nothing "pops up" between runs), with the reason on hover
-  const passed = run.status === 'passed';
 
   // shared by the inline tabs and the expanded modal so they stay in lockstep
   const devOptions = [
@@ -685,13 +667,17 @@ function RunDrawer({ run, open, onClose }: Props) {
     },
   ];
 
+  // the panels hold per-run selection state, so key them by the run; the HAR arrives
+  // asynchronously, hence the request count in the network key too
+  const shotsKey = `shots-${run.key}`;
+  const netKey = `net-${run.key}-${network.length}`;
+
   return (
     <EntityDrawer
-      type="run"
       open={open}
       onClose={onClose}
       title={run.testName}
-      eyebrow="Run"
+      eyebrow={t('Run')}
       headerActions={
         !running ? (
           <Button
@@ -707,7 +693,6 @@ function RunDrawer({ run, open, onClose }: Props) {
     >
       {banner}
 
-      {/* the runner's human result — show only the "Summary: …" tail when present */}
       {resultSummary(run.summary) && (
         <div className="px-5 py-3 border-b bg-white">
           <div className="text-xs font-medium uppercase tracking-wide text-disabled-text mb-1">
@@ -721,7 +706,6 @@ function RunDrawer({ run, open, onClose }: Props) {
 
       <Section
         title={
-          // which step version this run executed — same chip as the tests table
           <span className="flex items-center gap-1.5">
             {t('Steps')}
             <span className="text-gray-medium font-normal">·</span>
@@ -736,8 +720,6 @@ function RunDrawer({ run, open, onClose }: Props) {
         </div>
       </Section>
 
-      {/* DevTools — the same things you'd check on a session: screenshots, network,
-          console. One tab at a time so the drawer stays readable; expand for room. */}
       <div ref={activityRef} />
       <Section
         title={t('Activity')}
@@ -763,13 +745,14 @@ function RunDrawer({ run, open, onClose }: Props) {
         <div className="mt-3">
           {devTab === 'screenshots' && (
             <ScreenshotsView
+              key={shotsKey}
               run={run}
               onExpand={() => openExpanded('screenshots')}
             />
           )}
           {devTab === 'network' && (
             <NetworkPanel
-              key={`net-${network.length}`}
+              key={netKey}
               reqs={network}
               startedAt={run.date}
               onDownload={harText ? downloadHar : undefined}
@@ -779,7 +762,6 @@ function RunDrawer({ run, open, onClose }: Props) {
         </div>
       </Section>
 
-      {/* Expanded view — same three tabs, with room for the screenshot + network table */}
       <Modal
         open={expanded}
         onCancel={() => setExpanded(false)}
@@ -805,13 +787,15 @@ function RunDrawer({ run, open, onClose }: Props) {
             onChange={(v) => setModalTab(v as DevTab)}
             options={devOptions}
           />
-          {/* fixed stage — every tab renders inside the same height, so switching
-              tabs (or an empty console) never resizes the modal */}
+          {/* fixed stage — every tab renders inside the same height, so switching tabs
+              never resizes the modal */}
           <div className="h-[60vh] min-h-[420px]">
-            {modalTab === 'screenshots' && <ScreenshotsView run={run} fill />}
+            {modalTab === 'screenshots' && (
+              <ScreenshotsView key={`${shotsKey}-modal`} run={run} fill />
+            )}
             {modalTab === 'network' && (
               <NetworkPanel
-                key={`net-${network.length}`}
+                key={`${netKey}-modal`}
                 reqs={network}
                 startedAt={run.date}
                 fillHeight

@@ -6,12 +6,12 @@ import {
   Skeleton,
   Table,
   Tooltip,
-  message,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { RotateCw } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 import { formatDateTimeDefault } from 'App/date';
 
@@ -37,6 +37,7 @@ import {
 import { useKaiUi } from './shared/uiStore';
 import { useQueryParam } from './shared/useUrlState';
 import {
+  LOOKUP_LIMIT,
   PERIOD_OPTIONS,
   REGION_OPTIONS,
   RESOLUTION_OPTIONS,
@@ -55,16 +56,16 @@ const SORT_FIELD: Record<string, ListAllRunsParams['sortField']> = {
   duration: 'duration_ms',
   date: 'started_at',
 };
-// The 3 coarse UI buckets over the 6 API run statuses. Counts collapse all of them
-// (accurate badges); the status filter sends the bucket as a comma list (api4 any-of), so
-// running/failed filter every underlying status server-side.
+// The 3 coarse UI buckets over the 6 API run statuses. Counts collapse all of them, and
+// the status filter sends the bucket as a comma list (any-of), so the filter and the
+// badges agree with what the rows render.
 const BUCKET_STATUSES: Record<UiRunStatus, RunStatus[]> = {
   running: ['dispatched', 'running'],
   failed: ['failed', 'error', 'timeout'],
   passed: ['passed'],
 };
 
-// Live elapsed counter for an in-flight run — ticks each second from its start time.
+/** Live elapsed counter for an in-flight run. */
 function LiveDuration({ start }: { start: number }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -85,9 +86,10 @@ function LiveDuration({ start }: { start: number }) {
 function RunsTab() {
   const { t } = useTranslation();
   const triggerMut = useTriggerRun();
-  const { data: envData } = useEnvironments({ limit: 100 });
-  const envNameById = new Map(
-    (envData?.items ?? []).map((e) => [e.environmentId, e.name]),
+  const { data: envData } = useEnvironments({ limit: LOOKUP_LIMIT });
+  const envNameById = useMemo(
+    () => new Map((envData?.items ?? []).map((e) => [e.environmentId, e.name])),
+    [envData],
   );
   const envOptions = (envData?.items ?? []).map((e) => ({
     value: e.environmentId,
@@ -95,8 +97,7 @@ function RunsTab() {
   }));
 
   // A test drawer's "View all runs" / "View" shortcut sets a handoff (fresh handoffId)
-  // and switches here. Adopt it as the search / open run — at mount and again whenever
-  // handoffId changes (this pane stays mounted between visits).
+  // and switches here.
   const { runsTestFilter, runsOpenRunKey, handoffId } = useKaiUi();
   // the opened run drawer IS the ?run= param — open iff present. No separate state, so
   // browser back/forward just open/close it (no state↔URL sync loop).
@@ -108,17 +109,15 @@ function RunsTab() {
   const [tagFilter, setTagFilter] = useState('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [regionFilter, setRegionFilter] = useState('all');
-  const [periodFilter, setPeriodFilter] = useState('7'); // default: Last 7 days
-  const [dispatchFilter, setDispatchFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('7');
   const [sortBy, setSortBy] = useState<{
     field?: string;
     order?: 'ascend' | 'descend';
   }>({ field: 'date', order: 'descend' });
   const [page, setPage] = useState(1);
 
-  // adopt a cross-tab handoff ("View all runs" / "View run") exactly once when handoffId
-  // bumps — reset the filters and open the handed-off run in the URL (this pane stays
-  // mounted between visits, so a fresh id is the signal).
+  // adopt a cross-tab handoff exactly once when handoffId bumps — this pane stays
+  // mounted between visits, so a fresh id is the signal
   const seenHandoffRef = useRef(handoffId);
   useEffect(() => {
     if (seenHandoffRef.current === handoffId) return;
@@ -128,7 +127,6 @@ function RunsTab() {
     setStatusTab('all');
     // opening a handed-off run pushes an entry so Back returns to the list
     setOpenKey(runsOpenRunKey ?? undefined, !!runsOpenRunKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handoffId]);
 
   // debounce the search box (setState in a timer callback, not sync in the effect body)
@@ -137,14 +135,12 @@ function RunsTab() {
     return () => window.clearTimeout(id);
   }, [query]);
 
-  // filters shared by the list + the count aggregates (everything except the status tab).
-  // Memoize `from` per period — periodFrom() is Date.now()-based, so recomputing it every
-  // render produced a new value → new query key → refetch → re-render → request loop (429).
+  // Memoize `from` per period — periodFrom() is Date.now()-based, so recomputing it
+  // every render produced a new value → new query key → refetch → re-render loop (429).
   const from = useMemo(() => periodFrom(periodFilter), [periodFilter]);
   const filters = {
     name: search || undefined,
     screenType: resFilter !== 'all' ? resFilter : undefined,
-    dispatchMode: dispatchFilter !== 'all' ? dispatchFilter : undefined,
     tags: tagFilter !== 'all' ? tagFilter : undefined,
     environmentId: envFilter !== 'all' ? envFilter : undefined,
     region: regionFilter !== 'all' ? regionFilter : undefined,
@@ -166,23 +162,17 @@ function RunsTab() {
   const { data: runsData, isPending } = useAllRuns(listParams);
   // status counts ignore the active status tab so every tab shows its own total
   const { data: statusCounts } = useRunCounts('status', filters);
-  // dispatch-mode options come from the count buckets (excludes the unset "" bucket)
-  const { data: dispatchCounts } = useRunCounts('dispatchMode', {
+  // tag options come from the owning tests' tags, sharing the name/period filters
+  const { data: tagCounts } = useRunCounts('tags', {
     name: filters.name,
     from,
   });
-  const dispatchModes = (dispatchCounts?.buckets ?? [])
-    .map((b) => b.value)
-    .filter(Boolean);
-  // tag options come from the tag count buckets (owning test's tags), sharing the
-  // name/period filters so the list stays honest
-  const { data: tagCounts } = useRunCounts('tags', { name: filters.name, from });
   const tagOptions = (tagCounts?.buckets ?? [])
     .map((b) => b.value)
     .filter(Boolean);
 
   // reset to page 1 whenever a filter changes (sort resets page in onChange)
-  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${dispatchFilter}|${tagFilter}|${envFilter}|${regionFilter}`;
+  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${tagFilter}|${envFilter}|${regionFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
@@ -216,20 +206,49 @@ function RunsTab() {
     if (!run.testId) return;
     triggerMut.mutate(run.testId, {
       onSuccess: () =>
-        message.success(`${run.testName} — ${t('rerun started, see Runs')}`),
-      onError: () => message.error(t('Failed to start run')),
+        toast.success(`${run.testName} — ${t('rerun started, see Runs')}`),
+      onError: () => toast.error(t('Failed to start run')),
     });
   };
 
   const faded = (n: number) => <CountSuffix n={n} />;
   const statusOptions = [
-    { value: 'all', label: <span>{t('All')}{faded(allCount)}</span> },
+    {
+      value: 'all',
+      label: (
+        <span>
+          {t('All')}
+          {faded(allCount)}
+        </span>
+      ),
+    },
     {
       value: 'running',
-      label: <span>{t('Running')}{faded(runningCount)}</span>,
+      label: (
+        <span>
+          {t('Running')}
+          {faded(runningCount)}
+        </span>
+      ),
     },
-    { value: 'failed', label: <span>{t('Failed')}{faded(failedCount)}</span> },
-    { value: 'passed', label: <span>{t('Passed')}{faded(passedCount)}</span> },
+    {
+      value: 'failed',
+      label: (
+        <span>
+          {t('Failed')}
+          {faded(failedCount)}
+        </span>
+      ),
+    },
+    {
+      value: 'passed',
+      label: (
+        <span>
+          {t('Passed')}
+          {faded(passedCount)}
+        </span>
+      ),
+    },
   ];
 
   const columns: TableColumnsType<RunData> = [
@@ -292,7 +311,7 @@ function RunsTab() {
       showSorterTooltip: false,
       render: (date: number) => (
         <Tooltip title={formatDateTimeDefault(date)}>
-          <span className="text-disabled-text">{relativeTime(date)}</span>
+          <span className="text-disabled-text">{relativeTime(t, date)}</span>
         </Tooltip>
       ),
     },
@@ -385,7 +404,10 @@ function RunsTab() {
             style={{ width: 140 }}
             options={[
               { value: 'all', label: t('All regions') },
-              ...REGION_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+              ...REGION_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+              })),
             ]}
           />
           <Select

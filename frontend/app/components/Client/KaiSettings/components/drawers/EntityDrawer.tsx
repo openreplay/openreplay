@@ -1,102 +1,49 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Drawer, Input, Tooltip } from 'antd';
 import type { InputRef } from 'antd';
-import { FlaskConical, LucideIcon, Play, Plus, Sparkles, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// The three things a user can open from the tables. They share one shell so they read
-// as the same family of objects; each owns a distinct accent + icon + word so you can
-// never mistake which one you're looking at.
-export type EntityType = 'draft' | 'test' | 'run';
-
-interface TypeMeta {
-  label: string;
-  eyebrow: string;
-  Icon: LucideIcon;
-  square: string; // colored icon tile
-  accentText: string;
-  accentBorder: string;
-}
-
-export const TYPE_META: Record<EntityType, TypeMeta> = {
-  // gray — an AI proposal from the agent, not yet real
-  draft: {
-    label: 'Draft',
-    eyebrow: 'Draft',
-    Icon: Sparkles,
-    square: 'bg-gray-lightest text-gray-dark',
-    accentText: 'text-gray-dark',
-    accentBorder: 'border-gray-light',
-  },
-  // green — an approved, living test
-  test: {
-    label: 'Test',
-    eyebrow: 'Test',
-    Icon: FlaskConical,
-    square: 'bg-green-light text-green-dark',
-    accentText: 'text-green-dark',
-    accentBorder: 'border-green',
-  },
-  // indigo — one historical execution
-  run: {
-    label: 'Run',
-    eyebrow: 'Run',
-    Icon: Play,
-    square: 'bg-indigo-lightest text-indigo',
-    accentText: 'text-indigo',
-    accentBorder: 'border-indigo',
-  },
-};
-
 interface DrawerProps {
-  type: EntityType;
   open: boolean;
   onClose: () => void;
   title: string;
-  /** eyebrow override (e.g. "Test · Paused") */
-  eyebrow?: string;
+  /** small uppercase line above the title, e.g. "Test · Paused" */
+  eyebrow: string;
   /** when set, the title becomes inline-editable (rename) */
   onTitleChange?: (title: string) => void;
-  /** creation flow: mount the title already editing, empty, with a placeholder —
-   *  naming becomes the first step of the flow instead of a discovery */
+  /** creation flow: mount the title already editing, empty, with a placeholder */
   autoEditTitle?: boolean;
-  /** small line under the title */
-  statusLine?: React.ReactNode;
   /** actions rendered top-right in the header, before the close icon */
   headerActions?: React.ReactNode;
   footer?: React.ReactNode;
   children: React.ReactNode;
 }
 
+/** The shell every drawer in this feature shares, so they read as one family. */
 export function EntityDrawer({
-  type,
   open,
   onClose,
   title,
   eyebrow,
   onTitleChange,
   autoEditTitle,
-  statusLine,
   headerActions,
   footer,
   children,
 }: DrawerProps) {
-  const meta = TYPE_META[type];
-
   return (
     <Drawer
       open={open}
       onClose={onClose}
       rootClassName="kai-entity-drawer"
       placement="right"
-      // native antd header: standard close icon (matches the app's other drawers),
-      // actions in `extra`, the title block carries eyebrow + name + status line.
       closable
       title={
         <div className="min-w-0">
           <div className="text-xs font-medium uppercase tracking-wide text-disabled-text">
-            {eyebrow ?? meta.eyebrow}
+            {eyebrow}
           </div>
           {onTitleChange ? (
             <EditableTitle
@@ -109,7 +56,6 @@ export function EntityDrawer({
               {title}
             </div>
           )}
-          {statusLine && <div className="mt-2 font-normal">{statusLine}</div>}
         </div>
       }
       extra={headerActions}
@@ -117,8 +63,8 @@ export function EntityDrawer({
       styles={{
         wrapper: { width: 560 },
         body: { padding: 0 },
-        // 24px right/left = the header's padding, so the footer's primary button
-        // right-aligns with the header actions (Run now ↔ Save)
+        // 24px matches the header padding, so the footer's primary button right-aligns
+        // with the header actions
         footer: { padding: '12px 24px' },
       }}
     >
@@ -127,12 +73,8 @@ export function EntityDrawer({
   );
 }
 
-/** The drawer title as a click-to-rename field — the same interaction as the issue
- *  detail title (ProblemCard's EditableTitle): the whole title is the click target
- *  (hover tint + pencil), editing shows an input with Cancel/Save, Enter saves,
- *  Escape cancels. `autoEdit` (creation) mounts it already editing, empty, with a
- *  placeholder, so naming is part of the flow. An empty commit keeps the current
- *  title ("Untitled test" during creation). */
+/** Click-to-rename title. Enter saves, Escape cancels. `autoEdit` (creation) mounts it
+ *  already editing and empty; an empty commit keeps the current title. */
 function EditableTitle({
   title,
   onChange,
@@ -144,24 +86,25 @@ function EditableTitle({
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(!!autoEdit);
-  // creation starts from an empty field (the placeholder carries the hint) —
-  // typing the name directly beats editing a preselected "Untitled test"
   const [val, setVal] = useState(autoEdit ? '' : title);
   const ref = useRef<InputRef>(null);
 
-  // Sync the field to an external title change (render-time, not an effect), but never
-  // clobber what the user is currently typing.
+  // sync to an external title change (render-time, not an effect), but never clobber
+  // what the user is currently typing
   const [prevTitle, setPrevTitle] = useState(title);
   if (prevTitle !== title && !editing) {
     setPrevTitle(title);
     setVal(title);
   }
 
-  // the drawer animates in — on autoEdit, focus only after it settles (an early
-  // focus gets stolen by the Drawer's own focus management)
+  // on autoEdit, focus only after the drawer animation settles — an early focus gets
+  // stolen by the Drawer's own focus management
   useEffect(() => {
     if (!editing) return undefined;
-    const id = window.setTimeout(() => ref.current?.focus(), autoEdit ? 250 : 0);
+    const id = window.setTimeout(
+      () => ref.current?.focus(),
+      autoEdit ? 250 : 0,
+    );
     return () => window.clearTimeout(id);
   }, [editing, autoEdit]);
 
@@ -176,8 +119,7 @@ function EditableTitle({
     setEditing(false);
   };
 
-  // both states live in the same fixed-height row so toggling edit never grows the
-  // header; mr-4 keeps the row clear of the header action buttons
+  // both states share one fixed-height row so toggling edit never grows the header
   if (editing) {
     return (
       <div className="mt-1 h-8 flex items-center gap-2 min-w-0 mr-4">
@@ -209,7 +151,6 @@ function EditableTitle({
     <Tooltip mouseEnterDelay={0.4} title={t('Click to edit')}>
       <div
         onClick={() => setEditing(true)}
-        // w-fit: the tint hugs the title + pencil instead of filling the header row
         className="group mt-1 h-8 w-fit max-w-full flex items-center gap-2 min-w-0 mr-4 cursor-pointer select-none rounded-lg px-2 -mx-2 hover:bg-teal/10 transition"
       >
         <span className="text-xl font-semibold text-black leading-tight truncate">
@@ -223,7 +164,7 @@ function EditableTitle({
   );
 }
 
-/** A titled block. Every section in every drawer uses this — that's the visual glue. */
+/** A titled block. Every section in every drawer uses this. */
 export function Section({
   title,
   action,
@@ -246,27 +187,7 @@ export function Section({
   );
 }
 
-/** Read-only key/value pairs (run detail, test summary). */
-export function MetaGrid({
-  items,
-}: {
-  items: { label: string; value: React.ReactNode }[];
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-      {items.map((it) => (
-        <div key={it.label} className="flex flex-col gap-0.5 min-w-0">
-          <span className="text-xs text-disabled-text">{it.label}</span>
-          <span className="text-sm text-black font-medium flex items-center gap-1.5">
-            {it.value}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Stacked label + control, for editable fields. */
+/** Stacked label + control — the one shared field style in this feature. */
 export function Field({
   label,
   children,
@@ -276,35 +197,14 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      {/* matches the app's Account-settings field-label darkness (gray-dark read too
-          light next to it) — kept here as the one shared style every field label in
-          Kai settings should use */}
       <span className="text-sm font-medium text-gray-darkest">{label}</span>
       {children}
     </div>
   );
 }
 
-export function TagChips({ tags }: { tags?: string[] }) {
-  if (!tags || tags.length === 0)
-    return <span className="text-sm text-disabled-text">—</span>;
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {tags.slice(0, 3).map((tag) => (
-        <span
-          key={tag}
-          className="text-xs px-2 py-0.5 rounded bg-gray-lightest text-disabled-text"
-        >
-          {tag}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/** Up to 3 tags per test (Mehdi). Chips match the table's RowTags exactly; each has a
- *  remove ×, plus a dashed "Add" chip that turns into an inline input. A plain chip row
- *  (not an antd tags-Select) so the height doesn't jump while editing. */
+/** Up to 3 tags per test. A plain chip row (not an antd tags-Select) so the height
+ *  doesn't jump while editing. */
 export function TagEditor({
   value = [],
   onChange,

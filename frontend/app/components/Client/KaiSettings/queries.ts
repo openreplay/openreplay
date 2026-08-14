@@ -25,6 +25,7 @@ import {
   TestUpdateRequest,
   TestsBulkRequest,
 } from './components/shared/types';
+import { LOOKUP_LIMIT } from './components/shared/utils';
 
 // Lets the page-level project selector override which project the queries hit,
 // without mutating the globally-active project. Falls back to the active one.
@@ -56,9 +57,21 @@ export const browserTestsKeys = {
   runHar: (projectId: string, runId: string) =>
     ['browser-tests', projectId, 'run-har', runId] as const,
   testCounts: (projectId: string, aggregator: string, params?: unknown) =>
-    ['browser-tests', projectId, 'test-counts', aggregator, params ?? {}] as const,
+    [
+      'browser-tests',
+      projectId,
+      'test-counts',
+      aggregator,
+      params ?? {},
+    ] as const,
   runCounts: (projectId: string, aggregator: string, params?: unknown) =>
-    ['browser-tests', projectId, 'run-counts', aggregator, params ?? {}] as const,
+    [
+      'browser-tests',
+      projectId,
+      'run-counts',
+      aggregator,
+      params ?? {},
+    ] as const,
   versionDiff: (projectId: string, testId: string) =>
     ['browser-tests', projectId, 'version-diff', testId] as const,
   versions: (projectId: string, testId: string) =>
@@ -89,9 +102,9 @@ export function invalidateTestData(
   });
 }
 
-// Every GET in this section caches for 10 minutes — fresh (no refetch) and retained while
-// unused — so switching tabs / reopening a drawer serves from cache. Mutations still
-// invalidate the relevant keys, so writes show up immediately.
+// Every GET below stays fresh (no refetch) and retained while unused for this long, so
+// switching tabs / reopening a drawer serves from cache. Mutations still invalidate the
+// relevant keys, so writes show up immediately.
 const CACHE_MS = 5 * 60 * 1000;
 const cacheOpts = { staleTime: CACHE_MS, gcTime: CACHE_MS };
 
@@ -288,8 +301,7 @@ export function useRunHar(runId: string | undefined) {
   return useQuery({
     ...cacheOpts,
     queryKey: browserTestsKeys.runHar(projectId, runId ?? ''),
-    queryFn: () =>
-      api.getRunHar(projectId, runId as string).catch(() => null),
+    queryFn: () => api.getRunHar(projectId, runId as string).catch(() => null),
     enabled: !!projectId && !!runId,
     retry: false,
   });
@@ -333,7 +345,8 @@ export function useVersions(testId: string | undefined, enabled = true) {
   return useQuery({
     ...cacheOpts,
     queryKey: browserTestsKeys.versions(projectId, testId ?? ''),
-    queryFn: () => api.listVersions(projectId, testId as string, { limit: 100 }),
+    queryFn: () =>
+      api.listVersions(projectId, testId as string, { limit: LOOKUP_LIMIT }),
     enabled: !!projectId && !!testId && enabled,
     retry: false,
   });
@@ -347,7 +360,11 @@ export function useVersion(
   const projectId = useProjectId();
   return useQuery({
     ...cacheOpts,
-    queryKey: browserTestsKeys.version(projectId, testId ?? '', versionId ?? ''),
+    queryKey: browserTestsKeys.version(
+      projectId,
+      testId ?? '',
+      versionId ?? '',
+    ),
     queryFn: () =>
       api.getVersion(projectId, testId as string, versionId as string),
     enabled: !!projectId && !!testId && !!versionId,
@@ -376,8 +393,13 @@ export function useDismissVersion() {
   const projectId = useProjectId();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ testId, versionId }: { testId: string; versionId: string }) =>
-      api.dismissVersion(projectId, testId, versionId),
+    mutationFn: ({
+      testId,
+      versionId,
+    }: {
+      testId: string;
+      versionId: string;
+    }) => api.dismissVersion(projectId, testId, versionId),
     onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
@@ -420,7 +442,7 @@ export function useNotifications() {
  *  region from project settings, default environment from the env flagged `isDefault`. */
 export function useRunDefaults(): RunDefaults {
   const { data: settings } = useSettings();
-  const { data: envs } = useEnvironments({ limit: 100 });
+  const { data: envs } = useEnvironments({ limit: LOOKUP_LIMIT });
   const defaultEnv = (envs?.items ?? []).find((e) => e.isDefault);
   return {
     envId: defaultEnv?.environmentId,
