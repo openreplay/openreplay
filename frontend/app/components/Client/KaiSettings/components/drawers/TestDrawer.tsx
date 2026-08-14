@@ -1,4 +1,4 @@
-import { Button, Dropdown, Popconfirm, Tooltip, message } from 'antd';
+import { Button, Dropdown, Popconfirm, Tooltip } from 'antd';
 import {
   Check,
   CheckCheck,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 import {
   useActivateVersion,
@@ -34,6 +35,7 @@ import {
 } from '../shared/revisions';
 import { RunData, TestCase } from '../shared/types';
 import {
+  LOOKUP_LIMIT,
   VersionLabel,
   formatDuration,
   hasNoEnvironment,
@@ -44,10 +46,6 @@ import {
 import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
-
-// This test's runs (GET /tests/{testId}/runs); the API clamps `limit` to 100. The trend
-// strip only needs the last 10, so one page of 100 is plenty.
-const LOOKUP_LIMIT = 100;
 
 const versionDate = (ts: number): string =>
   new Date(ts).toLocaleDateString(undefined, {
@@ -70,17 +68,15 @@ interface Props {
   /** creation mode: footer "Create test" instead of header run controls */
   creating?: boolean;
   onCreate?: () => void;
-  /** merge review: accept flattens the arranged groups into one step list (parent saves
-   *  it as a new test + deletes the sources); cancel just drops the pending merge */
+  /** merge review: accept flattens the arranged groups into one step list (the parent
+   *  posts it as a new test + deletes the sources); cancel drops the pending merge */
   onMergeAccept?: (steps: string[]) => void;
   onCancelMerge?: () => void;
 }
 
-/** A live, approved test. Single-column control panel; the row's actions live in the
- *  header (Run now / Pause) next to the close icon, Delete sits in the footer danger
- *  zone. Edits persist live. Statuses: approved (no schedule) · active (scheduled) ·
- *  paused. Adding a schedule activates the test; clearing it returns to approved.
- *  A pending revision turns the steps section into a git-style review. */
+/** A live, approved test. Edits persist immediately. Adding a schedule activates the
+ *  test; clearing it returns to approved. A pending revision turns the steps section
+ *  into a git-style review. */
 function TestDrawer({
   test,
   open,
@@ -98,20 +94,18 @@ function TestDrawer({
   const { t } = useTranslation();
   const settingsRef = useRef<HTMLDivElement>(null);
   const { data: runsData } = useRuns(test?.key, { limit: LOOKUP_LIMIT });
-  // Settings → "Pause tests on new revisions": decides whether a pending revision
-  // pauses the test (Needs review status, run controls off) or it keeps running.
+  // Settings → "Pause tests on new revisions": decides whether a pending revision pauses
+  // the test (run controls off) or it keeps running.
   const { data: projectSettings } = useSettings();
   const pauseOnRevision = projectSettings?.pauseOnNewRevisions ?? true;
   const triggerMut = useTriggerRun();
   const activateMut = useActivateVersion();
   const dismissMut = useDismissVersion();
-  // the git-style diff behind a pending suggestion (active vs proposed steps)
   const { data: versionDiff } = useVersionDiff(
     test?.key,
     !!test?.pendingRevision,
   );
-  // version history (newest first) → the switcher dropdown; pending/rejected rows are
-  // owned by the review flow, not the switcher. The viewed version's steps load lazily.
+  // pending/rejected rows are owned by the review flow, not the switcher
   const { data: versionsData } = useVersions(test?.key, open && !creating);
   const versionItems = useMemo(
     () =>
@@ -121,33 +115,34 @@ function TestDrawer({
     [versionsData],
   );
 
-  // Steps edit locally; nothing is sent until "Save steps". Seeded once per mount — the
-  // parent keys this drawer by the test id, so opening a different test remounts it fresh.
-  // stepsDraft is a local mirror shown by the editor (authoritative) so edits don't snap
-  // back during the persist round-trip; every committed edit also persists immediately.
+  // Local mirror shown by the editor so edits don't snap back during the persist
+  // round-trip; every committed edit also persists immediately. Re-seeded whenever a
+  // different test lands here — including a deep-linked one that resolves after mount.
   const [stepsDraft, setStepsDraft] = useState<string[]>(test?.steps ?? []);
+  const [seededKey, setSeededKey] = useState<string | null>(test?.key ?? null);
+  if (test && test.key !== seededKey) {
+    setSeededKey(test.key);
+    setStepsDraft(test.steps);
+  }
   const saveSteps = (steps: string[]) => {
     setStepsDraft(steps);
-    onChange({ ...(test as TestCase), steps });
+    // stepsChanged → the update PUT replaces `steps`; plain metadata edits don't
+    onChange({ ...(test as TestCase), steps, stepsChanged: true });
   };
 
-  // review state: the proposal materialised as a live, fully-editable step list
-  // (plain rows + marked add/remove rows) — rebuilt when another test or another
-  // revision opens. Edits during a review land here, not on test.steps.
+  // the proposal materialised as a live, fully-editable step list; edits during a review
+  // land here, not on test.steps
   const [reviewItems, setReviewItems] = useState<StepItem[] | null>(null);
-  // merge review: the SAME editable list, each source test's steps under a draggable
-  // group label; the labels drop away when the merge is accepted (flattened).
+  // merge review: the SAME editable list, each source test's steps under a group label
   const [mergeItems, setMergeItems] = useState<StepItem[] | null>(null);
-  // version switcher: non-null = viewing an older read-only snapshot
+  // non-null = viewing an older read-only snapshot
   const [viewVersion, setViewVersion] = useState<number | null>(null);
-  // the versionId backing the viewed older version → its read-only steps
   const viewVersionId =
     viewVersion != null
       ? versionItems.find((v) => v.version === viewVersion)?.versionId
       : undefined;
   const { data: viewedVersionDetail } = useVersion(test?.key, viewVersionId);
-  // Build the review list once the diff arrives (active vs proposed steps → git-style
-  // add/remove markers over the active steps). No pending suggestion → no review.
+
   useEffect(() => {
     if (test?.pendingRevision && versionDiff) {
       const active = stepsToLines(versionDiff.active.steps);
@@ -159,28 +154,28 @@ function TestDrawer({
     setViewVersion(null);
   }, [test?.key, test?.pendingRevision, versionDiff]);
 
-  // seed the merge-review list from the pending merge's groups (once per test/merge)
+  // seed the merge-review list from the pending merge's groups. Each label carries a
+  // stable id so two sources sharing a title stay independent.
   useEffect(() => {
     setMergeItems(
       test?.pendingMerge
-        ? test.pendingMerge.groups.flatMap((g) => [
-            { text: g.title, kind: 'group' as const },
+        ? test.pendingMerge.groups.flatMap((g, i) => [
+            { text: g.title, kind: 'group' as const, id: `group-${i}` },
             ...g.steps.map((text) => ({ text })),
           ])
         : null,
     );
   }, [test?.key, test?.pendingMerge]);
 
-  // this test's runs, newest-last — scoped to the viewed version (a run from before a
-  // bump belongs to that version's story; no version recorded = v1)
+  // scoped to the viewed version (a run from before a bump belongs to that version's
+  // story; no version recorded = v1)
   const runs = useMemo(() => {
     if (!test) return [];
     return (runsData?.items ?? [])
-      .filter((r) => r.testId === test.key)
       .map((r) => apiRunToVM(r, test.title))
       .filter((r) => viewVersion == null || (r.version ?? 1) === viewVersion);
   }, [runsData, test, viewVersion]);
-  // trend: the last 10 completed runs, oldest → newest (newest on the right)
+  // the last 10 completed runs, oldest → newest
   const trend = useMemo(
     () =>
       runs
@@ -190,7 +185,6 @@ function TestDrawer({
     [runs],
   );
 
-  // jump to the schedule when opened via the Schedule action
   useEffect(() => {
     if (open && focusSchedule && settingsRef.current) {
       const el = settingsRef.current;
@@ -210,7 +204,6 @@ function TestDrawer({
   const revision = test.pendingRevision;
   const merge = test.pendingMerge;
   const version = testVersion(test);
-  // older versions available to switch to (excludes the current one)
   const pastVersions = versionItems
     .filter((v) => v.version !== version)
     .sort((a, b) => b.version - a.version);
@@ -226,7 +219,6 @@ function TestDrawer({
             : [],
         }
       : undefined;
-  // a paused test with no environment can't resume until one is set below
   const resumeBlocked = paused && hasNoEnvironment(test);
   const settings: RunSettings = {
     environments: test.environments,
@@ -235,8 +227,7 @@ function TestDrawer({
     schedule: test.schedule,
   };
 
-  // run settings persist live; a schedule activates the test, clearing it drops it back
-  // to approved. (Pause/Resume is a separate, explicit control below.)
+  // a schedule activates the test, clearing it drops back to approved
   const patch = (p: Partial<RunSettings>) => {
     const next: TestCase = { ...test, ...p };
     if ('schedule' in p)
@@ -247,8 +238,8 @@ function TestDrawer({
   const runNow = () =>
     triggerMut.mutate(test.key, {
       onSuccess: () =>
-        message.success(`${test.title} — ${t('run started, see Runs')}`),
-      onError: () => message.error(t('Failed to start run')),
+        toast.success(`${test.title} — ${t('run started, see Runs')}`),
+      onError: () => toast.error(t('Failed to start run')),
     });
   const togglePause = () =>
     onChange({ ...test, status: paused ? 'active' : 'paused' });
@@ -258,8 +249,7 @@ function TestDrawer({
   };
 
   // ---- pending revision (needs review) ---------------------------------
-  // the per-line ✓/✕ pair: clicking a side decides the suggestion; clicking the
-  // same side again un-decides it — every click gives feedback
+  // clicking a side decides the suggestion; clicking the same side again un-decides it
   const decideChange = (idx: number, decision: 'accepted' | 'rejected') =>
     setReviewItems(
       (prev) =>
@@ -291,8 +281,11 @@ function TestDrawer({
       <span className="flex items-center gap-2">
         <span className="text-sm text-disabled-text">
           {decidedCount > 0
-            ? `${decidedCount} ${t('of')} ${changedCount} ${t('reviewed')}`
-            : `${changedCount} ${changedCount === 1 ? t('change') : t('changes')}`}
+            ? t('{{done}} of {{total}} reviewed', {
+                done: decidedCount,
+                total: changedCount,
+              })
+            : t('{{count}} changes', { count: changedCount })}
         </span>
         <Button
           size="small"
@@ -305,8 +298,7 @@ function TestDrawer({
         </Button>
       </span>
     ) : undefined;
-  // finishing a review closes the drawer — activating adopts the reviewed steps as the
-  // new version (partial accept: the client-merged steps + per-change decisions).
+  // partial accept: the client-merged steps + the per-change decisions
   const saveRevision = () => {
     if (!revision?.versionId || !reviewItems) return;
     const decisions = reviewItems
@@ -320,8 +312,8 @@ function TestDrawer({
       },
       {
         onSuccess: () =>
-          message.success(t('Saved as v{{v}}', { v: revision.toVersion })),
-        onError: () => message.error(t('Could not save the new version')),
+          toast.success(t('Saved as v{{v}}', { v: revision.toVersion })),
+        onError: () => toast.error(t('Could not save the new version')),
       },
     );
     onClose();
@@ -331,14 +323,14 @@ function TestDrawer({
     dismissMut.mutate(
       { testId: test.key, versionId: revision.versionId },
       {
-        onSuccess: () => message.success(t('Kept v{{v}}', { v: version })),
-        onError: () => message.error(t('Could not dismiss the suggestion')),
+        onSuccess: () => toast.success(t('Kept v{{v}}', { v: version })),
+        onError: () => toast.error(t('Could not dismiss the suggestion')),
       },
     );
     onClose();
   };
 
-  // ---- pending merge — flatten the arranged groups into one step list -----
+  // ---- pending merge ----------------------------------------------------
   const mergedSteps =
     mergeItems?.filter((it) => it.kind !== 'group' && it.text.trim()) ?? [];
   const mergedGroupCount =
@@ -366,7 +358,6 @@ function TestDrawer({
     onClick: ({ key }: { key: string }) =>
       setViewVersion(Number(key) === version ? null : Number(key)),
   };
-  // the version chip + dropdown next to the Steps title — only once v2 exists
   const versionSwitcher =
     pastVersions.length > 0 ? (
       <Dropdown menu={versionMenu} trigger={['click']} placement="bottomRight">
@@ -384,7 +375,6 @@ function TestDrawer({
 
   return (
     <EntityDrawer
-      type="test"
       open={open}
       onClose={onClose}
       title={test.title}
@@ -409,7 +399,6 @@ function TestDrawer({
       }
       headerActions={
         creating ? undefined : merge ? (
-          // mid-merge nothing runs until the combined steps are accepted
           <Tooltip
             title={t('Runs are paused until the merged steps are accepted.')}
           >
@@ -418,7 +407,6 @@ function TestDrawer({
             </Button>
           </Tooltip>
         ) : revision && pauseOnRevision ? (
-          // pause-on-revision is ON: nothing runs until the review is done
           <Tooltip
             title={t('Runs are paused until the new version is reviewed.')}
           >
@@ -438,7 +426,7 @@ function TestDrawer({
             >
               {t('Run now')}
             </Button>
-            {/* approved tests have no schedule to pause — they just run on demand */}
+            {/* approved tests have no schedule to pause — they run on demand */}
             {test.status !== 'approved' && (
               <Tooltip
                 title={
@@ -463,7 +451,6 @@ function TestDrawer({
       }
       footer={
         creating ? (
-          // creation flow: commit action lives in the footer, like the draft workflow
           <div className="flex items-center justify-between">
             <Button type="text" onClick={onClose}>
               {t('Discard')}
@@ -477,8 +464,6 @@ function TestDrawer({
             </Button>
           </div>
         ) : merge ? (
-          // merge review: cancel drops it; accept flattens the arranged groups into one
-          // step list (parent saves as a new test + deletes the sources)
           <div className="flex items-center justify-between">
             <Button type="text" onClick={cancelMerge}>
               {t('Cancel merge')}
@@ -492,7 +477,6 @@ function TestDrawer({
             </Button>
           </div>
         ) : revision ? (
-          // reviewing: stay on the current version, or save the reviewed one
           <div className="flex items-center justify-between">
             <Button type="text" onClick={keepVersion}>
               {t('Keep v{{v}}', { v: version })}
@@ -520,8 +504,6 @@ function TestDrawer({
         )
       }
     >
-      {/* side-effect tests touch real data (orders / accounts / payments) when they run —
-          the runner flags this so nobody triggers one without knowing */}
       {test.hasSideEffects && (
         <div className="flex items-start gap-2 mb-4 px-3 py-2 rounded text-sm bg-warning-surface text-warning-text">
           <TriangleAlert size={16} className="shrink-0 mt-0.5" />
@@ -532,20 +514,19 @@ function TestDrawer({
           </span>
         </div>
       )}
-      {/* the steps section wears several hats: arranging a pending merge (group labels +
-          steps), reviewing a proposed version (git-style diff), viewing an older snapshot
-          (read-only), or plain editing. */}
+      {/* the steps section wears several hats: arranging a pending merge, reviewing a
+          proposed version, viewing an older snapshot (read-only), or plain editing */}
       {merge && mergeItems ? (
-        // the regular editor with group labels — dragging a label moves its whole block;
-        // steps edit / insert / delete / drag as always
         <EditableSteps
           steps={[]}
           bounded
           title={`${t('Steps')} · ${t('merge review')}`}
           headerAction={
             <span className="text-sm text-disabled-text">
-              {mergedGroupCount} {t('groups')} · {mergedSteps.length}{' '}
-              {t('steps')}
+              {t('{{groups}} groups · {{steps}} steps', {
+                groups: mergedGroupCount,
+                steps: mergedSteps.length,
+              })}
             </span>
           }
           reviewItems={mergeItems}
@@ -557,7 +538,6 @@ function TestDrawer({
           steps={[]}
           bounded
           title={
-            // same version chips as the table's title label, gray arrow between
             <span className="flex items-center gap-1.5">
               {t('Steps')}
               <span className="text-gray-medium font-normal">·</span>
@@ -575,8 +555,6 @@ function TestDrawer({
       ) : viewedSnapshot ? (
         <Section
           title={
-            // an approved version is history — read-only, no way back; the version
-            // dropdown already names it (no chip), the rest fits the title line.
             <span className="flex items-center gap-1.5">
               {`${t('Steps')} · ${viewedSnapshot.steps.length}`}
               <span className="text-sm text-disabled-text font-normal">
@@ -605,15 +583,13 @@ function TestDrawer({
           </div>
         </Section>
       ) : creating ? (
-        // creating: nothing persisted yet, so steps edit live (no Save/Cancel gate)
+        // nothing persisted yet, so steps edit live
         <EditableSteps
           steps={test.steps}
           bounded
           onStepsChange={(steps) => onChange({ ...test, steps })}
         />
       ) : (
-        // plain editing: each committed change persists immediately (no Save/Cancel gate);
-        // version switcher rides the header once older versions exist
         <EditableSteps
           steps={stepsDraft}
           bounded
@@ -635,7 +611,6 @@ function TestDrawer({
         </Section>
       </div>
 
-      {/* compact — the hint rides the header so tags stay a single row */}
       <Section
         title={t('Tags')}
         className="py-3!"
@@ -651,10 +626,8 @@ function TestDrawer({
         />
       </Section>
 
-      {/* Runs: just the "last 10" trend strip inline with the section title
-          (glanceable pattern — always-red / just-started-failing / healthy). Each
-          icon is one run: hover for result · duration · when, click to open that
-          exact run's drawer; the trailing chevron opens the full filtered list. */}
+      {/* the "last 10" trend strip: each icon is one run — hover for result · duration ·
+          when, click to open it; the trailing chevron opens the full filtered list */}
       {(onViewRuns || onViewRun) && !creating && (
         <Section
           title={t('Runs')}
@@ -668,7 +641,7 @@ function TestDrawer({
                   const info = [
                     failed ? t('Failed') : t('Passed'),
                     r.duration != null ? formatDuration(r.duration) : null,
-                    relativeTime(r.date),
+                    relativeTime(t, r.date),
                   ]
                     .filter(Boolean)
                     .join(' · ');

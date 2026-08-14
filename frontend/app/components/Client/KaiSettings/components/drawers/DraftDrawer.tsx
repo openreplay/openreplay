@@ -1,7 +1,8 @@
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import { ArrowLeft, ArrowRight, CalendarClock, Check, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 import { RunDefaults, TestCase } from '../shared/types';
 import { isScheduled } from '../shared/utils';
@@ -9,18 +10,7 @@ import EditableSteps from './EditableSteps';
 import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
 
-interface Props {
-  test: TestCase | null;
-  open: boolean;
-  onClose: () => void;
-  onChange: (updated: TestCase) => void;
-  onRemove: (key: string) => void;
-  /** Settings → Default run configuration; pre-fills a fresh draft's run settings */
-  defaults?: RunDefaults;
-}
-
-// A fresh draft carries nothing the user set — pre-fill env / viewport / region from
-// Settings' defaults (shown "(default)" until changed); never overwrite real values.
+// Pre-fill env / viewport / region from Settings' defaults; never overwrite real values.
 const withDefaults = (tc: TestCase, defaults?: RunDefaults): TestCase => {
   if (!defaults) return tc;
   return {
@@ -43,14 +33,21 @@ const withDefaults = (tc: TestCase, defaults?: RunDefaults): TestCase => {
   };
 };
 
-// The draft review is a small workflow: approve the steps, then choose a schedule (or
-// not), then optionally tag it. Approving without a schedule leaves the test "approved"
-// (ready, not scheduled); adding a schedule makes it "active".
+interface Props {
+  test: TestCase | null;
+  open: boolean;
+  onClose: () => void;
+  onChange: (updated: TestCase) => void;
+  onRemove: (key: string) => void;
+  /** Settings → Default run configuration; pre-fills a fresh draft's run settings */
+  defaults?: RunDefaults;
+}
+
 type WizStep = 0 | 1 | 2;
 
-/** A draft: the agent's proposal. Walk the approve → schedule → tag workflow, or
- *  dismiss it. Nothing is committed to the table until the user finishes (or closes
- *  after approving — in which case it lands as "approved"). */
+/** A draft: the agent's proposal. Walk approve → schedule → tag, or dismiss it.
+ *  Approving without a schedule leaves the test "approved"; adding one makes it
+ *  "active". Nothing is committed until the user finishes (or closes after approving). */
 function DraftDrawer({
   test,
   open,
@@ -60,14 +57,26 @@ function DraftDrawer({
   defaults,
 }: Props) {
   const { t } = useTranslation();
-  // Seeded once per mount; the parent keys this drawer by the test id, so opening a
-  // different draft remounts it with fresh state (no prop→state sync effect needed).
   const [draft, setDraft] = useState<TestCase | null>(() =>
-    test ? withDefaults(test, defaults) : test,
+    test ? withDefaults(test, defaults) : null,
   );
+  // re-seed whenever a different draft lands here — including a deep-linked one that
+  // resolves after mount
+  const [seededKey, setSeededKey] = useState<string | null>(test?.key ?? null);
   const [step, setStep] = useState<WizStep>(0);
   // true once the user has clicked "Approve steps" — closing now keeps it approved
   const [approved, setApproved] = useState(false);
+  // true once the user edits the proposed steps — only then does approving replace the
+  // stored steps (otherwise approve is a status-only change)
+  const [stepsChanged, setStepsChanged] = useState(false);
+
+  if (test && test.key !== seededKey) {
+    setSeededKey(test.key);
+    setDraft(withDefaults(test, defaults));
+    setStep(0);
+    setApproved(false);
+    setStepsChanged(false);
+  }
 
   if (!draft) return null;
 
@@ -81,11 +90,10 @@ function DraftDrawer({
   const patch = (p: Partial<TestCase>) =>
     setDraft((d) => (d ? { ...d, ...p } : d));
 
-  // Approve the draft. The one client-settable transition is draft → approved; the cron
-  // (from the schedule) rides along and the runner promotes it to `active` — sending
-  // `active` here would not be a valid transition and wouldn't persist.
+  // The one client-settable transition is draft → approved; the cron rides along and the
+  // runner promotes it to `active`.
   const finalize = () => {
-    onChange({ ...draft, status: 'approved', isNew: false });
+    onChange({ ...draft, status: 'approved', isNew: false, stepsChanged });
     onClose();
   };
   const approveSteps = () => {
@@ -93,15 +101,14 @@ function DraftDrawer({
     setStep(1);
   };
   const saveDraft = () => {
-    onChange(draft);
+    onChange({ ...draft, stepsChanged });
     onClose();
   };
   const dismiss = () => {
     onRemove(draft.key);
-    message.success(t('Draft dismissed'));
+    toast.success(t('Draft dismissed'));
     onClose();
   };
-  // X / mask: if the steps were approved, persist as approved (or active if scheduled)
   const handleClose = () => {
     if (approved) finalize();
     else onClose();
@@ -113,13 +120,11 @@ function DraftDrawer({
     if (i === 0 || approved) setStep(i as WizStep);
   };
 
-  // footer changes per step — the workflow's forward/back controls. Only step 0 talks
-  // about approving (that's where approval happens); afterwards it's schedule → done.
   const footer =
     step === 0 ? (
       <div className="flex items-center justify-between">
-        {/* Dismiss rejects the proposal → red, with the X ("reject a suggestion")
-            rather than the bin ("delete something you built") */}
+        {/* Dismiss rejects the proposal → the X ("reject a suggestion") rather than the
+            bin ("delete something you built") */}
         <Button type="text" danger icon={<X size={15} />} onClick={dismiss}>
           {t('Dismiss')}
         </Button>
@@ -175,15 +180,15 @@ function DraftDrawer({
 
   return (
     <EntityDrawer
-      type="draft"
       open={open}
       onClose={handleClose}
+      eyebrow={t('Draft')}
       title={draft.title}
       onTitleChange={(title) => patch({ title })}
       footer={footer}
     >
-      {/* custom stepper — full control of brand colours + clickable steps (antd's theme
-          algorithm can't derive a palette from the app's CSS-var primary). */}
+      {/* custom stepper — antd's theme algorithm can't derive a palette from the app's
+          CSS-var primary */}
       <div className="px-6 pt-5">
         <div className="flex items-center">
           {stepLabels.map((label, i) => {
@@ -243,16 +248,16 @@ function DraftDrawer({
         </div>
       </div>
 
-      {/* Step 1 — review & approve the agent's proposed steps */}
       {step === 0 && (
         <EditableSteps
           steps={draft.steps}
-          alternatives={draft.alternatives}
-          onStepsChange={(steps) => patch({ steps })}
+          onStepsChange={(steps) => {
+            patch({ steps });
+            setStepsChanged(true);
+          }}
         />
       )}
 
-      {/* Step 2 — where & when it runs (a schedule is optional) */}
       {step === 1 && (
         <Section title={t('Where & when it runs')}>
           <RunSettingsFields
@@ -274,7 +279,6 @@ function DraftDrawer({
         </Section>
       )}
 
-      {/* Step 3 — optional tags */}
       {step === 2 && (
         <Section title={t('Tags')}>
           <div className="text-sm text-disabled-text mb-3">

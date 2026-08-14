@@ -3,7 +3,7 @@ import withPermissions from 'HOCs/withPermissions';
 import { Button } from 'antd';
 import { Album, Settings as SettingsIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
@@ -21,9 +21,9 @@ function KaiSettings() {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
   const history = useHistory();
-  // controlled by the ui store so drawers can deep-link across tabs ("View runs")
+  // held in the ui store so drawers can deep-link across tabs ("View runs")
   const { activeTab } = useKaiUi();
-  // active tab persists in the URL (?tab=) so a reload / shared link restores it
+  // and mirrored in the URL (?tab=) so a reload / shared link restores it
   const [tabParam, setTabParam] = useQueryParam('tab');
   const seededRef = useRef(false);
   useEffect(() => {
@@ -33,7 +33,6 @@ function KaiSettings() {
       kaiUi.setActiveTab(tabParam as KaiTab);
       seededRef.current = true; // swallow the stale sync write that follows the seed
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (seededRef.current) {
@@ -42,10 +41,7 @@ function KaiSettings() {
     }
     setTabParam(activeTab);
   }, [activeTab, setTabParam]);
-  // Local project selection, defaulting to the globally-active project. Kept
-  // local so changing it here doesn't change the project elsewhere in the app.
-  const [selectedSiteId, setSelectedSiteId] = useState<string | undefined>();
-  const siteId = selectedSiteId ?? String(projectsStore.activeSiteId ?? '');
+  const siteId = String(projectsStore.activeSiteId ?? '');
 
   const tabItems = [
     {
@@ -59,8 +55,8 @@ function KaiSettings() {
       children: <RunsTab />,
     },
     {
-      // renamed from "Settings" (Mehdi 07-27): only core config lives here;
-      // behaviour toggles + notifications moved to Preferences > Agents
+      // only core config lives here; behaviour toggles + notifications are on
+      // Preferences > Agents
       key: 'settings',
       label: t('Environments'),
       children: <SettingsTab />,
@@ -76,8 +72,7 @@ function KaiSettings() {
         )}
         actions={
           <>
-            {/* shortcut to the shared agent preferences (Mehdi 07-27):
-                notifications + behaviour live there, not on this page */}
+            {/* notifications + behaviour live in the shared agent preferences */}
             <Button
               type="text"
               size="small"

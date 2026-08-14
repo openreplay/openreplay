@@ -10,7 +10,6 @@ import {
   Table,
   Tooltip,
   Typography,
-  message,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
@@ -71,6 +70,7 @@ import {
 import { kaiUi } from './shared/uiStore';
 import { useQueryParam } from './shared/useUrlState';
 import {
+  LOOKUP_LIMIT,
   RowTags,
   VersionLabel,
   getStatusTag,
@@ -81,9 +81,8 @@ import {
   scheduleShort,
 } from './shared/utils';
 
-// The list is now server-driven: filters / sort / pagination are query params, and the
-// tab badges come from the /tests/counts aggregate — so they stay absolute even past one
-// page. Only the columns the API can sort (Test → name) are sortable.
+// The list is server-driven: filters / sort / pagination are query params and the tab
+// badges come from /tests/counts, so they stay absolute past one page.
 // needs_review is a flag, not a stored status — its tab sends ?needsReview=true.
 type StatusTab = 'all' | 'needs_review' | TestStatus;
 const PAGE_SIZE = 20;
@@ -102,12 +101,11 @@ function TestsTab() {
   const projectId = useProjectId();
   const queryClient = useQueryClient();
   const defaults = useRunDefaults();
-  // Settings → "Pause tests on new revisions": when on, a needs-review test can't run and
-  // its run controls are withheld here (the drawer honours the same rule).
+  // Settings → "Pause tests on new revisions": when on, a needs-review test can't run
+  // and its run controls are withheld here (the drawer honours the same rule).
   const { data: projectSettings } = useSettings();
   const pauseOnRevision = projectSettings?.pauseOnNewRevisions ?? true;
   const reviewBlocked = (tc: TestCase) => needsReview(tc) && pauseOnRevision;
-  // refresh the tests/runs/versions families (not env/settings/notifications)
   const invalidateAll = () => invalidateTestData(queryClient, projectId);
 
   const [query, setQuery] = useState('');
@@ -127,18 +125,18 @@ function TestsTab() {
   const [focusSchedule, setFocusSchedule] = useState(false);
   const [draftTest, setDraftTest] = useState<TestCase | null>(null);
   const creating = draftTest != null;
-  // merge-in-review: the base test (first selected) carrying a client-only pendingMerge;
-  // opens the TestDrawer in merge mode. Nothing persists until "Combine".
+  // merge-in-review: the base test (first selected) carrying a client-only pendingMerge.
+  // Nothing persists until "Combine".
   const [mergeTest, setMergeTest] = useState<TestCase | null>(null);
 
-  // debounce the search box so typing isn't one request per keystroke (the setState
-  // runs in a timer callback, not synchronously in the effect body)
+  // debounce the search box (the setState runs in a timer callback, not synchronously
+  // in the effect body)
   useEffect(() => {
     const id = window.setTimeout(() => setSearch(query.trim()), 300);
     return () => window.clearTimeout(id);
   }, [query]);
 
-  // shared filter set (no pagination/sort) — reused for the list and the count aggregates
+  // shared filter set (no pagination/sort) — reused for the list and the aggregates
   const filters = useMemo(
     () => ({
       name: search || undefined,
@@ -164,7 +162,7 @@ function TestsTab() {
   };
 
   const { data, isPending } = useTests(listParams);
-  const { data: envData } = useEnvironments({ limit: 100 });
+  const { data: envData } = useEnvironments({ limit: LOOKUP_LIMIT });
   // status buckets ignore the active status tab (so every tab shows its own total);
   // tag buckets drive the tag filter's full option list.
   const { data: statusCounts } = useTestCounts('status', filters);
@@ -192,7 +190,7 @@ function TestsTab() {
     [envData],
   );
 
-  // Rejected tests are dismissed drafts — defensively hidden (our dismiss soft-deletes,
+  // Rejected tests are dismissed drafts — hidden defensively (our dismiss soft-deletes,
   // so these are rare); the server has no "not rejected" filter.
   const tests = useMemo(
     () =>
@@ -209,8 +207,8 @@ function TestsTab() {
   const approvedCount = countByStatus('approved');
   const activeCount = countByStatus('active');
   const pausedCount = countByStatus('paused');
-  // needs_review is an effective-status bucket — a flagged test counts here instead of its
-  // stored status, so it's a separate addend for the All total.
+  // a flagged test counts in needs_review instead of its stored status, so it's a
+  // separate addend for the All total
   const needsReviewCount = countByStatus('needs_review');
   const allCount =
     draftCount + approvedCount + activeCount + pausedCount + needsReviewCount;
@@ -222,16 +220,18 @@ function TestsTab() {
   const allTags = (tagCounts?.buckets ?? []).map((b) => b.value);
 
   // ---- persistence -----------------------------------------------------
-  // Persist an edited test. `status` is written only for a client-settable transition
-  // (draft→approved, active⇄paused); schedule/unschedule change `cron` only and let the
-  // runner promote/demote active (see `settableTransition`).
+  // `status` is written only for a client-settable transition; schedule/unschedule
+  // change `cron` only and let the runner promote/demote active.
   const updateTest = (updated: TestCase) => {
     const prev = tests.find((tc) => tc.key === updated.key);
     const status = prev
       ? settableTransition(prev.status, updated.status)
       : undefined;
     updateMut.mutate(
-      { testId: updated.key, body: vmToUpdateRequest(updated, status) },
+      {
+        testId: updated.key,
+        body: vmToUpdateRequest(updated, status, !!updated.stepsChanged),
+      },
       { onError: () => toast.error(t('Failed to update test')) },
     );
   };
@@ -243,9 +243,8 @@ function TestsTab() {
     if (openKey === key) setOpenKey(null);
   };
 
-  // Stamp seenAt on the opened test's cached rows so its "new" dot clears in place.
-  // We patch the cache instead of refetching the list: a refetch re-runs the query
-  // and re-sorts, which moves the row — this keeps it exactly where it was.
+  // Patch the cache instead of refetching: a refetch re-runs the query and re-sorts,
+  // which moves the row — this keeps it exactly where it was.
   const markSeenLocally = (key: string) => {
     const stamp = new Date().toISOString();
     queryClient.setQueriesData<ListResponse<Test>>(
@@ -269,7 +268,6 @@ function TestsTab() {
     setFocusSchedule(false);
     setOpenKey(tc.key, true); // push so Back closes the drawer
     // opening stamps seenAt server-side (GET /tests/{id}); mirror it in the cache
-    // locally instead of refetching, so the row keeps its position in the list.
     if (tc.isNew) {
       apiGetTest(projectId, tc.key).catch(() => {});
       markSeenLocally(tc.key);
@@ -286,7 +284,7 @@ function TestsTab() {
   const unschedule = (tc: TestCase) =>
     updateTest({ ...tc, status: 'approved', schedule: null });
 
-  // Manual creation — a hand-made test skips the draft flow and starts life `approved`.
+  // A hand-made test skips the draft flow and starts life `approved`.
   const addTest = () => {
     setFocusSchedule(false);
     setDraftTest({
@@ -308,9 +306,9 @@ function TestsTab() {
     const intended = draftTest;
     setDraftTest(null);
     try {
-      // create seeds the status directly (approved for a manual test) — no follow-up PUT
+      // create seeds the status directly — no follow-up PUT
       await apiCreateTest(projectId, vmToCreateRequest(intended));
-      message.success(t('Test created'));
+      toast.success(t('Test created'));
     } catch {
       toast.error(t('Failed to create test'));
     }
@@ -328,7 +326,7 @@ function TestsTab() {
         status: 'draft',
       }),
     )
-      .then(() => message.success(t('Duplicated as a draft')))
+      .then(() => toast.success(t('Duplicated as a draft')))
       .catch(() => toast.error(t('Failed to duplicate test')))
       .finally(invalidateAll);
   };
@@ -342,8 +340,8 @@ function TestsTab() {
     kaiUi.openRunInRunsTab(run);
   };
 
-  // Normally the open test is on the current page; on a deep link (?test=) it may live on
-  // another page or under a filter, so fetch it by id as a fallback.
+  // Normally the open test is on the current page; on a deep link (?test=) it may live
+  // on another page or under a filter, so fetch it by id as a fallback.
   const inList = tests.some((tc) => tc.key === openKey);
   const { data: openTestData } = useTest(
     !inList ? (openKey ?? undefined) : undefined,
@@ -397,7 +395,7 @@ function TestsTab() {
     setSelectedKeys([]);
     setOpenKey(null); // close any open edit drawer so only the merge review shows
     try {
-      // pull each test's data one by one so the groups carry full, current steps
+      // pull each test's data so the groups carry full, current steps
       const full = await Promise.all(
         sel.map((tc) => apiGetTest(projectId, tc.key)),
       );
@@ -414,8 +412,6 @@ function TestsTab() {
       toast.error(t('Failed to load tests to merge'));
     }
   };
-  // accept: create ONE test — first test's settings + all steps squashed together — then
-  // delete the originals it folded in.
   const commitMerge = async (steps: string[]) => {
     const base = mergeTest;
     if (!base?.pendingMerge) return;
@@ -424,15 +420,14 @@ function TestsTab() {
     try {
       // one atomic call: creates the merged test + soft-deletes the sources
       await apiMergeTests(projectId, vmToMergeRequest(base, sourceKeys, steps));
-      message.success(t('Merged {{n}} tests', { n: sourceKeys.length }));
+      toast.success(t('Merged {{n}} tests', { n: sourceKeys.length }));
     } catch {
       toast.error(t('Failed to merge tests'));
     }
     invalidateAll();
   };
 
-  // Escape hatch for a test stuck "needs review" with no suggestion to activate/dismiss —
-  // clears the runner-owned flag (api4 PUT needsReview:false).
+  // Escape hatch for a test stuck "needs review" with no suggestion to activate/dismiss.
   const clearReview = (tc: TestCase) =>
     updateMut.mutate(
       { testId: tc.key, body: { needsReview: false } },
@@ -443,7 +438,7 @@ function TestsTab() {
     if (reviewBlocked(tc)) return;
     triggerMut.mutate(tc.key, {
       onSuccess: () =>
-        message.success(`${tc.title} — ${t('run started, see Runs')}`),
+        toast.success(`${tc.title} — ${t('run started, see Runs')}`),
       onError: () => toast.error(t('Failed to start run')),
     });
   };
@@ -526,8 +521,7 @@ function TestsTab() {
         label: React.ReactNode;
         disabled?: boolean;
       }[] = [];
-      // a needs-review test (with pause-on-revision) is frozen until reviewed — no run
-      // controls, just the review-first "open" entry below
+      // a needs-review test (with pause-on-revision) is frozen until reviewed
       if (!reviewBlocked(tc)) {
         if (tc.status === 'active')
           controls.push({ key: 'pause', label: t('Pause') });
@@ -550,16 +544,14 @@ function TestsTab() {
             ),
           });
         }
-        // gate on the actual schedule, not status: an unscheduled test can be scheduled,
-        // an already-scheduled one (active, paused, or approved-with-cron) can only be
-        // unscheduled
+        // gate on the actual schedule, not status: an already-scheduled test (active,
+        // paused, or approved-with-cron) can only be unscheduled
         if (!isScheduled(tc.schedule))
           controls.push({ key: 'schedule', label: t('Schedule') });
         else controls.push({ key: 'unschedule', label: t('Unschedule') });
       }
       items = [
         ...controls,
-        // the drawer opens straight into the review while one is pending
         {
           key: 'open',
           label: needsReview(tc) ? t('Review changes') : t('Settings'),
@@ -576,7 +568,13 @@ function TestsTab() {
     }
     return {
       items,
-      onClick: ({ key, domEvent }: { key: string; domEvent: any }) => {
+      onClick: ({
+        key,
+        domEvent,
+      }: {
+        key: string;
+        domEvent: React.SyntheticEvent;
+      }) => {
         domEvent.stopPropagation();
         if (key === 'open') openRow(tc);
         else if (key === 'schedule') openSchedule(tc);
@@ -586,7 +584,7 @@ function TestsTab() {
           setSelectedKeys((prev) =>
             prev.includes(tc.key) ? prev : [...prev, tc.key],
           );
-          message.info(
+          toast.info(
             t('Select the tests to merge with, then hit Merge in the toolbar.'),
           );
         } else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
@@ -595,7 +593,7 @@ function TestsTab() {
         else if (key === 'dismiss') {
           // announce it — a row that vanishes silently reads as lost
           removeTest(tc.key);
-          message.success(t('Draft dismissed'));
+          toast.success(t('Draft dismissed'));
         } else if (key === 'delete') removeTest(tc.key);
       },
     };
@@ -611,7 +609,6 @@ function TestsTab() {
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-medium truncate">{title}</span>
           <VersionLabel version={tc.version} />
-          {/* real side effects — running this touches orders/accounts/payments */}
           {tc.hasSideEffects && (
             <Tooltip
               title={t(
@@ -680,10 +677,10 @@ function TestsTab() {
             {t('Not scheduled')}
           </span>
         ) : (
-          <Tooltip title={scheduleLabel(tc.schedule)}>
+          <Tooltip title={scheduleLabel(t, tc.schedule)}>
             <span className="flex items-center gap-1.5 text-gray-dark">
               <Calendar size={13} className="shrink-0 text-gray-medium" />
-              <span className="truncate">{scheduleShort(tc.schedule)}</span>
+              <span className="truncate">{scheduleShort(t, tc.schedule)}</span>
             </span>
           </Tooltip>
         ),
@@ -703,7 +700,7 @@ function TestsTab() {
               year: 'numeric',
             })}
           >
-            <span className="text-disabled-text">{relativeTime(ts)}</span>
+            <span className="text-disabled-text">{relativeTime(t, ts)}</span>
           </Tooltip>
         ) : (
           <span className="text-disabled-text">—</span>
@@ -769,8 +766,14 @@ function TestsTab() {
     );
   }
 
-  // first-run / empty state — only when there are genuinely no tests (no filter active)
-  const noTests = total === 0 && statusTab === 'all' && !search;
+  // first-run empty state — only when there are genuinely no tests, not when a filter
+  // simply matched nothing
+  const noTests =
+    total === 0 &&
+    statusTab === 'all' &&
+    !search &&
+    envFilter === 'all' &&
+    tagFilter === 'all';
   if (noTests && !creating) {
     return (
       <div className="flex flex-col items-center text-center gap-3 py-16 px-4">
@@ -944,8 +947,10 @@ function TestsTab() {
         />
       )}
 
+      {/* keyed by the RESOLVED test, not by ?test= — a deep-linked test arrives after
+          the drawer would otherwise have mounted with nothing in it */}
       <DraftDrawer
-        key={`draft-${openKey ?? 'none'}`}
+        key={`draft-${openTest?.key ?? 'none'}`}
         test={openTest?.status === 'draft' ? openTest : null}
         open={openTest?.status === 'draft'}
         defaults={defaults}
@@ -955,7 +960,9 @@ function TestsTab() {
       />
       <TestDrawer
         key={
-          creating ? `test-new-${draftTest?.key}` : `test-${openKey ?? 'none'}`
+          creating
+            ? `test-new-${draftTest?.key}`
+            : `test-${openTest?.key ?? 'none'}`
         }
         test={
           creating
@@ -980,9 +987,8 @@ function TestsTab() {
         onChange={creating ? setDraftTest : updateTest}
         onRemove={removeTest}
       />
-      {/* merge review — a client-only base test carrying pendingMerge; edits (title, run
-          settings, tags) stay local until "Combine", which creates one test + deletes the
-          sources. Never persists mid-review. */}
+      {/* merge review — a client-only base test carrying pendingMerge; edits stay local
+          until "Combine", which creates one test + deletes the sources */}
       <TestDrawer
         key={mergeTest ? `merge-${mergeTest.key}` : 'merge-none'}
         test={mergeTest}

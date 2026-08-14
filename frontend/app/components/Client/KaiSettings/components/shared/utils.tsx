@@ -21,6 +21,27 @@ import {
   UiRunStatus,
 } from './types';
 
+// The API clamps list `limit` to 100. Every "fetch the whole set to resolve names /
+// options" lookup in this feature uses that ceiling.
+export const LOOKUP_LIMIT = 100;
+
+// Brand tints shared by every status chip, banner and row wash in this feature, so the
+// same state never renders at two different alphas. TINT = chips/banners, TINT_SOFT =
+// full-row backgrounds (a chip alpha across a whole row reads far too heavy).
+export const TINT = {
+  red: 'rgba(204, 0, 0, 0.1)',
+  green: 'rgba(66, 174, 94, 0.12)',
+  indigo: 'rgba(97, 95, 255, 0.12)',
+  blue: 'rgba(57, 78, 255, 0.1)',
+  orange: 'rgba(226, 137, 64, 0.14)',
+} as const;
+export const TINT_SOFT = {
+  red: 'rgba(204, 0, 0, 0.06)',
+  green: 'rgba(66, 174, 94, 0.1)',
+} as const;
+// borders need more opacity than fills to stay visible
+export const TINT_BORDER = { red: 'rgba(204, 0, 0, 0.35)' } as const;
+
 export const RESOLUTION_OPTIONS: { value: Resolution; label: string }[] = [
   { value: 'desktop', label: 'Desktop' },
   { value: 'tablet', label: 'Tablet' },
@@ -33,8 +54,8 @@ export const RESOLUTION_ICON: Record<Resolution, LucideIcon> = {
   mobile: Smartphone,
 };
 
-// The API stores regions as a strict enum (`config.regions`); values here match it 1:1.
-// `country` is an ISO code for the shared CountryFlagIcon (country-flag-icons).
+// Values match the API's `config.regions` enum 1:1. `country` is an ISO code for the
+// shared CountryFlagIcon; labels are place names, so they aren't translated.
 export const REGION_OPTIONS: {
   value: string;
   label: string;
@@ -44,9 +65,8 @@ export const REGION_OPTIONS: {
   { value: 'us-east-1', label: 'N. Virginia', country: 'US' },
 ];
 
-// Preset date ranges for the list filters. `value` is a day count ('all' = no bound);
-// `periodFrom` turns it into the RFC3339 `from` the API takes (lower bound on
-// createdAt/startedAt). Presets keep it a one-click Select — no date-picker dependency.
+// `value` is a day count ('all' = no bound); `periodFrom` turns it into the RFC3339
+// `from` the API takes (lower bound on createdAt/startedAt).
 export const PERIOD_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'All time' },
   { value: '1', label: 'Last 24h' },
@@ -58,8 +78,8 @@ export const periodFrom = (value: string): string | undefined =>
     ? undefined
     : new Date(Date.now() - Number(value) * 86400000).toISOString();
 
-export const resolutionLabel = (r?: Resolution): string =>
-  RESOLUTION_OPTIONS.find((o) => o.value === r)?.label ?? 'Desktop';
+export const resolutionLabel = (t: TFunction, r?: Resolution): string =>
+  t(RESOLUTION_OPTIONS.find((o) => o.value === r)?.label ?? 'Desktop');
 
 export const regionLabel = (r?: string): string =>
   REGION_OPTIONS.find((o) => o.value === r)?.label ?? r ?? '';
@@ -67,21 +87,11 @@ export const regionLabel = (r?: string): string =>
 export const regionCountry = (r?: string): string =>
   REGION_OPTIONS.find((o) => o.value === r)?.country ?? 'DE';
 
-// What the table shows as the status. When Settings → "Pause tests on new
-// revisions" is on, a pending revision overrides the lifecycle: the test reads
-// "Needs review" and its scheduled runs pause until the proposed version is
-// reviewed. With the setting off, the test keeps its real status (and keeps
-// running) — the review is signalled by the blue dot and the Needs review tab.
+// With Settings → "Pause tests on new revisions" on, a pending revision overrides the
+// lifecycle: the test reads "Needs review" and its scheduled runs pause. With it off the
+// test keeps its real status and the review is signalled by the blue dot only.
 export type DisplayStatus = TestLifecycle | 'needs_review';
 
-export const displayStatus = (
-  tc: TestCase,
-  reviewPauses = true,
-): DisplayStatus =>
-  tc.pendingRevision && reviewPauses ? 'needs_review' : tc.status;
-
-// Status chip for the tests table — a filled <Tag> tinted with brand tokens. Draft
-// stays neutral; approved indigo (idle), active green, paused orange, needs-review blue.
 export const getStatusTag = (
   status: DisplayStatus,
   t: TFunction,
@@ -98,26 +108,24 @@ export const getStatusTag = (
     status === 'active'
       ? {
           label: t('Active'),
-          background: 'rgba(66, 174, 94, 0.12)',
+          background: TINT.green,
           color: 'var(--color-green-dark)',
         }
       : status === 'approved'
         ? {
             label: t('Approved'),
-            background: 'rgba(97, 95, 255, 0.12)',
+            background: TINT.indigo,
             color: 'var(--color-indigo)',
           }
         : status === 'needs_review'
           ? {
-              // brand blue — same language as the "new draft" dot: something new
-              // from the agent is waiting for the user
               label: t('Needs review'),
-              background: 'rgba(57, 78, 255, 0.1)',
+              background: TINT.blue,
               color: 'var(--color-main)',
             }
           : {
               label: t('Paused'),
-              background: 'rgba(226, 137, 64, 0.14)',
+              background: TINT.orange,
               color: 'var(--color-orange-dark)',
             };
   return (
@@ -131,8 +139,7 @@ export const getStatusTag = (
   );
 };
 
-// Run result chip — matches getStatusTag's brand-tint style plus a leading icon so the
-// outcome reads without relying on colour alone.
+// Leading icon so the outcome reads without relying on colour alone.
 export const getRunResult = (
   status: UiRunStatus,
   t: TFunction,
@@ -142,7 +149,7 @@ export const getRunResult = (
     status === 'running'
       ? {
           label: t('Running'),
-          background: 'rgba(97, 95, 255, 0.12)',
+          background: TINT.indigo,
           color: 'var(--color-indigo)',
           Icon: Loader,
           spin: true,
@@ -150,13 +157,13 @@ export const getRunResult = (
       : status === 'failed'
         ? {
             label: t('Failed'),
-            background: 'rgba(204, 0, 0, 0.1)',
+            background: TINT.red,
             color: 'var(--color-red)',
             Icon: XCircle,
           }
         : {
             label: t('Passed'),
-            background: 'rgba(66, 174, 94, 0.12)',
+            background: TINT.green,
             color: 'var(--color-green-dark)',
             Icon: CheckCircle2,
           };
@@ -175,9 +182,8 @@ export const getRunResult = (
   );
 };
 
-// Muted version tag next to a test's title — only from v2 up ("v1" everywhere would
-// be noise; a version only becomes interesting once the steps have actually changed).
-// `always` shows v1 too — for places comparing versions (the review's v1 → v2).
+// Hidden below v2 — a version only becomes interesting once the steps have changed.
+// `always` shows v1 too, for places comparing versions (the review's v1 → v2).
 export const VersionLabel = ({
   version,
   always,
@@ -196,8 +202,7 @@ export const VersionLabel = ({
   );
 };
 
-// Compact tag chips for a table cell: first 2 shown, the rest folded into a +N hint.
-// Empty reads italic "Not set" — same language as the environment/schedule gaps.
+// First 2 tags shown, the rest folded into a +N hint.
 export const RowTags = ({ tags }: { tags?: string[] }) => {
   const { t } = useTranslation();
   if (!tags || tags.length === 0)
@@ -226,8 +231,12 @@ export const RowTags = ({ tags }: { tags?: string[] }) => {
   );
 };
 
-export const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 export const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const dayShort = (t: TFunction, d: number): string =>
+  t(DAY_SHORT[d] ?? DAY_SHORT[0]);
+// Single-letter pill label, derived from the translated short name.
+export const dayInitial = (t: TFunction, d: number): string =>
+  dayShort(t, d).charAt(0);
 
 export function formatTime(time: string): string {
   const [h, m = 0] = time.split(':').map(Number);
@@ -250,8 +259,7 @@ export function ordinal(n: number): string {
   return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
 }
 
-// The frequency picker. Presets cover the day-of-week + monthly cases; 'custom' isn't
-// offered here (a non-preset cron, if one ever arrives, round-trips as a read-only chip).
+// 'custom' isn't offered: a non-preset cron round-trips as a read-only chip.
 export const FREQ_OPTIONS: { value: ScheduleFreq | 'never'; label: string }[] =
   [
     { value: 'never', label: 'Never' },
@@ -261,20 +269,19 @@ export const FREQ_OPTIONS: { value: ScheduleFreq | 'never'; label: string }[] =
     { value: 'monthly', label: 'Monthly' },
   ];
 
-// Infer the frequency from a schedule's days/dayOfMonth when `freq` is absent. Custom is
-// cron-based (not day-based), so a multi-day set with no explicit freq isn't inferable here.
+// Infer the frequency from the day set when `freq` is absent. Custom is cron-based, so
+// it is never inferable here.
 const inferFreq = (s: Schedule): ScheduleFreq | null => {
   if (s.dayOfMonth != null) return 'monthly';
   if (!s.days || s.days.length === 0) return null;
   if (s.days.length === 7) return 'daily';
   if (s.days.length === 5 && WEEKDAY_DAYS.every((d) => s.days.includes(d)))
     return 'weekdays';
-  // one day or an arbitrary set → weekly (runs on the selected day(s) each week)
   return 'weekly';
 };
 
-// Classify a schedule into a frequency. weekly with no day, or custom with no cron, reads
-// as "not scheduled" so it never produces a malformed cron.
+// weekly with no day, or custom with no cron, reads as "not scheduled" so it never
+// produces a malformed cron.
 export const scheduleFreq = (s?: Schedule | null): ScheduleFreq | null => {
   if (!s) return null;
   const freq = s.freq ?? inferFreq(s);
@@ -284,8 +291,8 @@ export const scheduleFreq = (s?: Schedule | null): ScheduleFreq | null => {
   return freq;
 };
 
-// A light structural check on a 5-field cron string (backend does full validation). Blocks
-// obvious garbage so we never persist an unparseable cron.
+// Structural check only — the backend validates fully. Blocks obvious garbage so we
+// never persist an unparseable cron.
 export const isValidCron = (cron?: string): boolean => {
   if (!cron) return false;
   const parts = cron.trim().split(/\s+/);
@@ -299,60 +306,64 @@ export const isScheduled = (s?: Schedule | null): boolean =>
 export const hasNoEnvironment = (tc: { environments?: string[] }): boolean =>
   !tc.environments || tc.environments.length === 0;
 
-const domLabel = (dom?: number): string =>
-  dom === 0 ? 'the last day' : `the ${ordinal(dom ?? 1)}`;
-
-export const scheduleLabel = (schedule?: Schedule | null): string => {
+export const scheduleLabel = (
+  t: TFunction,
+  schedule?: Schedule | null,
+): string => {
   const freq = scheduleFreq(schedule);
-  if (!freq || !schedule) return 'Not scheduled';
+  if (!freq || !schedule) return t('Not scheduled');
   const at = formatTime(schedule.time);
   switch (freq) {
     case 'daily':
-      return `Every day · ${at}`;
+      return `${t('Every day')} · ${at}`;
     case 'weekdays':
-      return `Weekdays · ${at}`;
-    case 'weekly':
-      return schedule.days.length > 1
-        ? `${[...schedule.days]
-            .sort((a, b) => a - b)
-            .map((d) => DAY_SHORT[d])
-            .join(', ')} · ${at}`
-        : `Every ${DAY_SHORT[schedule.days[0] ?? 1]} · ${at}`;
+      return `${t('Weekdays')} · ${at}`;
     case 'monthly':
-      return `Monthly on ${domLabel(schedule.dayOfMonth)} · ${at}`;
+      return schedule.dayOfMonth === 0
+        ? `${t('Monthly on the last day')} · ${at}`
+        : `${t('Monthly on the {{day}}', {
+            day: ordinal(schedule.dayOfMonth ?? 1),
+          })} · ${at}`;
     case 'custom':
-      return `Cron · ${schedule.cron}`;
-    default:
-      return `${[...schedule.days]
+      return `${t('Cron')} · ${schedule.cron}`;
+    case 'weekly':
+    default: {
+      const days = [...schedule.days]
         .sort((a, b) => a - b)
-        .map((d) => DAY_SHORT[d])
-        .join(', ')} · ${at}`;
+        .map((d) => dayShort(t, d));
+      return days.length > 1
+        ? `${days.join(', ')} · ${at}`
+        : `${t('Every {{day}}', { day: days[0] ?? dayShort(t, 1) })} · ${at}`;
+    }
   }
 };
 
-// Short form for the table column (full label lives in the tooltip).
-export const scheduleShort = (schedule?: Schedule | null): string => {
+/** Short form for the table column (the full label lives in the tooltip). */
+export const scheduleShort = (
+  t: TFunction,
+  schedule?: Schedule | null,
+): string => {
   const freq = scheduleFreq(schedule);
-  if (!freq || !schedule) return 'Not scheduled';
+  if (!freq || !schedule) return t('Not scheduled');
   const at = formatTime(schedule.time);
   switch (freq) {
     case 'daily':
-      return `Daily · ${at}`;
+      return `${t('Daily')} · ${at}`;
     case 'weekdays':
-      return `Weekdays · ${at}`;
+      return `${t('Weekdays')} · ${at}`;
     case 'weekly':
-      return `Weekly · ${at}`;
+      return `${t('Weekly')} · ${at}`;
     case 'monthly':
-      return `Monthly · ${at}`;
+      return `${t('Monthly')} · ${at}`;
     case 'custom':
-      return 'Custom';
+      return t('Custom');
     default:
-      return `${schedule.days.length} days · ${at}`;
+      return `${t('{{count}} days', { count: schedule.days.length })} · ${at}`;
   }
 };
 
-// The runner's result blob is a step-by-step log that (often) ends in a "Summary: …" line.
-// When that section is present, show only what follows it; otherwise the full text.
+// The runner's result blob often ends in a "Summary: …" section; show only that when
+// present, otherwise the full text.
 export const resultSummary = (text?: string): string | undefined => {
   if (!text) return text;
   const m = text.match(/^\s*summary:\s*([\s\S]*)$/im);
@@ -362,27 +373,25 @@ export const resultSummary = (text?: string): string | undefined => {
 export const formatDuration = (ms: number): string => {
   if (!ms) return '—';
   if (ms < 1000) return `${ms}ms`;
-  const seconds = (ms / 1000).toFixed(1);
-  return `${seconds}s`;
+  return `${(ms / 1000).toFixed(1)}s`;
 };
 
-export const relativeTime = (ts?: number): string => {
+export const relativeTime = (t: TFunction, ts?: number): string => {
   if (!ts) return '—';
   const mins = Math.round((Date.now() - ts) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t('just now');
+  if (mins < 60) return t('{{n}}m ago', { n: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
+  if (hours < 24) return t('{{n}}h ago', { n: hours });
+  return t('{{n}}d ago', { n: Math.round(hours / 24) });
 };
 
 // ---- Schedule <-> cron ----
-// The API stores schedules as standard 5-field cron strings. The Schedule object the
-// UI edits round-trips through cron so a schedule persists as a `cron` on the test.
+// The API stores schedules as standard 5-field cron strings; the Schedule object the UI
+// edits round-trips through cron.
 
 // Parse a cron day-of-week field into weekday numbers (0–6), or null if it isn't a plain
-// list/range of single digits (steps, names, etc. → not a preset, handled as custom).
+// list/range of single digits (steps, names, etc. → handled as custom).
 const parseDow = (dow: string): number[] | null => {
   const out: number[] = [];
   for (const token of dow.split(',')) {
@@ -418,24 +427,24 @@ export function cronToSchedule(cron?: string | null): Schedule | null {
 
   if (mon !== '*' || !simpleTime) return custom;
 
-  // Monthly — a concrete single day-of-month (1–31), no weekday constraint.
+  // Monthly — a concrete day-of-month, no weekday constraint.
   if ((dow === '*' || dow === '?') && dom !== '*' && dom !== '?') {
     if (/^\d+$/.test(dom)) {
       const d = Number(dom);
-      if (d >= 1 && d <= 31) return { freq: 'monthly', days: [], dayOfMonth: d, time };
+      if (d >= 1 && d <= 31)
+        return { freq: 'monthly', days: [], dayOfMonth: d, time };
     }
     return custom;
   }
 
-  // Day-of-week schedule — every day-of-month, dow is a plain day list. No explicit freq:
-  // inferFreq classifies the day set (daily / weekdays / weekly) so the pills round-trip.
+  // Day-of-week schedule. No explicit freq: inferFreq classifies the day set
+  // (daily / weekdays / weekly) so the pills round-trip.
   if (dom === '*' || dom === '?') {
     if (dow === '*' || dow === '?') return { days: ALL_DAYS, time };
     const days = parseDow(dow);
     if (days && days.length) return { days, time };
   }
 
-  // stepped hours, sub-daily, anything not a plain day schedule → raw custom cron
   return custom;
 }
 
@@ -451,17 +460,14 @@ export function scheduleToCron(schedule?: Schedule | null): string | null {
     case 'weekdays':
       return `${m} ${h} * * 1-5`;
     case 'monthly':
-      return `${m} ${h} ${schedule.dayOfMonth ?? 1} * *`;
+      return `${m} ${h} ${schedule.dayOfMonth || 1} * *`;
     case 'weekly':
     default:
       return `${m} ${h} * * ${[...schedule.days].sort((a, b) => a - b).join(',')}`;
   }
 }
 
-/**
- * The API stores test `steps` as free-form JSON. The UI works with a flat list of
- * step strings, so normalise whatever shape we get back.
- */
+/** The API stores `steps` as free-form JSON; the UI works with a flat string list. */
 export const stepsToLines = (steps: unknown): string[] => {
   if (!steps) return [];
   if (Array.isArray(steps)) {

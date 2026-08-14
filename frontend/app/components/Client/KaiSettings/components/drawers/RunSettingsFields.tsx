@@ -8,6 +8,7 @@ import { useEnvironments } from '../../queries';
 import ScheduleControl from '../ScheduleControl';
 import { Resolution, RunDefaults, Schedule } from '../shared/types';
 import {
+  LOOKUP_LIMIT,
   REGION_OPTIONS,
   RESOLUTION_ICON,
   RESOLUTION_OPTIONS,
@@ -33,23 +34,21 @@ interface Props {
   defaultHints?: boolean;
 }
 
-/** Shared environment / resolution / region / schedule editor used by Draft + Test.
- *  Environment · Resolution · Region are multi-select (a test runs across the matrix);
- *  they share one row and the schedule sits below it. */
+/** Shared environment / viewport / region / schedule editor used by Draft + Test. The
+ *  three are multi-select (a test runs across the matrix) and share one row. */
 function RunSettingsFields({ value, onChange, defaults, defaultHints }: Props) {
   const { t } = useTranslation();
-  const { data } = useEnvironments();
+  const { data } = useEnvironments({ limit: LOOKUP_LIMIT });
   const envOptions = (data?.items ?? []).map((env) => ({
     value: env.environmentId,
     label: env.name,
   }));
 
-  // narrow cells can't show chips nicely → collapse the box to a summary. A single
-  // selection shows its name — suffixed "(default)" when it came from Settings'
-  // default run configuration (draft / manual-create flow only).
+  // narrow cells can't show chips nicely → collapse the box to a summary.
+  // `omitted` is antd's DisplayValueType[], whose `value` is untyped.
   const summarize =
     (toLabel: (v: any) => string, defaultValue?: string) =>
-    (omitted: { label: React.ReactNode; value: any }[]) => {
+    (omitted: { label?: React.ReactNode; value?: any }[]) => {
       if (omitted.length === 1) {
         const v = omitted[0].value;
         const isDefault =
@@ -62,10 +61,13 @@ function RunSettingsFields({ value, onChange, defaults, defaultHints }: Props) {
     envOptions.find((o) => o.value === id)?.label ?? String(id);
   const envSummary = summarize(envName, defaults?.envId);
   const viewportSummary = summarize(
-    (v) => t(resolutionLabel(v)),
+    (v) => resolutionLabel(t, v as Resolution),
     defaults?.resolution,
   );
-  const regionSummary = summarize((v) => regionLabel(v), defaults?.region);
+  const regionSummary = summarize(
+    (v) => regionLabel(v as string),
+    defaults?.region,
+  );
 
   return (
     <div className="flex flex-col gap-4 kai-run-settings">

@@ -8,6 +8,7 @@ import { useEnvironments } from '../queries';
 import { Field } from './drawers/EntityDrawer';
 import { RunDefaults } from './shared/types';
 import {
+  LOOKUP_LIMIT,
   REGION_OPTIONS,
   RESOLUTION_ICON,
   RESOLUTION_OPTIONS,
@@ -20,11 +21,8 @@ interface Props {
   onChange: (patch: Partial<RunDefaults>) => void;
 }
 
-const LOOKUP_LIMIT = 100;
-
 // The preset environment / device / region that pre-fill a new test's run settings.
-// Single-select — the multi-select matrix lives per-test (RunSettingsFields). Not yet
-// persisted anywhere — see todo.md.
+// Single-select — the multi-select matrix lives per-test (RunSettingsFields).
 function Defaults({ value, onChange }: Props) {
   const { t } = useTranslation();
   const { data } = useEnvironments({ limit: LOOKUP_LIMIT });

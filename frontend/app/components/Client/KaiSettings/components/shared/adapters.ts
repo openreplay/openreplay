@@ -1,6 +1,4 @@
-// The single seam between the Browser Tests API shapes and the redesigned UI view
-// models. Everything the UI renders/edits goes through here; fields with no API
-// backing are left empty (see ../../todo.md).
+// The single seam between the Browser Tests API shapes and the UI view models.
 import { HarCategory, HarEntryDetail, parseHar } from './harParser';
 import {
   ConsoleLog,
@@ -22,8 +20,8 @@ import {
   Test,
   TestCase,
   TestCreateRequest,
-  TestMergeRequest,
   TestLifecycle,
+  TestMergeRequest,
   TestStatus,
   TestStatusSettable,
   TestStep,
@@ -34,8 +32,8 @@ import { cronToSchedule, scheduleToCron, stepsToLines } from './utils';
 
 // ---- Tests ----
 
-// Native statuses now: draft / approved / active / paused (rejected is filtered out of
-// the list before mapping). No cron-derivation — the scheduler owns active/paused.
+// `rejected` is filtered out of the list before mapping. No cron-derivation — the
+// scheduler owns active/paused.
 const lifecycleFromApi = (status: TestStatus): TestLifecycle => {
   if (status === 'paused') return 'paused';
   if (status === 'active') return 'active';
@@ -66,11 +64,15 @@ const configRegions = (
   config?: Record<string, unknown>,
 ): string[] | undefined => {
   const arr = config?.regions;
-  return Array.isArray(arr) ? arr.filter((r): r is string => typeof r === 'string') : undefined;
+  return Array.isArray(arr)
+    ? arr.filter((r): r is string => typeof r === 'string')
+    : undefined;
 };
 
 // Merge the run-matrix picks back into the opaque config, preserving unmodelled keys.
-const withMatrixConfig = (vm: TestCase): Record<string, unknown> | undefined => {
+const withMatrixConfig = (
+  vm: TestCase,
+): Record<string, unknown> | undefined => {
   const base = { ...(vm.config ?? {}) };
   if (vm.resolutions) base.resolutions = vm.resolutions;
   if (vm.regions) base.regions = vm.regions;
@@ -81,8 +83,7 @@ export function apiTestToVM(
   test: Test,
   envNameById?: Map<string, string>,
 ): TestCase {
-  // A pending suggestion → a review-ready pendingRevision. `changes` are computed from
-  // the versions/diff endpoint on demand (TestDrawer), so start empty here.
+  // `changes` are computed from the versions/diff endpoint on demand (TestDrawer).
   const pendingRevision = test.suggestion
     ? {
         toVersion: test.suggestion.version,
@@ -96,7 +97,7 @@ export function apiTestToVM(
     title: test.name,
     steps: stepsToLines(test.steps),
     status: lifecycleFromApi(test.status),
-    // no seenAt yet → the agent's proposal hasn't been opened; show the "new" dot
+    // no seenAt → the agent's proposal hasn't been opened; show the "new" dot
     isNew: test.status === 'draft' && !test.seenAt,
     environments: test.environments ?? [],
     envNames: envNameById
@@ -119,7 +120,6 @@ export function apiTestToVM(
   };
 }
 
-// Create accepts name/steps/cron/environments/tags/config plus an optional seed status.
 // A manual test starts `approved` (skips the draft flow); a duplicate lands as a `draft`.
 export function vmToCreateRequest(vm: TestCase): TestCreateRequest {
   return {
@@ -135,8 +135,7 @@ export function vmToCreateRequest(vm: TestCase): TestCreateRequest {
   };
 }
 
-// Merge the base VM's settings + the final (already-arranged) steps + the source ids into
-// the atomic merge request. Base = first selected; the new test is always a draft.
+// Base = first selected; the merged test is always a draft.
 export function vmToMergeRequest(
   vm: TestCase,
   testIds: string[],
@@ -155,13 +154,13 @@ export function vmToMergeRequest(
   };
 }
 
-// Updatable fields: name / tags / environments / cron / config, plus an optional
-// `status` — pass it ONLY for a client-settable transition (see `settableTransition`).
-// `approved → active` is runner-promoted (scheduling sets cron; the runner flips status),
-// so schedule/unschedule must call this WITHOUT a status.
+// Pass `status` ONLY for a client-settable transition (see `settableTransition`).
+// `approved → active` is runner-promoted (scheduling sets cron; the runner flips
+// status), so schedule/unschedule must call this WITHOUT a status.
 export function vmToUpdateRequest(
   vm: TestCase,
   status?: TestStatusSettable,
+  includeSteps = false,
 ): TestUpdateRequest {
   return {
     name: vm.title,
@@ -169,18 +168,15 @@ export function vmToUpdateRequest(
     // no schedule → clear the cron with an empty string (not null) so unscheduling sticks
     cron: scheduleToCron(vm.schedule) ?? '',
     environments: vm.environments,
-    // full replacement of the step list, same shape create sends (`string[]`).
-    // The VM always carries current steps (the list returns them too), so sending
-    // it on any update is a no-op unless the steps actually changed.
-    steps: vm.steps,
+    // only replace the steps when the user actually edited them this session
+    ...(includeSteps ? { steps: vm.steps } : {}),
     config: withMatrixConfig(vm),
     ...(status ? { status } : {}),
   };
 }
 
-// The status to actually write for a UI status change, or undefined when the API won't
-// accept it as a client transition (api3: draft→approved/rejected, and active⇄paused).
-// approved↔active (schedule/unschedule) is runner-owned → undefined (cron only).
+// The status to actually write, or undefined when the API won't accept it as a client
+// transition. approved↔active (schedule/unschedule) is runner-owned → cron only.
 export function settableTransition(
   prev: TestLifecycle,
   next: TestLifecycle,
@@ -189,11 +185,10 @@ export function settableTransition(
   if (prev === 'draft' && next === 'approved') return 'approved';
   if (prev === 'active' && next === 'paused') return 'paused';
   if (prev === 'paused' && next === 'active') return 'active';
-  return undefined; // approved↔active (schedule/unschedule) is runner-owned
+  return undefined;
 }
 
-// A client-computed git-style diff between the active steps and the proposed (latest)
-// steps — the versions/diff endpoint returns the two arrays, not a change list. LCS so
+// The versions/diff endpoint returns the two step arrays, not a change list. LCS so
 // unchanged rows stay put; a reworded step reads as a removal + an addition.
 export function stepsToChanges(
   active: string[],
@@ -233,7 +228,7 @@ export function stepsToChanges(
 
 const runStatusFromApi = (status: RunStatus): UiRunStatus => {
   if (status === 'passed') return 'passed';
-  if (status === 'dispatched') return 'running';
+  if (status === 'dispatched' || status === 'running') return 'running';
   return 'failed';
 };
 
@@ -246,12 +241,14 @@ const stepStatusFromApi = (status?: string): StepStatus => {
   return 'pending';
 };
 
-// A human-authored ("user") step → one UI row. A user step expands into one or more agent
-// actions, each with its own screenshot, so the row's `screenshots` is the union and its
-// network counts are summed across those actions. Screenshot paths are run-relative and
-// reduced to the file name the screenshots endpoint takes
-// (GET /runs/{runId}/screenshots/{name}). This is the source of truth when the runner
-// provides `user_steps`; `groupAgentSteps` is the legacy fallback.
+const lastSegment = (path: string): string => {
+  const clean = path.split(/[?#]/)[0];
+  return clean.split('/').filter(Boolean).pop() || clean || '/';
+};
+
+// A user step expands into one or more agent actions, each with its own screenshot, so
+// the row's `screenshots` is the union and its network counts are summed. Paths are
+// reduced to the file name the screenshots endpoint takes.
 const userStepToVM = (
   us: RunResultUserStep,
   agentSteps: RunResultStep[],
@@ -276,9 +273,8 @@ const userStepToVM = (
   };
 };
 
-// Legacy runs without `user_steps`: group the flat agent steps by their `user_step_index`
-// so the several agent actions of one human step collapse into a single row (this avoids
-// the duplicate-row artefact of mapping agent steps 1:1).
+// Legacy runs without `user_steps`: group the flat agent steps by `user_step_index` so
+// one human step is one row (mapping agent steps 1:1 duplicates rows).
 const groupAgentSteps = (agentSteps: RunResultStep[]): TestStep[] => {
   const order: (number | string)[] = [];
   const groups = new Map<number | string, RunResultStep[]>();
@@ -320,9 +316,8 @@ const runDate = (run: {
   return at ? new Date(at).getTime() : Date.now();
 };
 
-// A lean list item — no steps. network/console aren't captured in the list; resolution
-// comes from `screenType`, tags ride along from the owning test, env name is resolved via
-// the optional id→name map (the run carries only environmentId).
+// A lean list item — no steps, no network/console. Env name is resolved via the
+// optional id→name map (the run carries only environmentId).
 export function apiRunToVM(
   run: RunListItem,
   testName?: string,
@@ -348,8 +343,8 @@ export function apiRunToVM(
   };
 }
 
-// The single-run detail: all step-level detail lives inside the runner's results.json
-// (`results`); network comes from the streamed HAR (wired in the drawer, not here).
+// All step-level detail lives inside the runner's results.json; network comes from the
+// streamed HAR (wired in the drawer, not here).
 export function apiRunDetailToVM(
   detail: RunDetail,
   envNameById?: Map<string, string>,
@@ -358,16 +353,13 @@ export function apiRunDetailToVM(
   const agentSteps = Array.isArray(results?.agent_steps)
     ? results!.agent_steps
     : [];
-  // Prefer the human `user_steps` (one row per authored step); fall back to grouping the
-  // flat agent steps for older runs that predate it.
   const steps: TestStep[] =
     results?.user_steps && results.user_steps.length
       ? results.user_steps.map((us) => userStepToVM(us, agentSteps))
       : groupAgentSteps(agentSteps);
-  // Display rule (Mehdi, 07-20): a "skipped" step whose next step passed can't really have
-  // failed or been left out — the flow reached past it — so show it as passed. Applied
-  // backward so it cascades through a run of skips before a passed step. Pure display; it
-  // also makes the step counts read N/N instead of "M passed, K skipped".
+  // A "skipped" step whose next step passed can't have been skipped — the flow reached
+  // past it — so show it as passed. Applied backward so it cascades through a run of
+  // skips. Pure display; it also makes the step counts read N/N.
   {
     let nextPassed = false;
     for (let i = steps.length - 1; i >= 0; i -= 1) {
@@ -376,14 +368,13 @@ export function apiRunDetailToVM(
       nextPassed = steps[i].status === 'passed';
     }
   }
-  // the runner reports the failed step index directly (into user_steps); otherwise fall
-  // back to the first row that reports failed. A run can also fail with no single step
-  // marked failed (a semantic assertion) — then nothing is highlighted.
+  // The runner reports the failed index directly; otherwise fall back to the first row
+  // reporting failed. A run can also fail with no step marked failed (a semantic
+  // assertion) — then nothing is highlighted.
   const failed =
     typeof results?.failed_step_index === 'number'
       ? results.failed_step_index
       : steps.findIndex((s) => s.status === 'failed');
-  // runner-captured errors + page JS errors surface in the Console panel
   const logs: ConsoleLog[] = [
     ...(results?.errors ?? []),
     ...(results?.js_errors ?? []),
@@ -421,15 +412,13 @@ export function apiRunDetailToVM(
 // ---- Environments ----
 
 // Headers ride in `variables.headers` as a `{ name: value }` object (the runner reads a
-// map, not an ordered list). Old environments may still hold the legacy `HttpHeader[]`
-// array, so tolerate both on the way in.
+// map). Old environments may still hold the legacy `HttpHeader[]`, so tolerate both.
 function headersFromVar(raw: unknown): HttpHeader[] | undefined {
   if (Array.isArray(raw)) return raw as HttpHeader[];
   if (raw && typeof raw === 'object') {
-    return Object.entries(raw as Record<string, unknown>).map(([name, value]) => ({
-      name,
-      value: String(value ?? ''),
-    }));
+    return Object.entries(raw as Record<string, unknown>).map(
+      ([name, value]) => ({ name, value: String(value ?? '') }),
+    );
   }
   return undefined;
 }
@@ -450,10 +439,9 @@ export function apiEnvToVM(env: Environment): EnvironmentVM {
   };
 }
 
-// Credentials, headers and the SSL flag ride along in the environment's non-secret
-// `variables` record (the agent honouring headers/SSL is a backend TODO). The PUT
-// replaces `variables` wholesale, so start from the stored record and only touch the
-// keys the form manages — keys it doesn't model are preserved.
+// Credentials, headers and the SSL flag ride in the environment's non-secret
+// `variables`. The PUT replaces `variables` wholesale, so start from the stored record
+// and only touch the keys the form manages.
 export function envFormToRequest(
   vm: Omit<EnvironmentVM, 'id'>,
 ): EnvironmentRequest {
@@ -468,11 +456,14 @@ export function envFormToRequest(
   setOrDelete('login', vm.username?.trim() || undefined);
   setOrDelete('password', vm.password?.trim() || undefined);
   // headers → `{ name: value }` object (last write wins on duplicate names)
-  const headers = (vm.headers ?? []).reduce<Record<string, string>>((acc, h) => {
-    const name = h.name.trim();
-    if (name) acc[name] = h.value;
-    return acc;
-  }, {});
+  const headers = (vm.headers ?? []).reduce<Record<string, string>>(
+    (acc, h) => {
+      const name = h.name.trim();
+      if (name) acc[name] = h.value;
+      return acc;
+    },
+    {},
+  );
   setOrDelete('headers', Object.keys(headers).length ? headers : undefined);
   setOrDelete('ignoreHttpsErrors', vm.ignoreHttpsErrors || undefined);
   return {
@@ -487,8 +478,7 @@ export function envFormToRequest(
 
 // ---- Network (HAR) ----
 
-// The run drawer's NetworkPanel renders NetworkRequest[]; harParser categories map onto
-// the raw `type` strings NetworkPanel's own categoryOf() understands.
+// harParser categories map onto the raw `type` strings NetworkPanel's categoryOf() reads.
 const HAR_CAT_TO_TYPE: Record<HarCategory, string> = {
   xhr: 'xhr',
   js: 'script',
@@ -498,11 +488,6 @@ const HAR_CAT_TO_TYPE: Record<HarCategory, string> = {
   font: 'font',
   doc: 'document',
   other: 'other',
-};
-
-const lastSegment = (path: string): string => {
-  const clean = path.split(/[?#]/)[0];
-  return clean.split('/').filter(Boolean).pop() || clean || '/';
 };
 
 const harEntryToRequest = (e: HarEntryDetail): NetworkRequest => {
@@ -528,15 +513,15 @@ const harEntryToRequest = (e: HarEntryDetail): NetworkRequest => {
     requestHeaders: e.requestHeaders,
     responseHeaders: e.responseHeaders,
     payload: e.postData?.text || undefined,
-    // base64 bodies (images etc.) aren't useful as a text preview — skip.
+    // base64 bodies (images etc.) aren't useful as a text preview
     response:
       e.content.encoding === 'base64' ? undefined : e.content.text || undefined,
     timing,
   };
 };
 
-// Parse a .HAR file's contents into the NetworkRequest[] the run drawer renders.
-// Returns [] when the input isn't a valid HAR.
+/** Parse a .HAR file's contents into the requests the run drawer renders; [] when the
+ *  input isn't a valid HAR. */
 export function harToNetworkRequests(content: string): NetworkRequest[] {
   const { data } = parseHar(content);
   return data ? data.entries.map(harEntryToRequest) : [];
