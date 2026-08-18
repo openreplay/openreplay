@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v4"
+
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
@@ -30,8 +33,10 @@ type Notes interface {
 	GetByID(projectID, userID, noteID uint64) (*Note, error)
 	GetAll(projectID, userID uint64, opts *GetOpts) (interface{}, error)
 	Update(projectID, userID, noteID uint64, note *NoteUpdate) (*Note, error)
-	Delete(projectID, noteID uint64) error
+	Delete(projectID, userID, noteID uint64) error
 }
+
+var ErrNoteNotFound = errors.New("note not found")
 
 func New(log logger.Logger, db pool.Pool) (Notes, error) {
 	return &notesImpl{
@@ -50,7 +55,7 @@ func (n *notesImpl) Create(projectID, userID uint64, note *Note) (*Note, error) 
 		return nil, errors.New("note is required")
 	}
 
-	if len(*note.Message) > MaxMessageLength {
+	if note.Message != nil && len(*note.Message) > MaxMessageLength {
 		*note.Message = (*note.Message)[0:MaxMessageLength]
 	}
 	if note.Tag != nil && len(*note.Tag) > MaxTagLength {
@@ -206,8 +211,8 @@ func (n *notesImpl) GetAll(projectID, userID uint64, opts *GetOpts) (interface{}
 	}
 
 	if opts.Search != "" {
-		where = append(where, fmt.Sprintf("sessions_notes.message ILIKE $%d", argPos))
-		args = append(args, "%"+opts.Search+"%")
+		where = append(where, fmt.Sprintf(`sessions_notes.message ILIKE $%d ESCAPE '\'`, argPos))
+		args = append(args, "%"+postgres.EscapeILIKE(opts.Search)+"%")
 		argPos++
 	}
 
@@ -336,18 +341,24 @@ func (n *notesImpl) Update(projectID, userID, noteID uint64, note *NoteUpdate) (
 	return &updatedNote, nil
 }
 
-func (n *notesImpl) Delete(projectID, noteID uint64) error {
+func (n *notesImpl) Delete(projectID, userID, noteID uint64) error {
 	switch {
 	case projectID == 0:
 		return errors.New("projectID is required")
+	case userID == 0:
+		return errors.New("userID is required")
 	case noteID == 0:
 		return errors.New("noteID is required")
 	}
 	sql := `UPDATE sessions_notes
 			SET deleted_at = timezone('utc'::text, now())
-			WHERE note_id = $1 AND project_id = $2 AND deleted_at ISNULL;`
-	err := n.db.Exec(sql, noteID, projectID)
-	if err != nil {
+			WHERE note_id = $1 AND project_id = $2 AND user_id = $3 AND deleted_at ISNULL
+			RETURNING note_id;`
+	var deletedID uint64
+	if err := n.db.QueryRow(sql, noteID, projectID, userID).Scan(&deletedID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoteNotFound
+		}
 		return fmt.Errorf("failed to delete note: %v", err)
 	}
 	return nil
