@@ -64,6 +64,7 @@ func (s *saverImpl) Handle(msg Message) {
 		err     error
 	)
 	if msg.TypeID() == MsgSessionEnd || msg.TypeID() == MsgMobileSessionEnd {
+		s.log.Info(sessCtx, "SE_TRACE stage=db_received sessID=%d", msg.SessionID())
 		issueTypes, err := s.issues.Get(msg.SessionID())
 		if err != nil {
 			s.log.Warn(sessCtx, "issue types get error: %s", err)
@@ -73,6 +74,9 @@ func (s *saverImpl) Handle(msg Message) {
 		session, err = s.sessions.Get(msg.SessionID())
 	}
 	if err != nil || session == nil {
+		if msg.TypeID() == MsgSessionEnd || msg.TypeID() == MsgMobileSessionEnd {
+			s.log.Error(sessCtx, "SE_TRACE stage=db_dropped reason=no_session sessID=%d err=%v", msg.SessionID(), err)
+		}
 		s.log.Error(sessCtx, "error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
 		return
 	}

@@ -131,7 +131,9 @@ func main() {
 				return processEndedBatch(ctx, candidates, sessManager, producer, cfg, log, details, cleanupRegistry)
 			})
 			details.Log(log, ctx)
-			producer.Flush(cfg.ProducerTimeout)
+			if undelivered := producer.Flush(cfg.ProducerTimeout); undelivered > 0 {
+				log.Error(ctx, "SE_TRACE stage=ender_flush_incomplete undelivered=%d, committing offsets anyway", undelivered)
+			}
 			if err := consumer.CommitBack(ender.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}

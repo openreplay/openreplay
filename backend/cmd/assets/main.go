@@ -136,7 +136,9 @@ func main() {
 		switch m := msg.(type) {
 		case *messages.SessionEnd:
 			if err := producer.Produce(cfg.TopicRawWeb, msg.SessionID(), msg.Encode()); err != nil {
-				log.Error(ctx, "can't send SessionEnd to raw topic: %s", err)
+				log.Error(ctx, "SE_TRACE stage=assets_produce_failed sessID=%d err=%s", msg.SessionID(), err)
+			} else {
+				log.Info(ctx, "SE_TRACE stage=assets_forwarded sessID=%d", msg.SessionID())
 			}
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)

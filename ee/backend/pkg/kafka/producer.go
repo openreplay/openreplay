@@ -135,6 +135,6 @@ func (p *Producer) Close(timeoutMs int) {
 	p.producer.Close()
 }
 
-func (p *Producer) Flush(timeoutMs int) {
-	p.producer.Flush(timeoutMs)
+func (p *Producer) Flush(timeoutMs int) int {
+	return p.producer.Flush(timeoutMs)
 }

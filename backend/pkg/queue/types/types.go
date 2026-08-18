@@ -39,6 +39,7 @@ type Producer interface {
 	Produce(topic string, key uint64, value []byte) error
 	ProduceToPartition(topic string, partition, key uint64, value []byte) error
 	Ping(ctx context.Context) error
-	Flush(timeout int)
+	// Flush returns the number of messages still undelivered when the timeout expired.
+	Flush(timeout int) int
 	Close(timeout int)
 }

@@ -44,6 +44,7 @@ func ProcessEndedSessions(
 		if currDuration == newDur {
 			if sess.Duration != nil {
 				details.Duplicated[sessionID] = currDuration
+				log.Info(ctx, "SE_TRACE stage=ender_duplicated site=batch_pre_check sessID=%d dur=%d", sessionID, currDuration)
 				completed[sessionID] = true
 				continue
 			}
@@ -115,6 +116,7 @@ func ProcessEndedSession(
 	if currDuration == newDur {
 		if sess.Duration != nil {
 			details.Duplicated[sessionID] = currDuration
+			log.Info(ctx, "SE_TRACE stage=ender_duplicated site=fallback_pre_check sessID=%d dur=%d", sessionID, currDuration)
 			return true
 		}
 		log.Info(ctx, "ending zero-duration session, sessID: %d", sessionID)
@@ -160,6 +162,7 @@ func emitSessionEnd(
 	// Re-check after the update — could have raced with another path.
 	if currDuration == newDuration && currDuration != 0 {
 		details.Duplicated[sessionID] = currDuration
+		log.Info(ctx, "SE_TRACE stage=ender_duplicated site=post_update_check sessID=%d dur=%d", sessionID, currDuration)
 		return true
 	}
 
@@ -194,6 +197,8 @@ func emitSessionEnd(
 	}
 
 	cleanupReg.Done(sessionID)
+
+	log.Info(ctx, "SE_TRACE stage=ender_emitted sessID=%d prevDur=%d newDur=%d platform=%s", sessionID, currDuration, newDuration, sess.Platform)
 
 	if currDuration != 0 {
 		details.Diff[sessionID] = int64(newDuration) - int64(currDuration)

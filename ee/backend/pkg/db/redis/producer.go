@@ -47,4 +47,4 @@ func (c *producerImpl) ProduceToPartition(topic string, partition, key uint64, v
 	return c.Produce(topic, key, value)
 }
 
-func (c *producerImpl) Flush(timeout int) {}
+func (c *producerImpl) Flush(timeout int) int { return 0 }

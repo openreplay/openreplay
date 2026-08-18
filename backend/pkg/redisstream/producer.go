@@ -75,6 +75,7 @@ func (p *Producer) Close(_ int) {
 	// noop
 }
 
-func (p *Producer) Flush(_ int) {
-	// noop
+func (p *Producer) Flush(_ int) int {
+	// noop: XAdd is synchronous, nothing is ever buffered
+	return 0
 }
