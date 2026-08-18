@@ -2,7 +2,8 @@ package projects
 
 import (
 	"fmt"
-	"strings"
+
+	"openreplay/backend/pkg/db/postgres"
 )
 
 func (c *projectsImpl) getProjectByKey(projectKey string) (*Project, error) {
@@ -69,7 +70,7 @@ func (c *projectsImpl) listProjects() ([]*Project, error) {
 }
 
 func (c *projectsImpl) existsByName(name string) (bool, error) {
-	escaped := escapeILIKE(name)
+	escaped := postgres.EscapeILIKE(name)
 	var exists bool
 	if err := c.db.QueryRow(`
 		SELECT EXISTS(
@@ -80,12 +81,6 @@ func (c *projectsImpl) existsByName(name string) (bool, error) {
 		return false, err
 	}
 	return exists, nil
-}
-
-var ilikeReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
-
-func escapeILIKE(s string) string {
-	return ilikeReplacer.Replace(s)
 }
 
 func (c *projectsImpl) createProject(name string, platform string) (*Project, error) {
