@@ -227,8 +227,17 @@ func (h *handlersImpl) deleteNote(w http.ResponseWriter, r *http.Request) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	currUser := api.GetUser(r)
+	if currUser == nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("unauthorized"), startTime, r.URL.Path, bodySize)
+		return
+	}
 
-	if err := h.notes.Delete(uint64(projID), noteID); err != nil {
+	if err := h.notes.Delete(uint64(projID), currUser.ID, noteID); err != nil {
+		if errors.Is(err, notes.ErrNoteNotFound) {
+			h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+			return
+		}
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
