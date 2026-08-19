@@ -6,6 +6,7 @@ import (
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
 	"openreplay/backend/internal/db/datasaver"
+	"openreplay/backend/internal/db/reconciler"
 	"openreplay/backend/pkg/canvas"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -147,6 +148,15 @@ func main() {
 		log.Fatal(ctx, "can't init sdk saver: %s", err)
 	}
 	defer sdkSaver.Stop()
+
+	if cfg.AuditReconcilerEnabled {
+		auditReconciler, err := reconciler.New(log, pgConn, chConn, cfg.AuditReconcilerTick, cfg.AuditReconcilerBatch)
+		if err != nil {
+			log.Fatal(ctx, "can't init sessions audit reconciler: %s", err)
+		}
+		defer auditReconciler.Stop()
+		log.Info(ctx, "sessions audit reconciler started, tick=%s, batch=%d", cfg.AuditReconcilerTick, cfg.AuditReconcilerBatch)
+	}
 
 	// Run service and wait for TERM signal
 	service := db.New(log, cfg, consumer, saver, sessManager)

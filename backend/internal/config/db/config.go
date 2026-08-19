@@ -14,28 +14,31 @@ type Config struct {
 	common.Postgres
 	common.Clickhouse
 	redis.Redis
-	ProjectExpiration     time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
-	LoggerTimeout         int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
-	GroupDB               string        `env:"GROUP_DB,required"`
-	GroupAnalytics        string        `env:"GROUP_ANALYTICS,required"`
-	TopicRawWeb           string        `env:"TOPIC_RAW_WEB,required"`
-	TopicAnalytics        string        `env:"TOPIC_ANALYTICS,required"`
-	TopicRawMobile        string        `env:"TOPIC_RAW_IOS,required"`
-	TopicRawAnalytics     string        `env:"TOPIC_RAW_ANALYTICS,required"`
-	CommitBatchTimeout    time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=60s"`
-	BatchQueueLimit       int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
-	BatchSizeLimit        int           `env:"DB_BATCH_SIZE_LIMIT,required"`
-	UseProfiler           bool          `env:"PROFILER_ENABLED,default=false"`
-	PAUpdaterStartTime    string        `env:"PA_UPDATER_START_TIME,default=00:00"`
-	PAUpdaterEndTime      string        `env:"PA_UPDATER_END_TIME,default=00:00"`
-	PAUpdaterTickDuration time.Duration `env:"PA_UPDATER_TICK_DURATION,default=2m"`
-	CHReadBatchSizeLimit  int           `env:"CH_READ_BATCH_SIZE_LIMIT,default=500"`
-	CHSendBatchSizeLimit  int           `env:"CH_SEND_BATCH_SIZE_LIMIT,default=2000"`
-	CHReadUsersSizeLimit  int           `env:"CH_READ_USERS_SIZE_LIMIT,default=50"`
-	CHBatchSizeLimit      int           `env:"CH_BATCH_SIZE_LIMIT,default=50000"`
-	CHWorkerQueueDepth    int           `env:"CH_WORKER_QUEUE_DEPTH,default=2"`
-	CHSendWorkers         int           `env:"CH_SEND_WORKERS,default=4"`
-	IssuesFlushInterval   time.Duration `env:"ISSUES_FLUSH_INTERVAL,default=1s"`
+	ProjectExpiration      time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
+	LoggerTimeout          int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
+	GroupDB                string        `env:"GROUP_DB,required"`
+	GroupAnalytics         string        `env:"GROUP_ANALYTICS,required"`
+	TopicRawWeb            string        `env:"TOPIC_RAW_WEB,required"`
+	TopicAnalytics         string        `env:"TOPIC_ANALYTICS,required"`
+	TopicRawMobile         string        `env:"TOPIC_RAW_IOS,required"`
+	TopicRawAnalytics      string        `env:"TOPIC_RAW_ANALYTICS,required"`
+	CommitBatchTimeout     time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=60s"`
+	BatchQueueLimit        int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
+	BatchSizeLimit         int           `env:"DB_BATCH_SIZE_LIMIT,required"`
+	UseProfiler            bool          `env:"PROFILER_ENABLED,default=false"`
+	PAUpdaterStartTime     string        `env:"PA_UPDATER_START_TIME,default=00:00"`
+	PAUpdaterEndTime       string        `env:"PA_UPDATER_END_TIME,default=00:00"`
+	PAUpdaterTickDuration  time.Duration `env:"PA_UPDATER_TICK_DURATION,default=2m"`
+	CHReadBatchSizeLimit   int           `env:"CH_READ_BATCH_SIZE_LIMIT,default=500"`
+	CHSendBatchSizeLimit   int           `env:"CH_SEND_BATCH_SIZE_LIMIT,default=2000"`
+	CHReadUsersSizeLimit   int           `env:"CH_READ_USERS_SIZE_LIMIT,default=50"`
+	CHBatchSizeLimit       int           `env:"CH_BATCH_SIZE_LIMIT,default=50000"`
+	CHWorkerQueueDepth     int           `env:"CH_WORKER_QUEUE_DEPTH,default=2"`
+	CHSendWorkers          int           `env:"CH_SEND_WORKERS,default=4"`
+	IssuesFlushInterval    time.Duration `env:"ISSUES_FLUSH_INTERVAL,default=1s"`
+	AuditReconcilerEnabled bool          `env:"SESSIONS_AUDIT_RECONCILER_ENABLED,default=false"`
+	AuditReconcilerTick    time.Duration `env:"SESSIONS_AUDIT_RECONCILER_TICK,default=5m"`
+	AuditReconcilerBatch   int           `env:"SESSIONS_AUDIT_RECONCILER_BATCH,default=1000"`
 }
 
 func New(log logger.Logger) *Config {

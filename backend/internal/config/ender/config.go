@@ -12,22 +12,23 @@ type Config struct {
 	common.Config
 	common.Postgres
 	redis.Redis
-	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
-	GroupEnder        string        `env:"GROUP_ENDER,required"`
-	LoggerTimeout     int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
-	TopicRawWeb       string        `env:"TOPIC_RAW_WEB,required"`
-	TopicRawMobile    string        `env:"TOPIC_RAW_IOS,required"`
-	TopicCanvasImages string        `env:"TOPIC_CANVAS_IMAGES,required"`
-	TopicRawImages    string        `env:"TOPIC_RAW_IMAGES,required"`
-	TopicTrigger      string        `env:"TOPIC_TRIGGER,required"`
-	TopicRawAssets    string        `env:"TOPIC_RAW_ASSETS,required"`
-	GroupCleanup      string        `env:"GROUP_CLEANUP,required"`
-	CleanupReadGap    time.Duration `env:"CLEANUP_READ_GAP,default=24h"`
-	CleanupReaperTick time.Duration `env:"CLEANUP_REAPER_TICK,default=2m"`
-	ProducerTimeout   int           `env:"PRODUCER_TIMEOUT,default=2000"`
-	PartitionsNumber  int           `env:"PARTITIONS_NUMBER,required"`
-	UseEncryption     bool          `env:"USE_ENCRYPTION,default=false"`
-	UseProfiler       bool          `env:"PROFILER_ENABLED,default=false"`
+	ProjectExpiration    time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
+	GroupEnder           string        `env:"GROUP_ENDER,required"`
+	LoggerTimeout        int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
+	TopicRawWeb          string        `env:"TOPIC_RAW_WEB,required"`
+	TopicRawMobile       string        `env:"TOPIC_RAW_IOS,required"`
+	TopicCanvasImages    string        `env:"TOPIC_CANVAS_IMAGES,required"`
+	TopicRawImages       string        `env:"TOPIC_RAW_IMAGES,required"`
+	TopicTrigger         string        `env:"TOPIC_TRIGGER,required"`
+	TopicRawAssets       string        `env:"TOPIC_RAW_ASSETS,required"`
+	GroupCleanup         string        `env:"GROUP_CLEANUP,required"`
+	CleanupReadGap       time.Duration `env:"CLEANUP_READ_GAP,default=24h"`
+	CleanupReaperTick    time.Duration `env:"CLEANUP_REAPER_TICK,default=2m"`
+	SessionsAuditEnabled bool          `env:"SESSIONS_AUDIT_ENABLED,default=false"`
+	ProducerTimeout      int           `env:"PRODUCER_TIMEOUT,default=2000"`
+	PartitionsNumber     int           `env:"PARTITIONS_NUMBER,required"`
+	UseEncryption        bool          `env:"USE_ENCRYPTION,default=false"`
+	UseProfiler          bool          `env:"PROFILER_ENABLED,default=false"`
 }
 
 func New(log logger.Logger) *Config {

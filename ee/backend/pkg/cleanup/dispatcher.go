@@ -7,6 +7,7 @@ import (
 	"time"
 
 	config "openreplay/backend/internal/config/ender"
+	"openreplay/backend/pkg/cleanup/audit"
 	"openreplay/backend/pkg/cleanup/reaper"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -22,6 +23,7 @@ type dispatcherImpl struct {
 	consumer types.Consumer
 	producer types.Producer
 	reaper   *reaper.Reaper
+	audit    *audit.Writer
 	stop     chan struct{}
 }
 
@@ -44,6 +46,14 @@ func NewDispatcher(log logger.Logger, cfg *config.Config, producer types.Produce
 		cfg:      cfg,
 		producer: producer,
 		stop:     make(chan struct{}),
+	}
+	if cfg.SessionsAuditEnabled {
+		if db != nil {
+			d.audit = audit.NewWriter(log, db)
+			log.Info(context.Background(), "sessions audit writer started")
+		} else {
+			log.Warn(context.Background(), "sessions audit is disabled: no postgres connection")
+		}
 	}
 	consumer, err := queue.NewConsumer(
 		log,
@@ -87,6 +97,11 @@ func (d *dispatcherImpl) handle(msg messages.Message) {
 	sessionID := msg.SessionID()
 	sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessionID))
 	cleanMsg := &messages.CleanSession{}
+
+	// Mark the session in sessions_audit: its SessionEnd reached the trigger topic.
+	if d.audit != nil {
+		d.audit.Add(sessionID)
+	}
 
 	// Send to storage service (both web and mobile)
 	if err := d.producer.Produce(d.cfg.TopicTrigger, sessionID, cleanMsg.Encode()); err != nil {
@@ -137,4 +152,7 @@ func (d *dispatcherImpl) ActivePartitions(parts []uint64) {
 func (d *dispatcherImpl) Close() {
 	close(d.stop)
 	d.consumer.Close()
+	if d.audit != nil {
+		d.audit.Close()
+	}
 }
