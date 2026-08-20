@@ -2,9 +2,9 @@ import React from 'react';
 import { getInitials } from 'App/utils';
 
 function NameAvatar({ name, size }: { name?: string; size?: number }) {
-  const safeName = name ?? '';
-  const stripped = safeName.replace(/[^\p{L}\s]/gu, '').trim();
-  const onlyLetterName = stripped || safeName;
+  const onlyLetterName = (name ?? '')
+    .replace(/[^\p{L}\p{N}\s]/gu, '')
+    .trim();
   const fontSize = size ? Math.floor((size / 32) * 14) : 14;
   return (
     <div
