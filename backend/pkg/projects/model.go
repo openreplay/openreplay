@@ -5,6 +5,7 @@ type Project struct {
 	Name                string  `json:"name"`
 	ProjectKey          string  `json:"projectKey"`
 	TenantID            int     `json:"tenantId"`
+	Active              bool    `json:"active"`
 	MaxSessionDuration  int64   `json:"maxSessionDuration"`
 	SampleRate          byte    `json:"sampleRate"`
 	SaveRequestPayloads bool    `json:"saveRequestPayloads"`

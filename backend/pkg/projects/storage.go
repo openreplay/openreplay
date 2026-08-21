@@ -9,14 +9,14 @@ import (
 func (c *projectsImpl) getProjectByKey(projectKey string) (*Project, error) {
 	p := &Project{ProjectKey: projectKey}
 	if err := c.db.QueryRow(`
-		SELECT project_id, name, max_session_duration, save_request_payloads, sample_rate, beacon_size, platform,
+		SELECT project_id, name, active, max_session_duration, save_request_payloads, sample_rate, beacon_size, platform,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
 		FROM projects
-		WHERE project_key=$1 AND active = true
+		WHERE project_key=$1 AND deleted_at IS NULL
 	`,
 		projectKey,
-	).Scan(&p.ProjectID, &p.Name, &p.MaxSessionDuration, &p.SaveRequestPayloads, &p.SampleRate, &p.BeaconSize, &p.Platform,
+	).Scan(&p.ProjectID, &p.Name, &p.Active, &p.MaxSessionDuration, &p.SaveRequestPayloads, &p.SampleRate, &p.BeaconSize, &p.Platform,
 		&p.Metadata1, &p.Metadata2, &p.Metadata3, &p.Metadata4, &p.Metadata5,
 		&p.Metadata6, &p.Metadata7, &p.Metadata8, &p.Metadata9, &p.Metadata10); err != nil {
 		return nil, err
@@ -27,14 +27,14 @@ func (c *projectsImpl) getProjectByKey(projectKey string) (*Project, error) {
 func (c *projectsImpl) getProject(projectID uint32) (*Project, error) {
 	p := &Project{ProjectID: projectID}
 	if err := c.db.QueryRow(`
-		SELECT project_key, name, max_session_duration, save_request_payloads, sample_rate, beacon_size, platform,
+		SELECT project_key, name, active, max_session_duration, save_request_payloads, sample_rate, beacon_size, platform,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
 		FROM projects
-		WHERE project_id=$1 AND active = true
+		WHERE project_id=$1 AND deleted_at IS NULL
 	`,
 		projectID,
-	).Scan(&p.ProjectKey, &p.Name, &p.MaxSessionDuration, &p.SaveRequestPayloads, &p.SampleRate, &p.BeaconSize, &p.Platform,
+	).Scan(&p.ProjectKey, &p.Name, &p.Active, &p.MaxSessionDuration, &p.SaveRequestPayloads, &p.SampleRate, &p.BeaconSize, &p.Platform,
 		&p.Metadata1, &p.Metadata2, &p.Metadata3, &p.Metadata4, &p.Metadata5,
 		&p.Metadata6, &p.Metadata7, &p.Metadata8, &p.Metadata9, &p.Metadata10); err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (c *projectsImpl) getProject(projectID uint32) (*Project, error) {
 
 func (c *projectsImpl) listProjects() ([]*Project, error) {
 	rows, err := c.db.Query(`
-		SELECT project_id, project_key, name, max_session_duration, save_request_payloads, sample_rate, beacon_size, platform,
+		SELECT project_id, project_key, name, active, max_session_duration, save_request_payloads, sample_rate, beacon_size, platform,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
 		FROM projects
@@ -59,7 +59,7 @@ func (c *projectsImpl) listProjects() ([]*Project, error) {
 	var projects []*Project
 	for rows.Next() {
 		p := &Project{}
-		if err := rows.Scan(&p.ProjectID, &p.ProjectKey, &p.Name, &p.MaxSessionDuration, &p.SaveRequestPayloads, &p.SampleRate, &p.BeaconSize, &p.Platform,
+		if err := rows.Scan(&p.ProjectID, &p.ProjectKey, &p.Name, &p.Active, &p.MaxSessionDuration, &p.SaveRequestPayloads, &p.SampleRate, &p.BeaconSize, &p.Platform,
 			&p.Metadata1, &p.Metadata2, &p.Metadata3, &p.Metadata4, &p.Metadata5,
 			&p.Metadata6, &p.Metadata7, &p.Metadata8, &p.Metadata9, &p.Metadata10); err != nil {
 			return nil, err
@@ -100,19 +100,5 @@ func (c *projectsImpl) createProject(name string, platform string) (*Project, er
 }
 
 func (c *projectsImpl) getProjectNotDeleted(projectID uint32) (*Project, error) {
-	p := &Project{ProjectID: projectID}
-	if err := c.db.QueryRow(`
-		SELECT project_key, name, max_session_duration, save_request_payloads, sample_rate, beacon_size, platform,
-			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
-			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
-		FROM projects
-		WHERE project_id=$1 AND deleted_at IS NULL
-	`,
-		projectID,
-	).Scan(&p.ProjectKey, &p.Name, &p.MaxSessionDuration, &p.SaveRequestPayloads, &p.SampleRate, &p.BeaconSize, &p.Platform,
-		&p.Metadata1, &p.Metadata2, &p.Metadata3, &p.Metadata4, &p.Metadata5,
-		&p.Metadata6, &p.Metadata7, &p.Metadata8, &p.Metadata9, &p.Metadata10); err != nil {
-		return nil, err
-	}
-	return p, nil
+	return c.getProject(projectID)
 }
