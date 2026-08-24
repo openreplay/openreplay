@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"sync"
 	"time"
@@ -55,6 +56,16 @@ func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 	sessID, err := api.GetSessionID(r)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	isSessionExists, err := h.sessions.IsExists(projID, sessID)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	if !isSessionExists {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("wrong session id"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
