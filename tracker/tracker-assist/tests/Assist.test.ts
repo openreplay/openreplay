@@ -206,10 +206,12 @@ describe('Assist — requestConfirm gating', () => {
     })
   })
 
-  test('emit() drops everything while unconfirmed, force bypasses the gate', () => {
+  test('emit() drops replay data while unconfirmed, force bypasses the gate', () => {
     assist = makeAssist()
     assist.emit('messages', [1,])
-    assist.emit('UPDATE_SESSION', { active: true, })
+    assist.emit('messages_gz', new Uint8Array([1,]))
+    assist.emit('call_end')
+    assist.emit('control_granted', 'agent-1')
     expect(socketEmit).not.toHaveBeenCalled()
 
     assist.emit('session_confirm_pending', undefined, true)
@@ -217,6 +219,26 @@ describe('Assist — requestConfirm gating', () => {
     expect(socketEmit).toHaveBeenCalledWith('session_confirm_pending', {
       meta: { tabId: 'tab-1', },
       data: undefined,
+    })
+  })
+
+  test('emit() lets session updates through while unconfirmed', () => {
+    assist = makeAssist()
+    assist.emit('UPDATE_SESSION', { active: true, })
+    expect(socketEmit).toHaveBeenCalledWith('UPDATE_SESSION', {
+      meta: { tabId: 'tab-1', },
+      data: { active: true, },
+    })
+  })
+
+  test('session updates from the tracker reach the socket while unconfirmed', () => {
+    assist = makeAssist()
+    // constructor subscribed to session updates
+    const sessionUpdate = app.session.attachUpdateCallback.mock.calls[0][0]
+    sessionUpdate({ userID: 'user-1', metadata: { plan: 'pro', }, })
+    expect(socketEmit).toHaveBeenCalledWith('UPDATE_SESSION', {
+      meta: { tabId: 'tab-1', },
+      data: { userID: 'user-1', metadata: { plan: 'pro', }, },
     })
   })
 
@@ -307,6 +329,38 @@ describe('Assist — requestConfirm gating', () => {
     expect(socketEmit).toHaveBeenCalledWith('session_confirm_rejected', expect.anything())
     expect(onSessionConfirmDeny).toHaveBeenCalledWith({})
     expect(assist.sessionConfirmed).toBe(false)
+  })
+
+  test('a call in another tab is not mirrored while unconfirmed', () => {
+    assist = makeAssist()
+
+    assist.handleTabStateMessage({
+      data: {
+        type: 'assist_state',
+        update: 'call',
+        isCallActive: true,
+        agentIds: ['a1',],
+      },
+    })
+    expect(assist.callUI).toBe(null)
+
+    assist.handleTabStateMessage({
+      data: { type: 'assist_state', update: 'rc', rcActive: 'a1', },
+    })
+    expect(assist.remoteControl?.status).not.toBe(RCStatus.Enabled)
+  })
+
+  test('a state check is answered with one message per active topic', () => {
+    assist = makeAssist({ requestConfirm: false, })
+    assist.tabState = { isCallActive: true, agentIds: ['a1',], rcActive: 'a1', }
+
+    assist.handleTabStateMessage({ data: { type: 'assist_state_check', }, })
+
+    const sent = (assist.tabBus.postMessage as any).mock.calls.map((c: any[]) => c[0])
+    expect(sent).toEqual([
+      { type: 'assist_state', update: 'call', isCallActive: true, agentIds: ['a1',], },
+      { type: 'assist_state', update: 'rc', rcActive: 'a1', },
+    ])
   })
 
   test('confirm messages from another tab are ignored when requestConfirm is off', () => {

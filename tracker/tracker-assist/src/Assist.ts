@@ -29,6 +29,20 @@ const SS_CONTINUE_KEY = "__openreplay_assist_continue";
 const SS_CONFIRM_KEY = "__openreplay_session_confirm";
 
 /**
+ * Events allowed out of the socket before the user approved session viewing.
+ * They carry no replay or media payload: session metadata (live-session list,
+ * tab activity, page title, call flags) and the confirmation handshake. Replay
+ * data ("messages"/"messages_gz"), calls, remote control and canvas streams
+ * stay blocked until approval.
+ */
+const PRE_CONFIRM_ALLOWED_EVENTS = new Set([
+  "UPDATE_SESSION",
+  "session_confirm_pending",
+  "session_confirm_accepted",
+  "session_confirm_rejected",
+]);
+
+/**
  * Controls when assist connects to the server.
  */
 export enum Autostart {
@@ -111,11 +125,13 @@ export interface Options {
    */
   autostart: Autostart;
   /**
-   * Require explicit user confirmation before anything is shared with an
-   * agent: assist starts and opens the socket as usual, but no messages are
-   * sent through it until the user approves the confirmation popup, which is
-   * shown as soon as the first agent connects to the session. The approval
-   * is remembered per-tab (sessionStorage) until stop() is called.
+   * Require explicit user confirmation before the session is shared with an
+   * agent: assist starts and opens the socket as usual, but no replay data
+   * (and no call, remote control or canvas stream) goes through it until the
+   * user approves the confirmation popup, which is shown as soon as the first
+   * agent connects. Session metadata updates (userID, metadata, page title,
+   * tab activity) keep flowing so the live-session list stays accurate. The
+   * approval is remembered per-tab (sessionStorage) until stop() is called.
    * @default false
    */
   requestConfirm: boolean;
@@ -256,7 +272,7 @@ export default class Assist {
       this.titleObserver?.disconnect();
     });
     app.attachCommitCallback((messages) => {
-      if (this.agentsConnected && this.canSendMessages) {
+      if (this.agentsConnected && this.sessionApproved) {
         const batchSize = messages.length;
         // @ts-ignore No need in statistics messages. TODO proper filter
         if (
@@ -381,9 +397,14 @@ export default class Assist {
   }
 
   private emit(ev: string, args?: any, force = false): void {
-    // requestConfirm mode: nothing leaves the socket until the user approves,
-    // except the confirmation-state events themselves (force)
-    if (!force && !this.canSendMessages) {
+    // requestConfirm mode: no replay/media data leaves the socket until the
+    // user approves. Session metadata and the confirmation handshake still go
+    // out, so the live-session list keeps receiving updates while waiting.
+    if (
+      !force &&
+      !this.sessionApproved &&
+      !PRE_CONFIRM_ALLOWED_EVENTS.has(ev)
+    ) {
       return;
     }
     this.socket &&
@@ -393,8 +414,11 @@ export default class Assist {
       });
   }
 
-  /** False only in requestConfirm mode while the user hasn't approved yet. */
-  private get canSendMessages(): boolean {
+  /**
+   * False only in requestConfirm mode while the user hasn't approved yet.
+   * Gates replay data, calls, remote control and canvas streams.
+   */
+  private get sessionApproved(): boolean {
     return !this.options.requestConfirm || this.sessionConfirmed;
   }
 
@@ -403,7 +427,7 @@ export default class Assist {
    * connected agents the session is waiting for the user's approval.
    */
   private requestSessionConfirm = (agentInfo?: AgentInfo) => {
-    if (this.canSendMessages) {
+    if (this.sessionApproved) {
       return;
     }
     // let every agent (including ones connecting while the popup is already
@@ -459,6 +483,11 @@ export default class Assist {
         update: "confirm",
         confirmAnswer: answer,
       });
+      if (answer) {
+        // the check sent at start was answered while this tab still discarded
+        // call/RC state; ask again now that mirroring is allowed
+        this.publishState({ type: "assist_state_check" });
+      }
     }
   };
 
@@ -526,7 +555,7 @@ export default class Assist {
           : this.options.onAgentConnect?.(agentInfo),
       };
     });
-    if (!this.canSendMessages) {
+    if (!this.sessionApproved) {
       // restart (and snapshot) happens on approval instead
       this.requestSessionConfirm(connected[0].agentInfo);
       return;
@@ -772,7 +801,7 @@ export default class Assist {
     }
     if (this.remoteControl !== null) {
       socket.on("request_control", (agentId, dataObj) => {
-        if (!this.canSendMessages) return;
+        if (!this.sessionApproved) return;
         processEvent(agentId, dataObj, this.remoteControl?.requestControl);
       });
       socket.on("release_control", (agentId, dataObj) => {
@@ -837,7 +866,7 @@ export default class Assist {
         onDisconnect: this.options.onAgentConnect?.(info),
         agentInfo: info, // TODO ?
       };
-      if (!this.canSendMessages) {
+      if (!this.sessionApproved) {
         // nothing goes out until the user approves; the restart (and full
         // snapshot) happens on approval instead
         this.requestSessionConfirm(info);
@@ -918,6 +947,7 @@ export default class Assist {
     });
 
     socket.on("webrtc_canvas_answer", async (_, data: { answer; id }) => {
+      if (!this.sessionApproved) return;
       const pc = this.canvasPeers.get(data.id);
       if (pc) {
         try {
@@ -931,6 +961,7 @@ export default class Assist {
     socket.on(
       "webrtc_canvas_ice_candidate",
       async (_, data: { candidate; id }) => {
+        if (!this.sessionApproved) return;
         const pc = this.canvasPeers.get(data.id);
         if (pc) {
           try {
@@ -957,7 +988,7 @@ export default class Assist {
     });
 
     socket.on("request_recording", (id, info) => {
-      if (!this.canSendMessages) return;
+      if (!this.sessionApproved) return;
       if (app.getTabId() !== info.meta.tabId) return;
       const agentData = info.data;
       if (!recordingState.isActive) {
@@ -979,7 +1010,7 @@ export default class Assist {
     socket.on(
       "webrtc_call_offer",
       async (_, data: { from: string; offer: RTCSessionDescriptionInit }) => {
-        if (!this.canSendMessages) return;
+        if (!this.sessionApproved) return;
         if (!this.calls.has(data.from)) {
           await handleIncomingCallOffer(data.from, data.offer);
         }
@@ -989,6 +1020,7 @@ export default class Assist {
     socket.on(
       "webrtc_call_ice_candidate",
       async (_, data: { from: string; candidate: RTCIceCandidateInit }) => {
+        if (!this.sessionApproved) return;
         const pc = this.calls.get(data.from);
         if (pc) {
           try {
@@ -1283,7 +1315,7 @@ export default class Assist {
     const startCanvasStream = async (stream: MediaStream, id: number) => {
       // canvas streams go over WebRTC, not this.emit — gate them explicitly;
       // the restart on approval re-triggers the node callbacks
-      if (!this.canSendMessages) return;
+      if (!this.sessionApproved) return;
       for (const agent of Object.values(this.agents)) {
         if (!agent.agentInfo) continue;
 
@@ -1393,7 +1425,11 @@ export default class Assist {
   private cleanCanvasConnections() {
     this.canvasPeers.forEach((pc) => pc.close());
     this.canvasPeers.clear();
-    this.socket?.emit("webrtc_canvas_restart");
+    // canvas signalling bypasses emit(); gate it explicitly so nothing is
+    // announced to agents before the user approved session viewing
+    if (this.sessionApproved) {
+      this.socket?.emit("webrtc_canvas_restart");
+    }
   }
 
   private stopCanvasStream(id: number) {
@@ -1436,12 +1472,42 @@ export default class Assist {
     if (!msg) return;
 
     if (msg.data.type === "assist_state_check") {
-      if (this.tabState.isCallActive || this.tabState.rcActive) {
-        this.publishState({ type: "assist_state", ...this.tabState });
+      // one message per topic: spreading tabState would carry its own `type`
+      // (and a stale `update`) back out and bounce the check between tabs
+      if (this.tabState.isCallActive) {
+        this.publishState({
+          type: "assist_state",
+          update: "call",
+          isCallActive: true,
+          agentIds: this.tabState.agentIds,
+        });
+      }
+      if (this.tabState.rcActive) {
+        this.publishState({
+          type: "assist_state",
+          update: "rc",
+          rcActive: this.tabState.rcActive,
+        });
       }
     }
 
     if (msg.data.type === "assist_state") {
+      if (msg.data.update === "confirm" && this.options.requestConfirm) {
+        // the user answered the session confirm popup in another tab
+        if (msg.data.confirmAnswer) {
+          if (!this.sessionConfirmed) {
+            this.answerSessionConfirm(true, undefined, true);
+          }
+        } else if (this.sessionConfirmWindow) {
+          this.answerSessionConfirm(false, undefined, true);
+        }
+      }
+      // another tab may already be sharing; never mirror a call or remote
+      // control into a tab whose user hasn't approved session viewing yet
+      if (!this.sessionApproved) {
+        Object.assign(this.tabState, msg.data);
+        return;
+      }
       if (msg.data.update === "call") {
         if (msg.data.isCallActive) {
           if (!this.callUI) {
@@ -1468,16 +1534,6 @@ export default class Assist {
           this.remoteControl?.grantControl(msg.data.rcActive, true);
         } else {
           this.remoteControl?.releaseControl(false, false, true);
-        }
-      }
-      if (msg.data.update === "confirm" && this.options.requestConfirm) {
-        // the user answered the session confirm popup in another tab
-        if (msg.data.confirmAnswer) {
-          if (!this.sessionConfirmed) {
-            this.answerSessionConfirm(true, undefined, true);
-          }
-        } else if (this.sessionConfirmWindow) {
-          this.answerSessionConfirm(false, undefined, true);
         }
       }
       Object.assign(this.tabState, msg.data);

@@ -1,6 +1,9 @@
 ## 11.0.20
 
 - fixes towards stability of connection on restarts, page visits etc
+- `requestConfirm`: session data updates (userID, metadata, page title, tab
+  activity) are no longer suppressed while waiting for the user's approval;
+  only replay messages, calls, remote control and canvas streams are held back
 
 ## 11.0.19
 

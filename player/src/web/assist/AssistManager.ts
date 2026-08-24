@@ -289,12 +289,20 @@ export default class AssistManager {
       const { currentTab } = this.store.get();
 
       this.clearDisconnectTimeout();
-      !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected);
+      // session metadata alone doesn't mean the replay stream started: the
+      // tracker sends UPDATE_SESSION while still waiting for the user to
+      // approve session viewing (requestConfirm), and flipping to Connected
+      // there would show an empty screen instead of the pending state
+      if (!waitingForMessages && !this.inactiveTimeout) {
+        this.setStatus(ConnectionStatus.Connected);
+      }
 
       if (typeof active === 'boolean') {
         this.clearInactiveTimeout();
         if (active) {
-          this.setStatus(ConnectionStatus.Connected);
+          if (!waitingForMessages) {
+            this.setStatus(ConnectionStatus.Connected);
+          }
           this.inactiveTabs = this.inactiveTabs.filter((t) => t !== tabId);
         } else {
           if (!this.inactiveTabs.includes(tabId)) {
