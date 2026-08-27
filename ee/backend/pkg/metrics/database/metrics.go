@@ -6,6 +6,13 @@ import (
 	"openreplay/backend/pkg/metrics/common"
 )
 
+const (
+	MessageSaved     = "saved"
+	MessageError     = "error"
+	MessageDuplicate = "duplicate"
+	MessageNoSession = "no_session"
+)
+
 type Database interface {
 	RecordBatchElements(number float64)
 	RecordBatchInsertDuration(durMillis float64)
@@ -15,6 +22,10 @@ type Database interface {
 	IncreaseTotalRequests(method, table string)
 	IncreaseRedisRequests(method, table string)
 	RecordRedisRequestDuration(durMillis float64, method, table string)
+	IncreaseSaverMessages(platform, outcome string)
+	RecordBulkDroppedRows(size float64, db, table string)
+	IncreaseBulkSendRetries(db, table string)
+	RecordCHQueueDepth(size float64)
 	List() []prometheus.Collector
 }
 
@@ -27,6 +38,10 @@ type databaseImpl struct {
 	dbTotalRequests           *prometheus.CounterVec
 	cacheRedisRequests        *prometheus.CounterVec
 	cacheRedisRequestDuration *prometheus.HistogramVec
+	saverMessages             *prometheus.CounterVec
+	bulkDroppedRows           *prometheus.CounterVec
+	bulkSendRetries           *prometheus.CounterVec
+	chQueueDepth              prometheus.Gauge
 }
 
 func New(serviceName string) Database {
@@ -39,6 +54,10 @@ func New(serviceName string) Database {
 		dbTotalRequests:           newTotalRequests(serviceName),
 		cacheRedisRequests:        newRedisRequests(serviceName),
 		cacheRedisRequestDuration: newRedisRequestDuration(serviceName),
+		saverMessages:             newSaverMessages(serviceName),
+		bulkDroppedRows:           newBulkDroppedRows(serviceName),
+		bulkSendRetries:           newBulkSendRetries(serviceName),
+		chQueueDepth:              newCHQueueDepth(serviceName),
 	}
 }
 
@@ -52,6 +71,10 @@ func (d *databaseImpl) List() []prometheus.Collector {
 		d.dbTotalRequests,
 		d.cacheRedisRequests,
 		d.cacheRedisRequestDuration,
+		d.saverMessages,
+		d.bulkDroppedRows,
+		d.bulkSendRetries,
+		d.chQueueDepth,
 	}
 }
 
@@ -177,4 +200,66 @@ func newRedisRequestDuration(serviceName string) *prometheus.HistogramVec {
 
 func (d *databaseImpl) RecordRedisRequestDuration(durMillis float64, method, table string) {
 	d.cacheRedisRequestDuration.WithLabelValues(method, table).Observe(durMillis / 1000.0)
+}
+
+func newSaverMessages(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "messages_total",
+			Help:      "A counter displaying handled analytics messages by platform and outcome (saved/error/duplicate/no_session).",
+		},
+		[]string{"platform", "outcome"},
+	)
+}
+
+func (d *databaseImpl) IncreaseSaverMessages(platform, outcome string) {
+	d.saverMessages.WithLabelValues(platform, outcome).Inc()
+}
+
+func newBulkDroppedRows(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "bulk_dropped_rows_total",
+			Help:      "A counter displaying rows permanently dropped because the batch could not be parsed by the database (data loss).",
+		},
+		[]string{"db", "table"},
+	)
+}
+
+func (d *databaseImpl) RecordBulkDroppedRows(size float64, db, table string) {
+	if size == 0 {
+		return
+	}
+	d.bulkDroppedRows.WithLabelValues(db, table).Add(size)
+}
+
+func newBulkSendRetries(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "bulk_send_retries_total",
+			Help:      "A counter displaying transient bulk send failures that were retried.",
+		},
+		[]string{"db", "table"},
+	)
+}
+
+func (d *databaseImpl) IncreaseBulkSendRetries(db, table string) {
+	d.bulkSendRetries.WithLabelValues(db, table).Inc()
+}
+
+func newCHQueueDepth(serviceName string) prometheus.Gauge {
+	return prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: serviceName,
+			Name:      "ch_worker_queue_depth",
+			Help:      "A gauge displaying the current depth of the ClickHouse send-worker queue.",
+		},
+	)
+}
+
+func (d *databaseImpl) RecordCHQueueDepth(size float64) {
+	d.chQueueDepth.Set(size)
 }

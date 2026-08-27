@@ -35,6 +35,7 @@ import (
 	favoriteAPI "openreplay/backend/pkg/favorite/api"
 	"openreplay/backend/pkg/jobs"
 	"openreplay/backend/pkg/logger"
+	assistMetrics "openreplay/backend/pkg/metrics/assist"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/notes"
 	noteAPI "openreplay/backend/pkg/notes/api"
@@ -74,7 +75,7 @@ func (b *serviceBuilder) Handlers() []api.Handlers {
 		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI}
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, pgconn pool.Pool, redisClient *redis.Client, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, assistMetric assistMetrics.Assist, pgconn pool.Pool, redisClient *redis.Client, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
 	responser := api.NewResponser(webMetrics)
 
 	reqValidator := validator.New()
@@ -86,7 +87,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, fmt.Errorf("failed to create view service: %s", err)
 	}
 
-	assistService, err := assist.NewAssist(log, cfg, pgconn, redisClient, projects)
+	assistService, err := assist.NewAssist(log, cfg, pgconn, redisClient, projects, assistMetric)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create assist service: %s", err)
 	}

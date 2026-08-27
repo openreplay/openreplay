@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/ender"
 )
 
 type SessionEndType int
@@ -19,14 +20,32 @@ const (
 )
 
 type LogDetails struct {
-	Failed     map[uint64]uint64
-	Duplicated map[uint64]uint64
-	Negative   map[uint64]uint64
-	Shorter    map[uint64]int64
-	NotFound   map[uint64]uint64
-	Diff       map[uint64]int64
-	Updated    int
-	New        int
+	Failed              map[uint64]uint64
+	Duplicated          map[uint64]uint64
+	Negative            map[uint64]uint64
+	Shorter             map[uint64]int64
+	NotFound            map[uint64]uint64
+	Diff                map[uint64]int64
+	Updated             int
+	New                 int
+	LoadErrors          int
+	UpdateErrors        int
+	ProduceErrors       int
+	ProduceCanvasErrors int
+}
+
+func (l *LogDetails) Record(m ender.Ender) {
+	m.IncreaseSessionEnds(ender.EndNew, float64(l.New))
+	m.IncreaseSessionEnds(ender.EndUpdated, float64(l.Updated))
+	m.IncreaseSessionEnds(ender.EndDuplicate, float64(len(l.Duplicated)))
+	m.IncreaseSessionEnds(ender.EndShorter, float64(len(l.Shorter)))
+	m.IncreaseSessionEnds(ender.EndNotFound, float64(len(l.NotFound)))
+	m.IncreaseSessionEnds(ender.EndFailed, float64(len(l.Failed)))
+	m.IncreaseSessionEnds(ender.EndNegative, float64(len(l.Negative)))
+	m.IncreaseEndErrors(ender.StageLoad, float64(l.LoadErrors))
+	m.IncreaseEndErrors(ender.StageUpdate, float64(l.UpdateErrors))
+	m.IncreaseEndErrors(ender.StageProduce, float64(l.ProduceErrors))
+	m.IncreaseEndErrors(ender.StageProduceCanvas, float64(l.ProduceCanvasErrors))
 }
 
 func NewLogDetails() *LogDetails {

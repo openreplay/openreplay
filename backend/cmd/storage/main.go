@@ -102,7 +102,9 @@ func main() {
 		case <-counterTick:
 			log.Info(ctx, "count: %d", counter)
 			counter = 0
+			drainStart := time.Now()
 			srv.Wait()
+			storageMetric.RecordDrainDuration(float64(time.Since(drainStart).Milliseconds()))
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}

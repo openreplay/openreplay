@@ -26,6 +26,7 @@ import (
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
+	webmetrics "openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/api"
@@ -63,11 +64,12 @@ type handlersImpl struct {
 	conditions conditions.Conditions
 	flaker     *flakeid.Flaker
 	cleanupReg registry.Registry
+	metrics    webmetrics.Web
 }
 
 func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, producer types.Producer, projects projects.Projects,
 	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
-	conditions conditions.Conditions, flaker *flakeid.Flaker, cleanupReg registry.Registry) (api.Handlers, error) {
+	conditions conditions.Conditions, flaker *flakeid.Flaker, cleanupReg registry.Registry, metrics webmetrics.Web) (api.Handlers, error) {
 	return &handlersImpl{
 		log:        log,
 		cfg:        cfg,
@@ -81,7 +83,13 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser
 		conditions: conditions,
 		flaker:     flaker,
 		cleanupReg: cleanupReg,
+		metrics:    metrics,
 	}, nil
+}
+
+func (e *handlersImpl) rejectStart(w http.ResponseWriter, r *http.Request, code int, err error, startTime time.Time, reason string) {
+	e.metrics.IncreaseStartRejects("mobile", reason)
+	e.responser.ResponseWithError(e.log, r.Context(), w, code, err, startTime, r.URL.Path, 0)
 }
 
 func (e *handlersImpl) GetAll() []*api.Description {
@@ -96,7 +104,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 	startTime := time.Now()
 
 	if r.Body == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		e.rejectStart(w, r, http.StatusBadRequest, errors.New("request body is empty"), startTime, webmetrics.RejectEmptyBody)
 		return
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
@@ -104,7 +112,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 
 	req := &StartMobileSessionRequest{}
 	if err := json.NewDecoder(body).Decode(req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, 0)
+		e.rejectStart(w, r, http.StatusBadRequest, err, startTime, webmetrics.RejectBadJSON)
 		return
 	}
 
@@ -112,7 +120,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 	r = r.WithContext(context.WithValue(r.Context(), "tracker", req.TrackerVersion))
 
 	if req.ProjectKey == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, 0)
+		e.rejectStart(w, r, http.StatusForbidden, errors.New("projectKey value required"), startTime, webmetrics.RejectNoProjectKey)
 		return
 	}
 
@@ -120,10 +128,10 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, 0)
+			e.rejectStart(w, r, http.StatusNotFound, logErr, startTime, webmetrics.RejectProjectNotFound)
 		} else {
 			e.log.Error(r.Context(), "failed to get project by key: %s, err: %s", *req.ProjectKey, err)
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, 0)
+			e.rejectStart(w, r, http.StatusInternalServerError, errors.New("can't find a project"), startTime, webmetrics.RejectProjectError)
 		}
 		return
 	}
@@ -133,12 +141,12 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 
 	// Check if the project supports mobile sessions
 	if !p.IsMobile() {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("project doesn't support mobile sessions"), startTime, r.URL.Path, 0)
+		e.rejectStart(w, r, http.StatusForbidden, errors.New("project doesn't support mobile sessions"), startTime, webmetrics.RejectPlatformUnsupported)
 		return
 	}
 
 	if !checkMobileTrackerVersion(req.TrackerVersion) {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUpgradeRequired, errors.New("tracker version not supported"), startTime, r.URL.Path, 0)
+		e.rejectStart(w, r, http.StatusUpgradeRequired, errors.New("tracker version not supported"), startTime, webmetrics.RejectTrackerOutdated)
 		return
 	}
 
@@ -157,18 +165,18 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 			}
 		}
 		if dice >= p.SampleRate {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, 0)
+			e.rejectStart(w, r, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, webmetrics.RejectSampleRateMiss)
 			return
 		}
 
 		ua := e.uaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, 0)
+			e.rejectStart(w, r, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, webmetrics.RejectBrowserUnrecognized)
 			return
 		}
 		sessionID, err := e.flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+			e.rejectStart(w, r, http.StatusInternalServerError, err, startTime, webmetrics.RejectInternalError)
 			return
 		}
 

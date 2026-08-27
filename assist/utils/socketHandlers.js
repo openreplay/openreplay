@@ -17,11 +17,7 @@ const {
 } = require('../utils/wsServer');
 const {
     IncreaseTotalWSConnections,
-    IncreaseOnlineConnections,
-    DecreaseOnlineConnections,
     IncreaseTotalRooms,
-    IncreaseOnlineRooms,
-    DecreaseOnlineRooms,
 } = require('../utils/metrics');
 const {logger} = require('./logger');
 const deepMerge = require('@fastify/deepmerge')({all: true});
@@ -81,7 +77,6 @@ async function onConnect(socket) {
     logger.debug(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     processNewSocket(socket);
     IncreaseTotalWSConnections(socket.handshake.query.identity);
-    IncreaseOnlineConnections(socket.handshake.query.identity);
 
     const io = getServer();
     const {tabsCount, agentsCount, tabIDs, agentInfos, agentIDs, config} = await getRoomData(io, socket.handshake.query.roomId);
@@ -101,7 +96,6 @@ async function onConnect(socket) {
         if (tabsCount < 0) {
             // New session creates new room
             IncreaseTotalRooms();
-            IncreaseOnlineRooms();
         }
         // Inform all connected agents about reconnected session
         if (agentsCount > 0) {
@@ -149,7 +143,6 @@ async function onConnect(socket) {
 }
 
 async function onDisconnect(socket) {
-    DecreaseOnlineConnections(socket.handshake.query.identity);
     logger.debug(`${socket.id} disconnected from ${socket.handshake.query.roomId}`);
 
     if (socket.handshake.query.identity === IDENTITIES.agent) {
@@ -162,7 +155,6 @@ async function onDisconnect(socket) {
     let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.handshake.query.roomId);
 
     if (tabsCount === -1 && agentsCount === -1) {
-        DecreaseOnlineRooms();
         logger.debug(`room not found: ${socket.handshake.query.roomId}`);
         return;
     }

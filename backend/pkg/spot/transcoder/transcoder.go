@@ -62,9 +62,30 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 	return tnsc
 }
 
+type stageError struct {
+	stage string
+	err   error
+}
+
+func (e *stageError) Error() string { return e.err.Error() }
+func (e *stageError) Unwrap() error { return e.err }
+
+func withStage(stage string, err error) error {
+	return &stageError{stage: stage, err: err}
+}
+
+func stageOf(err error, fallback string) string {
+	var se *stageError
+	if errors.As(err, &se) {
+		return se.stage
+	}
+	return fallback
+}
+
 func (t *transcoderImpl) Process(spot *service.Spot) error {
 	if spot.Crop == nil && spot.Duration < t.cfg.MinimumStreamDuration {
 		// Skip this spot and set processed status
+		t.metrics.IncreaseSpots(spotMetrics.SpotSkipped)
 		t.log.Info(context.Background(), "Spot video %+v is too short for transcoding and without crop values", spot)
 		if err := t.spots.SetStatus(spot.ID, "processed"); err != nil {
 			t.log.Error(context.Background(), "Error updating spot status: %v", err)
@@ -95,7 +116,9 @@ func (t *transcoderImpl) mainLoop() {
 	}
 }
 
-func (t *transcoderImpl) failedTask(task *Task, err error) {
+func (t *transcoderImpl) failedTask(task *Task, stage string, err error) {
+	t.metrics.IncreaseSpots(spotMetrics.SpotFailed)
+	t.metrics.IncreaseTaskFailures(stage)
 	t.log.Error(context.Background(), "Task failed: %v", err)
 	if err := t.tasks.Failed(task, err); err != nil {
 		t.log.Error(context.Background(), "Error marking task as failed: %v", err)
@@ -106,6 +129,7 @@ func (t *transcoderImpl) failedTask(task *Task, err error) {
 }
 
 func (t *transcoderImpl) doneTask(task *Task) {
+	t.metrics.IncreaseSpots(spotMetrics.SpotProcessed)
 	if err := t.spots.SetStatus(task.SpotID, "processed"); err != nil {
 		t.log.Error(context.Background(), "Error updating spot status: %v", err)
 	}
@@ -118,9 +142,7 @@ func (t *transcoderImpl) doneTask(task *Task) {
 }
 
 func (t *transcoderImpl) process(task *Task) {
-	t.metrics.IncreaseVideosTotal()
-	//spotID := task.SpotID
-	t.log.Info(context.Background(), "Processing spot %s", task.SpotID)
+	t.log.Info(context.Background(), "Processing spot %d", task.SpotID)
 
 	// Prepare path for spot video
 	path := t.cfg.FSDir + "/"
@@ -138,13 +160,13 @@ func (t *transcoderImpl) prepare(payload interface{}) {
 
 	// Download video from S3
 	if err := t.downloadSpotVideo(task.SpotID, task.Path); err != nil {
-		t.failedTask(task, fmt.Errorf("can't download video, spot: %d, err: %s", task.SpotID, err.Error()))
+		t.failedTask(task, spotMetrics.StageDownload, fmt.Errorf("can't download video, spot: %d, err: %s", task.SpotID, err.Error()))
 		return
 	}
 
 	if task.HasToTrim() {
 		if err := t.cropSpotVideo(task.SpotID, task.Crop, task.Path); err != nil {
-			t.failedTask(task, fmt.Errorf("can't crop video, spot: %d, err: %s", task.SpotID, err.Error()))
+			t.failedTask(task, stageOf(err, spotMetrics.StageCrop), fmt.Errorf("can't crop video, spot: %d, err: %s", task.SpotID, err.Error()))
 			return
 		}
 	}
@@ -164,13 +186,13 @@ func (t *transcoderImpl) transcode(payload interface{}) {
 	// Transcode spot video to HLS format
 	streamPlaylist, err := t.transcodeSpotVideo(task.SpotID, task.Path)
 	if err != nil {
-		t.failedTask(task, fmt.Errorf("can't transcode video, spot: %d, err: %s", task.SpotID, err.Error()))
+		t.failedTask(task, stageOf(err, spotMetrics.StageTranscode), fmt.Errorf("can't transcode video, spot: %d, err: %s", task.SpotID, err.Error()))
 		return
 	}
 
 	// Save stream playlist to DB
 	if err := t.streams.Add(task.SpotID, streamPlaylist); err != nil {
-		t.failedTask(task, fmt.Errorf("can't insert playlist to DB, spot: %d, err: %s", task.SpotID, err.Error()))
+		t.failedTask(task, spotMetrics.StagePlaylist, fmt.Errorf("can't insert playlist to DB, spot: %d, err: %s", task.SpotID, err.Error()))
 		return
 	}
 
@@ -208,7 +230,7 @@ func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) error {
 	}
 	originVideo.Close()
 
-	t.metrics.RecordOriginalVideoDownloadDuration(time.Since(start).Seconds())
+	t.metrics.RecordStageDuration(float64(time.Since(start).Milliseconds()), spotMetrics.StageDownload)
 
 	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d in %v sec", spotID, time.Since(start).Seconds())
 	return nil
@@ -229,10 +251,9 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("failed to execute command: %v, stderr: %v", err, stderr.String())
+		return withStage(spotMetrics.StageCrop, fmt.Errorf("failed to execute command: %v, stderr: %v", err, stderr.String()))
 	}
-	t.metrics.IncreaseVideosCropped()
-	t.metrics.RecordCroppingDuration(time.Since(start).Seconds())
+	t.metrics.RecordStageDuration(float64(time.Since(start).Milliseconds()), spotMetrics.StageCrop)
 
 	t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start).Seconds())
 
@@ -243,7 +264,7 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 	start = time.Now()
 	video, err := os.Open(path + "origin.webm")
 	if err != nil {
-		return fmt.Errorf("failed to open cropped video: %v", err)
+		return withStage(spotMetrics.StageCropUpload, fmt.Errorf("failed to open cropped video: %v", err))
 	}
 	defer video.Close()
 
@@ -255,10 +276,10 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) e
 
 	err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoContentEncoding, objectstorage.NoCompression)
 	if err != nil {
-		return fmt.Errorf("failed to upload cropped video: %v", err)
+		return withStage(spotMetrics.StageCropUpload, fmt.Errorf("failed to upload cropped video: %v", err))
 	}
 
-	t.metrics.RecordCroppedVideoUploadDuration(time.Since(start).Seconds())
+	t.metrics.RecordStageDuration(float64(time.Since(start).Milliseconds()), spotMetrics.StageCropUpload)
 
 	t.log.Info(context.Background(), "Uploaded cropped spot %d in %v", spotID, time.Since(start).Seconds())
 	return nil
@@ -293,11 +314,10 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 
 	if err := cmd.Run(); err != nil {
 		t.log.Error(context.Background(), "Failed to execute ffmpeg: %v, stderr: %v", err, stderr.String())
-		return "", err
+		return "", withStage(spotMetrics.StageTranscode, err)
 	}
 
-	t.metrics.IncreaseVideosTranscoded()
-	t.metrics.RecordTranscodingDuration(time.Since(start).Seconds())
+	t.metrics.RecordStageDuration(float64(time.Since(start).Milliseconds()), spotMetrics.StageTranscode)
 	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start).Seconds())
 
 	uploadStart := time.Now()
@@ -306,7 +326,7 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 	mpdBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.log.Error(context.Background(), "Error reading manifest file: %v", err)
-		return "", err
+		return "", withStage(spotMetrics.StageUpload, err)
 	}
 
 	var chunks []string
@@ -328,14 +348,14 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 	})
 	if err != nil {
 		t.log.Error(context.Background(), "Error walking output dir: %v", err)
-		return "", err
+		return "", withStage(spotMetrics.StageUpload, err)
 	}
 
 	for _, chunkPath := range chunks {
 		f, err := os.Open(chunkPath)
 		if err != nil {
 			t.log.Error(context.Background(), "Error opening file %s: %v", chunkPath, err)
-			return "", err
+			return "", withStage(spotMetrics.StageUpload, err)
 		}
 
 		name := filepath.Base(chunkPath)
@@ -344,12 +364,12 @@ func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string,
 		if err := t.objStorage.Upload(f, key, "video/iso.segment", objectstorage.NoContentEncoding, objectstorage.NoCompression); err != nil {
 			_ = f.Close()
 			t.log.Error(context.Background(), "Error uploading file %s (key=%s): %v", chunkPath, key, err)
-			return "", err
+			return "", withStage(spotMetrics.StageUpload, err)
 		}
 		_ = f.Close()
 	}
 
-	t.metrics.RecordTranscodedVideoUploadDuration(time.Since(uploadStart).Seconds())
+	t.metrics.RecordStageDuration(float64(time.Since(uploadStart).Milliseconds()), spotMetrics.StageUpload)
 	t.log.Info(context.Background(), "Uploaded %d DASH chunks for spot %d in %v", len(chunks), spotID, time.Since(uploadStart).Seconds())
 
 	return string(mpdBytes), nil
@@ -373,10 +393,9 @@ func (t *transcoderImpl) _transcodeSpotVideo(spotID uint64, path string) (string
 	err := cmd.Run()
 	if err != nil {
 		t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
-		return "", err
+		return "", withStage(spotMetrics.StageTranscode, err)
 	}
-	t.metrics.IncreaseVideosTranscoded()
-	t.metrics.RecordTranscodingDuration(time.Since(start).Seconds())
+	t.metrics.RecordStageDuration(float64(time.Since(start).Milliseconds()), spotMetrics.StageTranscode)
 	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start).Seconds())
 
 	start = time.Now()
@@ -418,10 +437,10 @@ func (t *transcoderImpl) _transcodeSpotVideo(spotID uint64, path string) (string
 		err = t.objStorage.Upload(chunkFile, key, "video/mp2t", objectstorage.NoContentEncoding, objectstorage.NoCompression)
 		if err != nil {
 			fmt.Println("Error uploading file:", err)
-			return "", err
+			return "", withStage(spotMetrics.StageUpload, err)
 		}
 	}
-	t.metrics.RecordTranscodedVideoUploadDuration(time.Since(start).Seconds())
+	t.metrics.RecordStageDuration(float64(time.Since(start).Milliseconds()), spotMetrics.StageUpload)
 
 	t.log.Info(context.Background(), "Uploaded chunks for spot %d in %v", spotID, time.Since(start).Seconds())
 	return strings.Join(lines, "\n"), nil

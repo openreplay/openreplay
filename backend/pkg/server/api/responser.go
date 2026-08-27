@@ -64,6 +64,5 @@ func (r *responserImpl) recordMetrics(requestStart time.Time, url string, code, 
 	if bodySize > 0 {
 		r.metrics.RecordRequestSize(float64(bodySize), url, code)
 	}
-	r.metrics.IncreaseTotalRequests()
 	r.metrics.RecordRequestDuration(float64(time.Now().Sub(requestStart).Milliseconds()), url, code)
 }

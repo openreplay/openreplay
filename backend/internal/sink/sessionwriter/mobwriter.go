@@ -166,9 +166,9 @@ func (w *MobWriter) Sync() SyncStats {
 	return w.pool.Sync()
 }
 
-func (w *MobWriter) EvictStale(ttl time.Duration) {
+func (w *MobWriter) EvictStale(ttl time.Duration) int {
 	if ttl <= 0 {
-		return
+		return 0
 	}
 	now := time.Now().UnixNano()
 	cutoff := now - ttl.Nanoseconds()
@@ -199,6 +199,7 @@ func (w *MobWriter) EvictStale(ttl time.Duration) {
 			"evicted %d sessions by TTL (oldest: %s ago)",
 			evicted, time.Duration(oldest).Round(time.Second))
 	}
+	return evicted
 }
 
 func (w *MobWriter) Stop() {

@@ -224,6 +224,7 @@ func (c *connectorImpl) flush() {
 	c.mu.Unlock()
 	c.inflight <- struct{}{}
 	c.workerTask <- newTask
+	c.metrics.RecordCHQueueDepth(float64(len(c.workerTask)))
 }
 
 func copyOffsets(src qtypes.Offsets) qtypes.Offsets {
@@ -307,12 +308,14 @@ func (c *connectorImpl) sendBulk(b Batch) {
 			log.Fatalf("FATAL_CH_NO_SPACE: ClickHouse code 243, restarting to limit data loss: %s", err)
 		}
 		if isPermanentDataError(err) {
+			c.metrics.RecordBulkDroppedRows(float64(b.Len()), "ch", b.Table())
 			log.Printf("BROKEN_BATCH_DROPPED: table=%s rows=%d, unparseable data, dropping batch: %s", b.Table(), b.Len(), err)
 			return
 		}
 		if attempt >= maxSendAttempts {
 			log.Fatalf("FATAL_CH_SEND: table=%s giving up after %d attempts, restarting: %s", b.Table(), attempt, err)
 		}
+		c.metrics.IncreaseBulkSendRetries("ch", b.Table())
 		log.Printf("can't send batch (attempt %d): %s", attempt, err)
 		time.Sleep(backoff)
 		if backoff < sendRetryMax {

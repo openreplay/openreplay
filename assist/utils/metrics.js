@@ -43,20 +43,6 @@ const IncreaseTotalWSConnections = function (type) {
     websocketTotalConnections.inc({type: type});
 }
 
-const websocketOnlineConnections = new client.Gauge({
-    name: 'ws_connections_online',
-    help: 'A gauge displaying the number of online (active) connections',
-    labelNames: ['type'], // tab, agent
-});
-
-const IncreaseOnlineConnections = function (type) {
-    websocketOnlineConnections.inc({type: type});
-}
-
-const DecreaseOnlineConnections = function (type) {
-    websocketOnlineConnections.dec({type: type});
-}
-
 const websocketTotalRooms = new client.Counter({
     name: 'ws_rooms_total',
     help: 'A counter displaying the number of all rooms',
@@ -66,34 +52,16 @@ const IncreaseTotalRooms = function () {
     websocketTotalRooms.inc();
 }
 
-const websocketOnlineRooms = new client.Gauge({
-    name: 'ws_rooms_online',
-    help: 'A gauge displaying the number of online (active) rooms',
-});
-
-const IncreaseOnlineRooms = function () {
-    websocketOnlineRooms.inc();
-}
-
-const DecreaseOnlineRooms = function () {
-    websocketOnlineRooms.dec();
-}
 
 register.registerMetric(httpRequestDuration);
 register.registerMetric(httpTotalRequests);
 register.registerMetric(websocketTotalConnections);
-register.registerMetric(websocketOnlineConnections);
 register.registerMetric(websocketTotalRooms);
-register.registerMetric(websocketOnlineRooms);
 
 module.exports = {
     register,
     RecordRequestDuration,
     IncreaseTotalRequests,
     IncreaseTotalWSConnections,
-    IncreaseOnlineConnections,
-    DecreaseOnlineConnections,
     IncreaseTotalRooms,
-    IncreaseOnlineRooms,
-    DecreaseOnlineRooms,
 }

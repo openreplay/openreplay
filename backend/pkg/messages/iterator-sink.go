@@ -26,7 +26,6 @@ func (i *sinkIteratorImpl) handle(message Message) {
 
 func (i *sinkIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	i.metrics.RecordBatchSize(float64(len(batchData)))
-	i.metrics.IncreaseTotalBatches()
 	// Call core iterator
 	i.coreIterator.Iterate(batchData, batchInfo)
 	// Send batch end signal

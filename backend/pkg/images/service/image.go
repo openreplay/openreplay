@@ -90,6 +90,7 @@ type ImagesMessage struct {
 func (v *ImageStorage) Process(ctx context.Context, sessID uint64, data []byte) error {
 	var msg = &ImagesMessage{}
 	if err := json.Unmarshal(data, msg); err != nil {
+		v.metrics.IncreaseFrames(images.FrameBadMessage)
 		return fmt.Errorf("can't parse canvas message, err: %s", err)
 	}
 	v.saverPool.Submit(&saveTask{ctx: ctx, sessionID: sessID, name: msg.Name, data: msg.Data})
@@ -124,7 +125,7 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 		v.log.Fatal(task.ctx, "can't write frame to disk, err: %s", err)
 	}
 
-	v.metrics.IncreaseTotalSavedImages()
+	v.metrics.IncreaseFrames(images.FrameSaved)
 	v.metrics.RecordSavingImageDuration(time.Since(start).Seconds())
 	return
 }
@@ -143,9 +144,10 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 		if !strings.Contains(err.Error(), "no such file or directory") {
 			v.log.Fatal(task.ctx, "can't upload image, name: %s, err: %s", task.name, err)
 		}
+		v.metrics.IncreaseUploads(images.UploadMissing)
 		return
 	}
-	v.metrics.IncreaseTotalCreatedArchives()
+	v.metrics.IncreaseUploads(images.UploadOK)
 	v.metrics.RecordUploadingDuration(time.Since(start).Seconds())
 }
 

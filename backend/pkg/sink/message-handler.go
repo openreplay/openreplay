@@ -70,17 +70,19 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 		return
 	}
 
-	h.sinkMetrics.IncreaseTotalMessages()
 	sessCtx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
 
 	// Send SessionEnd trigger to storage service
 	if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd {
+		h.sinkMetrics.IncreaseMessages(sink.MessageTrigger)
 		if err := h.producer.Produce(h.cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
+			h.sinkMetrics.IncreaseTriggerErrors()
 			h.log.Error(sessCtx, "can't send SessionEnd to trigger topic: %s", err)
 		}
 		// duplicate session end message to mobile trigger topic to build video replay for mobile sessions
 		if msg.TypeID() == messages.MsgMobileSessionEnd {
 			if err := h.producer.Produce(h.cfg.TopicMobileTrigger, msg.SessionID(), msg.Encode()); err != nil {
+				h.sinkMetrics.IncreaseTriggerErrors()
 				h.log.Error(sessCtx, "can't send MobileSessionEnd to mobile trigger topic: %s", err)
 			}
 		}
@@ -95,6 +97,7 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 		msg.TypeID() == messages.MsgAdoptedSSInsertRuleURLBased {
 		m := msg.Decode()
 		if m == nil {
+			h.sinkMetrics.IncreaseMessages(sink.MessageError)
 			h.log.Error(sessCtx, "assets decode err, info: %s", msg.Meta().Batch().Info())
 			return
 		}
@@ -102,6 +105,7 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 	}
 
 	if !messages.IsReplayerType(msg.TypeID()) {
+		h.sinkMetrics.IncreaseMessages(sink.MessageFiltered)
 		return
 	}
 
@@ -115,6 +119,7 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 	// Try to encode message to avoid null data inserts
 	data := msg.Encode()
 	if data == nil {
+		h.sinkMetrics.IncreaseMessages(sink.MessageError)
 		return
 	}
 	binary.LittleEndian.PutUint64(h.messageIndex, msg.Meta().Index)
@@ -128,6 +133,5 @@ func (h *handlerImpl) Handle(msg messages.Message) {
 		h.devBuffer.Write(data)
 	}
 
-	h.sinkMetrics.IncreaseWrittenMessages()
-	h.sinkMetrics.RecordMessageSize(float64(len(data)))
+	h.sinkMetrics.IncreaseMessages(sink.MessageWritten)
 }
