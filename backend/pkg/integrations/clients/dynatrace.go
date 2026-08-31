@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 )
 
 type dynatraceClient struct{}
@@ -74,8 +75,7 @@ func (d *dynatraceClient) requestOAuthToken(clientID, clientSecret, resource str
 	}
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	client := &http.Client{}
-	response, err := client.Do(request)
+	response, err := SafeHTTPClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,12 @@ func requestParams(sessionID uint64) url.Values {
 	return params
 }
 
+var validEnvironmentID = regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
+
 func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uint64) (interface{}, error) {
+	if !validEnvironmentID.MatchString(environmentID) {
+		return nil, fmt.Errorf("invalid dynatrace environment id")
+	}
 	requestURL := fmt.Sprintf("https://%s.live.dynatrace.com/api/v2/logs/search", environmentID)
 	if sessionID == 0 {
 		requestURL += "?" + testRequestParams().Encode()
@@ -129,8 +134,7 @@ func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uin
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
-	client := &http.Client{}
-	response, err := client.Do(request)
+	response, err := SafeHTTPClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
