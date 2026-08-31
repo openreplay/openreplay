@@ -28,7 +28,16 @@ var (
 	sqlStringReplacer      = strings.NewReplacer(`\`, `\\`, `'`, `''`, `@`, `' || char(64) || '`)
 	sqlLikePatternReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `'`, `''`, `@`, `' || char(64) || '`)
 	camelToSnakeRe         = regexp.MustCompile("([a-z0-9])([A-Z])")
+	metadataColumnRe       = regexp.MustCompile(`^metadata_(?:[1-9]|10)$`)
 )
+
+// IsMetadataColumn reports whether name is a valid metadata column
+// (metadata_1 .. metadata_10). The metadata filter path splices the column
+// name directly into the SQL expression position, so it must be validated
+// against this fixed allowlist before use to prevent SQL injection.
+func IsMetadataColumn(name string) bool {
+	return metadataColumnRe.MatchString(name)
+}
 
 type Payload struct {
 	*model.MetricPayload
@@ -209,7 +218,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 		}
 		isSessionProperty := false
 		_, isSessionProperty = sessionProperties[f.Name]
-		isSessionProperty = isSessionProperty || strings.HasPrefix(f.Name, "metadata_") && f.AutoCaptured
+		isSessionProperty = isSessionProperty || IsMetadataColumn(f.Name) && f.AutoCaptured
 		if f.IsEvent || !isSessionProperty {
 			if option.EventsOrder == "then" {
 				//for "then" order, we can have duplicate conditions
@@ -278,7 +287,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 			}
 		}
 	}
-	if strings.HasPrefix(f.Name, "metadata_") {
+	if IsMetadataColumn(f.Name) {
 		cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn")
 		if cond != "" {
 			return []string{cond}, ""
@@ -581,7 +590,7 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 				filterName = CamelToSnake(f.Name)
 			}
 
-			if _, ok := SessionColumns[filterName]; ok || f.AutoCaptured && strings.HasPrefix(filterName, "metadata_") {
+			if _, ok := SessionColumns[filterName]; ok || f.AutoCaptured && IsMetadataColumn(filterName) {
 				sessionFiltersList = append(sessionFiltersList, f)
 			} else {
 				isEvent = true
