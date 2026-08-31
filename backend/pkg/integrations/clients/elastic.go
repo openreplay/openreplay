@@ -44,11 +44,15 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 			cfg.Indexes = val
 		}
 	}
+	if err := validateExternalURL(cfg.URL); err != nil {
+		return nil, fmt.Errorf("invalid elasticsearch url: %w", err)
+	}
 	clientCfg := elasticsearch.Config{
 		Addresses: []string{
 			cfg.URL,
 		},
-		APIKey: base64.StdEncoding.EncodeToString([]byte(cfg.APIKeyId + ":" + cfg.APIKey)),
+		APIKey:    base64.StdEncoding.EncodeToString([]byte(cfg.APIKeyId + ":" + cfg.APIKey)),
+		Transport: SafeTransport,
 	}
 
 	// Create Elasticsearch client

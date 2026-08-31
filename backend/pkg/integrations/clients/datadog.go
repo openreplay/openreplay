@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV2"
 )
+
+var validDatadogSite = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
 
 type dataDogClient struct{}
 
@@ -55,12 +58,16 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 		body.Filter.Query = datadog.PtrString(fmt.Sprintf("openReplaySession.id=%d", sessionID))
 		body.Page.Limit = datadog.PtrInt32(1000)
 	}
+	if !validDatadogSite.MatchString(cfg.Site) {
+		return nil, fmt.Errorf("invalid datadog site")
+	}
 	ctx := context.WithValue(context.Background(), datadog.ContextServerVariables, map[string]string{"site": cfg.Site})
 	ctx = context.WithValue(ctx, datadog.ContextAPIKeys, map[string]datadog.APIKey{
 		"apiKeyAuth": {Key: cfg.ApiKey},
 		"appKeyAuth": {Key: cfg.AppKey},
 	})
 	configuration := datadog.NewConfiguration()
+	configuration.HTTPClient = SafeHTTPClient
 	apiClient := datadog.NewAPIClient(configuration)
 	api := datadogV2.NewLogsApi(apiClient)
 	resp, r, err := api.ListLogs(ctx, *datadogV2.NewListLogsOptionalParameters().WithBody(body))

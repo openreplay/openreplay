@@ -86,6 +86,9 @@ func parseSentryConfig(credentials interface{}) (sentryConfig, error) {
 	if cfg.URL == "" {
 		cfg.URL = "https://sentry.io"
 	}
+	if err := validateExternalURL(cfg.URL); err != nil {
+		return cfg, fmt.Errorf("invalid sentry url: %w", err)
+	}
 	return cfg, nil
 }
 
@@ -115,8 +118,7 @@ func makeRequest(cfg sentryConfig, requestUrl string) ([]SentryEvent, error) {
 	}
 	req.Header.Set("Authorization", "Bearer "+cfg.Token)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := SafeHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %v", err)
 	}

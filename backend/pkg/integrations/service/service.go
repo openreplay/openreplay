@@ -49,16 +49,26 @@ func (s *serviceImpl) AddIntegration(projectID uint64, provider string, data int
 	case data == nil:
 		return errors.New("data is empty")
 	}
-	sql := `INSERT INTO public.integrations (project_id, provider, options) VALUES ($1, $2, $3)`
-	if err := s.conn.Exec(sql, projectID, provider, data); err != nil {
-		return fmt.Errorf("failed to add integration: %v", err)
-	}
-	// Check that provided credentials are valid
-	_, err := s.fetchSessionData(provider, data, 0)
-	if err != nil {
+	creds := normalizeCredentials(data)
+	if _, err := s.fetchSessionData(provider, creds, 0); err != nil {
 		return fmt.Errorf("failed to validate provider credentials: %v", err)
 	}
+	sql := `INSERT INTO public.integrations (project_id, provider, options) VALUES ($1, $2, $3)`
+	if err := s.conn.Exec(sql, projectID, provider, creds); err != nil {
+		return fmt.Errorf("failed to add integration: %v", err)
+	}
 	return nil
+}
+
+func normalizeCredentials(data interface{}) interface{} {
+	if m, ok := data.(map[string]string); ok {
+		out := make(map[string]interface{}, len(m))
+		for k, v := range m {
+			out[k] = v
+		}
+		return out
+	}
+	return data
 }
 
 func (s *serviceImpl) GetIntegration(projectID uint64, provider string) (interface{}, error) {
@@ -89,8 +99,12 @@ func (s *serviceImpl) UpdateIntegration(projectID uint64, provider string, data 
 	case data == nil:
 		return errors.New("data is empty")
 	}
+	creds := normalizeCredentials(data)
+	if _, err := s.fetchSessionData(provider, creds, 0); err != nil {
+		return fmt.Errorf("failed to validate provider credentials: %v", err)
+	}
 	sql := `UPDATE public.integrations SET options = $1 WHERE project_id = $2 AND provider = $3`
-	if err := s.conn.Exec(sql, data, projectID, provider); err != nil {
+	if err := s.conn.Exec(sql, creds, projectID, provider); err != nil {
 		return fmt.Errorf("failed to update integration: %v", err)
 	}
 	return nil
