@@ -676,7 +676,7 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 			var subCondition []string
 			if column, ok := sessionProperties[f.Name]; ok {
 				subCondition = append(subCondition, buildCond(column, f.Value, f.Operator, false, "singleColumn"))
-			} else if strings.HasPrefix(f.Name, "metadata_") {
+			} else if IsMetadataColumn(f.Name) {
 				subCondition = append(subCondition, buildCond(f.Name, f.Value, f.Operator, false, "singleColumn"))
 			}
 			if len(subCondition) > 0 {
