@@ -220,7 +220,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	} else {
 		var b []string = make([]string, 0)
 		for i := 0; i < len(subEvents)-1; i++ {
-			b = append(b, fmt.Sprintf("`$event_name`='%s',%s", subEvents[i].EventName, subEvents[i].Column))
+			b = append(b, fmt.Sprintf("`$event_name`='%s',%s", sqlStringReplacer.Replace(subEvents[i].EventName), subEvents[i].Column))
 		}
 		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1].Column)
 	}
@@ -256,7 +256,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 				return nil, fmt.Errorf("unknown operator: %s", ef.Operator)
 			}
 			op = reverseSqlOperator(op)
-			exclusions[ef.Name] = []string{fmt.Sprintf("`$event_name` %s '%s'", op, ef.Name)}
+			exclusions[ef.Name] = []string{fmt.Sprintf("`$event_name` %s '%s'", op, sqlStringReplacer.Replace(ef.Name))}
 		}
 	}
 	_, _, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"})
@@ -271,7 +271,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		if _, ok := PredefinedJourneys[s]; ok {
 			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", PredefinedJourneys[s].EventName))
 		} else {
-			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", s))
+			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", sqlStringReplacer.Replace(s)))
 		}
 		if _, ok := exclusions[s]; ok {
 			selectedEventTypeSubQuery[len(selectedEventTypeSubQuery)-1] += fmt.Sprintf(" AND (%s)", strings.Join(exclusions[s], " AND "))
