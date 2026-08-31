@@ -152,7 +152,7 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 		if filter.AutoCaptured && !filter.IsEvent {
 			filter.Name = CamelToSnake(filter.Name)
 		}
-		if _, exists := SessionColumns[filter.Name]; exists || strings.HasPrefix(filter.Name, "metadata_") {
+		if _, exists := SessionColumns[filter.Name]; exists || IsMetadataColumn(filter.Name) {
 			sessionFilters = append(sessionFilters, filter)
 		} else {
 			eventFilters = append(eventFilters, filter)
