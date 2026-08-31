@@ -166,8 +166,8 @@ func TestUserJourneyMetricValueNotInjectable(t *testing.T) {
 		StartTimestamp: 1704067200000,
 		EndTimestamp:   1704153600000,
 		Density:        2,
-		MetricValue:    []string{"x' OR 1=1 OR '"},
-		Series:         []model.Series{{Name: "s1", Filter: model.FilterGroup{}}},
+		MetricValue: []string{"x' OR 1=1 OR '", "CLICK"},
+		Series:      []model.Series{{Name: "s1", Filter: model.FilterGroup{}}},
 	}
 	p := &Payload{MetricPayload: payload, ProjectId: 1, UserId: 1}
 
@@ -176,6 +176,9 @@ func TestUserJourneyMetricValueNotInjectable(t *testing.T) {
 		t.Fatalf("buildQuery error: %v", err)
 	}
 	joined := strings.Join(queries, "\n")
+	if !strings.Contains(joined, "multiIf(") {
+		t.Fatalf("expected multiIf branch to be exercised:\n%s", joined)
+	}
 	// The malicious event name may only appear inside a quoted literal (escaped).
 	// Nothing from the payload may reach unquoted SQL expression position.
 	bare := stripSQLLiterals(joined)
