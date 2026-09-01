@@ -63,7 +63,7 @@ interface ApiSegment {
   filter?: { filters: Record<string, unknown>[] };
 }
 
-interface SearchSegmentsParams {
+export interface SearchSegmentsParams {
   limit: number;
   page: number;
   name?: string;
@@ -129,25 +129,29 @@ const sortSegments = (
   });
 };
 
-export function fetchSegments(params: SearchSegmentsParams): Promise<{
-  segments: Segment[];
-  total: number;
-}> {
+/** Server rows -> Segment models. Rows are held by the search store, which owns
+    the single saved-search request the whole app shares. */
+export function mapSegments(rows: unknown[]): Segment[] {
+  return (rows as ApiSegment[]).map((s) => new Segment(s));
+}
+
+/* Name filter, sort and paging all run over the whole set — the saved-search
+   list is loaded in full, and server paging would have sorted within a page. */
+export function selectSegments(
+  rows: unknown[],
+  params: SearchSegmentsParams,
+): { segments: Segment[]; total: number } {
+  const filtered = byNameFilter(rows as ApiSegment[], params.name);
+  const sorted = sortSegments(
+    mapSegments(filtered),
+    params.sortBy,
+    params.sortOrder,
+  );
   const offset = params.limit * (params.page - 1);
-  return client
-    .get(
-      `/PROJECT_ID/sessions/search/saved?limit=${params.limit}&offset=${offset}`,
-    )
-    .then((res) => res.json())
-    .then((json) => {
-      const rawList: ApiSegment[] = json.data?.data || json.data || [];
-      const total =
-        typeof json.data?.total === 'number' ? json.data.total : rawList.length;
-      const filtered = byNameFilter(rawList, params.name);
-      const all = filtered.map((s) => new Segment(s));
-      const sorted = sortSegments(all, params.sortBy, params.sortOrder);
-      return { segments: sorted, total };
-    });
+  return {
+    segments: sorted.slice(offset, offset + params.limit),
+    total: sorted.length,
+  };
 }
 
 export function fetchSegment(segmentId: string): Promise<Segment> {

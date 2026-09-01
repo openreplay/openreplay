@@ -22,6 +22,9 @@ import Search from 'App/mstore/types/search';
 import { searchService, sessionService } from 'App/services';
 
 const PER_PAGE = 10;
+/* The whole saved-search list is loaded in one request and shared by every
+   consumer (session search, Data Management, the Issues capture layer). */
+const SAVED_SEARCH_PAGE_SIZE = 200;
 
 export const checkValues = (key: any, value: any) => {
   if (key === FilterKey.DURATION) {
@@ -102,12 +105,19 @@ class SearchStore {
   activeTags: any[] = [];
   urlParsed: boolean = false;
   searchInProgress = false;
-  savedSearchPage = 1;
-  savedSearchPageSize = 100;
   savedSearchTotal = 0;
+  /* untouched server rows behind `list` — Data Management builds its richer
+     Segment objects from these (SavedSearch drops the count/capture fields) */
+  savedSearchRaw: any[] = [];
+  savedSearchLoaded = false;
+  /* one in-flight request shared by every caller, so the app-level load in
+     Router and the page-level loads don't each hit the endpoint */
+  private savedSearchRequest: { key: string; promise: Promise<void> } | null =
+    null;
 
   constructor() {
-    makeAutoObservable(this);
+    // the shared request handle is plumbing, not view state
+    makeAutoObservable(this, { savedSearchRequest: false } as any);
   }
 
   resetFilters = () => {
@@ -158,21 +168,43 @@ class SearchStore {
     this.currentPage = 1;
   }
 
-  async fetchSavedSearchList(page: number = 1, limit: number = 100) {
+  fetchSavedSearchList(
+    page: number = 1,
+    limit: number = SAVED_SEARCH_PAGE_SIZE,
+  ): Promise<void> {
+    const key = `${page}:${limit}`;
+    if (this.savedSearchRequest?.key === key) {
+      return this.savedSearchRequest.promise;
+    }
+    const promise = this.loadSavedSearchList(page, limit).finally(() => {
+      if (this.savedSearchRequest?.key === key) this.savedSearchRequest = null;
+    });
+    this.savedSearchRequest = { key, promise };
+    return promise;
+  }
+
+  private async loadSavedSearchList(page: number, limit: number) {
     const offset = (page - 1) * limit;
     const response = await searchService.fetchSavedSearch({ limit, offset });
     runInAction(() => {
-      this.list =
-        response.data?.map((item: any) => new SavedSearch(item)) || [];
-      this.savedSearchTotal = response.total;
-      this.savedSearchPage = page;
-      this.savedSearchPageSize = limit;
+      const rows: any[] = response.data || [];
+      this.savedSearchRaw = rows;
+      this.list = rows.map((item: any) => new SavedSearch(item));
+      this.savedSearchTotal = response.total ?? rows.length;
+      this.savedSearchLoaded = true;
     });
   }
 
-  changeSavedSearchPage(page: number) {
-    this.savedSearchPage = page;
-    void this.fetchSavedSearchList(page, this.savedSearchPageSize);
+  /** Load once per project — resolves immediately when the list is already in
+      state, and joins the in-flight request otherwise. */
+  ensureSavedSearchList(): Promise<void> {
+    if (this.savedSearchLoaded) return Promise.resolve();
+    return this.fetchSavedSearchList();
+  }
+
+  /** Mark the cached list stale so the next `ensureSavedSearchList` refetches. */
+  invalidateSavedSearchList() {
+    this.savedSearchLoaded = false;
   }
 
   async loadSharedSearch(searchId: string): Promise<void> {
@@ -425,6 +457,9 @@ class SearchStore {
 
   clearList() {
     this.list = [];
+    this.savedSearchRaw = [];
+    this.savedSearchLoaded = false;
+    this.savedSearchRequest = null;
   }
 
   clearSearch() {

@@ -35,7 +35,7 @@ function SegmentPage() {
   const isNew = segmentId === 'new';
   const history = useHistory();
   const queryClient = useQueryClient();
-  const { projectsStore, filterStore, userStore } = useStore();
+  const { projectsStore, filterStore, userStore, searchStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const backLink = withSiteId(dataManagement.segments(), siteId);
   const currentUserId = userStore.account.id;
@@ -91,6 +91,7 @@ function SegmentPage() {
       toast.success(
         t('Segment {{name}} created successfully', { name: created.name }),
       );
+      searchStore.invalidateSavedSearchList();
       queryClient.invalidateQueries({ queryKey: ['segments-list'] });
       void filterStore.fetchFilters(String(siteId), true);
       history.push(withSiteId(dataManagement.segmentPage(created.id), siteId!));
@@ -105,6 +106,7 @@ function SegmentPage() {
       updateSegment(segmentId!, payload),
     onSuccess: () => {
       toast.success(t('Segment updated successfully'));
+      searchStore.invalidateSavedSearchList();
       queryClient.invalidateQueries({ queryKey: ['segments-list'] });
       queryClient.invalidateQueries({
         queryKey: ['segment', siteId, segmentId],
@@ -119,6 +121,7 @@ function SegmentPage() {
   const deleteMutation = useMutation({
     mutationFn: () => deleteSegment(segmentId!),
     onSuccess: () => {
+      searchStore.invalidateSavedSearchList();
       queryClient.invalidateQueries({ queryKey: ['segments-list'] });
       void filterStore.fetchFilters(String(siteId), true);
       history.push(backLink);

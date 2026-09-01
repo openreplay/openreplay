@@ -5,7 +5,7 @@ import {
   deleteSegment as apiDeleteSegment,
   createSegment,
   fetchSegment,
-  fetchSegments as fetchDmSegments,
+  mapSegments,
   updateSegment,
 } from 'App/components/DataManagement/Segments/api';
 import {
@@ -57,7 +57,7 @@ import {
   type MatchMode,
   type SortMode,
 } from 'App/components/SmartAlerts/shared/model';
-import { filterStore, userStore } from 'App/mstore';
+import { filterStore, searchStore, userStore } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
 /* Critical is a DESCRIBED RULE, not a per-issue flag: the customer describes
@@ -455,15 +455,13 @@ export default class IssuesStore {
   fetchSegments = async () => {
     if (!this.projectId) return;
     try {
-      const [{ segments }, capture] = await Promise.all([
-        fetchDmSegments({
-          limit: 200,
-          page: 1,
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
-        }),
+      const [, capture] = await Promise.all([
+        // the saved-search list is loaded once per project by searchStore and
+        // shared with session search and Data Management
+        searchStore.ensureSavedSearchList(),
         getSegmentCapture(this.projectId),
       ]);
+      const segments = mapSegments(searchStore.savedSearchRaw);
       runInAction(() => {
         const mapped = segments.map((s) => toSavedSegment(s, capture));
         /* `captureSegmentsOnly` defaults to true on a project that never set it,
@@ -1116,6 +1114,7 @@ export default class IssuesStore {
       active: capture,
       instructions: input.instructions ?? '',
     });
+    searchStore.invalidateSavedSearchList();
     await this.fetchSegments();
     if (this.captureMode === 'segments' && this.activeSegmentCount === 0) {
       this.setCaptureMode('full');
@@ -1133,6 +1132,7 @@ export default class IssuesStore {
     } catch (e) {
       console.error('Failed to delete segment', e);
     }
+    searchStore.invalidateSavedSearchList();
     void this.fetchSegments();
   };
 

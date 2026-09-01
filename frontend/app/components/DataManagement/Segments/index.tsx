@@ -15,7 +15,7 @@ import { useHistory } from 'App/routing';
 import { debounce } from 'App/utils';
 
 import SegmentsList from './SegmentsList';
-import { fetchSegments } from './api';
+import { selectSegments } from './api';
 
 type SortBy = 'name' | 'createdAt' | 'updatedAt';
 type SortOrder = 'asc' | 'desc';
@@ -24,7 +24,7 @@ function SegmentsListPage() {
   const { t } = useTranslation();
   const [query, setQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState('');
-  const { projectsStore, issuesStore } = useStore();
+  const { projectsStore, issuesStore, searchStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const queryClient = useQueryClient();
@@ -67,14 +67,17 @@ function SegmentsListPage() {
       sortBy,
       sortOrder,
     ],
-    queryFn: () =>
-      fetchSegments({
+    // searchStore holds the app's single saved-search fetch; this only slices it
+    queryFn: async () => {
+      await searchStore.ensureSavedSearchList();
+      return selectSegments(searchStore.savedSearchRaw, {
         limit,
         page,
         name: debouncedQuery || undefined,
         sortBy,
         sortOrder,
-      }),
+      });
+    },
   });
 
   const onPageChange = (newPage: number) => {

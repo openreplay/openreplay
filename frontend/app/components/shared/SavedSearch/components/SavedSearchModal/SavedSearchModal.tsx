@@ -25,10 +25,14 @@ import ENV from '../../../../../../env';
 
 const { Title } = Typography;
 
+/* the whole list lives in the store, so the modal pages over it locally */
+const PAGE_SIZE = 100;
+
 function SavedSearchModal() {
   const { hideModal } = useModal();
   const [showModal, setshowModal] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
+  const [page, setPage] = useState(1);
   const { searchStore, userStore, projectsStore } = useStore();
   const { t } = useTranslation();
   const currentUserId = userStore.account.id;
@@ -60,9 +64,11 @@ function SavedSearchModal() {
   const shownItems = searchStore.list.filter((item) =>
     item.name?.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()),
   );
+  const pagedItems = shownItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const onPageChange = (page: number) => {
-    searchStore.changeSavedSearchPage(page);
+  const onFilterChange = (value: string) => {
+    setFilterQuery(value);
+    setPage(1);
   };
 
   const listActions = (item: SavedSearch) => {
@@ -114,7 +120,7 @@ function SavedSearchModal() {
         <div className="p-6 pt-4">
           <Input
             prefix={<Search size={16} className="text-gray-400" />}
-            onChange={(e) => setFilterQuery(e.target.value)}
+            onChange={(e) => onFilterChange(e.target.value)}
             placeholder={t('Filter by name')}
             allowClear
           />
@@ -122,7 +128,7 @@ function SavedSearchModal() {
       )}
       <List
         style={{ maxHeight: 'calc(100vh - 106px)', overflowY: 'auto' }}
-        dataSource={shownItems}
+        dataSource={pagedItems}
         rowKey={(item) => item.searchId?.toString() || ''}
         renderItem={(item) => {
           const isActive = searchStore.savedSearch.searchId === item.searchId;
@@ -192,13 +198,13 @@ function SavedSearchModal() {
           rename={true}
         />
       )}
-      {searchStore.savedSearchTotal > searchStore.savedSearchPageSize && (
+      {shownItems.length > PAGE_SIZE && (
         <div className="flex items-center justify-center p-4 border-t bg-white">
           <Pagination
-            current={searchStore.savedSearchPage}
-            total={searchStore.savedSearchTotal}
-            pageSize={searchStore.savedSearchPageSize}
-            onChange={onPageChange}
+            current={page}
+            total={shownItems.length}
+            pageSize={PAGE_SIZE}
+            onChange={setPage}
             showSizeChanger={false}
             showTotal={(total, range) =>
               `${range[0]}-${range[1]} ${t('of')} ${total}`
