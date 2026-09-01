@@ -21,7 +21,47 @@ func isBlockedIP(ip net.IP) bool {
 	if ip.Equal(net.IPv4(169, 254, 169, 254)) {
 		return true
 	}
+	if ip4 := ip.To4(); ip4 != nil && ip4[0] == 100 && ip4[1] >= 64 && ip4[1] <= 127 {
+		return true
+	}
+	if ip.To4() == nil {
+		if ip16 := ip.To16(); ip16 != nil && ip16[0] == 0xfe && ip16[1]&0xc0 == 0xc0 {
+			return true
+		}
+	}
+	if embedded := embeddedIPv4(ip); embedded != nil {
+		return isBlockedIP(embedded)
+	}
 	return false
+}
+
+func embeddedIPv4(ip net.IP) net.IP {
+	ip16 := ip.To16()
+	if ip16 == nil || ip.To4() != nil {
+		return nil
+	}
+	switch {
+	case ip16[0] == 0x20 && ip16[1] == 0x02: // 6to4, 2002::/16
+		return net.IPv4(ip16[2], ip16[3], ip16[4], ip16[5])
+	case ip16[0] == 0x00 && ip16[1] == 0x64 && ip16[2] == 0xff && ip16[3] == 0x9b: // NAT64, 64:ff9b::/96
+		if allZero(ip16[4:12]) {
+			return net.IPv4(ip16[12], ip16[13], ip16[14], ip16[15])
+		}
+	case ip16[0] == 0x20 && ip16[1] == 0x01 && ip16[2] == 0x00 && ip16[3] == 0x00: // Teredo, 2001:0000::/32
+		return net.IPv4(ip16[12]^0xff, ip16[13]^0xff, ip16[14]^0xff, ip16[15]^0xff)
+	case allZero(ip16[0:12]): // IPv4-compatible, ::/96 (deprecated)
+		return net.IPv4(ip16[12], ip16[13], ip16[14], ip16[15])
+	}
+	return nil
+}
+
+func allZero(b []byte) bool {
+	for _, x := range b {
+		if x != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func safeDialControl(network, address string, _ syscall.RawConn) error {
