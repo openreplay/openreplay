@@ -13,6 +13,12 @@ interface Props {
 }
 
 const tagClass = 'text-xs ml-2! mr-0! px-1! py-0!';
+/* antd derives a filled Tag's background from the hex it is given (l: 95%), so
+   it stays light in dark mode — read both surfaces from tokens instead */
+const tagStyle = {
+  backgroundColor: 'var(--color-tag-brand-bg)',
+  color: 'var(--color-indigo)',
+};
 
 export default function MenuContent({
   menu,
@@ -91,6 +97,7 @@ export default function MenuContent({
                       color={it.tag.color}
                       variant={it.tag.border ? 'outlined' : 'filled'}
                       className={tagClass}
+                      style={it.tag.border ? undefined : tagStyle}
                     >
                       {it.tag.label}
                     </Tag>
@@ -121,6 +128,7 @@ export default function MenuContent({
                             color={child.tag.color}
                             variant={child.tag.border ? 'outlined' : 'filled'}
                             className={tagClass}
+                            style={child.tag.border ? undefined : tagStyle}
                           >
                             {child.tag.label}
                           </Tag>
@@ -155,6 +163,7 @@ export default function MenuContent({
                     color={it.tag.color}
                     variant={it.tag.border ? 'outlined' : 'filled'}
                     className={tagClass}
+                    style={it.tag.border ? undefined : tagStyle}
                   >
                     {it.tag.label}
                   </Tag>

@@ -220,23 +220,23 @@ svg {
 }
 
 .dateRangeContainer  .react-calendar__tile--active{
-    background-color: rgba(57, 77, 254,.7);
-    color: #FFF!important;
+    background-color: color-mix(in srgb, var(--color-teal) 70%, transparent);
+    color: var(--color-white)!important;
 }
 
 .dateRangeContainer .react-calendar__tile--rangeStart {
-    background-color: #394dfe;
-    color: #FFF!important;
+    background-color: var(--color-teal);
+    color: var(--color-white)!important;
 }
 
 .dateRangeContainer .react-calendar__tile--hasActive, .dateRangeContainer .react-calendar__tile--active:hover, .dateRangeContainer .react-calendar__tile--active:enabled:hover, .dateRangeContainer .react-calendar__tile--active:enabled:focus, .dateRangeContainer  .react-calendar__tile--hasActive:enabled:hover, .dateRangeContainer  .react-calendar__tile--hasActive:enabled:focus{
-    background-color: #394dfe;
-    color: #FFF!important;
+    background-color: var(--color-teal);
+    color: var(--color-white)!important;
 }
 
 .react-calendar__tile--now:enabled:hover, .react-calendar__tile--now:enabled:focus {
-    background-color: #2331A8!important;
-    color: #FFF!important;
+    background-color: var(--color-teal-dark)!important;
+    color: var(--color-white)!important;
 }
 
 .dateRangePopup-module__wrapper {
@@ -244,7 +244,7 @@ svg {
 }
 
 .dateRangeContainer .react-calendar__tile--hasActive:hover{
-    background-color: #394dfe;
+    background-color: var(--color-teal);
     cursor: default;
 }
 

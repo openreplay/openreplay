@@ -57,7 +57,7 @@ const ThemedApp: React.FC = () => {
         siderBg: cssVar('gray-lightest'),
       },
       Segmented: {
-        itemSelectedBg: theme === 'dark' ? cssVar('gray-darkest') : '#FFFFFF',
+        itemSelectedBg: cssVar('control-selected-bg'),
         itemSelectedColor: cssVar('main'),
       },
       Form: {

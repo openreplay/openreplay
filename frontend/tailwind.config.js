@@ -116,8 +116,10 @@ module.exports = {
         // Process flat dark colors
         Object.entries(colors.dark).forEach(([key, value]) => {
           if (typeof value !== 'object') {
-            // Find the corresponding light mode key
-            const lightKey = key.replace('dark-', '');
+            // Only a `dark-` PREFIX names a light-mode key; a plain replace also
+            // ate the one inside `active-dark-blue` and aliased it to
+            // `active-blue`, leaving --color-active-dark-blue light in dark mode
+            const lightKey = key.startsWith('dark-') ? key.slice(5) : key;
             darkModeVars[`--color-${lightKey}`] = value;
           }
         });

@@ -465,8 +465,15 @@ export default class IssuesStore {
         getSegmentCapture(this.projectId),
       ]);
       runInAction(() => {
-        this.captureMode = capture.mode;
-        this.segments = segments.map((s) => toSavedSegment(s, capture));
+        const mapped = segments.map((s) => toSavedSegment(s, capture));
+        /* `captureSegmentsOnly` defaults to true on a project that never set it,
+           so a project with nothing capturing would read as "capturing only
+           active segments (0)" — segment capture needs a segment to be real. */
+        this.captureMode =
+          capture.mode === 'segments' && !mapped.some((s) => s.active)
+            ? 'full'
+            : capture.mode;
+        this.segments = mapped;
       });
     } catch (e) {
       console.error('Failed to load segments', e);
