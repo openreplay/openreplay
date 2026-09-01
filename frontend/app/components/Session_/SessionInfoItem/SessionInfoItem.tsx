@@ -6,7 +6,7 @@ interface Props {
   label: string;
   icon?: string;
   comp?: React.ReactNode;
-  value: string;
+  value: React.ReactNode;
   isLast?: boolean;
 }
 export default function SessionInfoItem(props: Props) {

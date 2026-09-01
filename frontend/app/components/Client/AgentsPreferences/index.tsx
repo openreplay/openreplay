@@ -15,15 +15,24 @@ import {
   useUpdateSettings,
 } from '../KaiSettings/queries';
 import PreferencesPage from '../PreferencesPage';
+import CriticalRules from './CriticalRules';
+import JourneyTags from './JourneyTags';
+
+/* Preferences > Agents: one tab per agent; per-agent journey tags, critical
+   rules, notifications and behaviour toggles live here rather than as a
+   Settings tab on each agent page. */
 
 // display:block is load-bearing: Typography.Text renders a span, max-width does
 // nothing to an inline element
 const PROSE = { display: 'block', maxWidth: '72ch' } as const;
 
-type AgentKey = 'tests';
-const AGENTS: AgentKey[] = ['tests'];
+type AgentKey = 'tests' | 'issues';
+const AGENTS: AgentKey[] = ['tests', 'issues'];
 // each tab needs the permission that guards that agent's own page
-const AGENT_PERMISSION: Record<AgentKey, string> = { tests: 'BROWSER_TESTS' };
+const AGENT_PERMISSION: Record<AgentKey, string> = {
+  tests: 'BROWSER_TESTS',
+  issues: 'SMART_ISSUES',
+};
 
 // HOCs/withPermissions' rule as a hook, since the check picks tabs rather than
 // gating the whole render
@@ -73,6 +82,7 @@ function Channel({
   );
 }
 
+/** a titled group inside a panel. */
 function PrefSection({
   title,
   hint,
@@ -162,13 +172,52 @@ const TestsPanel = observer(() => {
   );
 });
 
+const IssuesPanel = observer(() => {
+  const { t } = useTranslation();
+  const { issuesStore, projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
+
+  /* This page is reachable without ever opening Issues, so issuesStore may have
+     no `projectId`. Without these the tag + critical-rule managers render empty
+     AND their writes silently no-op (every mutation guards on `projectId`). */
+  React.useEffect(() => {
+    if (siteId) {
+      issuesStore.ensureJourneyTags(String(siteId));
+      issuesStore.ensureCriticalDefinitions(String(siteId));
+    }
+  }, [siteId]);
+
+  return (
+    <div className="flex flex-col gap-8 p-5">
+      <PrefSection
+        title={t('Journey tags')}
+        hint={t(
+          'Plain-words descriptions the agent matches against each session’s journey. Rename or remove any of them; new tags apply to sessions captured from now on.',
+        )}
+      >
+        <JourneyTags />
+      </PrefSection>
+
+      <PrefSection
+        title={t('What’s critical')}
+        hint={t(
+          'Describe what critical means to you. The agent flags issues that match, per author, so “Critical to me” filters by whose description matched.',
+        )}
+      >
+        <CriticalRules />
+      </PrefSection>
+    </div>
+  );
+});
+
 function AgentsPreferences() {
   const { t } = useTranslation();
+  const { issuesStore, projectsStore } = useStore();
   const history = useHistory();
   const location = useLocation();
   const permitted = usePermittedAgents();
 
-  // agent pages' Settings buttons deep-link to their own tab
+  // agent pages' Settings buttons deep-link to their own tab via ?agent=
   const requested = new URLSearchParams(location.search).get(
     'agent',
   ) as AgentKey | null;
@@ -178,12 +227,13 @@ function AgentsPreferences() {
   };
 
   const help = t(
-    'Notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
+    'Journey tags, critical rules, notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
   );
 
   const panels: Record<AgentKey, { label: string; children: React.ReactNode }> =
     {
       tests: { label: t('Tests'), children: <TestsPanel /> },
+      issues: { label: t('Issues'), children: <IssuesPanel /> },
     };
   const tabItems = permitted.map((key) => ({ key, ...panels[key] }));
 

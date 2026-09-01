@@ -1,0 +1,17 @@
+/* Force the outlined look on the shared SelectDateRange trigger (it renders as
+   a bare text button otherwise) so it matches the other filter controls.
+   Themed tokens keep it dark-safe. */
+.issues-date-range .btn-card-period-range,
+.issues-date-range .btn-card-period-range:hover,
+.issues-date-range .btn-card-period-range:focus,
+.issues-date-range .btn-card-period-range:focus-visible {
+  background: var(--color-white) !important;
+  border: 1px solid var(--color-gray-light) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016) !important;
+  color: var(--color-gray-darkest) !important;
+}
+.issues-date-range .btn-card-period-range:hover {
+  border-color: var(--color-main) !important;
+  color: var(--color-main) !important;
+}

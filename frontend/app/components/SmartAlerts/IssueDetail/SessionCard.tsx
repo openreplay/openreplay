@@ -1,0 +1,229 @@
+import { PlayCircleOutlined } from '@ant-design/icons';
+import { Popover, Tooltip } from 'antd';
+import { Link2 } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { countries } from 'App/constants';
+import { browserIcon, deviceTypeIcon, osIcon } from 'App/iconNames';
+import { capitalize } from 'App/utils';
+import SessionInfoItem from 'Components/Session_/SessionInfoItem';
+import { CountryFlag } from 'UI';
+
+import { type IssueSessionCard } from '../shared';
+import TagsRow from './TagsRow';
+
+const LINE = 1.35; // title line-height (em)
+// same placeholder surface as the Spots card, so the 80%-opacity thumbnail on
+// top reads at full colour and the teal hover tint shows through
+const THUMB_BG = '/assets/img/spotThumbBg.svg';
+
+/* The variation title, clamped to the grid-agreed number of lines. A hidden
+   unclamped clone reports its natural line count up so the grid can size every
+   title slot (≤3 lines). Truncated text shows in full on hover. */
+function ClampedTitle({
+  text,
+  lines,
+  onNaturalLines,
+}: {
+  text: string;
+  /** the grid-agreed slot height, in lines */
+  lines: number;
+  /** reports how many lines this title would take unclamped */
+  onNaturalLines: (n: number) => void;
+}) {
+  const measureRef = React.useRef<HTMLSpanElement>(null);
+  const [natural, setNatural] = React.useState(1);
+  React.useLayoutEffect(() => {
+    const el = measureRef.current;
+    if (!el) return undefined;
+    const report = () => {
+      // re-read the ref and skip detached nodes: ResizeObserver fires a final
+      // 0-size event for removed elements, which would reset the count
+      const node = measureRef.current;
+      if (!node || !node.isConnected) return;
+      const lineHeight = parseFloat(getComputedStyle(node).lineHeight) || 1;
+      const n = Math.max(1, Math.round(node.scrollHeight / lineHeight));
+      setNatural(n);
+      onNaturalLines(n);
+    };
+    report();
+    const ro = new ResizeObserver(report);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [text, onNaturalLines]);
+
+  const styleBase: React.CSSProperties = {
+    color: 'var(--color-gray-darkest)',
+    lineHeight: LINE,
+  };
+  return (
+    <Tooltip title={natural > lines ? text : ''}>
+      <span className="relative block">
+        {/* hidden unclamped clone — the line-count measurement */}
+        <span
+          ref={measureRef}
+          aria-hidden
+          className="text-sm font-medium invisible absolute inset-x-0 top-0"
+          style={styleBase}
+        >
+          {text}
+        </span>
+        <span
+          className="text-sm font-medium"
+          style={{
+            ...styleBase,
+            display: '-webkit-box',
+            WebkitLineClamp: lines,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            height: `${lines * LINE}em`,
+          }}
+        >
+          {text}
+        </span>
+      </span>
+    </Tooltip>
+  );
+}
+
+/* A session card titled by its issue variation. Footer rows have fixed heights
+   (shared title slot + one-line tags row) so all cards in the grid match size. */
+export default function SessionCard({
+  s,
+  onClick,
+  titleLines,
+  onTitleLines,
+  shareUrl,
+}: {
+  s: IssueSessionCard;
+  onClick: () => void;
+  /** grid-agreed title slot, in lines (max the visible cards need, ≤3) */
+  titleLines: number;
+  onTitleLines: (sessionId: string, n: number) => void;
+  /** full replay URL for the slide-in copy-link button (omit to hide it) */
+  shareUrl?: string;
+}) {
+  const { t } = useTranslation();
+  const reportLines = React.useCallback(
+    (n: number) => onTitleLines(s.sessionId, n),
+    [onTitleLines, s.sessionId],
+  );
+  const [copyTip, setCopyTip] = React.useState(t('Copy link'));
+  const copyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!shareUrl) return;
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        setCopyTip(t('Link copied!'));
+        setTimeout(() => setCopyTip(t('Copy link')), 2000);
+      })
+      .catch(() => {});
+  };
+  return (
+    <div className="bg-white rounded-lg overflow-hidden shadow-xs border transition hover:border-teal">
+      {/* hover matches the Spots card: 80% thumbnail over the placeholder bg so a
+          teal tint shows through, a white play ring fading + scaling in on a
+          brand-tinted circle, and a copy-link sliding up beside the duration */}
+      <button
+        onClick={onClick}
+        aria-label={t('Open session replay')}
+        className="relative group w-full block cursor-pointer overflow-hidden"
+        style={{
+          height: 180,
+          backgroundImage: `url(${THUMB_BG})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="w-full h-full transition-colors group-hover:bg-teal/70">
+          {s.thumbnail && (
+            <img
+              src={s.thumbnail}
+              alt=""
+              className="w-full h-full object-cover opacity-80"
+            />
+          )}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 transition-all group-hover:opacity-100 group-hover:scale-100">
+          <PlayCircleOutlined
+            style={{ fontSize: 44, color: 'white' }}
+            className="bg-teal/50 rounded-full"
+          />
+        </div>
+        <div className="absolute bottom-2 right-2 flex items-center gap-2">
+          {shareUrl && (
+            <Tooltip title={copyTip} className="capitalize!">
+              <div
+                aria-label={t('Copy link')}
+                onClick={copyLink}
+                className="bg-gray-dark text-white py-1 px-2 rounded-lg cursor-pointer flex items-center transition-transform translate-y-14 group-hover:translate-y-0"
+              >
+                <Link2 size={14} strokeWidth={1} />
+              </div>
+            </Tooltip>
+          )}
+          <div className="bg-gray-dark text-white py-1 px-2 text-xs rounded-lg">
+            {s.dur}
+          </div>
+        </div>
+      </button>
+
+      <div className="border-t px-3 py-3 flex flex-col gap-2">
+        <ClampedTitle
+          text={s.variation || s.journey || s.email}
+          lines={titleLines}
+          onNaturalLines={reportLines}
+        />
+        {/* fixed-height row so tags (always one line) never shift the footer */}
+        <div className="flex items-center" style={{ height: 24 }}>
+          <TagsRow tags={s.tags} />
+        </div>
+        <div className="flex items-center justify-between text-xs color-gray-medium">
+          <span className="whitespace-nowrap">{s.date}</span>
+          <Popover
+            trigger="hover"
+            placement="top"
+            content={
+              <div className="text-left bg-white" style={{ minWidth: 230 }}>
+                <SessionInfoItem
+                  comp={<CountryFlag country={s.country} />}
+                  label={countries[s.country] || s.country || t('Unknown')}
+                  value={s.loc}
+                />
+                {s.browser && (
+                  <SessionInfoItem
+                    icon={browserIcon(s.browser)}
+                    label={s.browser}
+                    value=""
+                  />
+                )}
+                {s.os && (
+                  <SessionInfoItem icon={osIcon(s.os)} label={s.os} value="" />
+                )}
+                <SessionInfoItem
+                  icon={deviceTypeIcon(s.device)}
+                  label={capitalize(s.device)}
+                  value=""
+                />
+                <SessionInfoItem
+                  label={t('Events')}
+                  value={String(s.events)}
+                  isLast
+                />
+              </div>
+            }
+          >
+            <span
+              className="link cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t('More')}
+            </span>
+          </Popover>
+        </div>
+      </div>
+    </div>
+  );
+}

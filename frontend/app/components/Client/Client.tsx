@@ -4,16 +4,17 @@ import { PANEL_SIZES } from 'App/constants/panelSizes';
 import { client as clientRoute } from 'App/routes';
 import { Navigate, withRouter } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
+import { agentsEnabled } from 'App/utils/split-utils';
 import Modules from 'Components/Client/Modules';
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 
+import AgentsPreferences from './AgentsPreferences';
 import AuditView from './Audit/AuditView';
 import Billing from './Billing/Billing';
 import ClientSaas from './ClientSaas';
 import CustomFields from './CustomFields';
 import ExportedVideosList from './ExportedVideos/ExportedVideosList';
 import Integrations from './Integrations';
-import AgentsPreferences from './AgentsPreferences';
 import KaiSettings from './KaiSettings';
 import Notifications from './Notifications';
 import ProfileSettings from './ProfileSettings';
@@ -55,14 +56,18 @@ class Client extends React.PureComponent<any> {
         return <Roles />;
       case CLIENT_TABS.AUDIT:
         return <AuditView />;
+      case CLIENT_TABS.AGENTS:
+        return agentsEnabled() ? (
+          <AgentsPreferences />
+        ) : (
+          <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />
+        );
       case CLIENT_TABS.MODULES:
         return <Modules />;
       case CLIENT_TABS.VIDEOS:
         return <ExportedVideosList />;
       case CLIENT_TABS.TEST_AGENTS:
         return <KaiSettings />;
-      case CLIENT_TABS.AGENTS:
-        return <AgentsPreferences />;
       default:
         return <ClientSaas activeTab={activeTab} />;
     }

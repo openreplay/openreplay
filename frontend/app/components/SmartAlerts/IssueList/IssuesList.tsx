@@ -1,0 +1,665 @@
+import withPageTitle from '@/components/hocs/withPageTitle';
+import withPermissions from '@/components/hocs/withPermissions';
+import Period, { LAST_7_DAYS } from 'Types/app/period';
+import {
+  Button,
+  Dropdown,
+  Input,
+  Modal,
+  Popover,
+  Segmented,
+  Table,
+  Tag,
+  Tooltip,
+} from 'antd';
+import type { TableColumnsType, TablePaginationConfig } from 'antd';
+import type { SorterResult } from 'antd/es/table/interface';
+import {
+  Album,
+  AlertTriangle,
+  ArrowUpRight,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Globe,
+  Info,
+  MoreVertical,
+  Pencil,
+  RotateCcw,
+  Settings,
+  SlidersHorizontal,
+  Split,
+  Trash2,
+} from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { useHistory } from 'App/routing';
+import { smartIssueDetails, withSiteId } from 'App/saasComponents';
+
+import FullPagination from 'Shared/FullPagination';
+import SelectDateRange from 'Shared/SelectDateRange';
+
+import type { SortDir } from '../api';
+import SegmentsIndicator from '../segments/SegmentsIndicator';
+import {
+  CAT_COLOR,
+  CAT_ICON,
+  CAT_ORDER,
+  type CategoryName,
+  CriticalDialog,
+  CriticalToggle,
+  HideIssueModal,
+  ImpactGauge,
+  type Issue,
+  NotCriticalDialog,
+  RenameIssueModal,
+  TagChip,
+  impactLevel,
+  lastSeenExact,
+  lastSeenLabel,
+} from '../shared';
+import type { SortMode } from '../shared/model';
+import TagFilter, { CheckRow, SegmentFilter } from './TagFilter';
+import './issues.css';
+
+/* antd header-sort order -> our SortMode */
+const SORT_FIELD: Record<string, SortMode> = {
+  impact: 'impact',
+  seenAgoMin: 'recency',
+};
+const antOrder = (dir: SortDir): 'ascend' | 'descend' =>
+  dir === 'asc' ? 'ascend' : 'descend';
+
+function IssuesList() {
+  const { issuesStore, projectsStore } = useStore();
+  const { t } = useTranslation();
+  const siteId = projectsStore.activeSiteId;
+  const history = useHistory();
+
+  const [dispOpen, setDispOpen] = React.useState(false);
+  const [hideTarget, setHideTarget] = React.useState<Issue | null>(null);
+  const [critTarget, setCritTarget] = React.useState<Issue | null>(null);
+  const [notCritTarget, setNotCritTarget] = React.useState<Issue | null>(null);
+  const [renameTarget, setRenameTarget] = React.useState<Issue | null>(null);
+  const [period, setPeriod] = React.useState<any>(
+    Period({ rangeName: LAST_7_DAYS }),
+  );
+
+  React.useEffect(() => {
+    if (siteId) issuesStore.init(String(siteId));
+  }, [siteId]);
+
+  // an empty *filtered* list: fetch the unfiltered baseline for the reset hint
+  React.useEffect(() => {
+    if (
+      !issuesStore.loading &&
+      issuesStore.total === 0 &&
+      issuesStore.hasActiveFilters
+    ) {
+      void issuesStore.fetchUnfilteredTotal();
+    }
+  }, [issuesStore.loading, issuesStore.total, issuesStore.hasActiveFilters]);
+
+  const resetFilters = () => {
+    setPeriod(Period({ rangeName: LAST_7_DAYS }));
+    issuesStore.resetFilters();
+  };
+
+  const openDetail = (id: string) =>
+    history.push(withSiteId(smartIssueDetails(encodeURIComponent(id)), siteId));
+
+  const onPeriodChange = (p: any) => {
+    setPeriod(p);
+    issuesStore.setRange([p.start, p.end]);
+  };
+
+  const showCategory = issuesStore.hasCategories;
+  const showLastSeen = issuesStore.list.some((i) => i.seenAgoMin != null);
+  const { visibility } = issuesStore;
+  // Hidden + Deleted are two toggles over one visibility enum: both on => 'all'
+  const showHidden = visibility === 'hidden' || visibility === 'all';
+  const showDeleted = visibility === 'deleted' || visibility === 'all';
+  const applyVisibility = (hidden: boolean, deleted: boolean) =>
+    issuesStore.setVisibility(
+      hidden && deleted
+        ? 'all'
+        : hidden
+          ? 'hidden'
+          : deleted
+            ? 'deleted'
+            : 'active',
+    );
+
+  const catValue: 'All' | CategoryName =
+    issuesStore.cats.length === 1 ? issuesStore.cats[0] : 'All';
+  // faded per-tab counts: each issue counted once under its primary category, so they sum to "All"
+  const hasCounts = issuesStore.hasCategoryCounts;
+  const faded = (n: number) => <span className="opacity-50 ml-1.5">{n}</span>;
+  const catTabOptions = [
+    {
+      value: 'All',
+      label: (
+        <span>
+          {t('All')}
+          {hasCounts && faded(issuesStore.allCategoryCount)}
+        </span>
+      ),
+    },
+    ...CAT_ORDER.map((c) => {
+      const Ic = CAT_ICON[c];
+      return {
+        value: c,
+        icon: (
+          <Ic
+            size={14}
+            strokeWidth={2}
+            style={{ color: c === catValue ? CAT_COLOR[c] : undefined }}
+          />
+        ),
+        label: (
+          <span>
+            {t(c)}
+            {hasCounts && faded(issuesStore.catCount(c))}
+          </span>
+        ),
+      };
+    }),
+  ];
+
+  const columns: TableColumnsType<Issue> = [
+    {
+      title: t('Impact'),
+      dataIndex: 'impact',
+      width: 96,
+      sorter: true,
+      sortOrder:
+        issuesStore.sortTouched && issuesStore.sort === 'impact'
+          ? antOrder(issuesStore.sortDir)
+          : null,
+      showSorterTooltip: false,
+      render: (v: number) => {
+        const title = t('{{level}} impact', { level: t(impactLevel(v)) });
+        return (
+          <Tooltip title={title}>
+            <span
+              className="inline-flex items-center"
+              role="img"
+              aria-label={title}
+            >
+              <ImpactGauge value={v} />
+            </span>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: t('Issue'),
+      dataIndex: 'head',
+      render: (head: string, r: Issue) => {
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <CriticalToggle
+              state={issuesStore.critState(r.id)}
+              onOpen={() => setCritTarget(r)}
+              stopPropagation
+            />
+            <span className="truncate font-medium color-gray-darkest">
+              {head}
+            </span>
+            {r.hidden && (
+              <Tooltip title={t('Hidden')}>
+                <Tag className="rounded">{t('Hidden')}</Tag>
+              </Tooltip>
+            )}
+            {r.deleted && (
+              <Tooltip title={t('Deleted')}>
+                <Tag color="red" className="rounded">
+                  {t('Deleted')}
+                </Tag>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: t('Tags'),
+      dataIndex: 'journeyLabels',
+      width: 260,
+      render: (labels: string[], r: Issue) => {
+        // origin icon: segment find (fork, blue) vs full traffic (globe, gray) — not clickable
+        const inSegments = r.segmentIds.length > 0;
+        const showOrigin = inSegments || issuesStore.segments.length > 0;
+        const segNames = r.segmentIds
+          .map((id) => issuesStore.segmentName(id))
+          .filter(Boolean);
+        const tags = labels ?? [];
+        const shown = tags.slice(0, 2);
+        const rest = tags.length - shown.length;
+        if (!showOrigin && !tags.length) return null;
+        return (
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            {showOrigin && (
+              <Tooltip
+                placement="top"
+                title={
+                  inSegments
+                    ? t('Found in: {{names}}', {
+                        names: segNames.join(', ') || r.segmentIds.join(', '),
+                      })
+                    : t('Found in full traffic')
+                }
+              >
+                <span
+                  className="rounded-md border border-gray-light bg-gray-lightest flex items-center justify-center shrink-0 cursor-default"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    color: inSegments
+                      ? 'var(--color-main)'
+                      : 'var(--color-gray-medium)',
+                  }}
+                >
+                  {inSegments ? <Split size={13} /> : <Globe size={13} />}
+                </span>
+              </Tooltip>
+            )}
+            {shown.map((tag) => (
+              <TagChip key={tag} label={tag} />
+            ))}
+            {rest > 0 && (
+              <Tooltip title={tags.join(' · ')} placement="top">
+                <span className="text-xs color-gray-medium shrink-0">
+                  +{rest}
+                </span>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
+    },
+    ...(showLastSeen
+      ? ([
+          {
+            title: t('Last seen'),
+            dataIndex: 'seenAgoMin',
+            width: 156,
+            sorter: true,
+            sortOrder:
+              issuesStore.sortTouched && issuesStore.sort === 'recency'
+                ? antOrder(issuesStore.sortDir)
+                : null,
+            showSorterTooltip: false,
+            render: (m?: number) =>
+              m == null ? null : (
+                <Tooltip title={lastSeenExact(m)}>
+                  <span className="text-sm tabular-nums color-gray-medium">
+                    {lastSeenLabel(m)}
+                  </span>
+                </Tooltip>
+              ),
+          },
+        ] as TableColumnsType<Issue>)
+      : []),
+    {
+      title: '',
+      dataIndex: 'actions',
+      width: 48,
+      align: 'center',
+      render: (_: unknown, r: Issue) => {
+        // a soft-deleted row only offers Open + Restore
+        const items = r.deleted
+          ? [
+              {
+                key: 'detail',
+                icon: <ArrowUpRight size={14} />,
+                label: t('Open'),
+              },
+              {
+                key: 'restore',
+                icon: <RotateCcw size={14} />,
+                label: t('Restore'),
+              },
+            ]
+          : [
+              {
+                key: 'detail',
+                icon: <ArrowUpRight size={14} />,
+                label: t('Open'),
+              },
+              {
+                key: 'rename',
+                icon: <Pencil size={14} />,
+                label: t('Rename'),
+              },
+              ...(issuesStore.notCritical[r.id] != null
+                ? [
+                    {
+                      key: 'restoreCritical',
+                      icon: <AlertTriangle size={14} />,
+                      label: t('Show as critical again'),
+                    },
+                  ]
+                : issuesStore.critState(r.id) !== 'none'
+                  ? [
+                      {
+                        key: 'notCritical',
+                        icon: <AlertTriangle size={14} />,
+                        label: t('Not critical for me'),
+                      },
+                    ]
+                  : []),
+              { type: 'divider' as const },
+              // hide/unhide follows the ROW, not the view: `all` mixes both kinds
+              r.hidden
+                ? { key: 'unhide', icon: <Eye size={14} />, label: t('Unhide') }
+                : { key: 'hide', icon: <EyeOff size={14} />, label: t('Hide') },
+              {
+                key: 'delete',
+                icon: <Trash2 size={14} />,
+                label: t('Delete'),
+                danger: true,
+              },
+            ];
+        return (
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{
+              onClick: ({ key, domEvent }) => {
+                domEvent.stopPropagation();
+                if (key === 'detail') openDetail(r.id);
+                else if (key === 'rename') setRenameTarget(r);
+                else if (key === 'notCritical') setNotCritTarget(r);
+                else if (key === 'restoreCritical')
+                  issuesStore.restoreCritical(r.id);
+                else if (key === 'hide') setHideTarget(r);
+                else if (key === 'unhide') issuesStore.unhide(r.id);
+                else if (key === 'restore') issuesStore.restore(r.id);
+                else if (key === 'delete') confirmDelete(r);
+              },
+              items,
+            }}
+          >
+            <Button
+              type="text"
+              size="small"
+              className="flex items-center justify-center"
+              aria-label={t('Issue actions')}
+              icon={<MoreVertical size={16} />}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        );
+      },
+    },
+  ];
+
+  const confirmDelete = (r: Issue) =>
+    Modal.confirm({
+      title: t('Delete this issue?'),
+      content: t('“{{head}}” will be removed from the list.', {
+        head: r.head,
+      }),
+      okText: t('Delete'),
+      okButtonProps: { danger: true },
+      onOk: () => issuesStore.remove(r.id),
+    });
+
+  const onTableChange = (
+    _pagination: TablePaginationConfig,
+    _filters: unknown,
+    sorter: SorterResult<Issue> | SorterResult<Issue>[],
+  ) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    const field = SORT_FIELD[String(s?.field ?? '')];
+    // pagination changes also fire onChange with the sorter unchanged; the setter no-ops when nothing changed
+    if (field && s?.order) {
+      issuesStore.setSortState(field, s.order === 'ascend' ? 'asc' : 'desc');
+    }
+  };
+
+  const dispCount =
+    (issuesStore.critOnly ? 1 : 0) +
+    (showHidden ? 1 : 0) +
+    (showDeleted ? 1 : 0) +
+    (issuesStore.relevantToMe ? 1 : 0);
+
+  const emptyText = issuesStore.loading ? (
+    // suppress the empty state while the loader overlay is up
+    <span />
+  ) : !issuesStore.hasActiveFilters ? (
+    t('No issues yet.')
+  ) : (
+    <div className="flex flex-col items-center gap-3 py-6">
+      <span
+        className="text-sm color-gray-medium text-center"
+        style={{ maxWidth: 420 }}
+      >
+        {issuesStore.relevantToMe
+          ? t(
+              'Nothing relevant yet — mark issues critical for you, or create a traffic segment, and they’ll show up here.',
+            )
+          : t('No issues match these filters.')}
+      </span>
+      <Button
+        size="small"
+        icon={<RotateCcw size={14} />}
+        onClick={resetFilters}
+      >
+        {issuesStore.unfilteredTotal
+          ? t('Reset filters to show {{n}} issues', {
+              n: issuesStore.unfilteredTotal,
+            })
+          : t('Reset filters')}
+      </Button>
+    </div>
+  );
+
+  // Display rows reuse the shared CheckRow (same as the Tags / Segments popovers)
+  const displayContent = (
+    <div className="flex flex-col p-1" style={{ minWidth: 190 }}>
+      <CheckRow
+        on={issuesStore.critOnly}
+        onClick={() => issuesStore.setCritOnly(!issuesStore.critOnly)}
+      >
+        {t('Critical only')}
+      </CheckRow>
+      <CheckRow
+        on={showHidden}
+        onClick={() => applyVisibility(!showHidden, showDeleted)}
+      >
+        {t('Hidden')}
+      </CheckRow>
+      {/* "what's mine": my criticals ∪ my segments' finds */}
+      <CheckRow
+        on={issuesStore.relevantToMe}
+        onClick={() => issuesStore.setRelevantToMe(!issuesStore.relevantToMe)}
+      >
+        {t('Critical to me')}
+        {issuesStore.relevantCount ? ` · ${issuesStore.relevantCount}` : ''}
+      </CheckRow>
+    </div>
+  );
+
+  return (
+    <div className="mx-auto w-full flex flex-col" style={{ maxWidth: 1360 }}>
+      <div className="flex flex-col rounded-lg border bg-white">
+        <div className="flex items-center justify-between border-b px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-lg">{t('Issues')}</span>
+            <Tooltip
+              placement="bottom"
+              title={t(
+                'Issues our agents found while reviewing session replays for this project, ranked by impact. Open one to read the journey and jump straight to the moment it happened.',
+              )}
+            >
+              <span className="flex items-center cursor-help color-gray-medium">
+                <Info size={15} />
+              </span>
+            </Tooltip>
+            {/* capture control — page-level, lives with the title, not the filter row */}
+            <SegmentsIndicator />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="text"
+              icon={<Settings size={14} />}
+              onClick={() => history.push('/client/agents?agent=issues')}
+            >
+              {t('Settings')}
+            </Button>
+            <a
+              href="https://docs.openreplay.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Button type="text" icon={<Album size={14} />}>
+                {t('Docs')}
+              </Button>
+            </a>
+            <div className="min-w-50 md:w-1/4 md:min-w-75">
+              <Input.Search
+                size="small"
+                allowClear
+                maxLength={256}
+                placeholder={t('Filter by issue name')}
+                value={issuesStore.query}
+                onChange={(e) => issuesStore.setQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
+          {showCategory ? (
+            <Segmented
+              size="small"
+              value={catValue}
+              onChange={(v) =>
+                issuesStore.setCats(v === 'All' ? [] : [v as CategoryName])
+              }
+              options={catTabOptions}
+            />
+          ) : (
+            <span />
+          )}
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <TagFilter
+              allTags={issuesStore.allTags}
+              labels={issuesStore.labels}
+              match={issuesStore.match}
+              onToggle={issuesStore.toggleLabel}
+              onSetMatch={issuesStore.setMatch}
+              onClear={() => issuesStore.setLabels([])}
+              onCreateTag={issuesStore.addCustomTag}
+            />
+            <SegmentFilter
+              segments={issuesStore.originSegments.map((s) => ({
+                id: s.id,
+                name: s.name,
+                mine: s.mine,
+              }))}
+              origins={issuesStore.origins}
+              onToggleOrigin={issuesStore.toggleOrigin}
+              onSetOrigins={issuesStore.setOrigins}
+              onClear={() => issuesStore.clearOrigins()}
+              match={issuesStore.segmentsMatch}
+              onSetMatch={issuesStore.setSegmentsMatch}
+            />
+
+            <Popover
+              open={dispOpen}
+              onOpenChange={setDispOpen}
+              trigger="click"
+              placement="bottomRight"
+              content={displayContent}
+            >
+              <Button size="small" icon={<SlidersHorizontal size={14} />}>
+                {t('Display')}
+                {dispCount ? ` (${dispCount})` : ''}
+                <ChevronDown size={13} className="ml-0.5 opacity-60" />
+              </Button>
+            </Popover>
+
+            {/* outlined trigger to match the other controls (renders as bare text otherwise) */}
+            <span className="issues-date-range">
+              <SelectDateRange
+                isAnt
+                right
+                useButtonStyle
+                period={period}
+                onChange={onPeriodChange}
+              />
+            </span>
+          </div>
+        </div>
+
+        <Table<Issue>
+          className="[&_.ant-table-tbody>tr>td]:!py-0 [&_.ant-table-tbody>tr>td]:h-[55px]"
+          rowKey="id"
+          columns={columns}
+          dataSource={issuesStore.list}
+          loading={issuesStore.loading}
+          onChange={onTableChange}
+          pagination={false}
+          rowClassName={(r) =>
+            `cursor-pointer${r.hidden || r.deleted ? ' opacity-60' : ''}`
+          }
+          onRow={(r) => ({ onClick: () => openDetail(r.id) })}
+          locale={{ emptyText }}
+        />
+      </div>
+
+      <FullPagination
+        page={issuesStore.page}
+        limit={issuesStore.limit}
+        total={issuesStore.total}
+        listLen={issuesStore.list.length}
+        onPageChange={(p) => issuesStore.setPage(p)}
+        entity={t('issues')}
+      />
+
+      <HideIssueModal
+        open={hideTarget != null}
+        head={hideTarget?.head}
+        reasons={issuesStore.reasons.hide}
+        onCancel={() => setHideTarget(null)}
+        onConfirm={(reasons, note) => {
+          if (hideTarget) issuesStore.hide(hideTarget.id, reasons, note);
+          setHideTarget(null);
+        }}
+      />
+
+      <RenameIssueModal
+        open={renameTarget != null}
+        initial={renameTarget?.head ?? ''}
+        onCancel={() => setRenameTarget(null)}
+        onConfirm={(name) => {
+          if (renameTarget) issuesStore.rename(renameTarget.id, name);
+          setRenameTarget(null);
+        }}
+      />
+
+      <CriticalDialog
+        issueId={critTarget?.id ?? null}
+        issueHead={critTarget?.head ?? ''}
+        onClose={() => setCritTarget(null)}
+      />
+
+      <NotCriticalDialog
+        issue={notCritTarget}
+        reasons={issuesStore.reasons.criticality}
+        onClose={() => setNotCritTarget(null)}
+      />
+    </div>
+  );
+}
+
+export default withPermissions(['SMART_ISSUES'])(
+  withPageTitle('Smart Issues')(observer(IssuesList)),
+);

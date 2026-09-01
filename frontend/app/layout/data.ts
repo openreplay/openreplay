@@ -1,7 +1,7 @@
 import { TFunction } from 'i18next';
 import { IconNames } from '../components/ui/SVG';
 import React from 'react';
-import { menuHidden } from 'App/utils/split-utils';
+import { agentsEnabled, menuHidden } from 'App/utils/split-utils';
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -67,6 +67,7 @@ export const enum MENU {
   DATA_MANAGEMENT = 'data-management',
   SEGMENTS = 'data-segments',
   TAGS = 'data-tags',
+  ISSUES = 'issues',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -103,6 +104,7 @@ export const categories: (t: TFunction) => Category[] = (t) => [
   {
     title: t('Agents'),
     key: 'agents',
+    hidden: !agentsEnabled(),
     items: [
       {
         label: t('Agents'),
@@ -112,8 +114,11 @@ export const categories: (t: TFunction) => Category[] = (t) => [
           label: t('New'),
           color: '#394DFE',
         },
-        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
-        children: [{ label: t('Tests'), key: MENU.TEST_AGENTS }],
+        hidden: !agentsEnabled(),
+        children: [
+          { label: t('Issues'), key: MENU.ISSUES },
+          { label: t('Tests'), key: MENU.TEST_AGENTS },
+        ],
       },
     ],
   },
@@ -135,14 +140,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     items: [
       { label: t('Dashboards'), key: MENU.DASHBOARDS, icon: 'columns-gap' },
       { label: t('Cards'), key: MENU.CARDS, icon: 'bar-chart-line' },
-      // {
-      //   label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line', children: [
-      //     { label: 'All', key: MENU.CARDS },
-      //     { label: 'Funnels', key: MENU.FUNNELS },
-      //     { label: 'Error Tracking', key: MENU.ERROR_TRACKING },
-      //     { label: 'Resource Monitoring', key: MENU.RESOURCE_MONITORING }
-      //   ]
-      // },
       { label: t('Alerts'), key: MENU.ALERTS, icon: 'bell' },
     ],
   },
@@ -258,20 +255,14 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         hidden: menuHidden.videoExport,
       },
       {
-        label: t('Test Agents'),
-        key: PREFERENCES_MENU.TEST_AGENTS,
-        icon: 'analytics',
-        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
-      },
-      {
-        // shared preferences for the agents (Mehdi 07-27): notifications by
-        // category + behaviour toggles. Core config (environments, run defaults)
-        // stays with each agent's page. Gated behind the same flag as the Tests
-        // agent page while it's in progress.
+        // shared preferences for the agents: journey tags, critical rules,
+        // notifications by category + behaviour toggles. Core config
+        // (environments, run defaults) stays with each agent's page. Gated
+        // behind the same flag as the rest of the Agents section.
         label: t('Agents'),
         key: PREFERENCES_MENU.AGENTS,
         icon: 'scan-pulse',
-        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+        hidden: !agentsEnabled(),
       },
     ],
   },

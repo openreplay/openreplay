@@ -1,0 +1,40 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Icon } from 'UI';
+
+/* AI summary textbox. `primary` is the full tinted card; `secondary` is inline
+   text with a sparkles mark. */
+export default function AiSummary({
+  children,
+  variant = 'primary',
+}: {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary';
+}) {
+  const { t } = useTranslation();
+  if (variant === 'secondary') {
+    return (
+      <div className="flex items-start gap-1.5 text-sm leading-relaxed color-gray-dark">
+        <Icon name="sparkles" size={13} className="shrink-0 mt-[3px]" />
+        <div>{children}</div>
+      </div>
+    );
+  }
+  return (
+    <div
+      className="rounded-lg p-3 flex flex-col gap-1.5 border border-gray-light"
+      style={{
+        background: 'linear-gradient(156deg, #F3F4FF 0%, #F1F8F8 100%)',
+      }}
+    >
+      <span className="inline-flex items-center gap-1.5">
+        <Icon name="sparkles" size={14} />
+        <span className="text-xs font-semibold text-main">
+          {t('AI summary')}
+        </span>
+      </span>
+      <div className="leading-relaxed color-gray-dark">{children}</div>
+    </div>
+  );
+}
