@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
+	connMetrics "openreplay/backend/pkg/metrics/connector"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/sessions"
 )
@@ -21,6 +22,7 @@ type Saver struct {
 	db               Database
 	sessModule       sessions.Sessions
 	projModule       projects.Projects
+	metrics          connMetrics.Connector
 	sessions         map[uint64]map[string]string
 	updatedSessions  map[uint64]bool
 	lastUpdate       map[uint64]time.Time
@@ -29,7 +31,7 @@ type Saver struct {
 	projectIDs       map[uint32]bool
 }
 
-func New(log logger.Logger, cfg *config.Config, db Database, sessions sessions.Sessions, projects projects.Projects) *Saver {
+func New(log logger.Logger, cfg *config.Config, db Database, sessions sessions.Sessions, projects projects.Projects, metrics connMetrics.Connector) *Saver {
 	ctx := context.Background()
 	if cfg == nil {
 		log.Fatal(ctx, "connector config is empty")
@@ -58,6 +60,7 @@ func New(log logger.Logger, cfg *config.Config, db Database, sessions sessions.S
 		db:              db,
 		sessModule:      sessions,
 		projModule:      projects,
+		metrics:         metrics,
 		updatedSessions: make(map[uint64]bool, 0),
 		lastUpdate:      make(map[uint64]time.Time, 0),
 		projectIDs:      projectIDs,
@@ -444,15 +447,18 @@ func (s *Saver) Handle(msg messages.Message) {
 		// Check if project ID is allowed
 		sessInfo, err := s.sessModule.Get(msg.SessionID())
 		if err != nil {
+			s.metrics.IncreaseMessages(connMetrics.MessageNoSession)
 			s.log.Error(context.Background(), "can't get session info: %s, skipping message", err)
 			return
 		}
 		if !s.projectIDs[sessInfo.ProjectID] {
+			s.metrics.IncreaseMessages(connMetrics.MessageFiltered)
 			s.log.Debug(context.Background(), "project ID %d is not allowed, skipping message", sessInfo.ProjectID)
 			return
 		}
 		s.log.Info(context.Background(), "project ID %d is allowed", sessInfo.ProjectID)
 	}
+	s.metrics.IncreaseMessages(connMetrics.MessageHandled)
 	newEvent := handleEvent(msg)
 	if newEvent != nil {
 		if s.events == nil {
@@ -475,9 +481,14 @@ func (s *Saver) commitEvents() {
 		s.log.Info(context.Background(), "empty events batch")
 		return
 	}
+	start := time.Now()
 	if err := s.db.InsertEvents(s.events); err != nil {
+		s.metrics.IncreaseDroppedRows(float64(len(s.events)), connMetrics.TableEvents)
 		s.log.Error(context.Background(), "can't insert events: %s", err)
+	} else {
+		s.metrics.IncreaseInsertedRows(float64(len(s.events)), connMetrics.TableEvents)
 	}
+	s.metrics.RecordInsertDuration(float64(time.Since(start).Milliseconds()), connMetrics.TableEvents)
 	s.events = nil
 }
 
@@ -503,9 +514,14 @@ func (s *Saver) commitSessions() {
 		s.log.Info(context.Background(), "empty sessions batch to send")
 		return
 	}
+	start := time.Now()
 	if err := s.db.InsertSessions(sessions); err != nil {
+		s.metrics.IncreaseDroppedRows(float64(len(sessions)), connMetrics.TableSessions)
 		s.log.Error(context.Background(), "can't insert sessions: %s", err)
+	} else {
+		s.metrics.IncreaseInsertedRows(float64(len(sessions)), connMetrics.TableSessions)
 	}
+	s.metrics.RecordInsertDuration(float64(time.Since(start).Milliseconds()), connMetrics.TableSessions)
 	s.log.Info(context.Background(), "finished: %d, to keep: %d, to send: %d", l, len(toKeep), len(toSend))
 	// Clear current list of finished sessions
 	for _, sessionID := range toSend {
@@ -531,6 +547,7 @@ func (s *Saver) Commit() {
 	s.commitEvents()
 	s.checkZombieSessions()
 	s.commitSessions()
+	s.metrics.RecordPendingSessions(float64(len(s.sessions)))
 }
 
 func (s *Saver) checkZombieSessions() {
@@ -569,6 +586,7 @@ func (s *Saver) checkZombieSessions() {
 			zombieSessionsCount++
 		}
 	}
+	s.metrics.IncreaseZombieSessions(float64(zombieSessionsCount))
 	if zombieSessionsCount > 0 {
 		s.log.Info(context.Background(), "found %d zombie sessions", zombieSessionsCount)
 	}

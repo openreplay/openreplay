@@ -55,16 +55,14 @@ func (se *SessionEnder) ActivePartitions(parts []uint64) {
 		activeParts[p] = true
 	}
 	removedSessions := 0
-	activeSessions := 0
-	for sessID, _ := range se.sessions {
+	for sessID := range se.sessions {
 		if !activeParts[sessID%se.parts] {
 			delete(se.sessions, sessID)
 			se.metrics.DecreaseActiveSessions()
 			removedSessions++
-		} else {
-			activeSessions++
 		}
 	}
+	se.metrics.IncreaseRebalanceEvictions(float64(removedSessions))
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
@@ -147,7 +145,6 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 		if completed {
 			delete(se.sessions, sessID)
 			se.metrics.DecreaseActiveSessions()
-			se.metrics.IncreaseClosedSessions()
 		}
 	}
 }

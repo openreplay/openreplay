@@ -15,6 +15,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
+	connectorMetrics "openreplay/backend/pkg/metrics/connector"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/projects"
@@ -29,7 +30,8 @@ func main() {
 	cfg := config.New(log)
 	// Observability
 	dbMetrics := database.New("connector")
-	metrics.New(log, dbMetrics.List())
+	connMetrics := connectorMetrics.New("connector")
+	metrics.New(log, append(connMetrics.List(), dbMetrics.List()...))
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -84,7 +86,7 @@ func main() {
 
 	projManager := projects.New(log, pgConn, redisClient, dbMetrics)
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetrics, sessions.DoNotIgnoreInactiveProjects)
-	dataSaver := saver.New(log, cfg, db, sessManager, projManager)
+	dataSaver := saver.New(log, cfg, db, sessManager, projManager, connMetrics)
 
 	// Message filter
 	msgFilter := []int{messages.MsgConsoleLog, messages.MsgCustomEvent, messages.MsgJSException,

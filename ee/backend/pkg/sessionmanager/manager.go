@@ -13,6 +13,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/logger"
+	assistMetrics "openreplay/backend/pkg/metrics/assist"
 )
 
 const (
@@ -59,9 +60,10 @@ type sessionManagerImpl struct {
 	sorted    []*SessionData
 	batchSize int
 	scanSize  int64
+	metrics   assistMetrics.Assist
 }
 
-func New(log logger.Logger, cacheTTL time.Duration, batchSize int, scanSize int64, redis *redis.Client) (SessionManager, error) {
+func New(log logger.Logger, cacheTTL time.Duration, batchSize int, scanSize int64, redis *redis.Client, metrics assistMetrics.Assist) (SessionManager, error) {
 	switch {
 	case log == nil:
 		return nil, fmt.Errorf("logger is required")
@@ -73,6 +75,8 @@ func New(log logger.Logger, cacheTTL time.Duration, batchSize int, scanSize int6
 		return nil, fmt.Errorf("scan size is required")
 	case redis == nil:
 		return nil, fmt.Errorf("redis client is required")
+	case metrics == nil:
+		return nil, fmt.Errorf("metrics is required")
 	}
 	sm := &sessionManagerImpl{
 		ctx:       context.Background(),
@@ -86,6 +90,7 @@ func New(log logger.Logger, cacheTTL time.Duration, batchSize int, scanSize int6
 		sorted:    make([]*SessionData, 0),
 		batchSize: batchSize,
 		scanSize:  scanSize,
+		metrics:   metrics,
 	}
 	return sm, nil
 }
@@ -177,9 +182,11 @@ func (sm *sessionManagerImpl) getOnlineSessionIDs() (map[string]struct{}, error)
 		return nil, err
 	}
 	sm.log.Debug(sm.ctx, "Found %d nodes", len(nodeIDs))
+	sm.metrics.RecordNodes(float64(len(nodeIDs)))
 
 	allSessionIDs := sm.getAllNodeSessions(nodeIDs)
 	sm.log.Debug(sm.ctx, "Collected %d unique session IDs", len(allSessionIDs))
+	sm.metrics.RecordOnlineSessions(float64(len(allSessionIDs)))
 	return allSessionIDs, nil
 }
 

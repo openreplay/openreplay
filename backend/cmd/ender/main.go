@@ -131,6 +131,7 @@ func main() {
 				return processEndedBatch(ctx, candidates, sessManager, producer, cfg, log, details, cleanupRegistry)
 			})
 			details.Log(log, ctx)
+			details.Record(enderMetric)
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(ender.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
@@ -162,6 +163,7 @@ func processEndedBatch(
 	}
 	loaded, err := sessManager.GetManySessions(ids)
 	if err != nil {
+		details.LoadErrors += len(ids)
 		log.Error(ctx, "can't get sessions from database: %s", err)
 		return map[uint64]bool{}
 	}

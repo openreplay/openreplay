@@ -86,7 +86,7 @@ func main() {
 		log.Fatal(ctx, "can't init users: %s", err)
 	}
 
-	saver := datasaver.New(log, cfg, chConnector, sessManager, issuesManager, tagsManager, canvases, users)
+	saver := datasaver.New(log, cfg, chConnector, sessManager, issuesManager, tagsManager, canvases, users, dbMetric)
 
 	msgFilter := []int{
 		// Web messages

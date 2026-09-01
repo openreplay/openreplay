@@ -55,10 +55,10 @@ func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics data
 	responser := api.NewResponser(webMetrics)
 	cleanupReg := registry.New(log, redis)
 	builder := &serviceBuilder{}
-	if builder.webAPI, err = websessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker, cleanupReg); err != nil {
+	if builder.webAPI, err = websessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker, cleanupReg, webMetrics); err != nil {
 		return nil, err
 	}
-	if builder.mobileAPI, err = mobilesessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker, cleanupReg); err != nil {
+	if builder.mobileAPI, err = mobilesessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker, cleanupReg, webMetrics); err != nil {
 		return nil, err
 	}
 	if builder.conditionsAPI, err = conditionsAPI.NewHandlers(log, responser, tokenizer, conditions); err != nil {

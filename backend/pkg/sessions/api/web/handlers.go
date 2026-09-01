@@ -23,6 +23,7 @@ import (
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	. "openreplay/backend/pkg/messages"
+	webmetrics "openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/api"
@@ -45,11 +46,12 @@ type handlersImpl struct {
 	flaker          *flakeid.Flaker
 	beaconSizeCache *beacons.BeaconCache
 	cleanupReg      registry.Registry
+	metrics         webmetrics.Web
 }
 
 func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, producer types.Producer, projects projects.Projects,
 	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
-	conditions conditions.Conditions, flaker *flakeid.Flaker, cleanupReg registry.Registry) (api.Handlers, error) {
+	conditions conditions.Conditions, flaker *flakeid.Flaker, cleanupReg registry.Registry, metrics webmetrics.Web) (api.Handlers, error) {
 	return &handlersImpl{
 		log:             log,
 		cfg:             cfg,
@@ -64,7 +66,13 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser
 		flaker:          flaker,
 		beaconSizeCache: beacons.NewBeaconCache(cfg.BeaconSizeLimit),
 		cleanupReg:      cleanupReg,
+		metrics:         metrics,
 	}, nil
+}
+
+func (e *handlersImpl) rejectStart(w http.ResponseWriter, r *http.Request, code int, err error, startTime time.Time, bodySize int, reason string) {
+	e.metrics.IncreaseStartRejects("web", reason)
+	e.responser.ResponseWithError(e.log, r.Context(), w, code, err, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) GetAll() []*api.Description {
@@ -110,13 +118,13 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Check request body
 	if r.Body == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.rejectStart(w, r, http.StatusBadRequest, errors.New("request body is empty"), startTime, bodySize, webmetrics.RejectEmptyBody)
 		return
 	}
 
 	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.rejectStart(w, r, http.StatusRequestEntityTooLarge, err, startTime, bodySize, webmetrics.RejectTooLarge)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -124,7 +132,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	// Parse request body
 	req := &StartSessionRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.rejectStart(w, r, http.StatusBadRequest, err, startTime, bodySize, webmetrics.RejectBadJSON)
 		return
 	}
 
@@ -132,13 +140,13 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(context.WithValue(r.Context(), "tracker", req.TrackerVersion))
 	if err := validateTrackerVersion(req.TrackerVersion); err != nil {
 		e.log.Error(r.Context(), "unsupported tracker version: %s, err: %s", req.TrackerVersion, err)
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUpgradeRequired, errors.New("please upgrade the tracker version"), startTime, r.URL.Path, bodySize)
+		e.rejectStart(w, r, http.StatusUpgradeRequired, errors.New("please upgrade the tracker version"), startTime, bodySize, webmetrics.RejectTrackerOutdated)
 		return
 	}
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, r.URL.Path, bodySize)
+		e.rejectStart(w, r, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, bodySize, webmetrics.RejectNoProjectKey)
 		return
 	}
 
@@ -146,10 +154,10 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
+			e.rejectStart(w, r, http.StatusNotFound, logErr, startTime, bodySize, webmetrics.RejectProjectNotFound)
 		} else {
 			e.log.Error(r.Context(), "failed to get project by key: %s, err: %s", *req.ProjectKey, err)
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
+			e.rejectStart(w, r, http.StatusInternalServerError, errors.New("can't find a project"), startTime, bodySize, webmetrics.RejectProjectError)
 		}
 		return
 	}
@@ -159,13 +167,13 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Check if the project supports mobile sessions
 	if !p.IsWeb() {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("project doesn't support web sessions"), startTime, r.URL.Path, bodySize)
+		e.rejectStart(w, r, http.StatusForbidden, errors.New("project doesn't support web sessions"), startTime, bodySize, webmetrics.RejectPlatformUnsupported)
 		return
 	}
 
 	ua := e.uaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
+		e.rejectStart(w, r, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, bodySize, webmetrics.RejectBrowserUnrecognized)
 		return
 	}
 
@@ -185,14 +193,14 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 			}
 		}
 		if dice >= p.SampleRate {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, bodySize)
+			e.rejectStart(w, r, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, bodySize, webmetrics.RejectSampleRateMiss)
 			return
 		}
 
 		startTimeMili := startTime.UnixMilli()
 		sessionID, err := e.flaker.Compose(uint64(startTimeMili))
 		if err != nil {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+			e.rejectStart(w, r, http.StatusInternalServerError, err, startTime, bodySize, webmetrics.RejectInternalError)
 			return
 		}
 

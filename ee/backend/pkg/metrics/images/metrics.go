@@ -6,35 +6,42 @@ import (
 	"openreplay/backend/pkg/metrics/common"
 )
 
+const (
+	FrameSaved      = "saved"
+	FrameBadMessage = "bad_message"
+	UploadOK        = "uploaded"
+	UploadMissing   = "missing"
+)
+
 type Images interface {
 	RecordSavingImageDuration(duration float64)
-	IncreaseTotalSavedImages()
-	IncreaseTotalCreatedArchives()
+	IncreaseFrames(outcome string)
+	IncreaseUploads(outcome string)
 	RecordUploadingDuration(duration float64)
 	List() []prometheus.Collector
 }
 
 type imagesImpl struct {
-	savingImageDuration  prometheus.Histogram
-	totalSavedImages     prometheus.Counter
-	totalCreatedArchives prometheus.Counter
-	uploadingDuration    prometheus.Histogram
+	savingImageDuration prometheus.Histogram
+	frames              *prometheus.CounterVec
+	uploads             *prometheus.CounterVec
+	uploadingDuration   prometheus.Histogram
 }
 
 func New(serviceName string) Images {
 	return &imagesImpl{
-		savingImageDuration:  newSavingImageDuration(serviceName),
-		totalSavedImages:     newTotalSavedImages(serviceName),
-		totalCreatedArchives: newTotalCreatedArchives(serviceName),
-		uploadingDuration:    newUploadingDuration(serviceName),
+		savingImageDuration: newSavingImageDuration(serviceName),
+		frames:              newFrames(serviceName),
+		uploads:             newUploads(serviceName),
+		uploadingDuration:   newUploadingDuration(serviceName),
 	}
 }
 
 func (i *imagesImpl) List() []prometheus.Collector {
 	return []prometheus.Collector{
 		i.savingImageDuration,
-		i.totalSavedImages,
-		i.totalCreatedArchives,
+		i.frames,
+		i.uploads,
 		i.uploadingDuration,
 	}
 }
@@ -54,32 +61,34 @@ func (i *imagesImpl) RecordSavingImageDuration(duration float64) {
 	i.savingImageDuration.Observe(duration)
 }
 
-func newTotalSavedImages(serviceName string) prometheus.Counter {
-	return prometheus.NewCounter(
+func newFrames(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: serviceName,
-			Name:      "total_saved_images",
-			Help:      "A counter displaying the total number of saved images.",
+			Name:      "frames_total",
+			Help:      "A counter displaying consumed screenshot frames by outcome (saved/bad_message).",
 		},
+		[]string{"outcome"},
 	)
 }
 
-func (i *imagesImpl) IncreaseTotalSavedImages() {
-	i.totalSavedImages.Inc()
+func (i *imagesImpl) IncreaseFrames(outcome string) {
+	i.frames.WithLabelValues(outcome).Inc()
 }
 
-func newTotalCreatedArchives(serviceName string) prometheus.Counter {
-	return prometheus.NewCounter(
+func newUploads(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: serviceName,
-			Name:      "total_created_archives",
-			Help:      "A counter displaying the total number of created archives.",
+			Name:      "uploads_total",
+			Help:      "A counter displaying screenshot archive uploads by outcome (uploaded/missing).",
 		},
+		[]string{"outcome"},
 	)
 }
 
-func (i *imagesImpl) IncreaseTotalCreatedArchives() {
-	i.totalCreatedArchives.Inc()
+func (i *imagesImpl) IncreaseUploads(outcome string) {
+	i.uploads.WithLabelValues(outcome).Inc()
 }
 
 func newUploadingDuration(serviceName string) prometheus.Histogram {

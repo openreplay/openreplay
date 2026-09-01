@@ -106,6 +106,8 @@ func main() {
 			stats := mobWriter.Sync()
 			sinkMetrics.RecordOpenFiles(float64(stats.OpenFiles), float64(stats.FilesLimit))
 			sinkMetrics.IncreaseFileEvictions(float64(stats.Evicted))
+			sinkMetrics.RecordSyncDuration(float64(stats.Duration.Milliseconds()))
+			sinkMetrics.IncreaseSyncedBytes(float64(stats.BytesSynced))
 			log.Info(ctx, "manual sync finished, fds=%d/%d, synced=%d, evicted=%d, size=%.2fMB, dur=%dms",
 				stats.OpenFiles, stats.FilesLimit, stats.FilesSynced, stats.Evicted,
 				float64(stats.BytesSynced)/(1024*1024), stats.Duration.Milliseconds())
@@ -141,10 +143,12 @@ func main() {
 			stats := mobWriter.Sync()
 			sinkMetrics.RecordOpenFiles(float64(stats.OpenFiles), float64(stats.FilesLimit))
 			sinkMetrics.IncreaseFileEvictions(float64(stats.Evicted))
+			sinkMetrics.RecordSyncDuration(float64(stats.Duration.Milliseconds()))
+			sinkMetrics.IncreaseSyncedBytes(float64(stats.BytesSynced))
 			log.Info(ctx, "sync: fds=%d/%d, synced=%d, evicted=%d, size=%.2fMB, dur=%dms",
 				stats.OpenFiles, stats.FilesLimit, stats.FilesSynced, stats.Evicted,
 				float64(stats.BytesSynced)/(1024*1024), stats.Duration.Milliseconds())
-			mobWriter.EvictStale(cfg.SessionTTL)
+			sinkMetrics.IncreaseStaleSessionsEvicted(float64(mobWriter.EvictStale(cfg.SessionTTL)))
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}

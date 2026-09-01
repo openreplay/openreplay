@@ -11,6 +11,7 @@ import (
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	assistMetrics "openreplay/backend/pkg/metrics/assist"
 )
 
 type FlexUint32 uint32
@@ -37,6 +38,7 @@ type assistStatsImpl struct {
 	log         logger.Logger
 	pgClient    pool.Pool
 	redisClient *redis.Client
+	metrics     assistMetrics.Assist
 	ticker      *time.Ticker
 	stopChan    chan struct{}
 }
@@ -45,7 +47,7 @@ type AssistStats interface {
 	Stop()
 }
 
-func NewAssistStats(log logger.Logger, pgClient pool.Pool, redisClient *redis.Client) (AssistStats, error) {
+func NewAssistStats(log logger.Logger, pgClient pool.Pool, redisClient *redis.Client, metrics assistMetrics.Assist) (AssistStats, error) {
 	switch {
 	case log == nil:
 		return nil, errors.New("logger is empty")
@@ -53,11 +55,14 @@ func NewAssistStats(log logger.Logger, pgClient pool.Pool, redisClient *redis.Cl
 		return nil, errors.New("pg client is empty")
 	case redisClient == nil:
 		return nil, errors.New("redis client is empty")
+	case metrics == nil:
+		return nil, errors.New("metrics is empty")
 	}
 	stats := &assistStatsImpl{
 		log:         log,
 		pgClient:    pgClient,
 		redisClient: redisClient,
+		metrics:     metrics,
 		ticker:      time.NewTicker(time.Minute),
 		stopChan:    make(chan struct{}),
 	}
@@ -94,6 +99,10 @@ type AssistStatsEvent struct {
 func (as *assistStatsImpl) loadData() {
 	ctx := context.Background()
 
+	if depth, err := as.redisClient.LLen(ctx, "assist:stats").Result(); err == nil {
+		as.metrics.RecordStatsQueueDepth(float64(depth))
+	}
+
 	events, err := as.redisClient.LPopCount(ctx, "assist:stats", 1000).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
@@ -113,15 +122,22 @@ func (as *assistStatsImpl) loadData() {
 		e := &AssistStatsEvent{}
 		err := json.Unmarshal([]byte(event), &e)
 		if err != nil {
+			as.metrics.IncreaseStatsDropped(assistMetrics.DropParse)
 			as.log.Error(ctx, "Failed to unmarshal event: %v", err)
 			continue
 		}
+		as.metrics.IncreaseStatsEvents(e.EventType, e.EventState)
 		switch e.EventState {
 		case "start":
-			err = as.insertEvent(e)
+			if err = as.insertEvent(e); err != nil {
+				as.metrics.IncreaseStatsDropped(assistMetrics.DropInsert)
+			}
 		case "end":
-			err = as.updateEvent(e)
+			if err = as.updateEvent(e); err != nil {
+				as.metrics.IncreaseStatsDropped(assistMetrics.DropUpdate)
+			}
 		default:
+			as.metrics.IncreaseStatsDropped(assistMetrics.DropUnknownState)
 			as.log.Warn(ctx, "Unknown event type: %s", e.EventType)
 		}
 		if err != nil {

@@ -137,6 +137,7 @@ func ProcessEndedSession(
 			details.NotFound[sessionID] = timestamp
 			return true
 		}
+		details.UpdateErrors++
 		log.Error(ctx, "can't update session duration, err: %s", err)
 		return false
 	}
@@ -177,18 +178,22 @@ func emitSessionEnd(
 	if sess.Platform == "ios" || sess.Platform == "android" {
 		mobileMsg := &messages.MobileSessionEnd{Timestamp: timestamp}
 		if err := producer.Produce(cfg.TopicRawMobile, sessionID, mobileMsg.Encode()); err != nil {
+			details.ProduceErrors++
 			log.Error(ctx, "can't send MobileSessionEnd to mobile topic: %s", err)
 			return false
 		}
 		if err := producer.Produce(cfg.TopicRawImages, sessionID, mobileMsg.Encode()); err != nil {
+			details.ProduceCanvasErrors++
 			log.Error(ctx, "can't send MobileSessionEnd signal to canvas topic: %s", err)
 		}
 	} else {
 		if err := producer.Produce(cfg.TopicRawAssets, sessionID, msg.Encode()); err != nil {
+			details.ProduceErrors++
 			log.Error(ctx, "can't send sessionEnd to raw topic: %s", err)
 			return false
 		}
 		if err := producer.Produce(cfg.TopicCanvasImages, sessionID, msg.Encode()); err != nil {
+			details.ProduceCanvasErrors++
 			log.Error(ctx, "can't send sessionEnd signal to canvas topic: %s", err)
 		}
 	}

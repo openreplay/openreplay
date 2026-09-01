@@ -8,24 +8,38 @@ import (
 	"openreplay/backend/pkg/metrics/common"
 )
 
+const (
+	RejectEmptyBody           = "empty_body"
+	RejectTooLarge            = "too_large"
+	RejectBadJSON             = "bad_json"
+	RejectTrackerOutdated     = "tracker_outdated"
+	RejectNoProjectKey        = "no_project_key"
+	RejectProjectNotFound     = "project_not_found"
+	RejectProjectError        = "project_error"
+	RejectPlatformUnsupported = "platform_unsupported"
+	RejectBrowserUnrecognized = "browser_unrecognized"
+	RejectSampleRateMiss      = "sample_rate_miss"
+	RejectInternalError       = "internal_error"
+)
+
 type Web interface {
 	RecordRequestSize(size float64, url string, code int)
 	RecordRequestDuration(durMillis float64, url string, code int)
-	IncreaseTotalRequests()
+	IncreaseStartRejects(platform, reason string)
 	List() []prometheus.Collector
 }
 
 type webImpl struct {
 	httpRequestSize     *prometheus.HistogramVec
 	httpRequestDuration *prometheus.HistogramVec
-	httpTotalRequests   prometheus.Counter
+	startRejects        *prometheus.CounterVec
 }
 
 func New(serviceName string) Web {
 	return &webImpl{
 		httpRequestSize:     newRequestSizeMetric(serviceName),
 		httpRequestDuration: newRequestDurationMetric(serviceName),
-		httpTotalRequests:   newTotalRequestsMetric(serviceName),
+		startRejects:        newStartRejects(serviceName),
 	}
 }
 
@@ -33,7 +47,7 @@ func (w *webImpl) List() []prometheus.Collector {
 	return []prometheus.Collector{
 		w.httpRequestSize,
 		w.httpRequestDuration,
-		w.httpTotalRequests,
+		w.startRejects,
 	}
 }
 
@@ -69,16 +83,17 @@ func (w *webImpl) RecordRequestDuration(durMillis float64, url string, code int)
 	w.httpRequestDuration.WithLabelValues(url, strconv.Itoa(code)).Observe(durMillis / 1000.0)
 }
 
-func newTotalRequestsMetric(serviceName string) prometheus.Counter {
-	return prometheus.NewCounter(
+func newStartRejects(serviceName string) *prometheus.CounterVec {
+	return prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: serviceName,
-			Name:      "web_requests_total",
-			Help:      "A counter displaying the number all HTTP requests.",
+			Name:      "start_rejects_total",
+			Help:      "A counter displaying rejected session-start requests by platform and reason (sessions lost at the front door).",
 		},
+		[]string{"platform", "reason"},
 	)
 }
 
-func (w *webImpl) IncreaseTotalRequests() {
-	w.httpTotalRequests.Inc()
+func (w *webImpl) IncreaseStartRejects(platform, reason string) {
+	w.startRejects.WithLabelValues(platform, reason).Inc()
 }

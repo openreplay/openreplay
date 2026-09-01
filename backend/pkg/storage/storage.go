@@ -67,9 +67,13 @@ func (u *uploaderImpl) Upload(ctx context.Context, sessionID uint64, encryptionK
 	saveMobeAsMobs := false
 	if err := checkMobFilePresence(filePath); err != nil {
 		if !errors.Is(err, ErrSessionWithoutFirstPart) {
+			if errors.Is(err, ErrSessionNotFound) {
+				u.metrics.IncreaseSessionsNotFound()
+			}
 			return err
 		}
 		saveMobeAsMobs = true
+		u.metrics.IncreaseSessionsWithoutStart()
 		u.log.Warn(ctx, "session without first part: %d", sessionID)
 	}
 	u.uploaderPool.Submit(&uploadTask{
@@ -121,17 +125,22 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 		start := time.Now()
 		mode := "compress"
 		var err error
+		var uploadedBytes int64
 		if task.encryptionKey != "" {
 			mode = "encrypt"
-			err = u.streamEncryptionToS3(name, task.encryptionKey, srcPath)
+			uploadedBytes, err = u.streamEncryptionToS3(name, task.encryptionKey, srcPath)
 		} else {
-			err = u.streamZstdToS3(name, srcPath)
+			uploadedBytes, err = u.streamZstdToS3(name, srcPath)
 		}
 		u.metrics.RecordSessionUploadDuration(float64(time.Since(start).Milliseconds()), fileType, mode)
-		if err == nil {
-			u.metrics.IncreaseStorageTotalSessions(fileType)
-		}
-		if err != nil {
+		switch {
+		case err == nil:
+			u.metrics.IncreaseUploads(fileType, storageMetrics.UploadOK)
+			u.metrics.IncreaseUploadedBytes(float64(uploadedBytes), fileType)
+		case IsNotExist(err):
+			u.metrics.IncreaseUploads(fileType, storageMetrics.UploadMissing)
+		default:
+			u.metrics.IncreaseUploads(fileType, storageMetrics.UploadFailed)
 			var fatalErr *objectstorage.FatalUploadError
 			if errors.As(err, &fatalErr) {
 				log.Fatalf("fatal S3 upload error (HTTP %d), terminating: %v", fatalErr.StatusCode, fatalErr.Cause)
@@ -193,6 +202,7 @@ func (u *uploaderImpl) uploadSession(payload interface{}) {
 
 	wg.Wait()
 	if mobsFailed {
+		u.metrics.IncreaseFailedSessions()
 		errs := make([]string, 0, len(uploadErrors))
 		for _, e := range uploadErrors {
 			if e != "" {
@@ -234,7 +244,18 @@ func (u *uploaderImpl) Wait() {
 	u.uploaderPool.Pause()
 }
 
-func (u *uploaderImpl) streamZstdToS3(name, srcPath string) error {
+type countingReader struct {
+	r io.Reader
+	n int64
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	c.n += int64(n)
+	return n, err
+}
+
+func (u *uploaderImpl) streamZstdToS3(name, srcPath string) (int64, error) {
 	pr, pw := io.Pipe()
 	errCh := make(chan error, 1)
 
@@ -266,10 +287,11 @@ func (u *uploaderImpl) streamZstdToS3(name, srcPath string) error {
 		_, wErr = io.CopyBuffer(zw, f, make([]byte, 256*1024))
 	}()
 
-	if err := u.objStorage.Upload(pr, name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
+	cr := &countingReader{r: pr}
+	if err := u.objStorage.Upload(cr, name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
 		pr.CloseWithError(err)
 		<-errCh
-		return err
+		return cr.n, err
 	}
-	return <-errCh
+	return cr.n, <-errCh
 }

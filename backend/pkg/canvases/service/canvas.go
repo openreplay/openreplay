@@ -100,6 +100,7 @@ func (v *ImageStorage) SaveCanvasToDisk(ctx context.Context, sessID uint64, data
 	}
 	var msg = &canvasData{}
 	if err := json.Unmarshal(data, msg); err != nil {
+		v.metrics.IncreaseFrames(canvas.FrameBadMessage)
 		return fmt.Errorf("can't parse canvas message, err: %s", err)
 	}
 	v.saverPool.Submit(&saveTask{ctx: ctx, sessionID: sessID, name: msg.Name, image: bytes.NewBuffer(msg.Data)})
@@ -142,7 +143,7 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	}
 
 	v.metrics.RecordCanvasImageSize(float64(task.image.Len()))
-	v.metrics.IncreaseTotalSavedImages()
+	v.metrics.IncreaseFrames(canvas.FrameSaved)
 
 	v.log.Debug(task.ctx, "canvas image saved, name: %s, size: %3.3f mb", task.name, float64(task.image.Len())/1024.0/1024.0)
 	return
@@ -172,6 +173,7 @@ func (v *ImageStorage) PrepareSessionCanvases(ctx context.Context, sessID uint64
 			Payload: dir,
 		}
 		if err := v.producer.Produce(v.cfg.TopicCanvasTrigger, sessID, msg.Encode()); err != nil {
+			v.metrics.IncreaseTriggerErrors()
 			v.log.Error(ctx, "can't send canvas trigger: %s", err)
 		}
 	}
@@ -199,9 +201,10 @@ func (v *ImageStorage) packCanvas(payload interface{}) {
 		if !strings.Contains(err.Error(), "no such file or directory") {
 			v.log.Fatal(task.ctx, "can't upload canvas, name: %s, err: %s", task.name, err)
 		}
+		v.metrics.IncreaseUploads(canvas.UploadMissing)
 		return
 	}
-	v.metrics.IncreaseTotalCreatedArchives()
+	v.metrics.IncreaseUploads(canvas.UploadOK)
 	v.metrics.RecordUploadingDuration(time.Since(start).Seconds())
 
 	v.log.Debug(task.ctx, "canvas packed and uploaded successfully in %.3fs, session: %d", time.Since(start).Seconds(), task.sessionID)

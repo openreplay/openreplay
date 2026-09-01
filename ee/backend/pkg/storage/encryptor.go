@@ -20,14 +20,14 @@ func GenerateEncryptionKey() []byte {
 	return key
 }
 
-func (u *uploaderImpl) streamEncryptionToS3(name, key, srcPath string) error {
+func (u *uploaderImpl) streamEncryptionToS3(name, key, srcPath string) (int64, error) {
 	keyBytes := []byte(key)
 	if len(keyBytes) != keyLen {
-		return fmt.Errorf("invalid encryption key length: %d, expected %d", len(keyBytes), keyLen)
+		return 0, fmt.Errorf("invalid encryption key length: %d, expected %d", len(keyBytes), keyLen)
 	}
 	block, err := aes.NewCipher(keyBytes)
 	if err != nil {
-		return fmt.Errorf("failed to create AES cipher: %s", err)
+		return 0, fmt.Errorf("failed to create AES cipher: %s", err)
 	}
 
 	pr, pw := io.Pipe()
@@ -66,10 +66,11 @@ func (u *uploaderImpl) streamEncryptionToS3(name, key, srcPath string) error {
 		_, wErr = io.CopyBuffer(w, f, make([]byte, 256*1024))
 	}()
 
-	if err := u.objStorage.Upload(pr, name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.NoCompression); err != nil {
+	cr := &countingReader{r: pr}
+	if err := u.objStorage.Upload(cr, name, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.NoCompression); err != nil {
 		pr.CloseWithError(err)
 		<-errCh
-		return err
+		return cr.n, err
 	}
-	return <-errCh
+	return cr.n, <-errCh
 }
