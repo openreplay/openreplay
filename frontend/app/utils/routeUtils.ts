@@ -12,4 +12,7 @@ export const CLIENT_TABS = {
   BILLING: 'billing',
   MODULES: 'modules',
   VIDEOS: 'exported',
+  TEST_AGENTS: 'test-agents',
+  AGENTS: 'agents',
+  SUPPORT: 'support',
 };

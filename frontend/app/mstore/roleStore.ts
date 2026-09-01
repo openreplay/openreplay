@@ -15,6 +15,7 @@ const permissions = (t: TFunction) => [
   { text: t('Change Spot Visibility'), value: 'SPOT_PUBLIC' },
   { text: t('Data Management'), value: 'DATA_MANAGEMENT' },
   { text: t('Session Export'), value: 'SESSION_EXPORT' },
+  { text: t('AI testing'), value: 'BROWSER_TESTS' },
 ];
 
 export default class UserStore {

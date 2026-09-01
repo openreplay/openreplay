@@ -1,12 +1,13 @@
-import React from 'react';
-import { Tooltip } from 'UI';
-import { Button } from 'antd';
-import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
-import { mobileScreen } from 'App/utils/isMobile';
 import { PlusOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import { TFunction } from 'i18next';
+import { useObserver } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { mobileScreen } from 'App/utils/isMobile';
+import { Tooltip } from 'UI';
 
 const PERMISSION_WARNING = (t: TFunction) =>
   t('You don’t have the permissions to perform this action.');
@@ -32,6 +33,7 @@ function AddUserButton({
       <Button
         disabled={!cannAddUser || !isAdmin}
         type={btnVariant}
+        size="small"
         onClick={onClick}
         icon={<PlusOutlined />}
       >

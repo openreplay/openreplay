@@ -14,6 +14,7 @@ export interface MenuItem {
   leading?: any;
   isEnterprise?: boolean;
   isAdmin?: boolean;
+  tag?: { label: string; color: string; border?: boolean };
 }
 
 interface Category {
@@ -36,6 +37,8 @@ export const enum PREFERENCES_MENU {
   NOTIFICATIONS = 'notifications',
   BILLING = 'billing',
   EXPORTED_VIDEOS = 'exported-videos',
+  TEST_AGENTS = 'test-agents',
+  AGENTS = 'agents',
 }
 
 export const enum MENU {
@@ -54,6 +57,8 @@ export const enum MENU {
   SUPPORT = 'support',
   EXIT = 'exit',
   SPOTS = 'spots',
+  AGENTS = 'agents',
+  TEST_AGENTS = 'agents-tests',
   ACTIVITY = 'activity',
   USER = 'user-page',
   USERS = 'data-users',
@@ -92,6 +97,23 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         label: t('Highlights'),
         key: MENU.HIGHLIGHTS,
         icon: 'chat-square-quote',
+      },
+    ],
+  },
+  {
+    title: t('Agents'),
+    key: 'agents',
+    items: [
+      {
+        label: t('Agents'),
+        key: MENU.AGENTS,
+        icon: 'scan-pulse',
+        tag: {
+          label: t('New'),
+          color: '#394DFE',
+        },
+        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+        children: [{ label: t('Tests'), key: MENU.TEST_AGENTS }],
       },
     ],
   },
@@ -234,6 +256,22 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         key: PREFERENCES_MENU.EXPORTED_VIDEOS,
         icon: 'ic-network',
         hidden: menuHidden.videoExport,
+      },
+      {
+        label: t('Test Agents'),
+        key: PREFERENCES_MENU.TEST_AGENTS,
+        icon: 'analytics',
+        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
+      },
+      {
+        // shared preferences for the agents (Mehdi 07-27): notifications by
+        // category + behaviour toggles. Core config (environments, run defaults)
+        // stays with each agent's page. Gated behind the same flag as the Tests
+        // agent page while it's in progress.
+        label: t('Agents'),
+        key: PREFERENCES_MENU.AGENTS,
+        icon: 'scan-pulse',
+        hidden: window.localStorage.getItem('__test_agents__') !== 'true',
       },
     ],
   },

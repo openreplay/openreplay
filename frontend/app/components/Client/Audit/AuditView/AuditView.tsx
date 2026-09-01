@@ -1,15 +1,19 @@
-import React, { useEffect } from 'react';
-import { PageTitle, Icon } from 'UI';
+import withPageTitle from 'HOCs/withPageTitle';
 import { Button } from 'antd';
-import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { numberWithCommas } from 'App/utils';
+import { Icon } from 'UI';
+
 import Select from 'Shared/Select';
 import SelectDateRange from 'Shared/SelectDateRange';
-import { numberWithCommas } from 'App/utils';
-import withPageTitle from 'HOCs/withPageTitle';
-import AuditSearchField from '../AuditSearchField';
+
+import PreferencesPage from '../../PreferencesPage';
 import AuditList from '../AuditList';
-import { useTranslation } from 'react-i18next';
+import AuditSearchField from '../AuditSearchField';
 
 function AuditView() {
   const { t } = useTranslation();
@@ -33,58 +37,46 @@ function AuditView() {
   };
 
   return useObserver(() => (
-    <div className="bg-white rounded-lg shadow-xs border">
-      <div className="flex items-center mb-4 px-5 pt-5">
-        <PageTitle
-          title={
-            <div className="flex items-center">
-              <span>{t('Audit Trail')}</span>
-              <span className="color-gray-medium ml-2">{total}</span>
-            </div>
-          }
-        />
-        <div className="flex items-center ml-auto">
-          <div className="mx-2">
-            <SelectDateRange
-              period={auditStore.period}
-              onChange={onChange}
-              right
-            />
-          </div>
-          <div className="mx-2">
-            <Select
-              options={[
-                { label: t('Newest First'), value: 'desc' },
-                { label: t('Oldest First'), value: 'asc' },
-              ]}
-              defaultValue={order}
-              plain
-              onChange={({ value }) =>
-                auditStore.updateKey('order', value.value)
-              }
-            />
-          </div>
+    <PreferencesPage
+      title={t('Audit Trail')}
+      value={total}
+      flush
+      actions={
+        <>
+          <SelectDateRange
+            period={auditStore.period}
+            onChange={onChange}
+            right
+          />
+          <Select
+            options={[
+              { label: t('Newest First'), value: 'desc' },
+              { label: t('Oldest First'), value: 'asc' },
+            ]}
+            defaultValue={order}
+            plain
+            size="small"
+            onChange={({ value }) => auditStore.updateKey('order', value.value)}
+          />
           <AuditSearchField
             onChange={(value) => {
               auditStore.updateKey('searchQuery', value);
               auditStore.updateKey('page', 1);
             }}
           />
-          <div>
-            <Button
-              type="text"
-              icon={<Icon name="grid-3x3" color="teal" />}
-              className="ml-3"
-              onClick={exportToCsv}
-            >
-              <span className="ml-2">{t('Export to CSV')}</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
+          <Button
+            type="text"
+            size="small"
+            icon={<Icon name="grid-3x3" color="teal" />}
+            onClick={exportToCsv}
+          >
+            <span className="ml-2">{t('Export to CSV')}</span>
+          </Button>
+        </>
+      }
+    >
       <AuditList />
-    </div>
+    </PreferencesPage>
   ));
 }
 

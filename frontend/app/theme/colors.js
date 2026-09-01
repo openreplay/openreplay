@@ -57,6 +57,8 @@ module.exports = {
   'disabled-text': 'rgba(0,0,0, 0.38)',
   'indigo-lightest': 'rgb(238, 242, 255)',
   indigo: 'rgb(97, 95, 255)',
+  'warning-surface': '#fff7ed',
+  'warning-text': '#C26822',
 
   /** DEPRECATED */
   figmaColors: {
@@ -120,6 +122,9 @@ module.exports = {
     offWhite: 'rgba(30, 30, 50, 1)',
     'green-light': 'rgb(3, 46, 21)',
     yellow: 'rgb(67, 32, 4)',
+
+    'warning-surface': 'rgb(67, 38, 12)',
+    'warning-text': 'rgb(251, 191, 128)',
 
     figmaColors: {
       'accent-secondary': 'rgba(82, 190, 195, 1)',
