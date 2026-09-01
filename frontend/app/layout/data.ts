@@ -255,12 +255,6 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         hidden: menuHidden.videoExport,
       },
       {
-        label: t('Test Agents'),
-        key: PREFERENCES_MENU.TEST_AGENTS,
-        icon: 'analytics',
-        hidden: !agentsEnabled(),
-      },
-      {
         // shared preferences for the agents: journey tags, critical rules,
         // notifications by category + behaviour toggles. Core config
         // (environments, run defaults) stays with each agent's page. Gated
