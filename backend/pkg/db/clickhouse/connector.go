@@ -54,7 +54,8 @@ type Connector interface {
 	InsertMobileIssue(session *sessions.Session, msg *messages.MobileIssueEvent) error
 	Commit() error
 	OnBatchEnd(topic string, partition int32, offset int64)
-	SetCommitter(committer OffsetCommitter)
+	TrackOffset(topic string, partition int32, offset int64)
+	AddCommitter(committer OffsetCommitter)
 	Stop() error
 }
 
@@ -85,7 +86,7 @@ type connectorImpl struct {
 	batches        map[string]Batch
 	pending        qtypes.Offsets
 	needToFlush    bool
-	committer      OffsetCommitter
+	committers     []OffsetCommitter
 	seq            uint64 // last assigned task seq
 	workerTask     chan *task
 	inflight       chan struct{}
@@ -173,8 +174,20 @@ func (c *connectorImpl) prepare() error {
 	return nil
 }
 
-func (c *connectorImpl) SetCommitter(committer OffsetCommitter) {
-	c.committer = committer
+func (c *connectorImpl) AddCommitter(committer OffsetCommitter) {
+	c.mu.Lock()
+	c.committers = append(c.committers, committer)
+	c.mu.Unlock()
+}
+
+func (c *connectorImpl) TrackOffset(topic string, partition int32, offset int64) {
+	c.mu.Lock()
+	if c.pending[topic] == nil {
+		c.pending[topic] = make(map[int32]int64)
+	}
+	c.pending[topic][partition] = offset
+	c.needToFlush = true
+	c.mu.Unlock()
 }
 
 func (c *connectorImpl) OnBatchEnd(topic string, partition int32, offset int64) {
@@ -340,11 +353,16 @@ func (c *connectorImpl) sendBulks(t *task) {
 }
 
 func (c *connectorImpl) commitOffsets(t *task) {
-	if t.snap == nil || c.committer == nil {
+	if t.snap == nil {
 		return
 	}
-	if err := c.committer.CommitOffsets(t.snap); err != nil {
-		log.Printf("can't commit offsets: %s", err)
+	c.mu.Lock()
+	committers := c.committers
+	c.mu.Unlock()
+	for _, committer := range committers {
+		if err := committer.CommitOffsets(t.snap); err != nil {
+			log.Printf("can't commit offsets: %s", err)
+		}
 	}
 }
 

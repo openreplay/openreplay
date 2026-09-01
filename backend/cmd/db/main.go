@@ -135,7 +135,7 @@ func main() {
 		clickhouse.OffsetCommitter
 		SetProcessedHook(func(topic string, partition int32, offset int64))
 	}); ok {
-		chConnector.SetCommitter(oc)
+		chConnector.AddCommitter(oc)
 		oc.SetProcessedHook(chConnector.OnBatchEnd)
 	}
 	h.Register("consumer", func(ctx context.Context) error {

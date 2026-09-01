@@ -178,6 +178,13 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 	if err != nil {
 		return nil, err
 	}
+	if oc, ok := ds.consumer.(interface {
+		clickhouse.OffsetCommitter
+		SetProcessedHook(func(topic string, partition int32, offset int64))
+	}); ok {
+		ds.ch.AddCommitter(oc)
+		oc.SetProcessedHook(ds.ch.TrackOffset)
+	}
 	go ds.run()
 	return ds, nil
 }
