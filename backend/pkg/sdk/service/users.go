@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -16,6 +18,12 @@ import (
 )
 
 var ErrUserNotFound = errors.New("user not found")
+
+const (
+	lastSeenThrottle = time.Minute
+	maxCachedUsers   = 200_000
+	maxDistinctSeen  = 300_000
+)
 
 type Users interface {
 	Add(session *sessions.Session, user *model.User) error
@@ -29,13 +37,21 @@ type usersImpl struct {
 	log      logger.Logger
 	conn     driver.Conn
 	sessions sessions.Sessions
+
+	mu           sync.Mutex
+	cache        map[string]*model.User // key -> latest known state (write-through)
+	distinctSeen map[string]bool        // projectID|distinctID|userID already inserted
+	lastTouch    map[string]time.Time   // key -> last last_seen write
 }
 
 func NewUsers(log logger.Logger, conn driver.Conn, sessions sessions.Sessions) (Users, error) {
 	return &usersImpl{
-		log:      log,
-		conn:     conn,
-		sessions: sessions,
+		log:          log,
+		conn:         conn,
+		sessions:     sessions,
+		cache:        make(map[string]*model.User),
+		distinctSeen: make(map[string]bool),
+		lastTouch:    make(map[string]time.Time),
 	}, nil
 }
 
@@ -43,6 +59,82 @@ var (
 	insertQuery = `INSERT INTO product_analytics.users (project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	selectQuery = `SELECT project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen", _deleted_at != '1970-01-01 00:00:00' AS _deleted from product_analytics.users WHERE project_id = ? AND "$user_id" = ? ORDER BY _timestamp DESC LIMIT 1`
 )
+
+func userKey(projectID uint32, userID string) string {
+	return strconv.FormatUint(uint64(projectID), 10) + "|" + userID
+}
+
+func distinctKey(projectID uint32, distinctID, userID string) string {
+	return strconv.FormatUint(uint64(projectID), 10) + "|" + distinctID + "|" + userID
+}
+
+func cloneUser(u *model.User) *model.User {
+	if u == nil {
+		return nil
+	}
+	c := *u
+	if u.Properties != nil {
+		c.Properties = make(map[string]interface{}, len(u.Properties))
+		for k, v := range u.Properties {
+			c.Properties[k] = v
+		}
+	}
+	c.GroupID1 = append([]string(nil), u.GroupID1...)
+	c.GroupID2 = append([]string(nil), u.GroupID2...)
+	c.GroupID3 = append([]string(nil), u.GroupID3...)
+	c.GroupID4 = append([]string(nil), u.GroupID4...)
+	c.GroupID5 = append([]string(nil), u.GroupID5...)
+	c.GroupID6 = append([]string(nil), u.GroupID6...)
+	return &c
+}
+
+func (u *usersImpl) getCached(key string) *model.User {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	return cloneUser(u.cache[key])
+}
+
+func (u *usersImpl) store(key string, user *model.User) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	if len(u.cache) >= maxCachedUsers {
+		u.cache = make(map[string]*model.User)
+		u.distinctSeen = make(map[string]bool)
+		u.lastTouch = make(map[string]time.Time)
+	}
+	u.cache[key] = cloneUser(user)
+}
+
+func (u *usersImpl) evict(key string) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	delete(u.cache, key)
+	delete(u.lastTouch, key)
+}
+
+func (u *usersImpl) markDistinct(dk string) bool {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	if u.distinctSeen[dk] {
+		return false
+	}
+	if len(u.distinctSeen) >= maxDistinctSeen {
+		u.distinctSeen = make(map[string]bool)
+	}
+	u.distinctSeen[dk] = true
+	return true
+}
+
+func (u *usersImpl) shouldTouch(key string) bool {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	now := time.Now()
+	if last, ok := u.lastTouch[key]; ok && now.Sub(last) < lastSeenThrottle {
+		return false
+	}
+	u.lastTouch[key] = now
+	return true
+}
 
 func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 	user.UserID = strings.TrimSpace(user.UserID)
@@ -59,21 +151,35 @@ func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 	}
 	session.UserID = &user.UserID
 
-	// Check that we don't have this user already in DB
-	if currUser, err := u.Get(session.ProjectID, user.UserID); err == nil {
-		u.log.Debug(context.Background(), "we already have this user in DB for session: %d", session.SessionID)
-		if err = u.addUserDistinctID(session, user); err != nil {
-			u.log.Error(context.Background(), "can't add user ID to distinct user table: %s", user.UserID)
+	key := userKey(session.ProjectID, user.UserID)
+	dk := distinctKey(session.ProjectID, session.UserUUID, user.UserID)
+
+	currUser := u.getCached(key)
+	if currUser == nil {
+		var err error
+		currUser, err = u.Get(session.ProjectID, user.UserID)
+		if err != nil && !errors.Is(err, ErrUserNotFound) {
+			u.log.Error(context.Background(), "can't get user: %s", err)
 		}
-		currUser.LastSeen = time.Now()
-		if err = u.Update(currUser); err != nil {
-			u.log.Error(context.Background(), "can't update user: %s", err.Error())
+	}
+	if currUser != nil {
+		if u.markDistinct(dk) {
+			if err := u.addUserDistinctID(session, user); err != nil {
+				u.log.Error(context.Background(), "can't add user ID to distinct user table: %s", user.UserID)
+			}
+		}
+		if u.shouldTouch(key) {
+			currUser.LastSeen = time.Now()
+			if err := u.Update(currUser); err != nil {
+				u.log.Error(context.Background(), "can't update user: %s", err.Error())
+			}
 		}
 		return nil
 	}
 	if err := u.add(session, user); err != nil {
 		return fmt.Errorf("can't insert user: %s", err)
 	}
+	u.markDistinct(dk)
 	return nil
 }
 
@@ -117,6 +223,7 @@ func (u *usersImpl) add(session *sessions.Session, user *model.User) error {
 	if err := u.conn.Exec(context.Background(), query, session.ProjectID, session.UserUUID, user.UserID); err != nil {
 		return fmt.Errorf("can't insert user to users_distinct_id table: %s", err)
 	}
+	u.store(userKey(session.ProjectID, user.UserID), user)
 	return nil
 }
 
@@ -129,6 +236,9 @@ func (u *usersImpl) addUserDistinctID(session *sessions.Session, user *model.Use
 }
 
 func (u *usersImpl) Get(projectID uint32, userID string) (*model.User, error) {
+	if cached := u.getCached(userKey(projectID, userID)); cached != nil {
+		return cached, nil
+	}
 	user := &model.User{}
 	if err := u.conn.QueryRow(context.Background(), selectQuery, projectID, userID).ScanStruct(user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -139,6 +249,7 @@ func (u *usersImpl) Get(projectID uint32, userID string) (*model.User, error) {
 	if user.Deleted != 0 {
 		return nil, ErrUserNotFound
 	}
+	u.store(userKey(projectID, userID), user)
 	return user, nil
 }
 
@@ -193,10 +304,15 @@ func (u *usersImpl) Update(user *model.User) error {
 	); err != nil {
 		return fmt.Errorf("can't insert user to users table: %s", err)
 	}
+	u.store(userKey(uint32(user.ProjectID), user.UserID), user)
 	return nil
 }
 
 func (u *usersImpl) Delete(projectID uint32, userID string) error {
 	query := `INSERT INTO product_analytics.users (project_id, "$user_id", _deleted_at) VALUES (?, ?, ?)`
-	return u.conn.Exec(context.Background(), query, projectID, userID, time.Now())
+	if err := u.conn.Exec(context.Background(), query, projectID, userID, time.Now()); err != nil {
+		return err
+	}
+	u.evict(userKey(projectID, userID))
+	return nil
 }
