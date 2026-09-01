@@ -1,4 +1,4 @@
-import { Button, Dropdown, Popconfirm, Tooltip } from 'antd';
+import { App, Button, Dropdown, Popconfirm, Tooltip } from 'antd';
 import {
   Check,
   CheckCheck,
@@ -39,7 +39,6 @@ import {
   VersionLabel,
   formatDuration,
   hasNoEnvironment,
-  isScheduled,
   relativeTime,
   stepsToLines,
 } from '../shared/utils';
@@ -74,8 +73,9 @@ interface Props {
   onCancelMerge?: () => void;
 }
 
-/** A live, approved test. Edits persist immediately. Adding a schedule activates the
- *  test; clearing it returns to approved. A pending revision turns the steps section
+/** A live, approved test. Edits buffer locally and commit on Save — the drawer's one
+ *  commit point. Adding a schedule activates the test (the runner promotes it on the
+ *  cron); clearing it returns to approved. A pending revision turns the steps section
  *  into a git-style review. */
 function TestDrawer({
   test,
@@ -115,20 +115,21 @@ function TestDrawer({
     [versionsData],
   );
 
-  // Local mirror shown by the editor so edits don't snap back during the persist
-  // round-trip; every committed edit also persists immediately. Re-seeded whenever a
-  // different test lands here — including a deep-linked one that resolves after mount.
-  const [stepsDraft, setStepsDraft] = useState<string[]>(test?.steps ?? []);
+  const { modal } = App.useApp();
+  // Buffered edits — nothing persists until Save. Only the user-editable fields live
+  // here; status, the pending revision and the run history always read from `test`, so a
+  // background refetch still shows through. Dropped whenever a different test lands here
+  // (including a deep-linked one that resolves after mount).
+  const [edits, setEdits] = useState<Partial<TestCase>>({});
+  // stepsChanged → the update PUT replaces `steps`; plain metadata edits must not
+  const [stepsDirty, setStepsDirty] = useState(false);
   const [seededKey, setSeededKey] = useState<string | null>(test?.key ?? null);
   if (test && test.key !== seededKey) {
     setSeededKey(test.key);
-    setStepsDraft(test.steps);
+    setEdits({});
+    setStepsDirty(false);
   }
-  const saveSteps = (steps: string[]) => {
-    setStepsDraft(steps);
-    // stepsChanged → the update PUT replaces `steps`; plain metadata edits don't
-    onChange({ ...(test as TestCase), steps, stepsChanged: true });
-  };
+  const dirty = Object.keys(edits).length > 0;
 
   // the proposal materialised as a live, fully-editable step list; edits during a review
   // land here, not on test.steps
@@ -219,20 +220,53 @@ function TestDrawer({
             : [],
         }
       : undefined;
-  const resumeBlocked = paused && hasNoEnvironment(test);
+  // What the fields render: the stored test with the unsaved edits laid over it. While
+  // creating, the parent owns the unsaved test, so it is already the live copy.
+  const view: TestCase = creating ? test : { ...test, ...edits };
+  const resumeBlocked = paused && hasNoEnvironment(view);
   const settings: RunSettings = {
-    environments: test.environments,
-    resolutions: test.resolutions,
-    regions: test.regions,
-    schedule: test.schedule,
+    environments: view.environments,
+    resolutions: view.resolutions,
+    regions: view.regions,
+    schedule: view.schedule,
   };
+  // only a scheduled test has runs to pause; approved ones run on demand
+  const canPause = paused || test.status === 'active';
 
-  // a schedule activates the test, clearing it drops back to approved
-  const patch = (p: Partial<RunSettings>) => {
-    const next: TestCase = { ...test, ...p };
-    if ('schedule' in p)
-      next.status = isScheduled(p.schedule) ? 'active' : 'approved';
-    onChange(next);
+  // Buffer an edit (or, while creating, hand it straight to the parent). A schedule
+  // change writes cron only — the runner owns the approved ↔ active promotion, so the
+  // status re-reads from the server after Save.
+  const patch = (p: Partial<TestCase>) => {
+    if (creating) {
+      onChange({ ...test, ...p });
+      return;
+    }
+    setEdits((prev) => ({ ...prev, ...p }));
+  };
+  const patchSteps = (steps: string[]) => {
+    patch({ steps });
+    setStepsDirty(true);
+  };
+  const save = () => {
+    onChange({ ...test, ...edits, stepsChanged: stepsDirty });
+    setEdits({});
+    setStepsDirty(false);
+    onClose();
+  };
+  // closing with buffered edits would silently drop them
+  const handleClose = () => {
+    if (!dirty) {
+      onClose();
+      return;
+    }
+    modal.confirm({
+      title: t('Discard unsaved changes?'),
+      content: t('The edits you made to this test will be lost.'),
+      okText: t('Discard'),
+      okButtonProps: { danger: true },
+      cancelText: t('Keep editing'),
+      onOk: onClose,
+    });
   };
 
   const runNow = () =>
@@ -241,6 +275,8 @@ function TestDrawer({
         toast.success(`${test.title} — ${t('run started, see Runs')}`),
       onError: () => toast.error(t('Failed to start run')),
     });
+  // A header action, not an edit: it commits the status on its own and leaves whatever
+  // is buffered in the form for Save.
   const togglePause = () =>
     onChange({ ...test, status: paused ? 'active' : 'paused' });
   const remove = () => {
@@ -376,9 +412,9 @@ function TestDrawer({
   return (
     <EntityDrawer
       open={open}
-      onClose={onClose}
-      title={test.title}
-      onTitleChange={(title) => onChange({ ...test, title })}
+      onClose={handleClose}
+      title={view.title}
+      onTitleChange={(title) => patch({ title })}
       autoEditTitle={creating}
       eyebrow={
         creating
@@ -397,57 +433,35 @@ function TestDrawer({
                   revision ? ` · ${t('Needs review')}` : ''
                 }`
       }
+      /* the header carries no primary action — running and saving live in the footer.
+         Pause / Resume is the one control here, and only for a scheduled test. */
       headerActions={
         creating ? undefined : merge ? (
-          <Tooltip
-            title={t('Runs are paused until the merged steps are accepted.')}
-          >
-            <Button size="small" disabled icon={<Play size={13} />}>
-              {t('Run now')}
-            </Button>
-          </Tooltip>
+          <span className="text-sm text-disabled-text">
+            {t('Runs paused during merge review')}
+          </span>
         ) : revision && pauseOnRevision ? (
+          <span className="text-sm text-disabled-text">
+            {t('Runs paused until reviewed')}
+          </span>
+        ) : canPause ? (
           <Tooltip
-            title={t('Runs are paused until the new version is reviewed.')}
+            title={
+              resumeBlocked
+                ? t('Set an environment below to resume this test.')
+                : undefined
+            }
           >
-            <Button size="small" disabled icon={<Play size={13} />}>
-              {t('Run now')}
+            <Button
+              size="small"
+              disabled={resumeBlocked}
+              icon={paused ? <Play size={13} /> : <Pause size={13} />}
+              onClick={togglePause}
+            >
+              {paused ? t('Resume') : t('Pause')}
             </Button>
           </Tooltip>
-        ) : (
-          <div className="flex items-center gap-2">
-            {/* paused: resuming is the main intent, so Resume takes the primary slot */}
-            <Button
-              type={paused ? 'default' : 'primary'}
-              size="small"
-              icon={<Play size={13} />}
-              loading={triggerMut.isPending}
-              onClick={runNow}
-            >
-              {t('Run now')}
-            </Button>
-            {/* approved tests have no schedule to pause — they run on demand */}
-            {test.status !== 'approved' && (
-              <Tooltip
-                title={
-                  resumeBlocked
-                    ? t('Set an environment below to resume this test.')
-                    : undefined
-                }
-              >
-                <Button
-                  type={paused ? 'primary' : 'default'}
-                  size="small"
-                  disabled={resumeBlocked}
-                  icon={paused ? <Play size={13} /> : <Pause size={13} />}
-                  onClick={togglePause}
-                >
-                  {paused ? t('Resume') : t('Pause')}
-                </Button>
-              </Tooltip>
-            )}
-          </div>
-        )
+        ) : undefined
       }
       footer={
         creating ? (
@@ -490,17 +504,46 @@ function TestDrawer({
             </Button>
           </div>
         ) : (
-          <Popconfirm
-            title={t('Delete this test?')}
-            okText={t('Delete')}
-            okButtonProps={{ danger: true }}
-            cancelText={t('Cancel')}
-            onConfirm={remove}
-          >
-            <Button type="text" danger icon={<Trash2 size={15} />}>
-              {t('Delete test')}
-            </Button>
-          </Popconfirm>
+          <div className="flex items-center justify-between">
+            <Popconfirm
+              title={t('Delete this test?')}
+              okText={t('Delete')}
+              okButtonProps={{ danger: true }}
+              cancelText={t('Cancel')}
+              onConfirm={remove}
+            >
+              <Button type="text" danger icon={<Trash2 size={15} />}>
+                {t('Delete test')}
+              </Button>
+            </Popconfirm>
+            <div className="flex items-center gap-2">
+              {dirty && (
+                <span className="text-sm text-disabled-text">
+                  {t('Unsaved changes')}
+                </span>
+              )}
+              {/* Run now uses the stored steps, so it runs what is saved, not the buffer */}
+              <Tooltip
+                title={dirty ? t('Runs the last saved version.') : undefined}
+              >
+                <Button
+                  icon={<Play size={13} />}
+                  loading={triggerMut.isPending}
+                  onClick={runNow}
+                >
+                  {t('Run now')}
+                </Button>
+              </Tooltip>
+              <Button
+                type="primary"
+                icon={<Check size={15} />}
+                disabled={!dirty}
+                onClick={save}
+              >
+                {t('Save')}
+              </Button>
+            </div>
+          </div>
         )
       }
     >
@@ -583,18 +626,13 @@ function TestDrawer({
           </div>
         </Section>
       ) : creating ? (
-        // nothing persisted yet, so steps edit live
-        <EditableSteps
-          steps={test.steps}
-          bounded
-          onStepsChange={(steps) => onChange({ ...test, steps })}
-        />
+        <EditableSteps steps={view.steps} bounded onStepsChange={patchSteps} />
       ) : (
         <EditableSteps
-          steps={stepsDraft}
+          steps={view.steps}
           bounded
           headerAction={versionSwitcher}
-          onStepsChange={saveSteps}
+          onStepsChange={patchSteps}
         />
       )}
 
@@ -620,10 +658,7 @@ function TestDrawer({
           </span>
         }
       >
-        <TagEditor
-          value={test.tags}
-          onChange={(tags) => onChange({ ...test, tags })}
-        />
+        <TagEditor value={view.tags} onChange={(tags) => patch({ tags })} />
       </Section>
 
       {/* the "last 10" trend strip: each icon is one run — hover for result · duration ·

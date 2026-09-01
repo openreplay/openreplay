@@ -19,6 +19,8 @@ import CountSuffix from 'Shared/CountSuffix';
 import FullPagination from 'Shared/FullPagination';
 
 import {
+  RUNS_LIST_POLL_MS,
+  RUNS_PENDING_POLL_MS,
   useAllRuns,
   useEnvironments,
   useRun,
@@ -34,7 +36,7 @@ import {
   RunStatus,
   UiRunStatus,
 } from './shared/types';
-import { useKaiUi } from './shared/uiStore';
+import { kaiUi, useKaiUi } from './shared/uiStore';
 import { useQueryParam } from './shared/useUrlState';
 import {
   LOOKUP_LIMIT,
@@ -64,6 +66,12 @@ const BUCKET_STATUSES: Record<UiRunStatus, RunStatus[]> = {
   failed: ['failed', 'error', 'timeout'],
   passed: ['passed'],
 };
+// How long the table waits for a just-triggered run before giving up and rendering
+// without it (the runner normally dispatches within a second or two).
+const TRIGGER_HOLD_MS = 12000;
+// A trigger's row counts as landed when it's in flight, or when any run of that test
+// started at/after the trigger (a very short run can finish before we ever poll).
+const LANDED_SLACK_MS = 5000;
 
 /** Live elapsed counter for an in-flight run. */
 function LiveDuration({ start }: { start: number }) {
@@ -98,7 +106,8 @@ function RunsTab() {
 
   // A test drawer's "View all runs" / "View" shortcut sets a handoff (fresh handoffId)
   // and switches here.
-  const { runsTestFilter, runsOpenRunKey, handoffId } = useKaiUi();
+  const { runsTestFilter, runsOpenRunKey, handoffId, pendingRuns, activeTab } =
+    useKaiUi();
   // the opened run drawer IS the ?run= param — open iff present. No separate state, so
   // browser back/forward just open/close it (no state↔URL sync loop).
   const [openKey, setOpenKey] = useQueryParam('run');
@@ -159,9 +168,20 @@ function RunsTab() {
       : {}),
   };
 
-  const { data: runsData, isPending } = useAllRuns(listParams);
+  // Only the visible tab polls — this pane stays mounted behind the others. A trigger
+  // waiting to surface polls fast, then the list settles back to its slow heartbeat so a
+  // scheduled run or a finishing one shows up without a reload.
+  const waitingForTrigger = Object.keys(pendingRuns).length > 0;
+  const pollMs =
+    activeTab !== 'runs'
+      ? (false as const)
+      : waitingForTrigger
+        ? RUNS_PENDING_POLL_MS
+        : RUNS_LIST_POLL_MS;
+
+  const { data: runsData, isPending } = useAllRuns(listParams, pollMs);
   // status counts ignore the active status tab so every tab shows its own total
-  const { data: statusCounts } = useRunCounts('status', filters);
+  const { data: statusCounts } = useRunCounts('status', filters, pollMs);
   // tag options come from the owning tests' tags, sharing the name/period filters
   const { data: tagCounts } = useRunCounts('tags', {
     name: filters.name,
@@ -183,6 +203,39 @@ function RunsTab() {
     apiRunToVM(run, undefined, envNameById),
   );
   const total = runsData?.total ?? 0;
+
+  // Retire each pending trigger as soon as its run is on screen — or when the wait runs
+  // out, so a filter that can't show it (another status tab, another page) never holds
+  // the table open-endedly.
+  useEffect(() => {
+    const ids = Object.keys(pendingRuns);
+    if (!ids.length) return undefined;
+    const landed = ids.filter((id) =>
+      runs.some(
+        (r) =>
+          r.testId === id &&
+          (r.status === 'running' ||
+            r.date >= pendingRuns[id] - LANDED_SLACK_MS),
+      ),
+    );
+    landed.forEach(kaiUi.clearRunTriggered);
+    const waiting = ids.filter((id) => !landed.includes(id));
+    if (!waiting.length) return undefined;
+    const oldest = Math.min(...waiting.map((id) => pendingRuns[id]));
+    const timer = window.setTimeout(
+      () => waiting.forEach(kaiUi.clearRunTriggered),
+      Math.max(0, TRIGGER_HOLD_MS - (Date.now() - oldest)),
+    );
+    return () => window.clearTimeout(timer);
+  }, [pendingRuns, runsData]);
+
+  // Hold the loading state rather than render a table the triggered run is missing from
+  // — but only where it could actually appear (newest-first page 1, a tab that shows it).
+  const holdingForTrigger =
+    waitingForTrigger &&
+    page === 1 &&
+    (statusTab === 'all' || statusTab === 'running') &&
+    !(sortBy.field === 'duration' || sortBy.order === 'ascend');
 
   const { data: detail } = useRun(openKey ?? undefined);
   const openRun: RunData | null = openKey
@@ -337,7 +390,7 @@ function RunsTab() {
     },
   ];
 
-  if (isPending) {
+  if (isPending || holdingForTrigger) {
     return (
       <div className="p-4">
         <Skeleton active paragraph={{ rows: 5 }} />

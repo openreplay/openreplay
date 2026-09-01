@@ -373,7 +373,7 @@ function RunDrawer({ run, open, onClose }: Props) {
   const activityRef = useRef<HTMLDivElement>(null);
   const triggerMut = useTriggerRun();
   // the detail response carries no network of its own — it comes from the streamed HAR
-  const { data: harText } = useRunHar(run?.key);
+  const { data: harText } = useRunHar(run?.key, run?.status !== 'running');
   const network = useMemo(
     () => (harText ? harToNetworkRequests(harText) : []),
     [harText],

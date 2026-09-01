@@ -21,10 +21,12 @@ import {
   ProjectSettingsRequest,
   Resolution,
   RunDefaults,
+  RunStatus,
   TestCreateRequest,
   TestUpdateRequest,
   TestsBulkRequest,
 } from './components/shared/types';
+import { kaiUi } from './components/shared/uiStore';
 import { LOOKUP_LIMIT } from './components/shared/utils';
 
 // Lets the page-level project selector override which project the queries hit,
@@ -101,6 +103,25 @@ export function invalidateTestData(
     },
   });
 }
+
+// A trigger / a finishing run only moves the run families — never the tests, envs,
+// settings or notifications. Narrow so a run landing can't re-sort the tests list.
+const RUN_FAMILIES = new Set(['all-runs', 'runs', 'run', 'run-counts']);
+export function invalidateRunData(queryClient: QueryClient, projectId: string) {
+  queryClient.invalidateQueries({
+    queryKey: browserTestsKeys.all(projectId),
+    predicate: (q) => RUN_FAMILIES.has(q.queryKey[2] as string),
+  });
+}
+
+// Live updates without a reload: a run detail polls only while that run is in flight,
+// and the lists poll only while their tab is on screen (the caller passes the interval).
+const RUN_POLL_MS = 30000;
+export const RUNS_LIST_POLL_MS = 30000;
+/** Poll this fast while waiting for a just-triggered run to surface. */
+export const RUNS_PENDING_POLL_MS = 2000;
+const inFlight = (status?: RunStatus) =>
+  status === 'dispatched' || status === 'running';
 
 // Every GET below stays fresh (no refetch) and retained while unused for this long, so
 // switching tabs / reopening a drawer serves from cache. Mutations still invalidate the
@@ -250,13 +271,20 @@ export function useDeleteEnvironment() {
 // ---- Runs ----
 
 /** Project-wide runs (all tests by default; pass `testId` to narrow). */
-export function useAllRuns(params?: ListAllRunsParams) {
+export function useAllRuns(
+  params?: ListAllRunsParams,
+  pollMs: number | false = false,
+) {
   const projectId = useProjectId();
   return useQuery({
     ...cacheOpts,
     queryKey: browserTestsKeys.allRuns(projectId, params),
     queryFn: () => api.listAllRuns(projectId, params),
     enabled: !!projectId,
+    // page / filter changes re-key this query; keeping the previous page's rows means a
+    // poll or a page turn never drops the table back to a skeleton
+    placeholderData: keepPreviousData,
+    refetchInterval: pollMs,
   });
 }
 
@@ -264,6 +292,7 @@ export function useAllRuns(params?: ListAllRunsParams) {
 export function useRunCounts(
   aggregator: 'status' | 'screenType' | 'dispatchMode' | 'tags',
   params?: Partial<ListAllRunsParams>,
+  pollMs: number | false = false,
 ) {
   const projectId = useProjectId();
   return useQuery({
@@ -271,6 +300,8 @@ export function useRunCounts(
     queryKey: browserTestsKeys.runCounts(projectId, aggregator, params),
     queryFn: () => api.runCounts(projectId, { aggregator, ...params }),
     enabled: !!projectId,
+    placeholderData: keepPreviousData,
+    refetchInterval: pollMs,
   });
 }
 
@@ -281,6 +312,12 @@ export function useRuns(testId: string | undefined, params?: ListRunsParams) {
     queryKey: browserTestsKeys.runs(projectId, testId ?? '', params),
     queryFn: () => api.listRuns(projectId, testId as string, params),
     enabled: !!projectId && !!testId,
+    // keep polling while one of this test's runs is in flight, so the drawer's trend
+    // strip fills in when it finishes
+    refetchInterval: (query) =>
+      (query.state.data?.items ?? []).some((r) => inFlight(r.status))
+        ? RUN_POLL_MS
+        : false,
   });
 }
 
@@ -291,26 +328,39 @@ export function useRun(runId: string | undefined) {
     queryKey: browserTestsKeys.run(projectId, runId ?? ''),
     queryFn: () => api.getRun(projectId, runId as string),
     enabled: !!projectId && !!runId,
+    // an open run drawer fills in its own result / duration when the run finishes
+    refetchInterval: (query) =>
+      inFlight(query.state.data?.status) ? RUN_POLL_MS : false,
   });
 }
 
 /** The run's captured network.har as text (parsed into NetworkRequest[] by the drawer).
  *  404 (no HAR) is expected for many runs, so failures are swallowed to `null`. */
-export function useRunHar(runId: string | undefined) {
+export function useRunHar(runId: string | undefined, enabled = true) {
   const projectId = useProjectId();
   return useQuery({
     ...cacheOpts,
     queryKey: browserTestsKeys.runHar(projectId, runId ?? ''),
     queryFn: () => api.getRunHar(projectId, runId as string).catch(() => null),
-    enabled: !!projectId && !!runId,
+    // a running run has no HAR yet; asking would cache the 404 as `null` for the whole
+    // gcTime and the panel would stay empty after it finishes
+    enabled: !!projectId && !!runId && enabled,
     retry: false,
   });
 }
 
 export function useTriggerRun() {
   const projectId = useProjectId();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (testId: string) => api.triggerRun(projectId, testId),
+    // The trigger only acknowledges — the row appears once the runner dispatches it. Note
+    // the wait so the Runs table can hold its loading state instead of rendering without
+    // the run, and refetch the run lists now (RunsTab stays mounted behind the tabs).
+    onSuccess: (_res, testId) => {
+      kaiUi.markRunTriggered(testId);
+      invalidateRunData(queryClient, projectId);
+    },
   });
 }
 

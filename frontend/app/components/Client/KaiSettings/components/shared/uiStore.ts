@@ -16,6 +16,10 @@ interface KaiUiState {
   runsTestFilter: string | null;
   runsOpenRunKey: string | null;
   handoffId: number;
+  // testId -> epoch ms of a trigger whose run hasn't surfaced in the Runs list yet. The
+  // trigger endpoint only acknowledges (no runId), so RunsTab holds its loading state
+  // until the row lands rather than rendering a table that is missing the run.
+  pendingRuns: Record<string, number>;
 }
 
 let state: KaiUiState = {
@@ -23,6 +27,7 @@ let state: KaiUiState = {
   runsTestFilter: null,
   runsOpenRunKey: null,
   handoffId: 0,
+  pendingRuns: {},
 };
 
 const listeners = new Set<() => void>();
@@ -50,6 +55,16 @@ export const kaiUi = {
       runsOpenRunKey: null,
       handoffId: state.handoffId + 1,
     }),
+  /** A manual trigger was accepted; its run row is expected shortly. */
+  markRunTriggered: (testId: string) =>
+    set({ pendingRuns: { ...state.pendingRuns, [testId]: Date.now() } }),
+  /** The run landed in the list (or the wait ran out) — stop holding for it. */
+  clearRunTriggered: (testId: string) => {
+    if (!(testId in state.pendingRuns)) return;
+    const { [testId]: _dropped, ...rest } = state.pendingRuns;
+    set({ pendingRuns: rest });
+  },
+
   /** "View" on the last-failed-run row — jump to the Runs tab, filtered to that test,
    *  with that exact run's drawer already open. */
   openRunInRunsTab: (run: RunData) =>
