@@ -413,6 +413,14 @@ const ValueAutoComplete = observer(
           className="mb-2" // Antd margin class
           autoFocus
           allowClear
+          onPressEnter={(e) => {
+            e.stopPropagation();
+            if (query.trim().length > 0) {
+              applyQuery();
+            } else {
+              applySelectedValues();
+            }
+          }}
         />
         <Spin spinning={loadingTopValues && query.length === 0}>
           {filteredOptions.length === 0 ? (
