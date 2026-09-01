@@ -4,7 +4,9 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useStore } from 'App/mstore';
 import { useHistory, useLocation } from 'App/routing';
+import { NoPermission } from 'UI';
 
 import {
   useNotifications,
@@ -14,33 +16,26 @@ import {
 } from '../KaiSettings/queries';
 import PreferencesPage from '../PreferencesPage';
 
-/* Preferences > Agents (Mehdi 07-27): the formula is MAIN components stay as
-   tabs in each agent's page (Tests keeps Environments + run defaults), while
-   preferences, notifications and behaviour toggles live HERE — otherwise every
-   agent grows a Settings tab that competes with Preferences.
-
-   ONE TAB PER AGENT. The tab says which agent, so the sections inside are free
-   to say what they are — Notifications, Behaviour. The chrome comes from the
-   shared Preferences shell (Client/PreferencesPage.tsx) — card, header row and
-   tab-bar padding — leaving this file only the panels: `p-5` with Title level 5
-   sections split by Dividers.
-
-   Only the Tests tab ships here; the Issues (journey tags + critical rules) and
-   Audits tabs land on their own branches. See todo.md. */
-
-/* full width is for tables and controls, never for a line of prose: hints stay
-   at a readable measure so they wrap where the eye expects, not at 1300px.
-   display:block is load-bearing — Typography.Text renders a span, and max-width
-   does nothing to an inline element. */
+// display:block is load-bearing: Typography.Text renders a span, max-width does
+// nothing to an inline element
 const PROSE = { display: 'block', maxWidth: '72ch' } as const;
 
 type AgentKey = 'tests';
 const AGENTS: AgentKey[] = ['tests'];
+// each tab needs the permission that guards that agent's own page
+const AGENT_PERMISSION: Record<AgentKey, string> = { tests: 'BROWSER_TESTS' };
 
-/** one preference: label, hint, then its controls DIRECTLY BENEATH, left
-    aligned (Mehdi 07-30). A label on the left with its control pinned right puts
-    an arbitrary 700 to 1000px between two things that belong together, and
-    padding cannot fix a gap that size — so the pairing goes vertical instead. */
+// HOCs/withPermissions' rule as a hook, since the check picks tabs rather than
+// gating the whole render
+function usePermittedAgents(): AgentKey[] {
+  const { userStore } = useStore();
+  const granted = userStore.account.permissions ?? [];
+  const unrestricted = userStore.isAdmin || !userStore.isEnterprise;
+  return AGENTS.filter(
+    (key) => unrestricted || granted.includes(AGENT_PERMISSION[key]),
+  );
+}
+
 function PrefRow({
   label,
   hint,
@@ -61,9 +56,6 @@ function PrefRow({
   );
 }
 
-/** a labelled switch — the switch leads and the label follows, as on the Weekly
-    Report page. One switch size on the page: the small one the other agent
-    surfaces already use (Environments, the segment drawer, the capture pill). */
 function Channel({
   label,
   checked,
@@ -81,7 +73,6 @@ function Channel({
   );
 }
 
-/** a titled group inside a panel — the Environments tab's section shape. */
 function PrefSection({
   title,
   hint,
@@ -106,19 +97,16 @@ function PrefSection({
   );
 }
 
-function AgentsPreferences() {
+// own component so its queries only mount when the tab is permitted — hooks
+// can't be conditional, so the element boundary is the gate
+const TestsPanel = observer(() => {
   const { t } = useTranslation();
-  const history = useHistory();
-  const location = useLocation();
 
-  // real project settings + notifications (same sources the Tests page used
-  // before these controls moved here)
   const { data: settings } = useSettings();
   const { data: notifications } = useNotifications();
   const updateSettings = useUpdateSettings();
   const updateNotifications = useUpdateNotifications();
   const pauseOnRevision = settings?.pauseOnNewRevisions ?? true;
-  // tests agent notifications: tests -> failedRuns -> { email, slack }
   const failedRuns = notifications?.tests?.failedRuns;
   const failedRunsEmail = !!failedRuns?.email;
   const failedRunsSlack = !!failedRuns?.slack;
@@ -128,81 +116,92 @@ function AgentsPreferences() {
       patch: { failedRuns: { [delivery]: v } },
     });
 
-  // the agent pages' Settings buttons deep-link to their own tab, the same
-  // query-param pattern Data Management's Properties page uses (?view=)
+  return (
+    <div className="flex flex-col p-5">
+      <PrefSection
+        title={t('Notifications')}
+        hint={t('How you hear from the Tests agent.')}
+      >
+        <PrefRow
+          label={t('Failed test runs')}
+          hint={t('When a scheduled run fails.')}
+        >
+          <Channel
+            label={t('Email')}
+            checked={failedRunsEmail}
+            onChange={(v) => setFailedRuns('email', v)}
+          />
+          <Channel
+            label={t('Slack')}
+            checked={failedRunsSlack}
+            onChange={(v) => setFailedRuns('slack', v)}
+          />
+        </PrefRow>
+      </PrefSection>
+
+      <Divider />
+
+      <PrefSection
+        title={t('Behaviour')}
+        hint={t('What the agent does when it proposes a new version.')}
+      >
+        <PrefRow
+          label={t('Pause tests on new revisions')}
+          hint={t(
+            'A changed flow usually breaks the current steps. When on, tests pause until the new version is reviewed; when off, they keep running on the current version.',
+          )}
+        >
+          <Channel
+            label={pauseOnRevision ? t('On') : t('Off')}
+            checked={pauseOnRevision}
+            onChange={(v) => updateSettings.mutate({ pauseOnNewRevisions: v })}
+          />
+        </PrefRow>
+      </PrefSection>
+    </div>
+  );
+});
+
+function AgentsPreferences() {
+  const { t } = useTranslation();
+  const history = useHistory();
+  const location = useLocation();
+  const permitted = usePermittedAgents();
+
+  // agent pages' Settings buttons deep-link to their own tab
   const requested = new URLSearchParams(location.search).get(
     'agent',
   ) as AgentKey | null;
-  const agent: AgentKey =
-    requested && AGENTS.includes(requested) ? requested : 'tests';
   const openTab = (key: string) => {
-    // replace, not push: switching tabs should not stack up back steps
+    // replace, not push: switching tabs shouldn't stack up back steps
     history.replace(`/client/agents?agent=${key}`);
   };
 
-  const tabItems = [
+  const help = t(
+    'Notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
+  );
+
+  const panels: Record<AgentKey, { label: string; children: React.ReactNode }> =
     {
-      key: 'tests',
-      label: t('Tests'),
-      children: (
-        <div className="flex flex-col p-5">
-          <PrefSection
-            title={t('Notifications')}
-            hint={t('How you hear from the Tests agent.')}
-          >
-            <PrefRow
-              label={t('Failed test runs')}
-              hint={t('When a scheduled run fails.')}
-            >
-              <Channel
-                label={t('Email')}
-                checked={failedRunsEmail}
-                onChange={(v) => setFailedRuns('email', v)}
-              />
-              <Channel
-                label={t('Slack')}
-                checked={failedRunsSlack}
-                onChange={(v) => setFailedRuns('slack', v)}
-              />
-            </PrefRow>
-          </PrefSection>
+      tests: { label: t('Tests'), children: <TestsPanel /> },
+    };
+  const tabItems = permitted.map((key) => ({ key, ...panels[key] }));
 
-          <Divider />
+  if (!tabItems.length) {
+    return (
+      <PreferencesPage title={t('Agents')} help={help}>
+        <NoPermission />
+      </PreferencesPage>
+    );
+  }
 
-          {/* moved here from the Tests page's old Settings tab */}
-          <PrefSection
-            title={t('Behaviour')}
-            hint={t('What the agent does when it proposes a new version.')}
-          >
-            <PrefRow
-              label={t('Pause tests on new revisions')}
-              hint={t(
-                'A changed flow usually breaks the current steps. When on, tests pause until the new version is reviewed; when off, they keep running on the current version.',
-              )}
-            >
-              {/* a lone boolean still gets a word beside it, the way the Weekly
-                  Report page pairs its switch with On/Off — a naked switch under
-                  a paragraph leaves you guessing which way is on */}
-              <Channel
-                label={pauseOnRevision ? t('On') : t('Off')}
-                checked={pauseOnRevision}
-                onChange={(v) =>
-                  updateSettings.mutate({ pauseOnNewRevisions: v })
-                }
-              />
-            </PrefRow>
-          </PrefSection>
-        </div>
-      ),
-    },
-  ];
+  const agent: AgentKey =
+    requested && permitted.includes(requested) ? requested : permitted[0];
 
   return (
     <PreferencesPage
       title={t('Agents')}
-      help={t(
-        'Notifications and behaviour for each agent. Core configuration like environments and run defaults lives with the agent itself.',
-      )}
+      help={help}
       tabs={tabItems}
       activeTab={agent}
       onTabChange={openTab}
