@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { MENU } from 'App/layout/data';
+import { agentsEnabled } from 'App/utils/split-utils';
 
 export const saasComponents = {};
 interface Route {
@@ -34,7 +35,7 @@ export const withSiteId = (
   siteId: string | string[] | null | undefined = ':siteId',
 ): string => `/${siteIdToUrl(siteId)}${route}`;
 
-export const saasRoutes: Route[] = [
+const smartIssuesRoutes: Route[] = [
   {
     path: smartIssues(),
     component: React.lazy(
@@ -61,6 +62,12 @@ export const saasRoutes: Route[] = [
   },
 ];
 
-export const extraMenuItems = (siteId: string | null) => ({
-  [MENU.ISSUES]: () => withSiteId(smartIssues(), siteId),
-});
+/* Smart Issues rides the same in-progress gate as the rest of the Agents
+   section (layout/data.ts): off => no route registered and no menu URL, so the
+   surface is fully hidden rather than only permission-guarded. */
+export const saasRoutes: Route[] = agentsEnabled() ? smartIssuesRoutes : [];
+
+export const extraMenuItems = (siteId: string | null) =>
+  agentsEnabled()
+    ? { [MENU.ISSUES]: () => withSiteId(smartIssues(), siteId) }
+    : {};
