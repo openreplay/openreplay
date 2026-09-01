@@ -83,7 +83,7 @@ android {
   if (rootProject.ext.has("javaVersion")) {
     javaVersion = rootProject.ext.get("javaVersion")
   }
-  
+
   compileOptions {
     sourceCompatibility javaVersion
     targetCompatibility javaVersion
@@ -108,5 +108,5 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation("com.facebook.react:react-native:+")
   implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
-  implementation("com.github.openreplay:android-tracker:v1.1.11")
+  implementation("com.github.openreplay:android-tracker:v1.1.12")
 }
