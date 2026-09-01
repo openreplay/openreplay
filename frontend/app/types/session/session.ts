@@ -381,7 +381,10 @@ export default class Session {
     }
 
     const exceptions =
-      (errors as IError[])?.map((e) => new SessionError(e)) || [];
+      (errors as IError[])?.map(
+        (e) =>
+          new SessionError({ ...e, time: (e.timestamp || e.time) - startedAt }),
+      ) || [];
 
     const issuesList =
       (issues as IIssue[]).map(
@@ -467,7 +470,13 @@ export default class Session {
     incidents: any[] = [],
   ) {
     const exceptions =
-      (errors as IError[])?.map((e) => new SessionError(e)) || [];
+      (errors as IError[])?.map(
+        (e) =>
+          new SessionError({
+            ...e,
+            time: (e.timestamp || e.time) - this.startedAt,
+          }),
+      ) || [];
     // rendered in xray in separate list
     // const exceptionIssues = exceptions.map((e) => ({
     //   contextString: e.name,
