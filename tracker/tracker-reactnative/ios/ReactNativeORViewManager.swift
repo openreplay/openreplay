@@ -31,26 +31,20 @@ class RntrackerView : UIView {
         didSet { register() }
     }
 
-    /// `Analytics` keeps observed views in a strong array with no removal API,
-    /// and props can land either side of the view entering the window, so the
-    /// registration is (re)done on every change and always unwound first.
+    /// `Analytics` holds observed views in a weak set, so `addObservedView` is
+    /// idempotent and a deallocated view leaves the set on its own. Props can
+    /// land either side of the view entering the window, so registration is
+    /// (re)done on every change — each call also refreshes the screen/view name.
     override func didMoveToWindow() {
         super.didMoveToWindow()
 
         if window != nil {
             register()
-        } else {
-            unregister()
         }
     }
 
     private func register() {
         guard window != nil, !screenName.isEmpty || !viewName.isEmpty else { return }
-        unregister()
         Analytics.shared.addObservedView(view: self, screenName: screenName, viewName: viewName)
-    }
-
-    private func unregister() {
-        Analytics.shared.observedViews.removeAll { $0 === self }
     }
 }

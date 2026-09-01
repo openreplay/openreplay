@@ -13,23 +13,19 @@ class RnTrackedInputManager: RCTViewManager {
   }
 }
 
-/// Native text field observed by the tracker. `Analytics` keeps observed inputs
-/// in a strong array with no removal API and appends on every call, so the
-/// registration is bound to window membership and always unwound first.
+/// Native text field observed by the tracker. `Analytics` holds observed inputs
+/// in a weak set and `addObservedInput` re-points the `editingDidEnd` target, so
+/// registering is idempotent and a deallocated field leaves the set on its own.
+/// Leaving the window only detaches the action, so an offscreen field stops
+/// emitting; re-entering re-registers it.
 class RnTrackedInput : UITextField {
     override func didMoveToWindow() {
         super.didMoveToWindow()
 
         if window != nil {
-            unregister()
             Analytics.shared.addObservedInput(self)
         } else {
-            unregister()
+            removeTarget(Analytics.shared, action: nil, for: .editingDidEnd)
         }
-    }
-
-    private func unregister() {
-        Analytics.shared.observedInputs.removeAll { $0 === self }
-        removeTarget(Analytics.shared, action: nil, for: .editingDidEnd)
     }
 }
