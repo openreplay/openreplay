@@ -11,7 +11,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends nodejs tini git && \
     rm -rf /var/lib/apt/lists/*
 ARG envarg
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
 ENV ENTERPRISE_BUILD=${envarg} \
+  GIT_SHA=${GIT_SHA} \
   MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
   PRIVATE_ENDPOINTS=false \
   LISTEN_PORT=9001 \

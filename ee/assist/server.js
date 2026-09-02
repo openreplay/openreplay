@@ -5,6 +5,10 @@ const { authorizer } = require("./app/assist");
 const { onConnect, setSocketIOServer } = require("./app/socket");
 const { startCacheRefresher } = require("./app/cache");
 
+const buildCommit = (process.env.GIT_SHA || 'unknown').slice(0, 12);
+const buildEnv = process.env.DEPLOY_ENV ? ` env=${process.env.DEPLOY_ENV}` : '';
+logger.info(`starting assist | build commit=${buildCommit}${buildEnv}`);
+
 const app = App();
 const pingInterval = parseInt(process.env.PING_INTERVAL) || 25000;
 

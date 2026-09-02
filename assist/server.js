@@ -7,6 +7,10 @@ const assert = require('assert').strict
 const register = require('./utils/metrics').register;
 const {logger} = require('./utils/logger');
 
+const buildCommit = (process.env.GIT_SHA || 'unknown').slice(0, 12);
+const buildEnv = process.env.DEPLOY_ENV ? ` env=${process.env.DEPLOY_ENV}` : '';
+logger.info(`starting assist | build commit=${buildCommit}${buildEnv}`);
+
 health.healthApp.get('/metrics', async (req, res) => {
     try {
         res.set('Content-Type', register.contentType);

@@ -1,9 +1,12 @@
 FROM node:25-alpine
-LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+LABEL Maintainer="Zavorotynskiy Alexander <zavorotynskiy@pm.me>"
 RUN apk add --no-cache tini
 
 ARG envarg
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
 ENV ENTERPRISE_BUILD=${envarg} \
+  GIT_SHA=${GIT_SHA} \
   MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
   PRIVATE_ENDPOINTS=false \
   LISTEN_PORT=9001 \

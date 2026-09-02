@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"openreplay/backend/pkg/version"
 )
 
 type Logger interface {
@@ -41,6 +44,8 @@ func New() Logger {
 		customLogger.extra = NewExtraLogger()
 		customLogger.useExtra = true
 	}
+
+	customLogger.Info(context.Background(), "starting %s | build %s", filepath.Base(os.Args[0]), version.String())
 	return customLogger
 }
 
