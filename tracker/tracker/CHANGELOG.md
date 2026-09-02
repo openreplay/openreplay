@@ -1,3 +1,14 @@
+## 18.1.4
+
+- fix commits stopping for the rest of the session after a single failed commit:
+  the shared requestIdleCb scheduler left its running flag set when a task threw
+  or rejected, so nothing reached the worker again (#4836)
+- guarantee every batch leaves with its BatchMetadata first: rebuild the header
+  if one is missing, and recover the real seam if a visual split is off, instead
+  of handing ingestion a body it silently drops (#4836)
+- report malformed batches on the console, and walk every batch fully under
+  __local_debug
+
 ## 18.1.3
 
 - fix for vizual batch recording preventing null split emits

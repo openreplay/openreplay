@@ -275,11 +275,20 @@ class FIFOTaskScheduler {
         return
       }
 
-      // Get the next task and execute it
+      // Get the next task and execute it. A task that throws (or rejects) must
+      // still schedule the next one: leaving `isRunning` true strands the queue
+      // for the lifetime of the page, and since commits run through here that
+      // silently ends the recording. See #4836.
       const nextTask = this.taskQueue.shift()
-      Promise.resolve(nextTask()).then(() => {
-        requestAnimationFrame(() => executeNextTask())
-      })
+      const scheduleNext = () => requestAnimationFrame(() => executeNextTask())
+      let result: any
+      try {
+        result = nextTask()
+      } catch (e) {
+        scheduleNext()
+        throw e
+      }
+      Promise.resolve(result).then(scheduleNext, scheduleNext)
     }
 
     executeNextTask()

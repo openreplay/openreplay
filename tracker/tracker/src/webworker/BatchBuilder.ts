@@ -104,6 +104,23 @@ export default class BatchBuilder {
     return out
   }
 
+  /** Bytes of a standalone batch header (BatchMetadata + Timestamp + TabData),
+   *  for repairing a batch that reached the sender without its leading metadata.
+   *  Leaves the builder empty. */
+  headerOnly(ctx: BatchContext): Uint8Array | null {
+    this.reset()
+    const written = this.writeHeader({
+      pageNo: ctx.pageNo,
+      firstIndex: ctx.index,
+      timestamp: ctx.timestamp,
+      url: ctx.url,
+      tabId: ctx.tabId,
+    })
+    const out = written ? this.encoder.flush() : null
+    this.reset()
+    return out !== null && out.length > 0 ? out : null
+  }
+
   /** Wipe state without emitting anything. */
   reset(): void {
     this.encoder.reset()

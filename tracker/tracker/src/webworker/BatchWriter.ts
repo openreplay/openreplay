@@ -11,6 +11,10 @@ const ANALYTICS_VERSION = 5
 // Attribute carrying the "DOM fully parsed & sent" signal (see top_observer).
 const VISUAL_SIGNAL_ATTR = 'orloaded'
 
+// Room for one rebuilt header (BatchMetadata + Timestamp + TabData). Only ever
+// allocated when a batch turns up without its metadata; the url dominates it.
+const HEADER_REPAIR_BUDGET = 16 * 1024
+
 export default class BatchWriter {
   private nextIndex = 0
   private beaconSize = 2 * 1e5 // 200kB soft trigger
@@ -208,16 +212,22 @@ export default class BatchWriter {
     this.playerBuilder = new BatchBuilder(this.beaconSize, this.playerVersion(), 'player')
     this.assetBuilder = new BatchBuilder(this.beaconSize, ASSETS_VERSION, 'assets')
 
-    if (playerBatch && assetBatch) {
-      const visual = new Uint8Array(playerBatch.length + assetBatch.length)
-      visual.set(playerBatch, 0)
-      visual.set(assetBatch, playerBatch.length)
-      this.emitBatch(visual, 'visual', skipCompression, playerBatch.length)
-    } else if (playerBatch) {
-      this.emitBatch(playerBatch, 'player', skipCompression)
-    } else if (assetBatch) {
+    // The megabatch is cut apart server-side at the player half's length, so both
+    // halves have to lead with their own BatchMetadata or a stray meta lands in
+    // the middle of the player record. Verify (and repair) before pairing (#4836).
+    const player = playerBatch && this.withHeader(playerBatch, 'player', this.playerVersion())
+    const assets = assetBatch && this.withHeader(assetBatch, 'assets', ASSETS_VERSION)
+
+    if (player && assets) {
+      const visual = new Uint8Array(player.length + assets.length)
+      visual.set(player, 0)
+      visual.set(assets, player.length)
+      this.emitBatch(visual, 'visual', skipCompression, player.length)
+    } else if (player) {
+      this.emitBatch(player, 'player', skipCompression)
+    } else if (assets) {
       // Defensive: assets without player shouldn't happen — ship as plain assets.
-      this.emitBatch(assetBatch, 'assets', skipCompression)
+      this.emitBatch(assets, 'assets', skipCompression)
     }
 
     for (const held of this.heldOther) {
@@ -235,11 +245,151 @@ export default class BatchWriter {
     return true
   }
 
-  private emitBatch(batch: Uint8Array, dataType: DataType, skipCompression: boolean, split?: number): void {
-    if (this.localDebug && this.onLocalSave) {
-      this.onLocalSave(`${dataType}-${Date.now()}`, batch.slice())
+  /** A batch must lead with its BatchMetadata: ingestion only learns the wire
+   *  version from it, so without it every size-prefixed message after is read as
+   *  unsized, the reader desyncs and the whole record is dropped. */
+  private startsWithMeta(batch: Uint8Array): boolean {
+    return batch.length > 0 && batch[0] === Messages.Type.BatchMetadata
+  }
+
+  /** Prepends a freshly built header to a batch that lost its leading metadata,
+   *  so the content still reaches the player instead of being thrown away.
+   *  Returns null only when even the header won't encode. */
+  private repairHeader(batch: Uint8Array, version: number): Uint8Array | null {
+    const header = new BatchBuilder(HEADER_REPAIR_BUDGET, version, 'player').headerOnly(
+      this.currentCtx(),
+    )
+    if (!header) return null
+    const fixed = new Uint8Array(header.length + batch.length)
+    fixed.set(header, 0)
+    fixed.set(batch, header.length)
+    return fixed
+  }
+
+  /** Guarantees the invariant every consumer downstream relies on: byte 0 is a
+   *  BatchMetadata. Repairs in place when it isn't (#4836). */
+  private withHeader(batch: Uint8Array, dataType: DataType, version: number): Uint8Array | null {
+    if (this.startsWithMeta(batch)) return batch
+    const fixed = this.repairHeader(batch, version)
+    console.warn(
+      `OpenReplay: ${dataType} batch had no leading BatchMetadata (${batch.length}B, head ${this.headHex(batch)}) — ` +
+        (fixed ? 'header rebuilt.' : 'could not rebuild the header, skipping.'),
+    )
+    return fixed
+  }
+
+  private versionOf(dataType: DataType): number {
+    switch (dataType) {
+      case 'assets':
+        return ASSETS_VERSION
+      case 'devtools':
+        return DEVTOOLS_VERSION
+      case 'analytics':
+        return ANALYTICS_VERSION
+      default:
+        return this.playerVersion()
     }
-    this.onBatch(batch, skipCompression, dataType, split)
+  }
+
+  private emitBatch(batch: Uint8Array, dataType: DataType, skipCompression: boolean, split?: number): void {
+    // Ingestion answers 200 for a body it cannot parse, so a malformed batch is
+    // lost silently along with everything the reader hasn't reached yet.
+    const checked = split === undefined ? this.withHeader(batch, dataType, this.versionOf(dataType)) : batch
+    if (!checked) return
+
+    let offset = split
+    // A megabatch's split has to land exactly on the asset half's own metadata.
+    // finalizeVisual only ever pairs verified halves, so this is a backstop: if
+    // it trips, walk the body for the real boundary instead of guessing.
+    if (offset !== undefined && !this.isBoundary(checked, offset)) {
+      const found = this.findBoundary(checked)
+      console.warn(
+        `OpenReplay: ${dataType} batch split ${String(offset)} is not a batch boundary (${checked.length}B) — ` +
+          (found > 0 ? `corrected to ${found}.` : 'no boundary found, skipping.'),
+      )
+      if (found <= 0) return
+      offset = found
+    }
+
+    if (this.localDebug) {
+      this.verifyBody(checked, dataType, offset)
+    }
+    if (this.localDebug && this.onLocalSave) {
+      this.onLocalSave(`${dataType}-${Date.now()}`, checked.slice())
+    }
+    this.onBatch(checked, skipCompression, dataType, offset)
+  }
+
+  private isBoundary(batch: Uint8Array, offset: number): boolean {
+    return offset > 0 && offset < batch.length && batch[offset] === Messages.Type.BatchMetadata
+  }
+
+  private headHex(batch: Uint8Array): string {
+    return Array.from(batch.subarray(0, 8), (b) => b.toString(16).padStart(2, '0')).join(' ')
+  }
+
+  /** Walks a body the way the ingest reader does: [type varint][3-byte size]
+   *  [payload] per message, BatchMetadata excepted (no size prefix). Returns the
+   *  offset of a second BatchMetadata — the real seam when two batches ended up
+   *  concatenated — or -1, plus the first framing fault seen. O(size). */
+  private scanBatch(batch: Uint8Array): { boundary: number; fault: string | null } {
+    let p = 0
+    let n = 0
+    const readUint = (): number => {
+      let val = 0
+      let shift = 0
+      while (p < batch.length) {
+        const b = batch[p++]
+        val += (b & 0x7f) * Math.pow(2, shift)
+        if ((b & 0x80) === 0) return val
+        shift += 7
+      }
+      return -1
+    }
+    while (p < batch.length) {
+      const at = p
+      const type = readUint()
+      n++
+      if (type < 0) return { boundary: -1, fault: `message ${n}: truncated type` }
+      if (type === Messages.Type.BatchMetadata) {
+        if (n > 1) return { boundary: at, fault: null }
+        // version, pageNo, firstIndex, timestamp, then a length-prefixed url
+        for (let i = 0; i < 4; i++) {
+          if (readUint() < 0) return { boundary: -1, fault: 'truncated BatchMetadata' }
+        }
+        const urlLen = readUint()
+        if (urlLen < 0 || p + urlLen > batch.length) {
+          return { boundary: -1, fault: 'truncated BatchMetadata url' }
+        }
+        p += urlLen
+        continue
+      }
+      if (n === 1) return { boundary: -1, fault: `leading message is type ${type}, not BatchMetadata` }
+      if (p + 3 > batch.length) return { boundary: -1, fault: `message ${n}: truncated size prefix` }
+      const size = batch[p] | (batch[p + 1] << 8) | (batch[p + 2] << 16)
+      p += 3
+      if (p + size > batch.length) return { boundary: -1, fault: `message ${n}: size ${size} overruns the batch` }
+      p += size
+    }
+    return { boundary: -1, fault: null }
+  }
+
+  private findBoundary(batch: Uint8Array): number {
+    return this.scanBatch(batch).boundary
+  }
+
+  /** localDebug only: report anything ingestion would choke on. */
+  private verifyBody(batch: Uint8Array, dataType: DataType, split?: number): void {
+    if (split !== undefined) {
+      this.verifyBody(batch.subarray(0, split), `${dataType}:player` as DataType)
+      this.verifyBody(batch.subarray(split), `${dataType}:assets` as DataType)
+      return
+    }
+    const { boundary, fault } = this.scanBatch(batch)
+    const why = fault ?? (boundary >= 0 ? `BatchMetadata at byte ${boundary} is not the first message` : null)
+    if (why !== null) {
+      console.warn(`OpenReplay: malformed ${dataType} batch — ${why} (${batch.length}B, head ${this.headHex(batch)}).`)
+    }
   }
 
   finaliseBatch(skipCompression = false) {
