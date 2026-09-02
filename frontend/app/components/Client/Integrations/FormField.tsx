@@ -18,7 +18,7 @@ export function FormField({
 }) {
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-disabled-text">{label}</label>
       <Input
         type="text"
         name={name}

@@ -228,7 +228,6 @@ export default class APIClient {
       // from the Python `kai` service) — routed at the origin root like /kai,
       // not under the chalice /api prefix.
       path.includes('/smart-issues') ||
-      path.includes('/integration/') ||
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('replay-exporter');
     let edp = ENV.API_EDP || window.location.origin + '/api';
@@ -253,10 +252,12 @@ export default class APIClient {
     };
 
     // using product analytics api for cards and dashboards (excluding sessions)
+    // integrations moved to the Go `api` service: /v2/api/{projectId}/integration/*
     if (
       (path.includes('/cards') ||
         path.includes('/dashboards') ||
-        path.includes('/sessions/search')) &&
+        path.includes('/sessions/search') ||
+        path.includes('/integration/')) &&
       !edp.includes('/v2')
     ) {
       edp = safeV2Replacer(edp);
