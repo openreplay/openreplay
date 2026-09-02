@@ -26,7 +26,6 @@ HEALTH_ENDPOINTS = {
     "ender": app_connection_string("ender-openreplay", 8888, "metrics"),
     "http": app_connection_string("http-openreplay", 8888, "metrics"),
     "ingress-nginx": app_connection_string("ingress-nginx-openreplay", 80, "healthz"),
-    "integrations": app_connection_string("integrations-openreplay", 8888, "metrics"),
     "sink": app_connection_string("sink-openreplay", 8888, "metrics"),
     "sourcemapreader": app_connection_string(
         "sourcemapreader-openreplay", 8888, "health"
@@ -191,7 +190,6 @@ def get_health(tenant_id=None):
             "frontend": __always_healthy,
             "http": __check_be_service("http"),
             "ingress-nginx": __always_healthy,
-            "integrations": __check_be_service("integrations"),
             "sink": __check_be_service("sink"),
             "sourcemapreader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage"),

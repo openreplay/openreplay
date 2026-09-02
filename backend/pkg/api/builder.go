@@ -33,6 +33,8 @@ import (
 	eventAPI "openreplay/backend/pkg/events/api"
 	"openreplay/backend/pkg/favorite"
 	favoriteAPI "openreplay/backend/pkg/favorite/api"
+	integrationsAPI "openreplay/backend/pkg/integrations/api"
+	integrationsService "openreplay/backend/pkg/integrations/service"
 	"openreplay/backend/pkg/jobs"
 	"openreplay/backend/pkg/logger"
 	assistMetrics "openreplay/backend/pkg/metrics/assist"
@@ -68,11 +70,12 @@ type serviceBuilder struct {
 	lexiconAPI         api.Handlers
 	tagsAdminAPI       api.Handlers
 	filtersCatalogAPI  api.Handlers
+	integrationsAPI    api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	return []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI}
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, assistMetric assistMetrics.Assist, pgconn pool.Pool, redisClient *redis.Client, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (api.ServiceBuilder, error) {
@@ -230,6 +233,15 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	integrator, err := integrationsService.NewService(log, pgconn, objStore)
+	if err != nil {
+		return nil, err
+	}
+	integrationsHandlers, err := integrationsAPI.NewHandlers(log, cfg.JsonSizeLimit, responser, integrator)
+	if err != nil {
+		return nil, err
+	}
+
 	return &serviceBuilder{
 		sessionAPI:         sessionHandlers,
 		eventAPI:           eventHandlers,
@@ -248,5 +260,6 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		lexiconAPI:         lexiconHandlers,
 		tagsAdminAPI:       tagAdminHandlers,
 		filtersCatalogAPI:  filtersCatalogHandlers,
+		integrationsAPI:    integrationsHandlers,
 	}, nil
 }

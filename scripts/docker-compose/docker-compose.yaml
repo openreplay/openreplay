@@ -295,32 +295,6 @@ services:
     restart: unless-stopped
   
   
-  integrations-openreplay:
-    image: public.ecr.aws/p1t3u8a3/integrations:${INTEGRATIONS_VERSION}
-    domainname: app.svc.cluster.local
-    container_name: integrations
-    networks:
-      openreplay-net:
-        aliases:
-          - integrations-openreplay
-          - integrations-openreplay.app.svc.cluster.local
-    volumes:
-      - shared-volume:/mnt/efs
-    env_file:
-      - docker-envs/integrations.env
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      clickhouse:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    environment: {}  # Fallback empty environment if env_file is missing
-    restart: unless-stopped
-  
-  
   sink-openreplay:
     image: public.ecr.aws/p1t3u8a3/sink:${SINK_VERSION}
     domainname: app.svc.cluster.local

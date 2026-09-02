@@ -16,7 +16,6 @@ apps=(
     db
     ender
     http
-    integrations
     sink
     storage
     assist
@@ -71,11 +70,6 @@ restart(){
             cd ../../backend
             source build.sh nil http
             restart http
-            ;;
-        integrations)
-            cd ../../backend
-            source build.sh nil integrations
-            restart integrations
             ;;
         sink)
             cd ../../backend
