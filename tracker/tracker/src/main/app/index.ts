@@ -277,7 +277,6 @@ export default class App {
 
   public attributeSender: AttributeSender
   public socketMode = false
-  private compressionThreshold = 24 * 1000
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId: string
   private canvasRecorder: CanvasRecorder | null = null
@@ -1223,33 +1222,6 @@ export default class App {
       this.stop(false)
       this.debug.error('worker_failed', data.reason)
       this._debug('worker_failed', data.reason)
-    } else if (data.type === 'compress') {
-      const batch = data.batch
-      const dataType = data.dataType
-      // split is a decompressed-byte offset, so it survives gzip unchanged.
-      const split = data.split
-      const batchSize = batch.byteLength
-      const hasCompressionAPI = 'CompressionStream' in globalThis
-      if (batchSize > this.compressionThreshold && hasCompressionAPI) {
-        const blob = new Blob([batch as BlobPart])
-        const stream = blob.stream().pipeThrough(new CompressionStream('gzip'))
-        new Response(stream)
-          .arrayBuffer()
-          .then((compressedBuffer) => {
-            this.worker?.postMessage({
-              type: 'compressed',
-              batch: new Uint8Array(compressedBuffer),
-              dataType,
-              split,
-            })
-          })
-          .catch((err) => {
-            this.debug.error('Openreplay compression error:', err)
-            this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType, split })
-          })
-      } else {
-        this.worker?.postMessage({ type: 'uncompressed', batch: batch, dataType, split })
-      }
     } else if (data.type === 'local_save') {
       const blob = new Blob([data.batch as BlobPart], { type: 'application/octet-stream' })
       const url = URL.createObjectURL(blob)
@@ -2033,6 +2005,7 @@ export default class App {
           token,
           beaconSizeLimit,
           protocolVersion,
+          compressionThreshold,
         })
       }
 
@@ -2047,7 +2020,6 @@ export default class App {
       )
       this.localStorage.setItem(this.options.local_uuid_key, userUUID)
 
-      this.compressionThreshold = compressionThreshold
       const onStartInfo = { sessionToken: token, userUUID, sessionID }
       // TODO: start as early as possible (before receiving the token)
       /** after start */

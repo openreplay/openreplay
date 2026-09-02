@@ -8,6 +8,15 @@
   of handing ingestion a body it silently drops (#4836)
 - report malformed batches on the console, and walk every batch fully under
   __local_debug
+- gzip batches in the worker instead of round-tripping them through the main
+  thread: `CompressionStream` is available in workers, so the hop only added
+  latency and a way to reorder batches
+- send batches strictly FIFO, one in flight at a time. Closing/unload batches now
+  skip compression without skipping the queue, so a large first batch can no
+  longer be overtaken while it compresses — ingestion appends in arrival order, so
+  an overtaken DOM snapshot landed after the mutations needing it and broke replay
+- drain the queue oldest-first on unload, abandoning an unfinished compression so
+  those bytes still go out ahead of what is behind them
 
 ## 18.1.3
 

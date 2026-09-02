@@ -153,6 +153,8 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   }
   if (data === 'closing') {
     finalize(true)
+    // Unload: get the queued batches out now, oldest first.
+    sender?.flushAll()
     return
   }
   if (Array.isArray(data)) {
@@ -176,23 +178,6 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     return
   }
 
-  if (data.type === 'compressed') {
-    if (!sender) {
-      console.debug('OR WebWorker: sender not initialised. Compressed batch.')
-      initiateRestart()
-      return
-    }
-    data.batch && sender.sendCompressed(data.batch, data.dataType, data.split)
-  }
-  if (data.type === 'uncompressed') {
-    if (!sender) {
-      console.debug('OR WebWorker: sender not initialised. Uncompressed batch.')
-      initiateRestart()
-      return
-    }
-    data.batch && sender.sendUncompressed(data.batch, data.dataType, data.split)
-  }
-
   if (data.type === 'start') {
     workerStatus = WorkerStatus.Starting
     sender = new QueueSender(
@@ -207,22 +192,18 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       },
       data.connAttemptCount,
       data.connAttemptGap,
-      (batch, dataType, split) => {
-          postMessage({ type: 'compress', batch, dataType, split }, [batch.buffer])
-      },
       data.pageNo,
+      data.compressionThreshold,
     )
     writer = new BatchWriter(
       data.pageNo,
       data.timestamp,
       data.url,
       (batch, skipCompression, dataType = 'player', split) => {
-        if (!sender) return;
-        if (skipCompression) {
-          sender.sendUncompressed(batch, dataType, split)
-        } else {
-          sender.push(batch, dataType, split)
-        }
+        if (!sender) return
+        // Always queued: skipCompression means "don't spend time on gzip", never
+        // "jump the line" — batches must reach ingestion in order (#4836).
+        sender.push(batch, dataType, split, skipCompression)
       },
       data.tabId,
       () => postMessage({ type: 'queue_empty' }),
@@ -250,6 +231,9 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       return
     }
 
+    if (typeof data.compressionThreshold === 'number') {
+      sender.setCompressionThreshold(data.compressionThreshold)
+    }
     sender.authorise(data.token)
     data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
     data.protocolVersion && writer.setProtocolVersion(data.protocolVersion)

@@ -15,6 +15,7 @@ type Start = {
   url: string
   tabId: string
   localDebug?: boolean
+  compressionThreshold?: number
 } & Options
 
 type Auth = {
@@ -22,6 +23,7 @@ type Auth = {
   token: string
   beaconSizeLimit?: number
   protocolVersion?: number
+  compressionThreshold?: number
 }
 
 export type ToWorkerData =
@@ -30,8 +32,6 @@ export type ToWorkerData =
   | Start
   | Auth
   | Array<Message>
-  | { type: 'compressed'; batch: Uint8Array; dataType: DataType; split?: number }
-  | { type: 'uncompressed'; batch: Uint8Array; dataType: DataType; split?: number }
   | 'forceFlushBatch'
   | 'closing'
   | 'check_queue'
@@ -56,6 +56,5 @@ export type FromWorkerData =
   | 'a_start'
   | Failure
   | 'not_init'
-  | { type: 'compress'; batch: Uint8Array; dataType: DataType; split?: number }
   | QEmpty
   | LocalSave
