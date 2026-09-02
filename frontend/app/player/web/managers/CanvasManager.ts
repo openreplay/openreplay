@@ -43,6 +43,11 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     private readonly links: [tar?: string, mp4?: string, frames?: string],
     private readonly getNode: (id: number) => VElement | undefined,
     private readonly sessionStart: number,
+    /**
+     * The replay document has scripting disabled, so the canvas bitmap is never
+     * painted and frames have to reach the screen another way. See paintFrame.
+     */
+    private readonly useCssPaint: boolean = false,
   ) {
     super();
     // try frames first, then tar, then mp4
@@ -122,7 +127,8 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       return Promise.reject(FRAMES_MISSING);
     }
     // webp, jpeg, png, avif
-    const fileFormat = /\.(webp|jpeg|png|avif)$/.exec(this.links[2])?.[1] ?? 'webp';
+    const fileFormat =
+      /\.(webp|jpeg|png|avif)$/.exec(this.links[2])?.[1] ?? 'webp';
     return fetch(this.links[2])
       .then((r) => {
         if (r.status === 200) {
@@ -185,16 +191,18 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         if (node && node.node) {
           const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
           const canvasEl = node.node as HTMLVideoElement;
-          requestAnimationFrame(() => {
-            canvasCtx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
-            canvasCtx?.drawImage(
-              this.snapImage,
-              0,
-              0,
-              canvasEl.width,
-              canvasEl.height,
-            );
-          });
+          if (!this.useCssPaint) {
+            requestAnimationFrame(() => {
+              canvasCtx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
+              canvasCtx?.drawImage(
+                this.snapImage,
+                0,
+                0,
+                canvasEl.width,
+                canvasEl.height,
+              );
+            });
+          }
           this.debugCanvas
             ?.getContext('2d')
             ?.drawImage(this.snapImage, 0, 0, 300, 200);
@@ -241,6 +249,25 @@ export default class CanvasManager extends ListWalker<Timestamp> {
           canvasEl.width,
           canvasEl.height,
         );
+        if (this.useCssPaint) {
+          // Unlike the snapshot modes there is no per-frame image to hand to
+          // paintFrame, so re-encode what was just drawn. Throttled to ~10fps by
+          // the 100ms guard above. Quality is high because this is a second
+          // lossy pass over already-lossy video frames; at these sizes the cost
+          // over 0.8 is ~20% more bytes, which never touch the network.
+          // The bitmap cannot be tainted (the video plays a same-origin blob
+          // URL), so toBlob will not fail on security grounds.
+          (node.node as HTMLCanvasElement).toBlob(
+            (blob) => {
+              if (!blob) return;
+              const url = URL.createObjectURL(blob);
+              this.paintFrame(url);
+              this.retainFrame(url);
+            },
+            'image/webp',
+            0.95,
+          );
+        }
       } else {
         console.error(`VideoMode CanvasManager: Node ${this.nodeId} not found`);
       }
@@ -248,17 +275,71 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   };
 
   previousBlob: string = '';
+
+  private warnedMissingNode = false;
+
+  /**
+   * Render the current frame as the canvas element's CSS background.
+   *
+   * The replay iframe is sandboxed without allow-scripts (see Screen.ts), so
+   * scripting is disabled for its document — and per the HTML spec a <canvas>
+   * in a script-disabled document renders its *fallback content* instead of its
+   * bitmap. drawImage() still fills the bitmap (getImageData reads it straight
+   * back), nothing throws and nothing logs, so the canvas just silently stays
+   * blank. A CSS background is painted either way and reproduces drawImage's
+   * stretch-to-content-box geometry exactly.
+   *
+   * This and the bitmap path are mutually exclusive — only one of them can ever
+   * be visible, and doing both would decode every frame twice.
+   */
+  private paintFrame = (blobUrl: string) => {
+    const canvasEl = this.getNode(parseInt(this.nodeId, 10))?.node as
+      | HTMLCanvasElement
+      | undefined;
+    if (!canvasEl) {
+      // Once per manager: frames keep arriving, and a node that is merely late
+      // would otherwise flood the console.
+      if (!this.warnedMissingNode) {
+        this.warnedMissingNode = true;
+        console.error(`CanvasManager: Node ${this.nodeId} not found`);
+      }
+      return;
+    }
+    Object.assign(canvasEl.style, {
+      backgroundImage: `url("${blobUrl}")`,
+      backgroundSize: '100% 100%',
+      backgroundRepeat: 'no-repeat',
+      // The bitmap is painted into the content box, so anchor the background
+      // there too — otherwise a padded canvas would be offset against it.
+      backgroundOrigin: 'content-box',
+      backgroundClip: 'content-box',
+    });
+  };
+
+  /** Take ownership of the displayed frame and release the one it replaced. */
+  private retainFrame(blobUrl: string) {
+    const previous = this.previousBlob;
+    this.previousBlob = blobUrl;
+    if (previous && previous !== blobUrl) {
+      URL.revokeObjectURL(previous);
+    }
+  }
+
   moveReadySnap = (t: number) => {
     const msg = this.getNew(t);
     if (msg) {
       const file = this.snapshots[msg.time];
       if (file) {
         const blobUrl = file.getBlobUrl();
-        this.snapImage.src = blobUrl;
-        if (this.previousBlob) {
-          URL.revokeObjectURL(this.previousBlob);
+        if (this.useCssPaint) {
+          this.paintFrame(blobUrl);
         }
-        this.previousBlob = blobUrl;
+        // Decoding into the <img> is only worth it if something consumes it:
+        // the canvas bitmap, or the debug strip when it is switched on.
+        if (!this.useCssPaint || this.debugCanvas) {
+          this.snapImage.src = blobUrl;
+        }
+        this.retainFrame(blobUrl);
       }
     }
   };
