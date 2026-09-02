@@ -5,12 +5,12 @@ PODS:
   - hermes-engine (250829098.0.10):
     - hermes-engine/Pre-built (= 250829098.0.10)
   - hermes-engine/Pre-built (250829098.0.10)
-  - Openreplay (1.0.24):
+  - Openreplay (1.0.25):
     - DeviceKit
     - SWCompression
-  - openreplay-react-native (0.7.9):
+  - openreplay-react-native (0.8.0):
     - hermes-engine
-    - Openreplay (= 1.0.24)
+    - Openreplay (= 1.0.25)
     - RCTRequired
     - RCTTypeSafety
     - React-Core
@@ -2101,8 +2101,8 @@ SPEC CHECKSUMS:
   DeviceKit: 57636054c827d171a22baa3fd320b65a70f3fda7
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: 9e323f03c46f39f89fa4eae61405796c21e873aa
-  Openreplay: 883773598bbde7c8142b7bf3d29dd937fa6d7e79
-  openreplay-react-native: 6f709993d995c431f476a2ffc10fcdd598c15fd2
+  Openreplay: 3d8714ac5dfc595f1d67a917e500022ec75c52ce
+  openreplay-react-native: 710799729dcef02ea847309a77a6d5cf5000c397
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
   RCTRequired: 9f3a7e5645d4bc3f551593de7550bb66ab6e42bc
   RCTSwiftUI: 239ed2eb9e73de5a6f518810630f0c95e01c8702

@@ -45,11 +45,13 @@ export default function App() {
   const [status, setStatus] = React.useState('Not started');
   const [reproVisible, setReproVisible] = React.useState(false);
 
+  const projectKey = OR_PROJECT_KEY || 'YOUR_PROJECT_KEY';
+  const ingestUrl = OR_INGEST_URL || 'https://ingest.openreplay.com';
   console.log('starting with', OR_PROJECT_KEY, OR_INGEST_URL);
   const start = () => {
     try {
       Openreplay.tracker.startSession(
-        OR_PROJECT_KEY,
+        projectKey,
         {
           crashes: true,
           analytics: true,
@@ -62,7 +64,7 @@ export default function App() {
           screenshotFrequency: 'low',
           screenshotQuality: 'standard',
         },
-        OR_INGEST_URL
+        ingestUrl
       );
       Openreplay.patchNetwork(global, () => false, { capturePayload: true });
       setStatus('Session started');
