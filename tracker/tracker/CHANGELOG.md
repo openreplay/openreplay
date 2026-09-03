@@ -1,3 +1,7 @@
+## 18.1.5
+
+- improve click labels and selectors computation
+
 ## 18.1.4
 
 - fix commits stopping for the rest of the session after a single failed commit:
