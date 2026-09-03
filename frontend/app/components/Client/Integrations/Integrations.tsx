@@ -20,6 +20,7 @@ import SentryForm from './Backend/SentryForm/SentryFormModal';
 import GithubForm from './GithubForm';
 import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
+import LinearForm from './LinearForm';
 import ProfilerDoc from './ProfilerDoc';
 import SlackForm from './SlackForm';
 import MSTeams from './Teams';
@@ -31,6 +32,9 @@ import PiniaDoc from './Tracker/PiniaDoc';
 import ReduxDoc from './Tracker/ReduxDoc';
 import VueDoc from './Tracker/VueDoc';
 import ZustandDoc from './Tracker/ZustandDoc';
+
+/** only one issue tracker can be connected per tenant */
+const issueTrackers = ['jira', 'github', 'linear'];
 
 interface Props {
   siteId: string;
@@ -156,10 +160,9 @@ function Integrations(props: Props) {
                 )
               }
               hide={
-                (integration.slug === 'github' &&
-                  integratedList.includes('jira')) ||
-                (integration.slug === 'jira' &&
-                  integratedList.includes('github'))
+                issueTrackers.includes(integration.slug) &&
+                !integratedList.includes(integration.slug) &&
+                issueTrackers.some((slug) => integratedList.includes(slug))
               }
             />
           </React.Fragment>
@@ -202,6 +205,16 @@ const integrations = (t: TFunction) => [
         category: 'Errors',
         icon: 'integrations/github',
         component: <GithubForm />,
+      },
+      {
+        title: t('Linear'),
+        subtitle: t(
+          'Integrate Linear with OpenReplay to enable the direct creation of a new issue from a session.',
+        ),
+        slug: 'linear',
+        category: 'Errors',
+        icon: 'integrations/linear',
+        component: <LinearForm />,
       },
     ],
   },

@@ -539,6 +539,35 @@ export const restoreIssue = (projectId: string, issueId: string) =>
 export const deleteIssue = (projectId: string, issueId: string) =>
   client.delete(base(projectId), { issueId });
 
+/* ---- issue-tracker tickets ---- */
+
+/** Issue tracker a ticket can be filed in — one of the connected integrations. */
+export type TicketTarget = 'linear';
+
+/** The created ticket: the tracker's own id plus a deep link to it. */
+export interface CreatedTicket {
+  /** id in the target tracker (NOT the smart-issue id) */
+  issueId: string;
+  url: string;
+}
+
+/** POST /smart-issues/{projectId}/issue/ticket — file the issue in a connected
+    tracker. Resolves to null when the server returns no ticket. */
+export async function createIssueTicket(
+  projectId: string,
+  issueId: string,
+  target: TicketTarget,
+): Promise<CreatedTicket | null> {
+  const res = await client.post(`${base(projectId)}/issue/ticket`, {
+    issueId,
+    target,
+  });
+  const json = await res.json();
+  const data = json.data;
+  if (!data) return null;
+  return { issueId: data.issueId, url: data.url ?? data.URL ?? '' };
+}
+
 /* ---- project settings (real; stored in projects.melonade_config) ---- */
 
 export interface ProjectSettings {

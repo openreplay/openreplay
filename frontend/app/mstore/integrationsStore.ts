@@ -12,6 +12,7 @@ import {
   Integration,
   IssueTracker,
   JiraInt,
+  LinearInt,
   SentryInt,
 } from './types/integrations/services';
 
@@ -309,6 +310,7 @@ export type namedStore =
   | 'sumologic'
   | 'jira'
   | 'github'
+  | 'linear'
   | 'issues';
 
 export class IntegrationsStore {
@@ -324,6 +326,8 @@ export class IntegrationsStore {
   jira = new NamedIntegrationStore('jira', (d) => new JiraInt(d));
 
   github = new NamedIntegrationStore('github', (d) => new GithubInt(d));
+
+  linear = new NamedIntegrationStore('linear', (d) => new LinearInt(d));
 
   issues = new NamedIntegrationStore('issues', (d) => new IssueTracker(d));
 

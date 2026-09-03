@@ -12,7 +12,7 @@ export default class IntegrationsService extends BaseService {
 
   fetchIntegration = async (name: string, siteId: string) => {
     const url =
-      siteId && name !== 'github' && name !== 'jira'
+      siteId && !['github', 'jira', 'linear'].includes(name)
         ? `/${siteId}/integrations/${name}`
         : `/integrations/${name}`;
     const r = await this.client.get(url);

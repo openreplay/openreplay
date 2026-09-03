@@ -12,6 +12,7 @@ import {
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { useHistory, useParams } from 'App/routing';
@@ -25,6 +26,7 @@ import {
   type IssueSessionCard,
   JOURNEY_SEARCH_SUGGESTIONS,
   JiraIcon,
+  LinearIcon,
   NotCriticalDialog,
 } from '../shared';
 import ProblemCard from './ProblemCard';
@@ -34,7 +36,7 @@ const SHOWN_LIMIT = 3;
 const MAX_EXAMPLES = 10;
 
 function IssueDetail() {
-  const { issuesStore, projectsStore } = useStore();
+  const { issuesStore, projectsStore, integrationsStore } = useStore();
   const { t } = useTranslation();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
@@ -43,6 +45,13 @@ function IssueDetail() {
   const id = params.issueId ? decodeURIComponent(params.issueId) : '';
   const idParam = params.issueId ?? '';
   const issue = issuesStore.byId(id);
+  /* the integration list is loaded once on app start (PrivateRoutes), so the
+     connected tracker is already in the store here */
+  const linearConnected =
+    integrationsStore.integrations.integratedServices.some(
+      (int: any) => int.name === 'linear',
+    );
+  const ticket = issue ? issuesStore.tickets[issue.id] : undefined;
 
   const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
@@ -64,6 +73,15 @@ function IssueDetail() {
       prev[id] === n ? prev : { ...prev, [id]: n },
     );
   }, []);
+
+  const createTicket = async () => {
+    const created = await issuesStore.createTicket(id, 'linear');
+    if (created) {
+      toast.success(t('Linear ticket created'));
+    } else {
+      toast.error(t('Failed to create the Linear ticket'));
+    }
+  };
 
   // sessions-only detail filters (segment scope + tag filter), mirrored to ?seg=
   const filterKey = `${issuesStore.detailScope.join(',')}|${
@@ -234,17 +252,27 @@ function IssueDetail() {
               <Button
                 type="primary"
                 size="small"
+                loading={issuesStore.ticketPending === issue.id}
                 icon={
-                  ticketHover ? (
+                  ticketHover || ticket ? (
                     <ExternalLink size={14} />
+                  ) : linearConnected ? (
+                    <LinearIcon size={14} />
                   ) : (
                     <JiraIcon size={14} />
                   )
                 }
                 onMouseEnter={() => setTicketHover(true)}
                 onMouseLeave={() => setTicketHover(false)}
+                onClick={
+                  ticket
+                    ? () => window.open(ticket.url, '_blank', 'noopener')
+                    : linearConnected
+                      ? createTicket
+                      : undefined
+                }
               >
-                {t('Create ticket')}
+                {ticket ? t('View ticket') : t('Create ticket')}
               </Button>
               {/* follows the ISSUE's own flag, not the list's visibility
                   filter — this page is deep-linkable and `all` mixes both */}
