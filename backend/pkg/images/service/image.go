@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	config "openreplay/backend/internal/config/images"
+	"openreplay/backend/pkg/frames"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/images"
 	"openreplay/backend/pkg/objectstorage"
@@ -15,8 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/klauspost/compress/zstd"
 )
 
 type saveTask struct {
@@ -82,13 +81,8 @@ func (v *ImageStorage) CleanSession(ctx context.Context, sessionID uint64) error
 	return nil
 }
 
-type ImagesMessage struct {
-	Name string
-	Data []byte
-}
-
 func (v *ImageStorage) Process(ctx context.Context, sessID uint64, data []byte) error {
-	var msg = &ImagesMessage{}
+	var msg = &frames.Message{}
 	if err := json.Unmarshal(data, msg); err != nil {
 		v.metrics.IncreaseFrames(images.FrameBadMessage)
 		return fmt.Errorf("can't parse canvas message, err: %s", err)
@@ -140,7 +134,7 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	task := payload.(*uploadTask)
 	start := time.Now()
 
-	if err := v.streamZstdToS3(task.name, task.path); err != nil {
+	if err := frames.StreamZstdToS3(v.objStorage, task.name, task.path); err != nil {
 		if !strings.Contains(err.Error(), "no such file or directory") {
 			v.log.Fatal(task.ctx, "can't upload image, name: %s, err: %s", task.name, err)
 		}
@@ -149,44 +143,4 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	}
 	v.metrics.IncreaseUploads(images.UploadOK)
 	v.metrics.RecordUploadingDuration(time.Since(start).Seconds())
-}
-
-func (v *ImageStorage) streamZstdToS3(key, srcPath string) error {
-	pr, pw := io.Pipe()
-	errCh := make(chan error, 1)
-
-	go func() {
-		var wErr error
-		defer func() {
-			if wErr != nil {
-				pw.CloseWithError(wErr)
-			} else {
-				pw.Close()
-			}
-			errCh <- wErr
-		}()
-
-		f, err := os.Open(srcPath)
-		if err != nil {
-			wErr = err
-			return
-		}
-		defer f.Close()
-
-		zw, err := zstd.NewWriter(pw, zstd.WithEncoderLevel(zstd.SpeedFastest))
-		if err != nil {
-			wErr = err
-			return
-		}
-		defer zw.Close()
-
-		_, wErr = io.CopyBuffer(zw, f, make([]byte, 256*1024))
-	}()
-
-	if err := v.objStorage.Upload(pr, key, "application/octet-stream", objectstorage.NoContentEncoding, objectstorage.Zstd); err != nil {
-		pr.CloseWithError(err)
-		<-errCh
-		return err
-	}
-	return <-errCh
 }
