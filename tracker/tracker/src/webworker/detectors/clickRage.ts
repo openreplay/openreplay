@@ -18,6 +18,8 @@ const MAX_TIME_DIFF = 300
 const MIN_CLICKS_IN_A_ROW = 3
 
 export default class ClickRageDetector implements Detector {
+  readonly types: readonly number[] = [Type.MouseClick]
+
   private lastTimestamp = 0
   private lastLabel = ''
   private lastSelector = ''
@@ -57,11 +59,11 @@ export default class ClickRageDetector implements Detector {
     })
   }
 
+  flush(): void {
+    this.build()
+  }
+
   handle(message: Message, index: number, timestamp: number): void {
-    const type = message[0]
-    if (type !== Type.MouseClick) {
-      return
-    }
     const msg = message as MouseClick
     const label = msg[3]
     const selector = msg[4]
@@ -69,7 +71,12 @@ export default class ClickRageDetector implements Detector {
       this.build()
       return
     }
-    if (this.lastLabel === label && timestamp - this.lastTimestamp < MAX_TIME_DIFF) {
+    // dt >= 0 guard: in Go these were uint64, so a backwards timestamp
+    // underflowed to a huge number and broke the row. In JS it goes negative
+    // and would read as "within MAX_TIME_DIFF", welding unrelated clicks
+    // together across a time jump.
+    const dt = timestamp - this.lastTimestamp
+    if (this.lastLabel === label && dt >= 0 && dt < MAX_TIME_DIFF) {
       this.lastTimestamp = timestamp
       this.countsInARow += 1
       return

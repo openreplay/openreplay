@@ -18,23 +18,50 @@ const CLICK_RELATION_TIME = 1234
 
 /**
  * DOM-mutation message types. Any of these arriving means the page reacted to
- * the click. Mirrors the mutation set in the Go Handle() switch
- * (MsgSetCSSData -> SetCSSDataURLBased on the tracker).
+ * the click.
+ *
+ * Wider than the Go handler's set on purpose. Go read the raw ingest topic,
+ * before assetscache rewrites the URL-based messages, so it only ever saw the
+ * plain SetNodeAttribute the tracker emits for a handful of internal
+ * attributes (sprite, dialog, orloaded, color scheme) — every ordinary
+ * attribute change (SetNodeAttributeURLBased) and every text change
+ * (SetNodeData) went unnoticed and the click read as dead. Here we know what
+ * the observer actually sends, so the whole mutation surface is listed.
  */
 const DOM_MUTATION_TYPES: ReadonlySet<number> = new Set<number>([
-  Type.SetNodeAttribute,
-  Type.RemoveNodeAttribute,
   Type.CreateElementNode,
   Type.CreateTextNode,
-  Type.SetNodeFocus,
   Type.MoveNode,
   Type.RemoveNode,
+  Type.UnbindNodes,
+  Type.SetNodeAttribute,
+  Type.SetNodeAttributeURLBased,
+  Type.SetNodeAttributeDict,
+  Type.SetNodeAttributeDictGlobal,
+  Type.RemoveNodeAttribute,
+  Type.SetNodeData,
   Type.SetCSSDataURLBased,
+  Type.SetNodeFocus,
+  Type.SetNodeSlot,
   Type.SetInputValue,
   Type.SetInputChecked,
+  Type.NodeAnimationResult,
+  Type.CanvasNode,
+  Type.AdoptedSSReplaceURLBased,
+  Type.AdoptedSSInsertRuleURLBased,
+  Type.AdoptedSSDeleteRule,
+  Type.AdoptedSSAddOwner,
+  Type.AdoptedSSRemoveOwner,
 ])
 
 export default class DeadClickDetector implements Detector {
+  readonly types: readonly number[] = [
+    Type.MouseClick,
+    Type.SetInputTarget,
+    Type.CreateDocument,
+    ...DOM_MUTATION_TYPES,
+  ]
+
   private lastMouseClick: MouseClick | null = null
   private lastTimestamp = 0
   private lastClickTimestamp = 0
@@ -47,7 +74,9 @@ export default class DeadClickDetector implements Detector {
     this.lastMouseClick = null
     this.lastClickTimestamp = 0
     this.lastMessageId = 0
-    this.inputIDSet.clear()
+    // inputIDSet deliberately survives: Go cleared it here, so any DOM mutation
+    // wiped the "these ids are inputs" memory and the next click on a known
+    // input read as a dead-click candidate. Only a new document clears it.
   }
 
   private build(): void {
@@ -70,17 +99,12 @@ export default class DeadClickDetector implements Detector {
     })
   }
 
+  flush(): void {
+    this.build()
+  }
+
   handle(message: Message, index: number, timestamp: number): void {
     const type = message[0]
-    const isMutation = DOM_MUTATION_TYPES.has(type)
-    if (
-      type !== Type.MouseClick &&
-      type !== Type.SetInputTarget &&
-      type !== Type.CreateDocument &&
-      !isMutation
-    ) {
-      return
-    }
     // Go updates lastTimestamp at the top of Handle for every relevant message.
     this.lastTimestamp = timestamp
 

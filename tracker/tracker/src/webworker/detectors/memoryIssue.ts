@@ -1,7 +1,6 @@
 import Message, {
   Type,
   PerformanceTrack,
-  SetPageLocation,
 } from '../../common/messages.gen.js'
 import type { Detector, ReportIssue } from './types.js'
 
@@ -17,14 +16,18 @@ const MIN_COUNT = 3
 const MEM_RATE_THRESHOLD = 300 // % of the running average
 
 export default class MemoryIssueDetector implements Detector {
+  readonly types: readonly number[] = [Type.PerformanceTrack]
+
   private startTimestamp = 0
   private startMessageId = 0
   private rate = 0
   private count = 0
   private sum = 0
-  private contextString = ''
 
-  constructor(private readonly report: ReportIssue) {}
+  constructor(
+    private readonly report: ReportIssue,
+    private readonly url: () => string,
+  ) {}
 
   private reset(): void {
     this.startTimestamp = 0
@@ -38,7 +41,7 @@ export default class MemoryIssueDetector implements Detector {
     }
     this.report({
       type: 'memory',
-      contextString: this.contextString,
+      contextString: this.url(),
       payload: JSON.stringify({ Rate: this.rate - 100 }),
       timestamp: this.startTimestamp,
       messageId: this.startMessageId,
@@ -46,15 +49,11 @@ export default class MemoryIssueDetector implements Detector {
     this.reset()
   }
 
+  flush(): void {
+    this.build()
+  }
+
   handle(message: Message, index: number, timestamp: number): void {
-    const type = message[0]
-    if (type === Type.SetPageLocation) {
-      this.contextString = (message as SetPageLocation)[1]
-      return
-    }
-    if (type !== Type.PerformanceTrack) {
-      return
-    }
     const usedJSHeapSize = (message as PerformanceTrack)[4]
 
     if (this.count < MIN_COUNT) {

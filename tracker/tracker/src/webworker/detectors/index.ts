@@ -20,6 +20,8 @@ export type { Detector, ReportIssue, IssueReport } from './types.js'
  */
 export default class Detectors {
   private readonly detectors: Detector[]
+  /** type -> detectors wanting it, so a DOM flood costs one lookup per message. */
+  private readonly dispatch = new Map<number, Detector[]>()
   /** Latest page URL (from SetPageLocation); stamped on every emitted IssueEvent. */
   private currentUrl = ''
 
@@ -40,24 +42,48 @@ export default class Detectors {
         issue.contextString ?? '',
         issue.context ?? '',
         issue.payload ?? '',
-        issue.url || this.currentUrl,
+        this.currentUrl,
       ])
     }
+    // cpu/memory report the page as their contextString; they read it from here
+    // at build time instead of each tracking SetPageLocation separately.
+    const url = () => this.currentUrl
 
     this.detectors = [
       new DeadClickDetector(report),
       new ClickRageDetector(report),
-      new CpuIssueDetector(report),
-      new MemoryIssueDetector(report),
+      new CpuIssueDetector(report, url),
+      new MemoryIssueDetector(report, url),
     ]
+    for (const detector of this.detectors) {
+      for (const type of detector.types) {
+        const existing = this.dispatch.get(type)
+        if (existing) {
+          existing.push(detector)
+        } else {
+          this.dispatch.set(type, [detector])
+        }
+      }
+    }
   }
 
   handle(message: Message, index: number, timestamp: number): void {
     if (message[0] === Type.SetPageLocation) {
       this.currentUrl = (message as SetPageLocation)[1]
     }
-    for (const detector of this.detectors) {
+    const targets = this.dispatch.get(message[0])
+    if (targets === undefined) {
+      return
+    }
+    for (const detector of targets) {
       detector.handle(message, index, timestamp)
+    }
+  }
+
+  /** Session end / unload: emit every still-open issue before the last batch goes. */
+  flush(): void {
+    for (const detector of this.detectors) {
+      detector.flush()
     }
   }
 }

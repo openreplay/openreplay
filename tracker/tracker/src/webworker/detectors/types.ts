@@ -13,7 +13,6 @@ export interface IssueReport {
   context?: string
   /** IssueEvent.Payload — JSON string, same shape as the Go detector's payload */
   payload?: string
-  url?: string
   /** IssueEvent.MessageID — index of the source message that triggered the issue */
   messageId?: number
 }
@@ -28,10 +27,22 @@ export type ReportIssue = (issue: IssueReport) => void
  */
 export interface Detector {
   /**
-   * Called for every written message once recording is active.
+   * Message types this detector wants, mirroring the Go MessageTypes(). The
+   * Detectors layer indexes on these so an unrelated message costs one map
+   * lookup instead of a call into every detector.
+   */
+  readonly types: readonly number[]
+  /**
+   * Called for every written message of one of `types` once recording is active.
    * @param message   the message
    * @param index     the message's stream index (its MessageID / MsgID)
    * @param timestamp the running batch timestamp
    */
   handle(message: Message, index: number, timestamp: number): void
+  /**
+   * Emit whatever is still pending. Mirrors the Go handlers' external Build()
+   * call on SessionEnd — without it, an issue whose stretch is still open when
+   * the session ends is never reported.
+   */
+  flush(): void
 }

@@ -1,7 +1,6 @@
 import Message, {
   Type,
   PerformanceTrack,
-  SetPageLocation,
 } from '../../common/messages.gen.js'
 import type { Detector, ReportIssue } from './types.js'
 import { cpuRate, timeDiff } from './performance.js'
@@ -21,13 +20,17 @@ const CPU_THRESHOLD = 70 // % out of 100
 const CPU_MIN_DURATION_TRIGGER = 6 * 1000
 
 export default class CpuIssueDetector implements Detector {
+  readonly types: readonly number[] = [Type.PerformanceTrack]
+
   private startTimestamp = 0
   private startMessageId = 0
   private lastTimestamp = 0
   private maxRate = 0
-  private contextString = ''
 
-  constructor(private readonly report: ReportIssue) {}
+  constructor(
+    private readonly report: ReportIssue,
+    private readonly url: () => string,
+  ) {}
 
   private duration(): number {
     return this.lastTimestamp - this.startTimestamp
@@ -51,22 +54,18 @@ export default class CpuIssueDetector implements Detector {
     }
     this.report({
       type: 'cpu',
-      contextString: this.contextString,
+      contextString: this.url(),
       payload: JSON.stringify({ Duration: duration, Rate: rate }),
       timestamp: start,
       messageId,
     })
   }
 
+  flush(): void {
+    this.build()
+  }
+
   handle(message: Message, index: number, timestamp: number): void {
-    const type = message[0]
-    if (type === Type.SetPageLocation) {
-      this.contextString = (message as SetPageLocation)[1]
-      return
-    }
-    if (type !== Type.PerformanceTrack) {
-      return
-    }
     const msg = message as PerformanceTrack
     const frames = msg[1]
     const ticks = msg[2]
