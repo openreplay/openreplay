@@ -29,6 +29,13 @@ const CLICK_RELATION_TIME = 1234
  * attribute change (SetNodeAttributeURLBased) and every text change
  * (SetNodeData) went unnoticed and the click read as dead. Here we know what
  * the observer actually sends, so the whole mutation surface is listed.
+ *
+ * Deliberately NOT listed, though the tracker sends them: NodeAnimationResult
+ * fires on animation *finish* (webAnimations.ts), so a looping spinner
+ * completing mid-window would cancel a real dead click; CanvasNode is emitted
+ * per canvas registration off an IntersectionObserver (canvas.ts), so it fires
+ * on scroll independently of any click. Both would only ever hide dead clicks,
+ * and a click that really does start an animation mutates attributes first.
  */
 const DOM_MUTATION_TYPES: ReadonlySet<number> = new Set<number>([
   Type.CreateElementNode,
@@ -47,8 +54,6 @@ const DOM_MUTATION_TYPES: ReadonlySet<number> = new Set<number>([
   Type.SetNodeSlot,
   Type.SetInputValue,
   Type.SetInputChecked,
-  Type.NodeAnimationResult,
-  Type.CanvasNode,
   Type.AdoptedSSReplaceURLBased,
   Type.AdoptedSSInsertRuleURLBased,
   Type.AdoptedSSDeleteRule,
@@ -62,6 +67,7 @@ export default class DeadClickDetector implements Detector {
     Type.SetInputTarget,
     Type.InputChange,
     Type.CreateDocument,
+    Type.SetPageLocation,
     ...DOM_MUTATION_TYPES,
   ]
 
@@ -102,7 +108,14 @@ export default class DeadClickDetector implements Detector {
     })
   }
 
-  flush(): void {
+  flush(timestamp: number): void {
+    // Without this the flush is inert. Nothing is dispatched between the click
+    // and the unload, so lastTimestamp is still the click's own and the guard
+    // in build() reads `clickTs + CLICK_RELATION_TIME > clickTs` — always an
+    // "instant reaction". Session end is real elapsed time, so advance to it.
+    if (timestamp > this.lastTimestamp) {
+      this.lastTimestamp = timestamp
+    }
     this.build()
   }
 
@@ -150,6 +163,14 @@ export default class DeadClickDetector implements Detector {
       case Type.InputChange:
         // Reports the user's own typing, not a page reaction — register only.
         this.inputIDSet.add((message as InputChange)[1])
+        return
+      case Type.SetPageLocation:
+        // Navigation boundary. A click still pending belongs to the page being
+        // left; without cutting here it would be reported on the next page's
+        // first mutation and — since Detectors updates currentUrl after
+        // dispatch — stamped with the new URL. lastTimestamp was advanced
+        // above, so the window is measured up to the navigation itself.
+        this.build()
         return
       case Type.CreateDocument:
         this.inputIDSet.clear()

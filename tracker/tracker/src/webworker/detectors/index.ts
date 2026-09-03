@@ -82,10 +82,11 @@ export default class Detectors {
     }
   }
 
-  /** Session end / unload: emit every still-open issue before the last batch goes. */
-  flush(): void {
+  /** Session end / unload: emit every still-open issue before the last batch
+   *  goes. `timestamp` is the latest known batch time — see Detector.flush. */
+  flush(timestamp: number): void {
     for (const detector of this.detectors) {
-      detector.flush()
+      detector.flush(timestamp)
     }
   }
 }

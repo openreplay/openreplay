@@ -40,7 +40,7 @@ function finalize(skipCompression?: boolean): void {
  *  that's about to go instead of being dropped. Not done on the auto-send tick:
  *  that would cut every open stretch at a 30s boundary. */
 function finalizeSession(skipCompression?: boolean): void {
-  detectors?.flush()
+  detectors?.flush(detectorsTimestamp)
   finalize(skipCompression)
 }
 

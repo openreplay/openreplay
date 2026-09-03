@@ -61,7 +61,7 @@ export default class CpuIssueDetector implements Detector {
     })
   }
 
-  flush(): void {
+  flush(_timestamp: number): void {
     this.build()
   }
 

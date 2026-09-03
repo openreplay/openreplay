@@ -59,7 +59,7 @@ export default class ClickRageDetector implements Detector {
     })
   }
 
-  flush(): void {
+  flush(_timestamp: number): void {
     this.build()
   }
 

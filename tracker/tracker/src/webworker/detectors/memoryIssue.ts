@@ -49,7 +49,7 @@ export default class MemoryIssueDetector implements Detector {
     this.reset()
   }
 
-  flush(): void {
+  flush(_timestamp: number): void {
     this.build()
   }
 

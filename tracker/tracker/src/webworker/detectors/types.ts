@@ -43,6 +43,12 @@ export interface Detector {
    * Emit whatever is still pending. Mirrors the Go handlers' external Build()
    * call on SessionEnd — without it, an issue whose stretch is still open when
    * the session ends is never reported.
+   *
+   * @param timestamp the session-end time. Detectors whose window is measured
+   * against "time since the last message" need it: nothing has been dispatched
+   * since the event opened, so their own clock is frozen at the event and the
+   * window looks empty. Detectors that only close a window they already
+   * measured (clickRage, cpu, memory) ignore it.
    */
-  flush(): void
+  flush(timestamp: number): void
 }

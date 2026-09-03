@@ -125,19 +125,30 @@ describe('DeadClickDetector', () => {
     expect(issues[0].type).toBe('dead_click')
   })
 
-  test('flush reports a click still pending at session end', () => {
+  test('flush reports a click nothing reacted to before unload', () => {
+    const { issues, report } = collector()
+    const d = new DeadClickDetector(report)
+
+    // Nothing is dispatched between the click and the unload, so the detector's
+    // own clock never advances — flush has to supply the session-end time.
+    d.handle(click(1, 'buy'), 7, 1000)
+    d.flush(1000 + 1235)
+
+    expect(issues).toEqual([
+      { type: 'dead_click', contextString: 'buy', context: '#buy', timestamp: 1000, messageId: 7 },
+    ])
+  })
+
+  test('flush stays quiet when the session ends inside the relation window', () => {
     const { issues, report } = collector()
     const d = new DeadClickDetector(report)
 
     d.handle(click(1, 'buy'), 7, 1000)
-    d.handle(textMutation(), 8, 1000 + 1235)
-    issues.length = 0
+    d.flush(1000 + 1233)
 
-    d.handle(click(2, 'pay'), 9, 5000)
-    d.handle(attrMutation(), 10, 5000 + 1235)
-    expect(issues).toHaveLength(1)
-    expect(issues[0].messageId).toBe(9)
+    expect(issues).toEqual([])
   })
+
 })
 
 describe('ClickRageDetector', () => {
@@ -181,6 +192,9 @@ describe('ClickRageDetector', () => {
     d.handle(click(1, 'buy'), 6, 1100)
     d.handle(click(1, 'buy'), 7, 1500)
     d.handle(click(1, 'buy'), 8, 1600)
+    // Flush is what makes this bite: without it a wrongly-welded row of four
+    // clicks is still only pending, so the assertion passes either way.
+    d.flush(2000)
 
     expect(issues).toEqual([])
   })
@@ -234,7 +248,7 @@ describe('ClickRageDetector', () => {
     d.handle(click(1, 'buy'), 7, 1200)
     expect(issues).toEqual([])
 
-    d.flush()
+    d.flush(20000)
     expect(issues).toHaveLength(1)
     expect(issues[0]).toMatchObject({ type: 'click_rage', timestamp: 1000, messageId: 5 })
   })
@@ -294,7 +308,7 @@ describe('CpuIssueDetector', () => {
     }
     expect(issues).toEqual([])
 
-    d.flush()
+    d.flush(20000)
     expect(issues).toHaveLength(1)
     expect(issues[0]).toMatchObject({ type: 'cpu', timestamp: 2000, messageId: 2 })
   })
@@ -352,7 +366,7 @@ describe('MemoryIssueDetector', () => {
     d.handle(perf(10, 400), 4, 4000)
     expect(issues).toEqual([])
 
-    d.flush()
+    d.flush(20000)
     expect(issues).toHaveLength(1)
     expect(issues[0]).toMatchObject({ type: 'memory', timestamp: 4000, messageId: 4 })
   })
@@ -365,26 +379,25 @@ describe('Detectors', () => {
     return { emitted, detectors }
   }
 
-  test('stamps the latest page URL on the emitted IssueEvent', () => {
+  test('stamps the page URL on the emitted IssueEvent', () => {
     const { emitted, detectors } = harness()
 
     detectors.handle(pageLocation('https://app/checkout'), 1, 1000)
     detectors.handle(click(1, 'buy'), 2, 1000)
     detectors.handle(click(1, 'buy'), 3, 1100)
     detectors.handle(click(1, 'buy'), 4, 1200)
-    detectors.flush()
+    detectors.flush(20000)
 
-    expect(emitted).toEqual([
-      [
-        Type.IssueEvent,
-        2, // messageId of the first click in the row
-        1000,
-        'click_rage',
-        'buy',
-        '#buy',
-        JSON.stringify({ Count: 3 }),
-        'https://app/checkout',
-      ],
+    // flush also drains the unanswered third click, so pick the rage out
+    expect(emitted.find((m) => m[3] === 'click_rage')).toEqual([
+      Type.IssueEvent,
+      2, // messageId of the first click in the row
+      1000,
+      'click_rage',
+      'buy',
+      '#buy',
+      JSON.stringify({ Count: 3 }),
+      'https://app/checkout',
     ])
   })
 
@@ -403,11 +416,29 @@ describe('Detectors', () => {
 
     detectors.handle(click(1, 'buy'), 2, 1000)
     detectors.handle(mutation(), 3, 1100)
-    // long past the relation window: only a click still pending here fires
-    detectors.handle(click(2, 'other'), 4, 9000)
-    detectors.flush()
+    // Well past the relation window. If the mutation was not dispatched as a
+    // reaction, the click is still pending and flush reports it.
+    detectors.flush(9000)
 
     expect(emitted).toEqual([])
+  })
+
+  test('a dead click is cut at a navigation and keeps the old page URL', () => {
+    const { emitted, detectors } = harness()
+
+    detectors.handle(pageLocation('https://app/first'), 1, 1000)
+    detectors.handle(click(1, 'buy'), 2, 1000)
+    detectors.handle(pageLocation('https://app/second'), 3, 1000 + 1235)
+
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0][3]).toBe('dead_click')
+    expect(emitted[0][1]).toBe(2) // messageId of the click
+    expect(emitted[0][7]).toBe('https://app/first')
+
+    // the click must not survive into the next page and fire again there
+    detectors.handle(textMutation(), 4, 9000)
+    detectors.flush(20000)
+    expect(emitted).toHaveLength(1)
   })
 
   test('a rage cut by a navigation keeps the URL it happened on', () => {
@@ -438,16 +469,62 @@ describe('Detectors', () => {
   test('flush drains every detector', () => {
     const { emitted, detectors } = harness()
 
+    // Leaves all four with an open window at once, so dropping any single
+    // detector from Detectors.flush() fails this.
+    // clickRage: a 3-click row. deadClick: the last of those clicks, unanswered.
     detectors.handle(click(1, 'buy'), 2, 1000)
     detectors.handle(click(1, 'buy'), 3, 1100)
     detectors.handle(click(1, 'buy'), 4, 1200)
-    detectors.handle(perf(10, 100), 5, 2000)
-    detectors.handle(perf(10, 100), 6, 3000)
-    detectors.handle(perf(10, 100), 7, 4000)
-    detectors.handle(perf(10, 400), 8, 5000)
+    // cpu: ticks=5 per 1000ms is 85% load, held from t=3000 to t=10000.
+    // memory: usage has to keep outrunning a rising average to stay open.
+    const used = [100, 100, 100, 400, 1000, 2000, 3000, 5000, 8000]
+    used.forEach((bytes, i) => {
+      detectors.handle(perf(5, bytes), 5 + i, 2000 + i * 1000)
+    })
 
-    detectors.flush()
+    detectors.flush(20000)
 
-    expect(emitted.map((m) => m[3]).sort()).toEqual(['click_rage', 'memory'])
+    expect(emitted.map((m) => m[3]).sort()).toEqual([
+      'click_rage',
+      'cpu',
+      'dead_click',
+      'memory',
+    ])
+  })
+
+  test('the page a cpu/memory issue reports is the one it ended on', () => {
+    const { emitted, detectors } = harness()
+
+    detectors.handle(pageLocation('https://app/first'), 1, 1000)
+    detectors.handle(perf(200, 100), 2, 2000)
+    detectors.handle(perf(200, 100), 3, 3000)
+    detectors.handle(perf(200, 100), 4, 4000)
+    // memory opens only after the navigation, so it must report the new page
+    detectors.handle(pageLocation('https://app/second'), 5, 4500)
+    detectors.handle(perf(200, 400), 6, 5000)
+
+    detectors.flush(20000)
+
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0][3]).toBe('memory')
+    expect(emitted[0][4]).toBe('https://app/second') // contextString
+    expect(emitted[0][7]).toBe('https://app/second') // url
+  })
+
+  // Both fire independently of clicks — animation finish, and canvas
+  // registration off an IntersectionObserver — so counting them as reactions
+  // would only ever hide a real dead click.
+  test.each([
+    ['NodeAnimationResult', (): Message => [Type.NodeAnimationResult, 1, '{}'] as Message],
+    ['CanvasNode', (): Message => [Type.CanvasNode, '1', 0] as Message],
+  ])('%s is not a reaction to a click', (_name, noise) => {
+    const { emitted, detectors } = harness()
+
+    detectors.handle(click(1, 'buy'), 2, 1000)
+    detectors.handle(noise(), 3, 1100)
+    detectors.flush(1000 + 1235)
+
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0][3]).toBe('dead_click')
   })
 })
