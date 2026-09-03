@@ -25,7 +25,7 @@ describe('uaParse', () => {
   let mockWindow
 
   beforeEach(() => {
-    originalNavigator = global.navigator
+    originalNavigator = globalThis.navigator
 
     mockWindow = {
       navigator: {
@@ -44,11 +44,11 @@ describe('uaParse', () => {
       },
     }
 
-    global.navigator = mockWindow.navigator
+    globalThis.navigator = mockWindow.navigator
   })
 
   afterEach(() => {
-    global.navigator = originalNavigator
+    globalThis.navigator = originalNavigator
   })
 
   test('detects Chrome browser and Windows OS correctly', () => {

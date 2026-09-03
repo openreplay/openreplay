@@ -4,7 +4,7 @@ const mockNextID = jest.fn().mockReturnValue(123);
 const mockAdoptedSSInsertRuleURLBased = jest.fn();
 const mockAdoptedSSAddOwner = jest.fn();
 
-global.fetch = jest.fn();
+globalThis.fetch = jest.fn();
 
 import { inlineRemoteCss } from '../main/app/observer/cssInliner';
 import { describe, test, expect, jest, beforeEach } from '@jest/globals';
@@ -33,7 +33,7 @@ describe('inlineRemoteCss', () => {
       value: null,
       writable: true
     });
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve('body { color: red; }')
     });
@@ -67,13 +67,13 @@ describe('inlineRemoteCss', () => {
       get: () => mockSheet
     });
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    expect(global.fetch).toHaveBeenCalledWith('http://example.com/style.css');
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://example.com/style.css');
   });
 
   test('should handle successful fetch and process CSS text', async () => {
     mockNode.href = 'http://example.com/style.css';
     const mockSheet = {};
-    global.fetch.mockImplementationOnce(() =>
+    globalThis.fetch.mockImplementationOnce(() =>
       Promise.resolve({
         ok: true,
         text: () => Promise.resolve('body { color: red; }')
@@ -97,7 +97,7 @@ describe('inlineRemoteCss', () => {
     Object.defineProperty(mockNode, 'sheet', {
       get: () => null
     });
-    global.fetch.mockImplementationOnce(() =>
+    globalThis.fetch.mockImplementationOnce(() =>
       Promise.resolve({
         ok: true,
         text: () => Promise.resolve('body { color: red; }')
@@ -106,7 +106,7 @@ describe('inlineRemoteCss', () => {
     mockNode.href = 'http://example.com/style.css';
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
     await new Promise(resolve => setTimeout(resolve, 0));
-    expect(global.fetch).toHaveBeenCalledWith('http://example.com/style.css');
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://example.com/style.css');
   });
 
   test('should handle complex CSS with multiple rules', async () => {
@@ -119,7 +119,7 @@ describe('inlineRemoteCss', () => {
       .class { background: blue; }
       @media (max-width: 600px) { body { font-size: 14px; } }
     `;
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(complexCss)
     });
@@ -149,7 +149,7 @@ describe('inlineRemoteCss', () => {
       /* Another comment */
       .class { background: blue; }
     `;
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(cssWithComments)
     });
@@ -170,7 +170,7 @@ describe('inlineRemoteCss', () => {
       get: () => null
     });
     mockNode.href = 'http://example.com/style.css';
-    global.fetch.mockRejectedValue(new Error('Network error'));
+    globalThis.fetch.mockRejectedValue(new Error('Network error'));
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
     await new Promise(process.nextTick);
@@ -186,7 +186,7 @@ describe('inlineRemoteCss', () => {
       get: () => null
     });
     mockNode.href = 'http://example.com/style.css';
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: false,
       status: 404,
       text: () => Promise.resolve('')
@@ -219,7 +219,7 @@ describe('inlineRemoteCss', () => {
         padding: 20px;
       }
     `;
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(nestedCss)
     });

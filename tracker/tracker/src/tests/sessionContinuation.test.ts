@@ -40,14 +40,14 @@ describe('session continuation across tabs', () => {
     Object.defineProperty(window, 'Worker', {
       value: jest.fn(() => 'mocked worker content'),
     })
-    global.IntersectionObserver = jest.fn(() => ({
+    globalThis.IntersectionObserver = jest.fn(() => ({
       observe: jest.fn(),
       unobserve: jest.fn(),
       disconnect: jest.fn(),
     }))
     // jsdom has no BroadcastChannel, and without one the app skips the
     // cross-tab handshake entirely
-    global.BroadcastChannel = class {
+    globalThis.BroadcastChannel = class {
       onmessage: ((ev: any) => void) | null = null
       postMessage = jest.fn()
       close = jest.fn()
@@ -59,7 +59,7 @@ describe('session continuation across tabs', () => {
   afterAll(() => {
     delete window.performance
     delete window.Worker
-    delete global.IntersectionObserver
+    delete globalThis.IntersectionObserver
   })
 
   beforeEach(() => {

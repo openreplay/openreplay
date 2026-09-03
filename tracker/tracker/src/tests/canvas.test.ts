@@ -104,7 +104,7 @@ describe('CanvasRecorder', () => {
 
   describe('clear', () => {
     test('clears intervals and snapshots', () => {
-      const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
+      const clearIntervalSpy = jest.spyOn(globalThis, 'clearInterval')
       canvasRecorder.recordCanvas(nodeMock, 1)
       canvasRecorder.clear()
       expect(clearIntervalSpy).toHaveBeenCalled()

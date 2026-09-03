@@ -26,7 +26,9 @@ const config = {
       },
     ],
   },
-  transformIgnorePatterns: ['/node_modules/(?!error-stack-parser-es/)'],
+  // Unanchored `.*` so this holds for npm's flat node_modules and for bun's
+  // nested one (node_modules/.bun/<name>@<ver>/node_modules/<name>/...).
+  transformIgnorePatterns: ['/node_modules/(?!.*error-stack-parser-es)'],
 }
 
 export default config

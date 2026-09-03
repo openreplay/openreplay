@@ -23,7 +23,7 @@ describe('ConditionsManager', () => {
       attachStopCallback: jest.fn(),
     }
     startOptionsMock = {}
-    global.fetch = jest.fn(() =>
+    globalThis.fetch = jest.fn(() =>
       Promise.resolve({
         json: () =>
           Promise.resolve({

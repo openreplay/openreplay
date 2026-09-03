@@ -29,7 +29,7 @@ describe('Batcher', () => {
       ok: true,
       status: 200,
     } as any)
-    global.fetch = fetchMock as any
+    globalThis.fetch = fetchMock as any
 
     batcher = new Batcher(backendUrl, getToken, init)
   })
@@ -37,7 +37,7 @@ describe('Batcher', () => {
   afterEach(() => {
     jest.useRealTimers()
     jest.resetAllMocks()
-    delete (global as any).fetch
+    delete (globalThis as any).fetch
   })
 
   const makePeopleEvent = (type: string, timestamp: number, payload: any) => ({

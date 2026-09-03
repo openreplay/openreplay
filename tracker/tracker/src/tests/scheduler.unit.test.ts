@@ -26,7 +26,7 @@ async function tick(times = 8) {
 describe('requestIdleCb task scheduler', () => {
   beforeEach(() => {
     rafQueue = []
-    ;(global as any).requestAnimationFrame = (cb: any) => {
+    ;(globalThis as any).requestAnimationFrame = (cb: any) => {
       rafQueue.push(cb)
       return rafQueue.length
     }

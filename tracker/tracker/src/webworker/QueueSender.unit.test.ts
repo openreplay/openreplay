@@ -1,10 +1,10 @@
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
 import QueueSender from './QueueSender.js'
 
-global.fetch = () => Promise.resolve(new Response()) // jsdom does not have it
+globalThis.fetch = () => Promise.resolve(new Response()) // jsdom does not have it
 
 function mockFetch(status: number, headers?: Record<string, string>) {
-  return jest.spyOn(global, 'fetch').mockImplementation((request) =>
+  return jest.spyOn(globalThis, 'fetch').mockImplementation((request) =>
     Promise.resolve({ status, headers, request } as unknown as Response & {
       request: RequestInfo
     }),
@@ -14,7 +14,7 @@ function mockFetch(status: number, headers?: Record<string, string>) {
 /** Resolves each fetch only when the test says so, so ordering is observable. */
 function gatedFetch() {
   const gates: Array<() => void> = []
-  const mock = jest.spyOn(global, 'fetch').mockImplementation(
+  const mock = jest.spyOn(globalThis, 'fetch').mockImplementation(
     () =>
       new Promise((resolve) => {
         gates.push(() => resolve({ status: 200 } as unknown as Response))

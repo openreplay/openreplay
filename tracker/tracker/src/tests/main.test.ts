@@ -35,7 +35,7 @@ describe('Constructor Tests', () => {
     Object.defineProperty(window, 'Worker', {
       value: jest.fn(() => 'mocked worker content')
     })
-    global.IntersectionObserver = jest.fn(() => ({
+    globalThis.IntersectionObserver = jest.fn(() => ({
       observe: jest.fn(),
       unobserve: jest.fn(),
       disconnect: jest.fn()
@@ -46,7 +46,7 @@ describe('Constructor Tests', () => {
     // Clean up the mock after tests if needed
     delete window.performance;
     delete window.Worker;
-    delete global.IntersectionObserver;
+    delete globalThis.IntersectionObserver;
   });
 
   test('Takes options correctly', () => {

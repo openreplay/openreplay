@@ -93,8 +93,8 @@ describe('ConstantProperties', () => {
   })
 
   test('detects UTM parameters from URL and stores them', () => {
-    const OriginalURLSearchParams = global.URLSearchParams
-    ;(global as any).URLSearchParams = class {
+    const OriginalURLSearchParams = globalThis.URLSearchParams
+    ;(globalThis as any).URLSearchParams = class {
       constructor(search: string) {
         this._search = search
       }
@@ -121,7 +121,7 @@ describe('ConstantProperties', () => {
         utm_campaign: 'test_campaign',
       }),
     )
-    ;(global as any).URLSearchParams = OriginalURLSearchParams
+    ;(globalThis as any).URLSearchParams = OriginalURLSearchParams
   })
 
   test('reuses stored UTM parameters if present in sessionStorage', () => {
@@ -286,8 +286,8 @@ describe('ConstantProperties', () => {
   })
 
   test('all getter returns full property map with correct keys', () => {
-    const OriginalURLSearchParams = global.URLSearchParams
-    ;(global as any).URLSearchParams = class {
+    const OriginalURLSearchParams = globalThis.URLSearchParams
+    ;(globalThis as any).URLSearchParams = class {
       constructor(search: string) {
         this._search = search
       }
@@ -323,7 +323,7 @@ describe('ConstantProperties', () => {
     })
 
     expect(all.distinct_id).toBe(properties.deviceId)
-    ;(global as any).URLSearchParams = OriginalURLSearchParams
+    ;(globalThis as any).URLSearchParams = OriginalURLSearchParams
   })
 
   test('defaultPropertyKeys matches keys of all', () => {

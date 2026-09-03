@@ -20,7 +20,7 @@ describe('TagWatcher', () => {
     mockDisconnect = jest.fn()
 
     // @ts-ignore
-    global.IntersectionObserver = jest.fn((callback) => ({
+    globalThis.IntersectionObserver = jest.fn((callback) => ({
       observe: mockObserve,
       unobserve: mockUnobserve,
       disconnect: mockDisconnect,
@@ -28,7 +28,7 @@ describe('TagWatcher', () => {
     }))
     jest.useFakeTimers()
     // @ts-ignore
-    global.document.querySelectorAll = jest.fn()
+    globalThis.document.querySelectorAll = jest.fn()
   })
 
   afterEach(() => {
@@ -57,7 +57,7 @@ describe('TagWatcher', () => {
 
   test('fetchTags sets tags and updates sessionStorage', async () => {
     // @ts-ignore
-    global.fetch = jest.fn(() =>
+    globalThis.fetch = jest.fn(() =>
       Promise.resolve({
         json: () =>
           Promise.resolve({

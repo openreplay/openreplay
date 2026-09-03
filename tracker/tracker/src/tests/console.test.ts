@@ -9,8 +9,8 @@ describe('Console logging module', () => {
   let mockApp
 
   beforeEach(() => {
-    originalConsole = global.console
-    global.console = {
+    originalConsole = globalThis.console
+    globalThis.console = {
       log: jest.fn(),
       info: jest.fn(),
       warn: jest.fn(),
@@ -40,13 +40,13 @@ describe('Console logging module', () => {
   })
 
   afterEach(() => {
-    global.console = originalConsole
+    globalThis.console = originalConsole
   })
 
   it('should patch console methods', () => {
     mainFunction(mockApp, {})
     jest.useFakeTimers()
-    global.console.log('test log')
+    globalThis.console.log('test log')
     jest.advanceTimersByTime(9999)
     // 22 - Console message
     expect(mockApp.send).toHaveBeenCalledWith([22, 'mockConstructor', 'test log'])
@@ -59,10 +59,10 @@ describe('Console logging module', () => {
     }
     mainFunction(mockApp, options)
     jest.runAllTimers()
-    global.console.log('test log 1')
-    global.console.log('test log 2')
-    global.console.log('test log 3')
-    global.console.log('test log 4')
+    globalThis.console.log('test log 1')
+    globalThis.console.log('test log 2')
+    globalThis.console.log('test log 3')
+    globalThis.console.log('test log 4')
 
     expect(mockApp.send).toHaveBeenCalledTimes(1)
   })
@@ -73,7 +73,7 @@ describe('Console logging module', () => {
       consoleThrottling: 30,
     }
     mainFunction(mockApp, options)
-    global.console.log('test log')
+    globalThis.console.log('test log')
     expect(mockApp.send).not.toHaveBeenCalled()
   })
 
@@ -83,7 +83,7 @@ describe('Console logging module', () => {
       consoleThrottling: 30,
     }
     mainFunction(mockApp, options)
-    global.console.log('test log')
+    globalThis.console.log('test log')
     expect(mockApp.send).not.toHaveBeenCalled()
   })
 
@@ -105,7 +105,7 @@ describe('Console logging module', () => {
       consoleThrottling: 30,
     }
     mainFunction(mockApp, options)
-    global.console.log('%s %f %d %o', 'test', 3.14, 42, { key: 'value' })
+    globalThis.console.log('%s %f %d %o', 'test', 3.14, 42, { key: 'value' })
     jest.advanceTimersByTimeAsync(110)
     expect(mockApp.send).toHaveBeenCalledWith([22, 'mockConstructor', 'test 3.14 42 {key: value}'])
   })
@@ -117,7 +117,7 @@ describe('Console logging module', () => {
       consoleThrottling: 30,
     }
     mainFunction(mockApp, options)
-    global.console.log([1, 2, 3], { key1: 'value1', key2: 'value2' })
+    globalThis.console.log([1, 2, 3], { key1: 'value1', key2: 'value2' })
     jest.advanceTimersByTimeAsync(110)
     expect(mockApp.send).toHaveBeenCalledWith([
       22,

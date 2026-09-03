@@ -25,7 +25,7 @@ class MockPerformanceObserver {
   }
 }
 // @ts-ignore
-global.PerformanceObserver = MockPerformanceObserver as any
+globalThis.PerformanceObserver = MockPerformanceObserver as any
 
 function makePerfEntry(
   partial: Partial<PerformanceResourceTiming> = {},
