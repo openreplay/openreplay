@@ -1,16 +1,36 @@
 import type App from '../app/index.js'
 import { hasTag, isSVGElement, isDocument } from '../app/guards.js'
-import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, getCustomAttributeLabel, getClassSelector, now } from '../utils.js'
+import {
+  hasOpenreplayAttribute,
+  getLabelAttribute,
+  getCustomAttributeLabel,
+  getCustomAttributeSelector,
+  getTextualLabel,
+  cssEscape,
+  cssAttrValue,
+  now,
+} from '../utils.js'
 import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 
 
-const cssEscape = (typeof CSS !== 'undefined' && CSS.escape) || ((t) => t);
 const docClassCache = new WeakMap();
 
-function _getSelector(target: Element): string {
-  const selector = getCSSPath(target)
+function _getSelector(target: Element, customAttributes?: string[]): string {
+  const selector = getCSSPath(target, customAttributes)
   return selector || ''
+}
+
+/**
+ * short selector for elements we don't build a full css path for
+ * (non-clickable targets, or a label fallback when clickmaps are off)
+ * */
+function getCheapSelector(target: Element, customAttributes?: string[]): string {
+  const attributeSelector = getCustomAttributeSelector(target, customAttributes)
+  if (attributeSelector) return attributeSelector
+  if (target.id) return `#${cssEscape(target.id)}`
+  const uniqueClass = getUniqueWordLikeClass(target)
+  return uniqueClass ? `${target.tagName.toLowerCase()}.${cssEscape(uniqueClass)}` : ''
 }
 
 function isClickable(element: Element): boolean {
@@ -29,15 +49,83 @@ function isClickable(element: Element): boolean {
   // MBTODO: intercept addEventListener
 }
 
+const CLICKABLE_ROLES = [
+  'button',
+  'link',
+  'tab',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'option',
+  'checkbox',
+  'radio',
+  'switch',
+  'combobox',
+]
+const MAX_POINTER_CLIMB = 6
+const pointerCursorCache = new WeakMap<Element, boolean>()
+
+function hasPointerCursor(element: Element): boolean {
+  const cached = pointerCursorCache.get(element)
+  if (cached !== undefined) return cached
+  let isPointer = false
+  try {
+    const view = element.ownerDocument.defaultView
+    isPointer = !!view && view.getComputedStyle(element).cursor === 'pointer'
+  } catch {
+    isPointer = false
+  }
+  pointerCursorCache.set(element, isPointer)
+  return isPointer
+}
+
+/**
+ * framework handlers (react & co) are delegated to the root, so onclick is null
+ * on the div that visually is a button; these signals catch it instead.
+ * computed style forces a style recalc, so it is only used on the click path
+ * */
+function looksClickable(element: Element): boolean {
+  return (
+    element.hasAttribute('onclick') ||
+    element.tagName.toUpperCase() === 'SUMMARY' ||
+    (element as HTMLElement).isContentEditable === true ||
+    CLICKABLE_ROLES.includes(element.getAttribute('role') || '') ||
+    (element as HTMLElement).tabIndex >= 0
+  )
+}
+
+export function isDeepClickable(element: Element): boolean {
+  return isClickable(element) || looksClickable(element) || hasPointerCursor(element)
+}
+
+/**
+ * cursor is inherited, so every child of a clickable div reports a pointer too;
+ * climb to the outermost element that still owns the pointer
+ * */
+export function resolvePointerRoot(element: Element): Element {
+  let result = element
+  let parent = element.parentElement
+  for (let depth = 0; parent !== null && depth < MAX_POINTER_CLIMB; depth++) {
+    if (parent === element.ownerDocument.documentElement || parent === element.ownerDocument.body) {
+      return result
+    }
+    if (isClickable(parent) || looksClickable(parent)) return parent
+    if (!hasPointerCursor(parent)) return result
+    result = parent
+    parent = parent.parentElement
+  }
+  return result
+}
+
 //TODO: fix (typescript is not sure about target variable after assignation of svg)
-function getTarget(target: EventTarget | null, document: Document): Element | null {
+function getTarget(target: EventTarget | null, document: Document, deep = false): Element | null {
   if (target instanceof Element) {
-    return _getTarget(target, document)
+    return _getTarget(target, document, deep)
   }
   return null
 }
 
-function _getTarget(target: Element, document: Document): Element | null {
+function _getTarget(target: Element, document: Document, deep = false): Element | null {
   let element: Element | null = target
   while (element !== null && element !== document.documentElement) {
     if (hasOpenreplayAttribute(element, 'masked')) {
@@ -64,6 +152,14 @@ function _getTarget(target: Element, document: Document): Element | null {
     if (isClickable(element) || getLabelAttribute(element) !== null) {
       return element
     }
+    if (deep) {
+      if (looksClickable(element)) {
+        return element
+      }
+      if (hasPointerCursor(element)) {
+        return resolvePointerRoot(element)
+      }
+    }
     element = element.parentElement
   }
   return target === document.documentElement ? null : target
@@ -84,6 +180,10 @@ export interface MouseHandlerOptions {
 export default function (app: App, options?: MouseHandlerOptions): void {
   const { disableClickmaps = false, customAttributes } = options || {}
 
+  /** innerText exists on html elements only, svg/jsdom nodes would break the sanitizer */
+  const getSecureInnerText = (el: HTMLElement) =>
+    typeof el.innerText === 'string' ? app.sanitizer.getInnerTextSecure(el) : ''
+
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target)
     if (dl !== null) {
@@ -94,17 +194,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     }
     const customAttributeLabel = getCustomAttributeLabel(target, customAttributes)
     if (customAttributeLabel) return customAttributeLabel
-    if (target.id) return `#${target.id}`
-    const classLabel = getClassSelector(target)
-    if (classLabel) return classLabel
-    if (isClickable(target)) {
-      let label = ''
-      if (target instanceof HTMLElement) {
-        label = app.sanitizer.getInnerTextSecure(target)
-      }
-      return normSpaces(label).slice(0, 100)
-    }
-    return ''
+    return getTextualLabel(target, getSecureInnerText)
   }
 
   let mousePositionX = -1
@@ -155,6 +245,11 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     }
   })
 
+  /** hover is resolved without the computed style check, so it can land on a relative */
+  const isHesitationTarget = (target: Element) =>
+    mouseTarget === target ||
+    (mouseTarget !== null && (target.contains(mouseTarget) || mouseTarget.contains(target)))
+
   const sendMouseMove = (): void => {
     if (mousePositionChanged) {
       app.send(MouseMove(mousePositionX, mousePositionY))
@@ -169,7 +264,11 @@ export default function (app: App, options?: MouseHandlerOptions): void {
       if (tagMatch) {
         return (selectorMap[id] = tagMatch.selector)
       }
-      return (selectorMap[id] = _getSelector(target))
+      if (!isDeepClickable(target)) {
+        const cheapSelector = getCheapSelector(target, customAttributes)
+        if (cheapSelector) return (selectorMap[id] = cheapSelector)
+      }
+      return (selectorMap[id] = _getSelector(target, customAttributes))
     }
 
     const attachListener = topframe
@@ -202,7 +301,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
       false,
     )
     attachListener(document, 'click', (e: MouseEvent): void => {
-      const target = getTarget(e.target, document)
+      const target = getTarget(e.target, document, true)
       if ((!e.clientX && !e.clientY) || target === null) {
         return
       }
@@ -218,13 +317,16 @@ export default function (app: App, options?: MouseHandlerOptions): void {
         const normalizedY = roundNumber(clickY / contentHeight)
 
         sendMouseMove()
-        const label = getTargetLabel(target)
+        const selector = disableClickmaps ? '' : getSelector(id, target)
+        // backend drops clicks without a label, so a selector is the last resort
+        const label =
+          getTargetLabel(target) || selector || getCheapSelector(target, customAttributes)
         app.send(
           MouseClick(
             id,
-            mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
+            isHesitationTarget(target) ? Math.round(performance.now() - mouseTargetTime) : 0,
             app.sanitizer.privateMode ? label.replaceAll(/./g, '*') : label,
-            isClickable(target) && !disableClickmaps ? getSelector(id, target) : '',
+            selector,
             normalizedX,
             normalizedY,
           ),
@@ -281,18 +383,26 @@ function wordLike(name: string): boolean {
     return false
 }
 
-export function getCSSPath(el: any) {
+export function getCSSPath(el: any, customAttributes?: string[]) {
     if (!el || el.nodeType !== 1) return false;
 
+    // customer configured attributes are the most stable thing we can get
+    const customAttr = getCustomAttributeSelector(el, customAttributes);
+    if (customAttr) return customAttr;
     if (el.id) return `#${cssEscape(el.id)}`;
     // if has data attributes - use them as they are more likely to be stable and unique
     const dataAttr = (Array.from(el.attributes) as Attr[]).find(attr => attr.name.startsWith('data-'));
     if (dataAttr) {
-        return `[${dataAttr.name}="${cssEscape(dataAttr.value)}"]`;
+        return `[${dataAttr.name}="${cssAttrValue(dataAttr.value)}"]`;
     }
     const parts: string[] = [];
 
     while (el && el.nodeType === 1 && el !== el.ownerDocument) {
+        const ancestorAttr = getCustomAttributeSelector(el, customAttributes);
+        if (ancestorAttr) {
+            parts.unshift(ancestorAttr);
+            break;
+        }
         if (el.id) {
             parts.unshift(`#${cssEscape(el.id)}`);
             break;
@@ -330,6 +440,14 @@ export function getCSSPath(el: any) {
 
     return parts.join(' > ');
 };
+
+function getUniqueWordLikeClass(el: Element): string | null {
+    if (!el.classList?.length) return null;
+    for (const cls of Array.from(el.classList)) {
+        if (wordLike(cls) && isDocUniqueClass(cls, el.ownerDocument)) return cls;
+    }
+    return null;
+}
 
 function getUniqueSiblingClass(el) {
     if (!el.classList?.length || !el.parentNode) return null;

@@ -1,42 +1,50 @@
 import { Click, Input, Location, TYPES } from 'App/types/session/event';
 
+/** labels are free-form text now, so they have to survive being inlined into a string literal */
+function q(value?: string | null): string {
+  return (value ?? '')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'");
+}
+
+const clickTarget = (event: Click): string =>
+  event.selector?.length ? event.selector : event.label;
+
 export const puppeteerEvents = {
-  [TYPES.LOCATION]: (event: Location) => `await page.goto('${event.url}')`,
+  [TYPES.LOCATION]: (event: Location) => `await page.goto('${q(event.url)}')`,
   [TYPES.CLICK]: (event: Click) =>
-    `await page.locator('${
-      event.selector?.length ? event.selector : event.label
-    }').click()`,
+    `await page.locator('${q(clickTarget(event))}').click()`,
   [TYPES.INPUT]: (event: Input, resolvedValue?: string) =>
-    `await page.locator('${event.label}').type('${resolvedValue ?? 'Test Input'}')`,
+    `await page.locator('${q(event.label)}').type('${q(resolvedValue ?? 'Test Input')}')`,
   screen: (width: number, height: number) =>
     `await page.setViewport({width: ${width}, height: ${height})`,
   testIntro: (pageTitle: string, firstUrl: string) =>
-    `describe('${pageTitle}', () => {\n  it('Navigates through ${firstUrl}', async () => {`,
+    `describe('${q(pageTitle)}', () => {\n  it('Navigates through ${q(firstUrl)}', async () => {`,
   testOutro: () => `  })\n})`,
 };
 export const cypressEvents = {
-  [TYPES.LOCATION]: (event: Location) => `cy.visit('${event.url}')`,
-  [TYPES.CLICK]: (event: Click) =>
-    `cy.get('${event.selector?.length ? event.selector : event.label}').click()`,
+  [TYPES.LOCATION]: (event: Location) => `cy.visit('${q(event.url)}')`,
+  [TYPES.CLICK]: (event: Click) => `cy.get('${q(clickTarget(event))}').click()`,
   [TYPES.INPUT]: (event: Input, resolvedValue?: string) =>
-    `cy.get('${event.label}').type('${resolvedValue ?? 'Test Input'}')`,
+    `cy.get('${q(event.label)}').type('${q(resolvedValue ?? 'Test Input')}')`,
   screen: (width: number, height: number) => `cy.viewport(${width}, ${height})`,
   testIntro: (pageTitle: string, firstUrl: string) =>
-    `describe('${pageTitle}', () => {\n  it('Navigates through ${firstUrl}', () => {`,
+    `describe('${q(pageTitle)}', () => {\n  it('Navigates through ${q(firstUrl)}', () => {`,
   testOutro: () => `  })\n})`,
 };
 export const playWrightEvents = {
-  [TYPES.LOCATION]: (event: Location) => `await page.goto('${event.url}')`,
+  [TYPES.LOCATION]: (event: Location) => `await page.goto('${q(event.url)}')`,
   [TYPES.CLICK]: (event: Click) =>
     event.selector?.length
-      ? `await page.locator('${event.selector}').click()`
-      : `await page.getByText('${event.label}').click()`,
+      ? `await page.locator('${q(event.selector)}').click()`
+      : `await page.getByText('${q(event.label)}').click()`,
   [TYPES.INPUT]: (event: Input, resolvedValue?: string) =>
-    `await page.getByLabel('${event.label}').fill('${resolvedValue ?? 'Test Input'}')`,
+    `await page.getByLabel('${q(event.label)}').fill('${q(resolvedValue ?? 'Test Input')}')`,
   screen: (width: number, height: number) =>
     `await page.setViewport({width: ${width}, height: ${height})`,
   testIntro: (pageTitle: string, firstUrl: string) =>
-    `test.describe('${pageTitle}', () => {\n  test('Navigates through ${firstUrl}', async () => {`,
+    `test.describe('${q(pageTitle)}', () => {\n  test('Navigates through ${q(firstUrl)}', async () => {`,
   testOutro: () => `  })\n})`,
 };
 
