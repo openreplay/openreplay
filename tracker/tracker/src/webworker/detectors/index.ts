@@ -68,15 +68,17 @@ export default class Detectors {
   }
 
   handle(message: Message, index: number, timestamp: number): void {
+    const targets = this.dispatch.get(message[0])
+    if (targets !== undefined) {
+      for (const detector of targets) {
+        detector.handle(message, index, timestamp)
+      }
+    }
+    // After dispatch, not before: a detector that closes its window on
+    // SetPageLocation (clickRage) reports events belonging to the page being
+    // left, so they have to be stamped with the old URL.
     if (message[0] === Type.SetPageLocation) {
       this.currentUrl = (message as SetPageLocation)[1]
-    }
-    const targets = this.dispatch.get(message[0])
-    if (targets === undefined) {
-      return
-    }
-    for (const detector of targets) {
-      detector.handle(message, index, timestamp)
     }
   }
 

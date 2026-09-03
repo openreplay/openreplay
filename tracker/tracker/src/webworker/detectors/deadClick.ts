@@ -2,6 +2,8 @@ import Message, {
   Type,
   MouseClick,
   SetInputTarget,
+  SetInputValue,
+  InputChange,
 } from '../../common/messages.gen.js'
 import type { Detector, ReportIssue } from './types.js'
 
@@ -58,6 +60,7 @@ export default class DeadClickDetector implements Detector {
   readonly types: readonly number[] = [
     Type.MouseClick,
     Type.SetInputTarget,
+    Type.InputChange,
     Type.CreateDocument,
     ...DOM_MUTATION_TYPES,
   ]
@@ -126,10 +129,28 @@ export default class DeadClickDetector implements Detector {
         return
       }
       case Type.SetInputTarget: {
+        // Kept for completeness — the web tracker has no call site for it.
         const msg = message as SetInputTarget
         this.inputIDSet.add(msg[1])
         return
       }
+      // How we actually learn a node is an input. SetInputTarget has a
+      // generated builder but nothing in src/main calls it, so Go's inputIDSet
+      // was always empty and every click into a text field that sat idle for
+      // CLICK_RELATION_TIME reported as dead. The observer instead emits
+      // SetInputValue for every text field and select as it registers the node
+      // (input.ts attachNodeCallback -> trackInputValue/trackSelectValue),
+      // before any interaction, so ids are known ahead of the first click.
+      case Type.SetInputValue:
+      case Type.SetInputChecked:
+        this.inputIDSet.add((message as SetInputValue)[1])
+        // A genuine value change is also a reaction, so still flush.
+        this.build()
+        return
+      case Type.InputChange:
+        // Reports the user's own typing, not a page reaction — register only.
+        this.inputIDSet.add((message as InputChange)[1])
+        return
       case Type.CreateDocument:
         this.inputIDSet.clear()
         return

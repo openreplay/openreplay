@@ -18,7 +18,7 @@ const MAX_TIME_DIFF = 300
 const MIN_CLICKS_IN_A_ROW = 3
 
 export default class ClickRageDetector implements Detector {
-  readonly types: readonly number[] = [Type.MouseClick]
+  readonly types: readonly number[] = [Type.MouseClick, Type.SetPageLocation]
 
   private lastTimestamp = 0
   private lastLabel = ''
@@ -64,6 +64,15 @@ export default class ClickRageDetector implements Detector {
   }
 
   handle(message: Message, index: number, timestamp: number): void {
+    if (message[0] === Type.SetPageLocation) {
+      // A row must not span a navigation. Go only ever saw MouseClick, so two
+      // same-label clicks under MAX_TIME_DIFF apart across an SPA route change
+      // welded into one row and the issue got stamped with the new page's URL
+      // while the clicks happened on the old one. Cutting here also emits a row
+      // that was already complete when the page changed.
+      this.build()
+      return
+    }
     const msg = message as MouseClick
     const label = msg[3]
     const selector = msg[4]

@@ -18,6 +18,13 @@ function collector() {
 const click = (id: number, label: string, selector = `#${label}`): Message =>
   [Type.MouseClick, id, 0, label, selector, 0, 0] as Message
 const inputTarget = (id: number): Message => [Type.SetInputTarget, id, 'lbl'] as Message
+/** What the observer really emits when it registers a text field or select. */
+const inputValue = (id: number, value = ''): Message =>
+  [Type.SetInputValue, id, value, 0] as Message
+const inputChecked = (id: number): Message => [Type.SetInputChecked, id, true] as Message
+const inputChange = (id: number): Message =>
+  [Type.InputChange, id, 'typed', false, 'lbl', 0, 0] as Message
+const nodeFocus = (id: number): Message => [Type.SetNodeFocus, id] as Message
 const textMutation = (): Message => [Type.SetNodeData, 1, 'text'] as Message
 const attrMutation = (): Message =>
   [Type.SetNodeAttributeURLBased, 1, 'class', 'open', 'https://a.b'] as Message
@@ -70,6 +77,37 @@ describe('DeadClickDetector', () => {
     d.handle(textMutation(), 7, 1100)
     d.handle(click(1, 'email'), 8, 2000)
     d.handle(click(2, 'buy'), 9, 9000)
+
+    expect(issues).toEqual([])
+  })
+
+  // The tracker has no SetInputTarget call site, so these are the only signals
+  // that identify an input. Without them a click into a text field that then
+  // sits idle reports as dead.
+  test.each([
+    ['SetInputValue', inputValue],
+    ['SetInputChecked', inputChecked],
+    ['InputChange', inputChange],
+  ])('%s registers the node as an input', (_name, signal) => {
+    const { issues, report } = collector()
+    const d = new DeadClickDetector(report)
+
+    d.handle(signal(1), 5, 1000) // observer registers the node
+    // focusin precedes click, so the focus lands before the click is pending
+    d.handle(nodeFocus(1), 6, 2000)
+    d.handle(click(1, 'email'), 7, 2000)
+    d.handle(click(2, 'buy'), 8, 9000) // long idle gap, then an unrelated click
+
+    expect(issues).toEqual([])
+  })
+
+  test('a value change is still a reaction, not just a registration', () => {
+    const { issues, report } = collector()
+    const d = new DeadClickDetector(report)
+
+    d.handle(click(1, 'buy'), 7, 1000)
+    d.handle(inputValue(9, 'filled'), 8, 1100) // page filled a field in response
+    d.handle(click(2, 'other'), 9, 9000)
 
     expect(issues).toEqual([])
   })
@@ -158,6 +196,33 @@ describe('ClickRageDetector', () => {
     d.handle(click(2, 'other'), 8, 9000)
 
     expect(issues).toEqual([])
+  })
+
+  test('a navigation breaks the row', () => {
+    const { issues, report } = collector()
+    const d = new ClickRageDetector(report)
+
+    d.handle(click(1, 'buy'), 5, 1000)
+    d.handle(click(1, 'buy'), 6, 1100)
+    d.handle(pageLocation('https://app/next'), 7, 1150)
+    // same label, still inside MAX_TIME_DIFF, but on the new page
+    d.handle(click(1, 'buy'), 8, 1200)
+    d.handle(click(2, 'other'), 9, 9000)
+
+    expect(issues).toEqual([])
+  })
+
+  test('a navigation emits a row that was already complete', () => {
+    const { issues, report } = collector()
+    const d = new ClickRageDetector(report)
+
+    d.handle(click(1, 'buy'), 5, 1000)
+    d.handle(click(1, 'buy'), 6, 1100)
+    d.handle(click(1, 'buy'), 7, 1200)
+    d.handle(pageLocation('https://app/next'), 8, 1250)
+
+    expect(issues).toHaveLength(1)
+    expect(issues[0]).toMatchObject({ type: 'click_rage', timestamp: 1000, messageId: 5 })
   })
 
   test('flush reports a rage that ends the session', () => {
@@ -343,6 +408,19 @@ describe('Detectors', () => {
     detectors.flush()
 
     expect(emitted).toEqual([])
+  })
+
+  test('a rage cut by a navigation keeps the URL it happened on', () => {
+    const { emitted, detectors } = harness()
+
+    detectors.handle(pageLocation('https://app/checkout'), 1, 1000)
+    detectors.handle(click(1, 'buy'), 2, 1000)
+    detectors.handle(click(1, 'buy'), 3, 1100)
+    detectors.handle(click(1, 'buy'), 4, 1200)
+    detectors.handle(pageLocation('https://app/thanks'), 5, 1250)
+
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0][7]).toBe('https://app/checkout')
   })
 
   test('a message no detector asked for is not dispatched', () => {
