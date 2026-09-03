@@ -1,4 +1,4 @@
-import { isRootNode } from '../../../guards';
+import { isIFrameElement, isRootNode } from '../../../guards';
 import { insertRule, deleteRule, replaceRule } from './safeCSSRules';
 
 function isNode(sth: any): sth is Node {
@@ -364,7 +364,7 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
     return new OnloadVRoot(
       new Promise((resolve, reject) => {
         vElem.onNode((host) => {
-          if (host instanceof HTMLIFrameElement) {
+          if (isIFrameElement(host)) {
             /* IFrame case: creating Document */
             const doc = host.contentDocument;
             if (doc) {

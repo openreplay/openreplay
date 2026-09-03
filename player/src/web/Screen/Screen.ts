@@ -3,6 +3,7 @@ import Cursor from './Cursor';
 import SelectDropdown from './SelectDropdown';
 
 import type { Point, Dimensions } from './types';
+import { isHTMLElement, isSelectElement } from '../../guards';
 
 export type State = Dimensions;
 
@@ -124,7 +125,7 @@ export default class Screen {
     if (this.remoteControlActive) {
       return;
     }
-    if (node instanceof HTMLSelectElement) {
+    if (isSelectElement(node)) {
       this.selectMenu.open(node);
     } else {
       this.selectMenu.hide();
@@ -375,7 +376,7 @@ export default class Screen {
    * nested-iframe offsets need adding.
    */
   public highlightClick(node?: Node | null): void {
-    if (!(node instanceof HTMLElement)) return;
+    if (!isHTMLElement(node)) return;
 
     const rect = node.getBoundingClientRect();
     if (!rect.width && !rect.height) return;

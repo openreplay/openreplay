@@ -1,5 +1,11 @@
 import logger from '../../../logger';
 
+import {
+  isDialogElement,
+  isSelectElement,
+  isValueElement,
+} from '../../../guards';
+
 import ListWalker from '../../../common/ListWalker';
 import type Screen from '../../Screen/Screen';
 import type {
@@ -481,13 +487,7 @@ export default class DOMManager extends ListWalker<Message> {
           return;
         }
         const nodeWithValue = vElem.node;
-        if (
-          !(
-            nodeWithValue instanceof HTMLInputElement ||
-            nodeWithValue instanceof HTMLTextAreaElement ||
-            nodeWithValue instanceof HTMLSelectElement
-          )
-        ) {
+        if (!isValueElement(nodeWithValue)) {
           logger.error('Trying to set value of non-Input element', msg);
           return;
         }
@@ -500,7 +500,7 @@ export default class DOMManager extends ListWalker<Message> {
           };
           return;
         }
-        if (nodeWithValue instanceof HTMLSelectElement) {
+        if (isSelectElement(nodeWithValue)) {
           this.pendingSelectValues.set(msg.id, val);
         } else {
           nodeWithValue.value = val; // Maybe make special VInputValueElement type for lazy value update
@@ -768,7 +768,7 @@ export default class DOMManager extends ListWalker<Message> {
         return;
       }
       const node = vElem.node;
-      if (!(node instanceof HTMLDialogElement) || !node.isConnected) {
+      if (!isDialogElement(node) || !node.isConnected) {
         return; // not mounted yet — retry next flush
       }
       // `:modal` is the only reliable read of top-layer membership (`open` is set for both).
@@ -807,7 +807,7 @@ export default class DOMManager extends ListWalker<Message> {
         return;
       }
       const node = vElem.node;
-      if (!(node instanceof HTMLSelectElement)) {
+      if (!isSelectElement(node)) {
         this.pendingSelectValues.delete(id);
         return;
       }

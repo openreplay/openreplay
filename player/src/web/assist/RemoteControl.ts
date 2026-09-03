@@ -2,6 +2,12 @@ import AnnotationCanvas from './AnnotationCanvas';
 import type { Socket } from './types';
 import type Screen from '../Screen/Screen';
 import type { Store } from '../../common/types';
+import {
+  isHTMLElement,
+  isInputElement,
+  isSelectElement,
+  isTextAreaElement,
+} from '../../guards';
 
 export enum RemoteControlStatus {
   Disabled = 0,
@@ -132,13 +138,10 @@ export default class RemoteControl {
     const data = this.screen.getInternalViewportCoordinates(e);
     // const el = this.screen.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.screen.getElementFromInternalPoint(data);
-    if (el instanceof HTMLElement) {
+    if (isHTMLElement(el)) {
       el.focus();
       el.oninput = (e) => {
-        if (
-          el instanceof HTMLTextAreaElement ||
-          el instanceof HTMLInputElement
-        ) {
+        if (isTextAreaElement(el) || isInputElement(el)) {
           this.socket && this.emitData('input', el.value);
         } else if (el.isContentEditable) {
           this.socket && this.emitData('input', el.innerText);
@@ -148,7 +151,7 @@ export default class RemoteControl {
       // be opened by the click itself. We open the native picker on the mirrored
       // element so the agent can pick an option, then forward the chosen value
       // to the tracker which applies it to the real <select>.
-      if (el instanceof HTMLSelectElement) {
+      if (isSelectElement(el)) {
         el.onchange = () => {
           this.socket && this.emitData('select', el.value);
         };

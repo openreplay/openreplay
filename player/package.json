@@ -13,6 +13,8 @@
     "syncod": "^0.0.1"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "prettier": "^3.9.6"
   }
 }

@@ -1,6 +1,7 @@
 import type Screen from '../../Screen/Screen';
 import { replaceCSSPseudoclasses } from '../../messages/rewriter/rewriteMessage';
 import logger from '../../../logger';
+import { isCSSStyleRule } from '../../../guards';
 
 // Doesn't work with css files (hasOwnProperty returns false)
 // TODO: recheck and remove if true
@@ -14,7 +15,7 @@ function rewriteNodeStyleSheet(
   }
   for (let i = 0; i < ss.cssRules.length; i++) {
     const r = ss.cssRules[i];
-    if (r instanceof CSSStyleRule) {
+    if (isCSSStyleRule(r)) {
       r.selectorText = replaceCSSPseudoclasses(r.selectorText);
     }
   }
