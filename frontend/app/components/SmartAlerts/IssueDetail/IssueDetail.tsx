@@ -25,7 +25,6 @@ import {
   HideIssueModal,
   type IssueSessionCard,
   JOURNEY_SEARCH_SUGGESTIONS,
-  JiraIcon,
   LinearIcon,
   NotCriticalDialog,
 } from '../shared';
@@ -249,31 +248,42 @@ function IssueDetail() {
           }
           actions={
             <>
-              <Button
-                type="primary"
-                size="small"
-                loading={issuesStore.ticketPending === issue.id}
-                icon={
-                  ticketHover || ticket ? (
-                    <ExternalLink size={14} />
-                  ) : linearConnected ? (
-                    <LinearIcon size={14} />
-                  ) : (
-                    <JiraIcon size={14} />
-                  )
-                }
-                onMouseEnter={() => setTicketHover(true)}
-                onMouseLeave={() => setTicketHover(false)}
-                onClick={
-                  ticket
-                    ? () => window.open(ticket.url, '_blank', 'noopener')
-                    : linearConnected
-                      ? createTicket
-                      : undefined
+              <Tooltip
+                title={
+                  linearConnected
+                    ? undefined
+                    : t(
+                        'Connect your Linear project to create tickets from OpenReplay',
+                      )
                 }
               >
-                {ticket ? t('View ticket') : t('Create ticket')}
-              </Button>
+                {/* a disabled antd Button gets pointer-events: none, so the
+                    tooltip needs a hoverable wrapper of its own */}
+                <span className="inline-flex">
+                  <Button
+                    type="primary"
+                    size="small"
+                    disabled={!linearConnected}
+                    loading={issuesStore.ticketPending === issue.id}
+                    icon={
+                      ticket || (ticketHover && linearConnected) ? (
+                        <ExternalLink size={14} />
+                      ) : (
+                        <LinearIcon size={14} />
+                      )
+                    }
+                    onMouseEnter={() => setTicketHover(true)}
+                    onMouseLeave={() => setTicketHover(false)}
+                    onClick={
+                      ticket
+                        ? () => window.open(ticket.url, '_blank', 'noopener')
+                        : createTicket
+                    }
+                  >
+                    {ticket ? t('View ticket') : t('Create ticket')}
+                  </Button>
+                </span>
+              </Tooltip>
               {/* follows the ISSUE's own flag, not the list's visibility
                   filter — this page is deep-linkable and `all` mixes both */}
               {issue.hidden ? (
