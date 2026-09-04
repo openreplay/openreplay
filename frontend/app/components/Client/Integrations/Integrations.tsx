@@ -20,6 +20,7 @@ import SentryForm from './Backend/SentryForm/SentryFormModal';
 import GithubForm from './GithubForm';
 import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
+import LinearForm from './LinearForm';
 import ProfilerDoc from './ProfilerDoc';
 import SlackForm from './SlackForm';
 import MSTeams from './Teams';
@@ -31,6 +32,19 @@ import PiniaDoc from './Tracker/PiniaDoc';
 import ReduxDoc from './Tracker/ReduxDoc';
 import VueDoc from './Tracker/VueDoc';
 import ZustandDoc from './Tracker/ZustandDoc';
+
+/* Issue trackers are mutually exclusive: only one can be connected, so the
+   others are disabled (not hidden) while one is, with a tooltip saying which
+   connection to drop first. Slug -> display name. */
+const issueTrackers: Record<string, string> = {
+  jira: 'Jira',
+  github: 'Github',
+  linear: 'Linear',
+};
+
+/** the connected issue tracker's slug, if any */
+const connectedTracker = (integrated: string[]) =>
+  integrated.find((name) => name in issueTrackers);
 
 interface Props {
   siteId: string;
@@ -117,6 +131,8 @@ function Integrations(props: Props) {
     (cat) => cat.integrations,
   );
 
+  const activeTracker = connectedTracker(integratedList);
+
   const onChangeSelect = ({ value }: any) => {
     integrationsStore.integrations.setSiteId(value.value);
   };
@@ -139,31 +155,42 @@ function Integrations(props: Props) {
       <div className="mb-4" />
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {allIntegrations.map((integration, i) => (
-          <React.Fragment key={`${integration.slug}+${i}`}>
-            <IntegrationItem
-              integrated={integratedList.includes(integration.slug)}
-              integration={integration}
-              useIcon={integration.useIcon}
-              onClick={() =>
-                onClick(
-                  integration,
-                  filteredIntegrations.find((cat) =>
-                    cat.integrations.includes(integration),
-                  )?.title === 'Plugins'
-                    ? 500
-                    : 350,
-                )
-              }
-              hide={
-                (integration.slug === 'github' &&
-                  integratedList.includes('jira')) ||
-                (integration.slug === 'jira' &&
-                  integratedList.includes('github'))
-              }
-            />
-          </React.Fragment>
-        ))}
+        {allIntegrations.map((integration, i) => {
+          // a rival tracker holds the slot -> this card is disabled, not hidden
+          const blockedTracker =
+            integration.slug in issueTrackers &&
+            activeTracker &&
+            activeTracker !== integration.slug
+              ? activeTracker
+              : undefined;
+          return (
+            <React.Fragment key={`${integration.slug}+${i}`}>
+              <IntegrationItem
+                integrated={integratedList.includes(integration.slug)}
+                integration={integration}
+                useIcon={integration.useIcon}
+                onClick={() =>
+                  onClick(
+                    integration,
+                    filteredIntegrations.find((cat) =>
+                      cat.integrations.includes(integration),
+                    )?.title === 'Plugins'
+                      ? 500
+                      : 350,
+                  )
+                }
+                disabled={blockedTracker !== undefined}
+                disabledHint={
+                  blockedTracker &&
+                  t(
+                    'Only one issue tracker can be connected at a time. Disconnect {{name}} first.',
+                    { name: issueTrackers[blockedTracker] },
+                  )
+                }
+              />
+            </React.Fragment>
+          );
+        })}
       </div>
     </>
   );
@@ -202,6 +229,16 @@ const integrations = (t: TFunction) => [
         category: 'Errors',
         icon: 'integrations/github',
         component: <GithubForm />,
+      },
+      {
+        title: t('Linear'),
+        subtitle: t(
+          'Integrate Linear with OpenReplay to enable the direct creation of a new issue from a session.',
+        ),
+        slug: 'linear',
+        category: 'Errors',
+        icon: 'integrations/linear',
+        component: <LinearForm />,
       },
     ],
   },

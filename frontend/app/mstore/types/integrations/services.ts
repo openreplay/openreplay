@@ -489,6 +489,44 @@ export class GithubInt implements Integration {
   }
 }
 
+export class LinearInt implements Integration {
+  projectId: number;
+
+  provider: string = 'linear';
+
+  token: string = '';
+
+  constructor(config: any) {
+    Object.assign(this, {
+      ...config,
+      projectId: config?.projectId ?? -1,
+    });
+    makeAutoObservable(this);
+  }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
+
+  validate() {
+    return this.token !== '';
+  }
+
+  exists() {
+    return !!this.token;
+  }
+
+  toData() {
+    return {
+      provider: this.provider,
+      token: this.token,
+      projectId: this.projectId,
+    };
+  }
+}
+
 export class IssueTracker implements Integration {
   username: string = '';
 

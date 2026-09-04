@@ -337,6 +337,7 @@ export { default as Integrations_github } from './integrations_github';
 export { default as Integrations_graphql } from './integrations_graphql';
 export { default as Integrations_jira_text } from './integrations_jira_text';
 export { default as Integrations_jira } from './integrations_jira';
+export { default as Integrations_linear } from './integrations_linear';
 export { default as Integrations_mobx } from './integrations_mobx';
 export { default as Integrations_newrelic_text } from './integrations_newrelic_text';
 export { default as Integrations_newrelic } from './integrations_newrelic';

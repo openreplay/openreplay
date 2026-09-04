@@ -10,6 +10,7 @@ import {
 } from 'App/components/DataManagement/Segments/api';
 import {
   type CaptureMode,
+  type CreatedTicket,
   type IssueOrigin,
   type LabelsMatch,
   type RawCriticalDefinition,
@@ -19,9 +20,11 @@ import {
   type SegmentCaptureState,
   type SessionJourney,
   type SortDir,
+  type TicketTarget,
   type Visibility,
   setCaptureMode as apiSetCaptureMode,
   createCriticalDefinition,
+  createIssueTicket,
   createJourneyTag,
   deleteCriticalDefinition,
   deleteIssue,
@@ -261,6 +264,12 @@ export default class IssuesStore {
   sessionJourneys: Record<string, SessionJourney | null> = {};
   sessionJourneyLoading: Record<string, boolean> = {};
 
+  /* ---- issue-tracker tickets ----
+     Session-only: the issue row carries no ticket, so a created ticket is only
+     known here until the page reloads. */
+  tickets: Record<string, CreatedTicket> = {};
+  ticketPending: string | null = null;
+
   private queryTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -318,6 +327,8 @@ export default class IssuesStore {
     this.unfilteredTotal = null;
     this.labelsAll = { issueLabels: [], journeyLabels: [] };
     this.reasons = { hide: [], criticality: [] };
+    this.tickets = {};
+    this.ticketPending = null;
     this.issueCache = {};
     this.issueLoading = {};
     this.issueDetailLoaded = {};
@@ -1241,5 +1252,31 @@ export default class IssuesStore {
     void restoreIssue(this.projectId, id)
       .then(() => this.refetch({ resetPage: false }))
       .catch((e) => console.error('Failed to restore issue', e));
+  };
+
+  /* File the issue in a connected tracker. Resolves to the ticket (also kept in
+     `tickets` so the button can link to it) or null when the call failed. */
+  createTicket = async (
+    id: string,
+    target: TicketTarget = 'linear',
+  ): Promise<CreatedTicket | null> => {
+    if (!this.projectId || this.ticketPending) return null;
+    this.ticketPending = id;
+    try {
+      const ticket = await createIssueTicket(this.projectId, id, target);
+      if (ticket) {
+        runInAction(() => {
+          this.tickets[id] = ticket;
+        });
+      }
+      return ticket;
+    } catch (e) {
+      console.error('Failed to create ticket', e);
+      return null;
+    } finally {
+      runInAction(() => {
+        this.ticketPending = null;
+      });
+    }
   };
 }

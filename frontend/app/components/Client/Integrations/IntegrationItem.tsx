@@ -1,25 +1,40 @@
-import React from 'react';
+import { Tooltip } from 'antd';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Icon } from 'UI';
 
 interface Props {
   integration: any;
   onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   integrated?: boolean;
-  hide?: boolean;
+  disabled?: boolean;
+  /** tooltip telling the user why the card can't be opened */
+  disabledHint?: string;
   useIcon?: boolean;
 }
 
 function IntegrationItem(props: Props) {
   const { t } = useTranslation();
-  const { integration, integrated, hide = false, useIcon } = props;
-  return hide ? null : (
+  const {
+    integration,
+    integrated,
+    disabled = false,
+    disabledHint,
+    useIcon,
+  } = props;
+  const card = (
     <div
       className={cn(
-        'flex flex-col border rounded-lg p-3 bg-white relative justify-between cursor-pointer hover:bg-active-blue',
+        'flex flex-col border rounded-lg p-3 bg-white relative justify-between',
+        disabled
+          ? 'opacity-60 cursor-not-allowed'
+          : 'cursor-pointer hover:bg-active-blue',
       )}
-      onClick={(e) => props.onClick(e)}
+      onClick={(e) => {
+        if (!disabled) props.onClick?.(e);
+      }}
       style={{ height: '136px' }}
     >
       <div className="flex gap-3">
@@ -55,6 +70,8 @@ function IntegrationItem(props: Props) {
       )}
     </div>
   );
+
+  return disabledHint ? <Tooltip title={disabledHint}>{card}</Tooltip> : card;
 }
 
 export default IntegrationItem;

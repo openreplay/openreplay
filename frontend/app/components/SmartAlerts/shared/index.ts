@@ -2,6 +2,7 @@ export * from './model';
 export { default as AiSummary } from './AiSummary';
 export { default as Eyebrow } from './Eyebrow';
 export { default as JiraIcon } from './JiraIcon';
+export { default as LinearIcon } from './LinearIcon';
 export { default as ImpactGauge } from './ImpactGauge';
 export { default as CategoryLabel } from './CategoryLabel';
 export { default as ReasonChip } from './ReasonChip';
