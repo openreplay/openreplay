@@ -116,7 +116,6 @@ const ValueAutoComplete = observer(
     commaQuery = false,
     isDisabled = false,
     isLive = false,
-    scope,
   }: Props) => {
     const predefinedValues = params.isPredefined
       ? (params.possibleValues ?? []).map((v) => ({
@@ -193,7 +192,7 @@ const ValueAutoComplete = observer(
       ) {
         setLoadingTopValues(true);
         filterStore
-          .fetchTopValues(params.id, isLive, scope)
+          .fetchTopValues(params.id, isLive)
           .catch((error) => console.error('Failed to load top values', error))
           .finally(() => setLoadingTopValues(false));
       }
@@ -257,10 +256,6 @@ const ValueAutoComplete = observer(
 
           if (params.eventName) {
             autoCompleteParams.eventName = params.eventName;
-          }
-
-          if (scope) {
-            autoCompleteParams.scope = scope;
           }
 
           const data: { events?: any[] } | any[] =

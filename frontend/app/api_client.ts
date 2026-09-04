@@ -48,6 +48,8 @@ const newApiUrls = [
   'lexicon',
   '/tags',
   '/browser-tests',
+  '/properties',
+  '/filters',
 ];
 const except = [
   'integrations/slack/notify',
