@@ -1,6 +1,6 @@
 import { Button, Tooltip } from 'antd';
 import cn from 'classnames';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -64,7 +64,7 @@ function UserForm({
     }
   };
 
-  return useObserver(() => (
+  return (
     <div className="bg-white h-screen p-6">
       <div className="">
         <h1 className="text-2xl mb-4">
@@ -194,7 +194,7 @@ function UserForm({
         />
       )}
     </div>
-  ));
+  );
 }
 
 export default observer(UserForm);

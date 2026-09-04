@@ -1,8 +1,9 @@
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+
 import { useStore } from 'App/mstore';
-import { Icon } from 'UI';
 import { debounce } from 'App/utils';
+import { Icon } from 'UI';
 
 let debounceUpdate: any = () => {};
 function FunnelSearch(props) {
@@ -20,7 +21,7 @@ function FunnelSearch(props) {
     debounceUpdate('metricsSearch', value);
   };
 
-  return useObserver(() => (
+  return (
     <div className="relative">
       <Icon
         name="search"
@@ -35,7 +36,7 @@ function FunnelSearch(props) {
         onChange={write}
       />
     </div>
-  ));
+  );
 }
 
-export default FunnelSearch;
+export default observer(FunnelSearch);

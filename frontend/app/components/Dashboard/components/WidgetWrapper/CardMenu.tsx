@@ -1,8 +1,4 @@
-import React from 'react';
-import { useHistory } from 'App/routing';
-import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { Button, Dropdown, MenuProps, message, Modal } from 'antd';
+import { Button, Dropdown, MenuProps, Modal, message } from 'antd';
 import {
   BellIcon,
   EllipsisVertical,
@@ -10,8 +6,12 @@ import {
   PencilIcon,
   TrashIcon,
 } from 'lucide-react';
+import React from 'react';
 import { toast } from 'react-toastify';
+
+import { useStore } from 'App/mstore';
 import { dashboardMetricDetails, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 
 function CardMenu({ card }: any) {
   const siteId = location.pathname.split('/')[1];

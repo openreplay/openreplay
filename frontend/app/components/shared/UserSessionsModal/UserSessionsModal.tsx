@@ -1,14 +1,16 @@
 /* eslint-disable i18next/no-literal-string */
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { FilterKey } from 'App/types/filter/filterType';
-import { NoContent, Pagination, Loader, Avatar } from 'UI';
-import SessionItem from 'Shared/SessionItem';
-import SelectDateRange from 'Shared/SelectDateRange';
-import { useObserver, observer } from 'mobx-react-lite';
-import { useModal } from 'App/components/Modal';
+import { Avatar, Loader, NoContent, Pagination } from 'UI';
+
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { useTranslation } from 'react-i18next';
+import SelectDateRange from 'Shared/SelectDateRange';
+import SessionItem from 'Shared/SessionItem';
 
 const PER_PAGE = 10;
 interface Props {
@@ -23,7 +25,7 @@ function UserSessionsModal(props: Props) {
   const { hideModal } = useModal();
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<any>({ sessions: [], total: 0 });
-  const filter = useObserver(() => sessionStore.userFilter);
+  const filter = sessionStore.userFilter;
 
   const onDateChange = (period: any) => {
     filter.update('period', period);

@@ -1,21 +1,24 @@
-import React, { useEffect } from 'react';
-import { NoContent, Loader } from 'UI';
 import { Button } from 'antd';
 import cn from 'classnames';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import ListItem from './ListItem';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { Loader, NoContent } from 'UI';
+
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
+import ListItem from './ListItem';
 
 interface Props {}
 function AlertTriggersModal(props: Props) {
   const { t } = useTranslation();
   const { notificationStore } = useStore();
-  const count = useObserver(() => notificationStore.notificationsCount);
-  const list = useObserver(() => notificationStore.notifications);
-  const loading = useObserver(() => notificationStore.loading);
-  const markingAsRead = useObserver(() => notificationStore.markingAsRead);
+  const count = notificationStore.notificationsCount;
+  const list = notificationStore.notifications;
+  const loading = notificationStore.loading;
+  const markingAsRead = notificationStore.markingAsRead;
 
   const onClearAll = () => {
     const firstItem = list[0];
@@ -33,7 +36,7 @@ function AlertTriggersModal(props: Props) {
     notificationStore.fetchNotifications();
   }, []);
 
-  return useObserver(() => (
+  return (
     <div className="bg-white box-shadow h-screen overflow-y-auto">
       <div className="flex items-center justify-between p-5 text-2xl">
         <div>{t('Alerts')}</div>
@@ -73,7 +76,7 @@ function AlertTriggersModal(props: Props) {
         </Loader>
       </div>
     </div>
-  ));
+  );
 }
 
-export default AlertTriggersModal;
+export default observer(AlertTriggersModal);

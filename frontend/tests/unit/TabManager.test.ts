@@ -16,9 +16,9 @@ jest.mock('syncod', () => {
   };
 });
 
-jest.mock('js-untar', () => ({
+jest.mock('modern-tar', () => ({
   __esModule: true,
-  default: jest.fn(),
+  unpackTar: jest.fn(async () => []),
 }));
 
 class FakeScreen {

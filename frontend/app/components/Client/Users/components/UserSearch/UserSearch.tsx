@@ -1,4 +1,4 @@
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'App/mstore';
@@ -22,7 +22,7 @@ function UserSearch(props) {
     debounceUpdate(name, value);
   };
 
-  return useObserver(() => (
+  return (
     <div className="relative" style={{ width: '300px' }}>
       <Icon
         name="search"
@@ -40,7 +40,7 @@ function UserSearch(props) {
         height={24}
       />
     </div>
-  ));
+  );
 }
 
-export default UserSearch;
+export default observer(UserSearch);

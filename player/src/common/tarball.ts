@@ -1,27 +1,36 @@
-import untar, { TarFile } from 'js-untar';
+import { unpackTar as unpackTarEntries } from 'modern-tar';
 
-const unpackTar = (data: Uint8Array): Promise<TarFile[]> => {
-  const isTar = true;
-  // tarball ustar starts from 257, 75 73 74 61 72, but this is getting lost here for some reason
-  // so we rely on try catch
-  // data[257] === 0x75 &&
-  // data[258] === 0x73 &&
-  // data[259] === 0x74 &&
-  // data[260] === 0x61 &&
-  // data[261] === 0x72 &&
-  // data[262] === 0x00;
+import { FrameSnapshot } from './parseFrames';
 
-  if (isTar) {
-    const now = performance.now();
-    return untar(data.buffer).then((files) => {
-      console.debug(
-        'Tar unpack time',
-        `${Math.floor(performance.now() - now)}ms`,
-      );
-      return files;
-    });
+export interface TarFile extends FrameSnapshot {
+  name: string;
+}
+
+const unpackTar = async (data: Uint8Array): Promise<TarFile[]> => {
+  const now = performance.now();
+
+  // Non-strict on purpose: a tarball whose trailing EOF blocks got cut off
+  // still yields the frames it does contain instead of failing the session.
+  // Bogus headers can't blow up memory either — the parser clamps a claimed
+  // entry size to the bytes actually present.
+  const entries = await unpackTarEntries(data);
+  console.debug('Tar unpack time', `${Math.floor(performance.now() - now)}ms`);
+
+  const files = entries
+    .filter((entry) => entry.data !== undefined)
+    .map((entry) => ({
+      name: entry.header.name,
+      // Not cached: CanvasManager revokes the url of the frame it steps off,
+      // so a re-seek to the same file has to mint a fresh one
+      getBlobUrl: () => URL.createObjectURL(new Blob([entry.data!])),
+    }));
+
+  // Both mapToSnapshots implementations index files[0] unguarded
+  if (!files.length) {
+    return Promise.reject('Not a tarball file');
   }
-  return Promise.reject('Not a tarball file');
+
+  return files;
 };
 
 export default unpackTar;

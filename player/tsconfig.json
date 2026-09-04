@@ -5,7 +5,7 @@
     "module": "ESNext",
     "lib": ["dom", "es2022", "esnext"],
     "jsx": "react",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

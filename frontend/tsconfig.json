@@ -14,7 +14,7 @@
     "lib": ["dom", "es2022", "esnext"],
     "allowJs": true,
     "isolatedModules": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "jsx": "react",
     "baseUrl": ".",

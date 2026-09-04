@@ -1,6 +1,12 @@
-import { makeAutoObservable, observable, action } from 'mobx';
-import FilterStore from './filter';
 import { JsonData } from '@/mstore/types/filterConstants';
+import {
+  action,
+  makeAutoObservable,
+  observable,
+  observableShallow,
+} from 'mobx';
+
+import FilterStore from './filter';
 
 export interface IFilterSeries {
   seriesId?: any;
@@ -30,7 +36,7 @@ export default class FilterSeries implements IFilterSeries {
   constructor() {
     makeAutoObservable(this, {
       name: observable,
-      filter: observable.shallow,
+      filter: observableShallow,
 
       update: action,
     });

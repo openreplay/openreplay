@@ -159,9 +159,6 @@ fs.writeFileSync(
   `
 /* Auto-generated, do not edit */
 import React from 'react';
-import {
-${iconPaths.map((icon) => `  ${titleCase(icon.fileName)}`).join(',\n')}
-} from './Icons'
 
 export type IconNames = ${icons
     .map((icon, i) => `'${icon.slice(0, -4)}'`)
@@ -175,23 +172,60 @@ interface Props {
     fill?: string;
 }
 
+type IconComponent = React.ComponentType<Omit<Props, 'name'>>;
+
+/* The ~${icons.length} icon modules are reached through a single dynamic import of the
+   ./Icons barrel, so they land in one lazily fetched chunk rather than in the
+   entry bundle (they used to be ~14% of it) or in ~${icons.length} separate requests.
+   Export names are derived from the icon name instead of kept in a lookup
+   table, so nothing but this file stays on the critical path. */
+let registry: Record<string, IconComponent> | null = null;
+let loading: Promise<void> | null = null;
+let version = 0;
+const subscribers = new Set<() => void>();
+
+export function preloadIcons(): Promise<void> {
+    if (registry) return Promise.resolve();
+    loading ??= import('./Icons').then((mod) => {
+        registry = mod as unknown as Record<string, IconComponent>;
+        version += 1;
+        subscribers.forEach((notify) => notify());
+    });
+    return loading;
+}
+
+function subscribe(notify: () => void) {
+    subscribers.add(notify);
+    return () => {
+        subscribers.delete(notify);
+    };
+}
+
+const getVersion = () => version;
+
+/* Mirrors the file/export naming this script applies to app/svg/icons/*.svg. */
+const exportName = (name: string) => {
+    const id = name.replaceAll('-', '_').replaceAll('/', '_');
+    return id[0].toUpperCase() + id.slice(1).toLowerCase();
+};
+
 /* Auto-generated, do not edit */
 const SVG = (props: Props) => {
     const { name, size = 14, width = size, height = size, fill = '' } = props;
-    switch (name) {
-${iconPaths
-  .map((icon) => {
-    return `
-    ${icon.oldName !== icon.name ? `// case '${icon.oldName}':` : ''}
-    case '${icon.oldName}': return <${titleCase(
-      icon.fileName
-    )} width={ width } height={ height } fill={ fill } />;
-  `;
-  })
-  .join('')}
-default:
-        console.trace('Unknown icon name ' + name);
+    React.useSyncExternalStore(subscribe, getVersion, getVersion);
+
+    if (!registry) {
+        void preloadIcons();
+        // Reserves the icon's box so nothing reflows once the chunk lands.
+        return <svg width={ \`\${ width }px\` } height={ \`\${ height }px\` } aria-hidden />;
     }
+
+    const Icon = registry[exportName(name)];
+    if (!Icon) {
+        console.trace('Unknown icon name ' + name);
+        return null;
+    }
+    return <Icon width={ width } height={ height } fill={ fill } />;
 }
 SVG.displayName = 'SVG';
 export default SVG;

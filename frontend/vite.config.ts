@@ -39,13 +39,25 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   const processEnvDefine = Object.fromEntries(
-    Object.keys(env).map((key) => [
-      `process.env.${key}`,
-      JSON.stringify(env[key]),
-    ]),
+    Object.keys(env)
+      .filter((key) => key !== 'NODE_ENV')
+      .map((key) => [`process.env.${key}`, JSON.stringify(env[key])]),
   );
+
+  // NODE_ENV has to be resolved the same way Vite resolves `isProduction`,
+  // which is `VITE_USER_NODE_ENV ?? mode` — VITE_USER_NODE_ENV being whatever
+  // NODE_ENV the .env files set. It cannot come from `env` above: loadEnv with
+  // an empty prefix folds the real process.env in on top of the .env files, and
+  // `vite build` has already set process.env.NODE_ENV=production there, so
+  // env.NODE_ENV reads "production" even when .env says development.
+  //
+  // If the two disagree the build compiles but dies on load: plugin-react sees
+  // isProduction=false and emits the development JSX transform (jsxDEV from
+  // react/jsx-dev-runtime), while this define sends React to its *production*
+  // jsx-dev-runtime, which is a stub exporting `jsxDEV = undefined` — hence
+  // "(0 , X.jsxDEV) is not a function" at startup.
   processEnvDefine['process.env.NODE_ENV'] = JSON.stringify(
-    env.NODE_ENV ?? mode,
+    process.env.VITE_USER_NODE_ENV ?? mode,
   );
 
   return {
@@ -57,7 +69,19 @@ export default defineConfig(({ mode }) => {
       }),
       tsconfigPaths({ projects: ['./tsconfig.json'] }),
       viteStaticCopy({
-        targets: [{ src: 'app/assets/*', dest: 'assets' }],
+        // `app/assets/*` matched only the top-level *files* (the plugin globs
+        // with onlyFiles), so img/, integrations/, mocks/ and prism/ were never
+        // copied, and the files it did copy kept their path relative to the
+        // project root — landing in assets/app/assets/ instead of assets/.
+        // `**/*` picks up the subdirectories; stripBase drops the two leading
+        // `app/assets` segments so the tree mirrors app/assets at /assets.
+        targets: [
+          {
+            src: 'app/assets/**/*',
+            dest: 'assets',
+            rename: { stripBase: 2 },
+          },
+        ],
       }),
       {
         name: 'serve-app-assets-dev',

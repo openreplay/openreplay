@@ -1,23 +1,26 @@
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
-import { Loader, Pagination, NoContent } from 'UI';
+import { Loader, NoContent, Pagination } from 'UI';
+
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
 import AuditDetailModal from '../AuditDetailModal';
 import AuditListItem from '../AuditListItem';
-import { useTranslation } from 'react-i18next';
 
 interface Props {}
 function AuditList(props: Props) {
   const { t } = useTranslation();
   const { auditStore } = useStore();
-  const loading = useObserver(() => auditStore.isLoading);
-  const list = useObserver(() => auditStore.list);
-  const searchQuery = useObserver(() => auditStore.searchQuery);
-  const page = useObserver(() => auditStore.page);
-  const order = useObserver(() => auditStore.order);
-  const period = useObserver(() => auditStore.period);
+  const loading = auditStore.isLoading;
+  const list = auditStore.list;
+  const searchQuery = auditStore.searchQuery;
+  const page = auditStore.page;
+  const order = auditStore.order;
+  const period = auditStore.period;
   const { showModal } = useModal();
 
   useEffect(() => {
@@ -32,7 +35,7 @@ function AuditList(props: Props) {
     });
   }, [page, searchQuery, order, period]);
 
-  return useObserver(() => (
+  return (
     <Loader loading={loading}>
       <NoContent
         title={
@@ -74,7 +77,7 @@ function AuditList(props: Props) {
         </div>
       </NoContent>
     </Loader>
-  ));
+  );
 }
 
-export default AuditList;
+export default observer(AuditList);

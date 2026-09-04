@@ -1,24 +1,24 @@
+import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { Loader } from 'UI';
-import { debounce } from 'App/utils';
-import useIsMounted from 'App/hooks/useIsMounted';
-import FunnelIssuesDropdown from '../FunnelIssuesDropdown';
-import FunnelIssuesSort from '../FunnelIssuesSort';
-import FunnelIssuesList from '../FunnelIssuesList';
 import { useTranslation } from 'react-i18next';
+
+import useIsMounted from 'App/hooks/useIsMounted';
+import { useStore } from 'App/mstore';
+import { debounce } from 'App/utils';
+import { Loader } from 'UI';
+
+import FunnelIssuesDropdown from '../FunnelIssuesDropdown';
+import FunnelIssuesList from '../FunnelIssuesList';
+import FunnelIssuesSort from '../FunnelIssuesSort';
 
 function FunnelIssues() {
   const { t } = useTranslation();
   const { metricStore, dashboardStore } = useStore();
   const [data, setData] = useState<any>({ issues: [] });
   const [loading, setLoading] = useState(false);
-  const widget: any = useObserver(() => metricStore.instance);
-  const funnel = useObserver(() => widget.data.funnel || { stages: [] });
-  const stages = useObserver(() =>
-    funnel.stages.filter((stage: any) => stage.isActive),
-  );
+  const widget: any = metricStore.instance;
+  const funnel = widget.data.funnel || { stages: [] };
+  const stages = funnel.stages.filter((stage: any) => stage.isActive);
   const isMounted = useIsMounted();
 
   const fetchIssues = (filter: any) => {
@@ -54,8 +54,8 @@ function FunnelIssues() {
       });
   };
 
-  const filter = useObserver(() => dashboardStore.drillDownFilter);
-  const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
+  const filter = dashboardStore.drillDownFilter;
+  const drillDownPeriod = dashboardStore.drillDownPeriod;
   const debounceRequest: any = React.useCallback(
     debounce(fetchIssues, 1000),
     [],
@@ -77,7 +77,7 @@ function FunnelIssues() {
     metricStore.sessionsPage,
   ]);
 
-  return useObserver(() => (
+  return (
     <div className="bg-white rounded-lg mt-4 p-4 border">
       <div className="flex">
         <h2 className="font-medium text-xl">
@@ -95,7 +95,7 @@ function FunnelIssues() {
         <FunnelIssuesList issues={data.issues} />
       </Loader>
     </div>
-  ));
+  );
 }
 
-export default FunnelIssues;
+export default observer(FunnelIssues);

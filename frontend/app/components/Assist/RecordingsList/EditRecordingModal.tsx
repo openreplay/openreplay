@@ -1,8 +1,9 @@
-import { useObserver } from 'mobx-react-lite';
-import React from 'react';
-import { Modal, Form, Icon, Input } from 'UI';
 import { Button } from 'antd';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Form, Icon, Input, Modal } from 'UI';
 
 interface Props {
   show: boolean;
@@ -28,7 +29,7 @@ function EditRecordingModal(props: Props) {
   const save = () => {
     onSave(text);
   };
-  return useObserver(() => (
+  return (
     <Modal open={show} onClose={closeHandler}>
       <Modal.Header className="flex! items-center! justify-between!">
         <div>{t('Rename')}</div>
@@ -64,7 +65,7 @@ function EditRecordingModal(props: Props) {
         </div>
       </Modal.Footer>
     </Modal>
-  ));
+  );
 }
 
-export default EditRecordingModal;
+export default observer(EditRecordingModal);

@@ -1,5 +1,5 @@
 import withPageTitle from 'HOCs/withPageTitle';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,8 +20,8 @@ function UsersView({ isOnboarding = false }: Props) {
   const { userStore, roleStore } = useStore();
   const { account } = userStore;
   const { isEnterprise } = userStore;
-  const userCount = useObserver(() => userStore.list.length);
-  const roles = useObserver(() => roleStore.list);
+  const userCount = userStore.list.length;
+  const roles = roleStore.list;
   const { showModal } = useModal();
   const isAdmin = account.admin || account.superAdmin;
 

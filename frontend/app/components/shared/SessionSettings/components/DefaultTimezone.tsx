@@ -1,20 +1,21 @@
-import { Radio, Button } from 'antd';
-import { useObserver } from 'mobx-react-lite';
+import { Button, Radio } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { Timezone } from 'App/mstore/types/sessionSettings';
 import { Icon } from 'UI';
+
 import Select from 'Shared/Select';
-import { useTranslation } from 'react-i18next';
 
 type TimezonesDropdown = Timezone[];
 
 function DefaultTimezone() {
   const { t } = useTranslation();
   const { settingsStore } = useStore();
-  const sessionSettings = useObserver(() => settingsStore.sessionSettings);
+  const sessionSettings = settingsStore.sessionSettings;
   const [changed, setChanged] = React.useState(false);
   const [shownTimezone, setShownTimezone] = React.useState<'user' | 'local'>(
     sessionSettings.shownTimezone,
@@ -127,4 +128,4 @@ function DefaultTimezone() {
   );
 }
 
-export default DefaultTimezone;
+export default observer(DefaultTimezone);

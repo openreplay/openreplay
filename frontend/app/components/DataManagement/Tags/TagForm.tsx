@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'Components/ModalContext';
 import { confirm } from 'UI';
-import { Trash } from 'UI/Icons';
+import Trash from 'UI/Icons/trash';
 
 interface Props {
   tag: any;

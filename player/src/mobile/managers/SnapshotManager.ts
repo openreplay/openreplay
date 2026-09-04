@@ -1,7 +1,7 @@
 import ListWalker from '../../common/ListWalker';
 import parseFrames, { FrameSnapshot } from '../../common/parseFrames';
 import unpack from '../../common/unpack';
-import { TarFile } from 'js-untar';
+import { TarFile } from '../../common/tarball';
 
 interface Snapshots {
   [timestamp: number]: TarFile | FrameSnapshot;

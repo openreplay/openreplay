@@ -8,13 +8,13 @@
     "@medv/finder": "^4.0.2",
     "fflate": "^0.8.2",
     "fzstd": "^0.1.1",
-    "js-untar": "^2.0.0",
+    "modern-tar": "^0.8.4",
     "socket.io-client": "^4.8.3",
     "syncod": "^0.0.1"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
-    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "prettier": "^3.9.6"
   }
 }

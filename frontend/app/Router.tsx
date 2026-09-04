@@ -91,7 +91,6 @@ const Router: React.FC = () => {
     const userData = await fetchUserInfo();
     const siteIdFromPath = location.pathname.split('/')[1];
     await fetchSiteList(siteIdFromPath, userData?.tenantId);
-    mstore.initClient();
 
     if (userData?.tenantId) {
       projectsStore.setTenantId(userData.tenantId);

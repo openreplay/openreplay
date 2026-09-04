@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { useStore } from 'App/mstore';
-import { observer, useObserver } from 'mobx-react-lite';
-import { Loader, NoContent, Pagination } from 'UI';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { debounce } from 'App/utils';
-import useIsMounted from 'App/hooks/useIsMounted';
+import { Button, List } from 'antd';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useModal } from 'App/components/Modal';
+import useIsMounted from 'App/hooks/useIsMounted';
+import { useStore } from 'App/mstore';
 import Issue from 'App/mstore/types/issue';
-import { List, Button } from 'antd';
+import { debounce } from 'App/utils';
+import { Loader, NoContent, Pagination } from 'UI';
+
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
 import SessionsModal from '../SessionsModal';
 import CardIssueItem from './CardIssueItem';
-import { useTranslation } from 'react-i18next';
 
 function CardIssues() {
   const { t } = useTranslation();
@@ -21,16 +24,16 @@ function CardIssues() {
     total: number;
   }>({ issues: [], total: 0 });
   const [loading, setLoading] = useState(false);
-  const widget: any = useObserver(() => metricStore.instance);
+  const widget: any = metricStore.instance;
   const isMounted = useIsMounted();
   const pageSize = 5;
   const { showModal } = useModal();
-  const filter = useObserver(() => dashboardStore.drillDownFilter);
+  const filter = dashboardStore.drillDownFilter;
   const hasFilters =
     filter.filters.length > 0 ||
     filter.startTimestamp !== dashboardStore.drillDownPeriod.start ||
     filter.endTimestamp !== dashboardStore.drillDownPeriod.end;
-  const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
+  const drillDownPeriod = dashboardStore.drillDownPeriod;
   const depsString = JSON.stringify(widget.series);
 
   function getFilters(filter: any) {
@@ -102,7 +105,7 @@ function CardIssues() {
     dashboardStore.resetDrillDownFilter();
   };
 
-  return useObserver(() => (
+  return (
     <div className="bg-white rounded-lg shadow-xs p-4 border">
       <div className="flex justify-between">
         <div className="flex items-center">
@@ -185,7 +188,7 @@ function CardIssues() {
         />
       </div>
     </div>
-  ));
+  );
 }
 
 export default observer(CardIssues);

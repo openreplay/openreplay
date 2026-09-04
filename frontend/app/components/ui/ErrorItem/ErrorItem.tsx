@@ -1,9 +1,15 @@
 import React from 'react';
 import cn from 'classnames';
 import { useModal } from 'App/components/Modal';
-import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import JumpButton from 'Shared/DevTools/JumpButton';
 import stl from './errorItem.module.css';
+
+/* ErrorItem is re-exported from the UI barrel, so a static import here put
+   ErrorDetailsModal — and the recharts/lodash/d3 tree behind its Trend chart —
+   in the entry bundle. Only the click path needs it. */
+const ErrorDetailsModal = React.lazy(
+  () => import('App/components/Dashboard/components/Errors/ErrorDetailsModal'),
+);
 
 interface Props {
   error: any;
@@ -15,10 +21,12 @@ function ErrorItem({ error = {}, onJump, inactive, selected }: Props) {
   const { showModal } = useModal();
 
   const onErrorClick = () => {
-    showModal(<ErrorDetailsModal errorId={error.errorId} />, {
-      right: true,
-      width: 1200,
-    });
+    showModal(
+      <React.Suspense fallback={null}>
+        <ErrorDetailsModal errorId={error.errorId} />
+      </React.Suspense>,
+      { right: true, width: 1200 },
+    );
   };
   return (
     <div

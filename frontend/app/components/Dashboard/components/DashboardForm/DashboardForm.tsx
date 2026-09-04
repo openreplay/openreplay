@@ -1,9 +1,10 @@
-import { useObserver } from 'mobx-react-lite';
-import React from 'react';
-import { Input } from 'UI';
 import cn from 'classnames';
-import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { Input } from 'UI';
 
 interface Props {}
 
@@ -18,7 +19,7 @@ function DashboardForm(props: Props) {
     dashboard.update({ [name]: value === 'team' });
   };
 
-  return useObserver(() => (
+  return (
     <div className="mb-8 grid grid-cols-2 gap-8">
       <div className="form-field flex flex-col">
         <label htmlFor="name" className="font-medium mb-2">
@@ -70,7 +71,7 @@ function DashboardForm(props: Props) {
         </div>
       </div>
     </div>
-  ));
+  );
 }
 
-export default DashboardForm;
+export default observer(DashboardForm);

@@ -4,7 +4,7 @@ import { useStore } from 'App/mstore';
 import { useModal } from 'Components/Modal';
 import { toast } from 'react-toastify';
 import { Button, Modal } from 'antd';
-import { Trash } from 'UI/Icons';
+import Trash from 'UI/Icons/trash';
 import { observer } from 'mobx-react-lite';
 import styles from './customFieldForm.module.css';
 import { useTranslation } from 'react-i18next';

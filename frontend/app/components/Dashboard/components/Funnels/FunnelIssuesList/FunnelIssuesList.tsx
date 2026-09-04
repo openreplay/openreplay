@@ -1,18 +1,20 @@
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Table, Typography } from 'antd';
 import type { TableProps } from 'antd';
-import { useObserver } from 'mobx-react-lite';
+import { TFunction } from 'i18next';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { RouteComponentProps, withRouter } from 'App/routing';
+import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
+import { RouteComponentProps, withRouter } from 'App/routing';
 import { NoContent } from 'UI';
-import { InfoCircleOutlined } from '@ant-design/icons';
+
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
 import FunnelIssueModal from '../FunnelIssueModal';
 import FunnelIssuesListItem from '../FunnelIssuesListItem';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
 
 const { Text } = Typography;
 
@@ -88,9 +90,9 @@ function FunnelIssuesList(props: Props) {
   const { t } = useTranslation();
   const { issues, loading } = props;
   const { funnelStore } = useStore();
-  const issuesSort = useObserver(() => funnelStore.issuesSort);
-  const issuesFilter = useObserver(() =>
-    funnelStore.issuesFilter.map((issue: any) => issue.value),
+  const issuesSort = funnelStore.issuesSort;
+  const issuesFilter = funnelStore.issuesFilter.map(
+    (issue: any) => issue.value,
   );
   const { showModal } = useModal();
   const issueId = new URLSearchParams(props.location.search).get('issueId');
@@ -115,26 +117,22 @@ function FunnelIssuesList(props: Props) {
     });
   }, [issueId]);
 
-  let filteredIssues = useObserver(() =>
+  let filteredIssues =
     issuesFilter.length > 0
       ? issues.filter((issue: any) => issuesFilter.includes(issue.type))
-      : issues,
-  );
-  filteredIssues = useObserver(() =>
-    issuesSort.sort
-      ? filteredIssues
-          .slice()
-          .sort(
-            (a: { [x: string]: number }, b: { [x: string]: number }) =>
-              a[issuesSort.sort] - b[issuesSort.sort],
-          )
-      : filteredIssues,
-  );
-  filteredIssues = useObserver(() =>
-    issuesSort.order === 'desc' ? filteredIssues.reverse() : filteredIssues,
-  );
+      : issues;
+  filteredIssues = issuesSort.sort
+    ? filteredIssues
+        .slice()
+        .sort(
+          (a: { [x: string]: number }, b: { [x: string]: number }) =>
+            a[issuesSort.sort] - b[issuesSort.sort],
+        )
+    : filteredIssues;
+  filteredIssues =
+    issuesSort.order === 'desc' ? filteredIssues.reverse() : filteredIssues;
 
-  return useObserver(() => (
+  return (
     <NoContent
       show={!loading && filteredIssues.length === 0}
       title={
@@ -156,7 +154,7 @@ function FunnelIssuesList(props: Props) {
         rowClassName="cursor-pointer"
       />
     </NoContent>
-  ));
+  );
 }
 
-export default withRouter(FunnelIssuesList);
+export default withRouter(observer(FunnelIssuesList));

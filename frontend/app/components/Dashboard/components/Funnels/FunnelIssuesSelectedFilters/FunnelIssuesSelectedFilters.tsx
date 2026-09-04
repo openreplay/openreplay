@@ -1,16 +1,17 @@
-import React from 'react';
-import { Icon } from 'UI';
-import { Tag } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+import { Tag } from 'antd';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import { Icon } from 'UI';
 
 interface Props {
   removeSelectedValue: (value: string) => void;
 }
 function FunnelIssuesSelectedFilters(props: Props) {
   const { funnelStore } = useStore();
-  const issuesFilter = useObserver(() => funnelStore.issuesFilter);
+  const issuesFilter = funnelStore.issuesFilter;
   const { removeSelectedValue } = props;
 
   return (
@@ -30,4 +31,4 @@ function FunnelIssuesSelectedFilters(props: Props) {
   );
 }
 
-export default FunnelIssuesSelectedFilters;
+export default observer(FunnelIssuesSelectedFilters);

@@ -1,11 +1,13 @@
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import SessionItem from 'Shared/SessionItem';
-import { Pagination, NoContent } from 'UI';
-import { useStore } from 'App/mstore';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import Session from 'App/mstore/types/session';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import Session from 'App/mstore/types/session';
+import { NoContent, Pagination } from 'UI';
+
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import SessionItem from 'Shared/SessionItem';
 
 interface Props {
   metric: any;
@@ -26,7 +28,7 @@ function CustomMetricTableSessions(props: Props) {
     [],
   );
 
-  return useObserver(() => (
+  return (
     <NoContent
       show={!metric || !data || !sessions || sessions.length === 0}
       size="small"
@@ -63,7 +65,7 @@ function CustomMetricTableSessions(props: Props) {
         {!isEdit && <ViewMore total={data.total} limit={metric.limit} />}
       </div>
     </NoContent>
-  ));
+  );
 }
 
 export default observer(CustomMetricTableSessions);

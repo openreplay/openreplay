@@ -1,5 +1,5 @@
 import logger from '../logger';
-import { TarFile } from 'js-untar';
+import { TarFile } from '../common/tarball';
 import { FrameSnapshot } from '../common/parseFrames';
 import { getResourceFromNetworkRequest } from '../web/types/resource';
 import ListWalker from '../common/ListWalker'

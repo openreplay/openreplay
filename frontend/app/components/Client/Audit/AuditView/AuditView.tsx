@@ -1,6 +1,6 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import { Button } from 'antd';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,8 +18,8 @@ import AuditSearchField from '../AuditSearchField';
 function AuditView() {
   const { t } = useTranslation();
   const { auditStore } = useStore();
-  const order = useObserver(() => auditStore.order);
-  const total = useObserver(() => numberWithCommas(auditStore.total));
+  const order = auditStore.order;
+  const total = numberWithCommas(auditStore.total);
 
   useEffect(
     () => () => {
@@ -36,7 +36,7 @@ function AuditView() {
     auditStore.setDateRange(data);
   };
 
-  return useObserver(() => (
+  return (
     <PreferencesPage
       title={t('Audit Trail')}
       value={total}
@@ -77,7 +77,9 @@ function AuditView() {
     >
       <AuditList />
     </PreferencesPage>
-  ));
+  );
 }
 
-export default withPageTitle('Audit Trail - OpenReplay Preferences')(AuditView);
+export default withPageTitle('Audit Trail - OpenReplay Preferences')(
+  observer(AuditView),
+);

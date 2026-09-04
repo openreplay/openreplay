@@ -1,11 +1,13 @@
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import Breadcrumb from 'App/components/shared/Breadcrumb';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
 import { withSiteId } from 'App/routes';
 import { Loader } from 'UI';
+
 import FunnelIssueDetails from '../Funnels/FunnelIssueDetails';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   history: any;
@@ -20,9 +22,9 @@ function WidgetSubDetailsView(props: Props) {
     },
   } = props;
   const { metricStore, funnelStore } = useStore();
-  const widget = useObserver(() => metricStore.instance);
-  const issueInstance = useObserver(() => funnelStore.issueInstance);
-  const loadingWidget = useObserver(() => metricStore.isLoading);
+  const widget = metricStore.instance;
+  const issueInstance = funnelStore.issueInstance;
+  const loadingWidget = metricStore.isLoading;
   // const isFunnel = widget.metricType === 'funnel'; // TODO uncomment this line
   const isFunnel = widget.metricType === 'table'; // TODO remove this line
 
@@ -57,4 +59,4 @@ function WidgetSubDetailsView(props: Props) {
   );
 }
 
-export default WidgetSubDetailsView;
+export default observer(WidgetSubDetailsView);

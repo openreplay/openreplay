@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { TFunction } from 'i18next';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,10 +20,9 @@ function AddUserButton({
 }: any) {
   const { t } = useTranslation();
   const { userStore } = useStore();
-  const limtis = useObserver(() => userStore.limits);
-  const cannAddUser = useObserver(
-    () => isAdmin && (limtis.teamMember === -1 || limtis.teamMember > 0),
-  );
+  const limtis = userStore.limits;
+  const cannAddUser =
+    isAdmin && (limtis.teamMember === -1 || limtis.teamMember > 0);
 
   return (
     <Tooltip
@@ -43,4 +42,4 @@ function AddUserButton({
   );
 }
 
-export default AddUserButton;
+export default observer(AddUserButton);

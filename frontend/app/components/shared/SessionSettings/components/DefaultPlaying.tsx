@@ -1,13 +1,14 @@
-import React from 'react';
 import { Switch } from 'antd';
-import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { toast } from 'react-toastify';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+
+import { useStore } from 'App/mstore';
 
 function DefaultPlaying() {
   const { settingsStore } = useStore();
-  const sessionSettings = useObserver(() => settingsStore.sessionSettings);
+  const sessionSettings = settingsStore.sessionSettings;
   const { t } = useTranslation();
 
   const toggleSkipToIssue = () => {
@@ -15,7 +16,7 @@ function DefaultPlaying() {
     toast.success(t('Default playing option saved successfully'));
   };
 
-  return useObserver(() => (
+  return (
     <>
       <h3 className="text-lg">{t('Default Playing Option')}</h3>
       <div className="my-1">
@@ -28,7 +29,7 @@ function DefaultPlaying() {
         />
       </div>
     </>
-  ));
+  );
 }
 
-export default DefaultPlaying;
+export default observer(DefaultPlaying);

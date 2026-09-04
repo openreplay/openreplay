@@ -1,4 +1,4 @@
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,11 +20,11 @@ function UserList(props: Props) {
   const { t } = useTranslation();
   const { isEnterprise = false, isOnboarding = false } = props;
   const { userStore } = useStore();
-  const loading = useObserver(() => userStore.loading);
-  const users = useObserver(() => userStore.list);
-  const searchQuery = useObserver(() => userStore.searchQuery);
-  const isOwner = useObserver(() => userStore.account.superAdmin);
-  const currentUserId = useObserver(() => userStore.account.id);
+  const loading = userStore.loading;
+  const users = userStore.list;
+  const searchQuery = userStore.searchQuery;
+  const isOwner = userStore.account.superAdmin;
+  const currentUserId = userStore.account.id;
   const { showModal, hideModal } = useModal();
 
   const getList = (list: any) =>
@@ -81,7 +81,7 @@ function UserList(props: Props) {
     });
   };
 
-  return useObserver(() => (
+  return (
     <Loader loading={loading}>
       <NoContent
         title={
@@ -140,7 +140,7 @@ function UserList(props: Props) {
         </div>
       </NoContent>
     </Loader>
-  ));
+  );
 }
 
-export default UserList;
+export default observer(UserList);

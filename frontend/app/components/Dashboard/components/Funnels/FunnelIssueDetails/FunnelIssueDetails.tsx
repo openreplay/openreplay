@@ -1,8 +1,10 @@
+import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { Loader } from 'UI';
+
 import SessionItem from 'App/components/shared/SessionItem/SessionItem';
+import { useStore } from 'App/mstore';
+import { Loader } from 'UI';
+
 import FunnelIssuesListItem from '../FunnelIssuesListItem';
 
 interface Props {
@@ -11,8 +13,8 @@ interface Props {
 function FunnelIssueDetails(props: Props) {
   const { dashboardStore, metricStore } = useStore();
   const { issueId } = props;
-  const filter = useObserver(() => dashboardStore.drillDownFilter);
-  const widget = useObserver(() => metricStore.instance);
+  const filter = dashboardStore.drillDownFilter;
+  const widget = metricStore.instance;
   const [loading, setLoading] = useState(false);
   const [funnelIssue, setFunnelIssue] = useState<any>(null);
   const [sessions, setSessions] = useState<any>([]);
@@ -62,4 +64,4 @@ function FunnelIssueDetails(props: Props) {
   );
 }
 
-export default FunnelIssueDetails;
+export default observer(FunnelIssueDetails);

@@ -114,6 +114,13 @@ const SPOT_PATH = routes.spot();
 const HIGHLIGHTS_PATH = routes.highlights();
 const TEST_AGENTS_PATH = routes.testAgents();
 
+/* Wrapped once at module scope: doing it in render gave React a new component
+   type on every re-render, remounting the route and refetching its data. */
+const SAAS_ROUTES = saasRoutes.map((route) => ({
+  path: route.path,
+  Component: withSiteIdUpdater(route.component),
+}));
+
 function PrivateRoutes() {
   const {
     projectsStore,
@@ -414,16 +421,13 @@ function PrivateRoutes() {
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Route key={fr} path={fr} element={<Navigate to={to} replace />} />
         ))}
-        {saasRoutes.map((route) => {
-          const Component = withSiteIdUpdater(route.component);
-          return (
-            <Route
-              key={route.path}
-              path={withSiteId(route.path, siteIdList)}
-              element={<Component />}
-            />
-          );
-        })}
+        {SAAS_ROUTES.map(({ path, Component }) => (
+          <Route
+            key={path}
+            path={withSiteId(path, siteIdList)}
+            element={<Component />}
+          />
+        ))}
         <Route path="*" element={<Navigate to={fallbackTo} replace />} />
       </StableRoutes>
     </Suspense>

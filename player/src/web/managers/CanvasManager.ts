@@ -1,9 +1,8 @@
 import ListWalker from '../../common/ListWalker';
-import unpackTar from '../../common/tarball';
+import unpackTar, { TarFile } from '../../common/tarball';
 import unpack from '../../common/unpack';
 import { VElement } from './DOM/VirtualDOM';
 import parseFrames, { FrameSnapshot } from '../../common/parseFrames';
-import { TarFile } from 'js-untar';
 
 const playMode = {
   video: 'video',
