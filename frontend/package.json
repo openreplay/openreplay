@@ -52,7 +52,7 @@
     "copy-to-clipboard": "^3.3.3",
     "country-flag-icons": "^1.6.12",
     "dashjs": "^5.1.1",
-    "echarts": "^6.0.0",
+    "echarts": "^6.1.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-config-prettier": "^10.1.8",
@@ -100,7 +100,7 @@
     "virtua": "^0.49.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
+    "@babel/core": "^8.0.0",
     "@babel/preset-env": "^7.29.2",
     "@babel/preset-react": "^7.28.5",
     "@eslint/eslintrc": "^3.3.5",
