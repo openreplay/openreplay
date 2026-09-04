@@ -12,6 +12,7 @@ import { observer } from 'mobx-react-lite';
 import DashboardOptions from '../DashboardOptions';
 import DashboardEditModal from '../DashboardEditModal';
 import AddCardSection from '../AddCardSection/AddCardSection';
+import DashboardSwitcher from './DashboardSwitcher';
 import { useTranslation } from 'react-i18next';
 import { mobileScreen } from 'App/utils/isMobile';
 
@@ -67,20 +68,8 @@ function DashboardHeader(props: Props) {
       />
 
       <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-0 md:justify-between px-4 pt-4  bg-white">
-        <div className="flex items-center gap-2" style={{ flex: 3 }}>
-          <BackButton siteId={siteId} compact />
-
-          <PageTitle
-            title={
-              <Tooltip title={t('Click to edit')} placement="bottom">
-                <div className="text-xl md:text-2xl h-8 flex items-center cursor-pointer select-none hover:bg-teal/10">
-                  {dashboard?.name}
-                </div>
-              </Tooltip>
-            }
-            onClick={() => onEdit(true)}
-            className="select-none border-b border-b-borderColor-transparent hover:border-dashed hover:border-gray-medium cursor-pointer"
-          />
+        <div className="flex items-center gap-2 min-w-0" style={{ flex: 3 }}>
+          <DashboardSwitcher siteId={siteId} onRename={() => onEdit(true)} />
         </div>
         <div className="flex items-center gap-2 md:justify-end w-full md:w-auto">
           <Popover
