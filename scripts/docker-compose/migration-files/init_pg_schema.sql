@@ -1,4 +1,4 @@
-\set or_version 'v1.27.0'
+\set or_version 'v1.28.0'
 SET client_min_messages TO NOTICE;
 \set ON_ERROR_STOP true
 SELECT EXISTS (SELECT 1
@@ -331,32 +331,6 @@ CREATE INDEX issues_project_id_issue_id_idx ON public.issues (project_id, issue_
 CREATE INDEX issues_project_id_idx ON public.issues (project_id);
 
 
-CREATE TYPE error_source AS ENUM ('js_exception', 'bugsnag', 'cloudwatch', 'datadog', 'newrelic', 'rollbar', 'sentry', 'stackdriver', 'sumologic', 'elasticsearch');
-CREATE TYPE error_status AS ENUM ('unresolved', 'resolved', 'ignored');
-CREATE TABLE public.errors
-(
-    error_id             text         NOT NULL PRIMARY KEY,
-    project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
-    source               error_source NOT NULL,
-    name                 text                  DEFAULT NULL,
-    message              text         NOT NULL,
-    payload              jsonb        NOT NULL,
-    status               error_status NOT NULL DEFAULT 'unresolved',
-    parent_error_id      text                  DEFAULT NULL REFERENCES public.errors (error_id) ON DELETE SET NULL,
-    stacktrace           jsonb, --to save the stacktrace and not query S3 another time
-    stacktrace_parsed_at timestamp
-);
-CREATE INDEX errors_project_id_source_idx ON public.errors (project_id, source);
-CREATE INDEX errors_message_gin_idx ON public.errors USING GIN (message gin_trgm_ops);
-CREATE INDEX errors_name_gin_idx ON public.errors USING GIN (name gin_trgm_ops);
-CREATE INDEX errors_project_id_idx ON public.errors (project_id);
-CREATE INDEX errors_project_id_status_idx ON public.errors (project_id, status);
-CREATE INDEX errors_project_id_error_id_js_exception_idx ON public.errors (project_id, error_id) WHERE source = 'js_exception';
-CREATE INDEX errors_project_id_error_id_idx ON public.errors (project_id, error_id);
-CREATE INDEX errors_project_id_error_id_integration_idx ON public.errors (project_id, error_id) WHERE source != 'js_exception';
-CREATE INDEX errors_error_id_idx ON public.errors (error_id);
-CREATE INDEX errors_parent_error_id_idx ON public.errors (parent_error_id);
-
 CREATE TYPE device_type AS ENUM ('desktop', 'tablet', 'mobile', 'other');
 CREATE TYPE country AS ENUM ('UN', 'RW', 'SO', 'YE', 'IQ', 'SA', 'IR', 'CY', 'TZ', 'SY', 'AM', 'KE', 'CD', 'DJ', 'UG', 'CF', 'SC', 'JO', 'LB', 'KW', 'OM', 'QA', 'BH', 'AE', 'IL', 'TR', 'ET', 'ER', 'EG', 'SD', 'GR', 'BI', 'EE', 'LV', 'AZ', 'LT', 'SJ', 'GE', 'MD', 'BY', 'FI', 'AX', 'UA', 'MK', 'HU', 'BG', 'AL', 'PL', 'RO', 'XK', 'ZW', 'ZM', 'KM', 'MW', 'LS', 'BW', 'MU', 'SZ', 'RE', 'ZA', 'YT', 'MZ', 'MG', 'AF', 'PK', 'BD', 'TM', 'TJ', 'LK', 'BT', 'IN', 'MV', 'IO', 'NP', 'MM', 'UZ', 'KZ', 'KG', 'TF', 'HM', 'CC', 'PW', 'VN', 'TH', 'ID', 'LA', 'TW', 'PH', 'MY', 'CN', 'HK', 'BN', 'MO', 'KH', 'KR', 'JP', 'KP', 'SG', 'CK', 'TL', 'RU', 'MN', 'AU', 'CX', 'MH', 'FM', 'PG', 'SB', 'TV', 'NR', 'VU', 'NC', 'NF', 'NZ', 'FJ', 'LY', 'CM', 'SN', 'CG', 'PT', 'LR', 'CI', 'GH', 'GQ', 'NG', 'BF', 'TG', 'GW', 'MR', 'BJ', 'GA', 'SL', 'ST', 'GI', 'GM', 'GN', 'TD', 'NE', 'ML', 'EH', 'TN', 'ES', 'MA', 'MT', 'DZ', 'FO', 'DK', 'IS', 'GB', 'CH', 'SE', 'NL', 'AT', 'BE', 'DE', 'LU', 'IE', 'MC', 'FR', 'AD', 'LI', 'JE', 'IM', 'GG', 'SK', 'CZ', 'NO', 'VA', 'SM', 'IT', 'SI', 'ME', 'HR', 'BA', 'AO', 'NA', 'SH', 'BV', 'BB', 'CV', 'GY', 'GF', 'SR', 'PM', 'GL', 'PY', 'UY', 'BR', 'FK', 'GS', 'JM', 'DO', 'CU', 'MQ', 'BS', 'BM', 'AI', 'TT', 'KN', 'DM', 'AG', 'LC', 'TC', 'AW', 'VG', 'VC', 'MS', 'MF', 'BL', 'GP', 'GD', 'KY', 'BZ', 'SV', 'GT', 'HN', 'NI', 'CR', 'VE', 'EC', 'CO', 'PA', 'HT', 'AR', 'CL', 'BO', 'PE', 'MX', 'PF', 'PN', 'KI', 'TK', 'TO', 'WF', 'WS', 'NU', 'MP', 'GU', 'PR', 'VI', 'UM', 'AS', 'CA', 'US', 'PS', 'RS', 'AQ', 'SX', 'CW', 'BQ', 'SS','AC','AN','BU','CP','CS','CT','DD','DG','DY','EA','FQ','FX','HV','IC','JT','MI','NH','NQ','NT','PC','PU','PZ','RH','SU','TA','TP','VD','WK','YD','YU','ZR');
 
@@ -654,21 +628,6 @@ CREATE INDEX inputs_label_gin_idx ON events.inputs USING GIN (label gin_trgm_ops
 CREATE INDEX inputs_timestamp_idx ON events.inputs (timestamp);
 CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label, session_id, timestamp);
 
-CREATE TABLE events.errors
-(
-    session_id bigint NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
-    message_id bigint NOT NULL,
-    timestamp  bigint NOT NULL,
-    error_id   text   NOT NULL REFERENCES public.errors (error_id) ON DELETE CASCADE,
-    PRIMARY KEY (session_id, message_id)
-);
-CREATE INDEX errors_session_id_idx ON events.errors (session_id);
-CREATE INDEX errors_timestamp_idx ON events.errors (timestamp);
-CREATE INDEX errors_session_id_timestamp_error_id_idx ON events.errors (session_id, timestamp, error_id);
-CREATE INDEX errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
-CREATE INDEX errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);
-CREATE INDEX errors_error_id_timestamp_session_id_idx ON events.errors (error_id, timestamp, session_id);
-CREATE INDEX errors_error_id_idx ON events.errors (error_id);
 
 
 CREATE TABLE events.graphql
@@ -902,21 +861,6 @@ CREATE TABLE public.sessions_notes
     start_at   integer                     NULL,
     end_at     integer                     NULL
 );
-
-CREATE TABLE public.errors_tags
-(
-    key        text                        NOT NULL,
-    value      text                        NOT NULL,
-    created_at timestamp without time zone NOT NULL default (now() at time zone 'utc'),
-    error_id   text                        NOT NULL REFERENCES public.errors (error_id) ON DELETE CASCADE,
-    session_id bigint                      NOT NULL,
-    message_id bigint                      NOT NULL,
-    FOREIGN KEY (session_id, message_id) REFERENCES events.errors (session_id, message_id) ON DELETE CASCADE
-);
-
-CREATE INDEX errors_tags_error_id_idx ON public.errors_tags (error_id);
-CREATE INDEX errors_tags_session_id_idx ON public.errors_tags (session_id);
-CREATE INDEX errors_tags_message_id_idx ON public.errors_tags (message_id);
 
 
 CREATE TABLE public.projects_stats
@@ -1223,7 +1167,7 @@ CREATE INDEX saved_searches_project_id_idx ON public.saved_searches (project_id)
 
 CREATE TABLE public.actions
 (
-    action_id   uuid                        PRIMARY KEY DEFAULT gen_random_uuid(),
+    action_id   uuid PRIMARY KEY                     DEFAULT gen_random_uuid(),
     project_id  integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
     user_id     integer                     NULL REFERENCES public.users (user_id) ON DELETE SET NULL,
     name        varchar(255)                NOT NULL,
