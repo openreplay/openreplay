@@ -16,6 +16,8 @@ temp_env_file=$(mktemp)
 # Function to merge environment variables from original to new env file
 function merge_envs() {
 	while IFS='=' read -r key value; do
+		# Skip blank lines, comments, and any line without a key
+		[[ -z "$key" || "$key" == \#* ]] && continue
 		# Skip the line if the key is COMMON_VERSION
 		case "$key" in
 		COMMON_VERSION)
@@ -103,7 +105,7 @@ function migrate() {
 	# Loop through versions and prepare Docker run commands
 	for ver in "${joined_migration_versions[@]}"; do
 		echo "$ver"
-		docker run --rm --network docker-compose_opereplay-net \
+		docker run --rm --network docker-compose_openreplay-net \
 			--name pgmigrate -e PGHOST=postgres -e PGPORT=5432 \
 			-e PGDATABASE=postgres -e PGUSER=postgres -e PGPASSWORD=$pgpassword \
 			-v $SCHEMA_DIR:/opt/data/ postgres psql -f /opt/data/db/init_dbs/postgresql/$ver/$ver.sql
@@ -122,4 +124,4 @@ set +a
 # Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
 find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}";cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
 
-sudo -E docker-compose up -d
+sudo -E docker compose up -d
