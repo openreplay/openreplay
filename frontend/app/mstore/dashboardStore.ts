@@ -1,10 +1,11 @@
 import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
 import { HEATMAP } from '@/constants/card';
-import { CUSTOM_RANGE } from '@/dateRange';
+import { CUSTOM_RANGE, dateRangeValues } from '@/dateRange';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { makeAutoObservable, reaction, runInAction } from 'mobx';
 import { toast } from 'react-toastify';
 
+import { DASHBOARD_TIME_RANGE } from 'App/constants/storageKeys';
 import { sessionStore } from 'App/mstore';
 import { dashboardService, metricService } from 'App/services';
 import { getRE } from 'App/utils';
@@ -12,6 +13,20 @@ import { getRE } from 'App/utils';
 import Dashboard from './types/dashboard';
 import Filter from './types/filter';
 import Widget from './types/widget';
+
+const DEFAULT_DASHBOARD_RANGE = LAST_24_HOURS;
+
+const getDashboardPeriod = () => {
+  const savedRangeName = localStorage.getItem(DASHBOARD_TIME_RANGE);
+  const rangeName =
+    savedRangeName &&
+    savedRangeName !== CUSTOM_RANGE &&
+    dateRangeValues.includes(savedRangeName)
+      ? savedRangeName
+      : DEFAULT_DASHBOARD_RANGE;
+
+  return Period({ rangeName });
+};
 
 interface DashboardFilter {
   query?: string;
@@ -27,10 +42,10 @@ export default class DashboardStore {
   currentWidget: Widget = new Widget();
   widgetCategories: any[] = [];
   widgets: Widget[] = [];
-  period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
+  period: Record<string, any> = getDashboardPeriod();
   drillDownFilter: Filter = new Filter();
   comparisonFilter: Filter = new Filter();
-  drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
+  drillDownPeriod: Record<string, any> = getDashboardPeriod();
   selectedDensity: number = 7;
   comparisonPeriods: Record<string, any> = {};
   startTimestamp: number = 0;
@@ -475,15 +490,21 @@ export default class DashboardStore {
   resetPeriod = () => {
     if (this.period) {
       const range = this.period.rangeName;
-      if (range !== CUSTOM_RANGE) {
-        this.period = Period({ rangeName: this.period.rangeName });
-      } else {
-        this.period = Period({ rangeName: LAST_24_HOURS });
-      }
+      this.period =
+        range !== CUSTOM_RANGE
+          ? Period({ rangeName: range })
+          : getDashboardPeriod();
     }
   };
 
   setPeriod(period: any) {
+    if (
+      period.rangeName !== CUSTOM_RANGE &&
+      dateRangeValues.includes(period.rangeName)
+    ) {
+      localStorage.setItem(DASHBOARD_TIME_RANGE, period.rangeName);
+    }
+
     this.period = Period({
       start: period.start,
       end: period.end,
