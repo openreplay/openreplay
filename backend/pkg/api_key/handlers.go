@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	config "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/analytics/events"
@@ -258,15 +259,12 @@ func (h *handlersImpl) searchEventsBySession(r *api.RequestContext) (any, int, e
 		return nil, statusCode, err
 	}
 
-	sessionID, err := api.GetPathParam(r.Request, "sessionID", api.ParseString)
+	sessionID, err := api.GetPathParam(r.Request, "sessionID", api.ParseUint64)
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("sessionID must be a positive integer")
 	}
-	if sessionID == "" {
-		return nil, http.StatusBadRequest, fmt.Errorf("sessionID cannot be empty")
-	}
-	if len(sessionID) > 256 {
-		return nil, http.StatusBadRequest, fmt.Errorf("sessionID exceeds maximum length of 256 characters")
+	if sessionID == 0 {
+		return nil, http.StatusBadRequest, fmt.Errorf("sessionID cannot be zero")
 	}
 
 	req := &eventsModel.EventsSearchRequest{}
@@ -277,7 +275,7 @@ func (h *handlersImpl) searchEventsBySession(r *api.RequestContext) (any, int, e
 	req.Filters = append(req.Filters, filters.Filter{
 		Name:     "session_id",
 		Operator: "is",
-		Value:    []string{sessionID},
+		Value:    []string{strconv.FormatUint(sessionID, 10)},
 	})
 
 	if err := filters.ValidateStruct(req); err != nil {
