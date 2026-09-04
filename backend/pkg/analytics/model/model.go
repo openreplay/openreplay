@@ -211,10 +211,11 @@ type SeriesSessionData struct {
 }
 
 type SavedSearchRequest struct {
-	Name     *string         `json:"name" validate:"omitempty,max=255"`
-	IsPublic *bool           `json:"isPublic"`
-	IsShare  *bool           `json:"isShare"`
-	Data     SavedSearchData `json:"data" validate:"required"`
+	Name      *string         `json:"name" validate:"omitempty,max=255"`
+	IsPublic  *bool           `json:"isPublic"`
+	IsShare   *bool           `json:"isShare"`
+	IsCapture *bool           `json:"isCapture"`
+	Data      SavedSearchData `json:"data" validate:"required"`
 }
 
 type SavedSearchData struct {
@@ -236,6 +237,7 @@ type SavedSearch struct {
 	Name          *string         `json:"name,omitempty"`
 	IsPublic      bool            `json:"isPublic"`
 	IsShare       bool            `json:"isShare"`
+	IsCapture     bool            `json:"isCapture"`
 	Data          SavedSearchData `json:"data"`
 	CreatedAt     time.Time       `json:"createdAt"`
 	SessionsCount int64           `json:"sessionsCount"`
@@ -249,6 +251,7 @@ type SavedSearchResponse struct {
 	Name      *string         `json:"name,omitempty"`
 	IsPublic  bool            `json:"isPublic"`
 	IsShare   bool            `json:"isShare"`
+	IsCapture bool            `json:"isCapture"`
 	Data      SavedSearchData `json:"data"`
 	CreatedAt time.Time       `json:"createdAt"`
 }

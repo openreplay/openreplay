@@ -26,6 +26,9 @@ DROP TABLE IF EXISTS public.errors;
 DROP TYPE IF EXISTS error_source;
 DROP TYPE IF EXISTS error_status;
 
+ALTER TABLE IF EXISTS public.saved_searches
+    ADD COLUMN IF NOT EXISTS is_capture boolean NOT NULL DEFAULT FALSE;
+
 
 COMMIT;
 

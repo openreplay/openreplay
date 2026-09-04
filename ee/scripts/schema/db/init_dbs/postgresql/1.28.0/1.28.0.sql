@@ -30,6 +30,9 @@ DROP TYPE IF EXISTS error_status;
 ALTER TABLE IF EXISTS public.scim_auth_codes
     ADD COLUMN IF NOT EXISTS used_for_jwt bool DEFAULT NULL;
 
+ALTER TABLE IF EXISTS public.saved_searches
+    ADD COLUMN IF NOT EXISTS is_capture boolean NOT NULL DEFAULT FALSE;
+
 COMMIT;
 
 \elif :is_next
