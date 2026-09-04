@@ -71,6 +71,11 @@ export default class BatchWriter {
     }
   }
 
+  /** Stream index the next written message will take (its MessageID / MsgID). */
+  get currentIndex(): number {
+    return this.nextIndex
+  }
+
   setBeaconSizeLimit(limit: number) {
     this.beaconSizeLimit = limit
   }

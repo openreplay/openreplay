@@ -6,6 +6,7 @@ import { FromWorkerData } from '../common/interaction.js'
 
 import QueueSender from './QueueSender.js'
 import BatchWriter from './BatchWriter.js'
+import Detectors from './detectors/index.js'
 
 declare function postMessage(message: FromWorkerData, transfer?: any[]): void
 
@@ -19,63 +20,11 @@ enum WorkerStatus {
 
 const AUTO_SEND_INTERVAL = 30 * 1000
 
-/** Read varint-encoded message types from a raw batch for debug logging. */
-function debugReadBatchTypes(batch: Uint8Array): number[] {
-  const types: number[] = []
-  let p = 0
-
-  const readUint = (): number | null => {
-    let val = 0, shift = 0
-    while (p < batch.length) {
-      const b = batch[p++]
-      val |= (b & 0x7f) << shift
-      if ((b & 0x80) === 0) return val
-      shift += 7
-    }
-    return null
-  }
-
-  const readSize = (): number | null => {
-    if (p + 3 > batch.length) return null
-    const s = batch[p] | (batch[p + 1] << 8) | (batch[p + 2] << 16)
-    p += 3
-    return s
-  }
-
-  // BatchMetadata (type 81) and PartitionedMessage (type 82) have no size prefix
-  const NO_SIZE = new Set([80, 81, 82])
-
-  while (p < batch.length) {
-    const tp = readUint()
-    if (tp === null) break
-    types.push(tp)
-
-    if (NO_SIZE.has(tp)) {
-      // skip fields by reading until we hit the next valid message
-      // BatchMetadata: uint, uint, uint, int, string — just read them
-      if (tp === 81) {
-        readUint(); readUint(); readUint(); readUint() // version, pageNo, firstIndex, timestamp(zigzag)
-        // string: length-prefixed
-        const len = readUint()
-        if (len !== null) p += len
-      } else if (tp === 82) {
-        readUint(); readUint() // partNo, partTotal
-      }
-      continue
-    }
-
-    // Regular message: 3-byte size prefix, skip body
-    const size = readSize()
-    if (size === null) break
-    p += size
-  }
-
-  return types
-}
-const KEEPALIVE_SAFE_RANGE = Math.floor((64 << 10) * 0.8)
-
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
+let detectors: Detectors | null = null
+// Running batch timestamp, tracked from Timestamp messages and fed to detectors.
+let detectorsTimestamp = 0
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
 
@@ -84,6 +33,15 @@ function finalize(skipCompression?: boolean): void {
     return
   }
   writer.finaliseBatch(skipCompression) // TODO: force sendAll?
+}
+
+/** End of session (stop / unload). Detectors flush first so an issue whose
+ *  stretch is still open — a rage row, a high-CPU window — lands in the batch
+ *  that's about to go instead of being dropped. Not done on the auto-send tick:
+ *  that would cut every open stretch at a 30s boundary. */
+function finalizeSession(skipCompression?: boolean): void {
+  detectors?.flush(detectorsTimestamp)
+  finalize(skipCompression)
 }
 
 function resetWriter(): void {
@@ -113,6 +71,8 @@ function reset(): Promise<any> {
     }
     resetWriter()
     resetSender()
+    detectors = null
+    detectorsTimestamp = 0
     setTimeout(() => {
       workerStatus = WorkerStatus.NotActive
       res(null)
@@ -140,7 +100,7 @@ let restartTimeoutID: ReturnType<typeof setTimeout>
 // @ts-ignore
 self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   if (data === 'stop') {
-    finalize()
+    finalizeSession()
     // eslint-disable-next-line
     reset().then(() => {
       workerStatus = WorkerStatus.Stopped
@@ -152,7 +112,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     return
   }
   if (data === 'closing') {
-    finalize(true)
+    finalizeSession(true)
     // Unload: get the queued batches out now, oldest first.
     sender?.flushAll()
     return
@@ -169,7 +129,19 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
             clearTimeout(restartTimeoutID)
           }
         }
+        // Highest timestamp seen, not the last one: mirrors the Go dispatcher,
+        // which fed detectors max(seen) so a backwards jump can't rewind them.
+        if (message[0] === MType.Timestamp && message[1] > detectorsTimestamp) {
+          detectorsTimestamp = message[1]
+        }
+        // Feed the just-written message (with its assigned stream index) to the
+        // heuristic detectors. Index advances only when the message is actually
+        // written, so control signals that don't push are skipped.
+        const messageIndex = w.currentIndex
         w.writeMessage(message)
+        if (detectors && w.currentIndex > messageIndex) {
+          detectors.handle(message, messageIndex, detectorsTimestamp)
+        }
       })
     } else {
       postMessage('not_init')
@@ -212,6 +184,10 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
         postMessage({ type: 'local_save', name, batch }, [batch.buffer])
       },
     )
+    // Tracker-side heuristics. Emitted IssueEvents are written back to the batch
+    // so they get a real stream index and are routed via the analytics pipeline.
+    detectors = new Detectors((msg) => writer?.writeMessage(msg), data.localDebug ?? false)
+    detectorsTimestamp = 0
     if (sendIntervalID === null) {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)
     }
