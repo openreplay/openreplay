@@ -60,19 +60,27 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
   }
 
   // borrow the searchStore while open: snapshot -> load this segment's query
-  // -> hand it back on close. Filters round-trip as FilterItem at runtime
-  // (Search types them loosely), so cast at the boundary.
+  // -> hand it back once the drawer finished sliding out (restoring mid-
+  // animation swaps the Sessions filters into the still-visible drawer).
+  // Filters round-trip as FilterItem at runtime (Search types them loosely),
+  // so cast at the boundary.
+  const restoreFilters = () => {
+    if (snapshot.current) {
+      searchStore.edit({ filters: snapshot.current as any });
+      snapshot.current = null;
+    }
+  };
+
   React.useEffect(() => {
     if (open) {
       snapshot.current = searchStore.instance.filters;
       searchStore.edit({
         filters: (segment ? [...segment.filters] : []) as any,
       });
-    } else if (snapshot.current) {
-      searchStore.edit({ filters: snapshot.current as any });
-      snapshot.current = null;
     }
   }, [open, segment]);
+
+  React.useEffect(() => restoreFilters, []);
 
   const filters = searchStore.instance.filters;
   const narrowed = filters.length > 0;
@@ -102,6 +110,10 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
     <Drawer
       open={open}
       onClose={onClose}
+      afterOpenChange={(opened) => {
+        if (!opened) restoreFilters();
+      }}
+      destroyOnHidden
       placement="right"
       title={
         readOnly
@@ -244,7 +256,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
           </div>
         </div>
 
-        {showAgent && (
+        {showAgent && captureNow && (
           <Alert
             type="info"
             showIcon
@@ -291,7 +303,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
                 onClick={() => setShowInstructions(true)}
                 className="self-start px-0!"
               >
-                {t('Add instructions')}
+                <span className="text-black!">{t('Add instructions')}</span>
               </Button>
             )
           ))}
