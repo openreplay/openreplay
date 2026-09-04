@@ -19,6 +19,7 @@ type FiltersCatalog interface {
 	GetAllFilters(ctx context.Context, projectID uint32, userID uint64, platform string) (*model.AllFiltersResponse, error)
 	SearchEventsAutocomplete(ctx context.Context, projectID uint32, q string) ([]model.AutocompleteRow, error)
 	SearchPropertiesAutocomplete(ctx context.Context, projectID uint32, propertyName, eventName, userID, source, q string, autoCaptured bool) ([]model.AutocompleteRow, error)
+	SearchEventProperties(ctx context.Context, projectID uint32, eventName string, autoCaptured bool) ([]map[string]any, error)
 }
 
 type filtersCatalogImpl struct {
