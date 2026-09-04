@@ -1,7 +1,9 @@
 import { TFunction } from 'i18next';
-import { IconNames } from '../components/ui/SVG';
 import React from 'react';
+
 import { agentsEnabled, menuHidden } from 'App/utils/split-utils';
+
+import { IconNames } from '../components/ui/SVG';
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -159,15 +161,15 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         hidden: menuHidden.dataAnalytics,
         key: MENU.DATA_MANAGEMENT,
         icon: 'memory',
-        tag: {
-          label: t('New'),
-          color: '#394DFE',
-        },
         children: [
           { label: 'People', key: MENU.USERS },
           { label: 'Events', key: MENU.EVENTS, hidden: menuHidden.lexicon },
           { label: 'Properties', key: MENU.PROPS, hidden: menuHidden.lexicon },
-          { label: 'Segments', key: MENU.SEGMENTS, hidden: menuHidden.segments },
+          {
+            label: 'Segments',
+            key: MENU.SEGMENTS,
+            hidden: menuHidden.segments,
+          },
           { label: 'Features', key: MENU.TAGS },
         ],
       },
