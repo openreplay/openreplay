@@ -110,7 +110,7 @@ postgresql:
   image:
     registry: ghcr.io
     repository: openreplay/postgres
-    tag: 17
+    tag: 18
   enabled: true
   resources:
     limits:
@@ -229,7 +229,7 @@ kafka:
 # Enterprise dbs
 clickhouse:
   image:
-    tag: "26.2-alpine"
+    tag: "26.8-alpine"
   enabled: false
 
 # For enterpriseEdition Only
