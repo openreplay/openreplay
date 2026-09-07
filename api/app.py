@@ -17,7 +17,7 @@ from chalicelib.utils import pg_client, ch_client
 from chalicelib.utils.log import sanitize
 from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic
-from routers.subs import health, spot, product_analytics
+from routers.subs import health, spot, product_analytics, mcp
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
@@ -155,3 +155,6 @@ app.include_router(spot.app_apikey)
 app.include_router(product_analytics.public_app, prefix="/pa")
 app.include_router(product_analytics.app, prefix="/pa")
 app.include_router(product_analytics.app_apikey, prefix="/pa")
+
+app.include_router(mcp.app)
+app.include_router(mcp.public_app)

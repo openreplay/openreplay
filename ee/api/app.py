@@ -27,6 +27,7 @@ from routers.subs import (
     health,
     spot,
     product_analytics,
+    mcp
 )
 
 if config("ENABLE_SSO", cast=bool, default=True):
@@ -192,6 +193,9 @@ app.include_router(spot.app_apikey)
 app.include_router(product_analytics.public_app, prefix="/pa")
 app.include_router(product_analytics.app, prefix="/pa")
 app.include_router(product_analytics.app_apikey, prefix="/pa")
+
+app.include_router(mcp.app)
+app.include_router(mcp.public_app)
 
 if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(saml.public_app)

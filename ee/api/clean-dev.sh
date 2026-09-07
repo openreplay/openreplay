@@ -28,10 +28,11 @@ rm -rf ./chalicelib/core/integrations_manager.py
 rm -rf ./chalicelib/core/issues
 rm -rf ./chalicelib/core/jobs.py
 rm -rf ./chalicelib/core/log_tools
+rm -rf ./chalicelib/core/mcp
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/saved_search.py
-rm -rf ./chalicelib/core/sessions/*.py
+find ./chalicelib/core/sessions -maxdepth 1 -name "*.py" ! -name "sessions_pg.py" -delete
 rm -rf ./chalicelib/core/sessions/sessions_viewed
 rm -rf ./chalicelib/core/sessions/sessions_favorite/sessions_favorite.py
 rm -rf ./chalicelib/core/sessions/sessions_devtool/sessions_devtool.py
