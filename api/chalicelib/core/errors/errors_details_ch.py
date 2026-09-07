@@ -5,6 +5,7 @@ from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import get_step_size
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -67,12 +68,13 @@ def __process_tags_map(row):
 
 def get_details(project_id, error_id, user_id, **data):
     MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(0)
-    MAIN_ERR_SESS_TABLE = exp_ch_helper.get_main_js_errors_sessions_table(0)
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
 
-    ch_basic_query = errors_helper.__get_basic_constraints_ch(time_constraint=False, table_name="errors")
-    ch_basic_query.append("error_id = %(error_id)s")
-    ch_basic_query.append("sessions.project_id = %(project_id)s")
+    ch_basic_query_errors = errors_helper.__get_basic_constraints_ch(time_constraint=False, table_name="errors",
+                                                                     type_condition=False)
+    ch_basic_query_sessions = ch_basic_query_errors[:]
+    ch_basic_query_errors.append("errors.`$event_name`='ERROR'")
+    ch_basic_query_errors.append("error_id = %(error_id)s")
 
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)
@@ -81,9 +83,9 @@ def get_details(project_id, error_id, user_id, **data):
         data["endDate30"] = TimeUTC.now()
 
         density24 = int(data.get("density24", 24))
-        step_size24 = get_step_size(data["startDate24"], data["endDate24"], density24)
+        step_size24 = get_step_size(data["startDate24"], data["endDate24"], density24) * 1000
         density30 = int(data.get("density30", 30))
-        step_size30 = get_step_size(data["startDate30"], data["endDate30"], density30)
+        step_size30 = get_step_size(data["startDate30"], data["endDate30"], density30) * 1000
         params = {
             "startDate24": data['startDate24'],
             "endDate24": data['endDate24'],
@@ -95,23 +97,35 @@ def get_details(project_id, error_id, user_id, **data):
             "step_size30": step_size30,
             "error_id": error_id}
 
+        tmp_id = uuid4().hex
+        tmp_table1 = f"pre_processed_error_{tmp_id}_{TimeUTC.now()}"
+        tmp_table2 = f"pre_processed_{tmp_id}_{TimeUTC.now()}"
+        tmp_query1 = f"""CREATE TEMPORARY TABLE {tmp_table1} AS
+                            SELECT error_id,
+                                  toString(`$properties`.name)             AS name,
+                                  toString(`$properties`.message)          AS message,
+                                  session_id,
+                                  created_at                               AS datetime
+                           FROM {MAIN_EVENTS_TABLE} AS errors
+                           WHERE {" AND ".join(ch_basic_query_errors)};"""
+        tmp_query2 = f"""CREATE TEMPORARY TABLE {tmp_table2} AS
+                            SELECT error_id,
+                                   name,
+                                   message,
+                                  session_id,
+                                  errors.datetime AS datetime,
+                                  user_id,
+                                  user_browser,
+                                  user_browser_version,
+                                  user_os,
+                                  user_os_version,
+                                  user_device_type,
+                                  user_device,
+                                  user_country
+                           FROM {MAIN_SESSIONS_TABLE} AS sessions INNER JOIN {tmp_table1} AS errors USING(session_id)
+                           WHERE {" AND ".join(ch_basic_query_sessions)}
+                                AND sessions.session_id IN (SELECT session_id FROM {tmp_table1});"""
         main_ch_query = f"""\
-        WITH pre_processed AS (SELECT error_id,
-                                      toString(`$properties`.name)             AS name,
-                                      toString(`$properties`.message)          AS message,
-                                      session_id,
-                                      created_at                               AS datetime,
-                                      user_id,
-                                      user_browser,
-                                      user_browser_version,
-                                      user_os,
-                                      user_os_version,
-                                      user_device_type,
-                                      user_device,
-                                      user_country
-                               FROM {MAIN_ERR_SESS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING(session_id)
-                               WHERE {" AND ".join(ch_basic_query)}
-                               )
         SELECT %(error_id)s AS error_id, name, message,users,
                 first_occurrence,last_occurrence,last_session_id,
                 sessions,browsers_partition,os_partition,device_partition,
@@ -119,19 +133,19 @@ def get_details(project_id, error_id, user_id, **data):
         FROM (SELECT error_id,
                      name,
                      message
-              FROM pre_processed
+              FROM {tmp_table2}
               LIMIT 1) AS details
                   INNER JOIN (SELECT COUNT(DISTINCT user_id)    AS users,
                                      COUNT(DISTINCT session_id) AS sessions
-                              FROM pre_processed
+                              FROM {tmp_table2}
                               WHERE datetime >= toDateTime(%(startDate30)s / 1000)
                                 AND datetime <= toDateTime(%(endDate30)s / 1000)
                               ) AS last_month_stats ON TRUE
                   INNER JOIN (SELECT toUnixTimestamp(max(datetime)) * 1000 AS last_occurrence,
                                      toUnixTimestamp(min(datetime)) * 1000 AS first_occurrence
-                              FROM pre_processed) AS time_details ON TRUE
+                              FROM {tmp_table2}) AS time_details ON TRUE
                   INNER JOIN (SELECT session_id AS last_session_id
-                              FROM pre_processed
+                              FROM {tmp_table2}
                               ORDER BY datetime DESC
                               LIMIT 1) AS last_session_details ON TRUE
                   INNER JOIN (SELECT groupArray(details) AS browsers_partition
@@ -141,7 +155,7 @@ def get_details(project_id, error_id, user_id, **data):
                                            map('browser', browser,
                                                'browser_version', browser_version,
                                                'count', toString(count)) AS details
-                                    FROM pre_processed
+                                    FROM {tmp_table2}
                                     GROUP BY ROLLUP(browser, browser_version)
                                     ORDER BY browser nulls first, browser_version nulls first, count DESC) AS mapped_browser_details
                  ) AS browser_details ON TRUE
@@ -152,7 +166,7 @@ def get_details(project_id, error_id, user_id, **data):
                                           map('os', os,
                                               'os_version', os_version,
                                               'count', toString(count)) AS details
-                                   FROM pre_processed
+                                   FROM {tmp_table2}
                                    GROUP BY ROLLUP(os, os_version)
                                    ORDER BY os nulls first, os_version nulls first, count DESC) AS mapped_os_details
                     ) AS os_details ON TRUE
@@ -162,7 +176,7 @@ def get_details(project_id, error_id, user_id, **data):
                                           map('device_type', toString(user_device_type),
                                               'device', user_device,
                                               'count', toString(count)) AS details
-                                   FROM pre_processed
+                                   FROM {tmp_table2}
                                    GROUP BY ROLLUP(user_device_type, user_device)
                                    ORDER BY user_device_type nulls first, user_device nulls first, count DESC
                                       ) AS count_per_device_details
@@ -171,7 +185,7 @@ def get_details(project_id, error_id, user_id, **data):
                              FROM (SELECT COUNT(1)  AS count,
                                           map('country', toString(user_country),
                                               'count', toString(count)) AS details
-                                   FROM pre_processed
+                                   FROM {tmp_table2}
                                    GROUP BY user_country
                                    ORDER BY count DESC) AS count_per_country_details
                             ) AS mapped_country_details ON TRUE
@@ -179,12 +193,9 @@ def get_details(project_id, error_id, user_id, **data):
                              FROM (SELECT gs.generate_series         AS timestamp,
                                           COUNT(DISTINCT session_id) AS count
                                    FROM generate_series(%(startDate24)s, %(endDate24)s, %(step_size24)s) AS gs
-                                        LEFT JOIN {MAIN_EVENTS_TABLE} AS errors ON(TRUE)
-                                   WHERE project_id = toUInt16(%(project_id)s)
-                                         AND `$event_name` = 'ERROR'
-                                         AND events.created_at >= toDateTime(timestamp / 1000)
-                                         AND events.created_at < toDateTime((timestamp + %(step_size24)s) / 1000)
-                                         AND error_id = %(error_id)s
+                                        LEFT JOIN {tmp_table2} ON(TRUE)
+                                   WHERE datetime >= toDateTime(timestamp / 1000)
+                                         AND datetime < toDateTime((timestamp + %(step_size24)s) / 1000)
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details
                             ) AS chart_details24 ON TRUE
@@ -192,20 +203,20 @@ def get_details(project_id, error_id, user_id, **data):
                              FROM (SELECT gs.generate_series         AS timestamp,
                                           COUNT(DISTINCT session_id) AS count
                                    FROM generate_series(%(startDate30)s, %(endDate30)s, %(step_size30)s) AS gs
-                                        LEFT JOIN {MAIN_EVENTS_TABLE} AS errors ON(TRUE)
-                                   WHERE project_id = toUInt16(%(project_id)s)
-                                         AND `$event_name` = 'ERROR'
-                                         AND events.created_at >= toDateTime(timestamp / 1000)
-                                         AND events.created_at < toDateTime((timestamp + %(step_size30)s) / 1000)
-                                         AND error_id = %(error_id)s
+                                        LEFT JOIN {tmp_table2} ON(TRUE)
+                                   WHERE datetime >= toDateTime(timestamp / 1000)
+                                         AND datetime < toDateTime((timestamp + %(step_size30)s) / 1000)
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details
                             ) AS chart_details30 ON TRUE;"""
 
-        logger.debug("--------------------")
-        logging.debug(ch.format(query=main_ch_query, parameters=params))
-        logger.debug("--------------------")
-        row = ch.execute(query=main_ch_query, parameters=params)
+        ch.execute(query=tmp_query1, parameters=params)
+        try:
+            ch.execute(query=tmp_query2, parameters=params)
+            row = ch.execute(query=main_ch_query, parameters=params)
+        finally:
+            ch.execute(query=f"DROP TEMPORARY TABLE IF EXISTS {tmp_table2};")
+            ch.execute(query=f"DROP TEMPORARY TABLE IF EXISTS {tmp_table1};")
         if len(row) == 0:
             return {"errors": ["error not found"]}
         row = row[0]
