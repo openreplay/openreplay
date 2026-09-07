@@ -1,20 +1,93 @@
-import { makeAutoObservable, runInAction, reaction } from 'mobx';
-import { dashboardService, metricService } from 'App/services';
-import { toast } from 'react-toastify';
-import Period, { LAST_24_HOURS } from 'Types/app/period';
-import { getRE } from 'App/utils';
-import Filter from './types/filter';
-import Widget from './types/widget';
-import Dashboard from './types/dashboard';
 import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
 import { HEATMAP } from '@/constants/card';
-import { sessionStore } from 'App/mstore';
 import { CUSTOM_RANGE } from '@/dateRange';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
+import { makeAutoObservable, reaction, runInAction } from 'mobx';
+import { toast } from 'react-toastify';
+
+import { sessionStore } from 'App/mstore';
+import { alertsService, dashboardService, metricService } from 'App/services';
+import { getRE } from 'App/utils';
+import type {
+  TemplateAlert,
+  TemplateCard,
+} from 'Components/Dashboard/components/DashboardTemplates/templates';
+
+import Dashboard from './types/dashboard';
+import Filter from './types/filter';
+import Widget from './types/widget';
 
 interface DashboardFilter {
   query?: string;
   showMine?: boolean;
 }
+export interface TemplateProvisioning {
+  name: string;
+  description: string;
+  cards: TemplateCard[];
+  alerts: TemplateAlert[];
+  /** Existing cards to attach instead of creating: template card key → metricId. */
+  reuse?: Record<string, number>;
+  /** Recipient of the template alerts; alerts are created silent when empty. */
+  notifyEmail?: string;
+}
+
+export interface TemplateProvisioningResult {
+  dashboardId: string;
+  created: number;
+  reused: number;
+  alertsCreated: number;
+  alertsSkipped: number;
+}
+
+function templateCardPayload(card: TemplateCard) {
+  return {
+    name: card.name,
+    metricType: card.metricType,
+    metricOf: card.metricOf,
+    metricFormat: card.metricFormat || 'sessionCount',
+    viewType: card.viewType,
+    metricValue: card.metricValue || [],
+    isPublic: true,
+    series: [
+      {
+        name: 'Series 1',
+        filter: {
+          eventsOrder: card.eventsOrder || 'then',
+          filters: card.filters || [],
+        },
+      },
+    ],
+    breakdowns: card.breakdowns || [],
+    startPoint: card.startPoint || [],
+    excludes: [],
+    rows: card.rows,
+    stepsBefore: card.stepsBefore,
+    stepsAfter: card.stepsAfter,
+  };
+}
+
+function templateAlertPayload(
+  alert: TemplateAlert,
+  left: number | string,
+  notifyEmail?: string,
+) {
+  return {
+    name: alert.name,
+    description: alert.description,
+    detectionMethod: alert.detectionMethod,
+    detection_method: alert.detectionMethod,
+    change: alert.change || 'change',
+    query: { left, operator: alert.operator, right: alert.right },
+    options: {
+      currentPeriod: alert.currentPeriod,
+      previousPeriod: alert.previousPeriod,
+      renotifyInterval: 720,
+      message: notifyEmail ? [{ type: 'email', value: notifyEmail }] : [],
+    },
+  };
+}
+
 export default class DashboardStore {
   siteId: any = null;
   dashboards: Dashboard[] = [];
@@ -450,6 +523,116 @@ export default class DashboardStore {
     } finally {
       this.isDeleting = false;
     }
+  }
+
+  /**
+   * Create a dashboard from a template: creates the missing cards (or reuses
+   * the existing ones passed in `reuse`), creates the dashboard, attaches the
+   * cards and optionally creates the alerts. Alerts whose name already exists
+   * in the project are skipped, so running a template twice never duplicates
+   * them. Cards are created one by one so the widget order matches the
+   * template order.
+   */
+  async createFromTemplate(
+    options: TemplateProvisioning,
+    onProgress?: (done: number, total: number, label: string) => void,
+  ): Promise<TemplateProvisioningResult> {
+    const { name, description, cards, alerts, notifyEmail } = options;
+    const reuse = options.reuse || {};
+    const total = cards.length + alerts.length + 1;
+    let done = 0;
+    const report = (label: string) => onProgress?.(done, total, label);
+    const result: TemplateProvisioningResult = {
+      dashboardId: '',
+      created: 0,
+      reused: 0,
+      alertsCreated: 0,
+      alertsSkipped: 0,
+    };
+
+    const metricIds: number[] = [];
+    const seriesByCard: Record<string, number> = {};
+    const metricByCard: Record<string, number> = {};
+    for (const card of cards) {
+      report(card.name);
+      if (reuse[card.key]) {
+        metricIds.push(reuse[card.key]);
+        metricByCard[card.key] = reuse[card.key];
+        result.reused += 1;
+      } else {
+        const created = await metricService.createCard(
+          templateCardPayload(card),
+        );
+        metricIds.push(created.metricId);
+        metricByCard[card.key] = created.metricId;
+        const seriesId = created.series?.[0]?.seriesId;
+        if (seriesId) seriesByCard[card.key] = seriesId;
+        result.created += 1;
+      }
+      done += 1;
+    }
+
+    report(name);
+    this.initDashboard();
+    this.dashboardInstance.update({ name, description, isPublic: true });
+    const dashboard = await this.save(this.dashboardInstance);
+    const saved = this.getDashboard(dashboard.dashboardId)!;
+    // call the service directly: addWidgetToDashboard swallows errors, and a
+    // dashboard without its cards must not be reported as a success
+    await dashboardService.addWidget(saved, metricIds);
+    result.dashboardId = dashboard.dashboardId;
+    done += 1;
+
+    if (alerts.length > 0) {
+      const existingNames = new Set(
+        (await alertsService.fetchList()).map((a) => a.name),
+      );
+      // series ids of reused cards are not known yet: read them from the
+      // cards, in parallel; a failed lookup only skips that card's alert
+      const toResolve = [
+        ...new Set(
+          alerts
+            .filter(
+              (a) => a.card && !seriesByCard[a.card] && metricByCard[a.card],
+            )
+            .map((a) => a.card!),
+        ),
+      ];
+      await Promise.all(
+        toResolve.map(async (cardKey) => {
+          try {
+            const card = await metricService.getMetric(
+              String(metricByCard[cardKey]),
+            );
+            const seriesId = card?.series?.[0]?.seriesId;
+            if (seriesId) seriesByCard[cardKey] = seriesId;
+          } catch (e) {
+            console.error(e);
+          }
+        }),
+      );
+      for (const alert of alerts) {
+        report(alert.name);
+        const left = alert.card ? seriesByCard[alert.card] : alert.column;
+        if (existingNames.has(alert.name) || !left) {
+          result.alertsSkipped += 1;
+        } else {
+          try {
+            await alertsService.create(
+              templateAlertPayload(alert, left, notifyEmail),
+            );
+            result.alertsCreated += 1;
+          } catch (e) {
+            console.error(e);
+            toast.error(`Alert "${alert.name}" could not be created.`);
+          }
+        }
+        done += 1;
+      }
+    }
+
+    void this.fetch(dashboard.dashboardId);
+    return result;
   }
 
   async addWidgetToDashboard(

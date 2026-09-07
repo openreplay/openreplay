@@ -1,10 +1,13 @@
-import React from 'react';
+import { mobileScreen } from '@/utils/isMobile';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Dropdown } from 'antd';
+import { LayoutTemplate as LayoutTemplateIcon } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
-import { useTranslation } from 'react-i18next';
-import { mobileScreen } from '@/utils/isMobile';
+import DashboardTemplatesModal from 'Components/Dashboard/components/DashboardTemplates';
 
 interface Props {
   disabled?: boolean;
@@ -13,6 +16,7 @@ interface Props {
 function CreateDashboardButton({ disabled }: Props) {
   const { t } = useTranslation();
   const [dashboardCreating, setDashboardCreating] = React.useState(false);
+  const [templatesOpen, setTemplatesOpen] = React.useState(false);
   const { projectsStore, dashboardStore } = useStore();
   const { siteId } = projectsStore;
   const history = useHistory();
@@ -30,17 +34,34 @@ function CreateDashboardButton({ disabled }: Props) {
         setDashboardCreating(false);
       });
   };
+
   return (
-    <Button
-      loading={dashboardCreating}
-      icon={<PlusOutlined />}
-      disabled={disabled}
-      type="primary"
-      onClick={createNewDashboard}
-      size="small"
-    >
-      {mobileScreen ? undefined : t('Create Dashboard')}
-    </Button>
+    <>
+      <Dropdown.Button
+        type="primary"
+        size="small"
+        disabled={disabled}
+        loading={dashboardCreating}
+        onClick={createNewDashboard}
+        menu={{
+          items: [
+            {
+              key: 'template',
+              icon: <LayoutTemplateIcon size={14} />,
+              label: t('From template…'),
+              onClick: () => setTemplatesOpen(true),
+            },
+          ],
+        }}
+      >
+        <PlusOutlined />
+        {mobileScreen ? undefined : t('Create Dashboard')}
+      </Dropdown.Button>
+      <DashboardTemplatesModal
+        open={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+      />
+    </>
   );
 }
 
