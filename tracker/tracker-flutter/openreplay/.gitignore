@@ -16,3 +16,6 @@ example/ios/Flutter/Generated.xcconfig
 example/ios/Flutter/flutter_export_environment.sh
 example/ios/Podfile.lock
 example/.flutter-plugins-dependencies
+
+# Local example config (see example/.env.example)
+example/.env

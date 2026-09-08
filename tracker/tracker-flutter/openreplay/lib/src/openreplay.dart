@@ -160,6 +160,8 @@ class OpenReplay with WidgetsBindingObserver {
         'screen recording needs OpenReplay v1.26.0 or newer',
       );
     }
+    DebugUtils.log('session ${session.sessionId} fps=${session.fps} '
+        'quality=${session.quality} framesSupport=${session.framesSupport}');
     ORNetworkManager.shared.sessionId = session.sessionId;
     MessageCollector.shared.projectKey = projectKey;
     ScreenshotManager.shared

@@ -37,6 +37,18 @@ Add the navigator observer to record screen transitions:
 MaterialApp(navigatorObservers: [ORNavigatorObserver()], ...)
 ```
 
+## Running the example
+
+```sh
+cd example
+cp .env.example .env      # fill in OR_PROJECT_KEY
+flutter run --dart-define-from-file=.env
+```
+
+Keys are compile-time constants, so changing `.env` needs a full restart rather
+than a hot reload. Screen recording needs a backend of v1.26.0 or newer; older
+ones report no frames support and only events are recorded.
+
 ## Masking
 
 Wrap anything that must not appear in the replay. The region is blurred and

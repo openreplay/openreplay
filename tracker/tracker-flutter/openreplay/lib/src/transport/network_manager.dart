@@ -88,7 +88,10 @@ class ORNetworkManager implements ORTransport {
       DebugUtils.log('batch ${content.length} -> ${compressed.length} bytes');
       req.add(compressed);
       final res = await req.close();
-      await res.drain<void>();
+      final body = await res.transform(utf8.decoder).join();
+      if (res.statusCode < 200 || res.statusCode > 299) {
+        DebugUtils.error('ingest ${res.statusCode}: $body');
+      }
       if (res.statusCode == 401) {
         // Token expired; the tracker restarts the session on the next tick.
         _token = null;
@@ -164,8 +167,15 @@ class ORNetworkManager implements ORTransport {
             'multipart/form-data; boundary=$boundary');
       req.add(body.takeBytes());
       final res = await req.close();
-      await res.drain<void>();
-      return res.statusCode >= 200 && res.statusCode <= 299;
+      final responseText = await res.transform(utf8.decoder).join();
+      final ok = res.statusCode >= 200 && res.statusCode <= 299;
+      if (ok) {
+        DebugUtils.log('images $name uploaded (${res.statusCode})');
+      } else {
+        DebugUtils.error(
+            'images $name rejected ${res.statusCode}: $responseText');
+      }
+      return ok;
     } on Object catch (e) {
       DebugUtils.error('images threw: $e');
       return false;

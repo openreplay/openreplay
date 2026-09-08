@@ -30,6 +30,14 @@ class ScreenshotManager {
   static const _maxBufferedFrames = 500;
   static const _heartbeat = Duration(seconds: 10);
 
+  /// Upload cadence floor.
+  ///
+  /// The iOS SDK relies on the batch-size trigger alone, which is fine there
+  /// because it captures on a fixed timer. Capture here follows repaints, so an
+  /// idle screen would take minutes to reach a full batch - hence a time-based
+  /// flush as well.
+  static const _flushInterval = Duration(seconds: 5);
+
   /// Set by [OpenReplayWidget]; the boundary wrapping the host app.
   GlobalKey? boundaryKey;
 
@@ -42,6 +50,7 @@ class ScreenshotManager {
       ORCaptureSettings(const Duration(milliseconds: 333), 0.5);
 
   Timer? _heartbeatTimer;
+  Timer? _flushTimer;
   Timer? _bufferTimer;
   bool _running = false;
   bool _capturing = false;
@@ -67,6 +76,8 @@ class ScreenshotManager {
     _lastTs = startTs;
     _scheduleNextCapture();
     _heartbeatTimer = Timer.periodic(_heartbeat, (_) => unawaited(_capture()));
+    _flushTimer =
+        Timer.periodic(_flushInterval, (_) => unawaited(sendFrames()));
   }
 
   /// Backgrounding: stop capturing and get what is buffered out, but keep the
@@ -78,6 +89,8 @@ class ScreenshotManager {
     _running = false;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
+    _flushTimer?.cancel();
+    _flushTimer = null;
     _bufferTimer?.cancel();
     _bufferTimer = null;
     await sendFrames();
@@ -91,12 +104,16 @@ class ScreenshotManager {
     _running = true;
     _scheduleNextCapture();
     _heartbeatTimer = Timer.periodic(_heartbeat, (_) => unawaited(_capture()));
+    _flushTimer =
+        Timer.periodic(_flushInterval, (_) => unawaited(sendFrames()));
   }
 
   void stop() {
     _running = false;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
+    _flushTimer?.cancel();
+    _flushTimer = null;
     _bufferTimer?.cancel();
     _bufferTimer = null;
     _frames.clear();
@@ -110,8 +127,16 @@ class ScreenshotManager {
   void _scheduleNextCapture() {
     if (!_running) return;
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await _capture();
-      _scheduleNextCapture();
+      try {
+        await _capture();
+      } on Object catch (e) {
+        // Re-arming in `finally` matters: anything escaping _capture (an
+        // unmounted boundary, say) would otherwise stop capture silently for
+        // the rest of the session.
+        DebugUtils.error('capture tick failed: $e');
+      } finally {
+        _scheduleNextCapture();
+      }
     });
   }
 
@@ -122,7 +147,11 @@ class ScreenshotManager {
     if (now - _lastCaptureMs < _settings.captureRate.inMilliseconds) return;
 
     final boundary = boundaryKey?.currentContext?.findRenderObject();
-    if (boundary is! RenderRepaintBoundary) return;
+    if (boundary is! RenderRepaintBoundary) {
+      DebugUtils.log('no repaint boundary yet - is the app wrapped in '
+          'OpenReplayWidget?');
+      return;
+    }
     if (boundary.debugNeedsPaint) return;
 
     final size = boundary.size;
@@ -167,6 +196,8 @@ class ScreenshotManager {
           return;
         }
         _enqueue(bytes, DateTime.now().millisecondsSinceEpoch);
+        DebugUtils.log('frame ${image.width}x${image.height} '
+            '-> ${bytes.length} bytes, buffered ${_frames.length}');
       } finally {
         // ui.Image holds memory outside the Dart heap; the GC will not reclaim
         // it promptly. This is the standard Flutter screenshot leak.
@@ -268,7 +299,11 @@ class ScreenshotManager {
   /// - see backend/pkg/images/api/handlers.go.
   Future<void> sendFrames() async {
     final sessionId = ORNetworkManager.shared.sessionId;
-    if (sessionId == null || _frames.isEmpty) return;
+    if (sessionId == null) {
+      DebugUtils.log('no session id yet, holding ${_frames.length} frames');
+      return;
+    }
+    if (_frames.isEmpty) return;
 
     final batch = List.of(_frames);
     _frames.clear();
@@ -285,6 +320,8 @@ class ScreenshotManager {
 
     try {
       final archive = Uint8List.fromList(gzip.encode(w.takeBytes()));
+      DebugUtils.log('packed ${batch.length} frames -> ${archive.length} '
+          'bytes as $name');
       await MessageCollector.shared.sendImagesBatch(archive, name);
     } on Object catch (e) {
       DebugUtils.error('could not pack frames: $e');

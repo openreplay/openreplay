@@ -3,7 +3,7 @@ description: OpenReplay session replay for Flutter - screen recording, touch and
 # This version string is sent to the ingest as `trackerVersion`, which rejects
 # anything below 1.0.9 (backend/pkg/sessions/api/mobile/handlers.go).
 version: 1.0.9
-homepage: https://github.com/openreplay/openreplay/tree/dev/tracker/tracker-flutter
+homepage: https://github.com/openreplay/openreplay/tree/dev/tracker/tracker-flutter/openreplay
 repository: https://github.com/openreplay/openreplay
 issue_tracker: https://github.com/openreplay/openreplay/issues
 

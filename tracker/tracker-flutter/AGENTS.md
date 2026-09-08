@@ -8,27 +8,37 @@ When something is ambiguous, match the Swift.
 
 ## Layout
 
+`openreplay/` is the published pub package; everything outside it is
+repo-side tooling and docs.
+
 ```
-lib/openreplay.dart          public exports
-lib/src/openreplay.dart      OpenReplay singleton, lifecycle
-lib/src/proto/               varint writer + generated messages
-lib/src/transport/           session start, ingest, frames, collector
-lib/src/capture/             frame capture, masking
-lib/src/listeners/           touches, nav, logs, crashes, perf, network
-ios/openreplay/Sources/      Swift: JPEG encode, metrics, Keychain
-android/src/main/kotlin/     Kotlin: same, Keystore-backed storage
+AGENTS.md                             this file (not published)
+openreplay/                           the pub package - name must match this dir
+  lib/openreplay.dart                 public exports
+  lib/src/openreplay.dart             OpenReplay singleton, lifecycle
+  lib/src/proto/                      varint writer + generated messages
+  lib/src/transport/                  session start, ingest, frames, collector
+  lib/src/capture/                    frame capture, masking
+  lib/src/listeners/                  touches, nav, logs, crashes, perf, network
+  ios/openreplay/Sources/             Swift: JPEG encode, metrics, Keychain
+  ios/openreplay/Package.swift        SPM manifest (needs FlutterFramework dep)
+  android/src/main/kotlin/            Kotlin: same, Keystore-backed storage
+  example/                            runnable demo
 ```
+
+README/CHANGELOG/LICENSE stay inside `openreplay/`: pub.dev scores the
+published package on their presence.
 
 ## Things that silently break if changed
 
-- **`lib/src/proto/messages.gen.dart` is generated.** Edit
-  `mobs/templates/tracker~tracker-flutter~lib~src~proto~messages.gen.dart.erb`
+- **`openreplay/lib/src/proto/messages.gen.dart` is generated.** Edit
+  `mobs/templates/tracker~tracker-flutter~openreplay~lib~src~proto~messages.gen.dart.erb`
   and run `cd mobs && ruby run.rb`, then `gofmt -w ../backend/pkg/messages`
   (`run.rb` regenerates every target and emits unformatted Go — that is what
   `generate.sh` does). Schema lives in `mobs/mobile_messages.rb`.
 - **Tracker version must stay ≥ 1.0.9.** `checkMobileTrackerVersion` in
   `backend/pkg/sessions/api/mobile/handlers.go` rejects lower with 426. It is
-  `kTrackerVersion` in `lib/src/openreplay.dart`, kept equal to the pubspec
+  `kTrackerVersion` in `openreplay/lib/src/openreplay.dart`, kept equal to the pubspec
   version.
 - **`platform` must be `ios` or `android`.** Anything else fails the backend's
   `IsMobile()` gate and the player's platform switch.
@@ -85,9 +95,12 @@ cd example && flutter build ios --no-codesign --debug
 - `wifiOnly` option exists but nothing enforces it.
 - `ConditionsManager` not ported: `coldStart`/`triggerRecording` work, but
   server-side condition evaluation does not.
-- No Swift Package Manager support: SPM derives package identity from the
-  directory name, which is `tracker-flutter`, not `openreplay`. Blocks SPM
-  until the directory is renamed. CocoaPods only for now.
+- The package directory must stay named `openreplay`, matching the pub name.
+  Flutter symlinks the plugin for Swift Package Manager under its *root
+  directory* name and SPM takes package identity from that symlink, so a
+  mismatch fails resolution with "identity ... doesn't match override's
+  identity". This is why the package is nested rather than sitting directly in
+  `tracker-flutter/`.
 - Android reports no `mainThreadCPU` — no per-thread equivalent exists and
   `/proc` self-reads were restricted in API 26+.
 - Frame dedupe is exact-hash only; a blinking text cursor still produces
