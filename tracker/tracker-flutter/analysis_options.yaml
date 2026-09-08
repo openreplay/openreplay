@@ -1,0 +1,15 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - example/**
+    - build/**
+    - android/**
+    - ios/**
+  errors:
+    todo: ignore
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    public_member_api_docs: false

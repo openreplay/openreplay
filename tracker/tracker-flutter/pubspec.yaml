@@ -1,0 +1,30 @@
+name: openreplay
+description: OpenReplay session replay for Flutter - screen recording, touch and navigation events, logs, crashes and network capture.
+# This version string is sent to the ingest as `trackerVersion`, which rejects
+# anything below 1.0.9 (backend/pkg/sessions/api/mobile/handlers.go).
+version: 1.0.9
+homepage: https://github.com/openreplay/openreplay/tree/dev/tracker/tracker-flutter
+repository: https://github.com/openreplay/openreplay
+issue_tracker: https://github.com/openreplay/openreplay/issues
+
+environment:
+  sdk: ^3.0.0
+  flutter: ">=3.41.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.openreplay.flutter
+        pluginClass: OpenreplayPlugin
+      ios:
+        pluginClass: OpenreplayPlugin

@@ -1,0 +1,18 @@
+.dart_tool/
+.packages
+build/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+ios/.symlinks/
+ios/Pods/
+android/.gradle/
+android/local.properties
+
+# Example app build output
+example/build/
+example/.dart_tool/
+example/ios/Flutter/Generated.xcconfig
+example/ios/Flutter/flutter_export_environment.sh
+example/ios/Podfile.lock
+example/.flutter-plugins-dependencies
