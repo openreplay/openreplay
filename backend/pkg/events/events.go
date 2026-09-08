@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/logger"
@@ -335,16 +336,16 @@ func (e *eventsImpl) GetErrorsBySessionID(projectID uint32, sessID uint64) []err
 }
 
 type customEvent struct {
-	Name                   string    `ch:"name" json:"name"`
-	Type                   string    `ch:"type" json:"type"`
-	AutoCapturedProperties string    `ch:"auto_props" json:"autoCapturedProperties"`
-	Properties             string    `ch:"properties" json:"properties"`
-	CreatedAt              time.Time `ch:"created_at" json:"createdAt"`
+	Name                   string     `ch:"name" json:"name"`
+	Type                   string     `ch:"type" json:"type"`
+	AutoCapturedProperties chcol.JSON `ch:"auto_props" json:"autoCapturedProperties"`
+	Properties             chcol.JSON `ch:"properties" json:"properties"`
+	CreatedAt              time.Time  `ch:"created_at" json:"createdAt"`
 }
 
 func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64) []interface{} {
-	query := `SELECT toString("$properties") AS auto_props,
-				toString(properties) AS properties,
+	query := `SELECT "$properties" AS auto_props,
+				properties,
 				created_at,
 				'CUSTOM' AS type,
 				"$event_name" AS name
@@ -369,24 +370,10 @@ func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64) []in
 		event["createdAt"] = cEvent.CreatedAt
 		event["timestamp"] = cEvent.CreatedAt.UnixMilli()
 
-		if cEvent.AutoCapturedProperties != "" && cEvent.AutoCapturedProperties != "null" {
-			var autoProps map[string]interface{}
-			if err := json.Unmarshal([]byte(cEvent.AutoCapturedProperties), &autoProps); err == nil {
-				for key, value := range autoProps {
-					event[toCamelCase(key)] = value
-				}
-			}
+		for key, value := range cEvent.AutoCapturedProperties.NestedMap() {
+			event[toCamelCase(key)] = value
 		}
-
-		var props map[string]interface{}
-		if cEvent.Properties != "" && cEvent.Properties != "null" {
-			if err := json.Unmarshal([]byte(cEvent.Properties), &props); err != nil {
-				props = make(map[string]interface{})
-			}
-		} else {
-			props = make(map[string]interface{})
-		}
-		event["properties"] = props
+		event["properties"] = cEvent.Properties.NestedMap()
 
 		res = append(res, event)
 	}
