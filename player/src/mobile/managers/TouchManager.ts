@@ -12,6 +12,16 @@ export default class TouchManager extends ListWalker<
 
   private readonly removeTouchTrail: boolean = false;
 
+  /**
+   * Touch coordinates arrive in the device's own logical points, but the canvas
+   * is sized to the phone shell picked by `mapIphoneModel`. Those only agree
+   * when the device is in that lookup table, so anything newer than the newest
+   * entry needs its coordinates scaled or the cursor drifts from the content.
+   */
+  private scaleX = 1;
+
+  private scaleY = 1;
+
   constructor(private screen: Screen) {
     super();
     const canvas = document.createElement('canvas');
@@ -30,10 +40,16 @@ export default class TouchManager extends ListWalker<
   public updateDimensions({
     width,
     height,
+    sourceWidth,
+    sourceHeight,
   }: {
     width: number;
     height: number;
+    sourceWidth?: number;
+    sourceHeight?: number;
   }) {
+    this.scaleX = sourceWidth && sourceWidth > 0 ? width / sourceWidth : 1;
+    this.scaleY = sourceHeight && sourceHeight > 0 ? height / sourceHeight : 1;
     return this.touchTrail?.resizeCanvas(width, height);
   }
 
@@ -48,7 +64,10 @@ export default class TouchManager extends ListWalker<
         //   direction: lastTouch.direction
         // } as SwipeEvent)
       } else {
-        this.touchTrail?.addTouch(lastTouch.x, lastTouch.y);
+        this.touchTrail?.addTouch(
+          lastTouch.x * this.scaleX,
+          lastTouch.y * this.scaleY,
+        );
         // this.screen.cursor.move(lastTouch);
         // this.screen.cursor.mobileClick();
       }

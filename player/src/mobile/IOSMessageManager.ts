@@ -144,7 +144,12 @@ export default class IOSMessageManager implements IMessageManager {
     this.snapshotManager = new SnapshotManager();
   }
 
-  public updateDimensions(dimensions: { width: number; height: number }) {
+  public updateDimensions(dimensions: {
+    width: number;
+    height: number;
+    sourceWidth?: number;
+    sourceHeight?: number;
+  }) {
     this.touchManager.updateDimensions(dimensions);
   }
 

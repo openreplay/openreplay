@@ -184,10 +184,19 @@ public class OpenreplayPlugin: NSObject, FlutterPlugin {
 
     private func deviceInfo() -> [String: Any] {
         let bundle = Bundle.main
-        var systemInfo = utsname()
-        uname(&systemInfo)
-        let machine = withUnsafePointer(to: &systemInfo.machine) {
-            $0.withMemoryRebound(to: CChar.self, capacity: 1) { String(cString: $0) }
+
+        // On a simulator `uname` reports the host architecture ("arm64"), which
+        // maps to no iPhone at all - the simulator exposes what it is
+        // pretending to be in the environment instead.
+        let machine: String
+        if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+            machine = simulated
+        } else {
+            var systemInfo = utsname()
+            uname(&systemInfo)
+            machine = withUnsafePointer(to: &systemInfo.machine) {
+                $0.withMemoryRebound(to: CChar.self, capacity: 1) { String(cString: $0) }
+            }
         }
 
         return [
