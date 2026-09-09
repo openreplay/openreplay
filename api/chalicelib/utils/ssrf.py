@@ -72,6 +72,34 @@ def post_json(endpoint, json_data, headers=None, timeout=None):
                       allow_redirects=False)
 
 
+def get_integration_allowed_hosts():
+    """Hosts exempted from the public-IP requirement for user-configured
+    integrations (e.g. an Elasticsearch instance on a private network)."""
+    return {h.strip().lower() for h in config("INTEGRATION_ALLOWED_HOSTS", default="").split(",") if h.strip()}
+
+
+def is_public_host(host: str, port=None) -> bool:
+    """Returns True only when the bare hostname/IP resolves exclusively to
+    public IPs (blocks loopback, RFC1918, link-local incl. cloud metadata
+    endpoints, CGNAT, ULA, reserved and multicast ranges)."""
+    if not host:
+        return False
+    try:
+        infos = socket.getaddrinfo(host, port, proto=socket.IPPROTO_TCP)
+    except (socket.gaierror, UnicodeError):
+        return False
+    if len(infos) == 0:
+        return False
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if not ip.is_global or ip.is_multicast:
+            return False
+    return True
+
+
 ALLOWED_SCHEMES = ("http", "https")
 ALLOWED_PORTS = (80, 443)
 
@@ -101,17 +129,4 @@ def is_safe_external_url(url: str) -> bool:
     port = port or (443 if p.scheme == "https" else 80)
     if port not in ALLOWED_PORTS:
         return False
-    try:
-        infos = socket.getaddrinfo(p.hostname, port, proto=socket.IPPROTO_TCP)
-    except (socket.gaierror, UnicodeError):
-        return False
-    if len(infos) == 0:
-        return False
-    for info in infos:
-        try:
-            ip = ipaddress.ip_address(info[4][0])
-        except ValueError:
-            return False
-        if not ip.is_global or ip.is_multicast:
-            return False
-    return True
+    return is_public_host(p.hostname, port)

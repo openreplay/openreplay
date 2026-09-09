@@ -1,6 +1,8 @@
 import logging
 
 from chalicelib.core.log_tools import log_tools
+from chalicelib.utils import ssrf
+from chalicelib.utils.log import sanitize
 from elasticsearch import Elasticsearch
 from schemas import schemas
 
@@ -60,6 +62,15 @@ def add_edit(tenant_id, project_id, data: schemas.IntegrationElasticsearchSchema
 def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
     scheme = "http" if host.startswith("http") else "https"
     host = host.replace("http://", "").replace("https://", "")
+    # host/port are user-controlled; without this guard es.ping() is a blind-SSRF
+    # oracle against internal networks and cloud metadata endpoints
+    if not isinstance(port, int) or not 0 < port <= 65535:
+        logger.warning(f"blocked Elasticsearch integration with invalid port: {sanitize(str(port))}")
+        return None
+    if host.lower() not in ssrf.get_integration_allowed_hosts() \
+            and ("/" in host or "@" in host or not ssrf.is_public_host(host, port)):
+        logger.warning(f"blocked Elasticsearch integration with non-public host: {sanitize(host)}")
+        return None
     try:
         args = {
             "hosts": [{"host": host, "port": port, "scheme": scheme}],
