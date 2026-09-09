@@ -11,6 +11,7 @@ import {
   FUNNEL,
   HEATMAP,
   INSIGHTS,
+  MAX_DASHBOARD_SERIES,
   RETENTION,
   TABLE,
   TIMESERIES,
@@ -103,7 +104,7 @@ const FilterSection = observer(
     const isInsights = metric.metricType === INSIGHTS;
     const isPathAnalysis = metric.metricType === USER_PATH;
     const isWebVitals = metric.metricType === WEBVITALS;
-    const canAddSeries = metric.series.length < 3;
+    const canAddSeries = metric.series.length < MAX_DASHBOARD_SERIES;
 
     const isSingleSeries = checkIsSingleSeries(metric);
     const { t } = useTranslation();
@@ -198,7 +199,13 @@ const FilterSection = observer(
         {isSingleSeries ? null : (
           <div className="mx-auto flex items-center gap-2 w-fit">
             <Tooltip
-              title={canAddSeries ? '' : t('Maximum of 3 series reached.')}
+              title={
+                canAddSeries
+                  ? ''
+                  : t('Maximum of {{limit}} series reached.', {
+                      limit: MAX_DASHBOARD_SERIES,
+                    })
+              }
             >
               <Button
                 onClick={() => {

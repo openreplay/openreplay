@@ -650,7 +650,7 @@
   "Cannot save funnel metric without at least 2 events": "至少需要2个事件才能保存漏斗指标",
   "Create & Add to Dashboard": "创建并添加到仪表板",
   "Undo": "撤销",
-  "Maximum of 3 series reached.": "最多添加3个系列。",
+  "Maximum of {{limit}} series reached.": "最多添加{{limit}}个系列。",
   "Add Series": "添加系列",
   "Expand": "展开",
   "Collapse": "折叠",
