@@ -17,7 +17,7 @@ fastapi = "==0.141.1"
 python-decouple = "==3.8"
 apscheduler = "==3.11.3"
 redis = "==8.1.0"
-psycopg = {extras = ["pool", "binary"], version = "==3.3.5"}
+psycopg = {extras = ["binary", "pool"], version = "==3.3.5"}
 uvicorn = {extras = ["standard"], version = "==0.52.4"}
 pydantic = {extras = ["email"], version = "==2.13.5"}
 
