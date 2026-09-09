@@ -57,7 +57,7 @@ func NewQueryBuilder(logger logger.Logger, p *Payload, sessionConn chdb.SessionF
 		return &FunnelQueryBuilder{Logger: logger}, nil
 	case MetricTypeTable:
 		if p.MetricOf == "jsException" {
-			return &TableErrorsQueryBuilder{Logger: logger}, nil
+			return &TableErrorsQueryBuilder{Logger: logger, SessionConn: sessionConn}, nil
 		}
 		return &TableQueryBuilder{Logger: logger, SessionConn: sessionConn}, nil
 	case MetricTypeHeatmap:

@@ -7,12 +7,18 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"strings"
+	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/google/uuid"
+
+	chdb "openreplay/backend/pkg/db/clickhouse"
 )
 
 type TableErrorsQueryBuilder struct {
-	Logger logger.Logger
+	Logger      logger.Logger
+	SessionConn chdb.SessionFactory
 }
 
 type ErrorChartPoint struct {
@@ -37,17 +43,49 @@ type TableErrorsResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
 
-func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
-	query, err := t.buildQuery(p)
+func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, _ driver.Conn) (interface{}, error) {
+	queries, err := t.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(ctx, query)
+
+	// Q1 creates a CLICKHOUSE TEMPORARY TABLE that Q2 reads from. Temp-table
+	// lifetime is bound to a single TCP session, so we acquire a dedicated
+	// 1-conn handle here instead of using the shared pool.
+	if t.SessionConn == nil {
+		return nil, fmt.Errorf("errors table requires a clickhouse session factory")
+	}
+	conn, err := t.SessionConn()
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire pinned clickhouse connection: %w", err)
+	}
+	defer func() {
+		if cerr := conn.Close(); cerr != nil {
+			if t.Logger != nil {
+				t.Logger.Warn(ctx, "failed to close errors table clickhouse session: %s", cerr)
+			} else {
+				log.Printf("failed to close errors table clickhouse session: %s", cerr)
+			}
+		}
+	}()
+
+	chCtx := clickhouse.Context(context.Background(), clickhouse.WithQueryID(uuid.NewString()))
+
+	if err := conn.Exec(chCtx, queries[0]); err != nil {
+		if t.Logger != nil {
+			t.Logger.Error(ctx, "Error executing tmp table query: %v, query: %s", err, queries[0])
+		} else {
+			log.Printf("Error executing tmp table query: %s\nQuery: %s", err, queries[0])
+		}
+		return nil, err
+	}
+
+	rows, err := conn.Query(chCtx, queries[1])
 	if err != nil {
 		if t.Logger != nil {
-			t.Logger.Error(ctx, "Error executing query: %v, query: %s", err, query)
+			t.Logger.Error(ctx, "Error executing query: %v, query: %s", err, queries[1])
 		} else {
-			log.Printf("Error executing query: %s\nQuery: %s", err, query)
+			log.Printf("Error executing query: %s\nQuery: %s", err, queries[1])
 		}
 		return nil, err
 	}
@@ -79,7 +117,7 @@ func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, conn 
 	return resp, nil
 }
 
-func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
+func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	density := p.Density
 	if density < 2 {
 		density = 7
@@ -179,8 +217,9 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 	// If no specific ERROR event filter is provided, add the default ERROR event conditions
 	if !hasErrorEventFilter {
 		conds = append(conds, "`$event_name` = 'ERROR'")
-		conds = append(conds, fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'source') = '%s'", "js_exception"))
-		conds = append(conds, fmt.Sprintf("JSONExtractString(toString(e.`$properties`), 'message') != '%s'", "Script error."))
+		conds = append(conds, fmt.Sprintf("e.`$properties`.'source' = '%s'", "js_exception"))
+		// Enable this if the Kafka worker is still processing Script errors.
+		//conds = append(conds, fmt.Sprintf("e.`$properties`.'message' != '%s'", "Script error."))
 	}
 
 	// Apply ERROR event filters
@@ -221,37 +260,43 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fromClause = `product_analytics.events as e`
 	}
 
-	sql := fmt.Sprintf(`WITH
-    events AS (
-        SELECT
-            error_id,
-            COALESCE(JSONExtractString(toString("$properties"), 'name'), 'ERROR') AS name,
-            COALESCE(JSONExtractString(toString("$properties"), 'message'),
-                    JSONExtractString(toString("$properties"), 'error'), 'Unknown error') AS message,
-            distinct_id,
-            session_id,
-            project_id,
-            created_at
-        FROM %s
-        WHERE %s
-        AND created_at IS NOT NULL
-    ),
+	tableKey := fmt.Sprintf("%d", time.Now().UnixMilli())
+	eventsTable := fmt.Sprintf("errors_events_%s", tableKey)
+
+	createSQL := fmt.Sprintf(`
+CREATE TEMPORARY TABLE %s AS (
+    SELECT
+        error_id,
+        COALESCE("$properties".'name', 'ERROR') AS name,
+        COALESCE("$properties".'message',
+                "$properties".'error', 'Unknown error') AS message,
+        distinct_id,
+        session_id,
+        project_id,
+        created_at
+    FROM %s
+    WHERE %s
+    AND created_at IS NOT NULL
+);`,
+		eventsTable,
+		fromClause,
+		whereClause,
+	)
+
+	mainSQL := fmt.Sprintf(`
+WITH
     sessions_per_interval AS (
         SELECT
             error_id,
             toUInt64(%d + (toUInt64((toUnixTimestamp64Milli(created_at) - %d) / %d) * %d)) AS bucket_ts,
             countDistinct(session_id) AS session_count
-        FROM events
+        FROM %s
         GROUP BY error_id, bucket_ts
     ),
     buckets AS (
         SELECT
             toUInt64(generate_series) AS bucket_ts
-        FROM generate_series(
-            %d,
-            %d,
-            %d
-        )
+        FROM generate_series(%d,%d,%d)
     ),
     error_meta AS (
         SELECT
@@ -263,8 +308,9 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             countDistinct(e.session_id) AS sessions,
             min(e.created_at) AS first_occurrence,
             max(e.created_at) AS last_occurrence
-        FROM events e
-        LEFT JOIN experimental.sessions s ON e.session_id = s.session_id AND e.project_id = s.project_id
+        FROM %s e
+        	LEFT JOIN experimental.sessions s 
+				ON e.session_id = s.session_id AND e.project_id = s.project_id AND s.project_id = %d
         WHERE e.error_id IS NOT NULL AND e.error_id != ''
         GROUP BY e.error_id
     ),
@@ -273,7 +319,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) (string, error) {
             e.error_id AS error_id,
             groupArray(b.bucket_ts) AS timestamps,
             groupArray(coalesce(s.session_count, 0)) AS counts
-        FROM (SELECT DISTINCT error_id FROM events) AS e
+        FROM (SELECT DISTINCT error_id FROM %s) AS e
         CROSS JOIN buckets AS b
         LEFT JOIN sessions_per_interval AS s
             ON s.error_id = e.error_id
@@ -304,16 +350,18 @@ CROSS JOIN total_count AS tc
 WHERE m.sessions > 0
 ORDER BY %s %s
 LIMIT %d OFFSET %d;`,
-		fromClause,
-		whereClause,
 		startMs, startMs, stepMs, stepMs, // New formula parameters
+		eventsTable,
 		startMs, endMs, stepMs,
+		eventsTable,
+		p.ProjectId,
+		eventsTable,
 		orderColumn, orderDirection,
 		limit, offset,
 	)
 
-	logQuery(fmt.Sprintf("TableErrorsQueryBuilder.buildQuery: %s", sql))
-	return sql, nil
+	logQuery(fmt.Sprintf("TableErrorsQueryBuilder.buildQuery: %s\n%s", createSQL, mainSQL))
+	return []string{createSQL, mainSQL}, nil
 }
 
 func (t *TableErrorsQueryBuilder) getSortDetails(sortBy string) (column string, direction string) {
