@@ -1,21 +1,19 @@
 import logging
-from typing import Optional, Union
 
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks, Request
 from fastapi import HTTPException, status
-from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
+from starlette.responses import RedirectResponse, JSONResponse, Response
 
 import schemas
-from chalicelib.core import assist, signup, feature_flags
 from chalicelib.core import scope
+from chalicelib.core import signup
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors, errors_details
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils import captcha, smtp
-from chalicelib.utils import contextual_validators
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_role
@@ -290,40 +288,3 @@ def get_errors_sessions(projectId: int, errorId: str, action: str, startDate: in
     return {
         "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                     start_date=start_date, end_date=end_date)}
-
-
-@app.post('/{projectId}/feature-flags/search', tags=["feature flags"])
-def search_feature_flags(projectId: int,
-                         data: schemas.SearchFlagsSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.search_feature_flags(project_id=projectId, user_id=context.user_id, data=data)
-
-
-@app.get('/{projectId}/feature-flags/{feature_flag_id}', tags=["feature flags"])
-def get_feature_flag(projectId: int, feature_flag_id: int):
-    return feature_flags.get_feature_flag(project_id=projectId, feature_flag_id=feature_flag_id)
-
-
-@app.post('/{projectId}/feature-flags', tags=["feature flags"])
-def add_feature_flag(projectId: int, data: schemas.FeatureFlagSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.create_feature_flag(project_id=projectId, user_id=context.user_id, feature_flag_data=data)
-
-
-@app.put('/{projectId}/feature-flags/{feature_flag_id}', tags=["feature flags"])
-def update_feature_flag(projectId: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
-                        context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.update_feature_flag(project_id=projectId, feature_flag_id=feature_flag_id,
-                                             user_id=context.user_id, feature_flag=data)
-
-
-@app.delete('/{projectId}/feature-flags/{feature_flag_id}', tags=["feature flags"])
-def delete_feature_flag(projectId: int, feature_flag_id: int, _=Body(None)):
-    return {"data": feature_flags.delete_feature_flag(project_id=projectId, feature_flag_id=feature_flag_id)}
-
-
-@app.post('/{projectId}/feature-flags/{feature_flag_id}/status', tags=["feature flags"])
-def update_feature_flag_status(projectId: int, feature_flag_id: int,
-                               data: schemas.FeatureFlagStatus = Body(...)):
-    return {"data": feature_flags.update_feature_flag_status(project_id=projectId, feature_flag_id=feature_flag_id,
-                                                             is_active=data.is_active)}

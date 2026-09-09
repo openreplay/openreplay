@@ -22,7 +22,6 @@ rm -rf ./chalicelib/core/metrics/heatmaps
 rm -rf ./chalicelib/core/metrics/product_analytics
 rm -rf ./chalicelib/core/metrics/product_anaytics2.py
 rm -rf ./chalicelib/core/events
-rm -rf ./chalicelib/core/feature_flags.py
 rm -rf ./chalicelib/core/issue_tracking
 rm -rf ./chalicelib/core/integrations_manager.py
 rm -rf ./chalicelib/core/issues

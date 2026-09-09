@@ -1121,66 +1121,6 @@ class WebhookType(str, Enum):
     MSTEAMS = "msteams"
 
 
-class FeatureFlagVariant(BaseModel):
-    variant_id: Optional[int] = Field(default=None)
-    value: str = Field(...)
-    description: Optional[str] = Field(default=None)
-    payload: Optional[str] = Field(default=None)
-    rollout_percentage: Optional[int] = Field(default=0, ge=0, le=100)
-
-
-class FeatureFlagConditionFilterSchema(BaseModel):
-    is_event: Literal[False] = False
-    type: FilterType = Field(...)
-    value: List[str] = Field(default_factory=list, min_length=1)
-    operator: Union[SearchEventOperator, MathOperator] = Field(...)
-    source: Optional[str] = Field(default=None)
-    sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(
-        default=None
-    )
-
-    @model_validator(mode="before")
-    @classmethod
-    def __force_is_event(cls, values):
-        values["isEvent"] = False
-        return values
-
-
-class FeatureFlagCondition(BaseModel):
-    condition_id: Optional[int] = Field(default=None)
-    name: str = Field(...)
-    rollout_percentage: Optional[int] = Field(default=0)
-    filters: List[FeatureFlagConditionFilterSchema] = Field(default_factory=list)
-
-
-class SearchFlagsSchema(_PaginatedSchema):
-    limit: int = Field(default=15, gt=0, le=200)
-    user_id: Optional[int] = Field(default=None)
-    order: SortOrderType = Field(default=SortOrderType.DESC)
-    query: Optional[str] = Field(default=None)
-    is_active: Optional[bool] = Field(default=None)
-
-
-class FeatureFlagType(str, Enum):
-    SINGLE_VARIANT = "single"
-    MULTI_VARIANT = "multi"
-
-
-class FeatureFlagStatus(BaseModel):
-    is_active: bool = Field(...)
-
-
-class FeatureFlagSchema(BaseModel):
-    payload: Optional[str] = Field(default=None)
-    flag_key: str = Field(..., pattern=r"^[a-zA-Z0-9\-]+$")
-    description: Optional[str] = Field(default=None)
-    flag_type: FeatureFlagType = Field(default=FeatureFlagType.SINGLE_VARIANT)
-    is_persist: Optional[bool] = Field(default=False)
-    is_active: Optional[bool] = Field(default=True)
-    conditions: List[FeatureFlagCondition] = Field(default_factory=list, min_length=1)
-    variants: List[FeatureFlagVariant] = Field(default_factory=list)
-
-
 class ModuleType(str, Enum):
     ASSIST = "assist"
     NOTES = "notes"
