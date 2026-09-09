@@ -15,6 +15,8 @@ from chalicelib.utils.TimeUTC import TimeUTC
 logger = logging.getLogger(__name__)
 
 
+# Ignore tenant_id for all queries because this version is for FOSS, it supports 1 single tenant.
+
 def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
