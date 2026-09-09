@@ -5,10 +5,15 @@ import requests
 from decouple import config
 
 from chalicelib.core.sourcemaps import sourcemaps_parser
+from chalicelib.utils import ssrf
 from chalicelib.utils.log import sanitize
 from chalicelib.utils.storage import StorageClient, generators
 
 logger = logging.getLogger(__name__)
+
+# When disabled, sourcemaps are only read from the bucket, never fetched
+# from the origin server referenced by error stack frames.
+FETCH_SOURCEMAPS_FROM_URL = config("FETCH_SOURCEMAPS_FROM_URL", cast=bool, default=True)
 
 
 def presign_share_urls(project_id, urls):
@@ -72,8 +77,16 @@ def format_payload(p, truncate_to_first=False):
 
 
 def url_exists(url):
+    if not FETCH_SOURCEMAPS_FROM_URL:
+        return False
+    # frame URLs originate from untrusted tracker payloads; without this guard
+    # this HEAD (and the follow-up GET in sourcemapreader) is an SSRF primitive
+    if not ssrf.is_safe_external_url(url):
+        logger.warning(f"blocked unsafe sourcemap URL: {sanitize(url)}")
+        return False
     try:
-        r = requests.head(url, allow_redirects=False)
+        r = requests.head(url, allow_redirects=False,
+                          timeout=config("sourcemapTimeout", cast=int, default=5))
         return r.status_code == 200 and "text/html" not in r.headers.get("Content-Type", "")
     except Exception as e:
         logger.warning(f"!! Issue checking if URL exists: {sanitize(url)}")

@@ -5,7 +5,73 @@ const {S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
 const {BlobServiceClient, StorageSharedKeyCredential} = require("@azure/storage-blob");
 const URL = require('url');
 const http = require('http');
+const https = require('https');
+const dns = require('dns');
+const net = require('net');
 const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
+
+const FETCH_TIMEOUT_MS = parseInt(process.env.SOURCEMAP_FETCH_TIMEOUT_MS) || 15000;
+const MAX_SOURCEMAP_SIZE_BYTES = (parseInt(process.env.SOURCEMAP_MAX_SIZE_MB) || 100) * 1024 * 1024;
+
+function isPublicIPv4(address) {
+    const o = address.split('.').map(Number);
+    if (o[0] === 0 || o[0] === 10 || o[0] === 127) return false;           // "this", private, loopback
+    if (o[0] === 100 && o[1] >= 64 && o[1] <= 127) return false;           // CGNAT
+    if (o[0] === 169 && o[1] === 254) return false;                        // link-local / cloud metadata
+    if (o[0] === 172 && o[1] >= 16 && o[1] <= 31) return false;            // private
+    if (o[0] === 192 && o[1] === 168) return false;                        // private
+    if (o[0] === 192 && o[1] === 0 && (o[2] === 0 || o[2] === 2)) return false; // IETF, TEST-NET-1
+    if (o[0] === 198 && (o[1] === 18 || o[1] === 19)) return false;        // benchmarking
+    if (o[0] === 198 && o[1] === 51 && o[2] === 100) return false;         // TEST-NET-2
+    if (o[0] === 203 && o[1] === 0 && o[2] === 113) return false;          // TEST-NET-3
+    if (o[0] >= 224) return false;                                         // multicast, reserved, broadcast
+    return true;
+}
+
+function isPublicIp(address) {
+    if (net.isIPv4(address)) return isPublicIPv4(address);
+    if (net.isIPv6(address)) {
+        const ip = address.toLowerCase();
+        if (ip.startsWith('::ffff:')) { // IPv4-mapped
+            const rest = ip.slice(7);
+            if (net.isIPv4(rest)) return isPublicIPv4(rest);
+            const groups = rest.split(':');
+            if (groups.length === 2) {
+                const hi = parseInt(groups[0], 16), lo = parseInt(groups[1], 16);
+                return isPublicIPv4(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`);
+            }
+            return false;
+        }
+        // only global unicast (2000::/3); rejects ::1, fe80::/10, fc00::/7, ff00::/8, NAT64...
+        const firstGroup = parseInt(ip.split(':')[0] || '0', 16);
+        return firstGroup >= 0x2000 && firstGroup <= 0x3fff;
+    }
+    return false;
+}
+
+// DNS lookup used for the actual connection: rejecting private ranges here
+// (not only in the API's pre-check) closes the DNS-rebinding TOCTOU window.
+function safeLookup(hostname, options, callback) {
+    if (typeof options === 'function') {
+        callback = options;
+        options = {};
+    }
+    dns.lookup(hostname, {...options, all: true}, (err, addresses) => {
+        if (err) return callback(err);
+        if (!Array.isArray(addresses) || addresses.length === 0) {
+            return callback(new Error('SSRF blocked: hostname did not resolve'));
+        }
+        for (const a of addresses) {
+            if (!isPublicIp(a.address)) {
+                return callback(new Error(`SSRF blocked: ${hostname} resolves to a non-public address`));
+            }
+        }
+        if (options.all) {
+            return callback(null, addresses);
+        }
+        return callback(null, addresses[0].address, addresses[0].family);
+    });
+}
 sourceMap.SourceMapConsumer.initialize({
     "lib/mappings.wasm": wasm
 });
@@ -79,12 +145,30 @@ function parseSourcemap(sourcemap, event, options, resolve, reject) {
 
 module.exports.sourcemapReader = async event => {
     if (event.isURL) {
+        let parsedURL;
+        try {
+            parsedURL = new URL.URL(event.key);
+        } catch (e) {
+            return Promise.reject(new Error('SSRF blocked: invalid sourcemap URL'));
+        }
+        if (parsedURL.protocol !== 'http:' && parsedURL.protocol !== 'https:') {
+            return Promise.reject(new Error(`SSRF blocked: unsupported protocol ${parsedURL.protocol}`));
+        }
+        if (parsedURL.username || parsedURL.password) {
+            return Promise.reject(new Error('SSRF blocked: credentials in sourcemap URL'));
+        }
+        // node skips the lookup hook for IP literals, so check them here
+        const literalHost = parsedURL.hostname.replace(/^\[|]$/g, '');
+        if (net.isIP(literalHost) && !isPublicIp(literalHost)) {
+            return Promise.reject(new Error('SSRF blocked: non-public IP address'));
+        }
+        const client = parsedURL.protocol === 'https:' ? https : http;
         let options = {
             URL: event.key
         };
         return new Promise(function (resolve, reject) {
             const getObjectStart = Date.now();
-            return http.get(options.URL, (response) => {
+            const request = client.get(options.URL, {lookup: safeLookup, timeout: FETCH_TIMEOUT_MS}, (response) => {
                 const {statusCode} = response;
                 const contentType = response.headers['content-type'];
 
@@ -110,7 +194,13 @@ module.exports.sourcemapReader = async event => {
                 }
                 response.setEncoding('utf8');
                 let rawData = '';
+                let receivedBytes = 0;
                 response.on('data', (chunk) => {
+                    receivedBytes += Buffer.byteLength(chunk);
+                    if (receivedBytes > MAX_SOURCEMAP_SIZE_BYTES) {
+                        response.destroy();
+                        return reject(new Error(`Sourcemap exceeds maximum allowed size of ${MAX_SOURCEMAP_SIZE_BYTES} bytes`));
+                    }
                     rawData += chunk;
                 });
                 response.on('end', () => {
@@ -130,7 +220,11 @@ module.exports.sourcemapReader = async event => {
                     }
                 });
 
-            }).on('error', (e) => {
+            });
+            request.on('timeout', () => {
+                request.destroy(new Error(`Timed out fetching sourcemap after ${FETCH_TIMEOUT_MS}ms`));
+            });
+            request.on('error', (e) => {
                 return reject(e);
             });
         });

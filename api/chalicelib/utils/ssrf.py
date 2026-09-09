@@ -70,3 +70,48 @@ def post_json(endpoint, json_data, headers=None, timeout=None):
             s.mount("https://", PinnedHostHTTPSAdapter(hostname))
         return s.post(url=pinned_url, json=json_data, headers=headers, timeout=timeout,
                       allow_redirects=False)
+
+
+ALLOWED_SCHEMES = ("http", "https")
+ALLOWED_PORTS = (80, 443)
+
+
+def is_safe_external_url(url: str) -> bool:
+    """SSRF guard for URLs fetched server-side on behalf of user-controlled data
+    (e.g. sourcemap URLs coming from error stack frames): http(s) only, no
+    embedded credentials, standard ports, and every IP the hostname resolves to
+    must be public (blocks loopback, RFC1918, link-local incl. cloud metadata
+    endpoints, CGNAT, ULA, reserved and multicast ranges).
+
+    Note: DNS is resolved here for validation only; the actual fetch resolves
+    again, so consumers must re-validate at connect time to rule out DNS
+    rebinding (sourcemapreader does this via its lookup hook)."""
+    try:
+        p = urlparse(url)
+    except ValueError:
+        return False
+    if p.scheme not in ALLOWED_SCHEMES:
+        return False
+    if not p.hostname or p.username or p.password:
+        return False
+    try:
+        port = p.port
+    except ValueError:
+        return False
+    port = port or (443 if p.scheme == "https" else 80)
+    if port not in ALLOWED_PORTS:
+        return False
+    try:
+        infos = socket.getaddrinfo(p.hostname, port, proto=socket.IPPROTO_TCP)
+    except (socket.gaierror, UnicodeError):
+        return False
+    if len(infos) == 0:
+        return False
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if not ip.is_global or ip.is_multicast:
+            return False
+    return True
