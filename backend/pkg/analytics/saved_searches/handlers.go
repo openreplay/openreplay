@@ -185,17 +185,18 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 		order = o
 	}
 
-	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset, sort, order)
+	searches, total, totalSessions, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset, sort, order)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{
-		"data":   searches,
-		"total":  total,
-		"limit":  limit,
-		"offset": offset,
+		"data":               searches,
+		"total":              total,
+		"totalSessionsCount": totalSessions,
+		"limit":              limit,
+		"offset":             offset,
 	}, startTime, r.URL.Path, bodySize)
 }
 
