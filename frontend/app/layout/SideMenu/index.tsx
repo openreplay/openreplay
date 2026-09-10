@@ -1,9 +1,12 @@
-import { Button, Drawer } from 'antd';
+import { Button, Drawer, Tooltip } from 'antd';
+import cn from 'classnames';
 import { Menu, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Icon } from 'UI';
 
+import Logo from 'App/layout/Logo';
 import SupportModal from 'App/layout/SupportModal';
 import { useStore } from 'App/mstore';
 import * as routes from 'App/routes';
@@ -42,7 +45,7 @@ function SideMenu(props: Props) {
   // added: mobile drawer state
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-  const { projectsStore, userStore } = useStore();
+  const { projectsStore, userStore, settingsStore } = useStore();
   const { account } = userStore;
   const modules = account.settings?.modules ?? [];
   const isAdmin = account.admin || account.superAdmin;
@@ -158,12 +161,44 @@ function SideMenu(props: Props) {
   return (
     <>
       {!isMobile && (
-        <MenuContent
-          menu={menu}
-          isMenuItemActive={isMenuItemActive}
-          handleClick={handleClick}
-          isCollapsed={isCollapsed}
-        />
+        <>
+          <div
+            className={cn(
+              'flex items-center h-[60px] shrink-0',
+              isCollapsed ? 'justify-center gap-1 px-3' : 'gap-2 px-5',
+            )}
+          >
+            <div
+              onClick={() => {
+                settingsStore.updateMenuCollapsed(!settingsStore.menuCollapsed);
+              }}
+              className="cursor-pointer xl:block hidden"
+            >
+              <Tooltip
+                title={
+                  settingsStore.menuCollapsed ? t('Show Menu') : t('Hide Menu')
+                }
+                mouseEnterDelay={1}
+              >
+                <Icon
+                  name={
+                    settingsStore.menuCollapsed
+                      ? 'side_menu_closed'
+                      : 'side_menu_open'
+                  }
+                  size={20}
+                />
+              </Tooltip>
+            </div>
+            <Logo siteId={siteId} small={isCollapsed} />
+          </div>
+          <MenuContent
+            menu={menu}
+            isMenuItemActive={isMenuItemActive}
+            handleClick={handleClick}
+            isCollapsed={isCollapsed}
+          />
+        </>
       )}
 
       {isMobile && (

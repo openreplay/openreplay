@@ -12,11 +12,12 @@ const SESSIONS_PATH = sessions();
 
 interface Props {
   siteId: any;
+  small?: boolean;
 }
 
 function Logo(props: Props) {
   const { theme } = useTheme();
-  if (mobileScreen) {
+  if (mobileScreen || props.small) {
     const icon = theme === 'dark' ? 'logo-small-white' : 'logo-small';
     return (
       <NavLink
