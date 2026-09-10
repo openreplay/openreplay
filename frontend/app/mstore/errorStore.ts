@@ -1,29 +1,38 @@
 import { makeAutoObservable } from 'mobx';
-
-import apiClient from 'App/api_client';
-import { errorService, sessionService } from 'App/services';
+import { errorService } from 'App/services';
 
 import { ErrorInfo } from './types/error';
 
 export default class ErrorStore {
   instance: ErrorInfo | null = null;
-
   instanceTrace: Record<string, any>[] = [];
-
   stats: Record<string, any> = {};
-
   sourcemapUploaded = false;
-
-  isLoading = false;
-
+  isLoadingError = false;
+  isLoadingTrace = false;
+  isLoadingStats = false;
   errorStates: Record<string, any> = {};
+  /** bumped on every details fetch so late responses of a previous error are dropped */
+  requestId = 0;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  setLoadingState(value: boolean) {
-    this.isLoading = value;
+  get isLoading() {
+    return this.isLoadingError || this.isLoadingTrace;
+  }
+
+  setLoadingError(value: boolean) {
+    this.isLoadingError = value;
+  }
+
+  setLoadingTrace(value: boolean) {
+    this.isLoadingTrace = value;
+  }
+
+  setLoadingStats(value: boolean) {
+    this.isLoadingStats = value;
   }
 
   setErrorState(actionKey: string, error: any) {
@@ -46,42 +55,63 @@ export default class ErrorStore {
     this.stats = stats;
   }
 
-  async fetchError(id: string) {
+  nextRequestId() {
+    this.requestId += 1;
+    return this.requestId;
+  }
+
+  async fetchErrorDetails(id: string) {
+    const rid = this.nextRequestId();
+    this.setInstance(null);
+    this.setInstanceTrace([]);
+    this.setSourcemapUploaded(false);
+    this.setLoadingError(true);
+    this.setLoadingTrace(true);
+    await Promise.all([
+      this.fetchError(id, rid),
+      this.fetchErrorTrace(id, rid),
+    ]);
+  }
+
+  async fetchError(id: string, rid = this.nextRequestId()) {
     const actionKey = 'fetchError';
-    this.setLoadingState(true);
+    this.setLoadingError(true);
     this.setErrorState(actionKey, null);
 
     try {
       const response = await errorService.fetchError(id);
-      const errorData = response.data;
-      this.setInstance(errorData);
+      if (rid !== this.requestId) return;
+      this.setInstance(response.data);
     } catch (error) {
+      if (rid !== this.requestId) return;
       this.setInstance(null);
       this.setErrorState(actionKey, error);
     } finally {
-      this.setLoadingState(false);
+      if (rid === this.requestId) this.setLoadingError(false);
     }
   }
 
-  async fetchErrorTrace(id: string) {
+  async fetchErrorTrace(id: string, rid = this.nextRequestId()) {
     const actionKey = 'fetchErrorTrace';
-    this.setLoadingState(true);
+    this.setLoadingTrace(true);
     this.setErrorState(actionKey, null);
 
     try {
       const response = await errorService.fetchErrorTrace(id);
+      if (rid !== this.requestId) return;
       this.setInstanceTrace(response.trace);
       this.setSourcemapUploaded(response.sourcemapUploaded);
     } catch (error) {
+      if (rid !== this.requestId) return;
       this.setErrorState(actionKey, error);
     } finally {
-      this.setLoadingState(false);
+      if (rid === this.requestId) this.setLoadingTrace(false);
     }
   }
 
   async fetchNewErrorsCount(params: any) {
     const actionKey = 'fetchNewErrorsCount';
-    this.setLoadingState(true);
+    this.setLoadingStats(true);
     this.setErrorState(actionKey, null);
 
     try {
@@ -90,7 +120,7 @@ export default class ErrorStore {
     } catch (error) {
       this.setErrorState(actionKey, error);
     } finally {
-      this.setLoadingState(false);
+      this.setLoadingStats(false);
     }
   }
 }

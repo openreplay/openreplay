@@ -5,7 +5,6 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import prettierConfig from 'eslint-config-prettier';
-import prettierPlugin from 'eslint-plugin-prettier';
 import importPlugin from 'eslint-plugin-import';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -52,7 +51,6 @@ export default [
       import: importPlugin,
       jest: pluginJest,
       i18next,
-      prettierPlugin,
     },
     settings: {
       'import/resolver': {
@@ -95,7 +93,6 @@ export default [
 
       // i18next rules
       'i18next/no-literal-string': 'warn',
-      'prettierPlugin/prettier': 'warn',
 
       // General rules
       'no-console': 'off', // Change from 'warn' to 'off' if you want to allow console statements
@@ -132,7 +129,6 @@ export default [
       'react/no-find-dom-node': 'off',
       'import/no-named-as-default': 'off',
       'import/no-extraneous-dependencies': 'off',
-      'react-hooks/rules-of-hooks': 'off',
       '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
       'react/no-children-prop': 'off',
     },

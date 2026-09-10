@@ -24,7 +24,7 @@ function MainSection(props: any) {
   const error = errorStore.instance;
   const trace = errorStore.instanceTrace;
   const { sourcemapUploaded } = errorStore;
-  const loading = errorStore.isLoading;
+  const loadingTrace = errorStore.isLoadingTrace;
   const { className, hideModal } = props;
 
   const findSessions = () => {
@@ -129,7 +129,7 @@ function MainSection(props: any) {
       </div>
       <Divider />
       <div className="m-4">
-        <Loader loading={loading}>
+        <Loader loading={loadingTrace}>
           <ErrorDetails
             name={error.name}
             message={error.message}

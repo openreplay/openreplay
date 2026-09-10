@@ -1,5 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import { Loader, NoContent } from 'UI';
@@ -8,24 +9,18 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import MainSection from './MainSection';
 import SideSection from './SideSection';
-import { useTranslation } from 'react-i18next';
 
 function ErrorInfo(props) {
   const { t } = useTranslation();
   const { errorStore } = useStore();
   const { instance } = errorStore;
-  const ensureInstance = () => {
-    if (errorStore.isLoading) return;
-    errorStore.fetchError(props.errorId);
-    errorStore.fetchErrorTrace(props.errorId);
-  };
 
   React.useEffect(() => {
-    ensureInstance();
+    if (!props.errorId) return;
+    void errorStore.fetchErrorDetails(props.errorId);
   }, [props.errorId]);
 
-  const errorIdInStore = errorStore.instance?.errorId;
-  const loading = errorStore.isLoading;
+  const loading = errorStore.isLoadingError;
   return (
     <NoContent
       title={
@@ -35,7 +30,7 @@ function ErrorInfo(props) {
         </div>
       }
       subtext={t('Please try to find existing one.')}
-      show={!loading && errorIdInStore == null}
+      show={!loading && instance == null}
     >
       <div className="flex w-full">
         <Loader loading={loading || !instance} className="w-full">
