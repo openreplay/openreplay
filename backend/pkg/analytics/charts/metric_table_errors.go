@@ -7,7 +7,6 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"strings"
-	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -260,23 +259,17 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		fromClause = `product_analytics.events as e`
 	}
 
-	tableKey := fmt.Sprintf("%d", time.Now().UnixMilli())
-	eventsTable := fmt.Sprintf("errors_events_%s", tableKey)
-
+	eventsTable := fmt.Sprintf("errors_events_%s", strings.ReplaceAll(uuid.NewString(), "-", ""))
 	createSQL := fmt.Sprintf(`
-CREATE TEMPORARY TABLE %s AS (
+CREATE TEMPORARY TABLE %s ENGINE = MergeTree ORDER BY (error_id,session_id,created_at) AS (
     SELECT
         error_id,
         COALESCE("$properties".'name', 'ERROR') AS name,
-        COALESCE("$properties".'message',
-                "$properties".'error', 'Unknown error') AS message,
-        distinct_id,
+        COALESCE("$properties".'message', 'Unknown error') AS message,
         session_id,
-        project_id,
         created_at
     FROM %s
     WHERE %s
-    AND created_at IS NOT NULL
 );`,
 		eventsTable,
 		fromClause,
@@ -310,8 +303,8 @@ WITH
             max(e.created_at) AS last_occurrence
         FROM %s e
         	LEFT JOIN experimental.sessions s 
-				ON e.session_id = s.session_id AND e.project_id = s.project_id AND s.project_id = %d
-        WHERE e.error_id IS NOT NULL AND e.error_id != ''
+				ON e.session_id = s.session_id AND s.project_id = %d
+        WHERE e.error_id != ''
         GROUP BY e.error_id
     ),
     error_chart AS (
