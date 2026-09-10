@@ -287,8 +287,8 @@ FROM product_analytics.events
 WHERE events.project_id = %d
   AND events.created_at >= toDateTime(%d / 1000)
   AND events.created_at <= toDateTime(%d / 1000)
-  AND events.`+"`$event_name`"+` = 'LOCATION'
-  AND events.`+"`$auto_captured`"+`%s
+  AND events."$event_name" = 'LOCATION'
+  AND events."$auto_captured" %s
   AND (
     isNotNull(events."$properties".dom_building_time)
         OR isNotNull(events."$properties".ttfb)
