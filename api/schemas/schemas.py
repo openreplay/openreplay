@@ -1,6 +1,5 @@
-from typing import Annotated, Any, List, Literal, Optional, Union
+from typing import Annotated, List, Literal, Optional, Union
 
-from chalicelib.utils.TimeUTC import TimeUTC
 from pydantic import (
     AfterValidator,
     AnyHttpUrl,
@@ -21,7 +20,6 @@ from .transformers_validators import (
     check_alphanumeric,
     check_property_name,
     check_regex,
-    force_is_event,
     int_to_string,
     remove_duplicate_values,
     remove_whitespace,
@@ -1175,8 +1173,3 @@ class SessionModel(BaseModel):
     userState: str
     userUuid: str
     viewed: bool = Field(default=False)
-
-
-class UsabilityTestQuery(_PaginatedSchema):
-    live: bool = Field(default=False)
-    user_id: Optional[str] = Field(default=None)
