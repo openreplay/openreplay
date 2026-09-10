@@ -222,76 +222,83 @@ func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
 		outerFiltersWhereStr += fmt.Sprintf(" AND events.sample_key < %d", p.SampleRate)
 	}
 
-	sessionsWhereStr := ""
-	if len(sessionsWhere) > 0 {
-		sessionsWhereStr = " AND " + strings.Join(sessionsWhere, " AND ")
+	// Join with experimental.sessions only when the card actually filters on
+	// session attributes; otherwise the events subquery alone is enough.
+	sessionsJoinStr := ""
+	if len(sessionsWhere) > 4 {
+		sessionsWhereStr := " AND " + strings.Join(sessionsWhere, " AND ")
+		sessionsJoinStr = fmt.Sprintf(`
+            INNER JOIN (SELECT DISTINCT session_id
+                    FROM experimental.sessions AS s
+                    WHERE s.project_id = %d
+						AND isNotNull(s.duration)%s
+						AND s.datetime >= toDateTime(%d/1000)
+						AND s.datetime <= toDateTime(%d/1000)) AS s ON(s.session_id=f.session_id)`,
+			p.ProjectId, sessionsWhereStr, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp)
 	}
 
 	query := fmt.Sprintf(`
-SELECT minIf(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_min,
-       avgIf(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_avg,
-       maxIf(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.dom_building_time::Float64, isNotNull(events.`+"`$properties`"+`.dom_building_time)) AS dom_building_time_p90,
-       minIf(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_min,
-       avgIf(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_avg,
-       maxIf(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.ttfb::Float64, isNotNull(events.`+"`$properties`"+`.ttfb))              AS ttfb_p90,
-       minIf(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_min,
-       avgIf(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_avg,
-       maxIf(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.speed_index::Float64, isNotNull(events.`+"`$properties`"+`.speed_index))       AS speed_index_p90,
-       minIf(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_min,
-       avgIf(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_avg,
-       maxIf(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.first_contentful_paint_time::Float64, isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)) AS first_contentful_paint_time_p90,
-       minIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_min,
-       avgIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_avg,
-       maxIf(events.`+"`$properties`"+`.LCP::Float64, isNotNull(events.`+"`$properties`"+`.LCP)) AS largest_contentful_paint_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.lcp::Float64, isNotNull(events.`+"`$properties`"+`.lcp)) AS largest_contentful_paint_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.lcp::Float64, isNotNull(events.`+"`$properties`"+`.lcp)) AS largest_contentful_paint_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.lcp::Float64, isNotNull(events.`+"`$properties`"+`.lcp)) AS largest_contentful_paint_p90,
-       minIf(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_min,
-       avgIf(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_avg,
-       maxIf(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_max,
-       quantileIf(0.5)(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_p50,
-       quantileIf(0.75)(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_p75,
-       quantileIf(0.90)(events.`+"`$properties`"+`.cls::Float64, isNotNull(events.`+"`$properties`"+`.cls)) AS cumulative_layout_shift_p90
-FROM (SELECT session_id
-      FROM (SELECT main.session_id,
-                   MIN(main.created_at) AS first_event_ts,
-                   MAX(main.created_at) AS last_event_ts
-            FROM product_analytics.events AS main
-            WHERE main.project_id = %d AND main.created_at >= toDateTime(%d/1000) AND main.created_at <= toDateTime(%d/1000)%s
-            GROUP BY session_id) AS f
-            INNER JOIN (SELECT DISTINCT ON (session_id) *
-                    FROM experimental.sessions AS s
-                    WHERE s.project_id = %d AND isNotNull(s.duration)%s AND s.datetime >= toDateTime(%d/1000) AND s.datetime <= toDateTime(%d/1000)
-                    ORDER BY _timestamp DESC) AS s ON(s.session_id=f.session_id)
-      ) AS raw
-       INNER JOIN product_analytics.events USING (session_id)
+SELECT minIf(events."$properties".dom_building_time::Float64, isNotNull(events."$properties".dom_building_time)) AS dom_building_time_min,
+       avgIf(events."$properties".dom_building_time::Float64, isNotNull(events."$properties".dom_building_time)) AS dom_building_time_avg,
+       maxIf(events."$properties".dom_building_time::Float64, isNotNull(events."$properties".dom_building_time)) AS dom_building_time_max,
+       quantileIf(0.5)(events."$properties".dom_building_time::Float64, isNotNull(events."$properties".dom_building_time)) AS dom_building_time_p50,
+       quantileIf(0.75)(events."$properties".dom_building_time::Float64, isNotNull(events."$properties".dom_building_time)) AS dom_building_time_p75,
+       quantileIf(0.90)(events."$properties".dom_building_time::Float64, isNotNull(events."$properties".dom_building_time)) AS dom_building_time_p90,
+       minIf(events."$properties".ttfb::Float64, isNotNull(events."$properties".ttfb))              AS ttfb_min,
+       avgIf(events."$properties".ttfb::Float64, isNotNull(events."$properties".ttfb))              AS ttfb_avg,
+       maxIf(events."$properties".ttfb::Float64, isNotNull(events."$properties".ttfb))              AS ttfb_max,
+       quantileIf(0.5)(events."$properties".ttfb::Float64, isNotNull(events."$properties".ttfb))              AS ttfb_p50,
+       quantileIf(0.75)(events."$properties".ttfb::Float64, isNotNull(events."$properties".ttfb))              AS ttfb_p75,
+       quantileIf(0.90)(events."$properties".ttfb::Float64, isNotNull(events."$properties".ttfb))              AS ttfb_p90,
+       minIf(events."$properties".speed_index::Float64, isNotNull(events."$properties".speed_index))       AS speed_index_min,
+       avgIf(events."$properties".speed_index::Float64, isNotNull(events."$properties".speed_index))       AS speed_index_avg,
+       maxIf(events."$properties".speed_index::Float64, isNotNull(events."$properties".speed_index))       AS speed_index_max,
+       quantileIf(0.5)(events."$properties".speed_index::Float64, isNotNull(events."$properties".speed_index))       AS speed_index_p50,
+       quantileIf(0.75)(events."$properties".speed_index::Float64, isNotNull(events."$properties".speed_index))       AS speed_index_p75,
+       quantileIf(0.90)(events."$properties".speed_index::Float64, isNotNull(events."$properties".speed_index))       AS speed_index_p90,
+       minIf(events."$properties".first_contentful_paint_time::Float64, isNotNull(events."$properties".first_contentful_paint_time)) AS first_contentful_paint_time_min,
+       avgIf(events."$properties".first_contentful_paint_time::Float64, isNotNull(events."$properties".first_contentful_paint_time)) AS first_contentful_paint_time_avg,
+       maxIf(events."$properties".first_contentful_paint_time::Float64, isNotNull(events."$properties".first_contentful_paint_time)) AS first_contentful_paint_time_max,
+       quantileIf(0.5)(events."$properties".first_contentful_paint_time::Float64, isNotNull(events."$properties".first_contentful_paint_time)) AS first_contentful_paint_time_p50,
+       quantileIf(0.75)(events."$properties".first_contentful_paint_time::Float64, isNotNull(events."$properties".first_contentful_paint_time)) AS first_contentful_paint_time_p75,
+       quantileIf(0.90)(events."$properties".first_contentful_paint_time::Float64, isNotNull(events."$properties".first_contentful_paint_time)) AS first_contentful_paint_time_p90,
+       minIf(events."$properties".lcp::Float64, isNotNull(events."$properties".lcp)) AS largest_contentful_paint_min,
+       avgIf(events."$properties".lcp::Float64, isNotNull(events."$properties".lcp)) AS largest_contentful_paint_avg,
+       maxIf(events."$properties".lcp::Float64, isNotNull(events."$properties".lcp)) AS largest_contentful_paint_max,
+       quantileIf(0.5)(events."$properties".lcp::Float64, isNotNull(events."$properties".lcp)) AS largest_contentful_paint_p50,
+       quantileIf(0.75)(events."$properties".lcp::Float64, isNotNull(events."$properties".lcp)) AS largest_contentful_paint_p75,
+       quantileIf(0.90)(events."$properties".lcp::Float64, isNotNull(events."$properties".lcp)) AS largest_contentful_paint_p90,
+       minIf(events."$properties".cls::Float64, isNotNull(events."$properties".cls)) AS cumulative_layout_shift_min,
+       avgIf(events."$properties".cls::Float64, isNotNull(events."$properties".cls)) AS cumulative_layout_shift_avg,
+       maxIf(events."$properties".cls::Float64, isNotNull(events."$properties".cls)) AS cumulative_layout_shift_max,
+       quantileIf(0.5)(events."$properties".cls::Float64, isNotNull(events."$properties".cls)) AS cumulative_layout_shift_p50,
+       quantileIf(0.75)(events."$properties".cls::Float64, isNotNull(events."$properties".cls)) AS cumulative_layout_shift_p75,
+       quantileIf(0.90)(events."$properties".cls::Float64, isNotNull(events."$properties".cls)) AS cumulative_layout_shift_p90
+FROM product_analytics.events
+	 INNER JOIN (SELECT session_id
+				 FROM ( SELECT DISTINCT main.session_id
+						FROM product_analytics.events AS main
+						WHERE main.project_id = %d 
+							AND main.created_at >= toDateTime(%d/1000) 
+							AND main.created_at <= toDateTime(%d/1000)
+							%s) AS f
+						%s
+				  ) AS raw USING (session_id)
 WHERE events.project_id = %d
   AND events.created_at >= toDateTime(%d / 1000)
   AND events.created_at <= toDateTime(%d / 1000)
   AND events.`+"`$event_name`"+` = 'LOCATION'
   AND events.`+"`$auto_captured`"+`%s
   AND (
-    isNotNull(events.`+"`$properties`"+`.dom_building_time)
-        OR isNotNull(events.`+"`$properties`"+`.ttfb)
-        OR isNotNull(events.`+"`$properties`"+`.speed_index)
-        OR isNotNull(events.`+"`$properties`"+`.first_contentful_paint_time)
-        OR isNotNull(events.`+"`$properties`"+`.lcp)
-        OR isNotNull(events.`+"`$properties`"+`.cls)
+    isNotNull(events."$properties".dom_building_time)
+        OR isNotNull(events."$properties".ttfb)
+        OR isNotNull(events."$properties".speed_index)
+        OR isNotNull(events."$properties".first_contentful_paint_time)
+        OR isNotNull(events."$properties".lcp)
+        OR isNotNull(events."$properties".cls)
     )`,
 		p.ProjectId, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp, innerEventsWhereStr,
-		p.ProjectId, sessionsWhereStr, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp,
+		sessionsJoinStr,
 		p.ProjectId, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp, outerFiltersWhereStr)
 
 	return query, nil
