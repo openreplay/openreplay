@@ -5,10 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.hardware.display.DisplayManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Debug
 import android.os.PowerManager
+import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -178,7 +180,8 @@ class OpenreplayPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
   /** Surface rotation mapped onto UIDeviceOrientation values. */
   private fun deviceOrientation(): Int {
     val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-      context.display?.rotation
+      (context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager)
+        ?.getDisplay(Display.DEFAULT_DISPLAY)?.rotation
     } else {
       @Suppress("DEPRECATION")
       (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)?.defaultDisplay?.rotation
@@ -206,7 +209,7 @@ class OpenreplayPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
       "revID" to versionName,
       "userOSVersion" to Build.VERSION.RELEASE,
       "userDevice" to Build.MODEL,
-      "userDeviceType" to "${Build.MANUFACTURER} ${Build.MODEL}",
+      "userDeviceType" to "mobile",
       "deviceMemory" to (memInfo.totalMem / 1024).toInt(),
       "performances" to mapOf(
         "physicalMemory" to memInfo.totalMem.toInt(),
