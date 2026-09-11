@@ -41,7 +41,7 @@ class MSTeams(BaseCollaboration):
                     "title": "Welcome to OpenReplay"
                 },
                 timeout=3)
-            if r.status_code != 200:
+            if not (200 <= r.status_code < 300):
                 logger.warning("MSTeams integration failed")
                 logger.warning(sanitize(r.text))
                 return False
@@ -63,7 +63,7 @@ class MSTeams(BaseCollaboration):
                 endpoint=integration["endpoint"],
                 json_data=body,
                 timeout=5)
-            if r.status_code != 200:
+            if not (200 <= r.status_code < 300):
                 logger.warning(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
                 logger.warning(sanitize(r.text))
                 return None
@@ -94,7 +94,7 @@ class MSTeams(BaseCollaboration):
                                    "summary": part[0]["activityTitle"],
                                    "sections": part
                                })
-            if r.status_code != 200:
+            if not (200 <= r.status_code < 300):
                 logger.warning("!!!! something went wrong")
                 logger.warning(sanitize(r.text))
 
