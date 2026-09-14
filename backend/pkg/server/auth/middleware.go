@@ -3,7 +3,6 @@ package auth
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	ctxStore "github.com/docker/distribution/context"
@@ -61,7 +60,7 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			spotID, parseErr := api.GetPathParam(r, "id", func(s string) (uint64, error) { return strconv.ParseUint(s, 10, 64) })
+			spotID, parseErr := api.GetPathParam(r, "id", api.ParseUint64)
 			if parseErr != nil {
 				a.log.Warn(r.Context(), "Unauthorized request, invalid spot id for public key: %s", parseErr)
 				w.WriteHeader(http.StatusUnauthorized)
