@@ -155,10 +155,13 @@ jobs:
         fi
         echo Services: "${{ github.event.inputs.services }}"
         IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
-        BUILD_SCRIPT_NAME="build.sh"
         # Build FOSS
         for SERVICE in "${SERVICES[@]}"; do
+          BUILD_SCRIPT_NAME="build.sh"
           is_ee_only=false
+          # crons is EE-only and versioned by the utilities chart
+          chart=$SERVICE
+          [[ $SERVICE == 'crons' ]] && chart=utilities && is_ee_only=true
           foss_build_args=""
           # Check if service is backend (FOSS)
           if grep -q $SERVICE /tmp/backend.txt; then 
@@ -180,7 +183,7 @@ jobs:
             [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
             ee_build_args="ee"
           fi  
-          version=$(image_version $SERVICE)
+          version=$(image_version $chart)
           # Build FOSS version (skip for EE-only services like assist-api)
           if [[ "$is_ee_only" == "false" ]]; then
             echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
@@ -199,7 +202,7 @@ jobs:
             build_managed $SERVICE $version
           fi
           cd $working_dir
-          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
+          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$chart/Chart.yaml"
           yq eval ".AppVersion = \"$version\"" -i $chart_path
           git add $chart_path
           git commit -m "Increment $SERVICE chart version"
