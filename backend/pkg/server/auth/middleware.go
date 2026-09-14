@@ -3,9 +3,11 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	ctxStore "github.com/docker/distribution/context"
+	"github.com/gorilla/mux"
 
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/tenant"
@@ -60,7 +62,13 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			user, err = a.keys.IsValid(r.URL.Query().Get("key"))
+			spotID, parseErr := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
+			if parseErr != nil {
+				a.log.Warn(r.Context(), "Unauthorized request, invalid spot id for public key: %s", parseErr)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			user, err = a.keys.IsValid(r.URL.Query().Get("key"), spotID)
 			if err != nil {
 				a.log.Warn(r.Context(), "Unauthorized request, wrong public key: %s", err)
 				w.WriteHeader(http.StatusUnauthorized)
