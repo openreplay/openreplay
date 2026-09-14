@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.users
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       ORDER BY (project_id, "$user_id")
       PARTITION BY toYYYYMM(_timestamp)
-      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00'
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _is_deleted
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 
@@ -212,10 +212,11 @@ CREATE TABLE IF NOT EXISTS product_analytics.devices
     "$browser_version" String                 DEFAULT '',
 
     _deleted_at        DateTime               DEFAULT '1970-01-01 00:00:00',
+    _is_deleted        UInt8                  DEFAULT 0,
     _timestamp         DateTime               DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
+) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       ORDER BY (project_id, "$device_id")
-      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _is_deleted;
 
 -- This table is used in order to identify all devices used by a specific user
 CREATE TABLE IF NOT EXISTS product_analytics.user_devices
@@ -229,7 +230,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.user_devices
     _timestamp   DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       ORDER BY (project_id, "$device_id", "$user_id")
-      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00';
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _is_deleted;
 
 
 -- This table is used in order to relate a distinct_id to an identified user.
@@ -246,7 +247,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.users_distinct_id
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       ORDER BY (project_id, distinct_id)
       PARTITION BY toMonday(_timestamp)
-      TTL _deleted_at WHERE _deleted_at != '1970-01-01 00:00:00';
+      TTL _deleted_at WHERE _is_deleted;
 
 
 CREATE TABLE IF NOT EXISTS product_analytics.events
@@ -306,10 +307,12 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$tags"                     Array(String) DEFAULT [] COMMENT 'tags are used to filter events',
     "$import"                   BOOL DEFAULT FALSE,
     _deleted_at                 DateTime DEFAULT '1970-01-01 00:00:00',
+    _is_deleted                 UInt8 DEFAULT 0,
     _timestamp                  DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
+) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
+      PARTITION BY toYYYYMMDD(created_at)
       ORDER BY (project_id, session_id, "$event_name", created_at, event_id)
-      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _deleted_at != '1970-01-01 00:00:00' AND NOT is_vault
+      TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _is_deleted
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
 -- The list of events that should not be ingested,
@@ -968,3 +971,5 @@ FROM product_analytics.users
 WHERE isNotNull(t.2)
   AND notEmpty(toString(t.2))
 GROUP BY ALL;
+CREATE OR REPLACE FUNCTION openreplay_migration_state AS() ->
+    -1;
