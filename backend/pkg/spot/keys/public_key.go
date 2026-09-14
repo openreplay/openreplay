@@ -25,7 +25,7 @@ type Key struct {
 type Keys interface {
 	Set(spotID, expiration uint64, user *user.User) (*Key, error)
 	Get(spotID uint64, user *user.User) (*Key, error)
-	IsValid(key string) (*user.User, error)
+	IsValid(key string, spotID uint64) (*user.User, error)
 }
 
 type keysImpl struct {
@@ -43,7 +43,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *user.User) (*Key, error)
 		return nil, fmt.Errorf("user is required")
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	if expiration == 0 {
 		sql := `UPDATE spots.keys SET expired_at = $1, expiration = 0 WHERE spot_id = $2`
 		if err := k.conn.Exec(sql, now, spotID); err != nil {
@@ -117,17 +117,20 @@ func (k *keysImpl) Get(spotID uint64, user *user.User) (*Key, error) {
 	return key, nil
 }
 
-func (k *keysImpl) IsValid(key string) (*user.User, error) {
-	if key == "" {
+func (k *keysImpl) IsValid(key string, spotID uint64) (*user.User, error) {
+	switch {
+	case key == "":
 		return nil, fmt.Errorf("key is required")
+	case spotID == 0:
+		return nil, fmt.Errorf("spotID is required")
 	}
 	var (
 		userID    uint64
 		expiredAt time.Time
 	)
 	// Get userID if key is valid
-	sql := `SELECT user_id, expired_at FROM spots.keys WHERE spot_key = $1`
-	if err := k.conn.QueryRow(sql, key).Scan(&userID, &expiredAt); err != nil {
+	sql := `SELECT user_id, expired_at FROM spots.keys WHERE spot_key = $1 AND spot_id = $2`
+	if err := k.conn.QueryRow(sql, key, spotID).Scan(&userID, &expiredAt); err != nil {
 		k.log.Error(context.Background(), "failed to get key: %v", err)
 		return nil, fmt.Errorf("key not found")
 	}

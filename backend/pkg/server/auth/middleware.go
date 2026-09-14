@@ -60,7 +60,13 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			user, err = a.keys.IsValid(r.URL.Query().Get("key"))
+			spotID, parseErr := api.GetPathParam(r, "id", api.ParseUint64)
+			if parseErr != nil {
+				a.log.Warn(r.Context(), "Unauthorized request, invalid spot id for public key: %s", parseErr)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			user, err = a.keys.IsValid(r.URL.Query().Get("key"), spotID)
 			if err != nil {
 				a.log.Warn(r.Context(), "Unauthorized request, wrong public key: %s", err)
 				w.WriteHeader(http.StatusUnauthorized)
