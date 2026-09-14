@@ -23,7 +23,7 @@ export { default as JSONTree } from './JSONTree';
 export { default as CountryFlag } from './CountryFlag';
 export { default as DbIPNotice } from './CountryFlag/DbIPNotice';
 export { default as confirm, MountPoint } from './Confirmation';
-export { default as SideMenuitem } from './SideMenuItem';
+export { default as SideMenuItem } from './SideMenuItem';
 export { default as Avatar } from './Avatar';
 export { default as ErrorItem } from './ErrorItem';
 export { default as ErrorFrame } from './ErrorFrame';

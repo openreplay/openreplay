@@ -1,5 +1,5 @@
 import { osIcon } from 'App/iconNames';
-import { Icon } from 'UI';
+import Icon from './Icon';
 import React from 'react';
 
 function OsIcon({ os, size = '20', ...props }) {

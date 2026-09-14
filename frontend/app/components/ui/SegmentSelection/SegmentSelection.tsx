@@ -1,7 +1,8 @@
 import React from 'react';
-import { Icon, Tooltip } from 'UI';
+import Icon from '../Icon';
+import Tooltip from '../Tooltip';
 import cn from 'classnames';
-import { IconNames } from 'UI/SVG';
+import { IconNames } from '../SVG';
 import styles from './segmentSelection.module.css';
 
 type Entry = {

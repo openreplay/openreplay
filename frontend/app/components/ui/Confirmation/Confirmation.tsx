@@ -2,7 +2,7 @@ import { Button } from 'antd';
 import React from 'react';
 import { confirmable } from 'react-confirm';
 
-import { Modal } from 'UI';
+import Modal from '../Modal';
 
 interface Props {
   show?: boolean;

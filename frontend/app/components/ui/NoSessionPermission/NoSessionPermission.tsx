@@ -8,7 +8,7 @@ import {
   sessions as sessionsRoute,
   withSiteId,
 } from 'App/routes';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import { Button } from 'antd';
 
 import stl from './NoSessionPermission.module.css';

@@ -21,7 +21,7 @@ import Router from './Router';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import AnimatedSVG from './components/shared/AnimatedSVG';
 import { ICONS } from './components/shared/AnimatedSVG/AnimatedSVG';
-import './i18n';
+import { i18nReady } from './i18n';
 import './init';
 import { RootStore, StoreProvider, client, userStore } from './mstore';
 import './styles/global.css';
@@ -235,11 +235,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // @ts-ignore
   const root = createRoot(container);
 
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ThemedApp />
-      </ThemeProvider>
-    </QueryClientProvider>,
-  );
+  const render = () =>
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <ThemedApp />
+        </ThemeProvider>
+      </QueryClientProvider>,
+    );
+
+  // `en` is bundled, so this settles on a microtask for most users. Any other
+  // language fetches its file first, which avoids a flash of raw i18n keys.
+  void i18nReady.then(render, render);
 });

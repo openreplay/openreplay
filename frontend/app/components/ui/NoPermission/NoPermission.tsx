@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import stl from './noPermission.module.css';
 import { useTranslation } from 'react-i18next';
 

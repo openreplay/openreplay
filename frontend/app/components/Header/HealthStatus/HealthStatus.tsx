@@ -1,10 +1,15 @@
 import React from 'react';
-import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
 import HealthWidget from 'Components/Header/HealthStatus/HealthWidget';
 import { Popover, Button } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { getHealthRequest } from './getHealth';
 import { lastAskedKey, healthResponseKey } from './const';
+
+// Rendered only while showModal is true; the widget itself stays eager so the
+// header icon does not pop in.
+const HealthModal = React.lazy(
+  () => import('Components/Header/HealthStatus/HealthModal/HealthModal'),
+);
 
 export interface IServiceStats {
   name: 'backendServices' | 'databases' | 'ingestionPipeline' | 'SSL';
@@ -81,12 +86,14 @@ function HealthStatus() {
         <Button icon={<ExclamationCircleOutlined />} />
       </Popover>
       {showModal ? (
-        <HealthModal
-          setShowModal={setShowModal}
-          healthResponse={healthResponse}
-          getHealth={getHealth}
-          isLoading={isLoading}
-        />
+        <React.Suspense fallback={null}>
+          <HealthModal
+            setShowModal={setShowModal}
+            healthResponse={healthResponse}
+            getHealth={getHealth}
+            isLoading={isLoading}
+          />
+        </React.Suspense>
       ) : null}
     </>
   );

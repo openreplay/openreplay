@@ -1,6 +1,6 @@
 import React from 'react';
 import { browserIcon } from 'App/iconNames';
-import { Icon } from 'UI';
+import Icon from './Icon';
 
 function BrowserIcon({ browser, size = '20', ...props }) {
   return <Icon name={browserIcon(browser)} size={size} {...props} />;

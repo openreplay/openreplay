@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import cn from 'classnames';
 import stl from './errorFrame.module.css';
 import { useTranslation } from 'react-i18next';

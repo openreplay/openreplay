@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
+import chroma from 'chroma-js';
 import { Tooltip, TextEllipsis } from 'UI';
-import { colorScale } from 'App/utils';
 import { Styles } from '../../Dashboard/Widgets/common';
 import cls from './distributionBar.module.css';
 
@@ -10,10 +10,7 @@ function DistributionBar({ className, title, partitions }) {
     return null;
   }
 
-  const values = Array(partitions.length)
-    .fill()
-    .map((element, index) => index + 0);
-  const colors = colorScale(values, Styles.colors);
+  const colors = chroma.scale(Styles.colors);
 
   return (
     <div className={className}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from 'antd';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 
 interface Props {
   size?: number;

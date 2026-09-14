@@ -1,5 +1,6 @@
 import React from 'react';
-import { TagInput, TagBadge } from 'UI';
+import TagInput from '../TagInput';
+import TagBadge from '../TagBadge';
 import cn from 'classnames';
 import styles from './tagList.module.css';
 

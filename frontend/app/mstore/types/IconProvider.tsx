@@ -1,6 +1,6 @@
 import { Avatar, Icon } from 'UI';
 import React from 'react';
-import * as Flags from 'country-flag-icons/react/3x2';
+import { flagUrl } from 'Shared/flagAssets';
 import { hashString } from 'Types/session/session';
 import { Tablet, Smartphone, Laptop, Monitor } from 'lucide-react';
 
@@ -32,15 +32,14 @@ class BrowserIconProvider implements IconProvider {
 
 class CountryIconProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
-    const s = obj.name.toUpperCase();
-    if (Flags[s as keyof typeof Flags]) {
-      const FlagComponent = Flags[s as keyof typeof Flags];
+    const url = flagUrl(obj.name);
+    if (url) {
       return (
-        <FlagComponent
-          style={{
-            width: 24,
-            height: 24,
-          }}
+        <img
+          src={url}
+          alt={obj.name}
+          style={{ width: 24, height: 24 }}
+          loading="lazy"
         />
       );
     }

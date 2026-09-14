@@ -3,6 +3,11 @@
   "version": "1.7.0",
   "license": "Apache-2.0",
   "browserslist": "> 0.5%, last 2 versions, not dead",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss",
+    "./app/init/**"
+  ],
   "scripts": {
     "writeCommitHash": "node ./scripts/getCommitHash/getHash.js",
     "dev": "vite",
@@ -46,6 +51,7 @@
     "html-to-image": "^1.11.13",
     "i18next": "^24.2.3",
     "i18next-browser-languagedetector": "^8.2.0",
+    "i18next-resources-to-backend": "^1.2.3",
     "jspdf": "4.2.1",
     "lucide-react": "0.487.0",
     "luxon": "^3.7.2",

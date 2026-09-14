@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import { Tooltip } from 'antd';
 import cn from 'classnames';
 import stl from './timelinePointer.module.css';

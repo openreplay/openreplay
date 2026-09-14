@@ -1,5 +1,6 @@
 import React from 'react';
-import { CopyButton, CodeBlock } from 'UI';
+import CopyButton from '../CopyButton';
+import CodeBlock from '../CodeBlock';
 import stl from './highlightCode.module.css';
 
 function HighlightCode({ className = 'js', text = '' }) {

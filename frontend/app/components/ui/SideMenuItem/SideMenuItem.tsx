@@ -1,7 +1,7 @@
 import React from 'react';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import cn from 'classnames';
-import { IconNames } from 'UI/SVG';
+import { IconNames } from '../SVG';
 import { Tooltip } from 'antd';
 import stl from './sideMenuItem.module.css';
 

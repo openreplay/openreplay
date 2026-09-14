@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { avatarIconName } from 'App/iconNames';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import { Tooltip } from 'antd';
 
 function Avatar({

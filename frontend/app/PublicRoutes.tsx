@@ -4,16 +4,18 @@ import React, { Suspense, lazy, useEffect } from 'react';
 import { useStore } from 'App/mstore';
 import * as routes from 'App/routes';
 import { Navigate, Route, StableRoutes } from 'App/routing';
-import Signup from 'Components/Signup/Signup';
 import { Loader } from 'UI';
-
-import SupportCallout from 'Shared/SupportCallout';
 
 const LOGIN_PATH = routes.login();
 const SIGNUP_PATH = routes.signup();
 const FORGOT_PASSWORD = routes.forgotPassword();
 const SPOT_PATH = routes.spot();
 
+// Signup and SupportCallout were the only eager imports here, which put their
+// whole component trees (and the antd surface they reach) in the entry chunk
+// alongside the lazy routes they sit next to.
+const Signup = lazy(() => import('Components/Signup/Signup'));
+const SupportCallout = lazy(() => import('Shared/SupportCallout'));
 const Login = lazy(() => import('Components/Login/Login'));
 const ForgotPassword = lazy(
   () => import('Components/ForgotPassword/ForgotPassword'),

@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 
 function TextLink({
   target = '_blank',

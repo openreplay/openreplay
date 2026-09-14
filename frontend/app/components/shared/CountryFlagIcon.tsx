@@ -1,6 +1,6 @@
 import React from 'react';
-import { hasFlag } from 'country-flag-icons';
-import * as Flags from 'country-flag-icons/react/3x2';
+
+import { flagUrl } from 'Shared/flagAssets';
 
 interface CountryFlagProps {
   countryCode: string;
@@ -11,10 +11,10 @@ const CountryFlagIcon: React.FC<CountryFlagProps> = ({
   countryCode,
   style,
 }) => {
-  const FlagComponent = Flags[countryCode as keyof typeof Flags];
+  const url = flagUrl(countryCode);
 
-  return hasFlag(countryCode) && FlagComponent ? (
-    <FlagComponent style={style} />
+  return url ? (
+    <img src={url} alt={countryCode} style={style} loading="lazy" />
   ) : (
     <div className="text-xs bg-gray-bg px-1 rounded-sm color-white">N/A</div>
   );

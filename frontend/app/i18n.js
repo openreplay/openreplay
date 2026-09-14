@@ -1,26 +1,44 @@
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import resourcesToBackend from 'i18next-resources-to-backend';
 import { initReactI18next } from 'react-i18next';
 
-// Import translation files
 import en from './locales/en.json';
-import es from './locales/es.json';
-import fr from './locales/fr.json';
-import ko from './locales/ko.json';
-import ru from './locales/ru.json';
-import zh from './locales/zh.json';
 
-i18n
+// Only `en` is bundled. It is the fallback language, so it has to be present
+// before the first render; the other five are fetched on demand. Bundling all
+// six put ~190KB gzip of translations on the critical path, the large majority
+// of it for languages a given user never selects.
+const lazyLocales = {
+  es: () => import('./locales/es.json'),
+  fr: () => import('./locales/fr.json'),
+  ko: () => import('./locales/ko.json'),
+  ru: () => import('./locales/ru.json'),
+  zh: () => import('./locales/zh.json'),
+};
+
+export const i18nReady = i18n
   .use(LanguageDetector)
+  .use(
+    resourcesToBackend((lng, _ns, cb) => {
+      const load = lazyLocales[lng];
+      if (!load) {
+        // `en` is already in `resources`, and an unknown code falls back to it.
+        cb(null, {});
+        return;
+      }
+      load()
+        .then((mod) => cb(null, mod.default))
+        .catch(cb);
+    }),
+  )
   .use(initReactI18next)
   .init({
+    // Without this i18next treats the bundled `en` as "everything is loaded"
+    // and never calls the backend for the other languages.
+    partialBundledLanguages: true,
     resources: {
       en: { translation: en },
-      fr: { translation: fr },
-      ru: { translation: ru },
-      es: { translation: es },
-      zh: { translation: zh },
-      ko: { translation: ko },
     },
     lng: localStorage.getItem('i18nextLng') || 'en',
     fallbackLng: 'en',
@@ -30,6 +48,12 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
+    },
+    // The app has no Suspense boundary above the router, so a suspending
+    // useTranslation would take the whole tree down. initialize.tsx awaits
+    // `i18nReady` instead, which is a no-op microtask for `en`.
+    react: {
+      useSuspense: false,
     },
   });
 

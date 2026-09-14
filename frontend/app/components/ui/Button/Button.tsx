@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
-import { CircularLoader, Icon } from 'UI';
+import CircularLoader from '../CircularLoader';
+import Icon from '../Icon';
 import { Tooltip } from 'antd';
 
 interface Props {

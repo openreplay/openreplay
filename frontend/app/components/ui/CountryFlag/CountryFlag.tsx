@@ -1,6 +1,7 @@
 import React, { FC, CSSProperties, memo } from 'react';
 import cn from 'classnames';
-import { Icon, TextEllipsis } from 'UI';
+import Icon from '../Icon';
+import TextEllipsis from '../TextEllipsis';
 import { Tooltip } from 'antd';
 import { countries } from 'App/constants';
 import CountryFlagIcon from 'Shared/CountryFlagIcon';

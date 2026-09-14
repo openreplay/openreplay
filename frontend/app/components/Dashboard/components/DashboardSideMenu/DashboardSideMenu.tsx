@@ -1,5 +1,5 @@
 import React from 'react';
-import { SideMenuitem } from 'UI';
+import { SideMenuItem } from 'UI';
 import { useLocation, useNavigate } from 'App/routing';
 import { withSiteId, metrics, dashboard, alerts } from 'App/routes';
 
@@ -22,7 +22,7 @@ function DashboardSideMenu(props: Props) {
     <div>
       {/* <SideMenuHeader className="mb-4 flex items-center" text="Dashboard" /> */}
       <div className="w-full">
-        <SideMenuitem
+        <SideMenuItem
           active={isDashboards}
           id="menu-manage-alerts"
           title="Dashboards"
@@ -32,7 +32,7 @@ function DashboardSideMenu(props: Props) {
       </div>
       <div className="w-full my-2" />
       <div className="w-full">
-        <SideMenuitem
+        <SideMenuItem
           active={isMetric}
           id="menu-manage-alerts"
           title="Cards"
@@ -42,7 +42,7 @@ function DashboardSideMenu(props: Props) {
       </div>
       <div className="w-full my-2" />
       <div className="w-full">
-        <SideMenuitem
+        <SideMenuItem
           active={isAlerts}
           id="menu-manage-alerts"
           title="Alerts"

@@ -178,6 +178,54 @@ export default [
       'no-undef': 'off', // Turn off no-undef for test files since Jest globals are handled
     },
   },
+  // ── UI component library: one way in, one way out ────────────────────────
+  // App code reaches the library only through the 'UI' barrel. The library
+  // itself never imports its own barrel — that is a circular dependency, and it
+  // was how 32 of these components used to import each other.
+  {
+    files: ['app/**/*.{ts,tsx,js,jsx}'],
+    ignores: ['app/components/ui/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              // UI/Icons/* is the generated icon set, not part of the barrel's
+              // API — Icon resolves those by name at runtime.
+              regex: '^UI/(?!Icons/)',
+              message:
+                "Import from the 'UI' barrel instead, e.g. import { Icon } from 'UI'.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['app/components/ui/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'UI',
+              message:
+                'Circular: the UI library must not import its own barrel. Use a relative import, e.g. ../Icon.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['UI/*'],
+              message:
+                'Circular: use a relative import instead, e.g. ../Icon.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Apply prettier as last to override other formatting rules
   prettierConfig,
 ];

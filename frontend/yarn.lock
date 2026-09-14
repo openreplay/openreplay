@@ -8690,6 +8690,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"i18next-resources-to-backend@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "i18next-resources-to-backend@npm:1.2.3"
+  dependencies:
+    "@babel/runtime": "npm:^7.23.2"
+  checksum: 10c1/49dee39430ef9dece3569ac078dfc47125f0f4a9ef2f4ca2e83884f174980809cc0186485bdef530dddc906b828122630144dfb5ba60cba97fc3d46207f667ba
+  languageName: node
+  linkType: hard
+
 "i18next@npm:^24.2.3":
   version: 24.2.3
   resolution: "i18next@npm:24.2.3"
@@ -11768,6 +11777,7 @@ __metadata:
     html-to-image: "npm:^1.11.13"
     i18next: "npm:^24.2.3"
     i18next-browser-languagedetector: "npm:^8.2.0"
+    i18next-resources-to-backend: "npm:^1.2.3"
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     jspdf: "npm:4.2.1"

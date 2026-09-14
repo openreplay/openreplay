@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';

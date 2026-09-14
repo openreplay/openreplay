@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import styles from './noContent.module.css';
 
 interface Props {

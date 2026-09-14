@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
-import { Icon, Tooltip } from 'UI';
+import Icon from '../Icon';
+import Tooltip from '../Tooltip';
 
 export default function QuestionMarkHint({ content, ...props }) {
   return (

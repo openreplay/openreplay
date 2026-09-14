@@ -1,6 +1,7 @@
 import cn from 'classnames';
 import React from 'react';
-import { Icon, Link } from 'UI';
+import Icon from '../Icon';
+import Link from '../Link';
 
 import cls from './backLink.module.css';
 

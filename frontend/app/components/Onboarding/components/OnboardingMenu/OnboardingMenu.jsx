@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, SideMenuitem } from 'UI';
+import { Icon, SideMenuItem } from 'UI';
 import cn from 'classnames';
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
 import { useNavigate, useParams } from 'App/routing';
@@ -52,10 +52,10 @@ function OnboardingMenu(props) {
 
   return (
     <div>
-      <SideMenuitem title="Install OpenReplay" iconName="tools" active />
-      <SideMenuitem title="Identify Users" iconName="tools" active />
-      <SideMenuitem title="Invite Collaborators" iconName="tools" active />
-      <SideMenuitem title="Integrations" iconName="tools" active />
+      <SideMenuItem title="Install OpenReplay" iconName="tools" active />
+      <SideMenuItem title="Identify Users" iconName="tools" active />
+      <SideMenuItem title="Invite Collaborators" iconName="tools" active />
+      <SideMenuItem title="Integrations" iconName="tools" active />
 
       <Item
         icon="check"

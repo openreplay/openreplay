@@ -14,6 +14,8 @@ export default {
   moduleNameMapper: {
     '^Shared/AnimatedSVG/AnimatedSVG$':
       '<rootDir>/frontend/tests/mocks/AnimatedSVGMock.tsx',
+    // Uses `import.meta.glob`, which Jest cannot parse.
+    '^Shared/flagAssets$': '<rootDir>/frontend/tests/mocks/flagAssets.mock.js',
     '^Types/(.+)$': '<rootDir>/frontend/app/types/$1',
     '^App/(.+)$': '<rootDir>/frontend/app/$1',
     '\\.(css|less)$': '<rootDir>/frontend/tests/mocks/style.mock.js',

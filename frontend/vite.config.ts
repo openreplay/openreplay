@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import react from '@vitejs/plugin-react';
 import tailwindPostcss from '@tailwindcss/postcss';
 import postcssImport from 'postcss-import';
@@ -16,6 +18,53 @@ const APP_ASSETS_DIR = path.resolve(__dirname, 'app/assets');
 const PLAYER_DIR = path.resolve(__dirname, '../player');
 const PLAYER_SRC_DIR = path.resolve(PLAYER_DIR, 'src');
 const STYLES_IMPORT_DIR = path.resolve(__dirname, 'app/styles/import');
+
+const COMPRESSIBLE_RE = /\.(js|css|html|json|svg|map)$/;
+const COMPRESS_MIN_BYTES = 1024;
+
+/* Precompresses the build so nginx can serve the bytes straight off disk
+   (`gzip_static` / `brotli_static`) instead of re-compressing every asset on
+   every request. Precompressing also lets us use the slowest, smallest settings,
+   which on-the-fly compression can't afford. */
+const precompress = () => {
+  let outDir = 'public';
+
+  return {
+    name: 'precompress-assets',
+    apply: 'build' as const,
+    // outDir is overridable on the CLI, so take whatever Vite resolved.
+    configResolved(resolved: { build: { outDir: string } }) {
+      outDir = resolved.build.outDir;
+    },
+    closeBundle() {
+      const walk = (dir: string): string[] =>
+        fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+          const p = path.join(dir, e.name);
+          return e.isDirectory() ? walk(p) : [p];
+        });
+
+      const root = path.resolve(__dirname, outDir);
+      if (!fs.existsSync(root)) return;
+
+      for (const file of walk(root)) {
+        if (!COMPRESSIBLE_RE.test(file)) continue;
+        const raw = fs.readFileSync(file);
+        if (raw.length < COMPRESS_MIN_BYTES) continue;
+
+        fs.writeFileSync(`${file}.gz`, zlib.gzipSync(raw, { level: 9 }));
+        fs.writeFileSync(
+          `${file}.br`,
+          zlib.brotliCompressSync(raw, {
+            params: {
+              [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+              [zlib.constants.BROTLI_PARAM_SIZE_HINT]: raw.length,
+            },
+          }),
+        );
+      }
+    },
+  };
+};
 
 const transformColorsToCssVars = (
   colorsObj: Record<string, unknown>,
@@ -103,6 +152,7 @@ export default defineConfig(({ mode }) => {
           server.watcher.add(PLAYER_SRC_DIR);
         },
       },
+      precompress(),
     ],
     resolve: {
       alias: [
@@ -179,6 +229,31 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       sourcemap: env.SOURCEMAP === 'true',
       target: 'es2022',
+      // Each flag SVG is under the 4KB inline threshold, so by default all ~267
+      // of them get base64'd straight back into the chunk that globs them —
+      // bigger than the React components they replaced. Emit them as files so
+      // the bundle keeps only URLs and the browser fetches the few in view.
+      assetsInlineLimit: (filePath: string) =>
+        filePath.includes('country-flag-icons') ? false : undefined,
+      reportCompressedSize: false,
+      rolldownOptions: {
+        output: {
+          // Without groups rolldown collapses every shared dependency into one
+          // ~1.3MB chunk the entry preloads. Splitting by package keeps the
+          // rarely-changing vendors (react, antd) on their own long-lived cache
+          // entries and lets chunks only a lazy route needs stay out of the
+          // entry graph.
+          advancedChunks: {
+            groups: [
+              {
+                name: 'react',
+                test: /node_modules[/\\](react|react-dom|scheduler)[/\\]/,
+                priority: 40,
+              },
+            ],
+          },
+        },
+      },
     },
   };
 });

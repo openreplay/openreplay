@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 import styles from './tagBadge.module.css';
 
 export default class TagBadge extends React.PureComponent {

@@ -1,11 +1,16 @@
 import React, { useEffect } from 'react';
 import { useModal } from 'App/components/Modal';
-import AlertTriggersModal from 'Shared/AlertTriggersModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Badge, Button, Tooltip } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+
+// Slide-out panel content, only mounted on click — keep it out of the header's
+// eager import tree.
+const AlertTriggersModal = React.lazy(
+  () => import('Shared/AlertTriggersModal'),
+);
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 
@@ -32,7 +37,14 @@ function Notifications() {
       <Tooltip title={t('Alerts')}>
         <Button
           icon={<BellOutlined />}
-          onClick={() => showModal(<AlertTriggersModal />, { right: true })}
+          onClick={() =>
+            showModal(
+              <React.Suspense fallback={null}>
+                <AlertTriggersModal />
+              </React.Suspense>,
+              { right: true },
+            )
+          }
         >
           {/* <Icon name='bell' size='18' color='gray-dark' /> */}
         </Button>

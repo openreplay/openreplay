@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icon, Popover } from 'UI';
+import Icon from '../Icon';
+import Popover from '../Popover';
 import { Button, Tooltip } from 'antd';
 import { EllipsisVertical } from 'lucide-react';
 import cn from 'classnames';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
-import { SideMenuitem, Icon } from 'UI';
+import { SideMenuItem, Icon } from 'UI';
 import { withSiteId, dashboardSelected } from 'App/routes';
 import { useNavigate } from 'App/routing';
 import { useModal } from 'App/components/Modal';
@@ -34,7 +34,7 @@ function DashbaordListModal(props: Props) {
       <div>
         {dashboards.map((item: any) => (
           <div key={item.dashboardId} className="px-4">
-            <SideMenuitem
+            <SideMenuItem
               key={item.dashboardId}
               active={item.dashboardId === activeDashboardId}
               title={item.name}

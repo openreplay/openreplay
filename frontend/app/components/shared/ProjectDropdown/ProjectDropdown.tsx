@@ -10,9 +10,15 @@ import { useStore } from 'App/mstore';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import { useLocation } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
-import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import { useModal } from 'Components/ModalContext';
 import { Icon } from 'UI';
+
+// Only ever rendered into a modal on click, but an eager import put its whole
+// antd Form/Input/Segmented tree in the entry chunk — this dropdown is in the
+// header, so it loads on every page.
+const ProjectForm = React.lazy(
+  () => import('Components/Client/Projects/ProjectForm'),
+);
 
 const { Text } = Typography;
 
@@ -60,7 +66,12 @@ function ProjectDropdown() {
 
   const addProjectClickHandler = () => {
     initProject({});
-    openModal(<ProjectForm onClose={onClose} />, { title: 'New Project' });
+    openModal(
+      <React.Suspense fallback={null}>
+        <ProjectForm onClose={onClose} />
+      </React.Suspense>,
+      { title: 'New Project' },
+    );
   };
 
   const menuItems: MenuProps['items'] = sites.map((site) => ({

@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import SVG, { IconNames } from 'UI/SVG';
+import SVG, { IconNames } from '../SVG';
 import styles from './icon.module.css';
 
 interface IProps {

@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import React from 'react';
 import { Input as AntInput } from 'antd';
-import { Icon } from 'UI';
+import Icon from '../Icon';
 
 interface Props {
   wrapperClassName?: string;
