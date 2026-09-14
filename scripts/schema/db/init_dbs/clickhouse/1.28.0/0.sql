@@ -6,4 +6,4 @@ SELECT throwIf((SELECT openreplay_migration_state()) > -1,
                (SELECT openreplay_migration_state()) || ']') AS check;
 
 CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.28.0';
-CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> -1;
+CREATE OR REPLACE FUNCTION openreplay_migration_state AS() -> 0;
