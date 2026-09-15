@@ -1,3 +1,7 @@
+## 18.1.6
+
+- fixing analytics sdk batcher squash operation to keep user_id property in mixed sends
+
 ## 18.1.5
 
 - improve click labels and selectors computation

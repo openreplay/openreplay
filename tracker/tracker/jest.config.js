@@ -26,7 +26,9 @@ const config = {
       },
     ],
   },
-  transformIgnorePatterns: ['/node_modules/(?!error-stack-parser-es/)'],
+  // bun nests real packages under node_modules/.bun/<pkg>@<ver>/node_modules/<pkg>,
+  // so the allowlist has to look ahead past the whole rest of the path.
+  transformIgnorePatterns: ['/node_modules/(?!.*error-stack-parser-es)'],
 }
 
 export default config
