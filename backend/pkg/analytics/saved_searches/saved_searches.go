@@ -38,7 +38,7 @@ type SegmentsListItem struct {
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Get(projectID int, searchID string) (*model.SavedSearch, error)
-	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error)
+	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, int64, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
 	ListForFilters(projectID, userID int) ([]SegmentsListItem, error)
@@ -88,6 +88,11 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 		isPublic = *req.IsPublic
 	}
 
+	isCapture := false
+	if req.IsCapture != nil {
+		isCapture = *req.IsCapture
+	}
+
 	var expiresAt *time.Time
 	if isShare {
 		exp := time.Now().AddDate(0, expiryMonths, 0)
@@ -96,8 +101,8 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 
 	const insertQuery = `
 		INSERT INTO public.saved_searches (
-			project_id, user_id, name, is_public, is_share, search_data, expires_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7)
+			project_id, user_id, name, is_public, is_share, is_capture, search_data, expires_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING search_id, created_at
 	`
 
@@ -110,6 +115,7 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 		req.Name,
 		isPublic,
 		isShare,
+		isCapture,
 		searchDataJSON,
 		expiresAt,
 	).Scan(&searchID, &createdAt)
@@ -124,6 +130,7 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 		Name:      req.Name,
 		IsPublic:  isPublic,
 		IsShare:   isShare,
+		IsCapture: isCapture,
 		Data:      req.Data,
 		CreatedAt: createdAt,
 	}, nil
@@ -133,8 +140,8 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 	ctx := context.Background()
 
 	const selectQuery = `
-		SELECT 
-			search_id, project_id, user_id, name, is_public, is_share, search_data, created_at, expires_at, deleted_at
+		SELECT
+			search_id, project_id, user_id, name, is_public, is_share, is_capture, search_data, created_at, expires_at, deleted_at
 		FROM public.saved_searches
 		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
 			AND (expires_at IS NULL OR expires_at > NOW())
@@ -150,6 +157,7 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 		&savedSearch.Name,
 		&savedSearch.IsPublic,
 		&savedSearch.IsShare,
+		&savedSearch.IsCapture,
 		&searchDataJSON,
 		&savedSearch.CreatedAt,
 		&savedSearch.ExpiresAt,
@@ -181,7 +189,7 @@ var sortColumns = map[string]string{
 	"userName":  "u.name",
 }
 
-func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error) {
+func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, int64, error) {
 	column, ok := sortColumns[sort]
 	if !ok {
 		column = sortColumns["createdAt"]
@@ -193,7 +201,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 
 	selectQuery := fmt.Sprintf(`
 		SELECT
-			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share,
+			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share, ss.is_capture,
 			ss.search_data, ss.created_at, ss.expires_at, ss.deleted_at,
 			COUNT(*) OVER() AS total_count
 		FROM public.saved_searches ss
@@ -208,7 +216,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 	rows, err := s.pgconn.Query(selectQuery, projectID, userID, limit, offset)
 	if err != nil {
 		s.log.Error(ctx, "list saved searches: %v", err)
-		return nil, 0, fmt.Errorf("list saved searches: %w", err)
+		return nil, 0, 0, fmt.Errorf("list saved searches: %w", err)
 	}
 	defer rows.Close()
 
@@ -227,6 +235,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 			&savedSearch.Name,
 			&savedSearch.IsPublic,
 			&savedSearch.IsShare,
+			&savedSearch.IsCapture,
 			&searchDataJSON,
 			&savedSearch.CreatedAt,
 			&savedSearch.ExpiresAt,
@@ -236,11 +245,11 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 
 		if err != nil {
 			s.log.Error(ctx, "scan saved search: %v", err)
-			return nil, 0, fmt.Errorf("scan saved search: %w", err)
+			return nil, 0, 0, fmt.Errorf("scan saved search: %w", err)
 		}
 
 		if err := json.Unmarshal(searchDataJSON, &savedSearch.Data); err != nil {
-			return nil, 0, fmt.Errorf("unmarshal search data: %w", err)
+			return nil, 0, 0, fmt.Errorf("unmarshal search data: %w", err)
 		}
 
 		searches = append(searches, &savedSearch)
@@ -248,7 +257,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 
 	if err := rows.Err(); err != nil {
 		s.log.Error(ctx, "rows error: %v", err)
-		return nil, 0, fmt.Errorf("rows error: %w", err)
+		return nil, 0, 0, fmt.Errorf("rows error: %w", err)
 	}
 
 	for _, ss := range searches {
@@ -260,7 +269,40 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 		ss.UsersCount = stats.UsersCount
 	}
 
-	return searches, total, nil
+	totalSessions := s.getTotalSessions(ctx, projectID)
+
+	return searches, total, totalSessions, nil
+}
+
+func (s *savedSearchesImpl) getTotalSessions(ctx context.Context, projectID int) int64 {
+	if s.search == nil {
+		return 0
+	}
+
+	cacheKey := fmt.Sprintf("saved_search_stats:%d:total", projectID)
+	if cached, ok := s.statsCache.GetAndRefresh(cacheKey); ok {
+		if v, ok := cached.(searchStats); ok && time.Since(v.ComputedAt) < statsFreshnessWindow {
+			return v.SessionsCount
+		}
+	}
+
+	now := time.Now()
+	req := &model.SessionsSearchRequest{
+		StartDate: now.AddDate(0, 0, -statsWindowDays).UnixMilli(),
+		EndDate:   now.UnixMilli(),
+	}
+
+	qctx, cancel := context.WithTimeout(ctx, statsQueryTimeout)
+	defer cancel()
+
+	sessionsCount, _, err := s.search.GetCounts(qctx, projectID, req)
+	if err != nil {
+		s.log.Warn(ctx, "saved search total sessions: %.200s", err)
+		return 0
+	}
+
+	s.statsCache.Set(cacheKey, searchStats{SessionsCount: sessionsCount, ComputedAt: time.Now()})
+	return sessionsCount
 }
 
 func (s *savedSearchesImpl) getSearchStats(ctx context.Context, projectID int, data *model.SavedSearchData) searchStats {
@@ -323,10 +365,15 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 		isPublic = *req.IsPublic
 	}
 
+	isCapture := false
+	if req.IsCapture != nil {
+		isCapture = *req.IsCapture
+	}
+
 	const updateQuery = `
 		UPDATE public.saved_searches
-		SET name=$1, is_public=$2, search_data=$3
-		WHERE search_id=$4 AND project_id=$5 AND deleted_at IS NULL
+		SET name=$1, is_public=$2, is_capture=$3, search_data=$4
+		WHERE search_id=$5 AND project_id=$6 AND deleted_at IS NULL
 		RETURNING is_share, created_at
 	`
 
@@ -336,6 +383,7 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 		updateQuery,
 		req.Name,
 		isPublic,
+		isCapture,
 		searchDataJSON,
 		searchID,
 		projectID,
@@ -354,6 +402,7 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 		Name:      req.Name,
 		IsPublic:  isPublic,
 		IsShare:   isShare,
+		IsCapture: isCapture,
 		Data:      req.Data,
 		CreatedAt: createdAt,
 	}, nil

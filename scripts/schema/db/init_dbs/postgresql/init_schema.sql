@@ -1157,6 +1157,7 @@ CREATE TABLE IF NOT EXISTS public.saved_searches
     name        varchar(255)                         DEFAULT NULL,
     is_public   boolean                     NOT NULL DEFAULT FALSE,
     is_share    boolean                     NOT NULL DEFAULT FALSE,
+    is_capture  boolean                     NOT NULL DEFAULT FALSE,
     search_data jsonb                       NOT NULL,
     created_at  timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     expires_at  timestamp without time zone NULL     DEFAULT NULL,
