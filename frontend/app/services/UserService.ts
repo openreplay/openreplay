@@ -1,15 +1,15 @@
-import APIClient from 'App/api_client';
+import APIClient, { apiClient } from 'App/api_client';
 import User from 'App/mstore/types/user';
 
 export default class UserService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   initClient(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   all() {
@@ -32,14 +32,12 @@ export default class UserService {
       return this.client
         .put(`/client/members/${user.userId}`, data)
         .then((r) => r.json())
-        .then((response: { data: any }) => response.data || {})
-        .catch((e) => Promise.reject(e));
+        .then((response: { data: any }) => response.data || {});
     }
     return this.client
       .post('/client/members', data)
       .then((r) => r.json())
-      .then((response: { data: any }) => response.data || {})
-      .catch((e) => Promise.reject(e));
+      .then((response: { data: any }) => response.data || {});
   }
 
   generateInviteCode(userId: any): Promise<any> {
@@ -53,8 +51,7 @@ export default class UserService {
     return this.client
       .delete(`/client/members/${userId}`)
       .then((r) => r.json())
-      .then((response: { data: any }) => response.data || {})
-      .catch((e) => Promise.reject(e));
+      .then((response: { data: any }) => response.data || {});
   }
 
   getRoles() {
@@ -117,8 +114,7 @@ export default class UserService {
     return this.client
       .post('/users/modules', module)
       .then((r) => r.json())
-      .then((response: { data: any }) => response.data || {})
-      .catch((e) => Promise.reject(e));
+      .then((response: { data: any }) => response.data || {});
   }
 
   login(data: any) {

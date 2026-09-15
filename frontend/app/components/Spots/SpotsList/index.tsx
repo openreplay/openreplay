@@ -31,13 +31,23 @@ function SpotsList() {
   };
 
   const onDelete = async (spotId: string) => {
-    await spotStore.deleteSpot([spotId]);
+    try {
+      await spotStore.deleteSpot([spotId]);
+    } catch (e) {
+      message.error(t('Failed to delete Spot'));
+      return;
+    }
     setSelectedSpots(selectedSpots.filter((s) => s !== spotId));
   };
 
   const batchDelete = async () => {
     const deletedCount = selectedSpots.length;
-    await spotStore.deleteSpot(selectedSpots);
+    try {
+      await spotStore.deleteSpot(selectedSpots);
+    } catch (e) {
+      message.error(t('Failed to delete Spots'));
+      return;
+    }
     setSelectedSpots([]);
 
     const remainingItemsOnPage = spotStore.spots.length - deletedCount;
@@ -54,7 +64,9 @@ function SpotsList() {
   };
 
   const onRename = (id: string, newName: string) =>
-    spotStore.updateSpot(id, { name: newName });
+    spotStore.updateSpot(id, { name: newName }).catch(() => {
+      message.error(t('Failed to rename Spot'));
+    });
 
   const onVideo = (id: string) => spotStore.getVideo(id);
 

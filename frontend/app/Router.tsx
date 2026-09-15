@@ -88,9 +88,8 @@ const Router: React.FC = () => {
     if (isSpotCb) {
       localStorage.setItem(SPOT_ONBOARDING, 'true');
     }
-    // /account and /projects don't depend on each other — the tenantId from
-    // /account is only used to pick a site once the list has arrived — so put
-    // them in flight together instead of chaining two round-trips.
+    // tenantId is only needed to pick a site once the list has arrived, so
+    // both requests can be in flight at once.
     const sitesPending = projectsStore.prefetchList();
     const userData = await fetchUserInfo();
     const siteIdFromPath = location.pathname.split('/')[1];

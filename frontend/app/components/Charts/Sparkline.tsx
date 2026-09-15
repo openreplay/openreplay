@@ -7,29 +7,26 @@ echarts.use([BarChart, LineChart]);
 
 interface Props {
   data: Record<string, any>[];
-  /** Key holding the value to plot. */
   valueKey: string;
   type?: 'bar' | 'area';
   color?: string;
-  /** Vertical gradient fill, top -> bottom. Ignored for `bar`. */
+  /** Vertical fill, top -> bottom. Ignored for `bar`. */
   gradient?: [string, string];
   height?: number;
   width?: number | string;
   name?: string;
-  /** Rendered inside the tooltip for the hovered row; no tooltip when omitted. */
+  /** Omit for no tooltip. */
   tooltipFormatter?: (row: Record<string, any>) => string;
-  /** Lower bound of the value axis — recharts' `baseValue`. */
   baseValue?: number;
-  /** Stroke on top of an area fill. 0 (the default) draws fill only. */
+  /** 0, the default, draws the fill without a stroke. */
   strokeWidth?: number;
   strokeColor?: string;
   strokeOpacity?: number;
 }
 
 /**
- * Axis-less inline chart for the small trend/preview graphs (error list rows,
- * the errors trend block, the session performance strip). These used recharts
- * with every axis hidden, so nothing here needs a grid, legend or axis labels.
+ * Axis-less inline chart for the small trend/preview graphs — error list rows,
+ * the errors trend block, the session performance strip.
  */
 function Sparkline(props: Props) {
   const {
@@ -67,7 +64,6 @@ function Sparkline(props: Props) {
     chart.setOption({
       animation: false,
       backgroundColor: 'transparent',
-      // The whole point is an axis-less strip: no gutters at all.
       grid: { left: 0, right: 0, top: 2, bottom: 0, containLabel: false },
       xAxis: {
         type: 'category',

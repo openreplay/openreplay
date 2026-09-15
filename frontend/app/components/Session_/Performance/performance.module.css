@@ -1,6 +1,4 @@
 .tooltipWrapper {
-	/* Token-based so the card follows the theme — a hardcoded white background
-	   showed up as a white box inside a dark frame in dark mode. */
 	background: $white;
 	padding: 2px 5px;
 	border-radius: 3px;

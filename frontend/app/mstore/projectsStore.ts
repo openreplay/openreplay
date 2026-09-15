@@ -146,17 +146,12 @@ export default class BaseProjectsStore {
     }
   };
 
-  /**
-   * Starts the /projects request without waiting for anything else. The
-   * response is only *interpreted* once the tenantId from /account is known,
-   * so the two can be in flight at the same time — pass the returned promise
-   * to fetchList as `pending`.
-   */
+  /** Pass the returned promise to `fetchList` as `pending`. */
   prefetchList = () => {
     this.setSitesLoading(true);
     const pending = projectsService.fetchList();
     // fetchList awaits this inside its own try/catch; this keeps an early
-    // rejection from surfacing as an unhandled rejection in the meantime.
+    // rejection from surfacing as unhandled in the meantime.
     pending.catch(() => {});
     return pending;
   };

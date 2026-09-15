@@ -312,8 +312,8 @@ export const positionOfTheNumber = (min, max, value, length) => {
 };
 
 export const convertElementToImage = async (el: HTMLElement) => {
-  // This barrel is imported by ~100 modules, so a static import would park
-  // html-to-image on the critical path for the one PDF-export flow that uses it.
+  // ~100 modules import this barrel; a static import would park html-to-image
+  // on the critical path for the one PDF-export flow that uses it.
   const htmlToImage = await import('html-to-image');
   // const fontEmbedCss = await htmlToImage.getFontEmbedCSS(el);
   const image = await htmlToImage.toJpeg(el, {

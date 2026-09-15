@@ -5,10 +5,8 @@ import { initReactI18next } from 'react-i18next';
 
 import en from './locales/en.json';
 
-// Only `en` is bundled. It is the fallback language, so it has to be present
-// before the first render; the other five are fetched on demand. Bundling all
-// six put ~190KB gzip of translations on the critical path, the large majority
-// of it for languages a given user never selects.
+// Only `en` is bundled — it is the fallback, so it must be there before the
+// first render. The other five were ~190KB gzip on the critical path.
 const lazyLocales = {
   es: () => import('./locales/es.json'),
   fr: () => import('./locales/fr.json'),
@@ -23,7 +21,7 @@ export const i18nReady = i18n
     resourcesToBackend((lng, _ns, cb) => {
       const load = lazyLocales[lng];
       if (!load) {
-        // `en` is already in `resources`, and an unknown code falls back to it.
+        // `en` is already in `resources`; an unknown code falls back to it.
         cb(null, {});
         return;
       }
@@ -49,9 +47,8 @@ export const i18nReady = i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
     },
-    // The app has no Suspense boundary above the router, so a suspending
-    // useTranslation would take the whole tree down. initialize.tsx awaits
-    // `i18nReady` instead, which is a no-op microtask for `en`.
+    // No Suspense boundary above the router, so a suspending useTranslation
+    // would take the whole tree down. initialize.tsx awaits `i18nReady`.
     react: {
       useSuspense: false,
     },

@@ -178,10 +178,8 @@ export default [
       'no-undef': 'off', // Turn off no-undef for test files since Jest globals are handled
     },
   },
-  // ── UI component library: one way in, one way out ────────────────────────
-  // App code reaches the library only through the 'UI' barrel. The library
-  // itself never imports its own barrel — that is a circular dependency, and it
-  // was how 32 of these components used to import each other.
+  // App code reaches the UI library only through the 'UI' barrel; the library
+  // itself never imports its own barrel, which would be circular.
   {
     files: ['app/**/*.{ts,tsx,js,jsx}'],
     ignores: ['app/components/ui/**'],
@@ -191,8 +189,7 @@ export default [
         {
           patterns: [
             {
-              // UI/Icons/* is the generated icon set, not part of the barrel's
-              // API — Icon resolves those by name at runtime.
+              // UI/Icons/* is the generated icon set, not barrel API.
               regex: '^UI/(?!Icons/)',
               message:
                 "Import from the 'UI' barrel instead, e.g. import { Icon } from 'UI'.",

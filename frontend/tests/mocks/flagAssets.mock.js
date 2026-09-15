@@ -1,6 +1,4 @@
-// app/components/shared/flagAssets.ts builds its lookup with `import.meta.glob`,
-// which Jest's CJS transform cannot parse. Tests only care that a code maps to
-// some URL, so return a predictable stub.
+// Stands in for flagAssets.ts, which Jest cannot parse (`import.meta.glob`).
 module.exports = {
   __esModule: true,
   flagUrl: (countryCode) =>
