@@ -14,7 +14,7 @@ export default class FunnelStore {
 
   instance: IFunnel | null = null;
 
-  period: Period = Period({ rangeName: LAST_7_DAYS });
+  period: ReturnType<typeof Period> = Period({ rangeName: LAST_7_DAYS });
 
   search: string = '';
 

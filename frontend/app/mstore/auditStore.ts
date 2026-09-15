@@ -21,7 +21,7 @@ export default class AuditStore {
 
   order: string = 'desc';
 
-  period: Period | null = Period({ rangeName: LAST_7_DAYS });
+  period: ReturnType<typeof Period> | null = Period({ rangeName: LAST_7_DAYS });
 
   constructor() {
     makeAutoObservable(this, {

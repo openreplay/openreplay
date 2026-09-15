@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string */
 import { useStore } from '@/mstore';
 import { Filter } from '@/mstore/types/filterConstants';
 import { Button, Card, Space } from 'antd';

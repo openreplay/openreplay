@@ -233,7 +233,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 );
 
 interface ExampleCardsGridProps {
-  items: JSX.Element[];
+  items: React.JSX.Element[];
 }
 
 const ExampleCardsGrid: React.FC<ExampleCardsGridProps> = ({ items }) => (

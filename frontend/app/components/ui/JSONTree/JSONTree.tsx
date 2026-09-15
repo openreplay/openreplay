@@ -50,11 +50,11 @@ interface Props {
 function JSONTree(props: Props) {
   return (
     <JsonView
+    {...props}
       src={updateObjectLink(props.src)}
       collapsed={1}
       displaySize="collapsed"
       enableClipboard
-      {...props}
     />
   );
 }
