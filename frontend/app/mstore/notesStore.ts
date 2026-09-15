@@ -1,6 +1,7 @@
 import { makeAutoObservable, action } from 'mobx';
 
 import { notesService } from 'App/services';
+import { queryClient } from 'App/queryClient';
 import { Note, NotesFilter, WriteNote, iTag } from 'App/services/NotesService';
 
 export const noNoteMsg = 'No Comment';
@@ -113,6 +114,7 @@ export default class NotesStore {
     try {
       const addedNote = await notesService.addNote(sessionId, note);
       this.appendNote(addedNote);
+      void queryClient.invalidateQueries({ queryKey: ['notes'] });
       return addedNote;
     } catch (e) {
       console.error(e);
@@ -125,6 +127,7 @@ export default class NotesStore {
     this.setLoading(true);
     try {
       const deleted = await notesService.deleteNote(noteId);
+      void queryClient.invalidateQueries({ queryKey: ['notes'] });
       return deleted;
     } catch (e) {
       console.error(e);
@@ -138,6 +141,7 @@ export default class NotesStore {
     try {
       delete note['thumbnail'];
       const updated = await notesService.updateNote(noteId, note);
+      void queryClient.invalidateQueries({ queryKey: ['notes'] });
       return updated;
     } catch (e) {
       console.error(e);

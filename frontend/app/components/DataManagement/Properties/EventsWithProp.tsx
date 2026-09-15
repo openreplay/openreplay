@@ -33,7 +33,7 @@ function EventsWithProp({ propName }: { propName: string }) {
   };
   const { t } = useTranslation();
   const { data = { events: [], total: 0 }, isPending } = useQuery({
-    queryKey: ['distinct-event-props-list', propName],
+    queryKey: ['events-with-prop', siteId, propName],
     queryFn: () => fetchListByProp(propName),
   });
 

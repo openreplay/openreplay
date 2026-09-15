@@ -1,4 +1,5 @@
 import { client } from '@/mstore';
+import { queryClient } from '@/queryClient';
 
 export interface DistinctEvent {
   name: string;
@@ -50,5 +51,9 @@ export function updateEventProperty(
 ): Promise<void> {
   return client
     .put(`/PROJECT_ID/lexicon/events`, payload)
-    .then((res) => res.json());
+    .then((res) => res.json())
+    .then((json) => {
+      void queryClient.invalidateQueries({ queryKey: ['events-with-prop'] });
+      return json;
+    });
 }
