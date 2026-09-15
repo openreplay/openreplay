@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.log import sanitize
 from schemas import schemas, MCP
 
 logger = logging.getLogger(__name__)
@@ -20,11 +21,13 @@ def get_supported_audience():
 
 def is_mcp_token(token: str) -> bool:
     try:
+        if len(token) < 5 or "." not in token:
+            return False
         decoded_token = jwt.decode(token, options={"verify_signature": False, "verify_exp": False})
         audience = decoded_token.get("aud")
         return audience == AUDIENCE
     except jwt.InvalidTokenError:
-        logger.error(f"Invalid token for is_spot_token: {token}")
+        logger.error(f"Invalid token for is_spot_token: {sanitize(token, max_length=16)}...")
         raise
 
 
