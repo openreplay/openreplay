@@ -203,7 +203,9 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 		sessionConditions = append(sessionConditions, durConds...)
 	}
 
-	tColumns := buildTColumns(stages, eventConditions, p.MetricFormat)
+	// windowFunnel's window covers the whole query range, matching sequenceMatch's unbounded lookahead
+	funnelWindowSeconds := (p.MetricPayload.EndTimestamp-p.MetricPayload.StartTimestamp)/1000 + 1
+	tColumns := buildTColumns(stages, eventConditions, p.MetricFormat, funnelWindowSeconds)
 
 	var innerParts []string
 	if numBreakdowns > 0 {
@@ -221,6 +223,16 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 		"e.created_at < toDateTime(@endTimestamp/1000)",
 		"e.project_id = @projectId",
 		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages)),
+	}
+
+	// Rows matching no stage condition cannot affect the funnel aggregates;
+	// dropping them here shrinks the per-group aggregation state.
+	if len(eventConditions) > 0 {
+		stageOr := make([]string, len(eventConditions))
+		for i, c := range eventConditions {
+			stageOr[i] = "(" + c + ")"
+		}
+		baseWhere = append(baseWhere, "("+strings.Join(stageOr, " OR ")+")")
 	}
 
 	if p.SampleRate > 0 && p.SampleRate < 100 {
@@ -253,11 +265,14 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 	}
 
 	groupColumn := "GROUP BY e.session_id"
+	querySettings := "SETTINGS optimize_aggregation_in_order = 1"
 	if p.MetricFormat == MetricFormatUserCount {
 		groupColumn = "GROUP BY s.user_id"
+		querySettings = ""
 	}
 	if numBreakdowns > 0 {
 		groupColumn = "GROUP BY ALL"
+		querySettings = ""
 	}
 
 	subQuery := fmt.Sprintf(`
@@ -272,7 +287,11 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 
 	stageColumns := make([]string, len(stages))
 	for i := range stages {
-		stageColumns[i] = fmt.Sprintf("coalesce(SUM(S%d), 0) AS stage%d", i+1, i+1)
+		if p.MetricFormat == MetricFormatEventCount {
+			stageColumns[i] = fmt.Sprintf("coalesce(SUM(S%d), 0) AS stage%d", i+1, i+1)
+		} else {
+			stageColumns[i] = fmt.Sprintf("countIf(level >= %d) AS stage%d", i+1, i+1)
+		}
 	}
 
 	var outerParts []string
@@ -288,10 +307,12 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 
 	q := fmt.Sprintf(`
         SELECT %s
-        FROM (%s) AS raw%s`,
+        FROM (%s) AS raw%s
+        %s`,
 		strings.Join(outerParts, ", "),
 		subQuery,
-		outerGroupBy)
+		outerGroupBy,
+		querySettings)
 
 	params := map[string]any{
 		"startTimestamp": p.MetricPayload.StartTimestamp,
@@ -302,31 +323,27 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 	return q, params, nil
 }
 
-func buildTColumns(stages []string, eventConditions []string, metricFormat string) []string {
+func buildTColumns(stages []string, eventConditions []string, metricFormat string, windowSeconds uint64) []string {
 	if len(stages) == 0 {
 		return nil
 	}
-	tColumns := make([]string, len(stages))
 
-	// S1
 	if metricFormat == MetricFormatEventCount {
+		tColumns := make([]string, len(stages))
 		tColumns[0] = fmt.Sprintf("countIf(%s) AS S1", eventConditions[0])
-	} else {
-		tColumns[0] = fmt.Sprintf("anyIf(1, %s) AS S1", eventConditions[0]) // 0/1 per group (session)
+		var pattern string = "(?1)"
+		for i := 1; i < len(stages); i++ {
+			pattern = fmt.Sprintf("%s(?%d)", pattern, i+1)
+			tColumns[i] = fmt.Sprintf("sequenceCount('%s')(toDateTime(e.created_at), %s) AS S%d",
+				pattern, strings.Join(eventConditions[:i+1], ", "), i+1)
+		}
+		return tColumns
 	}
 
-	// S2...Sn
-	var pattern string = "(?1)"
-	for i := 1; i < len(stages); i++ {
-		pattern = fmt.Sprintf("%s(?%d)", pattern, i+1)
-		fn := "sequenceMatch"
-		if metricFormat == MetricFormatEventCount {
-			fn = "sequenceCount"
-		}
-		tColumns[i] = fmt.Sprintf("%s('%s')(toDateTime(e.created_at), %s) AS S%d",
-			fn, pattern, strings.Join(eventConditions[:i+1], ", "), i+1)
-	}
-	return tColumns
+	// Session/user counts: a single windowFunnel state replaces anyIf + one
+	// sequenceMatch per stage; the outer query derives stages via countIf(level >= n).
+	return []string{fmt.Sprintf("windowFunnel(%d)(toDateTime(e.created_at), %s) AS level",
+		windowSeconds, strings.Join(eventConditions, ", "))}
 }
 
 func formatEventNames(stages []string) string {
