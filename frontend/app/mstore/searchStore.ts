@@ -105,6 +105,9 @@ class SearchStore {
   activeTags: any[] = [];
   urlParsed: boolean = false;
   searchInProgress = false;
+
+  /** Excluded from mobx: an observable proxy around it breaks abort(). */
+  searchAbort: AbortController | null = null;
   savedSearchTotal = 0;
   /* untouched server rows behind `list` — Data Management builds its richer
      Segment objects from these (SavedSearch drops the count/capture fields) */
@@ -117,7 +120,10 @@ class SearchStore {
 
   constructor() {
     // the shared request handle is plumbing, not view state
-    makeAutoObservable(this, { savedSearchRequest: false } as any);
+    makeAutoObservable(this, {
+      savedSearchRequest: false,
+      searchAbort: false,
+    } as any);
   }
 
   resetFilters = () => {
@@ -651,7 +657,9 @@ class SearchStore {
     force: boolean = false,
     bookmarked: boolean = false,
   ): Promise<void> {
-    if (this.searchInProgress) return;
+    this.searchAbort?.abort();
+    const controller = new AbortController();
+    this.searchAbort = controller;
 
     let filter = this.instance.toSearch();
     filter = this.applyTagFilter(filter, this.activeTags);
@@ -659,8 +667,8 @@ class SearchStore {
     this.latestRequestTime = filter.startDate;
     this.latestList = [];
     this.searchInProgress = true;
-    await sessionStore
-      .fetchSessions(
+    try {
+      await sessionStore.fetchSessions(
         {
           ...filter,
           page: this.currentPage,
@@ -668,10 +676,18 @@ class SearchStore {
           bookmarked: bookmarked ? true : undefined,
         },
         force,
-      )
-      .finally(() => {
-        this.searchInProgress = false;
-      });
+        controller.signal,
+      );
+    } catch (e) {
+      if (!controller.signal.aborted) throw e;
+    } finally {
+      if (this.searchAbort === controller) {
+        runInAction(() => {
+          this.searchAbort = null;
+          this.searchInProgress = false;
+        });
+      }
+    }
   }
 
   private applyTagFilter(filter: any, activeTags: string[]): any {

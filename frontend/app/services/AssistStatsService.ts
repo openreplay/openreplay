@@ -1,4 +1,4 @@
-import APIClient from 'App/api_client';
+import APIClient, { apiClient } from 'App/api_client';
 
 export interface Member {
   name: string;
@@ -95,11 +95,11 @@ export default class AssistStatsService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   initClient(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   fetch(path: string, body: Record<string, any>, method: 'get' | 'post') {

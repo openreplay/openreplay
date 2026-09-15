@@ -304,7 +304,11 @@ export default class SessionStore {
     }
   };
 
-  fetchSessions = async (params = {}, force = false) => {
+  fetchSessions = async (
+    params = {},
+    force = false,
+    abortSignal?: AbortSignal,
+  ) => {
     runInAction(() => {
       this.loadingSessions = true;
     });
@@ -316,7 +320,8 @@ export default class SessionStore {
         }
       }
       setSessionFilter(cleanSessionFilters(params));
-      const data = await sessionService.getSessions(params);
+      const data = await sessionService.getSessions(params, abortSignal);
+      if (abortSignal?.aborted) return;
       const list = data.sessions.map((s) => new Session(s));
       runInAction(() => {
         this.list = list;
@@ -325,11 +330,15 @@ export default class SessionStore {
         this.favoriteList = list.filter((s) => s.favorite);
       });
     } catch (e) {
+      if (abortSignal?.aborted) throw e;
       console.error(e);
     } finally {
-      runInAction(() => {
-        this.loadingSessions = false;
-      });
+      // A superseded search has already handed the spinner to its replacement.
+      if (!abortSignal?.aborted) {
+        runInAction(() => {
+          this.loadingSessions = false;
+        });
+      }
     }
   };
 

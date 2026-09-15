@@ -22,17 +22,14 @@ const STYLES_IMPORT_DIR = path.resolve(__dirname, 'app/styles/import');
 const COMPRESSIBLE_RE = /\.(js|css|html|json|svg|map)$/;
 const COMPRESS_MIN_BYTES = 1024;
 
-/* Precompresses the build so nginx can serve the bytes straight off disk
-   (`gzip_static` / `brotli_static`) instead of re-compressing every asset on
-   every request. Precompressing also lets us use the slowest, smallest settings,
-   which on-the-fly compression can't afford. */
+/* Emits .gz/.br next to every asset for nginx `gzip_static` / `brotli_static`,
+   at the slowest settings an on-the-fly pass could not afford. */
 const precompress = () => {
   let outDir = 'public';
 
   return {
     name: 'precompress-assets',
     apply: 'build' as const,
-    // outDir is overridable on the CLI, so take whatever Vite resolved.
     configResolved(resolved: { build: { outDir: string } }) {
       outDir = resolved.build.outDir;
     },
@@ -67,16 +64,11 @@ const precompress = () => {
 };
 
 /**
- * index.html is static, but every value it needs is already resolved at build
- * time (the same `define` that bakes ENV), so these tags can be decided here
- * instead of shipping them to everyone unconditionally.
+ * Tags that depend on build-time config, so index.html can stay static.
  *
- *  - preconnect: warms DNS + TCP + TLS for the API and asset hosts so the first
- *    request after the bundle parses doesn't pay a cold handshake. Skipped when
- *    the host is unset (the app falls back to window.location.origin) or is
- *    already same-origin, where preconnect does nothing.
- *  - Turnstile: only reachable behind CAPTCHA_ENABLED, so an unconditional tag
- *    is a third-party script plus a handshake that most deployments never use.
+ *  - preconnect to the API and asset hosts; skipped when the host is unset or
+ *    already same-origin, where it would do nothing.
+ *  - Turnstile, which is unreachable unless CAPTCHA_ENABLED.
  */
 const injectHtmlHints = (env: Record<string, string>) => ({
   name: 'inject-html-hints',
@@ -93,15 +85,15 @@ const injectHtmlHints = (env: Record<string, string>) => ({
       try {
         origins.add(new URL(value).origin);
       } catch {
-        /* not a usable absolute URL — nothing to preconnect to */
+        /* not an absolute URL — nothing to preconnect to */
       }
     }
     for (const origin of origins) {
       tags.push({
         tag: 'link',
         attrs: { rel: 'preconnect', href: origin, crossorigin: true },
-        // Ahead of the module preloads: the point is to have the socket open
-        // by the time the bundle finishes parsing and fires its first request.
+        // Ahead of the module preloads, so the socket is open by the time the
+        // bundle parses and fires its first request.
         injectTo: 'head-prepend',
       });
     }
@@ -286,20 +278,15 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       sourcemap: env.SOURCEMAP === 'true',
       target: 'es2022',
-      // Each flag SVG is under the 4KB inline threshold, so by default all ~267
-      // of them get base64'd straight back into the chunk that globs them —
-      // bigger than the React components they replaced. Emit them as files so
-      // the bundle keeps only URLs and the browser fetches the few in view.
+      // Every flag SVG is under the 4KB inline threshold, so all ~267 would be
+      // base64'd back into the chunk that globs them. Emit files instead.
       assetsInlineLimit: (filePath: string) =>
         filePath.includes('country-flag-icons') ? false : undefined,
       reportCompressedSize: false,
       rolldownOptions: {
         output: {
-          // Without groups rolldown collapses every shared dependency into one
-          // ~1.3MB chunk the entry preloads. Splitting by package keeps the
-          // rarely-changing vendors (react, antd) on their own long-lived cache
-          // entries and lets chunks only a lazy route needs stay out of the
-          // entry graph.
+          // Without a group, rolldown collapses every shared dependency into
+          // one ~1.3MB chunk that the entry preloads.
           advancedChunks: {
             groups: [
               {

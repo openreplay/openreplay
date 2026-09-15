@@ -6,7 +6,6 @@ import { defaultOptions, echarts } from './init';
 echarts.use([BarChart, LineChart]);
 
 export interface TimeseriesSeries {
-  /** Key to read out of each row of `data`. */
   key: string;
   name: string;
   color: string;
@@ -23,16 +22,12 @@ interface Props {
   height?: number;
   yLabel?: string;
   showLegend?: boolean;
-  /** Show every Nth category label, matching recharts' XAxis `interval`. */
+  /** Show every Nth category label. */
   xInterval?: number;
   valueFormatter?: (value: number) => string;
 }
 
-/**
- * Generic categorical timeseries used by the predefined dashboard widgets.
- * Replaces the recharts BarChart/LineChart those widgets each re-declared
- * inline; they only ever differed by series list, stacking and axis label.
- */
+/** Generic categorical timeseries for the predefined dashboard widgets. */
 function TimeseriesChart(props: Props) {
   const {
     data,
@@ -88,7 +83,7 @@ function TimeseriesChart(props: Props) {
       yAxis: {
         ...defaultOptions.yAxis,
         type: 'value',
-        // recharts had allowDecimals={false} on every one of these.
+        // These are all counts — no fractional ticks.
         minInterval: 1,
         name: yLabel,
         nameLocation: 'middle',

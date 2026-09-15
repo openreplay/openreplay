@@ -1,10 +1,7 @@
 import { MENU } from 'App/layout/data';
 
 /**
- * Every private route is `lazy()`, so clicking a menu item starts a cold chunk
- * fetch and shows a spinner until it lands. Hovering is a strong signal the
- * route is about to be opened, and the ~150ms between hover and click is
- * usually enough to cover the request.
+ * Warms the lazy chunk behind a menu item on hover.
  *
  * Paths must match the ones in PrivateRoutes.tsx so both resolve to the same
  * chunk — otherwise this warms a second copy instead of the one the route uses.
@@ -33,15 +30,13 @@ const loaders: Record<string, () => Promise<unknown>> = {
   [MENU.TAGS]: () => import('Components/DataManagement/Tags/index'),
 };
 
-/** Keys already requested — the browser caches the chunk, this just avoids churn. */
 const started = new Set<string>();
 
 export function prefetchRoute(key: string): void {
   const load = loaders[key];
   if (!load || started.has(key)) return;
   started.add(key);
-  // A failed prefetch is not an error worth surfacing: React.lazy will retry
-  // and report properly if the user actually navigates there.
+  // React.lazy retries and reports properly if the user actually navigates.
   void load().catch(() => started.delete(key));
 }
 

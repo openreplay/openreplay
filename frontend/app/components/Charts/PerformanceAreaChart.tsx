@@ -4,21 +4,17 @@ import React from 'react';
 
 import { echarts } from './init';
 
-// MarkLineComponent is not part of the shared registration in ./init, and in a
-// tree-shaken echarts build an unregistered component renders nothing at all —
-// silently, which is how the playback cursor came out invisible.
+// A tree-shaken echarts renders an unregistered component as nothing at all,
+// without warning — MarkLineComponent is not in ./init's shared set.
 echarts.use([LineChart, MarkLineComponent]);
 
 export interface PerfBand {
-  /** Key to read out of each row. */
   key: string;
   color: string;
   strokeColor?: string;
-  /** Renders as a step line — recharts' type="stepBefore". */
   step?: boolean;
-  /** Fade the fill, as the old <Gradient> defs did. */
   gradient?: boolean;
-  /** Stroke only, no fill — recharts' <Line> rather than <Area>. */
+  /** Stroke only, no fill. */
   line?: boolean;
 }
 
@@ -36,36 +32,31 @@ interface Props {
   yFormatter?: (value: number) => string;
   /** Omit to keep the time axis but hide its labels. */
   xFormatter?: (value: number) => string;
-  /** Explicit time-axis tick positions, as the old XAxis `ticks` prop gave. */
   ticks?: number[];
-  /** Playback position; draws the cursor line. */
   cursorTime?: number;
   cursorColor?: string;
   height: number | string;
-  /** Charts sharing a group id sync their axis pointer, like recharts syncId. */
+  /** Charts sharing a group id sync their axis pointer. */
   groupId?: string;
   onPointClick?: (index: number) => void;
   /** Return null to suppress the tooltip for that row. */
   tooltipFormatter?: (row: any, index: number) => string | null;
 }
 
-/* The cursor rides on the first data series: a markLine on a series with no
-   data has no coordinate system to resolve against and renders nothing. */
+/* A markLine on a series with no data has no coordinate system to resolve
+   against and renders nothing, so the cursor rides the first data series. */
 const CURSOR_SERIES_ID = '__band0';
 
-/* recharts' <Area> painted every fill at fillOpacity 0.6 by default, on top of
-   whatever alpha the gradient stops carried. Both charts have to apply it or
-   the fills come out roughly twice as dark as they used to. */
+/** Applied on top of whatever alpha the gradient stops carry. */
 const AREA_FILL_OPACITY = 0.6;
 
 /* echarts stamps sans-serif on its own text; the old SVG inherited the app's. */
 const FONT_FAMILY = 'Roboto, sans-serif';
 
-/* Charts that move their pointer together, standing in for recharts' syncId.
-   echarts.connect() forwards the source chart's seriesIndex, so a strip whose
-   series is null at that index — FPS while the tab was hidden, which is exactly
-   when its tooltip has something to say — silently shows nothing. Broadcasting
-   a pixel position instead lets each strip resolve the row for itself. */
+/* Pointer sync. echarts.connect() forwards the source chart's seriesIndex, so a
+   strip whose series is null at that index — FPS while the tab was hidden,
+   exactly when its tooltip has something to say — shows nothing. Broadcasting a
+   pixel position instead lets each strip resolve the row itself. */
 const groups = new Map<string, Set<any>>();
 
 function withAlpha(color: string, alpha: number): string {
@@ -80,12 +71,9 @@ function withAlpha(color: string, alpha: number): string {
 }
 
 /**
- * The stacked strips in the session player's performance panel. Each one is an
- * area chart over session time with a playback cursor, click-to-seek, and a
- * pointer synced across the sibling charts.
- *
- * Replaces the recharts AreaChart/ComposedChart these were built from; the
- * mirrored axes there map onto echarts' `inside` axis labels.
+ * One strip of the session player's performance panel: an area chart over
+ * session time with a playback cursor, click-to-seek, and a pointer synced
+ * across the sibling strips.
  */
 function PerformanceAreaChart(props: Props) {
   const {
@@ -130,7 +118,6 @@ function PerformanceAreaChart(props: Props) {
     const rows = data ?? [];
     const xs = rows.map((row) => row[xKey]);
 
-    // recharts took domain={[0, max => max * 1.2]} on the heap/nodes axes.
     let scaledMax: number | undefined;
     if (yMaxRatio) {
       let peak = 0;
@@ -160,16 +147,14 @@ function PerformanceAreaChart(props: Props) {
       type: 'line',
       step: band.step ? 'start' : false,
       smooth: !band.step,
-      // recharts' type="monotone" never overshoots; echarts' plain spline does.
+      // echarts' plain spline overshoots the samples; monotone does not.
       smoothMonotone: 'x',
       showSymbol: false,
-      // Only drawn on hover, standing in for recharts' activeDot.
       symbol: 'circle',
       symbolSize: 6,
-      // Nulls mean "no sample", not zero — don't bridge them.
+      // Null means "no sample", not zero — leave the gap.
       connectNulls: false,
       lineStyle: {
-        // recharts' default Area/Line strokeWidth was 1; markers drew stroke="none".
         width: band.strokeColor ? 1 : 0,
         color: band.strokeColor ?? band.color,
       },
@@ -179,9 +164,8 @@ function PerformanceAreaChart(props: Props) {
         : {
             opacity: AREA_FILL_OPACITY,
             color: band.gradient
-              ? // Same vector the old <Gradient> used: it runs diagonally from
-                // one box-width left of the shape, so most of the area sits past
-                // the 95% stop and renders at the lighter end of the ramp.
+              ? // Deliberately diagonal from one box-width left of the shape,
+                // so most of the area sits past the 95% stop, at the light end.
                 new echarts.graphic.LinearGradient(-1, 0, 0, 1, [
                   { offset: 0.05, color: withAlpha(band.color, 0.7) },
                   { offset: 0.95, color: withAlpha(band.color, 0.2) },
@@ -200,9 +184,8 @@ function PerformanceAreaChart(props: Props) {
         position: 'top',
         min: 0,
         max: xs.length ? Math.max(...xs) : undefined,
-        // recharts drew the time axis line by default (CartesianAxis stroke #666);
-        // it is what separates one strip from the next.
-        // onZero would pin it to the y=0 gridline at the bottom of the strip.
+        // This line is what separates one strip from the next; onZero would
+        // pin it to the y=0 gridline at the bottom instead of the top.
         axisLine: {
           show: true,
           onZero: false,
@@ -229,26 +212,23 @@ function PerformanceAreaChart(props: Props) {
         axisLine: { show: false },
         axisTick: { show: false },
         splitLine: { show: false },
-        // The top reading is drawn as a graphic below instead: a live axis label
-        // makes echarts reserve half its height at the top of the grid, which
-        // pushes the strip down and puts the axis line through the text.
+        // A live axis label makes echarts reserve half its height at the top of
+        // the grid, pushing the strip down and striking the text through with
+        // the axis line — the top reading is a `graphic` below instead.
         axisLabel: { show: false },
       },
       tooltip: tooltipFormatter
         ? {
             trigger: 'axis',
-            // Every strip in the group shows its tooltip at once (recharts did
-            // the same through syncId); confining keeps each one inside its own
-            // strip instead of spilling over the chart below.
+            // Every strip in the group shows its tooltip at once; confining
+            // keeps each inside its own strip rather than over its neighbour.
             confine: true,
-            // recharts drew a plain solid grey cursor, not echarts' dashed one.
             axisPointer: {
               type: 'line',
               lineStyle: { color: '#ccc', width: 1, type: 'solid' },
             },
-            // The formatter returns a styled wrapper of its own; without this
-            // echarts paints a second box around it, which reads as a dark
-            // frame around a white card in dark mode.
+            // The formatter returns its own styled wrapper; echarts would
+            // otherwise paint a second box around it.
             backgroundColor: 'transparent',
             borderWidth: 0,
             padding: 0,
@@ -274,8 +254,6 @@ function PerformanceAreaChart(props: Props) {
             fill: 'var(--color-gray-darkest)',
           },
         },
-        // recharts showed a single value-axis reading, pinned to the top-left
-        // (YAxis mirror + minTickGap: MAX_SAFE_INTEGER).
         ...(yFormatter && axisMax != null
           ? [
               {
@@ -296,15 +274,14 @@ function PerformanceAreaChart(props: Props) {
       series,
     });
 
-    // recharts seeked from a click anywhere on the plot, not just on a point,
-    // so map the click's x pixel back to the nearest sample.
+    // A click anywhere on the plot seeks, so map its x back to the nearest
+    // sample rather than requiring a hit on a point.
     const zr = chart.getZr();
     const handleClick = (event: any) => {
       if (!onPointClick || !rows.length) return;
       const point = [event.offsetX, event.offsetY];
       // convertFromPixel returns a tuple for a grid finder but a bare number
-      // for a single-axis one — destructuring the latter silently yields
-      // undefined, which is why seeking did nothing.
+      // for a single-axis one, which destructures to undefined.
       const converted: any = chart.convertFromPixel({ gridIndex: 0 }, point);
       const x = Array.isArray(converted) ? converted[0] : converted;
       if (x == null || Number.isNaN(x)) return;
@@ -351,7 +328,7 @@ function PerformanceAreaChart(props: Props) {
     };
   }, [data, bands, label, xKey, yMin, yMax, yMaxRatio, groupId, ticks]);
 
-  // Cursor moves every frame during playback — patch just that series.
+  // Moves every frame during playback — patch just that series.
   React.useEffect(() => {
     const chart = instRef.current;
     if (!chart) return;

@@ -11,9 +11,8 @@ const SIGNUP_PATH = routes.signup();
 const FORGOT_PASSWORD = routes.forgotPassword();
 const SPOT_PATH = routes.spot();
 
-// Signup and SupportCallout were the only eager imports here, which put their
-// whole component trees (and the antd surface they reach) in the entry chunk
-// alongside the lazy routes they sit next to.
+// These were the only eager imports here, so their whole component trees rode
+// in the entry chunk next to the lazy routes they sit beside.
 const Signup = lazy(() => import('Components/Signup/Signup'));
 const SupportCallout = lazy(() => import('Shared/SupportCallout'));
 const Login = lazy(() => import('Components/Login/Login'));

@@ -6,8 +6,7 @@ import { Badge, Button, Tooltip } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
-// Slide-out panel content, only mounted on click — keep it out of the header's
-// eager import tree.
+// Slide-out panel content, mounted on click — keep it out of the header's tree.
 const AlertTriggersModal = React.lazy(
   () => import('Shared/AlertTriggersModal'),
 );

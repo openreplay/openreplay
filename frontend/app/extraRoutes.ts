@@ -1,18 +1,24 @@
 import { saasRoutes } from './saasComponents';
 
+const isScalar = (value: any): boolean =>
+  /string|number|boolean/.test(typeof value);
+
 export const queried = (path: string, params?: Record<string, any>): string => {
-  const keys =
-    typeof params === 'object' &&
-    params !== null &&
-    Object.keys(params).filter((key) =>
-      /string|number|boolean/.test(typeof params[key]),
-    );
-  if (keys && keys.length > 0) {
-    return `${path}?${keys
-      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
-      .join('&')}`;
+  if (typeof params !== 'object' || params === null) {
+    return path;
   }
-  return path;
+  const pairs: string[] = [];
+  Object.keys(params).forEach((key) => {
+    const value = params[key];
+    if (isScalar(value)) {
+      pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+    } else if (Array.isArray(value)) {
+      value.filter(isScalar).forEach((item) => {
+        pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(item)}`);
+      });
+    }
+  });
+  return pairs.length > 0 ? `${path}?${pairs.join('&')}` : path;
 };
 
 const saasIdRequeired = saasRoutes

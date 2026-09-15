@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </QueryClientProvider>,
     );
 
-  // `en` is bundled, so this settles on a microtask for most users. Any other
-  // language fetches its file first, which avoids a flash of raw i18n keys.
+  // Settles on a microtask for `en`; any other language fetches its file first,
+  // which avoids a flash of raw i18n keys.
   void i18nReady.then(render, render);
 });

@@ -27,10 +27,8 @@
       href="/assets/favicon-16x16.png"
     />
 
-    <!-- Roboto is self-hosted (app/styles/fonts.css) — a Google Fonts stylesheet
-         is render-blocking and costs two extra cross-origin handshakes before
-         first paint. Latin 400 is the face almost every screen starts with, so
-         preload it; the rest are pulled in by unicode-range as needed. -->
+    <!-- Roboto is self-hosted (app/styles/fonts.css). Latin 400 is the face
+         almost every screen starts with; the rest load by unicode-range. -->
     <link
       rel="preload"
       href="/assets/fonts/roboto-400-latin.woff2"
@@ -47,9 +45,8 @@
     <script defer src="/assets/prism/prism-typescript.min.js"></script>
     <script defer src="/assets/prism/prism-kotlin.min.js"></script>
     <script defer src="/assets/prism/prism-swift.min.js"></script>
-    <!-- Turnstile is injected by the inject-html-hints plugin in vite.config.ts,
-         but only when CAPTCHA_ENABLED is set. Preconnect hints for the API and
-         asset hosts are injected there too. -->
+    <!-- Turnstile and the API/asset preconnects are injected by the
+         inject-html-hints plugin in vite.config.ts. -->
     <script src="/app/initialize.tsx" type="module"></script>
   </head>
   <body>
