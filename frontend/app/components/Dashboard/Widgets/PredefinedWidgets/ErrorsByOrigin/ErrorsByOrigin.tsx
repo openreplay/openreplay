@@ -1,5 +1,4 @@
 // @ts-nocheck
-/* eslint-disable i18next/no-literal-string */
 import React from 'react';
 import { NoContent } from 'UI';
 import TimeseriesChart from 'Components/Charts/TimeseriesChart';

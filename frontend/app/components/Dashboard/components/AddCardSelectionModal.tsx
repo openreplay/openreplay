@@ -39,7 +39,6 @@ function AddCardSelectionModal(props: Props) {
         footer={null}
         onCancel={props.onClose}
         className="addCard"
-        width={panelSize}
       >
         <Row gutter={16} justify="center" className="py-5">
           <Col span={12}>

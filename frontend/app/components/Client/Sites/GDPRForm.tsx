@@ -131,7 +131,7 @@ function GDPRForm(props) {
         <Button type="primary" className="float-left! mr-2!" loading={saving}>
           {t('Update')}
         </Button>
-        <Button onClick={onClose}>{t('Close')}</Button>
+        <Button onClick={props.onClose}>{t('Close')}</Button>
       </div>
     </Form>
   );

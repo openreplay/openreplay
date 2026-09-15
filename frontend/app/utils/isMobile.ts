@@ -3,10 +3,10 @@ function isMobile() {
     return window.innerWidth < 1280; // For local development, assume mobile if width is less than 1280px
   }
   if (
-    navigator.userAgentData &&
-    typeof navigator.userAgentData.mobile === 'boolean'
+    (navigator as any).userAgentData &&
+    typeof (navigator as any).userAgentData.mobile === 'boolean'
   ) {
-    return navigator.userAgentData.mobile;
+    return (navigator as any).userAgentData.mobile;
   }
   if (window.matchMedia?.('(pointer: coarse)').matches) {
     return true; // likely a touch-first device

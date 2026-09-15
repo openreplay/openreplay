@@ -360,7 +360,7 @@ export default class Widget {
           this.metricOf === FilterKey.ERRORS ||
           this.metricOf === FilterKey.SESSIONS ||
           this.metricOf === FilterKey.SLOWEST_RESOURCES ||
-          this.metricOf === FilterKey.MISSING_RESOURCES ||
+          this.metricOf === FilterKey.MISSING_RESOURCE ||
           this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION ||
           this.metricType === USER_PATH
             ? 4

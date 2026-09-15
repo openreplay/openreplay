@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon, Loader } from 'UI';
 import cn from 'classnames';
 import { filtersMap } from 'Types/filter/newFilter';
-import { getMatchingEntries } from 'Shared/Filters/FilterModal';
+import { getFilteredEntries } from 'Shared/Filters/FilterModal/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import stl from './LiveFilterModal.module.css';
@@ -38,7 +38,7 @@ function LiveFilterModal(props: Props) {
     onFilterClick(_filter);
   };
 
-  const { matchingCategories, matchingFilters } = getMatchingEntries(
+  const { matchingCategories, matchingFilters } = getFilteredEntries(
     searchQuery,
     filters,
   );

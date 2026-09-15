@@ -1,8 +1,9 @@
+import babel, { defineRolldownBabelPreset } from '@rolldown/plugin-babel';
+import tailwindPostcss from '@tailwindcss/postcss';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
-import react from '@vitejs/plugin-react';
-import tailwindPostcss from '@tailwindcss/postcss';
 import postcssImport from 'postcss-import';
 import postcssMixins from 'postcss-mixins';
 import postcssNesting from 'postcss-nesting';
@@ -13,6 +14,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 import colors from './app/theme/colors';
+import babelMobxNoMemo from './scripts/babelMobxNoMemo';
 
 const APP_ASSETS_DIR = path.resolve(__dirname, 'app/assets');
 const PLAYER_DIR = path.resolve(__dirname, '../player');
@@ -164,6 +166,24 @@ export default defineConfig(({ mode }) => {
       react({
         include: /\.(mjs|js|jsx|ts|tsx)$/,
       }),
+      // React Compiler, through the official Babel plugin. Runs at the `pre`
+      // stage on raw TSX, before Vite's oxc transform strips types/JSX and adds
+      // Fast Refresh. Babel applies presets last-to-first, so the MobX opt-out
+      // preset below runs before the compiler and its "use no memo" directives
+      // are already in place when the compiler decides what to memoize.
+      babel({
+        include: /[\\/]frontend[\\/]app[\\/].*\.[jt]sx?(?:$|\?)/,
+        presets: [
+          reactCompilerPreset(),
+          defineRolldownBabelPreset({
+            preset: () => ({ plugins: [babelMobxNoMemo] }),
+            rolldown: {
+              filter: { code: /\b(?:observer|useStore)\b/ },
+              applyToEnvironmentHook: (env) => env.config.consumer === 'client',
+            },
+          }),
+        ],
+      }),
       tsconfigPaths({ projects: ['./tsconfig.json'] }),
       viteStaticCopy({
         // `app/assets/*` matched only the top-level *files* (the plugin globs
@@ -256,7 +276,9 @@ export default defineConfig(({ mode }) => {
           postcssImport({ path: STYLES_IMPORT_DIR }),
           postcssMixins(),
           postcssSimpleVars({
-            variables: transformColorsToCssVars(colors as Record<string, unknown>),
+            variables: transformColorsToCssVars(
+              colors as Record<string, unknown>,
+            ),
           }),
           postcssNesting(),
           tailwindPostcss(),

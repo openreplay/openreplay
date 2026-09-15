@@ -2,6 +2,7 @@
 import { DatePicker } from 'antd';
 import { PickerTimeProps } from 'antd/es/time-picker';
 import React from 'react';
+import { DateTime } from 'luxon';
 import luxonGenerateConfig from './config';
 
 const CustomPicker = DatePicker.generatePicker<DateTime>(luxonGenerateConfig);

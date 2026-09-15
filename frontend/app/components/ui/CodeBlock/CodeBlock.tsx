@@ -26,7 +26,7 @@ export default function CodeBlock({
   useEffect(() => {
     setTimeout(() => {
       if (window.Prism) {
-        Prism.highlightAll();
+        window.Prism.highlightAll();
       }
     }, 0);
   }, [code, language]);

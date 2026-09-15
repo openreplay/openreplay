@@ -17,6 +17,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default [
+  // Vendored, minified third-party sources: never our lint surface.
+  { ignores: ['app/assets/prism/**', '**/*.min.js'] },
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],

@@ -1643,7 +1643,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/types@npm:^7.28.0, @babel/types@npm:^7.29.8":
+"@babel/types@npm:^7.26.0, @babel/types@npm:^7.28.0, @babel/types@npm:^7.29.8":
   version: 7.29.8
   resolution: "@babel/types@npm:7.29.8"
   dependencies:
@@ -3533,6 +3533,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rolldown/plugin-babel@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "@rolldown/plugin-babel@npm:0.2.4"
+  dependencies:
+    picomatch: "npm:^4.0.7"
+  peerDependencies:
+    "@babel/core": ^7.29.0 || ^8.0.0-rc.1
+    "@babel/plugin-transform-runtime": ^7.29.0 || ^8.0.0-rc.1
+    "@babel/runtime": ^7.27.0 || ^8.0.0-rc.1
+    rolldown: ^1.0.0-rc.5
+    vite: ^8.0.0
+  peerDependenciesMeta:
+    "@babel/plugin-transform-runtime":
+      optional: true
+    "@babel/runtime":
+      optional: true
+    vite:
+      optional: true
+  checksum: 10c1/d8bb83062f52869f83f0e31643e6c646cfee98ec9a3aae06bfe0a6ad320d0bab0b6015d0e2bd7816e043593f05dcd1e15cbde1670885a331bf17b80f4f024492
+  languageName: node
+  linkType: hard
+
 "@rolldown/pluginutils@npm:^1.0.0, @rolldown/pluginutils@npm:^1.0.1":
   version: 1.0.1
   resolution: "@rolldown/pluginutils@npm:1.0.1"
@@ -5298,6 +5320,15 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.4.0 || ^8.0.0
   checksum: 10c1/019f9ac9679449e81109455c8d3cce10b18bc20e44c33f5f93eb1911a839c2b133377d575ad49089d667a72423db2af1acd72c3d6cff9094750fdcce14b2a969
+  languageName: node
+  linkType: hard
+
+"babel-plugin-react-compiler@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "babel-plugin-react-compiler@npm:1.0.0"
+  dependencies:
+    "@babel/types": "npm:^7.26.0"
+  checksum: 10c1/46a63024ae8c1ce7e88f6e62ef0b438cbbd3ee11667ad08142ffac651ac382f634124a66f07d510e5a9fa6d6060ffc1119a2534021d5b0e4ae8fca9aca16a3fd
   languageName: node
   linkType: hard
 
@@ -11536,6 +11567,7 @@ __metadata:
     "@openreplay/player": "portal:../player"
     "@openreplay/sourcemap-uploader": "npm:^3.0.13"
     "@playwright/test": "npm:^1.60.0"
+    "@rolldown/plugin-babel": "npm:^0.2.4"
     "@sentry/browser": "npm:^9.47.1"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@tanstack/react-query": "npm:^5.102.8"
@@ -11558,6 +11590,7 @@ __metadata:
     antd: "npm:6.6.2"
     autoprefixer: "npm:^10.5.0"
     babel-jest: "npm:^30.4.1"
+    babel-plugin-react-compiler: "npm:^1.0.0"
     baseline-browser-mapping: "npm:^2.10.31"
     chroma-js: "npm:^3.2.0"
     classnames: "npm:^2.5.1"
@@ -11901,6 +11934,13 @@ __metadata:
   version: 4.0.5
   resolution: "picomatch@npm:4.0.5"
   checksum: 10c1/94e11eacecb84786ccc3525085475dab909a055468eac19777d34933dbaaed53bf93991002b8dd1f26b484fea65ced933469b72a3447e33859a621cb59f37792
+  languageName: node
+  linkType: hard
+
+"picomatch@npm:^4.0.7":
+  version: 4.0.7
+  resolution: "picomatch@npm:4.0.7"
+  checksum: 10c1/02244a3e6ccf6b0a571be80573a74db7fed45a57dadce64e599de1d3e6230063ecdb5f8154056f240d1a3305079ee769e8b42ea0ae378167392bcefc255e4cc2
   languageName: node
   linkType: hard
 

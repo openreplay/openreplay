@@ -70,7 +70,7 @@ function FunnelStepText(props: Props) {
           {filter.value.map((value: any, index: number) => (
             <span key={index}>
               <span className="font-medium color-gray-darkest">
-                "{String(value)}"
+                &quot;{String(value)}&quot;
               </span>
               {index < total - 1 && (
                 <span className="mx-1 color-gray-medium">{t('or')}</span>

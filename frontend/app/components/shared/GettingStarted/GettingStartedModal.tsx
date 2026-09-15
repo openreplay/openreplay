@@ -1,7 +1,8 @@
 import React from 'react';
 import Modal from 'App/components/Modal/Modal';
 import { observer } from 'mobx-react-lite';
-import StepList, { Step } from './StepList';
+import StepList from './StepList';
+import { Step } from 'App/mstore/types/gettingStarted';
 import { useTranslation } from 'react-i18next';
 
 export interface Props {

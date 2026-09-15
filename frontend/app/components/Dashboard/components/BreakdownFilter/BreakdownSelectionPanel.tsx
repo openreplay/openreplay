@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string */
 import { Button, InputNumber, Popover } from 'antd';
 import { ChevronDown } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
