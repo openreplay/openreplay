@@ -136,6 +136,8 @@ function ReplayWindow({
       playerContext.player.updateDimensions({
         width: styles.screen.width,
         height: styles.screen.height,
+        sourceWidth: screenWidth,
+        sourceHeight: screenHeight,
       });
       playerContext.player.updateOverlayStyle({
         margin: styles.margin,
@@ -233,7 +235,12 @@ function ReplayWindow({
       const newW = isLandscape ? screenH : screenW;
       const newH = isLandscape ? screenW : screenH;
 
-      playerContext.player.updateDimensions({ width: newW, height: newH });
+      playerContext.player.updateDimensions({
+        width: newW,
+        height: newH,
+        sourceWidth: isLandscape ? screenHeight : screenWidth,
+        sourceHeight: isLandscape ? screenWidth : screenHeight,
+      });
       playerContext.player.updateOverlayStyle({
         margin: styles.margin,
         width: `${newW}px`,

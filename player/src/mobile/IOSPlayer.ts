@@ -96,7 +96,12 @@ export default class IOSPlayer extends Player {
     this.screen.attach(parent);
   };
 
-  public updateDimensions(dimensions: { width: number; height: number }) {
+  public updateDimensions(dimensions: {
+    width: number;
+    height: number;
+    sourceWidth?: number;
+    sourceHeight?: number;
+  }) {
     return this.messageManager.updateDimensions(dimensions);
   }
 
