@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import { DateTime } from 'luxon';
 import { IGNORED, RESOLVED } from 'Types/errorInfo';
-import { BarChart, Bar, YAxis, Tooltip, XAxis } from 'recharts';
+import Sparkline from 'Components/Charts/Sparkline';
 import { diffFromNowString } from 'App/date';
 import ErrorName from '../ErrorName';
 import ErrorLabel from '../ErrorLabel';
@@ -47,26 +47,17 @@ function ErrorListItem(props: Props) {
         </div>
       </div>
       <div className="col-span-2">
-        <BarChart
+        <Sparkline
+          data={error.chart}
+          valueKey="count"
+          name={t('Sessions')}
+          color="#A8E0DA"
           width={150}
           height={40}
-          style={{ maxWidth: '100%' }}
-          data={error.chart}
-        >
-          <XAxis hide dataKey="timestamp" />
-          <YAxis hide domain={[0, 'dataMax + 8']} />
-          <Tooltip
-            {...Styles.tooltip}
-            label={t('Sessions')}
-            content={<CustomTooltip />}
-          />
-          <Bar
-            name={t('Sessions')}
-            minPointSize={1}
-            dataKey="count"
-            fill="#A8E0DA"
-          />
-        </BarChart>
+          tooltipFormatter={(row) =>
+            `${t('Sessions')}: ${row.count}`
+          }
+        />
       </div>
       <ErrorLabel
         // className={stl.sessions}

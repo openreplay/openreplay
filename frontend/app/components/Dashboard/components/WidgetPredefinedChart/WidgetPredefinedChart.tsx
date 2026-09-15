@@ -3,25 +3,16 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import CPULoad from 'App/components/Dashboard/Widgets/PredefinedWidgets/CPULoad';
 import CallsErrors4xx from 'App/components/Dashboard/Widgets/PredefinedWidgets/CallsErrors4xx';
 import CallsErrors5xx from 'App/components/Dashboard/Widgets/PredefinedWidgets/CallsErrors5xx';
-import Crashes from 'App/components/Dashboard/Widgets/PredefinedWidgets/Crashes';
-import DomBuildingTime from 'App/components/Dashboard/Widgets/PredefinedWidgets/DomBuildingTime';
 import ErrorsByOrigin from 'App/components/Dashboard/Widgets/PredefinedWidgets/ErrorsByOrigin';
 import ErrorsByType from 'App/components/Dashboard/Widgets/PredefinedWidgets/ErrorsByType';
 import ErrorsPerDomain from 'App/components/Dashboard/Widgets/PredefinedWidgets/ErrorsPerDomain';
-import FPS from 'App/components/Dashboard/Widgets/PredefinedWidgets/FPS';
-import MemoryConsumption from 'App/components/Dashboard/Widgets/PredefinedWidgets/MemoryConsumption';
-import ResponseTime from 'App/components/Dashboard/Widgets/PredefinedWidgets/ResponseTime';
 import SessionsAffectedByJSErrors from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsAffectedByJSErrors';
-import SessionsImpactedBySlowRequests from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsImpactedBySlowRequests';
 import SessionsPerBrowser from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsPerBrowser';
 import SlowestDomains from 'App/components/Dashboard/Widgets/PredefinedWidgets/SlowestDomains';
-import TimeToRender from 'App/components/Dashboard/Widgets/PredefinedWidgets/TimeToRender';
 
 import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
-import ResponseTimeDistribution from '../../Widgets/PredefinedWidgets/ResponseTimeDistribution';
 
 interface Props {
   data: any;
