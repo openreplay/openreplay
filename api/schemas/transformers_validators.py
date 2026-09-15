@@ -5,7 +5,9 @@ from pydantic import ValidationInfo
 
 from .overrides import Enum
 
-NAME_PATTERN = r"^[a-z,A-Z,0-9,\-,é,è,à,ç, ,|,&,\/,\\,_,.,#,']*$"
+# Used in pydantic Field(pattern=...), which compiles with the Rust regex
+# engine: end-of-string is \z there (\Z is unsupported and fails at schema build).
+NAME_PATTERN = r"^[a-zA-Z0-9\-éèàç |&/\\_.#':,@]*\z"
 
 # Property/column names are interpolated into ClickHouse SQL as identifiers, so
 # they must be restricted to a safe character set (no back-ticks, quotes, parens,
@@ -66,7 +68,7 @@ def check_alphanumeric(v: str, info: ValidationInfo) -> str:
 
 def check_account_name(v: str, info: ValidationInfo) -> str:
     if isinstance(v, str) and len(v) > 0:
-        pattern = r"^[\w\s\-'\.áéíóúàèìòùâêîôûäëïöüãõñçÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÄËÏÖÜÃÕÑÇ]+$"
+        pattern = r"^[\w\s\-'\.áéíóúàèìòùâêîôûäëïöüãõñçÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÄËÏÖÜÃÕÑÇ&@]+\Z"
         is_valid = re.match(pattern, v, re.UNICODE)
         assert is_valid, (
             f"{info.field_name} contains invalid characters. Only letters, numbers, spaces, hyphens, apostrophes, and periods are allowed"
