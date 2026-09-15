@@ -61,6 +61,61 @@ const except = [
 ];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const SITE_ID_RE = new RegExp(`^(?:${siteIdRequiredPaths.map(escapeRe).join('|')})`);
+const NEW_API_RE = new RegExp(newApiUrls.map(escapeRe).join('|'));
+const EXCEPT_RE = new RegExp(except.map(escapeRe).join('|'));
+const AGENT_NOTIFICATIONS_RE = /^\/\d+\/notifications(\/|$)/;
+
+const SAAS_HOST = 'api.openreplay.com';
+
+function toV2(url: string, isSaas: boolean): string {
+  if (isSaas) {
+    return url.replace('.com', '.com/v2');
+  }
+  try {
+    const urlObj = new URL(url);
+    urlObj.pathname = urlObj.pathname.replace('/api', '/v2/api');
+    return urlObj.toString();
+  } catch {
+    return url.replace('/api', '/v2/api');
+  }
+}
+
+interface Endpoints {
+  base: string;
+  isSaas: boolean;
+  v2: string;
+  noChalice: string;
+}
+
+/* Memoised rather than resolved at import time: ENV and the page origin are
+   read on each call. */
+let endpointCache: Endpoints | null = null;
+function endpoints(): Endpoints {
+  const base = ENV.API_EDP || window.location.origin + '/api';
+  if (endpointCache?.base !== base) {
+    let isSaas = false;
+    try {
+      isSaas = new URL(base).hostname === SAAS_HOST;
+    } catch {
+      isSaas = false;
+    }
+    endpointCache = {
+      base,
+      isSaas,
+      v2: toV2(base, isSaas),
+      noChalice: isSaas ? base : base.replace('/api', ''),
+    };
+  }
+  return endpointCache;
+}
+
+const isPlainObject = (value: any): boolean => {
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+};
+
 export const clean = (
   obj: any,
   forbiddenValues: any[] = [undefined, ''],
@@ -69,10 +124,15 @@ export const clean = (
     ? new Array(obj.length).fill(0).map((_, i) => i)
     : Object.keys(obj);
   const retObj = Array.isArray(obj) ? [] : {};
-  keys.map((key) => {
+  keys.forEach((key) => {
     const value = obj[key];
-    if (typeof value === 'object' && value !== null) {
-      retObj[key] = clean(value);
+    // A Date, Blob or File has an object typeof but yields `{}` if walked.
+    if (value !== null && typeof value === 'object') {
+      if (Array.isArray(value) || isPlainObject(value)) {
+        retObj[key] = clean(value, forbiddenValues);
+      } else {
+        retObj[key] = value;
+      }
     } else if (!forbiddenValues.includes(value)) {
       retObj[key] = value;
     }
@@ -88,6 +148,7 @@ export default class APIClient {
   public getJwt: () => string | null = () => null;
   private onUpdateJwt: (data: { jwt?: string; spotJwt?: string }) => void;
   private refreshingTokenPromise: Promise<string> | null = null;
+  private jwtExp: { token: string; exp: number } | null = null;
 
   constructor() {
     this.init = {
@@ -120,7 +181,6 @@ export default class APIClient {
 
   private getInit(
     method: string = 'GET',
-    params?: any,
     reqHeaders?: Record<string, any>,
     abortSignal?: AbortSignal,
   ): RequestInit {
@@ -141,34 +201,35 @@ export default class APIClient {
       headers.set('Authorization', `Bearer ${jwt}`);
     }
 
-    // Create the init object
     const init: RequestInit = {
       method,
       headers,
-      body: params ? JSON.stringify(params) : undefined,
       signal: abortSignal,
     };
 
-    if (method === 'GET') {
-      delete init.body; // GET requests shouldn't have a body
-    }
-
-    // /:id/path
-    // const idFromPath = window.location.pathname.split('/')[1];
     this.siteId = this.siteIdCheck?.().siteId ?? undefined;
     return init;
   }
 
   private decodeJwt(jwt: string): any {
     const base64Url = jwt.split('.')[1];
-    const base64 = base64Url.replace('-', '+').replace('_', '/');
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(window.atob(base64));
   }
 
   isTokenExpired(token: string): boolean {
-    const decoded: any = this.decodeJwt(token);
-    const currentTime = Date.now() / 1000;
-    return decoded.exp < currentTime;
+    if (this.jwtExp?.token !== token) {
+      let exp = 0;
+      try {
+        exp = this.decodeJwt(token).exp ?? 0;
+      } catch {
+        // An undecodable token counts as expired, which routes it through the
+        // refresh instead of throwing out of every request that carries it.
+        exp = 0;
+      }
+      this.jwtExp = { token, exp };
+    }
+    return this.jwtExp.exp < Date.now() / 1000;
   }
 
   private async handleTokenRefresh(): Promise<string> {
@@ -197,19 +258,10 @@ export default class APIClient {
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
 
-    const init = this.getInit(
-      method,
-      options.clean && params ? clean(params) : params,
-      headers,
-      abortSignal,
-    );
+    const init = this.getInit(method, headers, abortSignal);
 
-    if (params !== undefined) {
-      const cleanedParams = options.clean ? clean(params) : params;
-      init.body = JSON.stringify(cleanedParams);
-    }
-    if (init.method === 'GET') {
-      delete init.body;
+    if (init.method !== 'GET' && params !== undefined) {
+      init.body = JSON.stringify(options.clean ? clean(params) : params);
     }
 
     if (
@@ -232,47 +284,29 @@ export default class APIClient {
       path.includes('/smart-issues') ||
       (path.includes('/spot') && !path.includes('/login')) ||
       path.includes('replay-exporter');
-    let edp = ENV.API_EDP || window.location.origin + '/api';
-    let isSaas = false;
-    const saasHost = 'api.openreplay.com';
-    const urlObj = new URL(edp);
-    if (urlObj.hostname === saasHost) {
-      isSaas = true;
-    }
-    const safeV2Replacer = (url: string) => {
-      if (isSaas) {
-        return url.replace('.com', '.com/v2');
-      } else {
-        try {
-          const urlObj = new URL(url);
-          urlObj.pathname = urlObj.pathname.replace('/api', '/v2/api');
-          return urlObj.toString();
-        } catch {
-          return url.replace('/api', '/v2/api');
-        }
-      }
-    };
 
     // using product analytics api for cards and dashboards (excluding sessions)
     // integrations moved to the Go `api` service: /v2/api/{projectId}/integration/*
+    const { base, isSaas, v2, noChalice: baseNoChalice } = endpoints();
+    let edp = base;
     if (
+      !base.includes('/v2') &&
       (path.includes('/cards') ||
         path.includes('/dashboards') ||
         path.includes('/sessions/search') ||
-        path.includes('/integration/')) &&
-      !edp.includes('/v2')
+        path.includes('/integration/'))
     ) {
-      edp = safeV2Replacer(edp);
+      edp = v2;
     }
 
     if (noChalice && !isSaas) {
-      edp = edp.replace('/api', '');
+      edp = edp === base ? baseNoChalice : edp.replace('/api', '');
     }
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
       !path.includes('/assist/credentials') &&
-      siteIdRequiredPaths.some((sidPath) => path.startsWith(sidPath))
+      SITE_ID_RE.test(path)
     ) {
       edp = `${edp}/${this.siteId ?? ''}`;
     }
@@ -286,14 +320,12 @@ export default class APIClient {
       // routes are new-API (v2). Matched by shape rather than by adding
       // `/notifications` to newApiUrls, because the legacy in-app notification
       // centre lives at a bare `/notifications` and must stay on the old API.
-      const isAgentNotifications = /^\/\d+\/notifications(\/|$)/.test(_path);
       if (
-        ((newApiUrls.some((u) => _path.includes(u)) &&
-          !except.some((e) => _path.includes(e))) ||
-          isAgentNotifications) &&
-        !edp.includes('/v2')
+        !edp.includes('/v2') &&
+        ((NEW_API_RE.test(_path) && !EXCEPT_RE.test(_path)) ||
+          AGENT_NOTIFICATIONS_RE.test(_path))
       ) {
-        fullUrl = safeV2Replacer(fullUrl);
+        fullUrl = toV2(fullUrl, isSaas);
       }
     }
     const response = await window.fetch(fullUrl, init);
@@ -384,7 +416,7 @@ export default class APIClient {
     abortSignal?: AbortSignal,
   ): Promise<Response> {
     this.init.method = 'DELETE';
-    return this.fetch(path, params, 'DELETE');
+    return this.fetch(path, params, 'DELETE', options, undefined, abortSignal);
   }
 
   patch(
@@ -394,10 +426,15 @@ export default class APIClient {
     abortSignal?: AbortSignal,
   ): Promise<Response> {
     this.init.method = 'PATCH';
-    return this.fetch(path, params, 'PATCH');
+    return this.fetch(path, params, 'PATCH', options, undefined, abortSignal);
   }
 
   forceSiteId = (siteId: string) => {
     this.siteId = siteId;
   };
 }
+
+/* The client every service shares. `RootStore.initClient` wires the JWT and
+   site-id checkers into this instance, so a separately constructed one sends
+   requests with no Authorization header. */
+export const apiClient = new APIClient();

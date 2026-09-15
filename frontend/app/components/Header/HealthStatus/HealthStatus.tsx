@@ -5,8 +5,8 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { getHealthRequest } from './getHealth';
 import { lastAskedKey, healthResponseKey } from './const';
 
-// Rendered only while showModal is true; the widget itself stays eager so the
-// header icon does not pop in.
+// Only rendered while showModal is true; the widget stays eager so the header
+// icon does not pop in.
 const HealthModal = React.lazy(
   () => import('Components/Header/HealthStatus/HealthModal/HealthModal'),
 );

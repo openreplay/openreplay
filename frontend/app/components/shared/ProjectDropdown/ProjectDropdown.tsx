@@ -13,9 +13,8 @@ import { mobileScreen } from 'App/utils/isMobile';
 import { useModal } from 'Components/ModalContext';
 import { Icon } from 'UI';
 
-// Only ever rendered into a modal on click, but an eager import put its whole
-// antd Form/Input/Segmented tree in the entry chunk — this dropdown is in the
-// header, so it loads on every page.
+// Modal content, but the header renders this dropdown on every page, so an
+// eager import parked its antd Form/Input/Segmented tree in the entry chunk.
 const ProjectForm = React.lazy(
   () => import('Components/Client/Projects/ProjectForm'),
 );

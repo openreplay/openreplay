@@ -8,7 +8,7 @@ interface Props {
 }
 
 function Counter({ startTime, className }: Props) {
-  let intervalId: NodeJS.Timer;
+  let intervalId: ReturnType<typeof setInterval>;
   const [duration, setDuration] = useState(
     convertTimestampToUtcTimestamp(new Date().getTime()) -
       convertTimestampToUtcTimestamp(startTime),

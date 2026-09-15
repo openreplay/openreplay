@@ -141,10 +141,14 @@ describe('SessionStore', () => {
 
       await sessionStore.fetchSessions({ page: 1, filters: [] }, true);
 
-      expect(sessionService.getSessions).toHaveBeenCalledWith({
-        page: 1,
-        filters: [],
-      });
+      // second arg is the abort signal, absent for callers that don't pass one
+      expect(sessionService.getSessions).toHaveBeenCalledWith(
+        {
+          page: 1,
+          filters: [],
+        },
+        undefined,
+      );
       expect(sessionStore.list.length).toBe(2);
       expect(sessionStore.total).toBe(2);
       expect(sessionStore.sessionIds).toEqual(['1', '2']);
@@ -163,6 +167,40 @@ describe('SessionStore', () => {
 
       expect(console.error).toHaveBeenCalledWith(mockError);
       expect(sessionStore.loadingSessions).toBe(false);
+    });
+
+    it('ignores a response whose search was already superseded', async () => {
+      const controller = new AbortController();
+      (sessionService.getSessions as jest.Mock).mockImplementation(async () => {
+        controller.abort();
+        return {
+          sessions: [{ sessionId: 'stale', favorite: false }],
+          total: 1,
+        };
+      });
+
+      sessionStore.list = [];
+      sessionStore.total = 0;
+
+      await sessionStore.fetchSessions({ filters: [] }, true, controller.signal);
+
+      expect(sessionStore.list).toEqual([]);
+      expect(sessionStore.total).toBe(0);
+      // the replacement search owns the spinner from here
+      expect(sessionStore.loadingSessions).toBe(true);
+    });
+
+    it('rethrows an aborted request so the caller can tell it was cancelled', async () => {
+      const controller = new AbortController();
+      const abortError = new Error('aborted');
+      (sessionService.getSessions as jest.Mock).mockImplementation(async () => {
+        controller.abort();
+        throw abortError;
+      });
+
+      await expect(
+        sessionStore.fetchSessions({ filters: [] }, true, controller.signal),
+      ).rejects.toThrow('aborted');
     });
   });
 

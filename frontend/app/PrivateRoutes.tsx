@@ -14,7 +14,7 @@ import {
 } from 'App/routing';
 import { Loader } from 'UI';
 
-import APIClient from './api_client';
+import { apiClient } from './api_client';
 import { useStore } from './mstore';
 import * as routes from './routes';
 import { saasRoutes } from './saasComponents';
@@ -143,16 +143,15 @@ function PrivateRoutes() {
     const location = useLocation();
 
     React.useEffect(() => {
-      const client = new APIClient();
       switch (location.pathname) {
         case '/integrations/slack':
-          client.post('integrations/slack/add', {
+          apiClient.post('integrations/slack/add', {
             code: location.search.split('=')[1],
             state: tenantId,
           });
           break;
         case '/integrations/msteams':
-          client.post('integrations/msteams/add', {
+          apiClient.post('integrations/msteams/add', {
             code: location.search.split('=')[1],
             state: tenantId,
           });

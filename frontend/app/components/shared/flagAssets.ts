@@ -1,11 +1,9 @@
-/* `import * as Flags from 'country-flag-icons/react/3x2'` pulled all ~267 flags
-   in as React components — 325KB of source, 8% of the entry vendor chunk, for a
-   handful of flags ever shown on screen. The SVGs ship in the same package, so
-   they are emitted as hashed assets instead and fetched on demand: the bundle
-   keeps only this code -> URL map, and the browser caches each flag it sees.
+/* Importing the package's React components pulled in all ~267 flags, 325KB of
+   source. The SVGs ship alongside them, so emit those as hashed assets and keep
+   only a code -> URL map here.
 
-   Kept in its own module because `import.meta.glob` is Vite-only syntax that
-   Jest's CJS transform cannot parse — jest.config.mjs maps this path to a stub. */
+   Its own module because `import.meta.glob` is Vite-only syntax that Jest's CJS
+   transform cannot parse — jest.config.mjs maps this path to a stub. */
 const flagUrls = import.meta.glob<string>(
   '../../../node_modules/country-flag-icons/3x2/*.svg',
   { query: '?url', import: 'default', eager: true },

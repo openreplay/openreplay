@@ -107,10 +107,15 @@ function SpotPlayerHeader({
           ),
         })
       ) {
-        spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
-          history.push(spotsList());
-          message.success(t('Spot successfully deleted'));
-        });
+        spotStore
+          .deleteSpot([spotStore.currentSpot!.spotId])
+          .then(() => {
+            history.push(spotsList());
+            message.success(t('Spot successfully deleted'));
+          })
+          .catch(() => {
+            message.error(t('Failed to delete Spot'));
+          });
       }
     }
   };

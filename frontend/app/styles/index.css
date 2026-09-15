@@ -1,9 +1,9 @@
 @layer reset, base, components, utilities;
 
+@import "./fonts.css";
 @import "./reset.css" layer(reset);
 @import "./import.css";
 @import "./main.css";
 @import "./colors-autogen.css";
 @import "./toastify.css";
 @import "./general.css";
-@import "./recharts.css";

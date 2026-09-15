@@ -1,5 +1,5 @@
 import { client } from 'App/mstore';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
 export type ServiceName = 'datadog' | 'dynatrace' | 'elasticsearch' | 'sentry';
@@ -25,8 +25,12 @@ export function useIntegration<T>(
   projectId: string,
   initialValues: T,
 ) {
+  const queryClient = useQueryClient();
+  const queryKey = ['integrationData', projectId, name];
+  const invalidate = () => queryClient.invalidateQueries({ queryKey });
+
   const { data, isPending } = useQuery({
-    queryKey: ['integrationData', name],
+    queryKey,
     queryFn: async () => {
       const resp = await getIntegrationData<T>(name, projectId);
       if (resp) {
@@ -34,7 +38,6 @@ export function useIntegration<T>(
       }
       return initialValues;
     },
-    initialData: initialValues,
     retry: (failureCount, error) => {
       const status = error.status || error.response.status;
       if (status === 404) {
@@ -54,10 +57,12 @@ export function useIntegration<T>(
       siteId: string;
       exists?: boolean;
     }) => saveIntegration(name, values, siteId, exists),
+    onSuccess: invalidate,
   });
   const removeMutation = useMutation({
     mutationFn: ({ siteId }: { siteId: string }) =>
       removeIntegration(name, siteId),
+    onSuccess: invalidate,
   });
 
   return {

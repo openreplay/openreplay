@@ -68,14 +68,13 @@ function EventDetailsModal({
     data: event,
     error,
     isPending,
-  } = useQuery<Event | null>({
-    queryKey: ['event-details', event_id],
+  } = useQuery<Event>({
+    queryKey: ['event-details', siteId, event_id],
     retry: false,
     queryFn: async () => {
       const data = await analyticsService.getEvent(event_id);
       return new Event(data);
     },
-    initialData: null,
   });
   const tabProps = event
     ? {

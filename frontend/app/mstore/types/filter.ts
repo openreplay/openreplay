@@ -298,7 +298,7 @@ export default class FilterStore implements IFilterStore {
   }
 
   createFilterByKey(key: FilterKey | string): FilterItem {
-    const sourceMap = this.isConditional ? conditionalFiltersMap : filtersMap;
+    const sourceMap = filtersMap;
     const filterTemplate = sourceMap[key as FilterKey];
     const newFilterData = filterTemplate
       ? { ...filterTemplate, value: [''] }

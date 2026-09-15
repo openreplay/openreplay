@@ -6,8 +6,8 @@ import {
 } from 'Types/filter/newFilter';
 import { makeAutoObservable, reaction } from 'mobx';
 import Search from 'App/mstore/types/search';
-import { checkFilterValue, IFilter } from 'App/mstore/types/filter';
-import FilterItem from 'App/mstore/types/filterItem';
+import { checkFilterValue } from 'App/mstore/types/filter';
+import FilterItem, { IFilter } from 'App/mstore/types/filterItem';
 import { sessionStore } from 'App/mstore';
 import { searchService } from 'App/services';
 

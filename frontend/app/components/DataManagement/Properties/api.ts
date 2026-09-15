@@ -1,4 +1,5 @@
 import { client } from '@/mstore';
+import { queryClient } from '@/queryClient';
 
 export interface DistinctProperty {
   autoCaptured: boolean;
@@ -46,5 +47,11 @@ interface UpdatePropPayload {
 export function updateProperty(payload: UpdatePropPayload): Promise<void> {
   return client
     .put(`/PROJECT_ID/lexicon/properties`, payload)
-    .then((res) => res.json());
+    .then((res) => res.json())
+    .then((json) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['distinct-event-props-list'],
+      });
+      return json;
+    });
 }

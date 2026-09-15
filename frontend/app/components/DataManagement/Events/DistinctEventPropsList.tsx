@@ -32,7 +32,7 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
   const { t } = useTranslation();
   const [view, setView] = React.useState<'all' | 'default' | 'custom'>('all');
   const { data = { properties: [], total: 0 }, isPending } = useQuery({
-    queryKey: ['distinct-event-props-list', eventName],
+    queryKey: ['distinct-event-props-list', siteId, eventName],
     queryFn: () => fetchList('events', eventName),
   });
 

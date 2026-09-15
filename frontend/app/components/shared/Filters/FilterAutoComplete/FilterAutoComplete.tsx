@@ -148,19 +148,11 @@ const FilterAutoComplete = observer(
       debouncedLoadOptions(newValue);
     };
 
-    const handleFocus = () => {
-      if (!initialFocus) {
-        setOptions(topValues.map((i) => ({ value: i.value, label: i.value })));
-      }
-      setInitialFocus(true);
-    };
-
     return (
       <AutocompleteModal
         values={values}
         onClose={onClose}
         onApply={onApply}
-        handleFocus={handleFocus}
         loadOptions={handleInputChange}
         options={options}
         isLoading={loading}

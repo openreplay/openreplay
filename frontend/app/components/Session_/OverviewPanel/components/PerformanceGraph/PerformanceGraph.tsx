@@ -1,5 +1,5 @@
 import React from 'react';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import Sparkline from 'Components/Charts/Sparkline';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
@@ -65,40 +65,15 @@ const PerformanceGraph = React.memo((props: Props) => {
           </div>
         </div>
       ) : null}
-      <ResponsiveContainer height={35}>
-        <AreaChart
-          data={data}
-          margin={{
-            top: 0,
-            right: 0,
-            left: 0,
-            bottom: 0,
-          }}
-        >
-          <defs>
-            <linearGradient
-              id="cpuGradientTimeline"
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="1"
-            >
-              <stop offset="30%" stopColor="#CC0000" stopOpacity={0.5} />
-              <stop offset="95%" stopColor="#3EAAAF" stopOpacity={0.8} />
-            </linearGradient>
-          </defs>
-          {/* <Tooltip filterNull={false} /> */}
-          <Area
-            dataKey="cpu"
-            baseValue={5}
-            type="monotone"
-            stroke="none"
-            activeDot={false}
-            fill="url(#cpuGradientTimeline)"
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      <Sparkline
+        data={data}
+        valueKey="cpu"
+        type="area"
+        height={35}
+        baseValue={5}
+        color="#3EAAAF"
+        gradient={['rgba(204, 0, 0, 0.5)', 'rgba(62, 170, 175, 0.8)']}
+      />
     </div>
   );
 });

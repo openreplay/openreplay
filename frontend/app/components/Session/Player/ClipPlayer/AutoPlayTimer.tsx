@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 function AutoplayTimer({ history }: any) {
   const { t } = useTranslation();
-  let timer: NodeJS.Timer;
+  let timer: ReturnType<typeof setTimeout>;
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
   const { clipStore } = useStore();

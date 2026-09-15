@@ -9,7 +9,7 @@ import Breadcrumb from 'Shared/Breadcrumb';
 import { dataManagement, withSiteId } from 'App/routes';
 import { useParams, useHistory } from 'App/routing';
 import { useStore } from 'App/mstore';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Activity from './components/UserActivity';
 import { observer } from 'mobx-react-lite';
 import { CopyButton, confirm, CountryFlag } from 'UI';
@@ -31,13 +31,16 @@ function UserInfo({ userId }: { userId: string }) {
   const history = useHistory();
   const { showModal } = useModal();
   const { analyticsStore, projectsStore } = useStore();
+  const queryClient = useQueryClient();
+  const siteId = projectsStore.activeSiteId;
+  const queryKey = ['user-info', siteId, userId];
   const {
     data: user,
     refetch,
     failureCount,
     error,
   } = useQuery({
-    queryKey: ['user-info', userId],
+    queryKey,
     retry: (c, e) => {
       if (e.cause?.status === 404) {
         return false;
@@ -82,6 +85,7 @@ function UserInfo({ userId }: { userId: string }) {
     } as any);
     if (!confirmed) return;
     await analyticsStore.deleteUser(userId);
+    queryClient.removeQueries({ queryKey });
     history.push(
       withSiteId(dataManagement.usersList(), projectsStore.activeSiteId ?? ''),
     );

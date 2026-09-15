@@ -88,9 +88,12 @@ const Router: React.FC = () => {
     if (isSpotCb) {
       localStorage.setItem(SPOT_ONBOARDING, 'true');
     }
+    // tenantId is only needed to pick a site once the list has arrived, so
+    // both requests can be in flight at once.
+    const sitesPending = projectsStore.prefetchList();
     const userData = await fetchUserInfo();
     const siteIdFromPath = location.pathname.split('/')[1];
-    await fetchSiteList(siteIdFromPath, userData?.tenantId);
+    await fetchSiteList(siteIdFromPath, userData?.tenantId, sitesPending);
 
     if (userData?.tenantId) {
       projectsStore.setTenantId(userData.tenantId);

@@ -3,6 +3,8 @@ import cn from 'classnames';
 import React from 'react';
 import { Icon } from 'UI';
 
+import { prefetchRoute } from './prefetchRoutes';
+
 const { Text } = Typography;
 
 interface Props {
@@ -62,6 +64,7 @@ export default function MenuContent({
           if (it.key === 'exit') {
             return {
               key: it.key,
+              onMouseEnter: () => prefetchRoute(String(it.key)),
               icon: (
                 <Icon
                   name={it.icon}
@@ -81,6 +84,7 @@ export default function MenuContent({
           if (it.children) {
             return {
               key: it.key,
+              onMouseEnter: () => prefetchRoute(String(it.key)),
               icon: (
                 <Icon
                   name={it.icon}
@@ -111,6 +115,7 @@ export default function MenuContent({
 
                   return {
                     key: child.key,
+                    onMouseEnter: () => prefetchRoute(String(child.key)),
                     className: 'ml-8',
                     label: (
                       <div className="flex items-center gap-4 hover-fill-teal">
@@ -142,6 +147,7 @@ export default function MenuContent({
 
           return {
             key: it.key,
+            onMouseEnter: () => prefetchRoute(String(it.key)),
             icon: (
               <Icon
                 name={it.icon}

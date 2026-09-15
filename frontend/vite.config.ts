@@ -1,8 +1,9 @@
+import babel, { defineRolldownBabelPreset } from '@rolldown/plugin-babel';
+import tailwindPostcss from '@tailwindcss/postcss';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
-import react from '@vitejs/plugin-react';
-import tailwindPostcss from '@tailwindcss/postcss';
 import postcssImport from 'postcss-import';
 import postcssMixins from 'postcss-mixins';
 import postcssNesting from 'postcss-nesting';
@@ -13,6 +14,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 import colors from './app/theme/colors';
+import babelMobxNoMemo from './scripts/babelMobxNoMemo';
 
 const APP_ASSETS_DIR = path.resolve(__dirname, 'app/assets');
 const PLAYER_DIR = path.resolve(__dirname, '../player');
@@ -22,17 +24,14 @@ const STYLES_IMPORT_DIR = path.resolve(__dirname, 'app/styles/import');
 const COMPRESSIBLE_RE = /\.(js|css|html|json|svg|map)$/;
 const COMPRESS_MIN_BYTES = 1024;
 
-/* Precompresses the build so nginx can serve the bytes straight off disk
-   (`gzip_static` / `brotli_static`) instead of re-compressing every asset on
-   every request. Precompressing also lets us use the slowest, smallest settings,
-   which on-the-fly compression can't afford. */
+/* Emits .gz/.br next to every asset for nginx `gzip_static` / `brotli_static`,
+   at the slowest settings an on-the-fly pass could not afford. */
 const precompress = () => {
   let outDir = 'public';
 
   return {
     name: 'precompress-assets',
     apply: 'build' as const,
-    // outDir is overridable on the CLI, so take whatever Vite resolved.
     configResolved(resolved: { build: { outDir: string } }) {
       outDir = resolved.build.outDir;
     },
@@ -65,6 +64,57 @@ const precompress = () => {
     },
   };
 };
+
+/**
+ * Tags that depend on build-time config, so index.html can stay static.
+ *
+ *  - preconnect to the API and asset hosts; skipped when the host is unset or
+ *    already same-origin, where it would do nothing.
+ *  - Turnstile, which is unreachable unless CAPTCHA_ENABLED.
+ */
+const injectHtmlHints = (env: Record<string, string>) => ({
+  name: 'inject-html-hints',
+  transformIndexHtml() {
+    const tags: {
+      tag: string;
+      attrs: Record<string, string | boolean>;
+      injectTo: 'head-prepend' | 'head';
+    }[] = [];
+
+    const origins = new Set<string>();
+    for (const value of [env.API_EDP, env.ASSETS_HOST]) {
+      if (!value || !/^https?:\/\//i.test(value)) continue;
+      try {
+        origins.add(new URL(value).origin);
+      } catch {
+        /* not an absolute URL — nothing to preconnect to */
+      }
+    }
+    for (const origin of origins) {
+      tags.push({
+        tag: 'link',
+        attrs: { rel: 'preconnect', href: origin, crossorigin: true },
+        // Ahead of the module preloads, so the socket is open by the time the
+        // bundle parses and fires its first request.
+        injectTo: 'head-prepend',
+      });
+    }
+
+    if (env.CAPTCHA_ENABLED === 'true') {
+      tags.push({
+        tag: 'script',
+        attrs: {
+          src: 'https://challenges.cloudflare.com/turnstile/v0/api.js?compat=recaptcha',
+          async: true,
+          defer: true,
+        },
+        injectTo: 'head',
+      });
+    }
+
+    return tags;
+  },
+});
 
 const transformColorsToCssVars = (
   colorsObj: Record<string, unknown>,
@@ -116,6 +166,24 @@ export default defineConfig(({ mode }) => {
       react({
         include: /\.(mjs|js|jsx|ts|tsx)$/,
       }),
+      // React Compiler, through the official Babel plugin. Runs at the `pre`
+      // stage on raw TSX, before Vite's oxc transform strips types/JSX and adds
+      // Fast Refresh. Babel applies presets last-to-first, so the MobX opt-out
+      // preset below runs before the compiler and its "use no memo" directives
+      // are already in place when the compiler decides what to memoize.
+      babel({
+        include: /[\\/]frontend[\\/]app[\\/].*\.[jt]sx?(?:$|\?)/,
+        presets: [
+          reactCompilerPreset(),
+          defineRolldownBabelPreset({
+            preset: () => ({ plugins: [babelMobxNoMemo] }),
+            rolldown: {
+              filter: { code: /\b(?:observer|useStore)\b/ },
+              applyToEnvironmentHook: (env) => env.config.consumer === 'client',
+            },
+          }),
+        ],
+      }),
       tsconfigPaths({ projects: ['./tsconfig.json'] }),
       viteStaticCopy({
         // `app/assets/*` matched only the top-level *files* (the plugin globs
@@ -152,6 +220,7 @@ export default defineConfig(({ mode }) => {
           server.watcher.add(PLAYER_SRC_DIR);
         },
       },
+      injectHtmlHints(env),
       precompress(),
     ],
     resolve: {
@@ -207,7 +276,9 @@ export default defineConfig(({ mode }) => {
           postcssImport({ path: STYLES_IMPORT_DIR }),
           postcssMixins(),
           postcssSimpleVars({
-            variables: transformColorsToCssVars(colors as Record<string, unknown>),
+            variables: transformColorsToCssVars(
+              colors as Record<string, unknown>,
+            ),
           }),
           postcssNesting(),
           tailwindPostcss(),
@@ -229,20 +300,15 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       sourcemap: env.SOURCEMAP === 'true',
       target: 'es2022',
-      // Each flag SVG is under the 4KB inline threshold, so by default all ~267
-      // of them get base64'd straight back into the chunk that globs them —
-      // bigger than the React components they replaced. Emit them as files so
-      // the bundle keeps only URLs and the browser fetches the few in view.
+      // Every flag SVG is under the 4KB inline threshold, so all ~267 would be
+      // base64'd back into the chunk that globs them. Emit files instead.
       assetsInlineLimit: (filePath: string) =>
         filePath.includes('country-flag-icons') ? false : undefined,
       reportCompressedSize: false,
       rolldownOptions: {
         output: {
-          // Without groups rolldown collapses every shared dependency into one
-          // ~1.3MB chunk the entry preloads. Splitting by package keeps the
-          // rarely-changing vendors (react, antd) on their own long-lived cache
-          // entries and lets chunks only a lazy route needs stay out of the
-          // entry graph.
+          // Without a group, rolldown collapses every shared dependency into
+          // one ~1.3MB chunk that the entry preloads.
           advancedChunks: {
             groups: [
               {

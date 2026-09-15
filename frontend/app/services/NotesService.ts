@@ -1,4 +1,4 @@
-import APIClient from 'App/api_client';
+import APIClient, { apiClient } from 'App/api_client';
 
 export const tagProps = {
   ISSUE: 'red',
@@ -54,11 +54,11 @@ export default class NotesService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   initClient(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   fetchNotes(filter: NotesFilter): Promise<{ notes: Note[]; count: number }> {
