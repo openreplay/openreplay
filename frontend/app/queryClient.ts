@@ -33,14 +33,4 @@ export const queryClient = new QueryClient({
   },
 });
 
-/**
- * Spread into a `useQuery` that must track the backend closely. Still renders
- * cached data first, but always revalidates instead of trusting the 30s window.
- */
-export const liveQueryOptions = {
-  staleTime: 0,
-  refetchOnMount: 'always',
-  refetchOnWindowFocus: true,
-} as const;
-
 export default queryClient;

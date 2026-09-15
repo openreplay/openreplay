@@ -46,90 +46,115 @@ function Sparkline(props: Props) {
   } = props;
 
   const chartRef = React.useRef<HTMLDivElement>(null);
+  const instRef = React.useRef<any>(null);
+  const latest = React.useRef({ rows: data ?? [], tooltipFormatter });
+  React.useEffect(() => {
+    latest.current.tooltipFormatter = tooltipFormatter;
+  });
+
+  // Callers write `gradient={[...]}` inline; compare by value.
+  const gradientKey = gradient ? gradient.join('|') : '';
+  const stableGradient = React.useMemo(() => gradient, [gradientKey]);
+  const hasTooltip = Boolean(tooltipFormatter);
 
   React.useEffect(() => {
-    if (!chartRef.current) return;
-    const chart = echarts.init(chartRef.current);
+    const el = chartRef.current;
+    if (!el) return;
+    const chart = echarts.init(el);
+    instRef.current = chart;
     const obs = new ResizeObserver(() => chart.resize());
-    obs.observe(chartRef.current);
+    obs.observe(el);
+    return () => {
+      obs.disconnect();
+      chart.dispose();
+      instRef.current = null;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const chart = instRef.current;
+    if (!chart) return;
+    const rows = data ?? [];
+    latest.current.rows = rows;
 
     const fill =
-      type === 'area' && gradient
+      type === 'area' && stableGradient
         ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: gradient[0] },
-            { offset: 1, color: gradient[1] },
+            { offset: 0, color: stableGradient[0] },
+            { offset: 1, color: stableGradient[1] },
           ])
         : color;
 
-    chart.setOption({
-      animation: false,
-      backgroundColor: 'transparent',
-      grid: { left: 0, right: 0, top: 2, bottom: 0, containLabel: false },
-      xAxis: {
-        type: 'category',
-        show: false,
-        boundaryGap: type === 'bar',
-        data: (data ?? []).map((_, i) => i),
-      },
-      yAxis: {
-        type: 'value',
-        show: false,
-        min: baseValue ?? 0,
-      },
-      tooltip: tooltipFormatter
-        ? {
-            trigger: 'axis',
-            backgroundColor: 'var(--color-white)',
-            borderColor: 'var(--color-gray-light)',
-            borderWidth: 1,
-            extraCssText: 'box-shadow: 0 2px 8px rgba(0,0,0,.12);',
-            textStyle: { color: 'var(--color-gray-darkest)' },
-            axisPointer: { type: type === 'bar' ? 'shadow' : 'line' },
-            formatter: (params: any) => {
-              const idx = Array.isArray(params)
-                ? params[0]?.dataIndex
-                : params?.dataIndex;
-              const row = (data ?? [])[idx];
-              return row ? tooltipFormatter(row) : '';
-            },
-          }
-        : { show: false },
-      series: [
-        {
-          name,
-          type: type === 'area' ? 'line' : 'bar',
-          data: (data ?? []).map((row) => row[valueKey] ?? 0),
-          showSymbol: false,
-          smooth: type === 'area',
-          lineStyle:
-            type === 'area'
-              ? {
-                  width: strokeWidth,
-                  color: strokeColor ?? color,
-                  opacity: strokeOpacity,
-                }
-              : undefined,
-          areaStyle: type === 'area' ? { color: fill, opacity: 1 } : undefined,
-          itemStyle: { color: type === 'area' ? color : fill },
+    chart.setOption(
+      {
+        animation: false,
+        backgroundColor: 'transparent',
+        grid: { left: 0, right: 0, top: 2, bottom: 0, containLabel: false },
+        xAxis: {
+          type: 'category',
+          show: false,
+          boundaryGap: type === 'bar',
+          data: rows.map((_, i) => i),
         },
-      ],
-    });
-
-    return () => {
-      chart.dispose();
-      obs.disconnect();
-    };
+        yAxis: {
+          type: 'value',
+          show: false,
+          min: baseValue ?? 0,
+        },
+        tooltip: hasTooltip
+          ? {
+              trigger: 'axis',
+              backgroundColor: 'var(--color-white)',
+              borderColor: 'var(--color-gray-light)',
+              borderWidth: 1,
+              extraCssText: 'box-shadow: 0 2px 8px rgba(0,0,0,.12);',
+              textStyle: { color: 'var(--color-gray-darkest)' },
+              axisPointer: { type: type === 'bar' ? 'shadow' : 'line' },
+              formatter: (params: any) => {
+                const idx = Array.isArray(params)
+                  ? params[0]?.dataIndex
+                  : params?.dataIndex;
+                const row = latest.current.rows[idx];
+                const fmt = latest.current.tooltipFormatter;
+                return row && fmt ? fmt(row) : '';
+              },
+            }
+          : { show: false },
+        series: [
+          {
+            name,
+            type: type === 'area' ? 'line' : 'bar',
+            data: rows.map((row) => row[valueKey] ?? 0),
+            showSymbol: false,
+            smooth: type === 'area',
+            lineStyle:
+              type === 'area'
+                ? {
+                    width: strokeWidth,
+                    color: strokeColor ?? color,
+                    opacity: strokeOpacity,
+                  }
+                : undefined,
+            areaStyle:
+              type === 'area' ? { color: fill, opacity: 1 } : undefined,
+            itemStyle: { color: type === 'area' ? color : fill },
+          },
+        ],
+      },
+      { notMerge: true },
+    );
   }, [
     data,
     valueKey,
     type,
     color,
-    gradient,
+    stableGradient,
     name,
     baseValue,
     strokeWidth,
     strokeColor,
     strokeOpacity,
+    hasTooltip,
   ]);
 
   return <div ref={chartRef} style={{ width, height }} />;

@@ -6,7 +6,9 @@ import {
   PlayerContext,
 } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import PerformanceAreaChart from 'Components/Charts/PerformanceAreaChart';
+import PerformanceAreaChart, {
+  PerfBand,
+} from 'Components/Charts/PerformanceAreaChart';
 import { durationFromMsFormatted } from 'App/date';
 import { formatBytes } from 'App/utils';
 import { Tooltip as TooltipANT, Segmented } from 'antd';
@@ -36,6 +38,60 @@ const NODES_COUNT_STROKE_COLOR = '#7360AC';
 const HIDDEN_SCREEN_COLOR = '#CCC';
 
 const CURSOR_COLOR = '#394EFF';
+
+/* Module-level so the strips' option effects, which compare bands by value,
+   never see a new array on the per-tick re-render. */
+const MOBILE_CPU_BANDS: PerfBand[] = [
+  { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
+  { key: 'isBackground', color: HIDDEN_SCREEN_COLOR, step: true },
+];
+const MOBILE_MEMORY_BANDS: PerfBand[] = [
+  { key: 'isMemBackground', color: HIDDEN_SCREEN_COLOR, step: true },
+  {
+    key: 'memory',
+    color: USED_HEAP_COLOR,
+    strokeColor: USED_HEAP_STROKE_COLOR,
+    gradient: true,
+  },
+];
+const FPS_BANDS: PerfBand[] = [
+  {
+    key: 'fps',
+    color: FPS_COLOR,
+    strokeColor: FPS_STROKE_COLOR,
+    step: true,
+    gradient: true,
+  },
+  { key: 'fpsLowMarker', color: FPS_LOW_COLOR, step: true },
+  { key: 'fpsVeryLowMarker', color: FPS_VERY_LOW_COLOR, step: true },
+  { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
+];
+const CPU_BANDS: PerfBand[] = [
+  { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
+  { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
+];
+const HEAP_BANDS: PerfBand[] = [
+  {
+    key: 'totalHeap',
+    color: 'transparent',
+    strokeColor: TOTAL_HEAP_STROKE_COLOR,
+    line: true,
+  },
+  {
+    key: 'usedHeap',
+    color: USED_HEAP_COLOR,
+    strokeColor: USED_HEAP_STROKE_COLOR,
+    gradient: true,
+  },
+];
+const NODES_BANDS: PerfBand[] = [
+  {
+    key: 'nodesCount',
+    color: NODES_COUNT_COLOR,
+    strokeColor: NODES_COUNT_STROKE_COLOR,
+    gradient: true,
+  },
+];
 
 const TOTAL_HEAP = (t: TFunction) => t('Allocated Heap');
 const USED_HEAP = (t: TFunction) => t('JS Heap');
@@ -184,14 +240,6 @@ export const MobilePerformance = observer(() => {
     }
   };
 
-  const onChartClick = (e: any) => {
-    if (e === null) return;
-    const { activeTooltipIndex } = e;
-    const point = _data[activeTooltipIndex];
-    if (point) {
-      player.jump(point.time);
-    }
-  };
 
   const availableCount = 2;
   const height = `${100 / availableCount}%`;
@@ -226,10 +274,7 @@ export const MobilePerformance = observer(() => {
             onPointClick={(i) => onDotClick({ index: i })}
             yMax={120}
             tooltipFormatter={mobileCpuTooltip(t)}
-            bands={[
-              { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
-              { key: 'isBackground', color: HIDDEN_SCREEN_COLOR, step: true },
-            ]}
+            bands={MOBILE_CPU_BANDS}
           />
         <PerformanceAreaChart
             label="Memory"
@@ -243,10 +288,7 @@ export const MobilePerformance = observer(() => {
             yFormatter={formatBytes}
             yMaxRatio={1.2}
             tooltipFormatter={mobileMemoryTooltip(t)}
-            bands={[
-              { key: 'isMemBackground', color: HIDDEN_SCREEN_COLOR, step: true },
-              { key: 'memory', color: USED_HEAP_COLOR, strokeColor: USED_HEAP_STROKE_COLOR, gradient: true },
-            ]}
+            bands={MOBILE_MEMORY_BANDS}
           />
       </BottomBlock.Content>
     </BottomBlock>
@@ -287,14 +329,6 @@ function Performance() {
     }
   };
 
-  const onChartClick = (e: any) => {
-    if (e === null) return;
-    const { activeTooltipIndex } = e;
-    const point = _data[activeTooltipIndex];
-    if (point) {
-      player.jump(point.time);
-    }
-  };
 
   const { fps, cpu, heap, nodes } = availability;
   const availableCount = [fps, cpu, heap, nodes].reduce(
@@ -356,12 +390,7 @@ function Performance() {
               yMax={85}
               xFormatter={durationFromMsFormatted}
               tooltipFormatter={fpsTooltip(t)}
-              bands={[
-                { key: 'fps', color: FPS_COLOR, strokeColor: FPS_STROKE_COLOR, step: true, gradient: true },
-                { key: 'fpsLowMarker', color: FPS_LOW_COLOR, step: true },
-                { key: 'fpsVeryLowMarker', color: FPS_VERY_LOW_COLOR, step: true },
-                { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
-              ]}
+              bands={FPS_BANDS}
             />
         )}
         {cpu && (
@@ -376,10 +405,7 @@ function Performance() {
               onPointClick={(i) => onDotClick({ index: i })}
               yMax={120}
               tooltipFormatter={cpuTooltip(t)}
-              bands={[
-                { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
-                { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
-              ]}
+              bands={CPU_BANDS}
             />
         )}
 
@@ -396,10 +422,7 @@ function Performance() {
               yFormatter={formatBytes}
               yMaxRatio={1.2}
               tooltipFormatter={heapTooltip(t)}
-              bands={[
-                { key: 'totalHeap', color: 'transparent', strokeColor: TOTAL_HEAP_STROKE_COLOR, line: true },
-                { key: 'usedHeap', color: USED_HEAP_COLOR, strokeColor: USED_HEAP_STROKE_COLOR, gradient: true },
-              ]}
+              bands={HEAP_BANDS}
             />
         )}
         {nodes && (
@@ -414,9 +437,7 @@ function Performance() {
               onPointClick={(i) => onDotClick({ index: i })}
               yMaxRatio={1.2}
               tooltipFormatter={nodesCountTooltip(t)}
-              bands={[
-                { key: 'nodesCount', color: NODES_COUNT_COLOR, strokeColor: NODES_COUNT_STROKE_COLOR, gradient: true },
-              ]}
+              bands={NODES_BANDS}
             />
         )}
       </BottomBlock.Content>

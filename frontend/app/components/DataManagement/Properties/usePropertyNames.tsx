@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import React from 'react';
 
+import { useStore } from 'App/mstore';
 import { TextEllipsis } from 'UI';
 
 import { fetchList } from './api';
@@ -11,8 +12,9 @@ import { fetchList } from './api';
  * hook that will get all properties and then return a method to grab displayname by property name
  */
 function usePropertyNames(source: 'events' | 'users') {
+  const { projectsStore } = useStore();
   const { data = { properties: [] }, isPending } = useQuery({
-    queryKey: ['props-list', source],
+    queryKey: ['props-list', projectsStore.activeSiteId, source],
     queryFn: () => fetchList(source),
     enabled: !menuHidden.lexicon,
     // refetch every 20 minutes
