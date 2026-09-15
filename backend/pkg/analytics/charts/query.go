@@ -160,9 +160,9 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperti
 		// JSON extraction - escape property name to prevent injection
 		escapedProp := sqlStringReplacer.Replace(propKey.LogicalProperty)
 		if isNumeric {
-			return fmt.Sprintf("JSONExtractFloat(toString(%s), '%s')", colName, escapedProp), "singleColumn"
+			return fmt.Sprintf("JSONExtractFloat(%s, '%s')", colName, escapedProp), "singleColumn"
 		}
-		return fmt.Sprintf("JSONExtractString(toString(%s), '%s')", colName, escapedProp), "singleColumn"
+		return fmt.Sprintf("JSONExtractString(%s, '%s')", colName, escapedProp), "singleColumn"
 	} else {
 		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty), "singleColumn"
 	}
@@ -179,7 +179,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 
 	opts := BuildConditionsOptions{
 		MainTableAlias:             "e",
-		PropertiesColumnName:       "`$properties`",
+		PropertiesColumnName:       "\"$properties\"",
 		CustomPropertiesColumnName: "properties",
 		DefinedColumns:             make(map[string][]string),
 		EventsOrder:                "then",
