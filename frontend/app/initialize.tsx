@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { configurePlayer } from 'Player/config';
 import {
   App,
@@ -17,6 +17,7 @@ import { BrowserRouter, LocationSync } from 'App/routing';
 import { MountPoint, Notification } from 'UI';
 
 import ENV from '../env';
+import { queryClient } from './queryClient';
 import Router from './Router';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import AnimatedSVG from './components/shared/AnimatedSVG';
@@ -39,8 +40,6 @@ configurePlayer({
 // @ts-ignore
 window.getCommitHash = () =>
   console.log(`Version: ${ENV.VERSION}, Commit: ${ENV.COMMIT_HASH}`);
-
-const queryClient = new QueryClient();
 
 const cssVar = (name: string) => `var(--color-${name})`;
 

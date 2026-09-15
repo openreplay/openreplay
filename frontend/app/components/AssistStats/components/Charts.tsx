@@ -1,7 +1,7 @@
 import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from 'Components/Dashboard/Widgets/common';
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import Sparkline from 'Components/Charts/Sparkline';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
@@ -12,7 +12,6 @@ interface Props {
 function Chart(props: Props) {
   const { t } = useTranslation();
   const { data, label } = props;
-  const gradientDef = Styles.gradientDef();
 
   return (
     <NoContent
@@ -23,36 +22,18 @@ function Chart(props: Props) {
       show={data && data.length === 0}
       style={{ height: '100px' }}
     >
-      <ResponsiveContainer height={90} width="100%">
-        <AreaChart
-          data={data}
-          margin={{
-            top: 0,
-            right: 0,
-            left: 0,
-            bottom: 0,
-          }}
-        >
-          {gradientDef}
-          <XAxis hide {...Styles.xaxis} dataKey="time" interval={7} />
-          <YAxis
-            hide
-            {...Styles.yaxis}
-            allowDecimals={false}
-            tickFormatter={(val) => Styles.tickFormatter(val)}
-            label={{ ...Styles.axisLabelLeft, value: label }}
-          />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke={Styles.strokeColor}
-            fillOpacity={1}
-            strokeWidth={2}
-            strokeOpacity={0.8}
-            fill="url(#colorCount)"
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      <Sparkline
+        data={data}
+        valueKey="value"
+        name={label}
+        type="area"
+        height={90}
+        color={Styles.compareColors[2]}
+        gradient={['rgba(128, 141, 255, 0.5)', 'rgba(128, 141, 255, 0.2)']}
+        strokeColor={Styles.strokeColor}
+        strokeWidth={2}
+        strokeOpacity={0.8}
+      />
     </NoContent>
   );
 }

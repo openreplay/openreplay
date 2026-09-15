@@ -66,6 +66,62 @@ const precompress = () => {
   };
 };
 
+/**
+ * index.html is static, but every value it needs is already resolved at build
+ * time (the same `define` that bakes ENV), so these tags can be decided here
+ * instead of shipping them to everyone unconditionally.
+ *
+ *  - preconnect: warms DNS + TCP + TLS for the API and asset hosts so the first
+ *    request after the bundle parses doesn't pay a cold handshake. Skipped when
+ *    the host is unset (the app falls back to window.location.origin) or is
+ *    already same-origin, where preconnect does nothing.
+ *  - Turnstile: only reachable behind CAPTCHA_ENABLED, so an unconditional tag
+ *    is a third-party script plus a handshake that most deployments never use.
+ */
+const injectHtmlHints = (env: Record<string, string>) => ({
+  name: 'inject-html-hints',
+  transformIndexHtml() {
+    const tags: {
+      tag: string;
+      attrs: Record<string, string | boolean>;
+      injectTo: 'head-prepend' | 'head';
+    }[] = [];
+
+    const origins = new Set<string>();
+    for (const value of [env.API_EDP, env.ASSETS_HOST]) {
+      if (!value || !/^https?:\/\//i.test(value)) continue;
+      try {
+        origins.add(new URL(value).origin);
+      } catch {
+        /* not a usable absolute URL — nothing to preconnect to */
+      }
+    }
+    for (const origin of origins) {
+      tags.push({
+        tag: 'link',
+        attrs: { rel: 'preconnect', href: origin, crossorigin: true },
+        // Ahead of the module preloads: the point is to have the socket open
+        // by the time the bundle finishes parsing and fires its first request.
+        injectTo: 'head-prepend',
+      });
+    }
+
+    if (env.CAPTCHA_ENABLED === 'true') {
+      tags.push({
+        tag: 'script',
+        attrs: {
+          src: 'https://challenges.cloudflare.com/turnstile/v0/api.js?compat=recaptcha',
+          async: true,
+          defer: true,
+        },
+        injectTo: 'head',
+      });
+    }
+
+    return tags;
+  },
+});
+
 const transformColorsToCssVars = (
   colorsObj: Record<string, unknown>,
 ): Record<string, unknown> => {
@@ -152,6 +208,7 @@ export default defineConfig(({ mode }) => {
           server.watcher.add(PLAYER_SRC_DIR);
         },
       },
+      injectHtmlHints(env),
       precompress(),
     ],
     resolve: {

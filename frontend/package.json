@@ -75,7 +75,6 @@
     "react-select": "^5.10.2",
     "react-toastify": "^11.1.0",
     "react18-json-view": "^0.2.10",
-    "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.8.3",
     "syncod": "^0.0.1",
