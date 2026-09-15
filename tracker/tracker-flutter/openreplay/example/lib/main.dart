@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _card = TextEditingController();
   bool _recording = false;
+  bool _starting = false;
   String _lastNetwork = 'none yet';
   VoidCallback? _removeInputObserver;
 
@@ -62,18 +63,36 @@ class _HomePageState extends State<HomePage> {
       _toast('Set OR_PROJECT_KEY in .env, then restart');
       return;
     }
+    setState(() => _starting = true);
     await OpenReplay.instance.start(
       projectKey: kProjectKey,
       serverUrl: kServerUrl,
       options: OROptions.defaultDebug,
     );
+    if (!mounted) return;
+    if (OpenReplay.instance.sessionId.isEmpty) {
+      setState(() => _starting = false);
+      _toast('Could not start a session - check the key, URL and logs');
+      return;
+    }
     // Records dart:io traffic, including the button below.
     OpenReplay.instance.patchNetwork(
       const ORNetworkOptions(capturePayload: true),
     );
     _removeInputObserver =
         OpenReplay.instance.observeInput(_email, label: 'Email');
-    if (mounted) setState(() => _recording = true);
+    setState(() {
+      _starting = false;
+      _recording = true;
+    });
+  }
+
+  Future<void> _stop() async {
+    await OpenReplay.instance.stop();
+    OpenReplay.instance.unpatchNetwork();
+    _removeInputObserver?.call();
+    _removeInputObserver = null;
+    if (mounted) setState(() => _recording = false);
   }
 
   void _toast(String message) => ScaffoldMessenger.of(context)
@@ -111,16 +130,19 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16),
         children: [
           FilledButton(
-            onPressed: _recording ? null : _start,
-            child: Text(_recording ? 'Recording' : 'Start recording'),
+            onPressed: _recording || _starting ? null : _start,
+            child: Text(
+              _starting
+                  ? 'Starting...'
+                  : _recording
+                      ? 'Recording'
+                      : 'Start recording',
+            ),
           ),
           const SizedBox(height: 8),
           if (_recording)
             OutlinedButton(
-              onPressed: () async {
-                await OpenReplay.instance.stop();
-                if (mounted) setState(() => _recording = false);
-              },
+              onPressed: _stop,
               child: const Text('Stop and flush'),
             ),
 

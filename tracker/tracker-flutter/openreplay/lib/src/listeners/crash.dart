@@ -10,16 +10,19 @@ import '../transport/message_collector.dart';
 
 /// Port of Crash.swift.
 ///
-/// Covers the three places a Dart error can surface: the framework's own
-/// handler, the engine's uncaught-error hook, and errors raised on other
-/// isolates. Crashes in native code are not visible here and need a native
-/// handler.
+/// Covers the framework's own error handler, the engine's uncaught-error hook,
+/// and the error port of the isolate the tracker runs in (the root isolate).
+/// Errors in isolates the app spawns itself are not seen: forward them with
+/// [report], or add the spawned isolate's error port and call it from there.
+/// Crashes in native code are not visible here and need a native handler.
 class Crashs {
   Crashs._();
   static final Crashs shared = Crashs._();
 
   FlutterExceptionHandler? _previousOnError;
+  FlutterExceptionHandler? _installedOnError;
   ui.ErrorCallback? _previousPlatformOnError;
+  ui.ErrorCallback? _installedPlatformOnError;
   ReceivePort? _isolateErrors;
   bool _active = false;
 
@@ -30,7 +33,7 @@ class Crashs {
     // Chain rather than replace: the host app, and other SDKs, install these
     // too.
     _previousOnError = FlutterError.onError;
-    FlutterError.onError = (details) {
+    FlutterError.onError = _installedOnError = (details) {
       report(
         name: details.exception.runtimeType.toString(),
         reason: details.exceptionAsString(),
@@ -40,7 +43,8 @@ class Crashs {
     };
 
     _previousPlatformOnError = PlatformDispatcher.instance.onError;
-    PlatformDispatcher.instance.onError = (error, stack) {
+    PlatformDispatcher.instance.onError =
+        _installedPlatformOnError = (error, stack) {
       report(
         name: error.runtimeType.toString(),
         reason: error.toString(),
@@ -65,8 +69,17 @@ class Crashs {
   void stop() {
     if (!_active) return;
     _active = false;
-    FlutterError.onError = _previousOnError;
-    PlatformDispatcher.instance.onError = _previousPlatformOnError;
+    // Only unwind our own hooks; an SDK that installed after us and chained
+    // to them would otherwise be disconnected.
+    if (identical(FlutterError.onError, _installedOnError)) {
+      FlutterError.onError = _previousOnError;
+    }
+    if (identical(
+        PlatformDispatcher.instance.onError, _installedPlatformOnError)) {
+      PlatformDispatcher.instance.onError = _previousPlatformOnError;
+    }
+    _installedOnError = null;
+    _installedPlatformOnError = null;
     final port = _isolateErrors;
     if (port != null) {
       Isolate.current.removeErrorListener(port.sendPort);

@@ -12,13 +12,17 @@ const int _maxLabelLength = 80;
 /// noise in exactly the builds that ship. Text content, found by walking the
 /// hit-tested subtree, is stable instead.
 String labelForHitTest(Iterable<HitTestEntry> path) {
-  for (final entry in path) {
-    final target = entry.target;
-    if (target is! RenderObject) continue;
-
+  final targets = [
+    for (final entry in path)
+      if (entry.target case final RenderObject target) target,
+  ];
+  // The path runs innermost-first, so an ORTrackedView wrapping a Text would
+  // lose to the text unless explicit labels are checked over the whole path.
+  for (final target in targets) {
     final explicit = _explicitLabel(target);
     if (explicit != null) return explicit;
-
+  }
+  for (final target in targets) {
     final text = _findText(target, 0);
     if (text != null) return text;
   }

@@ -67,7 +67,7 @@ would otherwise appear blank. Set `maskPlatformViews: false` to opt out.
 ```dart
 OpenReplay.instance.patchNetwork(ORNetworkOptions(
   capturePayload: true,                 // bodies are dropped by default
-  ignoreHeaders: ['cookie', 'authorization'],
+  ignoreHeaders: ['cookie', 'set-cookie', 'authorization'],  // the defaults
   sanitizer: (record) {
     record.url = record.url.replaceAll(RegExp(r'token=[^&]+'), 'token=***');
     return record;                      // return null to drop the call

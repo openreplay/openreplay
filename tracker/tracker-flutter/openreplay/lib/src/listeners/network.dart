@@ -29,12 +29,16 @@ class ORHttpOverrides extends HttpOverrides {
     HttpOverrides.global = overrides;
   }
 
-  /// Restores whatever was installed beforehand.
+  /// Restores whatever was installed beforehand - unless another package has
+  /// since taken the slot, in which case it is left alone.
   static void uninstall() {
     final overrides = _installed;
     if (overrides == null) return;
     _installed = null;
-    HttpOverrides.global = overrides._previous;
+    // `global` is write-only; `current` reads it when no zone override is set.
+    if (identical(HttpOverrides.current, overrides)) {
+      HttpOverrides.global = overrides._previous;
+    }
   }
 
   @override
@@ -198,16 +202,20 @@ class _RecordingRequest implements HttpClientRequest {
   bool get _wantsBody => _options.capturePayload;
 
   @override
-  Future<HttpClientResponse> close() async {
-    final response = await _inner.close();
-    return _RecordingResponse(
-      response,
-      _options,
-      request: _inner,
-      requestBody: _wantsBody ? _body : null,
-      clock: _clock,
-    );
-  }
+  Future<HttpClientResponse> close() async => _record(await _inner.close());
+
+  /// `done` resolves to the same response as `close()`; only whichever copy
+  /// is listened to reports, so wrapping both cannot double-count.
+  @override
+  Future<HttpClientResponse> get done => _inner.done.then(_record);
+
+  HttpClientResponse _record(HttpClientResponse response) => _RecordingResponse(
+        response,
+        _options,
+        request: _inner,
+        requestBody: _wantsBody ? _body : null,
+        clock: _clock,
+      );
 
   @override
   void add(List<int> data) {
@@ -247,9 +255,6 @@ class _RecordingRequest implements HttpClientRequest {
 
   @override
   Future<void> flush() => _inner.flush();
-
-  @override
-  Future<HttpClientResponse> get done => _inner.done;
 
   @override
   bool get bufferOutput => _inner.bufferOutput;
@@ -319,6 +324,9 @@ class _RecordingResponse extends Stream<List<int>>
   final List<int>? _requestBody;
   final Stopwatch _clock;
 
+  /// The tee sits in a transformer rather than in handlers passed to
+  /// `_inner.listen`: `drain()` and `asFuture()` rebind `onDone` on the
+  /// subscription they are given, which would silently unhook the report.
   @override
   StreamSubscription<List<int>> listen(
     void Function(List<int> event)? onData, {
@@ -327,18 +335,22 @@ class _RecordingResponse extends Stream<List<int>>
     bool? cancelOnError,
   }) {
     final captured = _options.capturePayload ? <int>[] : null;
-    return _inner.listen(
-      (chunk) {
+    final tee = StreamTransformer<List<int>, List<int>>.fromHandlers(
+      handleData: (chunk, sink) {
         captured?.addAll(chunk);
-        onData?.call(chunk);
+        sink.add(chunk);
       },
-      onError: onError,
-      onDone: () {
+      handleDone: (sink) {
         _report(captured);
-        onDone?.call();
+        sink.close();
       },
-      cancelOnError: cancelOnError,
     );
+    return _inner.transform(tee).listen(
+          onData,
+          onError: onError,
+          onDone: onDone,
+          cancelOnError: cancelOnError,
+        );
   }
 
   void _report(List<int>? responseBody) {

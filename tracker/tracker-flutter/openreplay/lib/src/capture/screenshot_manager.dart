@@ -54,6 +54,10 @@ class ScreenshotManager {
   Timer? _bufferTimer;
   bool _running = false;
   bool _capturing = false;
+
+  /// Bumped by [stop]; a capture that was mid-await when the session ended
+  /// must not enqueue into the next one.
+  int _generation = 0;
   int _lastCaptureMs = 0;
   int _lastTs = 0;
   int _tick = 0;
@@ -106,10 +110,14 @@ class ScreenshotManager {
     _heartbeatTimer = Timer.periodic(_heartbeat, (_) => unawaited(_capture()));
     _flushTimer =
         Timer.periodic(_flushInterval, (_) => unawaited(sendFrames()));
+    // pause() cancels the rolling-buffer timer; a cold start that is still
+    // waiting for its trigger needs it back.
+    if (bufferingMode) cycleBuffer();
   }
 
   void stop() {
     _running = false;
+    _generation++;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
     _flushTimer?.cancel();
@@ -120,6 +128,8 @@ class ScreenshotManager {
     _framesBackup.clear();
     _previousHash = null;
     _lastTs = 0;
+    _tick = 0;
+    bufferingMode = false;
   }
 
   /// Re-arms the post-frame callback. Registering again from inside the
@@ -159,6 +169,7 @@ class ScreenshotManager {
 
     _capturing = true;
     _lastCaptureMs = now;
+    final generation = _generation;
     try {
       final ratio = _pixelRatio(size);
       // toImageSync rasterises the existing layer without waiting for a frame.
@@ -195,6 +206,7 @@ class ScreenshotManager {
           DebugUtils.log('frame unchanged, skipped');
           return;
         }
+        if (generation != _generation) return;
         _enqueue(bytes, DateTime.now().millisecondsSinceEpoch);
         DebugUtils.log('frame ${image.width}x${image.height} '
             '-> ${bytes.length} bytes, buffered ${_frames.length}');
@@ -298,6 +310,9 @@ class ScreenshotManager {
   /// the collector. Layout is `[u64 LE ts][u32 LE size][jpeg]` repeated, gzipped
   /// - see backend/pkg/images/api/handlers.go.
   Future<void> sendFrames() async {
+    // A cold start only buffers; the flush timer must not drain the rolling
+    // window that triggerRecording exists to ship.
+    if (bufferingMode) return;
     final sessionId = ORNetworkManager.shared.sessionId;
     if (sessionId == null) {
       DebugUtils.log('no session id yet, holding ${_frames.length} frames');

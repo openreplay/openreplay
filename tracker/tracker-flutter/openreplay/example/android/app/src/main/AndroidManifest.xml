@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Only the debug/profile manifests carry this by default; release
+         builds need it to reach ingest. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="openreplay_example"
         android:name="${applicationName}"

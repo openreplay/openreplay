@@ -57,17 +57,28 @@ class ORSessionRequest {
       condition: condition,
     );
 
-    // The iOS SDK retries indefinitely every 5 seconds; keep that, but bound it
-    // so a permanently misconfigured key does not spin forever.
-    for (var attempt = 0; attempt < 5; attempt++) {
+    // Exponential backoff as in the iOS SDK, bounded so a misconfigured key
+    // does not spin forever. A 4xx other than 429 is the backend's answer, not
+    // a transport failure: retrying a sampling miss (403) would defeat the
+    // project's capture rate.
+    const maxAttempts = 5;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
       final res = await ORNetworkManager.shared.createSession(params);
       if (res != null) {
         DebugUtils.log('session started: ${res.sessionId}');
         return res;
       }
-      await Future<void>.delayed(const Duration(seconds: 5));
+      final status = ORNetworkManager.shared.lastStartStatus;
+      if (status != null && status >= 400 && status < 500 && status != 429) {
+        DebugUtils.error('start rejected with $status, not retrying');
+        return null;
+      }
+      if (attempt < maxAttempts - 1) {
+        final seconds = (5 << attempt).clamp(5, 60);
+        await Future<void>.delayed(Duration(seconds: seconds));
+      }
     }
-    DebugUtils.error('could not start a session after 5 attempts');
+    DebugUtils.error('could not start a session after $maxAttempts attempts');
     return null;
   }
 

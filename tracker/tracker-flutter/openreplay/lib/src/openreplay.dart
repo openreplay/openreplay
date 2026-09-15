@@ -47,6 +47,8 @@ class OpenReplay with WidgetsBindingObserver {
 
   ORSessionResponse? _session;
   bool _observing = false;
+  bool _inBackground = false;
+  bool _restarting = false;
 
   /// Ingest base URL. Defaults to OpenReplay cloud.
   String get serverUrl => ORNetworkManager.shared.baseUrl;
@@ -79,10 +81,33 @@ class OpenReplay with WidgetsBindingObserver {
     _session = session;
     sessionStartTs = DateTime.now().millisecondsSinceEpoch;
     bufferingMode = false;
+    MessageCollector.shared.bufferingMode = false;
+    ScreenshotManager.shared.bufferingMode = false;
 
     _applySettings(session);
     await MessageCollector.shared.start();
     _startListeners();
+  }
+
+  /// Ingest answered 401: the token is gone, so open a new session and point
+  /// the running listeners at it. Port of the restart in NetworkManager.swift.
+  Future<void> _restartSession() async {
+    final key = projectKey;
+    if (_restarting || key == null || bufferingMode) return;
+    _restarting = true;
+    try {
+      final session = await ORSessionRequest.create(
+        projectKey: key,
+        trackerVersion: kTrackerVersion,
+        doNotRecord: false,
+      );
+      if (session == null) return;
+      _session = session;
+      _applySettings(session);
+      await MessageCollector.shared.start();
+    } finally {
+      _restarting = false;
+    }
   }
 
   /// Records into a rolling buffer without creating a session, so a later
@@ -149,6 +174,8 @@ class OpenReplay with WidgetsBindingObserver {
     }
     ORNetworkManager.shared.reset();
     _session = null;
+    bufferingMode = false;
+    _inBackground = false;
   }
 
   void _applySettings(ORSessionResponse session) {
@@ -162,7 +189,9 @@ class OpenReplay with WidgetsBindingObserver {
     }
     DebugUtils.log('session ${session.sessionId} fps=${session.fps} '
         'quality=${session.quality} framesSupport=${session.framesSupport}');
-    ORNetworkManager.shared.sessionId = session.sessionId;
+    ORNetworkManager.shared
+      ..sessionId = session.sessionId
+      ..onUnauthorized = () => unawaited(_restartSession());
     MessageCollector.shared.projectKey = projectKey;
     ScreenshotManager.shared
       ..setOptions(options)
@@ -188,13 +217,20 @@ class OpenReplay with WidgetsBindingObserver {
 
   // MARK: - lifecycle
 
+  /// Backgrounding delivers both `hidden` and `paused`, and a mere `inactive`
+  /// (control centre, permission dialog) comes back through `resumed`, so the
+  /// transitions are deduplicated on a background flag rather than mapped 1:1.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
+        if (_inBackground) return;
+        _inBackground = true;
         unawaited(_pause());
       case AppLifecycleState.resumed:
+        if (!_inBackground) return;
+        _inBackground = false;
         unawaited(_resume());
       case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
@@ -209,8 +245,16 @@ class OpenReplay with WidgetsBindingObserver {
         .sendScreenChange(view.physicalSize / view.devicePixelRatio);
   }
 
+  /// Flutter's counterpart of `didReceiveMemoryWarningNotification`.
+  @override
+  void didHaveMemoryPressure() {
+    if (options.performances) PerformanceListener.shared.memoryWarning();
+  }
+
   Future<void> _pause() async {
-    PerformanceListener.shared.backgroundStateChange(inBackground: true);
+    if (options.performances) {
+      PerformanceListener.shared.backgroundStateChange(inBackground: true);
+    }
     PerformanceListener.shared.stop();
     LogsListener.shared.stop();
     await ScreenshotManager.shared.pause();
@@ -218,7 +262,9 @@ class OpenReplay with WidgetsBindingObserver {
   }
 
   Future<void> _resume() async {
-    PerformanceListener.shared.backgroundStateChange(inBackground: false);
+    if (options.performances) {
+      PerformanceListener.shared.backgroundStateChange(inBackground: false);
+    }
     if (options.logs) LogsListener.shared.start();
     if (options.performances) await PerformanceListener.shared.start();
     if (options.screen && _session?.framesSupport == true) {

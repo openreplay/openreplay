@@ -30,7 +30,9 @@ class LogsListener {
     if (!_started) return;
     _started = false;
     final original = _original;
-    if (original != null) debugPrint = original;
+    // Another logger may have taken the slot since start(); putting back our
+    // stale original would silently disconnect it.
+    if (original != null && debugPrint == _capture) debugPrint = original;
     _original = null;
   }
 

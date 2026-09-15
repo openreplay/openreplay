@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -5,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:openreplay/src/listeners/network.dart';
 import 'package:openreplay/src/listeners/network_options.dart';
 import 'package:openreplay/src/transport/message_collector.dart';
+import 'package:openreplay/src/transport/network_manager.dart';
 import 'package:openreplay/src/transport/transport.dart';
 
 class CapturingTransport implements ORTransport {
@@ -131,13 +133,63 @@ void main() {
   });
 
   test('a sanitizer returning null drops the call', () async {
+    // Control: a pass-through sanitizer hands exactly one message to the
+    // collector, so the zero below means dropped rather than never recorded.
+    install();
+    await callEndpoint();
+    expect(MessageCollector.shared.queuedMessageCount, 1);
+
+    ORHttpOverrides.uninstall();
+    MessageCollector.shared.reset();
     ORHttpOverrides.install(
       ORNetworkOptions(sanitizer: (_) => null),
     );
     await callEndpoint();
-    // Nothing to assert beyond not throwing: the record never reaches the
-    // collector, and the request itself still completed above.
+    expect(MessageCollector.shared.queuedMessageCount, 0);
+  });
+
+  test('awaiting request.done is recorded like close()', () async {
+    install();
+    final client = HttpClient();
+    final request = await client.postUrl(endpoint);
+    unawaited(request.close());
+    final response = await request.done;
+    await response.transform(utf8.decoder).join();
+    client.close();
+
+    expect(seen, hasLength(1));
+  });
+
+  test('ingest traffic is not self-recorded when patchNetwork ran first',
+      () async {
+    install();
+    final manager = ORNetworkManager.shared;
+    final previousBase = manager.baseUrl;
+    manager.baseUrl = 'http://127.0.0.1:${server.port}';
+    try {
+      // First use of the ingest client happens here, under the override.
+      await manager.createSession(const {});
+    } finally {
+      manager
+        ..baseUrl = previousBase
+        ..reset();
+    }
+
     expect(seen, isEmpty);
+    expect(MessageCollector.shared.queuedMessageCount, 0);
+  });
+
+  test('drain() still records', () async {
+    // drain() rebinds onDone on the subscription it gets via asFuture(); the
+    // report must not live on that subscription.
+    install();
+    final client = HttpClient();
+    final request = await client.postUrl(endpoint);
+    final response = await request.close();
+    await response.drain<void>();
+    client.close();
+
+    expect(seen, hasLength(1));
   });
 
   test('failuresOnly skips 2xx responses', () async {

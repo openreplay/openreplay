@@ -26,17 +26,31 @@ class ORNetworkManager implements ORTransport {
   String? _token;
   bool _framesSupport = false;
 
+  /// Token of the session that was live before the current one started. The
+  /// late-message file is written by that session, so replaying it must not
+  /// use the token [createSession] has just overwritten.
+  String? _previousToken;
+
+  /// HTTP status of the last failed `/start`, null when the request threw.
+  int? lastStartStatus;
+
+  /// Invoked when ingest answers 401; the tracker starts a fresh session.
+  void Function()? onUnauthorized;
+
   /// Built without `HttpOverrides` so tracker traffic is never self-recorded.
   late final HttpClient _client = _makeClient();
 
   static HttpClient _makeClient() {
-    // HttpOverrides.global is deliberately bypassed: HttpClient's own
-    // constructor is overridden globally, so go through the zone-free factory.
-    final c = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 30)
-      ..idleTimeout = const Duration(seconds: 15)
-      ..maxConnectionsPerHost = 4;
-    return c;
+    // `HttpClient()` consults HttpOverrides.current, so if patchNetwork() ran
+    // first the ingest client would be wrapped by our own recorder. Running the
+    // constructor under a plain HttpOverrides yields the raw dart:io client.
+    return HttpOverrides.runWithHttpOverrides(
+      () => HttpClient()
+        ..connectionTimeout = const Duration(seconds: 30)
+        ..idleTimeout = const Duration(seconds: 15)
+        ..maxConnectionsPerHost = 4,
+      _PlainOverrides(),
+    );
   }
 
   bool get hasToken => _token != null;
@@ -55,6 +69,7 @@ class ORNetworkManager implements ORTransport {
       final bodyText = await res.transform(utf8.decoder).join();
 
       if (res.statusCode < 200 || res.statusCode > 299) {
+        lastStartStatus = res.statusCode;
         DebugUtils.error('start failed ${res.statusCode}: $bodyText');
         return null;
       }
@@ -65,9 +80,14 @@ class ORNetworkManager implements ORTransport {
       _token = session.token;
       sessionId = session.sessionId;
       _framesSupport = session.framesSupport;
+      lastStartStatus = null;
+      // Kept until the late file is replayed, so a coldStart -> trigger pair
+      // (two starts before the first replay) still uses the right token.
+      _previousToken ??= await ORUserDefaults.shared.lastToken();
       await ORUserDefaults.shared.setLastToken(session.token);
       return session;
     } on Object catch (e) {
+      lastStartStatus = null;
       DebugUtils.error('start request threw: $e');
       return null;
     }
@@ -93,9 +113,11 @@ class ORNetworkManager implements ORTransport {
         DebugUtils.error('ingest ${res.statusCode}: $body');
       }
       if (res.statusCode == 401) {
-        // Token expired; the tracker restarts the session on the next tick.
+        // Token expired: drop it so queued batches wait, and ask the tracker
+        // for a fresh session (what the iOS SDK does in callAPI).
         _token = null;
         DebugUtils.error('ingest returned 401, token cleared');
+        onUnauthorized?.call();
         return false;
       }
       return res.statusCode >= 200 && res.statusCode <= 299;
@@ -108,7 +130,7 @@ class ORNetworkManager implements ORTransport {
   /// Replays the batch persisted at the end of a previous run.
   @override
   Future<bool> sendLateMessages(Uint8List content) async {
-    final token = await ORUserDefaults.shared.lastToken();
+    final token = _previousToken ?? await ORUserDefaults.shared.lastToken();
     if (token == null) {
       DebugUtils.log('no last token, skipping late messages');
       return false;
@@ -119,7 +141,9 @@ class ORNetworkManager implements ORTransport {
       req.add(content);
       final res = await req.close();
       await res.drain<void>();
-      return res.statusCode >= 200 && res.statusCode <= 299;
+      final ok = res.statusCode >= 200 && res.statusCode <= 299;
+      if (ok) _previousToken = null;
+      return ok;
     } on Object catch (e) {
       DebugUtils.error('late request threw: $e');
       return false;
@@ -182,3 +206,6 @@ class ORNetworkManager implements ORTransport {
     }
   }
 }
+
+/// Default `HttpOverrides`: its `createHttpClient` is the stock dart:io one.
+class _PlainOverrides extends HttpOverrides {}

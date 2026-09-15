@@ -39,6 +39,9 @@ class PerformanceListener {
     isActive = true;
     await _sampleCpu();
     await _sampleMemory();
+    // stop() may have run while the first samples were awaiting the platform
+    // channel; installing timers now would leave them running unowned.
+    if (!isActive) return;
     _cpuTimer = Timer.periodic(_cpuInterval, (_) => unawaited(_sampleCpu()));
     _memTimer = Timer.periodic(_memInterval, (_) => unawaited(_sampleMemory()));
   }
@@ -54,6 +57,7 @@ class PerformanceListener {
 
   Future<void> _sampleCpu() async {
     final metrics = await ORNative.shared.systemMetrics();
+    if (!isActive) return;
     _emitIfPresent(metrics, 'mainThreadCPU');
     // The on-change metrics ride along with whichever sample runs first.
     for (final key in _onChangeKeys) {
@@ -63,6 +67,7 @@ class PerformanceListener {
 
   Future<void> _sampleMemory() async {
     final metrics = await ORNative.shared.systemMetrics();
+    if (!isActive) return;
     _emitIfPresent(metrics, 'memoryUsage');
   }
 
@@ -87,8 +92,11 @@ class PerformanceListener {
   /// 1 for wifi or ethernet, 0 for cellular.
   void networkStateChange(int state) => _send('networkState', state);
 
+  /// Fed by `WidgetsBindingObserver.didHaveMemoryPressure`.
   void memoryWarning() => _send('memoryWarning', 0);
 
+  /// Flutter exposes no low-disk notification; a host app that has its own
+  /// signal can call this.
   void lowDiskSpace() => _send('lowDiskSpace', 0);
 
   void _send(String name, int value) {

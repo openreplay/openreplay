@@ -16,22 +16,19 @@ class ORUserDefaults {
 
   static final Random _random = Random.secure();
 
-  String? _cachedUuid;
+  /// Memoised as a future so overlapping first calls share one lookup rather
+  /// than each minting a UUID.
+  Future<String>? _uuid;
 
   /// Reads the stored UUID, minting and persisting one on first run.
-  Future<String> userUUID() async {
-    final cached = _cachedUuid;
-    if (cached != null) return cached;
+  Future<String> userUUID() => _uuid ??= _loadUserUUID();
 
+  Future<String> _loadUserUUID() async {
     final stored = await ORNative.shared.prefsGet(_userUuidKey);
-    if (stored != null && stored.isNotEmpty) {
-      _cachedUuid = stored;
-      return stored;
-    }
+    if (stored != null && stored.isNotEmpty) return stored;
 
     final fresh = randomUuidV4();
     await ORNative.shared.prefsSet(_userUuidKey, fresh);
-    _cachedUuid = fresh;
     return fresh;
   }
 

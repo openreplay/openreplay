@@ -104,9 +104,9 @@ class OpenreplayPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(rgba).order(ByteOrder.nativeOrder()))
         val out = ByteArrayOutputStream(width * height / 8)
-        bitmap.compress(Bitmap.CompressFormat.JPEG, (quality * 100).toInt().coerceIn(1, 100), out)
+        val ok = bitmap.compress(Bitmap.CompressFormat.JPEG, (quality * 100).toInt().coerceIn(1, 100), out)
         bitmap.recycle()
-        out.toByteArray()
+        if (ok) out.toByteArray() else null
       } catch (e: Throwable) {
         null
       }

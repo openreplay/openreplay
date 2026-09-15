@@ -125,6 +125,7 @@ class Analytics {
 
   /// Viewport change, sent when the window is resized or rotated.
   void sendScreenChange(Size size) {
+    if (!enabled) return;
     MessageCollector.shared.sendMessage(
       ORMobileScreenChanges(
         x: 0,
@@ -176,6 +177,11 @@ class ORTrackedView extends StatefulWidget {
 class _ORTrackedViewState extends State<ORTrackedView> {
   final GlobalKey _key = GlobalKey();
 
+  /// Held directly: by the time [dispose] runs the child element is already
+  /// unmounted and the key no longer resolves, so looking it up there would
+  /// leave the entry in [annotatedLabels] forever.
+  RenderObject? _annotated;
+
   @override
   void initState() {
     super.initState();
@@ -188,13 +194,16 @@ class _ORTrackedViewState extends State<ORTrackedView> {
   }
 
   void _annotate() {
+    if (!mounted) return;
     final node = _key.currentContext?.findRenderObject();
-    if (node != null) annotatedLabels[node] = widget.viewName;
+    if (node == null) return;
+    _annotated = node;
+    annotatedLabels[node] = widget.viewName;
   }
 
   @override
   void dispose() {
-    final node = _key.currentContext?.findRenderObject();
+    final node = _annotated;
     if (node != null) annotatedLabels.remove(node);
     Analytics.shared.sendViewComponent(
       screenName: widget.screenName,
@@ -233,6 +242,13 @@ class ORNavigatorObserver extends NavigatorObserver {
   void didReplace({Route<Object?>? newRoute, Route<Object?>? oldRoute}) {
     if (oldRoute != null) _emit(oldRoute, visible: false);
     if (newRoute != null) _emit(newRoute, visible: true);
+  }
+
+  /// `removeRoute` / `popUntil` take routes out without a pop.
+  @override
+  void didRemove(Route<Object?> route, Route<Object?>? previousRoute) {
+    _emit(route, visible: false);
+    _depth = _depth > 0 ? _depth - 1 : 0;
   }
 
   void _emit(Route<Object?> route, {required bool visible}) {

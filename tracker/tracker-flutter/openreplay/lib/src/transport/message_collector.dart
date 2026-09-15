@@ -42,8 +42,8 @@ class MessageCollector {
 
   int _nextMessageIndex = 0;
   int _tick = 0;
-  bool _flushingMessages = false;
-  bool _flushingImages = false;
+  Future<void>? _messagesFlush;
+  Future<void>? _imagesFlush;
   bool _sendingLastMessages = false;
 
   /// Swappable for tests; defaults to the real HTTP layer.
@@ -69,6 +69,11 @@ class MessageCollector {
     _debounceTimer?.cancel();
     _debounceTimer = null;
     await terminate();
+    // The session is over, so the next start() must not inherit cold-start
+    // state or its shadow buffer.
+    bufferingMode = false;
+    _waitingBackup.clear();
+    _tick = 0;
   }
 
   /// Clears all queued state. Exposed so tests start from a known point.
@@ -79,11 +84,14 @@ class MessageCollector {
     _imagesWaiting.clear();
     _nextMessageIndex = 0;
     _tick = 0;
-    _flushingMessages = false;
-    _flushingImages = false;
+    _messagesFlush = null;
+    _imagesFlush = null;
     _sendingLastMessages = false;
     bufferingMode = false;
   }
+
+  @visibleForTesting
+  int get queuedMessageCount => _waiting.length;
 
   // MARK: - messages
 
@@ -138,55 +146,75 @@ class MessageCollector {
     await _flushImages();
   }
 
+  /// Final flush: persists the last batch to disk before sending so a kill
+  /// mid-request loses nothing. A flush already in flight was started without
+  /// that protection, so it is awaited first and whatever it leaves behind
+  /// goes through the persisted path.
   Future<void> terminate() async {
     if (_sendingLastMessages) return;
     _sendingLastMessages = true;
-    await _flushMessages();
-    await _flushImages();
-    _sendingLastMessages = false;
+    try {
+      await _messagesFlush;
+      await _flushMessages();
+      await _imagesFlush;
+      await _flushImages();
+    } finally {
+      _sendingLastMessages = false;
+    }
   }
 
-  Future<void> _flushMessages() async {
-    if (_flushingMessages || _waiting.isEmpty) return;
-    _flushingMessages = true;
-    try {
-      final batch = <Uint8List>[];
-      var size = 0;
-      while (_waiting.isNotEmpty &&
-          size + _waiting.first.length <= _maxMessagesSize) {
-        size += _waiting.first.length;
-        batch.add(_waiting.removeAt(0));
-      }
-      if (batch.isEmpty) return;
+  /// One flush at a time; concurrent callers share the in-flight future.
+  Future<void> _flushMessages() {
+    final inFlight = _messagesFlush;
+    if (inFlight != null) return inFlight;
+    if (_waiting.isEmpty) return Future<void>.value();
+    return _messagesFlush =
+        _sendNextBatch().whenComplete(() => _messagesFlush = null);
+  }
 
-      final firstIndex = _nextMessageIndex;
-      final content = MessageWriter()
-        ..writeBytes(ORMobileBatchMeta(firstIndex: firstIndex).encode(),
-            sizePrefix: false);
-      for (final m in batch) {
-        if (m.isNotEmpty) content.writeBytes(m, sizePrefix: false);
-      }
-      final payload = content.takeBytes();
+  Future<void> _sendNextBatch() async {
+    final batch = <Uint8List>[];
+    var size = 0;
+    while (_waiting.isNotEmpty &&
+        size + _waiting.first.length <= _maxMessagesSize) {
+      size += _waiting.first.length;
+      batch.add(_waiting.removeAt(0));
+    }
+    if (batch.isEmpty) return;
 
-      _nextMessageIndex += batch.length;
+    final firstIndex = _nextMessageIndex;
+    final content = MessageWriter()
+      ..writeBytes(ORMobileBatchMeta(firstIndex: firstIndex).encode(),
+          sizePrefix: false);
+    for (final m in batch) {
+      if (m.isNotEmpty) content.writeBytes(m, sizePrefix: false);
+    }
+    final payload = content.takeBytes();
 
-      if (_sendingLastMessages) await _persistLateMessages(payload);
+    _nextMessageIndex += batch.length;
 
-      final ok = await transport.sendMessages(payload);
-      if (!ok) {
-        DebugUtils.log('re-queueing failed batch');
-        _waiting.insertAll(0, batch);
-        // The iOS SDK leaves the counter advanced here, so a retried batch
-        // ships under a higher firstIndex and leaves a gap in the sequence the
-        // player orders on. Roll it back instead.
-        _nextMessageIndex = firstIndex;
+    final persisted =
+        _sendingLastMessages && await _persistLateMessages(payload);
+
+    final ok = await transport.sendMessages(payload);
+    if (!ok) {
+      if (persisted) {
+        // The file is now the source of truth for this batch: it is replayed
+        // via /late on the next start. Keeping it in memory too would send it
+        // twice, under the next session's token.
+        DebugUtils.log('final batch persisted for late delivery');
         return;
       }
-
-      if (_sendingLastMessages) await _clearLateMessages();
-    } finally {
-      _flushingMessages = false;
+      DebugUtils.log('re-queueing failed batch');
+      _waiting.insertAll(0, batch);
+      // The iOS SDK leaves the counter advanced here, so a retried batch
+      // ships under a higher firstIndex and leaves a gap in the sequence the
+      // player orders on. Roll it back instead.
+      _nextMessageIndex = firstIndex;
+      return;
     }
+
+    if (persisted) await _clearLateMessages();
   }
 
   // MARK: - images
@@ -200,30 +228,32 @@ class MessageCollector {
     await _flushImages();
   }
 
-  Future<void> _flushImages() async {
-    if (_flushingImages || _imagesWaiting.isEmpty) return;
-    _flushingImages = true;
-    try {
-      while (_imagesWaiting.isNotEmpty) {
-        final batch = _imagesWaiting.removeAt(0);
-        final projectKey = _projectKey;
-        if (projectKey == null) {
-          _imagesWaiting.insert(0, batch);
-          return;
-        }
-        DebugUtils.log('sending images ${batch.name} ${batch.data.length}');
-        final ok = await transport.sendImages(
-          projectKey: projectKey,
-          archive: batch.data,
-          name: batch.name,
-        );
-        if (!ok) {
-          _imagesWaiting.insert(0, batch);
-          return;
-        }
+  Future<void> _flushImages() {
+    final inFlight = _imagesFlush;
+    if (inFlight != null) return inFlight;
+    if (_imagesWaiting.isEmpty) return Future<void>.value();
+    return _imagesFlush =
+        _sendQueuedImages().whenComplete(() => _imagesFlush = null);
+  }
+
+  Future<void> _sendQueuedImages() async {
+    while (_imagesWaiting.isNotEmpty) {
+      final batch = _imagesWaiting.removeAt(0);
+      final projectKey = _projectKey;
+      if (projectKey == null) {
+        _imagesWaiting.insert(0, batch);
+        return;
       }
-    } finally {
-      _flushingImages = false;
+      DebugUtils.log('sending images ${batch.name} ${batch.data.length}');
+      final ok = await transport.sendImages(
+        projectKey: projectKey,
+        archive: batch.data,
+        name: batch.name,
+      );
+      if (!ok) {
+        _imagesWaiting.insert(0, batch);
+        return;
+      }
     }
   }
 
@@ -272,12 +302,15 @@ class MessageCollector {
     return _lateMessagesFile = File('$dir/lateMessages.dat');
   }
 
-  Future<void> _persistLateMessages(Uint8List payload) async {
+  Future<bool> _persistLateMessages(Uint8List payload) async {
     try {
       final f = await _lateFile();
-      await f?.writeAsBytes(payload, flush: true);
+      if (f == null) return false;
+      await f.writeAsBytes(payload, flush: true);
+      return true;
     } on Object catch (e) {
       DebugUtils.error('could not persist late messages: $e');
+      return false;
     }
   }
 
