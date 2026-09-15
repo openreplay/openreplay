@@ -2,6 +2,7 @@ import { categories } from './types'
 
 interface PeopleEvent {
   type: string
+  user_id?: string
   timestamp: number
   payload: Record<string, any>
 }
@@ -86,10 +87,13 @@ class Batcher {
     if (!events || events.length === 0) {
       return []
     }
+    // keyed by type + user_id: the backend drops actions without a user_id, and merging
+    // mutations aimed at different users would misattribute them
     const uniqueEventsByType = new Map<string, PeopleEvent>()
 
     for (let event of events) {
-      const prev = uniqueEventsByType.get(event.type)
+      const eventKey = `${event.type}|${event.user_id ?? ''}`
+      const prev = uniqueEventsByType.get(eventKey)
       if (prev) {
         if (event.type === 'increment_property') {
           const previousValues = Object.entries(prev.payload)
@@ -101,21 +105,23 @@ class Batcher {
             const currValue = typeof event.payload[key] === 'number' ? event.payload[key] : 0
             mergedPayload[key] = prevValue + currValue
           })
-          uniqueEventsByType.set(event.type, {
+          uniqueEventsByType.set(eventKey, {
             type: event.type,
+            user_id: event.user_id,
             timestamp: event.timestamp,
             payload: mergedPayload,
           })
           continue
         }
         // merge payloads, taking priority to the latest one
-        uniqueEventsByType.set(event.type, {
+        uniqueEventsByType.set(eventKey, {
           type: event.type,
+          user_id: event.user_id,
           timestamp: event.timestamp,
           payload: { ...(prev.payload ?? {}), ...(event.payload ?? {}) },
         })
       } else {
-        uniqueEventsByType.set(event.type, event)
+        uniqueEventsByType.set(eventKey, event)
       }
     }
 

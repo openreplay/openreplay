@@ -40,10 +40,11 @@ describe('Batcher', () => {
     delete (globalThis as any).fetch
   })
 
-  const makePeopleEvent = (type: string, timestamp: number, payload: any) => ({
+  const makePeopleEvent = (type: string, timestamp: number, payload: any, user_id?: string) => ({
     category: categories.people,
     data: {
       type,
+      user_id,
       timestamp,
       payload,
     },
@@ -127,6 +128,66 @@ describe('Batcher', () => {
         other: 10,
       },
     })
+  })
+
+  test('squashing keeps user_id so the backend does not drop the merged action', () => {
+    // https://github.com/openreplay/openreplay/issues/4879
+    batcher.addEvent(makePeopleEvent('set_property', 1, { a: 1 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('set_property', 2, { b: 2 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('set_property_once', 3, { c: 3 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('set_property_once', 4, { d: 4 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('increment_property', 5, { score: 1 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('increment_property', 6, { score: 2 }, 'visitor-a'))
+
+    const peopleBatch = batcher.getBatches().data[categories.people]
+
+    expect(peopleBatch).toEqual([
+      { type: 'set_property', user_id: 'visitor-a', timestamp: 2, payload: { a: 1, b: 2 } },
+      { type: 'set_property_once', user_id: 'visitor-a', timestamp: 4, payload: { c: 3, d: 4 } },
+      { type: 'increment_property', user_id: 'visitor-a', timestamp: 6, payload: { score: 3 } },
+    ])
+  })
+
+  test('user_id survives the serialized flush body', () => {
+    batcher.addEvent(makePeopleEvent('set_property', 1, { a: 1 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('set_property', 2, { b: 2 }, 'visitor-a'))
+
+    batcher.flush()
+
+    const [, options] = fetchMock.mock.calls[0]
+    const body = JSON.parse(options.body)
+
+    expect(body.data[categories.people]).toEqual([
+      { type: 'set_property', user_id: 'visitor-a', timestamp: 2, payload: { a: 1, b: 2 } },
+    ])
+  })
+
+  test('mutations for different users are not squashed together', () => {
+    batcher.addEvent(makePeopleEvent('set_property', 1, { a: 1 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('set_property', 2, { b: 2 }, 'visitor-b'))
+    batcher.addEvent(makePeopleEvent('set_property', 3, { a: 9 }, 'visitor-a'))
+
+    const peopleBatch = batcher.getBatches().data[categories.people]
+
+    expect(peopleBatch).toEqual([
+      { type: 'set_property', user_id: 'visitor-a', timestamp: 3, payload: { a: 9 } },
+      { type: 'set_property', user_id: 'visitor-b', timestamp: 2, payload: { b: 2 } },
+    ])
+  })
+
+  test('identity events keep their user_id and still split the batch', () => {
+    batcher.addEvent(makePeopleEvent('set_property', 1, { a: 1 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('identity', 2, undefined, 'visitor-b'))
+    batcher.addEvent(makePeopleEvent('set_property', 3, { b: 2 }, 'visitor-b'))
+    batcher.addEvent(makePeopleEvent('set_property', 4, { c: 3 }, 'visitor-b'))
+
+    const peopleBatch = batcher.getBatches().data[categories.people]
+
+    expect(peopleBatch).toEqual([
+      { type: 'set_property', user_id: 'visitor-a', timestamp: 1, payload: { a: 1 } },
+      { type: 'identity', user_id: 'visitor-b', timestamp: 2, payload: undefined },
+      { type: 'set_property', user_id: 'visitor-b', timestamp: 4, payload: { b: 2, c: 3 } },
+    ])
   })
 
   test('sendImmediately posts single event batch and does not touch stored batch', () => {
