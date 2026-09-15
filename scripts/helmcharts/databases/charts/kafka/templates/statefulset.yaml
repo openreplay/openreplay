@@ -81,21 +81,22 @@ spec:
           {{- if .Values.command }}
           command:
             {{- toYaml .Values.command | nindent 12 }}
-          {{- if or .Values.args (and .Values.redpanda .Values.resources .Values.resources.limits .Values.resources.limits.cpu) }}
+          {{- with .Values.args }}
           args:
-            {{- if .Values.args }}
-            {{- toYaml .Values.args | nindent 12 }}
-            {{- end }}
-            {{- if and .Values.redpanda .Values.resources .Values.resources.limits .Values.resources.limits.cpu }}
-            {{- $cpu := .Values.resources.limits.cpu | toString }}
-            {{- if hasSuffix "m" $cpu }}
-            - "--smp={{ max 1 (div (trimSuffix "m" $cpu | int) 1000) }}"
-            {{- else }}
-            - "--smp={{ max 1 ($cpu | int) }}"
-            {{- end }}
-            {{- end }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
+            {{- if and .Values.redpanda .Values.resources .Values.resources.limits .Values.resources.limits.cpu }}
+            # Expose the container CPU limit as REDPANDA_SMP (rounded up to whole
+            # cores) so the entrypoint can pass --smp regardless of command form.
+            # Replaces the old args-append, which was silently dropped when the
+            # command is `/bin/bash -c <script>` (appended arg became $0).
+            - name: REDPANDA_SMP
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.cpu
+                  divisor: "1"
+            {{- end }}
             - name: MY_POD_NAME
               valueFrom:
                 fieldRef:
