@@ -494,6 +494,79 @@ LIMIT $3 OFFSET $4`,
 	return resp, nil
 }
 
+const countsQuerySettings = "max_execution_time = 10, max_threads = 4, " +
+	"use_query_cache = 1, query_cache_ttl = 1800, query_cache_min_query_duration = 200"
+
+func buildCountsQuery(projectId int, req *model.SessionsSearchRequest) string {
+	startSec := req.StartDate / 1000
+	endSec := req.EndDate / 1000
+
+	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
+	sessionsWhere = append([]string{
+		fmt.Sprintf("s.project_id = %d", projectId),
+		fmt.Sprintf("s.datetime >= toDateTime(%d)", startSec),
+		fmt.Sprintf("s.datetime < toDateTime(%d)", endSec),
+	}, sessionsWhere...)
+
+	if sub := eventSessionsSubquery(projectId, startSec, endSec, eventsWhere, filtersWhere, req.EventsOrder); sub != "" {
+		sessionsWhere = append(sessionsWhere, fmt.Sprintf("s.session_id IN (%s\n\t)", sub))
+	}
+
+	if len(negativeEventsWhere) > 0 {
+		negConds := []string{
+			fmt.Sprintf("e.project_id = %d", projectId),
+			fmt.Sprintf("e.created_at >= toDateTime(%d)", startSec),
+			fmt.Sprintf("e.created_at < toDateTime(%d)", endSec),
+		}
+		negConds = append(negConds, negativeEventsWhere...)
+		sessionsWhere = append(sessionsWhere, fmt.Sprintf(`s.session_id NOT IN (
+		SELECT session_id
+		FROM product_analytics.events AS e
+		WHERE %s
+	)`, strings.Join(negConds, " AND\n\t\t      ")))
+	}
+
+	return fmt.Sprintf(`
+SELECT uniq(s.session_id) AS sessions_count,
+       uniqIf(s.user_id, ifNull(s.user_id, '') != '') AS users_count
+FROM experimental.sessions AS s
+WHERE %s
+SETTINGS %s;`,
+		strings.Join(sessionsWhere, " AND\n      "),
+		countsQuerySettings,
+	)
+}
+
+func eventSessionsSubquery(projectId int, startSec, endSec int64, eventsWhere, filtersWhere []string, eventsOrder string) string {
+	if len(eventsWhere) == 0 && len(filtersWhere) == 0 {
+		return ""
+	}
+
+	conds := []string{
+		fmt.Sprintf("e.project_id = %d", projectId),
+		fmt.Sprintf("e.created_at >= toDateTime(%d)", startSec),
+		fmt.Sprintf("e.created_at < toDateTime(%d)", endSec),
+	}
+	conds = append(conds, filtersWhere...)
+
+	groupBy := charts.BuildJoinClause(eventsOrder, eventsWhere)
+	switch {
+	case len(eventsWhere) == 1:
+		conds = append(conds, eventsWhere[0])
+	case len(eventsWhere) > 1 && groupBy != "":
+		conds = append(conds, "("+strings.Join(eventsWhere, " OR ")+")")
+	}
+
+	if groupBy != "" {
+		groupBy = "\n\t\t" + strings.ReplaceAll(groupBy, "\n", "\n\t\t")
+	}
+
+	return fmt.Sprintf(`
+		SELECT session_id
+		FROM product_analytics.events AS e
+		WHERE %s%s`, strings.Join(conds, " AND\n\t\t      "), groupBy)
+}
+
 func (s *searchImpl) GetCounts(ctx context.Context, projectId int, req *model.SessionsSearchRequest) (int64, int64, error) {
 	if req == nil {
 		return 0, 0, errors.New("nil request")
@@ -502,73 +575,7 @@ func (s *searchImpl) GetCounts(ctx context.Context, projectId int, req *model.Se
 		return 0, 0, err
 	}
 
-	startSec := req.StartDate / 1000
-	endSec := req.EndDate / 1000
-
-	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
-	sessionsWhere = append([]string{
-		fmt.Sprintf("s.project_id = %d", projectId),
-		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-	}, sessionsWhere...)
-
-	hasEventFilters := len(eventsWhere) > 0 || len(filtersWhere) > 0
-
-	var distinctIdJoin string
-	if hasEventFilters {
-		conds := []string{
-			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-		}
-		conds = append(conds, filtersWhere...)
-		if len(eventsWhere) == 1 {
-			conds = append(conds, eventsWhere[0])
-		}
-		groupBy := charts.BuildJoinClause(req.EventsOrder, eventsWhere)
-		if groupBy == "" {
-			groupBy = "GROUP BY session_id"
-		}
-		distinctIdJoin = fmt.Sprintf(`ANY INNER JOIN (
-		SELECT session_id, any(distinct_id) AS distinct_id
-		FROM product_analytics.events AS e
-		WHERE %s
-		%s
-	) AS fs USING (session_id)`,
-			strings.Join(conds, " AND \n"), groupBy)
-	} else {
-		distinctIdJoin = fmt.Sprintf(`ANY LEFT JOIN (
-		SELECT session_id, any(distinct_id) AS distinct_id
-		FROM product_analytics.events
-		WHERE project_id = %d
-		  AND created_at BETWEEN toDateTime(%d) AND toDateTime(%d)
-		GROUP BY session_id
-	) AS fs USING (session_id)`, projectId, startSec, endSec)
-	}
-
-	var leftAntiJoin string
-	if len(negativeEventsWhere) > 0 {
-		negConds := []string{
-			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-		}
-		negConds = append(negConds, negativeEventsWhere...)
-		leftAntiJoin = fmt.Sprintf(`LEFT ANTI JOIN (
-		SELECT DISTINCT session_id
-		FROM product_analytics.events AS e
-		WHERE %s
-	) AS negative_sessions USING (session_id)`, strings.Join(negConds, " AND \n"))
-	}
-
-	query := fmt.Sprintf(`
-SELECT countDistinct(s.session_id) AS sessions_count,
-       countDistinctIf(fs.distinct_id, fs.distinct_id != '') AS users_count
-FROM experimental.sessions AS s
-	%s
-	%s
-WHERE %s;`,
-		distinctIdJoin,
-		leftAntiJoin,
-		strings.Join(sessionsWhere, " AND "),
-	)
+	query := buildCountsQuery(projectId, req)
 
 	var sessionsCount, usersCount uint64
 	_start := time.Now()
