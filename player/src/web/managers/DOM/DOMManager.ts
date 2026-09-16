@@ -337,6 +337,14 @@ export default class DOMManager extends ListWalker<Message> {
         const vHTMLElement = new VHTMLElement(fRoot);
         this.vElements.clear();
         this.vElements.set(0, vHTMLElement);
+        // Sessions recorded before the tracker noticed a replaced documentElement
+        // carry a synthesized CreateDocument (see TabManager.recoverSwappedRoot):
+        // the rest of the page references the new <html> by its tracker id, so
+        // alias it onto the document element we just built.
+        const rootId = (msg as { rootId?: number }).rootId;
+        if (rootId !== undefined) {
+          this.vElements.set(rootId, vHTMLElement);
+        }
         const vDoc = OnloadVRoot.fromDocumentNode(doc);
         vDoc.insertChildAt(vHTMLElement, 0);
         this.olVRoots.clear();
