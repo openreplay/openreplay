@@ -79,6 +79,7 @@ rm -rf ./run-dev.sh
 rm -rf ./run-db_init-dev.sh
 rm -rf ./schemas/overrides.py
 rm -rf ./schemas/schemas.py
+rm -rf ./schemas/schemas_mcp.py
 rm -rf ./schemas/transformers_validators.py
 rm -rf ./orpy.py
 rm -rf ./chalicelib/core/usability_testing/
