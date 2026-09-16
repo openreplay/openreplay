@@ -249,20 +249,14 @@ function SegmentsIndicator() {
           options={[
             {
               value: 'full',
-              label: (
-                <span className="flex items-center justify-center gap-1.5 py-0.5">
-                  <Globe size={14} /> {t('Full traffic')}
-                </span>
-              ),
+              icon: <Globe size={14} />,
+              label: t('Full traffic'),
             },
             {
               value: 'segments',
               disabled: activeCount === 0,
-              label: (
-                <span className="flex items-center justify-center gap-1.5 py-0.5">
-                  <Split size={14} /> {t('Segments')}
-                </span>
-              ),
+              icon: <Split size={14} />,
+              label: t('Segments'),
             },
           ]}
         />
@@ -456,9 +450,6 @@ function SegmentsIndicator() {
                 onChange={onSwitch}
               />
             </span>
-            {/* text-base, NOT text-sm: reset.css sets html root to 14px, so
-                text-sm ≈ 12.25px; text-base (1rem = 14px) matches the antd
-                filter controls next to the pill */}
             <span className="text-base color-gray-darkest">
               {t('Traffic segments')}
               {segmentsMode && (

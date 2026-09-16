@@ -34,18 +34,6 @@
   box-shadow: none;
 }
 
-/* Keep the mode icons inside the switch aligned with antd's stacked-span slide
-   (which offsets the hidden label by exactly one track height, -16px). */
-.capture-switch .ant-switch-inner-checked,
-.capture-switch .ant-switch-inner-unchecked {
-  height: 16px;
-  padding-top: 3px;
-}
-.capture-switch .ant-switch-inner-checked svg,
-.capture-switch .ant-switch-inner-unchecked svg {
-  display: block;
-}
-
 /* Resting/hover track uses a themed mid-gray so the white 10px icon stays
    readable in both light and dark. Extra :not() classes lift specificity above
    antd's runtime-injected rules. */
