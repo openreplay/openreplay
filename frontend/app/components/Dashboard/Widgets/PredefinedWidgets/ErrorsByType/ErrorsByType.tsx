@@ -26,6 +26,7 @@ function ErrorsByType(props: Props) {
         data={metric.data.chart}
         xInterval={metric.params.density / 7}
         yLabel="Number of Errors"
+        valueFormatter={Styles.tickFormatter}
         stack
         series={[
           { key: 'integrations', name: 'Integrations', color: Styles.compareColors[0] },

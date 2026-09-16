@@ -100,7 +100,8 @@ const CPU = (t: TFunction) => t('CPU Load');
 const NODES_COUNT = (t: TFunction) => t('Nodes Сount');
 
 const tipWrap = (inner: string, style = '') =>
-  `<div class="${stl.tooltipWrapper}"${style ? ` style="${style}"` : ''}>${inner}</div>`;
+  // `!important` because .tooltipWrapper declares its own colour the same way.
+  `<div class="${stl.tooltipWrapper}"${style ? ` style="${style} !important"` : ''}>${inner}</div>`;
 const tipRow = (label: string, value: string) =>
   `<span class="font-medium">${label}: </span>${value}`;
 

@@ -244,6 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
   // Settles on a microtask for `en`; any other language fetches its file first,
-  // which avoids a flash of raw i18n keys.
-  void i18nReady.then(render, render);
+  // which avoids a flash of raw i18n keys. The timeout is the floor: a locale
+  // chunk that never resolves must not hold the app on the loading shell.
+  void Promise.race([
+    i18nReady,
+    new Promise<void>((resolve) => setTimeout(resolve, 5000)),
+  ]).then(render, render);
 });

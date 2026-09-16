@@ -70,7 +70,6 @@ const PerformanceGraph = React.memo((props: Props) => {
         valueKey="cpu"
         type="area"
         height={35}
-        baseValue={5}
         color="#3EAAAF"
         gradient={['rgba(204, 0, 0, 0.5)', 'rgba(62, 170, 175, 0.8)']}
       />

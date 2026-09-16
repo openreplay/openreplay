@@ -657,6 +657,7 @@ class SearchStore {
     force: boolean = false,
     bookmarked: boolean = false,
   ): Promise<void> {
+    const superseded = Boolean(this.searchAbort);
     this.searchAbort?.abort();
     const controller = new AbortController();
     this.searchAbort = controller;
@@ -675,7 +676,9 @@ class SearchStore {
           limit: this.pageSize,
           bookmarked: bookmarked ? true : undefined,
         },
-        force,
+        // SessionStore skips a search whose filters match the persisted ones —
+        // including the ones the aborted request just wrote.
+        force || superseded,
         controller.signal,
       );
     } catch (e) {

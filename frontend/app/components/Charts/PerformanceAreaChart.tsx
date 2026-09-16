@@ -386,6 +386,8 @@ function PerformanceAreaChart(props: Props) {
     groupId,
     hasXLabels,
     hasYLabel,
+    xFormatter,
+    yFormatter,
     hasTooltip,
   ]);
 

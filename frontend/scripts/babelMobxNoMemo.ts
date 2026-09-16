@@ -20,7 +20,7 @@ import type { NodePath, PluginObject, types as t } from '@babel/core';
 
 const MOBX_REACT_MODULES = new Set(['mobx-react-lite', 'mobx-react']);
 const STORE_MODULE_RE = /(^|\/)mstore$/;
-const OPT_OUT_RE = /^use (no )?memo$/;
+const OPT_OUT_RE = /^use no memo$/;
 
 type FunctionPath = NodePath<t.Function>;
 

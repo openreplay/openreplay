@@ -2,7 +2,6 @@ import React from 'react';
 import { Icon, Loader } from 'UI';
 import cn from 'classnames';
 import { filtersMap } from 'Types/filter/newFilter';
-import { getFilteredEntries } from 'Shared/Filters/FilterModal/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import stl from './LiveFilterModal.module.css';
@@ -38,17 +37,25 @@ function LiveFilterModal(props: Props) {
     onFilterClick(_filter);
   };
 
-  const { matchingCategories, matchingFilters } = getFilteredEntries(
-    searchQuery,
-    filters,
-  );
+  // Live filters are keyed by category and expose `label`, so the shared
+  // FilterModal matcher (which reads `displayName` and injects an "All"
+  // pseudo-category) does not fit them.
+  const matchingCategories = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const categories = Object.keys(filters);
+    if (!q) return categories;
+    return categories.filter(
+      (cat) =>
+        cat.toLowerCase().includes(q) ||
+        filters[cat].some((f: any) => f.label?.toLowerCase().includes(q)),
+    );
+  }, [searchQuery, filters]);
 
   const isResultEmpty =
     (!filterSearchList ||
       Object.keys(filterSearchList).filter((i) => filtersMap[i].isLive)
         .length === 0) &&
-    matchingCategories.length === 0 &&
-    matchingFilters.length === 0;
+    matchingCategories.length === 0;
 
   return (
     <div

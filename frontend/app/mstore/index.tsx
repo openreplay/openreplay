@@ -149,6 +149,9 @@ export class RootStore {
     this.clipStore = new ClipStore();
     this.analyticsStore = new AnalyticsStore();
     this.issuesStore = new IssuesStore();
+    // Before any component renders: child effects (the integration callback
+    // among them) run ahead of Router's own mount effect.
+    this.initClient();
   }
 
   initClient() {

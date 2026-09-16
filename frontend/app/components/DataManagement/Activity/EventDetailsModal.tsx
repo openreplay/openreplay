@@ -133,18 +133,7 @@ function EventDetailsModal({
     </div>
   );
 
-  if (isPending || !event) {
-    return (
-      <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
-        {header}
-        <div className="flex flex-col w-full items-center justify-center mt-8 gap-4">
-          <AnimatedSVG name={ICONS.LOADER} size={72} />
-          <div className="font-semibold">Loading event details...</div>
-        </div>
-      </div>
-    );
-  }
-  if (!isPending && error) {
+  if (!isPending && (error || !event)) {
     return (
       <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
         {header}
@@ -153,6 +142,17 @@ function EventDetailsModal({
           <div className="font-semibold">
             {t('Error loading event details.')}
           </div>
+        </div>
+      </div>
+    );
+  }
+  if (isPending || !event) {
+    return (
+      <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
+        {header}
+        <div className="flex flex-col w-full items-center justify-center mt-8 gap-4">
+          <AnimatedSVG name={ICONS.LOADER} size={72} />
+          <div className="font-semibold">Loading event details...</div>
         </div>
       </div>
     );

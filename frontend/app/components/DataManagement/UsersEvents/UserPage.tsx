@@ -14,6 +14,7 @@ import Activity from './components/UserActivity';
 import { observer } from 'mobx-react-lite';
 import { CopyButton, confirm, CountryFlag } from 'UI';
 import NameAvatar from 'Shared/NameAvatar';
+import { toast } from 'react-toastify';
 
 const card = 'rounded-lg border bg-white';
 
@@ -84,7 +85,11 @@ function UserInfo({ userId }: { userId: string }) {
       confirmButton: 'Yes, Delete',
     } as any);
     if (!confirmed) return;
-    await analyticsStore.deleteUser(userId);
+    const deleted = await analyticsStore.deleteUser(userId);
+    if (!deleted) {
+      toast.error('Failed to delete user');
+      return;
+    }
     queryClient.removeQueries({ queryKey });
     history.push(
       withSiteId(dataManagement.usersList(), projectsStore.activeSiteId ?? ''),

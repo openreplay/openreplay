@@ -28,6 +28,9 @@ const loaders: Record<string, () => Promise<unknown>> = {
   [MENU.PROPS]: () => import('Components/DataManagement/Properties/ListPage'),
   [MENU.SEGMENTS]: () => import('Components/DataManagement/Segments/index'),
   [MENU.TAGS]: () => import('Components/DataManagement/Tags/index'),
+  [MENU.ISSUES]: () => import('Components/SmartAlerts/IssueList/IssuesList'),
+  [MENU.TEST_AGENTS]: () =>
+    import('Components/Client/SmartTests/StandalonePage'),
 };
 
 const started = new Set<string>();

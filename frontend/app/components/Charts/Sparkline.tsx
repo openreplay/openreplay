@@ -17,6 +17,7 @@ interface Props {
   name?: string;
   /** Omit for no tooltip. */
   tooltipFormatter?: (row: Record<string, any>) => string;
+  /** Y-axis floor; anything below it is clipped. Defaults to 0. */
   baseValue?: number;
   /** 0, the default, draws the fill without a stroke. */
   strokeWidth?: number;

@@ -49,9 +49,11 @@ export function updateProperty(payload: UpdatePropPayload): Promise<void> {
     .put(`/PROJECT_ID/lexicon/properties`, payload)
     .then((res) => res.json())
     .then((json) => {
-      void queryClient.invalidateQueries({
-        queryKey: ['distinct-event-props-list'],
-      });
+      if (payload.source === 'events') {
+        void queryClient.invalidateQueries({
+          queryKey: ['distinct-event-props-list'],
+        });
+      }
       return json;
     });
 }

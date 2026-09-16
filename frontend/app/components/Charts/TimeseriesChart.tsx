@@ -1,6 +1,8 @@
 import { BarChart, LineChart } from 'echarts/charts';
 import React from 'react';
 
+import { numberWithCommas } from 'App/utils';
+
 import { defaultOptions, echarts } from './init';
 
 echarts.use([BarChart, LineChart]);
@@ -97,6 +99,7 @@ function TimeseriesChart(props: Props) {
           extraCssText: 'box-shadow: 0 2px 8px rgba(0,0,0,.12);',
           textStyle: { color: 'var(--color-gray-darkest)' },
           axisPointer: { type: type === 'bar' ? 'shadow' : 'line' },
+          valueFormatter: (v: number) => numberWithCommas(Math.round(v)),
         },
         toolbox: { feature: { saveAsImage: { show: false } } },
         xAxis: {
@@ -104,7 +107,7 @@ function TimeseriesChart(props: Props) {
           boundaryGap: type === 'bar',
           data: rows.map((row) => row[xKey]),
           axisLabel:
-            xInterval && xInterval > 0
+            xInterval != null && xInterval >= 0
               ? { interval: Math.max(0, Math.round(xInterval)) }
               : {},
         },

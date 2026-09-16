@@ -30,6 +30,7 @@ function ErrorsByOrigin(props: Props) {
         data={metric.data.chart}
         xInterval={metric.params.density / 7}
         yLabel={t('Number of Errors')}
+        valueFormatter={Styles.tickFormatter}
         stack
         series={[
           { key: 'firstParty', name: t('1st Party'), color: Styles.compareColors[0] },

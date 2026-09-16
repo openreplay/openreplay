@@ -59,17 +59,17 @@ export default class SpotService extends BaseService {
   }
 
   async updateSpot(id: string, filter: UpdateSpotRequest) {
-    return this.client
-      .patch(`/spot/spots/${id}`, filter)
-      .then((r) => r.json());
+    // 200 with an empty body — parsing it would reject on a successful update.
+    return this.client.patch(`/spot/spots/${id}`, filter).then(() => undefined);
   }
 
   async deleteSpot(spotIDs: string[]) {
+    // 200 with an empty body — parsing it would reject on a successful delete.
     return this.client
       .delete('/spot/spots', {
         spotIDs,
       })
-      .then((r) => r.json());
+      .then(() => undefined);
   }
 
   async addComment(id: string, data: AddCommentRequest, accessKey?: string) {
