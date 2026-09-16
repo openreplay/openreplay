@@ -15,6 +15,7 @@ const lazyLocales = {
   ko: () => import('./locales/ko.json'),
   ru: () => import('./locales/ru.json'),
   zh: () => import('./locales/zh.json'),
+  uk: () => import('./locales/uk.json'),
 };
 
 export const i18nReady = i18n
