@@ -253,6 +253,7 @@ Pipfile.lock
 /run-dev.sh
 /schemas/overrides.py
 /schemas/schemas.py
+/schemas/schemas_mcp.py
 /schemas/transformers_validators.py
 /test/
 /chalicelib/core/user_testing.py
