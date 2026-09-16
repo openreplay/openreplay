@@ -8,6 +8,7 @@ const langs = [
   { code: 'fr', label: 'Français' },
   { code: 'es', label: 'Español' },
   { code: 'ru', label: 'Русский' },
+  { code: 'uk', label: 'Українська' },
   { code: 'zh', label: '简体中文' },
   { code: 'ko', label: '한국어' },
 ];
@@ -16,6 +17,7 @@ const langLabels = {
   fr: 'Français',
   es: 'Español',
   ru: 'Русский',
+  uk: 'Українська',
   zh: '中國人',
   ko: '한국어',
 };
