@@ -1,5 +1,6 @@
 import { createMutationObserver, throttleWithTrailing } from '../../utils.js'
 import {
+  CreateDocument,
   RemoveNodeAttribute,
   SetNodeAttributeURLBased,
   SetCSSDataURLBased,
@@ -237,7 +238,9 @@ export default abstract class Observer {
     this.inlinerOptions = options.inlinerOptions
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
+        let rootSwapped = false
         for (const mutation of mutations) {
+          try {
           // mutations order is sequential
           const target = mutation.target
           const type = mutation.type
@@ -246,6 +249,10 @@ export default abstract class Observer {
             continue
           }
           if (type === 'childList') {
+            if (this.isTopContext && isRootNode(target) && this.isRootSwapped()) {
+              rootSwapped = true
+              break
+            }
             for (let i = 0; i < mutation.removedNodes.length; i++) {
               // Should be the same as bindTree(mutation.removedNodes[i]), but logic needs to be be untied
               if (isObservable(mutation.removedNodes[i])) {
@@ -281,6 +288,10 @@ export default abstract class Observer {
             continue
           }
         }
+        if (rootSwapped) {
+          this.rebindRoot()
+          return
+        }
         this.commitNodes()
       }) as MutationCallback,
       this.app.options.forceNgOff,
@@ -292,6 +303,25 @@ export default abstract class Observer {
     this.indexes.length = 1
     this.attributesMap.clear()
     this.textSet.clear()
+  }
+
+  /** True when the node bound as 0 is no longer the live documentElement, i.e. the
+   *  page swapped <html> out (document.write(), documentElement.replaceWith(),
+   *  outerHTML = ...). Returns false mid-swap, while documentElement is null. */
+  private isRootSwapped(): boolean {
+    const bound = this.app.nodes.getNode(0)
+    const root = document.documentElement
+    return !!bound && !!root && bound !== root
+  }
+
+  private rebindRoot(): void {
+    this.clear()
+    this.app.sanitizer.clear()
+    this.app.nodes.clear()
+    this.app.send(CreateDocument())
+    this.app.nodes.callNodeCallbacks(document, true)
+    this.bindTree(document.documentElement)
+    this.commitNodes(true)
   }
 
   /**
