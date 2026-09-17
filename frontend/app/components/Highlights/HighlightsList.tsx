@@ -41,20 +41,16 @@ function HighlightsList() {
   const activeProject = projectsStore.activeSiteId;
   const { query } = notesStore;
   const limit = notesStore.pageSize;
-  const listLength = notesStore.notes.length;
   const { activeTags } = notesStore;
   const { page } = notesStore;
   const { ownOnly } = notesStore;
-  const {
-    data = { notes: [], total: 0 },
-    isPending,
-    refetch,
-  } = useQuery({
-    queryKey: ['notes', page, query, activeTags, activeProject],
+  const { data = { notes: [], total: 0 }, isPending } = useQuery({
+    queryKey: ['notes', activeProject, page, limit, query, activeTags, ownOnly],
     queryFn: () => notesStore.fetchNotes(),
     retry: 3,
   });
   const { total, notes } = data;
+  const listLength = notes.length;
   const debounceTimeout = React.useRef(0);
   const onSearch = (value: string) => {
     notesStore.setQuery(value);
@@ -78,7 +74,6 @@ function HighlightsList() {
 
   const onDelete = async (id: number) => {
     await notesStore.deleteNote(id);
-    refetch();
     toast.success(t('Highlight deleted successfully'));
   };
 
@@ -91,7 +86,7 @@ function HighlightsList() {
   };
 
   const onEdit = (id: string) => {
-    const hl = notesStore.getNoteById(id);
+    const hl = notesStore.getNoteById(id, notes);
     if (!hl) {
       return toast.error(t('Highlight not found in the list'));
     }
@@ -121,7 +116,6 @@ function HighlightsList() {
 
   const toggleShared = (val: boolean) => {
     notesStore.toggleShared(val);
-    refetch();
   };
 
   const isEmpty = !isPending && total === 0;

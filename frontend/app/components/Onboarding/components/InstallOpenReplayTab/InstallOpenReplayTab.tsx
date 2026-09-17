@@ -49,6 +49,7 @@ function InstallOpenReplayTab(props: Props) {
         <a
           href={'https://docs.openreplay.com/en/sdk/using-or/'}
           target="_blank"
+          rel="noreferrer"
         >
           <Button
             size={'small'}

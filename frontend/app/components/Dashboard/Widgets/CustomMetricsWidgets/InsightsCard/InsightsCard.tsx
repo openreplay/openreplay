@@ -2,7 +2,7 @@ import { NoContent, Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { InishtIssue } from 'App/mstore/types/widget';
+import { InsightIssue } from 'App/mstore/types/widget';
 import FilterItem from 'App/mstore/types/filterItem';
 import {
   FilterKey,
@@ -20,7 +20,7 @@ function InsightsCard({ data }: any) {
 
   const clickHanddler = (
     e: React.MouseEvent<HTMLDivElement>,
-    item: InishtIssue,
+    item: InsightIssue,
   ) => {
     let filter: any = {};
     switch (item.category) {

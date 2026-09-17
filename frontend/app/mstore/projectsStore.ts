@@ -146,10 +146,24 @@ export default class BaseProjectsStore {
     }
   };
 
-  fetchList = async (siteIdFromPath?: string, tenantId?: string) => {
+  /** Pass the returned promise to `fetchList` as `pending`. */
+  prefetchList = () => {
+    this.setSitesLoading(true);
+    const pending = projectsService.fetchList();
+    // fetchList awaits this inside its own try/catch; this keeps an early
+    // rejection from surfacing as unhandled in the meantime.
+    pending.catch(() => {});
+    return pending;
+  };
+
+  fetchList = async (
+    siteIdFromPath?: string,
+    tenantId?: string,
+    pending?: ReturnType<typeof projectsService.fetchList>,
+  ) => {
     this.setSitesLoading(true);
     try {
-      const response = await projectsService.fetchList();
+      const response = await (pending ?? projectsService.fetchList());
       runInAction(() => {
         this.list = response.data.map((data) => new Project(data));
         const siteIds = this.list.map((site) => site.id);

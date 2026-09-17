@@ -1,15 +1,6 @@
 import React from 'react';
 import { NoContent } from 'UI';
-import {
-  BarChart,
-  Bar,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import TimeseriesChart from 'Components/Charts/TimeseriesChart';
 import { NO_METRIC_DATA } from 'App/constants/messages';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Styles } from '../../common';
@@ -31,53 +22,19 @@ function ErrorsByType(props: Props) {
       show={metric.data.chart.length === 0}
       style={{ height: '240px' }}
     >
-      <ResponsiveContainer height={240} width="100%">
-        <BarChart data={metric.data.chart} margin={Styles.chartMargins}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            vertical={false}
-            stroke="#EEEEEE"
-          />
-          <XAxis
-            {...Styles.xaxis}
-            dataKey="time"
-            interval={metric.params.density / 7}
-          />
-          <YAxis
-            {...Styles.yaxis}
-            tickFormatter={(val) => Styles.tickFormatter(val)}
-            label={{ ...Styles.axisLabelLeft, value: 'Number of Errors' }}
-            allowDecimals={false}
-          />
-          <Legend />
-          <Tooltip {...Styles.tooltip} />
-          <Bar
-            minPointSize={1}
-            name="Integrations"
-            dataKey="integrations"
-            stackId="a"
-            fill={Styles.compareColors[0]}
-          />
-          <Bar
-            name="4xx"
-            dataKey="4xx"
-            stackId="a"
-            fill={Styles.compareColors[1]}
-          />
-          <Bar
-            name="5xx"
-            dataKey="5xx"
-            stackId="a"
-            fill={Styles.compareColors[2]}
-          />
-          <Bar
-            name="Javascript"
-            dataKey="js"
-            stackId="a"
-            fill={Styles.compareColors[3]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <TimeseriesChart
+        data={metric.data.chart}
+        xInterval={metric.params.density / 7}
+        yLabel="Number of Errors"
+        valueFormatter={Styles.tickFormatter}
+        stack
+        series={[
+          { key: 'integrations', name: 'Integrations', color: Styles.compareColors[0] },
+          { key: '4xx', name: '4xx', color: Styles.compareColors[1] },
+          { key: '5xx', name: '5xx', color: Styles.compareColors[2] },
+          { key: 'js', name: 'Javascript', color: Styles.compareColors[3] },
+        ]}
+      />
     </NoContent>
   );
 }

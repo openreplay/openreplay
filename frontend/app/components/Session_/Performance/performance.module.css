@@ -1,7 +1,14 @@
 .tooltipWrapper {
-	background: white;
+	background: $white;
 	padding: 2px 5px;
 	border-radius: 3px;
-	border: 1px solid #ccc;
+	border: 1px solid $gray-light;
 	color: $gray-dark !important;
+	/* echarts stamps `font: 14px sans-serif` on its tooltip container. */
+	font-family: 'Roboto', sans-serif;
+}
+
+.tooltipWrapper p {
+	display: block;
+	margin: 0;
 }

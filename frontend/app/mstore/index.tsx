@@ -1,6 +1,6 @@
 import React from 'react';
 
-import APIClient from 'App/api_client';
+import { apiClient } from 'App/api_client';
 import { services } from 'App/services';
 
 import AiFiltersStore from './aiFiltersStore';
@@ -80,7 +80,7 @@ window.setJWT = (jwt) => {
   userStore.updateJwt({ jwt });
 };
 
-const client = new APIClient();
+const client = apiClient;
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -149,6 +149,9 @@ export class RootStore {
     this.clipStore = new ClipStore();
     this.analyticsStore = new AnalyticsStore();
     this.issuesStore = new IssuesStore();
+    // Before any component renders: child effects (the integration callback
+    // among them) run ahead of Router's own mount effect.
+    this.initClient();
   }
 
   initClient() {

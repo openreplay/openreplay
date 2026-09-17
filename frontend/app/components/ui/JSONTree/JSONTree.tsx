@@ -47,14 +47,20 @@ interface Props {
   }) => void;
 }
 
-function JSONTree(props: Props) {
+function JSONTree({
+  src,
+  collapsed = 1,
+  displaySize = 'collapsed',
+  enableClipboard = true,
+  ...rest
+}: Props) {
   return (
     <JsonView
-      src={updateObjectLink(props.src)}
-      collapsed={1}
-      displaySize="collapsed"
-      enableClipboard
-      {...props}
+      {...rest}
+      src={updateObjectLink(src)}
+      collapsed={collapsed}
+      displaySize={displaySize}
+      enableClipboard={enableClipboard}
     />
   );
 }

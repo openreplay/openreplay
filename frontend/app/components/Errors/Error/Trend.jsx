@@ -1,36 +1,7 @@
 import React from 'react';
-import {
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  BarChart,
-  Bar,
-} from 'recharts';
-import domain from 'Components/Dashboard/Widgets/common/domain';
+import Sparkline from 'Components/Charts/Sparkline';
 import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
-
-function CustomTooltip({ active, payload, label, timeFormat = 'hh:mm a' }) {
-  const { t } = useTranslation();
-  if (active) {
-    const p = payload[0]?.payload;
-    if (!p) return null;
-    const dateStr = DateTime.fromMillis(p.timestamp).toFormat(timeFormat);
-    return (
-      <div className="rounded-sm border bg-white p-2">
-        <p className="label text-sm color-gray-medium">{dateStr}</p>
-        <p className="text-sm">
-          {t('Sessions:')}
-          {p.count}
-        </p>
-      </div>
-    );
-  }
-
-  return null;
-}
 
 function Trend({ title = '', chart, onDateChange, timeFormat = 'hh:mm a' }) {
   const { t } = useTranslation();
@@ -52,45 +23,20 @@ function Trend({ title = '', chart, onDateChange, timeFormat = 'hh:mm a' }) {
           customHidden
 	      /> */}
       </div>
-      <ResponsiveContainer height={100} width="100%">
-        <BarChart data={chart} margin={0}>
-          <defs>
-            <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#A8E0DA" stopOpacity={0.9} />
-              <stop offset="95%" stopColor="#A8E0DA" stopOpacity={0.2} />
-            </linearGradient>
-          </defs>
-          <Tooltip
-            cursor={{ fill: '#ddd' }}
-            content={<CustomTooltip timeFormat={timeFormat} />}
-          />
-          <XAxis
-            interval={0}
-            dataKey="time"
-            // tick={ { fill: '#999999', fontSize: 9 } }
-            // tickLine = {{ stroke: '#CCCCCC' }}
-            strokeWidth={0}
-            hide
-          />
-          <YAxis hide interval={0} domain={domain} />
-          <CartesianGrid
-            strokeDasharray="3 3"
-            vertical={false}
-            stroke="#EEEEEE"
-          />
-          <Bar
-            name={t('Sessions')}
-            type="monotone"
-            dataKey="count"
-            // stroke="#3EAAAF"
-            minPointSize={1}
-            fillOpacity={1}
-            // strokeWidth={ 1 }
-            // strokeOpacity={ 0.8 }
-            fill="#3EAAAF"
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <Sparkline
+        data={chart}
+        valueKey="count"
+        name={t('Sessions')}
+        color="#3EAAAF"
+        height={100}
+        tooltipFormatter={(row) =>
+          `<div class="text-sm color-gray-medium">${DateTime.fromMillis(
+            row.timestamp,
+          ).toFormat(timeFormat)}</div><div class="text-sm">${t(
+            'Sessions:',
+          )}${row.count}</div>`
+        }
+      />
     </>
   );
 }

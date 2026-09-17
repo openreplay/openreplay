@@ -1,4 +1,4 @@
-import APIClient, { clean as cleanParams } from 'App/api_client';
+import APIClient, { apiClient, clean as cleanParams } from 'App/api_client';
 import { ISession } from 'Types/session/session';
 import { IErrorStack } from 'Types/session/errorStack';
 
@@ -6,11 +6,11 @@ export default class SettingsService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   initClient(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   saveCaptureRate(projectId: number, data: any) {
@@ -37,12 +37,14 @@ export default class SettingsService {
     return this.client.post(`/${projectId}/conditions`, data);
   }
 
-  getSessions(filter: any): Promise<{ sessions: ISession[]; total: number }> {
+  getSessions(
+    filter: any,
+    abortSignal?: AbortSignal,
+  ): Promise<{ sessions: ISession[]; total: number }> {
     return this.client
-      .post('/sessions/search', filter)
+      .post('/sessions/search', filter, undefined, undefined, abortSignal)
       .then((r) => r.json())
-      .then((response) => response.data || [])
-      .catch((e) => Promise.reject(e));
+      .then((response) => response.data || []);
   }
 
   getFirstMobUrl(
@@ -51,8 +53,7 @@ export default class SettingsService {
     return this.client
       .get(`/sessions/${sessionId}/first-mob`)
       .then((r) => r.json())
-      .then((j) => j.data || {})
-      .catch(console.error);
+      .then((j) => j.data || {});
   }
 
   getRecommendedSessions(sort?: any): Promise<{
@@ -62,23 +63,20 @@ export default class SettingsService {
     return this.client
       .post('/sessions-recommendations', sort)
       .then((r) => r.json())
-      .then((response) => response || [])
-      .catch((e) => Promise.reject(e));
+      .then((response) => response || []);
   }
 
   getFinetuneSessions(): Promise<{ sessions: string[] }> {
     return this.client
       .get('/PROJECT_ID/finetuning/sessions')
-      .then((r) => r.json())
-      .catch(Promise.reject);
+      .then((r) => r.json());
   }
 
   sendFeedback(data: any): Promise<any> {
     return this.client
       .post(`/session-feedback`, data)
       .then((r) => r.json())
-      .then((j) => j.data || [])
-      .catch(Promise.reject);
+      .then((j) => j.data || []);
   }
 
   signalFinetune() {
@@ -89,8 +87,7 @@ export default class SettingsService {
     return this.client
       .get(`/session-feedback/${sessionId}`)
       .then((r) => r.json())
-      .then((j) => j.data || false)
-      .catch(Promise.reject);
+      .then((j) => j.data || false);
   }
 
   getSessionInfo(
@@ -116,15 +113,13 @@ export default class SettingsService {
     this.client
       .get(`/sessions/${sessionId}/events`)
       .then((r) => r.json())
-      .then((j) => j.data || [])
-      .catch(console.error);
+      .then((j) => j.data || []);
 
   getLiveSessions(filter: any): Promise<{ sessions: ISession[] }> {
     return this.client
       .post('/assist/sessions', cleanParams(filter))
       .then((r) => r.json())
-      .then((response) => response.data || [])
-      .catch((e) => Promise.reject(e));
+      .then((response) => response.data || []);
   }
 
   getErrorStack(
@@ -134,46 +129,40 @@ export default class SettingsService {
     return this.client
       .get(`/sessions/${sessionId}/errors/${errorId}/sourcemaps`)
       .then((r) => r.json())
-      .then((j) => j.data || {})
-      .catch((e) => Promise.reject(e));
+      .then((j) => j.data || {});
   }
 
   getAutoplayList(params = {}): Promise<{ sessionId: string }[]> {
     return this.client
       .post('/sessions/search/ids', cleanParams(params))
       .then((r) => r.json())
-      .then((j) => j.data || [])
-      .catch((e) => Promise.reject(e));
+      .then((j) => j.data || []);
   }
 
   toggleFavorite(sessionId: string): Promise<any> {
     return this.client
-      .get(`/sessions/${sessionId}/favorite`)
-      .catch(Promise.reject);
+      .get(`/sessions/${sessionId}/favorite`);
   }
 
   getClickMap(params = {}): Promise<any[]> {
     return this.client
       .post('/heatmaps/url', params)
       .then((r) => r.json())
-      .then((j) => j.data || [])
-      .catch(Promise.reject);
+      .then((j) => j.data || []);
   }
 
   getSessionClickMap(sessionId: string, params = {}): Promise<any[]> {
     return this.client
       .post(`/sessions/${sessionId}/clickmaps`, params)
       .then((r) => r.json())
-      .then((j) => j.data || [])
-      .catch(Promise.reject);
+      .then((j) => j.data || []);
   }
 
   getRecordingStatus(): Promise<any> {
     return this.client
       .get('/check-recording-status')
       .then((r) => r.json())
-      .then((j) => j.data || {})
-      .catch(Promise.reject);
+      .then((j) => j.data || {});
   }
 
   async fetchSimilarSessions(

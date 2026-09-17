@@ -29,9 +29,16 @@ function LanguageSwitcher() {
   const onChange = (val: string) => {
     setSelected(val);
   };
+  const pending = React.useRef<string | null>(null);
   const handleChangeLanguage = () => {
-    void i18n.changeLanguage(selected);
     localStorage.setItem('i18nextLng', selected);
+    // Locale chunks load at different speeds, so a slower earlier request must
+    // not be the one that wins.
+    pending.current = selected;
+    void i18n.changeLanguage(selected).then(() => {
+      if (pending.current !== selected)
+        void i18n.changeLanguage(pending.current!);
+    });
   };
 
   const menuItems: MenuProps['items'] = langs.map((lang) => ({

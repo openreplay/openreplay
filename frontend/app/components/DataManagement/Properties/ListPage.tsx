@@ -67,16 +67,16 @@ function ListPage() {
       ),
     },
   ];
+  const { projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
   const {
     data = { properties: [], total: 0 },
     isPending,
     refetch,
   } = useQuery({
-    queryKey: ['props-list', view],
+    queryKey: ['props-list', siteId, view],
     queryFn: () => fetchList(view),
   });
-  const { projectsStore } = useStore();
-  const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const openProp = (name: string) => {
     queryParams.set('property', name);

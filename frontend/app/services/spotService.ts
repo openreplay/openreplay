@@ -49,8 +49,7 @@ export default class SpotService extends BaseService {
   async fetchSpots(filters: GetSpotsRequest): Promise<GetSpotsResponse> {
     return this.client
       .get('/spot/spots', filters)
-      .then((r) => r.json())
-      .catch(console.error);
+      .then((r) => r.json());
   }
 
   async fetchSpot(id: string, accessKey?: string): Promise<GetSpotResponse> {
@@ -60,19 +59,17 @@ export default class SpotService extends BaseService {
   }
 
   async updateSpot(id: string, filter: UpdateSpotRequest) {
-    return this.client
-      .patch(`/spot/spots/${id}`, filter)
-      .then((r) => r.json())
-      .catch(console.error);
+    // 200 with an empty body — parsing it would reject on a successful update.
+    return this.client.patch(`/spot/spots/${id}`, filter).then(() => undefined);
   }
 
   async deleteSpot(spotIDs: string[]) {
+    // 200 with an empty body — parsing it would reject on a successful delete.
     return this.client
       .delete('/spot/spots', {
         spotIDs,
       })
-      .then((r) => r.json())
-      .catch(console.error);
+      .then(() => undefined);
   }
 
   async addComment(id: string, data: AddCommentRequest, accessKey?: string) {
@@ -87,8 +84,7 @@ export default class SpotService extends BaseService {
   async getVideo(id: string) {
     return this.client
       .get(`/spot/spots/${id}/video`)
-      .then((r) => r.json())
-      .catch(console.error);
+      .then((r) => r.json());
   }
 
   /**
@@ -101,8 +97,7 @@ export default class SpotService extends BaseService {
   ): Promise<{ key: { value: string; expiration: number } }> {
     return this.client
       .patch(`/spot/spots/${id}/public-key`, { expiration })
-      .then((r) => r.json())
-      .catch(console.error);
+      .then((r) => r.json());
   }
 
   async getKey(
@@ -110,14 +105,12 @@ export default class SpotService extends BaseService {
   ): Promise<{ key: { value: string; expiration: number } }> {
     return this.client
       .get(`/spot/spots/${id}/public-key`)
-      .then((r) => r.json())
-      .catch(console.error);
+      .then((r) => r.json());
   }
 
   async checkProcessingStatus(id: string, accessKey?: string) {
     return this.client
       .get(`/spot/spots/${id}/status${accessKey ? `?key=${accessKey}` : ''}`)
-      .then((r) => r.json())
-      .catch(console.error);
+      .then((r) => r.json());
   }
 }

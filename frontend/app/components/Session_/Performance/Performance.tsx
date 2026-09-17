@@ -6,18 +6,9 @@ import {
   PlayerContext,
 } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import {
-  AreaChart,
-  Area,
-  ComposedChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Label,
-} from 'recharts';
+import PerformanceAreaChart, {
+  PerfBand,
+} from 'Components/Charts/PerformanceAreaChart';
 import { durationFromMsFormatted } from 'App/date';
 import { formatBytes } from 'App/utils';
 import { Tooltip as TooltipANT, Segmented } from 'antd';
@@ -48,14 +39,59 @@ const HIDDEN_SCREEN_COLOR = '#CCC';
 
 const CURSOR_COLOR = '#394EFF';
 
-function Gradient({ color, id }) {
-  return (
-    <linearGradient id={id} x1="-1" y1="0" x2="0" y2="1">
-      <stop offset="5%" stopColor={color} stopOpacity={0.7} />
-      <stop offset="95%" stopColor={color} stopOpacity={0.2} />
-    </linearGradient>
-  );
-}
+/* Module-level so the strips' option effects, which compare bands by value,
+   never see a new array on the per-tick re-render. */
+const MOBILE_CPU_BANDS: PerfBand[] = [
+  { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
+  { key: 'isBackground', color: HIDDEN_SCREEN_COLOR, step: true },
+];
+const MOBILE_MEMORY_BANDS: PerfBand[] = [
+  { key: 'isMemBackground', color: HIDDEN_SCREEN_COLOR, step: true },
+  {
+    key: 'memory',
+    color: USED_HEAP_COLOR,
+    strokeColor: USED_HEAP_STROKE_COLOR,
+    gradient: true,
+  },
+];
+const FPS_BANDS: PerfBand[] = [
+  {
+    key: 'fps',
+    color: FPS_COLOR,
+    strokeColor: FPS_STROKE_COLOR,
+    step: true,
+    gradient: true,
+  },
+  { key: 'fpsLowMarker', color: FPS_LOW_COLOR, step: true },
+  { key: 'fpsVeryLowMarker', color: FPS_VERY_LOW_COLOR, step: true },
+  { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
+];
+const CPU_BANDS: PerfBand[] = [
+  { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
+  { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
+];
+const HEAP_BANDS: PerfBand[] = [
+  {
+    key: 'totalHeap',
+    color: 'transparent',
+    strokeColor: TOTAL_HEAP_STROKE_COLOR,
+    line: true,
+  },
+  {
+    key: 'usedHeap',
+    color: USED_HEAP_COLOR,
+    strokeColor: USED_HEAP_STROKE_COLOR,
+    gradient: true,
+  },
+];
+const NODES_BANDS: PerfBand[] = [
+  {
+    key: 'nodesCount',
+    color: NODES_COUNT_COLOR,
+    strokeColor: NODES_COUNT_STROKE_COLOR,
+    gradient: true,
+  },
+];
 
 const TOTAL_HEAP = (t: TFunction) => t('Allocated Heap');
 const USED_HEAP = (t: TFunction) => t('JS Heap');
@@ -63,123 +99,58 @@ const FPS = (t: TFunction) => t('Framerate');
 const CPU = (t: TFunction) => t('CPU Load');
 const NODES_COUNT = (t: TFunction) => t('Nodes Сount');
 
-function FPSTooltip({ active, payload }) {
-  const { t } = useTranslation();
-  if (!payload) return null;
-  if (!active || !payload || payload.length < 3) {
-    return null;
-  }
-  if (payload[0].value === null) {
-    return (
-      <div
-        className={stl.tooltipWrapper}
-        style={{ color: HIDDEN_SCREEN_COLOR }}
-      >
-        {t('Page is not active. User switched the tab or hid the window.')}
-      </div>
+const tipWrap = (inner: string, style = '') =>
+  // `!important` because .tooltipWrapper declares its own colour the same way.
+  `<div class="${stl.tooltipWrapper}"${style ? ` style="${style} !important"` : ''}>${inner}</div>`;
+const tipRow = (label: string, value: string) =>
+  `<span class="font-medium">${label}: </span>${value}`;
+
+const fpsTooltip = (t: TFunction) => (row: any) => {
+  if (!row) return null;
+  if (row.fps == null)
+    return tipWrap(
+      t('Page is not active. User switched the tab or hid the window.'),
+      `color:${HIDDEN_SCREEN_COLOR}`,
     );
-  }
-
-  let style;
-  if (payload[1].value != null && payload[1].value > 0) {
-    style = { color: FPS_LOW_COLOR };
-  }
-  if (payload[2].value != null && payload[2].value > 0) {
-    style = { color: FPS_VERY_LOW_COLOR };
-  }
-
-  return (
-    <div className={stl.tooltipWrapper} style={style}>
-      <span className="font-medium">{`${FPS(t)}: `}</span>
-      {Math.trunc(payload[0].value)}
-    </div>
+  let color = '';
+  if (row.fpsLowMarker != null && row.fpsLowMarker > 0) color = FPS_LOW_COLOR;
+  if (row.fpsVeryLowMarker != null && row.fpsVeryLowMarker > 0)
+    color = FPS_VERY_LOW_COLOR;
+  return tipWrap(
+    tipRow(FPS(t), String(Math.trunc(row.fps))),
+    color ? `color:${color}` : '',
   );
-}
+};
 
-function CPUTooltip({ active, payload }) {
-  const { t } = useTranslation();
-  if (!payload) return null;
-  if (!active || payload.length < 1 || payload[0].value === null) {
-    return null;
-  }
-  return (
-    <div className={stl.tooltipWrapper}>
-      <span className="font-medium">{`${CPU(t)}: `}</span>
-      {payload[0].value - CPU_VISUAL_OFFSET}%
-    </div>
+const cpuTooltip = (t: TFunction) => (row: any) => {
+  if (!row || row.cpu == null) return null;
+  return tipWrap(tipRow(CPU(t), `${row.cpu - CPU_VISUAL_OFFSET}%`));
+};
+
+const mobileCpuTooltip = (t: TFunction) => (row: any) => {
+  if (!row) return null;
+  if (row.cpu == null)
+    return tipWrap(t('App is in the background.'), `color:${HIDDEN_SCREEN_COLOR}`);
+  return tipWrap(tipRow(CPU(t), `${row.cpu}%`));
+};
+
+const heapTooltip = (t: TFunction) => (row: any) => {
+  if (!row) return null;
+  return tipWrap(
+    `<p>${tipRow(TOTAL_HEAP(t), formatBytes(row.totalHeap))}</p>` +
+      `<p>${tipRow(USED_HEAP(t), formatBytes(row.usedHeap))}</p>`,
   );
-}
+};
 
-function MobileCpuTooltip({ active, payload }) {
-  const { t } = useTranslation();
+const mobileMemoryTooltip = (t: TFunction) => (row: any) => {
+  if (!row || row.memory == null) return null;
+  return tipWrap(`<p>${tipRow(t('Used Memory'), formatBytes(row.memory))}</p>`);
+};
 
-  if (!payload) return null;
-  if (!active || payload.length < 1) {
-    return null;
-  }
-  if (payload[0].value === null) {
-    return (
-      <div
-        className={stl.tooltipWrapper}
-        style={{ color: HIDDEN_SCREEN_COLOR }}
-      >
-        {t('App is in the background.')}
-      </div>
-    );
-  }
-  return (
-    <div className={stl.tooltipWrapper}>
-      <span className="font-medium">{`${CPU(t)}: `}</span>
-      {payload[0].value}%
-    </div>
-  );
-}
-
-function HeapTooltip({ active, payload }) {
-  const { t } = useTranslation();
-  if (!payload) return null;
-  if (!active || payload.length < 2) return null;
-  return (
-    <div className={stl.tooltipWrapper}>
-      <p>
-        <span className="font-medium">{`${TOTAL_HEAP(t)}: `}</span>
-        {formatBytes(payload[0].value)}
-      </p>
-      <p>
-        <span className="font-medium">{`${USED_HEAP(t)}: `}</span>
-        {formatBytes(payload[1].value)}
-      </p>
-    </div>
-  );
-}
-
-function MobileMemoryTooltip({ active, payload }) {
-  const { t } = useTranslation();
-  if (!payload) return null;
-  if (!active || payload.length < 1 || payload[1].value === null) return null;
-  return (
-    <div className={stl.tooltipWrapper}>
-      <p>
-        <span className="font-medium">{t('Used Memory: ')}</span>
-        {formatBytes(payload[1].value)}
-      </p>
-    </div>
-  );
-}
-
-function NodesCountTooltip({ active, payload }) {
-  const { t } = useTranslation();
-  if (!payload) return null;
-  if (!active || !payload || payload.length === 0) return null;
-  return (
-    <div className={stl.tooltipWrapper}>
-      <p>
-        <span className="font-medium">{`${NODES_COUNT(t)}: `}</span>
-        {payload[0].value}
-      </p>
-    </div>
-  );
-}
+const nodesCountTooltip = (t: TFunction) => (row: any) => {
+  if (!row || row.nodesCount == null) return null;
+  return tipWrap(`<p>${tipRow(NODES_COUNT(t), String(row.nodesCount))}</p>`);
+};
 
 const TICKS_COUNT = 10;
 function generateTicks(data: Array<Timed>): Array<number> {
@@ -270,14 +241,6 @@ export const MobilePerformance = observer(() => {
     }
   };
 
-  const onChartClick = (e: any) => {
-    if (e === null) return;
-    const { activeTooltipIndex } = e;
-    const point = _data[activeTooltipIndex];
-    if (point) {
-      player.jump(point.time);
-    }
-  };
 
   const availableCount = 2;
   const height = `${100 / availableCount}%`;
@@ -301,143 +264,33 @@ export const MobilePerformance = observer(() => {
         </div>
       </BottomBlock.Header>
       <BottomBlock.Content>
-        <ResponsiveContainer height={height}>
-          <AreaChart
-            onClick={onChartClick}
+        <PerformanceAreaChart
+            label="CPU"
             data={_data}
-            syncId="s"
-            margin={{
-              top: 0,
-              right: 0,
-              left: 0,
-              bottom: 0,
-            }}
-          >
-            <defs>
-              <Gradient id="cpuGradient" color={CPU_COLOR} />
-            </defs>
-            {/* <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" /> */}
-            <XAxis
-              dataKey="time"
-              type="number"
-              mirror
-              orientation="top"
-              tickLine={false}
-              tickFormatter={() => ''}
-              domain={[0, 'dataMax']}
-              ticks={_timeTicks}
-            >
-              <Label
-                value="CPU"
-                position="insideTopRight"
-                className="fill-gray-darkest"
-              />
-            </XAxis>
-            <YAxis
-              axisLine={false}
-              tick={false}
-              mirror
-              domain={[0, 120]}
-              orientation="right"
-            />
-            <Area
-              dataKey="cpu"
-              type="monotone"
-              stroke={CPU_STROKE_COLOR}
-              fill="url(#cpuGradient)"
-              dot={false}
-              activeDot={{
-                onClick: onDotClick,
-                style: { cursor: 'pointer' },
-              }}
-              isAnimationActive={false}
-            />
-            <Area
-              dataKey="isBackground"
-              type="stepBefore"
-              stroke="none"
-              fill={HIDDEN_SCREEN_COLOR}
-              activeDot={false}
-              isAnimationActive={false}
-            />
-            <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
-            <Tooltip content={MobileCpuTooltip} filterNull={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-        <ResponsiveContainer height={height}>
-          <ComposedChart
-            onClick={onChartClick}
+            cursorTime={performanceChartTime}
+            cursorColor={CURSOR_COLOR}
+            height={height}
+            groupId="or-performance"
+            ticks={_timeTicks}
+            onPointClick={(i) => onDotClick({ index: i })}
+            yMax={120}
+            tooltipFormatter={mobileCpuTooltip(t)}
+            bands={MOBILE_CPU_BANDS}
+          />
+        <PerformanceAreaChart
+            label="Memory"
             data={_data}
-            margin={{
-              top: 0,
-              right: 0,
-              left: 0,
-              bottom: 0,
-            }}
-            syncId="s"
-          >
-            <defs>
-              <Gradient id="usedHeapGradient" color={USED_HEAP_COLOR} />
-            </defs>
-            <XAxis
-              dataKey="time"
-              type="number"
-              mirror
-              orientation="top"
-              tickLine={false}
-              tickFormatter={() => ''} // tick={false} + _timeTicks to cartesian array
-              domain={[0, 'dataMax']}
-              ticks={_timeTicks}
-            >
-              <Label
-                value="Memory"
-                position="insideTopRight"
-                className="fill-gray-darkest"
-              />
-            </XAxis>
-            <YAxis
-              axisLine={false}
-              tickFormatter={formatBytes}
-              mirror
-              // Hack to keep only end tick
-              minTickGap={Number.MAX_SAFE_INTEGER}
-              domain={[0, (max: number) => max * 1.2]}
-            />
-            {/* <Line */}
-            {/*    type="monotone" */}
-            {/*    dataKey="totalHeap" */}
-            {/*    stroke={TOTAL_HEAP_STROKE_COLOR} */}
-            {/*    dot={false} */}
-            {/*    activeDot={{ */}
-            {/*      onClick: onDotClick, */}
-            {/*      style: { cursor: 'pointer' }, */}
-            {/*    }} */}
-            {/*    isAnimationActive={false} */}
-            {/* /> */}
-            <Area
-              dataKey="isMemBackground"
-              type="stepBefore"
-              stroke="none"
-              fill={HIDDEN_SCREEN_COLOR}
-              activeDot={false}
-              isAnimationActive={false}
-            />
-            <Area
-              dataKey="memory"
-              type="monotone"
-              fill="url(#usedHeapGradient)"
-              stroke={USED_HEAP_STROKE_COLOR}
-              dot={false}
-              activeDot={{
-                onClick: onDotClick,
-                style: { cursor: 'pointer' },
-              }}
-              isAnimationActive={false}
-            />
-            <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
-            <Tooltip content={MobileMemoryTooltip} filterNull={false} />
-          </ComposedChart>
-        </ResponsiveContainer>
+            cursorTime={performanceChartTime}
+            cursorColor={CURSOR_COLOR}
+            height={height}
+            groupId="or-performance"
+            ticks={_timeTicks}
+            onPointClick={(i) => onDotClick({ index: i })}
+            yFormatter={formatBytes}
+            yMaxRatio={1.2}
+            tooltipFormatter={mobileMemoryTooltip(t)}
+            bands={MOBILE_MEMORY_BANDS}
+          />
       </BottomBlock.Content>
     </BottomBlock>
   );
@@ -477,14 +330,6 @@ function Performance() {
     }
   };
 
-  const onChartClick = (e: any) => {
-    if (e === null) return;
-    const { activeTooltipIndex } = e;
-    const point = _data[activeTooltipIndex];
-    if (point) {
-      player.jump(point.time);
-    }
-  };
 
   const { fps, cpu, heap, nodes } = availability;
   const availableCount = [fps, cpu, heap, nodes].reduce(
@@ -534,269 +379,67 @@ function Performance() {
       </BottomBlock.Header>
       <BottomBlock.Content>
         {fps && (
-          <ResponsiveContainer height={height}>
-            <AreaChart
-              onClick={onChartClick}
+          <PerformanceAreaChart
+              label="FPS"
               data={_data}
-              syncId="s"
-              margin={{
-                top: 0,
-                right: 0,
-                left: 0,
-                bottom: 0,
-              }}
-            >
-              <defs>
-                <Gradient id="fpsGradient" color={FPS_COLOR} />
-              </defs>
-              <XAxis
-                dataKey="time"
-                type="number"
-                mirror
-                orientation="top"
-                tickLine={false}
-                tickFormatter={durationFromMsFormatted}
-                tick={{ fontSize: '12px', fill: '#333' }}
-                domain={[0, 'dataMax']}
-                ticks={_timeTicks}
-              >
-                <Label
-                  value="FPS"
-                  position="insideTopRight"
-                  className="fill-gray-darkest"
-                />
-              </XAxis>
-              <YAxis axisLine={false} tick={false} mirror domain={[0, 85]} />
-              <Area
-                dataKey="fps"
-                type="stepBefore"
-                stroke={FPS_STROKE_COLOR}
-                fill="url(#fpsGradient)"
-                dot={false}
-                activeDot={{
-                  onClick: onDotClick,
-                  style: { cursor: 'pointer' },
-                }}
-                isAnimationActive={false}
-              />
-              <Area
-                dataKey="fpsLowMarker"
-                type="stepBefore"
-                stroke="none"
-                fill={FPS_LOW_COLOR}
-                activeDot={false}
-                isAnimationActive={false}
-              />
-              <Area
-                dataKey="fpsVeryLowMarker"
-                type="stepBefore"
-                stroke="none"
-                fill={FPS_VERY_LOW_COLOR}
-                activeDot={false}
-                isAnimationActive={false}
-              />
-              <Area
-                dataKey="hiddenScreenMarker"
-                type="stepBefore"
-                stroke="none"
-                fill={HIDDEN_SCREEN_COLOR}
-                activeDot={false}
-                isAnimationActive={false}
-              />
-              <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
-              <Tooltip content={FPSTooltip} filterNull={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+              cursorTime={performanceChartTime}
+              cursorColor={CURSOR_COLOR}
+              height={height}
+              groupId="or-performance"
+              ticks={_timeTicks}
+              onPointClick={(i) => onDotClick({ index: i })}
+              yMax={85}
+              xFormatter={durationFromMsFormatted}
+              tooltipFormatter={fpsTooltip(t)}
+              bands={FPS_BANDS}
+            />
         )}
         {cpu && (
-          <ResponsiveContainer height={height}>
-            <AreaChart
-              onClick={onChartClick}
+          <PerformanceAreaChart
+              label="CPU"
               data={_data}
-              syncId="s"
-              margin={{
-                top: 0,
-                right: 0,
-                left: 0,
-                bottom: 0,
-              }}
-            >
-              <defs>
-                <Gradient id="cpuGradient" color={CPU_COLOR} />
-              </defs>
-              {/* <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" /> */}
-              <XAxis
-                dataKey="time"
-                type="number"
-                mirror
-                orientation="top"
-                tickLine={false}
-                tickFormatter={() => ''}
-                domain={[0, 'dataMax']}
-                ticks={_timeTicks}
-              >
-                <Label
-                  value="CPU"
-                  position="insideTopRight"
-                  className="fill-gray-darkest"
-                />
-              </XAxis>
-              <YAxis
-                axisLine={false}
-                tick={false}
-                mirror
-                domain={[0, 120]}
-                orientation="right"
-              />
-              <Area
-                dataKey="cpu"
-                type="monotone"
-                stroke={CPU_STROKE_COLOR}
-                fill="url(#cpuGradient)"
-                dot={false}
-                activeDot={{
-                  onClick: onDotClick,
-                  style: { cursor: 'pointer' },
-                }}
-                isAnimationActive={false}
-              />
-              <Area
-                dataKey="hiddenScreenMarker"
-                type="stepBefore"
-                stroke="none"
-                fill={HIDDEN_SCREEN_COLOR}
-                activeDot={false}
-                isAnimationActive={false}
-              />
-              <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
-              <Tooltip content={CPUTooltip} filterNull={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+              cursorTime={performanceChartTime}
+              cursorColor={CURSOR_COLOR}
+              height={height}
+              groupId="or-performance"
+              ticks={_timeTicks}
+              onPointClick={(i) => onDotClick({ index: i })}
+              yMax={120}
+              tooltipFormatter={cpuTooltip(t)}
+              bands={CPU_BANDS}
+            />
         )}
 
         {heap && (
-          <ResponsiveContainer height={height}>
-            <ComposedChart
-              onClick={onChartClick}
+          <PerformanceAreaChart
+              label="HEAP"
               data={_data}
-              margin={{
-                top: 0,
-                right: 0,
-                left: 0,
-                bottom: 0,
-              }}
-              syncId="s"
-            >
-              <defs>
-                <Gradient id="usedHeapGradient" color={USED_HEAP_COLOR} />
-              </defs>
-              <XAxis
-                dataKey="time"
-                type="number"
-                mirror
-                orientation="top"
-                tickLine={false}
-                tickFormatter={() => ''} // tick={false} + _timeTicks to cartesian array
-                domain={[0, 'dataMax']}
-                ticks={_timeTicks}
-              >
-                <Label
-                  value="HEAP"
-                  position="insideTopRight"
-                  className="fill-gray-darkest"
-                />
-              </XAxis>
-              <YAxis
-                axisLine={false}
-                tickFormatter={formatBytes}
-                mirror
-                // Hack to keep only end tick
-                minTickGap={Number.MAX_SAFE_INTEGER}
-                domain={[0, (max: number) => max * 1.2]}
-              />
-              <Line
-                type="monotone"
-                dataKey="totalHeap"
-                stroke={TOTAL_HEAP_STROKE_COLOR}
-                dot={false}
-                activeDot={{
-                  onClick: onDotClick,
-                  style: { cursor: 'pointer' },
-                }}
-                isAnimationActive={false}
-              />
-              <Area
-                dataKey="usedHeap"
-                type="monotone"
-                fill="url(#usedHeapGradient)"
-                stroke={USED_HEAP_STROKE_COLOR}
-                dot={false}
-                activeDot={{
-                  onClick: onDotClick,
-                  style: { cursor: 'pointer' },
-                }}
-                isAnimationActive={false}
-              />
-              <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
-              <Tooltip content={HeapTooltip} filterNull={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
+              cursorTime={performanceChartTime}
+              cursorColor={CURSOR_COLOR}
+              height={height}
+              groupId="or-performance"
+              ticks={_timeTicks}
+              onPointClick={(i) => onDotClick({ index: i })}
+              yFormatter={formatBytes}
+              yMaxRatio={1.2}
+              tooltipFormatter={heapTooltip(t)}
+              bands={HEAP_BANDS}
+            />
         )}
         {nodes && (
-          <ResponsiveContainer height={height}>
-            <AreaChart
-              onClick={onChartClick}
+          <PerformanceAreaChart
+              label="NODES"
               data={_data}
-              syncId="s"
-              margin={{
-                top: 0,
-                right: 0,
-                left: 0,
-                bottom: 0,
-              }}
-            >
-              <defs>
-                <Gradient id="nodesGradient" color={NODES_COUNT_COLOR} />
-              </defs>
-              <XAxis
-                dataKey="time"
-                type="number"
-                mirror
-                orientation="top"
-                tickLine={false}
-                tickFormatter={() => ''}
-                domain={[0, 'dataMax']}
-                ticks={_timeTicks}
-              >
-                <Label
-                  value="NODES"
-                  position="insideTopRight"
-                  className="fill-gray-darkest"
-                />
-              </XAxis>
-              <YAxis
-                axisLine={false}
-                tick={false}
-                mirror
-                orientation="right"
-                domain={[0, (max: number) => max * 1.2]}
-              />
-              <Area
-                dataKey="nodesCount"
-                type="monotone"
-                stroke={NODES_COUNT_STROKE_COLOR}
-                fill="url(#nodesGradient)"
-                dot={false}
-                activeDot={{
-                  onClick: onDotClick,
-                  style: { cursor: 'pointer' },
-                }}
-                isAnimationActive={false}
-              />
-              <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
-              <Tooltip content={NodesCountTooltip} filterNull={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+              cursorTime={performanceChartTime}
+              cursorColor={CURSOR_COLOR}
+              height={height}
+              groupId="or-performance"
+              ticks={_timeTicks}
+              onPointClick={(i) => onDotClick({ index: i })}
+              yMaxRatio={1.2}
+              tooltipFormatter={nodesCountTooltip(t)}
+              bands={NODES_BANDS}
+            />
         )}
       </BottomBlock.Content>
     </BottomBlock>

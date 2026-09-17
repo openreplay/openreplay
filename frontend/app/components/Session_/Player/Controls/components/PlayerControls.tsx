@@ -15,7 +15,7 @@ interface Props {
   speed: number;
   disabled: boolean;
   startedAt: number;
-  playButton: JSX.Element;
+  playButton: React.JSX.Element;
   skipIntervals: Record<number, number>;
   currentInterval: number;
   setSkipInterval: (interval: number) => void;

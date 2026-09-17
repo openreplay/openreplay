@@ -5,8 +5,8 @@ import JumpButton from 'Shared/DevTools/JumpButton';
 import stl from './errorItem.module.css';
 
 /* ErrorItem is re-exported from the UI barrel, so a static import here put
-   ErrorDetailsModal — and the recharts/lodash/d3 tree behind its Trend chart —
-   in the entry bundle. Only the click path needs it. */
+   ErrorDetailsModal and its chart tree in the entry bundle. Only the click
+   path needs it. */
 const ErrorDetailsModal = React.lazy(
   () => import('App/components/Dashboard/components/Errors/ErrorDetailsModal'),
 );

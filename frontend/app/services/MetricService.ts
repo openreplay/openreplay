@@ -1,16 +1,16 @@
 import Widget from 'App/mstore/types/widget';
-import APIClient from 'App/api_client';
+import APIClient, { apiClient } from 'App/api_client';
 import { HEATMAP, USER_PATH } from 'App/constants/card';
 
 export default class MetricService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   initClient(client?: APIClient) {
-    this.client = client || new APIClient();
+    this.client = client || apiClient;
   }
 
   /**
