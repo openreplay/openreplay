@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     metadata_9           Nullable(String),
     metadata_10          Nullable(String),
     is_vault             BOOL                      DEFAULT FALSE,
-    _timestamp           DateTime                  DEFAULT now()
+    _timestamp           DateTime                  DEFAULT now(),
+    INDEX user_id_idx (user_id) TYPE bloom_filter(0.01) GRANULARITY 4
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMMDD(datetime)
       ORDER BY (project_id, datetime, session_id)
@@ -308,7 +309,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.events
     "$import"                   BOOL DEFAULT FALSE,
     _deleted_at                 DateTime DEFAULT '1970-01-01 00:00:00',
     _is_deleted                 UInt8 DEFAULT 0,
-    _timestamp                  DateTime DEFAULT now()
+    _timestamp                  DateTime DEFAULT now(),
+    INDEX user_id_idx ("$user_id") TYPE bloom_filter(0.01) GRANULARITY 4
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       PARTITION BY toYYYYMMDD(created_at)
       ORDER BY (project_id, "$event_name", session_id, created_at, event_id)
