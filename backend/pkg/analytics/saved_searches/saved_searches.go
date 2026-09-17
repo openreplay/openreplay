@@ -39,7 +39,7 @@ type SegmentsListItem struct {
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Get(projectID int, searchID string) (*model.SavedSearch, error)
-	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error)
+	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string, withStats bool) ([]*model.SavedSearch, int, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
 	ListForFilters(projectID, userID int) ([]SegmentsListItem, error)
@@ -182,7 +182,7 @@ var sortColumns = map[string]string{
 	"userName":  "u.name",
 }
 
-func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string) ([]*model.SavedSearch, int, error) {
+func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string, withStats bool) ([]*model.SavedSearch, int, error) {
 	column, ok := sortColumns[sort]
 	if !ok {
 		column = sortColumns["createdAt"]
@@ -248,6 +248,10 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 	if err := rows.Err(); err != nil {
 		s.log.Error(ctx, "rows error: %v", err)
 		return nil, 0, fmt.Errorf("rows error: %w", err)
+	}
+
+	if !withStats {
+		return searches, total, nil
 	}
 
 	statsCtx, cancel := context.WithTimeout(ctx, statsQueryTimeout)

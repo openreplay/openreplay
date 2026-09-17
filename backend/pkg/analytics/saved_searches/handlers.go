@@ -194,7 +194,9 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 		order = o
 	}
 
-	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset, sort, order)
+	withStats := strings.EqualFold(r.URL.Query().Get("withStats"), "true") || r.URL.Query().Get("withStats") == "1"
+
+	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset, sort, order, withStats)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
