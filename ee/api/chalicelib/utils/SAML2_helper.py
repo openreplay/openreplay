@@ -17,17 +17,19 @@ if config("LOCAL_DEV", default=False, cast=bool):
 else:
     API_PREFIX = "/api"
 
+SITE_URL = config("SITE_URL").rstrip("/")
+
 SAML2 = {
     "strict": config("saml_strict", cast=bool, default=True),
     "debug": config("saml_debug", cast=bool, default=True),
     "sp": {
-        "entityId": config("SITE_URL") + API_PREFIX + "/sso/saml2/metadata/",
+        "entityId": SITE_URL + API_PREFIX + "/sso/saml2/metadata/",
         "assertionConsumerService": {
-            "url": config("SITE_URL") + API_PREFIX + "/sso/saml2/acs/",
+            "url": SITE_URL + API_PREFIX + "/sso/saml2/acs/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
         },
         "singleLogoutService": {
-            "url": config("SITE_URL") + API_PREFIX + "/sso/saml2/sls/",
+            "url": SITE_URL + API_PREFIX + "/sso/saml2/sls/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
@@ -165,7 +167,7 @@ def get_landing_URL(query_params: dict = None, redirect_to_link2=False):
             return config("sso_landing_override") + query_params
 
     base_url = config("SITE_URL_LOCAL") if config("LOCAL_DEV", cast=bool, default=False) else config("SITE_URL")
-    return base_url + config("sso_landing", default="/login") + query_params
+    return base_url.rstrip("/") + config("sso_landing", default="/login") + query_params
 
 
 environ["hastSAML2"] = str(is_saml2_available())
