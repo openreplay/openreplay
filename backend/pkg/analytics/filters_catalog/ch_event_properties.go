@@ -104,15 +104,14 @@ func buildEventProperties(rows []eventPropertyRow, eventName string, autoCapture
 		}
 
 		item := map[string]any{
-			"name":                   name,
-			"displayName":            display,
-			"autoCaptured":           r.AutoCaptured,
-			"possibleTypes":          SimplifyClickHouseTypes(r.PossibleTypes),
-			"id":                     StringToID("prop_" + name),
-			"category":               "events",
-			"_foundInPredefinedList": false,
-			"isPredefined":           false,
-			"possibleValues":         []any{},
+			"name":           name,
+			"displayName":    display,
+			"autoCaptured":   r.AutoCaptured,
+			"possibleTypes":  SimplifyClickHouseTypes(r.PossibleTypes),
+			"id":             StringToID("prop_" + name),
+			"category":       "events",
+			"isPredefined":   false,
+			"possibleValues": []any{},
 		}
 		if predefined {
 			values := pp.PossibleValues
@@ -120,7 +119,6 @@ func buildEventProperties(rows []eventPropertyRow, eventName string, autoCapture
 				values = []any{}
 			}
 			item["dataType"] = SimplifyClickHouseType(pp.Type)
-			item["_foundInPredefinedList"] = true
 			item["isPredefined"] = pp.IsPredefined
 			item["possibleValues"] = values
 		}
@@ -160,17 +158,16 @@ func eventsExtraProperties(eventName string) []map[string]any {
 	switch eventName {
 	case "REQUEST":
 		return []map[string]any{{
-			"name":                   "duration",
-			"displayName":            "Duration",
-			"autoCaptured":           true,
-			"possibleTypes":          []string{"int"},
-			"id":                     StringToID("prop_duration"),
-			"category":               "events",
-			"_foundInPredefinedList": true,
-			"isPredefined":           false,
-			"possibleValues":         []any{},
-			"dataType":               "int",
-			"defaultProperty":        false,
+			"name":            "duration",
+			"displayName":     "Duration",
+			"autoCaptured":    true,
+			"possibleTypes":   []string{"int"},
+			"id":              StringToID("prop_duration"),
+			"category":        "events",
+			"isPredefined":    false,
+			"possibleValues":  []any{},
+			"dataType":        "int",
+			"defaultProperty": false,
 		}}
 	}
 	return nil
@@ -182,16 +179,15 @@ func tagTriggerProperties(tags []tagValue) []map[string]any {
 		values = append(values, map[string]any{"id": t.ID, "name": t.Name, "autoCaptured": false})
 	}
 	return []map[string]any{{
-		"name":                   "tagId",
-		"displayName":            "Name",
-		"autoCaptured":           true,
-		"possibleTypes":          []string{"string"},
-		"id":                     StringToID("prop_tagId"),
-		"category":               "events",
-		"_foundInPredefinedList": false,
-		"defaultProperty":        true,
-		"isPredefined":           true,
-		"possibleValues":         values,
+		"name":            "tagId",
+		"displayName":     "Name",
+		"autoCaptured":    true,
+		"possibleTypes":   []string{"string"},
+		"id":              StringToID("prop_tagId"),
+		"category":        "events",
+		"defaultProperty": true,
+		"isPredefined":    true,
+		"possibleValues":  values,
 	}}
 }
 

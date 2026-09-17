@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"openreplay/backend/pkg/logger"
@@ -43,6 +44,8 @@ func (r *responserImpl) ResponseWithJSON(log logger.Logger, ctx context.Context,
 		log.Error(ctx, "can't marshal response: %s", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.Header().Set("Cache-Control", "no-store")
 	w.Write(body)
 	r.recordMetrics(requestStart, url, http.StatusOK, bodySize)
 }
@@ -55,6 +58,8 @@ func (r *responserImpl) ResponseWithError(log logger.Logger, ctx context.Context
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 	}
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(code)
 	w.Write(body)
 	r.recordMetrics(requestStart, url, code, bodySize)

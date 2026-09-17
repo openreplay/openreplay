@@ -9,23 +9,21 @@ type StaticFilterItem struct {
 	PossibleTypes  []string `json:"possibleTypes"`
 	DataType       string   `json:"dataType"`
 	AutoCaptured   bool     `json:"autoCaptured"`
-	IsPredefined   bool     `json:"isPredefined"`
+	IsPredefined   bool     `json:"isPredefined,omitempty"`
 	PossibleValues []any    `json:"possibleValues"`
-	IsConditional  bool     `json:"isConditional"`
+	IsConditional  bool     `json:"isConditional,omitempty"`
 }
 
-// EventCatalogItem is the events-section shape: 8 fields, never includes
-// isPredefined or possibleValues. _foundInPredefinedList serializes as a
-// snake-style key with leading underscore (matches the golden).
+// EventCatalogItem is the events-section shape: 7 fields, never includes
+// isPredefined or possibleValues.
 type EventCatalogItem struct {
-	Name                  string   `json:"name"`
-	DisplayName           string   `json:"displayName"`
-	AutoCaptured          bool     `json:"autoCaptured"`
-	ID                    string   `json:"id"`
-	DataType              string   `json:"dataType"`
-	PossibleTypes         []string `json:"possibleTypes"`
-	IsConditional         bool     `json:"isConditional"`
-	FoundInPredefinedList bool     `json:"_foundInPredefinedList"`
+	Name          string   `json:"name"`
+	DisplayName   string   `json:"displayName"`
+	AutoCaptured  bool     `json:"autoCaptured"`
+	ID            string   `json:"id"`
+	DataType      string   `json:"dataType"`
+	PossibleTypes []string `json:"possibleTypes"`
+	IsConditional bool     `json:"isConditional,omitempty"`
 }
 
 // MetadataItem is the metadata-section shape: 6 fields. No isPredefined,

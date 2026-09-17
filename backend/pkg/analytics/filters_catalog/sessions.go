@@ -1,11 +1,15 @@
 package filters_catalog
 
-import "openreplay/backend/pkg/analytics/filters_catalog/model"
+import (
+	"sync"
+
+	"openreplay/backend/pkg/analytics/filters_catalog/model"
+)
 
 // GetSessionsFilters mirrors api/chalicelib/core/product_analytics/filters.py:get_sessions_filters.
 // The Total field is intentionally 13 (Python's hard-coded literal) even though the list has 17
 // items — the frontend uses len(List), not Total. Order matches the Python source.
-func GetSessionsFilters() model.FilterSection {
+func computeSessionsFilters() model.FilterSection {
 	str := []string{"string"}
 
 	// Country values: convert []string to []any.
@@ -90,7 +94,7 @@ func GetSessionsFilters() model.FilterSection {
 }
 
 // GetUsersFilters mirrors the Python get_users_filters() output.
-func GetUsersFilters() model.FilterSection {
+func computeUsersFilters() model.FilterSection {
 	str := []string{"string"}
 
 	mkEnum := func(prefix string, def FilterTypeDef, display, dataType string, types []string, predefined, conditional bool, values []any) model.StaticFilterItem {
@@ -123,7 +127,7 @@ func GetUsersFilters() model.FilterSection {
 
 // GetUsersIdentifiedFilters mirrors the Python get_identified_users_filters() output.
 // IDs are computed via StringToID("uif_" + name) — not via FilterTypeDef enum strings.
-func GetUsersIdentifiedFilters() model.FilterSection {
+func computeUsersIdentifiedFilters() model.FilterSection {
 	type cfg struct {
 		name, display, dataType string
 		predefined              bool
@@ -185,4 +189,43 @@ func GetUsersIdentifiedFilters() model.FilterSection {
 		Scope:       []string{"events", "users"},
 		List:        list,
 	}
+}
+
+var (
+	sessionsFiltersOnce sync.Once
+	sessionsFiltersVal  model.FilterSection
+
+	usersFiltersOnce sync.Once
+	usersFiltersVal  model.FilterSection
+
+	usersIdentifiedFiltersOnce sync.Once
+	usersIdentifiedFiltersVal  model.FilterSection
+)
+
+// GetSessionsFilters returns the deterministic, argument-free sessions filter
+// section, computed once and cached for the process lifetime.
+func GetSessionsFilters() model.FilterSection {
+	sessionsFiltersOnce.Do(func() {
+		sessionsFiltersVal = computeSessionsFilters()
+	})
+	return sessionsFiltersVal
+}
+
+// GetUsersFilters returns the deterministic, argument-free user filter
+// section, computed once and cached for the process lifetime.
+func GetUsersFilters() model.FilterSection {
+	usersFiltersOnce.Do(func() {
+		usersFiltersVal = computeUsersFilters()
+	})
+	return usersFiltersVal
+}
+
+// GetUsersIdentifiedFilters returns the deterministic, argument-free
+// identified-users filter section, computed once and cached for the process
+// lifetime.
+func GetUsersIdentifiedFilters() model.FilterSection {
+	usersIdentifiedFiltersOnce.Do(func() {
+		usersIdentifiedFiltersVal = computeUsersIdentifiedFilters()
+	})
+	return usersIdentifiedFiltersVal
 }

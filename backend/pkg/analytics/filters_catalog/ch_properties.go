@@ -26,7 +26,7 @@ FROM product_analytics.all_properties
         GROUP BY ALL
     ) AS event_properties USING (property_name)
 WHERE project_id = ?
-    AND (apc.status = 'visible' OR isNull(apc.status))
+    AND (apc.status = 'visible' OR apc.status = '')
 GROUP BY ALL
 ORDER BY apc.display_name, all_properties.property_name`
 
@@ -42,6 +42,11 @@ type propertyCatalogRow struct {
 // getPropertiesCatalog queries ClickHouse for event properties and delegates to
 // buildPropertiesCatalogSection for the pure transformation logic.
 func (s *filtersCatalogImpl) getPropertiesCatalog(ctx context.Context, projectID uint32) (model.FilterSection, error) {
+	cacheKey := propertiesCatalogCacheKey(projectID)
+	if cached, ok := s.catalogCache.get(cacheKey); ok {
+		return cached, nil
+	}
+
 	rows, err := s.ch.Query(ctx, propertiesCatalogQuery, projectID, projectID)
 	if err != nil {
 		return model.FilterSection{}, fmt.Errorf("ch query properties catalog: %w", err)
@@ -59,14 +64,17 @@ func (s *filtersCatalogImpl) getPropertiesCatalog(ctx context.Context, projectID
 	if err := rows.Err(); err != nil {
 		return model.FilterSection{}, err
 	}
-	return buildPropertiesCatalogSection(fetched), nil
+	section := buildPropertiesCatalogSection(fetched)
+	s.catalogCache.set(cacheKey, section)
+	return section, nil
 }
 
 // buildPropertiesCatalogSection mirrors get_all_properties from
 // api/chalicelib/core/product_analytics/properties.py:259-340. Each item is a
 // map[string]any because the field set varies:
-//   - CH rows that match a PredefinedProperties key: 8 keys (no isPredefined/possibleValues).
-//   - CH rows that do NOT match: also 8 keys (same trimmed shape — no isPredefined/possibleValues).
+//   - CH rows that match a PredefinedProperties key: 8 keys, plus possibleValues
+//     when the matched entry defines one (no isPredefined).
+//   - CH rows that do NOT match: 8 keys (same trimmed shape — no isPredefined/possibleValues).
 //   - Predefined-fallback appends: 10 keys (includes isPredefined + possibleValues).
 //
 // NOTE: there is a pre-existing inconsistency in the Python source — live golden
@@ -120,11 +128,12 @@ func buildPropertiesCatalogSection(fetched []propertyCatalogRow) model.FilterSec
 		}
 
 		if pp, ok := PredefinedProperties[snake]; ok {
-			item["_foundInPredefinedList"] = true
 			item["isConditional"] = pp.IsConditional
 			item["dataType"] = SimplifyClickHouseType(pp.Type)
+			if len(pp.PossibleValues) > 0 {
+				item["possibleValues"] = pp.PossibleValues
+			}
 		} else {
-			item["_foundInPredefinedList"] = false
 			if len(simplified) > 0 {
 				item["dataType"] = simplified[0]
 			} else {
@@ -151,16 +160,15 @@ func buildPropertiesCatalogSection(fetched []propertyCatalogRow) model.FilterSec
 			values = []any{}
 		}
 		processed = append(processed, map[string]any{
-			"name":                   camelKey,
-			"displayName":            ORPropertyDisplayName(snakeKey),
-			"possibleTypes":          []string{pp.Type},
-			"id":                     StringToID("prop_" + camelKey),
-			"_foundInPredefinedList": false,
-			"dataType":               pp.Type,
-			"autoCaptured":           true,
-			"isPredefined":           pp.IsPredefined,
-			"possibleValues":         values,
-			"isConditional":          pp.IsConditional,
+			"name":           camelKey,
+			"displayName":    ORPropertyDisplayName(snakeKey),
+			"possibleTypes":  []string{pp.Type},
+			"id":             StringToID("prop_" + camelKey),
+			"dataType":       pp.Type,
+			"autoCaptured":   true,
+			"isPredefined":   pp.IsPredefined,
+			"possibleValues": values,
+			"isConditional":  pp.IsConditional,
 		})
 	}
 

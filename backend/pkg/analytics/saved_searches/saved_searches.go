@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -194,7 +195,7 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 	selectQuery := fmt.Sprintf(`
 		SELECT
 			ss.search_id, ss.project_id, ss.user_id, u.name AS user_name, ss.name, ss.is_public, ss.is_share,
-			ss.search_data, ss.created_at, ss.expires_at, ss.deleted_at,
+			ss.search_data, ss.created_at,
 			COUNT(*) OVER() AS total_count
 		FROM public.saved_searches ss
 		LEFT JOIN public.users u ON ss.user_id = u.user_id
@@ -229,8 +230,6 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 			&savedSearch.IsShare,
 			&searchDataJSON,
 			&savedSearch.CreatedAt,
-			&savedSearch.ExpiresAt,
-			&savedSearch.DeletedAt,
 			&total,
 		)
 
@@ -251,14 +250,35 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 		return nil, 0, fmt.Errorf("rows error: %w", err)
 	}
 
+	statsCtx, cancel := context.WithTimeout(ctx, statsQueryTimeout)
+	defer cancel()
+
+	const statsConcurrency = 8
+	sem := make(chan struct{}, statsConcurrency)
+	var wg sync.WaitGroup
 	for _, ss := range searches {
-		if ctx.Err() != nil {
+		select {
+		case sem <- struct{}{}:
+		case <-statsCtx.Done():
+		}
+		if statsCtx.Err() != nil {
 			break
 		}
-		stats := s.getSearchStats(ctx, projectID, &ss.Data)
-		ss.SessionsCount = stats.SessionsCount
-		ss.UsersCount = stats.UsersCount
+		wg.Add(1)
+		go func(ss *model.SavedSearch) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			defer func() {
+				if r := recover(); r != nil {
+					s.log.Error(ctx, "saved search stats panic: %v", r)
+				}
+			}()
+			stats := s.getSearchStats(statsCtx, projectID, &ss.Data)
+			ss.SessionsCount = stats.SessionsCount
+			ss.UsersCount = stats.UsersCount
+		}(ss)
 	}
+	wg.Wait()
 
 	return searches, total, nil
 }
@@ -280,7 +300,7 @@ func (s *savedSearchesImpl) getSearchStats(ctx context.Context, projectID int, d
 		}
 	}
 
-	now := time.Now()
+	now := time.Now().Truncate(5 * time.Minute)
 	req := &model.SessionsSearchRequest{
 		Filters:     append([]model.Filter(nil), data.Filters...),
 		EventsOrder: data.EventsOrder,

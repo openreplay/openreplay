@@ -29,7 +29,7 @@ func TestBuildEventPropertiesPredefinedAndDefault(t *testing.T) {
 	if label["defaultProperty"] != true {
 		t.Errorf("label.defaultProperty = %v, want true", label["defaultProperty"])
 	}
-	if label["_foundInPredefinedList"] != true || label["dataType"] != "string" {
+	if label["dataType"] != "string" {
 		t.Errorf("label predefined metadata wrong: %v", label)
 	}
 	if label["displayName"] == nil || label["displayName"] == "" {
@@ -45,7 +45,7 @@ func TestBuildEventPropertiesPredefinedAndDefault(t *testing.T) {
 	if custom == nil {
 		t.Fatal("custom_thing missing")
 	}
-	if custom["defaultProperty"] != false || custom["_foundInPredefinedList"] != false || custom["isPredefined"] != false {
+	if custom["defaultProperty"] != false || custom["isPredefined"] != false {
 		t.Errorf("custom_thing flags wrong: %v", custom)
 	}
 	if _, has := custom["dataType"]; has {
@@ -94,7 +94,7 @@ func TestBuildEventPropertiesRequestExtraDuration(t *testing.T) {
 	if dur == nil {
 		t.Fatal("duration should be appended for REQUEST")
 	}
-	if dur["dataType"] != "int" || dur["_foundInPredefinedList"] != true || dur["defaultProperty"] != false {
+	if dur["dataType"] != "int" || dur["defaultProperty"] != false {
 		t.Errorf("duration extra shape wrong: %v", dur)
 	}
 
