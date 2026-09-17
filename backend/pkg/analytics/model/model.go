@@ -165,10 +165,10 @@ func ValidateFilterFields(sl validator.StructLevel) {
 
 type Session struct {
 	Duration              uint32             `json:"duration" ch:"duration"`
-	ErrorsCount           int                `json:"errorsCount"`
+	ErrorsCount           uint16             `json:"errorsCount" ch:"errors_count"`
 	EventsCount           uint16             `json:"eventsCount" ch:"events_count"`
 	IssueTypes            []string           `json:"issueTypes" ch:"issue_types"`
-	PagesCount            int                `json:"pagesCount" ch:"pages_count"`
+	PagesCount            uint16             `json:"pagesCount" ch:"pages_count"`
 	Platform              string             `json:"platform" ch:"platform"`
 	ProjectId             uint16             `json:"projectId" ch:"project_id"`
 	SessionId             string             `json:"sessionId" ch:"session_id"`

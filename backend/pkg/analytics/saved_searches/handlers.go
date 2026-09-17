@@ -154,15 +154,24 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 	offset := 0
 
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
+		l, err := strconv.Atoi(limitStr)
+		if err != nil || l <= 0 {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid limit: %s (must be a positive integer)", limitStr), startTime, r.URL.Path, bodySize)
+			return
 		}
+		if l > 200 {
+			l = 200
+		}
+		limit = l
 	}
 
 	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
+		o, err := strconv.Atoi(offsetStr)
+		if err != nil || o < 0 {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid offset: %s (must be a non-negative integer)", offsetStr), startTime, r.URL.Path, bodySize)
+			return
 		}
+		offset = o
 	}
 
 	sort := "createdAt"

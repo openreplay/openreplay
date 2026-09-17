@@ -2,12 +2,16 @@ package user
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 
+	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/math"
 )
+
+const userCacheTTL = 30 * time.Second
 
 const MCPAudience = "mcp:OpenReplay"
 
@@ -58,13 +62,19 @@ type Users interface {
 	GetServiceAccount(tenantID uint64) (*User, error)
 }
 
+type userCacheEntry struct {
+	user      *User
+	fetchedAt time.Time
+}
+
 type usersImpl struct {
-	conn pool.Pool
-	mcp  MCPConfig
+	conn      pool.Pool
+	mcp       MCPConfig
+	userCache cache.Cache
 }
 
 func New(pgconn pool.Pool, mcp MCPConfig) Users {
-	return &usersImpl{conn: pgconn, mcp: mcp}
+	return &usersImpl{conn: pgconn, mcp: mcp, userCache: cache.New(time.Minute, time.Minute)}
 }
 
 func peekAudience(tokenString string) string {
@@ -105,6 +115,18 @@ func parseJWT(tokenString, secret string, allowedMethods []string, audience stri
 	return claims, nil
 }
 
+func (u *usersImpl) getCachedUser(cacheKey string) (*User, error) {
+	cached, ok := u.userCache.Get(cacheKey)
+	if !ok {
+		return nil, fmt.Errorf("cache miss")
+	}
+	entry, ok := cached.(userCacheEntry)
+	if !ok || time.Since(entry.fetchedAt) >= userCacheTTL {
+		return nil, fmt.Errorf("cache miss")
+	}
+	return entry.user, nil
+}
+
 func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, error) {
 	isMCP := peekAudience(authHeader) == MCPAudience
 
@@ -126,14 +148,23 @@ func (u *usersImpl) Get(authHeader, secret string, tokenType TokenType) (*User, 
 	if err != nil {
 		return nil, err
 	}
-	dbUser, err := getUserFromDB(u.conn, jwtInfo.UserId, jwtInfo.TenantID, tokenType)
+	iat := int64(0)
+	if jwtInfo.IssuedAt != nil {
+		iat = jwtInfo.IssuedAt.Unix()
+	}
+	cacheKey := fmt.Sprintf("%d:%d:%s:%d", jwtInfo.UserId, jwtInfo.TenantID, tokenType, iat)
+	dbUser, err := u.getCachedUser(cacheKey)
 	if err != nil {
-		return nil, err
+		dbUser, err = getUserFromDB(u.conn, jwtInfo.UserId, jwtInfo.TenantID, tokenType)
+		if err != nil {
+			return nil, err
+		}
+		u.userCache.Set(cacheKey, userCacheEntry{user: dbUser, fetchedAt: time.Now()})
 	}
 	// MCP tokens carry their own lifetime via exp/aud — skip the
 	// users.jwt_iat-vs-token.iat tracking used for UI sessions.
 	if !isMCP && !dbUser.ServiceAccount &&
-		(dbUser.JwtIat == 0 || math.Abs(int(jwtInfo.IssuedAt.Unix())-dbUser.JwtIat) > 1) {
+		(dbUser.JwtIat == 0 || math.Abs(int(iat)-dbUser.JwtIat) > 1) {
 		return nil, fmt.Errorf("token has been updated")
 	}
 	return dbUser, nil

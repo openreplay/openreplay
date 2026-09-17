@@ -38,6 +38,11 @@ type eventCatalogRow struct {
 // based on the project's platform and merging in any predefined events the CH
 // query did not return.
 func (s *filtersCatalogImpl) getEventsCatalog(ctx context.Context, projectID uint32, platform string) (model.FilterSection, error) {
+	cacheKey := eventsCatalogCacheKey(projectID, platform)
+	if cached, ok := s.catalogCache.get(cacheKey); ok {
+		return cached, nil
+	}
+
 	rows, err := s.ch.Query(ctx, eventsCatalogQuery, projectID)
 	if err != nil {
 		return model.FilterSection{}, fmt.Errorf("ch query events catalog: %w", err)
@@ -56,7 +61,9 @@ func (s *filtersCatalogImpl) getEventsCatalog(ctx context.Context, projectID uin
 		return model.FilterSection{}, err
 	}
 
-	return buildEventsCatalogSection(fetched, platform), nil
+	section := buildEventsCatalogSection(fetched, platform)
+	s.catalogCache.set(cacheKey, section)
+	return section, nil
 }
 
 // buildEventsCatalogSection is the pure post-query transformation. Exposed
@@ -78,13 +85,12 @@ func buildEventsCatalogSection(fetched []eventCatalogRow, platform string) model
 		list := make([]any, 0, len(order))
 		for _, name := range order {
 			list = append(list, model.EventCatalogItem{
-				Name:                  name,
-				DisplayName:           OREventDisplayName(name),
-				AutoCaptured:          true,
-				ID:                    StringToID("event_" + name),
-				DataType:              "string",
-				PossibleTypes:         []string{"string"},
-				FoundInPredefinedList: false,
+				Name:          name,
+				DisplayName:   OREventDisplayName(name),
+				AutoCaptured:  true,
+				ID:            StringToID("event_" + name),
+				DataType:      "string",
+				PossibleTypes: []string{"string"},
 			})
 		}
 		return model.FilterSection{Total: len(predefined), DisplayName: "Events", Scope: scope, List: list}
@@ -116,14 +122,13 @@ func buildEventsCatalogSection(fetched []eventCatalogRow, platform string) model
 			display = OREventDisplayName(r.Name)
 		}
 		list = append(list, model.EventCatalogItem{
-			Name:                  r.Name,
-			DisplayName:           display,
-			AutoCaptured:          r.AutoCaptured,
-			ID:                    StringToID("event_" + r.Name),
-			DataType:              "string",
-			PossibleTypes:         []string{"string"},
-			IsConditional:         true,
-			FoundInPredefinedList: true,
+			Name:          r.Name,
+			DisplayName:   display,
+			AutoCaptured:  r.AutoCaptured,
+			ID:            StringToID("event_" + r.Name),
+			DataType:      "string",
+			PossibleTypes: []string{"string"},
+			IsConditional: true,
 		})
 	}
 
@@ -135,14 +140,13 @@ func buildEventsCatalogSection(fetched []eventCatalogRow, platform string) model
 		}
 		total++
 		list = append(list, model.EventCatalogItem{
-			Name:                  name,
-			DisplayName:           OREventDisplayName(name),
-			AutoCaptured:          true,
-			ID:                    StringToID("event_" + name),
-			DataType:              "string",
-			PossibleTypes:         []string{"string"},
-			IsConditional:         true,
-			FoundInPredefinedList: false,
+			Name:          name,
+			DisplayName:   OREventDisplayName(name),
+			AutoCaptured:  true,
+			ID:            StringToID("event_" + name),
+			DataType:      "string",
+			PossibleTypes: []string{"string"},
+			IsConditional: true,
 		})
 	}
 

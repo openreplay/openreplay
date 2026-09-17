@@ -56,17 +56,26 @@ type Lexicon interface {
 	InvalidateCache(projID uint32)
 }
 
-type lexiconImpl struct {
-	log    logger.Logger
-	chConn driver.Conn
-	cache  cache.Cache
+// CatalogInvalidator lets the lexicon service evict any cached filters
+// catalog entries after an event/property visibility change. Satisfied
+// structurally by filters_catalog's FiltersCatalog, without importing it.
+type CatalogInvalidator interface {
+	Invalidate(projectID uint32)
 }
 
-func New(log logger.Logger, chConn driver.Conn) Lexicon {
+type lexiconImpl struct {
+	log     logger.Logger
+	chConn  driver.Conn
+	cache   cache.Cache
+	catalog CatalogInvalidator
+}
+
+func New(log logger.Logger, chConn driver.Conn, catalog CatalogInvalidator) Lexicon {
 	return &lexiconImpl{
-		log:    log,
-		chConn: chConn,
-		cache:  cache.New(5*time.Minute, 10*time.Minute),
+		log:     log,
+		chConn:  chConn,
+		cache:   cache.New(5*time.Minute, 10*time.Minute),
+		catalog: catalog,
 	}
 }
 
@@ -464,6 +473,9 @@ func (e *lexiconImpl) GetHiddenProperties(ctx context.Context, projID uint32) ([
 func (e *lexiconImpl) InvalidateCache(projID uint32) {
 	e.cache.Set(fmt.Sprintf("hidden_events:%d", projID), nil)
 	e.cache.Set(fmt.Sprintf("hidden_properties:%d", projID), nil)
+	if e.catalog != nil {
+		e.catalog.Invalidate(projID)
+	}
 }
 
 func (e *lexiconImpl) UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error {

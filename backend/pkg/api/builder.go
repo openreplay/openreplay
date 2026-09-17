@@ -120,8 +120,36 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 
 	requestHandler := api.NewRequestHandler(log, responser, cfg.JsonSizeLimit)
 
-	lexiconService := lexicon.New(log, chconn)
 	segmentsService := lexicon.NewSegments(log, pgconn)
+
+	tagAdminService := tagAdmin.NewTagService(log, pgconn, chconn)
+	tagAdminHandlers, err := tagAdmin.NewHandlers(log, requestHandler, tagAdminService)
+	if err != nil {
+		return nil, err
+	}
+
+	searchService, err := search.New(log, chconn, pgconn, segmentsService, projects)
+	if err != nil {
+		return nil, err
+	}
+	searchHandlers, err := search.NewHandlers(log, cfg, responser, searchService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
+	savedSearchesService := saved_searches.New(log, pgconn, searchService)
+	savedSearchesHandlers, err := saved_searches.NewHandlers(log, cfg, responser, savedSearchesService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
+	filtersCatalogService := filtersCatalog.New(log, chconn, projects, savedSearchesService, tagAdminService)
+	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects, assistService)
+	if err != nil {
+		return nil, err
+	}
+
+	lexiconService := lexicon.New(log, chconn, filtersCatalogService)
 
 	analyticsEventsService, err := analyticsEvents.New(log, chconn, lexiconService)
 	if err != nil {
@@ -177,15 +205,6 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	searchService, err := search.New(log, chconn, pgconn, segmentsService)
-	if err != nil {
-		return nil, err
-	}
-	searchHandlers, err := search.NewHandlers(log, cfg, responser, searchService, reqValidator)
-	if err != nil {
-		return nil, err
-	}
-
 	cardsService := cards.New(log, pgconn)
 	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator, charts.ValidateBreakdowns)
 	if err != nil {
@@ -210,25 +229,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	savedSearchesService := saved_searches.New(log, pgconn, searchService)
-	savedSearchesHandlers, err := saved_searches.NewHandlers(log, cfg, responser, savedSearchesService, reqValidator)
-	if err != nil {
-		return nil, err
-	}
-
 	lexiconHandlers, err := lexiconAPI.NewHandlers(log, requestHandler, lexiconService)
-	if err != nil {
-		return nil, err
-	}
-
-	tagAdminService := tagAdmin.NewTagService(log, pgconn, chconn)
-	tagAdminHandlers, err := tagAdmin.NewHandlers(log, requestHandler, tagAdminService)
-	if err != nil {
-		return nil, err
-	}
-
-	filtersCatalogService := filtersCatalog.New(log, chconn, projects, savedSearchesService, tagAdminService)
-	filtersCatalogHandlers, err := filtersCatalogAPI.NewHandlers(log, requestHandler, filtersCatalogService, projects, assistService)
 	if err != nil {
 		return nil, err
 	}

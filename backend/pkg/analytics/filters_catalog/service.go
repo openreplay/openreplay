@@ -20,21 +20,30 @@ type FiltersCatalog interface {
 	SearchEventsAutocomplete(ctx context.Context, projectID uint32, q string) ([]model.AutocompleteRow, error)
 	SearchPropertiesAutocomplete(ctx context.Context, projectID uint32, propertyName, eventName, userID, source, q string, autoCaptured bool) ([]model.AutocompleteRow, error)
 	SearchEventProperties(ctx context.Context, projectID uint32, eventName string, autoCaptured bool) ([]map[string]any, error)
+	// Invalidate evicts the cached events and properties catalog sections
+	// for the given project.
+	Invalidate(projectID uint32)
 }
 
 type filtersCatalogImpl struct {
-	log      logger.Logger
-	ch       driver.Conn
-	projects projects.Projects
-	segments savedSearches.SavedSearches
-	features tagAdmin.TagService
-	acCache  *autocompleteCache
+	log          logger.Logger
+	ch           driver.Conn
+	projects     projects.Projects
+	segments     savedSearches.SavedSearches
+	features     tagAdmin.TagService
+	acCache      *autocompleteCache
+	catalogCache *catalogCache
 }
 
 func New(log logger.Logger, ch driver.Conn, p projects.Projects, segments savedSearches.SavedSearches, features tagAdmin.TagService) FiltersCatalog {
 	return &filtersCatalogImpl{
 		log: log, ch: ch,
 		projects: p, segments: segments, features: features,
-		acCache: newAutocompleteCache(autocompleteCacheTTL),
+		acCache:      newAutocompleteCache(autocompleteCacheTTL),
+		catalogCache: newCatalogCache(catalogCacheTTL),
 	}
+}
+
+func (s *filtersCatalogImpl) Invalidate(projectID uint32) {
+	s.catalogCache.invalidate(projectID)
 }
