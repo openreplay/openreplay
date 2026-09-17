@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS product_analytics.events_v2
     _timestamp                  DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       PARTITION BY toYYYYMMDD(created_at)
-      ORDER BY (project_id, session_id, "$event_name", created_at, event_id)
+      ORDER BY (project_id, "$event_name", session_id, created_at, event_id)
       TTL _deleted_at + INTERVAL 1 DAY DELETE WHERE _is_deleted
       SETTINGS allow_experimental_json_type = 1, enable_json_type = 1;
 
