@@ -6,6 +6,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	filterscatalogmodel "openreplay/backend/pkg/analytics/filters_catalog/model"
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -127,7 +128,7 @@ func resolveBreakdown(b model.Breakdown) (resolvedBreakdown, error) {
 		}
 		key := name
 		if b.AutoCaptured {
-			key = CamelToSnake(key)
+			key = filterscatalogmodel.StoredPropertyKey(key)
 		}
 		if strings.ContainsRune(key, '@') {
 			return resolvedBreakdown{}, fmt.Errorf("unsupported breakdown %q", b.Name)

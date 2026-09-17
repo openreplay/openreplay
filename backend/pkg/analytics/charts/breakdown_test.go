@@ -811,7 +811,7 @@ func TestBreakdown_MetadataColumn(t *testing.T) {
 func TestBreakdown_DynamicAutoCapturedEventKey(t *testing.T) {
 	b := []model.Breakdown{evBd("myPlanType", true, "string")}
 	got := GetEventOnlyBreakdownProjection(b, "main")
-	want := "toString(main.\"$properties\".`my_plan_type`) AS break1"
+	want := "toString(main.\"$properties\".`myPlanType`) AS break1"
 	if len(got) != 1 || got[0] != want {
 		t.Fatalf("got %v, want [%q]", got, want)
 	}
@@ -820,6 +820,15 @@ func TestBreakdown_DynamicAutoCapturedEventKey(t *testing.T) {
 	}
 	if !HasEventOnlyBreakdowns(b) {
 		t.Error("dynamic event breakdown must be event-only")
+	}
+}
+
+func TestBreakdown_DynamicAutoCapturedUppercaseKeyUnchanged(t *testing.T) {
+	b := []model.Breakdown{evBd("apiURL", true, "string")}
+	got := GetEventOnlyBreakdownProjection(b, "main")
+	want := "toString(main.\"$properties\".`apiURL`) AS break1"
+	if len(got) != 1 || got[0] != want {
+		t.Fatalf("got %v, want [%q]", got, want)
 	}
 }
 
@@ -835,7 +844,7 @@ func TestBreakdown_DataTypeDoesNotAffectSQL(t *testing.T) {
 	for _, dt := range []string{"int", "float", "number", "integer", "double", "long", "string", "boolean", ""} {
 		t.Run(dt, func(t *testing.T) {
 			got := GetEventOnlyBreakdownProjection([]model.Breakdown{evBd("itemCount", true, dt)}, "main")
-			want := "toString(main.\"$properties\".`item_count`) AS break1"
+			want := "toString(main.\"$properties\".`itemCount`) AS break1"
 			if len(got) != 1 || got[0] != want {
 				t.Fatalf("dataType %q: got %v, want [%q]", dt, got, want)
 			}

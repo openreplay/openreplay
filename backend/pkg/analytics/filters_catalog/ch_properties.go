@@ -171,6 +171,10 @@ func buildPropertiesCatalogSection(fetched []propertyCatalogRow) model.FilterSec
 	return model.FilterSection{Total: total, DisplayName: "Event Properties", Scope: scope, List: list}
 }
 
+func StoredPropertyKey(name string) string {
+	return model.StoredPropertyKey(name)
+}
+
 // keyToSnakeCase converts camelCase or PascalCase to snake_case. No acronym
 // handling — matches the Python key_to_snake_case used by properties.py.
 // Examples: "hesitationTime" → "hesitation_time", "minUsedJsHeapSize" → "min_used_js_heap_size".
