@@ -231,16 +231,8 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	sessionsQuery := BuildSessionsSubQuery(sessionFilters, p.StartTimestamp, p.Breakdowns)
 	projection, joinEvents := t.getProjectionAndJoin(metric, p)
 
-	for _, bdName := range p.Breakdowns {
-		dim, ok := breakdownDimensions[bdName]
-		if !ok {
-			continue
-		}
-		if dim.EventOnly {
-			projection += ", evt." + bdName
-		} else {
-			projection += ", s." + bdName
-		}
+	for _, ref := range GetBreakdownJoinRefs(p.Breakdowns, "evt", "s") {
+		projection += ", " + ref
 	}
 
 	return fmt.Sprintf(

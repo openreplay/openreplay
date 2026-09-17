@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	config "openreplay/backend/internal/config/api"
+	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
@@ -32,11 +33,12 @@ func getIDFromRequest(r *http.Request, key string) (int, error) {
 }
 
 type handlersImpl struct {
-	log           logger.Logger
-	responser     api.Responser
-	jsonSizeLimit int64
-	cards         Cards
-	validator     *validator.Validate
+	log                logger.Logger
+	responser          api.Responser
+	jsonSizeLimit      int64
+	cards              Cards
+	validator          *validator.Validate
+	validateBreakdowns func([]model.Breakdown) error
 }
 
 func (e *handlersImpl) GetAll() []*api.Description {
@@ -51,13 +53,14 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, cfg *config.Config, responser api.Responser, cards Cards, validator *validator.Validate) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *config.Config, responser api.Responser, cards Cards, validator *validator.Validate, validateBreakdowns func([]model.Breakdown) error) (api.Handlers, error) {
 	return &handlersImpl{
-		log:           log,
-		responser:     responser,
-		jsonSizeLimit: cfg.JsonWithDataSizeLimit,
-		cards:         cards,
-		validator:     validator,
+		log:                log,
+		responser:          responser,
+		jsonSizeLimit:      cfg.JsonWithDataSizeLimit,
+		cards:              cards,
+		validator:          validator,
+		validateBreakdowns: validateBreakdowns,
 	}, nil
 }
 
@@ -79,6 +82,11 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = e.validator.Struct(req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if err = e.validateBreakdowns(req.Breakdowns); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -259,6 +267,11 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = e.validator.Struct(req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if err = e.validateBreakdowns(req.Breakdowns); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
