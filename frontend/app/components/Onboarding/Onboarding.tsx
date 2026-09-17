@@ -10,7 +10,6 @@ import IdentifyUsersTab from './components/IdentifyUsersTab';
 import InstallOpenReplayTab from './components/InstallOpenReplayTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
-import SideMenu from './components/SideMenu';
 
 const platformMap = {
   ios: 'mobile',
@@ -45,10 +44,6 @@ function Onboarding() {
     } as const,
   ] as const;
   const [platform, setPlatform] = React.useState(platforms[0]);
-
-  const onMenuItemClick = (tab: string) => {
-    navigate(withSiteId(onboardingRoute(tab), siteId));
-  };
 
   const resolvedTab = activeTab || OB_DEFAULT_TAB;
 
@@ -88,7 +83,6 @@ function Onboarding() {
 
   return (
     <div className="flex relative">
-      <SideMenu activeTab={resolvedTab} onClick={onMenuItemClick} />
       <div className="w-full">
         <div
           className="bg-white w-full rounded-lg mx-auto mb-8 border"

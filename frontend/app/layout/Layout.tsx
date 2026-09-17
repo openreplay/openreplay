@@ -22,9 +22,8 @@ function Layout(props: Props) {
   const isPlayer = /\/(session|assist|view-spot)\//.test(
     window.location.pathname,
   );
-  const { settingsStore, projectsStore } = useStore();
+  const { settingsStore } = useStore();
   const [collapsed, setCollapsed] = React.useState(false);
-  const { siteId } = projectsStore;
   const mobileDevice = mobileScreen;
 
   useEffect(() => {
@@ -44,8 +43,11 @@ function Layout(props: Props) {
     };
   }, []);
 
-  const showMenu =
-    !hideHeader && !window.location.pathname.includes('/onboarding/');
+  // onboarding keeps the sider and swaps only the menu body inside it (SideMenu)
+  const showMenu = !hideHeader;
+  // the sider carries the logo, except on mobile where it collapses into a
+  // drawer — there the header takes it over
+  const logoInHeader = mobileDevice;
 
   return (
     <AntLayout style={{ height: mobileDevice ? '100dvh' : undefined }}>
@@ -56,7 +58,6 @@ function Layout(props: Props) {
         {showMenu ? (
           mobileDevice ? (
             <SideMenu
-              siteId={siteId!}
               isCollapsed={settingsStore.menuCollapsed || collapsed}
             />
           ) : (
@@ -70,7 +71,6 @@ function Layout(props: Props) {
               width={250}
             >
               <SideMenu
-                siteId={siteId!}
                 isCollapsed={settingsStore.menuCollapsed || collapsed}
               />
             </Sider>
@@ -87,7 +87,7 @@ function Layout(props: Props) {
             className={hideHeader ? 'hidden' : 'block'}
             style={{ position: 'sticky', top: 0, zIndex: INDEXES.HEADER }}
           >
-            <TopHeader />
+            <TopHeader showLogo={logoInHeader} />
           </div>
           <Content
             style={{

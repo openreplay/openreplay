@@ -8,6 +8,7 @@ import { Icon } from 'UI';
 
 import Logo from 'App/layout/Logo';
 import SupportModal from 'App/layout/SupportModal';
+import OnboardingMenu from 'Components/Onboarding/components/SideMenu';
 import { useStore } from 'App/mstore';
 import * as routes from 'App/routes';
 import {
@@ -41,6 +42,8 @@ function SideMenu(props: Props) {
   const { isCollapsed } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
+  // onboarding swaps the menu body but keeps the sider chrome around it
+  const isOnboarding = location.pathname.includes('/onboarding/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   // added: mobile drawer state
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -192,12 +195,16 @@ function SideMenu(props: Props) {
             </div>
             <Logo siteId={siteId} small={isCollapsed} />
           </div>
-          <MenuContent
-            menu={menu}
-            isMenuItemActive={isMenuItemActive}
-            handleClick={handleClick}
-            isCollapsed={isCollapsed}
-          />
+          {isOnboarding ? (
+            <OnboardingMenu />
+          ) : (
+            <MenuContent
+              menu={menu}
+              isMenuItemActive={isMenuItemActive}
+              handleClick={handleClick}
+              isCollapsed={isCollapsed}
+            />
+          )}
         </>
       )}
 
@@ -217,14 +224,16 @@ function SideMenu(props: Props) {
             open={mobileMenuOpen}
             closeIcon={false}
           >
-            {
+            {isOnboarding ? (
+              <OnboardingMenu />
+            ) : (
               <MenuContent
                 menu={menu}
                 isMenuItemActive={isMenuItemActive}
                 handleClick={handleClick}
                 isCollapsed={false}
               />
-            }
+            )}
           </Drawer>
 
           <Button
