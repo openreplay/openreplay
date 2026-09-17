@@ -21,7 +21,7 @@
 <p align="center">Session replay, cobrowsing, and product analytics — self-hosted, so your users' data never leaves your infrastructure.</p>
 
 <p align="center">
-  <a href="https://github.com/openreplay/openreplay/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3%20%26%20more-394DFE" alt="License"></a>
+  <a href="https://github.com/openreplay/openreplay/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-394DFE" alt="License"></a>
   <a href="https://slack.openreplay.com"><img src="https://img.shields.io/badge/Slack-join-394DFE?logo=slack&logoColor=white" alt="Join us on Slack"></a>
   <img src="https://img.shields.io/badge/SOC%202-Type%20II-394DFE" alt="SOC 2 Type II">
 </p>
