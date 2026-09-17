@@ -160,42 +160,34 @@ func TestIsMetadataColumn(t *testing.T) {
 	}
 }
 
-func TestUserJourneyMetricValueNotInjectable(t *testing.T) {
+func TestUserJourneyMetricValueRejected(t *testing.T) {
 	h := &UserJourneyQueryBuilder{}
 	payload := &model.MetricPayload{
 		StartTimestamp: 1704067200000,
 		EndTimestamp:   1704153600000,
 		Density:        2,
-		MetricValue: []string{"x' OR 1=1 OR '", "CLICK"},
-		Series:      []model.Series{{Name: "s1", Filter: model.FilterGroup{}}},
+		MetricValue:    []string{"x' OR 1=1 OR '", "click"},
+		Series:         []model.Series{{Name: "s1", Filter: model.FilterGroup{}}},
 	}
 	p := &Payload{MetricPayload: payload, ProjectId: 1, UserId: 1}
 
+	// Only the predefined journey types are accepted; anything else is rejected
+	// before reaching SQL expression position.
 	queries, err := h.buildQuery(p)
-	if err != nil {
-		t.Fatalf("buildQuery error: %v", err)
-	}
-	joined := strings.Join(queries, "\n")
-	if !strings.Contains(joined, "multiIf(") {
-		t.Fatalf("expected multiIf branch to be exercised:\n%s", joined)
-	}
-	// The malicious event name may only appear inside a quoted literal (escaped).
-	// Nothing from the payload may reach unquoted SQL expression position.
-	bare := stripSQLLiterals(joined)
-	if strings.Contains(bare, "OR 1=1") {
-		t.Errorf("user-journey MetricValue injection survived:\n%s", joined)
+	if err == nil {
+		t.Fatalf("expected unsupported metricValue to be rejected, got queries:\n%s", strings.Join(queries, "\n"))
 	}
 }
 
-func TestUserJourneyExcludeNameNotInjectable(t *testing.T) {
+func TestUserJourneyExcludeValueNotInjectable(t *testing.T) {
 	h := &UserJourneyQueryBuilder{}
 	mal := "y' OR 1=1 OR '"
 	payload := &model.MetricPayload{
 		StartTimestamp: 1704067200000,
 		EndTimestamp:   1704153600000,
 		Density:        2,
-		MetricValue:    []string{mal},
-		Exclude:        []model.Filter{{Name: mal, Operator: "is", Value: []string{"v"}}},
+		MetricValue:    []string{"location"},
+		Exclude:        []model.Filter{{Name: "location", Operator: "is", Value: []string{mal}}},
 		Series:         []model.Series{{Name: "s1", Filter: model.FilterGroup{}}},
 	}
 	p := &Payload{MetricPayload: payload, ProjectId: 1, UserId: 1}
@@ -204,8 +196,9 @@ func TestUserJourneyExcludeNameNotInjectable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildQuery error: %v", err)
 	}
+	// The malicious exclude value may only appear inside a quoted literal (escaped).
 	bare := stripSQLLiterals(strings.Join(queries, "\n"))
 	if strings.Contains(bare, "OR 1=1") {
-		t.Errorf("user-journey Exclude.Name injection survived:\n%s", strings.Join(queries, "\n"))
+		t.Errorf("user-journey Exclude.Value injection survived:\n%s", strings.Join(queries, "\n"))
 	}
 }
