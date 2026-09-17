@@ -187,7 +187,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	}
 
 	cardsService := cards.New(log, pgconn)
-	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator)
+	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator, charts.ValidateBreakdowns)
 	if err != nil {
 		return nil, err
 	}
