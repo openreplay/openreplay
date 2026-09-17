@@ -65,14 +65,37 @@ type UserJourneyRawData struct {
 }
 
 type JourneyStep struct {
-	Column    string
-	EventName string
+	Column       string // expression used as e_value
+	EventName    string // exact `$event_name` to match; empty means any event name
+	AutoCaptured bool   // true: auto-captured events only, false: manually captured events only
 }
 
+// eventCondition returns the SQL condition selecting this step's events,
+// optionally qualified with a table alias.
+func (s JourneyStep) eventCondition(alias string) string {
+	if alias != "" {
+		alias += "."
+	}
+	var conds []string = make([]string, 0, 2)
+	if s.EventName != "" {
+		conds = append(conds, fmt.Sprintf("%s`$event_name` = '%s'", alias, sqlStringReplacer.Replace(s.EventName)))
+	}
+	if s.AutoCaptured {
+		conds = append(conds, fmt.Sprintf("%s`$auto_captured`", alias))
+	} else {
+		conds = append(conds, fmt.Sprintf("NOT %s`$auto_captured`", alias))
+	}
+	return strings.Join(conds, " AND ")
+}
+
+const customJourney = "custom"
+
 var PredefinedJourneys = map[string]JourneyStep{
-	"LOCATION": {EventName: "LOCATION", Column: "`$current_path`"},
-	"CLICK":    {EventName: "CLICK", Column: "`$properties`.label"},
-	"INPUT":    {EventName: "INPUT", Column: "`$properties`.label"},
+	"location":    {EventName: "LOCATION", Column: "`$current_path`", AutoCaptured: true},
+	"click":       {EventName: "CLICK", Column: "`$properties`.label", AutoCaptured: true},
+	"input":       {EventName: "INPUT", Column: "`$properties`.label", AutoCaptured: true},
+	customJourney: {EventName: "", Column: "`$event_name`", AutoCaptured: false},
+	"title":       {EventName: "LOCATION", Column: "`$properties`.page_title", AutoCaptured: true},
 }
 
 type UserJourneyQueryBuilder struct {
@@ -179,39 +202,51 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	var mainColumn string = ""
 
 	if len(p.MetricValue) == 0 {
-		p.MetricValue = append(p.MetricValue, "LOCATION")
-		subEvents = append(subEvents, JourneyStep{"`$current_path`", "LOCATION"})
-	} else {
+		p.MetricValue = []string{"location"}
+	}
+	for i := range p.MetricValue {
+		p.MetricValue[i] = strings.ToLower(p.MetricValue[i])
+		if _, ok := PredefinedJourneys[p.MetricValue[i]]; !ok {
+			return nil, fmt.Errorf("unsupported metricValue '%s' for pathAnalysis, supported values: location, click, input, custom, title", p.MetricValue[i])
+		}
+	}
 
-		if len(p.StartPoint) > 0 {
-			var extraMetricValues []string = make([]string, 0)
-			for _, s := range p.StartPoint {
-				if !slices.Contains(p.MetricValue, s.Name) {
-					subEvents = append(subEvents, JourneyStep{PredefinedJourneys[s.Name].Column, PredefinedJourneys[s.Name].EventName})
-					step1PostConditions = append(step1PostConditions, fmt.Sprintf("(`$event_name`='%[1]v' AND event_number_in_session = 1 OR `$event_name`!='%[1]v' AND event_number_in_session > 1)",
-						PredefinedJourneys[s.Name].EventName))
-					extraMetricValues = append(extraMetricValues, s.Name)
-					if q2ExtraCol == "" {
-						// This is used in case start event has different type of the visible event,
-						// because it causes intermediary events to be removed, so you find a jump from step-0 to step-3
-						// because step-2 is not of a visible event
-						q2ExtraCol = fmt.Sprintf(`,leadInFrame(toNullable(event_number_in_session))
-											 OVER (PARTITION BY session_id ORDER BY created_at %s
-											   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_event_number_in_session`, pathDirection)
-						q2ExtraCondition = "WHERE event_number_in_session + 1 = next_event_number_in_session OR isNull(next_event_number_in_session);"
+	if len(p.StartPoint) > 0 {
+		var extraMetricValues []string = make([]string, 0)
+		for j := range p.StartPoint {
+			name := strings.ToLower(p.StartPoint[j].Name)
+			step, ok := PredefinedJourneys[name]
+			if !ok {
+				// A start point referencing a custom event by its own name
+				name = customJourney
+				step = PredefinedJourneys[name]
+			} else if step.EventName != "" {
+				// Normalize the filter name to the real `$event_name` for BuildEventConditions
+				p.StartPoint[j].Name = step.EventName
+			}
+			if !slices.Contains(p.MetricValue, name) && !slices.Contains(extraMetricValues, name) {
+				subEvents = append(subEvents, step)
+				step1PostConditions = append(step1PostConditions, fmt.Sprintf("((%[1]s) AND event_number_in_session = 1 OR NOT (%[1]s) AND event_number_in_session > 1)",
+					step.eventCondition("")))
+				extraMetricValues = append(extraMetricValues, name)
+				if q2ExtraCol == "" {
+					// This is used in case start event has different type of the visible event,
+					// because it causes intermediary events to be removed, so you find a jump from step-0 to step-3
+					// because step-2 is not of a visible event
+					q2ExtraCol = fmt.Sprintf(`,leadInFrame(toNullable(event_number_in_session))
+										 OVER (PARTITION BY session_id ORDER BY created_at %s
+										   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_event_number_in_session`, pathDirection)
+					q2ExtraCondition = "WHERE event_number_in_session + 1 = next_event_number_in_session OR isNull(next_event_number_in_session);"
 
-					}
 				}
 			}
-			p.MetricValue = append(p.MetricValue, extraMetricValues...)
 		}
+		p.MetricValue = append(p.MetricValue, extraMetricValues...)
+	}
 
-		for _, v := range p.MetricValue {
-			if selected, ok := PredefinedJourneys[v]; ok {
-				subEvents = append(subEvents, JourneyStep{selected.Column, selected.EventName})
-			} else {
-				subEvents = append(subEvents, JourneyStep{"`$event_name`", v})
-			}
+	for _, v := range p.MetricValue {
+		if !slices.Contains(subEvents, PredefinedJourneys[v]) {
+			subEvents = append(subEvents, PredefinedJourneys[v])
 		}
 	}
 
@@ -220,7 +255,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	} else {
 		var b []string = make([]string, 0)
 		for i := 0; i < len(subEvents)-1; i++ {
-			b = append(b, fmt.Sprintf("`$event_name`='%s',%s", sqlStringReplacer.Replace(subEvents[i].EventName), subEvents[i].Column))
+			b = append(b, fmt.Sprintf("(%s),%s", subEvents[i].eventCondition(""), subEvents[i].Column))
 		}
 		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1].Column)
 	}
@@ -250,13 +285,16 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		if len(ef.Value) == 0 {
 			continue
 		}
-		if slices.Contains(p.MetricValue, ef.Name) {
+		name := strings.ToLower(ef.Name)
+		if slices.Contains(p.MetricValue, name) {
 			op, ok := compOps[ef.Operator]
 			if !ok {
 				return nil, fmt.Errorf("unknown operator: %s", ef.Operator)
 			}
 			op = reverseSqlOperator(op)
-			exclusions[ef.Name] = []string{fmt.Sprintf("`$event_name` %s '%s'", op, sqlStringReplacer.Replace(ef.Name))}
+			for _, v := range ef.Value {
+				exclusions[name] = append(exclusions[name], fmt.Sprintf("%s %s '%s'", PredefinedJourneys[name].Column, op, sqlStringReplacer.Replace(v)))
+			}
 		}
 	}
 	_, _, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"})
@@ -268,14 +306,11 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	}
 	selectedEventTypeSubQuery := make([]string, 0)
 	for _, s := range p.MetricValue {
-		if _, ok := PredefinedJourneys[s]; ok {
-			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", PredefinedJourneys[s].EventName))
-		} else {
-			selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("events.`$event_name` = '%s'", sqlStringReplacer.Replace(s)))
-		}
+		cond := PredefinedJourneys[s].eventCondition("events")
 		if _, ok := exclusions[s]; ok {
-			selectedEventTypeSubQuery[len(selectedEventTypeSubQuery)-1] += fmt.Sprintf(" AND (%s)", strings.Join(exclusions[s], " AND "))
+			cond += fmt.Sprintf(" AND (%s)", strings.Join(exclusions[s], " AND "))
 		}
+		selectedEventTypeSubQuery = append(selectedEventTypeSubQuery, fmt.Sprintf("(%s)", cond))
 	}
 	chSubQuery = append(chSubQuery, fmt.Sprintf("(%s)", strings.Join(selectedEventTypeSubQuery, " OR ")))
 
