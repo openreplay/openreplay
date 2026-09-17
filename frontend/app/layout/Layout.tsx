@@ -76,7 +76,10 @@ function Layout(props: Props) {
             </Sider>
           )
         ) : null}
-        <AntLayout>
+        {/* hasSider is pinned: a Sider registers with the nearest Layout through
+            context, so a page rendering its own Sider inside Content (onboarding)
+            would otherwise flip this column to a row and put the header beside it */}
+        <AntLayout hasSider={false}>
           {/* sticky lives on the wrapper, not on antd's Header: a sticky box
               cannot travel outside its own parent, so a 60px-tall wrapper
               would leave it no room to stick at all */}

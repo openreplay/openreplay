@@ -22,6 +22,8 @@ class UserStore {
   loading: boolean = false;
   saving: boolean = false;
   limits: any = {};
+  limitsLoaded: boolean = false;
+  limitsRequest: Promise<any> | null = null;
   initialDataFetched: boolean = false;
   account = new Account();
   siteId: string | null = null;
@@ -130,8 +132,25 @@ class UserStore {
         });
     });
 
+  /**
+   * Limits only gate the add-user/add-project buttons, so they are fetched
+   * where those render rather than at app boot. Deduped across callers.
+   */
+  ensureLimits = (): Promise<any> => {
+    if (this.limitsLoaded) return Promise.resolve(this.limits);
+    if (this.limitsRequest) return this.limitsRequest;
+    const request = this.fetchLimits().finally(() => {
+      runInAction(() => {
+        this.limitsRequest = null;
+      });
+    });
+    this.limitsRequest = request;
+    return request;
+  };
+
   setLimits = (limits: any) => {
     this.limits = limits;
+    this.limitsLoaded = true;
   };
 
   initUser = (user?: User): Promise<void> =>
@@ -657,6 +676,8 @@ class UserStore {
     this.loading = false;
     this.saving = false;
     this.limits = {};
+    this.limitsLoaded = false;
+    this.limitsRequest = null;
     this.initialDataFetched = false;
   };
 }

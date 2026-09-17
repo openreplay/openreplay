@@ -21,6 +21,9 @@ function AddUserButton({
   const { t } = useTranslation();
   const { userStore } = useStore();
   const limtis = userStore.limits;
+  React.useEffect(() => {
+    void userStore.ensureLimits();
+  }, []);
   const cannAddUser =
     isAdmin && (limtis.teamMember === -1 || limtis.teamMember > 0);
 

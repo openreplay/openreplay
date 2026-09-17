@@ -23,13 +23,37 @@ class GenericIntegrationsStore {
 
   siteId: string = '';
 
+  private pending: { siteId: string; promise: Promise<void> } | null = null;
+
   constructor() {
     makeAutoObservable(this);
   }
 
   setSiteId(siteId: string) {
+    if (this.siteId !== siteId) {
+      this.list = [];
+      this.pending = null;
+    }
     this.siteId = siteId;
   }
+
+  /**
+   * Fetch on demand: only the player and the alert issue view read this list,
+   * so it is no longer part of the app boot. Deduped per project and across
+   * concurrent callers.
+   */
+  ensureIntegrations = (siteId?: string | null): Promise<void> => {
+    if (!siteId) return Promise.resolve();
+    if (this.siteId === siteId && (this.list.length > 0 || this.pending)) {
+      return this.pending?.promise ?? Promise.resolve();
+    }
+    this.setSiteId(siteId);
+    const promise = this.fetchIntegrations(siteId).finally(() => {
+      if (this.pending?.siteId === siteId) this.pending = null;
+    });
+    this.pending = { siteId, promise };
+    return promise;
+  };
 
   get integratedServices() {
     return this.list.filter((int) => int.integrated);

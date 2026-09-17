@@ -116,13 +116,7 @@ const SAAS_ROUTES = saasRoutes.map((route) => ({
 }));
 
 function PrivateRoutes() {
-  const {
-    projectsStore,
-    userStore,
-    integrationsStore,
-    searchStore,
-    filterStore,
-  } = useStore();
+  const { projectsStore, userStore, searchStore, filterStore } = useStore();
   const location = useLocation();
   const history = useHistory();
   const onboarding = userStore.onboarding;
@@ -137,6 +131,7 @@ function PrivateRoutes() {
   const siteIdList: any = sites.map(({ id }) => id);
 
   const initialFetchDoneRef = React.useRef(false);
+  const lastFiltersSiteIdRef = React.useRef<string | null>(null);
   const [filtersLoaded, setFiltersLoaded] = React.useState(false);
 
   const IntegrationsRedirect: React.FC = () => {
@@ -163,78 +158,83 @@ function PrivateRoutes() {
   };
 
   React.useEffect(() => {
-    if (!searchStore.urlParsed && filtersLoaded) {
-      const searchParams = new URLSearchParams(location.search);
-      const searchId = searchParams.get('sid');
-      const supportedFilters = [
-        'userId',
-        'distinct_id',
-        'userCountry',
-        'userCity',
-        'meta_',
-      ];
-      const searchParamsKeys = Array.from(searchParams.keys());
-      const parsedFilters = searchParamsKeys.filter((key) =>
-        supportedFilters.some((f) =>
-          f === 'meta_' ? key.startsWith('meta_') : key === f,
-        ),
-      );
+    if (searchStore.urlParsed || !siteId) return;
 
-      if (searchId) {
-        searchStore
-          .loadSharedSearch(searchId)
-          .then(() => {
-            searchParams.delete('sid');
-            const newSearch = searchParams.toString();
-            const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
-            history.replace(newUrl);
-            searchStore.setUrlParsed();
-            setTimeout(() => {
-              initialFetchDoneRef.current = true;
-            }, 500);
-          })
-          .catch((error) => {
-            console.error('Failed to load shared search:', error);
-            searchStore.setUrlParsed();
-            setTimeout(() => {
-              initialFetchDoneRef.current = true;
-            }, 500);
-          });
-      } else if (parsedFilters.length > 0) {
-        const start = searchParams.get('st_ts');
-        const end = searchParams.get('end_ts');
-        const filters: any[] = [];
-        parsedFilters.forEach((f, i) => {
-          const value = searchParams.get(f) as string;
-          const isMeta = f.startsWith('meta_');
-          const filterName = isMeta ? f.replace('meta_', '') : f;
-          const searchPayload = isMeta
-            ? { displayName: filterName }
-            : { name: filterName };
-          const filter = filterStore.findEvent(searchPayload);
-          if (filter) {
-            filter.value = [value];
-          }
-          filters.push(filter);
+    const searchParams = new URLSearchParams(location.search);
+    const searchId = searchParams.get('sid');
+    const supportedFilters = [
+      'userId',
+      'distinct_id',
+      'userCountry',
+      'userCity',
+      'meta_',
+    ];
+    const searchParamsKeys = Array.from(searchParams.keys());
+    const parsedFilters = searchParamsKeys.filter((key) =>
+      supportedFilters.some((f) =>
+        f === 'meta_' ? key.startsWith('meta_') : key === f,
+      ),
+    );
+
+    // only the two URL-driven branches read the filter catalogue; a plain load
+    // builds its search body from searchStore alone, so it must not queue
+    // behind /filters
+    if ((searchId || parsedFilters.length > 0) && !filtersLoaded) return;
+
+    if (searchId) {
+      searchStore
+        .loadSharedSearch(searchId)
+        .then(() => {
+          searchParams.delete('sid');
+          const newSearch = searchParams.toString();
+          const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
+          history.replace(newUrl);
+          searchStore.setUrlParsed();
+          setTimeout(() => {
+            initialFetchDoneRef.current = true;
+          }, 500);
+        })
+        .catch((error) => {
+          console.error('Failed to load shared search:', error);
+          searchStore.setUrlParsed();
+          setTimeout(() => {
+            initialFetchDoneRef.current = true;
+          }, 500);
         });
-        searchStore.edit({
-          filters,
-          startDate: start ? parseInt(start) : undefined,
-          endDate: end ? parseInt(end) : undefined,
-          rangeName: 'CUSTOM_RANGE',
-          rangeValue: 'CUSTOM_RANGE',
-        });
-        searchStore.setUrlParsed();
-        void searchStore.fetchSessions(true);
-      } else {
-        searchStore.setUrlParsed();
-        void searchStore.fetchSessions(true);
-        setTimeout(() => {
-          initialFetchDoneRef.current = true;
-        }, 500);
-      }
+    } else if (parsedFilters.length > 0) {
+      const start = searchParams.get('st_ts');
+      const end = searchParams.get('end_ts');
+      const filters: any[] = [];
+      parsedFilters.forEach((f, i) => {
+        const value = searchParams.get(f) as string;
+        const isMeta = f.startsWith('meta_');
+        const filterName = isMeta ? f.replace('meta_', '') : f;
+        const searchPayload = isMeta
+          ? { displayName: filterName }
+          : { name: filterName };
+        const filter = filterStore.findEvent(searchPayload);
+        if (filter) {
+          filter.value = [value];
+        }
+        filters.push(filter);
+      });
+      searchStore.edit({
+        filters,
+        startDate: start ? parseInt(start) : undefined,
+        endDate: end ? parseInt(end) : undefined,
+        rangeName: 'CUSTOM_RANGE',
+        rangeValue: 'CUSTOM_RANGE',
+      });
+      searchStore.setUrlParsed();
+      void searchStore.fetchSessions(true);
+    } else {
+      searchStore.setUrlParsed();
+      void searchStore.fetchSessions(true);
+      setTimeout(() => {
+        initialFetchDoneRef.current = true;
+      }, 500);
     }
-  }, [filtersLoaded, searchStore.urlParsed, location.search]);
+  }, [filtersLoaded, searchStore.urlParsed, location.search, siteId]);
 
   const debouncedSearchCall = React.useMemo(
     () => debounceCall(() => searchStore.fetchSessions(true), 250),
@@ -248,9 +248,8 @@ function PrivateRoutes() {
   React.useEffect(() => {
     const siteId = projectsStore.activeSiteId;
     searchStore.resetTags();
-    if (siteId && integrationsStore.integrations.siteId !== siteId) {
-      integrationsStore.integrations.setSiteId(siteId);
-      void integrationsStore.integrations.fetchIntegrations(siteId);
+    if (siteId && lastFiltersSiteIdRef.current !== siteId) {
+      lastFiltersSiteIdRef.current = siteId;
       filterStore
         .fetchFilters(siteId)
         .then(() => {
@@ -258,8 +257,15 @@ function PrivateRoutes() {
         })
         .catch((e) => {
           console.error(e);
-          // if filters failed, there may be some sessions still available in the list
-          void searchStore.fetchSessions(true);
+          // if filters failed, there may be some sessions still available in
+          // the list — unless the plain-load branch above already asked for them
+          if (!searchStore.urlParsed) {
+            searchStore.setUrlParsed();
+            void searchStore.fetchSessions(true);
+            setTimeout(() => {
+              initialFetchDoneRef.current = true;
+            }, 500);
+          }
         });
     }
   }, [projectsStore.activeSiteId]);

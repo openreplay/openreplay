@@ -15,14 +15,19 @@ function TopHeader() {
   const { siteId } = projectsStore;
   const { initialDataFetched } = userStore;
 
+  // the badge is a dot, not a number — it can wait until the first screen has
+  // painted. Limits are fetched by the settings screens that read them.
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
-    Promise.all([
-      userStore.fetchLimits(),
-      notificationStore.fetchNotificationsCount(),
-    ]).then(() => {
-      userStore.updateKey('initialDataFetched', true);
-    });
+    const handle = setTimeout(() => {
+      notificationStore
+        .fetchNotificationsCount()
+        .catch(() => {})
+        .then(() => {
+          userStore.updateKey('initialDataFetched', true);
+        });
+    }, 0);
+    return () => clearTimeout(handle);
   }, [account]);
 
   return (

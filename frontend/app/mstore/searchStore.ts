@@ -26,6 +26,28 @@ const PER_PAGE = 10;
    consumer (session search, Data Management, the Issues capture layer). */
 const SAVED_SEARCH_PAGE_SIZE = 200;
 
+/* What the sessions/search handler actually binds. Applied at the request
+   boundary only — toSearch() output is also what gets persisted as saved-search
+   data and what the live-sessions endpoint receives, so it stays wider. */
+const SEARCH_REQUEST_FIELDS = [
+  'filters',
+  'startTimestamp',
+  'endTimestamp',
+  'sort',
+  'order',
+  'eventsOrder',
+  'limit',
+  'page',
+  'series',
+  'bookmarked',
+] as const;
+
+const pickSearchRequestFields = (filter: Record<string, any>) =>
+  SEARCH_REQUEST_FIELDS.reduce<Record<string, any>>((acc, key) => {
+    if (filter[key] !== undefined) acc[key] = filter[key];
+    return acc;
+  }, {});
+
 export const checkValues = (key: any, value: any) => {
   if (key === FilterKey.DURATION) {
     return value[0] === '' || value[0] === null ? [0, value[1]] : value;
@@ -671,7 +693,7 @@ class SearchStore {
     try {
       await sessionStore.fetchSessions(
         {
-          ...filter,
+          ...pickSearchRequestFields(filter),
           page: this.currentPage,
           limit: this.pageSize,
           bookmarked: bookmarked ? true : undefined,

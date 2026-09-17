@@ -349,45 +349,4 @@ describe('SessionStore', () => {
       expect(sessionStore.fetchFailed).toBe(true);
     });
   });
-
-  describe('sortSessions', () => {
-    it('should sort sessions by the specified key in ascending order', () => {
-      sessionStore.list = [
-        new Session(mockSession({ duration: 3000, sessionId: '1' })),
-        new Session(mockSession({ duration: 1000, sessionId: '2' })),
-        new Session(mockSession({ duration: 2000, sessionId: '3' })),
-      ];
-      sessionStore.favoriteList = [
-        new Session(mockSession({ duration: 3000, sessionId: '1' })),
-        new Session(mockSession({ duration: 2000, sessionId: '3' })),
-      ];
-
-      sessionStore.sortSessions('duration', 1);
-
-      expect(sessionStore.list.map((s) => s.sessionId)).toEqual([
-        '2',
-        '3',
-        '1',
-      ]);
-      expect(sessionStore.favoriteList.map((s) => s.sessionId)).toEqual([
-        '3',
-        '1',
-      ]);
-    });
-
-    it('should sort sessions by the specified key in descending order', () => {
-      sessionStore.list = [
-        new Session(mockSession({ duration: 3000, sessionId: '1' })),
-        new Session(mockSession({ duration: 1000, sessionId: '2' })),
-        new Session(mockSession({ duration: 2000, sessionId: '3' })),
-      ];
-
-      sessionStore.sortSessions('duration', -1);
-      expect(sessionStore.list.map((s) => s.sessionId)).toEqual([
-        '1',
-        '3',
-        '2',
-      ]);
-    });
-  });
 });

@@ -18,6 +18,9 @@ function AddProjectButton({ isAdmin = false }: any) {
   const init = projectsStore.initProject;
   const { showModal, hideModal } = useModal();
   const { limits } = userStore;
+  React.useEffect(() => {
+    void userStore.ensureLimits();
+  }, []);
   const canAddProject =
     isAdmin && (limits.projects === -1 || limits.projects > 0);
 

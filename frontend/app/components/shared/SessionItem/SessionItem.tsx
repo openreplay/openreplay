@@ -176,10 +176,13 @@ function SessionItem(props: RouteComponentProps & Props) {
 
   const _metaList = useMemo(() => {
     if (!metadata) return [];
-    return Object.keys(metadata).map((key) => ({
-      label: key,
-      value: metadata[key],
-    }));
+    // the search response emits every configured metadata key, null included
+    return Object.keys(metadata)
+      .filter((key) => metadata[key] !== null && metadata[key] !== undefined)
+      .map((key) => ({
+        label: key,
+        value: metadata[key],
+      }));
   }, [metadata]);
 
   const handleHover = useCallback(async () => {

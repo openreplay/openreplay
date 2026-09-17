@@ -158,13 +158,6 @@ export default class SettingsService {
       .then((j) => j.data || []);
   }
 
-  getRecordingStatus(): Promise<any> {
-    return this.client
-      .get('/check-recording-status')
-      .then((r) => r.json())
-      .then((j) => j.data || {});
-  }
-
   async fetchSimilarSessions(
     sessionId: string,
     params: any,

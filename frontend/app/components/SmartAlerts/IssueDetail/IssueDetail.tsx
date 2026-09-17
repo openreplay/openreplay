@@ -44,8 +44,10 @@ function IssueDetail() {
   const id = params.issueId ? decodeURIComponent(params.issueId) : '';
   const idParam = params.issueId ?? '';
   const issue = issuesStore.byId(id);
-  /* the integration list is loaded once on app start (PrivateRoutes), so the
-     connected tracker is already in the store here */
+  /* the integration list is fetched on demand, not at app boot */
+  React.useEffect(() => {
+    void integrationsStore.integrations.ensureIntegrations(siteId);
+  }, [siteId]);
   const linearConnected =
     integrationsStore.integrations.integratedServices.some(
       (int: any) => int.name === 'linear',

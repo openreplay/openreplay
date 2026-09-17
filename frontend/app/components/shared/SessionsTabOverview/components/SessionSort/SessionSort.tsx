@@ -56,15 +56,13 @@ export function SortDropdown<T>({
 
 function SessionSort() {
   const { t } = useTranslation();
-  const { searchStore, sessionStore } = useStore();
-  const onSessionSort = sessionStore.sortSessions;
+  const { searchStore } = useStore();
   const { sort, order } = searchStore.instance;
   const onSort = ({ key }: { key: string }) => {
     const [sort, order] = key.split('-');
-    const sign = order === 'desc' ? -1 : 1;
+    // the server sorts; re-sorting the list we are about to replace is wasted
     searchStore.applyFilter({ order, sort });
     void searchStore.fetchSessions();
-    onSessionSort(sort, sign);
   };
 
   const defaultOption = `${sort}-${order}`;

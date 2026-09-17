@@ -27,7 +27,6 @@ const siteIdRequiredPaths: string[] = [
   '/cards',
   '/unprocessed',
   '/notes',
-  '/check-recording-status',
   '/usability-tests',
   '/tags',
   '/intelligent',

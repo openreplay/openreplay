@@ -313,9 +313,17 @@ const DevtoolsButtons = observer(
     activeTab,
   }: IDevtoolsButtons) => {
     const { t } = useTranslation();
-    const { aiSummaryStore, integrationsStore } = useStore();
+    const { aiSummaryStore, integrationsStore, projectsStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
     const { inspectorMode, currentTab, tabStates } = store.get();
+
+    // the integration list is no longer fetched at app boot; the player is the
+    // first place that needs it
+    React.useEffect(() => {
+      void integrationsStore.integrations.ensureIntegrations(
+        projectsStore.activeSiteId,
+      );
+    }, [projectsStore.activeSiteId]);
 
     const disableButtons = disabled;
 

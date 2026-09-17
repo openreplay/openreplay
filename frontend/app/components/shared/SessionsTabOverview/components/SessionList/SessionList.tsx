@@ -7,7 +7,6 @@ import { useLocation, withRouter } from 'App/routing';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';
-import { sessionService } from 'App/services';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import SessionDateRange from './SessionDateRange';
@@ -21,8 +20,6 @@ type SessionStatus = {
 const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000;
 let sessionTimeOut: any = null;
 let sessionStatusTimeOut: any = null;
-
-const STATUS_FREQUENCY = 5000;
 
 function SessionList() {
   const location = useLocation(); // Get the current URL location
@@ -38,7 +35,6 @@ function SessionList() {
     filterStore,
   } = useStore();
   const { isEnterprise } = userStore;
-  const { isLoggedIn } = userStore;
   const { lastPlayedSessionId, list, total } = sessionStore;
   const loading = sessionStore.loadingSessions;
   const onToggleFavorite = sessionStore.toggleFavorite;
@@ -82,28 +78,6 @@ function SessionList() {
     status: 0,
     count: 0,
   });
-
-  const fetchStatus = async () => {
-    const response = await sessionService.getRecordingStatus();
-    setStatusData({
-      status: response.recordingStatus,
-      count: response.sessionsCount,
-    });
-  };
-
-  useEffect(() => {
-    if (!hasNoRecordings || !activeSite || !isLoggedIn) {
-      return;
-    }
-
-    void fetchStatus();
-
-    sessionStatusTimeOut = setInterval(() => {
-      void fetchStatus();
-    }, STATUS_FREQUENCY);
-
-    return () => clearInterval(sessionStatusTimeOut);
-  }, [hasNoRecordings, activeSite, isLoggedIn]);
 
   useEffect(() => {
     if (!hasNoRecordings && statusData.status === 0) {

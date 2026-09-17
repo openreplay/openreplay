@@ -568,18 +568,6 @@ export default class SessionStore {
     }
   };
 
-  sortSessions = (sortKey: string, sign: number = 1) => {
-    const comparator = (s1: Session, s2: Session) => {
-      // @ts-ignore
-      let diff = s1[sortKey] - s2[sortKey];
-      diff = diff === 0 ? s1.startedAt - s2.startedAt : diff;
-      return sign * diff;
-    };
-
-    this.list = this.list.slice().sort(comparator);
-    this.favoriteList = this.favoriteList.slice().sort(comparator);
-  };
-
   setActiveTab = (tab: { type: string; name: string }) => {
     const list =
       tab.type === 'all'
