@@ -28,12 +28,12 @@ type CardBase struct {
 }
 
 type CardInfo struct {
-	Rows        *int64         `json:"rows"`
-	StepsBefore *int64         `json:"stepsBefore"`
-	StepsAfter  *int64         `json:"stepsAfter"`
-	StartPoint  []model.Filter `json:"startPoint"`
-	Excludes    []model.Filter `json:"excludes"`
-	Breakdowns  []string       `json:"breakdowns" validate:"omitempty,max=3,unique,dive,oneof=userCountry userCity userState userBrowser userDevice userOs referrer userId platform utmSource utmMedium utmCampaign userDeviceType revId issueType currentPath referringDomain searchEngine httpMethod statusCode urlHost"`
+	Rows        *int64            `json:"rows"`
+	StepsBefore *int64            `json:"stepsBefore"`
+	StepsAfter  *int64            `json:"stepsAfter"`
+	StartPoint  []model.Filter    `json:"startPoint"`
+	Excludes    []model.Filter    `json:"excludes"`
+	Breakdowns  []model.Breakdown `json:"breakdowns" validate:"omitempty,max=3,unique=Name,dive"`
 }
 
 // Card Fields specific to database operations

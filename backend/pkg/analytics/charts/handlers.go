@@ -135,6 +135,11 @@ func (e *handlersImpl) getSavedCardChartData(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if err = ValidateBreakdowns(req.Breakdowns); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
 	currentUser := r.Context().Value("userData").(*user.User)
 	resp, err := e.charts.GetData(r.Context(), projectID, currentUser.ID, req)
 	if err != nil {
@@ -176,6 +181,11 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err = e.validator.Struct(req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if err = ValidateBreakdowns(req.Breakdowns); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
