@@ -21,7 +21,11 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] =
     useState<IPlayerContext>(defaultContextValue);
   const playerRef = React.useRef<any>(null);
-  const insightsSize = React.useRef(0);
+  const appliedRef = React.useRef<{
+    insights: any;
+    jump: number;
+    sessionId: string;
+  } | null>(null);
 
   useEffect(() => {
     const init = () => {
@@ -92,13 +96,20 @@ function WebPlayer(props: any) {
 
   React.useEffect(() => {
     contextValue.player && contextValue.player.play();
-    if (
-      isPlayerReady &&
-      insights.length > 0 &&
-      jumpTimestamp &&
-      insightsSize.current !== insights.length
-    ) {
-      insightsSize.current = insights.length;
+    const applied = appliedRef.current;
+    // `ready` flips while files load, so dedupe on the inputs themselves;
+    // comparing only insights.length missed path switches that hit the
+    // backend's 500-click cap both times
+    const isApplied =
+      applied?.insights === insights &&
+      applied?.jump === jumpTimestamp &&
+      applied?.sessionId === session.sessionId;
+    if (isPlayerReady && insights.length > 0 && jumpTimestamp && !isApplied) {
+      appliedRef.current = {
+        insights,
+        jump: jumpTimestamp,
+        sessionId: session.sessionId,
+      };
       setTimeout(() => {
         contextValue.player.pause();
         contextValue.player.jump(jumpTimestamp);
@@ -108,7 +119,7 @@ function WebPlayer(props: any) {
         }, 250);
       }, 250);
     }
-  }, [insights, isPlayerReady, jumpTimestamp]);
+  }, [insights, isPlayerReady, jumpTimestamp, session.sessionId]);
 
   if (!contextValue.player || !session) return null;
 
