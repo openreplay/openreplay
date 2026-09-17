@@ -19,6 +19,7 @@ import {
 } from 'App/utils/breakdownTree';
 
 import BreakdownSelectionPanel from '../BreakdownFilter/BreakdownSelectionPanel';
+import { getBreakdownDisplayName } from '../BreakdownFilter/breakdownDimensions';
 
 interface Props {
   data: Record<string, NestedData>;
@@ -172,8 +173,18 @@ function buildTableData(data: Record<string, NestedData>): {
 
 function BreakdownDatatable(props: Props) {
   const { t } = useTranslation();
-  const { metricStore } = useStore();
+  const { metricStore, filterStore } = useStore();
   const [showTable, setShowTable] = useState(props.defaultOpen);
+
+  // props.breakdownLabels are API dimension keys; show the catalog label instead.
+  // Keyed on the joined names because getCurrentProjectFilters() returns a fresh array.
+  const labelsKey = (props.breakdownLabels ?? []).join('|');
+  const breakdownLabels = useMemo(() => {
+    const allFilterOptions = filterStore.getCurrentProjectFilters();
+    return (props.breakdownLabels ?? []).map((name) =>
+      getBreakdownDisplayName(name, allFilterOptions),
+    );
+  }, [labelsKey, filterStore.isLoadingFilters]);
 
   const hasBreakdowns = useMemo(
     () => Object.values(props.data).some((d) => getDepth(d) > 0),
@@ -247,7 +258,7 @@ function BreakdownDatatable(props: Props) {
       },
     ];
 
-    const labels = props.breakdownLabels ?? [];
+    const labels = breakdownLabels;
     for (let lvl = 0; lvl < depth; lvl++) {
       const levelLabel = labels[lvl] ?? `Level ${lvl + 1}`;
       cols.push({
@@ -362,7 +373,7 @@ function BreakdownDatatable(props: Props) {
     return { rows, timestamps, depth, columns: cols };
   }, [
     props.data,
-    props.breakdownLabels,
+    breakdownLabels,
     hasBreakdowns,
     levelTree,
     metricStore.breakdownSelection,
@@ -430,7 +441,7 @@ function BreakdownDatatable(props: Props) {
               {hasBreakdowns && (
                 <BreakdownSelectionPanel
                   data={props.data}
-                  breakdownLabels={props.breakdownLabels}
+                  breakdownLabels={breakdownLabels}
                 />
               )}
               <Button

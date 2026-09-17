@@ -10,35 +10,12 @@ import { useTranslation } from 'react-i18next';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 
 import BreakdownFilterItem from './BreakdownFilterItem';
+import { buildBreakdownOptions } from './breakdownDimensions';
 
 interface Props {
   metric: any;
   observeChanges?: () => void;
 }
-
-const supportedOptions = [
-  'userCountry',
-  'userCity',
-  'userState',
-  'userBrowser',
-  'userDevice',
-  'userOs',
-  'referrer',
-  'userId',
-  'platform',
-  'utmSource',
-  'utmMedium',
-  'utmCampaign',
-  'userDeviceType',
-  'revId',
-  'issueType',
-  'currentPath',
-  'referringDomain',
-  'searchEngine',
-  'httpMethod',
-  'statusCode',
-  'urlHost',
-];
 
 function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
   const { t } = useTranslation();
@@ -92,21 +69,18 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
     setHoverPos(null);
   }, []);
 
-  const allFilterOptions: Filter[] = filterStore.getScopedCurrentProjectFilters(
-    ['sessions'],
+  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
+  const breakdownOptions: Filter[] = buildBreakdownOptions(allFilterOptions);
+  const breakdownLabels: string[] = metric.breakdowns || [];
+  // Keep unresolved dimensions in the list so they can still be removed.
+  const breakdownFilters: Filter[] = breakdownLabels.map(
+    (label: string) =>
+      breakdownOptions.find((f) => f.name === label) ??
+      ({ name: label, displayName: label, category: '' } as Filter),
   );
-  const breakdownLabels: any[] = metric.breakdowns || [];
-  const breakdownFilters: Filter[] = breakdownLabels
-    .map((label: string) => allFilterOptions.find((f) => f.name === label))
-    .filter((f): f is Filter => f !== undefined);
   const activeFilterNames = breakdownFilters.map((f: any) => f.name);
-  const isMetadata = (i: Filter) =>
-    String(i.category).toLowerCase() === 'metadata';
-  const propertyOptions: Filter[] = allFilterOptions.filter(
-    (i) =>
-      !i.isEvent &&
-      (supportedOptions.includes(i.name) || isMetadata(i)) &&
-      !activeFilterNames.includes(i.name),
+  const propertyOptions: Filter[] = breakdownOptions.filter(
+    (i) => !activeFilterNames.includes(i.name),
   );
   const canAddMore = activeFilterNames.length < 3;
 
