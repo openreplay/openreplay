@@ -42,7 +42,6 @@ rm -rf ./chalicelib/saml
 rm -rf ./chalicelib/utils/__init__.py
 rm -rf ./chalicelib/utils/args_transformer.py
 rm -rf ./chalicelib/core/boarding.py
-rm -rf ./chalicelib/core/canvas.py
 rm -rf ./chalicelib/utils/captcha.py
 rm -rf ./chalicelib/utils/dev.py
 rm -rf ./chalicelib/utils/email_handler.py
