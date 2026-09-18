@@ -68,10 +68,12 @@ type JourneyStep struct {
 	Column       string // expression used as e_value
 	EventName    string // exact `$event_name` to match; empty means any event name
 	AutoCaptured bool   // true: auto-captured events only, false: manually captured events only
+	RequireValue bool   // skip events whose Column value is NULL or empty
 }
 
-// eventCondition returns the SQL condition selecting this step's events,
-// optionally qualified with a table alias.
+// eventCondition returns the SQL condition identifying this step's events,
+// optionally qualified with a table alias. It only references columns kept in
+// pre_ranked_events, so it is safe to use after ranking as well.
 func (s JourneyStep) eventCondition(alias string) string {
 	if alias != "" {
 		alias += "."
@@ -88,6 +90,20 @@ func (s JourneyStep) eventCondition(alias string) string {
 	return strings.Join(conds, " AND ")
 }
 
+// selectCondition extends eventCondition with the non-empty value requirement;
+// it references Column, so it may only be used where the raw event columns are
+// in scope.
+func (s JourneyStep) selectCondition(alias string) string {
+	cond := s.eventCondition(alias)
+	if s.RequireValue {
+		if alias != "" {
+			alias += "."
+		}
+		cond += fmt.Sprintf(" AND notEmpty(toString(%s%s))", alias, s.Column)
+	}
+	return cond
+}
+
 const customJourney = "custom"
 
 var PredefinedJourneys = map[string]JourneyStep{
@@ -95,7 +111,7 @@ var PredefinedJourneys = map[string]JourneyStep{
 	"click":       {EventName: "CLICK", Column: "`$properties`.label", AutoCaptured: true},
 	"input":       {EventName: "INPUT", Column: "`$properties`.label", AutoCaptured: true},
 	customJourney: {EventName: "", Column: "`$event_name`", AutoCaptured: false},
-	"title":       {EventName: "LOCATION", Column: "`$properties`.page_title", AutoCaptured: true},
+	"title":       {EventName: "LOCATION", Column: "`$properties`.page_title", AutoCaptured: true, RequireValue: true},
 }
 
 type UserJourneyQueryBuilder struct {
@@ -255,7 +271,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	} else {
 		var b []string = make([]string, 0)
 		for i := 0; i < len(subEvents)-1; i++ {
-			b = append(b, fmt.Sprintf("(%s),%s", subEvents[i].eventCondition(""), subEvents[i].Column))
+			b = append(b, fmt.Sprintf("(%s),%s", subEvents[i].selectCondition(""), subEvents[i].Column))
 		}
 		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1].Column)
 	}
@@ -306,7 +322,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	}
 	selectedEventTypeSubQuery := make([]string, 0)
 	for _, s := range p.MetricValue {
-		cond := PredefinedJourneys[s].eventCondition("events")
+		cond := PredefinedJourneys[s].selectCondition("events")
 		if _, ok := exclusions[s]; ok {
 			cond += fmt.Sprintf(" AND (%s)", strings.Join(exclusions[s], " AND "))
 		}
