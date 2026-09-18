@@ -5,6 +5,12 @@ import { DateTime } from 'luxon';
 import { makeAutoObservable, observable, runInAction } from 'mobx';
 
 import {
+  type Breakdown,
+  type StoredBreakdown,
+  normalizeBreakdown,
+  toBreakdown,
+} from 'App/components/Dashboard/components/BreakdownFilter/breakdownDimensions';
+import {
   FUNNEL,
   HEATMAP,
   INSIGHTS,
@@ -121,7 +127,7 @@ export default class Widget {
   sortBy?: string = '';
   sortOrder?: string = 'desc';
   includeClickRage?: boolean = false;
-  breakdowns: string[] = [];
+  breakdowns: Breakdown[] = [];
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
@@ -181,13 +187,13 @@ export default class Widget {
   }
 
   addBreakdown(filter: any) {
-    this.breakdowns = [...this.breakdowns, filter.name];
+    this.breakdowns = [...this.breakdowns, toBreakdown(filter)];
     this.hasChanged = true;
   }
 
   updateBreakdown(index: number, filter: any) {
     const next = [...this.breakdowns];
-    next[index] = filter.name;
+    next[index] = toBreakdown(filter);
     this.breakdowns = next;
     this.hasChanged = true;
   }
@@ -253,7 +259,9 @@ export default class Widget {
       this.isPublic = json.isPublic;
       this.sortBy = json.sortBy || '';
       this.sortOrder = json.sortOrder || 'desc';
-      this.breakdowns = json.breakdowns || [];
+      this.breakdowns = ((json.breakdowns || []) as StoredBreakdown[]).map(
+        normalizeBreakdown,
+      );
 
       if (this.metricType === FUNNEL) {
         this.series[0].filter.eventsOrder = 'then';

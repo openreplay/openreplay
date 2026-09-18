@@ -9,7 +9,11 @@ import { useTranslation } from 'react-i18next';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 
 import BreakdownFilterItem from './BreakdownFilterItem';
-import { buildBreakdownOptions } from './breakdownDimensions';
+import {
+  MAX_BREAKDOWNS,
+  breakdownName,
+  buildBreakdownOptions,
+} from './breakdownDimensions';
 
 interface Props {
   metric: any;
@@ -70,7 +74,9 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
 
   const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
   const breakdownOptions: Filter[] = buildBreakdownOptions(allFilterOptions);
-  const breakdownLabels: string[] = metric.breakdowns || [];
+  const breakdownLabels: string[] = (metric.breakdowns || []).map(
+    breakdownName,
+  );
   // Keep unresolved dimensions in the list so they can still be removed.
   const breakdownFilters: Filter[] = breakdownLabels.map(
     (label: string) =>
@@ -81,7 +87,7 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
   const propertyOptions: Filter[] = breakdownOptions.filter(
     (i) => !activeFilterNames.includes(i.name),
   );
-  const canAddMore = activeFilterNames.length < 3;
+  const canAddMore = activeFilterNames.length < MAX_BREAKDOWNS;
 
   const onAddFilter = (filter: Filter) => {
     metric.addBreakdown(filter);
