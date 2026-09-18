@@ -89,23 +89,12 @@ export default class PagesManager extends ListWalker<DOMManager> {
     return this.currentPage?.getNode(id);
   }
 
-  spriteMapEl: SVGElement | null = null;
+  /** Reconstructed <symbol> markup, owned by MessageManager and handed to whichever page is current. */
+  private spriteContent = '';
 
   injectSpriteMap = (spriteEl: SVGElement) => {
-    this.spriteMapEl = spriteEl;
-    this.refreshSprites();
-  };
-
-  refreshSprites = () => {
-    const int = setInterval(() => {
-      const potential = this.screen.document?.body.querySelector(
-        '#OPENREPLAY_SPRITES_MAP',
-      );
-      if (potential) {
-        potential.innerHTML = this.spriteMapEl!.innerHTML;
-        clearInterval(int);
-      }
-    }, 250);
+    this.spriteContent = spriteEl.innerHTML;
+    this.currentPage?.setSpriteContent(this.spriteContent);
   };
 
   moveReady(t: number): Promise<void> {
@@ -118,13 +107,10 @@ export default class PagesManager extends ListWalker<DOMManager> {
       changed = true;
     }
     if (this.currentPage != null) {
-      return this.currentPage.moveReady(t).then(() => {
-        if (changed && this.spriteMapEl) {
-          setTimeout(() => {
-            this.refreshSprites();
-          }, 0);
-        }
-      });
+      if (changed && this.spriteContent) {
+        this.currentPage.setSpriteContent(this.spriteContent);
+      }
+      return this.currentPage.moveReady(t);
     }
     return Promise.resolve();
   }

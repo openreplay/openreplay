@@ -21,6 +21,7 @@ import {
   VHTMLElement,
   VShadowRoot,
   VSlot,
+  VSpriteMap,
   VText,
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
@@ -45,6 +46,8 @@ function setupWindowLogging(
 }
 
 const IGNORED_ATTRS = ['autocomplete'];
+/** Keeps the sprite map last among <body>'s children, whatever indices the message stream uses. */
+const SPRITE_MAP_INDEX = Number.MAX_SAFE_INTEGER - 100;
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/;
 
 export default class DOMManager extends ListWalker<Message> {
@@ -56,6 +59,10 @@ export default class DOMManager extends ListWalker<Message> {
   /** required to keep track of iframes, frameId : vnodeId */
   private readonly iframeRoots: Record<number, number> = {};
   private shadowRootParentMap: Map<number, number> = new Map();
+  /** One per <body> of this page (the top document and any reconstructed iframe). */
+  private spriteMaps: VSpriteMap[] = [];
+  private readonly spriteHosts: WeakSet<VElement> = new WeakSet();
+  private spriteContent = '';
   /** Constructed StyleSheets https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets
    * as well as <style> tag owned StyleSheets
    */
@@ -189,6 +196,9 @@ export default class DOMManager extends ListWalker<Message> {
       logger.error('Insert error. Node not found', id);
       return;
     }
+    if (child instanceof VElement && child.tagName === 'BODY') {
+      this.attachSpriteMap(child);
+    }
 
     const parent = this.vElements.get(parentID) || this.olVRoots.get(parentID);
     if (!parent) {
@@ -221,6 +231,45 @@ export default class DOMManager extends ListWalker<Message> {
     }
 
     parent.insertChildAt(child, index);
+  }
+
+  private attachSpriteMap(body: VElement): void {
+    if (this.spriteHosts.has(body)) {
+      return;
+    }
+    this.spriteHosts.add(body);
+    const spriteMap = new VSpriteMap(
+      'svg',
+      true,
+      SPRITE_MAP_INDEX,
+      SPRITE_MAP_INDEX,
+    );
+    // Set on the node, not through setAttribute: the queue is flushed by
+    // VElement.applyChanges, which VSpriteMap deliberately does not call.
+    spriteMap.node.setAttribute('id', 'OPENREPLAY_SPRITES_MAP');
+    spriteMap.node.setAttribute('style', 'display: none;');
+    body.insertChildAt(spriteMap, SPRITE_MAP_INDEX);
+    this.spriteMaps.push(spriteMap);
+    this.writeSprites(spriteMap);
+  }
+
+  private writeSprites(spriteMap: VSpriteMap): void {
+    if (!this.spriteContent) {
+      return;
+    }
+    spriteMap.setContent(this.spriteContent);
+    // The symbols have to be in place before the frame that references them is
+    // painted, so don't wait for the next flush.
+    spriteMap.applyChanges();
+  }
+
+  /** Symbol markup reconstructed by MessageManager; re-applied whenever a <body> appears. */
+  public setSpriteContent(content: string): void {
+    if (content === this.spriteContent) {
+      return;
+    }
+    this.spriteContent = content;
+    this.spriteMaps.forEach((spriteMap) => this.writeSprites(spriteMap));
   }
 
   private setNodeAttribute(msg: { id: number; name: string; value: string }) {
@@ -311,6 +360,7 @@ export default class DOMManager extends ListWalker<Message> {
         // this is done for the AdoptedCSS logic
         // Maybetodo: start Document as 0-node in tracker
         this.vTexts.clear();
+        this.spriteMaps.length = 0;
         this.olStyleSheets.clear();
         this.pendingStyleRules.clear();
         this.pendingSelectValues.clear();

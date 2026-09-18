@@ -118,13 +118,7 @@ export default class TabSessionManager {
       screen,
       this.session.isMobile,
       this.setCSSLoading,
-      () => {
-        setTimeout(() => {
-          this.state.update({
-            vModeBadge: true,
-          });
-        }, 0);
-      },
+      this.showVModeBadge,
     );
     this.lists = new Lists(initialLists);
     initialLists?.event?.forEach((e: Record<string, string>) => {
@@ -145,7 +139,18 @@ export default class TabSessionManager {
 
   public getNode = (id: number) => this.pagesManager.getNode(id);
 
+  private showVModeBadge = () => {
+    setTimeout(() => {
+      this.state.update({
+        vModeBadge: true,
+      });
+    }, 0);
+  };
+
+  private spriteMapEl: SVGElement | null = null;
+
   public injectSpriteMap = (spriteMapEl: SVGElement) => {
+    this.spriteMapEl = spriteMapEl;
     this.pagesManager.injectSpriteMap(spriteMapEl);
   };
 
@@ -219,8 +224,12 @@ export default class TabSessionManager {
       this.screen,
       this.session.isMobile,
       this.setCSSLoading,
-      () => null,
+      this.showVModeBadge,
     );
+    // Sprites live outside the message stream, so a fresh PagesManager starts without them.
+    if (this.spriteMapEl) {
+      this.pagesManager.injectSpriteMap(this.spriteMapEl);
+    }
   }
 
   firstTitleSet = false;

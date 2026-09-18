@@ -302,6 +302,35 @@ export class VHTMLElement extends VElement {
   }
 }
 
+/**
+ * Host for the `<symbol>`s rebuilt from `_$OPENREPLAY_SPRITE$_` messages, kept as the last child
+ * of every <body> so the `<use href="#symbol-N">` rewrite done in MessageManager resolves inside
+ * the replay document (`<use>` refuses external and data: refs as cross-origin).
+ * Its content comes from innerHTML instead of the message stream, so VParent's child
+ * reconciliation must not run here: it would prune every symbol as an unexpected node.
+ */
+export class VSpriteMap extends VElement {
+  private content = '';
+
+  private dirty = false;
+
+  setContent(content: string) {
+    if (content === this.content) {
+      return;
+    }
+    this.content = content;
+    this.dirty = true;
+  }
+
+  applyChanges() {
+    if (!this.dirty) {
+      return;
+    }
+    this.node.innerHTML = this.content;
+    this.dirty = false;
+  }
+}
+
 export class VText extends VNode<Text> {
   parentNode: VParent | null = null;
 
