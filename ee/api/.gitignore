@@ -199,8 +199,6 @@ Pipfile.lock
 /chalicelib/core/metrics/dashboards.py
 /chalicelib/core/metrics/funnels.py
 /chalicelib/core/metrics/heatmaps
-/chalicelib/core/metrics/product_analytics
-/chalicelib/core/metrics/product_anaytics2.py
 /chalicelib/core/events*
 /chalicelib/core/issue_tracking/*
 /chalicelib/core/issues/
@@ -216,7 +214,6 @@ Pipfile.lock
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps
 /chalicelib/core/tags.py
-/chalicelib/core/product_analytics
 /chalicelib/saml
 /chalicelib/utils/__init__.py
 /chalicelib/utils/args_transformer.py
@@ -266,10 +263,8 @@ Pipfile.lock
 /chalicelib/core/spot.py
 /run-db_init-dev.sh
 /.dev/
-/chalicelib/core/product_anaytics2.py
 /chalicelib/utils/ch_client.py
 /chalicelib/utils/ch_client_exp.py
-/routers/subs/product_anaytics.py
 /chalicelib/core/alerts/__init__.py
 /chalicelib/core/alerts/alerts.py
 /chalicelib/core/alerts/alerts_processor.py
@@ -279,6 +274,4 @@ Pipfile.lock
 /chalicelib/core/errors/
 /chalicelib/core/notes.py
 /chalicelib/utils/contextual_validators.py
-/routers/subs/product_analytics.py
-/schemas/product_analytics.py
 /chalicelib/utils/log.py
