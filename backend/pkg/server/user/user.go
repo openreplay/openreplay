@@ -11,7 +11,7 @@ import (
 	"openreplay/backend/pkg/math"
 )
 
-const userCacheTTL = 30 * time.Second
+const userCacheTTL = 5 * time.Second
 
 const MCPAudience = "mcp:OpenReplay"
 
@@ -74,7 +74,7 @@ type usersImpl struct {
 }
 
 func New(pgconn pool.Pool, mcp MCPConfig) Users {
-	return &usersImpl{conn: pgconn, mcp: mcp, userCache: cache.New(time.Minute, time.Minute)}
+	return &usersImpl{conn: pgconn, mcp: mcp, userCache: cache.New(userCacheTTL, userCacheTTL)}
 }
 
 func peekAudience(tokenString string) string {

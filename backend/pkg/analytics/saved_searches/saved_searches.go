@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -27,6 +28,7 @@ const (
 	statsWindowDays      = 7
 	statsFreshnessWindow = 30 * time.Minute
 	statsQueryTimeout    = 10 * time.Second
+	statsPerQueryTimeout = 3 * time.Second
 )
 
 // SegmentsListItem is a lightweight projection used by the filters catalog.
@@ -56,6 +58,7 @@ type searchStats struct {
 	SessionsCount int64
 	UsersCount    int64
 	ComputedAt    time.Time
+	Failed        bool
 }
 
 func New(log logger.Logger, conn pool.Pool, search search.Search) SavedSearches {
@@ -260,12 +263,15 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 	const statsConcurrency = 8
 	sem := make(chan struct{}, statsConcurrency)
 	var wg sync.WaitGroup
-	for _, ss := range searches {
+	var failed int64
+	skipped := 0
+	for i, ss := range searches {
 		select {
 		case sem <- struct{}{}:
 		case <-statsCtx.Done():
 		}
 		if statsCtx.Err() != nil {
+			skipped = len(searches) - i
 			break
 		}
 		wg.Add(1)
@@ -280,9 +286,16 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 			stats := s.getSearchStats(statsCtx, projectID, &ss.Data)
 			ss.SessionsCount = stats.SessionsCount
 			ss.UsersCount = stats.UsersCount
+			if stats.Failed {
+				atomic.AddInt64(&failed, 1)
+			}
 		}(ss)
 	}
 	wg.Wait()
+
+	if skipped > 0 || failed > 0 {
+		s.log.Warn(ctx, "saved search stats incomplete: %d undispatched, %d failed of %d", skipped, failed, len(searches))
+	}
 
 	return searches, total, nil
 }
@@ -312,13 +325,14 @@ func (s *savedSearchesImpl) getSearchStats(ctx context.Context, projectID int, d
 		EndDate:     now.UnixMilli(),
 	}
 
-	qctx, cancel := context.WithTimeout(ctx, statsQueryTimeout)
+	qctx, cancel := context.WithTimeout(ctx, statsPerQueryTimeout)
 	defer cancel()
 
 	sessionsCount, usersCount, err := s.search.GetCounts(qctx, projectID, req)
 	if err != nil {
 		s.log.Warn(ctx, "saved search counts: %.200s", err)
-		return searchStats{}
+		failed := errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
+		return searchStats{Failed: failed}
 	}
 
 	stats := searchStats{

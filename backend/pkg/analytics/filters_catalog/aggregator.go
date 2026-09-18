@@ -8,95 +8,93 @@ import (
 	"openreplay/backend/pkg/analytics/filters_catalog/model"
 )
 
-func (s *filtersCatalogImpl) GetAllFilters(ctx context.Context, projectID uint32, userID uint64, platform string) (*model.AllFiltersResponse, error) {
-	var (
-		events, properties, metadata, segments, features model.FilterSection
-		wg                                               sync.WaitGroup
-		once                                             sync.Once
-		firstErr                                         error
-	)
+type labeledFilterFunc struct {
+	label string
+	fn    func(ctx context.Context) error
+}
 
-	setErr := func(err error) {
+func runCancelOnFirstError(parent context.Context, fns ...labeledFilterFunc) error {
+	ctx, cancel := context.WithCancel(parent)
+	defer cancel()
+
+	var (
+		wg       sync.WaitGroup
+		once     sync.Once
+		firstErr error
+	)
+	fail := func(err error) {
 		once.Do(func() {
 			firstErr = err
 		})
+		cancel()
 	}
 
-	wg.Add(5)
-	go func() {
-		defer wg.Done()
-		defer func() {
-			if r := recover(); r != nil {
-				setErr(fmt.Errorf("events catalog panic: %v", r))
+	wg.Add(len(fns))
+	for _, f := range fns {
+		go func(f labeledFilterFunc) {
+			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					fail(fmt.Errorf("%s panic: %v", f.label, r))
+				}
+			}()
+			if err := f.fn(ctx); err != nil {
+				fail(err)
 			}
-		}()
-		v, err := s.getEventsCatalog(ctx, projectID, platform)
-		if err != nil {
-			setErr(fmt.Errorf("events catalog: %w", err))
-			return
-		}
-		events = v
-	}()
-	go func() {
-		defer wg.Done()
-		defer func() {
-			if r := recover(); r != nil {
-				setErr(fmt.Errorf("properties catalog panic: %v", r))
-			}
-		}()
-		v, err := s.getPropertiesCatalog(ctx, projectID)
-		if err != nil {
-			setErr(fmt.Errorf("properties catalog: %w", err))
-			return
-		}
-		properties = v
-	}()
-	go func() {
-		defer wg.Done()
-		defer func() {
-			if r := recover(); r != nil {
-				setErr(fmt.Errorf("metadata catalog panic: %v", r))
-			}
-		}()
-		v, err := s.getMetadataFilters(ctx, projectID)
-		if err != nil {
-			setErr(fmt.Errorf("metadata catalog: %w", err))
-			return
-		}
-		metadata = v
-	}()
-	go func() {
-		defer wg.Done()
-		defer func() {
-			if r := recover(); r != nil {
-				setErr(fmt.Errorf("segments catalog panic: %v", r))
-			}
-		}()
-		v, err := s.getSegmentsFilters(ctx, projectID, userID)
-		if err != nil {
-			setErr(fmt.Errorf("segments catalog: %w", err))
-			return
-		}
-		segments = v
-	}()
-	go func() {
-		defer wg.Done()
-		defer func() {
-			if r := recover(); r != nil {
-				setErr(fmt.Errorf("features catalog panic: %v", r))
-			}
-		}()
-		v, err := s.getFeaturesFilters(ctx, projectID)
-		if err != nil {
-			setErr(fmt.Errorf("features catalog: %w", err))
-			return
-		}
-		features = v
-	}()
+		}(f)
+	}
 	wg.Wait()
 
-	if firstErr != nil {
-		return nil, firstErr
+	return firstErr
+}
+
+func (s *filtersCatalogImpl) GetAllFilters(ctx context.Context, projectID uint32, userID uint64, platform string) (*model.AllFiltersResponse, error) {
+	var events, properties, metadata, segments, features model.FilterSection
+
+	err := runCancelOnFirstError(ctx,
+		labeledFilterFunc{"events catalog", func(ctx context.Context) error {
+			v, err := s.getEventsCatalog(ctx, projectID, platform)
+			if err != nil {
+				return fmt.Errorf("events catalog: %w", err)
+			}
+			events = v
+			return nil
+		}},
+		labeledFilterFunc{"properties catalog", func(ctx context.Context) error {
+			v, err := s.getPropertiesCatalog(ctx, projectID)
+			if err != nil {
+				return fmt.Errorf("properties catalog: %w", err)
+			}
+			properties = v
+			return nil
+		}},
+		labeledFilterFunc{"metadata catalog", func(ctx context.Context) error {
+			v, err := s.getMetadataFilters(ctx, projectID)
+			if err != nil {
+				return fmt.Errorf("metadata catalog: %w", err)
+			}
+			metadata = v
+			return nil
+		}},
+		labeledFilterFunc{"segments catalog", func(ctx context.Context) error {
+			v, err := s.getSegmentsFilters(ctx, projectID, userID)
+			if err != nil {
+				return fmt.Errorf("segments catalog: %w", err)
+			}
+			segments = v
+			return nil
+		}},
+		labeledFilterFunc{"features catalog", func(ctx context.Context) error {
+			v, err := s.getFeaturesFilters(ctx, projectID)
+			if err != nil {
+				return fmt.Errorf("features catalog: %w", err)
+			}
+			features = v
+			return nil
+		}},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return &model.AllFiltersResponse{

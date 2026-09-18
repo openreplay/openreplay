@@ -34,6 +34,15 @@ func getIDFromRequest(r *http.Request, key string) (int, error) {
 	return id, nil
 }
 
+func parseWithStats(r *http.Request) bool {
+	v := r.URL.Query().Get("withStats")
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return true
+	}
+	return b
+}
+
 func getSearchIDFromRequest(r *http.Request) (string, error) {
 	vars := mux.Vars(r)
 	searchID := vars["searchId"]
@@ -194,7 +203,7 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 		order = o
 	}
 
-	withStats := strings.EqualFold(r.URL.Query().Get("withStats"), "true") || r.URL.Query().Get("withStats") == "1"
+	withStats := parseWithStats(r)
 
 	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset, sort, order, withStats)
 	if err != nil {
