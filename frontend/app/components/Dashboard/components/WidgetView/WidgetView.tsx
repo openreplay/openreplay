@@ -166,6 +166,7 @@ function WidgetView({
           });
 
           cardData.startPoint = startPoint;
+          cardData.metricValue = ['location'];
         }
 
         if (selectedCard.cardType === HEATMAP) {

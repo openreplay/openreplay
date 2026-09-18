@@ -19,10 +19,15 @@ import {
 } from 'App/utils/breakdownTree';
 
 import BreakdownSelectionPanel from '../BreakdownFilter/BreakdownSelectionPanel';
+import {
+  type StoredBreakdown,
+  breakdownName,
+  getBreakdownDisplayName,
+} from '../BreakdownFilter/breakdownDimensions';
 
 interface Props {
   data: Record<string, NestedData>;
-  breakdownLabels?: string[];
+  breakdownLabels?: StoredBreakdown[];
   defaultOpen?: boolean;
   metric: { name: string; viewType: string };
   inBuilder?: boolean;
@@ -172,8 +177,18 @@ function buildTableData(data: Record<string, NestedData>): {
 
 function BreakdownDatatable(props: Props) {
   const { t } = useTranslation();
-  const { metricStore } = useStore();
+  const { metricStore, filterStore } = useStore();
   const [showTable, setShowTable] = useState(props.defaultOpen);
+
+  // props.breakdownLabels are API dimension keys; show the catalog label instead.
+  // Keyed on the joined names because getCurrentProjectFilters() returns a fresh array.
+  const labelsKey = (props.breakdownLabels ?? []).map(breakdownName).join('|');
+  const breakdownLabels = useMemo(() => {
+    const allFilterOptions = filterStore.getCurrentProjectFilters();
+    return (props.breakdownLabels ?? []).map((breakdown) =>
+      getBreakdownDisplayName(breakdown, allFilterOptions),
+    );
+  }, [labelsKey, filterStore.isLoadingFilters]);
 
   const hasBreakdowns = useMemo(
     () => Object.values(props.data).some((d) => getDepth(d) > 0),
@@ -247,7 +262,7 @@ function BreakdownDatatable(props: Props) {
       },
     ];
 
-    const labels = props.breakdownLabels ?? [];
+    const labels = breakdownLabels;
     for (let lvl = 0; lvl < depth; lvl++) {
       const levelLabel = labels[lvl] ?? `Level ${lvl + 1}`;
       cols.push({
@@ -362,7 +377,7 @@ function BreakdownDatatable(props: Props) {
     return { rows, timestamps, depth, columns: cols };
   }, [
     props.data,
-    props.breakdownLabels,
+    breakdownLabels,
     hasBreakdowns,
     levelTree,
     metricStore.breakdownSelection,
@@ -391,6 +406,9 @@ function BreakdownDatatable(props: Props) {
   );
 
   const isTableOnlyMode = props.metric.viewType === 'table';
+  // In the dashboard grid (not the card builder/preview) the table height is
+  // capped and the controls row (level selection + export) is hidden.
+  const inGrid = !props.inBuilder;
 
   if (!props.data || Object.keys(props.data).length === 0) {
     return null;
@@ -422,32 +440,53 @@ function BreakdownDatatable(props: Props) {
 
       {showTable || isTableOnlyMode ? (
         <div className="relative">
-          <div className="flex items-center mb-2 gap-2">
-            {hasBreakdowns && (
-              <BreakdownSelectionPanel
-                data={props.data}
-                breakdownLabels={props.breakdownLabels}
-              />
-            )}
-            <Button
-              icon={<Download size={14} />}
+          {!inGrid && (
+            <div className="flex items-center mb-2 gap-2">
+              {hasBreakdowns && (
+                <BreakdownSelectionPanel
+                  data={props.data}
+                  breakdownLabels={breakdownLabels}
+                />
+              )}
+              <Button
+                icon={<Download size={14} />}
+                size="small"
+                type="default"
+                className="ml-auto"
+                onClick={() => exportAntCsv(columns, rows, props.metric.name)}
+              >
+                {t('Export as CSV')}
+              </Button>
+            </div>
+          )}
+          <div
+            className="relative"
+            style={
+              inGrid
+                ? { maxHeight: 240, overflow: 'hidden' }
+                : undefined
+            }
+          >
+            <Table
+              columns={columns}
+              dataSource={rows}
+              pagination={false}
               size="small"
-              type="default"
-              className="ml-auto"
-              onClick={() => exportAntCsv(columns, rows, props.metric.name)}
-            >
-              {t('Export as CSV')}
-            </Button>
+              scroll={{ x: 'max-content' }}
+              bordered
+              rowClassName={rowClassName}
+            />
           </div>
-          <Table
-            columns={columns}
-            dataSource={rows}
-            pagination={false}
-            size="small"
-            scroll={{ x: 'max-content' }}
-            bordered
-            rowClassName={rowClassName}
-          />
+          {inGrid && (
+            <div
+              className="pointer-events-none absolute bottom-0 left-0 right-0"
+              style={{
+                height: 40,
+                background:
+                  'linear-gradient(to bottom, transparent, var(--color-white))',
+              }}
+            />
+          )}
         </div>
       ) : null}
     </div>

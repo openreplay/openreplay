@@ -29,7 +29,9 @@ function ClickMapCard() {
     ) {
       setCustomSession(null);
       setTimeout(() => {
-        setCustomSession(metricStore.instance.data);
+        // snapshot: metric.data is mutated in place on every refetch, so keeping
+        // the reference would make the sessionId check above always false
+        setCustomSession({ ...metricStore.instance.data });
       }, 100);
     }
   }, [metricStore.instance, sessionId]);
@@ -84,7 +86,11 @@ function ClickMapCard() {
   };
   const ts = jumpToEvent.timestamp ?? metricStore.instance.data.startTs;
   const domTime = jumpToEvent.domBuildingTime ?? 0;
-  const jumpTimestamp = ts - metricStore.instance.data.startTs + domTime + 10;
+  // player timeline is zeroed on the session's real start, not on the
+  // second-truncated startTs the heatmap query returns
+  const sessionStart =
+    metricStore.instance.data.startedAt ?? metricStore.instance.data.startTs;
+  const jumpTimestamp = Math.max(0, ts - sessionStart + domTime + 10);
 
   return (
     <div

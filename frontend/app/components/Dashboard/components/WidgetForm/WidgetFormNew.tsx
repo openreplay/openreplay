@@ -244,26 +244,13 @@ const FilterSection = observer(
 
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
-  // const metricValueOptions = [
-  //   { value: 'location', label: t('Pages') },
-  //   { value: 'click', label: t('Clicks') },
-  //   { value: 'input', label: t('Input') },
-  //   { value: 'custom', label: t('Custom Events') },
-  // ];
-  //
-  const { filterStore } = useStore();
-  const metricValueOptions = useMemo(() => {
-    return filterStore.getEventOptions(
-      projectStore?.activeSiteId + '',
-      (f) =>
-        (f.autoCaptured &&
-          f.name !== 'PERFORMANCE' &&
-          f.name !== 'ERROR' &&
-          f.name !== 'ISSUE' &&
-          f.name !== 'TAG_TRIGGER') ||
-        !f.autoCaptured,
-    );
-  }, []);
+  const metricValueOptions = [
+    { value: 'location', label: t('Page Paths') },
+    { value: 'title', label: t('Page Titles') },
+    { value: 'click', label: t('Clicks') },
+    { value: 'input', label: t('Inputs') },
+    { value: 'custom', label: t('Events') },
+  ];
 
   const onPointChange = (value: any) => {
     writeOption({ name: 'startType', value: { value } });
