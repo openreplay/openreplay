@@ -19,11 +19,15 @@ import {
 } from 'App/utils/breakdownTree';
 
 import BreakdownSelectionPanel from '../BreakdownFilter/BreakdownSelectionPanel';
-import { getBreakdownDisplayName } from '../BreakdownFilter/breakdownDimensions';
+import {
+  type StoredBreakdown,
+  breakdownName,
+  getBreakdownDisplayName,
+} from '../BreakdownFilter/breakdownDimensions';
 
 interface Props {
   data: Record<string, NestedData>;
-  breakdownLabels?: string[];
+  breakdownLabels?: StoredBreakdown[];
   defaultOpen?: boolean;
   metric: { name: string; viewType: string };
   inBuilder?: boolean;
@@ -178,11 +182,11 @@ function BreakdownDatatable(props: Props) {
 
   // props.breakdownLabels are API dimension keys; show the catalog label instead.
   // Keyed on the joined names because getCurrentProjectFilters() returns a fresh array.
-  const labelsKey = (props.breakdownLabels ?? []).join('|');
+  const labelsKey = (props.breakdownLabels ?? []).map(breakdownName).join('|');
   const breakdownLabels = useMemo(() => {
     const allFilterOptions = filterStore.getCurrentProjectFilters();
-    return (props.breakdownLabels ?? []).map((name) =>
-      getBreakdownDisplayName(name, allFilterOptions),
+    return (props.breakdownLabels ?? []).map((breakdown) =>
+      getBreakdownDisplayName(breakdown, allFilterOptions),
     );
   }, [labelsKey, filterStore.isLoadingFilters]);
 

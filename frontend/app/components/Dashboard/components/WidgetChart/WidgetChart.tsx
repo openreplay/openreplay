@@ -49,6 +49,7 @@ import { Icon, Loader } from 'UI';
 import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
+import { breakdownName } from '../BreakdownFilter/breakdownDimensions';
 import BreakdownDatatable from '../WidgetDatatable/BreakdownDatatable';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import LongLoader from './LongLoader';
@@ -161,7 +162,9 @@ function WidgetChart(props: Props) {
           if (breakdownPath) {
             const levels = breakdownPath.split(' / ');
             for (let i = 0; i < levels.length && i < breakdowns.length; i++) {
-              const filterItem = filterStore.findEvent({ name: breakdowns[i] });
+              const filterItem = filterStore.findEvent({
+                name: breakdownName(breakdowns[i]),
+              });
               if (filterItem) {
                 filterItem.value = [levels[i]];
                 breakdownFilters.push(filterItem);
