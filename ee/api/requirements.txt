@@ -1,16 +1,16 @@
-urllib3==2.7.0
+urllib3==2.8.0
 requests==2.34.2
-boto3==1.43.87
-pyjwt==2.13.0
-psycopg2-binary==2.9.12
+boto3==1.43.97
+pyjwt==2.14.0
+psycopg2-binary==2.9.13
 psycopg[pool,binary]==3.3.5
 clickhouse-connect==1.8.0
-elasticsearch==9.5.0
+elasticsearch==9.5.1
 jira==3.10.5
-cachetools==7.1.8
+cachetools==7.2.0
 
 fastapi==0.141.1
-uvicorn[standard]==0.52.4
+uvicorn[standard]==0.53.0
 gunicorn==26.2.0
 python-decouple==3.8
 pydantic[email]==2.13.5
@@ -22,11 +22,11 @@ python3-saml==1.16.0
 python-multipart==0.0.32
 
 # SCIM packages for user/group provisioning
-scim2-models==0.6.12
+scim2-models==0.7.0
 scim2-server==0.1.9
 scim2-filter-parser==0.7.0
 werkzeug==3.1.8
 
 redis==8.1.0
 #confluent-kafka==2.1.0
-azure-storage-blob==12.30.1
+azure-storage-blob==12.30.2
