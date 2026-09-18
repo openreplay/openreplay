@@ -246,7 +246,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   const metricValueOptions = [
     { value: 'location', label: t('Page Paths') },
-    // { value: 'title', label: t('Page Titles') },
+    { value: 'title', label: t('Page Titles') },
     { value: 'click', label: t('Clicks') },
     { value: 'input', label: t('Inputs') },
     { value: 'custom', label: t('Events') },

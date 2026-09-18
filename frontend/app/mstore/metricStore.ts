@@ -255,7 +255,7 @@ export default class MetricStore {
     obj.series = obj.series.slice(0, 1);
     obj.series[0].filter.filters = [];
 
-    obj.metricValue = [];
+    obj.metricValue = value === USER_PATH ? ['location'] : [];
 
     if (value === TABLE) {
       obj.metricOf = 'userId';
