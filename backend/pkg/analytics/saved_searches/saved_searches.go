@@ -28,7 +28,6 @@ const (
 	statsWindowDays      = 7
 	statsFreshnessWindow = 30 * time.Minute
 	statsQueryTimeout    = 10 * time.Second
-	statsPerQueryTimeout = 3 * time.Second
 )
 
 // SegmentsListItem is a lightweight projection used by the filters catalog.
@@ -325,14 +324,13 @@ func (s *savedSearchesImpl) getSearchStats(ctx context.Context, projectID int, d
 		EndDate:     now.UnixMilli(),
 	}
 
-	qctx, cancel := context.WithTimeout(ctx, statsPerQueryTimeout)
+	qctx, cancel := context.WithTimeout(ctx, statsQueryTimeout)
 	defer cancel()
 
 	sessionsCount, usersCount, err := s.search.GetCounts(qctx, projectID, req)
 	if err != nil {
 		s.log.Warn(ctx, "saved search counts: %.200s", err)
-		failed := errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
-		return searchStats{Failed: failed}
+		return searchStats{Failed: true}
 	}
 
 	stats := searchStats{
