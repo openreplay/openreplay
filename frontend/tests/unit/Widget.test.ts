@@ -533,14 +533,22 @@ describe('Widget.fromJson / toJson', () => {
 
     expect(w.metricId).toBe('abc-123');
     expect(w.name).toBe('My Widget');
-    expect(w.breakdowns).toEqual(['userCountry', 'userCity']);
+    // cards saved before event properties stored bare strings; fromJson
+    // normalises them to the object form the API now takes
+    expect(w.breakdowns).toEqual([
+      { name: 'userCountry' },
+      { name: 'userCity' },
+    ]);
     expect(w.sortBy).toBe('total');
     expect(w.sortOrder).toBe('asc');
 
     const json = w.toJson();
     expect(json.metricId).toBe('abc-123');
     expect(json.name).toBe('My Widget');
-    expect(json.breakdowns).toEqual(['userCountry', 'userCity']);
+    expect(json.breakdowns).toEqual([
+      { name: 'userCountry' },
+      { name: 'userCity' },
+    ]);
     expect(json.sortBy).toBe('total');
     expect(json.sortOrder).toBe('asc');
   });
@@ -584,15 +592,30 @@ describe('Widget breakdown management', () => {
   it('addBreakdown appends and marks changed', () => {
     const w = new Widget();
     w.addBreakdown({ name: 'userCountry' });
-    expect(w.breakdowns).toEqual(['userCountry']);
+    expect(w.breakdowns).toEqual([{ name: 'userCountry' }]);
     expect(w.hasChanged).toBe(true);
+  });
+
+  it('addBreakdown flags event properties so the API resolves them as such', () => {
+    const w = new Widget();
+    w.addBreakdown({
+      name: 'plan',
+      category: 'event',
+      autoCaptured: true,
+    });
+    expect(w.breakdowns).toEqual([
+      { name: 'plan', isEvent: true, autoCaptured: true },
+    ]);
   });
 
   it('updateBreakdown replaces at index', () => {
     const w = new Widget();
-    w.breakdowns = ['userCountry', 'userCity'];
+    w.breakdowns = [{ name: 'userCountry' }, { name: 'userCity' }];
     w.updateBreakdown(1, { name: 'userBrowser' });
-    expect(w.breakdowns).toEqual(['userCountry', 'userBrowser']);
+    expect(w.breakdowns).toEqual([
+      { name: 'userCountry' },
+      { name: 'userBrowser' },
+    ]);
   });
 
   it('removeBreakdown removes at index', () => {

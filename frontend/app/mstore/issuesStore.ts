@@ -468,8 +468,9 @@ export default class IssuesStore {
     try {
       const [, capture] = await Promise.all([
         // the saved-search list is loaded once per project by searchStore and
-        // shared with session search and Data Management
-        searchStore.ensureSavedSearchList(),
+        // shared with session search and Data Management; the segment cards
+        // show session/user counts, which are opt-in
+        searchStore.ensureSavedSearchList(true),
         getSegmentCapture(this.projectId),
       ]);
       const segments = mapSegments(searchStore.savedSearchRaw);

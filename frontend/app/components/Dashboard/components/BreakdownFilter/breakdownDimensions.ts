@@ -69,6 +69,7 @@ const NON_DIMENSION_CATEGORIES = new Set([
   'user_events',
   'segments',
   'features',
+  'users',
 ]);
 
 /** The `event` section of the filters catalog holds the event properties. */

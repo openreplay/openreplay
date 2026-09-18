@@ -135,6 +135,9 @@ class SearchStore {
      Segment objects from these (SavedSearch drops the count/capture fields) */
   savedSearchRaw: any[] = [];
   savedSearchLoaded = false;
+  /* sessionsCount/usersCount are opt-in (withStats) — the sessions-list load
+     skips them, so Data Management has to know whether the cache carries them */
+  savedSearchHasStats = false;
   /* one in-flight request shared by every caller, so the app-level load in
      Router and the page-level loads don't each hit the endpoint */
   private savedSearchRequest: { key: string; promise: Promise<void> } | null =
@@ -199,40 +202,64 @@ class SearchStore {
   fetchSavedSearchList(
     page: number = 1,
     limit: number = SAVED_SEARCH_PAGE_SIZE,
+    withStats = false,
   ): Promise<void> {
-    const key = `${page}:${limit}`;
+    const key = `${page}:${limit}:${withStats}`;
     if (this.savedSearchRequest?.key === key) {
       return this.savedSearchRequest.promise;
     }
-    const promise = this.loadSavedSearchList(page, limit).finally(() => {
-      if (this.savedSearchRequest?.key === key) this.savedSearchRequest = null;
-    });
+    const promise = this.loadSavedSearchList(page, limit, withStats).finally(
+      () => {
+        if (this.savedSearchRequest?.key === key)
+          this.savedSearchRequest = null;
+      },
+    );
     this.savedSearchRequest = { key, promise };
     return promise;
   }
 
-  private async loadSavedSearchList(page: number, limit: number) {
+  private async loadSavedSearchList(
+    page: number,
+    limit: number,
+    withStats: boolean,
+  ) {
     const offset = (page - 1) * limit;
-    const response = await searchService.fetchSavedSearch({ limit, offset });
-    runInAction(() => {
-      const rows: any[] = response.data || [];
-      this.savedSearchRaw = rows;
-      this.list = rows.map((item: any) => new SavedSearch(item));
-      this.savedSearchTotal = response.total ?? rows.length;
-      this.savedSearchLoaded = true;
-    });
+    try {
+      const response = await searchService.fetchSavedSearch({
+        limit,
+        offset,
+        withStats: withStats ? 1 : undefined,
+      });
+      runInAction(() => {
+        const rows: any[] = response.data || [];
+        this.savedSearchRaw = rows;
+        this.list = rows.map((item: any) => new SavedSearch(item));
+        this.savedSearchTotal = response.total ?? rows.length;
+        this.savedSearchLoaded = true;
+        this.savedSearchHasStats = withStats;
+      });
+    } catch (e) {
+      // the endpoint 400s on an out-of-range limit/offset; leaving the latch
+      // unset lets the next caller retry instead of reading an empty list
+      console.error('Failed to load saved searches:', e);
+    }
   }
 
   /** Load once per project — resolves immediately when the list is already in
-      state, and joins the in-flight request otherwise. */
-  ensureSavedSearchList(): Promise<void> {
-    if (this.savedSearchLoaded) return Promise.resolve();
-    return this.fetchSavedSearchList();
+      state, and joins the in-flight request otherwise. Counts are only returned
+      when asked for, so a cached stats-less list is refetched for a caller that
+      needs them. */
+  ensureSavedSearchList(withStats = false): Promise<void> {
+    if (this.savedSearchLoaded && (!withStats || this.savedSearchHasStats)) {
+      return Promise.resolve();
+    }
+    return this.fetchSavedSearchList(1, SAVED_SEARCH_PAGE_SIZE, withStats);
   }
 
   /** Mark the cached list stale so the next `ensureSavedSearchList` refetches. */
   invalidateSavedSearchList() {
     this.savedSearchLoaded = false;
+    this.savedSearchHasStats = false;
   }
 
   async loadSharedSearch(searchId: string): Promise<void> {

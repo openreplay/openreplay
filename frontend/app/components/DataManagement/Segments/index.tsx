@@ -69,7 +69,9 @@ function SegmentsListPage() {
     ],
     // searchStore holds the app's single saved-search fetch; this only slices it
     queryFn: async () => {
-      await searchStore.ensureSavedSearchList();
+      // the list renders # Sessions / # Users, which the server only returns
+      // when asked
+      await searchStore.ensureSavedSearchList(true);
       return selectSegments(searchStore.savedSearchRaw, {
         limit,
         page,

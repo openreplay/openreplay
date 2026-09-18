@@ -36,7 +36,11 @@ export default class SearchService extends BaseService {
     return j.data;
   }
 
-  async fetchSavedSearch(params?: { limit?: number; offset?: number }) {
+  async fetchSavedSearch(params?: {
+    limit?: number;
+    offset?: number;
+    withStats?: 1;
+  }) {
     const r = await this.client.get(
       '/PROJECT_ID/sessions/search/saved',
       params,
