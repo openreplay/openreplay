@@ -128,6 +128,11 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 		task.name = task.name + ".frames"
 	}
 	path := filepath.Join(dir, task.name)
+	if filepath.Dir(path) != dir {
+		v.metrics.IncreaseFrames(canvas.FrameBadMessage)
+		v.log.Error(task.ctx, "frames file name escapes session dir, name: %q", task.name)
+		return
+	}
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		v.log.Fatal(task.ctx, "can't open frames file, err: %s", err)

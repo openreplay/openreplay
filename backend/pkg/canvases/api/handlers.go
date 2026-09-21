@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -57,6 +58,8 @@ type ImagesMessage struct {
 	Data []byte
 }
 
+var framesFileName = regexp.MustCompile(`^[0-9A-Za-z_.-]+\.frames$`)
+
 func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
@@ -70,16 +73,20 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
-	//if r.Body == nil {
-	//	h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
-	//	return
-	//}
-	//r.Body = http.MaxBytesReader(w, r.Body, h.cfg.FileSizeLimit)
-	//defer r.Body.Close()
+	if r.Body == nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, h.cfg.FileSizeLimit)
+	defer r.Body.Close()
 
 	err = r.ParseMultipartForm(h.cfg.FileSizeLimit)
+	var maxBytesErr *http.MaxBytesError
 	if errors.Is(err, http.ErrNotMultipart) || errors.Is(err, http.ErrMissingBoundary) {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+		return
+	} else if errors.As(err, &maxBytesErr) {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, 0)
 		return
 	} else if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
@@ -119,9 +126,9 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			fileName := util.SafeString(fileHeader.Filename)
 
 			if isFrames {
-				if !strings.HasSuffix(fileName, ".frames") {
-					h.log.Error(r.Context(), "file name does not end with .frames: %s", fileName)
-					h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnsupportedMediaType, errors.New("file name does not end with .frames"), startTime, r.URL.Path, 0)
+				if !framesFileName.MatchString(fileName) {
+					h.log.Error(r.Context(), "invalid frames file name: %s", fileName)
+					h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnsupportedMediaType, errors.New("invalid frames file name"), startTime, r.URL.Path, 0)
 					return
 				}
 
