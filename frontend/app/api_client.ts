@@ -281,8 +281,7 @@ export default class APIClient {
       // from the Python `kai` service) — routed at the origin root like /kai,
       // not under the chalice /api prefix.
       path.includes('/smart-issues') ||
-      (path.includes('/spot') && !path.includes('/login')) ||
-      path.includes('replay-exporter');
+      (path.includes('/spot') && !path.includes('/login'))
 
     // using product analytics api for cards and dashboards (excluding sessions)
     // integrations moved to the Go `api` service: /v2/api/{projectId}/integration/*
