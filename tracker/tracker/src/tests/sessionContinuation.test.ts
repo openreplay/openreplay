@@ -3,6 +3,7 @@ import { describe, expect, test, jest, beforeAll, afterAll, beforeEach } from '@
 import Tracker, { Options } from '../main/index.js'
 
 jest.mock('@openreplay/network-proxy', () => ({
+  __esModule: true,
   default: jest.fn(() => 'mocked network-proxy content'),
 }))
 
@@ -38,6 +39,7 @@ describe('session continuation across tabs', () => {
       value: { timing: {}, now: jest.fn(() => 1000) },
     })
     Object.defineProperty(window, 'Worker', {
+      configurable: true, // afterAll removes this synthetic property.
       value: jest.fn(() => 'mocked worker content'),
     })
     globalThis.IntersectionObserver = jest.fn(() => ({

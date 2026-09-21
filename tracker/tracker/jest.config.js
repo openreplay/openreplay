@@ -20,6 +20,7 @@ const config = {
       {
         tsconfig: {
           target: 'es2020',
+          esModuleInterop: true,
           lib: ['DOM', 'ES2022'],
           allowJs: true,
         },

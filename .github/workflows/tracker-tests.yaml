@@ -23,14 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and test Tracker
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.4.0
 
       - name: Cache bun install cache and modules
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.bun/install/cache
@@ -54,6 +54,11 @@ jobs:
           cd tracker/tracker
           bun run build
 
+      - name: Tracker NodeNext declaration consumer
+        run: |
+          cd tracker/tracker
+          bun run test:types
+
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
@@ -65,7 +70,7 @@ jobs:
           bun run build
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: tracker

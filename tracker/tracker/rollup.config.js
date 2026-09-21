@@ -36,6 +36,8 @@ export default async () => {
       {
         dir: 'dist/cjs',
         format: 'cjs',
+        // Preserve the existing mixed named/default CommonJS export shape explicitly.
+        exports: 'named',
         sourcemap: true,
         entryFileNames: '[name].js',
       },

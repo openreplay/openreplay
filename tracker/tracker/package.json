@@ -46,6 +46,7 @@
     "build": "bun run clean && bun run compile && bun run create-types && rollup --config rollup.config.js",
     "build:fast": "bun run compile && rollup --config rollup.config.js",
     "test": "jest --coverage=false",
+    "test:types": "tsc --project src/main/tsconfig.json && tsc --project tsconfig.nodenext.json",
     "test:ci": "jest --coverage=true",
     "postversion": "bun run build",
     "prepublishOnly": "bun run test && bun run build"

@@ -1,4 +1,4 @@
-import { categories } from './types'
+import { categories } from './types.js'
 
 interface PeopleEvent {
   type: string

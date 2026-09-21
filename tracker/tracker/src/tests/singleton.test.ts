@@ -1,7 +1,7 @@
 import { describe, expect, test, jest, beforeAll, afterAll } from '@jest/globals'
 import singleton from "../main/singleton";
 
-jest.mock('@openreplay/network-proxy', () => ({ default: jest.fn(() => 'mocked network-proxy content') }));
+jest.mock('@openreplay/network-proxy', () => ({ __esModule: true, default: jest.fn(() => 'mocked network-proxy content') }));
 
 const methods = [
   'restartCanvasTracking',
@@ -43,6 +43,7 @@ describe('Singleton Testing', () => {
       },
     });
     Object.defineProperty(window, 'Worker', {
+      configurable: true, // afterAll removes this synthetic property.
       value: jest.fn(() => 'mocked worker content')
     })
     globalThis.IntersectionObserver = jest.fn(() => ({

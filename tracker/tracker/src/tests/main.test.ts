@@ -12,7 +12,7 @@ const conditions: string[] = [
   'Worker',
 ]
 
-jest.mock('@openreplay/network-proxy', () => ({ default: jest.fn(() => 'mocked network-proxy content') }));
+jest.mock('@openreplay/network-proxy', () => ({ __esModule: true, default: jest.fn(() => 'mocked network-proxy content') }));
 // jest.mock('../main/modules/network', () => jest.fn(() => 'mocked network content'));
 
 describe('Constructor Tests', () => {
@@ -33,6 +33,7 @@ describe('Constructor Tests', () => {
       },
     });
     Object.defineProperty(window, 'Worker', {
+      configurable: true, // afterAll removes this synthetic property.
       value: jest.fn(() => 'mocked worker content')
     })
     globalThis.IntersectionObserver = jest.fn(() => ({

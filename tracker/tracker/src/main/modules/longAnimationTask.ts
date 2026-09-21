@@ -1,5 +1,5 @@
 import type App from '../app/index.js'
-import { LongAnimationTask } from "../app/messages.gen";
+import { LongAnimationTask } from "../app/messages.gen.js";
 
 export interface LongAnimationTask extends PerformanceEntry {
   name: string;

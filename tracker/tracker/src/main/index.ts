@@ -1,4 +1,4 @@
-import App from './app/index'
+import App from './app/index.js'
 
 export { default as App } from './app/index.js'
 
