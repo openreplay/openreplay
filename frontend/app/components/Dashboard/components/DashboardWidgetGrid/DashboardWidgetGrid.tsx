@@ -43,6 +43,7 @@ function DashboardWidgetGrid(props: Props) {
               key={item.widgetId}
               item={item}
               index={index}
+              isHero={index === 0}
               dashboard={dashboard}
               dashboardId={dashboardId}
               siteId={siteId}
@@ -62,7 +63,7 @@ const colSpanMap: { [key: number]: string } = {
   4: 'lg:col-span-4',
 };
 
-function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
+function GridItem({ item, index, isHero, dashboard, dashboardId, siteId }: any) {
   const { t } = useTranslation();
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const handleOpenChange = (open: boolean) => {
@@ -74,7 +75,10 @@ function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
       key={item.widgetId}
       className={cn(
         'col-span-4',
-        colSpanMap[item.config.col] || 'lg:col-span-4',
+        // The first card leads the dashboard, so it spans the full width and the
+        // rest fall in beneath it. Gives the page a focal point instead of a
+        // uniform grid where nothing is more important than anything else.
+        isHero ? 'lg:col-span-4' : colSpanMap[item.config.col] || 'lg:col-span-4',
         'group relative md:p-2 hover:bg-active-blue w-full rounded-xl',
       )}
     >
