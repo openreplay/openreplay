@@ -7,6 +7,7 @@ import (
 )
 
 const PageEventTimeout = 1 * 60 * 1000
+const maxLoadTiming = 30000
 
 type pageEventBuilder struct {
 	pageEvent *PageEvent
@@ -21,6 +22,8 @@ func NewPageEventBuilder() *pageEventBuilder {
 func (b *pageEventBuilder) MessageTypes() []int {
 	return []int{
 		MsgSetPageLocation,
+		MsgPageLoadTiming,
+		MsgPageRenderTiming,
 		MsgWebVitals,
 	}
 }
@@ -33,13 +36,15 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 			return nil
 		}
 		if msg.NavigationStart == 0 { // routing without new page loading
-			return &PageEvent{
+			pageEvent := &PageEvent{
 				URL:       msg.URL,
 				Referrer:  msg.Referrer,
 				Loaded:    false,
 				MessageID: message.MsgID(),
 				Timestamp: timestamp,
 			}
+			pageEvent.Meta().SetMeta(message.Meta())
+			return pageEvent
 		} else {
 			pageEvent := b.Build()
 			b.pageEvent = &PageEvent{
@@ -49,8 +54,57 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 				MessageID: message.MsgID(),
 				Timestamp: timestamp,
 			}
+			b.pageEvent.Meta().SetMeta(message.Meta())
 			return pageEvent
 		}
+	case MsgPageLoadTiming:
+		if b.pageEvent == nil {
+			break
+		}
+		msg, ok := message.Decode().(*PageLoadTiming)
+		if !ok {
+			return nil
+		}
+		if msg.RequestStart <= maxLoadTiming {
+			b.pageEvent.RequestStart = msg.RequestStart
+		}
+		if msg.ResponseStart <= maxLoadTiming {
+			b.pageEvent.ResponseStart = msg.ResponseStart
+		}
+		if msg.ResponseEnd <= maxLoadTiming {
+			b.pageEvent.ResponseEnd = msg.ResponseEnd
+		}
+		if msg.DomContentLoadedEventStart <= maxLoadTiming {
+			b.pageEvent.DomContentLoadedEventStart = msg.DomContentLoadedEventStart
+		}
+		if msg.DomContentLoadedEventEnd <= maxLoadTiming {
+			b.pageEvent.DomContentLoadedEventEnd = msg.DomContentLoadedEventEnd
+		}
+		if msg.LoadEventStart <= maxLoadTiming {
+			b.pageEvent.LoadEventStart = msg.LoadEventStart
+		}
+		if msg.LoadEventEnd <= maxLoadTiming {
+			b.pageEvent.LoadEventEnd = msg.LoadEventEnd
+		}
+		if msg.FirstPaint <= maxLoadTiming {
+			b.pageEvent.FirstPaint = msg.FirstPaint
+		}
+		if msg.FirstContentfulPaint <= maxLoadTiming {
+			b.pageEvent.FirstContentfulPaint = msg.FirstContentfulPaint
+		}
+		return nil
+	case MsgPageRenderTiming:
+		if b.pageEvent == nil {
+			break
+		}
+		msg, ok := message.Decode().(*PageRenderTiming)
+		if !ok {
+			return nil
+		}
+		b.pageEvent.SpeedIndex = msg.SpeedIndex
+		b.pageEvent.VisuallyComplete = msg.VisuallyComplete
+		b.pageEvent.TimeToInteractive = msg.TimeToInteractive
+		return nil
 	case MsgWebVitals:
 		msg, ok := message.Decode().(*WebVitals)
 		if !ok {

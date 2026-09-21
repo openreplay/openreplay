@@ -105,7 +105,9 @@ func (bs *builders) Handle(msg messages.Message) {
 
 	for _, p := range b.dispatch[msg.TypeID()] {
 		if rm := p.Handle(msg, b.timestamp); rm != nil {
-			rm.Meta().SetMeta(msg.Meta())
+			if !messages.HasMeta(rm) {
+				rm.Meta().SetMeta(msg.Meta())
+			}
 			bs.emit(rm)
 		}
 	}
@@ -120,7 +122,7 @@ func (bs *builders) Handle(msg messages.Message) {
 func (bs *builders) flush(sessionID uint64, b *builder) {
 	for _, p := range b.processors {
 		if rm := p.Build(); rm != nil {
-			if b.lastMsg != nil {
+			if b.lastMsg != nil && !messages.HasMeta(rm) {
 				// attribute the event to the session's last known page
 				rm.Meta().SetMeta(b.lastMsg.Meta())
 			}

@@ -103,6 +103,10 @@ func (m *message) Meta() *message {
 	return m
 }
 
+func HasMeta(m Message) bool {
+	return m.Meta().batch != nil
+}
+
 func (m *message) SetMeta(origin *message) {
 	m.batch = origin.batch
 	m.Timestamp = origin.Timestamp
