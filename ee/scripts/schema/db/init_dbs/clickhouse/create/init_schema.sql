@@ -244,7 +244,8 @@ CREATE TABLE IF NOT EXISTS product_analytics.users_distinct_id
 
     _deleted_at DateTime DEFAULT '1970-01-01 00:00:00',
     _is_deleted UInt8    DEFAULT 0,
-    _timestamp  DateTime DEFAULT now()
+    _timestamp  DateTime DEFAULT now(),
+    INDEX user_id_idx ("$user_id") TYPE bloom_filter(0.01) GRANULARITY 4
 ) ENGINE = ReplacingMergeTree(_timestamp, _is_deleted)
       ORDER BY (project_id, distinct_id)
       PARTITION BY toMonday(_timestamp)

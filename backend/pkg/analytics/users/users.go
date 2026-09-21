@@ -129,9 +129,9 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 			"$or_api_endpoint", "$timezone", "$first_event_at", "$last_seen",
 			(SELECT arraySort(groupUniqArray(distinct_id)) 
 			 FROM product_analytics.users_distinct_id 
-			 WHERE project_id = ? AND "$user_id" = ? AND _deleted_at = '1970-01-01 00:00:00') AS distinct_ids
+			 WHERE project_id = ? AND "$user_id" = ? AND NOT _is_deleted) AS distinct_ids
 		FROM latest_user
-		WHERE _deleted_at = '1970-01-01 00:00:00'`
+		WHERE NOT _is_deleted`
 
 	row := u.chConn.QueryRow(ctx, query, projID, userId, projID, userId)
 
