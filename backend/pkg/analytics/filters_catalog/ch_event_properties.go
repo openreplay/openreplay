@@ -103,11 +103,12 @@ func buildEventProperties(rows []eventPropertyRow, eventName string, autoCapture
 			display = ORPropertyDisplayName(snake)
 		}
 
+		simplified := SimplifyClickHouseTypes(r.PossibleTypes)
 		item := map[string]any{
 			"name":           name,
 			"displayName":    display,
 			"autoCaptured":   r.AutoCaptured,
-			"possibleTypes":  SimplifyClickHouseTypes(r.PossibleTypes),
+			"possibleTypes":  simplified,
 			"id":             StringToID("prop_" + name),
 			"category":       "events",
 			"isPredefined":   false,
@@ -121,6 +122,10 @@ func buildEventProperties(rows []eventPropertyRow, eventName string, autoCapture
 			item["dataType"] = SimplifyClickHouseType(pp.Type)
 			item["isPredefined"] = pp.IsPredefined
 			item["possibleValues"] = values
+		} else if len(simplified) > 0 {
+			item["dataType"] = simplified[0]
+		} else {
+			item["dataType"] = "string"
 		}
 		item["defaultProperty"] = autoCaptured && hasDefault && snake == defaultSnake
 		out = append(out, item)
