@@ -1,6 +1,7 @@
 package filters_catalog
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -48,11 +49,66 @@ func TestBuildEventPropertiesPredefinedAndDefault(t *testing.T) {
 	if custom["defaultProperty"] != false || custom["isPredefined"] != false {
 		t.Errorf("custom_thing flags wrong: %v", custom)
 	}
-	if _, has := custom["dataType"]; has {
-		t.Errorf("custom_thing should not carry dataType: %v", custom)
+	if custom["dataType"] != "int" {
+		t.Errorf("custom_thing.dataType = %v, want int", custom["dataType"])
 	}
 	if custom["displayName"] != "Custom" {
 		t.Errorf("custom_thing.displayName = %v", custom["displayName"])
+	}
+}
+
+func TestBuildEventPropertiesCustomDataType(t *testing.T) {
+	tests := []struct {
+		name              string
+		possibleTypes     []string
+		wantDataType      string
+		wantPossibleTypes []string
+	}{
+		{"signed integer", []string{"Int64"}, "int", []string{"int"}},
+		{"unsigned integer", []string{"UInt64"}, "int", []string{"int"}},
+		{"float", []string{"Float64"}, "float", []string{"float"}},
+		{"boolean", []string{"Bool"}, "bool", []string{"bool"}},
+		{"string", []string{"String"}, "string", []string{"string"}},
+		{"empty types", []string{}, "string", []string{}},
+		{"nil types", nil, "string", []string{}},
+		{"wrapped and duplicate types", []string{"Nullable(Int64)", "UInt32", "Int64"}, "int", []string{"int"}},
+		{"mixed types preserve first", []string{"Float64", "String"}, "float", []string{"float", "string"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildEventProperties([]eventPropertyRow{{
+				Name:          "custom_value",
+				PossibleTypes: tt.possibleTypes,
+			}}, "CUSTOM_EVENT", false)
+			if len(got) != 1 {
+				t.Fatalf("len = %d, want 1", len(got))
+			}
+			if got[0]["dataType"] != tt.wantDataType {
+				t.Errorf("dataType = %v, want %s", got[0]["dataType"], tt.wantDataType)
+			}
+			if !reflect.DeepEqual(got[0]["possibleTypes"], tt.wantPossibleTypes) {
+				t.Errorf("possibleTypes = %v, want %v", got[0]["possibleTypes"], tt.wantPossibleTypes)
+			}
+		})
+	}
+}
+
+func TestBuildEventPropertiesPredefinedTypeOverridesObservedType(t *testing.T) {
+	got := buildEventProperties([]eventPropertyRow{{
+		Name:          "method",
+		AutoCaptured:  true,
+		PossibleTypes: []string{"Int64"},
+	}}, "REQUEST", true)
+	method := findByName(got, "method")
+	if method == nil {
+		t.Fatal("method missing")
+	}
+	if method["dataType"] != "string" || method["isPredefined"] != true {
+		t.Errorf("method predefined metadata wrong: %v", method)
+	}
+	wantValues := []any{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTION"}
+	if !reflect.DeepEqual(method["possibleValues"], wantValues) {
+		t.Errorf("method.possibleValues = %v, want %v", method["possibleValues"], wantValues)
 	}
 }
 
