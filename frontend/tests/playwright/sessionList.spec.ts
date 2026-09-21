@@ -1,22 +1,16 @@
-import { test } from '@playwright/test';
-import { testUseAuthState } from './helpers';
+import { expect, test } from '@playwright/test';
 
-testUseAuthState();
+import { authStateFile, selectProject } from './helpers';
+
+test.use({ storageState: authStateFile });
 
 test('check session list after change period', async ({ page }) => {
-  const LOGIN = process.env.TEST_FOSS_LOGIN || '';
-  const PASSWORD = process.env.TEST_FOSS_PASSWORD || '';
-  await page.goto('http://localhost:3333/login');
-  await page.locator('[data-test-id="login"]').fill(LOGIN);
-  await page
-    .locator('[data-test-id="password"]')
-    .fill(PASSWORD);
-  await page.locator('[data-test-id="log-button"]').click();
-  await page.getByRole('button', { name: 'Android caret-down' }).click();
-  await page
-    .getByRole('menuitem', { name: 'OpenReplay Documentation Site' })
-    .click();
-  await page.getByRole('button', { name: 'Past 24 Hours down' }).click();
+  await page.goto('/');
+  await selectProject(page);
+
+  await page.locator('[data-test-id="widget-select-date-range"]').first().click();
   await page.getByRole('menuitem', { name: 'Past 30 Days' }).click();
+
+  await expect(page.locator('#session-item').first()).toBeVisible();
   await page.locator('#session-item').first().click();
 });

@@ -1,38 +1,19 @@
-import { authStateFile, testUseAuthState } from './helpers';
 import { expect, test as setup } from '@playwright/test';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
-testUseAuthState();
+import { authStateFile, fillLogin } from './helpers';
 
-setup.beforeEach(async ({ page }) => {
-  await page.goto('http://localhost:3333');
-});
-
+/* The only login in the suite. The API keeps one active session per user, so a
+   second login anywhere invalidates the token every other spec is holding —
+   specs read this state instead of signing in themselves. sign-in.spec.ts is
+   the deliberate exception and refreshes the file afterwards. */
 setup('authenticate', async ({ page }) => {
-  const LOGIN = process.env.TEST_FOSS_LOGIN || '';
-  const PASSWORD = process.env.TEST_FOSS_PASSWORD || '';
-
   await page.goto('/login');
+  await fillLogin(page);
 
-  try {
-    const url = page.url();
-    console.log('Current URL:', url);
+  /* Failing here rather than saving a logged-out state: every other spec
+     depends on this file, and an empty one turns one bad credential into a
+     suite-wide cascade of unrelated locator timeouts. */
+  await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
 
-    if (url.includes('login')) {
-      console.log('On login page, authenticating...');
-      await page.locator('[data-test-id="login"]').fill(LOGIN);
-      await page.locator('[data-test-id="password"]').fill(PASSWORD);
-      await page.locator('[data-test-id="log-button"]').click();
-    }
-    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
-  } catch (e) {
-    console.error('Error during authentication:', e);
-  }
-
-  try {
-    await page.context().storageState({ path: authStateFile });
-  } catch (e) {
-    console.error('Error saving authentication state:', e);
-  }
+  await page.context().storageState({ path: authStateFile });
 });

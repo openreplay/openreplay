@@ -1,13 +1,16 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
+import { authStateFile, fillLogin } from './helpers';
+
+// the one spec that signs in for real, so it starts from a clean context
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test('Sign in flow', async ({ page }) => {
-  const LOGIN = process.env.TEST_FOSS_LOGIN || '';
-  const PASSWORD = process.env.TEST_FOSS_PASSWORD || '';
-  await page.goto('/');
-  await page
-        .locator('[data-test-id="login"]')
-        .fill(LOGIN);
-  await page.locator('[data-test-id="password"]').fill(PASSWORD);
-  await page.locator('[data-test-id="log-button"]').click();
+  await page.goto('/login');
+  await fillLogin(page);
   await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
+
+  /* This login invalidated the token in the shared state file; write the new
+     one back so specs running after this do not fall out of their session. */
+  await page.context().storageState({ path: authStateFile });
 });

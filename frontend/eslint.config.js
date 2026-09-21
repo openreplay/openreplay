@@ -37,7 +37,7 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
-        project: './tsconfig.json',
+        project: ['./tsconfig.json', './tests/tsconfig.json'],
       },
       // Add this to define environments
       globals: {
@@ -155,7 +155,7 @@ export default [
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
-        project: './tsconfig.json',
+        project: ['./tsconfig.json', './tests/tsconfig.json'],
       },
       globals: {
         ...globals.jest,

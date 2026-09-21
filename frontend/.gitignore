@@ -17,9 +17,8 @@ logs
 !.yarn/sdks
 !.yarn/versions
 *.env.json
-cypress.env.json
-**/__diff_output__/*
-*.diff.png
-cypress/videos/
+test-results/
+playwright-report/
+tests/playwright/auth-state.json
 coverage
 dist

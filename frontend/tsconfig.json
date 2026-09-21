@@ -42,8 +42,6 @@
     "app/**/*.jsx",
     "../player/src",
     "../player/src/**/*.ts",
-    "window.d.ts",
-    "cypress/snapshots/sessionStore.test.ts",
-    "tests/unit/create.test.ts"
+    "window.d.ts"
   ]
 }
