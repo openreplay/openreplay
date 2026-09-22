@@ -1,5 +1,6 @@
-import APIClient from 'App/api_client';
 import Alert, { IAlert } from 'Types/alert';
+
+import APIClient from 'App/api_client';
 
 export default class AlertsService {
   private client: APIClient;
@@ -21,6 +22,16 @@ export default class AlertsService {
       .then((response) => response.json())
       .then((response) => response.data || {})
       .catch(Promise.reject);
+  }
+
+  /**
+   * Create an alert from a ready-made payload (dashboard templates).
+   * @param payload alert body as accepted by POST /alerts
+   */
+  async create(payload: Record<string, any>): Promise<IAlert> {
+    const r = await this.client.post('/alerts', payload);
+    const response = await r.json();
+    return response.data || {};
   }
 
   fetchTriggerOptions(): Promise<{ name: string; value: string | number }[]> {
