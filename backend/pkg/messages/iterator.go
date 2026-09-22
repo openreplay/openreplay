@@ -17,6 +17,7 @@ type MessageIterator interface {
 var preFilterTypes = []int{
 	MsgBatchMetadata, MsgTimestamp, MsgSessionStart,
 	MsgSessionEnd, MsgSetPageLocation, MsgMobileBatchMeta,
+	MsgPageEvent,
 }
 
 type messageIteratorImpl struct {
@@ -33,6 +34,7 @@ type messageIteratorImpl struct {
 	broken        bool
 	messageInfo   *message
 	batchInfo     *BatchInfo
+	titles        *pageTitles
 	brokenStats   *brokenBatches
 }
 
@@ -42,6 +44,7 @@ func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messag
 		handler:     messageHandler,
 		autoDecode:  autoDecode,
 		reader:      &messageReaderImpl{reader: NewBytesReader(nil)},
+		titles:      NewPageTitles(),
 		brokenStats: NewBrokenBatches(),
 	}
 	iter.preFilter = NewTypeFilter(preFilterTypes)
@@ -57,7 +60,7 @@ func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messag
 
 func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
 	i.batchInfo = batchInfo
-	i.messageInfo = &message{batch: batchInfo}
+	i.messageInfo = &message{batch: batchInfo, PageTitle: i.titles.Last(batchInfo.sessionID)}
 	i.version = 0
 	i.canSkip = false
 	i.broken = false
@@ -175,6 +178,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionEnd")
 		}
+		i.titles.End(i.messageInfo.batch.sessionID)
 		// Report and clear broken-batch stats accumulated for this session.
 		if count, firstErr, ok := i.brokenStats.Pop(i.messageInfo.batch.sessionID); ok {
 			ctx := context.WithValue(context.Background(), "sessionID", i.messageInfo.batch.sessionID)
@@ -185,6 +189,12 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
 		i.messageInfo.PageTitle = m.DocumentTitle
+		i.titles.Set(i.messageInfo.batch.sessionID, m.URL, m.DocumentTitle)
+
+	case *PageEvent:
+		if title := i.titles.ForURL(i.messageInfo.batch.sessionID, m.URL); title != "" {
+			i.messageInfo.PageTitle = title
+		}
 
 	case *MobileBatchMeta:
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
