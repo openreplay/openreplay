@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strconv"
 	"time"
@@ -14,14 +15,12 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
-const GroupClickRage bool = true
-
 type errorEvent struct {
 	ErrorID   string    `ch:"error_id" json:"errorId"`
 	Source    string    `ch:"source" json:"source"`
 	Name      string    `ch:"name" json:"name"`
 	Message   string    `ch:"message" json:"message"`
-	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
+	CreatedAt time.Time `ch:"created_at"`
 	Timestamp int64     `json:"timestamp"`
 }
 
@@ -30,14 +29,14 @@ func (e *errorEvent) IsNotJsException() bool {
 }
 
 type Events interface {
-	GetBySessionID(projID uint32, sessID uint64, doGroupClickRage bool) []interface{}
-	GetErrorsBySessionID(projectID uint32, sessID uint64) []errorEvent
-	GetCustomsBySessionID(projectID uint32, sessID uint64) []interface{}
-	GetIssuesBySessionID(projID uint32, sessID uint64) []interface{}
-	GetIncidentsBySessionID(projectID uint32, sessID uint64) []interface{}
-	GetMobileBySessionID(projID uint32, sessID uint64) []interface{}
-	GetMobileCrashesBySessionID(sessID uint64) []interface{}
-	GetMobileCustomsBySessionID(sessID uint64) []interface{}
+	GetSessionEvents(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error)
+	GetMobileSessionEvents(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error)
+	GroupClicksToClickRage(sessEvents []interface{}, clickRage []interface{}) []interface{}
+	GetErrorsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]errorEvent, error)
+	GetCustomsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error)
+	GetIssueEventsBySessionID(projID uint32, sessID uint64, lower, upper time.Time) (issues []interface{}, incidents []interface{}, clickRage []interface{}, err error)
+	GetMobileCrashesBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error)
+	GetMobileCustomsBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error)
 	GetClickMaps(projID uint32, sessID uint64, url string) ([]interface{}, error)
 }
 
@@ -53,107 +52,48 @@ func New(log logger.Logger, conn driver.Conn) (Events, error) {
 	}, nil
 }
 
-func getString(event *event, name string) *string {
-	if event == nil || event.Properties == nil || event.Properties[name] == nil {
+func parseInt64(s *string) *int64 {
+	if s == nil {
 		return nil
 	}
-	val := event.Properties[name].(string)
-	return &val
-}
-
-func toInt64(v any) (int64, bool) {
-	switch val := v.(type) {
-	case int:
-		return int64(val), true
-	case int8:
-		return int64(val), true
-	case int16:
-		return int64(val), true
-	case int32:
-		return int64(val), true
-	case int64:
-		return val, true
-	case uint:
-		return int64(val), true
-	case uint8:
-		return int64(val), true
-	case uint16:
-		return int64(val), true
-	case uint32:
-		return int64(val), true
-	case uint64:
-		return int64(val), true
-	case float32:
-		return int64(val), true
-	case float64:
-		return int64(val), true
-	case json.Number:
-		if i, err := val.Int64(); err == nil {
-			return i, true
-		}
-		if f, err := val.Float64(); err == nil {
-			return int64(f), true
-		}
-	case string:
-		if i, err := strconv.ParseInt(val, 10, 64); err == nil {
-			return i, true
-		}
-		if f, err := strconv.ParseFloat(val, 64); err == nil {
-			return int64(f), true
-		}
+	if i, err := strconv.ParseInt(*s, 10, 64); err == nil {
+		return &i
 	}
-	return 0, false
-}
-
-func getInt64(event *event, name string) *int64 {
-	if event == nil || event.Properties == nil {
-		return nil
-	}
-	raw, ok := event.Properties[name]
-	if !ok || raw == nil {
-		return nil
-	}
-	result, ok := toInt64(raw)
-	if !ok {
-		return nil
-	}
-	return &result
-}
-
-func getDiffInt64(event *event, start, end string) *int64 {
-	startVal, endVal := getInt64(event, start), getInt64(event, end)
-	if startVal != nil && endVal != nil {
-		res := *endVal - *startVal
-		return &res
+	if f, err := strconv.ParseFloat(*s, 64); err == nil {
+		v := int64(f)
+		return &v
 	}
 	return nil
 }
 
 type event struct {
-	Type       string                 `ch:"type" json:"type"`
-	Duration   *uint16                `ch:"duration" json:"duration"`
-	Url        *string                `ch:"url" json:"url"`
-	Referrer   *string                `ch:"referrer" json:"referrer"`
-	Properties map[string]interface{} `ch:"props" json:"properties"`
-	CreatedAt  time.Time              `ch:"created_at" json:"createdAt"`
+	Type           string    `ch:"type"`
+	Duration       *uint16   `ch:"duration"`
+	Url            *string   `ch:"url"`
+	Referrer       *string   `ch:"referrer"`
+	Label          *string   `ch:"label"`
+	Selector       *string   `ch:"selector"`
+	HesitationTime *string   `ch:"hesitation_time"`
+	Value          *string   `ch:"value"`
+	InputDuration  *string   `ch:"input_duration"`
+	WebVitals      *string   `ch:"web_vitals"`
+	CreatedAt      time.Time `ch:"created_at"`
 }
 
 type ClickEvent struct {
-	Type       string    `json:"type"`
-	Label      *string   `json:"label"`
-	Hesitation *int64    `json:"hesitation"`
-	Selector   *string   `json:"selector"`
-	CreatedAt  time.Time `json:"createdAt"`
-	Timestamp  int64     `json:"timestamp"`
+	Type       string  `json:"type"`
+	Label      *string `json:"label,omitempty"`
+	Hesitation *int64  `json:"hesitation,omitempty"`
+	Selector   *string `json:"selector,omitempty"`
+	Timestamp  int64   `json:"timestamp"`
 }
 
 func NewClickEvent(event *event) *ClickEvent {
 	return &ClickEvent{
 		Type:       event.Type,
-		Label:      getString(event, "label"),
-		Hesitation: getInt64(event, "hesitation_time"),
-		Selector:   getString(event, "selector"),
-		CreatedAt:  event.CreatedAt,
+		Label:      event.Label,
+		Hesitation: parseInt64(event.HesitationTime),
+		Selector:   event.Selector,
 		Timestamp:  event.CreatedAt.UnixMilli(),
 	}
 }
@@ -173,51 +113,47 @@ func NewClickRageEvent(event *event, count int) *ClickRageEvent {
 }
 
 type InputEvent struct {
-	Type       string    `json:"type"`
-	Label      *string   `json:"label"`
-	Duration   *int64    `json:"duration"`
-	Hesitation *int64    `json:"hesitation"`
-	Value      *string   `json:"value"`
-	CreatedAt  time.Time `json:"createdAt"`
-	Timestamp  int64     `json:"timestamp"`
+	Type       string  `json:"type"`
+	Label      *string `json:"label,omitempty"`
+	Duration   *int64  `json:"duration,omitempty"`
+	Hesitation *int64  `json:"hesitation,omitempty"`
+	Value      *string `json:"value,omitempty"`
+	Timestamp  int64   `json:"timestamp"`
 }
 
 func NewInputEvent(event *event) *InputEvent {
-	duration := getInt64(event, "duration")
+	duration := parseInt64(event.InputDuration)
 	if duration != nil {
 		*duration *= 1000
 	}
 	return &InputEvent{
 		Type:       event.Type,
-		Label:      getString(event, "label"),
+		Label:      event.Label,
 		Duration:   duration,
-		Hesitation: getInt64(event, "hesitation_time"),
-		Value:      getString(event, "value"),
-		CreatedAt:  event.CreatedAt,
+		Hesitation: parseInt64(event.HesitationTime),
+		Value:      event.Value,
 		Timestamp:  event.CreatedAt.UnixMilli(),
 	}
 }
 
 type LocationEvent struct {
-	Type      string    `json:"type"`
-	Label     *string   `json:"label"`
-	Url       *string   `json:"url"`
-	Referrer  *string   `json:"referrer"`
-	Host      *string   `json:"host"`
-	WebVitals *string   `json:"webVitals"`
-	CreatedAt time.Time `json:"createdAt"`
-	Timestamp int64     `json:"timestamp"`
+	Type      string  `json:"type"`
+	Label     *string `json:"label,omitempty"`
+	Url       *string `json:"url,omitempty"`
+	Referrer  *string `json:"referrer,omitempty"`
+	Host      *string `json:"host,omitempty"`
+	WebVitals *string `json:"webVitals"`
+	Timestamp int64   `json:"timestamp"`
 }
 
 func NewLocationEvent(event *event) *LocationEvent {
 	return &LocationEvent{
 		Type:      event.Type,
-		Label:     getString(event, "label"),
+		Label:     event.Label,
 		Url:       event.Url,
 		Referrer:  event.Referrer,
 		Host:      getHostFromUrl(*event.Url),
-		WebVitals: getString(event, "web_vitals"),
-		CreatedAt: event.CreatedAt,
+		WebVitals: event.WebVitals,
 		Timestamp: event.CreatedAt.UnixMilli(),
 	}
 }
@@ -230,37 +166,55 @@ func getHostFromUrl(fullUrl string) *string {
 	return &parsedURL.Host
 }
 
-func (e *eventsImpl) GetBySessionID(projID uint32, sessID uint64, doGroupClickRage bool) []interface{} {
+const sessionEventsColumns = `nullIf(toString("$properties".label), '') AS label,
+					nullIf(toString("$properties".selector), '') AS selector,
+					nullIf(toString("$properties".hesitation_time), '') AS hesitation_time,
+					nullIf(toString("$properties".value), '') AS value,
+					nullIf(toString("$properties".duration), '') AS input_duration,
+					nullIf(toString("$properties".web_vitals), '') AS web_vitals`
+
+func (e *eventsImpl) GetSessionEvents(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
 	query := `SELECT created_at,
-					"$properties" AS props,
 					"$event_name" AS type,
 					"$duration_s" AS duration,
 					"$current_url" AS url,
-					"$referrer" AS referrer
+					"$referrer" AS referrer,
+					` + sessionEventsColumns + `
 			  FROM product_analytics.events
 			  WHERE session_id = ? AND project_id = ?
 				AND "$event_name" IN ('CLICK', 'INPUT', 'LOCATION')
 				AND "$auto_captured"
+				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	sessEvents := make([]event, 0)
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID, projID); err != nil {
-		e.log.Error(context.Background(), "Error querying events: %v", err)
-		return nil
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID, projID, lower, upper); err != nil {
+		return nil, fmt.Errorf("query events: %s", err)
 	}
-
-	return e.groupClicksToClickRage(projID, sessID, sessEvents)
+	res := make([]interface{}, 0, len(sessEvents))
+	for i := range sessEvents {
+		res = append(res, &sessEvents[i])
+	}
+	return res, nil
 }
 
-func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEvents []event) []interface{} {
-	// Get issues by sessID
-	clickRageEvents := e.getIssues(projID, sessID, "click_rage")
+func (e *eventsImpl) GroupClicksToClickRage(sessEvents []interface{}, clickRage []interface{}) []interface{} {
+	crEvents := make([]issue, 0, len(clickRage))
+	for _, cr := range clickRage {
+		if is, ok := cr.(issue); ok {
+			crEvents = append(crEvents, is)
+		}
+	}
 	crPtr, toSkip := -1, 0 // pointer for issues and events lists
-	if len(clickRageEvents) > 0 {
+	if len(crEvents) > 0 {
 		crPtr = 0
 	}
 
 	res := make([]interface{}, 0, len(sessEvents))
-	for _, sessEvent := range sessEvents {
+	for _, raw := range sessEvents {
+		sessEvent, ok := raw.(*event)
+		if !ok {
+			continue
+		}
 		switch sessEvent.Type {
 		case "CLICK", "TAP":
 			if toSkip > 0 {
@@ -268,35 +222,35 @@ func (e *eventsImpl) groupClicksToClickRage(projID uint32, sessID uint64, sessEv
 				continue
 			}
 			if crPtr == -1 { // empty clickRageEvents list
-				res = append(res, NewClickEvent(&sessEvent))
+				res = append(res, NewClickEvent(sessEvent))
 				continue
 			}
-			if clickRageEvents[crPtr].CreatedAt.Equal(sessEvent.CreatedAt) {
-				toSkip = clickRageEvents[crPtr].CountFromPayload()
-				res = append(res, NewClickRageEvent(&sessEvent, toSkip))
+			if crEvents[crPtr].CreatedAt.Equal(sessEvent.CreatedAt) {
+				toSkip = crEvents[crPtr].CountFromPayload()
+				res = append(res, NewClickRageEvent(sessEvent, toSkip))
 				toSkip--
 				crPtr++
-				if crPtr == len(clickRageEvents) {
+				if crPtr == len(crEvents) {
 					crPtr = -1
 				}
 			} else {
-				res = append(res, NewClickEvent(&sessEvent))
+				res = append(res, NewClickEvent(sessEvent))
 			}
 		default:
 			if toSkip > 0 {
 				toSkip = 0 // reset the current clickRage set
 			}
 			if sessEvent.Type == "INPUT" {
-				res = append(res, NewInputEvent(&sessEvent))
+				res = append(res, NewInputEvent(sessEvent))
 			} else if sessEvent.Type == "LOCATION" {
-				res = append(res, NewLocationEvent(&sessEvent))
+				res = append(res, NewLocationEvent(sessEvent))
 			}
 		}
 	}
 	return res
 }
 
-func (e *eventsImpl) GetErrorsBySessionID(projectID uint32, sessID uint64) []errorEvent {
+func (e *eventsImpl) GetErrorsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]errorEvent, error) {
 	query := `SELECT DISTINCT ON (event_id) error_id,
 					'js_exception' AS source,
 					'ERROR' AS name,
@@ -306,16 +260,16 @@ func (e *eventsImpl) GetErrorsBySessionID(projectID uint32, sessID uint64) []err
 			  WHERE session_id = ? AND project_id = ?
 				AND "$event_name"= 'ERROR'
 			  	AND "$auto_captured"
+				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	errorEvents := make([]errorEvent, 0)
-	if err := e.chConn.Select(context.Background(), &errorEvents, query, sessID, projectID); err != nil {
-		e.log.Error(context.Background(), "Error querying error events: %v", err)
-		return nil
+	if err := e.chConn.Select(context.Background(), &errorEvents, query, sessID, projectID, lower, upper); err != nil {
+		return nil, fmt.Errorf("query error events: %s", err)
 	}
 	for i := range errorEvents {
 		errorEvents[i].Timestamp = errorEvents[i].CreatedAt.UnixMilli()
 	}
-	return errorEvents
+	return errorEvents, nil
 }
 
 type customEvent struct {
@@ -323,10 +277,10 @@ type customEvent struct {
 	Type                   string     `ch:"type" json:"type"`
 	AutoCapturedProperties chcol.JSON `ch:"auto_props" json:"autoCapturedProperties"`
 	Properties             chcol.JSON `ch:"properties" json:"properties"`
-	CreatedAt              time.Time  `ch:"created_at" json:"createdAt"`
+	CreatedAt              time.Time  `ch:"created_at"`
 }
 
-func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64) []interface{} {
+func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
 	query := `SELECT "$properties" AS auto_props,
 				properties,
 				created_at,
@@ -336,21 +290,20 @@ func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64) []in
 			  WHERE session_id = ?
 			    AND project_id = ?
 				AND NOT "$auto_captured"
+				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	customEvents := make([]customEvent, 0)
 	res := make([]interface{}, 0, len(customEvents))
-	if err := e.chConn.Select(context.Background(), &customEvents, query, sessID, projectID); err != nil {
-		e.log.Error(context.Background(), "Error querying custom events: %v", err)
-		return res
+	if err := e.chConn.Select(context.Background(), &customEvents, query, sessID, projectID, lower, upper); err != nil {
+		return nil, fmt.Errorf("query custom events: %s", err)
 	}
 	if len(customEvents) == 0 {
-		return res
+		return res, nil
 	}
 	for _, cEvent := range customEvents {
 		event := make(map[string]interface{})
 		event["name"] = cEvent.Name
 		event["type"] = cEvent.Type
-		event["createdAt"] = cEvent.CreatedAt
 		event["timestamp"] = cEvent.CreatedAt.UnixMilli()
 
 		for key, value := range cEvent.AutoCapturedProperties.NestedMap() {
@@ -360,7 +313,7 @@ func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64) []in
 
 		res = append(res, event)
 	}
-	return res
+	return res, nil
 }
 
 func toCamelCase(s string) string {
@@ -386,35 +339,10 @@ func toCamelCase(s string) string {
 
 type issueEvent struct {
 	ID        string    `ch:"issue_id" json:"issueId"`
-	Type      string    `ch:"issue_type" json:"issueType"`
+	Type      string    `ch:"issue_type" json:"type"`
 	Context   string    `ch:"context_string" json:"contextString"`
-	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
+	CreatedAt time.Time `ch:"created_at"`
 	Timestamp int64     `json:"timestamp"`
-}
-
-func (e *eventsImpl) GetIssuesBySessionID(projID uint32, sessID uint64) []interface{} {
-	query := `SELECT DISTINCT ON (events.created_at, issue_id) events.created_at AS created_at,
-					issue_id,
-					issue_type,
-				 	context_string
-                FROM experimental.issues
-				INNER JOIN product_analytics.events ON (events.issue_id = issues.issue_id)
-				WHERE session_id = ?
-					AND events.project_id = ?
-					AND issues.project_id = ?
-					AND "$event_name" = 'ISSUE' AND issue_type != 'incident'
-				ORDER BY created_at;`
-	issues := make([]issueEvent, 0)
-	if err := e.chConn.Select(context.Background(), &issues, query, sessID, projID, projID); err != nil {
-		e.log.Error(context.Background(), "Error querying issues: %v", err)
-	}
-	issues = reduceIssues(issues, defaultIssuesWindow)
-	res := make([]interface{}, 0, len(issues))
-	for _, issue := range issues {
-		issue.Timestamp = issue.CreatedAt.UnixMilli()
-		res = append(res, issue)
-	}
-	return res
 }
 
 const (
@@ -440,11 +368,11 @@ func reduceIssues(issues []issueEvent, window time.Duration) []issueEvent {
 }
 
 type issue struct {
-	ID        string    `ch:"issue_id" json:"issueId"`
-	Type      string    `ch:"issue_type" json:"issueType"`
-	Context   string    `ch:"context_string" json:"contextString"`
-	Payload   string    `ch:"payload_string" json:"payload"`
-	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
+	ID        string    `ch:"issue_id"`
+	Type      string    `ch:"issue_type"`
+	Context   string    `ch:"context_string"`
+	Payload   string    `ch:"payload_string"`
+	CreatedAt time.Time `ch:"created_at"`
 }
 
 func (i *issue) CountFromPayload() int {
@@ -465,80 +393,109 @@ func (i *issue) CountFromPayload() int {
 	return count
 }
 
-func (e *eventsImpl) getIssues(projID uint32, sessID uint64, issueType string) []issue {
-	cond := ""
-	if issueType != "" {
-		cond = "AND events.issue_type = '" + issueType + "'"
-	}
-	query := `SELECT DISTINCT ON (event_id) events.created_at,
-				issue_id,
-                issue_type,
-                "$properties".payload AS payload_string
-            FROM product_analytics.events
-            WHERE session_id = ?
-                AND events.project_id = ?
-                AND "$event_name"= 'ISSUE'
-                ` + cond + `
-			ORDER BY created_at;`
-	sessIssues := make([]issue, 0)
-	if err := e.chConn.Select(context.Background(), &sessIssues, query, sessID, projID); err != nil {
-		e.log.Error(context.Background(), "Error querying issues: %v", err)
-		return nil
-	}
-	return sessIssues
-}
-
 type incidentEvent struct {
-	Type      string    `ch:"type" json:"type"`
-	Label     string    `ch:"label" json:"label"`
-	StartTime int64     `ch:"start_time" json:"startTime"`
-	EndTime   int64     `ch:"end_time" json:"endTime"`
-	CreatedAt time.Time `ch:"created_at" json:"createdAt"`
-	Timestamp int64     `ch:"timestamp" json:"timestamp"`
+	Type      string `json:"type"`
+	Label     string `ch:"label" json:"label"`
+	StartTime int64  `ch:"start_time" json:"startTime"`
+	EndTime   int64  `ch:"end_time" json:"endTime"`
+	Timestamp int64  `json:"timestamp"`
 }
 
-func (e *eventsImpl) GetIncidentsBySessionID(projectID uint32, sessID uint64) []interface{} {
-	query := `SELECT created_at,
-			 		"$properties".end_time  AS end_time,
-					"$properties".label AS label,
-					"$properties".start_time AS start_time
-			FROM product_analytics.events
-			WHERE session_id = ? AND project_id = ?
-			  	AND issue_type = 'incident'
-			  	AND "$event_name" = 'ISSUE'
-				AND "$auto_captured"
-			ORDER BY created_at;`
-	incidents := make([]incidentEvent, 0)
-	if err := e.chConn.Select(context.Background(), &incidents, query, sessID, projectID); err != nil {
-		e.log.Error(context.Background(), "Error querying incidents: %v", err)
-		return nil
-	}
-	res := make([]interface{}, 0, len(incidents))
-	for _, incident := range incidents {
-		incident.Timestamp = incident.CreatedAt.UnixMilli()
-		res = append(res, incident)
-	}
-	return res
+type issueEventRow struct {
+	EventID       string    `ch:"event_id"`
+	CreatedAt     time.Time `ch:"created_at"`
+	IssueID       string    `ch:"issue_id"`
+	IssueType     string    `ch:"issue_type"`
+	ContextString string    `ch:"context_string"`
+	Payload       string    `ch:"payload_string"`
+	Label         string    `ch:"label"`
+	StartTime     int64     `ch:"start_time"`
+	EndTime       int64     `ch:"end_time"`
 }
 
-func (e *eventsImpl) GetMobileBySessionID(projID uint32, sessID uint64) []interface{} {
+func (e *eventsImpl) GetIssueEventsBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, []interface{}, []interface{}, error) {
+	query := `SELECT DISTINCT ON (created_at, issue_id) event_id,
+					created_at,
+					issue_id,
+					issue_type,
+					if(toString("$properties".context_string) = '', toString("$properties".url), toString("$properties".context_string)) AS context_string,
+					toString("$properties".payload) AS payload_string,
+					toString("$properties".label) AS label,
+					toInt64OrZero(toString("$properties".start_time)) AS start_time,
+					toInt64OrZero(toString("$properties".end_time)) AS end_time
+			  FROM product_analytics.events
+			  WHERE session_id = ? AND project_id = ?
+				AND "$event_name" = 'ISSUE'
+				AND issue_type != ''
+				AND created_at BETWEEN ? AND ?
+			  ORDER BY created_at;`
+	rows := make([]issueEventRow, 0)
+	if err := e.chConn.Select(context.Background(), &rows, query, sessID, projID, lower, upper); err != nil {
+		return nil, nil, nil, fmt.Errorf("query issue events: %s", err)
+	}
+
+	issuesRaw := make([]issueEvent, 0, len(rows))
+	clickRage := make([]interface{}, 0)
+	incidents := make([]interface{}, 0)
+	for _, row := range rows {
+		if row.IssueType == "incident" {
+			incidents = append(incidents, incidentEvent{
+				Type:      row.IssueType,
+				Label:     row.Label,
+				StartTime: row.StartTime,
+				EndTime:   row.EndTime,
+				Timestamp: row.CreatedAt.UnixMilli(),
+			})
+			continue
+		}
+		issuesRaw = append(issuesRaw, issueEvent{
+			ID:        row.IssueID,
+			Type:      row.IssueType,
+			Context:   row.ContextString,
+			CreatedAt: row.CreatedAt,
+		})
+		if row.IssueType == "click_rage" {
+			clickRage = append(clickRage, issue{
+				ID:        row.IssueID,
+				Type:      row.IssueType,
+				Context:   row.ContextString,
+				Payload:   row.Payload,
+				CreatedAt: row.CreatedAt,
+			})
+		}
+	}
+
+	issuesRaw = reduceIssues(issuesRaw, defaultIssuesWindow)
+	issues := make([]interface{}, 0, len(issuesRaw))
+	for _, is := range issuesRaw {
+		is.Timestamp = is.CreatedAt.UnixMilli()
+		issues = append(issues, is)
+	}
+	return issues, incidents, clickRage, nil
+}
+
+func (e *eventsImpl) GetMobileSessionEvents(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
 	query := `SELECT created_at,
-					"$properties" AS props,
 					"$event_name" AS type,
 					"$duration_s" AS duration,
 					"$current_url" AS url,
-					"$referrer" AS referrer
+					"$referrer" AS referrer,
+					` + sessionEventsColumns + `
               FROM product_analytics.events
               WHERE project_id = ? AND session_id = ?
               	AND "$event_name" IN ('INPUT', 'LOCATION', 'TAP')
 				AND "$auto_captured"
+				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	sessEvents := make([]event, 0)
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, projID, sessID); err != nil {
-		e.log.Error(context.Background(), "Error querying mobile events: %v", err)
-		return nil
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, projID, sessID, lower, upper); err != nil {
+		return nil, fmt.Errorf("query mobile events: %s", err)
 	}
-	return e.groupClicksToClickRage(projID, sessID, sessEvents)
+	res := make([]interface{}, 0, len(sessEvents))
+	for i := range sessEvents {
+		res = append(res, &sessEvents[i])
+	}
+	return res, nil
 }
 
 type mobileEvent struct {
@@ -546,11 +503,11 @@ type mobileEvent struct {
 	Name         string    `ch:"name" json:"name"`
 	AutoCaptures string    `ch:"auto_captures" json:"autoCaptures"`
 	Properties   string    `ch:"properties" json:"properties"`
-	CreatedAt    time.Time `ch:"created_at" json:"createdAt"`
+	CreatedAt    time.Time `ch:"created_at"`
 	Timestamp    int64     `ch:"timestamp" json:"timestamp"`
 }
 
-func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
+func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error) {
 	query := `SELECT ` + "`$properties`" + `AS auto_captures,
 				properties,
 				created_at,
@@ -560,21 +517,21 @@ func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64) []interface{} {
 			  WHERE session_id = ?
 				AND NOT ` + "`$auto_captured`" + `
 				AND ` + "`$event_name`" + ` = 'CRASH'
+				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
-		e.log.Error(context.Background(), "Error querying mobile crashes: %v", err)
-		return nil
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID, lower, upper); err != nil {
+		return nil, fmt.Errorf("query mobile crashes: %s", err)
 	}
 	res := make([]interface{}, 0, len(sessEvents))
 	for _, sessEvent := range sessEvents {
 		sessEvent.Timestamp = sessEvent.CreatedAt.UnixMilli()
 		res = append(res, sessEvent)
 	}
-	return res
+	return res, nil
 }
 
-func (e *eventsImpl) GetMobileCustomsBySessionID(sessID uint64) []interface{} {
+func (e *eventsImpl) GetMobileCustomsBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error) {
 	query := `SELECT ` + "`$properties`" + `AS auto_captures,
 				properties,
 				created_at,
@@ -583,18 +540,18 @@ func (e *eventsImpl) GetMobileCustomsBySessionID(sessID uint64) []interface{} {
 			  FROM product_analytics.events
 			  WHERE session_id = ?
 				AND NOT ` + "`$auto_captured`" + `
+				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
 	res := make([]interface{}, 0, len(sessEvents))
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID); err != nil {
-		e.log.Error(context.Background(), "Error querying mobile customs: %v", err)
-		return res
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID, lower, upper); err != nil {
+		return nil, fmt.Errorf("query mobile customs: %s", err)
 	}
 	for _, sessEvent := range sessEvents {
 		sessEvent.Timestamp = sessEvent.CreatedAt.UnixMilli()
 		res = append(res, sessEvent)
 	}
-	return res
+	return res, nil
 }
 
 func (e *eventsImpl) GetClickMaps(projID uint32, sessID uint64, url string) ([]interface{}, error) {

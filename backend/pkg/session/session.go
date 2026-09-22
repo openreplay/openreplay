@@ -17,7 +17,7 @@ import (
 type Service interface {
 	GetReplay(projectID uint32, sessionID uint64, userID string) (*SessionReplay, error)
 	IsExists(projectID uint32, sessionID uint64) (bool, error)
-	GetPlatform(projectID uint32, sessionID uint64) (string, error)
+	GetSessionWindow(projectID uint32, sessionID uint64) (startTs int64, duration *int, found bool, err error)
 	GetFileKey(sessID uint64) (*string, error)
 }
 
@@ -219,11 +219,16 @@ func (s *serviceImpl) IsExists(projectID uint32, sessionID uint64) (bool, error)
 	return exists, nil
 }
 
-func (s *serviceImpl) GetPlatform(projectID uint32, sessionID uint64) (string, error) {
-	query := `SELECT platform FROM public.projects WHERE project_id = $1`
-	var platform string
-	if err := s.conn.QueryRow(query, projectID).Scan(&platform); err != nil {
-		return "", err
+func (s *serviceImpl) GetSessionWindow(projectID uint32, sessionID uint64) (int64, *int, bool, error) {
+	sql := `SELECT start_ts, duration FROM public.sessions
+            WHERE session_id = $1 AND project_id = $2;`
+	var startTs int64
+	var duration *int
+	if err := s.conn.QueryRow(sql, sessionID, projectID).Scan(&startTs, &duration); err != nil {
+		if postgres.IsNoRowsErr(err) {
+			return 0, nil, false, nil
+		}
+		return 0, nil, false, fmt.Errorf("failed to get session window: %s", err)
 	}
-	return platform, nil
+	return startTs, duration, true, nil
 }
