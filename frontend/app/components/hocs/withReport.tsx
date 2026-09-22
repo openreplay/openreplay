@@ -4,7 +4,6 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import jsPDF from 'jspdf';
 
 const TEXT_GENERATING = 'Generating report...';
 const TEXT_SUCCESS = 'Report successfully generated';
@@ -56,15 +55,16 @@ export default function withReport<P extends Props>(
 
     const renderPromise = async (): Promise<any> => {
       setRendering(true);
-      processReport();
+      void processReport();
       toast.info(TEXT_GENERATING, {
         autoClose: false,
         isLoading: true,
       });
     };
 
-    const processReport = () => {
+    const processReport = async () => {
       document.body.scrollIntoView();
+      const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF('p', 'mm', 'a4');
       const now = new Date().toISOString();
 

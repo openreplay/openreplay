@@ -1,17 +1,14 @@
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useInView } from 'react-intersection-observer';
 
-import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
-import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import {
   ERRORS,
   FUNNEL,
@@ -39,20 +36,40 @@ import BarChart from 'Components/Charts/BarChart';
 import ColumnChart from 'Components/Charts/ColumnChart';
 import LineChart from 'Components/Charts/LineChart';
 import PieChart from 'Components/Charts/PieChart';
-import SankeyChart from 'Components/Charts/SankeyChart';
-import SunBurstChart from 'Components/Charts/SunburstChart/Sunburst';
-import WebVitalsChart from 'Components/Charts/WebVitals';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
 import { Icon, Loader } from 'UI';
 
-import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
-import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import { breakdownName } from '../BreakdownFilter/breakdownDimensions';
-import BreakdownDatatable from '../WidgetDatatable/BreakdownDatatable';
-import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import LongLoader from './LongLoader';
+
+// Only one of these renders per card, so each one is its own chunk; the
+// <Suspense> at the render site below covers them all.
+const ClickMapCard = lazy(
+  () =>
+    import('App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard'),
+);
+const InsightsCard = lazy(
+  () =>
+    import('App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard'),
+);
+const FunnelWidget = lazy(() => import('App/components/Funnels/FunnelWidget'));
+const FunnelTable = lazy(
+  () => import('../../../Funnels/FunnelWidget/FunnelTable'),
+);
+const SankeyChart = lazy(() => import('Components/Charts/SankeyChart'));
+const SunBurstChart = lazy(
+  () => import('Components/Charts/SunburstChart/Sunburst'),
+);
+const WebVitalsChart = lazy(() => import('Components/Charts/WebVitals'));
+const CohortCard = lazy(
+  () => import('../../Widgets/CustomMetricsWidgets/CohortCard'),
+);
+const WidgetPredefinedChart = lazy(() => import('../WidgetPredefinedChart'));
+const BreakdownDatatable = lazy(
+  () => import('../WidgetDatatable/BreakdownDatatable'),
+);
 
 interface Props {
   metric: any;
@@ -264,24 +281,37 @@ function WidgetChart(props: Props) {
     debounce(fetchMetricChartData, 500),
     [],
   );
+  const lastRequestKey = useRef<string | undefined>(undefined);
   const loadPage = () => {
     if (!inView) return;
     if (prevMetricRef.current && prevMetricRef.current.name !== _metric.name) {
       prevMetricRef.current = _metric;
       return;
     }
+    const isFirstLoad = prevMetricRef.current === undefined;
     prevMetricRef.current = _metric;
     const timestmaps = drillDownPeriod.toTimestamps();
     const density = dashboardStore.selectedDensity;
     const payload = isSaved
       ? { ...metricParams, density }
       : { ...params, ...timestmaps, ..._metric.toJson(), density };
-    debounceRequest(
-      _metric,
+    const requestPeriod = !isSaved ? drillDownPeriod : period;
+    // both the dependency effect and the page effect call loadPage on mount;
+    // the debounce used to collapse them, the key does it now
+    const requestKey = JSON.stringify([
       payload,
+      requestPeriod.toTimestamps(),
+      _metric.page,
+      _metric.limit,
       isSaved,
-      !isSaved ? drillDownPeriod : period,
-    );
+    ]);
+    if (requestKey === lastRequestKey.current) return;
+    lastRequestKey.current = requestKey;
+    if (isFirstLoad) {
+      fetchMetricChartData(_metric, payload, isSaved, requestPeriod);
+    } else {
+      debounceRequest(_metric, payload, isSaved, requestPeriod);
+    }
   };
 
   const loadComparisonData = () => {
@@ -391,7 +421,6 @@ function WidgetChart(props: Props) {
           data={data}
           compData={compData}
           isWidget={isSaved || isTemplate}
-          height={height}
         />
       );
     }
@@ -407,7 +436,6 @@ function WidgetChart(props: Props) {
           metric={defaultMetric}
           data={data}
           predefinedKey={_metric.metricOf}
-          height={height}
         />
       );
     }
@@ -680,7 +708,7 @@ function WidgetChart(props: Props) {
           </div>
         );
       }
-      return <ClickMapCard height={height} />;
+      return <ClickMapCard />;
     }
 
     if (metricType === INSIGHTS) {
@@ -845,18 +873,20 @@ function WidgetChart(props: Props) {
         )
       ) : (
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
-          {renderChart()}
-          {showTable &&
-          mergedBreakdownData &&
-          Object.keys(mergedBreakdownData).length > 0 ? (
-            <BreakdownDatatable
-              data={mergedBreakdownData}
-              breakdownLabels={_metric.breakdowns}
-              inBuilder={props.isPreview}
-              defaultOpen
-              metric={_metric}
-            />
-          ) : null}
+          <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
+            {renderChart()}
+            {showTable &&
+            mergedBreakdownData &&
+            Object.keys(mergedBreakdownData).length > 0 ? (
+              <BreakdownDatatable
+                data={mergedBreakdownData}
+                breakdownLabels={_metric.breakdowns}
+                inBuilder={props.isPreview}
+                defaultOpen
+                metric={_metric}
+              />
+            ) : null}
+          </Suspense>
         </div>
       )}
     </div>

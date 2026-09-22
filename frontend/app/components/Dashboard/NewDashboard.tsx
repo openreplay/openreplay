@@ -36,15 +36,22 @@ function NewDashboard(props: RouteComponentProps<RouterProps>) {
         history.push(withSiteId(dashboard(), siteId));
       }
     }
-    dashboardStore.fetchList().then((resp) => {
-      if (parseInt(dashboardId) > 0) {
+    dashboardStore.fetchList().then(() => {
+      // DashboardView builds selectedDashboard from the detail call, which
+      // usually wins this race — don't clobber it with the widget-less list row
+      if (
+        parseInt(dashboardId) > 0 &&
+        dashboardStore.selectedDashboard?.dashboardId != dashboardId
+      ) {
         dashboardStore.selectDashboardById(dashboardId);
       }
     });
   }, [siteId]);
 
+  // only the dashboard list reads dashboardStore.dashboards; a dashboard opened
+  // by id fetches its own detail and must not wait for the list
   return (
-    <Loader loading={loading} className="mt-12">
+    <Loader loading={loading && !dashboardId} className="mt-12">
       <DashboardRouter />
     </Loader>
   );

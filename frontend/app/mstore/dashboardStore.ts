@@ -214,13 +214,22 @@ export default class DashboardStore {
       });
   }
 
-  async fetch(dashboardId: string): Promise<any> {
+  async fetch(dashboardId: string): Promise<Dashboard> {
     this.setFetchingDashboard(true);
     try {
       const response = await dashboardService.getDashboard(dashboardId);
-      this.selectedDashboard?.update({
-        widgets: new Dashboard().fromJson(response).widgets,
+      if (!response || !response.dashboardId) {
+        throw new Error(`Dashboard ${dashboardId} not found`);
+      }
+      const detail = new Dashboard().fromJson(response);
+      runInAction(() => {
+        if (this.selectedDashboard?.dashboardId == dashboardId) {
+          this.selectedDashboard.update({ widgets: detail.widgets });
+        } else {
+          this.selectedDashboard = detail;
+        }
       });
+      return this.selectedDashboard!;
     } finally {
       this.setFetchingDashboard(false);
     }
@@ -276,7 +285,9 @@ export default class DashboardStore {
       this.selectedDashboard.updateInfo(info);
     }
     const index = this.dashboards.findIndex((d) => d.dashboardId === id);
-    this.dashboards[index].updateInfo(info);
+    if (index >= 0) {
+      this.dashboards[index].updateInfo(info);
+    }
   }
 
   saveMetric(metric: Widget, dashboardId: string): Promise<any> {
@@ -369,34 +380,6 @@ export default class DashboardStore {
     this.selectedDashboard =
       this.dashboards.find((d) => d.dashboardId == dashboardId) ||
       new Dashboard();
-  };
-
-  getDashboardById = async (dashboardId: string) => {
-    if (!this.listFetched) {
-      const maxWait = (5 * 1000) / 250;
-      let count = 0;
-      await new Promise((resolve) => {
-        const interval = setInterval(() => {
-          if (this.listFetched) {
-            clearInterval(interval);
-            resolve(true);
-          }
-          if (count >= maxWait) {
-            clearInterval(interval);
-            resolve(false);
-          }
-          count++;
-        }, 250);
-      });
-    }
-    const dashboard = this.dashboards.find((d) => d.dashboardId == dashboardId);
-
-    if (dashboard) {
-      this.selectedDashboard = dashboard;
-      return true;
-    }
-    this.selectedDashboard = null;
-    return false;
   };
 
   resetSelectedDashboard = () => {
@@ -584,7 +567,12 @@ export default class DashboardStore {
           data.events = [];
         }
 
-        const res = metric.setData(data, period, isComparison, data.density);
+        const res = metric.setData(
+          data,
+          period,
+          isComparison,
+          data.density ?? params.density,
+        );
         resolve(res);
       } catch (error) {
         reject(error);

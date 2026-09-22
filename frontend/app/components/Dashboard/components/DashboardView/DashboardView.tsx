@@ -72,20 +72,17 @@ function DashboardView(props: Props) {
   }, []);
 
   useEffect(() => {
-    const isExists = async () => dashboardStore.getDashboardById(dashboardId);
-    isExists().then((res) => {
-      if (!res) {
-        history.push(withSiteId('/dashboard', siteId));
-      }
+    let cancelled = false;
+    // the detail call is both the data and the existence check
+    dashboardStore.fetch(dashboardId).catch(() => {
+      if (!cancelled) history.push(withSiteId('/dashboard', siteId));
     });
+    return () => {
+      cancelled = true;
+    };
   }, [dashboardId]);
 
-  useEffect(() => {
-    if (!dashboard || !dashboard.dashboardId) return;
-    dashboardStore.fetch(dashboard.dashboardId);
-  }, [dashboard]);
-
-  if (!dashboard) return null;
+  if (!dashboard) return <Loader loading className="mt-12" />;
   return (
     <Loader loading={loading}>
       <div

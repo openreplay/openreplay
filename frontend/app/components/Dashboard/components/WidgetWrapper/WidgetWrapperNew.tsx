@@ -1,7 +1,7 @@
 import { Card, Tooltip } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import React, { lazy, useRef } from 'react';
+import React, { Suspense, lazy, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +12,7 @@ import { RouteComponentProps, withRouter } from 'App/routing';
 import { FilterKey } from 'App/types/filter/filterType';
 import AlertButton from 'Components/Dashboard/components/WidgetWrapper/AlertButton';
 import CardMenu from 'Components/Dashboard/components/WidgetWrapper/CardMenu';
+import { Loader } from 'UI';
 
 import TemplateOverlay from './TemplateOverlay';
 import stl from './widgetWrapper.module.css';
@@ -108,6 +109,7 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
   const beforeAlertInit = () => {
     metricStore.init(widget);
   };
+  const seriesId = widget.series[0] && widget.series[0].seriesId;
   return (
     <Card
       className={cn(
@@ -129,11 +131,8 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
       title={!props.hideName ? widget.name : null}
       extra={[
         <div className="flex items-center" id="no-print">
-          {!isPredefined && isTimeSeries && !isGridView && (
-            <AlertButton
-              initAlert={beforeAlertInit}
-              seriesId={widget.series[0] && widget.series[0].seriesId}
-            />
+          {!isPredefined && isTimeSeries && !isGridView && seriesId && (
+            <AlertButton initAlert={beforeAlertInit} seriesId={seriesId} />
           )}
 
           {showMenu && <CardMenu card={widget} key="card-menu" />}
@@ -170,13 +169,15 @@ function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
       )}
 
       <div className="px-4 flex-1" onClick={onChartClick}>
-        <WidgetChart
-          isPreview={isPreview}
-          metric={widget}
-          isTemplate={isTemplate}
-          isWidget={isWidget}
-          isSaved={isSaved}
-        />
+        <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
+          <WidgetChart
+            isPreview={isPreview}
+            metric={widget}
+            isTemplate={isTemplate}
+            isWidget={isWidget}
+            isSaved={isSaved}
+          />
+        </Suspense>
       </div>
     </Card>
   );

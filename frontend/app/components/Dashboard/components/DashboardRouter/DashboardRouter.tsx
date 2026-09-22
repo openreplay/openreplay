@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 
 import { useHistory, useLocation, useParams } from 'App/routing';
+import { Loader } from 'UI';
 
-import Alerts from '../Alerts';
-import CreateAlert from '../Alerts/NewAlert';
 import DashboardsView from '../DashboardList';
 import DashboardView from '../DashboardView';
-import MetricsView from '../MetricsView';
-import WidgetSubDetailsView from '../WidgetSubDetailsView';
-import WidgetView from '../WidgetView';
+
+// the card builder and the alert views are never on screen with the dashboard
+// grid, so they stay out of its chunk
+const Alerts = lazy(() => import('../Alerts'));
+const CreateAlert = lazy(() => import('../Alerts/NewAlert'));
+const MetricsView = lazy(() => import('../MetricsView'));
+const WidgetSubDetailsView = lazy(() => import('../WidgetSubDetailsView'));
+const WidgetView = lazy(() => import('../WidgetView'));
 
 type RouterParams = {
   siteId?: string;
@@ -35,29 +39,38 @@ function DashboardRouter() {
 
   if (!siteId) return null;
 
-  if (section === 'metrics') {
-    if (subId) return <WidgetSubDetailsView siteId={siteId} {...routeProps} />;
-    if (metricId) return <WidgetView siteId={siteId} {...routeProps} />;
-    return <MetricsView siteId={siteId} />;
-  }
+  const renderView = () => {
+    if (section === 'metrics') {
+      if (subId)
+        return <WidgetSubDetailsView siteId={siteId} {...routeProps} />;
+      if (metricId) return <WidgetView siteId={siteId} {...routeProps} />;
+      return <MetricsView siteId={siteId} />;
+    }
 
-  if (section === 'dashboard') {
-    if (metricId) return <WidgetView siteId={siteId} {...routeProps} />;
-    if (dashboardId)
-      return <DashboardView siteId={siteId} dashboardId={dashboardId} />;
-    return <DashboardsView siteId={siteId} history={history} />;
-  }
+    if (section === 'dashboard') {
+      if (metricId) return <WidgetView siteId={siteId} {...routeProps} />;
+      if (dashboardId)
+        return <DashboardView siteId={siteId} dashboardId={dashboardId} />;
+      return <DashboardsView siteId={siteId} history={history} />;
+    }
 
-  if (section === 'alerts') {
-    return <Alerts siteId={siteId} />;
-  }
+    if (section === 'alerts') {
+      return <Alerts siteId={siteId} />;
+    }
 
-  if (section === 'alert') {
-    // @ts-ignore
-    return <CreateAlert siteId={siteId} {...routeProps} />;
-  }
+    if (section === 'alert') {
+      // @ts-ignore
+      return <CreateAlert siteId={siteId} {...routeProps} />;
+    }
 
-  return null;
+    return null;
+  };
+
+  return (
+    <Suspense fallback={<Loader loading className="mt-12" />}>
+      {renderView()}
+    </Suspense>
+  );
 }
 
 export default DashboardRouter;

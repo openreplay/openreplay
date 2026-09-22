@@ -53,7 +53,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
 
   const errors = data.errors || [];
   const displayedData = props.inGrid ? errors.slice(0, 3) : errors;
-  const rest = errors.length - displayedData.length;
+  const rest = (data.total ?? errors.length) - displayedData.length;
   return (
     <NoContent
       title={

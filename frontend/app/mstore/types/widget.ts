@@ -1,5 +1,8 @@
 import Period, { LAST_24_HOURS } from 'Types/app/period';
-import { getChartFormatter } from 'Types/dashboard/helper';
+import {
+  fillTimeseriesGaps,
+  getChartFormatter,
+} from 'Types/dashboard/helper';
 import { FilterKey } from 'Types/filter/filterType';
 import { DateTime } from 'luxon';
 import { makeAutoObservable, observable, runInAction } from 'mobx';
@@ -729,7 +732,9 @@ export default class Widget {
         const { chart, namesMap, breakdownData } =
           this.transformNewSeriesFormat(data.series, isComparison);
 
-        _data['chart'] = (getChartFormatter(period, density) as any)(chart);
+        _data['chart'] = (getChartFormatter(period, density) as any)(
+          fillTimeseriesGaps(chart, period, density),
+        );
         _data['namesMap'] = namesMap;
         _data['value'] = data.value;
         _data['unit'] = data.unit;
