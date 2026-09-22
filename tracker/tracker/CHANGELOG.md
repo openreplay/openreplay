@@ -1,3 +1,18 @@
+## 18.2.0
+
+- ship one flat `.d.ts` per entry point instead of the per-file declaration tree:
+  the emitted declarations carried extensionless relative imports, which fail to
+  resolve for consumers on `moduleResolution: node16`/`nodenext` with
+  `skipLibCheck: false` (TS2834)
+- mark `dist/cjs` as `"type": "commonjs"`: the package root declares
+  `"type": "module"`, so Node loaded the CommonJS bundle as ESM and
+  `require('@openreplay/tracker')` threw `exports is not defined in ES module scope`
+- resolve types per condition in `exports`, so a `require` consumer gets the
+  CommonJS declarations rather than the ESM ones, and add `typesVersions` so the
+  `/class` and `/cjs` subpaths resolve for pre-`exports` resolvers
+- add `test:types`, `test:pack` (arethetypeswrong) and a declaration-consumer
+  fixture, run in CI and on `prepublishOnly`
+
 ## 18.1.6
 
 - fixing analytics sdk batcher squash operation to keep user_id property in mixed sends

@@ -54,6 +54,13 @@ jobs:
           cd tracker/tracker
           bun run build
 
+      - name: Published types and package entry points
+        run: |
+          cd tracker/tracker
+          bun run test:types
+          node tests-dts/require.cjs
+          bun run test:pack
+
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
