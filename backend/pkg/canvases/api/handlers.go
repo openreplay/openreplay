@@ -9,15 +9,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path/filepath"
 	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	config "openreplay/backend/internal/config/canvases"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/cleanup/registry"
+	"openreplay/backend/pkg/frames"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/api"
@@ -53,11 +51,9 @@ func (h *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-type ImagesMessage struct {
-	Name string
-	Data []byte
-}
-
+// framesFileName is the only accepted shape for a client-supplied frames file name.
+// Go's multipart parser already strips directory components (RFC 7578 §4.2);
+// this keeps the guarantee explicit instead of relying on stdlib behaviour.
 var framesFileName = regexp.MustCompile(`^[0-9A-Za-z_.-]+\.frames$`)
 
 func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +73,7 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
 	}
+	// ParseMultipartForm's argument only caps in-memory buffering; the total body size must be bounded separately.
 	r.Body = http.MaxBytesReader(w, r.Body, h.cfg.FileSizeLimit)
 	defer r.Body.Close()
 
@@ -102,8 +99,8 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		h.cleanupReg.Register(sessionData.ID, false, sessionData.ExpTime+registry.DeadlineGraceMs)
 	}
 
-	frames := bytes.NewBuffer([]byte{})
-	msg := ImagesMessage{}
+	framesBuf := bytes.NewBuffer([]byte{})
+	msg := frames.Message{}
 
 	// Iterate over uploaded files
 	for _, fileHeaderList := range r.MultipartForm.File {
@@ -132,7 +129,7 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 					return
 				}
 
-				data, err := json.Marshal(&ImagesMessage{
+				data, err := json.Marshal(&frames.Message{
 					Name: fileName,
 					Data: fileBytes,
 				})
@@ -148,7 +145,7 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 				return
 			}
 
-			baseName, ts, err := parseImageName(fileName)
+			baseName, ts, err := frames.ParseFrameName(fileName)
 			if err != nil {
 				h.log.Error(r.Context(), "can't parse canvas name %s: %s", fileName, err)
 				continue
@@ -156,17 +153,17 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			if msg.Name == "" {
 				msg.Name = baseName
 			}
-			if err := binary.Write(frames, binary.LittleEndian, ts); err != nil {
+			if err := binary.Write(framesBuf, binary.LittleEndian, ts); err != nil {
 				h.log.Error(r.Context(), "can't write frame's time for %s: %s", fileName, err)
 			}
-			if err := binary.Write(frames, binary.LittleEndian, uint32(len(fileBytes))); err != nil {
+			if err := binary.Write(framesBuf, binary.LittleEndian, uint32(len(fileBytes))); err != nil {
 				h.log.Error(r.Context(), "can't write frame's size for %s: %s", fileName, err)
 			}
-			frames.Write(fileBytes)
+			framesBuf.Write(fileBytes)
 		}
 	}
 
-	if frames.Len() == 0 {
+	if framesBuf.Len() == 0 {
 		h.log.Warn(r.Context(), "no frames to upload")
 		h.responser.ResponseOK(h.log, r.Context(), w, startTime, r.URL.Path, 0)
 		return
@@ -174,7 +171,7 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 
 	h.log.Debug(r.Context(), "uploading image, name: %s", msg.Name)
 
-	msg.Data = frames.Bytes()
+	msg.Data = framesBuf.Bytes()
 	data, err := json.Marshal(&msg)
 	if err != nil {
 		h.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
@@ -186,20 +183,4 @@ func (h *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	}
 
 	h.responser.ResponseOK(h.log, r.Context(), w, startTime, r.URL.Path, 0)
-}
-
-func parseImageName(canvasName string) (baseName string, ts uint64, err error) {
-	ext := filepath.Ext(canvasName) // .webp, .png, .jpg, .avif
-	name := strings.TrimSuffix(canvasName, ext)
-	// Last segment after '_' is the timestamp
-	idx := strings.LastIndex(name, "_")
-	if idx < 0 {
-		return "", 0, fmt.Errorf("canvas name has no underscore: %s", canvasName)
-	}
-	baseName = name[:idx] + ext // for example "1771238515501_33.webp"
-	ts, err = strconv.ParseUint(name[idx+1:], 10, 64)
-	if err != nil {
-		return "", 0, fmt.Errorf("can't parse timestamp from canvas name %s: %w", canvasName, err)
-	}
-	return baseName, ts, nil
 }
