@@ -605,6 +605,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
 		"issue_type":       "mouse_thrashing",
 		"url":              cropString(msg.Url),
+		"context_string":   cropString(msg.Url),
 		"url_host":         host,
 		"url_path":         path,
 		"url_hostpath":     hostpath,

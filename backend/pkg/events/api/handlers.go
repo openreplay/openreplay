@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/events"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/session"
 )
@@ -19,15 +20,17 @@ type handlersImpl struct {
 	responser     api.Responser
 	events        events.Events
 	sessions      session.Service
+	projects      projects.Projects
 	jsonSizeLimit int64
 }
 
-func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, events events.Events, sessions session.Service) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, events events.Events, sessions session.Service, projects projects.Projects) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
 		events:        events,
 		sessions:      sessions,
+		projects:      projects,
 		jsonSizeLimit: cfg.JsonSizeLimit,
 	}, nil
 }
@@ -39,9 +42,7 @@ func (h *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-const (
-	GroupClickRage bool = true
-)
+const sessionWindowMargin = time.Hour
 
 func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
@@ -59,52 +60,107 @@ func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isSessionExists, err := h.sessions.IsExists(projID, sessID)
+	sessStartTs, sessDuration, found, err := h.sessions.GetSessionWindow(projID, sessID)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	if !isSessionExists {
+	if !found {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, errors.New("wrong session id"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	platform, err := h.sessions.GetPlatform(projID, sessID)
+	project, err := h.projects.GetProject(projID)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	platform := project.Platform
 
-	async := func(wg *sync.WaitGroup, fn func()) {
+	lower := time.UnixMilli(sessStartTs).Add(-sessionWindowMargin)
+	var upper time.Time
+	if sessDuration != nil && *sessDuration > 1000 {
+		upper = time.UnixMilli(sessStartTs).Add(time.Duration(*sessDuration) * time.Millisecond).Add(sessionWindowMargin)
+	} else {
+		upper = time.Now().Add(sessionWindowMargin)
+	}
+
+	runLane := func(wg *sync.WaitGroup, name string, fn func() error) *error {
+		var laneErr error
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fn()
+			laneStart := time.Now()
+			laneErr = fn()
+			h.log.Debug(r.Context(), "events lane %s took %s", name, time.Since(laneStart))
 		}()
+		return &laneErr
 	}
+
 	var (
 		wg            sync.WaitGroup
-		eventsRes     interface{}
-		errorsRes     interface{}
-		userEventsRes interface{}
-		crashesRes    interface{}
-		issuesRes     interface{}
-		incidentsRes  interface{}
+		rawEvents     = make([]interface{}, 0)
+		errorsRes     = make([]interface{}, 0)
+		userEventsRes = make([]interface{}, 0)
+		crashesRes    = make([]interface{}, 0)
+		issuesRes     = make([]interface{}, 0)
+		incidentsRes  = make([]interface{}, 0)
+		clickRage     = make([]interface{}, 0)
 	)
 
+	var eventsErr, errorsErr, customsErr, crashesErr *error
+	issuesErr := runLane(&wg, "issues", func() error {
+		var err error
+		issuesRes, incidentsRes, clickRage, err = h.events.GetIssueEventsBySessionID(projID, sessID, lower, upper)
+		return err
+	})
+
 	if platform == "web" {
-		async(&wg, func() { eventsRes = h.events.GetBySessionID(projID, sessID, GroupClickRage) })
-		async(&wg, func() { errorsRes = h.events.GetErrorsBySessionID(projID, sessID) })
-		async(&wg, func() { userEventsRes = h.events.GetCustomsBySessionID(projID, sessID) })
+		eventsErr = runLane(&wg, "events", func() error {
+			var err error
+			rawEvents, err = h.events.GetSessionEvents(projID, sessID, lower, upper)
+			return err
+		})
+		errorsErr = runLane(&wg, "errors", func() error {
+			res, err := h.events.GetErrorsBySessionID(projID, sessID, lower, upper)
+			for _, r := range res {
+				errorsRes = append(errorsRes, r)
+			}
+			return err
+		})
+		customsErr = runLane(&wg, "customs", func() error {
+			var err error
+			userEventsRes, err = h.events.GetCustomsBySessionID(projID, sessID, lower, upper)
+			return err
+		})
 	} else {
-		async(&wg, func() { eventsRes = h.events.GetMobileBySessionID(projID, sessID) })
-		async(&wg, func() { crashesRes = h.events.GetMobileCrashesBySessionID(sessID) })
-		async(&wg, func() { userEventsRes = h.events.GetMobileCustomsBySessionID(sessID) })
+		eventsErr = runLane(&wg, "events", func() error {
+			var err error
+			rawEvents, err = h.events.GetMobileSessionEvents(projID, sessID, lower, upper)
+			return err
+		})
+		crashesErr = runLane(&wg, "crashes", func() error {
+			var err error
+			crashesRes, err = h.events.GetMobileCrashesBySessionID(sessID, lower, upper)
+			return err
+		})
+		customsErr = runLane(&wg, "customs", func() error {
+			var err error
+			userEventsRes, err = h.events.GetMobileCustomsBySessionID(sessID, lower, upper)
+			return err
+		})
 	}
-	async(&wg, func() { issuesRes = h.events.GetIssuesBySessionID(projID, sessID) })
-	async(&wg, func() { incidentsRes = h.events.GetIncidentsBySessionID(projID, sessID) })
 
 	wg.Wait()
+
+	for _, laneErr := range []*error{eventsErr, issuesErr, errorsErr, customsErr, crashesErr} {
+		if laneErr != nil && *laneErr != nil {
+			h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, *laneErr, startTime, r.URL.Path, bodySize)
+			return
+		}
+	}
+
+	eventsRes := h.events.GroupClicksToClickRage(rawEvents, clickRage)
 
 	response := map[string]interface{}{
 		"events":     eventsRes,
