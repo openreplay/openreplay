@@ -15,42 +15,66 @@
   "type": "module",
   "exports": {
     ".": {
-      "require": "./dist/cjs/entry.js",
-      "import": "./dist/lib/entry.js",
-      "types": "./dist/lib/main/entry.d.ts"
+      "import": {
+        "types": "./dist/lib/entry.d.ts",
+        "default": "./dist/lib/entry.js"
+      },
+      "require": {
+        "types": "./dist/cjs/entry.d.ts",
+        "default": "./dist/cjs/entry.js"
+      }
     },
     "./class": {
-      "require": "./dist/cjs/index.js",
-      "import": "./dist/lib/index.js",
-      "types": "./dist/lib/main/index.d.ts"
+      "import": {
+        "types": "./dist/lib/index.d.ts",
+        "default": "./dist/lib/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./cjs": {
-      "require": "./dist/cjs/entry.js",
-      "types": "./dist/cjs/main/entry.d.ts"
-    }
+      "types": "./dist/cjs/entry.d.ts",
+      "default": "./dist/cjs/entry.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist/lib/**/*",
-    "dist/cjs/**/*",
-    "dist/types/**/*"
+    "dist/cjs/**/*"
   ],
   "main": "./dist/cjs/entry.js",
   "module": "./dist/lib/entry.js",
-  "types": "./dist/lib/main/entry.d.ts",
+  "types": "./dist/lib/entry.d.ts",
+  "typesVersions": {
+    "*": {
+      "class": [
+        "./dist/lib/index.d.ts"
+      ],
+      "cjs": [
+        "./dist/cjs/entry.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "lint": "eslint src --ext .ts,.js --fix --quiet",
     "clean": "rm -Rf build && rm -Rf dist",
     "build:common": "tsc -b src/common",
     "compile": "tsc --project src/main/tsconfig.json",
-    "create-types": "mkdir dist/lib/ dist/cjs && cp -r dist/types/* dist/lib/ && cp -r dist/types/* dist/cjs/",
-    "build": "bun run clean && bun run compile && bun run create-types && rollup --config rollup.config.js",
-    "build:fast": "bun run compile && rollup --config rollup.config.js",
+    "build:types": "rollup --config rollup.dts.config.js",
+    "create-types": "mkdir -p dist/lib dist/cjs && printf '{\\n  \"type\": \"commonjs\"\\n}\\n' > dist/cjs/package.json && bun run build:types && cp dist/lib/entry.d.ts dist/lib/index.d.ts dist/cjs/",
+    "build": "bun run clean && bun run compile && rollup --config rollup.config.js && bun run create-types",
+    "build:fast": "bun run compile && rollup --config rollup.config.js && bun run create-types",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
+    "test:types": "tsc --noEmit --project tests-dts/tsconfig.json",
+    "test:pack": "attw --pack . --ignore-rules cjs-only-exports-default",
     "postversion": "bun run build",
-    "prepublishOnly": "bun run test && bun run build"
+    "prepublishOnly": "bun run test && bun run build && bun run test:types && node tests-dts/require.cjs && bun run test:pack"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
     "@babel/core": "^7.29.7",
     "@babel/plugin-transform-modules-commonjs": "^7.29.7",
     "@jest/globals": "^30.4.1",
@@ -70,6 +94,7 @@
     "jest-environment-jsdom": "^30.4.1",
     "prettier": "^3.9.6",
     "rollup": "^4.62.3",
+    "rollup-plugin-dts": "^6.5.1",
     "semver": "^6.3.0",
     "ts-jest": "^29.4.12",
     "tslib": "^2.8.1",
