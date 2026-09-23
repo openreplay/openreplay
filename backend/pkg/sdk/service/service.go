@@ -27,6 +27,9 @@ const (
 	leaderLockKey             = "pa-updater:leader-lock"
 	leaderLockTTL             = 5 * time.Minute
 	leaderLockRefreshInterval = 1 * time.Minute
+	// devicesPerQuery bounds the size of the IN clause in selectEventsQuery
+	devicesPerQuery = 500
+	zeroUUID        = "00000000-0000-0000-0000-000000000000"
 )
 
 type SdkDataSaver interface {
@@ -382,19 +385,28 @@ func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
 		}
 
 		for ds.currUserIndex < len(ds.currUsersBatch) {
-			user := &ds.currUsersBatch[ds.currUserIndex]
-			ds.log.Debug(ctx, "processing user: project_id=%d, distinct_id=%s, user_id=%s",
-				user.ProjectID, user.DistinctID, user.UserID)
+			end := min(ds.currUserIndex+devicesPerQuery, len(ds.currUsersBatch))
+			chunk := ds.currUsersBatch[ds.currUserIndex:end]
+			ds.log.Debug(ctx, "processing users %d..%d of batch", ds.currUserIndex, end)
 
-			eventsProcessed, err := ds.processUserEvents(ctx, batch, user)
+			eventsProcessed, completed, err := ds.processUsersEvents(ctx, batch, chunk,
+				ds.cfg.CHSendBatchSizeLimit-totalEventsProcessed)
 			if err != nil {
-				ds.log.Error(ctx, "can't process events for user %s: %s", user.UserID, err)
-				// Move to next user anyway
+				ds.log.Error(ctx, "can't process events for users chunk: %s", err)
+				// Move to the next chunk anyway
+				completed = true
 			}
 			totalEventsProcessed += eventsProcessed
-			totalUsersProcessed++
-			ds.lastTs = user.Timestamp
-			ds.currUserIndex++
+			if !completed {
+				// Batch limit reached mid-chunk: keep the cursor on this chunk so the next
+				// tick re-processes it; events sent in this batch will carry a user_id and
+				// be filtered out by the HAVING clause.
+				ds.log.Debug(ctx, "reached batch limit (%d events) mid-chunk, will continue next tick", totalEventsProcessed)
+				break
+			}
+			totalUsersProcessed += len(chunk)
+			ds.lastTs = chunk[len(chunk)-1].Timestamp
+			ds.currUserIndex = end
 
 			if totalEventsProcessed >= ds.cfg.CHSendBatchSizeLimit {
 				ds.log.Debug(ctx, "reached batch limit (%d events), will continue next tick", totalEventsProcessed)
@@ -420,12 +432,9 @@ func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
 }
 
 // Parameters: timestamp + limit size
-var selectUsers = `SELECT *
-FROM (
-    SELECT project_id, distinct_id, "$user_id", _timestamp
-    FROM product_analytics.users_distinct_id
-    ORDER BY _timestamp DESC
-    LIMIT 1 BY project_id, distinct_id) AS raw
+var selectUsers = `
+SELECT project_id, distinct_id, "$user_id", _timestamp
+FROM product_analytics.users_distinct_id FINAL
 WHERE _timestamp < ?
 ORDER BY _timestamp DESC
 LIMIT ?;`
@@ -453,45 +462,78 @@ func (ds *dataSaverImpl) loadUsersBatch(ctx context.Context) error {
 	return nil
 }
 
-func (ds *dataSaverImpl) processUserEvents(ctx context.Context, batch clickhouse.Batch, user *UserRecord) (int, error) {
-	totalCount := 0
-	offset := 0
+// processUsersEvents updates events for a chunk of users with one query series per project.
+// It returns the number of events appended and whether the whole chunk was processed;
+// completed=false means the events budget ran out and the chunk must be re-processed later.
+func (ds *dataSaverImpl) processUsersEvents(ctx context.Context, batch clickhouse.Batch, users []UserRecord, budget int) (int, bool, error) {
+	devicesByProject := make(map[uint16][]string)
+	usersByDevice := make(map[uint16]map[string]*UserRecord)
+	for i := range users {
+		user := &users[i]
+		devicesByProject[user.ProjectID] = append(devicesByProject[user.ProjectID], user.DistinctID)
+		if usersByDevice[user.ProjectID] == nil {
+			usersByDevice[user.ProjectID] = make(map[string]*UserRecord)
+		}
+		usersByDevice[user.ProjectID][user.DistinctID] = user
+	}
 
+	total := 0
+	for projectID, deviceIDs := range devicesByProject {
+		count, completed, err := ds.processProjectEvents(ctx, batch, projectID, deviceIDs, usersByDevice[projectID], budget-total)
+		total += count
+		if err != nil {
+			return total, false, err
+		}
+		if !completed {
+			return total, false, nil
+		}
+	}
+	return total, true, nil
+}
+
+func (ds *dataSaverImpl) processProjectEvents(ctx context.Context, batch clickhouse.Batch, projectID uint16,
+	deviceIDs []string, usersByDevice map[string]*UserRecord, budget int) (int, bool, error) {
+	if budget <= 0 {
+		return 0, false, nil
+	}
+
+	lastEventID := zeroUUID
+	total := 0
 	for {
 		rows := make([]UserEvent, 0, ds.cfg.CHReadBatchSizeLimit)
 		if err := ds.conn.Select(ctx, &rows, selectEventsQuery,
-			user.ProjectID, user.DistinctID, ds.cfg.CHReadBatchSizeLimit, offset); err != nil {
-			return totalCount, fmt.Errorf("failed to select events: %w", err)
+			projectID, deviceIDs, lastEventID, ds.cfg.CHReadBatchSizeLimit); err != nil {
+			return total, false, fmt.Errorf("failed to select events: %w", err)
 		}
 		if len(rows) == 0 {
-			if totalCount == 0 {
-				ds.log.Debug(ctx, "no events without user_id for user: %s", user.UserID)
-			}
 			break
 		}
-		ds.log.Debug(ctx, "found %d events to update for user: %s (offset: %d)", len(rows), user.UserID, offset)
+		ds.log.Debug(ctx, "found %d events to update for project: %d (cursor: %s)", len(rows), projectID, lastEventID)
 
-		count, err := addUserEvents(batch, rows, user)
+		count, err := addUserEvents(batch, rows, usersByDevice)
+		total += count
 		if err != nil {
-			return totalCount + count, fmt.Errorf("failed to add events to batch: %w", err)
+			return total, false, fmt.Errorf("failed to add events to batch: %w", err)
 		}
-		totalCount += count
-		offset += count
+		lastEventID = rows[len(rows)-1].EventID
 
 		if len(rows) < ds.cfg.CHReadBatchSizeLimit {
 			break
 		}
+		if total >= budget {
+			return total, false, nil
+		}
 	}
-
-	if totalCount > 0 {
-		ds.log.Debug(ctx, "processed total %d events for user: %s", totalCount, user.UserID)
-	}
-
-	return totalCount, nil
+	return total, true, nil
 }
 
-func addUserEvents(batch clickhouse.Batch, rows []UserEvent, userRec *UserRecord) (int, error) {
+func addUserEvents(batch clickhouse.Batch, rows []UserEvent, usersByDevice map[string]*UserRecord) (int, error) {
+	added := 0
 	for i := 0; i < len(rows); i++ {
+		userRec, ok := usersByDevice[rows[i].DeviceID]
+		if !ok {
+			continue
+		}
 		if err := batch.Append(
 			rows[i].SessionID,
 			userRec.ProjectID,
@@ -519,10 +561,11 @@ func addUserEvents(batch clickhouse.Batch, rows []UserEvent, userRec *UserRecord
 			rows[i].ACProperties,
 			rows[i].Properties,
 		); err != nil {
-			return i, err
+			return added, err
 		}
+		added++
 	}
-	return len(rows), nil
+	return added, nil
 }
 
 type UserRecord struct {
@@ -532,17 +575,37 @@ type UserRecord struct {
 	Timestamp  time.Time `ch:"_timestamp"`
 }
 
-var selectEventsQuery = `SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured",
-       "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url",
-       "$duration_s", error_id, issue_type, issue_id, toString("$properties") AS "$properties", toString(properties) AS properties, "$user_id"
-FROM (SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured",
-       "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url",
-       "$duration_s", error_id, issue_type, issue_id, "$properties", properties, "$user_id"
-      FROM product_analytics.events
-      WHERE project_id = ? AND "$device_id" = ? AND _timestamp > now() - INTERVAL 2 DAY AND _timestamp <= now()
-      ORDER BY _timestamp DESC
-      LIMIT 1 BY event_id, created_at)
-WHERE empty("$user_id") LIMIT ? OFFSET ?;`
+// no need to transform properties and $properties toString if you are reading map[string]interface{}, it makes the query faster
+// Parameters: project_id, device_ids, last event_id cursor, limit.
+// GROUP BY + argMax dedups versions without sorting; the HAVING keeps the
+// "check user_id after dedup" semantics, so already-updated events are excluded.
+var selectEventsQuery = `SELECT "$device_id", session_id, event_id, created_at,
+       argMax("$event_name", _timestamp) AS "$event_name",
+       argMax("$time", _timestamp) AS "$time",
+       argMax("$auto_captured", _timestamp) AS "$auto_captured",
+       argMax("$device", _timestamp) AS "$device",
+       argMax("$os_version", _timestamp) AS "$os_version",
+       argMax("$os", _timestamp) AS "$os",
+       argMax("$browser", _timestamp) AS "$browser",
+       argMax("$referrer", _timestamp) AS "$referrer",
+       argMax("$country", _timestamp) AS "$country",
+       argMax("$state", _timestamp) AS "$state",
+       argMax("$city", _timestamp) AS "$city",
+       argMax("$current_url", _timestamp) AS "$current_url",
+       argMax("$duration_s", _timestamp) AS "$duration_s",
+       argMax(error_id, _timestamp) AS error_id,
+       argMax(issue_type, _timestamp) AS issue_type,
+       argMax(issue_id, _timestamp) AS issue_id,
+       argMax("$properties", _timestamp) AS "$properties",
+       argMax(properties, _timestamp) AS properties
+FROM product_analytics.events
+WHERE project_id = ? AND "$device_id" IN (?)
+	AND _timestamp > now() - INTERVAL 2 DAY AND created_at > now() - INTERVAL 3 DAY
+	AND event_id > toUUID(?)
+GROUP BY "$device_id", session_id, event_id, created_at
+HAVING empty(argMax("$user_id", _timestamp))
+ORDER BY event_id
+LIMIT ?;`
 
 var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, 
                                       "$time", distinct_id, "$device_id", "$user_id", "$auto_captured", "$device", 
@@ -551,29 +614,28 @@ var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, proje
                                       properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 type UserEvent struct {
-	SessionID    uint64    `ch:"session_id"`
-	EventID      string    `ch:"event_id"`
-	EventName    string    `ch:"$event_name"`
-	CreatedAt    time.Time `ch:"created_at"`
-	Timestamp    uint32    `ch:"$time"`
-	DeviceID     string    `ch:"$device_id"`
-	AutoCapture  bool      `ch:"$auto_captured"`
-	Device       string    `ch:"$device"`
-	OSVersion    string    `ch:"$os_version"`
-	Os           string    `ch:"$os"`
-	Browser      string    `ch:"$browser"`
-	Referrer     *string   `ch:"$referrer"`
-	Country      string    `ch:"$country"`
-	State        string    `ch:"$state"`
-	City         string    `ch:"$city"`
-	CurrentURL   string    `ch:"$current_url"`
-	DurationS    uint16    `ch:"$duration_s"`
-	ErrorID      string    `ch:"error_id"`
-	IssueType    string    `ch:"issue_type"`
-	IssueID      string    `ch:"issue_id"`
-	ACProperties string    `ch:"$properties"`
-	Properties   string    `ch:"properties"`
-	UserID       *string   `ch:"$user_id"`
+	SessionID    uint64                 `ch:"session_id"`
+	EventID      string                 `ch:"event_id"`
+	EventName    string                 `ch:"$event_name"`
+	CreatedAt    time.Time              `ch:"created_at"`
+	Timestamp    uint32                 `ch:"$time"`
+	DeviceID     string                 `ch:"$device_id"`
+	AutoCapture  bool                   `ch:"$auto_captured"`
+	Device       string                 `ch:"$device"`
+	OSVersion    string                 `ch:"$os_version"`
+	Os           string                 `ch:"$os"`
+	Browser      string                 `ch:"$browser"`
+	Referrer     *string                `ch:"$referrer"`
+	Country      string                 `ch:"$country"`
+	State        string                 `ch:"$state"`
+	City         string                 `ch:"$city"`
+	CurrentURL   string                 `ch:"$current_url"`
+	DurationS    uint16                 `ch:"$duration_s"`
+	ErrorID      string                 `ch:"error_id"`
+	IssueType    string                 `ch:"issue_type"`
+	IssueID      string                 `ch:"issue_id"`
+	ACProperties map[string]interface{} `ch:"$properties"`
+	Properties   map[string]interface{} `ch:"properties"`
 }
 
 func (ds *dataSaverImpl) Stop() {
