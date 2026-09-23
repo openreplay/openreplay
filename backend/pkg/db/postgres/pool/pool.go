@@ -19,6 +19,7 @@ type Pool interface {
 	Query(sql string, args ...interface{}) (pgx.Rows, error)
 	QueryRow(sql string, args ...interface{}) pgx.Row
 	Exec(sql string, arguments ...interface{}) error
+	ExecContext(ctx context.Context, sql string, arguments ...interface{}) error
 	SendBatch(b *pgx.Batch) pgx.BatchResults
 	Begin() (*Tx, error)
 	Ping(ctx context.Context) error
@@ -80,6 +81,15 @@ func (p *poolImpl) QueryRow(sql string, args ...interface{}) pgx.Row {
 func (p *poolImpl) Exec(sql string, arguments ...interface{}) error {
 	start := time.Now()
 	_, err := p.conn.Exec(getTimeoutContext(), sql, arguments...)
+	method, table := methodName(sql)
+	p.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	p.metrics.IncreaseTotalRequests(method, table)
+	return err
+}
+
+func (p *poolImpl) ExecContext(ctx context.Context, sql string, arguments ...interface{}) error {
+	start := time.Now()
+	_, err := p.conn.Exec(ctx, sql, arguments...)
 	method, table := methodName(sql)
 	p.metrics.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
 	p.metrics.IncreaseTotalRequests(method, table)

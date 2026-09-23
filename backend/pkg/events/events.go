@@ -414,7 +414,7 @@ type issueEventRow struct {
 }
 
 func (e *eventsImpl) GetIssueEventsBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, []interface{}, []interface{}, error) {
-	query := `SELECT DISTINCT ON (created_at, issue_id) event_id,
+	query := `SELECT DISTINCT ON (event_id) event_id,
 					created_at,
 					issue_id,
 					issue_type,

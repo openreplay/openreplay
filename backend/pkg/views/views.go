@@ -37,7 +37,7 @@ func (v *viewsImpl) AddSessionView(ctx context.Context, projID uint32, sessID ui
 
 func (v *viewsImpl) addToPostgres(ctx context.Context, sessID uint64, userID string) error {
 	query := `INSERT INTO public.user_viewed_sessions(session_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING;`
-	return v.pgPool.Exec(query, sessID, userID)
+	return v.pgPool.ExecContext(ctx, query, sessID, userID)
 }
 
 func (v *viewsImpl) addToClickHouse(ctx context.Context, projID uint32, sessID uint64, userID string) error {
