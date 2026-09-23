@@ -507,7 +507,6 @@ CREATE TABLE public.user_favorite_sessions
     session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, session_id)
 );
-CREATE INDEX user_favorite_sessions_user_id_session_id_idx ON public.user_favorite_sessions (user_id, session_id);
 
 
 CREATE TABLE public.assigned_sessions
@@ -914,6 +913,8 @@ CREATE TABLE public.sessions_notes
     start_at   integer                     NULL,
     end_at     integer                     NULL
 );
+
+CREATE INDEX IF NOT EXISTS sessions_notes_project_id_session_id_idx ON public.sessions_notes (project_id, session_id) WHERE deleted_at IS NULL;
 
 
 CREATE TABLE public.projects_stats

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
 )
 
@@ -30,19 +31,36 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 
 func (t *tracerImpl) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Read body and restore the io.ReadCloser to its original state
-		bodyBytes, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "can't read body", http.StatusBadRequest)
+		if !t.isTracked(r) {
+			next.ServeHTTP(w, r)
 			return
 		}
-		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		var bodyBytes []byte
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			// Read body and restore the io.ReadCloser to its original state
+			var err error
+			bodyBytes, err = io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "can't read body", http.StatusBadRequest)
+				return
+			}
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
 		// Use custom response writer to get the status code
 		sw := &statusWriter{ResponseWriter: w}
 		// Serve the request
 		next.ServeHTTP(sw, r)
 		t.logRequest(r, bodyBytes, sw.statusCode)
 	})
+}
+
+func (t *tracerImpl) isTracked(r *http.Request) bool {
+	pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
+	if err != nil {
+		return false
+	}
+	action, ok := t.routeMatch[r.Method+pathTemplate]
+	return ok && action != api.DoNotTrack
 }
 
 func (t *tracerImpl) logRequest(r *http.Request, bodyBytes []byte, statusCode int) {

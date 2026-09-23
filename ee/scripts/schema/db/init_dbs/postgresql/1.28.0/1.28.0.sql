@@ -30,6 +30,9 @@ DROP TYPE IF EXISTS error_status;
 ALTER TABLE IF EXISTS public.scim_auth_codes
     ADD COLUMN IF NOT EXISTS used_for_jwt bool DEFAULT NULL;
 
+CREATE INDEX IF NOT EXISTS sessions_notes_project_id_session_id_idx ON public.sessions_notes (project_id, session_id) WHERE deleted_at IS NULL;
+DROP INDEX IF EXISTS public.user_favorite_sessions_user_id_session_id_idx;
+
 COMMIT;
 
 \elif :is_next
