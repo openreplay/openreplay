@@ -6,7 +6,8 @@
   "sideEffects": [
     "**/*.css",
     "**/*.scss",
-    "./app/init/**"
+    "./app/init/**",
+    "./app/components/Charts/init.ts"
   ],
   "scripts": {
     "writeCommitHash": "node ./scripts/getCommitHash/getHash.js",
