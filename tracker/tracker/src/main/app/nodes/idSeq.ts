@@ -1,8 +1,9 @@
-// 4 levels, 128 frames between each level, 8_388_608 nodes per page
+// 4 levels, 128 frames between each level, 8_388_608 node ids per frame (uses all 32 bits)
+// (top context is level 0 / order 0 and never collides: children start at level 1)
 // lets hope no one will need more :D
 export const BITS_LEVEL = 2 // 4
 export const BITS_ORDER = 7 // 128
-export const BITS_NODE  = 22 // 8_388_608
+export const BITS_NODE  = 23 // 8_388_608
 
 export const SHIFT_ORDER = BITS_NODE
 export const SHIFT_LEVEL = BITS_NODE + BITS_ORDER

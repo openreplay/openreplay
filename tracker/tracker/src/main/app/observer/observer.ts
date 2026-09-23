@@ -29,6 +29,7 @@ import {
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
 import { SanitizeLevel } from '../sanitizer.js'
+import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
 const svgUrlCache = {}
@@ -610,7 +611,7 @@ export default abstract class Observer {
     }
     let slot = (node as any).assignedSlot as HTMLSlotElement | null
 
-    const parent = node.parentNode
+    const parent = parentNode(node)
     let parentID: number | undefined
 
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
@@ -637,7 +638,7 @@ export default abstract class Observer {
       }
     }
     // From here parentID === undefined if node is top context HTML node
-    let sibling = node.previousSibling
+    let sibling = previousSibling(node)
     while (sibling !== null) {
       const siblingID = this.app.nodes.getID(sibling)
       if (siblingID !== undefined) {
@@ -645,7 +646,7 @@ export default abstract class Observer {
         this.indexes[id] = this.indexes[siblingID] + 1
         break
       }
-      sibling = sibling.previousSibling
+      sibling = previousSibling(sibling)
     }
     if (sibling === null) {
       this.indexes[id] = 0
@@ -782,7 +783,7 @@ export default abstract class Observer {
     if (!isObservable(root)) {
       return
     }
-    const parent = root.parentNode
+    const parent = parentNode(root)
     const parentId = parent !== null ? this.app.nodes.getID(parent) : undefined
     const parentLevel =
       parentId !== undefined ? this.app.sanitizer.getLevel(parentId) : SanitizeLevel.Plain
@@ -817,7 +818,7 @@ export default abstract class Observer {
       this.app.sanitizer.setLevel(id, newLevel)
       this.reemitNode(id, node)
     }
-    for (let child = node.firstChild; child !== null; child = child.nextSibling) {
+    for (let child = firstChild(node); child !== null; child = nextSibling(child)) {
       this.resanitizeNode(child, newLevel)
     }
   }
@@ -866,7 +867,7 @@ export default abstract class Observer {
 
   private reemitNode(id: number, node: Node): void {
     if (isTextNode(node)) {
-      const parent = node.parentNode
+      const parent = parentNode(node)
       if (parent !== null && isElementNode(parent)) {
         // re-runs sanitize() at the level we just set
         this.sendNodeData(id, parent, node.data)

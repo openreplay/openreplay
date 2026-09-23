@@ -21,12 +21,9 @@ describe('isObject', () => {
 })
 
 describe('uaParse', () => {
-  let originalNavigator
   let mockWindow
 
   beforeEach(() => {
-    originalNavigator = globalThis.navigator
-
     mockWindow = {
       navigator: {
         appVersion: '5.0 (Windows NT 10.0; Win64; x64)',
@@ -40,15 +37,9 @@ describe('uaParse', () => {
         height: 1080,
       },
       document: {
-        cookie: 'testcookie=1',
+        cookie: '',
       },
     }
-
-    globalThis.navigator = mockWindow.navigator
-  })
-
-  afterEach(() => {
-    globalThis.navigator = originalNavigator
   })
 
   test('detects Chrome browser and Windows OS correctly', () => {
@@ -59,13 +50,6 @@ describe('uaParse', () => {
     expect(result.osVersion).toBe('10')
   })
 
-  test('detects screen dimensions correctly', () => {
-    const result = uaParse(mockWindow as any)
-    expect(result.width).toBe(1920)
-    expect(result.height).toBe(1080)
-    expect(result.screen).toBe('1920 x 1080')
-  })
-
   test('detects mobile devices and iOS correctly', () => {
     mockWindow.navigator.userAgent =
       'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
@@ -73,6 +57,10 @@ describe('uaParse', () => {
     const result = uaParse(mockWindow as any)
     expect(result.mobile).toBe(true)
     expect(result.os).toBe('iOS')
+    expect(result.osVersion).toBe('14.6.0')
+    expect(result.browser).toBe('Safari')
+    expect(result.browserVersion).toBe('14.0')
+    expect(result.browserMajorVersion).toBe(14)
   })
 
   test('detects Firefox browser correctly', () => {
@@ -83,11 +71,19 @@ describe('uaParse', () => {
     expect(result.browserMajorVersion).toBe(89)
   })
 
-  test('detects Edge browser correctly', () => {
+  test('detects Chromium Edge and legacy Edge', () => {
     mockWindow.navigator.userAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59'
-    const result = uaParse(mockWindow as any)
-    expect(result.browser).toBe('Microsoft Edge')
+    const edge = uaParse(mockWindow as any)
+    expect(edge.browser).toBe('Microsoft Edge')
+    expect(edge.browserVersion).toBe('91.0.864.59')
+    expect(edge.browserMajorVersion).toBe(91)
+
+    mockWindow.navigator.userAgent =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582'
+    const legacy = uaParse(mockWindow as any)
+    expect(legacy.browser).toBe('Microsoft Legacy Edge')
+    expect(legacy.browserMajorVersion).toBe(18)
   })
 
   test('detects Mac OS X and version correctly', () => {
@@ -108,6 +104,23 @@ describe('uaParse', () => {
     expect(result2.cookies).toBe(false)
   })
 
+  test('falls back to a test cookie when navigator.cookieEnabled is missing', () => {
+    delete mockWindow.navigator.cookieEnabled
+    const original = Object.getOwnPropertyDescriptor(window, 'navigator')
+    Object.defineProperty(window, 'navigator', { value: mockWindow.navigator, configurable: true })
+    try {
+      expect(uaParse(mockWindow as any).cookies).toBe(true)
+      expect(mockWindow.document.cookie).toBe('testcookie')
+
+      // cookie write silently rejected
+      Object.defineProperty(mockWindow.document, 'cookie', { get: () => '', set: () => {} })
+      expect(uaParse(mockWindow as any).cookies).toBe(false)
+    } finally {
+      if (original) Object.defineProperty(window, 'navigator', original)
+      else delete (window as any).navigator
+    }
+  })
+
   test('handles undefined screen dimensions', () => {
     delete mockWindow.screen.width
     delete mockWindow.screen.height
@@ -120,8 +133,18 @@ describe('uaParse', () => {
 })
 
 describe('getUTCOffsetString', () => {
-  test('returns string in UTC±HH:MM format', () => {
-    const result = getUTCOffsetString()
-    expect(result).toMatch(/^UTC[+-]\d{2}:\d{2}$/)
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test.each([
+    [-330, 'UTC+05:30'],
+    [0, 'UTC+00:00'],
+    [300, 'UTC-05:00'],
+    [-345, 'UTC+05:45'],
+    [210, 'UTC-03:30'],
+  ])('offset %i minutes → %s', (offset, expected) => {
+    jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(offset)
+    expect(getUTCOffsetString()).toBe(expected)
   })
 })

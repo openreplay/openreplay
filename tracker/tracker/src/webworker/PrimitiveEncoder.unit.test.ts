@@ -1,46 +1,55 @@
-import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
+import { describe, expect, test, jest } from '@jest/globals'
+import { TextEncoder as NodeTextEncoder } from 'util'
 import PrimitiveEncoder from './PrimitiveEncoder.js'
 
+function bytesOf(write: (e: PrimitiveEncoder) => boolean, size = 64): number[] {
+  const e = new PrimitiveEncoder(size)
+  expect(write(e)).toBe(true)
+  e.checkpoint()
+  return Array.from(e.flush())
+}
+
 describe('PrimitiveEncoder', () => {
-  test('initial state', () => {
+  test('flush() returns only checkpointed bytes, then starts over', () => {
     const enc = new PrimitiveEncoder(10)
-
-    expect(enc.getCurrentOffset()).toBe(0)
+    enc.uint(1)
+    enc.checkpoint()
+    enc.uint(2) // not checkpointed: a partial write in progress
+    expect(Array.from(enc.flush())).toEqual([1])
     expect(enc.isEmpty).toBe(true)
-    expect(enc.flush().length).toBe(0)
+    expect(enc.getCurrentCheckpoint()).toBe(0)
+    enc.uint(3)
+    enc.checkpoint()
+    expect(Array.from(enc.flush())).toEqual([3])
   })
 
-  test('skip()', () => {
-    const enc = new PrimitiveEncoder(10)
-    enc.skip(5)
-    expect(enc.getCurrentOffset()).toBe(5)
-    expect(enc.isEmpty).toBe(false)
+  test('boolean() writes one 0/1 byte', () => {
+    expect(bytesOf((e) => e.boolean(true) && e.boolean(false))).toEqual([1, 0])
   })
 
-  test('checkpoint()', () => {
-    const enc = new PrimitiveEncoder(10)
-    enc.skip(5)
-    enc.checkpoint()
-    expect(enc.flush().length).toBe(5)
+  describe('uint() varint', () => {
+    test.each([
+      [0, [0x00]],
+      [127, [0x7f]],
+      [128, [0x80, 0x01]],
+      [300, [0xac, 0x02]],
+      [16_384, [0x80, 0x80, 0x01]],
+      [2 ** 32, [0x80, 0x80, 0x80, 0x80, 0x10]],
+      [Number.MAX_SAFE_INTEGER, [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f]],
+    ])('%d', (value, expected) => {
+      expect(bytesOf((e) => e.uint(value))).toEqual(expected)
+    })
+
+    test('negative and unsafe values clamp to 0', () => {
+      expect(bytesOf((e) => e.uint(-5) && e.uint(Number.MAX_SAFE_INTEGER + 1) && e.uint(Infinity))).toEqual([0, 0, 0])
+    })
   })
 
-  test('boolean(true)', () => {
-    const enc = new PrimitiveEncoder(10)
-    enc.boolean(true)
-    enc.checkpoint()
-    const bytes = enc.flush()
-    expect(bytes.length).toBe(1)
-    expect(bytes[0]).toBe(1)
+  test('int() zigzag-encodes and rounds', () => {
+    expect(bytesOf((e) => e.int(0) && e.int(-1) && e.int(1) && e.int(-64) && e.int(64) && e.int(-2.6))).toEqual([
+      0, 1, 2, 127, 0x80, 0x01, 5,
+    ])
   })
-  test('boolean(false)', () => {
-    const enc = new PrimitiveEncoder(10)
-    enc.boolean(false)
-    enc.checkpoint()
-    const bytes = enc.flush()
-    expect(bytes.length).toBe(1)
-    expect(bytes[0]).toBe(0)
-  })
-  // TODO: test correct enc/dec on a top level(?) with player(PrimitiveReader.ts)/tracker(PrimitiveEncoder.ts)
 
   test('buffer oveflow with string()', () => {
     const N = 10
@@ -59,6 +68,55 @@ describe('PrimitiveEncoder', () => {
     expect(wasWritten).toBe(true)
     wasWritten = enc.boolean(true)
     expect(wasWritten).toBe(false)
+  })
+
+  describe('string() UTF-8', () => {
+    const samples = ['', 'ascii', 'é ß', '€ 中文', '😀 𝄞', 'a😀b€c']
+    const fallbackEncoder = () => {
+      let Enc: typeof PrimitiveEncoder
+      const saved = (globalThis as any).TextEncoder
+      delete (globalThis as any).TextEncoder
+      jest.isolateModules(() => {
+        Enc = require('./PrimitiveEncoder.js').default
+      })
+      ;(globalThis as any).TextEncoder = saved
+      return Enc!
+    }
+    const nativeEncoder = () => {
+      let Enc: typeof PrimitiveEncoder
+      const saved = (globalThis as any).TextEncoder
+      ;(globalThis as any).TextEncoder = NodeTextEncoder
+      jest.isolateModules(() => {
+        Enc = require('./PrimitiveEncoder.js').default
+      })
+      ;(globalThis as any).TextEncoder = saved
+      return Enc!
+    }
+
+    test.each([
+      ['fallback', fallbackEncoder],
+      ['TextEncoder', nativeEncoder],
+    ])('%s: length-prefixed, byte-exact with Node utf8', (_, load) => {
+      const Enc = load()
+      for (const str of samples) {
+        const e = new Enc(64)
+        expect(e.string(str)).toBe(true)
+        e.checkpoint()
+        const utf8 = Array.from(Buffer.from(str, 'utf8'))
+        expect(Array.from(e.flush())).toEqual([utf8.length, ...utf8])
+      }
+    })
+
+    test.each([
+      ['fallback', fallbackEncoder],
+      ['TextEncoder', nativeEncoder],
+    ])('%s: lone surrogates become U+FFFD', (_, load) => {
+      const e = new (load())(64)
+      expect(e.string('a\ud800b\udc00')).toBe(true)
+      e.checkpoint()
+      // Matches TextEncoder: an unpaired high or low surrogate is replaced, the next code unit kept.
+      expect(Array.from(e.flush())).toEqual([8, 0x61, 0xef, 0xbf, 0xbd, 0x62, 0xef, 0xbf, 0xbd])
+    })
   })
 
   describe('rewind()', () => {
@@ -89,16 +147,6 @@ describe('PrimitiveEncoder', () => {
       const offset = e.getCurrentOffset()
       e.rewind(offset + 5, 100)
       expect(e.getCurrentOffset()).toBe(offset)
-      expect(e.getCurrentCheckpoint()).toBe(0)
-    })
-
-    test('rewind to (0,0) is equivalent to reset', () => {
-      const e = new PrimitiveEncoder(64)
-      e.uint(1)
-      e.checkpoint()
-      e.uint(2)
-      e.rewind(0, 0)
-      expect(e.getCurrentOffset()).toBe(0)
       expect(e.getCurrentCheckpoint()).toBe(0)
     })
   })

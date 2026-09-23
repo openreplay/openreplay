@@ -80,6 +80,11 @@ function calculateSpeedIndex(firstContentfulPaint: number, paintBlocks: Array<Pa
   return a === 0 ? 0 : s / a
 }
 
+// unreached performance.timing fields are 0, not an offset from navigationStart
+function sinceNavigation(t: number, navigationStart: number): number {
+  return t && navigationStart ? t - navigationStart : 0
+}
+
 export interface Options {
   captureResourceTimings: boolean
   capturePageLoadTimings: boolean
@@ -248,15 +253,16 @@ export default function (app: App, opts: Partial<Options>): void {
           loadEventStart,
           loadEventEnd,
         } = performance.timing
+        const rel = (t: number) => sinceNavigation(t, navigationStart)
         app.send(
           PageLoadTiming(
-            requestStart - navigationStart || 0,
-            responseStart - navigationStart || 0,
-            responseEnd - navigationStart || 0,
-            domContentLoadedEventStart - navigationStart || 0,
-            domContentLoadedEventEnd - navigationStart || 0,
-            loadEventStart - navigationStart || 0,
-            loadEventEnd - navigationStart || 0,
+            rel(requestStart),
+            rel(responseStart),
+            rel(responseEnd),
+            rel(domContentLoadedEventStart),
+            rel(domContentLoadedEventEnd),
+            rel(loadEventStart),
+            rel(loadEventEnd),
             firstPaint,
             firstContentfulPaint,
           ),
@@ -306,7 +312,7 @@ export default function (app: App, opts: Partial<Options>): void {
             ? Math.max(
                 interactiveWindowStartTime,
                 firstContentfulPaint,
-                domContentLoadedEventEnd - navigationStart || 0,
+                sinceNavigation(domContentLoadedEventEnd, navigationStart),
               )
             : 0
         app.send(

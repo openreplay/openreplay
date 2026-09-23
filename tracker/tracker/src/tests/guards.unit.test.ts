@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals'
+import { describe, expect, test, beforeAll, afterAll } from '@jest/globals'
 import {
   isNode,
   isSVGElement,
@@ -10,104 +10,109 @@ import {
   hasTag,
 } from '../main/app/guards.js'
 
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
 describe('isNode', () => {
-  test('returns true for a valid Node object', () => {
-    const node = document.createElement('div')
-    expect(isNode(node)).toBe(true)
+  test('accepts nodes, rejects plain objects and nullish', () => {
+    expect(isNode(document.createElement('div'))).toBe(true)
+    expect(isNode({ foo: 'bar' })).toBe(false)
+    expect(isNode(null)).toBe(false)
+    expect(isNode(undefined)).toBe(false)
+  })
+})
+
+describe('guards on cross-realm (iframe) nodes', () => {
+  let frame: HTMLIFrameElement
+  let doc: Document
+
+  beforeAll(() => {
+    frame = document.createElement('iframe')
+    document.body.appendChild(frame)
+    doc = frame.contentDocument!
   })
 
-  test('returns false for a non-Node object', () => {
-    const obj = { foo: 'bar' }
-    expect(isNode(obj)).toBe(false)
+  afterAll(() => {
+    frame.remove()
+  })
+
+  test('nodes really come from another realm', () => {
+    const el = doc.createElement('div')
+    expect(el instanceof Element).toBe(false)
+    expect(doc instanceof Document).toBe(false)
+  })
+
+  test('nodeType-based guards still recognize them', () => {
+    const el = doc.createElement('div')
+    const text = doc.createTextNode('t')
+    const comment = doc.createComment('c')
+    const fragment = doc.createDocumentFragment()
+
+    expect(isNode(el)).toBe(true)
+    expect(isElementNode(el)).toBe(true)
+    expect(isElementNode(text)).toBe(false)
+    expect(isTextNode(text)).toBe(true)
+    expect(isTextNode(el)).toBe(false)
+    expect(isCommentNode(comment)).toBe(true)
+    expect(isCommentNode(text)).toBe(false)
+    expect(isDocument(doc)).toBe(true)
+    expect(isDocument(el)).toBe(false)
+    expect(isRootNode(doc)).toBe(true)
+    expect(isRootNode(fragment)).toBe(true)
+    expect(isRootNode(el)).toBe(false)
+  })
+
+  test('shadow root from another realm is a root node', () => {
+    const host = doc.createElement('div')
+    const shadow = host.attachShadow({ mode: 'open' })
+    expect(isRootNode(shadow)).toBe(true)
+    expect(isDocument(shadow)).toBe(false)
+  })
+
+  test('isSVGElement and hasTag work for iframe elements', () => {
+    expect(isSVGElement(doc.createElementNS(SVG_NS, 'circle'))).toBe(true)
+    expect(isSVGElement(doc.createElement('div'))).toBe(false)
+    expect(hasTag(doc.createElement('input'), 'input')).toBe(true)
   })
 })
 
 describe('isSVGElement', () => {
-  test('returns true for an SVGElement object', () => {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  test('any element in the SVG namespace', () => {
+    expect(isSVGElement(document.createElementNS(SVG_NS, 'svg'))).toBe(true)
+    expect(isSVGElement(document.createElementNS(SVG_NS, 'path'))).toBe(true)
+  })
+
+  test('falls back to localName for an <svg> outside the SVG namespace', () => {
+    const svg = document.createElementNS('http://www.w3.org/1999/xhtml', 'svg')
+    expect(svg.namespaceURI).not.toBe(SVG_NS)
     expect(isSVGElement(svg)).toBe(true)
   })
 
-  test('returns false for a non-SVGElement object', () => {
-    const div = document.createElement('div')
-    expect(isSVGElement(div)).toBe(false)
-  })
-})
-
-describe('isElementNode', () => {
-  test('returns true for an Element object', () => {
-    const element = document.createElement('div')
-    expect(isElementNode(element)).toBe(true)
-  })
-
-  test('returns false for a non-Element object', () => {
-    const textNode = document.createTextNode('Hello')
-    expect(isElementNode(textNode)).toBe(false)
-  })
-})
-
-describe('isCommentNode', () => {
-  test('returns true for a Comment object', () => {
-    const comment = document.createComment('This is a comment')
-    expect(isCommentNode(comment)).toBe(true)
-  })
-
-  test('returns false for a non-Comment object', () => {
-    const div = document.createElement('div')
-    expect(isCommentNode(div)).toBe(false)
-  })
-})
-
-describe('isTextNode', () => {
-  test('returns true for a Text object', () => {
-    const textNode = document.createTextNode('Hello')
-    expect(isTextNode(textNode)).toBe(true)
-  })
-
-  test('returns false for a non-Text object', () => {
-    const div = document.createElement('div')
-    expect(isTextNode(div)).toBe(false)
-  })
-})
-
-describe('isDocument', () => {
-  test('returns true for a Document object', () => {
-    const documentObj = document.implementation.createHTMLDocument('Test')
-    expect(isDocument(documentObj)).toBe(true)
-  })
-
-  test('returns false for a non-Document object', () => {
-    const div = document.createElement('div')
-    expect(isDocument(div)).toBe(false)
-  })
-})
-
-describe('isRootNode', () => {
-  test('returns true for a Document object', () => {
-    const documentObj = document.implementation.createHTMLDocument('Test')
-    expect(isRootNode(documentObj)).toBe(true)
-  })
-
-  test('returns true for a DocumentFragment object', () => {
-    const fragment = document.createDocumentFragment()
-    expect(isRootNode(fragment)).toBe(true)
-  })
-
-  test('returns false for a non-root Node object', () => {
-    const div = document.createElement('div')
-    expect(isRootNode(div)).toBe(false)
+  test('HTML-namespaced non-svg elements are not SVG', () => {
+    expect(isSVGElement(document.createElement('div'))).toBe(false)
+    expect(isSVGElement(document.createElementNS('http://www.w3.org/1999/xhtml', 'path'))).toBe(false)
   })
 })
 
 describe('hasTag', () => {
-  test('returns true if the element has the specified tag name', () => {
-    const element = document.createElement('input')
-    expect(hasTag(element, 'input')).toBe(true)
+  test('matches by localName', () => {
+    expect(hasTag(document.createElement('input'), 'input')).toBe(true)
+    // @ts-expect-error
+    expect(hasTag(document.createElement('div'), 'span')).toBe(false)
   })
 
-  test('returns false if the element does not have the specified tag name', () => {
-    const element = document.createElement('div')
-    // @ts-expect-error
-    expect(hasTag(element, 'span')).toBe(false)
+  test('matches SVG <style> as style', () => {
+    const style = document.createElementNS(SVG_NS, 'style')
+    expect(style.tagName).toBe('style')
+    expect(hasTag(style, 'style')).toBe(true)
+  })
+
+  test('is case-insensitive for HTML tagName (uses localName)', () => {
+    const img = document.createElement('IMG')
+    expect(img.tagName).toBe('IMG')
+    expect(hasTag(img, 'img')).toBe(true)
+  })
+
+  test('non-element nodes never match', () => {
+    expect(hasTag(document.createTextNode('style'), 'style')).toBe(false)
   })
 })

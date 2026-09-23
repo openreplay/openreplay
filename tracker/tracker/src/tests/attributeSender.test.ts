@@ -1,105 +1,71 @@
 import { Type } from '../common/messages.gen.js'
 import AttributeSender from '../main/modules/attributeSender.js'
-import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
+import { describe, expect, test, jest, beforeEach } from '@jest/globals'
 
 describe('AttributeSender', () => {
-  let attributeSender: AttributeSender
-  let appMock: any
+  let appMock: { send: jest.Mock }
+
+  const make = (isDictDisabled = false) =>
+    new AttributeSender({ app: appMock as any, isDictDisabled })
+
+  const dictEntries = () =>
+    appMock.send.mock.calls
+      .map((c) => c[0] as any[])
+      .filter((m) => m[0] === Type.StringDictGlobal)
 
   beforeEach(() => {
-    appMock = {
-      send: (...args: any[]) => args,
-      session: {
-        getPageNumber: () => 1,
-      }
-    }
-    attributeSender = new AttributeSender({
-      app: appMock,
-      isDictDisabled: false,
-    })
+    appMock = { send: jest.fn() }
   })
 
-  afterEach(() => {
-    jest.restoreAllMocks()
+  test('sends dict entries first, then the attribute referencing their keys', () => {
+    make().sendSetAttribute(1, 'color', 'red')
+
+    const calls = appMock.send.mock.calls.map((c) => c[0] as any[])
+    expect(calls).toHaveLength(3)
+    const [nameEntry, valueEntry, attr] = calls
+    expect(nameEntry).toEqual([Type.StringDictGlobal, expect.any(Number), 'color'])
+    expect(valueEntry).toEqual([Type.StringDictGlobal, expect.any(Number), 'red'])
+    expect(attr).toEqual([Type.SetNodeAttributeDictGlobal, 1, nameEntry[1], valueEntry[1]])
+    expect(nameEntry[1]).not.toBe(valueEntry[1])
   })
 
-  test('should send the set attribute message to the app', () => {
-    const sendSpy = jest.spyOn(appMock, 'send')
-    const id = 1
-    const name = 'color' // 1_1
-    const value = 'red' // attribute is second, so 1_2; (page_key)
-    // @ts-ignore
-
-    attributeSender.sendSetAttribute(id, name, value)
-
-    expect(sendSpy).toHaveBeenCalledWith(
-      expect.arrayContaining([Type.SetNodeAttributeDictGlobal, id, expect.any(Number), expect.any(Number)])
-    )
-  })
-
-  test('should apply dictionary to the attribute name and value', () => {
-    const id = 1
-    const name = 'color'
-    const value = 'red'
-    const sendSpy = jest.spyOn(appMock, 'send')
-
-    attributeSender.sendSetAttribute(id, name, value)
-
-    expect(sendSpy).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        // @ts-ignore
-        Type.SetNodeAttributeDictGlobal,
-        id,
-        expect.any(Number),
-        expect.any(Number),
-      ]),
-    )
-  })
-
-  test('should send the string dictionary entry if the attribute is new', () => {
-    const id = 1
-    const name = 'color' // 1_1, name comes first (page_keyid)
-    const value = 'red'
-    const sendSpy = jest.spyOn(appMock, 'send')
-
-    attributeSender.sendSetAttribute(id, name, value)
-
-    // @ts-ignore
-    expect(sendSpy).toHaveBeenCalledWith(expect.arrayContaining([Type.StringDictGlobal, expect.any(Number), name]))
-  })
-
-  test('should not send the string dictionary entry if the attribute already exists', () => {
-    const id = 1
-    const name = 'color'
-    const value = 'red'
-    const sendSpy = jest.spyOn(appMock, 'send')
-
-    attributeSender.sendSetAttribute(id, name, value)
-    attributeSender.sendSetAttribute(id, name, value)
+  test('does not resend dict entries for known strings', () => {
+    const sender = make()
+    sender.sendSetAttribute(1, 'color', 'red')
+    sender.sendSetAttribute(2, 'color', 'red')
 
     // 2 attributes + 1 stringDict name + 1 stringDict value
-    expect(sendSpy).toHaveBeenCalledTimes(4)
-    expect(sendSpy).toHaveBeenCalledWith(
-      // @ts-ignore
-      expect.not.arrayContaining([Type.StringDict, expect.any(Number), name]),
-    )
+    expect(appMock.send).toHaveBeenCalledTimes(4)
+    expect(dictEntries()).toHaveLength(2)
+    const first = appMock.send.mock.calls[2][0] as any[]
+    const second = appMock.send.mock.calls[3][0] as any[]
+    expect(second).toEqual([Type.SetNodeAttributeDictGlobal, 2, first[2], first[3]])
   })
 
-  test('should clear the dictionary', () => {
-    const id = 1
-    const name = 'color'
-    const value = 'red'
-    const sendSpy = jest.spyOn(appMock, 'send')
+  test('same string as name and value is sent once', () => {
+    make().sendSetAttribute(1, 'x', 'x')
+    expect(dictEntries()).toHaveLength(1)
+    const attr = appMock.send.mock.calls[1][0] as any[]
+    expect(attr[2]).toBe(attr[3])
+  })
 
-    attributeSender.sendSetAttribute(id, name, value)
-    attributeSender.clear()
-    attributeSender.sendSetAttribute(id, name, value)
+  test('clear() resends dictionary entries under fresh keys', () => {
+    const sender = make()
+    sender.sendSetAttribute(1, 'color', 'red')
+    sender.clear()
+    sender.sendSetAttribute(1, 'color', 'red')
 
     // (attribute + stringDict name + stringDict value) * 2 = 6
-    expect(sendSpy).toHaveBeenCalledTimes(6)
-    expect(sendSpy).toHaveBeenCalledWith(
-      // @ts-ignore
-      expect.arrayContaining([Type.StringDictGlobal, expect.any(Number), name]),
-    )
+    expect(appMock.send).toHaveBeenCalledTimes(6)
+    const entries = dictEntries()
+    expect(entries.map((e) => e[2])).toEqual(['color', 'red', 'color', 'red'])
+    expect(new Set(entries.map((e) => e[1])).size).toBe(4)
+  })
+
+  test('isDictDisabled sends plain SetNodeAttribute without dictionary', () => {
+    make(true).sendSetAttribute(3, 'color', 'red')
+
+    expect(appMock.send).toHaveBeenCalledTimes(1)
+    expect(appMock.send).toHaveBeenCalledWith([Type.SetNodeAttribute, 3, 'color', 'red'])
   })
 })

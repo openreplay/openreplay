@@ -81,14 +81,14 @@ export default class Events {
     let changed = false
     if (isObject(nameOrProperties)) {
       Object.entries(nameOrProperties).forEach(([key, val]) => {
-        if (!this.ownProperties[key] && !reservedProps.includes(key)) {
+        if (this.canSetOnce(key)) {
           this.ownProperties[key] = val
           changed = true
         }
       })
     }
     if (typeof nameOrProperties === 'string' && value !== undefined) {
-      if (!this.ownProperties[nameOrProperties] && !reservedProps.includes(nameOrProperties)) {
+      if (this.canSetOnce(nameOrProperties)) {
         this.ownProperties[nameOrProperties] = value
         changed = true
       }
@@ -99,6 +99,14 @@ export default class Events {
     }
   }
 
+  private canSetOnce(key: string) {
+    return (
+      this.ownProperties[key] === undefined &&
+      !reservedProps.includes(key) &&
+      !this.constantProperties.defaultPropertyKeys.includes(key)
+    )
+  }
+
   /**
    * removes properties from list of super properties
    * */
@@ -106,12 +114,12 @@ export default class Events {
     let changed = false
     if (Array.isArray(properties)) {
       properties.forEach((key) => {
-        if (this.ownProperties[key] && !reservedProps.includes(key)) {
+        if (key in this.ownProperties && !reservedProps.includes(key)) {
           delete this.ownProperties[key]
           changed = true
         }
       })
-    } else if (this.ownProperties[properties] && !reservedProps.includes(properties)) {
+    } else if (properties in this.ownProperties && !reservedProps.includes(properties)) {
       delete this.ownProperties[properties]
       changed = true
     }

@@ -77,9 +77,31 @@ describe('Performance plugin', () => {
     setupPerformance(app as any, {})
 
     expect(() => app.start()).not.toThrow()
-    // The re-entrancy guard stops the loop after at most one synchronous burst
-    // instead of recursing.
-    expect((window.requestAnimationFrame as jest.Mock).mock.calls.length).toBeLessThanOrEqual(2)
+    // The re-entrancy guard stops the loop after one synchronous frame instead of recursing.
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1)
+  })
+
+  test('a synchronous requestAnimationFrame still reschedules on the next sample', () => {
+    window.requestAnimationFrame = jest.fn((cb: FrameRequestCallback) => {
+      cb(0)
+      return 7
+    }) as any
+    window.cancelAnimationFrame = jest.fn()
+    const spy = jest.spyOn(TrackerMessages, 'PerformanceTrack')
+
+    setupPerformance(app as any, {})
+    app.start()
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1)
+
+    // sample ticker: the frame loop must be re-armed, not blocked by a stale handle
+    const sample = app.tickerCallbacks[1]
+    sample()
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(2)
+    sample()
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(3)
+    // each sample counted the synchronous frame of the previous schedule
+    expect(spy.mock.calls[2][0]).toBe(1)
+    spy.mockRestore()
   })
 
   test('keeps a single in-flight frame even if start fires twice', () => {
@@ -155,16 +177,43 @@ describe('Performance plugin', () => {
     )
   })
 
-  test('emits a PerformanceTrack sample on start', () => {
-    window.requestAnimationFrame = jest.fn(() => 1) as any
+  test('emits PerformanceTrack samples with counted frames and ticks', () => {
+    const queue: FrameRequestCallback[] = []
+    window.requestAnimationFrame = jest.fn((cb: FrameRequestCallback) => {
+      queue.push(cb)
+      return queue.length
+    }) as any
     window.cancelAnimationFrame = jest.fn()
     const spy = jest.spyOn(TrackerMessages, 'PerformanceTrack')
 
     setupPerformance(app as any, {})
     app.start()
+    // first sample on start is the paused marker
+    expect(spy).toHaveBeenLastCalledWith(-1, -1, 0, 0)
+    expect(app.send).toHaveBeenCalledTimes(1)
 
-    expect(spy).toHaveBeenCalled()
-    expect(app.send).toHaveBeenCalled()
+    const [tick, sample] = app.tickerCallbacks
+    tick()
+    tick()
+    tick()
+    queue.shift()!(0)
+    queue.shift()!(0)
+    sample()
+    expect(spy).toHaveBeenLastCalledWith(2, 3, 0, 0)
+    expect(app.send).toHaveBeenCalledTimes(2)
     spy.mockRestore()
+  })
+
+  test('sends nothing when stopped or when capturePerformance is false', () => {
+    window.requestAnimationFrame = jest.fn(() => 1) as any
+    window.cancelAnimationFrame = jest.fn()
+
+    setupPerformance(app as any, { capturePerformance: false })
+    expect(app.tickerCallbacks).toHaveLength(0)
+    expect(app.startCallbacks).toHaveLength(0)
+
+    setupPerformance(app as any, {})
+    app.tickerCallbacks[1]()
+    expect(app.send).not.toHaveBeenCalled()
   })
 })

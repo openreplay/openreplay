@@ -3,6 +3,7 @@ import { isElementNode, hasTag } from '../guards.js'
 
 import IFrameObserver from './iframe_observer.js'
 import ShadowRootObserver from './shadow_root_observer.js'
+import { initUntaintedDom } from '../untaintedDom.js'
 import IFrameOffsets, { Offset } from './iframe_offsets.js'
 
 import { CreateDocument, SetNodeAttribute } from '../messages.gen.js'
@@ -205,8 +206,14 @@ export default class TopObserver extends Observer {
     handle()
   }
 
-  private shadowRootObservers: WeakMap<ShadowRoot, ShadowRootObserver> = new WeakMap()
+  private shadowRootObservers: Map<ShadowRoot, ShadowRootObserver> = new Map()
   private handleShadowRoot(shRoot: ShadowRoot) {
+    this.shadowRootObservers.forEach((obs, root) => {
+      if (root === shRoot || !root.host.isConnected) {
+        obs.disconnect()
+        this.shadowRootObservers.delete(root)
+      }
+    })
     const observer = new ShadowRootObserver(this.app, false, {
       disableSprites: this.options.disableSprites,
       ...getInlineOptions(this.options.inlineCss, console.warn),
@@ -217,6 +224,7 @@ export default class TopObserver extends Observer {
 
   observe(): void {
     // Protection from several subsequent calls?
+    initUntaintedDom()
 
     const observer = this
     Element.prototype.attachShadow = function () {
@@ -280,6 +288,7 @@ export default class TopObserver extends Observer {
   }
 
   crossdomainObserve(rootNodeId: number, frameOder: number, frameLevel: number) {
+    initUntaintedDom()
     const observer = this
     Element.prototype.attachShadow = function () {
       // eslint-disable-next-line
@@ -308,7 +317,8 @@ export default class TopObserver extends Observer {
     this.iframeObserversArr.forEach((observer) => observer.disconnect())
     this.iframeObserversArr = []
     this.iframeObservers = new WeakMap()
-    this.shadowRootObservers = new WeakMap()
+    this.shadowRootObservers.forEach((observer) => observer.disconnect())
+    this.shadowRootObservers.clear()
     this.docObservers = new WeakMap()
     super.disconnect()
   }

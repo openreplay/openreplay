@@ -3,13 +3,6 @@ import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globa
 import Batcher from '../batcher.js'
 import { categories } from '../types.js'
 
-jest.mock('../types.js', () => ({
-  categories: {
-    people: 'people',
-    events: 'events',
-  },
-}))
-
 describe('Batcher', () => {
   let backendUrl: string
   let getToken: jest.Mock
@@ -31,10 +24,12 @@ describe('Batcher', () => {
     } as any)
     globalThis.fetch = fetchMock as any
 
-    batcher = new Batcher(backendUrl, getToken, init)
+    batcher = new Batcher(backendUrl, getToken, init, true)
   })
 
   afterEach(() => {
+    batcher.stop()
+    jest.clearAllTimers()
     jest.useRealTimers()
     jest.resetAllMocks()
     delete (globalThis as any).fetch
@@ -220,13 +215,30 @@ describe('Batcher', () => {
     expect(batches.data[categories.events]).toHaveLength(0)
   })
 
-  test('sendImmediately does nothing when token is null', () => {
+  test('sendImmediately without a token keeps the event for the next flush', () => {
     getToken.mockReturnValueOnce(null)
 
-    const ev = makePeopleEvent('set_property', 1, { a: 1 })
-    batcher.sendImmediately(ev)
-
+    batcher.sendImmediately(makeEventsEvent('instant', 1, { v: 1 }))
     expect(fetchMock).not.toHaveBeenCalled()
+
+    batcher.flush()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.data[categories.events]).toEqual([{ name: 'instant', payload: { v: 1 }, timestamp: 1 }])
+  })
+
+  test('appends to the same key are not squashed into one value', () => {
+    batcher.addEvent(makePeopleEvent('append_property', 1, { tags: 'a' }, 'u1'))
+    batcher.addEvent(makePeopleEvent('append_property', 2, { tags: 'b' }, 'u1'))
+    batcher.addEvent(makePeopleEvent('append_unique_property', 3, { tags: 'c' }, 'u1'))
+    batcher.addEvent(makePeopleEvent('append_unique_property', 4, { tags: 'd' }, 'u1'))
+
+    expect(batcher.getBatches().data[categories.people]).toEqual([
+      { type: 'append_property', user_id: 'u1', timestamp: 1, payload: { tags: 'a' } },
+      { type: 'append_property', user_id: 'u1', timestamp: 2, payload: { tags: 'b' } },
+      { type: 'append_unique_property', user_id: 'u1', timestamp: 3, payload: { tags: 'c' } },
+      { type: 'append_unique_property', user_id: 'u1', timestamp: 4, payload: { tags: 'd' } },
+    ])
   })
 
   test('sendBatch called via flush posts all events and then clears batches', () => {
@@ -293,18 +305,95 @@ describe('Batcher', () => {
     expect(flushSpy).toHaveBeenCalledTimes(1)
   })
 
-  test('403 response triggers init()', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      status: 403,
-    } as any)
+  test('403 response re-inits and resends the same body', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 403 } as any)
 
-    const ev = makeEventsEvent('evt', 1, {})
-    batcher.sendImmediately(ev)
-
-    await Promise.resolve()
+    batcher.sendImmediately(makeEventsEvent('evt', 1, {}))
+    await jest.runAllTimersAsync()
 
     expect(init).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1][1].body).toBe(fetchMock.mock.calls[0][1].body)
+  })
+
+  test('network errors are retried 3 times, then events go back ahead of newer ones', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'))
+    batcher.addEvent(makeEventsEvent('first', 1, {}))
+    batcher.flush()
+    batcher.addEvent(makeEventsEvent('second', 2, {}))
+
+    await Promise.resolve()
+    await Promise.resolve()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    await jest.advanceTimersByTimeAsync(2999)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    await jest.advanceTimersByTimeAsync(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    await jest.advanceTimersByTimeAsync(3000)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    await jest.advanceTimersByTimeAsync(10000)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+
+    expect(batcher.getBatches().data[categories.events].map((e) => e.name)).toEqual([
+      'first',
+      'second',
+    ])
+  })
+
+  test('401 token expired stops a non-standalone batcher', async () => {
+    batcher = new Batcher(backendUrl, getToken, init, false)
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ error: 'token expired' }),
+    } as any)
+
+    batcher.addEvent(makeEventsEvent('evt', 1, {}))
+    batcher.flush()
+    await jest.runAllTimersAsync()
+
+    expect(init).not.toHaveBeenCalled()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    batcher.addEvent(makeEventsEvent('later', 2, {}))
+    batcher.flush()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('401 token expired re-inits in standalone mode', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ error: 'token expired' }),
+    } as any)
+
+    batcher.sendImmediately(makeEventsEvent('evt', 1, {}))
+    await jest.runAllTimersAsync()
+
+    expect(init).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  test('hiding the tab flushes with keepalive and pauses autosend', () => {
+    const hidden = Object.getOwnPropertyDescriptor(Document.prototype, 'hidden')
+    let isHidden = false
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => isHidden })
+    try {
+      batcher.startAutosend()
+      batcher.addEvent(makeEventsEvent('evt', 1, {}))
+
+      isHidden = true
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock.mock.calls[0][1].keepalive).toBe(true)
+
+      batcher.addEvent(makeEventsEvent('while-hidden', 2, {}))
+      jest.advanceTimersByTime(5000)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    } finally {
+      delete (document as any).hidden
+      if (hidden) Object.defineProperty(Document.prototype, 'hidden', hidden)
+    }
   })
 })

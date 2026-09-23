@@ -70,12 +70,15 @@ export default class People {
   /**
    * set user properties, overwriting existing ones
    * */
-  public setProperties = (propertyOrObj: Record<string, string | number> | string, value?: string) => {
+  public setProperties = (
+    propertyOrObj: Record<string, string | number> | string,
+    value?: string | number,
+  ) => {
     if (!propertyOrObj) {
       throw new Error('OR SDK: no user properties provided to set')
     }
     const properties: Record<string, string | number> = {}
-    if (typeof propertyOrObj === 'string' && propertyOrObj && value) {
+    if (typeof propertyOrObj === 'string' && value !== undefined) {
       properties[propertyOrObj] = value
     } else if (isObject(propertyOrObj)) {
       Object.assign(properties, propertyOrObj)
@@ -102,7 +105,10 @@ export default class People {
       throw new Error('Properties must be an object')
     }
     Object.entries(properties).forEach(([key, value]) => {
-      if (!this.constantProperties.defaultPropertyKeys.includes(key) && !this.ownProperties[key]) {
+      if (
+        !this.constantProperties.defaultPropertyKeys.includes(key) &&
+        this.ownProperties[key] === undefined
+      ) {
         this.ownProperties[key] = value
       }
     })
@@ -118,13 +124,7 @@ export default class People {
    * Add value to property (will turn string prop into array)
    * */
   public appendValues = (key: string, value: string | number) => {
-    if (!this.constantProperties.defaultPropertyKeys.includes(key) && this.ownProperties[key]) {
-      if (Array.isArray(this.ownProperties[key])) {
-        this.ownProperties[key].push(value)
-      } else {
-        this.ownProperties[key] = [this.ownProperties[key], value]
-      }
-    }
+    this.appendLocal(key, value)
 
     const appendEvent = createEvent(categories.people, mutationTypes.appendProperty, undefined, {
       properties: { [key]: value },
@@ -137,13 +137,10 @@ export default class People {
    * Add unique values to property (will turn string prop into array)
    * */
   public appendUniqueValues = (key: string, value: string | number) => {
-    if (!this.ownProperties[key]) return
-    if (Array.isArray(this.ownProperties[key])) {
-      if (!this.ownProperties[key].includes(value)) {
-        this.appendValues(key, value)
-      }
-    } else if (this.ownProperties[key] !== value) {
-      this.appendValues(key, value)
+    const current = this.ownProperties[key]
+    const known = Array.isArray(current) ? current.includes(value) : current === value
+    if (!known) {
+      this.appendLocal(key, value)
     }
 
     const unionEvent = createEvent(
@@ -156,6 +153,18 @@ export default class People {
       },
     )
     this.batcher.addEvent(unionEvent)
+  }
+
+  private appendLocal(key: string, value: string | number) {
+    const current = this.ownProperties[key]
+    if (this.constantProperties.defaultPropertyKeys.includes(key) || current === undefined) {
+      return
+    }
+    if (Array.isArray(current)) {
+      current.push(value)
+    } else {
+      this.ownProperties[key] = [current, value]
+    }
   }
 
   /**

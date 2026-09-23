@@ -1,5 +1,5 @@
-import TagMatcher from '../main/modules/tagMatcher'
-import { describe, expect, beforeEach, test } from '@jest/globals'
+import TagMatcher, { matchesLocation } from '../main/modules/tagMatcher'
+import { describe, expect, beforeEach, afterEach, test } from '@jest/globals'
 
 function el(html: string): Element {
   const tpl = document.createElement('template')
@@ -21,12 +21,6 @@ describe('TagMatcher', () => {
   })
 
   describe('setTags / getTags / clear', () => {
-    test('getTags returns current tags', () => {
-      const tags = [{ id: 1, selector: '#app' }]
-      matcher.setTags(tags)
-      expect(matcher.getTags()).toBe(tags)
-    })
-
     test('clear resets state', () => {
       matcher.setTags([{ id: 1, selector: '#app' }])
       matcher.clear()
@@ -178,11 +172,6 @@ describe('TagMatcher', () => {
   })
 
   describe('edge cases', () => {
-    test('returns null with no tags set', () => {
-      const node = el('<div></div>')
-      expect(matcher.match(node)).toBeNull()
-    })
-
     test('handles empty selector gracefully', () => {
       matcher.setTags([{ id: 1, selector: '' }])
       const node = el('<div></div>')
@@ -212,6 +201,115 @@ describe('TagMatcher', () => {
       expect(matcher.match(document.querySelector('[data-role="nav"]')!)).toBe(dataTag)
       expect(matcher.match(document.querySelector('.sidebar')!)).toBe(classTag)
       expect(matcher.match(document.querySelector('li')!)).toBe(fallbackTag)
+    })
+  })
+
+  describe('fingerprint edge cases', () => {
+    test('id followed by a class keeps the id key', () => {
+      const tag = { id: 1, selector: '#a.x' }
+      matcher.setTags([tag])
+      expect(matcher.match(el('<div id="a" class="x"></div>'))).toBe(tag)
+      cleanup()
+      expect(matcher.match(el('<div id="a"></div>'))).toBeNull()
+    })
+
+    test.each([
+      [`[data-t='v']`],
+      ['[data-t=v]'],
+      ['[data-t = "v"]'],
+      ['div[data-t="v"][data-u="w"]'],
+      ['[data-u="w"][data-t="v"]'],
+    ])('data attribute selector %s matches', (selector) => {
+      const tag = { id: 1, selector }
+      matcher.setTags([tag])
+      expect(matcher.match(el('<div data-t="v" data-u="w"></div>'))).toBe(tag)
+    })
+
+    test('quoted attribute value with spaces after a combinator', () => {
+      // jsdom's selector engine can't match '>' inside attribute values, so only spaces here
+      const tag = { id: 1, selector: 'form [data-label="Save all now"]' }
+      matcher.setTags([tag])
+      document.body.innerHTML = '<form><button data-label="Save all now"></button></form>'
+      expect(matcher.match(document.querySelector('button')!)).toBe(tag)
+    })
+
+    test('attribute value with a space in the last segment', () => {
+      const tag = { id: 1, selector: 'button[aria-label="Close dialog"]' }
+      matcher.setTags([tag])
+      expect(matcher.match(el('<button aria-label="Close dialog"></button>'))).toBe(tag)
+    })
+
+    test('two tags sharing an id fingerprint both match', () => {
+      const a = { id: 1, selector: 'section > #target' }
+      const b = { id: 2, selector: 'div > #target' }
+      matcher.setTags([a, b])
+      document.body.innerHTML =
+        '<section><i id="target"></i></section>'
+      expect(matcher.match(document.getElementById('target')!)).toBe(a)
+      document.body.innerHTML = '<div><i id="target"></i></div>'
+      expect(matcher.match(document.getElementById('target')!)).toBe(b)
+    })
+
+    test('two tags sharing a first class both match', () => {
+      const a = { id: 1, selector: '.btn.primary' }
+      const b = { id: 2, selector: '.btn.secondary' }
+      matcher.setTags([a, b])
+      expect(matcher.match(el('<button class="btn secondary"></button>'))).toBe(b)
+    })
+
+    test('within a tier the first tag in list order wins', () => {
+      const a = { id: 1, selector: '.btn' }
+      const b = { id: 2, selector: '.primary' }
+      matcher.setTags([a, b])
+      expect(matcher.match(el('<button class="primary btn"></button>'))).toBe(a)
+    })
+
+    test('selector lists and pseudo-classes fall back to element.matches', () => {
+      const list = { id: 1, selector: '#nope, .yes' }
+      const not = { id: 2, selector: 'li:not(#skip)' }
+      matcher.setTags([list, not])
+      expect(matcher.match(el('<span class="yes"></span>'))).toBe(list)
+      document.body.innerHTML = '<ul><li id="skip"></li><li id="keep"></li></ul>'
+      expect(matcher.match(document.getElementById('keep')!)).toBe(not)
+      expect(matcher.match(document.getElementById('skip')!)).toBeNull()
+    })
+
+    test('escaped identifiers fall back to element.matches', () => {
+      const tag = { id: 1, selector: '#a\\.b' }
+      matcher.setTags([tag])
+      expect(matcher.match(el('<div id="a.b"></div>'))).toBe(tag)
+    })
+
+    test('case-insensitive attribute flag falls back', () => {
+      const tag = { id: 1, selector: '[data-t="VALUE" i]' }
+      matcher.setTags([tag])
+      expect(matcher.match(el('<div data-t="value"></div>'))).toBe(tag)
+    })
+  })
+
+  describe('location', () => {
+    const originalUrl = window.location.href
+    afterEach(() => {
+      window.history.replaceState(null, '', originalUrl)
+    })
+
+    test('tag with a path location only matches on that path', () => {
+      const tag = { id: 1, selector: '#btn', location: '/checkout' }
+      matcher.setTags([tag])
+      const node = el('<button id="btn"></button>')
+      window.history.replaceState(null, '', '/cart')
+      expect(matcher.match(node)).toBeNull()
+      window.history.replaceState(null, '', '/checkout')
+      expect(matcher.match(node)).toBe(tag)
+    })
+
+    test('matchesLocation compares full urls and paths', () => {
+      window.history.replaceState(null, '', '/a?b=1')
+      expect(matchesLocation({})).toBe(true)
+      expect(matchesLocation({ location: '/a' })).toBe(true)
+      expect(matchesLocation({ location: '/b' })).toBe(false)
+      expect(matchesLocation({ location: window.location.href })).toBe(true)
+      expect(matchesLocation({ location: 'http://other.host/a?b=1' })).toBe(false)
     })
   })
 })

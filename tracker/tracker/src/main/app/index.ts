@@ -36,7 +36,9 @@ import { MASK_ORDER } from './nodes/idSeq.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer, { InlineCssMode } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
-import Sanitizer, { SanitizeLevel } from './sanitizer.js'
+import Sanitizer, { SanitizeLevel, stringWiper } from './sanitizer.js'
+import { defaultUrlSanitizer } from '../modules/viewport.js'
+import type { Options as ViewportOptions } from '../modules/viewport.js'
 import type { Options as SessOptions } from './session.js'
 import Session from './session.js'
 import Ticker from './ticker.js'
@@ -124,6 +126,7 @@ enum ActivityState {
 
 type AppOptions = {
   revID: string
+  urls?: Partial<ViewportOptions>
   node_id: string
   session_reset_key: string
   session_token_key: string
@@ -366,6 +369,7 @@ export default class App {
       node_id: this.options.node_id,
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
+      onIdSpaceExhausted: this.ignoreThisFrame,
     })
     this.observer = new Observer({ app: this, options })
     this.ticker = new Ticker(this)
@@ -407,7 +411,7 @@ export default class App {
        * */
       window.addEventListener('message', this.parentCrossDomainFrameListener)
       window.addEventListener('message', this.crossDomainIframeListener)
-      setInterval(() => {
+      this.childPollingInterval = setInterval(() => {
         window.parent.postMessage(
           {
             line: proto.polling,
@@ -479,6 +483,9 @@ export default class App {
         }
         if (ev.data.line === proto.reset) {
           const newToken = ev.data.token
+          if (!newToken || newToken === this.session.getSessionToken(this.projectKey)) {
+            return
+          }
           this.debug.log('Received reset signal from another tab')
           this.session.setSessionToken(newToken, this.projectKey)
           this.restart()
@@ -489,6 +496,20 @@ export default class App {
 
   /** used by child iframes for crossdomain only */
   parentActive = false
+  /** child iframe that ran out of its node id block: silent for the rest of its lifetime */
+  private frameIgnored = false
+  private childPollingInterval: ReturnType<typeof setInterval> | null = null
+  private ignoreThisFrame = () => {
+    if (this.frameIgnored) return
+    this.frameIgnored = true
+    this.debug.error('OpenReplay: crossdomain iframe exhausted its node id space, ignoring it')
+    if (this.childPollingInterval) {
+      clearInterval(this.childPollingInterval)
+      this.childPollingInterval = null
+    }
+    // deferred: we are inside a commit that is still walking nodes
+    setTimeout(() => this.stop(false))
+  }
   checkStatus = () => {
     return this.parentActive
   }
@@ -556,6 +577,9 @@ export default class App {
       data.line === proto.killIframe
     ) {
       this.lastParentMsgAt = Date.now()
+    }
+    if (this.frameIgnored) {
+      return
     }
     if (data.line === proto.startIframe) {
       // Avoid corrupting an in-flight start; let it complete.
@@ -1250,8 +1274,18 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
+  private sanitizeReferrer(referrer: string): string {
+    if (!referrer) return ''
+    if (this.sanitizer.privateMode) return stringWiper(referrer)
+    return (this.options.urls?.urlSanitizer ?? defaultUrlSanitizer)(referrer)
+  }
+
   send = (message: Message, urgent = false): void => {
     if (this.activityState === ActivityState.NotActive) {
+      return
+    }
+    // ids past the frame's block would corrupt a sibling frame in replay
+    if (this.frameIgnored) {
       return
     }
     // ====================================================
@@ -1332,14 +1366,18 @@ export default class App {
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
-      })
+      }, this.onCommitError)
     } catch (e) {
-      this._debug('worker_commit', e)
-      this.stop(true)
-      setTimeout(() => {
-        void this.start()
-      }, 500)
+      this.onCommitError(e)
     }
+  }
+
+  private onCommitError = (e: unknown) => {
+    this._debug('worker_commit', e)
+    this.stop(true)
+    setTimeout(() => {
+      void this.start()
+    }, 500)
   }
 
   coldStartCommitN = 0
@@ -1925,7 +1963,7 @@ export default class App {
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
           height: window.screen.height,
-          referrer: document.referrer,
+          referrer: this.sanitizeReferrer(document.referrer),
         }),
       })
       if (r.status !== 200) {
@@ -1978,8 +2016,10 @@ export default class App {
       this.storeSessionVersion(this.getSessionVersionHash())
       if (sessionToken && sessionToken !== token) {
         this.bc?.postMessage({
-          type: proto.reset,
+          line: proto.reset,
           token: token,
+          context: this.contextId,
+          projectKey: this.projectKey,
         })
       }
       this.session.setUserInfo({

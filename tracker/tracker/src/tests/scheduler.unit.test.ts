@@ -82,6 +82,35 @@ describe('requestIdleCb task scheduler', () => {
     expect(ran).toEqual(['first', 'boom', 'after-1', 'after-2'])
   })
 
+  test('a throwing task queued behind a pending one does not escape the frame callback', async () => {
+    const ran: string[] = []
+    const onError = jest.fn()
+    requestIdleCb(() => ran.push('first'))
+    requestIdleCb(() => {
+      ran.push('boom')
+      throw new Error('queued failure')
+    }, onError)
+    requestIdleCb(() => ran.push('after'))
+
+    // tick() calls the rAF callbacks directly: an escaping throw would reject here
+    await expect(tick()).resolves.toBeUndefined()
+    expect(ran).toEqual(['first', 'boom', 'after'])
+    expect(onError).toHaveBeenCalledTimes(1)
+    expect((onError.mock.calls[0][0] as Error).message).toBe('queued failure')
+  })
+
+  test('a queued throwing task without an error handler is swallowed', async () => {
+    const ran: string[] = []
+    requestIdleCb(() => ran.push('first'))
+    requestIdleCb(() => {
+      throw new Error('queued failure')
+    })
+    requestIdleCb(() => ran.push('after'))
+
+    await expect(tick()).resolves.toBeUndefined()
+    expect(ran).toEqual(['first', 'after'])
+  })
+
   test('a task returning a rejected promise does not strand the queue', async () => {
     const ran: string[] = []
     requestIdleCb(() => ran.push('first'))

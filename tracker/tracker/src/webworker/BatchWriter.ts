@@ -35,6 +35,9 @@ export default class BatchWriter {
   private signalSeen = false
   // Devtools/analytics batches buffered during init, released right after the visual.
   private heldOther: Array<{ batch: Uint8Array; dataType: DataType }> = []
+  // Until the protocol version is known, the messages sitting unsent in playerBuilder,
+  // so a version switch can re-route them instead of dropping them. null = not recording.
+  private unversioned: Array<{ message: Message; ctx: BatchContext }> | null = []
 
   constructor(
     private readonly pageNo: number,
@@ -81,20 +84,38 @@ export default class BatchWriter {
   }
 
   setProtocolVersion(version: number) {
+    const pending = this.unversioned
+    this.unversioned = null
     if (this.protocolVersion === version) return
+    // Buffered player content is either replayed below or shipped under the old version.
+    if (pending) this.playerBuilder.reset()
+    else this.flushBuilder(this.playerBuilder)
+    this.flushBuilder(this.assetBuilder)
     this.protocolVersion = version
     if (version === 2 && !this.signalSeen) {
       // Init phase: player+assets accumulate up to the hard cap (soft limit ignored).
-      this.playerBuilder.reset()
-      this.assetBuilder.reset()
       this.playerBuilder = new BatchBuilder(this.beaconSizeLimit, this.playerVersion(), 'player')
       this.assetBuilder = new BatchBuilder(this.beaconSizeLimit, ASSETS_VERSION, 'assets')
-      return
+    } else {
+      if (version === 2) this.visualSent = true
+      // Recreate the player builder so subsequent batches carry the right version.
+      this.playerBuilder = new BatchBuilder(this.beaconSize, this.playerVersion(), 'player')
     }
-    if (version === 2) this.visualSent = true
-    // Recreate the player builder so subsequent batches carry the right version.
-    this.playerBuilder.reset()
-    this.playerBuilder = new BatchBuilder(this.beaconSize, this.playerVersion(), 'player')
+    if (pending?.length) this.replay(pending)
+  }
+
+  /** Re-pushes messages under the current routing with their original index/ctx. */
+  private replay(pending: Array<{ message: Message; ctx: BatchContext }>): void {
+    const { nextIndex, timestamp, url } = this
+    for (const { message, ctx } of pending) {
+      this.nextIndex = ctx.index
+      this.timestamp = ctx.timestamp
+      this.url = ctx.url
+      this.pushTo(this.routeMessage(message), message)
+    }
+    this.nextIndex = nextIndex
+    this.timestamp = timestamp
+    this.url = url
   }
 
   writeMessage(message: Message) {
@@ -142,6 +163,7 @@ export default class BatchWriter {
     }
     if (builder.push(message, ctx)) {
       this.nextIndex++
+      if (this.unversioned && builder === this.playerBuilder) this.unversioned.push({ message, ctx })
       return
     }
     // Soft-budget hit: flush this stream's batch, retry once on the same builder.
@@ -151,6 +173,7 @@ export default class BatchWriter {
     this.flushBuilder(builder)
     if (builder.push(message, ctx)) {
       this.nextIndex++
+      if (this.unversioned && builder === this.playerBuilder) this.unversioned.push({ message, ctx })
       return
     }
     // Single message exceeds soft budget: build a one-shot oversized batch.
@@ -169,19 +192,16 @@ export default class BatchWriter {
 
   private pushDuringInit(builder: BatchBuilder, message: Message, ctx: BatchContext): void {
     const isVisual = builder === this.playerBuilder || builder === this.assetBuilder
-    if (builder.push(message, ctx)) {
+    // The two halves ship as one request, so they share the hard cap.
+    const limit = isVisual
+      ? this.beaconSizeLimit - (builder === this.playerBuilder ? this.assetBuilder : this.playerBuilder).size()
+      : undefined
+    if (builder.push(message, ctx, limit)) {
       this.nextIndex++
-      if (
-        isVisual &&
-        this.playerBuilder.size() + this.assetBuilder.size() >= this.beaconSizeLimit
-      ) {
-        // Hard cap reached before the signal — force-finalize the visual.
-        this.finalizeVisual()
-      }
       return
     }
     if (isVisual) {
-      // Builder full: finalize the visual, then re-route via the normal path.
+      // Hard cap reached before the signal: finalize the visual, then re-route via the normal path.
       this.finalizeVisual()
       this.pushTo(this.routeMessage(message), message)
       return
@@ -244,6 +264,7 @@ export default class BatchWriter {
   }
 
   private flushBuilder(builder: BatchBuilder, skipCompression = false): boolean {
+    if (this.unversioned && builder === this.playerBuilder) this.unversioned.length = 0
     const batch = builder.flush()
     if (!batch) return false
     this.emitBatch(batch, builder.dataType, skipCompression)
@@ -415,6 +436,7 @@ export default class BatchWriter {
     this.devtoolsBuilder.reset()
     this.analyticsBuilder.reset()
     this.heldOther.length = 0
+    if (this.unversioned) this.unversioned.length = 0
     this.visualSent = false
     this.signalSeen = false
   }

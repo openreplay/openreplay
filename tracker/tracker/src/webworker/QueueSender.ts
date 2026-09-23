@@ -113,8 +113,11 @@ export default class QueueSender {
     return new Uint8Array(await new Response(stream).arrayBuffer())
   }
 
-  /** Called once the in-flight batch is done with (sent, or given up on). */
-  private finish(): void {
+  /** An entry is done with (sent, or given up on). Only the in-flight one frees the
+   *  line: entries flushAll sent alongside it must not start the next batch early. */
+  private settle(entry: QueueEntry): void {
+    if (this.inFlight !== entry) return
+    this.attemptsCount = 0
     this.inFlight = null
     this.inFlightDispatched = false
     this.pump()
@@ -143,8 +146,7 @@ export default class QueueSender {
         dataType: entry.dataType,
         isCompressed,
       })
-      this.attemptsCount = 0
-      this.finish()
+      this.settle(entry)
       return
     }
 
@@ -165,6 +167,7 @@ export default class QueueSender {
      * sometimes happen during assist connects for some reason
      * */
     if (this.token === null) {
+      if (this.stopped) return
       setTimeout(() => this.dispatch(entry, body, isCompressed, 'newToken'), 500)
       return
     }
@@ -209,8 +212,13 @@ export default class QueueSender {
         r.body?.cancel().catch(() => {})
         if (r.status === 401) {
           // TODO: continuous session ?
-          this.inFlight = null
-          this.inFlightDispatched = false
+          // The line stays stopped: onUnauthorised restarts the session with a new
+          // sender, and nothing more may go out on the rejected token.
+          this.token = null
+          if (this.inFlight === entry) {
+            this.inFlight = null
+            this.inFlightDispatched = false
+          }
           this.onUnauthorised()
           return
         }
@@ -218,9 +226,7 @@ export default class QueueSender {
           this.retry(entry, body, isCompressed, `network:${r.status}`)
           return
         }
-        // Success
-        this.attemptsCount = 0
-        this.finish()
+        this.settle(entry)
       })
       .catch((e: Error) => {
         releaseKeepalive()

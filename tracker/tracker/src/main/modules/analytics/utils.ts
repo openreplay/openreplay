@@ -245,7 +245,7 @@ export function getUTCOffsetString() {
   const date = new Date()
   const offsetMinutes = date.getTimezoneOffset()
 
-  const hours = Math.abs(Math.floor(offsetMinutes / 60))
+  const hours = Math.floor(Math.abs(offsetMinutes) / 60)
   const minutes = Math.abs(offsetMinutes % 60)
 
   const sign = offsetMinutes <= 0 ? '+' : '-'

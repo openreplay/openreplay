@@ -1,24 +1,9 @@
 // @ts-nocheck
 import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals'
 import Events from '../events.js'
-import * as utils from '../utils.js'
-import { createEvent, categories } from '../types.js'
-
-jest.mock('../types.js', () => ({
-  categories: {
-    events: 'events',
-  },
-  createEvent: jest.fn((category, type, timestamp, payload) => ({
-    category,
-    type,
-    timestamp,
-    payload,
-  })),
-}))
 
 describe('Events', () => {
   let constantProps: any
-  let getTimestamp: jest.Mock
   let batcher: { addEvent: jest.Mock; sendImmediately: jest.Mock }
   let events: Events
 
@@ -33,51 +18,29 @@ describe('Events', () => {
       clearSuperProperties: jest.fn(),
     }
 
-    getTimestamp = jest.fn(() => 1635186000000)
     batcher = {
       addEvent: jest.fn(),
       sendImmediately: jest.fn().mockResolvedValue(undefined),
     }
 
-    events = new Events(constantProps, getTimestamp, batcher)
-  })
-
-  afterEach(() => {
-    jest.restoreAllMocks()
-  })
-
-  test('constructor initializes ownProperties from constantProperties.getSuperProperties', () => {
-    expect(constantProps.getSuperProperties).toHaveBeenCalled()
-    expect(events.ownProperties).toEqual({
-      superA: 'A',
-      superB: 2,
-    })
+    events = new Events(constantProps, () => 1635186000000, batcher)
   })
 
   test('sendEvent merges ownProperties and non-default properties, sends via addEvent', () => {
-    const spyIsObject = jest.spyOn(utils, 'isObject')
-
     events.sendEvent('test_event', {
       foo: 'bar',
       os: 'Windows', // should be filtered out by defaultPropertyKeys
     })
 
-    expect(spyIsObject).toHaveBeenCalledWith({
-      foo: 'bar',
-      os: 'Windows',
-    })
-    expect(getTimestamp).toHaveBeenCalled()
-
     expect(batcher.addEvent).toHaveBeenCalledTimes(1)
     const event = batcher.addEvent.mock.calls[0][0]
 
     expect(event).toEqual({
-      category: categories.events,
-      type: undefined,
-      timestamp: 1635186000000,
-      payload: {
+      category: 'events',
+      data: {
         name: 'test_event',
-        properties: {
+        timestamp: 1635186000000,
+        payload: {
           superA: 'A',
           superB: 2,
           foo: 'bar',
@@ -98,13 +61,8 @@ describe('Events', () => {
     expect(batcher.addEvent).toHaveBeenCalledTimes(1)
     const event = batcher.addEvent.mock.calls[0][0]
 
-    expect(event.payload).toEqual({
-      name: 'no_props',
-      properties: {
-        superA: 'A',
-        superB: 2,
-      },
-    })
+    expect(event.data.name).toBe('no_props')
+    expect(event.data.payload).toEqual({ superA: 'A', superB: 2 })
   })
 
   test('sendEvent with send_immediately option calls batcher.sendImmediately instead of addEvent', () => {
@@ -113,7 +71,7 @@ describe('Events', () => {
     expect(batcher.sendImmediately).toHaveBeenCalledTimes(1)
     const event = batcher.sendImmediately.mock.calls[0][0]
 
-    expect(event.payload.name).toBe('immediate_event')
+    expect(event.data.name).toBe('immediate_event')
     expect(batcher.addEvent).not.toHaveBeenCalled()
   })
 
@@ -255,13 +213,35 @@ describe('Events', () => {
     expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
   })
 
-  test('reset clears all super properties and calls clearSuperProperties', () => {
-    events.ownProperties = { something: 'here' }
+  test('setPropertiesOnce ignores reserved and default keys even when missing', () => {
+    events.ownProperties = {}
 
-    events.reset()
+    events.setPropertiesOnce({ os: 'Linux', token: 't', timestamp: 1, properties: {}, ok: 1 })
+    events.setPropertiesOnce('browser', 'Chrome')
+    events.setPropertiesOnce('token', 'x')
 
-    expect(events.ownProperties).toEqual({})
-    expect(constantProps.clearSuperProperties).toHaveBeenCalled()
+    expect(events.ownProperties).toEqual({ ok: 1 })
+    expect(constantProps.saveSuperProperties).toHaveBeenCalledTimes(1)
+  })
+
+  test('setPropertiesOnce keeps existing falsy values', () => {
+    events.ownProperties = { zero: 0, empty: '', no: false }
+
+    events.setPropertiesOnce({ zero: 1, empty: 'x', no: true })
+    events.setPropertiesOnce('zero', 2)
+
+    expect(events.ownProperties).toEqual({ zero: 0, empty: '', no: false })
+    expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
+  })
+
+  test('unsetProperties removes properties with falsy values', () => {
+    events.ownProperties = { zero: 0, empty: '', nil: null, keep: 1 }
+
+    events.unsetProperties(['zero', 'empty'])
+    events.unsetProperties('nil')
+
+    expect(events.ownProperties).toEqual({ keep: 1 })
+    expect(constantProps.saveSuperProperties).toHaveBeenCalledTimes(2)
   })
 
   test('event properties override ownProperties on sendEvent', () => {
@@ -270,6 +250,6 @@ describe('Events', () => {
     events.sendEvent('test', { foo: 'from_event' })
 
     const event = batcher.addEvent.mock.calls[0][0]
-    expect(event.payload.properties.foo).toBe('from_event')
+    expect(event.data.payload.foo).toBe('from_event')
   })
 })

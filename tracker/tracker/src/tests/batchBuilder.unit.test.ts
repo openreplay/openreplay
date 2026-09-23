@@ -21,6 +21,7 @@ jest.mock('../common/messages.gen', () => {
 })
 
 import BatchBuilder from '../webworker/BatchBuilder.js'
+import { parseBatch } from './batchTestKit.js'
 
 const MType = {
   Timestamp: 0,
@@ -116,12 +117,6 @@ describe('BatchBuilder', () => {
       const [firstIdx] = readVarint(out, i)
       expect(firstIdx).toBe(42)
     })
-
-    test('Timestamp pushed as the very first message does NOT count as content; flush returns null', () => {
-      builder.push([MType.Timestamp, 5000], ctx())
-      // Header was synthesized but no real (non-Timestamp) message — empty batch.
-      expect(builder.flush()).toBeNull()
-    })
   })
 
   describe('atomic push', () => {
@@ -194,36 +189,39 @@ describe('BatchBuilder', () => {
       expect(idx(first)).toBe(5)
       expect(idx(second)).toBe(9)
     })
-
-    test('reset() drops in-progress batch silently', () => {
-      builder.push([MType.MouseMove, 1, 2], ctx())
-      builder.reset()
-      expect(builder.flush()).toBeNull()
-    })
-
-    test('hasContent() reflects whether a real message was pushed', () => {
-      expect(builder.hasContent()).toBe(false)
-      builder.push([MType.Timestamp, 5000], ctx())
-      expect(builder.hasContent()).toBe(false) // Timestamp alone doesn't count
-      builder.push([MType.MouseMove, 1, 2], ctx())
-      expect(builder.hasContent()).toBe(true)
-    })
   })
 
   describe('budget enforcement', () => {
-    test('hard cap: bufferSize is never exceeded', () => {
+    test('hard cap: push refuses once the next message would not fit, output stays whole', () => {
       const small = new BatchBuilder(500, 1, 'player')
-      // Try to fill it with successively-pushed mouse moves
-      let ok = true
-      let i = 0
-      while (ok) {
-        ok = small.push([MType.MouseMove, i, i], ctx({ index: i }))
-        i++
-        if (i > 1000) break
+      let accepted = 0
+      while (accepted < 1000 && small.push([MType.MouseMove, 1000 + accepted, 1000], ctx({ index: accepted }))) {
+        accepted++
       }
-      const out = small.flush()
-      expect(out).not.toBeNull()
-      expect(out!.length).toBeLessThanOrEqual(500)
+      expect(accepted).toBeGreaterThan(0)
+      expect(accepted).toBeLessThan(1000)
+      expect(small.size()).toBeLessThanOrEqual(500)
+      // One more MouseMove (8 bytes: type + 3-byte size + two 2-byte varints) would overflow.
+      expect(small.size() + 8).toBeGreaterThan(500)
+
+      const out = small.flush()!
+      const parsed = parseBatch(out) // throws on a truncated trailing message
+      expect(parsed.types.filter((t) => t === MType.MouseMove)).toHaveLength(accepted)
+    })
+
+    test('a per-push limit caps below bufferSize for that push only', () => {
+      builder.push([MType.MouseMove, 1, 2], ctx())
+      const used = builder.size()
+      expect(builder.push([MType.ConsoleLog, 'info', 'x'.repeat(100)], ctx({ index: 1 }), used + 50)).toBe(false)
+      expect(builder.size()).toBe(used)
+      expect(builder.push([MType.ConsoleLog, 'info', 'x'.repeat(100)], ctx({ index: 1 }))).toBe(true)
+      expect(parseBatch(builder.flush()!).types).toEqual([MType.Timestamp, MType.TabData, MType.MouseMove, MType.ConsoleLog])
+    })
+
+    test('a per-push limit also covers the header of a fresh batch', () => {
+      expect(builder.push([MType.MouseMove, 1, 2], ctx(), 10)).toBe(false)
+      expect(builder.size()).toBe(0)
+      expect(builder.flush()).toBeNull()
     })
   })
 

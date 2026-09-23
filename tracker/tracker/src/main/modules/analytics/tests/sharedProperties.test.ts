@@ -21,7 +21,18 @@ describe('ConstantProperties', () => {
   let sessionStorageMock: any
   let localStorageMock: any
   let originalReferrer: string
-  let originalLocation: Location | any
+
+  const withSearch = (search: string, fn: () => void) => {
+    const original = window.location.href
+    window.history.replaceState(null, '', `${window.location.pathname}${search}`)
+    try {
+      fn()
+    } finally {
+      window.history.replaceState(null, '', original)
+    }
+  }
+  const setReferrer = (value: string) =>
+    Object.defineProperty(document, 'referrer', { configurable: true, value })
 
   beforeEach(() => {
     sessionStorageStore = {}
@@ -93,35 +104,18 @@ describe('ConstantProperties', () => {
   })
 
   test('detects UTM parameters from URL and stores them', () => {
-    const OriginalURLSearchParams = globalThis.URLSearchParams
-    ;(globalThis as any).URLSearchParams = class {
-      constructor(search: string) {
-        this._search = search
-      }
-      get(name: string) {
-        const map: Record<string, string> = {
-          utm_source: 'test_source',
-          utm_medium: 'test_medium',
-          utm_campaign: 'test_campaign',
-        }
-        return map[name] ?? null
-      }
-    } as any
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
+    withSearch('?utm_source=test_source&utm_medium=test_medium&utm_campaign=test_campaign', () => {
+      const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
 
-    expect(properties.utmSource).toBe('test_source')
-    expect(properties.utmMedium).toBe('test_medium')
-    expect(properties.utmCampaign).toBe('test_campaign')
-
-    expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
-      utmParamsKey,
-      JSON.stringify({
+      expect(properties.utmSource).toBe('test_source')
+      expect(properties.utmMedium).toBe('test_medium')
+      expect(properties.utmCampaign).toBe('test_campaign')
+      expect(JSON.parse(sessionStorageStore[utmParamsKey])).toEqual({
         utm_source: 'test_source',
         utm_medium: 'test_medium',
         utm_campaign: 'test_campaign',
-      }),
-    )
-    ;(globalThis as any).URLSearchParams = OriginalURLSearchParams
+      })
+    })
   })
 
   test('reuses stored UTM parameters if present in sessionStorage', () => {
@@ -131,21 +125,27 @@ describe('ConstantProperties', () => {
       utm_campaign: 'stored_campaign',
     })
 
-    window.location.search =
-      '?utm_source=ignored_source&utm_medium=ignored_medium&utm_campaign=ignored_campaign'
+    withSearch('?utm_source=ignored_source&utm_medium=ignored_medium', () => {
+      const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
 
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
+      expect(properties.utmSource).toBe('stored_source')
+      expect(properties.utmMedium).toBe('stored_medium')
+      expect(properties.utmCampaign).toBe('stored_campaign')
+      expect(sessionStorageMock.setItem).not.toHaveBeenCalledWith(utmParamsKey, expect.any(String))
+    })
+  })
 
-    expect(properties.utmSource).toBe('stored_source')
-    expect(properties.utmMedium).toBe('stored_medium')
-    expect(properties.utmCampaign).toBe('stored_campaign')
+  test('corrupt stored UTM falls back to the URL', () => {
+    sessionStorageStore[utmParamsKey] = '{not json'
 
-    expect(sessionStorageMock.setItem).not.toHaveBeenCalledWith(utmParamsKey, expect.any(String))
+    withSearch('?utm_source=url_source', () => {
+      const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
+      expect(properties.utmSource).toBe('url_source')
+      expect(properties.utmMedium).toBeNull()
+    })
   })
 
   test('handles missing UTM parameters when not provided', () => {
-    window.location.search = ''
-
     const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
 
     expect(properties.utmSource).toBeNull()
@@ -180,11 +180,6 @@ describe('ConstantProperties', () => {
     expect(properties.deviceId).toBe('existing-device-id')
   })
 
-  test('distinctId getter returns deviceId', () => {
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
-    expect(properties.distinctId).toBe(properties.deviceId)
-  })
-
   test('gets referrer from session storage if available', () => {
     sessionStorageStore[refKey] = 'https://stored-referrer.com'
 
@@ -195,16 +190,31 @@ describe('ConstantProperties', () => {
     expect(properties.initialReferrer).toBe('https://stored-referrer.com')
   })
 
-  test('detects search engine from referrer', () => {
-    Object.defineProperty(document, 'referrer', {
-      configurable: true,
-      value: 'https://www.google.com/search?q=openreplay',
-    })
+  test.each([
+    ['https://www.google.com/search?q=openreplay', 'google'],
+    ['https://www.google.co.uk/', 'google'],
+    ['https://search.yahoo.co.jp/search?p=x', 'yahoo'],
+    ['https://ask.com/web?q=x', 'ask'],
+    ['https://duckduckgo.com/', 'duckduckgo'],
+  ])('detects search engine from referrer %s', (referrer, engine) => {
+    setReferrer(referrer)
 
     const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
 
-    expect(properties.initialReferrer).toBe('https://www.google.com/search?q=openreplay')
-    expect(properties.searchEngine).toBe('google')
+    expect(properties.initialReferrer).toBe(referrer)
+    expect(properties.searchEngine).toBe(engine)
+  })
+
+  test.each([
+    'https://tasks.io/board',
+    'https://example.info/',
+    'https://blog.example.com/?ref=google',
+    'https://mygoogle.dev/',
+    'not a url',
+  ])('does not take %s for a search engine', (referrer) => {
+    setReferrer(referrer)
+
+    expect(new ConstantProperties(localStorageMock, sessionStorageMock).searchEngine).toBeNull()
   })
 
   test('reads user id from session storage when present', () => {
@@ -235,6 +245,9 @@ describe('ConstantProperties', () => {
     properties.resetUserId()
     expect(properties.user_id).toBeNull()
     expect(properties.deviceId).toBe(deviceIdBefore)
+
+    // a reload must not restore the logged-out user
+    expect(new ConstantProperties(localStorageMock, sessionStorageMock).user_id).toBeNull()
   })
 
   test('resetUserId hard reset regenerates deviceId', () => {
@@ -249,11 +262,14 @@ describe('ConstantProperties', () => {
     expect(localStorageMock.setItem).toHaveBeenCalledWith(distinctIdKey, properties.deviceId)
   })
 
-  test('getSuperProperties returns empty object when not set', () => {
+  test('getSuperProperties returns empty object when not set or corrupt', () => {
     const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
+    expect(properties.getSuperProperties()).toEqual({})
 
-    const result = properties.getSuperProperties()
-    expect(result).toEqual({})
+    localStorageStore[superPropKey] = '{broken'
+    expect(properties.getSuperProperties()).toEqual({})
+    localStorageStore[superPropKey] = 'null'
+    expect(properties.getSuperProperties()).toEqual({})
   })
 
   test('getSuperProperties returns parsed object when stored', () => {
@@ -286,53 +302,63 @@ describe('ConstantProperties', () => {
   })
 
   test('all getter returns full property map with correct keys', () => {
-    const OriginalURLSearchParams = globalThis.URLSearchParams
-    ;(globalThis as any).URLSearchParams = class {
-      constructor(search: string) {
-        this._search = search
-      }
-      get(name: string) {
-        const map: Record<string, string> = {
-          utm_source: 'test_source',
-          utm_medium: 'test_medium',
-          utm_campaign: 'test_campaign',
-        }
-        return map[name] ?? null
-      }
-    } as any
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
-    const all = properties.all
+    withSearch('?utm_source=test_source&utm_medium=test_medium&utm_campaign=test_campaign', () => {
+      const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
 
-    expect(all).toMatchObject({
-      os: 'Windows',
-      os_version: '10',
-      browser: 'Chrome',
-      browser_version: '91.0.4472.124 (91)',
-      platform: 'desktop',
-      screen_height: 1080,
-      screen_width: 1920,
-      initial_referrer: 'https://example.com',
-      utm_source: 'test_source',
-      utm_medium: 'test_medium',
-      utm_campaign: 'test_campaign',
-      user_id: null,
-      sdk_edition: 'web',
-      sdk_version: 'TRACKER_VERSION',
-      timezone: 'UTC+01:00',
-      search_engine: null,
+      expect(properties.all).toEqual({
+        os: 'Windows',
+        os_version: '10',
+        browser: 'Chrome',
+        browser_version: '91.0.4472.124 (91)',
+        platform: 'desktop',
+        screen_height: 1080,
+        screen_width: 1920,
+        initial_referrer: 'https://example.com',
+        utm_source: 'test_source',
+        utm_medium: 'test_medium',
+        utm_campaign: 'test_campaign',
+        user_id: null,
+        distinct_id: properties.deviceId,
+        sdk_edition: 'web',
+        sdk_version: 'TRACKER_VERSION',
+        timezone: 'UTC+01:00',
+        search_engine: null,
+      })
     })
-
-    expect(all.distinct_id).toBe(properties.deviceId)
-    ;(globalThis as any).URLSearchParams = OriginalURLSearchParams
   })
 
-  test('defaultPropertyKeys matches keys of all', () => {
+  test('defaultPropertyKeys lists the reserved property names', () => {
     const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
 
-    const keysFromGetter = properties.defaultPropertyKeys
-    const keysFromAll = Object.keys(properties.all)
+    expect(properties.defaultPropertyKeys).toEqual([
+      'os',
+      'os_version',
+      'browser',
+      'browser_version',
+      'platform',
+      'screen_height',
+      'screen_width',
+      'initial_referrer',
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'user_id',
+      'distinct_id',
+      'sdk_edition',
+      'sdk_version',
+      'timezone',
+      'search_engine',
+    ])
+  })
 
-    expect(keysFromGetter.sort()).toEqual(keysFromAll.sort())
+  test('late OS version refinement from uaParse updates properties', () => {
+    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
+    const onOsVersionUpdate = (utils.uaParse as jest.Mock).mock.calls.at(-1)[1]
+
+    onOsVersionUpdate('11')
+
+    expect(properties.osVersion).toBe('11')
+    expect(properties.all.os_version).toBe('11')
   })
 
   test('handles mobile device detection and updates platform', () => {

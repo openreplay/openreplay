@@ -51,9 +51,11 @@ export default function (app: App, opts: Partial<Options>): void {
   let frames = 0
   let ticks = 0
   let rafHandle: number | null = null
+  let framePending = false
   let inFrame = false
 
   const onFrame = (): void => {
+    framePending = false
     rafHandle = null
     if (!running || frames === PAUSED) {
       return
@@ -66,12 +68,15 @@ export default function (app: App, opts: Partial<Options>): void {
   }
 
   const scheduleFrame = (): void => {
-    if (!raf || rafHandle !== null) {
+    if (!raf || framePending) {
       return
     }
+    framePending = true
     inFrame = true
-    rafHandle = raf(onFrame)
+    const handle = raf(onFrame)
     inFrame = false
+    // a synchronous rAF has already run onFrame; keeping its handle would block rescheduling
+    rafHandle = framePending ? handle : null
   }
 
   const stopLoop = (): void => {
@@ -79,6 +84,7 @@ export default function (app: App, opts: Partial<Options>): void {
       caf(rafHandle)
     }
     rafHandle = null
+    framePending = false
   }
 
   app.ticker.attach(

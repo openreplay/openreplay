@@ -230,10 +230,10 @@ export function generateRandomId(len?: number) {
   const safeCrypto = window.crypto || window.msCrypto
   if (safeCrypto) {
     safeCrypto.getRandomValues(arr)
-    return Array.from(arr, dec2hex).join('')
   } else {
-    return Array.from({ length: len || 40 }, () => dec2hex(Math.floor(Math.random() * 16))).join('')
+    for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(Math.random() * 256)
   }
+  return Array.from(arr, dec2hex).join('')
 }
 
 export function inIframe() {
@@ -340,8 +340,8 @@ class FIFOTaskScheduler {
   }
 
   // Adds a task to the queue
-  addTask(task: () => any) {
-    this.taskQueue.push(task)
+  addTask(task: () => any, onError?: (e: unknown) => void) {
+    this.taskQueue.push({ task, onError })
     this.runTasks()
   }
 
@@ -353,7 +353,7 @@ class FIFOTaskScheduler {
 
     this.isRunning = true
 
-    const executeNextTask = () => {
+    const executeNextTask = (sync: boolean) => {
       if (this.taskQueue.length === 0) {
         this.isRunning = false
         return
@@ -363,26 +363,29 @@ class FIFOTaskScheduler {
       // still schedule the next one: leaving `isRunning` true strands the queue
       // for the lifetime of the page, and since commits run through here that
       // silently ends the recording. See #4836.
-      const nextTask = this.taskQueue.shift()
-      const scheduleNext = () => requestAnimationFrame(() => executeNextTask())
+      const { task, onError } = this.taskQueue.shift()
+      const scheduleNext = () => requestAnimationFrame(() => executeNextTask(false))
       let result: any
       try {
-        result = nextTask()
+        result = task()
       } catch (e) {
         scheduleNext()
-        throw e
+        // only the synchronous first task still has its caller on the stack
+        if (sync) throw e
+        onError?.(e)
+        return
       }
       Promise.resolve(result).then(scheduleNext, scheduleNext)
     }
 
-    executeNextTask()
+    executeNextTask(true)
   }
 }
 
 const scheduler = new FIFOTaskScheduler()
-export function requestIdleCb(callback: () => void) {
+export function requestIdleCb(callback: () => void, onError?: (e: unknown) => void) {
   // performance improvement experiment;
-  scheduler.addTask(callback)
+  scheduler.addTask(callback, onError)
   /**
    * This is a brief polyfill that suits our needs
    * I took inspiration from Microsoft Clarity polyfill on this one

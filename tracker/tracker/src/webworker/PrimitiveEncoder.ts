@@ -37,6 +37,8 @@ const textEncoder: { encode(str: string): Uint8Array } =
                 resArr[(resPos += 1)] = 0xbd /*0b10111101*/
                 continue
               }
+            } else if (point >= 0xdc00 && point <= 0xdfff) {
+              point = 0xfffd // lone low surrogate
             }
             if (point <= 0x007f) {
               resArr[(resPos += 1)] = (0x0 /*0b0*/ << 7) | point

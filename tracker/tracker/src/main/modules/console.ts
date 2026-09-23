@@ -52,7 +52,7 @@ function printObject(arg: any): string {
     const res: string[] = []
     let i = 0
     for (const k in arg) {
-      if (++i === 10) {
+      if (i++ === 10) {
         break
       }
       const v = arg[k]
@@ -128,17 +128,18 @@ export default function (app: App, opts: Partial<Options>): void {
   const restores: Array<() => void> = []
 
   const patchConsole = (console: Console, ctx: typeof globalThis) => {
-    const handler = {
+    // level comes from the patched method: target.name is unreliable once the host wraps console
+    const makeHandler = (level: string) => ({
       apply: function (target: Console['log'], thisArg: typeof this, argumentsList: unknown[]) {
         Reflect.apply(target, ctx, argumentsList)
         n = n + 1
         if (n > options.consoleThrottling) {
           return
         } else {
-          sendConsoleLog(target.name, argumentsList)
+          sendConsoleLog(level, argumentsList)
         }
       },
-    }
+    })
 
     options.consoleMethods!.forEach((method) => {
       if (consoleMethods.indexOf(method) === -1) {
@@ -147,7 +148,7 @@ export default function (app: App, opts: Partial<Options>): void {
       }
       const fn = (ctx.console as any)[method]
       // is there any way to preserve the original console trace?
-      ;(console as any)[method] = new Proxy(fn, handler)
+      ;(console as any)[method] = new Proxy(fn, makeHandler(method))
       restores.push(() => {
         ;(console as any)[method] = fn
       })

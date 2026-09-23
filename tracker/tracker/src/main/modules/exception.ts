@@ -48,7 +48,9 @@ export function getExceptionMessageFromEvent(
     if (e.error instanceof Error) {
       return getExceptionMessage(e.error, getDefaultStack(e), metadata)
     } else {
-      let [name, message] = e.message.split(':')
+      const sep = e.message.indexOf(':')
+      let name = sep === -1 ? '' : e.message.slice(0, sep).trim()
+      let message = sep === -1 ? '' : e.message.slice(sep + 1).trim()
       if (!message) {
         name = 'Error'
         message = e.message

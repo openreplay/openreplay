@@ -4,7 +4,7 @@
  * while input messages arrive at the same time, and check every body the way
  * backend/pkg/messages/reader.go does.
  */
-import { describe, expect, test, jest } from '@jest/globals'
+import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
 
 jest.mock('../common/messages.gen', () => {
   const Type = {
@@ -28,6 +28,7 @@ jest.mock('../common/messages.gen', () => {
 })
 
 import BatchWriter from '../webworker/BatchWriter.js'
+import { contentTypes, expectNoRepair, parseAll } from './batchTestKit.js'
 
 const T = {
   Timestamp: 0, SetViewportSize: 5, SetViewportScroll: 6, CreateDocument: 7,
@@ -42,49 +43,26 @@ const T = {
 
 const ORLOADED = [T.SetNodeAttribute, 0, 'orloaded', 'true']
 
-// ── reader.go port ────────────────────────────────────────────────────────
-function readUint(b, p) {
-  let v = 0, s = 0, i = p
-  while (i < b.length) { const x = b[i++]; v += (x & 0x7f) * Math.pow(2, s); if ((x & 0x80) === 0) return [v, i]; s += 7 }
-  return [null, i]
-}
-function readLikeIngest(b, label) {
-  let p = 0, index = 0, version = 0
-  const seen = []
-  while (p < b.length) {
-    const [t, np] = readUint(b, p); if (t === null) break
-    p = np; index++; seen.push(t)
-    if (version > 0 && t !== T.BatchMetadata) {
-      if (p + 3 > b.length) throw new Error(`${label}: read message size err @msg${index}`)
-      const size = b[p] | (b[p + 1] << 8) | (b[p + 2] << 16); p += 3
-      if (b.length - p < size) throw new Error(`${label}: can't read message body @msg${index}`)
-      p += size; continue
-    }
-    if (t !== T.BatchMetadata) {
-      throw new Error(`${label}: body starts with type ${t}, not BatchMetadata (desync)`)
-    }
-    if (index > 1) throw new Error(`${label}: batch meta not at the start of batch @msg${index}`)
-    let v, pn, fi, ts, ul
-    ;[v, p] = readUint(b, p); ;[pn, p] = readUint(b, p); ;[fi, p] = readUint(b, p)
-    ;[ts, p] = readUint(b, p); ;[ul, p] = readUint(b, p); p += ul
-    version = v
-    if (version < 1 || version > 5) throw new Error(`${label}: unsupported version ${version}`)
-  }
-  return seen
-}
-function assertReadable(captured, ctx) {
-  captured.forEach((c, i) => {
-    const label = `${ctx} batch#${i}(${c.dataType},${c.batch.length}B,split=${c.split})`
-    if (c.batch.length === 0) throw new Error(`${label}: zero-byte body`)
-    if (c.dataType === 'visual') {
-      if (typeof c.split !== 'number') throw new Error(`${label}: visual with no split`)
-      if (c.split <= 0 || c.split >= c.batch.length) throw new Error(`${label}: split out of range`)
-      readLikeIngest(c.batch.subarray(0, c.split), label + '/player')
-      readLikeIngest(c.batch.subarray(c.split), label + '/assets')
-    } else {
-      readLikeIngest(c.batch, label)
-    }
-  })
+let warn: any
+beforeEach(() => { warn = jest.spyOn(console, 'warn').mockImplementation(() => {}) })
+afterEach(() => {
+  try { expectNoRepair(warn) } finally { warn.mockRestore() }
+})
+
+const isSignal = (m) => m[0] === T.SetNodeAttribute && m[2] === 'orloaded'
+
+/** Every body parses like ingestion, and every content message written comes out
+ *  exactly once, except the ones the writer reported as too large to send. */
+function assertReadable(captured, ctx, written?: any[]) {
+  const parsed = parseAll(captured, ctx)
+  if (!written) return
+  const dropped = warn.mock.calls
+    .filter((args) => String(args[0]).includes('beacon size overflow'))
+    .map((args) => args[1][0])
+  const expected = contentTypes([...written.filter((m) => !isSignal(m)).map((m) => m[0])])
+  for (const t of dropped) expected[t] -= 1
+  for (const t of Object.keys(expected)) if (expected[t] === 0) delete expected[t]
+  expect([ctx, contentTypes(parsed.flatMap((p) => p.types))]).toEqual([ctx, expected])
 }
 
 // ── realistic streams ─────────────────────────────────────────────────────
@@ -135,8 +113,9 @@ function makeWriter(pageNo = 2) {
 }
 
 /** Feed arrays the way the worker's onmessage does. */
-function feed(writer, arrays: any[][]) {
+function feed(writer, arrays: any[][]): any[] {
   for (const arr of arrays) for (const m of arr) writer.writeMessage(m as any)
+  return arrays.flat()
 }
 
 describe('input arriving while the tracker is starting', () => {
@@ -146,9 +125,9 @@ describe('input arriving while the tracker is starting', () => {
       const { writer, captured } = makeWriter()
       writer.setBeaconSizeLimit(1e6)
       writer.setProtocolVersion(2)
-      feed(writer, [[...dom.slice(0, at), ...keystroke('a'), ...dom.slice(at), ORLOADED]])
+      const written = feed(writer, [[...dom.slice(0, at), ...keystroke('a'), ...dom.slice(at), ORLOADED]])
       writer.finaliseBatch()
-      assertReadable(captured, `splice@${at}`)
+      assertReadable(captured, `splice@${at}`, written)
     }
   })
 
@@ -163,9 +142,9 @@ describe('input arriving while the tracker is starting', () => {
       writer.setBeaconSizeLimit(1e6)
       writer.setProtocolVersion(2)
       const arrays = [...commits.slice(0, gap), keystroke('b'), ...commits.slice(gap)]
-      feed(writer, arrays)
+      const written = feed(writer, arrays)
       writer.finaliseBatch()
-      assertReadable(captured, `gap@${gap}`)
+      assertReadable(captured, `gap@${gap}`, written)
     }
   })
 
@@ -180,7 +159,7 @@ describe('input arriving while the tracker is starting', () => {
       }
       if (authAt >= stream.length) { writer.setBeaconSizeLimit(1e6); writer.setProtocolVersion(2) }
       writer.finaliseBatch()
-      assertReadable(captured, `auth@${authAt}`)
+      assertReadable(captured, `auth@${authAt}`, stream)
     }
   })
 
@@ -191,9 +170,10 @@ describe('input arriving while the tracker is starting', () => {
         const { writer, captured } = makeWriter()
         writer.setBeaconSizeLimit(limit)
         writer.setProtocolVersion(2)
-        feed(writer, [[...dom.slice(0, at), ...keystroke('f'), ...dom.slice(at), ORLOADED, ...keystroke('g')]])
+        const written = feed(writer, [[...dom.slice(0, at), ...keystroke('f'), ...dom.slice(at), ORLOADED, ...keystroke('g')]])
         writer.finaliseBatch()
-        assertReadable(captured, `limit=${limit} at=${at}`)
+        assertReadable(captured, `limit=${limit} at=${at}`, written)
+        for (const c of captured) if (c.dataType === 'visual') expect(c.batch.length).toBeLessThanOrEqual(limit)
       }
     }
   })
@@ -206,7 +186,8 @@ describe('input arriving while the tracker is starting', () => {
         const { writer, captured } = makeWriter()
         writer.setBeaconSizeLimit(limit)
         writer.setProtocolVersion(2)
-        feed(writer, [[
+        warn.mockClear()
+        const written = feed(writer, [[
           ...dom.slice(0, 20),
           [T.SetInputValue, 42, paste, 0],                                  // player
           [T.InputChange, 42, paste, false, 'Name', 12, 3],                 // analytics
@@ -217,7 +198,7 @@ describe('input arriving while the tracker is starting', () => {
           ORLOADED,
         ]])
         writer.finaliseBatch()
-        assertReadable(captured, `paste=${size} limit=${limit}`)
+        assertReadable(captured, `paste=${size} limit=${limit}`, written)
       }
     }
   })
@@ -227,9 +208,9 @@ describe('input arriving while the tracker is starting', () => {
     const { writer, captured } = makeWriter()
     writer.setBeaconSizeLimit(1e6)
     writer.setProtocolVersion(2)
-    feed(writer, [dom, keystroke('h'), [ORLOADED], keystroke('i')])
+    const written = feed(writer, [dom, keystroke('h'), [ORLOADED], keystroke('i')])
     writer.finaliseBatch()
-    assertReadable(captured, 'signal-own-commit')
+    assertReadable(captured, 'signal-own-commit', written)
     expect(captured.some((c) => c.dataType === 'visual')).toBe(true)
   })
 
@@ -240,14 +221,11 @@ describe('input arriving while the tracker is starting', () => {
         const { writer, captured } = makeWriter()
         writer.setBeaconSizeLimit(1e6)
         writer.setProtocolVersion(2)
-        dom.slice(0, at).forEach((m) => writer.writeMessage(m as any))
-        keystroke('j').forEach((m) => writer.writeMessage(m as any))
+        const written = feed(writer, [dom.slice(0, at), keystroke('j')])
         writer.finaliseBatch(skip)             // 30s autosend or 'closing' mid-init
-        keystroke('k').forEach((m) => writer.writeMessage(m as any))
-        dom.slice(at).forEach((m) => writer.writeMessage(m as any))
-        writer.writeMessage(ORLOADED as any)
+        written.push(...feed(writer, [keystroke('k'), dom.slice(at), [ORLOADED]]))
         writer.finaliseBatch()
-        assertReadable(captured, `finalise@${at} skip=${skip}`)
+        assertReadable(captured, `finalise@${at} skip=${skip}`, written)
       }
     }
   })

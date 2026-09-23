@@ -12,12 +12,19 @@ function mockFetch(status: number, headers?: Record<string, string>) {
 }
 
 /** Resolves each fetch only when the test says so, so ordering is observable. */
+const flush = async () => {
+  for (let i = 0; i < 5; i++) await Promise.resolve()
+}
+
 function gatedFetch() {
   const gates: Array<() => void> = []
+  const settled: Array<() => void> = []
   const mock = jest.spyOn(globalThis, 'fetch').mockImplementation(
     () =>
       new Promise((resolve) => {
-        gates.push(() => resolve({ status: 200 } as unknown as Response))
+        const done = () => resolve({ status: 200 } as unknown as Response)
+        gates.push(done)
+        settled.push(done)
       }),
   )
   return {
@@ -25,9 +32,12 @@ function gatedFetch() {
     releaseNext: async () => {
       const gate = gates.shift()
       if (gate) gate()
-      await Promise.resolve()
-      await Promise.resolve()
-      await Promise.resolve()
+      await flush()
+    },
+    /** Resolves the fetch started n-th (0-based, counting all calls). */
+    release: async (n: number) => {
+      settled[n]()
+      await flush()
     },
   }
 }
@@ -141,22 +151,6 @@ describe('QueueSender', () => {
     expect(mock.mock.calls.map(seqOf)).toEqual([1, 2, 3, 4])
   })
 
-  test('A raw (closing) batch cannot overtake an earlier queued one', async () => {
-    const queueSender = defaultQueueSender()
-    const { mock, releaseNext } = gatedFetch()
-    queueSender.authorise(randomToken)
-
-    queueSender.push(sampleArray, 'visual', 1) // in flight
-    queueSender.push(sampleArray, 'player') // queued
-    // Closing-path batch: skips gzip, but must not jump the line.
-    queueSender.push(sampleArray, 'devtools', undefined, true)
-
-    expect(mock).toHaveBeenCalledTimes(1)
-    await releaseNext()
-    await releaseNext()
-    expect(mock.mock.calls.map(dataTypeOf)).toEqual(['visual', 'player', 'devtools'])
-  })
-
   test('flushAll drains the queue oldest-first', async () => {
     const queueSender = defaultQueueSender()
     const { mock } = gatedFetch()
@@ -172,16 +166,140 @@ describe('QueueSender', () => {
     expect(mock.mock.calls.map(seqOf)).toEqual([1, 2, 3])
   })
 
-  test('seq numbers are unique and gapless across many batches', async () => {
+  test('a batch flushAll sent alongside the in-flight one does not free the line', async () => {
     const queueSender = defaultQueueSender()
-    const { mock, releaseNext } = gatedFetch()
+    const { mock, release } = gatedFetch()
     queueSender.authorise(randomToken)
 
-    for (let i = 0; i < 25; i++) queueSender.push(sampleArray, 'player')
-    for (let i = 0; i < 25; i++) await releaseNext()
+    queueSender.push(sampleArray, 'visual', 1) // fetch #0, in flight
+    queueSender.push(sampleArray, 'player')
+    queueSender.flushAll() // fetch #1, sent next to #0
+    expect(mock).toHaveBeenCalledTimes(2)
 
-    const seqs = mock.mock.calls.map(seqOf)
-    expect(seqs).toEqual(Array.from({ length: 25 }, (_, i) => i + 1))
+    await release(1) // the flushed one lands first
+    queueSender.push(sampleArray, 'assets') // page survived the close: pushes continue
+    expect(mock).toHaveBeenCalledTimes(2) // #0 still holds the line
+
+    await release(0)
+    expect(mock).toHaveBeenCalledTimes(3)
+    expect(mock.mock.calls.map(seqOf)).toEqual([1, 2, 3])
+  })
+
+  test('retries back off linearly (ATTEMPT_TIMEOUT * n), then give up without dropping the batch', async () => {
+    jest.useFakeTimers()
+    const onFailed = jest.fn()
+    const queueSender = new QueueSender(baseURL, () => {}, onFailed, 3, 100)
+    const fetchMock = mockFetch(500)
+    queueSender.authorise(randomToken)
+    queueSender.push(sampleArray)
+    queueSender.push(sampleArray)
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    for (const delay of [100, 200, 300]) {
+      jest.advanceTimersByTime(delay - 1)
+      await flush()
+      const before = fetchMock.mock.calls.length
+      jest.advanceTimersByTime(1)
+      await flush()
+      expect(fetchMock.mock.calls.length).toBe(before + 1)
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(onFailed).toHaveBeenCalledTimes(1)
+    expect(onFailed).toHaveBeenCalledWith('Failed to send batch after 3 attempts.')
+    expect(String(fetchMock.mock.calls[3][0])).toContain('_network:500')
+
+    jest.advanceTimersByTime(60_000)
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock.mock.calls.every((c) => seqOf(c) === 1)).toBe(true)
+    expect(queueSender.getQueueStatus()).toBe(false)
+  })
+
+  test('a success resets the attempt counter for the next batch', async () => {
+    jest.useFakeTimers()
+    const queueSender = new QueueSender(baseURL, () => {}, () => {}, 10, 100)
+    const statuses = [500, 500, 200, 500, 200]
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve({ status: statuses.shift() } as unknown as Response))
+    queueSender.authorise(randomToken)
+    queueSender.push(sampleArray)
+    queueSender.push(sampleArray)
+    await flush()
+    jest.advanceTimersByTime(100) // attempt 1
+    await flush()
+    jest.advanceTimersByTime(200) // attempt 2 → 200, batch 2 starts and fails
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    // Batch 2's first retry waits ATTEMPT_TIMEOUT * 1, not * 3.
+    jest.advanceTimersByTime(100)
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+    expect(fetchMock.mock.calls.map(seqOf)).toEqual([1, 1, 1, 2, 2])
+    expect(queueSender.getQueueStatus()).toBe(true)
+  })
+
+  test('uses keepalive only while the in-flight keepalive bytes stay within 64kB', async () => {
+    const queueSender = defaultQueueSender()
+    const { mock, release } = gatedFetch()
+    const keepalive = (n: number) => (mock.mock.calls[n][1] as RequestInit).keepalive
+    queueSender.authorise(randomToken)
+
+    queueSender.push(new Uint8Array(64 << 10)) // #0: a body of exactly 64kB never qualifies
+    expect(keepalive(0)).toBe(false)
+    expect(String(mock.mock.calls[0][0])).toContain('_kno')
+    await release(0)
+
+    queueSender.push(new Uint8Array(40_000)) // #1
+    queueSender.push(new Uint8Array(30_000))
+    queueSender.push(new Uint8Array(20_000))
+    queueSender.flushAll() // #2 and #3 go out while #1 is still in flight
+    expect(mock).toHaveBeenCalledTimes(4)
+    expect([keepalive(1), keepalive(2), keepalive(3)]).toEqual([true, false, true])
+    expect(String(mock.mock.calls[1][0])).toContain('_kyes')
+
+    await release(1)
+    await release(3)
+    queueSender.push(new Uint8Array(60_000)) // #4: budget released
+    expect(keepalive(4)).toBe(true)
+  })
+
+  test('refuses a 0-byte batch and moves on to the next one', () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const queueSender = defaultQueueSender()
+    const fetchMock = mockFetch(200)
+    queueSender.authorise(randomToken)
+    queueSender.push(new Uint8Array(0))
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(error).toHaveBeenCalledWith('OpenReplay: refusing to send 0-byte batch.', expect.anything())
+    queueSender.push(sampleArray)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(seqOf(fetchMock.mock.calls[0])).toBe(2)
+  })
+
+  test('a retry that finds no token waits for one, then goes out with it', async () => {
+    jest.useFakeTimers()
+    const queueSender = defaultQueueSender()
+    const statuses = [500]
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve({ status: statuses.shift() ?? 200 } as unknown as Response))
+    queueSender.authorise(randomToken)
+    queueSender.push(sampleArray)
+    await flush()
+    ;(queueSender as any).token = null // e.g. dropped by a 401 on another request
+    jest.advanceTimersByTime(1000)
+    jest.advanceTimersByTime(1500)
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    queueSender.authorise('fresh')
+    jest.advanceTimersByTime(500)
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(String(fetchMock.mock.calls[1][0])).toContain('_newToken')
+    expect((fetchMock.mock.calls[1][1] as any).headers.Authorization).toBe('Bearer fresh')
   })
 
   test('A failing batch blocks the queue rather than letting later ones pass', async () => {
@@ -229,17 +347,23 @@ describe('QueueSender', () => {
   })
 
   // onUnauthorised
-  test('Calls onUnauthorized callback on 401', (done) => {
+  test('401: calls onUnauthorised once, no retry, nothing more on that token', async () => {
+    jest.useFakeTimers()
     const onUnauthorised = jest.fn()
-    const queueSender = defaultQueueSender({
-      onUnauthorised,
-    })
-    mockFetch(401)
+    const onFailed = jest.fn()
+    const queueSender = defaultQueueSender({ onUnauthorised, onFailed })
+    const fetchMock = mockFetch(401)
     queueSender.authorise(randomToken)
     queueSender.push(sampleArray)
-    setTimeout(() => {
-      expect(onUnauthorised).toHaveBeenCalled()
-      done()
-    }, 100)
+    queueSender.push(sampleArray)
+    await flush()
+    expect(onUnauthorised).toHaveBeenCalledTimes(1)
+
+    jest.advanceTimersByTime(60_000)
+    queueSender.push(sampleArray)
+    queueSender.flushAll() // the restart's clean() path
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(onFailed).not.toHaveBeenCalled()
   })
 })

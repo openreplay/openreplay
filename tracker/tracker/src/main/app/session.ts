@@ -126,8 +126,8 @@ export default class Session {
     return token || undefined
   }
 
-  getRawTokenWithProject = (): string | null => {
-    return this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
+  getRawTokenWithProject = (): string | undefined => {
+    return this.token || this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
   }
 
   setSessionToken = (token: string, projectKey: string): void => {
@@ -146,6 +146,7 @@ export default class Session {
       return
     }
 
+    this.token = token
     this.app.sessionStorage.setItem(this.options.session_token_key, token)
     this.app.sessionStorage.setItem(this.options.session_pageno_key, pageNoStr)
   }
@@ -191,6 +192,7 @@ export default class Session {
 
   reset(): void {
     this.app.sessionStorage.removeItem(this.options.session_token_key)
+    this.token = undefined
     this.metadata = {}
     this.userID = null
     this.sessionID = undefined

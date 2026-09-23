@@ -6,7 +6,7 @@
  *   2. every batch carries [BatchMetadata, Timestamp, TabData] at byte 0
  *   3. soft (200kB) and hard (beaconSizeLimit) budgets are enforced
  */
-import { describe, expect, test, jest } from '@jest/globals'
+import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
 
 jest.mock('../common/messages.gen', () => {
   const Type = {
@@ -36,6 +36,7 @@ jest.mock('../common/messages.gen', () => {
 })
 
 import BatchWriter from '../webworker/BatchWriter.js'
+import { contentTypes, expectNoRepair, parseAll } from './batchTestKit.js'
 
 const T = {
   Timestamp: 0,
@@ -139,6 +140,14 @@ interface CapturedBatch {
 let onBatch: jest.Mock
 let onOfflineEnd: jest.Mock
 let captured: CapturedBatch[]
+let warn: any
+
+beforeEach(() => { warn = jest.spyOn(console, 'warn').mockImplementation(() => {}) })
+afterEach(() => {
+  try { expectNoRepair(warn) } finally { warn.mockRestore() }
+})
+
+const OVERFLOW_WARNING = 'OpenReplay: beacon size overflow. Skipping large message.'
 
 function makeWriter(
   opts: { protocolVersion?: number; beaconSizeLimit?: number; exitInit?: boolean } = {},
@@ -303,10 +312,14 @@ describe('BatchWriter e2e', () => {
       expect(header.version).toBe(1)
     }
 
-    // firstIndex of batch n+1 > firstIndex of batch n (monotonic).
-    const firstIndices = players.map((c) => parseBatchHeader(c.batch).firstIndex)
-    for (let i = 1; i < firstIndices.length; i++) {
-      expect(firstIndices[i]).toBeGreaterThan(firstIndices[i - 1])
+    // Nothing lost or duplicated across the splits.
+    const parsed = parseAll(players)
+    expect(parsed.reduce((n, p) => n + (contentTypes(p.types)[T.ConsoleLog] ?? 0), 0)).toBe(60)
+    // Indexes are contiguous: each batch starts right after the previous one's
+    // messages (all but its 2-message header prelude consume an index).
+    expect(parsed[0].firstIndex).toBe(0)
+    for (let i = 1; i < parsed.length; i++) {
+      expect(parsed[i].firstIndex).toBe(parsed[i - 1].firstIndex + parsed[i - 1].types.length - 2)
     }
   })
 
@@ -339,16 +352,16 @@ describe('BatchWriter e2e', () => {
     // every retry path fails. Using beaconSizeLimit < 200kB doesn't actually
     // clamp anything because the regular builder is sized at beaconSize.
     const writer = makeWriter({ beaconSizeLimit: 250_000 })
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
 
     writer.writeMessage([T.Timestamp, 1_000_000])
     // 300kB string → exceeds 200kB soft AND 250kB hard cap.
-    writer.writeMessage([T.ConsoleLog, 'huge', 'x'.repeat(300_000)])
+    const huge = [T.ConsoleLog, 'huge', 'x'.repeat(300_000)]
+    writer.writeMessage(huge)
     writer.finaliseBatch()
 
-    expect(warnSpy).toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(OVERFLOW_WARNING, huge)
     expect(batchesByType('player').length).toBe(0)
-    warnSpy.mockRestore()
   })
 
   test('mixed soft + hard scenario across 50 messages emits only well-formed batches', () => {
@@ -475,35 +488,40 @@ describe('BatchWriter e2e', () => {
       expect(captured[0].batch[0]).toBe(T.BatchMetadata)
     })
 
-    test('a visual batch is never emitted without a numeric split offset', () => {
-      const writer = makeWriter({ protocolVersion: 2, exitInit: false })
-      writer.writeMessage([T.MouseMove, 1, 2])
-      writer.writeMessage(VISUAL_SIGNAL)
-      writer.writeMessage([T.MouseMove, 3, 4])
-      writer.finaliseBatch()
-
-      for (const c of captured) {
-        if (c.dataType === 'visual') expect(typeof c.split).toBe('number')
-      }
-    })
-
     test('hard cap reached before the signal force-flushes the visual batch', () => {
       const writer = makeWriter({ protocolVersion: 2, beaconSizeLimit: 250_000, exitInit: false })
-      // Big player + big asset push the combined budget past the 250kB hard cap.
-      writer.writeMessage(bigPlayer(130_000))
-      writer.writeMessage([T.SetCSSDataURLBased, 1, 'b'.repeat(130_000), 'http://cdn'])
+      writer.writeMessage(bigPlayer(100_000))
+      writer.writeMessage([T.SetCSSDataURLBased, 1, 'b'.repeat(100_000), 'http://cdn'])
+      expect(captured).toHaveLength(0)
+      // The third one would take player+assets past the 250kB hard cap.
+      writer.writeMessage([T.SetCSSDataURLBased, 2, 'c'.repeat(100_000), 'http://cdn'])
 
-      // Visual was force-flushed without any signal.
+      // Visual was force-flushed without any signal, and still fits one request.
       expect(captured).toHaveLength(1)
       expect(captured[0].dataType).toBe('visual')
       expect(typeof captured[0].split).toBe('number')
-      expect(captured[0].batch.length).toBeLessThanOrEqual(1_000_000)
+      expect(captured[0].batch.length).toBeLessThanOrEqual(250_000)
+      expect(parseAll(captured).map((p) => contentTypes(p.types))).toEqual([
+        { 122: 1 },
+        { [T.SetCSSDataURLBased]: 1 },
+      ])
 
       // Init is over: a later signal is a no-op and batching is back to normal.
       writer.writeMessage([T.MouseMove, 1, 2])
       writer.writeMessage(VISUAL_SIGNAL)
       writer.finaliseBatch()
-      expect(captured[captured.length - 1].dataType).toBe('player')
+      // The overflowing asset went to the normal assets stream, after the player batch.
+      expect(captured.map((c) => c.dataType)).toEqual(['visual', 'player', 'assets'])
+    })
+
+    test('the halves share the hard cap: an asset that would overshoot it ships after the player half', () => {
+      const writer = makeWriter({ protocolVersion: 2, beaconSizeLimit: 250_000, exitInit: false })
+      writer.writeMessage(bigPlayer(130_000))
+      writer.writeMessage([T.SetCSSDataURLBased, 1, 'b'.repeat(130_000), 'http://cdn'])
+      writer.finaliseBatch()
+
+      expect(captured.map((c) => c.dataType)).toEqual(['player', 'assets'])
+      for (const c of captured) expect(c.batch.length).toBeLessThanOrEqual(250_000)
     })
 
     test('finaliseBatch during init ships the visual (auto-send / closing fallback)', () => {
@@ -549,13 +567,46 @@ describe('BatchWriter e2e', () => {
       )
       const writer = new BatchWriter(7, 1_000_000, 'http://example.com/start', onBatch, 'tab-XYZ', jest.fn())
       writer.writeMessage([T.MouseMove, 1, 2]) // stray pre-auth event
+      writer.writeMessage([T.SetCSSDataURLBased, 9, '.a{}', 'http://cdn']) // pre-auth asset
+      writer.writeMessage([T.ConsoleLog, 'info', 'early']) // pre-auth devtools
+      expect(writer.currentIndex).toBe(3)
       writer.setProtocolVersion(2) // auth lands after the round-trip → init engages
+      expect(writer.currentIndex).toBe(3)
       writer.writeMessage([T.MouseMove, 3, 4])
       writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])
       writer.writeMessage(VISUAL_SIGNAL)
 
-      expect(captured[0].dataType).toBe('visual')
-      expect(typeof captured[0].split).toBe('number')
+      expect(captured.map((c) => c.dataType)).toEqual(['visual', 'devtools'])
+      // Pre-auth messages are re-routed into the init streams, not dropped, and keep their indexes.
+      const [player, assets, devtools] = parseAll(captured)
+      expect(player.version).toBe(VERSION_PLAYER_V2)
+      expect(player.firstIndex).toBe(0)
+      expect(contentTypes(player.types)).toEqual({ [T.MouseMove]: 2 })
+      expect(assets.firstIndex).toBe(1)
+      expect(contentTypes(assets.types)).toEqual({ [T.SetCSSDataURLBased]: 1, [T.SetNodeAttributeURLBased]: 1 })
+      expect(devtools.firstIndex).toBe(2)
+      expect(contentTypes(devtools.types)).toEqual({ [T.ConsoleLog]: 1 })
+    })
+
+    test('messages already shipped before auth are not replayed', () => {
+      captured = []
+      onBatch = jest.fn((batch, skipCompression, dataType, split) => {
+        captured.push({ batch, skipCompression: !!skipCompression, dataType, split })
+      })
+      const writer = new BatchWriter(7, 1_000_000, 'http://example.com/start', onBatch, 'tab-XYZ', jest.fn())
+      writer.writeMessage([T.MouseMove, 1, 2])
+      writer.finaliseBatch() // 30s auto-send tick before auth
+      writer.writeMessage([T.MouseMove, 3, 4])
+      writer.setProtocolVersion(2)
+      writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])
+      writer.writeMessage(VISUAL_SIGNAL)
+
+      const parsed = parseAll(captured)
+      expect(parsed.map((p) => [p.dataType, p.firstIndex, contentTypes(p.types)])).toEqual([
+        ['player', 0, { [T.MouseMove]: 1 }],
+        ['visual:player', 1, { [T.MouseMove]: 1 }],
+        ['visual:assets', 2, { [T.SetNodeAttributeURLBased]: 1 }],
+      ])
     })
 
     test('signal already seen under v1 then flip to v2 skips the feature', () => {
@@ -572,10 +623,9 @@ describe('BatchWriter e2e', () => {
       writer.writeMessage([T.MouseMove, 3, 4])
       writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])
       writer.finaliseBatch()
-      const types = captured.map((c) => c.dataType)
-      expect(types).not.toContain('visual')
-      expect(types).toContain('player')
-      expect(types).toContain('assets')
+      expect(captured.map((c) => c.dataType)).toEqual(['player', 'assets'])
+      // The MouseMove written before the flip is kept.
+      expect(contentTypes(parseAll(captured)[0].types)).toEqual({ [T.MouseMove]: 2 })
     })
   })
 })

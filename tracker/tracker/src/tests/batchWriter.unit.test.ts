@@ -28,6 +28,7 @@ jest.mock('../common/messages.gen', () => {
 })
 
 import BatchWriter from '../webworker/BatchWriter.js'
+import { expectNoRepair, parseAll, parseBatch } from './batchTestKit.js'
 import * as Messages from '../common/messages.gen.js'
 import Message from '../common/messages.gen.js'
 
@@ -49,16 +50,26 @@ describe('BatchWriter', () => {
   let onBatch: jest.Mock
   let onOfflineEnd: jest.Mock
   let onLocalSave: jest.Mock
+  let warn: jest.SpiedFunction<typeof console.warn>
 
   beforeEach(() => {
     onBatch = jest.fn()
     onOfflineEnd = jest.fn()
     onLocalSave = jest.fn()
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
+    try {
+      expectNoRepair(warn)
+    } finally {
+      warn.mockRestore()
+    }
     jest.clearAllMocks()
   })
+
+  const captured = () =>
+    onBatch.mock.calls.map(([batch, skipCompression, dataType, split]) => ({ batch, skipCompression, dataType, split }))
 
   function createWriter(
     opts: { protocolVersion?: number; localDebug?: boolean; exitInit?: boolean } = {},
@@ -84,27 +95,24 @@ describe('BatchWriter', () => {
     return writer
   }
 
-  describe('construction and configuration', () => {
-    test('constructor accepts the required arguments without throwing', () => {
-      expect(() => createWriter()).not.toThrow()
-    })
-
-    test('setBeaconSizeLimit does not affect a normal-sized batch', () => {
+  describe('configuration', () => {
+    test('setBeaconSizeLimit bounds the oversized one-shot batch', () => {
+      const big = [MType.SetPageLocation, 'http://x', '', 0, 'a'.repeat(300_000)] as Message
       const writer = createWriter()
-      writer.setBeaconSizeLimit(500000)
-      writer.writeMessage([MType.MouseMove, 100, 200])
-      writer.finaliseBatch()
+      writer.setBeaconSizeLimit(400_000)
+      writer.writeMessage(big)
       expect(onBatch).toHaveBeenCalledTimes(1)
+      expect(onBatch.mock.calls[0][0].length).toBeGreaterThan(300_000)
+      expect(onBatch.mock.calls[0][0].length).toBeLessThanOrEqual(400_000)
+
+      writer.setBeaconSizeLimit(250_000)
+      writer.writeMessage(big)
+      expect(onBatch).toHaveBeenCalledTimes(1)
+      expect(warn).toHaveBeenCalledWith('OpenReplay: beacon size overflow. Skipping large message.', big)
     })
   })
 
   describe('emission policy', () => {
-    test('finaliseBatch with no messages does nothing', () => {
-      const writer = createWriter()
-      writer.finaliseBatch()
-      expect(onBatch).not.toHaveBeenCalled()
-    })
-
     test('finaliseBatch after multiple calls with no messages still does nothing', () => {
       const writer = createWriter()
       writer.finaliseBatch()
@@ -122,14 +130,20 @@ describe('BatchWriter', () => {
   })
 
   describe('single BatchMetadata per batch', () => {
-    test('writing a real message and finalising produces exactly one batch', () => {
+    test('messages land in one player batch with exactly one leading BatchMetadata', () => {
       const writer = createWriter()
       writer.writeMessage([MType.MouseMove, 100, 200])
+      writer.writeMessage([MType.MouseMove, 110, 210])
+      writer.writeMessage([MType.MouseMove, 120, 220])
       writer.finaliseBatch()
+
       expect(onBatch).toHaveBeenCalledTimes(1)
-      const [batch, , dataType] = onBatch.mock.calls[0]
-      expect(batch).toBeInstanceOf(Uint8Array)
-      expect(dataType).toBe('player')
+      expect(onBatch.mock.calls[0][2]).toBe('player')
+      const parsed = parseBatch(onBatch.mock.calls[0][0])
+      expect(parsed.metas).toBe(1)
+      expect(parsed.version).toBe(1)
+      expect(parsed.firstIndex).toBe(0)
+      expect(parsed.types).toEqual([MType.Timestamp, MType.TabData, MType.MouseMove, MType.MouseMove, MType.MouseMove])
     })
 
     test('consecutive finaliseBatch after flush does not produce extra batches', () => {
@@ -140,40 +154,16 @@ describe('BatchWriter', () => {
       expect(onBatch).toHaveBeenCalledTimes(1)
     })
 
-    test('batch binary starts with BatchMetadata type marker', () => {
+    test('the next batch starts a fresh header at the running index', () => {
       const writer = createWriter()
       writer.writeMessage([MType.MouseMove, 100, 200])
       writer.finaliseBatch()
-      const batch: Uint8Array = onBatch.mock.calls[0][0]
-      expect(batch[0]).toBe(MType.BatchMetadata)
-    })
-
-    test('batch contains exactly one BatchMetadata (single onBatch call)', () => {
-      const writer = createWriter()
-      writer.writeMessage([MType.MouseMove, 100, 200])
       writer.writeMessage([MType.MouseMove, 110, 210])
-      writer.writeMessage([MType.MouseMove, 120, 220])
       writer.finaliseBatch()
-
-      const batch: Uint8Array = onBatch.mock.calls[0][0]
-      expect(batch[0]).toBe(MType.BatchMetadata)
-      expect(onBatch).toHaveBeenCalledTimes(1)
-    })
-
-    test('finaliseBatch emits the player batch via onBatch', () => {
-      const writer = createWriter()
-      writer.writeMessage([MType.MouseMove, 100, 200] as Message)
-      writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      expect(onBatch.mock.calls[0][2]).toBe('player')
-      const batch: Uint8Array = onBatch.mock.calls[0][0]
-      expect(batch[0]).toBe(MType.BatchMetadata)
-    })
-
-    test('finaliseBatch does nothing when no messages written', () => {
-      const writer = createWriter()
-      writer.finaliseBatch()
-      expect(onBatch).not.toHaveBeenCalled()
+      const [a, b] = parseAll(captured())
+      expect(a.metas).toBe(1)
+      expect(b.metas).toBe(1)
+      expect(b.firstIndex).toBe(1)
     })
   })
 
@@ -217,12 +207,6 @@ describe('BatchWriter', () => {
       const batch: Uint8Array = onBatch.mock.calls[0][0]
       expect(batch[0]).toBe(MType.BatchMetadata)
       expect(batch[1]).toBe(2)
-    })
-
-    test('no regular messages + no asset messages = no batch', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.finaliseBatch()
-      expect(onBatch).not.toHaveBeenCalled()
     })
 
     test('asset messages are cleared after finaliseBatch', () => {
@@ -291,22 +275,6 @@ describe('BatchWriter', () => {
   })
 
   describe('multiple batches maintain correct state', () => {
-    test('second batch after first finalize works correctly', () => {
-      const writer = createWriter()
-      writer.writeMessage([MType.MouseMove, 100, 200])
-      writer.finaliseBatch()
-
-      writer.writeMessage([MType.MouseMove, 110, 210])
-      writer.finaliseBatch()
-
-      expect(onBatch).toHaveBeenCalledTimes(2)
-      for (let i = 0; i < 2; i++) {
-        const batch: Uint8Array = onBatch.mock.calls[i][0]
-        expect(batch[0]).toBe(MType.BatchMetadata)
-        expect(onBatch.mock.calls[i][2]).toBe('player')
-      }
-    })
-
     test('interleaved regular and asset batches across multiple finalizes', () => {
       const writer = createWriter({ protocolVersion: 2 })
 
@@ -346,6 +314,18 @@ describe('BatchWriter', () => {
       writer.clean()
       writer.finaliseBatch()
       expect(onBatch).not.toHaveBeenCalled()
+    })
+
+    test('clean on protocol v2 re-arms the visual init phase', () => {
+      const writer = createWriter({ protocolVersion: 2 })
+      writer.clean()
+      writer.writeMessage([MType.MouseMove, 100, 200])
+      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://b.com'])
+      expect(onBatch).not.toHaveBeenCalled()
+      writer.writeMessage(VISUAL_SIGNAL)
+      expect(onBatch).toHaveBeenCalledTimes(1)
+      expect(onBatch.mock.calls[0][2]).toBe('visual')
+      expect(parseAll(captured()).map((p) => p.metas)).toEqual([1, 1])
     })
   })
 })

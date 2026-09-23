@@ -1,5 +1,14 @@
 // @ts-nocheck
-import { describe, expect, test, jest, beforeAll, afterAll, beforeEach } from '@jest/globals'
+import {
+  describe,
+  expect,
+  test,
+  jest,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from '@jest/globals'
 import Tracker, { Options } from '../main/index.js'
 
 jest.mock('@openreplay/network-proxy', () => ({
@@ -13,6 +22,8 @@ const PROJECT_KEY = 'test-project-key'
 
 const RESP = 'never-gonna-let-you-down'
 const ASK = 'never-gonna-give-you-up'
+const REG = 'never-gonna-run-around-and-desert-you'
+const RESET = 'reset-your-session-please'
 
 const options = {
   projectKey: PROJECT_KEY,
@@ -32,6 +43,8 @@ const storeToken = (token: string) =>
 describe('session continuation across tabs', () => {
   // the tracker is a singleton, so one instance is shared by every test
   let app: any
+  // tab id captured by the handshake listener at construction
+  let initialTabId: string
 
   beforeAll(() => {
     Object.defineProperty(window, 'performance', {
@@ -54,6 +67,7 @@ describe('session continuation across tabs', () => {
       constructor(public name: string) {}
     }
     app = new Tracker(options as unknown as Options).app
+    initialTabId = app.session.getTabId()
   })
 
   afterAll(() => {
@@ -142,6 +156,82 @@ describe('session continuation across tabs', () => {
       send({ line: RESP, token: 'tok' })
 
       expect(app.checkSessionToken()).toBe(true)
+    })
+
+    test('an ask from a duplicated tab (same tab id) is answered with reg', () => {
+      storeToken('tok')
+      app.bc.postMessage.mockClear()
+
+      send({ line: ASK, source: initialTabId })
+
+      expect(app.bc.postMessage).toHaveBeenCalledTimes(1)
+      expect(app.bc.postMessage.mock.calls[0][0]).toMatchObject({ line: REG, token: 'tok' })
+    })
+
+    test('reg regenerates the tab id and adopts the token', () => {
+      const regen = jest.spyOn(app.session, 'regenerateTabId')
+      const before = app.session.getTabId()
+
+      send({ line: REG, token: 'tok', version: currentVersion(app) })
+
+      expect(regen).toHaveBeenCalledTimes(1)
+      expect(app.session.getTabId()).not.toBe(before)
+      expect(app.session.getSessionToken(PROJECT_KEY)).toBe('tok')
+      regen.mockRestore()
+    })
+
+    describe('reset', () => {
+      let restart: jest.Mock
+      let realRestart: any
+
+      beforeEach(() => {
+        realRestart = app.restart
+        restart = jest.fn()
+        app.restart = restart
+      })
+
+      afterEach(() => {
+        app.restart = realRestart
+      })
+
+      test('restarts with the new token from another tab', () => {
+        storeToken('old')
+        send({ line: RESET, token: 'new' })
+
+        expect(restart).toHaveBeenCalledTimes(1)
+        expect(app.session.getSessionToken(PROJECT_KEY)).toBe('new')
+      })
+
+      test('ignores a reset carrying the current token', () => {
+        storeToken('same')
+        send({ line: RESET, token: 'same' })
+
+        expect(restart).not.toHaveBeenCalled()
+      })
+
+      test('ignores a reset without a token', () => {
+        storeToken('old')
+        send({ line: RESET })
+
+        expect(restart).not.toHaveBeenCalled()
+        expect(app.session.getSessionToken(PROJECT_KEY)).toBe('old')
+      })
+
+      test('ignores messages for another project', () => {
+        storeToken('old')
+        send({ line: RESET, token: 'new', projectKey: 'other-project' })
+
+        expect(restart).not.toHaveBeenCalled()
+        expect(app.session.getSessionToken(PROJECT_KEY)).toBe('old')
+      })
+
+      test('ignores messages from its own context', () => {
+        storeToken('old')
+        send({ line: RESET, token: 'new', context: app.contextId })
+
+        expect(restart).not.toHaveBeenCalled()
+        expect(app.session.getSessionToken(PROJECT_KEY)).toBe('old')
+      })
     })
   })
 })

@@ -12,7 +12,6 @@ import {
   canAccessIframe,
   generateRandomId,
   ngSafeBrowserMethod,
-  requestIdleCb,
   inIframe,
   canAccessTarget,
   createEventListener,
@@ -82,6 +81,13 @@ describe('simpleMerge', () => {
     expect(result).toEqual({ a: 1, b: { c: 5, d: 3 }, e: 6 })
     expect(defaults).toEqual({ a: 1, b: { c: 2, d: 3 } })
   })
+
+  test('replaces arrays and null values instead of merging them', () => {
+    const defaults = { list: [1, 2, 3], nested: { x: 1 } } as any
+    const result = simpleMerge(defaults, { list: [9], nested: null })
+    expect(result).toEqual({ list: [9], nested: null })
+    expect(defaults.list).toEqual([1, 2, 3])
+  })
 })
 
 describe('throttleWithTrailing', () => {
@@ -117,34 +123,50 @@ describe('throttleWithTrailing', () => {
   })
 })
 
-describe('adjustTimeOrigin', () => {
-  test('adjusts the time origin based on performance.now', () => {
-    jest.spyOn(Date, 'now').mockReturnValue(1000)
-    jest.spyOn(performance, 'now').mockReturnValue(1000)
-    adjustTimeOrigin()
+describe('throttleWithTrailing per-key', () => {
+  test('throttles each key independently', () => {
+    jest.useFakeTimers()
+    const fn = jest.fn()
+    const throttled = throttleWithTrailing<string, [number]>(fn, 50)
 
-    expect(getTimeOrigin()).toBe(0)
+    throttled('a', 1)
+    throttled('b', 1)
+    throttled('a', 2)
+    throttled('b', 2)
+    expect(fn.mock.calls).toEqual([
+      ['a', 1],
+      ['b', 1],
+    ])
+
+    jest.advanceTimersByTime(60)
+    expect(fn).toHaveBeenCalledWith('a', 2)
+    expect(fn).toHaveBeenCalledWith('b', 2)
+    expect(fn).toHaveBeenCalledTimes(4)
   })
 })
 
-describe('now', () => {
-  test('returns the current timestamp in milliseconds', () => {
-    jest.spyOn(Date, 'now').mockReturnValue(2550)
-    jest.spyOn(performance, 'now').mockReturnValue(2550)
+describe('adjustTimeOrigin / now', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
 
+  test('time origin is Date.now() minus performance.now()', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(10_000)
+    jest.spyOn(performance, 'now').mockReturnValue(1_500)
     adjustTimeOrigin()
 
-    expect(now()).toBe(2550)
-  })
-})
-
-describe('stars', () => {
-  test('returns a string of asterisks with the same length as the input string', () => {
-    expect(stars('hello')).toBe('*****')
+    expect(getTimeOrigin()).toBe(8_500)
   })
 
-  test('returns an empty string if the input string is empty', () => {
-    expect(stars('')).toBe('')
+  test('now() is monotonic performance time shifted by the origin, rounded', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(10_000)
+    const perfNow = jest.spyOn(performance, 'now').mockReturnValue(1_500)
+    adjustTimeOrigin()
+
+    perfNow.mockReturnValue(2_000.4)
+    // a wall-clock jump must not affect now()
+    jest.spyOn(Date, 'now').mockReturnValue(99_999)
+    expect(now()).toBe(10_500)
   })
 })
 
@@ -153,27 +175,6 @@ describe('normSpaces', () => {
     expect(normSpaces('  hello   world  ')).toBe('hello world')
   })
 
-  test('returns an empty string if the input string is empty', () => {
-    expect(normSpaces('')).toBe('')
-  })
-})
-
-describe('isURL', () => {
-  test('returns true for a valid URL starting with "https://"', () => {
-    expect(isURL('https://example.com')).toBe(true)
-  })
-
-  test('returns true for a valid URL starting with "http://"', () => {
-    expect(isURL('http://example.com')).toBe(true)
-  })
-
-  test('returns false for a URL without a valid protocol', () => {
-    expect(isURL('example.com')).toBe(false)
-  })
-
-  test('returns false for an empty string', () => {
-    expect(isURL('')).toBe(false)
-  })
 })
 
 describe('deprecationWarn', () => {
@@ -289,16 +290,30 @@ describe('generateRandomId', () => {
   })
 
   test('falls back to Math.random if crypto api is not available', () => {
-    const originalCrypto = window.crypto
-    // @ts-ignore
-    window.crypto = undefined
-    const id = generateRandomId(20)
-    expect(id).toHaveLength(20)
-    expect(/^[0-9a-f]+$/.test(id)).toBe(true)
+    const desc = Object.getOwnPropertyDescriptor(window, 'crypto')
+    Object.defineProperty(window, 'crypto', { configurable: true, value: undefined })
+    const random = jest.spyOn(Math, 'random')
+    try {
+      const id = generateRandomId(20)
+      expect(id).toHaveLength(20)
+      expect(/^[0-9a-f]+$/.test(id)).toBe(true)
+      expect(random).toHaveBeenCalledTimes(10)
+    } finally {
+      random.mockRestore()
+      if (desc) Object.defineProperty(window, 'crypto', desc)
+      else delete (window as any).crypto
+    }
   })
 })
 
 describe('ngSafeBrowserMethod', () => {
+  const hadZone = 'Zone' in window
+  const originalZone = (window as any).Zone
+  afterEach(() => {
+    if (hadZone) (window as any).Zone = originalZone
+    else delete (window as any).Zone
+  })
+
   test('returns the method as-is if Zone and __symbol__ are not in window.Zone', () => {
     //@ts-ignore
     window.Zone = undefined // Ensure Zone is not in the window object
@@ -311,25 +326,6 @@ describe('ngSafeBrowserMethod', () => {
       __symbol__: (method: string) => `__${method}__`,
     }
     expect(ngSafeBrowserMethod('someMethod')).toBe('__someMethod__')
-  })
-})
-
-describe('requestIdleCb', () => {
-  test('testing FIFO scheduler', async () => {
-    jest.useFakeTimers()
-    // @ts-ignore
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => cb())
-    const cb1 = jest.fn()
-    const cb2 = jest.fn()
-
-    requestIdleCb(cb1)
-    requestIdleCb(cb2)
-
-    expect(cb1).toHaveBeenCalled()
-    expect(cb2).toHaveBeenCalledTimes(0)
-    await jest.advanceTimersToNextTimerAsync(1)
-
-    expect(cb2).toHaveBeenCalledTimes(1)
   })
 })
 

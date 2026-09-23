@@ -1,4 +1,6 @@
-import { categories } from './types'
+import { categories, mutationTypes } from './types'
+
+const appendTypes = [mutationTypes.appendProperty, mutationTypes.appendUniqueProperty]
 
 interface PeopleEvent {
   type: string
@@ -52,7 +54,9 @@ class Batcher {
   }
 
   sendImmediately(event: any) {
-    this.sendBatch({ [event.category]: [event.data] })
+    this.sendBatch({ [event.category]: [event.data] }, false, () =>
+      this.requeue({ [event.category]: [event.data] }),
+    )
   }
 
   /**
@@ -91,8 +95,12 @@ class Batcher {
     // mutations aimed at different users would misattribute them
     const uniqueEventsByType = new Map<string, PeopleEvent>()
 
-    for (let event of events) {
-      const eventKey = `${event.type}|${event.user_id ?? ''}`
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i]
+      // appends to the same key can't be merged into one object without losing values
+      const eventKey = appendTypes.includes(event.type)
+        ? `${event.type}|${i}`
+        : `${event.type}|${event.user_id ?? ''}`
       const prev = uniqueEventsByType.get(eventKey)
       if (prev) {
         if (event.type === 'increment_property') {
@@ -248,11 +256,11 @@ class Batcher {
     // Put the failed events back at the front, ahead of anything queued since,
     // so they're retried on the next flush rather than lost.
     this.batch[categories.people] = [
-      ...snapshot[categories.people],
+      ...(snapshot[categories.people] ?? []),
       ...this.batch[categories.people],
     ]
     this.batch[categories.events] = [
-      ...snapshot[categories.events],
+      ...(snapshot[categories.events] ?? []),
       ...this.batch[categories.events],
     ]
   }

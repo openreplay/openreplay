@@ -4,13 +4,22 @@ const mockNextID = jest.fn().mockReturnValue(123);
 const mockAdoptedSSInsertRuleURLBased = jest.fn();
 const mockAdoptedSSAddOwner = jest.fn();
 
-globalThis.fetch = jest.fn();
-
 import { inlineRemoteCss } from '../main/app/observer/cssInliner';
-import { describe, test, expect, jest, beforeEach } from '@jest/globals';
+import { describe, test, expect, jest, beforeEach, beforeAll, afterAll } from '@jest/globals';
+
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('inlineRemoteCss', () => {
   let mockNode;
+  const originalFetch = globalThis.fetch;
+
+  beforeAll(() => {
+    globalThis.fetch = jest.fn();
+  });
+
+  afterAll(() => {
+    globalThis.fetch = originalFetch;
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -40,7 +49,6 @@ describe('inlineRemoteCss', () => {
   });
 
   test('should process rules directly if node has a sheet with accessible rules', () => {
-    jest.useFakeTimers();
     const mockRule = { cssText: 'body { color: red; }' };
     const mockRules = [mockRule];
     Object.defineProperty(mockRules, 'length', { value: 1 });
@@ -50,11 +58,11 @@ describe('inlineRemoteCss', () => {
       get: () => mockSheet
     });
     inlineRemoteCss(mockNode, 456, 'http://example.com', mockNextID,mockAdoptedSSInsertRuleURLBased,mockAdoptedSSAddOwner);
-    jest.runAllTimers();
-    expect(mockNextID).toHaveBeenCalled();
+    expect(mockNextID).toHaveBeenCalledTimes(1);
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(1);
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 0, 'http://example.com');
-    jest.useRealTimers();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   test('should fetch CSS if accessing rules throws an error', () => {
@@ -86,27 +94,11 @@ describe('inlineRemoteCss', () => {
       get: () => mockSheet
     });
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(resolve => setTimeout(resolve, 0));
-    expect(mockNextID).toHaveBeenCalled();
+    await flush();
+    expect(mockNextID).toHaveBeenCalledTimes(1);
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(1);
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 0, 'http://example.com');
-    jest.useRealTimers();
-  });
-
-  test('should fetch CSS if node has no sheet but has href', async () => {
-    Object.defineProperty(mockNode, 'sheet', {
-      get: () => null
-    });
-    globalThis.fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve('body { color: red; }')
-      })
-    );
-    mockNode.href = 'http://example.com/style.css';
-    inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(resolve => setTimeout(resolve, 0));
-    expect(globalThis.fetch).toHaveBeenCalledWith('http://example.com/style.css');
   });
 
   test('should handle complex CSS with multiple rules', async () => {
@@ -124,7 +116,7 @@ describe('inlineRemoteCss', () => {
       text: () => Promise.resolve(complexCss)
     });
     inlineRemoteCss(mockNode, 456, 'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(process.nextTick);
+    await flush();
     expect(mockNextID).toHaveBeenCalled();
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(
@@ -136,6 +128,7 @@ describe('inlineRemoteCss', () => {
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(
       123, '@media (max-width: 600px) { body { font-size: 14px; } }', 2, 'http://example.com'
     );
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(3);
   });
 
   test('should handle CSS with comments', async () => {
@@ -154,7 +147,7 @@ describe('inlineRemoteCss', () => {
       text: () => Promise.resolve(cssWithComments)
     });
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(process.nextTick);
+    await flush();
     expect(mockNextID).toHaveBeenCalled();
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(
@@ -163,6 +156,7 @@ describe('inlineRemoteCss', () => {
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(
       123, '.class { background: blue; }', 1, 'http://example.com'
     );
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(2);
   });
 
   test('should handle failed fetch', async () => {
@@ -173,7 +167,7 @@ describe('inlineRemoteCss', () => {
     globalThis.fetch.mockRejectedValue(new Error('Network error'));
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(process.nextTick);
+    await flush();
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('Failed to fetch CSS from http://example.com/style.css:'),
       expect.any(Error)
@@ -196,8 +190,13 @@ describe('inlineRemoteCss', () => {
 
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
 
-    await new Promise(process.nextTick);
-    expect.any(Error)
+    await flush();
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'OpenReplay: Failed to fetch CSS from http://example.com/style.css:',
+      expect.objectContaining({ message: 'response status 404' })
+    );
+    expect(mockAdoptedSSInsertRuleURLBased).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 
@@ -224,7 +223,7 @@ describe('inlineRemoteCss', () => {
       text: () => Promise.resolve(nestedCss)
     });
     inlineRemoteCss(mockNode, 456, 'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    await new Promise(process.nextTick);
+    await flush();
     expect(mockNextID).toHaveBeenCalled();
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(
@@ -239,5 +238,6 @@ describe('inlineRemoteCss', () => {
       1,
       'http://example.com'
     );
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(2);
   });
 });

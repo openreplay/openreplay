@@ -1,3 +1,44 @@
+## 19.0.0
+
+- click rage, dead click, CPU and memory issue detection moved from the backend into the tracker worker; detected issues are sent as issue messages with correct message indexes (#4861)
+- full type definitions for every entry point (`@openreplay/tracker`, `/class`, `/cjs`), checked on publish with `attw`
+- handle the root `<html>` element being replaced during recording (re-announces the document instead of losing the tree)
+- pages that override core DOM getters (Prototype.js, MooTools, some polyfills) no longer corrupt recording: the tracker reads native `parentNode`/`previousSibling`/`nextSibling`/`firstChild` from a pristine iframe, only when the page's getters are patched
+- standalone privacy/consent module (`modules/privacy`, not wired in yet): GPC/DNT, Google Consent Mode, cookieless storage, SHA-256 user id; integration plan in `PRIVACY_MODULE.md`
+- `data-openreplay-unmask` in `privateMode` now works on regular elements and applies to the whole subtree, including shadow roots of an unmasked host (before, it was overridden by the parent's default masking)
+- `privateMode` no longer downgrades hidden elements to obscured: `data-openreplay-hidden`, `htmlmasked` and `domSanitizer` → Hidden are respected
+- referrer is passed through `urls.urlSanitizer` (default one masks `token`, `jwt`, `password` …) in the start request and in page location messages; wiped in `privateMode`. Before, e.g. `?token=abc` in the referrer was sent as is, and after an SPA navigation the previous raw URL became the next referrer
+- messages recorded before the server confirms the session are no longer dropped when the protocol version is applied
+- the first (visual) batch never exceeds `beaconSizeLimit`; when it would, player and asset parts go out as separate batches
+- at most one batch in flight after unload flush started; a 401 no longer re-sends the queue with the rejected token; a retry firing after `clean()` no longer loops forever
+- errors in deferred commits are caught and handled like immediate ones (stop + restart) instead of surfacing as uncaught page errors
+- shadow root observers are disconnected on stop and when their host is removed or re-observed (previously leaked after restarts, cold start, Assist, bfcache)
+- node maintainer (detached node cleanup) only runs while recording
+- string dictionary is capped (LRU, 100k entries / 20M chars) so long sessions don't grow tracker memory without bound; keys stay unique even with >10k new strings in one millisecond
+- crossdomain iframes: 8,388,608 node ids per frame (was 4,194,304); a frame that runs out of ids stops itself instead of corrupting a sibling frame's tree — the top page is not affected
+- fixed invalid UTF-8 for lone surrogates in the fallback text encoder
+- visited URL conditions match against the pathname: `is /checkout` matches `https://site.com/checkout?step=2`; `is`/`isNot` are now exact matches (were substring), numbers compare numerically; a `=` status-code condition no longer throws during cold start
+- tag selectors like `#id.class`, `[data-x='v']`, `[data-x=v]`, chained attributes, and several tags sharing the same id/class now match
+- session reset between tabs works again (the broadcast was filtered out by other tabs)
+- `session.reset()` clears the in-memory token; `getSessionHash()` returns undefined instead of `"1&null"` without a token
+- fonts: descriptors (weight, style …) are recorded again; creating a `FontFace` inside a not-yet-tracked iframe no longer throws in page code
+- FPS no longer stuck at 0 when `requestAnimationFrame` runs synchronously
+- console: correct level when console methods are wrapped by other tools (Sentry etc.); objects keep 10 keys (was 9)
+- JS errors: message no longer cut at the second colon (`TypeError: a: b`)
+- page load timings not reached yet are sent as 0 instead of a large negative number
+- input labels are limited to 100 chars on every path
+- `generateRandomId` fallback (no `crypto`) returns the requested length
+- UTC offset for half-hour zones (IST was `UTC+06:30`, now `UTC+05:30`)
+- `union()` / `appendUniqueValues` always sends (was a no-op after page reload) and sends a single event (was two)
+- `people.reset()` clears the stored user id, so a reload doesn't restore a logged-out user
+- falsy property values (`0`, `''`) are accepted and handled by set / setOnce / unset
+- `setPropertiesOnce` can't overwrite reserved keys (`os`, `user_id`, …)
+- search engine detection matches host labels (`tasks.io` is no longer "ask")
+- `sendImmediately` without a token keeps the event instead of dropping it; repeated append events are no longer merged into one
+- user id kept when people events are squashed in a batch (#4879); corrupt stored JSON no longer breaks startup
+- test suite reviewed: removed trivial/always-passing tests, fixed ones that encoded bugs, added ~200 tests (input recording, observer commits/resanitize, shadow observers, gzip/keepalive transport, encoder); line coverage 48% → 61%
+- global types replaced with `globalThis`
+
 ## 18.1.5
 
 - improve click labels and selectors computation

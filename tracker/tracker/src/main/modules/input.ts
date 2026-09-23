@@ -78,10 +78,10 @@ export function getInputLabel(node: TextFieldElement, customAttributes?: string[
   const openreplayLabel = getLabelAttribute(node)
   if (openreplayLabel !== null) return normSpaces(openreplayLabel).slice(0, 100)
   const customAttributeLabel = getCustomAttributeLabel(node, customAttributes)
-  if (customAttributeLabel) return customAttributeLabel
-  if (node.id) return `#${node.id}`
+  if (customAttributeLabel) return customAttributeLabel.slice(0, 100)
+  if (node.id) return `#${node.id}`.slice(0, 100)
   const classLabel = getClassSelector(node)
-  if (classLabel) return classLabel
+  if (classLabel) return classLabel.slice(0, 100)
   const labelElement = labelElementFor(node)
   const label =
     node.name || node.placeholder || (labelElement && labelElement.innerText) || node.type

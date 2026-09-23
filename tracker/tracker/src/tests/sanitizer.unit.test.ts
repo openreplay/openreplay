@@ -136,20 +136,67 @@ describe('Sanitizer', () => {
     expect(sanitizedText).toEqual('')
   })
 
-  describe('two-way level state (dynamic re-sanitization)', () => {
-    test('getLevel defaults to Plain for untracked ids', () => {
-      expect(sanitizer.getLevel(999)).toBe(SanitizeLevel.Plain)
-    })
+  test('getInnerTextSecure works for node id 0', () => {
+    const element = document.createElement('div')
+    sanitizer.setLevel(0, SanitizeLevel.Obscured)
+    // @ts-expect-error
+    element.mockId = 0
+    element.innerText = 'Secret'
+    expect(sanitizer.getInnerTextSecure(element)).toEqual('******')
+  })
 
-    test('setLevel returns previous level and can both raise and lower', () => {
-      expect(sanitizer.setLevel(1, SanitizeLevel.Obscured)).toBe(SanitizeLevel.Plain)
-      expect(sanitizer.getLevel(1)).toBe(SanitizeLevel.Obscured)
-      // lower it back
-      expect(sanitizer.setLevel(1, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
-      expect(sanitizer.getLevel(1)).toBe(SanitizeLevel.Plain)
-      expect(sanitizer.isObscured(1)).toBe(false)
-    })
+  test.each(['data-openreplay-masked', 'data-openreplay-obscured'])('%s obscures', (attr) => {
+    const node = document.createElement('div')
+    node.setAttribute(attr, '')
+    expect(sanitizer.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+  })
 
+  test.each(['data-openreplay-htmlmasked', 'data-openreplay-hidden'])('%s hides', (attr) => {
+    const node = document.createElement('div')
+    node.setAttribute(attr, '')
+    expect(sanitizer.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+    expect(sanitizer.computeLevel(node, SanitizeLevel.Obscured)).toBe(SanitizeLevel.Hidden)
+  })
+
+  test('masks embedded, multiple and multi-part-TLD emails', () => {
+    expect(sanitizer.sanitize(1, 'mail a@b.co.uk or c@d.com')).toBe('mail *@*.**.** or *@*.***')
+    expect(sanitizer.sanitize(1, 'contact: john.doe@mail.example.org!')).toBe(
+      'contact: ********@****.*******.****',
+    )
+    expect(sanitizer.sanitize(1, 'no email @ here')).toBe('no email @ here')
+  })
+
+  test('domSanitizer returning Plain cannot lower an attribute mask', () => {
+    const app = { nodes: { getID: jest.fn() } }
+    const s = new Sanitizer({
+      // @ts-expect-error partial app mock
+      app,
+      options: { domSanitizer: () => SanitizeLevel.Plain },
+    })
+    const obscured = document.createElement('div')
+    obscured.setAttribute('data-openreplay-obscured', '')
+    const hidden = document.createElement('div')
+    hidden.setAttribute('data-openreplay-hidden', '')
+    expect(s.computeLevel(obscured, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+    expect(s.computeLevel(hidden, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+    expect(s.computeLevel(document.createElement('div'), SanitizeLevel.Obscured)).toBe(
+      SanitizeLevel.Obscured,
+    )
+  })
+
+  test('domSanitizer returning Obscured does not lower Hidden', () => {
+    const app = { nodes: { getID: jest.fn() } }
+    const s = new Sanitizer({
+      // @ts-expect-error partial app mock
+      app,
+      options: { domSanitizer: () => SanitizeLevel.Obscured },
+    })
+    const hidden = document.createElement('div')
+    hidden.setAttribute('data-openreplay-hidden', '')
+    expect(s.computeLevel(hidden, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+  })
+
+  describe('level state', () => {
     test('handleNode is escalate-only: it never lowers an existing level', () => {
       sanitizer.setLevel(1, SanitizeLevel.Hidden)
       // a plain div would compute Plain, but handleNode must not downgrade Hidden
@@ -157,43 +204,141 @@ describe('Sanitizer', () => {
       expect(sanitizer.isHidden(1)).toBe(true)
     })
 
-    test('computeLevel reads the live DOM (attributes win over Plain parent)', () => {
-      const obscuredNode = document.createElement('div')
-      obscuredNode.setAttribute('data-openreplay-obscured', '')
-      expect(sanitizer.computeLevel(obscuredNode, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
-
-      const hiddenNode = document.createElement('div')
-      hiddenNode.setAttribute('data-openreplay-hidden', '')
-      expect(sanitizer.computeLevel(hiddenNode, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
-
-      const plainNode = document.createElement('div')
-      expect(sanitizer.computeLevel(plainNode, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+    test('setLevel can lower a level (used by resanitize)', () => {
+      sanitizer.setLevel(1, SanitizeLevel.Hidden)
+      expect(sanitizer.setLevel(1, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+      expect(sanitizer.isObscured(1)).toBe(false)
+      expect(sanitizer.sanitize(1, 'text')).toBe('text')
     })
+  })
 
-    test('computeLevel inherits the parent level (max semantics)', () => {
-      const node = document.createElement('div')
-      expect(sanitizer.computeLevel(node, SanitizeLevel.Obscured)).toBe(SanitizeLevel.Obscured)
-      expect(sanitizer.computeLevel(node, SanitizeLevel.Hidden)).toBe(SanitizeLevel.Hidden)
-    })
-
-    test('computeLevel reflects a domSanitizer toggled via class at call time', () => {
-      const options: Options = {
-        obscureTextEmails: true,
-        obscureTextNumbers: false,
-        domSanitizer: (node: Element): SanitizeLevel =>
-          node.classList.contains('secret') ? SanitizeLevel.Obscured : SanitizeLevel.Plain,
-      }
+  describe('privateMode unmask', () => {
+    let s: Sanitizer
+    beforeEach(() => {
       const app = { nodes: { getID: jest.fn() } }
       // @ts-expect-error partial app mock
-      const s = new Sanitizer({ app, options })
-      const node = document.createElement('div')
+      s = new Sanitizer({ app, options: { privateMode: true } })
+    })
 
-      expect(s.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
-      // user toggles the marker the callback keys on, then recomputes
-      node.classList.add('secret')
-      expect(s.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
-      node.classList.remove('secret')
-      expect(s.computeLevel(node, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+    test('unmask applies to deep descendants and their text', () => {
+      const root = document.createElement('div')
+      root.setAttribute('data-openreplay-unmask', '')
+      root.innerHTML = '<section><p><b>deep</b></p></section>'
+      document.body.appendChild(root)
+      const b = root.querySelector('b')!
+      expect(s.computeLevel(b, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+      expect(s.computeLevel(b.firstChild!, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+      root.remove()
+    })
+
+    test('unmask region root ignores the private default of its parent', () => {
+      const outer = document.createElement('div')
+      outer.innerHTML = '<div data-openreplay-unmask><p>x</p></div>'
+      document.body.appendChild(outer)
+      const region = outer.firstElementChild!
+      // outer is obscured by privateMode itself
+      expect(s.computeLevel(outer, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      expect(s.computeLevel(region, SanitizeLevel.Obscured)).toBe(SanitizeLevel.Plain)
+      expect(s.computeLevel(region.firstElementChild!, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+      outer.remove()
+    })
+
+    test('explicit mask above an unmask region still wins', () => {
+      const outer = document.createElement('div')
+      outer.setAttribute('data-openreplay-obscured', '')
+      outer.innerHTML = '<div data-openreplay-unmask>x</div>'
+      document.body.appendChild(outer)
+      expect(s.computeLevel(outer.firstElementChild!, SanitizeLevel.Obscured)).toBe(
+        SanitizeLevel.Obscured,
+      )
+      outer.remove()
+    })
+
+    test('hidden parent keeps an unmask region hidden', () => {
+      const el = document.createElement('div')
+      el.setAttribute('data-openreplay-unmask', '')
+      document.body.appendChild(el)
+      expect(s.computeLevel(el, SanitizeLevel.Hidden)).toBe(SanitizeLevel.Hidden)
+      el.remove()
+    })
+
+    test('elements outside unmasked subtree stay obscured', () => {
+      const el = document.createElement('p')
+      el.textContent = 'secret'
+      document.body.appendChild(el)
+      expect(s.computeLevel(el, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      expect(s.computeLevel(el.firstChild!, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      el.remove()
+    })
+
+    test('explicit mask inside unmasked subtree wins', () => {
+      const root = document.createElement('div')
+      root.setAttribute('data-openreplay-unmask', '')
+      root.innerHTML = '<div data-openreplay-obscured><span>x</span></div>'
+      document.body.appendChild(root)
+      const masked = root.firstElementChild!
+      const span = masked.firstElementChild!
+      expect(s.computeLevel(masked, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      expect(s.computeLevel(span, SanitizeLevel.Obscured)).toBe(SanitizeLevel.Obscured)
+      root.remove()
+    })
+
+    test('hidden rules still apply outside unmask regions', () => {
+      const container = document.createElement('div')
+      container.innerHTML =
+        '<div data-openreplay-hidden>a</div><div data-openreplay-htmlmasked>b</div><p>c</p>'
+      document.body.appendChild(container)
+      const [hidden, htmlmasked, p] = Array.from(container.children)
+      expect(s.computeLevel(hidden, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+      expect(s.computeLevel(htmlmasked, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+      expect(s.computeLevel(p, SanitizeLevel.Hidden)).toBe(SanitizeLevel.Hidden)
+      expect(s.computeLevel(p.firstChild!, SanitizeLevel.Hidden)).toBe(SanitizeLevel.Hidden)
+      expect(s.computeLevel(p, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      container.remove()
+    })
+
+    test('domSanitizer Hidden applies outside unmask regions', () => {
+      const app = { nodes: { getID: jest.fn() } }
+      const ps = new Sanitizer({
+        // @ts-expect-error partial app mock
+        app,
+        options: {
+          privateMode: true,
+          domSanitizer: (n) => (n.classList.contains('secret') ? SanitizeLevel.Hidden : SanitizeLevel.Plain),
+        },
+      })
+      const el = document.createElement('div')
+      el.className = 'secret'
+      document.body.appendChild(el)
+      expect(ps.computeLevel(el, SanitizeLevel.Plain)).toBe(SanitizeLevel.Hidden)
+      el.classList.remove('secret')
+      expect(ps.computeLevel(el, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      el.remove()
+    })
+
+    test('text directly under a shadow root follows the host unmask', () => {
+      const host = document.createElement('div')
+      host.setAttribute('data-openreplay-unmask', '')
+      const shadow = host.attachShadow({ mode: 'open' })
+      const text = document.createTextNode('visible')
+      shadow.appendChild(text)
+      document.body.appendChild(host)
+      expect(text.parentElement).toBe(null)
+      expect(s.computeLevel(text, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+      host.removeAttribute('data-openreplay-unmask')
+      expect(s.computeLevel(text, SanitizeLevel.Plain)).toBe(SanitizeLevel.Obscured)
+      host.remove()
+    })
+
+    test('unmask on shadow host applies inside its shadow root', () => {
+      const host = document.createElement('div')
+      host.setAttribute('data-openreplay-unmask', '')
+      const shadow = host.attachShadow({ mode: 'open' })
+      shadow.innerHTML = '<span>inside</span>'
+      document.body.appendChild(host)
+      const span = shadow.querySelector('span')!
+      expect(s.computeLevel(span, SanitizeLevel.Plain)).toBe(SanitizeLevel.Plain)
+      host.remove()
     })
   })
 })
