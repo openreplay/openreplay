@@ -30,10 +30,9 @@ DROP TYPE IF EXISTS error_status;
 ALTER TABLE IF EXISTS public.scim_auth_codes
     ADD COLUMN IF NOT EXISTS used_for_jwt bool DEFAULT NULL;
 
-CREATE INDEX IF NOT EXISTS sessions_notes_project_id_session_id_idx ON public.sessions_notes (project_id, session_id) WHERE deleted_at IS NULL;
-DROP INDEX IF EXISTS public.user_favorite_sessions_user_id_session_id_idx;
-
 COMMIT;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_notes_project_id_session_id_idx ON public.sessions_notes (project_id, session_id) WHERE deleted_at IS NULL;
+DROP INDEX CONCURRENTLY IF EXISTS public.user_favorite_sessions_user_id_session_id_idx;
 
 \elif :is_next
 \echo new version detected :'next_version', nothing to do
