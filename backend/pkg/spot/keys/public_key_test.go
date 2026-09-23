@@ -82,6 +82,9 @@ func (p *fakePool) Exec(sql string, args ...interface{}) error {
 	p.args = append(p.args, args)
 	return nil
 }
+func (p *fakePool) ExecContext(ctx context.Context, sql string, args ...interface{}) error {
+	return p.Exec(sql, args...)
+}
 func (p *fakePool) SendBatch(b *pgx.Batch) pgx.BatchResults { return nil }
 func (p *fakePool) Begin() (*pool.Tx, error)                { return nil, fmt.Errorf("not implemented") }
 func (p *fakePool) Ping(ctx context.Context) error          { return nil }
