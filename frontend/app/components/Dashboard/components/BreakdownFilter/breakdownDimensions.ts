@@ -51,6 +51,20 @@ export const CANONICAL_DIMENSIONS = [
   'urlHost',
 ];
 
+/**
+ * Dimensions the API resolves from event columns even when `isEvent` is set.
+ * Any other canonical name on an event property would skip its dimension and
+ * be looked up as a dynamic key under the wrong name.
+ */
+const EVENT_ONLY_DIMENSIONS = new Set([
+  'currentPath',
+  'referringDomain',
+  'searchEngine',
+  'httpMethod',
+  'statusCode',
+  'urlHost',
+]);
+
 /** Dimensions the filters catalog publishes under a different name. */
 const CATALOG_NAME_BY_DIMENSION: Record<string, string> = {
   httpMethod: 'method',
@@ -94,6 +108,18 @@ const CANONICAL_BY_NORMALIZED_NAME = CANONICAL_DIMENSIONS.reduce<
 const canonicalDimension = (name: string): string | undefined =>
   CANONICAL_BY_NORMALIZED_NAME[normalizeName(name)];
 
+/** Event property `user_id` must not turn into (and shadow) the `userId` dimension. */
+const dimensionName = (filter: Filter): string => {
+  const canonical = canonicalDimension(filter.name);
+  if (!canonical) return filter.name;
+  if (
+    filter.category === EVENT_PROPERTY_CATEGORY &&
+    !EVENT_ONLY_DIMENSIONS.has(canonical)
+  )
+    return filter.name;
+  return canonical;
+};
+
 export const normalizeBreakdown = (breakdown: StoredBreakdown): Breakdown =>
   typeof breakdown === 'string' ? { name: breakdown } : breakdown;
 
@@ -128,7 +154,7 @@ export function buildBreakdownOptions(allFilters: Filter[]): Filter[] {
   const seen = new Set<string>();
   return allFilters.reduce<Filter[]>((acc, filter) => {
     if (!isBreakdownable(filter)) return acc;
-    const name = canonicalDimension(filter.name) ?? filter.name;
+    const name = dimensionName(filter);
     // The API rejects duplicate breakdown names, so one entry wins per name.
     if (seen.has(name)) return acc;
     seen.add(name);
@@ -148,7 +174,7 @@ export function buildBreakdownOptions(allFilters: Filter[]): Filter[] {
  */
 export function toBreakdown(filter: Filter): Breakdown {
   const breakdown: Breakdown = {
-    name: canonicalDimension(filter.name) ?? filter.name,
+    name: dimensionName(filter),
   };
   if (filter.category === EVENT_PROPERTY_CATEGORY) {
     breakdown.isEvent = true;
