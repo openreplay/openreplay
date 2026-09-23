@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
@@ -67,9 +68,12 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 						'index', ms.index,
 						'name', ms.name,
 						'filter', ms.filter
-					)
+					) ORDER BY ms.index, ms.series_id
 				) AS series
 			FROM metric_series ms
+			WHERE ms.metric_id IN (
+				SELECT dw.metric_id FROM dashboard_widgets dw WHERE dw.dashboard_id = $1
+			) AND ms.deleted_at IS NULL
 			GROUP BY ms.metric_id
 		)
 		SELECT
@@ -98,13 +102,13 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 			) FILTER (WHERE m.metric_id IS NOT NULL), '[]') AS metrics
 		FROM dashboards d
 		LEFT JOIN dashboard_widgets dw ON d.dashboard_id = dw.dashboard_id
-		LEFT JOIN metrics m ON dw.metric_id = m.metric_id
+		LEFT JOIN metrics m ON dw.metric_id = m.metric_id AND m.deleted_at IS NULL
 		LEFT JOIN series_agg s ON m.metric_id = s.metric_id
 		WHERE d.dashboard_id = $1 AND d.project_id = $2 AND d.deleted_at IS NULL
 		GROUP BY d.dashboard_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.user_id, d.created_at`
 
 	dashboard := &GetDashboardResponse{}
-	var ownerID int
+	var ownerID *int
 	var metricsJSON []byte
 
 	err := s.pgconn.QueryRow(sql, dashboardID, projectId).Scan(
@@ -120,7 +124,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 	)
 
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if postgres.IsNoRowsErr(err) {
 			return nil, errors.New("not_found: dashboard not found")
 		}
 		return nil, fmt.Errorf("error fetching dashboard: %w", err)
@@ -130,7 +134,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		return nil, fmt.Errorf("error unmarshalling metrics: %w", err)
 	}
 
-	if !dashboard.IsPublic && uint64(ownerID) != userID {
+	if !dashboard.IsPublic && (ownerID == nil || uint64(*ownerID) != userID) {
 		return nil, fmt.Errorf("access_denied: user does not have access")
 	}
 

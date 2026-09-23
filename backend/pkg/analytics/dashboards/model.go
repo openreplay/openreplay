@@ -8,7 +8,7 @@ import (
 type Dashboard struct {
 	DashboardID int              `json:"dashboardId"`
 	ProjectID   int              `json:"projectId"`
-	UserID      int              `json:"userId"`
+	UserID      int              `json:"userId,omitempty"`
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	IsPublic    bool             `json:"isPublic"`

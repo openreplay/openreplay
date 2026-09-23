@@ -231,7 +231,7 @@ func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, error) {
             INNER JOIN (SELECT DISTINCT session_id
                     FROM experimental.sessions AS s
                     WHERE s.project_id = %d
-						AND isNotNull(s.duration)%s
+						%s
 						AND s.datetime >= toDateTime(%d/1000)
 						AND s.datetime <= toDateTime(%d/1000)) AS s ON(s.session_id=f.session_id)`,
 			p.ProjectId, sessionsWhereStr, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp)

@@ -577,7 +577,6 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	eventFilters = make([]string, 0)
 	negativeEventFilters = make([]string, 0)
 	sessionFilters = make([]string, 0)
-	sessionFilters = append(sessionFilters, fmt.Sprintf("isNotNull(%s.duration)", sessionsAlias))
 	//sessionColumns := GetSessionColumns(len(isSessionJoin) > 0 && isSessionJoin[0])
 
 	var sessionFiltersList, eventFiltersList, negativeEvents []model.Filter
@@ -760,11 +759,6 @@ func FilterOutTypes(filters []model.Filter, typesToRemove []string) (kept []mode
 	return
 }
 
-func logQuery(query string, args ...interface{}) {
-	if len(args) > 0 {
-		query = fmt.Sprintf(query, args...)
-	}
-}
 func isSlice(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Slice
 }

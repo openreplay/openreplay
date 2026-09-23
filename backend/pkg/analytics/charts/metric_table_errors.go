@@ -353,7 +353,6 @@ LIMIT %d OFFSET %d;`,
 		limit, offset,
 	)
 
-	logQuery(fmt.Sprintf("TableErrorsQueryBuilder.buildQuery: %s\n%s", createSQL, mainSQL))
 	return []string{createSQL, mainSQL}, nil
 }
 
