@@ -427,8 +427,6 @@ LIMIT %d OFFSET %d;`,
 		)
 	}
 
-	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
-
 	params := map[string]any{
 		"projectId":      r.ProjectId,
 		"startTimestamp": r.StartTimestamp,
@@ -651,7 +649,6 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 
 	// Add core session conditions
 	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s")...)
-	sessionConditions = append(sessionConditions, "isNotNull(s.duration)")
 
 	// Add duration conditions
 	for _, durCond := range durConds {

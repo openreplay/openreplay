@@ -18,6 +18,8 @@ type Charts interface {
 	GetData(ctx context.Context, projectId int, userId uint64, req *model.MetricPayload) (interface{}, error)
 }
 
+var validate = validator.New()
+
 type chartsImpl struct {
 	chConn        driver.Conn
 	chSessionConn chdb.SessionFactory
@@ -50,7 +52,6 @@ func (s *chartsImpl) GetData(ctx context.Context, projectId int, userID uint64, 
 		UserId:        userID,
 		MetricPayload: req,
 	}
-	var validate *validator.Validate = validator.New()
 	var err error
 	if err = validate.Struct(payload); err != nil {
 		s.Logger.Error(ctx, "Error validating payload", zap.Error(err))

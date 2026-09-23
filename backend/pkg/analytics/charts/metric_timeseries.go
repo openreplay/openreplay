@@ -136,7 +136,6 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series
 		"projectId":      p.ProjectId,
 	}
 
-	logQuery(fmt.Sprintf("TimeSeriesQueryBuilder.buildQuery: %s", query))
 	return query, params, nil
 }
 
