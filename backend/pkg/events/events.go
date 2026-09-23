@@ -20,7 +20,7 @@ type errorEvent struct {
 	Source    string    `ch:"source" json:"source"`
 	Name      string    `ch:"name" json:"name"`
 	Message   string    `ch:"message" json:"message"`
-	CreatedAt time.Time `ch:"created_at"`
+	CreatedAt time.Time `ch:"created_at" json:"-"`
 	Timestamp int64     `json:"timestamp"`
 }
 
@@ -77,7 +77,7 @@ type event struct {
 	Value          *string   `ch:"value"`
 	InputDuration  *string   `ch:"input_duration"`
 	WebVitals      *string   `ch:"web_vitals"`
-	CreatedAt      time.Time `ch:"created_at"`
+	CreatedAt      time.Time `ch:"created_at" json:"-"`
 }
 
 type ClickEvent struct {
@@ -277,7 +277,7 @@ type customEvent struct {
 	Type                   string     `ch:"type" json:"type"`
 	AutoCapturedProperties chcol.JSON `ch:"auto_props" json:"autoCapturedProperties"`
 	Properties             chcol.JSON `ch:"properties" json:"properties"`
-	CreatedAt              time.Time  `ch:"created_at"`
+	CreatedAt              time.Time  `ch:"created_at" json:"-"`
 }
 
 func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
@@ -341,7 +341,7 @@ type issueEvent struct {
 	ID        string    `ch:"issue_id" json:"issueId"`
 	Type      string    `ch:"issue_type" json:"type"`
 	Context   string    `ch:"context_string" json:"contextString"`
-	CreatedAt time.Time `ch:"created_at"`
+	CreatedAt time.Time `ch:"created_at" json:"-"`
 	Timestamp int64     `json:"timestamp"`
 }
 
@@ -372,7 +372,7 @@ type issue struct {
 	Type      string    `ch:"issue_type"`
 	Context   string    `ch:"context_string"`
 	Payload   string    `ch:"payload_string"`
-	CreatedAt time.Time `ch:"created_at"`
+	CreatedAt time.Time `ch:"created_at" json:"-"`
 }
 
 func (i *issue) CountFromPayload() int {
@@ -403,7 +403,7 @@ type incidentEvent struct {
 
 type issueEventRow struct {
 	EventID       string    `ch:"event_id"`
-	CreatedAt     time.Time `ch:"created_at"`
+	CreatedAt     time.Time `ch:"created_at" json:"-"`
 	IssueID       string    `ch:"issue_id"`
 	IssueType     string    `ch:"issue_type"`
 	ContextString string    `ch:"context_string"`
@@ -503,7 +503,7 @@ type mobileEvent struct {
 	Name         string    `ch:"name" json:"name"`
 	AutoCaptures string    `ch:"auto_captures" json:"autoCaptures"`
 	Properties   string    `ch:"properties" json:"properties"`
-	CreatedAt    time.Time `ch:"created_at"`
+	CreatedAt    time.Time `ch:"created_at" json:"-"`
 	Timestamp    int64     `ch:"timestamp" json:"timestamp"`
 }
 
