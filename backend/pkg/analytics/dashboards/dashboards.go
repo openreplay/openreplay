@@ -72,7 +72,10 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 				) AS series
 			FROM metric_series ms
 			WHERE ms.metric_id IN (
-				SELECT dw.metric_id FROM dashboard_widgets dw WHERE dw.dashboard_id = $1
+				SELECT dw.metric_id
+				FROM dashboard_widgets dw
+				JOIN metrics m ON m.metric_id = dw.metric_id AND m.deleted_at IS NULL
+				WHERE dw.dashboard_id = $1
 			) AND ms.deleted_at IS NULL
 			GROUP BY ms.metric_id
 		)
