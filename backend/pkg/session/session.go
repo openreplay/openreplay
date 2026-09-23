@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
+	"time"
 
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -57,7 +56,7 @@ type SessionReplay struct {
 	UserCountry        string                 `json:"userCountry"`
 	PagesCount         int                    `json:"pagesCount"`
 	EventsCount        int                    `json:"eventsCount"`
-	IssueTypes         string                 `json:"issueTypes"`
+	IssueTypes         []string               `json:"issueTypes"`
 	UtmSource          *string                `json:"utmSource"`
 	UtmMedium          *string                `json:"utmMedium"`
 	UtmCampaign        *string                `json:"utmCampaign"`
@@ -78,7 +77,7 @@ type SessionReplay struct {
 	FramesURL          []string               `json:"mobileFrames"`
 	Metadata           map[string]interface{} `json:"metadata"`
 	Live               bool                   `json:"live"`
-	FileKey            *string                `json:"fileKey"`
+	FileKey            *string                `json:"fileKey,omitempty"`
 }
 
 const (
@@ -112,7 +111,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 	    s.user_state,
 	    s.pages_count,
 	    s.events_count,
-	    s.issue_types,
+	    COALESCE(s.issue_types::text[], '{}') AS issue_types,
 	    s.utm_source,
 	    s.utm_medium,
 	    s.utm_campaign,
@@ -125,14 +124,14 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 			SELECT 1
 			FROM public.user_favorite_sessions fs
 			WHERE fs.session_id = s.session_id
-			  AND fs.user_id = :user_id
+			  AND fs.user_id = $1
 		) AS favorite,
-	
+
 		EXISTS (
 			SELECT 1
 			FROM public.user_viewed_sessions fs
 			WHERE fs.session_id = s.session_id
-			  AND fs.user_id = :user_id
+			  AND fs.user_id = $1
 		) AS viewed,
 
 		COALESCE(
@@ -158,17 +157,12 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 	
 	FROM public.sessions s
          JOIN public.projects p USING (project_id)
-	WHERE s.project_id = :project_id AND s.session_id = :session_id;
+	WHERE s.project_id = $2 AND s.session_id = $3;
 	`
-
-	// Replace all placeholders with actual values
-	sqlRequest = strings.ReplaceAll(sqlRequest, ":user_id", userID)
-	sqlRequest = strings.ReplaceAll(sqlRequest, ":project_id", strconv.Itoa(int(projectID)))
-	sqlRequest = strings.ReplaceAll(sqlRequest, ":session_id", strconv.Itoa(int(sessionID)))
 
 	// Scan everything into a struct
 	si := &SessionReplay{}
-	if err := s.conn.QueryRow(sqlRequest).Scan(
+	if err := s.conn.QueryRow(sqlRequest, userID, projectID, sessionID).Scan(
 		&si.SessionID, &si.ProjectID, &si.TrackerVersion, &si.StartTs, &si.Duration, &si.Platform, &si.UserID, &si.UserUUID,
 		&si.UserOS, &si.UserOSVersion, &si.UserBrowser, &si.UserBrowserVersion, &si.UserDevice, &si.UserDeviceType,
 		&si.UserDeviceMemory, &si.UserDeviceHeap, &si.UserCountry, &si.UserCity, &si.UserState, &si.PagesCount,
@@ -199,9 +193,15 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 		}
 	}
 
-	if err := s.views.AddSessionView(projectID, sessionID, userID); err != nil {
-		s.log.Error(context.Background(), "failed to add session view", err)
-	}
+	go func() {
+		viewCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessionID))
+		viewCtx = context.WithValue(viewCtx, "projectID", fmt.Sprintf("%d", projectID))
+		ctx, cancel := context.WithTimeout(viewCtx, 5*time.Second)
+		defer cancel()
+		if err := s.views.AddSessionView(ctx, projectID, sessionID, userID); err != nil {
+			s.log.Error(ctx, "failed to add session view: %s", err)
+		}
+	}()
 
 	return si, nil
 }
