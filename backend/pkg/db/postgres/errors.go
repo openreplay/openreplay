@@ -3,9 +3,9 @@ package postgres
 import (
 	"errors"
 
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func IsPkeyViolation(err error) bool {

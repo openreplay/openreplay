@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/analytics/search"

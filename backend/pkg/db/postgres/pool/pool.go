@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"openreplay/backend/pkg/metrics/database"
 )
@@ -35,9 +35,14 @@ func New(metrics database.Database, url string) (Pool, error) {
 	if url == "" {
 		return nil, errors.New("pg connection url is empty")
 	}
-	conn, err := pgxpool.Connect(context.Background(), url)
+	cfg, err := pgxpool.ParseConfig(url)
 	if err != nil {
-		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
+		return nil, fmt.Errorf("pgxpool.ParseConfig error: %v", err)
+	}
+	cfg.AfterConnect = registerCustomTypes
+	conn, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	if err != nil {
+		return nil, fmt.Errorf("pgxpool.NewWithConfig error: %v", err)
 	}
 	res := &poolImpl{
 		url:     url,
@@ -111,6 +116,19 @@ func (p *poolImpl) Ping(ctx context.Context) error {
 
 func (p *poolImpl) Close() {
 	p.conn.Close()
+}
+
+var customTypes = []string{"issue_type", "_issue_type"}
+
+func registerCustomTypes(ctx context.Context, conn *pgx.Conn) error {
+	for _, name := range customTypes {
+		t, err := conn.LoadType(ctx, name)
+		if err != nil {
+			continue
+		}
+		conn.TypeMap().RegisterType(t)
+	}
+	return nil
 }
 
 // TX - start
