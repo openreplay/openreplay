@@ -130,7 +130,7 @@ func (b *corsImpl) Middleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,Content-Encoding,datatype")
 		}
 		if r.Method == http.MethodOptions {
-			w.Header().Set("Cache-Control", "max-age=86400")
+			w.Header().Set("Access-Control-Max-Age", "3600")
 			w.WriteHeader(http.StatusOK)
 			return
 		}
