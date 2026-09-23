@@ -532,9 +532,7 @@ type UserRecord struct {
 	Timestamp  time.Time `ch:"_timestamp"`
 }
 
-var selectEventsQuery = `SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured",
-       "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url",
-       "$duration_s", error_id, issue_type, issue_id, toString("$properties") AS "$properties", toString(properties) AS properties, "$user_id"
+var selectEventsQuery = `SELECT *
 FROM (SELECT session_id, event_id, "$event_name", created_at, "$time", "$device_id", "$auto_captured",
        "$device", "$os_version", "$os", "$browser", "$referrer", "$country", "$state", "$city", "$current_url",
        "$duration_s", error_id, issue_type, issue_id, "$properties", properties, "$user_id"
@@ -551,29 +549,29 @@ var insertEventsQuery = `INSERT INTO product_analytics.events (session_id, proje
                                       properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 type UserEvent struct {
-	SessionID    uint64    `ch:"session_id"`
-	EventID      string    `ch:"event_id"`
-	EventName    string    `ch:"$event_name"`
-	CreatedAt    time.Time `ch:"created_at"`
-	Timestamp    uint32    `ch:"$time"`
-	DeviceID     string    `ch:"$device_id"`
-	AutoCapture  bool      `ch:"$auto_captured"`
-	Device       string    `ch:"$device"`
-	OSVersion    string    `ch:"$os_version"`
-	Os           string    `ch:"$os"`
-	Browser      string    `ch:"$browser"`
-	Referrer     *string   `ch:"$referrer"`
-	Country      string    `ch:"$country"`
-	State        string    `ch:"$state"`
-	City         string    `ch:"$city"`
-	CurrentURL   string    `ch:"$current_url"`
-	DurationS    uint16    `ch:"$duration_s"`
-	ErrorID      string    `ch:"error_id"`
-	IssueType    string    `ch:"issue_type"`
-	IssueID      string    `ch:"issue_id"`
-	ACProperties string    `ch:"$properties"`
-	Properties   string    `ch:"properties"`
-	UserID       *string   `ch:"$user_id"`
+	SessionID    uint64                 `ch:"session_id"`
+	EventID      string                 `ch:"event_id"`
+	EventName    string                 `ch:"$event_name"`
+	CreatedAt    time.Time              `ch:"created_at"`
+	Timestamp    uint32                 `ch:"$time"`
+	DeviceID     string                 `ch:"$device_id"`
+	AutoCapture  bool                   `ch:"$auto_captured"`
+	Device       string                 `ch:"$device"`
+	OSVersion    string                 `ch:"$os_version"`
+	Os           string                 `ch:"$os"`
+	Browser      string                 `ch:"$browser"`
+	Referrer     *string                `ch:"$referrer"`
+	Country      string                 `ch:"$country"`
+	State        string                 `ch:"$state"`
+	City         string                 `ch:"$city"`
+	CurrentURL   string                 `ch:"$current_url"`
+	DurationS    uint16                 `ch:"$duration_s"`
+	ErrorID      string                 `ch:"error_id"`
+	IssueType    string                 `ch:"issue_type"`
+	IssueID      string                 `ch:"issue_id"`
+	ACProperties map[string]interface{} `ch:"$properties"`
+	Properties   map[string]interface{} `ch:"properties"`
+	UserID       *string                `ch:"$user_id"`
 }
 
 func (ds *dataSaverImpl) Stop() {
