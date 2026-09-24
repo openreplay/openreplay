@@ -1,6 +1,7 @@
 package api
 
 import (
+	config "openreplay/backend/internal/config/api"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
@@ -23,6 +24,7 @@ type Service interface {
 
 type eeDeps struct {
 	log        logger.Logger
+	cfg        *config.Config
 	pgconn     pool.Pool
 	objStore   objectstorage.ObjectStorage
 	projects   projects.Projects

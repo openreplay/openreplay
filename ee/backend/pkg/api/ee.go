@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"os"
-	"strconv"
 
 	"github.com/go-playground/validator/v10"
 
@@ -19,7 +17,7 @@ import (
 )
 
 func eeServices(d eeDeps) ([]api.Handlers, []Worker, error) {
-	if enabled, _ := strconv.ParseBool(os.Getenv("REPLAY_EXPORT_ENABLED")); !enabled {
+	if !d.cfg.ReplayExportEnabled {
 		d.log.Info(context.Background(), "replay export disabled, skipping video-replays setup")
 		return nil, nil, nil
 	}
@@ -36,8 +34,8 @@ func eeServices(d eeDeps) ([]api.Handlers, []Worker, error) {
 		return nil, nil, err
 	}
 
-	sess := sessions.New(d.log, d.pgconn, d.projects, nil, d.dbMetrics)
-	users := user.New(d.pgconn)
+	sess := sessions.New(d.log, d.pgconn, d.projects, nil, d.dbMetrics, sessions.DoNotIgnoreInactiveProjects)
+	users := user.New(d.pgconn, user.MCPConfig{})
 
 	svc, err := vsvc.New(d.log, vcfg, storage, batchJobs, d.objStore, users)
 	if err != nil {

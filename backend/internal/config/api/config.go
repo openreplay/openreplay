@@ -37,6 +37,7 @@ type Config struct {
 	AssistCacheTTL        time.Duration `env:"REDIS_CACHE_TTL,default=5s"`
 	AssistBatchSize       int           `env:"REDIS_BATCH_SIZE,default=1000"`
 	AssistScanSize        int64         `env:"REDIS_SCAN_SIZE,default=1000"`
+	ReplayExportEnabled   bool          `env:"REPLAY_EXPORT_ENABLED,default=false"`
 	WorkerID              uint16
 }
 

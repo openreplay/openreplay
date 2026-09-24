@@ -38,8 +38,8 @@ import (
 	integrationsService "openreplay/backend/pkg/integrations/service"
 	"openreplay/backend/pkg/jobs"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/metrics/database"
 	assistMetrics "openreplay/backend/pkg/metrics/assist"
+	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/notes"
 	noteAPI "openreplay/backend/pkg/notes/api"
@@ -101,7 +101,7 @@ func (b *serviceBuilder) Close() {
 	b.wg.Wait()
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, assistMetric assistMetrics.Assist, dbMetrics database.Database, pgconn pool.Pool, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (Service, error) {
+func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web, assistMetric assistMetrics.Assist, dbMetrics database.Database, pgconn pool.Pool, redisClient *redis.Client, chconn clickhouse.Conn, chSessionFactory chdb.SessionFactory, objStore objectstorage.ObjectStorage, projects projects.Projects, canvases canvas.Canvases) (Service, error) {
 	responser := api.NewResponser(webMetrics)
 
 	reqValidator := validator.New()
@@ -268,6 +268,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 
 	extraHandlers, workers, err := eeServices(eeDeps{
 		log:        log,
+		cfg:        cfg,
 		pgconn:     pgconn,
 		objStore:   objStore,
 		projects:   projects,
