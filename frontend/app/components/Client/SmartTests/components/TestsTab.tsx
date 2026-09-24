@@ -3,6 +3,7 @@ import {
   Badge,
   Button,
   Dropdown,
+  Grid,
   Input,
   Segmented,
   Select,
@@ -128,6 +129,8 @@ function TestsTab() {
   // merge-in-review: the base test (first selected) carrying a client-only pendingMerge.
   // Nothing persists until "Combine".
   const [mergeTest, setMergeTest] = useState<TestCase | null>(null);
+  // below md: secondary columns drop and the table scrolls sideways
+  const narrow = Grid.useBreakpoint().md === false;
 
   // debounce the search box (the setState runs in a timer callback, not synchronously
   // in the effect body)
@@ -641,12 +644,14 @@ function TestsTab() {
       title: t('Tags'),
       dataIndex: 'tags',
       width: 190,
+      responsive: ['md'],
       render: (tags: string[]) => <RowTags tags={tags} />,
     },
     {
       title: t('Environment'),
       dataIndex: 'envNames',
       width: 150,
+      responsive: ['md'],
       showSorterTooltip: false,
       render: (envNames?: string[]) => {
         if (!envNames || envNames.length === 0)
@@ -670,6 +675,7 @@ function TestsTab() {
       title: t('Schedule'),
       dataIndex: 'schedule',
       width: 180,
+      responsive: ['md'],
       showSorterTooltip: false,
       render: (_: unknown, tc) =>
         !isScheduled(tc.schedule) ? (
@@ -689,6 +695,7 @@ function TestsTab() {
       title: t('Created'),
       dataIndex: 'createdAt',
       width: 120,
+      responsive: ['md'],
       sorter: true, // server-sorted via created_at (see SORT_FIELD)
       showSorterTooltip: false,
       render: (ts?: number) =>
@@ -807,12 +814,23 @@ function TestsTab() {
     <div className="flex flex-col">
       {/* controls bar — status tabs (left) + search & filters (right) */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
-        <Segmented
-          size="small"
-          value={statusTab}
-          onChange={(v) => setStatusTab(v as StatusTab)}
-          options={statusOptions}
-        />
+        {narrow ? (
+          <Select
+            size="small"
+            value={statusTab}
+            onChange={(v) => setStatusTab(v as StatusTab)}
+            options={statusOptions}
+            popupMatchSelectWidth={false}
+            style={{ minWidth: 150 }}
+          />
+        ) : (
+          <Segmented
+            size="small"
+            value={statusTab}
+            onChange={(v) => setStatusTab(v as StatusTab)}
+            options={statusOptions}
+          />
+        )}
         {selectedKeys.length > 0 ? (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-disabled-text">
@@ -905,6 +923,8 @@ function TestsTab() {
         className="kai-table"
         rowKey="key"
         columns={columns}
+        tableLayout={narrow ? 'fixed' : undefined}
+        scroll={narrow ? { x: 520 } : undefined}
         dataSource={tests}
         pagination={false}
         rowSelection={{

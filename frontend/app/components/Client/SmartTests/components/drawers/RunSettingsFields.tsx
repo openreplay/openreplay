@@ -71,7 +71,7 @@ function RunSettingsFields({ value, onChange, defaults, defaultHints }: Props) {
 
   return (
     <div className="flex flex-col gap-4 kai-run-settings">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 max-sm:grid-cols-1">
         <Field label={t('Environments')}>
           <Select
             mode="multiple"

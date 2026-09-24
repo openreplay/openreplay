@@ -125,8 +125,14 @@ function DraftDrawer({
       <div className="flex items-center justify-between">
         {/* Dismiss rejects the proposal → the X ("reject a suggestion") rather than the
             bin ("delete something you built") */}
-        <Button type="text" danger icon={<X size={15} />} onClick={dismiss}>
-          {t('Dismiss')}
+        <Button
+          type="text"
+          danger
+          icon={<X size={15} />}
+          onClick={dismiss}
+          aria-label={t('Dismiss')}
+        >
+          <span className="max-sm:hidden">{t('Dismiss')}</span>
         </Button>
         <div className="flex items-center gap-2">
           <Button onClick={saveDraft}>{t('Save draft')}</Button>
@@ -146,12 +152,18 @@ function DraftDrawer({
           type="text"
           onClick={() => setStep(0)}
           icon={<ArrowLeft size={15} />}
+          aria-label={t('Back')}
         >
-          {t('Back')}
+          <span className="max-sm:hidden">{t('Back')}</span>
         </Button>
         <div className="flex items-center gap-2">
           <Button type="text" onClick={finalize}>
-            {scheduled ? t('Skip tags & finish') : t('Finish without schedule')}
+            <span className="max-sm:hidden">
+              {scheduled
+                ? t('Skip tags & finish')
+                : t('Finish without schedule')}
+            </span>
+            <span className="sm:hidden">{t('Finish')}</span>
           </Button>
           <Button
             type="primary"
@@ -159,7 +171,8 @@ function DraftDrawer({
             icon={<ArrowRight size={15} />}
             iconPosition="end"
           >
-            {t('Continue to tags')}
+            <span className="max-sm:hidden">{t('Continue to tags')}</span>
+            <span className="sm:hidden">{t('Continue')}</span>
           </Button>
         </div>
       </div>

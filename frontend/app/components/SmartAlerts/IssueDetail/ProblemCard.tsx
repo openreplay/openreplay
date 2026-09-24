@@ -111,7 +111,7 @@ export default function ProblemCard({
   if (framed) {
     return (
       <div className="flex flex-col">
-        <div className="px-4 py-3 flex items-center justify-between gap-3">
+        <div className="px-4 py-3 flex items-center justify-between gap-3 max-md:flex-wrap">
           <div className="flex items-center gap-2 min-w-0">{title}</div>
           {actions && (
             <div className="flex items-center gap-2 shrink-0">{actions}</div>
@@ -129,7 +129,7 @@ export default function ProblemCard({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2.5">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 max-md:flex-wrap">
           <div className="flex items-center gap-2 min-w-0">{title}</div>
           {actions && (
             <div className="flex items-center gap-2 shrink-0">{actions}</div>

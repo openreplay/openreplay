@@ -437,11 +437,11 @@ function TestDrawer({
          Pause / Resume is the one control here, and only for a scheduled test. */
       headerActions={
         creating ? undefined : merge ? (
-          <span className="text-sm text-disabled-text">
+          <span className="text-sm text-disabled-text max-sm:block max-sm:max-w-28 max-sm:text-xs max-sm:text-right">
             {t('Runs paused during merge review')}
           </span>
         ) : revision && pauseOnRevision ? (
-          <span className="text-sm text-disabled-text">
+          <span className="text-sm text-disabled-text max-sm:block max-sm:max-w-28 max-sm:text-xs max-sm:text-right">
             {t('Runs paused until reviewed')}
           </span>
         ) : canPause ? (
@@ -512,13 +512,18 @@ function TestDrawer({
               cancelText={t('Cancel')}
               onConfirm={remove}
             >
-              <Button type="text" danger icon={<Trash2 size={15} />}>
-                {t('Delete test')}
+              <Button
+                type="text"
+                danger
+                icon={<Trash2 size={15} />}
+                aria-label={t('Delete test')}
+              >
+                <span className="max-sm:hidden">{t('Delete test')}</span>
               </Button>
             </Popconfirm>
             <div className="flex items-center gap-2">
               {dirty && (
-                <span className="text-sm text-disabled-text">
+                <span className="text-sm text-disabled-text max-sm:hidden">
                   {t('Unsaved changes')}
                 </span>
               )}

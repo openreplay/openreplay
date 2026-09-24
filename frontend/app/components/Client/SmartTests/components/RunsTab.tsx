@@ -1,6 +1,8 @@
 import {
   Button,
+  Grid,
   Input,
+  Popover,
   Segmented,
   Select,
   Skeleton,
@@ -8,7 +10,7 @@ import {
   Tooltip,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { RotateCw } from 'lucide-react';
+import { RotateCw, SlidersHorizontal } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
@@ -124,6 +126,10 @@ function RunsTab() {
     order?: 'ascend' | 'descend';
   }>({ field: 'date', order: 'descend' });
   const [page, setPage] = useState(1);
+  // below md: secondary columns drop, the table scrolls sideways and the
+  // filter selects fold into a popover
+  const narrow = Grid.useBreakpoint().md === false;
+  const selectWidth = (px: number) => (narrow ? '100%' : px);
 
   // adopt a cross-tab handoff exactly once when handoffId bumps — this pane stays
   // mounted between visits, so a fresh id is the signal
@@ -327,12 +333,14 @@ function RunsTab() {
       title: t('Tags'),
       dataIndex: 'tags',
       width: 160,
+      responsive: ['md'],
       render: (tags: string[]) => <RowTags tags={tags} />,
     },
     {
       title: t('Environment'),
       dataIndex: 'envName',
       width: 140,
+      responsive: ['md'],
       render: (envName?: string) =>
         envName ? (
           <span className="text-gray-dark truncate">{envName}</span>
@@ -344,6 +352,7 @@ function RunsTab() {
       title: t('Duration'),
       dataIndex: 'duration',
       width: 120,
+      responsive: ['md'],
       sorter: true,
       showSorterTooltip: false,
       render: (_: unknown, run) =>
@@ -390,6 +399,70 @@ function RunsTab() {
     },
   ];
 
+  const activeFilters =
+    [resFilter, tagFilter, envFilter, regionFilter].filter((f) => f !== 'all')
+      .length + (periodFilter !== '7' ? 1 : 0);
+  const filterSelects = (
+    <>
+      <Select
+        size="small"
+        value={resFilter}
+        onChange={setResFilter}
+        style={{ width: selectWidth(140) }}
+        options={[
+          { value: 'all', label: t('All viewports') },
+          ...RESOLUTION_OPTIONS.map((o) => ({
+            value: o.value,
+            label: t(o.label),
+          })),
+        ]}
+      />
+      <Select
+        size="small"
+        value={tagFilter}
+        onChange={setTagFilter}
+        style={{ width: selectWidth(130) }}
+        options={[
+          { value: 'all', label: t('All tags') },
+          ...tagOptions.map((tag) => ({ value: tag, label: tag })),
+        ]}
+      />
+      <Select
+        size="small"
+        value={envFilter}
+        onChange={setEnvFilter}
+        style={{ width: selectWidth(150) }}
+        options={[
+          { value: 'all', label: t('All environments') },
+          ...envOptions,
+        ]}
+      />
+      <Select
+        size="small"
+        value={regionFilter}
+        onChange={setRegionFilter}
+        style={{ width: selectWidth(140) }}
+        options={[
+          { value: 'all', label: t('All regions') },
+          ...REGION_OPTIONS.map((o) => ({
+            value: o.value,
+            label: o.label,
+          })),
+        ]}
+      />
+      <Select
+        size="small"
+        value={periodFilter}
+        onChange={setPeriodFilter}
+        style={{ width: selectWidth(130) }}
+        options={PERIOD_OPTIONS.map((o) => ({
+          value: o.value,
+          label: t(o.label),
+        }))}
+      />
+    </>
+  );
+
   if (isPending || holdingForTrigger) {
     return (
       <div className="p-4">
@@ -402,12 +475,23 @@ function RunsTab() {
     <div className="flex flex-col">
       {/* controls bar — status tabs (left) + search & filters (right) */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
-        <Segmented
-          size="small"
-          value={statusTab}
-          onChange={(v) => setStatusTab(v as StatusTab)}
-          options={statusOptions}
-        />
+        {narrow ? (
+          <Select
+            size="small"
+            value={statusTab}
+            onChange={(v) => setStatusTab(v as StatusTab)}
+            options={statusOptions}
+            popupMatchSelectWidth={false}
+            style={{ minWidth: 150 }}
+          />
+        ) : (
+          <Segmented
+            size="small"
+            value={statusTab}
+            onChange={(v) => setStatusTab(v as StatusTab)}
+            options={statusOptions}
+          />
+        )}
         <div className="flex items-center gap-2 flex-wrap">
           <Input.Search
             size="small"
@@ -417,62 +501,24 @@ function RunsTab() {
             onChange={(e) => setQuery(e.target.value)}
             style={{ width: 170 }}
           />
-          <Select
-            size="small"
-            value={resFilter}
-            onChange={setResFilter}
-            style={{ width: 140 }}
-            options={[
-              { value: 'all', label: t('All viewports') },
-              ...RESOLUTION_OPTIONS.map((o) => ({
-                value: o.value,
-                label: t(o.label),
-              })),
-            ]}
-          />
-          <Select
-            size="small"
-            value={tagFilter}
-            onChange={setTagFilter}
-            style={{ width: 130 }}
-            options={[
-              { value: 'all', label: t('All tags') },
-              ...tagOptions.map((tag) => ({ value: tag, label: tag })),
-            ]}
-          />
-          <Select
-            size="small"
-            value={envFilter}
-            onChange={setEnvFilter}
-            style={{ width: 150 }}
-            options={[
-              { value: 'all', label: t('All environments') },
-              ...envOptions,
-            ]}
-          />
-          <Select
-            size="small"
-            value={regionFilter}
-            onChange={setRegionFilter}
-            style={{ width: 140 }}
-            options={[
-              { value: 'all', label: t('All regions') },
-              ...REGION_OPTIONS.map((o) => ({
-                value: o.value,
-                label: o.label,
-              })),
-            ]}
-          />
-          <Select
-            size="small"
-            value={periodFilter}
-            onChange={setPeriodFilter}
-            style={{ width: 130 }}
-            options={PERIOD_OPTIONS.map((o) => ({
-              value: o.value,
-              label: t(o.label),
-            }))}
-          />
+          {narrow ? (
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              content={
+                <div className="flex flex-col gap-2" style={{ width: 220 }}>
+                  {filterSelects}
+                </div>
+              }
+            >
+              <Button size="small" icon={<SlidersHorizontal size={14} />}>
+                {t('Filters')}
+                {activeFilters ? ` (${activeFilters})` : ''}
+              </Button>
+            </Popover>
+          ) : (
+            filterSelects
+          )}
         </div>
       </div>
 
@@ -480,6 +526,8 @@ function RunsTab() {
         className="kai-table"
         rowKey="key"
         columns={columns}
+        tableLayout={narrow ? 'fixed' : undefined}
+        scroll={narrow ? { x: 520 } : undefined}
         dataSource={runs}
         pagination={false}
         rowClassName="cursor-pointer"

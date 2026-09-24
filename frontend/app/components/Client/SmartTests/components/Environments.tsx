@@ -173,7 +173,7 @@ function Environments() {
                 >
                   <Button
                     type="text"
-                    className="invisible group-hover:visible"
+                    className="invisible group-hover:visible pointer-coarse:visible"
                     icon={<PencilIcon size={16} />}
                     aria-label={t('Edit')}
                     onClick={() => openEdit(env)}
@@ -181,7 +181,7 @@ function Environments() {
                   <Button
                     type="text"
                     danger
-                    className="invisible group-hover:visible"
+                    className="invisible group-hover:visible pointer-coarse:visible"
                     loading={
                       deleteEnv.isPending &&
                       deleteEnv.variables?.environmentId === env.id

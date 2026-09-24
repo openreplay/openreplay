@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { countries } from 'App/constants';
 import { browserIcon, deviceTypeIcon, osIcon } from 'App/iconNames';
 import { capitalize } from 'App/utils';
+import { mobileScreen } from 'App/utils/isMobile';
 import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'Components/Session/playerContext';
 import HighlightButton from 'Components/Session_/Highlight/HighlightButton';
@@ -162,7 +163,7 @@ export default function IssuePlayerHeader({
           onClick={onBack}
           className="px-2"
         >
-          {t('Back to issue')}
+          <span className="max-lg:hidden">{t('Back to issue')}</span>
         </Button>
       </Tooltip>
       <Divider />
@@ -181,7 +182,7 @@ export default function IssuePlayerHeader({
             </span>
           </Tooltip>
         </div>
-        <div className="flex items-center gap-1 lg:gap-2 text-black/50 text-sm">
+        <div className="flex items-center gap-1 lg:gap-2 text-black/50 text-sm max-lg:min-w-0">
           {issue && (
             <>
               <Tooltip
@@ -202,7 +203,7 @@ export default function IssuePlayerHeader({
           )}
           <Popover
             content={more}
-            trigger="hover"
+            trigger={mobileScreen ? 'click' : 'hover'}
             placement="bottom"
             zIndex={PLAYER_POPUP_Z}
           >

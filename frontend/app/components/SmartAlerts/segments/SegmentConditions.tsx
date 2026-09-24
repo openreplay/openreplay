@@ -76,7 +76,10 @@ function SegmentConditions({ segment }: { segment: SavedSegment }) {
   };
 
   return (
-    <div className="flex flex-col gap-2" style={{ maxWidth: 340 }}>
+    <div
+      className="flex flex-col gap-2"
+      style={{ maxWidth: 'min(340px, calc(100vw - 48px))' }}
+    >
       {filters.length ? (
         <>
           {events.length > 0 && section(t('Events — in order'))}

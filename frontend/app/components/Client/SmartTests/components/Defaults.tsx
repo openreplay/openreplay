@@ -41,7 +41,7 @@ function Defaults({ value, onChange }: Props) {
           {t('New tests start with these. You can override them per test.')}
         </Typography.Text>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 max-sm:grid-cols-1">
         <Field label={t('Default environment')}>
           <Select
             allowClear

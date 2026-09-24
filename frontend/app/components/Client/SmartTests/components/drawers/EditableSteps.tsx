@@ -1,5 +1,7 @@
 import { Tooltip } from 'antd';
 import {
+  ArrowDown,
+  ArrowUp,
   Check,
   ChevronRight,
   CornerDownLeft,
@@ -161,8 +163,9 @@ function Gap({
       role="button"
       aria-label={label ?? t('Insert step')}
       onClick={onInsert}
+      // no hover on touch to reveal it, so there it would only catch stray taps
       className={`group/ins relative flex items-center justify-center cursor-pointer ${
-        always ? 'h-7' : 'h-5'
+        always ? 'h-7' : 'h-5 pointer-coarse:pointer-events-none'
       }`}
     >
       <div
@@ -197,6 +200,10 @@ interface StepRowProps {
   onEscape: () => void;
   onDragStart: (idx: number) => void;
   onDragEnd: () => void;
+  /** touch stand-in for drag: shift the row being edited up / down one slot */
+  onMove: (dir: -1 | 1) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onDecide?: (idx: number, decision: StepDecision) => void;
   /** merge review: "· N steps" suffix and collapse state of a group label row */
   groupMeta?: string;
@@ -221,6 +228,9 @@ function StepRow({
   onEscape,
   onDragStart,
   onDragEnd,
+  onMove,
+  canMoveUp,
+  canMoveDown,
   onDecide,
   groupMeta,
   groupCollapsed,
@@ -360,6 +370,26 @@ function StepRow({
           // mousedown-preventDefault keeps the input focused so its onBlur doesn't fire
           // first and commit/close before the click handler runs
           <>
+            <button
+              type="button"
+              aria-label={t('Move step up')}
+              disabled={!canMoveUp}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onMove(-1)}
+              className="hidden pointer-coarse:flex w-6 h-6 rounded items-center justify-center text-gray-medium disabled:opacity-30"
+            >
+              <ArrowUp size={14} />
+            </button>
+            <button
+              type="button"
+              aria-label={t('Move step down')}
+              disabled={!canMoveDown}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onMove(1)}
+              className="hidden pointer-coarse:flex w-6 h-6 rounded items-center justify-center text-gray-medium disabled:opacity-30"
+            >
+              <ArrowDown size={14} />
+            </button>
             <Tooltip title={t('Confirm — Enter')}>
               <button
                 type="button"
@@ -403,7 +433,7 @@ function StepRow({
                 e.stopPropagation();
                 onRemove(idx);
               }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
+              className="opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
             >
               <Trash2 size={14} />
             </button>
@@ -546,6 +576,35 @@ function EditableSteps({
   const removeStep = (idx: number) => {
     emit(items.filter((_, i) => i !== idx));
     if (editingIdx === idx) setEditingIdx(null);
+  };
+
+  // keeps the row in edit mode at its new slot so repeated taps keep moving it
+  const moveStep = (dir: -1 | 1) => {
+    if (editingIdx == null) return;
+    const to = editingIdx + dir;
+    if (to < 0 || to >= items.length) return;
+    const next = commitInto(editingIdx);
+    if (draft.trim() === '') {
+      emit(next);
+      setEditingIdx(null);
+      return;
+    }
+    const [row] = next.splice(editingIdx, 1);
+    next.splice(to, 0, row);
+    emit(next);
+    setEditingIdx(to);
+    // landing inside a collapsed merge group would hide the row being edited
+    for (let i = to - 1; i >= 0; i -= 1) {
+      if (next[i].kind !== 'group') continue;
+      const key = groupKey(next[i]);
+      setCollapsedGroups((prev) => {
+        if (!prev.has(key)) return prev;
+        const open = new Set(prev);
+        open.delete(key);
+        return open;
+      });
+      break;
+    }
   };
 
   // ---- drag reorder ----
@@ -728,6 +787,9 @@ function EditableSteps({
                     onEscape={onEscape}
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}
+                    onMove={moveStep}
+                    canMoveUp={idx > 0}
+                    canMoveDown={idx < items.length - 1}
                     onDecide={onDecide}
                   />
                 </div>

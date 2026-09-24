@@ -156,7 +156,7 @@ function EditableTitle({
         <span className="text-xl font-semibold text-black leading-tight truncate">
           {title}
         </span>
-        <span className="shrink-0 text-main opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="shrink-0 text-main opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity">
           <EditOutlined />
         </span>
       </div>

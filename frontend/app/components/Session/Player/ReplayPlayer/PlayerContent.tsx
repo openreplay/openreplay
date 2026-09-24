@@ -15,6 +15,8 @@ interface IProps {
   session: Session;
   /** keep the SubHeader tabs but drop its duplicated actions (host has its own header) */
   minimalSubHeader?: boolean;
+  /** size to the parent instead of the viewport (host header isn't the default 50px) */
+  fillHeight?: boolean;
 }
 
 function PlayerContent({
@@ -23,6 +25,7 @@ function PlayerContent({
   activeTab,
   setActiveTab,
   minimalSubHeader,
+  fillHeight,
 }: IProps) {
   const { store } = React.useContext(PlayerContext);
 
@@ -69,9 +72,11 @@ function PlayerContent({
       className={cn('relative flex h-full', {
         'pointer-events-none': hasError,
       })}
-      style={{
-        height: `calc(100dvh - ${mobileScreen ? '26px' : '50px'})`,
-      }}
+      style={
+        fillHeight
+          ? undefined
+          : { height: `calc(100dvh - ${mobileScreen ? '26px' : '50px'})` }
+      }
     >
       <div
         className="w-full h-full"

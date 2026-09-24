@@ -158,7 +158,7 @@ export default function SessionCard({
               <div
                 aria-label={t('Copy link')}
                 onClick={copyLink}
-                className="bg-gray-dark text-white py-1 px-2 rounded-lg cursor-pointer flex items-center transition-transform translate-y-14 group-hover:translate-y-0"
+                className="bg-gray-dark text-white py-1 px-2 rounded-lg cursor-pointer flex items-center transition-transform translate-y-14 group-hover:translate-y-0 pointer-coarse:translate-y-0"
               >
                 <Link2 size={14} strokeWidth={1} />
               </div>
@@ -183,7 +183,7 @@ export default function SessionCard({
         <div className="flex items-center justify-between text-xs color-gray-medium">
           <span className="whitespace-nowrap">{s.date}</span>
           <Popover
-            trigger="hover"
+            trigger={['hover', 'click']}
             placement="top"
             content={
               <div className="text-left bg-white" style={{ minWidth: 230 }}>

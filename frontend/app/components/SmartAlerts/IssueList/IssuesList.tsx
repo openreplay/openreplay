@@ -4,6 +4,7 @@ import Period, { LAST_7_DAYS } from 'Types/app/period';
 import {
   Button,
   Dropdown,
+  Grid,
   Input,
   Modal,
   Popover,
@@ -87,6 +88,8 @@ function IssuesList() {
   const [period, setPeriod] = React.useState<any>(
     Period({ rangeName: LAST_7_DAYS }),
   );
+  // below md the table keeps impact · issue · actions and truncates titles
+  const narrow = Grid.useBreakpoint().md === false;
 
   React.useEffect(() => {
     if (siteId) issuesStore.init(String(siteId));
@@ -229,6 +232,7 @@ function IssuesList() {
       title: t('Tags'),
       dataIndex: 'journeyLabels',
       width: 260,
+      responsive: ['md'],
       render: (labels: string[], r: Issue) => {
         // origin icon: segment find (fork, blue) vs full traffic (globe, gray) — not clickable
         const inSegments = r.segmentIds.length > 0;
@@ -287,6 +291,7 @@ function IssuesList() {
             title: t('Last seen'),
             dataIndex: 'seenAgoMin',
             width: 156,
+            responsive: ['md'],
             sorter: true,
             sortOrder:
               issuesStore.sortTouched && issuesStore.sort === 'recency'
@@ -488,7 +493,7 @@ function IssuesList() {
   return (
     <div className="mx-auto w-full flex flex-col" style={{ maxWidth: 1360 }}>
       <div className="flex flex-col rounded-lg border bg-white">
-        <div className="flex items-center justify-between border-b px-4 py-2">
+        <div className="flex items-center justify-between border-b px-4 py-2 max-md:flex-wrap max-md:gap-2 max-md:px-3">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-lg">{t('Issues')}</span>
             <Tooltip
@@ -504,13 +509,13 @@ function IssuesList() {
             {/* capture control — page-level, lives with the title, not the filter row */}
             <SegmentsIndicator />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-md:w-full">
             <Button
               type="text"
               icon={<Settings size={14} />}
               onClick={() => history.push('/client/agents?agent=issues')}
             >
-              {t('Settings')}
+              <span className="max-md:hidden">{t('Settings')}</span>
             </Button>
             <a
               href="https://docs.openreplay.com/"
@@ -518,10 +523,10 @@ function IssuesList() {
               rel="noreferrer"
             >
               <Button type="text" icon={<Album size={14} />}>
-                {t('Docs')}
+                <span className="max-md:hidden">{t('Docs')}</span>
               </Button>
             </a>
-            <div className="min-w-50 md:w-1/4 md:min-w-75">
+            <div className="min-w-50 md:w-1/4 md:min-w-75 max-md:flex-1 max-md:min-w-0">
               <Input.Search
                 size="small"
                 allowClear
@@ -534,9 +539,10 @@ function IssuesList() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap max-md:px-3">
           {showCategory ? (
             <Segmented
+              className="max-md:max-w-full max-md:overflow-x-auto"
               size="small"
               value={catValue}
               onChange={(v) =>
@@ -603,6 +609,7 @@ function IssuesList() {
           className="[&_.ant-table-tbody>tr>td]:!py-0 [&_.ant-table-tbody>tr>td]:h-[55px]"
           rowKey="id"
           columns={columns}
+          tableLayout={narrow ? 'fixed' : undefined}
           dataSource={issuesStore.list}
           loading={issuesStore.loading}
           onChange={onTableChange}

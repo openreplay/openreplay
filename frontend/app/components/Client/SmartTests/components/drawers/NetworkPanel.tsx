@@ -114,9 +114,9 @@ function HeaderRows({ rows }: { rows?: { name: string; value: string }[] }) {
         // header names repeat (set-cookie, link…), so the index is part of the key
         <div
           key={`${h.name}-${i}`}
-          className="flex items-start gap-3 px-3 py-2 text-xs font-mono"
+          className="flex items-start gap-3 px-3 py-2 text-xs font-mono max-sm:flex-col max-sm:gap-0.5"
         >
-          <span className="w-40 shrink-0 text-gray-dark font-medium break-all">
+          <span className="w-40 shrink-0 text-gray-dark font-medium break-all max-sm:w-auto">
             {h.name}
           </span>
           <span className="flex-1 min-w-0 text-gray-darkest break-all">
@@ -343,9 +343,9 @@ function Detail({
   );
 }
 
-/** Grid columns shared by the request list header + rows. */
+/** Grid columns shared by the request list header + rows. Phones drop At + Size. */
 const NET_GRID =
-  'grid items-center gap-2 grid-cols-[52px_56px_minmax(0,1fr)_58px_64px_60px]';
+  'grid items-center gap-2 grid-cols-[52px_56px_minmax(0,1fr)_58px_64px_60px] max-sm:grid-cols-[40px_48px_minmax(0,1fr)_52px]';
 
 function NetworkPanel({
   reqs,
@@ -470,9 +470,9 @@ function NetworkPanel({
           <span>{t('Method')}</span>
           <span>{t('Request')}</span>
           <Tooltip title={t('When it fired, relative to the run start')}>
-            <span className="text-right">{t('At')}</span>
+            <span className="text-right max-sm:hidden">{t('At')}</span>
           </Tooltip>
-          <span className="text-right">{t('Size')}</span>
+          <span className="text-right max-sm:hidden">{t('Size')}</span>
           <span className="text-right">{t('Time')}</span>
         </div>
         {visible.length === 0 ? (
@@ -498,10 +498,10 @@ function NetworkPanel({
                 <span className="text-disabled-text">{hostOf(r.url)}</span>
                 <span className="text-gray-darkest"> {pathOf(r.url)}</span>
               </span>
-              <span className="text-right text-disabled-text tabular-nums">
+              <span className="text-right text-disabled-text tabular-nums max-sm:hidden">
                 {fmtOffset(r.time)}
               </span>
-              <span className="text-right text-disabled-text">
+              <span className="text-right text-disabled-text max-sm:hidden">
                 {fmtBytes(r.size)}
               </span>
               <span className="text-right text-disabled-text">

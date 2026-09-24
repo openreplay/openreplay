@@ -79,7 +79,7 @@ function SmartTests() {
               icon={<SettingsIcon size={14} />}
               onClick={() => history.push('/client/agents?agent=tests')}
             >
-              {t('Settings')}
+              <span className="max-md:hidden">{t('Settings')}</span>
             </Button>
             <a
               href="https://docs.openreplay.com/"
@@ -87,7 +87,7 @@ function SmartTests() {
               rel="noreferrer"
             >
               <Button type="text" size="small" icon={<Album size={14} />}>
-                {t('Docs')}
+                <span className="max-md:hidden">{t('Docs')}</span>
               </Button>
             </a>
           </>

@@ -38,7 +38,7 @@ export default function EditableTitle({
 
   if (editing) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 max-md:flex-wrap">
         <Input
           ref={ref}
           size="small"
@@ -50,6 +50,7 @@ export default function EditableTitle({
             if (e.key === 'Escape') cancel();
           }}
           style={{ width: 320 }}
+          className="max-md:w-full!"
         />
         <Button size="small" type="text" onClick={cancel}>
           {t('Cancel')}
@@ -69,7 +70,7 @@ export default function EditableTitle({
         <span className="text-xl font-semibold color-gray-darkest leading-tight">
           {value}
         </span>
-        <span className="text-main opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-main opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity">
           <EditOutlined />
         </span>
       </div>

@@ -220,6 +220,9 @@ function SideMenu(props: Props) {
               },
             }}
             height={520}
+            // below the FAB, which stays below every other drawer/modal (999+)
+            // so it never covers their footer buttons
+            zIndex={997}
             onClose={() => setMobileMenuOpen(false)}
             open={mobileMenuOpen}
             closeIcon={false}
@@ -241,7 +244,7 @@ function SideMenu(props: Props) {
             shape="circle"
             size="large"
             icon={mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 10000 }}
+            style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 998 }}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           />
         </>

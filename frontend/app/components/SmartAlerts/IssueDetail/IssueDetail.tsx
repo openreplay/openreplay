@@ -414,7 +414,7 @@ function IssueDetail() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 max-sm:grid-cols-1">
               {shown.map((s) => (
                 <SessionCard
                   key={s.sessionId}
@@ -426,7 +426,7 @@ function IssueDetail() {
                 />
               ))}
             </div>
-            <div className="flex items-center justify-between px-4 py-3 shadow-xs w-full bg-white rounded-lg">
+            <div className="flex items-center justify-between px-4 py-3 shadow-xs w-full bg-white rounded-lg max-md:gap-2">
               <span className="text-sm color-gray-dark">
                 {t('Showing')}{' '}
                 <span className="font-medium">{shown.length}</span>{' '}

@@ -282,7 +282,7 @@ function ScreenshotsView({
           </span>
         )}
         {onExpand && (
-          <span className="absolute bottom-2 left-2 w-7 h-7 rounded bg-white/90 border shadow-sm flex items-center justify-center text-gray-dark opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="absolute bottom-2 left-2 w-7 h-7 rounded bg-white/90 border shadow-sm flex items-center justify-center text-gray-dark opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity">
             <Maximize2 size={14} />
           </span>
         )}
@@ -789,7 +789,7 @@ function RunDrawer({ run, open, onClose }: Props) {
           />
           {/* fixed stage — every tab renders inside the same height, so switching tabs
               never resizes the modal */}
-          <div className="h-[60vh] min-h-[420px]">
+          <div className="h-[60vh] min-h-[420px] max-sm:min-h-0 max-sm:h-[70dvh]">
             {modalTab === 'screenshots' && (
               <ScreenshotsView key={`${shotsKey}-modal`} run={run} fill />
             )}

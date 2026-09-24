@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
+import { mobileScreen } from 'App/utils/isMobile';
 
 import type { SavedSegment } from '../api';
 import SegmentConditions from './SegmentConditions';
@@ -46,8 +47,8 @@ function SegmentRow({
       </span>
       <Popover
         content={<SegmentConditions segment={segment} />}
-        placement="left"
-        trigger="hover"
+        placement={mobileScreen ? 'bottom' : 'left'}
+        trigger={mobileScreen ? 'click' : 'hover'}
         mouseEnterDelay={0.45}
       >
         <span className="shrink-0 flex items-center cursor-help color-gray-medium">
@@ -74,7 +75,7 @@ function SegmentRow({
               type="button"
               aria-label={t('Edit segment')}
               onClick={() => onEdit(segment)}
-              className="w-6 h-6 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity color-gray-medium"
+              className="w-6 h-6 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity color-gray-medium"
             >
               <Pencil size={14} />
             </button>
@@ -86,7 +87,7 @@ function SegmentRow({
             })}
             placement="top"
           >
-            <span className="w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-40 transition-opacity cursor-not-allowed color-gray-medium">
+            <span className="w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-40 pointer-coarse:opacity-40 transition-opacity cursor-not-allowed color-gray-medium">
               <Pencil size={14} />
             </span>
           </Tooltip>
@@ -119,8 +120,8 @@ function CandidateRow({
       </span>
       <Popover
         content={<SegmentConditions segment={segment} />}
-        placement="left"
-        trigger="hover"
+        placement={mobileScreen ? 'bottom' : 'left'}
+        trigger={mobileScreen ? 'click' : 'hover'}
         mouseEnterDelay={0.45}
       >
         <span
@@ -132,7 +133,7 @@ function CandidateRow({
       </Popover>
       {eligible ? (
         <span
-          className="w-4 shrink-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="w-4 shrink-0 flex items-center opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity"
           style={{ color: 'var(--color-main)' }}
         >
           <Plus size={15} />
@@ -374,7 +375,10 @@ function SegmentsIndicator() {
   );
 
   const content = (
-    <div className="flex flex-col" style={{ width: 340 }}>
+    <div
+      className="flex flex-col"
+      style={{ width: 'min(340px, calc(100vw - 48px))' }}
+    >
       {view === 'main' ? mainView : pickerView}
     </div>
   );

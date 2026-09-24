@@ -1,7 +1,7 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
 import { createWebPlayer } from 'Player';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, Drawer } from 'antd';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -16,16 +16,21 @@ import {
   smartIssues,
   withSiteId,
 } from 'App/saasComponents';
+import { mobileScreen } from 'App/utils/isMobile';
 import PlayerContent from 'Components/Session/Player/ReplayPlayer/PlayerContent';
+import PhoneHorizontalWarn from 'Components/Session/Player/SharedComponents/PhoneHorizontal';
 import {
   type IPlayerContext,
   PlayerContext,
   defaultContextValue,
 } from 'Components/Session/playerContext';
+import EventsBlock from 'Components/Session_/EventsBlock';
+import HighlightPanel from 'Components/Session_/Highlight/HighlightPanel';
 import { Loader } from 'UI';
 
 import { makeJourneyCard } from '../factories';
 import { CriticalDialog, PLAYER_OVERLAY_Z, fmtDate } from '../shared';
+import IssuePanel from './IssuePanel';
 import IssuePlayerHeader from './IssuePlayerHeader';
 
 type View = 'activity' | 'issue' | 'highlight' | null;
@@ -52,7 +57,8 @@ function IssuePlayer() {
     undefined,
   );
   const adjustedRef = React.useRef(false);
-  const [view, setView] = React.useState<View>('issue');
+  // on phones the side panel is a drawer over the replay, so start with it closed
+  const [view, setView] = React.useState<View>(mobileScreen ? null : 'issue');
 
   const issue = issuesStore.byId(id);
   const realId = issue?.id ?? id;
@@ -241,6 +247,16 @@ function IssuePlayer() {
     else if (tab === '') setView(null);
   };
 
+  const closePanel = () => setView(null);
+  const mobilePanel =
+    view === 'activity' ? (
+      <EventsBlock setActiveTab={setPlayerActiveTab} />
+    ) : view === 'highlight' ? (
+      <HighlightPanel onClose={closePanel} />
+    ) : view === 'issue' ? (
+      <IssuePanel onClose={closePanel} />
+    ) : null;
+
   const email = card?.email ?? session.userId ?? t('Anonymous');
   const browser = card?.browser ?? session.userBrowser ?? '';
   const os = card?.os ?? session.userOs ?? '';
@@ -287,9 +303,10 @@ function IssuePlayer() {
                 <PlayerContent
                   session={session}
                   fullscreen={false}
-                  activeTab={playerActiveTab}
+                  activeTab={mobileScreen ? '' : playerActiveTab}
                   setActiveTab={setPlayerActiveTab}
                   minimalSubHeader
+                  fillHeight={mobileScreen}
                 />
               ) : (
                 <div className="flex-1 flex items-center justify-center">
@@ -301,6 +318,21 @@ function IssuePlayer() {
                 (activeTab 'ISSUE'), so it shares the panel chrome natively */}
           </div>
 
+          {mobileScreen && (
+            <Drawer
+              open={!!mobilePanel}
+              onClose={closePanel}
+              placement="right"
+              closable={false}
+              styles={{
+                wrapper: { width: 'min(360px, 85vw)' },
+                body: { padding: 0 },
+              }}
+            >
+              <div className="flex flex-col h-full bg-white">{mobilePanel}</div>
+            </Drawer>
+          )}
+
           {/* sibling of the header/panel, never nested in a Tooltip (antd Children.only) */}
           {issue && (
             <CriticalDialog
@@ -310,6 +342,12 @@ function IssuePlayer() {
             />
           )}
         </div>
+        {/* own stacking context so the warning paints above the overlay */}
+        {mobileScreen && (
+          <div className="relative" style={{ zIndex: PLAYER_OVERLAY_Z + 1 }}>
+            <PhoneHorizontalWarn />
+          </div>
+        )}
       </PlayerContext.Provider>
     </ConfigProvider>
   );
