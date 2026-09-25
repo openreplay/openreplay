@@ -120,13 +120,14 @@ type UserJourneyQueryBuilder struct {
 }
 
 func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _ driver.Conn) (interface{}, error) {
-	queries, err := h.buildQuery(p)
+	queries, params, err := h.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("No queries to execute for userJourney")
 	}
+	chParams := convertParams(params)
 
 	// Q1/Q2 create CLICKHOUSE TEMPORARY TABLES whose lifetime is bound to a single
 	// TCP session. The shared pool may dispatch each statement on a different
@@ -150,7 +151,7 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _ dri
 	for i := 0; i < len(queries)-1; i++ {
 		_start := time.Now()
 		h.Logger.Debug(ctx, "Executing query %d: %s", i+1, queries[i])
-		err = conn.Exec(chCtx, queries[i])
+		err = conn.Exec(chCtx, queries[i], chParams...)
 
 		if time.Since(_start) > 2*time.Second {
 			h.Logger.Warn(ctx, "Query execution took longer than 2s: %s", queries[i])
@@ -166,7 +167,7 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _ dri
 	var rawData []UserJourneyRawData
 	_start := time.Now()
 	h.Logger.Debug(ctx, "Executing query: %s", queries[len(queries)-1])
-	if err = conn.Select(chCtx, &rawData, queries[len(queries)-1]); err != nil {
+	if err = conn.Select(chCtx, &rawData, queries[len(queries)-1], chParams...); err != nil {
 		for j := 0; j < len(queries); j++ {
 			h.Logger.Error(ctx, "UserJourney query failed: %s", queries[j])
 		}
@@ -189,7 +190,8 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _ dri
 	return result, nil
 }
 
-func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
+func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, map[string]any, error) {
+	qp := NewParams()
 	//Remove useless starting point
 	i := 0
 	for i < len(p.StartPoint) {
@@ -223,7 +225,7 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	for i := range p.MetricValue {
 		p.MetricValue[i] = strings.ToLower(p.MetricValue[i])
 		if _, ok := PredefinedJourneys[p.MetricValue[i]]; !ok {
-			return nil, fmt.Errorf("unsupported metricValue '%s' for pathAnalysis, supported values: location, click, input, custom, title", p.MetricValue[i])
+			return nil, nil, fmt.Errorf("unsupported metricValue '%s' for pathAnalysis, supported values: location, click, input, custom, title", p.MetricValue[i])
 		}
 	}
 
@@ -276,14 +278,14 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		mainColumn = fmt.Sprintf("multiIf(%s,%s)", strings.Join(b, ","), subEvents[len(subEvents)-1].Column)
 	}
 
-	startPointsConditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"})
+	startPointsConditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "events"}, qp)
 	for j := 0; j < len(p.StartPoint); j++ {
 		for i := 0; i < len(p.StartPoint[j].Filters); i++ {
 			// In the future, make sure UI sends $auto_captured for predefined events properties
 			p.StartPoint[j].Filters[i].Name = "e_value"
 		}
 	}
-	step0Conditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string][]string{"e_value": {"e_value", "singleColumn"}}, MainTableAlias: "pre_ranked_events"})
+	step0Conditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string][]string{"e_value": {"e_value", "singleColumn"}}, MainTableAlias: "pre_ranked_events"}, qp)
 	if len(startPointsConditions) > 0 {
 		startPointsConditions = []string{fmt.Sprintf("(%s)", strings.Join(startPointsConditions, " OR "))}
 		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId))
@@ -305,15 +307,15 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		if slices.Contains(p.MetricValue, name) {
 			op, ok := compOps[ef.Operator]
 			if !ok {
-				return nil, fmt.Errorf("unknown operator: %s", ef.Operator)
+				return nil, nil, fmt.Errorf("unknown operator: %s", ef.Operator)
 			}
 			op = reverseSqlOperator(op)
 			for _, v := range ef.Value {
-				exclusions[name] = append(exclusions[name], fmt.Sprintf("%s %s '%s'", PredefinedJourneys[name].Column, op, sqlStringReplacer.Replace(v)))
+				exclusions[name] = append(exclusions[name], fmt.Sprintf("%s %s %s", PredefinedJourneys[name].Column, op, qp.Add(v)))
 			}
 		}
 	}
-	_, _, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"})
+	_, _, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"}, qp)
 	chSubQuery := []string{fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId),
 		fmt.Sprintf("events.created_at >= toDateTime(%d / 1000)", p.StartTimestamp),
 		fmt.Sprintf("events.created_at < toDateTime(%d / 1000)", p.EndTimestamp)}
@@ -593,7 +595,7 @@ ORDER BY event_number_in_session, sessions_count DESC;
 		p.Density,
 	)
 
-	return []string{q1, q2, q3}, nil
+	return []string{q1, q2, q3}, qp.Values(), nil
 }
 
 func (h *UserJourneyQueryBuilder) transformJourney(rows []UserJourneyRawData, reverse bool) (JourneyData, error) {

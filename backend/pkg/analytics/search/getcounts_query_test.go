@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/model"
 )
 
@@ -11,7 +12,7 @@ func TestBuildCountsQueryNoFilters(t *testing.T) {
 	q := buildCountsQuery(42, &model.SessionsSearchRequest{
 		StartDate: 1_700_000_000_000,
 		EndDate:   1_700_604_800_000,
-	})
+	}, charts.NewParams())
 
 	if strings.Contains(q, "product_analytics.events") {
 		t.Errorf("unfiltered counts query still reads the events table:\n%s", q)
@@ -47,7 +48,7 @@ func TestBuildCountsQueryUsesSemiJoinNotJoin(t *testing.T) {
 		Filters: []model.Filter{
 			{IsEvent: true, Name: "CLICK", Operator: "=", Value: []string{"buy"}},
 		},
-	})
+	}, charts.NewParams())
 
 	if strings.Contains(q, "JOIN") {
 		t.Errorf("event-filtered query still uses a JOIN, want IN:\n%s", q)
@@ -135,7 +136,7 @@ func TestBuildCountsQueryNegativeEventsUseNotIn(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, charts.NewParams())
 
 	if strings.Contains(q, "ANTI JOIN") {
 		t.Errorf("negative filters still use LEFT ANTI JOIN:\n%s", q)

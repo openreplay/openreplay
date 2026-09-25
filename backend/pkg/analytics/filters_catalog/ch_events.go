@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
+
 	"openreplay/backend/pkg/analytics/filters_catalog/model"
 )
 
@@ -21,7 +23,7 @@ ON(event_name, auto_captured)
     auto_captured
 FROM product_analytics.all_events
     LEFT JOIN product_analytics.all_events_customized AS aec USING (project_id, auto_captured, event_name)
-WHERE project_id = ?
+WHERE project_id = @projectId
     AND (aec.status = 'visible' OR aec.status = '')
 ORDER BY auto_captured, aec.display_name, all_events.event_name`
 
@@ -43,7 +45,7 @@ func (s *filtersCatalogImpl) getEventsCatalog(ctx context.Context, projectID uin
 		return cached, nil
 	}
 
-	rows, err := s.ch.Query(ctx, eventsCatalogQuery, projectID)
+	rows, err := s.ch.Query(ctx, eventsCatalogQuery, clickhouse.Named("projectId", projectID))
 	if err != nil {
 		return model.FilterSection{}, fmt.Errorf("ch query events catalog: %w", err)
 	}

@@ -26,7 +26,7 @@ type HeatmapSessionQueryBuilder struct {
 }
 
 func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
-	shortestQ, err := h.buildQuery(p)
+	shortestQ, params, err := h.buildQuery(p)
 	if err != nil {
 		h.Logger.Error(ctx, "Failed to build query", err)
 		return nil, err
@@ -34,7 +34,7 @@ func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, co
 
 	h.Logger.Debug(ctx, "Executing Heatmap query: %s", shortestQ)
 	_start := time.Now()
-	row := conn.QueryRow(ctx, shortestQ)
+	row := conn.QueryRow(ctx, shortestQ, convertParams(params)...)
 	if time.Since(_start) > 2*time.Second {
 		h.Logger.Warn(ctx, "Heatmap query execution took longer than 2s: %s", shortestQ)
 	}
@@ -135,11 +135,12 @@ ORDER BY rand()
 LIMIT 1;`
 )
 
-func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
+func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]any, error) {
 	projectId := p.ProjectId
 	startSec := p.MetricPayload.StartTimestamp / 1000
 	endSec := (p.MetricPayload.EndTimestamp + 86400000) / 1000
 	series := p.MetricPayload.Series[0]
+	qp := NewParams()
 
 	for i := range series.Filter.Filters {
 		for j := range series.Filter.Filters[i].Filters {
@@ -171,7 +172,7 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 		"s.duration > 500",
 	}
-	_, filtersWhere, _, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", true)
+	_, filtersWhere, _, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", qp, true)
 	sessionsWhere = append(sessionsWhere, extraSessions...)
 
 	var query string
@@ -181,7 +182,7 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 			"e.`$event_name` = 'CLICK'",
 		}
-		if cond := buildCond(`e."$current_path"`, locationFilter.Value, locationFilter.Operator, false, "singleColumn"); cond != "" {
+		if cond := buildCond(`e."$current_path"`, locationFilter.Value, locationFilter.Operator, false, "singleColumn", qp); cond != "" {
 			eventsWhere = append(eventsWhere, cond)
 		}
 		if p.SampleRate > 0 && p.SampleRate < 100 {
@@ -227,5 +228,5 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, error) {
 	}
 
 	h.Logger.Debug(context.Background(), "Built query", zap.String("query", query))
-	return query, nil
+	return query, qp.Values(), nil
 }

@@ -409,13 +409,13 @@ func AppendBreakdownProjection(projection string, breakdowns []model.Breakdown, 
 	return projection
 }
 
-func BuildSessionsFilterConditions(sessionFilters []model.Filter) []string {
+func BuildSessionsFilterConditions(sessionFilters []model.Filter, qp *Params) []string {
 	_, _, sessionConditions := BuildEventConditions(sessionFilters, BuildConditionsOptions{
 		DefinedColumns: SessionColumns,
 		MainTableAlias: "s",
-	})
+	}, qp)
 
-	durConds, _ := BuildDurationWhere(sessionFilters, "s")
+	durConds, _ := BuildDurationWhere(sessionFilters, qp, "s")
 
 	whereParts := []string{
 		"s.project_id = @projectId",
@@ -476,8 +476,8 @@ func FunnelBreakdownNeedsSessions(breakdowns []model.Breakdown) bool {
 	return false
 }
 
-func BuildSessionsSubQuery(sessionFilters []model.Filter, startTimestamp uint64, breakdowns []model.Breakdown) string {
-	whereParts := BuildSessionsFilterConditions(sessionFilters)
+func BuildSessionsSubQuery(sessionFilters []model.Filter, startTimestamp uint64, breakdowns []model.Breakdown, qp *Params) string {
+	whereParts := BuildSessionsFilterConditions(sessionFilters, qp)
 	sessionsTable := getMainSessionsTable(startTimestamp)
 
 	selectCols := "session_id, datetime, user_id, user_uuid, user_anonymous_id"

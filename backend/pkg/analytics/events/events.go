@@ -33,35 +33,33 @@ func New(log logger.Logger, conn driver.Conn, lex lexicon.Lexicon) (Events, erro
 	}, nil
 }
 
-func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSearchRequest, hiddenEvents []lexicon.HiddenEvent, hiddenProps []lexicon.HiddenProperty) (whereClause string, params []interface{}, needsUserJoin bool) {
-	startTime := filters.ConvertMillisToTime(req.StartDate)
-	endTime := filters.ConvertMillisToTime(req.EndDate)
+func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSearchRequest, hiddenEvents []lexicon.HiddenEvent, hiddenProps []lexicon.HiddenProperty, qp *filters.Params) (whereClause string, needsUserJoin bool) {
+	qp.Set("projectId", projID)
+	qp.Set("startDate", filters.ConvertMillisToTime(req.StartDate))
+	qp.Set("endDate", filters.ConvertMillisToTime(req.EndDate))
 
 	baseConditions := []string{
-		"e.project_id = ?",
-		"e.created_at >= ?",
-		"e.created_at <= ?",
+		"e.project_id = @projectId",
+		"e.created_at >= @startDate",
+		"e.created_at <= @endDate",
 		`e."$event_name" != 'TAG_TRIGGER'`,
 	}
-	params = []interface{}{projID, startTime, endTime}
 
 	if len(hiddenEvents) > 0 {
 		placeholders := make([]string, len(hiddenEvents))
 		for i, he := range hiddenEvents {
-			placeholders[i] = "(?, ?)"
-			params = append(params, he.EventName, he.AutoCaptured)
+			placeholders[i] = fmt.Sprintf("(%s, %s)", qp.Add(he.EventName), qp.Add(he.AutoCaptured))
 		}
 		baseConditions = append(baseConditions, fmt.Sprintf(`(e."$event_name", e."$auto_captured") NOT IN (%s)`, strings.Join(placeholders, ", ")))
 	}
 
-	filterConditions, filterParams, needsUserJoin := BuildEventSearchQuery("e", req.Filters, hiddenProps)
+	filterConditions, needsUserJoin := BuildEventSearchQuery("e", req.Filters, hiddenProps, qp)
 	whereClause = filters.BuildWhereClause(baseConditions, filterConditions)
-	params = append(params, filterParams...)
 
-	return whereClause, params, needsUserJoin
+	return whereClause, needsUserJoin
 }
 
-func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy string, sortOrder filters.SortOrderType, needsUserJoin bool, projID uint32) string {
+func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy string, sortOrder filters.SortOrderType, needsUserJoin bool) string {
 	var sb strings.Builder
 	sb.WriteString("SELECT COUNT(*) OVER() as total_count, ")
 	sb.WriteString(strings.Join(selectColumns, ", "))
@@ -69,8 +67,7 @@ func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns
 
 	if needsUserJoin {
 		sb.WriteString(" LEFT JOIN (")
-		sb.WriteString("SELECT * FROM product_analytics.users WHERE project_id = ")
-		sb.WriteString(fmt.Sprintf("%d", projID))
+		sb.WriteString("SELECT * FROM product_analytics.users WHERE project_id = @projectId")
 		sb.WriteString(" ORDER BY _timestamp DESC LIMIT 1 BY project_id, \"$user_id\"")
 		sb.WriteString(") AS u ON e.project_id = u.project_id AND e.\"$user_id\" = u.\"$user_id\"")
 	}
@@ -81,7 +78,7 @@ func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns
 	sb.WriteString(sortBy)
 	sb.WriteString(" ")
 	sb.WriteString(strings.ToUpper(string(sortOrder)))
-	sb.WriteString(" LIMIT ? OFFSET ?")
+	sb.WriteString(" LIMIT @limit OFFSET @offset")
 
 	return sb.String()
 }
@@ -126,16 +123,18 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 
 	offset := filters.CalculateOffset(req.Page, req.Limit)
 
-	whereClause, queryParams, needsUserJoin := e.buildSearchQueryParams(projID, req, lexHiddenEvents, hiddenProps)
+	qp := filters.NewParams()
+	whereClause, needsUserJoin := e.buildSearchQueryParams(projID, req, lexHiddenEvents, hiddenProps, qp)
 
 	selectColumns := BuildSelectColumns("e", req.Columns)
 	sortBy := "e." + ValidateSortColumn(string(req.SortBy))
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
-	query := e.buildSearchQueryWithCount(whereClause, selectColumns, sortBy, sortOrder, needsUserJoin, projID)
-	queryParams = append(queryParams, req.Limit, offset)
+	query := e.buildSearchQueryWithCount(whereClause, selectColumns, sortBy, sortOrder, needsUserJoin)
+	qp.Set("limit", req.Limit)
+	qp.Set("offset", offset)
 
-	rows, err := e.chConn.Query(ctx, query, queryParams...)
+	rows, err := e.chConn.Query(ctx, query, qp.Args()...)
 	if err != nil {
 		e.log.Error(ctx, "failed to execute search query for project %d: %v", projID, err)
 		return nil, fmt.Errorf("failed to query events for project %d: %w", projID, err)
@@ -178,26 +177,24 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 	}, nil
 }
 
-func (e *eventsImpl) buildGetEventQuery(selectColumns []string, hiddenEvents []lexicon.HiddenEvent) (string, []interface{}) {
+func (e *eventsImpl) buildGetEventQuery(selectColumns []string, hiddenEvents []lexicon.HiddenEvent, qp *filters.Params) string {
 	var sb strings.Builder
-	params := make([]interface{}, 0)
 
 	sb.WriteString("SELECT ")
 	sb.WriteString(strings.Join(selectColumns, ", "))
 	sb.WriteString(" FROM product_analytics.events AS e")
-	sb.WriteString(" WHERE e.project_id = ? AND e.event_id = ?")
+	sb.WriteString(" WHERE e.project_id = @projectId AND e.event_id = @eventId")
 
 	if len(hiddenEvents) > 0 {
 		placeholders := make([]string, len(hiddenEvents))
 		for i, he := range hiddenEvents {
-			placeholders[i] = "(?, ?)"
-			params = append(params, he.EventName, he.AutoCaptured)
+			placeholders[i] = fmt.Sprintf("(%s, %s)", qp.Add(he.EventName), qp.Add(he.AutoCaptured))
 		}
 		sb.WriteString(fmt.Sprintf(` AND (e."$event_name", e."$auto_captured") NOT IN (%s)`, strings.Join(placeholders, ", ")))
 	}
 
 	sb.WriteString(" LIMIT 1")
-	return sb.String(), params
+	return sb.String()
 }
 
 func (e *eventsImpl) GetEventByID(ctx context.Context, projID uint32, eventID string) (*model.EventEntry, error) {
@@ -212,14 +209,16 @@ func (e *eventsImpl) GetEventByID(ctx context.Context, projID uint32, eventID st
 	}
 	allColumns := filters.EventColumns
 	selectColumns := BuildSelectColumns("e", allColumns)
-	query, hiddenParams := e.buildGetEventQuery(selectColumns, lexHiddenEvents)
+	qp := filters.NewParams()
+	qp.Set("projectId", projID)
+	qp.Set("eventId", eventID)
+	query := e.buildGetEventQuery(selectColumns, lexHiddenEvents, qp)
 
 	entry := model.EventEntry{}
 	var createdAt time.Time
 	scanPtrs := e.buildScanPointers(&entry, allColumns, &createdAt)
 
-	queryParams := append([]interface{}{projID, eventID}, hiddenParams...)
-	err = e.chConn.QueryRow(ctx, query, queryParams...).Scan(scanPtrs...)
+	err = e.chConn.QueryRow(ctx, query, qp.Args()...).Scan(scanPtrs...)
 	if err != nil {
 		e.log.Error(ctx, "failed to get event %s for project %d: %v", eventID, projID, err)
 		return nil, fmt.Errorf("failed to get event %s for project %d: %w", eventID, projID, err)

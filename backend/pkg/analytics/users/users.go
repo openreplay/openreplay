@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/analytics/events"
@@ -117,23 +118,25 @@ func (u *usersImpl) GetByUserID(ctx context.Context, projID uint32, userId strin
 		WITH latest_user AS (
 			SELECT *
 			FROM product_analytics.users
-			WHERE project_id = ? AND "$user_id" = ?
+			WHERE project_id = @projectId AND "$user_id" = @userId
 			ORDER BY _timestamp DESC
 			LIMIT 1
 		)
-		SELECT 
+		SELECT
 			project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar",
 			"$created_at", toString(properties) AS properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6,
 			"$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain",
 			initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city",
 			"$or_api_endpoint", "$timezone", "$first_event_at", "$last_seen",
-			(SELECT arraySort(groupUniqArray(distinct_id)) 
-			 FROM product_analytics.users_distinct_id 
-			 WHERE project_id = ? AND "$user_id" = ? AND NOT _is_deleted) AS distinct_ids
+			(SELECT arraySort(groupUniqArray(distinct_id))
+			 FROM product_analytics.users_distinct_id
+			 WHERE project_id = @projectId AND "$user_id" = @userId AND NOT _is_deleted) AS distinct_ids
 		FROM latest_user
 		WHERE NOT _is_deleted`
 
-	row := u.chConn.QueryRow(ctx, query, projID, userId, projID, userId)
+	row := u.chConn.QueryRow(ctx, query,
+		clickhouse.Named("projectId", projID),
+		clickhouse.Named("userId", userId))
 
 	user := &model.UserRequest{}
 	var createdAt, firstEventAt, lastSeen time.Time
@@ -175,51 +178,62 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	offset := filters.CalculateOffset(req.Page, req.Limit)
 	columnsStr := filters.ConvertColumnsToStrings(req.Columns)
 
-	whereClause, params := u.buildSearchQueryParams(projID, req)
+	qp := filters.NewParams()
+	whereClause := u.buildSearchQueryParams(projID, req, qp)
 	selectColumns := BuildSelectColumns("", columnsStr)
 	sortBy := filters.ValidateSortColumnGeneric(string(req.SortBy), model.ColumnMapping, `"$user_id"`)
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
-	eventJoinClause, eventJoinParams, hasEventFilters := BuildEventJoinQuery("latest_users.", req.Filters, projID, req.StartDate, req.EndDate)
+	eventJoinClause, hasEventFilters := BuildEventJoinQuery("latest_users.", req.Filters, projID, req.StartDate, req.EndDate, qp)
 
+	// Deletion appends a tombstone row, so the deleted filter must apply to the
+	// latest row per user, not before picking it: latest_rows keeps tombstones,
+	// latest_users then drops deleted users (same semantics as GetByUserID).
 	var query string
 	if hasEventFilters {
 		query = fmt.Sprintf(`
-			WITH latest_users AS (
-				SELECT %s
+			WITH latest_rows AS (
+				SELECT %s, _is_deleted
 				FROM product_analytics.users
-				WHERE %s AND _deleted_at = '1970-01-01 00:00:00'
+				WHERE %s
 				ORDER BY _timestamp DESC
 				LIMIT 1 BY project_id, "$user_id"
+			),
+			latest_users AS (
+				SELECT * EXCEPT (_is_deleted)
+				FROM latest_rows
+				WHERE NOT _is_deleted
 			)
 			SELECT COUNT(*) OVER() as total_count, latest_users.*
 			FROM latest_users%s
 			ORDER BY %s %s
-			LIMIT ? OFFSET ?`,
+			LIMIT @limit OFFSET @offset`,
 			strings.Join(selectColumns, ", "), whereClause, eventJoinClause, sortBy, strings.ToUpper(string(sortOrder)))
 	} else {
 		query = fmt.Sprintf(`
-			WITH latest_users AS (
-				SELECT %s
+			WITH latest_rows AS (
+				SELECT %s, _is_deleted
 				FROM product_analytics.users
-				WHERE %s AND _deleted_at = '1970-01-01 00:00:00'
+				WHERE %s
 				ORDER BY _timestamp DESC
 				LIMIT 1 BY project_id, "$user_id"
+			),
+			latest_users AS (
+				SELECT * EXCEPT (_is_deleted)
+				FROM latest_rows
+				WHERE NOT _is_deleted
 			)
 			SELECT COUNT(*) OVER() as total_count, latest_users.*
 			FROM latest_users
 			ORDER BY %s %s
-			LIMIT ? OFFSET ?`,
+			LIMIT @limit OFFSET @offset`,
 			strings.Join(selectColumns, ", "), whereClause, sortBy, strings.ToUpper(string(sortOrder)))
 	}
 
-	queryParams := params
-	if hasEventFilters {
-		queryParams = append(params, eventJoinParams...)
-	}
-	queryParams = append(queryParams, req.Limit, offset)
+	qp.Set("limit", req.Limit)
+	qp.Set("offset", offset)
 
-	rows, err := u.chConn.Query(ctx, query, queryParams...)
+	rows, err := u.chConn.Query(ctx, query, qp.Args()...)
 	if err != nil {
 		u.log.Error(ctx, "failed to query users: %v", err)
 		return nil, fmt.Errorf("failed to query users: %w", err)
@@ -261,26 +275,22 @@ func (u *usersImpl) SearchUsers(ctx context.Context, projID uint32, req *model.S
 	}, nil
 }
 
-func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsersRequest) (string, []interface{}) {
-	baseConditions := []string{"project_id = ?"}
-	params := []interface{}{projID}
+func (u *usersImpl) buildSearchQueryParams(projID uint32, req *model.SearchUsersRequest, qp *filters.Params) string {
+	baseConditions := []string{"project_id = " + qp.Add(projID)}
 
 	if req.Query != "" {
-		queryPattern := "%" + req.Query + "%"
-		queryCondition := fmt.Sprintf(`("%s" ILIKE ? OR "%s" ILIKE ? OR "%s" ILIKE ?)`,
-			string(filters.UserColumnUserID),
-			string(filters.UserColumnEmail),
-			string(filters.UserColumnName))
+		pattern := qp.Add("%" + filters.EscapeLikePattern(req.Query) + "%")
+		queryCondition := fmt.Sprintf(`("%s" ILIKE %s OR "%s" ILIKE %s OR "%s" ILIKE %s)`,
+			string(filters.UserColumnUserID), pattern,
+			string(filters.UserColumnEmail), pattern,
+			string(filters.UserColumnName), pattern)
 		baseConditions = append(baseConditions, queryCondition)
-		params = append(params, queryPattern, queryPattern, queryPattern)
 	}
 
 	nonEventFilters := filters.ExtractNonEventFilters(req.Filters)
-	filterConditions, filterParams := filters.BuildSimpleFilterQuery("", nonEventFilters, model.ColumnMapping, "properties")
-	whereClause := filters.BuildWhereClause(baseConditions, filterConditions)
-	params = append(params, filterParams...)
+	filterConditions := filters.BuildSimpleFilterQuery("", nonEventFilters, model.ColumnMapping, "properties", qp)
 
-	return whereClause, params
+	return filters.BuildWhereClause(baseConditions, filterConditions)
 }
 
 func (u *usersImpl) getScanDestinations(user *model.UserRequest, requestedCols []string) []interface{} {
@@ -468,27 +478,32 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 	startTime := filters.ConvertMillisToTime(req.StartDate)
 	endTime := filters.ConvertMillisToTime(req.EndDate)
 
+	qp := filters.NewParams()
+	qp.Set("projectId", projID)
+	qp.Set("userId", userID)
+	qp.Set("startDate", startTime)
+	qp.Set("endDate", endTime)
+	qp.Set("limit", req.Limit)
+	qp.Set("offset", offset)
+
 	baseConditions := []string{
-		"e.project_id = ?",
-		`e."$user_id" = ?`,
-		"e.created_at >= ?",
-		"e.created_at <= ?",
+		"e.project_id = @projectId",
+		`e."$user_id" = @userId`,
+		"e.created_at >= @startDate",
+		"e.created_at <= @endDate",
 		`e."$event_name" != 'TAG_TRIGGER'`,
 	}
-	params := []interface{}{projID, userID, startTime, endTime}
 
 	if len(req.HideEvents) > 0 {
 		placeholders := make([]string, len(req.HideEvents))
 		for i := range req.HideEvents {
-			placeholders[i] = "?"
-			params = append(params, req.HideEvents[i])
+			placeholders[i] = qp.Add(req.HideEvents[i])
 		}
 		baseConditions = append(baseConditions, fmt.Sprintf(`e."$event_name" NOT IN (%s)`, strings.Join(placeholders, ", ")))
 	}
 
-	filterConditions, filterParams, _ := events.BuildEventSearchQuery("e", req.Filters, []lexicon.HiddenProperty{})
+	filterConditions, _ := events.BuildEventSearchQuery("e", req.Filters, []lexicon.HiddenProperty{}, qp)
 	whereClause := filters.BuildWhereClause(baseConditions, filterConditions)
-	params = append(params, filterParams...)
 
 	query := fmt.Sprintf(`
 		SELECT COUNT(*) OVER() as total_count,
@@ -499,12 +514,10 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		FROM product_analytics.events AS e
 		WHERE %s
 		ORDER BY e.%s %s
-		LIMIT ? OFFSET ?`,
+		LIMIT @limit OFFSET @offset`,
 		whereClause, sortBy, strings.ToUpper(string(sortOrder)))
 
-	queryParams := append(params, req.Limit, offset)
-
-	rows, err := u.chConn.Query(ctx, query, queryParams...)
+	rows, err := u.chConn.Query(ctx, query, qp.Args()...)
 	if err != nil {
 		u.log.Error(ctx, "failed to query user activity: %v", err)
 		return nil, fmt.Errorf("failed to query user activity: %w", err)
@@ -569,16 +582,22 @@ func (u *usersImpl) GetUserSessions(ctx context.Context, projID uint32, userID s
 			min(e.created_at) AS start_ts,
 			max(e.created_at) AS end_ts
 		FROM product_analytics.events AS e
-		WHERE e.project_id = ?
-			AND e."$user_id" = ?
-			AND e.created_at >= ?
-			AND e.created_at <= ?
+		WHERE e.project_id = @projectId
+			AND e."$user_id" = @userId
+			AND e.created_at >= @startDate
+			AND e.created_at <= @endDate
 		GROUP BY e.session_id
 		ORDER BY start_ts %s
-		LIMIT ? OFFSET ?`,
+		LIMIT @limit OFFSET @offset`,
 		strings.ToUpper(string(sortOrder)))
 
-	rows, err := u.chConn.Query(ctx, query, projID, userID, startTime, endTime, req.Limit, offset)
+	rows, err := u.chConn.Query(ctx, query,
+		clickhouse.Named("projectId", projID),
+		clickhouse.Named("userId", userID),
+		clickhouse.Named("startDate", startTime),
+		clickhouse.Named("endDate", endTime),
+		clickhouse.Named("limit", req.Limit),
+		clickhouse.Named("offset", offset))
 	if err != nil {
 		u.log.Error(ctx, "failed to query user sessions: %v", err)
 		return nil, fmt.Errorf("failed to query user sessions: %w", err)

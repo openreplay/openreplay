@@ -28,7 +28,7 @@ type HeatmapQueryBuilder struct {
 }
 
 func (h *HeatmapQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
-	query, err := h.buildQuery(p)
+	query, params, err := h.buildQuery(p)
 	if err != nil {
 		h.Logger.Error(ctx, "Error building query: %v", err)
 		return nil, err
@@ -38,7 +38,7 @@ func (h *HeatmapQueryBuilder) Execute(ctx context.Context, p *Payload, conn driv
 
 	var pts []HeatmapPoint = make([]HeatmapPoint, 0)
 
-	if err = conn.Select(ctx, &pts, query); err != nil {
+	if err = conn.Select(ctx, &pts, query, convertParams(params)...); err != nil {
 		h.Logger.Error(ctx, "Error executing query: %v, query: %s", err, query)
 		return nil, err
 	}
@@ -51,14 +51,14 @@ func (h *HeatmapQueryBuilder) Execute(ctx context.Context, p *Payload, conn driv
 	}
 
 	if !p.IncludeClickRage {
-		query, err = h.buildClickRageQuery(p)
+		query, params, err = h.buildClickRageQuery(p)
 		if err != nil {
 			h.Logger.Error(ctx, "Error building click rage query: %v", err)
 			return nil, err
 		}
 		var clickRages []ClickRageRow = make([]ClickRageRow, 0)
 
-		if err = conn.Select(ctx, &clickRages, query); err != nil {
+		if err = conn.Select(ctx, &clickRages, query, convertParams(params)...); err != nil {
 			h.Logger.Error(ctx, "Error executing click rage query: %v, query: %s", err, query)
 			return nil, err
 		}
@@ -92,12 +92,16 @@ func (h *HeatmapQueryBuilder) Execute(ctx context.Context, p *Payload, conn driv
 	return pts, nil
 }
 
-func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
+func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, map[string]any, error) {
 	filter := p.MetricPayload.Series[0].Filter
+	qp := NewParams()
+	qp.Set("projectId", p.ProjectId)
+	qp.Set("startTimestamp", p.MetricPayload.StartTimestamp)
+	qp.Set("endTimestamp", p.MetricPayload.EndTimestamp)
 
 	base := []string{
-		fmt.Sprintf("e.project_id = %d", p.ProjectId),
-		fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
+		"e.project_id = @projectId",
+		"e.created_at BETWEEN toDateTime(@startTimestamp/1000) AND toDateTime(@endTimestamp/1000)",
 		"e.session_id IS NOT NULL",
 		"e.`$event_name` = 'CLICK'",
 		"isNotNull(e.\"$properties\".normalized_x)",
@@ -106,13 +110,13 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, error) {
 	if p.SampleRate > 0 && p.SampleRate < 100 {
 		base = append(base, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
 	}
-	base = append(base, buildLocationConditions(filter.Filters, "e")...)
+	base = append(base, buildLocationConditions(filter.Filters, "e", qp)...)
 
-	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
+	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls", qp)
 
 	subBase := []string{
-		fmt.Sprintf("l.project_id = %d", p.ProjectId),
-		fmt.Sprintf("l.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
+		"l.project_id = @projectId",
+		"l.created_at BETWEEN toDateTime(@startTimestamp/1000) AND toDateTime(@endTimestamp/1000)",
 		"l.session_id IS NOT NULL",
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
@@ -156,15 +160,20 @@ WHERE %s
 ORDER BY e.created_at
 LIMIT 500;`, where)
 
-	return q, nil
+	logQuery(fmt.Sprintf("HeatmapQueryBuilder.buildQuery: %s", q))
+	return q, qp.Values(), nil
 }
 
-func (h *HeatmapQueryBuilder) buildClickRageQuery(p *Payload) (string, error) {
+func (h *HeatmapQueryBuilder) buildClickRageQuery(p *Payload) (string, map[string]any, error) {
 	filter := p.MetricPayload.Series[0].Filter
+	qp := NewParams()
+	qp.Set("projectId", p.ProjectId)
+	qp.Set("startTimestamp", p.MetricPayload.StartTimestamp)
+	qp.Set("endTimestamp", p.MetricPayload.EndTimestamp)
 
 	base := []string{
-		fmt.Sprintf("e.project_id = %d", p.ProjectId),
-		fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
+		"e.project_id = @projectId",
+		"e.created_at BETWEEN toDateTime(@startTimestamp/1000) AND toDateTime(@endTimestamp/1000)",
 		"e.session_id IS NOT NULL",
 		"e.`$event_name` = 'ISSUE'",
 		"e.issue_type = 'click_rage'",
@@ -174,11 +183,11 @@ func (h *HeatmapQueryBuilder) buildClickRageQuery(p *Payload) (string, error) {
 		base = append(base, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
 	}
 
-	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls")
+	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls", qp)
 
 	subBase := []string{
-		fmt.Sprintf("l.project_id = %d", p.ProjectId),
-		fmt.Sprintf("l.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", p.MetricPayload.StartTimestamp/1000, p.MetricPayload.EndTimestamp/1000),
+		"l.project_id = @projectId",
+		"l.created_at BETWEEN toDateTime(@startTimestamp/1000) AND toDateTime(@endTimestamp/1000)",
 		"l.session_id IS NOT NULL",
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
@@ -221,5 +230,6 @@ WHERE %s
 ORDER BY e.created_at
 LIMIT 500;`, where)
 
-	return q, nil
+	logQuery(fmt.Sprintf("HeatmapQueryBuilder.buildClickRageQuery: %s", q))
+	return q, qp.Values(), nil
 }

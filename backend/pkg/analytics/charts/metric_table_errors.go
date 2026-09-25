@@ -43,10 +43,11 @@ type TableErrorsResponse struct {
 }
 
 func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, _ driver.Conn) (interface{}, error) {
-	queries, err := t.buildQuery(p)
+	queries, params, err := t.buildQuery(p)
 	if err != nil {
 		return nil, err
 	}
+	chParams := convertParams(params)
 
 	// Q1 creates a CLICKHOUSE TEMPORARY TABLE that Q2 reads from. Temp-table
 	// lifetime is bound to a single TCP session, so we acquire a dedicated
@@ -70,7 +71,7 @@ func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, _ dri
 
 	chCtx := clickhouse.Context(context.Background(), clickhouse.WithQueryID(uuid.NewString()))
 
-	if err := conn.Exec(chCtx, queries[0]); err != nil {
+	if err := conn.Exec(chCtx, queries[0], chParams...); err != nil {
 		if t.Logger != nil {
 			t.Logger.Error(ctx, "Error executing tmp table query: %v, query: %s", err, queries[0])
 		} else {
@@ -79,7 +80,7 @@ func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, _ dri
 		return nil, err
 	}
 
-	rows, err := conn.Query(chCtx, queries[1])
+	rows, err := conn.Query(chCtx, queries[1], chParams...)
 	if err != nil {
 		if t.Logger != nil {
 			t.Logger.Error(ctx, "Error executing query: %v, query: %s", err, queries[1])
@@ -116,7 +117,7 @@ func (t *TableErrorsQueryBuilder) Execute(ctx context.Context, p *Payload, _ dri
 	return resp, nil
 }
 
-func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, error) {
+func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, map[string]any, error) {
 	density := p.Density
 	if density < 2 {
 		density = 7
@@ -167,7 +168,8 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 	}
 
 	// Use BuildWhere for proper separation of events, session and duration filters
-	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(regularFilters, string(p.Series[0].Filter.EventsOrder), "e", "s", needsSessionJoin)
+	qp := NewParams()
+	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(regularFilters, string(p.Series[0].Filter.EventsOrder), "e", "s", qp, needsSessionJoin)
 
 	// Build ERROR event conditions
 	var errorEventConds []string
@@ -175,6 +177,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		errorEventConds, _, _ = BuildEventConditions(
 			errorEventFilters,
 			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"},
+			qp,
 		)
 	}
 
@@ -184,6 +187,7 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, error) {
 		sessionEventFilterConds, _, _ := BuildEventConditions(
 			sessionEventFilters,
 			BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "se"},
+			qp,
 		)
 		if len(sessionEventFilterConds) > 0 {
 			subqueryConds := []string{
@@ -353,7 +357,8 @@ LIMIT %d OFFSET %d;`,
 		limit, offset,
 	)
 
-	return []string{createSQL, mainSQL}, nil
+	logQuery(fmt.Sprintf("TableErrorsQueryBuilder.buildQuery: %s\n%s", createSQL, mainSQL))
+	return []string{createSQL, mainSQL}, qp.Values(), nil
 }
 
 func (t *TableErrorsQueryBuilder) getSortDetails(sortBy string) (column string, direction string) {

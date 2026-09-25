@@ -13,6 +13,7 @@ func TestBuildEventConditions(t *testing.T) {
 		options        []BuildConditionsOptions
 		wantEventConds []string
 		wantOtherConds []string
+		wantParams     map[string]any
 	}{
 		{
 			name: "Event filter with equals operator",
@@ -31,8 +32,9 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') = 'button'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = @p1 AND (JSONExtractString(e.properties, @p2) = @p3))"},
 			wantOtherConds: nil,
+			wantParams:     map[string]any{"p1": "CLICK", "p2": "label", "p3": "button"},
 		},
 		{
 			name: "Event filter with isAny operator",
@@ -44,8 +46,9 @@ func TestBuildEventConditions(t *testing.T) {
 					IsEvent:  true,
 				},
 			},
-			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK')"},
+			wantEventConds: []string{"(e.\"$event_name\" = @p1)"},
 			wantOtherConds: nil,
+			wantParams:     map[string]any{"p1": "CLICK"},
 		},
 		{
 			name: "Event filter with contains operator",
@@ -64,8 +67,9 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') ILIKE '%button%'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = @p1 AND (JSONExtractString(e.properties, @p2) ILIKE @p3))"},
 			wantOtherConds: nil,
+			wantParams:     map[string]any{"p1": "CLICK", "p2": "label", "p3": "%button%"},
 		},
 
 		{
@@ -85,8 +89,9 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND ((e.\"$current_path\" ILIKE '%login%' OR e.\"$current_path\" ILIKE '%signup%')))"},
+			wantEventConds: []string{"(e.\"$event_name\" = @p1 AND ((e.\"$current_path\" ILIKE @p2 OR e.\"$current_path\" ILIKE @p3)))"},
 			wantOtherConds: nil,
+			wantParams:     map[string]any{"p1": "CLICK", "p2": "%login%", "p3": "%signup%"},
 		},
 
 		{
@@ -106,8 +111,9 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (e.\"$current_path\" != 'login'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = @p1 AND (e.\"$current_path\" != @p2))"},
 			wantOtherConds: nil,
+			wantParams:     map[string]any{"p1": "CLICK", "p2": "login"},
 		},
 		{
 			// NOTE: PropertyOrder is currently not used by addFilter for joining
@@ -134,8 +140,9 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') = 'button') AND (e.\"$current_path\" = 'login'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = @p1 AND (JSONExtractString(e.properties, @p2) = @p3) AND (e.\"$current_path\" = @p4))"},
 			wantOtherConds: nil,
+			wantParams:     map[string]any{"p1": "CLICK", "p2": "label", "p3": "button", "p4": "login"},
 		},
 		{
 			name: "Events filters with multiple properties (nested) and proper order AND",
@@ -160,20 +167,26 @@ func TestBuildEventConditions(t *testing.T) {
 					},
 				},
 			},
-			wantEventConds: []string{"(e.\"$event_name\" = 'CLICK' AND (JSONExtractString(toString(e.properties), 'label') = 'button') AND (e.\"$current_path\" = 'login'))"},
+			wantEventConds: []string{"(e.\"$event_name\" = @p1 AND (JSONExtractString(e.properties, @p2) = @p3) AND (e.\"$current_path\" = @p4))"},
 			wantOtherConds: nil,
+			wantParams:     map[string]any{"p1": "CLICK", "p2": "label", "p3": "button", "p4": "login"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			qp := NewParams()
 			gotEventConds, _, gotOtherConds := BuildEventConditions(tt.filters, BuildConditionsOptions{
 				MainTableAlias: "e",
 				DefinedColumns: mainColumns,
-			})
+			}, qp)
 
 			if !reflect.DeepEqual(gotEventConds, tt.wantEventConds) {
 				t.Errorf("BuildEventConditions() Events: \ngot = %v, \nwant %v", gotEventConds, tt.wantEventConds)
+			}
+
+			if tt.wantParams != nil && !reflect.DeepEqual(qp.Values(), tt.wantParams) {
+				t.Errorf("BuildEventConditions() Params: \ngot = %v, \nwant %v", qp.Values(), tt.wantParams)
 			}
 
 			// Normalise nil vs empty slice for comparison
@@ -187,6 +200,35 @@ func TestBuildEventConditions(t *testing.T) {
 	}
 }
 
+func TestBuildCondEscapesLikeMetacharacters(t *testing.T) {
+	qp := NewParams()
+	cond := buildCond("s.name", []string{"100%"}, "contains", false, "singleColumn", qp)
+	if cond != "s.name ILIKE @p1" {
+		t.Errorf("contains: got %q", cond)
+	}
+	if got := qp.Values()["p1"]; got != `%100\%%` {
+		t.Errorf("contains pattern = %q, want %q", got, `%100\%%`)
+	}
+}
+
+func TestParamsAddDeduplicatesEqualValues(t *testing.T) {
+	qp := NewParams()
+	if p1, p2 := qp.Add("CLICK"), qp.Add("CLICK"); p1 != p2 {
+		t.Errorf("equal values got different placeholders: %s vs %s", p1, p2)
+	}
+	if p1, p3 := qp.Add("CLICK"), qp.Add("INPUT"); p1 == p3 {
+		t.Errorf("different values got the same placeholder: %s", p1)
+	}
+	// slices with the same joined text must not collide
+	if pa, pb := qp.Add([]string{"a", "b"}), qp.Add([]string{"a b"}); pa == pb {
+		t.Errorf("distinct slices got the same placeholder: %s", pa)
+	}
+	// string vs numeric values must not collide
+	if ps, pn := qp.Add("42"), qp.Add(float64(42)); ps == pn {
+		t.Errorf("string and numeric values got the same placeholder: %s", ps)
+	}
+}
+
 func TestGetColumnAccessor_DoesNotMutateSharedMap(t *testing.T) {
 	// Snapshot the original value
 	original := mainColumns["userCountry"][0]
@@ -197,8 +239,8 @@ func TestGetColumnAccessor_DoesNotMutateSharedMap(t *testing.T) {
 	}
 
 	// Call twice — the bug causes progressive mutation
-	getColumnAccessor("userCountry", false, false, false, opts)
-	getColumnAccessor("userCountry", false, false, false, opts)
+	getColumnAccessor("userCountry", false, false, false, opts, NewParams())
+	getColumnAccessor("userCountry", false, false, false, opts, NewParams())
 
 	if mainColumns["userCountry"][0] != original {
 		t.Errorf("getColumnAccessor mutated shared map: got %q, want %q",
@@ -230,7 +272,7 @@ func TestCamelToSnake(t *testing.T) {
 }
 
 func TestBuildCond_IsUndefined(t *testing.T) {
-	got := buildCond("s.user_country", nil, "isUndefined", false, "singleColumn")
+	got := buildCond("s.user_country", nil, "isUndefined", false, "singleColumn", NewParams())
 	want := "(isNull(s.user_country) OR s.user_country = '')"
 	if got != want {
 		t.Errorf("buildCond isUndefined:\ngot  = %q\nwant = %q", got, want)
@@ -238,7 +280,7 @@ func TestBuildCond_IsUndefined(t *testing.T) {
 }
 
 func TestBuildCond_IsUndefined_ArrayColumn(t *testing.T) {
-	got := buildCond("s.issue_types", nil, "isUndefined", false, "arrayColumn")
+	got := buildCond("s.issue_types", nil, "isUndefined", false, "arrayColumn", NewParams())
 	want := "empty(s.issue_types)"
 	if got != want {
 		t.Errorf("buildCond isUndefined array:\ngot  = %q\nwant = %q", got, want)
@@ -256,6 +298,7 @@ func TestGetColumnAccessor(t *testing.T) {
 		opts          BuildConditionsOptions
 		wantAccessor  string
 		wantNature    string
+		wantParams    map[string]any
 	}{
 		{
 			name:          "Defined column mapping",
@@ -269,6 +312,7 @@ func TestGetColumnAccessor(t *testing.T) {
 			},
 			wantAccessor: "sessions.user_device",
 			wantNature:   "singleColumn",
+			wantParams:   map[string]any{},
 		},
 		{
 			name:          "Column with $ prefix gets quoted",
@@ -280,8 +324,9 @@ func TestGetColumnAccessor(t *testing.T) {
 				MainTableAlias:       "e",
 				PropertiesColumnName: "$properties",
 			},
-			wantAccessor: "JSONExtractString(toString(e.\"$properties\"), '$special')",
+			wantAccessor: "JSONExtractString(e.\"$properties\", @p1)",
 			wantNature:   "singleColumn",
+			wantParams:   map[string]any{"p1": "$special"},
 		},
 		{
 			name:          "Numeric property extraction",
@@ -293,8 +338,9 @@ func TestGetColumnAccessor(t *testing.T) {
 				MainTableAlias:       "e",
 				PropertiesColumnName: "$properties",
 			},
-			wantAccessor: "JSONExtractFloat(toString(e.\"$properties\"), 'count')",
+			wantAccessor: "JSONExtractFloat(e.\"$properties\", @p1)",
 			wantNature:   "singleColumn",
+			wantParams:   map[string]any{"p1": "count"},
 		},
 		{
 			name:          "Property mapping from propertyKeyMap",
@@ -308,17 +354,22 @@ func TestGetColumnAccessor(t *testing.T) {
 			},
 			wantAccessor: "e.\"$current_path\"",
 			wantNature:   "singleColumn",
+			wantParams:   map[string]any{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotAccessor, gotNature := getColumnAccessor(tt.logical, tt.isNumeric, tt.inDProperties, tt.inProperties, tt.opts)
+			qp := NewParams()
+			gotAccessor, gotNature := getColumnAccessor(tt.logical, tt.isNumeric, tt.inDProperties, tt.inProperties, tt.opts, qp)
 			if gotAccessor != tt.wantAccessor {
 				t.Errorf("getColumnAccessor() accessor = %v, want %v", gotAccessor, tt.wantAccessor)
 			}
 			if gotNature != tt.wantNature {
 				t.Errorf("getColumnAccessor() nature = %v, want %v", gotNature, tt.wantNature)
+			}
+			if tt.wantParams != nil && !reflect.DeepEqual(qp.Values(), tt.wantParams) {
+				t.Errorf("getColumnAccessor() params = %v, want %v", qp.Values(), tt.wantParams)
 			}
 		})
 	}

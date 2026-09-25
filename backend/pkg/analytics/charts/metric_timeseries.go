@@ -109,7 +109,8 @@ func (t *TimeSeriesQueryBuilder) validatePayload(p *Payload) error {
 }
 
 func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series, metric, idField string) (string, map[string]any, error) {
-	sub, err := t.buildSubQuery(p, s, metric)
+	qp := NewParams()
+	sub, err := t.buildSubQuery(p, s, metric, qp)
 	if err != nil {
 		return "", nil, fmt.Errorf("buildSubQuery: %w", err)
 	}
@@ -129,17 +130,16 @@ func (t *TimeSeriesQueryBuilder) buildTimeSeriesQuery(p *Payload, s model.Series
 					%s ORDER BY timestamp;`,
 		strings.Join(selectParts, ", "), sub, groupByClause)
 
-	params := map[string]any{
-		"startTimestamp": p.StartTimestamp,
-		"endTimestamp":   p.EndTimestamp,
-		"step":           step,
-		"projectId":      p.ProjectId,
-	}
+	qp.Set("startTimestamp", p.StartTimestamp)
+	qp.Set("endTimestamp", p.EndTimestamp)
+	qp.Set("step", step)
+	qp.Set("projectId", p.ProjectId)
 
-	return query, params, nil
+	logQuery(fmt.Sprintf("TimeSeriesQueryBuilder.buildQuery: %s", query))
+	return query, qp.Values(), nil
 }
 
-func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metric string) (string, error) {
+func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metric string, qp *Params) (string, error) {
 	allFilters := s.Filter.Filters
 
 	var (
@@ -161,13 +161,13 @@ func (t *TimeSeriesQueryBuilder) buildSubQuery(p *Payload, s model.Series, metri
 	requiresEventsTable := len(eventFilters) > 0 || metric == MetricEventCount || HasEventOnlyBreakdowns(p.Breakdowns)
 
 	if requiresEventsTable {
-		return t.buildEventsBasedSubQuery(p, s, metric, eventFilters, sessionFilters)
+		return t.buildEventsBasedSubQuery(p, s, metric, eventFilters, sessionFilters, qp)
 	} else {
-		return t.buildSessionsOnlySubQuery(p, s, metric, sessionFilters)
+		return t.buildSessionsOnlySubQuery(p, s, metric, sessionFilters, qp)
 	}
 }
 
-func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Series, metric string, eventFilters, sessionFilters []model.Filter) (string, error) {
+func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Series, metric string, eventFilters, sessionFilters []model.Filter, qp *Params) (string, error) {
 	eventConds, eventNameConds, otherConds := BuildEventConditions(
 		eventFilters,
 		BuildConditionsOptions{
@@ -177,6 +177,7 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 			CustomPropertiesColumnName: "properties",
 			EventsOrder:                string(s.Filter.EventsOrder),
 		},
+		qp,
 	)
 
 	staticEvt := buildStaticEventWhere(p)
@@ -227,7 +228,7 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 
 	subQuery := sb.String()
-	sessionsQuery := BuildSessionsSubQuery(sessionFilters, p.StartTimestamp, p.Breakdowns)
+	sessionsQuery := BuildSessionsSubQuery(sessionFilters, p.StartTimestamp, p.Breakdowns, qp)
 	projection, joinEvents := t.getProjectionAndJoin(metric, p)
 
 	for _, ref := range GetBreakdownJoinRefs(p.Breakdowns, "evt", "s") {
@@ -242,8 +243,8 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	), nil
 }
 
-func (t *TimeSeriesQueryBuilder) buildSessionsOnlySubQuery(p *Payload, s model.Series, metric string, sessionFilters []model.Filter) (string, error) {
-	whereParts := BuildSessionsFilterConditions(sessionFilters)
+func (t *TimeSeriesQueryBuilder) buildSessionsOnlySubQuery(p *Payload, s model.Series, metric string, sessionFilters []model.Filter, qp *Params) (string, error) {
+	whereParts := BuildSessionsFilterConditions(sessionFilters, qp)
 	projection := t.getSessionsOnlyProjection(metric)
 	projection = AppendBreakdownProjection(projection, p.Breakdowns, "s")
 

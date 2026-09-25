@@ -43,38 +43,33 @@ func BuildSelectColumns(tableAlias string, requestedColumns []string) []string {
 	return filters.GenericBuildSelectColumns(tableAlias, baseColumns, requestedColumns, model.ColumnMapping, skipColumns, formatColumnForSelect)
 }
 
-func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID uint32, startDate int64, endDate int64) (string, []interface{}, bool) {
+func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID uint32, startDate int64, endDate int64, qp *filters.Params) (string, bool) {
 	eventFilters := filters.ExtractEventFilters(filtersList)
 	if len(eventFilters) == 0 {
-		return "", nil, false
+		return "", false
 	}
 
-	conditions, condParams, _ := events.BuildEventSearchQuery("e", eventFilters, []lexicon.HiddenProperty{})
+	conditions, _ := events.BuildEventSearchQuery("e", eventFilters, []lexicon.HiddenProperty{}, qp)
 	if len(conditions) == 0 {
-		return "", nil, false
+		return "", false
 	}
 
 	alias := filters.NormalizeAlias(tableAlias)
-	params := make([]interface{}, 0)
-	params = append(params, projID)
 
 	dateConditions := make([]string, 0, 2)
 	if startDate > 0 {
-		dateConditions = append(dateConditions, "e.created_at >= ?")
 		startTime := filters.ConvertMillisToTime(startDate)
-		params = append(params, startTime)
+		dateConditions = append(dateConditions, "e.created_at >= "+qp.Add(startTime))
 	}
 	if endDate > 0 {
-		dateConditions = append(dateConditions, "e.created_at <= ?")
 		endTime := filters.ConvertMillisToTime(endDate)
-		params = append(params, endTime)
+		dateConditions = append(dateConditions, "e.created_at <= "+qp.Add(endTime))
 	}
-
-	params = append(params, condParams...)
 
 	var sb strings.Builder
 	sb.WriteString(" INNER JOIN (")
-	sb.WriteString("SELECT project_id, \"$user_id\" FROM product_analytics.events AS e WHERE e.project_id = ?")
+	sb.WriteString("SELECT project_id, \"$user_id\" FROM product_analytics.events AS e WHERE e.project_id = ")
+	sb.WriteString(qp.Add(projID))
 
 	if len(dateConditions) > 0 {
 		sb.WriteString(" AND ")
@@ -90,5 +85,5 @@ func BuildEventJoinQuery(tableAlias string, filtersList []filters.Filter, projID
 	sb.WriteString(alias)
 	sb.WriteString(`"$user_id" = events_filter."$user_id"`)
 
-	return sb.String(), params, true
+	return sb.String(), true
 }
