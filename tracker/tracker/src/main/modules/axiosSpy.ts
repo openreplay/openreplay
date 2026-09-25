@@ -154,12 +154,13 @@ export default function (
     app.debug.log('Openreplay: capturing API request', config)
     config.__openreplay_timing = performance.now()
     if (opts.sessionTokenHeader) {
+      // same default name and url filter as fetch/XHR tracking in network.ts
       const header =
         typeof opts.sessionTokenHeader === 'string'
           ? opts.sessionTokenHeader
-          : 'X-OpenReplay-Session-Token'
+          : 'X-OpenReplay-SessionToken'
       const headerValue = app.getSessionToken()
-      if (headerValue) {
+      if (headerValue && (!opts.tokenUrlMatcher || opts.tokenUrlMatcher(instance.getUri(config)))) {
         config.headers.set(header, headerValue)
       }
     }
