@@ -79,7 +79,11 @@ export default function (
     const { data: resData, headers: resHs, status: resStatus } = response || {}
 
     const ihOpt = opts.ignoreHeaders
-    const isHIgnoring = Array.isArray(ihOpt) ? (name: string) => ihOpt.includes(name) : () => ihOpt
+    // header names are case-insensitive, and axios keeps them in the case they were set
+    const ignoredNames = Array.isArray(ihOpt) ? ihOpt.map((h) => h.toLowerCase()) : []
+    const isHIgnoring = Array.isArray(ihOpt)
+      ? (name: string) => ignoredNames.includes(name.toLowerCase())
+      : () => ihOpt
 
     function writeHeader(hsObj: Record<string, string>, header: [string, string]) {
       if (!isHIgnoring(header[0])) {
@@ -87,10 +91,10 @@ export default function (
       }
     }
 
-    let requestHs: Record<string, string> = {}
-    let responseHs: Record<string, string> = {}
+    const requestHs: Record<string, string> = {}
+    const responseHs: Record<string, string> = {}
     if (reqHs.toJSON) {
-      requestHs = reqHs.toJSON()
+      Object.entries(reqHs.toJSON()).forEach((h) => writeHeader(requestHs, h))
     } else if (reqHs instanceof Headers) {
       reqHs.forEach((v, n) => writeHeader(requestHs, [n, v]))
     } else if (Array.isArray(reqHs)) {
@@ -101,7 +105,7 @@ export default function (
 
     const usedResHeader = resHs ? resHs : rHs
     if (usedResHeader.toJSON) {
-      responseHs = usedResHeader.toJSON()
+      Object.entries(usedResHeader.toJSON()).forEach((h) => writeHeader(responseHs, h))
     } else if (usedResHeader instanceof Headers) {
       usedResHeader.forEach((v, n) => writeHeader(responseHs, [n, v]))
     } else if (Array.isArray(usedResHeader)) {
