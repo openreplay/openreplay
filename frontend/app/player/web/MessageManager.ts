@@ -335,7 +335,7 @@ export default class MessageManager {
       }
       if (!this.activeTab) {
         this.activeTab =
-          this.state.get().currentTab ?? Object.keys(this.tabs)[0];
+          this.state.get().currentTab || Object.keys(this.tabs)[0];
       }
 
       const connectionQuality = this.connectionInfoManger.moveReady(t);
