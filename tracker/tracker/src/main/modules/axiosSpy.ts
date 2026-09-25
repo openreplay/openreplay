@@ -114,16 +114,18 @@ export default function (
       )
     }
 
+    // privateMode: no headers and a masked url, same as fetch/XHR capture in network.ts
+    const privateMode = app.sanitizer.privateMode
     const reqResInfo = sanitize({
       url,
       method: method || '',
       status: globStatus || resStatus || 0,
       request: {
-        headers: requestHs,
+        headers: privateMode ? {} : requestHs,
         body: reqData,
       },
       response: {
-        headers: responseHs,
+        headers: privateMode ? {} : responseHs,
         body: resData || rData,
       },
     })
@@ -139,7 +141,7 @@ export default function (
       NetworkRequest(
         'xhr',
         String(method),
-        String(reqResInfo.url),
+        privateMode ? '************' : String(reqResInfo.url),
         stringify(reqResInfo.request),
         stringify(reqResInfo.response),
         reqResInfo.status,
