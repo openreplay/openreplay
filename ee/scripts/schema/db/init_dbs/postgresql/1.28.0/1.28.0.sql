@@ -30,11 +30,12 @@ DROP TYPE IF EXISTS error_status;
 ALTER TABLE IF EXISTS public.scim_auth_codes
     ADD COLUMN IF NOT EXISTS used_for_jwt bool DEFAULT NULL;
 
+CREATE INDEX IF NOT EXISTS sessions_notes_project_id_session_id_idx ON public.sessions_notes (project_id, session_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS dashboards_project_id_idx ON public.dashboards (project_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS dashboard_widgets_dashboard_id_metric_id_idx ON public.dashboard_widgets (dashboard_id, metric_id);
+DROP INDEX IF EXISTS public.user_favorite_sessions_user_id_session_id_idx;
+
 COMMIT;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_notes_project_id_session_id_idx ON public.sessions_notes (project_id, session_id) WHERE deleted_at IS NULL;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS dashboards_project_id_idx ON public.dashboards (project_id) WHERE deleted_at IS NULL;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS dashboard_widgets_dashboard_id_metric_id_idx ON public.dashboard_widgets (dashboard_id, metric_id);
-DROP INDEX CONCURRENTLY IF EXISTS public.user_favorite_sessions_user_id_session_id_idx;
 
 \elif :is_next
 \echo new version detected :'next_version', nothing to do
