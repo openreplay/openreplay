@@ -16,7 +16,7 @@ class FakeAxiosHeaders {
   }
 }
 
-function recordAxiosRequest(privateMode: boolean) {
+function recordAxiosRequest(privateMode: boolean, sanitizer?: (data: any) => any) {
   let onRequest: ((config: any) => any) | undefined
   let onResponse: ((response: any) => any) | undefined
   const instance: AxiosInstance = {
@@ -48,7 +48,7 @@ function recordAxiosRequest(privateMode: boolean) {
     attachStopCallback: jest.fn(),
   }
   // @ts-ignore partial app mock
-  network(app, { axiosInstances: [instance], captureInIframes: false })
+  network(app, { axiosInstances: [instance], captureInIframes: false, sanitizer })
 
   const config = onRequest!({
     url: '/users/jane.doe@example.com/orders?card=4111111111111111',
@@ -86,5 +86,18 @@ describe('network privateMode with axios instances', () => {
     expect(recorded.url).toBe('/users/jane.doe@example.com/orders?card=4111111111111111')
     expect(recorded.requestHeaders).toEqual({ Accept: 'application/json', 'X-Customer-Id': '42' })
     expect(recorded.responseHeaders).toEqual({ 'x-request-id': 'abc' })
+  })
+
+  test('user sanitizer sees the real url but no headers, and the url is masked after it', () => {
+    const seen: any[] = []
+    const recorded = recordAxiosRequest(true, (data) => {
+      seen.push(JSON.parse(JSON.stringify(data)))
+      return data
+    })
+    expect(seen).toHaveLength(1)
+    expect(seen[0].url).toBe('/users/jane.doe@example.com/orders?card=4111111111111111')
+    expect(seen[0].request.headers).toEqual({})
+    expect(seen[0].response.headers).toEqual({})
+    expect(recorded.url).toBe('************')
   })
 })
