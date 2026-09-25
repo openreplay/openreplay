@@ -219,13 +219,14 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 	isFromEvents := slices.Contains(eventsProperties, r.MetricOf)
 
 	// Build event filter conditions with error handling
-	durConds, _ := BuildDurationWhere(s.Filter.Filters)
+	qp := NewParams()
+	durConds, _ := BuildDurationWhere(s.Filter.Filters, qp)
 
 	eventConditions, nameConditions, _ := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
-	})
+	}, qp)
 
 	skipEventsTable := slices.Contains([]string{
 		string(MetricOfTableUserId), string(MetricOfTableCountry),
@@ -234,7 +235,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 	}, r.MetricOf) && len(eventConditions) == 0 && !HasEventOnlyBreakdowns(r.Breakdowns)
 
 	eventsConditions := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, []string{})
-	sessionConditions := t.buildSessionConditions(r, r.MetricFormat, durConds)
+	sessionConditions := t.buildSessionConditions(r, r.MetricFormat, durConds, qp)
 	eventsHaving, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return "", nil, err
@@ -289,7 +290,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 		if hasExtraCondition {
 			var extraWhere, _, _ = BuildEventConditions([]model.Filter{extraCondition}, BuildConditionsOptions{
 				MainTableAlias: "main",
-			})
+			}, qp)
 
 			if emptyEventFilters {
 				extraWhere = append(extraWhere, t.buildPrewhereConditions(r, s.Filter.EventsOrder, extraWhere, []string{})...)
@@ -427,26 +428,27 @@ LIMIT %d OFFSET %d;`,
 		)
 	}
 
-	params := map[string]any{
-		"projectId":      r.ProjectId,
-		"startTimestamp": r.StartTimestamp,
-		"endTimestamp":   r.EndTimestamp,
-	}
-	return query, params, nil
+	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
+
+	qp.Set("projectId", r.ProjectId)
+	qp.Set("startTimestamp", r.StartTimestamp)
+	qp.Set("endTimestamp", r.EndTimestamp)
+	return query, qp.Values(), nil
 }
 
 func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, map[string]any, error) {
 	s := r.Series[0]
 	// Build event filter conditions with error handling
-	durConds, _ := BuildDurationWhere(s.Filter.Filters)
+	qp := NewParams()
+	durConds, _ := BuildDurationWhere(s.Filter.Filters, qp)
 	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []string{string(FilterDuration), string(FilterUserAnonymousId)})
 	eventConditions, _, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "main",
 		EventsOrder:    string(s.Filter.EventsOrder),
-	})
+	}, qp)
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
-	queryConditions := t.buildSessionConditions(r, r.MetricFormat, durConds)
+	queryConditions := t.buildSessionConditions(r, r.MetricFormat, durConds, qp)
 	joinClause, extraWhere, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return []string{}, nil, err
@@ -479,6 +481,11 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, 
 
 	pagination := t.calculatePagination(r.Page, r.Limit)
 	tableKey := fmt.Sprintf("%d", time.Now().UnixMilli())
+	qp.Set("startTimestamp", r.StartTimestamp)
+	qp.Set("endTimestamp", r.EndTimestamp)
+	qp.Set("projectId", r.ProjectId)
+	qp.Set("limit", pagination.Limit-1)
+	qp.Set("offset", max(0, pagination.Offset-1))
 	return []string{fmt.Sprintf(`
 CREATE TEMPORARY TABLE base_%[1]v AS (
 			SELECT screen_width,
@@ -524,13 +531,7 @@ FROM (SELECT any(full_count)               AS full_count,
       GROUP BY center_width, center_height
       LIMIT @limit OFFSET @offset) AS raw
 	  ORDER BY total_in_group DESC;`, tableKey)},
-		map[string]any{
-			"startTimestamp": r.StartTimestamp,
-			"endTimestamp":   r.EndTimestamp,
-			"projectId":      r.ProjectId,
-			"limit":          pagination.Limit - 1,
-			"offset":         max(0, pagination.Offset-1),
-		}, nil
+		qp.Values(), nil
 }
 
 // out: having (for THEN|AND operator),where,error
@@ -644,7 +645,7 @@ var sessionProperties = map[string]string{
 }
 
 // buildSessionConditions constructs the session conditions for the sessions query
-func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat string, durConds []string) []string {
+func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat string, durConds []string, qp *Params) []string {
 	var sessionConditions []string = make([]string, 0)
 
 	// Add core session conditions
@@ -672,9 +673,9 @@ func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat stri
 			}
 			var subCondition []string
 			if column, ok := sessionProperties[f.Name]; ok {
-				subCondition = append(subCondition, buildCond(column, f.Value, f.Operator, false, "singleColumn"))
+				subCondition = append(subCondition, buildCond(column, f.Value, f.Operator, false, "singleColumn", qp))
 			} else if IsMetadataColumn(f.Name) {
-				subCondition = append(subCondition, buildCond(f.Name, f.Value, f.Operator, false, "singleColumn"))
+				subCondition = append(subCondition, buildCond(f.Name, f.Value, f.Operator, false, "singleColumn", qp))
 			}
 			if len(subCondition) > 0 {
 				sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))

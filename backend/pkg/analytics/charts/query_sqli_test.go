@@ -8,10 +8,20 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 )
 
-func buildOne(t *testing.T, f model.Filter) string {
+func buildOne(t *testing.T, f model.Filter) (string, map[string]any) {
 	t.Helper()
-	ev, ef, nev, sf := BuildWhere([]model.Filter{f}, "", "e", "s")
-	return strings.Join(append(append(append(ev, ef...), nev...), sf...), " | ")
+	qp := NewParams()
+	ev, ef, nev, sf := BuildWhere([]model.Filter{f}, "", "e", "s", qp)
+	return strings.Join(append(append(append(ev, ef...), nev...), sf...), " | "), qp.Values()
+}
+
+func hasParamValue(params map[string]any, want any) bool {
+	for _, v := range params {
+		if v == want {
+			return true
+		}
+	}
+	return false
 }
 
 func TestNumericValueNotInjectable(t *testing.T) {
@@ -27,7 +37,7 @@ func TestNumericValueNotInjectable(t *testing.T) {
 		{"break", model.Filter{Name: "zz", Operator: "is", Value: []string{"1)) zz"}, DataType: "number"}},
 	}
 	for _, c := range inject {
-		got := buildOne(t, c.f)
+		got, _ := buildOne(t, c.f)
 		if strings.Contains(got, "OR 1=1") || strings.Contains(got, ")) zz") {
 			t.Errorf("%s: injection survived: %s", c.name, got)
 		}
@@ -38,29 +48,32 @@ func TestNumericValueNotInjectable(t *testing.T) {
 }
 
 func TestLegitimateNumericPreserved(t *testing.T) {
-	cases := map[string]model.Filter{
-		"int":   {Name: "zz", Operator: "is", Value: []string{"404"}, DataType: "number"},
-		"neg":   {Name: "zz", Operator: "is", Value: []string{"-5"}, DataType: "number"},
-		"float": {Name: "zz", Operator: ">", Value: []string{"3.14"}, DataType: "number"},
+	cases := map[string]struct {
+		f    model.Filter
+		want float64
+	}{
+		"int":   {model.Filter{Name: "zz", Operator: "is", Value: []string{"404"}, DataType: "number"}, 404},
+		"neg":   {model.Filter{Name: "zz", Operator: "is", Value: []string{"-5"}, DataType: "number"}, -5},
+		"float": {model.Filter{Name: "zz", Operator: ">", Value: []string{"3.14"}, DataType: "number"}, 3.14},
 	}
-	for name, f := range cases {
-		got := buildOne(t, f)
+	for name, c := range cases {
+		got, params := buildOne(t, c.f)
 		if strings.Contains(got, "NULL") {
 			t.Errorf("%s: valid numeric wrongly neutralized: %s", name, got)
 		}
-	}
-	if got := buildOne(t, cases["int"]); !strings.Contains(got, "= 404") {
-		t.Errorf("int: expected `= 404`, got: %s", got)
+		if !hasParamValue(params, c.want) {
+			t.Errorf("%s: expected %v bound as a parameter, params: %v (sql: %s)", name, c.want, params, got)
+		}
 	}
 }
 
-func TestStringValueStillEscaped(t *testing.T) {
-	got := buildOne(t, model.Filter{Name: "zz", Operator: "is", Value: []string{"1 OR 1=1"}, DataType: "string"})
-	if strings.Contains(got, "= 1 OR 1=1") {
-		t.Errorf("string value not quoted: %s", got)
+func TestStringValueBoundAsParameter(t *testing.T) {
+	got, params := buildOne(t, model.Filter{Name: "zz", Operator: "is", Value: []string{"1 OR 1=1"}, DataType: "string"})
+	if strings.Contains(got, "1 OR 1=1") {
+		t.Errorf("string value leaked into SQL text: %s", got)
 	}
-	if !strings.Contains(got, "'1 OR 1=1'") {
-		t.Errorf("expected quoted literal, got: %s", got)
+	if !hasParamValue(params, "1 OR 1=1") {
+		t.Errorf("expected value bound as a parameter, params: %v (sql: %s)", params, got)
 	}
 }
 
@@ -93,7 +106,7 @@ func TestMetadataNameNotInjectable(t *testing.T) {
 		}},
 	}
 	for _, c := range inject {
-		got := buildOne(t, c.f)
+		got, _ := buildOne(t, c.f)
 		// Payloads that don't match the metadata allowlist must never reach the
 		// SQL expression position. They may only appear (inert) inside quoted
 		// string literals, so strip those before checking for injected tokens.
@@ -130,14 +143,17 @@ func stripSQLLiterals(s string) string {
 func TestLegitimateMetadataPreserved(t *testing.T) {
 	for i := 1; i <= 10; i++ {
 		name := fmt.Sprintf("metadata_%d", i)
-		got := buildOne(t, model.Filter{Name: name, Operator: "isAny"})
+		got, _ := buildOne(t, model.Filter{Name: name, Operator: "isAny"})
 		if !strings.Contains(got, fmt.Sprintf("isNotNull(%s)", name)) {
 			t.Errorf("%s: valid metadata column wrongly dropped: %s", name, got)
 		}
 	}
-	got := buildOne(t, model.Filter{Name: "metadata_3", Operator: "is", Value: []string{"prod"}})
-	if !strings.Contains(got, "metadata_3 = 'prod'") {
+	got, params := buildOne(t, model.Filter{Name: "metadata_3", Operator: "is", Value: []string{"prod"}})
+	if !strings.Contains(got, "metadata_3 = @") {
 		t.Errorf("valid metadata equals not built: %s", got)
+	}
+	if !hasParamValue(params, "prod") {
+		t.Errorf("expected metadata value bound as a parameter, params: %v", params)
 	}
 }
 
@@ -173,7 +189,7 @@ func TestUserJourneyMetricValueRejected(t *testing.T) {
 
 	// Only the predefined journey types are accepted; anything else is rejected
 	// before reaching SQL expression position.
-	queries, err := h.buildQuery(p)
+	queries, _, err := h.buildQuery(p)
 	if err == nil {
 		t.Fatalf("expected unsupported metricValue to be rejected, got queries:\n%s", strings.Join(queries, "\n"))
 	}
@@ -192,13 +208,17 @@ func TestUserJourneyExcludeValueNotInjectable(t *testing.T) {
 	}
 	p := &Payload{MetricPayload: payload, ProjectId: 1, UserId: 1}
 
-	queries, err := h.buildQuery(p)
+	queries, params, err := h.buildQuery(p)
 	if err != nil {
 		t.Fatalf("buildQuery error: %v", err)
 	}
-	// The malicious exclude value may only appear inside a quoted literal (escaped).
-	bare := stripSQLLiterals(strings.Join(queries, "\n"))
-	if strings.Contains(bare, "OR 1=1") {
-		t.Errorf("user-journey Exclude.Value injection survived:\n%s", strings.Join(queries, "\n"))
+	// The malicious exclude value may only be bound as a parameter, never
+	// spliced into the SQL text.
+	joined := strings.Join(queries, "\n")
+	if strings.Contains(joined, "OR 1=1") {
+		t.Errorf("user-journey Exclude.Value injection survived:\n%s", joined)
+	}
+	if !hasParamValue(params, mal) {
+		t.Errorf("expected exclude value bound as a parameter, params: %v", params)
 	}
 }

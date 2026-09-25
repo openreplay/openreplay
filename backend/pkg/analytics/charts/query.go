@@ -14,6 +14,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	filterspkg "openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/model"
 	chdb "openreplay/backend/pkg/db/clickhouse"
 )
@@ -25,11 +26,33 @@ const (
 )
 
 var (
-	sqlStringReplacer      = strings.NewReplacer(`\`, `\\`, `'`, `''`, `@`, `' || char(64) || '`)
-	sqlLikePatternReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `'`, `''`, `@`, `' || char(64) || '`)
-	camelToSnakeRe         = regexp.MustCompile("([a-z0-9])([A-Z])")
-	metadataColumnRe       = regexp.MustCompile(`^metadata_(?:[1-9]|10)$`)
+	sqlStringReplacer = strings.NewReplacer(`\`, `\\`, `'`, `''`, `@`, `' || char(64) || '`)
+	camelToSnakeRe    = regexp.MustCompile("([a-z0-9])([A-Z])")
+	metadataColumnRe  = regexp.MustCompile(`^metadata_(?:[1-9]|10)$`)
 )
+
+// Params is the shared named-parameter collector. It lives in the filters
+// package (the bottom of the analytics dependency chain) and is aliased here
+// for the charts/search call sites.
+type Params = filterspkg.Params
+
+func NewParams() *Params {
+	return filterspkg.NewParams()
+}
+
+// bindScalar binds one filter value and returns its placeholder. Numeric
+// values are parsed first; anything that is not a valid number degrades to a
+// never-matching NULL literal, as before.
+func bindScalar(qp *Params, value string, isNumeric bool) string {
+	if isNumeric {
+		f, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+		if err != nil {
+			return "NULL"
+		}
+		return qp.Add(f)
+	}
+	return qp.Add(value)
+}
 
 // IsMetadataColumn reports whether name is a valid metadata column
 // (metadata_1 .. metadata_10). The metadata filter path splices the column
@@ -110,7 +133,7 @@ type filterConfig struct {
 }
 
 // out: column accessor ; column nature (singleColumn/arrayColumn)
-func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperties bool, opts BuildConditionsOptions) (string, string) {
+func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperties bool, opts BuildConditionsOptions, qp *Params) (string, string) {
 	// helper: wrap names starting with $ in quotes
 	quote := func(name string) string {
 		prefix := opts.MainTableAlias + "."
@@ -157,19 +180,19 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperti
 	colName = quote(colName)
 
 	if propKey.InDProperties || propKey.InProperties {
-		// JSON extraction - escape property name to prevent injection
-		escapedProp := sqlStringReplacer.Replace(propKey.LogicalProperty)
+		// JSON extraction - the property name is bound as a parameter
+		prop := qp.Add(propKey.LogicalProperty)
 		if isNumeric {
-			return fmt.Sprintf("JSONExtractFloat(%s, '%s')", colName, escapedProp), "singleColumn"
+			return fmt.Sprintf("JSONExtractFloat(%s, %s)", colName, prop), "singleColumn"
 		}
-		return fmt.Sprintf("JSONExtractString(%s, '%s')", colName, escapedProp), "singleColumn"
+		return fmt.Sprintf("JSONExtractString(%s, %s)", colName, prop), "singleColumn"
 	} else {
 		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty), "singleColumn"
 	}
 }
 
 // out: []eventConditions, []eventNameConditions, []sessionConditions with the same alias as eventConditions
-func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions) ([]string, []string, []string) {
+func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions, qp *Params) ([]string, []string, []string) {
 	var finalEventConditions []string = make([]string, 0)
 	var finalOtherConditions []string = make([]string, 0)
 
@@ -212,7 +235,7 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 		if f.Name == string(FilterDuration) {
 			continue
 		}
-		conds, nameCondition := addFilter(f, opts, f.IsEvent)
+		conds, nameCondition := addFilter(f, opts, f.IsEvent, qp)
 		if !slices.Contains(eventNames, nameCondition) && nameCondition != "" {
 			eventNames = append(eventNames, nameCondition)
 		}
@@ -246,15 +269,14 @@ func BuildEventConditions(filters []model.Filter, option BuildConditionsOptions)
 }
 
 // out: []conditions, nameCondition
-func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool) ([]string, string) {
+func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool, qp *Params) ([]string, string) {
 	alias := opts.MainTableAlias
 	if alias != "" && !strings.HasSuffix(alias, ".") {
 		alias += "."
 	}
 	var nameCondition string = ""
 	if f.IsEvent {
-		escapedName := sqlStringReplacer.Replace(f.Name)
-		nameCondition = fmt.Sprintf("%s\"$event_name\" = '%s'", alias, escapedName)
+		nameCondition = fmt.Sprintf("%s\"$event_name\" = %s", alias, qp.Add(f.Name))
 		var parts []string
 		parts = append(parts, nameCondition)
 
@@ -267,7 +289,7 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 		// To fix: when PropertyOrder == "or", join subConds with " OR " instead of " AND ".
 		// See: query_test.go TestBuildEventConditions "Events filters with multiple properties"
 		for _, sub := range f.Filters {
-			subConds, _ := addFilter(sub, opts, true)
+			subConds, _ := addFilter(sub, opts, true, qp)
 			if len(subConds) > 0 {
 				parts = append(parts, "("+strings.Join(subConds, " AND ")+")")
 			}
@@ -281,14 +303,14 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 	if isEventProperty {
 		if col, ok := eventPropertyColumns[f.Name]; ok {
 			accessor := fmt.Sprintf("%s%s", alias, col)
-			cond := buildCond(accessor, f.Value, f.Operator, false, "singleColumn")
+			cond := buildCond(accessor, f.Value, f.Operator, false, "singleColumn", qp)
 			if cond != "" {
 				return []string{cond}, ""
 			}
 		}
 	}
 	if IsMetadataColumn(f.Name) {
-		cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn")
+		cond := buildCond(f.Name, f.Value, f.Operator, false, "singleColumn", qp)
 		if cond != "" {
 			return []string{cond}, ""
 		}
@@ -299,16 +321,15 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 	if !ok {
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric, InDProperties: f.AutoCaptured, InProperties: !f.AutoCaptured}
 	}
-	acc, nature := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, cfg.InProperties, opts)
+	acc, nature := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, cfg.InProperties, opts, qp)
 	switch f.Operator {
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above
 		if f.IsEvent {
-			escapedName := sqlStringReplacer.Replace(f.Name)
-			return []string{fmt.Sprintf("%s\"$event_name\" = '%s'", alias, escapedName)}, ""
+			return []string{fmt.Sprintf("%s\"$event_name\" = %s", alias, qp.Add(f.Name))}, ""
 		}
 	default:
-		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric, nature); c != "" {
+		if c := buildCond(acc, f.Value, f.Operator, cfg.IsNumeric, nature, qp); c != "" {
 			return []string{c}, ""
 		}
 	}
@@ -328,7 +349,7 @@ var compOpsArrays = map[string]string{
 	"notEquals": "NOT hasAny", "not": "NOT hasAny", "off": "NOT hasAny",
 }
 
-func buildCond(expr string, values []string, operator string, isNumeric bool, nature string) string {
+func buildCond(expr string, values []string, operator string, isNumeric bool, nature string, qp *Params) string {
 	if len(values) == 0 && operator != "isAny" && operator != "isUndefined" {
 		return ""
 	}
@@ -346,43 +367,35 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 	case "isNot", "not":
 		//TODO: find how to process array column
 		if len(values) == 1 {
-			return formatCondition(expr, "%s != %s", values[0], isNumeric)
+			return formatCondition(expr, "%s != %s", values[0], isNumeric, qp)
 		}
-		wrapped := make([]string, len(values))
-		for i, v := range values {
-			if isNumeric {
-				wrapped[i] = sqlNumericLiteral(v)
-			} else {
-				wrapped[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
-			}
-		}
-		return fmt.Sprintf("%s NOT IN (%s)", expr, strings.Join(wrapped, ", "))
+		return inClause(expr, values, true, isNumeric, qp)
 	case "contains":
 		// wrap values with % on both sides and escape LIKE pattern
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = fmt.Sprintf("%%%s%%", sqlLikePatternReplacer.Replace(v))
+			wrapped[i] = fmt.Sprintf("%%%s%%", filterspkg.EscapeLikePattern(v))
 		}
-		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
+		return multiValCond(expr, wrapped, "%s ILIKE %s", false, qp)
 	case "notContains", "doesNotContain":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = fmt.Sprintf("%%%s%%", sqlLikePatternReplacer.Replace(v))
+			wrapped[i] = fmt.Sprintf("%%%s%%", filterspkg.EscapeLikePattern(v))
 		}
-		cond := multiValCond(expr, wrapped, "%s ILIKE %s", false)
+		cond := multiValCond(expr, wrapped, "%s ILIKE %s", false, qp)
 		return "NOT (" + cond + ")"
 	case "startsWith":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = sqlLikePatternReplacer.Replace(v) + "%"
+			wrapped[i] = filterspkg.EscapeLikePattern(v) + "%"
 		}
-		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
+		return multiValCond(expr, wrapped, "%s ILIKE %s", false, qp)
 	case "endsWith":
 		wrapped := make([]string, len(values))
 		for i, v := range values {
-			wrapped[i] = "%" + sqlLikePatternReplacer.Replace(v)
+			wrapped[i] = "%" + filterspkg.EscapeLikePattern(v)
 		}
-		return multiValCond(expr, wrapped, "%s ILIKE %s", false)
+		return multiValCond(expr, wrapped, "%s ILIKE %s", false, qp)
 	case "regex":
 		const maxRegexLen = 256
 		var parts []string
@@ -393,7 +406,7 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 			if _, err := regexp.Compile(v); err != nil {
 				continue
 			}
-			parts = append(parts, fmt.Sprintf("match(%s, '%s')", expr, sqlStringReplacer.Replace(v)))
+			parts = append(parts, fmt.Sprintf("match(%s, %s)", expr, qp.Add(v)))
 		}
 		if len(parts) == 0 {
 			return ""
@@ -404,92 +417,55 @@ func buildCond(expr string, values []string, operator string, isNumeric bool, na
 		return parts[0]
 	case "in", "notIn":
 		neg := operator == "notIn"
-		return inClause(expr, values, neg, isNumeric)
+		return inClause(expr, values, neg, isNumeric, qp)
 	case ">=", ">", "<=", "<":
-		return multiValCond(expr, values, "%s "+operator+" %s", isNumeric)
+		return multiValCond(expr, values, "%s "+operator+" %s", isNumeric, qp)
 	default:
 		if nature == "arrayColumn" {
 			if op, ok := compOpsArrays[operator]; ok {
-				for i := range values {
-					values[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(values[i]))
-				}
-				return fmt.Sprintf("%s(%s,[%s])", op, expr, strings.Join(values, ","))
+				// a []string parameter is rendered as a ClickHouse array literal
+				return fmt.Sprintf("%s(%s,%s)", op, expr, qp.Add(append([]string(nil), values...)))
 			}
 		} else {
 			if op, ok := compOps[operator]; ok {
 				tmpl := "%s " + op + " %s"
-				return multiValCond(expr, values, tmpl, isNumeric)
+				return multiValCond(expr, values, tmpl, isNumeric, qp)
 			}
 		}
 		// fallback equals
 		tmpl := "%s = %s"
-		return multiValCond(expr, values, tmpl, isNumeric)
+		return multiValCond(expr, values, tmpl, isNumeric, qp)
 	}
 }
 
-func sqlNumericLiteral(v string) string {
-	t := strings.TrimSpace(v)
-	if _, err := strconv.ParseFloat(t, 64); err == nil {
-		return t
-	}
-	return "NULL"
-}
-
-// formatCondition applies a template to a single value, handling quoting and escaping
-func formatCondition(expr, tmpl, value string, isNumeric bool) string {
-	val := value
-	if isNumeric {
-		val = sqlNumericLiteral(value)
-	} else {
-		val = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(value))
-	}
-	return fmt.Sprintf(tmpl, expr, val)
+// formatCondition applies a template to a single value, binding it as a query parameter
+func formatCondition(expr, tmpl, value string, isNumeric bool, qp *Params) string {
+	return fmt.Sprintf(tmpl, expr, bindScalar(qp, value, isNumeric))
 }
 
 // multiValCond applies a template to one or multiple values, using formatCondition
-func multiValCond(expr string, values []string, tmpl string, isNumeric bool) string {
+func multiValCond(expr string, values []string, tmpl string, isNumeric bool, qp *Params) string {
 	if len(values) == 1 {
-		return formatCondition(expr, tmpl, values[0], isNumeric)
+		return formatCondition(expr, tmpl, values[0], isNumeric, qp)
 	}
 	parts := make([]string, len(values))
 	for i, v := range values {
-		parts[i] = formatCondition(expr, tmpl, v, isNumeric)
+		parts[i] = formatCondition(expr, tmpl, v, isNumeric, qp)
 	}
 	return "(" + strings.Join(parts, " OR ") + ")"
 }
 
-// inClause constructs IN/NOT IN clauses with proper quoting
-func inClause(expr string, values []string, negate, isNumeric bool) string {
+// inClause constructs IN/NOT IN clauses with bound parameters
+func inClause(expr string, values []string, negate, isNumeric bool, qp *Params) string {
 	op := "IN"
 	if negate {
 		op = "NOT IN"
 	}
-
-	if len(values) == 1 {
-		return fmt.Sprintf("%s %s (%s)", expr, op, func() string {
-			if isNumeric {
-				return sqlNumericLiteral(values[0])
-			}
-			return fmt.Sprintf("'%s'", sqlStringReplacer.Replace(values[0]))
-		}())
-	}
-	quoted := make([]string, len(values))
+	bound := make([]string, len(values))
 	for i, v := range values {
-		if isNumeric {
-			quoted[i] = sqlNumericLiteral(v)
-		} else {
-			quoted[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v))
-		}
+		bound[i] = bindScalar(qp, v, isNumeric)
 	}
-	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(quoted, ", "))
-}
-
-func buildInClause(values []string) string {
-	var quoted []string
-	for _, v := range values {
-		quoted = append(quoted, fmt.Sprintf("'%s'", sqlStringReplacer.Replace(v)))
-	}
-	return strings.Join(quoted, ",")
+	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(bound, ", "))
 }
 
 func buildStaticEventWhere(p *Payload) string {
@@ -572,7 +548,7 @@ func reverseNegativeFilter(f model.Filter) model.Filter {
 	}
 	return f
 }
-func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string, isSessionJoin ...bool) (events, eventFilters, negativeEventFilters, sessionFilters []string) {
+func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string, qp *Params, isSessionJoin ...bool) (events, eventFilters, negativeEventFilters, sessionFilters []string) {
 	events = make([]string, 0)
 	eventFilters = make([]string, 0)
 	negativeEventFilters = make([]string, 0)
@@ -610,7 +586,7 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 		DefinedColumns: mainColumns,
 		MainTableAlias: eventsAlias,
 		EventsOrder:    eventsOrder,
-	})
+	}, qp)
 	events = append(events, evConds...)
 	eventFilters = append(eventFilters, misc...)
 
@@ -618,12 +594,12 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 		DefinedColumns: mainColumns,
 		MainTableAlias: eventsAlias,
 		EventsOrder:    eventsOrder,
-	})
+	}, qp)
 	_, _, sConds := BuildEventConditions(sessionFiltersList, BuildConditionsOptions{
 		DefinedColumns: SessionColumns,
 		MainTableAlias: sessionsAlias,
-	})
-	durConds, _ := BuildDurationWhere(filters, sessionsAlias)
+	}, qp)
+	durConds, _ := BuildDurationWhere(filters, qp, sessionsAlias)
 	sessionFilters = append(sessionFilters, durConds...)
 	sessionFilters = append(sessionFilters, sConds...)
 	negativeEventFilters = append(negativeEventFilters, nevConds...)
@@ -683,7 +659,7 @@ func BuildJoinClause(order string, eventsWhere []string, tableAlias ...string) s
 	return ""
 }
 
-func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string, []model.Filter) {
+func BuildDurationWhere(filters []model.Filter, qp *Params, tableAlias ...string) ([]string, []model.Filter) {
 	alias := "sessions"
 	if len(tableAlias) > 0 && tableAlias[0] != "" {
 		alias = tableAlias[0]
@@ -697,18 +673,18 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 			if len(v) == 1 {
 				if v[0] != "" {
 					if d, err := strconv.ParseInt(v[0], 10, 64); err == nil {
-						conds = append(conds, fmt.Sprintf("%s.duration >= %d", alias, d))
+						conds = append(conds, fmt.Sprintf("%s.duration >= %s", alias, qp.Add(d)))
 					}
 				}
 			} else if len(v) >= 2 {
 				if v[0] != "" {
 					if d, err := strconv.ParseInt(v[0], 10, 64); err == nil {
-						conds = append(conds, fmt.Sprintf("%s.duration >= %d", alias, d))
+						conds = append(conds, fmt.Sprintf("%s.duration >= %s", alias, qp.Add(d)))
 					}
 				}
 				if v[1] != "" {
 					if d, err := strconv.ParseInt(v[1], 10, 64); err == nil {
-						conds = append(conds, fmt.Sprintf("%s.duration <= %d", alias, d))
+						conds = append(conds, fmt.Sprintf("%s.duration <= %s", alias, qp.Add(d)))
 					}
 				}
 			}
@@ -721,7 +697,7 @@ func BuildDurationWhere(filters []model.Filter, tableAlias ...string) ([]string,
 
 // buildLocationConditions extracts the url_path properties of LOCATION filters
 // and turns them into `$current_path` conditions on the given table alias.
-func buildLocationConditions(filters []model.Filter, tableAlias string) []string {
+func buildLocationConditions(filters []model.Filter, tableAlias string, qp *Params) []string {
 	var conds []string
 	for _, f := range filters {
 		if f.Name != "LOCATION" {
@@ -736,7 +712,7 @@ func buildLocationConditions(filters []model.Filter, tableAlias string) []string
 				continue
 			}
 			expr := fmt.Sprintf("%s.\"$current_path\"", tableAlias)
-			if c := buildCond(expr, nested.Value, nested.Operator, false, "singleColumn"); c != "" {
+			if c := buildCond(expr, nested.Value, nested.Operator, false, "singleColumn", qp); c != "" {
 				conds = append(conds, c)
 			}
 		}

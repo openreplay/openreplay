@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-var ILIKEReplacer = strings.NewReplacer("%", "\\%", "_", "\\_")
-
 func ConvertTimeToMillis(t time.Time) int64 {
 	return t.UnixMilli()
 }
@@ -53,17 +51,18 @@ func MarshalJSONProperties(properties *map[string]interface{}) (string, error) {
 	return string(data), nil
 }
 
-func BuildJSONExtractColumn(alias, propertiesCol, dataType string) string {
+func BuildJSONExtractColumn(alias, propertiesCol, dataType, property string, qp *Params) string {
+	prop := qp.Add(property)
 	dtType := DataTypeType(dataType)
 	switch dtType {
 	case DataTypeNumber, DataTypeInteger:
-		return fmt.Sprintf("toFloat64OrNull(toString(getSubcolumn(%s%s, ?)))", alias, propertiesCol)
+		return fmt.Sprintf("toFloat64OrNull(toString(getSubcolumn(%s%s, %s)))", alias, propertiesCol, prop)
 	case DataTypeBoolean:
-		return fmt.Sprintf("toBool(getSubcolumn(%s%s, ?))", alias, propertiesCol)
+		return fmt.Sprintf("toBool(getSubcolumn(%s%s, %s))", alias, propertiesCol, prop)
 	case DataTypeTimestamp:
-		return fmt.Sprintf("toDateTime(toInt64OrNull(toString(getSubcolumn(%s%s, ?))))", alias, propertiesCol)
+		return fmt.Sprintf("toDateTime(toInt64OrNull(toString(getSubcolumn(%s%s, %s))))", alias, propertiesCol, prop)
 	default:
-		return fmt.Sprintf("getSubcolumn(%s%s, ?)", alias, propertiesCol)
+		return fmt.Sprintf("getSubcolumn(%s%s, %s)", alias, propertiesCol, prop)
 	}
 }
 
@@ -112,13 +111,6 @@ func NormalizeAlias(alias string) string {
 		return alias + "."
 	}
 	return alias
-}
-
-func BuildQuotedColumn(alias, column string) string {
-	if strings.HasPrefix(column, "$") {
-		return fmt.Sprintf("%s\"%s\"", alias, column)
-	}
-	return alias + column
 }
 
 var UserColumnMapping = map[UserColumn]string{
@@ -222,7 +214,7 @@ func ValidateSortColumnGeneric(column string, columnMapping map[string]string, d
 	return defaultColumn
 }
 
-func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[string]string, propertiesCol string) (string, []interface{}) {
+func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[string]string, propertiesCol string, qp *Params) string {
 	alias = NormalizeAlias(alias)
 
 	column := filter.Name
@@ -235,10 +227,10 @@ func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[
 
 	if mappedCol, ok := columnMapping[column]; ok {
 		fullCol = alias + mappedCol
-		return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
+		return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType, qp)
 	}
 
-	fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType)
+	fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType, column, qp)
 
 	dtType := DataTypeType(dataType)
 	if dtType == "" || dtType == DataTypeString {
@@ -253,49 +245,26 @@ func BuildFilterConditionGeneric(alias string, filter Filter, columnMapping map[
 		values = adjustedValues
 	}
 
-	cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
-	if cond != "" {
-		needsPropertyParam := strings.Contains(fullCol, "?")
-		if needsPropertyParam {
-			propertyPlaceholderCount := strings.Count(cond, "?") - len(params)
-			if propertyPlaceholderCount > 1 {
-				allParams := make([]interface{}, 0, len(values)*2)
-				for _, param := range params {
-					allParams = append(allParams, column)
-					allParams = append(allParams, param)
-				}
-				return cond, allParams
-			}
-			allParams := []interface{}{column}
-			allParams = append(allParams, params...)
-			return cond, allParams
-		}
-		return cond, params
-	}
-
-	return "", nil
+	return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType, qp)
 }
 
-type FilterConditionBuilder func(alias string, filter Filter) (string, []interface{})
+type FilterConditionBuilder func(alias string, filter Filter) string
 
-func BuildQueryConditions(tableAlias string, filters []Filter, skipEventFilters bool, conditionBuilder FilterConditionBuilder) ([]string, []interface{}) {
+func BuildQueryConditions(tableAlias string, filters []Filter, skipEventFilters bool, conditionBuilder FilterConditionBuilder) []string {
 	alias := NormalizeAlias(tableAlias)
 	conditions := make([]string, 0)
-	params := make([]interface{}, 0)
 
 	for _, filter := range filters {
 		if skipEventFilters && filter.IsEvent {
 			continue
 		}
 
-		cond, condParams := conditionBuilder(alias, filter)
-		if cond != "" {
+		if cond := conditionBuilder(alias, filter); cond != "" {
 			conditions = append(conditions, cond)
-			params = append(params, condParams...)
 		}
 	}
 
-	return conditions, params
+	return conditions
 }
 
 func ConvertColumnsToStrings[T ~string](columns []T) []string {
@@ -310,9 +279,9 @@ func CalculateOffset(page, limit int) int {
 	return (page - 1) * limit
 }
 
-func BuildSimpleFilterQuery(tableAlias string, filters []Filter, columnMapping map[string]string, propertiesCol string) ([]string, []interface{}) {
-	conditionBuilder := func(alias string, filter Filter) (string, []interface{}) {
-		return BuildFilterConditionGeneric(alias, filter, columnMapping, propertiesCol)
+func BuildSimpleFilterQuery(tableAlias string, filters []Filter, columnMapping map[string]string, propertiesCol string, qp *Params) []string {
+	conditionBuilder := func(alias string, filter Filter) string {
+		return BuildFilterConditionGeneric(alias, filter, columnMapping, propertiesCol, qp)
 	}
 	return BuildQueryConditions(tableAlias, filters, true, conditionBuilder)
 }
@@ -351,33 +320,21 @@ func ExtractNonEventFilters(filtersList []Filter) []Filter {
 	return nonEventFilters
 }
 
-func BuildLatestRecordCTE(tableName, alias string, selectColumns []string, whereClause string) string {
-	return fmt.Sprintf(`
-		WITH %s AS (
-			SELECT %s
-			FROM product_analytics.%s
-			WHERE %s AND _deleted_at = '1970-01-01 00:00:00'
-			ORDER BY _timestamp DESC
-			LIMIT 1 BY project_id, "$user_id"
-		)`, alias, strings.Join(selectColumns, ", "), tableName, whereClause)
-}
-
 type FilterMappings struct {
 	ColumnMapping       map[string]string
 	FilterColumnMapping map[string][]string
 }
 
-func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, mappings FilterMappings) (string, []interface{}) {
+func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, mappings FilterMappings, qp *Params) string {
 	alias := NormalizeAlias(tableAlias)
 
 	if filter.IsEvent {
 		var sb strings.Builder
-		allParams := make([]interface{}, 0)
 
 		sb.WriteString("(")
 		sb.WriteString(alias)
-		sb.WriteString(`"$event_name" = ?`)
-		allParams = append(allParams, filter.Name)
+		sb.WriteString(`"$event_name" = `)
+		sb.WriteString(qp.Add(filter.Name))
 
 		if filter.AutoCaptured {
 			sb.WriteString(" AND ")
@@ -387,12 +344,9 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 
 		if len(filter.Filters) > 0 {
 			var subConditions []string
-			var subAllParams []interface{}
 			for _, sub := range filter.Filters {
-				subCond, subParams := BuildFilterCondition(tableAlias, sub, userAlias, mappings)
-				if subCond != "" {
+				if subCond := BuildFilterCondition(tableAlias, sub, userAlias, mappings, qp); subCond != "" {
 					subConditions = append(subConditions, subCond)
-					subAllParams = append(subAllParams, subParams...)
 				}
 			}
 
@@ -404,12 +358,11 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 				sb.WriteString(" AND (")
 				sb.WriteString(strings.Join(subConditions, joinOp))
 				sb.WriteString(")")
-				allParams = append(allParams, subAllParams...)
 			}
 		}
 
 		sb.WriteString(")")
-		return sb.String(), allParams
+		return sb.String()
 	}
 
 	column := filter.Name
@@ -424,7 +377,7 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 		if col, exists := GetUserColumnMapping(column); exists {
 			fullCol = uAlias + col
 		} else {
-			fullCol = BuildJSONExtractColumn(uAlias, string(UserColumnProperties), dataType)
+			fullCol = BuildJSONExtractColumn(uAlias, string(UserColumnProperties), dataType, column, qp)
 
 			dtType := DataTypeType(dataType)
 			if dtType == "" || dtType == DataTypeString {
@@ -438,29 +391,8 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 				}
 				values = adjustedValues
 			}
-
-			cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
-			if cond != "" {
-				needsPropertyParam := strings.Contains(fullCol, "?")
-				if needsPropertyParam {
-					propertyPlaceholderCount := strings.Count(cond, "?") - len(params)
-					if propertyPlaceholderCount > 1 {
-						allParams := make([]interface{}, 0, len(values)*2)
-						for _, param := range params {
-							allParams = append(allParams, column)
-							allParams = append(allParams, param)
-						}
-						return cond, allParams
-					}
-					allParams := []interface{}{column}
-					allParams = append(allParams, params...)
-					return cond, allParams
-				}
-				return cond, params
-			}
-			return "", nil
 		}
-		return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
+		return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType, qp)
 	}
 
 	if filterMapping, exists := mappings.FilterColumnMapping[column]; exists {
@@ -475,7 +407,7 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 		if !filter.AutoCaptured {
 			propertiesCol = string(EventColumnProperties)
 		}
-		fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType)
+		fullCol = BuildJSONExtractColumn(alias, propertiesCol, dataType, column, qp)
 
 		dtType := DataTypeType(dataType)
 		if dtType == "" || dtType == DataTypeString {
@@ -489,28 +421,7 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 			}
 			values = adjustedValues
 		}
-
-		cond, params := BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
-		if cond != "" {
-			needsPropertyParam := strings.Contains(fullCol, "?")
-			if needsPropertyParam {
-				propertyPlaceholderCount := strings.Count(cond, "?") - len(params)
-				if propertyPlaceholderCount > 1 {
-					allParams := make([]interface{}, 0, len(values)*2)
-					for _, param := range params {
-						allParams = append(allParams, column)
-						allParams = append(allParams, param)
-					}
-					return cond, allParams
-				}
-				allParams := []interface{}{column}
-				allParams = append(allParams, params...)
-				return cond, allParams
-			}
-			return cond, params
-		}
-		return "", nil
 	}
 
-	return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType)
+	return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType, qp)
 }

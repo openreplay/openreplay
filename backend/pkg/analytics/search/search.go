@@ -137,6 +137,7 @@ type sessionsQueryComponents struct {
 	sortOrder       string
 	limit           int
 	offset          int
+	params          *charts.Params
 }
 
 func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, req *model.SessionsSearchRequest) *sessionsQueryComponents {
@@ -144,7 +145,8 @@ func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, 
 	endSec := req.EndDate / 1000
 	offset := (req.Page - 1) * req.Limit
 
-	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
+	qp := charts.NewParams()
+	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s", qp)
 	sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
 		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 	}, sessionsWhere...)
@@ -210,6 +212,7 @@ func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, 
 		sortOrder:       sortOrder,
 		limit:           req.Limit,
 		offset:          offset,
+		params:          qp,
 	}
 }
 
@@ -235,7 +238,7 @@ func (s *searchImpl) getSingleSessions(ctx context.Context, projectId int, userI
 
 	resp := &model.GetSessionsResponse{Sessions: make([]model.Session, 0)}
 	_start := time.Now()
-	if err := s.chConn.Select(ctx, &resp.Sessions, query); err != nil {
+	if err := s.chConn.Select(ctx, &resp.Sessions, query, qc.params.Args()...); err != nil {
 		if time.Since(_start) > 2*time.Second {
 			s.Logger.Warn(ctx, "Slow getSingleSession select: %s", query)
 		}
@@ -268,7 +271,8 @@ func (s *searchImpl) getSeriesSessions(ctx context.Context, projectId int, userI
 			Limit:       req.Limit,
 		}
 
-		eventsWhere, filtersWhere, _, sessionsWhere := charts.BuildWhere(seriesReq.Filters, seriesReq.EventsOrder, "e", "s")
+		qp := charts.NewParams()
+		eventsWhere, filtersWhere, _, sessionsWhere := charts.BuildWhere(seriesReq.Filters, seriesReq.EventsOrder, "e", "s", qp)
 		sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
 			fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
 		}, sessionsWhere...)
@@ -332,7 +336,7 @@ func (s *searchImpl) getSeriesSessions(ctx context.Context, projectId int, userI
 		}
 
 		_start := time.Now()
-		if err := s.chConn.Select(ctx, &seriesData.Sessions, query); err != nil {
+		if err := s.chConn.Select(ctx, &seriesData.Sessions, query, qp.Args()...); err != nil {
 			if time.Since(_start) > 2*time.Second {
 				s.Logger.Warn(ctx, "Slow getSeriesSessions [series %d]: %s", i, query)
 			}
@@ -504,11 +508,11 @@ LIMIT $3 OFFSET $4`,
 const countsQuerySettings = "max_execution_time = 10, max_threads = 4, " +
 	"use_query_cache = 1, query_cache_ttl = 1800, query_cache_min_query_duration = 200"
 
-func buildCountsQuery(projectId int, req *model.SessionsSearchRequest) string {
+func buildCountsQuery(projectId int, req *model.SessionsSearchRequest, qp *charts.Params) string {
 	startSec := req.StartDate / 1000
 	endSec := req.EndDate / 1000
 
-	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s")
+	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s", qp)
 	sessionsWhere = append([]string{
 		fmt.Sprintf("s.project_id = %d", projectId),
 		fmt.Sprintf("s.datetime >= toDateTime(%d)", startSec),
@@ -582,11 +586,12 @@ func (s *searchImpl) GetCounts(ctx context.Context, projectId int, req *model.Se
 		return 0, 0, err
 	}
 
-	query := buildCountsQuery(projectId, req)
+	qp := charts.NewParams()
+	query := buildCountsQuery(projectId, req, qp)
 
 	var sessionsCount, usersCount uint64
 	_start := time.Now()
-	if err := s.chConn.QueryRow(ctx, query).Scan(&sessionsCount, &usersCount); err != nil {
+	if err := s.chConn.QueryRow(ctx, query, qp.Args()...).Scan(&sessionsCount, &usersCount); err != nil {
 		if time.Since(_start) > 2*time.Second {
 			s.Logger.Warn(ctx, "Slow GetCounts query: %s", query)
 		}
@@ -627,7 +632,7 @@ LIMIT %d OFFSET %d;`,
 
 	_start := time.Now()
 	sessionIds := make([]model.SessionIdData, 0)
-	if err := s.chConn.Select(ctx, &sessionIds, query); err != nil {
+	if err := s.chConn.Select(ctx, &sessionIds, query, qc.params.Args()...); err != nil {
 		s.Logger.Error(ctx, "Error executing GetSessionIds query: %s\nQuery: %s", err, query)
 		return nil, err
 	}

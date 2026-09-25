@@ -181,24 +181,25 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 		}
 	}
 
+	qp := NewParams()
 	eventConditions, _, otherConditions := BuildEventConditions(eventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
-	})
+	}, qp)
 	_, _, namelessEventConditions := BuildEventConditions(namelessEventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
-	})
+	}, qp)
 
 	var sessionConditions []string = make([]string, 0)
 	if len(sessionFilters) > 0 {
 		_, _, sessionConditions = BuildEventConditions(sessionFilters, BuildConditionsOptions{
 			DefinedColumns: SessionColumns,
 			MainTableAlias: "s",
-		})
+		}, qp)
 	}
 
-	durConds, _ := BuildDurationWhere(allFilters, "s")
+	durConds, _ := BuildDurationWhere(allFilters, qp, "s")
 	if durConds != nil {
 		sessionConditions = append(sessionConditions, durConds...)
 	}
@@ -222,7 +223,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 		"e.created_at >= toDateTime(@startTimestamp/1000)",
 		"e.created_at < toDateTime(@endTimestamp/1000)",
 		"e.project_id = @projectId",
-		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages)),
+		fmt.Sprintf("e.`$event_name` IN %s", formatEventNames(stages, qp)),
 	}
 
 	// Rows matching no stage condition cannot affect the funnel aggregates;
@@ -314,13 +315,11 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 		outerGroupBy,
 		querySettings)
 
-	params := map[string]any{
-		"startTimestamp": p.MetricPayload.StartTimestamp,
-		"endTimestamp":   p.MetricPayload.EndTimestamp,
-		"projectId":      p.ProjectId,
-	}
+	qp.Set("startTimestamp", p.MetricPayload.StartTimestamp)
+	qp.Set("endTimestamp", p.MetricPayload.EndTimestamp)
+	qp.Set("projectId", p.ProjectId)
 
-	return q, params, nil
+	return q, qp.Values(), nil
 }
 
 func buildTColumns(stages []string, eventConditions []string, metricFormat string, windowSeconds uint64) []string {
@@ -346,12 +345,12 @@ func buildTColumns(stages []string, eventConditions []string, metricFormat strin
 		windowSeconds, strings.Join(eventConditions, ", "))}
 }
 
-func formatEventNames(stages []string) string {
-	quoted := make([]string, len(stages))
+func formatEventNames(stages []string, qp *Params) string {
+	bound := make([]string, len(stages))
 	for i, stage := range stages {
-		quoted[i] = fmt.Sprintf("'%s'", sqlStringReplacer.Replace(stage))
+		bound[i] = qp.Add(stage)
 	}
-	return fmt.Sprintf("(%s)", strings.Join(quoted, ", "))
+	return fmt.Sprintf("(%s)", strings.Join(bound, ", "))
 }
 
 func convertToFilterDetails(filters []model.Filter) []FilterDetail {

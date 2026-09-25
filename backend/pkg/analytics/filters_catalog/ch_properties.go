@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
+
 	"openreplay/backend/pkg/analytics/filters_catalog/model"
 )
 
@@ -22,10 +24,10 @@ FROM product_analytics.all_properties
                auto_captured_property,
                arrayDistinct(groupArray(event_properties.value_type)) AS possible_types
         FROM product_analytics.event_properties
-        WHERE event_properties.project_id = ?
+        WHERE event_properties.project_id = @projectId
         GROUP BY ALL
     ) AS event_properties USING (property_name)
-WHERE project_id = ?
+WHERE project_id = @projectId
     AND (apc.status = 'visible' OR apc.status = '')
 GROUP BY ALL
 ORDER BY apc.display_name, all_properties.property_name`
@@ -47,7 +49,7 @@ func (s *filtersCatalogImpl) getPropertiesCatalog(ctx context.Context, projectID
 		return cached, nil
 	}
 
-	rows, err := s.ch.Query(ctx, propertiesCatalogQuery, projectID, projectID)
+	rows, err := s.ch.Query(ctx, propertiesCatalogQuery, clickhouse.Named("projectId", projectID))
 	if err != nil {
 		return model.FilterSection{}, fmt.Errorf("ch query properties catalog: %w", err)
 	}
