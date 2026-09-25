@@ -128,7 +128,7 @@ minio:
   image:
     registry: docker.io
     repository: rustfs/rustfs
-    tag: 1.0.0-beta.1
+    tag: 1.0.0
   fullnameOverride: minio
   enabled: true
   resources:
