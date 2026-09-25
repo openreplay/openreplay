@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { Popconfirm, Tooltip } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,9 @@ interface Props {
   /** tooltip telling the user why the card can't be opened */
   disabledHint?: string;
   useIcon?: boolean;
+  /** redirect-based integrations have no drawer to delete from: when connected,
+      clicking the card asks to disconnect instead of calling onClick */
+  onDisconnect?: () => Promise<unknown> | void;
 }
 
 function IntegrationItem(props: Props) {
@@ -23,7 +26,9 @@ function IntegrationItem(props: Props) {
     disabled = false,
     disabledHint,
     useIcon,
+    onDisconnect,
   } = props;
+  const confirmDisconnect = integrated && !disabled && !!onDisconnect;
   const card = (
     <div
       className={cn(
@@ -33,7 +38,7 @@ function IntegrationItem(props: Props) {
           : 'cursor-pointer hover:bg-active-blue',
       )}
       onClick={(e) => {
-        if (!disabled) props.onClick?.(e);
+        if (!disabled && !confirmDisconnect) props.onClick?.(e);
       }}
       style={{ height: '136px' }}
     >
@@ -70,6 +75,20 @@ function IntegrationItem(props: Props) {
       )}
     </div>
   );
+
+  if (confirmDisconnect) {
+    return (
+      <Popconfirm
+        title={t('Disconnect {{name}}?', { name: integration.title })}
+        okText={t('Disconnect')}
+        okButtonProps={{ danger: true }}
+        cancelText={t('Cancel')}
+        onConfirm={onDisconnect}
+      >
+        {card}
+      </Popconfirm>
+    );
+  }
 
   return disabledHint ? <Tooltip title={disabledHint}>{card}</Tooltip> : card;
 }

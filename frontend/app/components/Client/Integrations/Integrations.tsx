@@ -3,9 +3,11 @@ import { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
+import { namedStore } from 'App/mstore/integrationsStore';
 import { mobileScreen } from 'App/utils/isMobile';
 import IntegrationFilters from 'Components/Client/Integrations/IntegrationFilters';
 
@@ -108,6 +110,18 @@ function Integrations(props: Props) {
     );
   };
 
+  const onDisconnect = async (slug: string) => {
+    try {
+      await integrationsStore[slug as namedStore].deleteIntegration();
+      toast.success(t('Integration removed'));
+    } catch (e) {
+      console.error(e);
+      toast.error(t('Failed to remove integration'));
+    } finally {
+      void fetchIntegrationList(siteId);
+    }
+  };
+
   const onChange = (key: string) => {
     setActiveFilter(key);
   };
@@ -155,7 +169,7 @@ function Integrations(props: Props) {
       <div className="mb-4" />
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {allIntegrations.map((integration, i) => {
+        {allIntegrations.map((integration: any, i) => {
           // a rival tracker holds the slot -> this card is disabled, not hidden
           const blockedTracker =
             integration.slug in issueTrackers &&
@@ -178,6 +192,11 @@ function Integrations(props: Props) {
                       ? 500
                       : 350,
                   )
+                }
+                onDisconnect={
+                  integration.oauth
+                    ? () => onDisconnect(integration.slug)
+                    : undefined
                 }
                 disabled={blockedTracker !== undefined}
                 disabledHint={
