@@ -13,37 +13,13 @@ export interface ILog {
   time: number;
   timestamp: number;
   tp: number;
-  _index: number;
+  _index?: number;
 }
 
 export const Log = (log: ILog) => ({
   isRed: log.severity === LogLevel.EXCEPTION || log.severity === LogLevel.ERROR,
   isYellow: log.severity === LogLevel.WARN,
   value: log.content,
+  level: log.severity,
   ...log,
 });
-
-// content
-//   :
-//   ">>>POST:https://foss.openreplay.com/ingest/v1/mobile/i\n<<<\n"
-// length
-//   :
-//   65
-// severity
-//   :
-//   "info"
-// tabId
-//   :
-//   "back-compatability"
-// time
-//   :
-//   10048
-// timestamp
-//   :
-//   1692966743780
-// tp
-//   :
-//   103
-// _index
-//   :
-//   50

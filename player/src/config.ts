@@ -13,6 +13,8 @@ export interface PlayerConfig {
   };
   getUserName?: () => string;
   getApiEndpoint?: () => string;
+  /** Keeps raw messages and exposes debug hooks on window (see isPlayerDebug). */
+  debug?: boolean;
 }
 
 let config: PlayerConfig = {};
@@ -23,4 +25,17 @@ export function configurePlayer(c: PlayerConfig) {
 
 export function getPlayerConfig(): PlayerConfig {
   return config;
+}
+
+/** Debug features (raw message retention, window hooks) are opt-in. */
+export function isPlayerDebug(): boolean {
+  if (config.debug !== undefined) {
+    return config.debug;
+  }
+  try {
+    // @ts-ignore host dev-tools toggle (frontend/app/dev/console.js)
+    return window.__OPENREPLAY_DEV_TOOLS__?.verbose === true;
+  } catch {
+    return false;
+  }
 }

@@ -12,11 +12,19 @@ export default class WebLivePlayer extends WebPlayer {
 
   assistManager: AssistManager; // public so far
 
-  private readonly incomingMessages: PlayerMsg[] = [];
+  /**
+   * Live messages kept until the first successful time travel: the EFS file lags the
+   * stream (tracker flush + ingestion), and if it fails to load they rebuild the page.
+   */
+  private incomingMessages: PlayerMsg[] = [];
+
+  private cleaned = false;
 
   private historyFileIsLoading = false;
 
   private lastMessageInFileTime = 0;
+
+  private timetravelPromise: Promise<boolean> | null = null;
 
   constructor(
     wpState: Store<typeof WebLivePlayer.INITIAL_STATE>,
@@ -32,9 +40,10 @@ export default class WebLivePlayer extends WebPlayer {
       session,
       (f) => this.messageManager.setMessagesLoading(f),
       (msg) => {
-        this.incomingMessages.push(msg);
+        if (!this.wpState.get().liveTimeTravel) {
+          this.incomingMessages.push(msg);
+        }
         if (!this.historyFileIsLoading) {
-          // TODO: fix index-ing after historyFile-load
           this.messageManager.distributeMessage(msg);
         }
       },
@@ -54,23 +63,38 @@ export default class WebLivePlayer extends WebPlayer {
    * then reads it to add everything happened before "now" to message manager
    * to be able to replay it like usual
    * */
-  toggleTimetravel = async () => {
+  toggleTimetravel = () => {
     if (
       (this.wpState.get() as typeof WebLivePlayer.INITIAL_STATE).liveTimeTravel
     ) {
-      return;
+      return Promise.resolve(false);
     }
+    // repeated timeline clicks while the file is loading share one load
+    if (!this.timetravelPromise) {
+      this.timetravelPromise = this.loadTimetravel().finally(() => {
+        this.timetravelPromise = null;
+      });
+    }
+    return this.timetravelPromise;
+  };
+
+  private loadTimetravel = async () => {
     let result = false;
+    this.lastMessageInFileTime = 0;
     this.historyFileIsLoading = true;
     this.messageManager.setMessagesLoading(true); // do it in one place. update unique  loading states each time instead
     this.messageManager.resetMessageManagers();
 
     try {
       const bytes = await requestEFSDom(this.session.sessionId);
+      if (this.cleaned) return false;
       const reader = this.messageLoader.createNewParser(
         false,
         (msgs) => {
           msgs.forEach((msg) => {
+            if (msg.time > this.lastMessageInFileTime) {
+              this.lastMessageInFileTime = msg.time;
+            }
             this.messageManager.distributeMessage(msg);
           });
         },
@@ -84,15 +108,21 @@ export default class WebLivePlayer extends WebPlayer {
       result = true;
       // here we need to update also lists state, if we're going use them this.messageManager.onFileReadSuccess
     } catch (e) {
+      if (this.cleaned) return false;
       this.uiErrorHandler?.error('Error requesting a session file');
       console.error('EFS file download error:', e);
     }
+    if (this.cleaned) return false;
 
-    // Append previously received messages
+    // live messages the (lagging) file doesn't have yet; ones at its last timestamp
+    // may be duplicates, which is safer than dropping mutations
     this.incomingMessages
       .filter((msg) => msg.time >= this.lastMessageInFileTime)
       .forEach((msg) => this.messageManager.distributeMessage(msg));
-    this.incomingMessages.length = 0;
+    if (result) {
+      // after a successful time travel the managers hold everything
+      this.incomingMessages = [];
+    }
 
     this.historyFileIsLoading = false;
     this.messageManager.setMessagesLoading(false);
@@ -107,12 +137,10 @@ export default class WebLivePlayer extends WebPlayer {
     this.jump(this.wpState.get().lastMessageTime);
   };
 
-  clean = () => {
-    this.incomingMessages.length = 0;
+  clean() {
+    this.cleaned = true;
+    this.incomingMessages = [];
     this.assistManager.clean();
-    this.screen?.clean?.();
-    // @ts-ignore
-    this.screen = undefined;
     super.clean();
-  };
+  }
 }

@@ -6,6 +6,7 @@ const performanceEvTypes = {
   MainThreadCPU: 'mainThreadCPU',
   Background: 'background',
 };
+const SUPPORTED_TYPES = new Set(Object.values(performanceEvTypes));
 
 export type PerformanceChartPoint = {
   time: number;
@@ -24,9 +25,20 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
     memory: null,
   };
 
+  private pushPoint(point: PerformanceChartPoint) {
+    const { chart } = this;
+    if (!chart.length || chart[chart.length - 1].time <= point.time) {
+      chart.push(point);
+      return;
+    }
+    let i = chart.length;
+    while (i > 0 && chart[i - 1].time > point.time) i--;
+    chart.splice(i, 0, point);
+  }
+
   append(msg: IosPerformanceEvent): void {
-    if (!Object.values(performanceEvTypes).includes(msg.name)) {
-      return console.log('Unsupported performance event type', msg.name);
+    if (!SUPPORTED_TYPES.has(msg.name)) {
+      return;
     }
 
     let cpu: number | null = null;
@@ -37,7 +49,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
       const isBackground = msg.value === 1;
       if (isBackground === this.isInBg) return;
       this.isInBg = isBackground;
-      this.chart.push({
+      this.pushPoint({
         time: msg.time,
         cpu: null,
         memory: null,
@@ -56,7 +68,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
       this.lastData.cpu = cpu;
     }
 
-    this.chart.push({
+    this.pushPoint({
       time: msg.time,
       cpu,
       memory,

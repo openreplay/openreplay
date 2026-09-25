@@ -1,5 +1,6 @@
 import AnnotationCanvas from './AnnotationCanvas';
 import type { Socket } from './types';
+import { createEmitter, listen, safeQuery } from './utils';
 import type Screen from '../Screen/Screen';
 import type { Store } from '../../common/types';
 import {
@@ -21,11 +22,15 @@ export interface State {
   currentTab?: string;
 }
 
+const REQUEST_TIMEOUT = 35000;
+
 export default class RemoteControl {
-  private assistVersion = 1;
   private isDragging = false;
   private dragStart: any | null = null;
   private readonly dragThreshold = 3;
+  private readonly unsubscribe: () => void;
+  private readonly emitData: (event: string, data?: any) => void;
+  private requestTimeout?: ReturnType<typeof setTimeout>;
 
   static readonly INITIAL_STATE: Readonly<State> = {
     remoteControl: RemoteControlStatus.Disabled,
@@ -48,62 +53,53 @@ export default class RemoteControl {
     private onToggle: (active: boolean) => void,
     private getAssistVersion: () => number,
   ) {
-    socket.on('control_granted', ({ meta, data }) => {
-      if (data === socket.id) {
-        this.toggleRemoteControl(data === socket.id);
-        this.onStart();
-      }
-    });
-    socket.on('control_rejected', ({ meta, data }) => {
-      if (data === socket.id) {
-        if (this.store.get().remoteControl === RemoteControlStatus.Enabled)
+    this.emitData = createEmitter(
+      socket,
+      getAssistVersion,
+      () => this.store.get().currentTab,
+    );
+    // control events are broadcast to every agent in the room; `data` is the
+    // socket id of the agent they are meant for
+    this.unsubscribe = listen(socket, {
+      control_granted: ({ data }) => {
+        if (data === socket.id) {
+          this.toggleRemoteControl(true);
+          this.onStart();
+        }
+      },
+      control_rejected: ({ data }) => {
+        if (data !== socket.id) return;
+        const { remoteControl } = this.store.get();
+        if (remoteControl === RemoteControlStatus.Requesting) {
+          this.onReject();
+        } else if (remoteControl === RemoteControlStatus.Enabled) {
           this.onEnd();
+        }
         this.toggleRemoteControl(false);
-      }
-      if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
-        this.onReject();
-        return this.store.update({
-          remoteControl: RemoteControlStatus.Disabled,
-        });
-      }
+      },
+      control_busy: ({ data }) => {
+        if (data !== socket.id) return;
+        this.onBusy();
+        if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
+          this.clearRequestTimeout();
+          this.store.update({ remoteControl: RemoteControlStatus.Disabled });
+        }
+      },
+      SESSION_DISCONNECTED: () => {
+        // an enabled control survives the user's page reload
+        if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
+          this.toggleRemoteControl(false);
+        }
+      },
+      disconnect: () => this.toggleRemoteControl(false),
+      error: () => this.toggleRemoteControl(false),
     });
-    socket.on('control_busy', ({ meta, data }) => {
-      this.onBusy();
-      if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
-        return this.store.update({
-          remoteControl: RemoteControlStatus.Disabled,
-        });
-      }
-    });
-    socket.on('SESSION_DISCONNECTED', () => {
-      if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
-        this.toggleRemoteControl(false); // else its remaining
-      }
-    });
-    socket.on('disconnect', () => {
-      this.toggleRemoteControl(false);
-    });
-    socket.on('error', () => {
-      this.toggleRemoteControl(false);
-    });
-    this.assistVersion = getAssistVersion();
   }
 
   private onMouseMove = (e: MouseEvent): void => {
     if (this.isDragging) return;
     const data = this.screen.getInternalCoordinates(e);
     this.emitData('move', [data.x, data.y]);
-  };
-
-  private emitData = (event: string, data?: any) => {
-    if (this.getAssistVersion() === 1) {
-      this.socket.emit(event, data);
-    } else {
-      this.socket.emit(event, {
-        meta: { tabId: this.store.get().currentTab },
-        data,
-      });
-    }
   };
 
   private onWheel = (e: WheelEvent): void => {
@@ -223,7 +219,13 @@ export default class RemoteControl {
     window.addEventListener('mouseup', handleUp);
   };
 
+  private clearRequestTimeout() {
+    clearTimeout(this.requestTimeout);
+    this.requestTimeout = undefined;
+  }
+
   private toggleRemoteControl(enable: boolean) {
+    this.clearRequestTimeout();
     // Suppress the synthetic <select> replay picker while the agent controls the
     // real element (they get the native picker via their own gesture).
     this.screen.setRemoteControlActive(enable);
@@ -251,11 +253,20 @@ export default class RemoteControl {
     }
     if (remoteControl === RemoteControlStatus.Disabled) {
       this.store.update({ remoteControl: RemoteControlStatus.Requesting });
+      // the tracker drops a request that competes with another pending one without
+      // answering it, and times its own requests out after 30s
+      this.clearRequestTimeout();
+      this.requestTimeout = setTimeout(() => {
+        if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
+          this.onReject();
+          this.toggleRemoteControl(false);
+        }
+      }, REQUEST_TIMEOUT);
       this.emitData(
         'request_control',
         JSON.stringify({
           ...this.agentInfo,
-          query: document.location.search,
+          query: safeQuery(),
         }),
       );
     } else {
@@ -283,14 +294,13 @@ export default class RemoteControl {
         annot.start([data.x, data.y]);
         this.emitData('startAnnotation', [data.x, data.y]);
       });
-      annot.canvas.addEventListener('mouseleave', () => {
+      const stop = () => {
+        if (!annot.isPainting()) return;
         annot.stop();
         this.emitData('stopAnnotation');
-      });
-      annot.canvas.addEventListener('mouseup', () => {
-        annot.stop();
-        this.emitData('stopAnnotation');
-      });
+      };
+      annot.canvas.addEventListener('mouseleave', stop);
+      annot.canvas.addEventListener('mouseup', stop);
       annot.canvas.addEventListener('mousemove', (e) => {
         if (!annot.isPainting()) {
           return;
@@ -309,6 +319,7 @@ export default class RemoteControl {
   }
 
   clean() {
+    this.unsubscribe();
     this.toggleRemoteControl(false);
     if (this.annot) {
       this.annot.remove();

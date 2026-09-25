@@ -1,29 +1,35 @@
 import ListWalker from '../../common/ListWalker';
 import { ConnectionInformation } from '../messages';
 
+const DEFAULT_QUALITY = 4;
+
 export default class ConnectionManager extends ListWalker<ConnectionInformation> {
-  currentQuality = 4;
-  currentTime = 0;
+  currentQuality = DEFAULT_QUALITY;
 
+  private reportedItem: ConnectionInformation | null | undefined = undefined;
+
+  /**
+   * @returns quality (0-4) when the current connection item changed
+   * (the default one when moved before the first item), null otherwise
+   */
   moveReady = (t: number): number | null => {
-    if (t < this.currentTime) {
-      this.reset();
+    this.moveGetLast(t);
+    const item = this.current;
+    if (item === this.reportedItem) {
+      return null;
     }
-    this.currentTime = t;
-    const msg = this.moveGetLast(t);
-
-    if (msg) {
-      this.currentQuality = getNetworkQuality(msg.downlink, msg.type);
-      return this.currentQuality;
-    }
-    return null;
+    this.reportedItem = item;
+    this.currentQuality = item
+      ? getNetworkQuality(item.downlink, item.type)
+      : DEFAULT_QUALITY;
+    return this.currentQuality;
   };
 }
 
+/** @param downlink kbps, as sent by the tracker (navigator.connection.downlink * 1000) */
 function getNetworkQuality(downlink: number, type: string): number {
-  const dl = Number.isFinite(downlink)
-    ? Math.max(0, Math.min(10, Number(downlink)))
-    : 0;
+  const mbps = Number.isFinite(downlink) ? Number(downlink) / 1000 : 0;
+  const dl = Math.max(0, Math.min(10, mbps));
   const t = (type || '').toLowerCase();
 
   const TYPE_SCORE: Record<string, number> = {

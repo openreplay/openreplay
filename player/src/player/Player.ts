@@ -36,34 +36,33 @@ export default class Player extends Animator {
     range: [0, 0] as [number, number],
   } as const;
 
+  private autoplayResume = true;
+
   constructor(
     private pState: Store<State & AnimatorGetState>,
     private manager: IMessageManager,
   ) {
     super(pState, manager);
 
-    // Autoplay
     if (pState.get().autoplay) {
-      let autoPlay = true;
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          const { playing } = pState.get();
-          autoPlay = playing;
-          if (playing) {
-            this.pause();
-          }
-        } else if (autoPlay) {
-          this.play();
-        }
-      });
-
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
       if (!document.hidden) {
         this.play();
       }
     }
   }
 
-  /* === TODO: incapsulate in LSCache === */
+  private onVisibilityChange = () => {
+    if (document.hidden) {
+      const { playing } = this.pState.get();
+      this.autoplayResume = playing;
+      if (playing) {
+        this.pause();
+      }
+    } else if (this.autoplayResume) {
+      this.play();
+    }
+  };
 
   toggleAutoplay() {
     const autoplay = !this.pState.get().autoplay;
@@ -71,14 +70,12 @@ export default class Player extends Animator {
     this.pState.update({ autoplay });
   }
 
-  // TODO: move to react part (with localStorage-cache react hook)?
   toggleEvents() {
     const showEvents = !this.pState.get().showEvents;
     localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
     this.pState.update({ showEvents });
   }
 
-  // TODO: move to React part
   toggleSkipToIssue() {
     const skipToIssue = !this.pState.get().skipToIssue;
     localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, `${skipToIssue}`);
@@ -123,7 +120,8 @@ export default class Player extends Animator {
   };
 
   clean() {
-    this.pause();
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.destroyAnimator();
     this.manager.clean();
   }
 }

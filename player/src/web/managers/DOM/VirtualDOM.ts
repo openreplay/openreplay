@@ -1,5 +1,6 @@
 import { isIFrameElement, isRootNode } from '../../../guards';
 import { insertRule, deleteRule, replaceRule } from './safeCSSRules';
+import { parseSanitizedSvgContent } from './sanitize';
 
 function isNode(sth: any): sth is Node {
   return !!sth && sth.nodeType != null;
@@ -73,6 +74,10 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
     this.children.splice(index, 0, child);
     this.notMontedChildren.add(child);
     child.parentNode = this;
+  }
+
+  getChildren(): readonly VChild[] {
+    return this.children;
   }
 
   removeChild(child: VChild) {
@@ -176,7 +181,7 @@ export class VElement extends VParent<Element> {
     readonly tagName: string,
     readonly isSVG = false,
     public readonly index: number,
-    private readonly nodeId: number,
+    public readonly nodeId: number,
   ) {
     super();
   }
@@ -306,7 +311,7 @@ export class VHTMLElement extends VElement {
  * Host for the `<symbol>`s rebuilt from `_$OPENREPLAY_SPRITE$_` messages, kept as the last child
  * of every <body> so the `<use href="#symbol-N">` rewrite done in MessageManager resolves inside
  * the replay document (`<use>` refuses external and data: refs as cross-origin).
- * Its content comes from innerHTML instead of the message stream, so VParent's child
+ * Its content is set wholesale instead of coming from the message stream, so VParent's child
  * reconciliation must not run here: it would prune every symbol as an unexpected node.
  */
 export class VSpriteMap extends VElement {
@@ -326,13 +331,23 @@ export class VSpriteMap extends VElement {
     if (!this.dirty) {
       return;
     }
-    this.node.innerHTML = this.content;
     this.dirty = false;
+    const node = this.node;
+    const parsed = this.content ? parseSanitizedSvgContent(this.content) : null;
+    const doc = node.ownerDocument;
+    const symbols = parsed
+      ? Array.from(parsed.childNodes, (child) => doc.importNode(child, true))
+      : [];
+    node.replaceChildren(...symbols);
   }
 }
 
 export class VText extends VNode<Text> {
   parentNode: VParent | null = null;
+
+  constructor(public readonly nodeId: number = -1) {
+    super();
+  }
 
   protected createNode() {
     return new Text();

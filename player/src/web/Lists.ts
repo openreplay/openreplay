@@ -118,13 +118,14 @@ export default class Lists {
   constructor(initialLists: Partial<InitialLists> = {}) {
     const lists: Partial<ListsObject> = {};
     for (const name of SIMPLE_LIST_NAMES) {
-      lists[name] = new ListWalker(initialLists[name]);
+      // own copy: walkers mutate their list, and every tab gets the same session arrays
+      lists[name] = new ListWalker(initialLists[name]?.slice());
     }
     for (const name of MARKED_LIST_NAMES) {
       // TODO: provide types
       lists[name] = new ListWalkerWithMarks(
         (el) => el.isRed,
-        initialLists[name],
+        initialLists[name]?.slice(),
       );
     }
     this.lists = lists as ListsObject;
@@ -137,20 +138,30 @@ export default class Lists {
     }, {} as Partial<StateList>) as StateList;
   }
 
-  moveGetState(t: number): StateNow {
-    return LIST_NAMES.reduce(
-      (state, name) => {
-        const lastMsg = this.lists[name].moveGetLast(t); // index: name === 'exceptions' ? undefined : index);
-        if (lastMsg != null) {
-          state[`${name}ListNow`] = this.lists[name].listNow;
-        }
-        return state;
-      },
-      MARKED_LIST_NAMES.reduce((state, name) => {
-        state[`${name}MarkedCountNow`] = this.lists[name].markedCountNow; // Red --> Marked
-        return state;
-      }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
-    ) as State;
+  private publishedMarkedCounts: Partial<StateMarkedCountNow> = {};
+
+  /** Moves every list to `t`; returns only the "now" values that changed. */
+  moveGetState(t: number): Partial<StateNow> {
+    const state: Partial<State> = {};
+    LIST_NAMES.forEach((name) => {
+      const list = this.lists[name];
+      const before = list.countNow;
+      list.moveGetLast(t);
+      // countNow, not the return value: moving back before the first item returns nothing
+      if (list.countNow !== before) {
+        state[`${name}ListNow`] = list.listNow;
+      }
+    });
+    // read after walking, otherwise the counts lag one move behind
+    MARKED_LIST_NAMES.forEach((name) => {
+      const key = `${name}MarkedCountNow` as const;
+      const count = this.lists[name].markedCountNow;
+      if (this.publishedMarkedCounts[key] !== count) {
+        this.publishedMarkedCounts[key] = count;
+        state[key] = count;
+      }
+    });
+    return state;
   }
 
   resetListNowStates = (): State => {
@@ -160,6 +171,7 @@ export default class Lists {
     }, {} as Partial<StateListNow>);
     MARKED_LIST_NAMES.forEach((name) => {
       state[`${name}MarkedCountNow`] = 0;
+      this.publishedMarkedCounts[`${name}MarkedCountNow`] = 0;
     });
 
     return state as State;

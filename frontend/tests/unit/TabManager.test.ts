@@ -54,11 +54,17 @@ beforeEach(() => {
 
 it('updateLists should append location events and update store', () => {
   const event = { time: 1, key: 1, type: EVENT_TYPES.LOCATION } as any;
-  manager.updateLists({ event: [event] });
+  expect(manager.updateLists({ event: [event] })).toBe(1);
   // @ts-ignore private access
   expect((manager as any).locationEventManager.list[0]).toBe(event);
   expect(store.get().tabStates['tab1'].eventList).toEqual([event]);
-  expect(store.get().eventCount).toBe(1);
+});
+
+it('updateLists is idempotent for repeated session data', () => {
+  const event = { time: 1, key: 1, type: EVENT_TYPES.LOCATION } as any;
+  manager.updateLists({ event: [event] });
+  expect(manager.updateLists({ event: [{ ...event }] })).toBe(1);
+  expect(store.get().tabStates['tab1'].eventList.length).toBe(1);
 });
 
 it('resetMessageManagers should clear managers', () => {

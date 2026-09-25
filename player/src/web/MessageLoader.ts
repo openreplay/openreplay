@@ -1,4 +1,5 @@
 import type { PlayerMsg, SessionFilesInfo, Store } from '../index';
+import { isPlayerDebug } from '../config';
 import unpackTar from '../common/tarball';
 import unpack from '../common/unpack';
 import IOSMessageManager from '../mobile/IOSMessageManager';
@@ -7,11 +8,13 @@ import { MType } from './messages';
 
 import logger from '../logger';
 
-import MFileReader from './messages/MFileReader';
-import { fixMessageOrder, sortIframes } from './messages/messageOrder';
+import MobFileParser from './messages/MobFileParser';
+import { fixMessageOrder } from './messages/messageOrder';
 import TrackerReader from './messages/TrackerReader';
 import { decryptSessionBytes } from './network/crypto';
 import {
+  NO_URLS,
+  isAbortError,
   loadFiles,
   requestEFSDevtools,
   requestEFSDom,
@@ -26,6 +29,8 @@ interface State {
   error: boolean;
 }
 
+const CANVAS_URL_TIMEOUT = 15000;
+
 export default class MessageLoader {
   static INITIAL_STATE: State = {
     firstFileLoading: false,
@@ -34,284 +39,146 @@ export default class MessageLoader {
     error: false,
   };
 
+  /** Aborted on clean(): downloads, decryption and parsing of a left session stop. */
+  private readonly abortController = new AbortController();
+
+  private preloadPromise: Promise<void> | null = null;
+
   constructor(
     private session: SessionFilesInfo,
     private store: Store<State>,
     private messageManager: MessageManager | IOSMessageManager,
     private isClickmap: boolean,
     private uiErrorHandler?: { error: (msg: string) => void },
-  ) {
-  }
+  ) {}
 
   setSession(session: SessionFilesInfo) {
     this.session = session;
   }
 
-  /**
-   * Detect protocol format from the 8-byte header.
-   * V1 = all 0xff (legacy mob format, with or without indexes depending on version)
-   * V2 = 7x 0xff + 0xfe (tracker batch format)
-   * V3 = 7x 0xff + 0xfd (new or old tracker without indexes)
-   */
-  checkProtoFormat = (binary: Uint8Array) => {
-    // Mobile sessions are always legacy v1 (MFileReader). Their header byte can
-    // be 0xfe/0xfd (which would otherwise route to the web TrackerReader) and
-    // their bodies are not size-prefixed, so force v1 regardless of the header.
-    if (this.messageManager instanceof IOSMessageManager) {
-      return 1;
-    }
-    console.debug(
-      'Checking protocol format from header',
-      binary.slice(0, 24).join(' '),
-    );
-    const hasHeader = binary.slice(0, 3).every((b) => b === 0xff);
-    if (!hasHeader) {
-      // probably second file in the recording cuz messages arrived late
-      return 3;
-    }
-    const isV2 =
-      binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfe;
-    if (isV2) return 2;
-    const isV3 =
-      binary.slice(0, 7).every((b) => b === 0xff) && binary[7] === 0xfd;
-    if (isV3) return 3;
-    return 1;
-  };
-
-  /** Strip the 8-byte format header (v1: 0xff, v2: 0xfe, v3: 0xfd) if present */
-  private stripHeader(data: Uint8Array): Uint8Array {
-    const hasHeader =
-      data.slice(0, 7).every((b) => b === 0xff) &&
-      (data[7] === 0xff || data[7] === 0xfe || data[7] === 0xfd);
-    return hasHeader && data[0] !== 81 ? data.slice(8) : data;
+  private get signal() {
+    return this.abortController.signal;
   }
 
+  private get isMobile() {
+    return this.messageManager instanceof IOSMessageManager;
+  }
+
+  /** Only kept in debug mode (see isPlayerDebug): a second copy of every message. */
   rawMessages: any[] = [];
 
   /**
-   * Create a parser for the legacy v1 mob format.
-   * Used as the default parser and as fallback when format is v1.
-   */
-  createV1Parser(
-    shouldDecrypt = true,
-    onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
-    file?: string,
-  ) {
-    const decrypt =
-      shouldDecrypt && this.session.fileKey
-        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
-        : (b: Uint8Array) => Promise.resolve(b);
-
-    const fileReader = new MFileReader(
-      new Uint8Array(),
-      this.session.startedAt,
-    );
-    let fileNum = 0;
-    return async (b: Uint8Array) => {
-      try {
-        fileNum += 1;
-        const mobBytes = await decrypt(b);
-        const data = unpack(mobBytes);
-        fileReader.append(data);
-        fileReader.checkForIndexes();
-        const msgs: Array<PlayerMsg> = [];
-        let finished = false;
-        while (!finished) {
-          const msg = fileReader.readNext();
-          if (msg) {
-            this.rawMessages.push(msg);
-            msgs.push(msg);
-          } else {
-            finished = true;
-            break;
-          }
-        }
-
-        let artificialStartTime = Infinity;
-        let startTimeSet = false;
-        msgs.forEach((msg, i) => {
-          if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
-            if ('actionTime' in msg && msg.actionTime) {
-              msg.time = msg.actionTime - this.session.startedAt;
-            } else {
-              // @ts-ignore
-              Object.assign(msg, {
-                actionTime: msg.time + this.session.startedAt,
-              });
-            }
-          }
-          if (
-            msg.tp === MType.CreateDocument &&
-            msg.time !== undefined &&
-            msg.time < artificialStartTime
-          ) {
-            artificialStartTime = msg.time;
-            startTimeSet = true;
-          }
-        });
-
-        if (!startTimeSet) {
-          artificialStartTime = 0;
-        }
-
-        let brokenMessages = 0;
-        const originalCopy = [...msgs];
-        msgs.forEach((msg) => {
-          if (!msg.time) {
-            msg.time = artificialStartTime;
-            brokenMessages += 1;
-          }
-        });
-
-        const sortedMsgs = fixMessageOrder(msgs).sort(sortIframes);
-
-        if (brokenMessages > 0) {
-          console.warn(
-            'Broken timestamp messages',
-            brokenMessages,
-            originalCopy,
-          );
-        }
-
-        onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
-      } catch (e) {
-        console.error(e);
-        this.uiErrorHandler?.error(`Error parsing file: ${e.message}`);
-      }
-    };
-  }
-
-  /**
-   * Create a parser for the v2 tracker batch format.
-   * Uses TrackerReader to handle BatchMetadata, size-prefixed messages, and asset separation.
-   */
-  createV2Parser(
-    shouldDecrypt = true,
-    onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
-    file?: string,
-  ) {
-    const decrypt =
-      shouldDecrypt && this.session.fileKey
-        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
-        : (b: Uint8Array) => Promise.resolve(b);
-
-    const reader = new TrackerReader(this.session.startedAt);
-    let fileNum = 0;
-
-    return async (b: Uint8Array) => {
-      try {
-        fileNum += 1;
-        const mobBytes = await decrypt(b);
-        const data = unpack(mobBytes);
-
-        const batchData = this.stripHeader(data);
-        reader.append(batchData);
-        const messages = reader.readBatch();
-
-        messages.forEach((msg) => this.rawMessages.push(msg));
-
-        const sortedMsgs = fixMessageOrder(messages).sort(sortIframes);
-        onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
-      } catch (e) {
-        console.error(e);
-        this.uiErrorHandler?.error(`Error parsing file: ${e.message}`);
-      }
-    };
-  }
-
-  /**
-   * Create a format-detecting parser that checks the 8-byte header
-   * and dispatches to v1 or v2 parser accordingly.
-   * Once the format is determined from the first file, subsequent files use the same parser.
+   * Parser for a session's consecutive files: decrypts and decompresses each file
+   * once, detects the format on the first one and keeps reader state between files.
    */
   createNewParser(
     shouldDecrypt = true,
     onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
     file?: string,
   ) {
-    const decrypt =
-      shouldDecrypt && this.session.fileKey
-        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
-        : (b: Uint8Array) => Promise.resolve(b);
-
-    let resolvedParser: ((b: Uint8Array) => Promise<void>) | null = null;
-
+    const parser = new MobFileParser(this.session.startedAt, {
+      trackerVersion: this.session.trackerVersion,
+      mobile: this.isMobile,
+    });
+    const keepRawMessages = isPlayerDebug();
+    let fileNum = 0;
+    let readErrorReported = false;
     return async (b: Uint8Array) => {
-      if (resolvedParser) {
-        return resolvedParser(b);
+      if (this.signal.aborted) return;
+      fileNum += 1;
+      let data: Uint8Array;
+      try {
+        const { fileKey } = this.session;
+        const bytes =
+          shouldDecrypt && fileKey ? await decryptSessionBytes(b, fileKey) : b;
+        data = unpack(bytes);
+      } catch (e) {
+        if (isAbortError(e) || this.signal.aborted) return;
+        // an undecodable first file means a wrong source: let the caller fall back (EFS)
+        if (fileNum === 1) throw e;
+        console.error(e);
+        this.uiErrorHandler?.error(`Error decoding file: ${e?.message ?? e}`);
+        return;
       }
-
-      // Detect format from first file's raw bytes (before decrypt/unpack, header is prepended)
-      const mobBytes = await decrypt(b);
-      const data = unpack(mobBytes);
-      const version = this.checkProtoFormat(data);
-
-      if (version === 2 || version === 3) {
-        resolvedParser = this.createV2Parser(
-          shouldDecrypt,
-          onMessagesDone,
-          file,
-        );
-      } else {
-        resolvedParser = this.createV1Parser(
-          shouldDecrypt,
-          onMessagesDone,
-          file,
-        );
+      if (this.signal.aborted) return;
+      try {
+        const msgs = parser.parse(data);
+        if (parser.readError && !readErrorReported) {
+          readErrorReported = true;
+          this.uiErrorHandler?.error('Error parsing file: unreadable message');
+        }
+        if (keepRawMessages) {
+          for (const msg of msgs) this.rawMessages.push(msg);
+        }
+        onMessagesDone(msgs, `${file} ${fileNum}`);
+      } catch (e) {
+        if (isAbortError(e) || this.signal.aborted) return;
+        console.error(e);
+        this.uiErrorHandler?.error(`Error parsing file: ${e?.message ?? e}`);
       }
-
-      // Re-feed the original bytes so the resolved parser processes this file
-      return resolvedParser(b);
     };
   }
 
   waitForCanvasURL = () => {
     const start = Date.now();
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       const checkInterval = setInterval(() => {
         if (this.session.canvasURL?.length) {
           clearInterval(checkInterval);
-          resolve(true);
-        } else if (Date.now() - start > 15000) {
+          resolve();
+        } else if (
+          this.signal.aborted ||
+          Date.now() - start > CANVAS_URL_TIMEOUT
+        ) {
           clearInterval(checkInterval);
-          throw new Error('could not load canvas data after 15 seconds');
+          reject(new Error('could not load canvas data after 15 seconds'));
         }
       }, 100);
     });
   };
 
-  allMessages: any[] = [];
   processMessages = (msgs: PlayerMsg[], file?: string) => {
-    msgs.forEach(async (msg) => {
-      if (msg.tabId && file?.includes('dom')) {
-        this.allMessages.push(msg);
+    if (this.signal.aborted) return;
+    const tabSources =
+      file?.includes('dom') && 'messageTabSourceManager' in this.messageManager
+        ? this.messageManager.messageTabSourceManager
+        : null;
+    // prefetched sessions get signed canvas urls later; their canvas nodes wait for them
+    const waitsForCanvasUrls =
+      !!file?.includes('p:dom') && !this.session.canvasURL?.length;
+    const deferredCanvasNodes: PlayerMsg[] = [];
+
+    for (const msg of msgs) {
+      if (tabSources && msg.tabId) {
+        tabSources.processMessage(msg);
       }
-      if (msg.tp === MType.CanvasNode) {
-        /**
-         * in case of prefetched sessions with canvases,
-         * we wait for signed urls and then parse the session
-         * */
-        if (file?.includes('p:dom') && !this.session.canvasURL?.length) {
-          console.warn('⚠️Openreplay is waiting for canvas node to load');
-          await this.waitForCanvasURL();
-        }
+      if (waitsForCanvasUrls && msg.tp === MType.CanvasNode) {
+        deferredCanvasNodes.push(msg);
+        continue;
       }
       this.messageManager.distributeMessage(msg);
-    });
-    logger.info('Messages count: ', msgs.length, msgs, file);
+    }
+    logger.info('Messages count: ', msgs.length, file);
     this.messageManager.sortDomRemoveMessages(msgs);
     this.messageManager.setMessagesLoading(false);
+
+    if (deferredCanvasNodes.length) {
+      console.warn('⚠️Openreplay is waiting for canvas node to load');
+      this.waitForCanvasURL()
+        .then(() => {
+          if (this.signal.aborted) return;
+          deferredCanvasNodes.forEach((msg) =>
+            this.messageManager.distributeMessage(msg),
+          );
+        })
+        .catch((e) => logger.warn(e));
+    }
   };
 
   async loadTarball(url: string) {
-    try {
-      const tarBufferZstd = await requestTarball(url);
-      if (tarBufferZstd) {
-        const tar = unpack(tarBufferZstd);
-        return await unpackTar(tar);
-      }
-    } catch (e) {
-      throw e;
+    const tarBufferZstd = await requestTarball(url, this.signal);
+    if (tarBufferZstd) {
+      return unpackTar(unpack(tarBufferZstd));
     }
   }
 
@@ -323,43 +190,41 @@ export default class MessageLoader {
 
   preloaded = false;
 
-  async preloadFirstFile(data: Uint8Array, fileKey?: string) {
+  preloadFirstFile(data: Uint8Array, fileKey?: string) {
     this.session.fileKey = fileKey;
     this.mobParser = this.createNewParser(true, this.processMessages, 'p:dom');
-
-    try {
-      await this.mobParser(data);
-      this.preloaded = true;
-    } catch (e) {
-      console.error('error parsing msgs', e);
-    }
+    const parser = this.mobParser;
+    this.preloadPromise = (async () => {
+      try {
+        await parser(data);
+        this.preloaded = true;
+      } catch (e) {
+        console.error('error parsing msgs', e);
+        // a half-fed reader must not receive the re-fetched first file
+        this.mobParser = undefined;
+      }
+    })();
+    return this.preloadPromise;
   }
 
   async loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {
     if (urls.length > 0) {
       this.store.update({ domLoading: true });
-      await loadFiles(urls, parser, true);
+      await loadFiles(urls, parser, true, this.signal);
       return this.store.update({ domLoading: false });
     }
     return Promise.resolve();
   }
 
   loadDevtools(parser: (b: Uint8Array) => Promise<void>) {
-    if (!this.isClickmap) {
-      this.store.update({ devtoolsLoading: true });
-      return (
-        loadFiles(this.session.devtoolsURL, parser)
-          // TODO: also in case of dynamic update through assist
-          .then(() => {
-            // @ts-ignore ?
-            this.store.update({
-              ...this.messageManager.getListsFullState(),
-              devtoolsLoading: false,
-            });
-          })
-      );
+    if (this.isClickmap || !this.session.devtoolsURL?.length) {
+      return Promise.resolve();
     }
-    return Promise.resolve();
+    this.store.update({ devtoolsLoading: true });
+    // a missing devtools file (404) is fine; other failures are reported by loadMobs
+    return loadFiles(this.session.devtoolsURL, parser, true, this.signal).finally(
+      () => this.store.update({ devtoolsLoading: false }),
+    );
   }
 
   /**
@@ -367,6 +232,10 @@ export default class MessageLoader {
    * if EFS fails, then session doesn't exist
    * */
   async loadFiles() {
+    // a preload still in flight owns the first file
+    if (this.preloadPromise) {
+      await this.preloadPromise;
+    }
     if (!this.preloaded) {
       this.messageManager.startLoading();
     }
@@ -374,44 +243,41 @@ export default class MessageLoader {
     try {
       await this.loadMobs();
     } catch (sessionLoadError) {
+      if (this.signal.aborted) return;
       console.info('!', sessionLoadError);
       try {
         await this.loadEFSMobs();
       } catch (unprocessedLoadError) {
-        this.messageManager.onFileReadFailed(
-          sessionLoadError,
-          unprocessedLoadError,
-        );
+        if (!this.signal.aborted) {
+          this.messageManager.onFileReadFailed(
+            sessionLoadError,
+            unprocessedLoadError,
+          );
+        }
       }
     } finally {
-      this.createTabCloseEvents();
-      if ('messageTabSourceManager' in this.messageManager) {
-        this.messageManager.messageTabSourceManager.processMessages(
-          this.allMessages,
-        );
+      if (!this.signal.aborted) {
+        this.createTabCloseEvents();
+        this.store.update({ domLoading: false, devtoolsLoading: false });
       }
-      this.store.update({ domLoading: false, devtoolsLoading: false });
     }
   }
 
-  mobParser: (b: Uint8Array) => Promise<void>;
+  mobParser: ((b: Uint8Array) => Promise<void>) | undefined;
 
   loadMobs = async () => {
-    const loadMethod =
-      this.session.domURL && this.session.domURL.length > 0
-        ? {
-            mobUrls: this.session.domURL,
-            parser: () =>
-              this.createNewParser(true, this.processMessages, 'd:dom'),
-          }
-        : {
-            mobUrls: this.session.mobsUrl,
-            parser: () =>
-              this.createNewParser(false, this.processMessages, 'm:dom'),
-          };
+    const useDomUrls = !!this.session.domURL?.length;
+    const mobUrls = useDomUrls ? this.session.domURL : this.session.mobsUrl;
+    if (!mobUrls?.length) {
+      throw NO_URLS;
+    }
 
     if (!this.mobParser) {
-      this.mobParser = loadMethod.parser();
+      this.mobParser = this.createNewParser(
+        useDomUrls,
+        this.processMessages,
+        useDomUrls ? 'd:dom' : 'm:dom',
+      );
     }
     const parser = this.mobParser;
     const devtoolsParser = this.createNewParser(
@@ -427,15 +293,25 @@ export default class MessageLoader {
      * as a tradeoff we have some copy-paste code
      * for the devtools file
      * */
-    if (!this.preloaded) await loadFiles([loadMethod.mobUrls[0]], parser);
+    if (!this.preloaded) {
+      await loadFiles([mobUrls[0]], parser, false, this.signal);
+    }
+    if (this.signal.aborted) return;
     this.messageManager.onFileReadFinally();
-    const restDomFilesPromise = this.loadDomFiles(
-      [...loadMethod.mobUrls.slice(1)],
-      parser,
-    );
-    const restDevtoolsFilesPromise = this.loadDevtools(devtoolsParser);
 
-    await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise]);
+    const results = await Promise.allSettled([
+      this.loadDomFiles(mobUrls.slice(1), parser),
+      this.loadDevtools(devtoolsParser),
+    ]);
+    if (this.signal.aborted) return;
+    const failures = results.filter(
+      (r): r is PromiseRejectedResult =>
+        r.status === 'rejected' && !isAbortError(r.reason),
+    );
+    if (failures.length) {
+      logger.warn('Some session files failed to load', failures);
+      this.uiErrorHandler?.error('Part of the recording failed to load');
+    }
     this.messageManager.onFileReadSuccess();
   };
 
@@ -443,10 +319,14 @@ export default class MessageLoader {
     this.store.update({ domLoading: true, devtoolsLoading: true });
 
     const [domData, secondDomData, devtoolsData] = await Promise.allSettled([
-      requestEFSDom(this.session.sessionId),
-      requestSecondEFSDom(this.session.sessionId),
-      requestEFSDevtools(this.session.sessionId),
+      requestEFSDom(this.session.sessionId, this.signal),
+      requestSecondEFSDom(this.session.sessionId, this.signal),
+      requestEFSDevtools(this.session.sessionId, this.signal),
     ]);
+    if (this.signal.aborted) return;
+    if (domData.status !== 'fulfilled' && secondDomData.status !== 'fulfilled') {
+      throw 'No dom files in EFS';
+    }
 
     const domParser = this.createNewParser(
       false,
@@ -459,27 +339,16 @@ export default class MessageLoader {
       'devtoolsEFS',
     );
 
-    const parseDomPromise: Promise<void> = (async () => {
-      if (domData.status === 'fulfilled') {
-        await domParser(domData.value);
-      }
-      if (secondDomData.status === 'fulfilled') {
-        await domParser(secondDomData.value);
-      }
-      if (
-        domData.status !== 'fulfilled' &&
-        secondDomData.status !== 'fulfilled'
-      ) {
-        throw 'No dom files in EFS';
-      }
-    })();
-
-    const parseDevtoolsPromise: Promise<void> =
-      devtoolsData.status === 'fulfilled'
-        ? devtoolsParser(devtoolsData.value)
-        : Promise.reject('No devtools file in EFS');
-
-    await Promise.allSettled([parseDomPromise, parseDevtoolsPromise]);
+    if (domData.status === 'fulfilled') {
+      await domParser(domData.value);
+    }
+    if (secondDomData.status === 'fulfilled') {
+      await domParser(secondDomData.value);
+    }
+    if (devtoolsData.status === 'fulfilled') {
+      await devtoolsParser(devtoolsData.value);
+    }
+    if (this.signal.aborted) return;
     this.store.update({ domLoading: false, devtoolsLoading: false });
     this.messageManager.onFileReadFinally();
     this.messageManager.onFileReadSuccess();
@@ -496,34 +365,26 @@ export default class MessageLoader {
     this.store.update({ domLoading: true });
 
     const reader = new TrackerReader(this.session.startedAt);
-    const allPlayer: PlayerMsg[] = [];
-    const allAssets: PlayerMsg[] = [];
+    const collected: PlayerMsg[] = [];
 
     for (const url of batchUrls) {
       try {
-        const resp = await window.fetch(url);
+        const resp = await window.fetch(url, { signal: this.signal });
         if (!resp.ok) {
           console.warn(`TrackerReader: failed to fetch ${url}: ${resp.status}`);
           continue;
         }
-        const buf = new Uint8Array(await resp.arrayBuffer());
-        const data = unpack(buf);
-        const { kind, messages } = reader.readBatch(data);
-
-        if (kind === 'assets') {
-          allAssets.push(...messages);
-        } else {
-          allPlayer.push(...messages);
+        reader.append(unpack(new Uint8Array(await resp.arrayBuffer())));
+        for (const msg of reader.readBatch()) {
+          collected.push(msg as PlayerMsg);
         }
       } catch (e) {
+        if (isAbortError(e)) return;
         console.error(`TrackerReader: error processing ${url}:`, e);
       }
     }
 
-    // Merge and sort
-    const merged = [...allPlayer, ...allAssets];
-    const sorted = fixMessageOrder(merged).sort(sortIframes);
-
+    const sorted = fixMessageOrder(collected);
     logger.info(
       'TrackerReader: loaded',
       sorted.length,
@@ -540,6 +401,8 @@ export default class MessageLoader {
   }
 
   clean() {
+    this.abortController.abort();
+    this.rawMessages = [];
     this.store.update(MessageLoader.INITIAL_STATE);
   }
 }

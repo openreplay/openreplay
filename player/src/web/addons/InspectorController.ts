@@ -3,7 +3,6 @@ import { State } from './TargetMarker';
 import Marker from '../Screen/Marker';
 import Inspector from '../Screen/Inspector';
 import Screen, { ScaleMode } from '../Screen/Screen';
-import type { Dimensions } from '../Screen/types';
 
 export default class InspectorController {
   static INITIAL_STATE = {
@@ -29,15 +28,11 @@ export default class InspectorController {
       const returnOverlay = () => {
         screen.overlay.style.display = 'block';
         doc.removeEventListener('mousemove', returnOverlay);
-        doc.removeEventListener('mouseclick', returnOverlay); // TODO: prevent default in case of input selection
+        doc.removeEventListener('mousedown', returnOverlay); // TODO: prevent default in case of input selection
       };
       doc.addEventListener('mousemove', returnOverlay);
-      doc.addEventListener('mouseclick', returnOverlay);
+      doc.addEventListener('mousedown', returnOverlay);
     });
-  }
-
-  scale(dims: Dimensions) {
-    this.screen.scale(dims);
   }
 
   enableInspector(): Document | null {

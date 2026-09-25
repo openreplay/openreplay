@@ -1,4 +1,5 @@
 import logger from '../../../logger';
+import { isPlayerDebug } from '../../../config';
 
 import {
   isDialogElement,
@@ -101,6 +102,8 @@ export default class DOMManager extends ListWalker<Message> {
   private virtualMode = false;
   private hasSlots = false;
   private showVModeBadge?: () => void;
+  /** Subtree roots removed during the current batch; their descendants get forgotten after it. */
+  private removedRoots: VElement[] = [];
 
   constructor(params: {
     screen: Screen;
@@ -125,7 +128,9 @@ export default class DOMManager extends ListWalker<Message> {
     this.stylesManager = new StylesManager(params.screen, params.setCssLoading);
     this.virtualMode = params.virtualMode || false;
     this.showVModeBadge = params.showVModeBadge;
-    setupWindowLogging(this.vTexts, this.vElements, this.olVRoots);
+    if (isPlayerDebug()) {
+      setupWindowLogging(this.vTexts, this.vElements, this.olVRoots);
+    }
   }
 
   public clearSelectionManager() {
@@ -412,7 +417,7 @@ export default class DOMManager extends ListWalker<Message> {
         return;
       }
       case MType.CreateTextNode: {
-        const vText = new VText();
+        const vText = new VText(msg.id);
         this.vTexts.set(msg.id, vText);
         this.insertNode(msg);
         return;
@@ -473,6 +478,9 @@ export default class DOMManager extends ListWalker<Message> {
         vChild.parentNode.removeChild(vChild);
         this.vElements.delete(msg.id);
         this.vTexts.delete(msg.id);
+        if (vChild instanceof VElement) {
+          this.removedRoots.push(vChild);
+        }
         return;
       }
       case MType.SetNodeAttribute:
@@ -735,10 +743,10 @@ export default class DOMManager extends ListWalker<Message> {
         }
         olStyleSheet.whenReady((styleSheet) => {
           vRoot.onNode((node) => {
-            // @ts-ignore
-            node.adoptedStyleSheets = [...vRoot.node.adoptedStyleSheets].filter(
-              (s) => s !== styleSheet,
-            );
+            const anyNode = node as any;
+            anyNode.adoptedStyleSheets = [
+              ...(anyNode.adoptedStyleSheets || []),
+            ].filter((s) => s !== styleSheet);
           });
         });
         return;
@@ -888,8 +896,36 @@ export default class DOMManager extends ListWalker<Message> {
    * @returns Promise that fulfills when necessary changes get applied
    *   (the async part exists mostly due to styles loading)
    */
+  /**
+   * The tracker sends one RemoveNode per removed subtree root, so descendants
+   * would otherwise stay referenced until the next CreateDocument. Done after
+   * the batch: a descendant moved elsewhere in the same mutation is re-parented
+   * (no longer under the removed root) by then.
+   */
+  private forgetRemovedSubtrees() {
+    if (this.removedRoots.length === 0) return;
+    const stack: VElement[] = this.removedRoots.filter((r) => !r.parentNode);
+    this.removedRoots = [];
+    while (stack.length) {
+      const parent = stack.pop()!;
+      parent.getChildren().forEach((child) => {
+        if (child instanceof VElement) {
+          if (this.vElements.get(child.nodeId) === child) {
+            this.vElements.delete(child.nodeId);
+            this.pendingSelectValues.delete(child.nodeId);
+            this.dialogModes.delete(child.nodeId);
+          }
+          stack.push(child);
+        } else if (this.vTexts.get(child.nodeId) === child) {
+          this.vTexts.delete(child.nodeId);
+        }
+      });
+    }
+  }
+
   async moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage);
+    this.forgetRemovedSubtrees();
     this.olVRoots.forEach((rt) => rt.applyChanges());
     // applyChanges() mutates the DOM on a microtask; reconcile dialogs after it (macrotask).
     if (this.dialogModes.size > 0 && !this.dialogFlushScheduled) {

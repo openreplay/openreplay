@@ -1,14 +1,27 @@
 import styles from './cursor.module.css';
 import type { Point } from './types';
 
+const CLICK_MS = 600;
+const TIMER_CLICK_MS = 510;
+const SHAKE_MS = 500;
+
+// The individual `translate` property composes with the `transform` used by the
+// shake/touch animations, and moving it doesn't trigger layout like top/left does.
+const supportsTranslate =
+  typeof CSS !== 'undefined' &&
+  typeof CSS.supports === 'function' &&
+  CSS.supports('translate', '1px 1px');
+
 export default class Cursor {
   private readonly isMobile: boolean;
   private readonly cursor: HTMLDivElement;
   private tagElement: HTMLDivElement;
   private coords = { x: 0, y: 0 };
-  private isMoving = false;
   private onClick: () => void;
   private highlightCursor = false;
+  private clickTimeout?: ReturnType<typeof setTimeout>;
+  private clickClass: string | null = null;
+  private shakeTimeout?: ReturnType<typeof setTimeout>;
 
   constructor(overlay: HTMLDivElement, isMobile: boolean) {
     this.cursor = document.createElement('div');
@@ -56,11 +69,13 @@ export default class Cursor {
   }
 
   move({ x, y }: Point) {
-    this.isMoving = true;
-    this.cursor.style.left = `${x}px`;
-    this.cursor.style.top = `${y}px`;
+    if (supportsTranslate) {
+      this.cursor.style.setProperty('translate', `${x}px ${y}px`);
+    } else {
+      this.cursor.style.left = `${x}px`;
+      this.cursor.style.top = `${y}px`;
+    }
     this.coords = { x, y };
-    setTimeout(() => (this.isMoving = false), 60);
   }
 
   setDefaultStyle() {
@@ -70,10 +85,40 @@ export default class Cursor {
   }
 
   shake() {
-    this.cursor.classList.add(styles.shaking);
-    setTimeout(() => {
+    if (this.shakeTimeout) {
+      clearTimeout(this.shakeTimeout);
+    }
+    this.restartClass(styles.shaking);
+    this.shakeTimeout = setTimeout(() => {
       this.cursor.classList.remove(styles.shaking);
-    }, 500);
+      this.shakeTimeout = undefined;
+    }, SHAKE_MS);
+  }
+
+  /** Re-adding a class that is still present would not restart its animation. */
+  private restartClass(className: string) {
+    if (this.cursor.classList.contains(className)) {
+      this.cursor.classList.remove(className);
+      void this.cursor.offsetWidth;
+    }
+    this.cursor.classList.add(className);
+  }
+
+  private flashClickClass(className: string, duration: number) {
+    if (this.clickTimeout) {
+      clearTimeout(this.clickTimeout);
+      this.clickTimeout = undefined;
+    }
+    if (this.clickClass && this.clickClass !== className) {
+      this.cursor.classList.remove(this.clickClass);
+    }
+    this.clickClass = className;
+    this.restartClass(className);
+    this.clickTimeout = setTimeout(() => {
+      this.cursor.classList.remove(className);
+      this.clickClass = null;
+      this.clickTimeout = undefined;
+    }, duration);
   }
 
   click(showTimerRing = true) {
@@ -82,36 +127,16 @@ export default class Cursor {
       // In highlight mode the clicked element gets red brackets; the cursor ring
       // is only a fallback for when no element could be resolved.
       if (!showTimerRing) return;
-      const styleList = styles.timerClicked;
-      this.cursor.classList.add(styleList);
-      setTimeout(() => {
-        this.cursor.classList.remove(styleList);
-      }, 510);
+      this.flashClickClass(styles.timerClicked, TIMER_CLICK_MS);
       return;
     }
-    const styleList = styles.clicked;
-    this.cursor.classList.add(styleList);
+    this.flashClickClass(styles.clicked, CLICK_MS);
     this.onClick?.();
-    setTimeout(() => {
-      this.cursor.classList.remove(styleList);
-    }, 600);
   }
 
-  clickTimeout?: NodeJS.Timeout;
-
   mobileClick() {
-    const styleList = styles.mobileTouch;
-    if (this.clickTimeout) {
-      clearTimeout(this.clickTimeout);
-      this.cursor.classList.remove(styleList);
-      this.clickTimeout = undefined;
-    }
-    this.cursor.classList.add(styleList);
+    this.flashClickClass(styles.mobileTouch, CLICK_MS);
     this.onClick?.();
-    this.clickTimeout = setTimeout(() => {
-      this.cursor.classList.remove(styleList);
-      this.clickTimeout = undefined;
-    }, 600);
   }
 
   setOnClickHook(callback: () => void) {
@@ -127,4 +152,5 @@ export default class Cursor {
   get position(): Point {
     return this.coords;
   }
+
 }

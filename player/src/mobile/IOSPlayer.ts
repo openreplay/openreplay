@@ -27,6 +27,11 @@ export default class IOSPlayer extends Player {
 
   protected readonly messageLoader: MessageLoader;
 
+  /** Aborts frame/tar downloads when the player is cleaned. */
+  private readonly abortController = new AbortController();
+
+  private resizeListening = false;
+
   constructor(
     protected wpState: Store<any>,
     session: SessionFilesInfo,
@@ -53,22 +58,7 @@ export default class IOSPlayer extends Player {
     this.messageManager = messageManager;
     this.messageLoader = messageLoader;
 
-    if (session.mobileFrames) {
-      this.messageManager.snapshotManager
-        .loadFrames(session.mobileFrames, session.startedAt)
-        .then(() => {
-          this.wpState.update({ mode: PlayerMode.SNAPS });
-        })
-        .catch((e) => {
-          console.warn('Failed to load mobile frames, falling back to tar', e);
-          if (hasTar) {
-            return this.loadTar(session, messageLoader);
-          }
-          this.wpState.update({ mode: PlayerMode.SNAPS });
-        });
-    } else if (hasTar) {
-      this.loadTar(session, messageLoader);
-    }
+    void this.loadVisuals(session, hasTar);
     void messageLoader.loadFiles();
     const endTime = session.duration?.valueOf() || 0;
 
@@ -78,18 +68,45 @@ export default class IOSPlayer extends Player {
     });
   }
 
-  private loadTar(session: SessionFilesInfo, messageLoader: MessageLoader) {
-    messageLoader
-      .loadTarball(session.videoURL.find((url) => url.includes('.tar.'))!)
-      .then((files) => {
-        if (files) {
-          this.wpState.update({ mode: PlayerMode.SNAPS });
-          this.messageManager.snapshotManager.mapToSnapshots(files);
-        }
-      })
-      .catch(() => {
-        this.wpState.update({ mode: PlayerMode.VIDEO });
-      });
+  /** frames file → tar archive → mp4, whichever loads first */
+  private async loadVisuals(session: SessionFilesInfo, hasTar: boolean) {
+    const { signal } = this.abortController;
+    const snapshotManager = this.messageManager.snapshotManager;
+    // the API sends a list, older callers a single url
+    const framesUrl = ([] as string[]).concat(session.mobileFrames ?? [])[0];
+    const tarUrl = hasTar
+      ? session.videoURL.find((url) => url.includes('.tar.'))
+      : undefined;
+    const hasVideo = session.videoURL.some((url) => url.includes('.mp4'));
+
+    const attempts: Array<() => Promise<void>> = [];
+    if (framesUrl) {
+      attempts.push(() =>
+        snapshotManager.loadFrames(framesUrl, session.startedAt, signal),
+      );
+    }
+    if (tarUrl) {
+      attempts.push(() =>
+        snapshotManager.loadTar(tarUrl, session.startedAt, signal),
+      );
+    }
+    for (const attempt of attempts) {
+      try {
+        await attempt();
+        if (signal.aborted) return;
+        this.wpState.update({ mode: PlayerMode.SNAPS });
+        return;
+      } catch (e) {
+        if (signal.aborted) return;
+        console.warn('Failed to load mobile frames', e);
+      }
+    }
+    if (hasVideo) {
+      this.wpState.update({ mode: PlayerMode.VIDEO });
+    } else if (attempts.length) {
+      this.wpState.update({ mode: PlayerMode.SNAPS });
+      this.uiErrorHandler?.error('Could not load session screenshots');
+    }
   }
 
   attach = (parent: HTMLElement) => {
@@ -106,26 +123,23 @@ export default class IOSPlayer extends Player {
   }
 
   public updateLists(session: any) {
-    const exceptions = session.crashes.concat(session.errors || []);
+    // the events panel reads these very objects, so the rename stays in place
+    session.events?.forEach((e: Record<string, any>) => {
+      if (e.name === 'Click') e.name = 'Touch';
+    });
+    const exceptions = (session.crashes || []).concat(session.errors || []);
     const lists = {
-      event:
-        session.events.map((e: Record<string, any>) => {
-          if (e.name === 'Click') e.name = 'Touch';
-          return e;
-        }) || [],
       frustrations: session.frustrations || [],
-      stack: session.stackEvents || [],
-      exceptions:
-        exceptions.map(({ name, ...rest }: any) =>
-          Log({
-            level: LogLevel.ERROR,
-            value: name,
-            name,
-            message: rest.reason,
-            errorId: rest.crashId || rest.errorId,
-            ...rest,
-          }),
-        ) || [],
+      exceptions: exceptions.map(({ name, ...rest }: any) =>
+        Log({
+          level: LogLevel.ERROR,
+          value: name,
+          name,
+          message: rest.reason,
+          errorId: rest.crashId || rest.errorId,
+          ...rest,
+        }),
+      ),
     };
 
     return this.messageManager.updateLists(lists);
@@ -139,13 +153,14 @@ export default class IOSPlayer extends Player {
     this.screen.addToBody(player);
     this.screen.addMobileStyles(stableTop);
 
-    window.addEventListener('resize', () =>
-      this.customScale(
-        this.customConstrains.width,
-        this.customConstrains.height,
-      ),
-    );
+    if (!this.resizeListening) {
+      this.resizeListening = true;
+      window.addEventListener('resize', this.onWindowResize);
+    }
   };
+
+  private onWindowResize = () =>
+    this.customScale(this.customConstrains.width, this.customConstrains.height);
 
   scale = () => {
     // const { width, height } = this.wpState.get()
@@ -175,14 +190,16 @@ export default class IOSPlayer extends Player {
     }
   };
 
-  clean = () => {
+  clean() {
+    this.abortController.abort();
+    window.removeEventListener('resize', this.onWindowResize);
+    this.resizeListening = false;
+    this.messageLoader.clean();
     super.clean();
     this.screen?.clean();
     // @ts-ignore
     this.screen = undefined;
-    this.messageLoader.clean();
     // @ts-ignore
     this.messageManager = undefined;
-    window.removeEventListener('resize', this.scale);
-  };
+  }
 }

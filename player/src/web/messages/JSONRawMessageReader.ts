@@ -16,21 +16,30 @@ function legacyTranslate(msg: any): RawMessage | null {
 }
 
 export default class JSONRawMessageReader {
+  /** Read position; shift() would copy large snapshot batches on every message */
+  private p = 0;
+
   constructor(private messages: TrackerMessage[] = []) {}
 
   append(messages: TrackerMessage[]) {
-    this.messages = this.messages.concat(messages);
+    this.messages =
+      this.p >= this.messages.length
+        ? messages
+        : this.messages.slice(this.p).concat(messages);
+    this.p = 0;
   }
 
   readMessage(): RawMessage | null {
-    const msg = this.messages.shift();
-    if (!msg) {
-      return null;
+    while (this.p < this.messages.length) {
+      const msg = this.messages[this.p++];
+      if (!msg) {
+        continue;
+      }
+      const rawMsg = Array.isArray(msg) ? translate(msg) : legacyTranslate(msg);
+      if (rawMsg) {
+        return rewriteMessage(rawMsg);
+      }
     }
-    const rawMsg = Array.isArray(msg) ? translate(msg) : legacyTranslate(msg);
-    if (!rawMsg) {
-      return this.readMessage();
-    }
-    return rewriteMessage(rawMsg);
+    return null;
   }
 }

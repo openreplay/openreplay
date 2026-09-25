@@ -26,6 +26,10 @@ import type { SkipInterval } from './managers/ActivityManager';
 
 import HookManager from './managers/HookManager';
 import ConnectionManager from './managers/ConnectionManager';
+import { parseSanitizedSvg } from './managers/DOM/sanitize';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const SPRITE_MARKER = '_$OPENREPLAY_SPRITE$_';
 
 interface RawList {
   event: Record<string, any>[] & { tabId: string | null };
@@ -97,6 +101,13 @@ export const userOnlyChanges = [
   MType.SetViewportScroll,
 ];
 
+const visualChangesSet = new Set<number>(visualChanges);
+const HOOK_TYPES = [
+  { tp: MType.SetPageLocation, name: 'LOCATION', attrKey: 'url' },
+  { tp: MType.SetPageLocationDeprecated, name: 'LOCATION', attrKey: 'url' },
+];
+const userOnlyChangesSet = new Set<number>(userOnlyChanges);
+
 export default class MessageManager {
   static INITIAL_STATE: State = {
     ...SCREEN_INITIAL_STATE,
@@ -142,6 +153,10 @@ export default class MessageManager {
 
   private hookManager = new HookManager();
   public messageTabSourceManager = new MessageTabSourceManager();
+  private lastMessageTimeScheduled = false;
+  /** All session files are in (or loading failed): stop guessing whether more data is coming. */
+  private allFilesLoaded = false;
+  private loadingByHeuristic = false;
 
   constructor(
     private session: SessionFilesInfo,
@@ -167,10 +182,7 @@ export default class MessageManager {
       this.ignoreDomOnInactivity = true;
     }
 
-    this.hookManager.setTypes([
-      { tp: MType.SetPageLocation, name: 'LOCATION', attrKey: 'url' },
-      { tp: MType.SetPageLocationDeprecated, name: 'LOCATION', attrKey: 'url' },
-    ]);
+    this.hookManager.setTypes(HOOK_TYPES);
   }
 
   private virtualMode = false;
@@ -180,11 +192,8 @@ export default class MessageManager {
   };
 
   public getListsFullState = () => {
-    const fullState: Record<string, any> = {};
-    for (const tab in Object.keys(this.tabs)) {
-      fullState[tab] = this.tabs[tab].getListsFullState();
-    }
-    return Object.values(this.tabs)[0].getListsFullState();
+    const firstTab = Object.values(this.tabs)[0];
+    return firstTab ? firstTab.getListsFullState() : {};
   };
 
   public injectSpriteMap = (spriteEl: SVGElement) => {
@@ -201,22 +210,12 @@ export default class MessageManager {
   };
 
   public updateLists(lists: RawList) {
-    Object.keys(this.tabs).forEach((tab) => {
-      this.tabs[tab]!.updateLists(lists);
-      // once upon a time we wanted to insert events for each tab individually
-      // but then evil magician came and said "no, you don't want to do that"
-      // because it was bad for database size
-      // const list = {
-      //   event: lists.event.filter((e) => e.tabId === tab),
-      //   frustrations: lists.frustrations.filter((e) => e.tabId === tab),
-      //   stack: lists.stack.filter((e) => e.tabId === tab),
-      //   exceptions: lists.exceptions.filter((e) => e.tabId === tab),
-      // };
-      // // saving some microseconds here probably
-      // if (Object.values(list).some((l) => l.length > 0)) {
-      //   this.tabs[tab]!.updateLists(list);
-      // }
+    // session-level lists are shared by every tab (stored once per session in the db)
+    let eventCount = 0;
+    Object.values(this.tabs).forEach((tab) => {
+      eventCount = Math.max(eventCount, tab.updateLists(lists));
     });
+    this.state.update({ eventCount });
   }
 
   /**
@@ -230,6 +229,7 @@ export default class MessageManager {
   private waitingForFiles: boolean = false;
 
   public onFileReadSuccess = () => {
+    this.markAllFilesLoaded();
     if (this.activityManager) {
       this.activityManager.end();
       this.state.update({ skipIntervals: this.activityManager.list });
@@ -247,6 +247,7 @@ export default class MessageManager {
   };
 
   public onFileReadFailed = (...e: any[]) => {
+    this.markAllFilesLoaded();
     logger.error(e);
     this.state.update({ error: true });
     this.uiErrorHandler?.error('Error requesting a session file');
@@ -284,20 +285,37 @@ export default class MessageManager {
       });
   };
 
+  private markAllFilesLoaded() {
+    this.allFilesLoaded = true;
+    if (this.loadingByHeuristic) {
+      this.loadingByHeuristic = false;
+      this.setMessagesLoading(false);
+    }
+  }
+
   public startLoading = () => {
     this.waitingForFiles = true;
+    this.allFilesLoaded = false;
     this.state.update({ messagesProcessed: false });
     this.setMessagesLoading(true);
   };
 
+  /** Full reset of every message-derived manager (live time travel re-feeds the whole session). */
   resetMessageManagers() {
     this.clickManager = new ListWalker();
+    this.mouseThrashingManager = new ListWalker();
     this.lastSelectClickTime = -1;
     this.screen.selectMenu.hide();
+    this.mouseMoveManager.destroy();
     this.mouseMoveManager = new MouseMoveManager(this.screen);
     this.activityManager = new ActivityManager(this.session.durationMs);
     this.activeTabManager = new ActiveTabManager();
+    this.tabCloseManager = new TabClosingManager();
+    this.hookManager = new HookManager();
+    this.hookManager.setTypes(HOOK_TYPES);
     this.connectionInfoManger.reset();
+    this.tabChangeEvents = [];
+    this.lastT = 0;
 
     Object.values(this.tabs).forEach((tab) => tab.resetMessageManagers());
   }
@@ -313,92 +331,98 @@ export default class MessageManager {
         (tab) => tab.firstMessageTs > t,
       );
       inactive.forEach((tab) => tab.resetToStart());
+      this.mouseMoveManager.clearTrail();
+      this.lastSelectClickTime = -1;
     }
-    this.activeTabManager.moveReady(t).then(async (tabId) => {
-      const newState: Record<string, any> = {};
-      const closeMessage = await this.tabCloseManager.moveReady(t);
-      if (closeMessage) {
-        const { closedTabs } = this.tabCloseManager;
-        if (closedTabs.size === this.tabsAmount) {
-          if (this.session.durationMs - t < 250) {
-            newState['closedTabs'] = Array.from(closedTabs);
-          }
-        } else {
+    const tabId = this.activeTabManager.moveReady(t);
+    const newState: Record<string, any> = {};
+    const closeMessage = this.tabCloseManager.moveReady(t);
+    if (closeMessage) {
+      const { closedTabs } = this.tabCloseManager;
+      if (closedTabs.size === this.tabsAmount) {
+        if (this.session.durationMs - t < 250) {
           newState['closedTabs'] = Array.from(closedTabs);
         }
-      }
-      // Moving mouse and setting :hover classes on ready view
-      this.mouseMoveManager.move(t);
-      const lastClick = this.clickManager.moveGetLast(t);
-      // getting clicks happened during last 600ms
-      if (!!lastClick && t - lastClick.time < 600) {
-        const highlight = this.screen.cursor.highlightMode;
-        // Fire once per click: a native <select> picker can't be reopened during
-        // replay (needs a user gesture), so approximate it with a synthetic list.
-        if (lastClick.time !== this.lastSelectClickTime) {
-          this.lastSelectClickTime = lastClick.time;
-          const clickedNode = this.getNode(lastClick.id)?.node;
-          this.screen.showSelectMenu(clickedNode);
-          if (highlight) {
-            const target =
-              this.screen.getElementFromInternalPoint(
-                this.screen.cursor.position,
-              ) ?? clickedNode;
-            this.highlightClickHasTarget = !!target;
-            this.screen.highlightClick(target);
-            // Hold the replay briefly so the highlighted click is unmistakable.
-            this.onClickPause?.(750);
-          }
-        }
-        // In highlight mode the brackets mark the click, so the cursor ring is
-        // only drawn as a fallback when no element could be resolved.
-        this.screen.cursor.click(!highlight || !this.highlightClickHasTarget);
-      }
-      const lastThrashing = this.mouseThrashingManager.moveGetLast(t);
-      if (!!lastThrashing && t - lastThrashing.time < 300) {
-        this.screen.cursor.shake();
-      }
-      if (!this.activeTab) {
-        this.activeTab =
-          this.state.get().currentTab ?? Object.keys(this.tabs)[0];
-      }
-
-      const connectionQuality = this.connectionInfoManger.moveReady(t);
-      if (connectionQuality) {
-        newState['connectionQuality'] = connectionQuality;
-      }
-      if (tabId) {
-        if (this.activeTab !== tabId) {
-          newState['currentTab'] = tabId;
-          this.activeTab = tabId;
-          this.tabs[this.activeTab].clean();
-        }
-        const activeTabs = this.state.get().tabs;
-        if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
-          newState['tabs'] = this.activeTabManager.tabInstances;
-        }
-      }
-      this.state.update(newState);
-      if (this.tabs[this.activeTab]) {
-        this.tabs[this.activeTab].move(t);
       } else {
-        // should we add ui error here?
-        console.error(
-          'missing tab state',
-          this.tabs,
-          this.activeTab,
-          tabId,
-          this.activeTabManager.list,
-        );
+        newState['closedTabs'] = Array.from(closedTabs);
       }
-    });
-    void this.hookManager.moveReady(t);
-    if (
-      this.waitingForFiles ||
-      // first file is 15 secs usually, everything else means last msg was before reported session duration
-      (this.lastMessageTime <= t && t < this.session.durationMs) && t < 15000
-    ) {
-      this.setMessagesLoading(true);
+    }
+    // Moving mouse and setting :hover classes on ready view
+    this.mouseMoveManager.move(t);
+    const lastClick = this.clickManager.moveGetLast(t);
+    // getting clicks happened during last 600ms
+    if (!!lastClick && t - lastClick.time < 600) {
+      const highlight = this.screen.cursor.highlightMode;
+      // Fire once per click: a native <select> picker can't be reopened during
+      // replay (needs a user gesture), so approximate it with a synthetic list.
+      if (lastClick.time !== this.lastSelectClickTime) {
+        this.lastSelectClickTime = lastClick.time;
+        const clickedNode = this.getNode(lastClick.id)?.node;
+        this.screen.showSelectMenu(clickedNode);
+        if (highlight) {
+          const target =
+            this.screen.getElementFromInternalPoint(
+              this.screen.cursor.position,
+            ) ?? clickedNode;
+          this.highlightClickHasTarget = !!target;
+          this.screen.highlightClick(target);
+          // Hold the replay briefly so the highlighted click is unmistakable.
+          this.onClickPause?.(750);
+        }
+      }
+      // In highlight mode the brackets mark the click, so the cursor ring is
+      // only drawn as a fallback when no element could be resolved.
+      this.screen.cursor.click(!highlight || !this.highlightClickHasTarget);
+    }
+    const lastThrashing = this.mouseThrashingManager.moveGetLast(t);
+    if (!!lastThrashing && t - lastThrashing.time < 300) {
+      this.screen.cursor.shake();
+    }
+    if (!this.activeTab) {
+      this.activeTab =
+        this.state.get().currentTab || Object.keys(this.tabs)[0];
+    }
+
+    const connectionQuality = this.connectionInfoManger.moveReady(t);
+    if (connectionQuality !== null) {
+      newState['connectionQuality'] = connectionQuality;
+    }
+    if (tabId) {
+      if (this.activeTab !== tabId) {
+        newState['currentTab'] = tabId;
+        this.activeTab = tabId;
+        this.tabs[this.activeTab].clean();
+      }
+      const activeTabs = this.state.get().tabs;
+      if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
+        newState['tabs'] = this.activeTabManager.tabInstances;
+      }
+    }
+    if (Object.keys(newState).length > 0) {
+      this.state.update(newState);
+    }
+    if (this.tabs[this.activeTab]) {
+      this.tabs[this.activeTab].move(t);
+    } else {
+      console.error('missing tab state', this.activeTab, tabId);
+    }
+    this.hookManager.moveReady(t);
+
+    // first file is 15 secs usually; being past the last loaded message while
+    // the rest is still downloading means we should wait for it
+    const waitingForData =
+      !this.allFilesLoaded &&
+      this.lastMessageTime <= t &&
+      t < this.session.durationMs &&
+      t < 15000;
+    if (this.waitingForFiles || waitingForData) {
+      this.loadingByHeuristic = !this.waitingForFiles;
+      if (!this.state.get().messagesLoading) {
+        this.setMessagesLoading(true);
+      }
+    } else if (this.loadingByHeuristic) {
+      this.loadingByHeuristic = false;
+      this.setMessagesLoading(false);
     }
   }
 
@@ -422,41 +446,76 @@ export default class MessageManager {
     this.state.update({ tabChangeEvents: this.tabChangeEvents });
   }
 
+  /**
+   * Symbols rebuilt from sprite messages. Lives in an inert XML document: recorded
+   * markup must never be parsed into the (live) player document.
+   */
   spriteMapSvg: SVGElement | null = null;
-  potentialSpriteMap: Record<string, any> = {};
-  domParser: DOMParser | null = null;
-  createSpriteMap = () => {
+  private spriteIds: Record<string, string> = {};
+  private spriteCounter = 0;
+
+  private createSpriteMap(): SVGElement {
     if (!this.spriteMapSvg) {
-      this.domParser = new DOMParser();
-      this.spriteMapSvg = document.createElementNS(
-        'http://www.w3.org/2000/svg',
+      const spriteDoc = document.implementation.createDocument(
+        SVG_NS,
         'svg',
+        null,
       );
+      this.spriteMapSvg = spriteDoc.documentElement as unknown as SVGElement;
       this.spriteMapSvg.setAttribute('style', 'display: none;');
       this.spriteMapSvg.setAttribute('id', 'reconstructed-sprite');
     }
+    return this.spriteMapSvg;
+  }
+
+  /** Rewrites a sprite attribute to `#<symbol id>` and stores the sanitized symbol. */
+  private handleSprite(msg: { value: string }) {
+    const svgData = msg.value.split(SPRITE_MARKER)[1] ?? '';
+    const knownId = this.spriteIds[svgData];
+    if (knownId) {
+      msg.value = knownId;
+      return;
+    }
+    const svg = parseSanitizedSvg(svgData);
+    if (!svg) {
+      return;
+    }
+    const spriteMap = this.createSpriteMap();
+    const symbol = spriteMap.ownerDocument.createElementNS(SVG_NS, 'symbol');
+    // node ids restart on every page, so they can't identify a symbol
+    const symbolId = `__or_sprite_${++this.spriteCounter}`;
+    symbol.setAttribute('id', symbolId);
+    symbol.setAttribute('viewBox', svg.getAttribute('viewBox') || '0 0 24 24');
+    while (svg.firstChild) {
+      symbol.appendChild(svg.firstChild);
+    }
+    spriteMap.appendChild(symbol);
+    msg.value = `#${symbolId}`;
+    this.spriteIds[svgData] = msg.value;
+  }
+
+  private publishLastMessageTime = () => {
+    this.lastMessageTimeScheduled = false;
+    this.state.update({ lastMessageTime: this.lastMessageTime });
   };
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
-    const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
-    this.lastMessageTime = lastMessageTime;
-    this.state.update({ lastMessageTime });
+    if (msg.time > this.lastMessageTime) {
+      this.lastMessageTime = msg.time;
+      // one store update per distributed batch instead of one per message
+      if (!this.lastMessageTimeScheduled) {
+        this.lastMessageTimeScheduled = true;
+        queueMicrotask(this.publishLastMessageTime);
+      }
+    }
     // @ts-ignore placeholder msg for timestamps
     if (msg.tp === 9999) return;
     this.hookManager.append(msg);
-    if (msg.tp === MType.SetNodeAttribute) {
-      if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
-        this.createSpriteMap();
-        if (!this.domParser) {
-          return console.error('DOM parser is not initialized?');
-        }
-        handleSprites(
-          this.potentialSpriteMap,
-          this.domParser,
-          msg,
-          this.spriteMapSvg!,
-        );
-      }
+    if (
+      msg.tp === MType.SetNodeAttribute &&
+      msg.value.includes(SPRITE_MARKER)
+    ) {
+      this.handleSprite(msg);
     }
     if (!this.tabs[msg.tabId]) {
       this.tabsAmount++;
@@ -481,9 +540,9 @@ export default class MessageManager {
     }
 
     const activityMessages = this.ignoreDomOnInactivity
-      ? userOnlyChanges
-      : visualChanges;
-    if (activityMessages.includes(msg.tp)) {
+      ? userOnlyChangesSet
+      : visualChangesSet;
+    if (activityMessages.has(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
@@ -563,8 +622,9 @@ export default class MessageManager {
     this.state.update({ width, height });
   }
 
-  // TODO: clean managers?
   clean() {
+    this.mouseMoveManager.destroy();
+    Object.values(this.tabs).forEach((tab) => tab.destroy());
     this.state.update(MessageManager.INITIAL_STATE);
   }
 }
@@ -577,37 +637,4 @@ function mapTabs(tabs: Record<string, TabSessionManager>) {
   });
 
   return tabMap;
-}
-
-function handleSprites(
-  potentialSpriteMap: Record<string, any>,
-  parser: DOMParser,
-  msg: Record<string, any>,
-  spriteMapSvg: SVGElement,
-) {
-  const [_, svgData] = msg.value.split('_$OPENREPLAY_SPRITE$_');
-  const potentialSprite = potentialSpriteMap[svgData];
-  if (potentialSprite) {
-    msg.value = potentialSprite;
-  } else {
-    const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
-    const originalSvg = svgDoc.querySelector('svg');
-    if (originalSvg) {
-      const symbol = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'symbol',
-      );
-      const symbolId = `symbol-${msg.id || `ind-${msg.time}`}`; // Generate an ID if missing
-      symbol.setAttribute('id', symbolId);
-      symbol.setAttribute(
-        'viewBox',
-        originalSvg.getAttribute('viewBox') || '0 0 24 24',
-      );
-      symbol.innerHTML = originalSvg.innerHTML;
-
-      spriteMapSvg.appendChild(symbol);
-      msg.value = `#${symbolId}`;
-      potentialSpriteMap[svgData] = `#${symbolId}`;
-    }
-  }
 }

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import ExCard from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/ExCard';
-import heatmapRenderer from 'Player/web/addons/simpleHeatmap';
+import SimpleHeatmap from 'Player/web/addons/simpleHeatmap';
 
 interface Props {
   title: string;
@@ -39,6 +39,7 @@ function HeatmapsExample(props: Props) {
       heatmapData.push([...data, times]);
     }
 
+    const heatmapRenderer = new SimpleHeatmap();
     heatmapRenderer
       .setCanvas(canvasRef?.current!)
       .setData(heatmapData)
@@ -46,6 +47,7 @@ function HeatmapsExample(props: Props) {
       .setMax(maxIntensity)
       .resize()
       .draw();
+    return () => heatmapRenderer.destroy();
   }, []);
 
   // const data = {};

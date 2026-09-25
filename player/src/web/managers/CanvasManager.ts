@@ -9,9 +9,14 @@ const playMode = {
   snaps: 'snaps',
 } as const;
 
+type PlayMode = (typeof playMode)[keyof typeof playMode];
+
 const FRAMES_MISSING = 'FRAMES_404';
 const TAR_MISSING = 'TAR_404';
 const MP4_MISSING = 'MP4_404';
+
+/** Video frames are refreshed at most this often (ms of replay time). */
+const VIDEO_FRAME_STEP = 100;
 
 type Timestamp = { time: number };
 
@@ -24,11 +29,22 @@ export default class CanvasManager extends ListWalker<Timestamp> {
 
   private lastTs = 0;
 
-  private playMode: string = playMode.snaps;
+  private playMode: PlayMode = playMode.snaps;
 
   private snapshots: Record<number, TarFile | FrameSnapshot> = {};
 
   private debugCanvas: HTMLCanvasElement | undefined;
+
+  private readonly abortController = new AbortController();
+
+  private destroyed = false;
+
+  private started = false;
+
+  /** Latest requested video position (s); seeks are coalesced towards it. */
+  private targetTime: number | null = null;
+
+  private seekingTo: number | null = null;
 
   constructor(
     /**
@@ -61,6 +77,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         throw e;
       })
       .catch((e) => {
+        if (this.destroyed) return;
         if (e === MP4_MISSING) {
           console.error(`No canvas recording found for node ${this.nodeId}`);
         } else {
@@ -92,9 +109,14 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       this.debugCanvas = debugCanvas;
       debugContainer.appendChild(debugCanvas);
     }
+
+    this.videoTag.addEventListener('loadedmetadata', this.onVideoReady);
+    this.videoTag.addEventListener('seeked', this.onSeeked);
+    this.videoTag.addEventListener('error', this.onVideoError);
   }
 
   public mapToSnapshots(files: TarFile[]) {
+    if (this.destroyed || !files.length) return;
     const tempArr: Timestamp[] = [];
     const filenameRegexp = /(\d+)_(\d+)_(\d+)\.(jpeg|png|avif|webp)$/;
     const firstPair = files[0].name.match(filenameRegexp);
@@ -121,6 +143,10 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       });
   }
 
+  private fetchFile(url: string) {
+    return fetch(url, { signal: this.abortController.signal });
+  }
+
   loadFrames = async () => {
     if (!this.links[2]) {
       return Promise.reject(FRAMES_MISSING);
@@ -128,7 +154,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     // webp, jpeg, png, avif
     const fileFormat =
       /\.(webp|jpeg|png|avif)$/.exec(this.links[2])?.[1] ?? 'webp';
-    return fetch(this.links[2])
+    return this.fetchFile(this.links[2])
       .then((r) => {
         if (r.status === 200) {
           return r.arrayBuffer();
@@ -136,6 +162,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         return Promise.reject(FRAMES_MISSING);
       })
       .then((zstdBuf) => {
+        if (this.destroyed) return;
         const buf = unpack(new Uint8Array(zstdBuf));
         const { snapshots, timestamps } = parseFrames(
           buf,
@@ -152,7 +179,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     if (!this.links[0]) {
       return Promise.reject(TAR_MISSING);
     }
-    return fetch(this.links[0])
+    return this.fetchFile(this.links[0])
       .then((r) => {
         if (r.status === 200) {
           return r.arrayBuffer();
@@ -160,6 +187,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         return Promise.reject(TAR_MISSING);
       })
       .then((buf) => {
+        if (this.destroyed) return [];
         const tar = unpack(new Uint8Array(buf));
         this.playMode = playMode.snaps;
         return unpackTar(tar);
@@ -170,7 +198,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     if (!this.links[1]) {
       return Promise.reject(MP4_MISSING);
     }
-    return fetch(this.links[1])
+    return this.fetchFile(this.links[1])
       .then((r) => {
         if (r.status === 200) {
           return r.blob();
@@ -178,49 +206,55 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         return Promise.reject(MP4_MISSING);
       })
       .then((blob) => {
+        if (this.destroyed) return;
         this.playMode = playMode.video;
         this.fileData = URL.createObjectURL(blob);
+        // playback may have reached the canvas while the frames/tar lookups were still failing
+        if (this.started) {
+          this.attachVideo();
+        }
       });
   };
 
+  /** Idempotent: called when playback reaches the canvas node (again after a rewind). */
   startVideo = () => {
+    if (this.destroyed) return;
+    this.started = true;
     if (this.playMode === playMode.snaps) {
       this.snapImage.onload = () => {
-        const node = this.getNode(parseInt(this.nodeId, 10));
-        if (node && node.node) {
-          const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
-          const canvasEl = node.node as HTMLVideoElement;
-          if (!this.useCssPaint) {
-            requestAnimationFrame(() => {
-              canvasCtx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
-              canvasCtx?.drawImage(
-                this.snapImage,
-                0,
-                0,
-                canvasEl.width,
-                canvasEl.height,
-              );
-            });
-          }
-          this.debugCanvas
-            ?.getContext('2d')
-            ?.drawImage(this.snapImage, 0, 0, 300, 200);
-        } else {
-          console.error(`CanvasManager: Node ${this.nodeId} not found`);
+        const canvasEl = this.getCanvas();
+        if (!canvasEl) return;
+        if (!this.useCssPaint) {
+          const canvasCtx = canvasEl.getContext('2d');
+          canvasCtx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
+          canvasCtx?.drawImage(
+            this.snapImage,
+            0,
+            0,
+            canvasEl.width,
+            canvasEl.height,
+          );
         }
+        this.debugCanvas
+          ?.getContext('2d')
+          ?.drawImage(this.snapImage, 0, 0, 300, 200);
       };
     } else {
-      if (!this.fileData) return;
-      this.videoTag.setAttribute('autoplay', 'true');
-      this.videoTag.setAttribute('muted', 'true');
-      this.videoTag.setAttribute('playsinline', 'true');
-      this.videoTag.setAttribute('crossorigin', 'anonymous');
-      this.videoTag.src = this.fileData;
-      this.videoTag.currentTime = 0;
+      this.attachVideo();
     }
   };
 
+  private attachVideo() {
+    if (!this.fileData || this.videoTag.getAttribute('src')) return;
+    this.videoTag.muted = true;
+    this.videoTag.playsInline = true;
+    this.videoTag.preload = 'auto';
+    this.videoTag.crossOrigin = 'anonymous';
+    this.videoTag.src = this.fileData;
+  }
+
   move(t: number) {
+    if (this.destroyed) return;
     if (this.playMode === playMode.video) {
       this.moveReadyVideo(t);
     } else {
@@ -228,54 +262,99 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     }
   }
 
+  /** Rewind support: forget the playback position so the next move repaints. */
+  reset(): void {
+    super.reset();
+    this.prevTs = 0;
+    this.lastTs = 0;
+    this.targetTime = null;
+  }
+
   moveReadyVideo = (t: number) => {
-    if (Math.abs(t - this.lastTs) < 100) return;
+    if (Math.abs(t - this.lastTs) < VIDEO_FRAME_STEP) return;
     this.lastTs = t;
     const playTime = t - this.delta;
-    if (playTime > 0) {
-      const node = this.getNode(parseInt(this.nodeId, 10));
-      if (node && node.node) {
-        const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
-        const canvasEl = node.node as HTMLVideoElement;
-        if (!this.videoTag.paused) {
-          void this.videoTag.pause();
-        }
-        this.videoTag.currentTime = playTime / 1000;
-        canvasCtx?.drawImage(
-          this.videoTag,
-          0,
-          0,
-          canvasEl.width,
-          canvasEl.height,
-        );
-        if (this.useCssPaint) {
-          // Unlike the snapshot modes there is no per-frame image to hand to
-          // paintFrame, so re-encode what was just drawn. Throttled to ~10fps by
-          // the 100ms guard above. Quality is high because this is a second
-          // lossy pass over already-lossy video frames; at these sizes the cost
-          // over 0.8 is ~20% more bytes, which never touch the network.
-          // The bitmap cannot be tainted (the video plays a same-origin blob
-          // URL), so toBlob will not fail on security grounds.
-          (node.node as HTMLCanvasElement).toBlob(
-            (blob) => {
-              if (!blob) return;
-              const url = URL.createObjectURL(blob);
-              this.paintFrame(url);
-              this.retainFrame(url);
-            },
-            'image/webp',
-            0.95,
-          );
-        }
-      } else {
-        console.error(`VideoMode CanvasManager: Node ${this.nodeId} not found`);
-      }
+    if (playTime <= 0 || !this.getCanvas()) return;
+    if (!this.videoTag.paused) {
+      this.videoTag.pause();
+    }
+    this.requestVideoFrame(playTime / 1000);
+  };
+
+  // Seeking is async: drawing right after setting currentTime paints the previous frame.
+  private requestVideoFrame(sec: number) {
+    const video = this.videoTag;
+    const duration = video.duration;
+    this.targetTime = Number.isFinite(duration)
+      ? Math.min(sec, duration)
+      : sec;
+    if (video.readyState < HTMLMediaElement.HAVE_METADATA) return; // onVideoReady picks it up
+    if (this.seekingTo !== null) return; // onSeeked continues to the latest target
+    this.seekingTo = this.targetTime;
+    video.currentTime = this.targetTime;
+  }
+
+  private onVideoReady = () => {
+    if (this.targetTime !== null && this.seekingTo === null) {
+      this.requestVideoFrame(this.targetTime);
     }
   };
+
+  private onSeeked = () => {
+    const reached = this.seekingTo;
+    this.seekingTo = null;
+    if (this.destroyed) return;
+    if (this.targetTime !== null && this.targetTime !== reached) {
+      this.requestVideoFrame(this.targetTime);
+      return;
+    }
+    this.drawVideoFrame();
+  };
+
+  private onVideoError = () => {
+    this.seekingTo = null;
+  };
+
+  private drawVideoFrame() {
+    const canvasEl = this.getCanvas();
+    if (!canvasEl) return;
+    const canvasCtx = canvasEl.getContext('2d');
+    canvasCtx?.drawImage(this.videoTag, 0, 0, canvasEl.width, canvasEl.height);
+    if (this.useCssPaint) {
+      // Unlike the snapshot modes there is no per-frame image to hand to
+      // paintFrame, so re-encode what was just drawn. Quality is high because
+      // this is a second lossy pass over already-lossy video frames.
+      // The bitmap cannot be tainted (the video plays a same-origin blob
+      // URL), so toBlob will not fail on security grounds.
+      canvasEl.toBlob(
+        (blob) => {
+          if (!blob || this.destroyed) return;
+          const url = URL.createObjectURL(blob);
+          this.paintFrame(url);
+          this.retainFrame(url);
+        },
+        'image/webp',
+        0.95,
+      );
+    }
+  }
 
   previousBlob: string = '';
 
   private warnedMissingNode = false;
+
+  private getCanvas(): HTMLCanvasElement | undefined {
+    const canvasEl = this.getNode(parseInt(this.nodeId, 10))?.node as
+      | HTMLCanvasElement
+      | undefined;
+    if (!canvasEl && !this.warnedMissingNode) {
+      // Once per manager: frames keep arriving, and a node that is merely late
+      // (or whose page is gone) would otherwise flood the console.
+      this.warnedMissingNode = true;
+      console.error(`CanvasManager: Node ${this.nodeId} not found`);
+    }
+    return canvasEl;
+  }
 
   /**
    * Render the current frame as the canvas element's CSS background.
@@ -292,18 +371,8 @@ export default class CanvasManager extends ListWalker<Timestamp> {
    * be visible, and doing both would decode every frame twice.
    */
   private paintFrame = (blobUrl: string) => {
-    const canvasEl = this.getNode(parseInt(this.nodeId, 10))?.node as
-      | HTMLCanvasElement
-      | undefined;
-    if (!canvasEl) {
-      // Once per manager: frames keep arriving, and a node that is merely late
-      // would otherwise flood the console.
-      if (!this.warnedMissingNode) {
-        this.warnedMissingNode = true;
-        console.error(`CanvasManager: Node ${this.nodeId} not found`);
-      }
-      return;
-    }
+    const canvasEl = this.getCanvas();
+    if (!canvasEl) return;
     Object.assign(canvasEl.style, {
       backgroundImage: `url("${blobUrl}")`,
       backgroundSize: '100% 100%',
@@ -342,15 +411,41 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       }
     }
   };
-}
 
-function saveImageData(imageDataUrl: string, name: string) {
-  const link = document.createElement('a');
-  link.href = imageDataUrl;
-  link.download = name;
-  link.style.display = 'none';
+  destroy() {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.abortController.abort();
 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    const video = this.videoTag;
+    video.removeEventListener('loadedmetadata', this.onVideoReady);
+    video.removeEventListener('seeked', this.onSeeked);
+    video.removeEventListener('error', this.onVideoError);
+    if (video.getAttribute('src')) {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+    }
+    this.snapImage.onload = null;
+    this.snapImage.removeAttribute('src');
+
+    if (this.fileData) {
+      URL.revokeObjectURL(this.fileData);
+      this.fileData = undefined;
+    }
+    if (this.previousBlob) {
+      URL.revokeObjectURL(this.previousBlob);
+      this.previousBlob = '';
+    }
+    this.snapshots = {};
+    this.targetTime = null;
+    this.seekingTo = null;
+
+    const debugContainer = this.debugCanvas?.parentElement;
+    this.debugCanvas?.remove();
+    this.debugCanvas = undefined;
+    if (debugContainer && !debugContainer.childElementCount) {
+      debugContainer.remove();
+    }
+  }
 }

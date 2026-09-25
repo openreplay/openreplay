@@ -53,13 +53,7 @@ export default class TrackerReader {
 
       messages.push(msg);
     }
-    if (this.reader.hasReadAll()) {
-      console.log(
-        'has read all bytes',
-        this.reader.getBufferSize(),
-        this.reader.batchMetaMessages,
-      );
-    }
+    this.reader.releaseConsumed();
     return messages;
   }
 }

@@ -9,9 +9,14 @@ const loadFilesMock = jest.fn(async () => {});
 
 jest.mock('../../../player/src/web/network/loadFiles', () => ({
   __esModule: true,
+  NO_URLS: 'No-urls-provided',
+  isAbortError: (e: any) => e?.name === 'AbortError',
   loadFiles: jest.fn(async () => {}),
   requestTarball: jest.fn(),
   requestEFSDom: jest.fn(),
+  requestSecondEFSDom: jest.fn(async () => {
+    throw 'No-efs-file';
+  }),
   requestEFSDevtools: jest.fn(),
 }));
 
@@ -44,6 +49,7 @@ jest.mock('../../../player/src/web/messages/MFileReader', () => {
         append: jest.fn(),
         checkForIndexes: jest.fn(),
         readNext: readNextMock,
+        releaseConsumed: jest.fn(),
       };
     }),
   };
@@ -124,10 +130,8 @@ describe('MessageLoader.loadDevtools', () => {
     await loader.loadDevtools(parser);
 
     expect(store.update).toHaveBeenCalledWith({ devtoolsLoading: true });
-    expect(store.update).toHaveBeenLastCalledWith({
-      ...manager.getListsFullState(),
-      devtoolsLoading: false,
-    });
+    // lists live in per-tab state; the loader only toggles the flag
+    expect(store.update).toHaveBeenLastCalledWith({ devtoolsLoading: false });
   });
 
   test('skips devtools for clickmap', async () => {
@@ -197,9 +201,42 @@ describe('MessageLoader.createNewParser', () => {
 
     const onDone = jest.fn();
     const parser = loader.createNewParser(false, onDone, 'file');
-    await parser(new Uint8Array());
+    // v1 header: 8x 0xff
+    await parser(new Uint8Array(8).fill(0xff));
 
     expect(onDone).toHaveBeenCalledWith([msgs[1], msgs[0]], 'file 1');
-    expect(loader.rawMessages.length).toBe(2);
+    // raw copies are kept only in debug mode
+    expect(loader.rawMessages.length).toBe(0);
+  });
+
+  test('stops parsing once cleaned', async () => {
+    const loader = new MessageLoader(
+      mockSession({}),
+      createStore() as any,
+      createManager() as any,
+      false,
+    );
+    const onDone = jest.fn();
+    const parser = loader.createNewParser(false, onDone, 'file');
+    loader.clean();
+    await parser(new Uint8Array(8).fill(0xff));
+    expect(onDone).not.toHaveBeenCalled();
+  });
+});
+
+describe('MessageLoader.loadFiles', () => {
+  test('reports failure when both the files and the EFS backup are missing', async () => {
+    const { loadFiles, requestEFSDom } = jest.requireMock(
+      '../../../player/src/web/network/loadFiles',
+    ) as any;
+    loadFiles.mockRejectedValueOnce('Bad file status code 404');
+    requestEFSDom.mockRejectedValue('No-efs-file');
+    const session = mockSession({});
+    session.domURL = ['d1'];
+    const manager = createManager();
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false);
+    await loader.loadFiles();
+    expect(manager.onFileReadFailed).toHaveBeenCalled();
+    expect(manager.onFileReadSuccess).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,11 @@ import { Message, MType } from '../messages';
 import type Screen from '../Screen/Screen';
 import DOMManager from './DOM/DOMManager';
 
+const GLOBAL_DICT_TYPES = new Set<number>([
+  MType.StringDict,
+  MType.StringDictGlobal,
+]);
+
 export default class PagesManager extends ListWalker<DOMManager> {
   private currentPage: DOMManager | null = null;
 
@@ -37,7 +42,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
   };
 
   appendMessage(m: Message): void {
-    if ([MType.StringDict, MType.StringDictGlobal].includes(m.tp)) {
+    if (GLOBAL_DICT_TYPES.has(m.tp)) {
       this.globalDictionary.set(m.key, m.value);
       return;
     }
@@ -52,6 +57,11 @@ export default class PagesManager extends ListWalker<DOMManager> {
       return;
     }
     if (m.tp === MType.CreateDocument) {
+      if (this.last && m.time < this.last.time) {
+        // pages must stay append-only: messages always go to the newest page
+        logger.warn('Out of order CreateDocument, skipping:', m);
+        return;
+      }
       if (!this.falseOrder) {
         this.stringDicts.unshift({});
       }

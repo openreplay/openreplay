@@ -94,6 +94,10 @@ export default class TabSessionManager {
 
   private canvasReplayWalker: ListWalker<CanvasNode> = new ListWalker();
 
+  private virtualMode = false;
+
+  private lastMoveTime = 0;
+
   constructor(
     private session: any,
     private readonly state: Store<{
@@ -112,7 +116,7 @@ export default class TabSessionManager {
       width: number;
     }) => void,
     private readonly sessionStart: number,
-    initialLists?: Partial<InitialLists>,
+    private readonly initialLists?: Partial<InitialLists>,
   ) {
     this.pagesManager = new PagesManager(
       screen,
@@ -130,6 +134,7 @@ export default class TabSessionManager {
   }
 
   public setVirtualMode = (virtualMode: boolean) => {
+    this.virtualMode = virtualMode;
     this.pagesManager.setVirtualMode(virtualMode);
   };
 
@@ -154,34 +159,41 @@ export default class TabSessionManager {
     this.pagesManager.injectSpriteMap(spriteMapEl);
   };
 
-  public updateLists(lists: Partial<InitialLists>) {
+  /**
+   * Merges session-level lists (events, errors...) without duplicates.
+   * @returns the resulting number of events
+   */
+  public updateLists(lists: Partial<InitialLists>): number {
     Object.keys(lists).forEach((key: 'event' | 'stack' | 'exceptions') => {
       const currentList = this.lists.lists[key];
       const insertingList = lists[key];
-      insertingList?.forEach((item) => {
-        if (
-          currentList.list.findIndex(
-            (exv: { time: number; key: number; messageId?: number }) =>
-              exv.time === item.time &&
-              exv.key === item.key &&
-              (exv.messageId && item.messageId
-                ? exv.messageId === item.messageId
-                : true),
-          ) === -1
-        ) {
-          currentList.insert(item);
-          if (key === 'event' && item.type === EVENT_TYPES.LOCATION) {
-            this.locationEventManager.append(item);
-          }
+      if (!currentList || !insertingList?.length) return;
+      // same time+key is a duplicate unless both carry different message ids
+      const seen = new Map<string, Array<number | undefined>>();
+      currentList.list.forEach((item: Record<string, any>) => {
+        const k = `${item.time}|${item.key}`;
+        const ids = seen.get(k);
+        if (ids) ids.push(item.messageId);
+        else seen.set(k, [item.messageId]);
+      });
+      insertingList.forEach((item) => {
+        const k = `${item.time}|${item.key}`;
+        const ids = seen.get(k);
+        const isDuplicate = ids?.some(
+          (id) => !id || !item.messageId || id === item.messageId,
+        );
+        if (isDuplicate) return;
+        if (ids) ids.push(item.messageId);
+        else seen.set(k, [item.messageId]);
+        currentList.insert(item);
+        if (key === 'event' && item.type === EVENT_TYPES.LOCATION) {
+          this.locationEventManager.insert(item);
         }
       });
     });
-    const eventCount = lists?.event?.length || 0;
 
     const currentState = this.state.get();
     this.state.update({
-      // @ts-ignore comes from parent state
-      eventCount: currentState.eventCount + eventCount,
       tabStates: {
         ...currentState.tabStates,
         [this.id]: {
@@ -190,6 +202,7 @@ export default class TabSessionManager {
         },
       },
     });
+    return this.lists.lists.event.length;
   }
 
   /**
@@ -210,8 +223,18 @@ export default class TabSessionManager {
     });
   };
 
+  /** Full reset before the whole session is re-fed (live time travel). */
   public resetMessageManagers() {
+    this.destroyCanvasManagers();
+    this.canvasReplayWalker = new ListWalker();
+    this.resourceIdx.clear();
+    this.lists = new Lists(this.initialLists);
     this.locationEventManager = new ListWalker();
+    this.initialLists?.event?.forEach((e: Record<string, string>) => {
+      if (e.type === EVENT_TYPES.LOCATION) {
+        this.locationEventManager.append(e);
+      }
+    });
     this.locationManager = new ListWalker();
     this.loadedLocationManager = new ListWalker();
     this.scrollManager = new ListWalker();
@@ -226,6 +249,7 @@ export default class TabSessionManager {
       this.setCSSLoading,
       this.showVModeBadge,
     );
+    this.pagesManager.setVirtualMode(this.virtualMode);
     // Sprites live outside the message stream, so a fresh PagesManager starts without them.
     if (this.spriteMapEl) {
       this.pagesManager.injectSpriteMap(this.spriteMapEl);
@@ -344,11 +368,10 @@ export default class TabSessionManager {
         const key = this.makeResKey(req.url, req.timestamp || req.time);
         const twin = this.resourceIdx.get(key);
         if (twin) {
-          const twinId = this.lists.lists.resource.list.findIndex(
-            (r) => r.url === twin.url && r.time === twin.time,
-          );
+          const resources = this.lists.lists.resource;
+          const twinId = resources.list.lastIndexOf(twin);
           if (twinId !== -1) {
-            this.lists.lists.resource.list.splice(twinId, 1);
+            resources.removeAt(twinId);
           }
           this.resourceIdx.delete(key);
         }
@@ -418,15 +441,10 @@ export default class TabSessionManager {
             );
             break;
           case MType.LoadFontFace:
-            if (msg.source.startsWith('url(/')) {
-              const relativeUrl = msg.source.substring(4);
-              const lastUrl = this.locationManager.findLast(msg.time)?.url;
-              if (lastUrl) {
-                const u = new URL(lastUrl);
-                const base = `${u.protocol}//${u.hostname}/`;
-                msg.source = `url(${base}${relativeUrl}`;
-              }
-            }
+            msg.source = resolveRootRelativeFontUrls(
+              msg.source,
+              this.locationManager.findLast(msg.time)?.url,
+            );
             break;
         }
         this.performanceTrackManager.addNodeCountPointIfNeed(msg.time);
@@ -518,6 +536,16 @@ export default class TabSessionManager {
       this.updateLocalState(stateToUpdate);
     }
     if (silent) return;
+    if (t < this.lastMoveTime) {
+      // canvases that start after the new position restart when playback reaches them
+      Object.values(this.canvasManagers).forEach((entry) => {
+        if (entry.running && entry.start - this.sessionStart > t) {
+          entry.running = false;
+          entry.manager.reset();
+        }
+      });
+    }
+    this.lastMoveTime = t;
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);
@@ -559,23 +587,26 @@ export default class TabSessionManager {
    * Legacy code. Ensures that RemoveNode messages with parent being <HEAD> are sorted before other RemoveNode messages.
    * */
   public sortDomRemoveMessages = (msgs: Message[]) => {
-    // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
-    const headChildrenMsgIds = msgs
-      .filter((m) => m.parentID === 1)
-      .map((m) => m.id);
+    const headChildrenMsgIds = new Set<number>();
+    msgs.forEach((m) => {
+      // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
+      if (m.parentID === 1) headChildrenMsgIds.add(m.id);
+    });
+    // the comparator only ever reorders removals of <head> children
+    if (headChildrenMsgIds.size === 0) return;
     this.pagesManager.sortPages((m1, m2) => {
       if (m1.time === m2.time) {
         if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {
-          if (headChildrenMsgIds.includes(m1.id)) {
+          if (headChildrenMsgIds.has(m1.id)) {
             return -1;
           }
         } else if (m2.tp === MType.RemoveNode && m1.tp !== MType.RemoveNode) {
-          if (headChildrenMsgIds.includes(m2.id)) {
+          if (headChildrenMsgIds.has(m2.id)) {
             return 1;
           }
         } else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
-          const m1FromHead = headChildrenMsgIds.includes(m1.id);
-          const m2FromHead = headChildrenMsgIds.includes(m2.id);
+          const m1FromHead = headChildrenMsgIds.has(m1.id);
+          const m2FromHead = headChildrenMsgIds.has(m2.id);
           if (m1FromHead && !m2FromHead) {
             return -1;
           }
@@ -601,8 +632,21 @@ export default class TabSessionManager {
 
   public getListsFullState = () => this.lists.getFullListsState();
 
+  /** Tab switch: the page gets rebuilt on the next move. */
   clean() {
     this.pagesManager.reset();
+  }
+
+  private destroyCanvasManagers() {
+    Object.values(this.canvasManagers).forEach(({ manager }) =>
+      manager.destroy(),
+    );
+    this.canvasManagers = {};
+  }
+
+  /** Player teardown. */
+  destroy() {
+    this.destroyCanvasManagers();
   }
 
   resetToStart = () => {
@@ -611,4 +655,21 @@ export default class TabSessionManager {
     const newStates = this.lists.resetListNowStates();
     this.updateLocalState(newStates);
   };
+}
+
+/** Root-relative `url(/...)` font sources can't resolve inside the replay frame. */
+function resolveRootRelativeFontUrls(source: string, pageUrl?: string) {
+  if (!pageUrl || !source.includes('url(')) {
+    return source;
+  }
+  return source.replace(
+    /url\(\s*(['"]?)(\/(?!\/)[^'")]*)\1\s*\)/g,
+    (match, quote, path) => {
+      try {
+        return `url(${quote}${new URL(path, pageUrl).href}${quote})`;
+      } catch {
+        return match;
+      }
+    },
+  );
 }

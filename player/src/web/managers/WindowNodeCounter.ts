@@ -1,40 +1,40 @@
 class NodeCounter {
-  private parent: NodeCounter | null = null;
+  parent: NodeCounter | null = null;
 
   private _count: number = 0;
 
-  private children: Array<NodeCounter> = [];
+  /** Created on first child: most nodes are leaves. */
+  children: Set<NodeCounter> | undefined;
+
+  constructor(readonly id: number) {}
 
   bubbleCount(count: number) {
-    this._count += count;
-    if (this.parent != null) {
-      this.parent.bubbleCount(count);
+    let node: NodeCounter | null = this;
+    while (node) {
+      node._count += count;
+      node = node.parent;
     }
   }
 
-  newChild(): NodeCounter {
-    const child = new NodeCounter();
-    this.children.push(child);
+  newChild(id: number): NodeCounter {
+    const child = new NodeCounter(id);
+    (this.children ??= new Set()).add(child);
     child.parent = this;
     this.bubbleCount(1);
     return child;
   }
 
-  removeChild(child: NodeCounter) {
-    this.children = this.children.filter((c) => c != child);
-    this.bubbleCount(-(child._count + 1));
-  }
-
-  removeNode() {
-    if (this.parent) {
-      this.parent.removeChild(this);
-    }
+  detach() {
+    const { parent } = this;
+    if (!parent) return;
+    parent.children?.delete(this);
+    parent.bubbleCount(-(this._count + 1));
     this.parent = null;
   }
 
-  moveNode(newParent: NodeCounter) {
-    this.removeNode();
-    newParent.children.push(this);
+  moveTo(newParent: NodeCounter) {
+    this.detach();
+    (newParent.children ??= new Set()).add(this);
     this.parent = newParent;
     newParent.bubbleCount(this._count + 1);
   }
@@ -44,56 +44,67 @@ class NodeCounter {
   }
 }
 
-export default class WindowNodeCounter {
-  private root: NodeCounter = new NodeCounter();
+const ROOT_ID = 0;
 
-  private nodes: Array<NodeCounter> = [this.root];
+export default class WindowNodeCounter {
+  private root: NodeCounter = new NodeCounter(ROOT_ID);
+
+  /** Indexed by node id (dense per document) */
+  private nodes: Array<NodeCounter | undefined> = [this.root];
 
   reset() {
-    this.root = new NodeCounter();
+    this.root = new NodeCounter(ROOT_ID);
     this.nodes = [this.root];
   }
 
   addNode(msg: { id: number; parentID: number; time: number }): boolean {
     const { id, parentID } = msg;
-    if (!this.nodes[parentID]) {
+    const parent = this.nodes[parentID];
+    if (!parent) {
       // TODO: iframe case
-      // console.error(`Wrong! Node with id ${ parentID } (parentId) not found.`);
       return false;
     }
     if (this.nodes[id]) {
-      // console.error(`Wrong! Node with id ${ id } already exists.`);
       return false;
     }
-    this.nodes[id] = this.nodes[parentID].newChild();
+    this.nodes[id] = parent.newChild(id);
     return true;
   }
 
+  /** The tracker sends RemoveNode only for the subtree root, so descendants are dropped here too. */
   removeNode({ id }: { id: number }) {
-    if (!this.nodes[id]) {
+    const node = this.nodes[id];
+    if (!node || node === this.root) {
       // Might be text node
-      // console.error(`Wrong! Node with id ${ id } not found.`);
       return false;
     }
-    this.nodes[id].removeNode();
+    node.detach();
+    const stack = [node];
+    while (stack.length) {
+      const current = stack.pop()!;
+      this.nodes[current.id] = undefined;
+      current.children?.forEach((child) => stack.push(child));
+    }
     return true;
   }
 
   moveNode(msg: { id: number; parentID: number; time: number }) {
     const { id, parentID, time } = msg;
-    if (!this.nodes[id]) {
+    const node = this.nodes[id];
+    if (!node) {
       console.warn(
         `Node Counter: Node with id ${id} (parent: ${parentID}) not found. time: ${time}`,
       );
       return false;
     }
-    if (!this.nodes[parentID]) {
+    const parent = this.nodes[parentID];
+    if (!parent) {
       console.warn(
         `Node Counter: Node with id ${parentID} (parentId) not found. time: ${time}`,
       );
       return false;
     }
-    this.nodes[id].moveNode(this.nodes[parentID]);
+    node.moveTo(parent);
     return true;
   }
 

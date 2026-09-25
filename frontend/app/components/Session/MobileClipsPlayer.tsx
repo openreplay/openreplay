@@ -1,5 +1,5 @@
 import { createClipPlayer } from 'Player';
-import { makeAutoObservable } from 'mobx';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -79,7 +79,7 @@ function MobileClipsPlayer(props: Props) {
     sessionStore.setUserTimezone(session?.timezone);
     const [PlayerInst, PlayerStore] = createClipPlayer(
       session,
-      (state) => makeAutoObservable(state),
+      wrapPlayerStore,
       toast,
       clip.range,
       true,
