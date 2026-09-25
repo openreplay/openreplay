@@ -160,7 +160,10 @@ export default function (
           ? opts.sessionTokenHeader
           : 'X-OpenReplay-SessionToken'
       const headerValue = app.getSessionToken()
-      if (headerValue && (!opts.tokenUrlMatcher || opts.tokenUrlMatcher(instance.getUri(config)))) {
+      if (
+        headerValue &&
+        (!opts.tokenUrlMatcher || opts.tokenUrlMatcher(absoluteUrl(instance.getUri(config))))
+      ) {
         config.headers.set(header, headerValue)
       }
     }
@@ -198,6 +201,15 @@ export default function (
     instance.interceptors.request.eject?.(reqInt)
     instance.interceptors.response.eject?.(resInt)
   })
+}
+
+// resolve relative axios urls (no baseURL) the way the fetch/XHR proxy does
+function absoluteUrl(url: string) {
+  try {
+    return new URL(url, window.location.href).toString()
+  } catch {
+    return url
+  }
 }
 
 function isAxiosError(payload: Record<string, any>) {

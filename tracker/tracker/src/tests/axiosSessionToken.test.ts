@@ -61,4 +61,20 @@ describe('axiosSpy sessionTokenHeader', () => {
     expect(request('https://third-party.example', '/v1/track')).toEqual({})
     expect(tokenUrlMatcher).toHaveBeenLastCalledWith('https://third-party.example/v1/track')
   })
+
+  test('default header name and tokenUrlMatcher work together', () => {
+    const tokenUrlMatcher = (url: string) => url.startsWith('https://api.example.com/')
+    const request = setup({ sessionTokenHeader: true, tokenUrlMatcher })
+    expect(request('https://api.example.com', '/me')).toEqual({
+      'X-OpenReplay-SessionToken': 'session-token',
+    })
+    expect(request('https://third-party.example', '/v1/track')).toEqual({})
+  })
+
+  test('passes relative urls to tokenUrlMatcher as absolute, like fetch/XHR', () => {
+    const tokenUrlMatcher = jest.fn((url: string) => url.startsWith(window.location.origin + '/'))
+    const request = setup({ sessionTokenHeader: true, tokenUrlMatcher })
+    expect(request('', '/v1/track')).toEqual({ 'X-OpenReplay-SessionToken': 'session-token' })
+    expect(tokenUrlMatcher).toHaveBeenLastCalledWith(window.location.origin + '/v1/track')
+  })
 })
