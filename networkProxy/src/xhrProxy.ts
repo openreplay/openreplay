@@ -20,6 +20,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
 {
   public XMLReq: XMLHttpRequest;
   public item: NetworkMessage;
+  private reported = false;
 
   constructor(
     XMLReq: XMLHttpRequest,
@@ -109,36 +110,40 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
     }
 
     if (this.XMLReq.readyState === RequestState.DONE) {
-      const msg = this.item.getMessage();
-      if (msg) {
-        this.sendMessage(msg);
+      if (this.XMLReq.status === 0) {
+        // abort/timeout fire right after this readystatechange; let them report once
+        setTimeout(() => this.report(), 0);
+      } else {
+        this.report();
       }
+    }
+  }
+
+  private report() {
+    if (this.reported) return;
+    this.reported = true;
+    const msg = this.item.getMessage();
+    if (msg) {
+      this.sendMessage(msg);
     }
   }
 
   public onAbort() {
     this.item.cancelState = 1;
     this.item.statusText = "Abort";
-
-    const msg = this.item.getMessage();
-    if (msg) {
-      this.sendMessage(msg);
-    }
+    this.report();
   }
 
   public onTimeout() {
     this.item.cancelState = 3;
     this.item.statusText = "Timeout";
-
-    const msg = this.item.getMessage();
-    if (msg) {
-      this.sendMessage(msg);
-    }
+    this.report();
   }
 
   protected getOpen(target: T) {
     const targetFunction = Reflect.get(target, "open");
     return (...args: any[]) => {
+      this.reported = false;
       const method = args[0];
       const url = args[1];
       this.item.method = method ? method.toUpperCase() : "GET";
@@ -300,8 +305,10 @@ export default class XHRProxy {
     sendMessage: (data: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,
+    // the context's own constructor: wrapping this module's global breaks iframes
+    target: typeof XMLHttpRequest = XMLHttpRequest,
   ) {
-    return new Proxy(XMLHttpRequest, {
+    return new Proxy(target, {
       construct(original: any) {
         const XMLReq = new original();
         return new Proxy(
