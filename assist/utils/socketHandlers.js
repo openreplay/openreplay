@@ -66,6 +66,13 @@ async function getRoomData(io, roomID) {
 function processNewSocket(socket) {
     socket._connectedAt = new Date();
     let {projectKey: connProjectKey, sessionId: connSessionId, tabId: connTabId} = extractPeerId(socket.handshake.query.peerId);
+    const tokenSessionId = socket.decoded && socket.decoded.sessionId;
+    if (socket.handshake.query.identity === IDENTITIES.session && tokenSessionId) {
+        if (tokenSessionId !== connSessionId) {
+            logger.warn(`peerId sessionId:${connSessionId} differs from token sessionId:${tokenSessionId}, using token`);
+        }
+        connSessionId = tokenSessionId;
+    }
     socket.handshake.query.roomId = `${connProjectKey}-${connSessionId}`;
     socket.handshake.query.projectKey = connProjectKey;
     socket.handshake.query.sessId = connSessionId;
