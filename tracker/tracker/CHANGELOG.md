@@ -4,7 +4,6 @@
 - full type definitions for every entry point (`@openreplay/tracker`, `/class`, `/cjs`), checked on publish with `attw`
 - handle the root `<html>` element being replaced during recording (re-announces the document instead of losing the tree)
 - pages that override core DOM getters (Prototype.js, MooTools, some polyfills) no longer corrupt recording: the tracker reads native `parentNode`/`previousSibling`/`nextSibling`/`firstChild` from a pristine iframe, only when the page's getters are patched
-- standalone privacy/consent module (`modules/privacy`, not wired in yet): GPC/DNT, Google Consent Mode, cookieless storage, SHA-256 user id; integration plan in `PRIVACY_MODULE.md`
 - `data-openreplay-unmask` in `privateMode` now works on regular elements and applies to the whole subtree, including shadow roots of an unmasked host (before, it was overridden by the parent's default masking)
 - `privateMode` no longer downgrades hidden elements to obscured: `data-openreplay-hidden`, `htmlmasked` and `domSanitizer` → Hidden are respected
 - referrer is passed through `urls.urlSanitizer` (default one masks `token`, `jwt`, `password` …) in the start request and in page location messages; wiped in `privateMode`. Before, e.g. `?token=abc` in the referrer was sent as is, and after an SPA navigation the previous raw URL became the next referrer
