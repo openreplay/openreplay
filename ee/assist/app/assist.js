@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const uaParser = require('ua-parser-js');
 const {geoip} = require('./geoIP');
 const {logger} = require('./logger');
+const sessionToken = require('./sessionToken');
 
 let PROJECT_KEY_LENGTH = parseInt(process.env.PROJECT_KEY_LENGTH) || 20;
 
@@ -67,7 +68,14 @@ const generateRandomTabId = () => (Math.random() + 1).toString(36).substring(2);
 
 function processPeerInfo(socket) {
     socket._connectedAt = new Date();
-    const { projectKey, sessionId, tabId } = extractPeerId(socket.handshake.query.peerId || "");
+    let { projectKey, sessionId, tabId } = extractPeerId(socket.handshake.query.peerId || "");
+    const tokenSessionId = socket.decoded && socket.decoded.sessionId;
+    if (socket.handshake.query.identity === IDENTITIES.session && tokenSessionId) {
+        if (tokenSessionId !== sessionId) {
+            logger.warn(`peerId sessionId:${sessionId} differs from token sessionId:${tokenSessionId}, using token`);
+        }
+        sessionId = tokenSessionId;
+    }
     Object.assign(socket.handshake.query, {
         roomId: projectKey && sessionId ? `${projectKey}-${sessionId}` : null,
         projectKey,
@@ -118,10 +126,37 @@ function errorHandler(listenerName, error) {
 }
 
 const JWT_TOKEN_PREFIX = "Bearer ";
+const REQUIRE_SESSION_TOKEN = process.env.ASSIST_REQUIRE_SESSION_TOKEN === "true";
+const TOKEN_SECRET = process.env.TOKEN_SECRET;
+if (REQUIRE_SESSION_TOKEN && !TOKEN_SECRET) {
+    throw new Error('ASSIST_REQUIRE_SESSION_TOKEN=true needs TOKEN_SECRET');
+}
+if (!TOKEN_SECRET) {
+    logger.warn('TOKEN_SECRET is not set, session tokens are not verified');
+}
+
+function checkSession(socket, next) {
+    const token = socket.handshake.auth && socket.handshake.auth.token;
+    if (!token || !TOKEN_SECRET) {
+        if (REQUIRE_SESSION_TOKEN) {
+            logger.debug(`session without token, peerId: ${socket.handshake.query.peerId}`);
+            return next(new Error('Authentication error'));
+        }
+        logger.info(`legacy session without token, peerId: ${socket.handshake.query.peerId}`);
+        return next();
+    }
+    try {
+        socket.decoded = sessionToken.parse(token, TOKEN_SECRET);
+    } catch (e) {
+        logger.debug(`invalid session token, peerId: ${socket.handshake.query.peerId}, err: ${e.message}`);
+        return next(new Error('Authentication error'));
+    }
+    return next();
+}
 
 function check(socket, next) {
     if (socket.handshake.query.identity === IDENTITIES.session) {
-        return next();
+        return checkSession(socket, next);
     }
     if (socket.handshake.query.peerId && socket.handshake.auth && socket.handshake.auth.token) {
         let token = socket.handshake.auth.token;
