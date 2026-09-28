@@ -14,50 +14,6 @@ import {
   getURL,
 } from "./utils";
 
-export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T> {
-  public resp: Response;
-  public item: NetworkMessage;
-
-  constructor(resp: T, item: NetworkMessage) {
-    this.resp = resp;
-    this.item = item;
-  }
-
-  public set(target: T, key: string, value: (args: any[]) => any) {
-    return Reflect.set(target, key, value);
-  }
-
-  public get(target: T, key: string) {
-    const value = Reflect.get(target, key);
-
-    if (key === "arrayBuffer" || key === "blob") {
-      return typeof value === "function" ? value.bind(target) : value;
-    }
-
-    switch (key) {
-      case "formData":
-      case "json":
-      case "text":
-        return () => {
-          this.item.responseType = <any>key.toLowerCase();
-          // @ts-ignore
-          return value.apply(target).then((resp: any) => {
-            this.item.response = getStringResponseByType(
-              this.item.responseType,
-              resp,
-            );
-            return resp;
-          });
-        };
-    }
-    if (typeof value === "function") {
-      return value.bind(target);
-    } else {
-      return value;
-    }
-  }
-}
-
 export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T> {
   constructor(
     private readonly ignoredHeaders: boolean | string[],
@@ -70,6 +26,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     private readonly sendMessage: (item: INetworkMessage) => void,
     private readonly isServiceUrl: (url: string) => boolean,
     private readonly tokenUrlMatcher?: (url: string) => boolean,
+    private readonly context: typeof globalThis = window,
   ) {}
 
   public apply(
@@ -79,21 +36,23 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
   ) {
     const input = argsList[0];
     const init = argsList[1];
+    // URL objects may come from another realm, so no instanceof
+    const isURLObject = !!input && typeof input === "object" && typeof (input as any).href === "string" && !("url" in input);
     if (
       !input ||
       // @ts-ignore
-      (typeof input !== "string" && !input?.url)
+      (typeof input !== "string" && !isURLObject && !input?.url)
     ) {
-      return <ReturnType<T>>target.apply(window, argsList);
+      return <ReturnType<T>>target.apply(this.context, argsList);
     }
 
     const isORUrl =
-      input instanceof URL || typeof input === "string"
+      isURLObject || typeof input === "string"
         ? this.isServiceUrl(String(input))
-        : this.isServiceUrl(String(input.url));
+        : this.isServiceUrl(String((input as Request).url));
 
     if (isORUrl) {
-      return target.apply(window, argsList);
+      return target.apply(this.context, argsList);
     }
 
     const item = new NetworkMessage(
@@ -101,7 +60,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       this.setSessionTokenHeader,
       this.sanitize,
     );
-    this.beforeFetch(item, input as RequestInfo, init);
+    this.beforeFetch(item, isURLObject ? String(input) : (input as RequestInfo), init);
 
     const signal =
       (argsList[0] instanceof Request ? (argsList[0] as Request).signal : undefined) ||
@@ -150,7 +109,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
         }
       }
     });
-    return (<ReturnType<T>>target.apply(window, argsList))
+    return (<ReturnType<T>>target.apply(this.context, argsList))
       .then(this.afterFetch(item, () => {
         abortedNotified = true;
       }))
@@ -183,12 +142,12 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     if (typeof input === "string") {
       // when `input` is a string
       method = init?.method || "GET";
-      url = getURL(input);
+      url = getURL(input, this.context.location?.href);
       requestHeader = init?.headers || {};
     } else {
       // when `input` is a `Request` object
       method = input.method || "GET";
-      url = getURL(input.url);
+      url = getURL(input.url, this.context.location?.href);
       requestHeader = input.headers;
     }
 
@@ -284,12 +243,9 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
           });
       }
 
-      const ct = (resp.headers.get("content-type") || "").toLowerCase();
-      const isTextLike =
-        ct.includes("application/json") || ct.startsWith("text/");
-      return isTextLike
-        ? new Proxy(resp, new ResponseProxyHandler(resp, item))
-        : resp;
+      // the real Response: a Proxy fails brand checks (cache.put, structuredClone, instanceof
+      // across realms); the body is already captured from the clone above
+      return resp;
     };
   }
 
@@ -320,9 +276,12 @@ export default class FetchProxy {
     sendMessage: (item: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,
+    // the context's own fetch and global: wrapping this module's globals breaks iframes
+    target: typeof fetch = fetch,
+    context: typeof globalThis = window,
   ) {
     return new Proxy(
-      fetch,
+      target,
       new FetchProxyHandler(
         ignoredHeaders,
         setSessionTokenHeader,
@@ -330,6 +289,7 @@ export default class FetchProxy {
         sendMessage,
         isServiceUrl,
         tokenUrlMatcher,
+        context,
       ),
     );
   }

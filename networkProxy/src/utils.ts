@@ -70,16 +70,18 @@ export const genStringBody = (body?: BodyInit) => {
   try {
     if (typeof body === 'string') {
       if (body[0] === '{' || body[0] === '[') {
-        result = body
-      }
-      // 'a=1&b=2' => try to parse as query
-      const arr = body.split('&')
-      if (arr.length === 1) {
-        // not a query, parse as original string
+        // JSON may contain '&' in its values
         result = body
       } else {
-        // 'a=1&b=2&c' => parse as query
-        result = arr.join(',')
+        // 'a=1&b=2' => try to parse as query
+        const arr = body.split('&')
+        if (arr.length === 1) {
+          // not a query, parse as original string
+          result = body
+        } else {
+          // 'a=1&b=2&c' => parse as query
+          result = arr.join(',')
+        }
       }
     } else if (isIterable(body)) {
       // FormData or URLSearchParams or Array
@@ -199,14 +201,14 @@ export function formatByteSize(bytes: number) {
   return `${bytes}B`
 }
 
-export const getURL = (urlString: string) => {
+export const getURL = (urlString: string, base: string = window.location.href) => {
   if (urlString.startsWith('//')) {
-    const baseUrl = new URL(window.location.href)
+    const baseUrl = new URL(base)
     urlString = `${baseUrl.protocol}${urlString}`
   }
   if (urlString.startsWith('http')) {
     return new URL(urlString)
   } else {
-    return new URL(urlString, window.location.href)
+    return new URL(urlString, base)
   }
 }

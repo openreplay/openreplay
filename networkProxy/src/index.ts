@@ -77,6 +77,7 @@ export default function createNetworkProxy(
           sendMessage,
           isServiceUrl,
           tokenUrlMatcher,
+          original,
         ),
         original,
       )
@@ -94,6 +95,8 @@ export default function createNetworkProxy(
           sendMessage,
           isServiceUrl,
           tokenUrlMatcher,
+          original,
+          context,
         ) as typeof context.fetch,
         original,
       )
