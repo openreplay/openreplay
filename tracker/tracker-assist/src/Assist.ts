@@ -675,16 +675,16 @@ export default class Assist {
       query: {
         peerId: peerID,
         identity: "session",
-        tabId: this.app.getTabId(),
+        tabId: app.getTabId(),
         sessionInfo: JSON.stringify({
           pageTitle: document.title,
           active: true,
-          assistOnly: this.app.socketMode,
-          ...this.app.getSessionInfo(),
+          assistOnly: app.socketMode,
+          ...app.getSessionInfo(),
         }),
       },
       auth: (cb) =>
-        cb({ token: app.session.getSessionToken(app.getProjectKey()) }),
+        cb({ token: app.getSessionToken() }),
       extraHeaders: {
         sessionId,
       },
