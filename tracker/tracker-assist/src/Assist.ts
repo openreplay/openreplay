@@ -683,6 +683,8 @@ export default class Assist {
           ...this.app.getSessionInfo(),
         }),
       },
+      auth: (cb) =>
+        cb({ token: app.session.getSessionToken(app.getProjectKey()) }),
       extraHeaders: {
         sessionId,
       },
