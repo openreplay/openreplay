@@ -1,0 +1,20 @@
+import http from 'node:http'; import fs from 'node:fs'; import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const { chromium } = require('/Users/nikitamelnikov/Documents/work/work/openreplay/frontend/node_modules/playwright')
+const [scn, impl] = process.argv.slice(2)
+const html = `<!doctype html><html><head></head><body><div id="app"></div><script src="/page.js"></script></body></html>`
+const server = http.createServer((q, s) => q.url === '/page.js' ? s.end(fs.readFileSync('dist/page.js')) : s.end(html))
+await new Promise((r) => server.listen(0, r))
+const b = await chromium.launch(); const ctx = await b.newContext(); const p = await ctx.newPage()
+const cdp = await ctx.newCDPSession(p)
+await p.goto(`http://127.0.0.1:${server.address().port}/`)
+await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 50 }); await cdp.send('Profiler.start')
+await p.evaluate(([s, i]) => window.H.run(s, i), [scn, impl])
+const { profile } = await cdp.send('Profiler.stop')
+const self = new Map(); const byId = new Map(profile.nodes.map((n) => [n.id, n]))
+const dt = profile.timeDeltas; const counts = new Map()
+profile.samples.forEach((id, k) => counts.set(id, (counts.get(id) ?? 0) + (dt[k] ?? 0)))
+for (const [id, t] of counts) { const n = byId.get(id); const key = `${n.callFrame.functionName || '(anon)'} ${n.callFrame.url.split('/').pop()}:${n.callFrame.lineNumber}`; self.set(key, (self.get(key) ?? 0) + t) }
+const tot = [...self.values()].reduce((a, b) => a + b, 0)
+console.log([...self.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25).map(([k, v]) => `${(v / 1000).toFixed(1).padStart(7)}ms ${(100 * v / tot).toFixed(1).padStart(5)}%  ${k}`).join('\n'))
+await b.close(); server.close()

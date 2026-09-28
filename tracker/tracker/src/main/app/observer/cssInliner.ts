@@ -154,6 +154,10 @@ export function inlineRemoteCss(
           rules.push(currentRule.trim());
           currentRule = '';
         }
+      } else if (char === ';' && braceLevel === 0) {
+        // brace-less statement (@layer a, b; @import ...; @namespace ...;)
+        rules.push(currentRule.trim());
+        currentRule = '';
       }
     }
 

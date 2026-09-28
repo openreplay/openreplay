@@ -142,3 +142,28 @@ describe('requestIdleCb task scheduler', () => {
     expect(ran).toEqual([0, 1, 2, 3, 4, 5])
   })
 })
+
+describe('requestIdleCb in a background tab', () => {
+  test('keeps draining the queue although animation frames never fire', async () => {
+    jest.useFakeTimers()
+    ;(globalThis as any).requestAnimationFrame = () => 0
+    const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    let ric: (cb: () => any) => void
+    jest.resetModules()
+    jest.isolateModules(() => {
+      ric = require('../main/utils.js').requestIdleCb
+    })
+    const ran: number[] = []
+    ric!(() => ran.push(1))
+    ric!(() => ran.push(2))
+    ric!(() => ran.push(3))
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve()
+      await Promise.resolve()
+      jest.runOnlyPendingTimers()
+    }
+    expect(ran).toEqual([1, 2, 3])
+    hidden.mockRestore()
+    jest.useRealTimers()
+  })
+})

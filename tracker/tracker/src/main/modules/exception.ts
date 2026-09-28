@@ -39,13 +39,20 @@ export function getExceptionMessage(
   return JSException(error.name, error.message, JSON.stringify(stack), JSON.stringify(metadata))
 }
 
+// events and errors from iframes are instances of the iframe realm's classes
+const isError = (x: unknown, context: typeof globalThis): x is Error =>
+  x instanceof Error || (context !== window && 'Error' in context && x instanceof context.Error)
+
 export function getExceptionMessageFromEvent(
   e: ErrorEvent | PromiseRejectionEvent,
   context: typeof globalThis = window,
   metadata: Record<string, any> = {},
 ): Message | null {
-  if (e instanceof ErrorEvent) {
-    if (e.error instanceof Error) {
+  if (
+    e instanceof ErrorEvent ||
+    (context !== window && 'ErrorEvent' in context && e instanceof context.ErrorEvent)
+  ) {
+    if (isError(e.error, context)) {
       return getExceptionMessage(e.error, getDefaultStack(e), metadata)
     } else {
       const sep = e.message.indexOf(':')
@@ -63,7 +70,7 @@ export function getExceptionMessageFromEvent(
       )
     }
   } else if ('PromiseRejectionEvent' in context && e instanceof context.PromiseRejectionEvent) {
-    if (e.reason instanceof Error) {
+    if (isError(e.reason, context)) {
       return getExceptionMessage(e.reason, [], metadata)
     } else {
       let message: string

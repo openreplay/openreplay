@@ -236,3 +236,25 @@ describe('input module', () => {
     expect(h.sent(Type.SetInputValue)).toHaveLength(1)
   })
 })
+
+describe('input module: password fields', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('stay hidden after a "show password" toggle switches the type to text', () => {
+    const h = createApp()
+    setupInput(h.app as any, { defaultInputMode: InputMode.Plain })
+    const el = input('password', 'secret')
+    h.add(el)
+    el.type = 'text'
+    el.value = 'secret2'
+    h.tick()
+    const sent = h.sent(Type.SetInputValue)
+    expect(sent.length).toBeGreaterThan(0)
+    for (const m of sent) {
+      expect(m[2]).toBe('')
+      expect(m[3]).toBe(-1)
+    }
+  })
+})

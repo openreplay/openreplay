@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "19.0.1",
+  "version": "20.0.0-beta.0",
   "keywords": [
     "logging",
     "replay"
@@ -102,7 +102,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@openreplay/network-proxy": "^1.2.5",
+    "@openreplay/network-proxy": "^1.2.6",
     "error-stack-parser-es": "2.0.1",
     "web-vitals": "^5.3.0"
   },

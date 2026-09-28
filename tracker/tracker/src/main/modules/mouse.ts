@@ -14,7 +14,7 @@ import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 
 
-const docClassCache = new WeakMap();
+let docClassCache = new WeakMap();
 
 function _getSelector(target: Element, customAttributes?: string[]): string {
   const selector = getCSSPath(target, customAttributes)
@@ -217,6 +217,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
 
     if (!velocity) {
       velocity = nextVelocity
+      distance = 0
+      directionChangeCount = 0
       return
     }
 
@@ -260,6 +262,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   const patchDocument = (document: Document, topframe = false) => {
     function getSelector(id: number, target: Element): string {
       if (selectorMap[id]) return selectorMap[id]
+      // class uniqueness is only valid for the DOM it was computed on
+      docClassCache = new WeakMap()
       const tagMatch = app.tagMatcher.match(target)
       if (tagMatch) {
         return (selectorMap[id] = tagMatch.selector)
@@ -293,7 +297,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
         const nextDirection = Math.sign(e.movementX)
         distance += Math.abs(e.movementX) + Math.abs(e.movementY)
 
-        if (nextDirection !== direction) {
+        // purely vertical moves don't change horizontal direction
+        if (nextDirection !== 0 && nextDirection !== direction) {
           direction = nextDirection
           directionChangeCount++
         }
@@ -391,9 +396,14 @@ export function getCSSPath(el: any, customAttributes?: string[]) {
     if (customAttr) return customAttr;
     if (el.id) return `#${cssEscape(el.id)}`;
     // if has data attributes - use them as they are more likely to be stable and unique
-    const dataAttr = (Array.from(el.attributes) as Attr[]).find(attr => attr.name.startsWith('data-'));
-    if (dataAttr) {
-        return `[${dataAttr.name}="${cssAttrValue(dataAttr.value)}"]`;
+    for (const attr of Array.from(el.attributes) as Attr[]) {
+        if (!attr.name.startsWith('data-')) continue;
+        const sel = `[${attr.name}="${cssAttrValue(attr.value)}"]`;
+        try {
+            if (el.ownerDocument.querySelectorAll(sel).length === 1) return sel;
+        } catch (e) {
+            // attribute name not valid in a selector
+        }
     }
     const parts: string[] = [];
 
