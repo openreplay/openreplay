@@ -142,6 +142,7 @@ function checkSession(socket, next) {
             logger.debug(`session without token, peerId: ${socket.handshake.query.peerId}`);
             return next(new Error('Authentication error'));
         }
+        logger.info(`legacy session without token, peerId: ${socket.handshake.query.peerId}`);
         return next();
     }
     try {

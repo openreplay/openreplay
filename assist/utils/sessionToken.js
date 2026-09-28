@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const B36 = '0123456789abcdefghijklmnopqrstuvwxyz';
 const EXPIRY_GRACE_MS = 30000;
+const MAX_TOKEN_LENGTH = 128;
 
 function base58Decode(str) {
     let n = 0n;
@@ -47,7 +48,7 @@ function base36ToBigInt(str) {
 }
 
 function parse(token, secret) {
-    if (typeof token !== 'string') {
+    if (typeof token !== 'string' || token.length > MAX_TOKEN_LENGTH) {
         throw new Error('wrong token format');
     }
     const parts = token.split('.');

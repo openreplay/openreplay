@@ -55,7 +55,7 @@ const IncreaseTotalRooms = function () {
 const websocketSessionAuth = new client.Counter({
     name: 'ws_session_auth_total',
     help: 'A counter displaying session connections by auth outcome',
-    labelNames: ['mode'], // token, legacy, rejected
+    labelNames: ['mode'], // token, legacy, missing, rejected
 });
 
 const IncreaseSessionAuth = function (mode) {

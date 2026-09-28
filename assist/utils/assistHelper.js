@@ -139,6 +139,7 @@ function checkSession(socket, next) {
     if (!token || !TOKEN_SECRET) {
         if (REQUIRE_SESSION_TOKEN) {
             logger.debug(`session without token, peerId: ${socket.handshake.query.peerId}`);
+            IncreaseSessionAuth('missing');
             return next(new Error('Authentication error'));
         }
         IncreaseSessionAuth('legacy');
