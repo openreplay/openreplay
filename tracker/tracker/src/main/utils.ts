@@ -364,7 +364,14 @@ class FIFOTaskScheduler {
       // for the lifetime of the page, and since commits run through here that
       // silently ends the recording. See #4836.
       const { task, onError } = this.taskQueue.shift()
-      const scheduleNext = () => requestAnimationFrame(() => executeNextTask(false))
+      const scheduleNext = () => {
+        // rAF never fires in a background tab: the queue (and every commit) would wait there
+        if (typeof document !== 'undefined' && document.hidden) {
+          setTimeout(() => executeNextTask(false), 0)
+        } else {
+          requestAnimationFrame(() => executeNextTask(false))
+        }
+      }
       let result: any
       try {
         result = task()

@@ -146,3 +146,26 @@ describe('viewport module', () => {
     })
   })
 })
+
+describe('viewport module with replaceHashSymbol', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('does not resend an unchanged url on every tick', () => {
+    let url = 'http://example.com/#/path'
+    jest.spyOn(document, 'URL', 'get').mockImplementation(() => url)
+    const app = createApp()
+    viewportModule(app, { replaceHashSymbol: true })
+    app.attachStartCallback.mock.calls[0][0]()
+    const tick = app.ticker.attach.mock.calls[0][0]
+    tick()
+    tick()
+    expect(locations(app)).toHaveLength(1)
+
+    url = 'http://example.com/#/other'
+    tick()
+    expect(locations(app)).toHaveLength(2)
+    expect(locations(app)[1][1]).toBe('http://example.com/other')
+  })
+})

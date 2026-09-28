@@ -23,7 +23,7 @@ export enum InlineCssMode {
 }
 const localhostStylesDoc = 'https://docs.openreplay.com/en/troubleshooting/localhost/'
 
-function getInlineOptions(mode: InlineCssMode, logger: (args: any) => void) {
+export function getInlineOptions(mode: InlineCssMode, logger: (args: any) => void) {
   switch (mode) {
     case InlineCssMode.Inline:
       return {

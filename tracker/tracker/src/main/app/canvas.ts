@@ -11,6 +11,79 @@ interface CanvasSnapshot {
   isStopped: boolean
 }
 
+type GLContext = WebGLRenderingContext | WebGL2RenderingContext
+
+/**
+ * A WebGL drawing buffer (preserveDrawingBuffer: false, the default) is cleared once the
+ * frame is presented, so a snapshot taken from a timer reads a transparent canvas. The
+ * buffer is only valid in the task that drew it: we remember WebGL contexts as they are
+ * created and, when a frame is due, capture right after the page's next draw call.
+ */
+const WEBGL_TYPES = ['webgl', 'webgl2', 'experimental-webgl']
+const DRAW_CALLS = [
+  'drawArrays',
+  'drawElements',
+  'drawArraysInstanced',
+  'drawElementsInstanced',
+  'drawRangeElements',
+  'clear',
+]
+const glContexts = new WeakMap<HTMLCanvasElement, GLContext>()
+const hookedProtos = new WeakSet<object>()
+
+/** Must run before the page creates its contexts; contexts created earlier keep the timer capture. */
+export function watchCanvasContexts(context: typeof globalThis = window) {
+  const proto = context.HTMLCanvasElement?.prototype
+  if (!proto || hookedProtos.has(proto)) return
+  hookedProtos.add(proto)
+  const nativeGetContext = proto.getContext
+  proto.getContext = function (this: HTMLCanvasElement, type: string) {
+    // eslint-disable-next-line prefer-rest-params
+    const ctx = nativeGetContext.apply(this, arguments as any)
+    if (ctx && WEBGL_TYPES.includes(type)) {
+      glContexts.set(this, ctx as GLContext)
+    }
+    return ctx
+  } as typeof proto.getContext
+}
+
+interface DrawHook {
+  due: boolean
+  queued: boolean
+  capture: () => void
+}
+
+function hookDraws(gl: GLContext, capture: () => void): DrawHook {
+  const hook: DrawHook = { due: false, queued: false, capture }
+  for (const name of DRAW_CALLS) {
+    const native = (gl as any)[name]
+    if (typeof native !== 'function') continue
+    // own property on this context only: other contexts keep the plain prototype method
+    ;(gl as any)[name] = function () {
+      if (hook.due && !hook.queued) {
+        hook.queued = true
+        // runs once the page's current render code returns, before the frame is presented
+        queueMicrotask(() => {
+          hook.queued = false
+          hook.due = false
+          hook.capture()
+        })
+      }
+      // eslint-disable-next-line prefer-rest-params
+      return native.apply(this, arguments)
+    }
+  }
+  return hook
+}
+
+function unhookDraws(gl: GLContext) {
+  for (const name of DRAW_CALLS) {
+    if (Object.prototype.hasOwnProperty.call(gl, name)) {
+      delete (gl as any)[name]
+    }
+  }
+}
+
 interface Options {
   fps: number
   quality: 'low' | 'medium' | 'high'
@@ -32,6 +105,7 @@ class CanvasRecorder {
   private snapshots: Record<number, CanvasSnapshot> = {}
   private readonly intervals: Map<number, ReturnType<typeof setInterval>> = new Map()
   private readonly observers: Map<number, IntersectionObserver> = new Map()
+  private readonly drawHooks: Map<number, { gl: GLContext; hook: DrawHook }> = new Map()
   private readonly interval: number
   private readonly fileExt: 'webp' | 'png' | 'jpeg' | 'avif'
   private uploadQueue = 0
@@ -167,6 +241,12 @@ class CanvasRecorder {
       )
     }
 
+    const gl = glContexts.get(cachedCanvas)
+    const drawHook = gl ? hookDraws(gl, () => captureFn(cachedCanvas)) : null
+    if (gl && drawHook) {
+      this.drawHooks.set(id, { gl, hook: drawHook })
+    }
+
     const int = setInterval(() => {
       const snapshot = this.snapshots[id]
       if (!snapshot || snapshot.isStopped) {
@@ -175,14 +255,22 @@ class CanvasRecorder {
         return
       }
 
-      if (!document.contains(cachedCanvas)) {
+      // isConnected covers shadow roots and iframes; a removed iframe leaves its document without a window
+      if (!cachedCanvas.isConnected || !cachedCanvas.ownerDocument.defaultView) {
         this.app.debug.log('Canvas element not in sync', cachedCanvas, node)
+        if (snapshot.images.length > 0) {
+          this.sendSnaps(snapshot.images, id, snapshot.createdAt)
+          snapshot.images = []
+        }
         this.cleanupCanvas(id)
         return
       }
 
       if (!snapshot.paused) {
-        if (this.options.useAnimationFrame) {
+        if (drawHook) {
+          // captured on the next draw; an idle WebGL canvas sends nothing new
+          drawHook.due = true
+        } else if (this.options.useAnimationFrame) {
           requestAnimationFrame(() => {
             captureFn(cachedCanvas)
           })
@@ -344,6 +432,12 @@ class CanvasRecorder {
     if (observer) {
       observer.disconnect()
       this.observers.delete(id)
+    }
+
+    const drawHook = this.drawHooks.get(id)
+    if (drawHook) {
+      unhookDraws(drawHook.gl)
+      this.drawHooks.delete(id)
     }
 
     if (this.snapshots[id]?.dummy) {

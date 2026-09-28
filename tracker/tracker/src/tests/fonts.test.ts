@@ -49,7 +49,7 @@ describe('fonts module', () => {
     const ff = new (window as any).FontFace('MyFont', 'url(my.woff2)', { weight: '400' })
     expect(app.send).toHaveBeenCalledTimes(1)
     expect(app.send).toHaveBeenCalledWith(
-      LoadFontFace(0, 'MyFont', 'url(my.woff2)', '{"weight":"400"}'),
+      LoadFontFace(0, 'MyFont', 'url("http://localhost/my.woff2")', '{"weight":"400"}'),
     )
     expect(ff).toBeInstanceOf(NativeFontFace)
     expect(ff.family).toBe('MyFont')
@@ -66,7 +66,7 @@ describe('fonts module', () => {
     new (window as any).FontFace('Late', 'url(late.woff2)')
     expect(app.send).not.toHaveBeenCalled()
     nodeCallback(document)
-    expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'Late', 'url(late.woff2)', ''))
+    expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'Late', 'url("http://localhost/late.woff2")', ''))
   })
 
   test('unserializable descriptor does not break construction', () => {
@@ -74,14 +74,14 @@ describe('fonts module', () => {
     desc.self = desc
     const ff = new (window as any).FontFace('Circ', 'url(c.woff2)', desc)
     expect(ff.family).toBe('Circ')
-    expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'Circ', 'url(c.woff2)', ''))
+    expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'Circ', 'url("http://localhost/c.woff2")', ''))
   })
 
   test('replays stored fonts on node callback', () => {
     new (window as any).FontFace('OtherFont', 'url(other.woff2)')
     app.send.mockClear()
     nodeCallback(document)
-    expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'OtherFont', 'url(other.woff2)', ''))
+    expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'OtherFont', 'url("http://localhost/other.woff2")', ''))
   })
 
   test('iframe with unregistered document: page FontFace still works, font sent once registered', () => {

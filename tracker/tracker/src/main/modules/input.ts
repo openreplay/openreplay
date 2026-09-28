@@ -145,11 +145,17 @@ export default function (app: App, opts: Partial<Options>): void {
     return null
   }
 
+  // stays hidden after a "show password" toggle switches the type to text
+  const passwordFields = new WeakSet<Node>()
+
   function getInputValue(id: number, node: TextFieldElement | HTMLSelectElement) {
     let value = node.value
     let inputMode: InputModeT = options.defaultInputMode
 
-    if (node.type === 'password' || app.sanitizer.isHidden(id)) {
+    if (node.type === 'password') {
+      passwordFields.add(node)
+    }
+    if (passwordFields.has(node) || app.sanitizer.isHidden(id)) {
       inputMode = InputMode.Hidden
     } else if (
       app.sanitizer.isObscured(id) ||

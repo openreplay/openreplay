@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "lib": ["DOM", "ES2022", "DOM.Iterable"],
+    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "rootDir": "../..",
+    "outDir": ".build",
+    "types": []
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/replay"]
+}

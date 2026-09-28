@@ -240,4 +240,16 @@ describe('inlineRemoteCss', () => {
     );
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(2);
   });
+
+  test('keeps brace-less at-rules as separate rules', async () => {
+    mockNode.href = 'http://example.com/style.css';
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('@layer theme, base;\nbody { color: red; }'),
+    });
+    inlineRemoteCss(mockNode, 456, 'http://example.com', mockNextID, mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
+    await flush();
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, '@layer theme, base;', 0, 'http://example.com');
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 1, 'http://example.com');
+  });
 });

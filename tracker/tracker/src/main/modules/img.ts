@@ -3,7 +3,7 @@ import { isURL, IS_FIREFOX, MAX_STR_LEN, createMutationObserver } from '../utils
 import { ResourceTiming, SetNodeAttributeURLBased } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
-function resolveURL(url: string, location: Location = document.location) {
+function resolveURL(url: string, base: string = document.baseURI) {
   url = url.trim()
   if (
     url.startsWith('//') ||
@@ -12,16 +12,23 @@ function resolveURL(url: string, location: Location = document.location) {
     url.startsWith('data:') // any other possible value here? https://bugzilla.mozilla.org/show_bug.cgi?id=1758035
   ) {
     return url
-  } else if (url.startsWith('/')) {
-    return location.origin + url
-  } else {
-    return location.origin + location.pathname + url
   }
+  try {
+    return new URL(url, base).href
+  } catch (e) {
+    return url
+  }
+}
+
+// srcset candidate: "url [descriptor]"
+function resolveSrcsetCandidate(candidate: string, base: string) {
+  const [url, ...descriptors] = candidate.trim().split(/\s+/)
+  return [resolveURL(url, base), ...descriptors].join(' ')
 }
 
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1607081
 function isSVGInFireFox(url: string) {
-  return IS_FIREFOX && (url.startsWith('data:image/svg+xml') || url.match(/.svg$|/i))
+  return IS_FIREFOX && (url.startsWith('data:image/svg+xml') || /\.svg([?#]|$)/i.test(url))
 }
 
 const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
@@ -45,7 +52,7 @@ export default function (app: App): void {
     }
     const resolvedSrcset = srcset
       .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
-      .map((str) => resolveURL(str))
+      .map((str) => resolveSrcsetCandidate(str, app.getBaseHref()))
       .join(', ')
     app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset)
   }
@@ -53,6 +60,7 @@ export default function (app: App): void {
   const sendSrc = function (id: number, img: HTMLImageElement): void {
     if (img.src.length > MAX_STR_LEN) {
       sendPlaceholder(id, img)
+      return
     }
     app.send(SetNodeAttributeURLBased(id, 'src', img.src, app.getBaseHref()))
   }
@@ -87,7 +95,8 @@ export default function (app: App): void {
         if (mutation.type === 'attributes') {
           const target = mutation.target as HTMLImageElement
           const id = app.nodes.getID(target)
-          if (id === undefined) {
+          // masked images keep their placeholder
+          if (id === undefined || app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) {
             continue
           }
           if (mutation.attributeName === 'src') {

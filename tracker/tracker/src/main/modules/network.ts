@@ -84,9 +84,12 @@ export default function (app: App, opts: Partial<Options> = {}) {
   }
 
   const ignoreHeaders = options.ignoreHeaders
-  const isHIgnored = Array.isArray(ignoreHeaders)
-                     ? (name: string) => ignoreHeaders.includes(name)
-                     : () => ignoreHeaders
+  const ignoredNames = Array.isArray(ignoreHeaders)
+    ? new Set(ignoreHeaders.map((h) => h.toLowerCase()))
+    : null
+  const isHIgnored = ignoredNames
+    ? (name: string) => ignoredNames.has(name.toLowerCase())
+    : () => ignoreHeaders
 
   const stHeader =
     options.sessionTokenHeader === true ? 'X-OpenReplay-SessionToken' : options.sessionTokenHeader
@@ -159,7 +162,8 @@ export default function (app: App, opts: Partial<Options> = {}) {
           )
         },
         (url) => app.isServiceURL(url),
-        { xhr: true, fetch: true, beacon: true },
+        // axiosInstances are captured by axiosSpy; patching XHR too would record every call twice
+        { xhr: !options.axiosInstances, fetch: true, beacon: true },
         options.tokenUrlMatcher,
       )
     }

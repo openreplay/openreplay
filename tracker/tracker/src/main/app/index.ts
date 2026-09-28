@@ -18,7 +18,7 @@ import {
   requestIdleCb,
   simpleMerge,
 } from '../utils.js'
-import CanvasRecorder from './canvas.js'
+import CanvasRecorder, { watchCanvasContexts } from './canvas.js'
 import Logger, { ILogLevel, LogLevel } from './logger.js'
 import Message, {
   ConsoleLog,
@@ -32,9 +32,11 @@ import Message, {
   WSChannel,
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
+import NextNodes from './nodes/next_nodes.js'
 import { MASK_ORDER } from './nodes/idSeq.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer, { InlineCssMode } from './observer/top_observer.js'
+import NextObserver from './observer/next_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import Sanitizer, { SanitizeLevel, stringWiper } from './sanitizer.js'
 import { defaultUrlSanitizer } from '../modules/viewport.js'
@@ -203,6 +205,13 @@ type AppOptions = {
   nodes?: {
     maintainer: Partial<MaintainerOptions>
   }
+  /**
+   * Experimental DOM core: tracks node liveness structurally instead of with an id map and
+   * a periodic Maintainer, uses a single MutationObserver for all documents and shadow roots.
+   * Same recording format; meant for gradual testing.
+   * @default false
+   * */
+  nextObserver?: boolean
 } & WebworkerOptions &
   SessOptions
 
@@ -365,13 +374,27 @@ export default class App {
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer({ app: this, options })
-    this.nodes = new Nodes({
+    const nodesOptions = {
       node_id: this.options.node_id,
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
       onIdSpaceExhausted: this.ignoreThisFrame,
-    })
-    this.observer = new Observer({ app: this, options })
+      // ids are never reused, so a removed node's level would otherwise stay forever
+      onUnregister: (id: number) => this.sanitizer.setLevel(id, SanitizeLevel.Plain),
+    }
+    if (this.options.nextObserver) {
+      // same public surface as Nodes/TopObserver, see next_observer.ts
+      this.nodes = new NextNodes(nodesOptions) as unknown as Nodes
+      this.observer = new NextObserver({ app: this, options }) as unknown as Observer
+    } else {
+      this.nodes = new Nodes(nodesOptions)
+      this.observer = new Observer({ app: this, options })
+    }
+    if (IN_BROWSER && !this.options.canvas.disableCanvas) {
+      // WebGL canvases are captured on draw; that needs their contexts from creation on
+      watchCanvasContexts(window)
+      this.observer.attachContextCallback(watchCanvasContexts)
+    }
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
@@ -736,7 +759,7 @@ export default class App {
       this.pageFrames.find((f) => f.contentWindow === event.source) ||
       Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
     if (targetFrame) {
-      const nodeId = (targetFrame as any)[this.options.node_id]
+      const nodeId = this.nodes.getID(targetFrame)
       if (nodeId !== undefined) {
         message.id = nodeId
       }
@@ -884,7 +907,8 @@ export default class App {
         this.frameBatchLastSeen.set(data.context, Date.now())
       }
       const msgBatch = data.messages
-      const mappedMessages: Message[] = []
+      // pushed one by one: spreading a large child snapshot into push() overflows the call stack
+      const mappedMessages = this.messages
       msgBatch.forEach((msg: Message) => {
         if (msg[0] === MType.MouseMove) {
           let fixedMessage = msg
@@ -896,8 +920,7 @@ export default class App {
             }
           })
           mappedMessages.push(fixedMessage)
-        }
-        if (msg[0] === MType.MouseClick) {
+        } else if (msg[0] === MType.MouseClick) {
           let fixedMessage = msg
           this.pageFrames.forEach((frame) => {
             if (frame.contentWindow === event.source) {
@@ -924,12 +947,10 @@ export default class App {
             }
           })
           mappedMessages.push(fixedMessage)
-        }
-        if (![MType.UserID, MType.UserAnonymousID, MType.Metadata].includes(msg[0])) {
+        } else if (![MType.UserID, MType.UserAnonymousID, MType.Metadata].includes(msg[0])) {
           mappedMessages.push(msg)
         }
       })
-      this.messages.push(...mappedMessages)
     }
     if (data.line === proto.polling) {
       // Self-heal: a live child that was enrolled before but fell out of trackedFrames
@@ -973,7 +994,7 @@ export default class App {
           const targetFrame = this.pageFrames.find((f) => f.contentWindow === event.source)
             || Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
           if (targetFrame) {
-            const nodeId = (targetFrame as any)[this.options.node_id]
+            const nodeId = this.nodes.getID(targetFrame)
             if (nodeId !== undefined) {
               message.id = nodeId
             }
@@ -1103,8 +1124,7 @@ export default class App {
      * */
     let tries = 0
     while (tries < 100) {
-      // @ts-ignore
-      const potentialId = targetFrame[this.options.node_id]
+      const potentialId = this.nodes.getID(targetFrame)
       if (potentialId !== undefined) {
         tries = 100
         return potentialId
@@ -1140,6 +1160,14 @@ export default class App {
         }, 500)
 
         if (this.worker) {
+          // the page may be gone before the next commit task runs
+          if (this.activityState === ActivityState.Active) {
+            try {
+              this.postPending()
+            } catch (e) {
+              this._debug('worker_commit', e)
+            }
+          }
           this.worker.postMessage('closing')
         }
       }
@@ -1321,6 +1349,10 @@ export default class App {
     }
 
     if (this.insideIframe) {
+      // liveness is signalled by the 250ms poll; an empty batch would only cost a cross-window message
+      if (!this.messages.length) {
+        return
+      }
       window.parent.postMessage(
         {
           line: proto.iframeBatch,
@@ -1358,18 +1390,20 @@ export default class App {
     this.emptyBatchCounter = 0
 
     try {
-      requestIdleCb(() => {
-        if (!this.messages.length) {
-          return
-        }
-        this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
-        this.worker?.postMessage(this.messages)
-        this.commitCallbacks.forEach((cb) => cb(this.messages))
-        this.messages.length = 0
-      }, this.onCommitError)
+      requestIdleCb(this.postPending, this.onCommitError)
     } catch (e) {
       this.onCommitError(e)
     }
+  }
+
+  private postPending = () => {
+    if (!this.messages.length) {
+      return
+    }
+    this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
+    this.worker?.postMessage(this.messages)
+    this.commitCallbacks.forEach((cb) => cb(this.messages))
+    this.messages.length = 0
   }
 
   private onCommitError = (e: unknown) => {
