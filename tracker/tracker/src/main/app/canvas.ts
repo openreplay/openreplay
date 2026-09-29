@@ -142,11 +142,6 @@ class CanvasRecorder {
     const isIgnored = this.app.sanitizer.isObscured(id) || this.app.sanitizer.isHidden(id)
     if (isIgnored) {
       if (this.snapshots[id] || this.observers.has(id)) {
-        const observer = this.observers.get(id)
-        if (observer) {
-          observer.disconnect()
-          this.observers.delete(id)
-        }
         this.cleanupCanvas(id)
       }
     } else if (!this.snapshots[id] && !this.observers.has(id)) {
@@ -319,58 +314,26 @@ class CanvasRecorder {
   }
 
   private async uploadBatch(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
-    if (this.options.isDebug) {
-      const packed = await packFrames(images)
-      if (packed) {
-        const fileName = `${createdAt}_${canvasId}.${this.fileExt}.frames`
-        const url = URL.createObjectURL(new Blob([packed]))
-        const link = document.createElement('a')
-        link.href = url
-        link.download = fileName
-        link.style.display = 'none'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-      }
-      // fall through to also send to backend
+    const packed =
+      this.options.isDebug || this.options.framesSupport ? await packFrames(images) : null
+    if (this.options.isDebug && packed) {
+      const fileName = `${createdAt}_${canvasId}.${this.fileExt}.frames`
+      const url = URL.createObjectURL(new Blob([packed]))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
     }
 
     let formData: FormData
 
     if (this.options.framesSupport) {
-      // Pack frames into binary format: [uint64 LE timestamp][uint32 LE size][data] per frame
-      const buffers: ArrayBuffer[] = []
-      let totalSize = 0
-      for (const snapshot of images) {
-        if (!snapshot.data) continue
-        const ab = await snapshot.data.arrayBuffer()
-        buffers.push(ab)
-        totalSize += 8 + 4 + ab.byteLength // uint64 ts + uint32 size + data
-      }
-
-      if (totalSize === 0) return
-
-      const packed = new ArrayBuffer(totalSize)
-      const view = new DataView(packed)
-      const bytes = new Uint8Array(packed)
-      let offset = 0
-
-      for (let i = 0; i < images.length; i++) {
-        if (!images[i].data) continue
-        const ab = buffers.shift()!
-        const ts = images[i].id
-        // uint64 LE as two uint32 LE writes -- timestamp
-        view.setUint32(offset, ts % 0x100000000, true)
-        view.setUint32(offset + 4, Math.floor(ts / 0x100000000), true)
-        offset += 8
-        // uint32 LE -- size
-        view.setUint32(offset, ab.byteLength, true)
-        offset += 4
-        // image data
-        bytes.set(new Uint8Array(ab), offset)
-        offset += ab.byteLength
-      }
+      // [uint64 LE timestamp][uint32 LE size][data] per frame
+      if (!packed) return
 
       formData = new FormData()
       formData.append('type', 'frames');
@@ -537,23 +500,6 @@ async function packFrames(images: { data: Blob; id: number }[]): Promise<ArrayBu
   }
 
   return packed
-}
-
-function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
-  const [header, base64] = dataUrl.split(',')
-  if (!header || !base64) return null
-  const encParts = header.match(/:(.*?);/)
-  if (!encParts) return null
-  const mime = encParts[1]
-  const blobStr = atob(base64)
-  let n = blobStr.length
-  const u8arr = new Uint8Array(n)
-
-  while (n--) {
-    u8arr[n] = blobStr.charCodeAt(n)
-  }
-
-  return [new Blob([u8arr], { type: mime }), u8arr]
 }
 
 export default CanvasRecorder

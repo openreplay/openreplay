@@ -387,3 +387,27 @@ describe('NextNodes listener cleanup', () => {
     expect(fresh).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('NextObserver parity details', () => {
+  test('light children get their slot once the shadow root is recorded', () => {
+    setup('')
+    const host = document.createElement('x-slotted')
+    host.attachShadow({ mode: 'open' }).innerHTML = '<div><slot></slot></div>'
+    const light = document.createElement('span')
+    host.append(light)
+    document.body.append(host)
+    observer.observe()
+    const slot = host.shadowRoot!.querySelector('slot')!
+    expect(ofType(Type.SetNodeSlot)).toContainEqual([Type.SetNodeSlot, nodes.getID(light), nodes.getID(slot)])
+  })
+
+  test('content of a shadow root attached later is reported as a snapshot (isStart)', () => {
+    setup('<x-late id="late"></x-late>')
+    const starts: Array<[Node, boolean]> = []
+    nodes.attachNodeCallback((n, isStart) => starts.push([n, isStart]))
+    observer.observe()
+    const late = $('#late')
+    const sr = late.attachShadow({ mode: 'open' })
+    expect(starts.find(([n]) => n === sr)?.[1]).toBe(true)
+  })
+})

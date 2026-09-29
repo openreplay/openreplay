@@ -14,6 +14,7 @@ import {
   genStringBody,
   getStringResponseByType,
 } from "./utils";
+import { proxiedRequests } from "./proxied";
 
 export class XHRProxyHandler<T extends XMLHttpRequest>
   implements ProxyHandler<T>
@@ -64,6 +65,9 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
               return;
             }
           }
+          // already set by the app or the axios hook: a second call would join the values
+          const lower = name.toLowerCase();
+          if (Object.keys(this.item.requestHeader).some((k) => k.toLowerCase() === lower)) return;
           if (target.readyState === 1) target.setRequestHeader(name, value);
         });
         return this.getSend(target);
@@ -311,7 +315,7 @@ export default class XHRProxy {
     return new Proxy(target, {
       construct(original: any) {
         const XMLReq = new original();
-        return new Proxy(
+        const proxy = new Proxy(
           XMLReq,
           new XHRProxyHandler(
             XMLReq as XMLHttpRequest,
@@ -323,6 +327,8 @@ export default class XHRProxy {
             tokenUrlMatcher,
           ),
         );
+        proxiedRequests.add(proxy);
+        return proxy;
       },
     });
   }

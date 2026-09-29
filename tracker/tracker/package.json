@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "20.0.0-beta.0",
+  "version": "20.0.0-beta.1",
   "keywords": [
     "logging",
     "replay"
@@ -60,7 +60,6 @@
   "scripts": {
     "lint": "eslint src --ext .ts,.js --fix --quiet",
     "clean": "rm -Rf build && rm -Rf dist",
-    "build:common": "tsc -b src/common",
     "compile": "tsc --project src/main/tsconfig.json",
     "build:types": "rollup --config rollup.dts.config.js",
     "create-types": "mkdir -p dist/lib dist/cjs && printf '{\\n  \"type\": \"commonjs\"\\n}\\n' > dist/cjs/package.json && bun run build:types && cp dist/lib/entry.d.ts dist/lib/index.d.ts dist/cjs/",
@@ -101,7 +100,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@openreplay/network-proxy": "^1.2.6",
+    "@openreplay/network-proxy": "^1.2.7",
     "error-stack-parser-es": "2.0.1",
     "web-vitals": "^5.3.0"
   },

@@ -13,6 +13,12 @@ import {
   getStringResponseByType,
   getURL,
 } from "./utils";
+import { proxiedRequests } from "./proxied";
+
+// Requests may come from another realm, so no instanceof
+const isRequest = (x: unknown): x is Request =>
+  !!x && typeof x === "object" && typeof (x as Request).url === "string" && typeof (x as Request).clone === "function";
+const TEXTUAL = /json|text\/|xml|javascript|urlencoded|graphql/i;
 
 export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T> {
   constructor(
@@ -36,6 +42,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
   ) {
     const input = argsList[0];
     const init = argsList[1];
+    if (isRequest(input)) proxiedRequests.add(input);
     // URL objects may come from another realm, so no instanceof
     const isURLObject = !!input && typeof input === "object" && typeof (input as any).href === "string" && !("url" in input);
     if (
@@ -60,10 +67,10 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       this.setSessionTokenHeader,
       this.sanitize,
     );
-    this.beforeFetch(item, isURLObject ? String(input) : (input as RequestInfo), init);
+    const requestBodyRead = this.beforeFetch(item, isURLObject ? String(input) : (input as RequestInfo), init);
 
     const signal =
-      (argsList[0] instanceof Request ? (argsList[0] as Request).signal : undefined) ||
+      (isRequest(argsList[0]) ? argsList[0].signal : undefined) ||
       (argsList[1]?.signal as AbortSignal | undefined);
     // guard to avoid double-send
     let abortedNotified = false;
@@ -92,15 +99,18 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
           return;
         }
       }
-      if (argsList[1] === undefined && argsList[0] instanceof Request) {
-        return argsList[0].headers.append(name, value);
+      // init.headers replaces the Request's headers entirely, so only add it there if it's already set
+      if (argsList[1]?.headers === undefined && isRequest(argsList[0])) {
+        // already set by the app or the axios hook: append would join the values
+        if (!argsList[0].headers.has(name)) argsList[0].headers.append(name, value);
+        return;
       } else {
         if (!argsList[1]) argsList[1] = {};
         if (argsList[1].headers === undefined) {
           argsList[1] = { ...argsList[1], headers: {} };
         }
         if (argsList[1].headers instanceof Headers) {
-          argsList[1].headers.append(name, value);
+          if (!argsList[1].headers.has(name)) argsList[1].headers.append(name, value);
         } else if (Array.isArray(argsList[1].headers)) {
           argsList[1].headers.push([name, value]);
         } else {
@@ -112,7 +122,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     return (<ReturnType<T>>target.apply(this.context, argsList))
       .then(this.afterFetch(item, () => {
         abortedNotified = true;
-      }))
+      }, requestBodyRead))
       .catch((e) => {
         item.endTime = performance.now();
         item.duration = item.endTime - (item.startTime || item.endTime);
@@ -184,64 +194,65 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     // save POST data
     if (init?.body) {
       item.requestData = genStringBody(init.body);
+    } else if (
+      typeof input !== "string" &&
+      method !== "GET" &&
+      method !== "HEAD" &&
+      TEXTUAL.test(input.headers.get("content-type") || "")
+    ) {
+      // the body is inside the Request; read a copy before fetch consumes it
+      try {
+        return input.clone().text().then(
+          (text) => {
+            item.requestData = genStringBody(text);
+          },
+          () => {},
+        );
+      } catch {}
     }
   }
 
-  protected afterFetch(item: NetworkMessage, onResolved?: () => void) {
+  protected afterFetch(item: NetworkMessage, onResolved?: () => void, requestBodyRead?: Promise<void>) {
     return (resp: Response) => {
       if (onResolved) onResolved?.();
       item.endTime = performance.now();
       item.duration = item.endTime - (item.startTime || item.endTime);
       item.status = resp.status;
       item.statusText = String(resp.status);
+      item.readyState = 4;
 
-      let isChunked = false;
       item.header = {};
       for (const [key, value] of resp.headers) {
         item.header[key] = value;
-        isChunked =
-          value.toLowerCase().indexOf("chunked") > -1 ? true : isChunked;
       }
 
-      if (isChunked) {
-        // when `transfer-encoding` is chunked, the response is a stream which is under loading,
-        // so the `readyState` should be 3 (Loading),
-        // and the response should NOT be `clone()` which will affect stream reading.
-        item.readyState = 3;
-      } else {
-        // Otherwise, not chunked, the response is not a stream,
-        // so it's completed and can be cloned for `text()` calling.
-        item.readyState = 4;
+      Promise.all([this.handleResponseBody(resp, item), requestBodyRead])
+        .then(([responseValue]) => {
+          item.responseSize =
+            typeof responseValue === "string"
+              ? responseValue.length
+              : responseValue.byteLength;
+          item.responseSizeText = formatByteSize(item.responseSize);
+          item.response = getStringResponseByType(
+            item.responseType,
+            responseValue,
+          );
 
-        this.handleResponseBody(resp.clone(), item)
-          .then((responseValue: string | ArrayBuffer) => {
-            item.responseSize =
-              typeof responseValue === "string"
-                ? responseValue.length
-                : responseValue.byteLength;
-            item.responseSizeText = formatByteSize(item.responseSize);
-            item.response = getStringResponseByType(
-              item.responseType,
-              responseValue,
-            );
-
+          const msg = item.getMessage();
+          if (msg) {
+            this.sendMessage(msg);
+          }
+        })
+        .catch((e) => {
+          // other errors (a stream broken mid-body) are the app's to see on its own copy
+          if (e.name === "AbortError") {
+            item.status = 0;
+            item.statusText = "Aborted";
+            item.readyState = 0;
             const msg = item.getMessage();
-            if (msg) {
-              this.sendMessage(msg);
-            }
-          })
-          .catch((e) => {
-            if (e.name === "AbortError") {
-              item.status = 0;
-              item.statusText = "Aborted";
-              item.readyState = 0;
-              const msg = item.getMessage();
-              if (msg) this.sendMessage(msg);
-            } else {
-              throw e;
-            }
-          });
-      }
+            if (msg) this.sendMessage(msg);
+          }
+        });
 
       // the real Response: a Proxy fails brand checks (cache.put, structuredClone, instanceof
       // across realms); the body is already captured from the clone above
@@ -249,22 +260,23 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     };
   }
 
-  protected handleResponseBody(resp: Response, item: NetworkMessage) {
-    // parse response body by Content-Type
-    const contentType = resp.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      item.responseType = "json";
-      return resp.text();
-    } else if (
-      contentType &&
-      (contentType.includes("text/html") || contentType.includes("text/plain"))
-    ) {
+  protected handleResponseBody(resp: Response, item: NetworkMessage): Promise<string | ArrayBuffer> {
+    const contentType = resp.headers.get("content-type") || "";
+    if (contentType.includes("event-stream")) {
+      // never ends: a copy would buffer the whole stream
       item.responseType = "text";
-      return resp.text();
-    } else {
-      item.responseType = "arraybuffer";
-      return resp.arrayBuffer();
+      return Promise.resolve("");
     }
+    if (contentType.includes("json")) {
+      item.responseType = "json";
+      return resp.clone().text();
+    }
+    if (!contentType || TEXTUAL.test(contentType)) {
+      item.responseType = "text";
+      return resp.clone().text();
+    }
+    item.responseType = "arraybuffer";
+    return resp.clone().arrayBuffer();
   }
 }
 

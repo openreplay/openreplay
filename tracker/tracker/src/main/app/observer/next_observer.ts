@@ -196,6 +196,8 @@ export default class NextObserver
   private pend: Node[] = []
   private fresh = new Set<Node>()
   private created: Node[] = []
+  /** iframe documents / shadow roots attached in this batch: their content is a snapshot (isStart) */
+  private snapshotRoots = new Set<Rec>()
 
   constructor(params: { app: App; options: Partial<Options> }) {
     this.app = params.app
@@ -363,6 +365,7 @@ export default class NextObserver
     this.mo.observe(sr, MO_OPTS)
     this.listen(sr, 'slotchange', this.onSlotChange)
     this.created.push(sr)
+    this.snapshotRoots.add(r)
     for (let c = firstChild(sr); c !== null; c = nextSibling(c)) this.collect(c)
   }
 
@@ -394,6 +397,7 @@ export default class NextObserver
     this.listen(doc, 'load', this.onLoad)
     this.iframeOffsets.observe(iframe)
     this.created.push(doc)
+    this.snapshotRoots.add(r)
     for (let c = firstChild(doc); c !== null; c = nextSibling(c)) this.collect(c)
     const win = iframe.contentWindow as Context | null
     // a same-origin navigation may keep the global (initial about:blank) or create a new one
@@ -807,6 +811,14 @@ export default class NextObserver
       const sr = this.shadowOf(n as Element)
       if (sr !== null) this.attachShadowRoot(r, sr)
       if (hasTag(n, 'iframe')) this.attachFrame(r, n)
+      // light children are placed before the host's shadow content, so their slot
+      // didn't exist yet when they were created
+      if (hasTag(n, 'slot')) {
+        for (const assigned of n.assignedNodes()) {
+          const ar = this.nodes.live(assigned)
+          if (ar !== undefined) this.syncSlot(ar, assigned)
+        }
+      }
     }
     this.syncSlot(r, n)
   }
@@ -843,11 +855,14 @@ export default class NextObserver
 
   private finish(isStart: boolean) {
     const created = this.created
+    const roots = this.snapshotRoots
     this.created = []
+    this.snapshotRoots = new Set()
     this.resetBatch()
     for (const n of created) {
-      if (n !== document && this.nodes.live(n) === undefined) continue
-      this.app.nodes.callNodeCallbacks(n, isStart)
+      const r = n === document ? undefined : this.nodes.live(n)
+      if (n !== document && r === undefined) continue
+      this.app.nodes.callNodeCallbacks(n, isStart || (roots.size > 0 && this.underRoot(r, roots)))
     }
     const contexts = this.newContexts
     this.newContexts = []
@@ -855,6 +870,13 @@ export default class NextObserver
       this.contextCallbacks.forEach((cb) => cb(win))
     }
     this.nodes.maybeSweep()
+  }
+
+  private underRoot(r: Rec | undefined, roots: Set<Rec>) {
+    for (let x = r ?? null; x !== null; x = x.p) {
+      if (roots.has(x)) return true
+    }
+    return false
   }
 
   private resetBatch() {

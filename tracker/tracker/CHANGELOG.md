@@ -4,7 +4,7 @@
 - WebGL canvases are recorded (were blank frames): contexts are noted when created and a frame is captured right after the page draws; idle WebGL canvases no longer resend frames. Contexts created before the tracker was constructed keep the old capture
 - `adoptedStyleSheets.push()` / `splice()` / index writes are recorded (only assignment was)
 - attribute string dictionary hits no longer re-insert into the LRU map on every lookup (~4µs → ~30ns per attribute)
-- privacy: `src`/`srcset` changes of masked images, selection text inside masked content, a password field switched to `type=text`, and axios `Authorization`/cookie headers (case-insensitive, `toJSON` headers, privateMode) are no longer recorded in plain
+- privacy: `src`/`srcset` changes of masked images, selection text inside masked content, and a password field switched to `type=text` are no longer recorded in plain
 - `replaceHashSymbol` no longer resends the page location on every tick
 - JS errors and rejections from same-origin iframes are recorded (were dropped / sent as `{}`)
 - font sources with relative `url()` are resolved against the page, web vitals aren't duplicated after a restart
@@ -12,7 +12,8 @@
 - canvases inside shadow roots and iframes keep recording; frames pending when a canvas is removed are sent
 - commits keep flowing in background tabs; pending messages are flushed before unload
 - crossdomain: child mouse events are no longer sent twice, idle frames don't post empty batches, large child batches can't overflow the stack
-- axios instances aren't captured twice (by the axios spy and the XHR proxy)
+- network: removed the `useProxy` option, the legacy fetch/XHR patching and the axios spy; axios (0.x and 1.x, XHR and fetch adapters) is captured by the network proxy with no setup. `axiosInstances` is only needed for instances with a custom adapter (native HTTP bridge, mock, `env.fetch`) and no longer records requests twice or sends the session token header twice
+- network (network-proxy 1.2.7): with `sessionTokenHeader`, `fetch(request, { signal })` / `fetch(request, {})` no longer drops the request's own headers (e.g. `Authorization`); bodies of `Request` inputs, `+json`/xml/untyped responses and chunked responses are recorded; `text/event-stream` responses aren't buffered
 - mouse: `data-*` selectors are used only when unique, class uniqueness isn't cached forever, thrashing detection resets after idle
 - sanitizer levels of removed nodes are dropped; stylesheet and font maps no longer retain detached iframe documents
 - worker: a quick stop/start can't null the new sender or reset the new session's status

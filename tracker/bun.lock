@@ -7,9 +7,9 @@
     },
     "tracker": {
       "name": "@openreplay/tracker",
-      "version": "20.0.0-beta.0",
+      "version": "20.0.0-beta.1",
       "dependencies": {
-        "@openreplay/network-proxy": "^1.2.6",
+        "@openreplay/network-proxy": "^1.2.7",
         "error-stack-parser-es": "2.0.1",
         "web-vitals": "^5.3.0",
       },
@@ -275,7 +275,7 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@openreplay/network-proxy": ["@openreplay/network-proxy@1.2.6", "", {}, "sha512-YyaO5Iii2coc9uK6GO/dzmKjN+fWd4IdMNBAgantg7r5sLgjiegnLR5St/h2SrbTSYYDY+ckPo9kg3Il62OYGQ=="],
+    "@openreplay/network-proxy": ["@openreplay/network-proxy@1.2.7", "", {}, "sha512-jkuJujQMUcOylZ6SY2Utqt/WE4PkCxLafAOuWg46LIwUB/b8HftUqNPX19HJlLzUjhanmaRqbNV0Y1T9XOe70A=="],
 
     "@openreplay/tracker": ["@openreplay/tracker@workspace:tracker"],
 
