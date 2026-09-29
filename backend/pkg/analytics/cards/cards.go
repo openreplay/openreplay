@@ -17,7 +17,6 @@ type Cards interface {
 	Create(projectID int, userID uint64, req *CardCreateRequest) (*CardGetResponse, error)
 	Get(projectID int, cardID int64) (*CardGetResponse, error)
 	GetWithSeries(projectID int, cardID int64) (*CardGetResponse, error)
-	GetAll(projectID int) (*GetCardsResponse, error)
 	GetAllPaginated(projectID int, filters CardListFilter, sort CardListSort, limit, offset int) (*GetCardsResponsePaginated, error)
 	Update(projectID int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error)
 	Delete(projectID int, cardID int64, userID uint64) error
@@ -189,24 +188,6 @@ func (s *cardsImpl) GetWithSeries(projectID int, cardID int64) (*CardGetResponse
 	return card, nil
 }
 
-func (s *cardsImpl) GetAll(projectID int) (*GetCardsResponse, error) {
-	const q = `SELECT metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at FROM public.metrics WHERE project_id=$1 AND deleted_at IS NULL`
-	rows, err := s.pgconn.Query(q, projectID)
-	if err != nil {
-		return nil, fmt.Errorf("get all cards: %w", err)
-	}
-	defer rows.Close()
-	resp := &GetCardsResponse{}
-	for rows.Next() {
-		var c Card
-		if err := rows.Scan(&c.CardID, &c.ProjectID, &c.UserID, &c.Name, &c.MetricType, &c.ViewType, &c.MetricOf, &c.MetricValue, &c.MetricFormat, &c.IsPublic, &c.CreatedAt, &c.EditedAt); err != nil {
-			return nil, err
-		}
-		resp.Cards = append(resp.Cards, c)
-	}
-	return resp, nil
-}
-
 func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort CardListSort, limit, offset int) (*GetCardsResponsePaginated, error) {
 	if err := ValidateStruct(filters); err != nil {
 		return nil, fmt.Errorf("invalid filters: %w", err)
@@ -292,9 +273,9 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	}
 	defer rows.Close()
 
-	var cards []Card
+	var cards []CardListItem
 	for rows.Next() {
-		var c Card
+		var c CardListItem
 		if err := rows.Scan(
 			&c.CardID,
 			&c.ProjectID,

@@ -133,26 +133,6 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *handlersImpl) getCards(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	bodySize := 0
-
-	projectID, err := getIDFromRequest(r, "projectId")
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	//currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.cards.GetAll(projectID)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
-}
-
 func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0

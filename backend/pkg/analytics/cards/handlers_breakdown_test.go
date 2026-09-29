@@ -29,7 +29,6 @@ func (f *fakeCards) Get(projectID int, cardID int64) (*CardGetResponse, error) {
 func (f *fakeCards) GetWithSeries(projectID int, cardID int64) (*CardGetResponse, error) {
 	return nil, nil
 }
-func (f *fakeCards) GetAll(projectID int) (*GetCardsResponse, error) { return nil, nil }
 func (f *fakeCards) GetAllPaginated(projectID int, filters CardListFilter, sort CardListSort, limit, offset int) (*GetCardsResponsePaginated, error) {
 	return nil, nil
 }

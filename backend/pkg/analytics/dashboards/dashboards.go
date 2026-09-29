@@ -15,7 +15,6 @@ type Dashboards interface {
 	Create(projectId int, userId uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error)
 	Get(projectId int, dashboardId int, userId uint64) (*GetDashboardResponse, error)
 	GetAll(projectId int, userId uint64) (*GetDashboardsResponse, error)
-	GetAllPaginated(projectId int, userId uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error)
 	Update(projectId int, dashboardId int, userId uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error)
 	Delete(projectId int, dashboardId int, userId uint64) error
 	AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error
@@ -157,9 +156,9 @@ func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsRes
 	}
 	defer rows.Close()
 
-	var dashboards []Dashboard
+	var dashboards []DashboardListItem
 	for rows.Next() {
-		var dashboard Dashboard
+		var dashboard DashboardListItem
 
 		err := rows.Scan(&dashboard.DashboardID, &dashboard.UserID, &dashboard.ProjectID, &dashboard.Name, &dashboard.Description, &dashboard.IsPublic, &dashboard.IsPinned, &dashboard.OwnerEmail, &dashboard.OwnerName, &dashboard.CreatedAt)
 		if err != nil {
@@ -175,55 +174,6 @@ func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsRes
 
 	return &GetDashboardsResponse{
 		Dashboards: dashboards,
-	}, nil
-}
-
-func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error) {
-	baseSQL, args := buildBaseQuery(projectId, userID, req)
-
-	// Count total dashboards
-	countSQL := fmt.Sprintf("SELECT COUNT(*) FROM (%s) AS count_query", baseSQL)
-	var total uint64
-	err := s.pgconn.QueryRow(countSQL, args...).Scan(&total)
-	if err != nil {
-		return nil, fmt.Errorf("error counting dashboards: %w", err)
-	}
-
-	// Fetch paginated dashboards
-	paginatedSQL := fmt.Sprintf("%s ORDER BY %s %s LIMIT $%d OFFSET $%d",
-		baseSQL, getOrderBy(req.OrderBy), getOrder(req.Order), len(args)+1, len(args)+2)
-	args = append(args, req.Limit, req.Limit*(req.Page-1))
-
-	rows, err := s.pgconn.Query(paginatedSQL, args...)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching paginated dashboards: %w", err)
-	}
-	defer rows.Close()
-
-	var dashboards []Dashboard
-	for rows.Next() {
-		var dashboard Dashboard
-		err := rows.Scan(
-			&dashboard.DashboardID,
-			&dashboard.UserID,
-			&dashboard.ProjectID,
-			&dashboard.Name,
-			&dashboard.Description,
-			&dashboard.IsPublic,
-			&dashboard.IsPinned,
-			&dashboard.OwnerEmail,
-			&dashboard.OwnerName,
-			&dashboard.CreatedAt,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning dashboard: %w", err)
-		}
-		dashboards = append(dashboards, dashboard)
-	}
-
-	return &GetDashboardsResponsePaginated{
-		Dashboards: dashboards,
-		Total:      total,
 	}, nil
 }
 
@@ -269,57 +219,6 @@ func (s *dashboardsImpl) Delete(projectId int, dashboardID int, userID uint64) e
 	}
 
 	return nil
-}
-
-func buildBaseQuery(projectId int, userID uint64, req *GetDashboardsRequest) (string, []interface{}) {
-	var conditions []string
-	args := []interface{}{projectId}
-
-	conditions = append(conditions, "d.project_id = $1")
-
-	// Handle is_public filter
-	if req.IsPublic {
-		conditions = append(conditions, "d.is_public = true")
-	} else {
-		conditions = append(conditions, "(d.is_public = true OR d.user_id = $2)")
-		args = append(args, userID)
-	}
-
-	// Handle search query
-	if req.Query != "" {
-		conditions = append(conditions, "(d.name ILIKE $3 OR d.description ILIKE $3)")
-		args = append(args, "%"+req.Query+"%")
-	}
-
-	conditions = append(conditions, "d.deleted_at IS NULL")
-	whereClause := "WHERE " + fmt.Sprint(conditions)
-
-	baseSQL := fmt.Sprintf(`
-		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned,
-		       u.email AS owner_email, u.name AS owner_name, d.created_at
-		FROM dashboards d
-		LEFT JOIN users u ON d.user_id = u.user_id
-		%s`, whereClause)
-
-	return baseSQL, args
-}
-
-func getOrderBy(orderBy string) string {
-	if orderBy == "" {
-		return "d.dashboard_id"
-	}
-	allowed := map[string]bool{"dashboard_id": true, "name": true, "description": true}
-	if allowed[orderBy] {
-		return fmt.Sprintf("d.%s", orderBy)
-	}
-	return "d.dashboard_id"
-}
-
-func getOrder(order string) string {
-	if order == "DESC" {
-		return "DESC"
-	}
-	return "ASC"
 }
 
 type MetricWithConfig struct {
