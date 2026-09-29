@@ -141,12 +141,12 @@ func (h *handlersImpl) getEvents(w http.ResponseWriter, r *http.Request) {
 		})
 		crashesErr = runLane(&wg, "crashes", func() error {
 			var err error
-			crashesRes, err = h.events.GetMobileCrashesBySessionID(sessID, lower, upper)
+			crashesRes, err = h.events.GetMobileCrashesBySessionID(projID, sessID, lower, upper)
 			return err
 		})
 		customsErr = runLane(&wg, "customs", func() error {
 			var err error
-			userEventsRes, err = h.events.GetMobileCustomsBySessionID(sessID, lower, upper)
+			userEventsRes, err = h.events.GetMobileCustomsBySessionID(projID, sessID, lower, upper)
 			return err
 		})
 	}
