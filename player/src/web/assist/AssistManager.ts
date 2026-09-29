@@ -3,7 +3,8 @@ import type { Socket } from 'socket.io-client';
 import type { PlayerMsg, Store } from '../../index';
 import CanvasReceiver from './CanvasReceiver';
 import { gunzipSync } from 'fflate';
-import { Message, MType } from '../messages';
+import { MType } from '../messages';
+import type { TrackerMessage } from '../messages/tracker.gen';
 import type Screen from '../Screen/Screen';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader';
@@ -83,7 +84,9 @@ export default class AssistManager {
     private handleMessage: (m: PlayerMsg, index: number) => void,
     private screen: Screen,
     private config: RTCIceServer[] | null,
-    private store: Store<typeof AssistManager.INITIAL_STATE>,
+    private store: Store<
+      typeof AssistManager.INITIAL_STATE & { tabs: Set<string> }
+    >,
     private getNode: MessageManager['getNode'],
     public readonly agentId: number,
     private readonly updateSpriteMap: () => void,
@@ -216,7 +219,7 @@ export default class AssistManager {
 
     const processMessages = (messages: {
       meta: { version: number; tabId: string };
-      data: Message[];
+      data: TrackerMessage[];
     }) => {
       const isOldVersion = messages.meta.version === 1;
       this.assistVersion = isOldVersion ? 1 : 2;

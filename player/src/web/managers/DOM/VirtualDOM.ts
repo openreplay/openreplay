@@ -302,7 +302,7 @@ export class VSlot extends VElement {
 
 export class VHTMLElement extends VElement {
   constructor(node: HTMLElement) {
-    super('HTML', false);
+    super('HTML', false, -1, -1);
     this.createNode = () => node;
   }
 }

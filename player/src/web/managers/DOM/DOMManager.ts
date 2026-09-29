@@ -95,7 +95,7 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly isMobile: boolean;
   private readonly stringDict: Record<number, string>;
   private readonly globalDict: {
-    get: (key: string) => string | undefined;
+    get: (key: string | number) => string | undefined;
     all: () => Record<string, string>;
   };
   public readonly time: number;
@@ -112,7 +112,7 @@ export default class DOMManager extends ListWalker<Message> {
     time: number;
     stringDict: Record<number, string>;
     globalDict: {
-      get: (key: string) => string | undefined;
+      get: (key: string | number) => string | undefined;
       all: () => Record<string, string>;
     };
     virtualMode?: boolean;
@@ -772,7 +772,10 @@ export default class DOMManager extends ListWalker<Message> {
             }
           }
           const ff = new FontFace(msg.family, msg.source, descr);
-          vNode.node.fonts.add(ff);
+          // lib.dom doesn't model FontFaceSet's set methods
+          (vNode.node.fonts as FontFaceSet & Pick<Set<FontFace>, 'add'>).add(
+            ff,
+          );
           void ff.load();
         });
         return;

@@ -132,10 +132,13 @@ export default class Lists {
   }
 
   getFullListsState(): StateList {
-    return LIST_NAMES.reduce((state, name) => {
-      state[`${name}List`] = this.lists[name].list;
-      return state;
-    }, {} as Partial<StateList>) as StateList;
+    return LIST_NAMES.reduce(
+      (state, name) => {
+        state[`${name}List`] = this.lists[name].list;
+        return state;
+      },
+      {} as Record<string, unknown>,
+    ) as StateList;
   }
 
   private publishedMarkedCounts: Partial<StateMarkedCountNow> = {};
@@ -149,7 +152,7 @@ export default class Lists {
       list.moveGetLast(t);
       // countNow, not the return value: moving back before the first item returns nothing
       if (list.countNow !== before) {
-        state[`${name}ListNow`] = list.listNow;
+        (state as Record<string, unknown>)[`${name}ListNow`] = list.listNow;
       }
     });
     // read after walking, otherwise the counts lag one move behind

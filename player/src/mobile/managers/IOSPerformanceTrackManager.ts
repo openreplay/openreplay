@@ -1,5 +1,5 @@
 import ListWalker from '../../common/ListWalker';
-import type { IosPerformanceEvent } from '../../web/messages';
+import type { MobilePerformanceEvent } from '../../web/messages';
 
 const performanceEvTypes = {
   MemoryUsage: 'memoryUsage',
@@ -15,7 +15,9 @@ export type PerformanceChartPoint = {
   isBackground: boolean;
 };
 
-export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanceEvent> {
+export default class IOSPerformanceTrackManager extends ListWalker<
+  MobilePerformanceEvent
+> {
   private chart: Array<PerformanceChartPoint> = [];
 
   private isInBg = false;
@@ -36,7 +38,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
     chart.splice(i, 0, point);
   }
 
-  append(msg: IosPerformanceEvent): void {
+  append(msg: MobilePerformanceEvent): void {
     if (!SUPPORTED_TYPES.has(msg.name)) {
       return;
     }

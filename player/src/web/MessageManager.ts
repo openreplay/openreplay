@@ -14,7 +14,13 @@ import ActivityManager from './managers/ActivityManager';
 import TabClosingManager from './managers/TabClosingManager';
 import MessageTabSourceManager from './managers/MessageTabSourceManager';
 
-import { MouseThrashing, MType, MouseClick, Message } from './messages';
+import {
+  MouseThrashing,
+  MType,
+  MouseClick,
+  MouseClickDeprecated,
+  Message,
+} from './messages';
 
 import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
@@ -130,7 +136,8 @@ export default class MessageManager {
     connectionQuality: 4,
   };
 
-  private clickManager: ListWalker<MouseClick> = new ListWalker();
+  private clickManager: ListWalker<MouseClick | MouseClickDeprecated> =
+    new ListWalker();
   private lastSelectClickTime = -1;
   private highlightClickHasTarget = false;
   private onClickPause?: (ms: number) => void;

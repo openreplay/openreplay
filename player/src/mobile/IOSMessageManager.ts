@@ -307,7 +307,7 @@ export default class IOSMessageManager implements IMessageManager {
   };
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
-    if (msg.tp === 9999 || this.disposed) return;
+    if ((msg.tp as number) === 9999 || this.disposed) return;
     // @ts-ignore mobile messages carry absolute timestamps
     if (typeof msg.timestamp === 'number') {
       // @ts-ignore

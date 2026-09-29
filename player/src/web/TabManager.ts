@@ -309,7 +309,8 @@ export default class TabSessionManager {
         break;
       case MType.SetPageLocationDeprecated:
       case MType.SetPageLocation:
-        this.locationManager.append(msg);
+        // deprecated messages only lack documentTitle
+        this.locationManager.append(msg as SetPageLocation);
         if ('documentTitle' in msg && !this.firstTitleSet) {
           this.state.update({
             tabNames: {
@@ -320,7 +321,7 @@ export default class TabSessionManager {
           this.firstTitleSet = true;
         }
         if (msg.navigationStart > 0) {
-          this.loadedLocationManager.append(msg);
+          this.loadedLocationManager.append(msg as SetPageLocation);
         }
         break;
       case MType.SetViewportSize:

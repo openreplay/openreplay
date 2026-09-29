@@ -1,7 +1,6 @@
 import type {
   ResourceTiming,
   NetworkRequest,
-  Fetch,
   MobileNetworkCall,
 } from '../messages';
 
@@ -150,10 +149,16 @@ export const Resource = (
   };
 };
 
+/** `time` is always set and `timestamp` comes from the spread message */
+type TimedResource = ReturnType<typeof Resource> & {
+  time: number;
+  timestamp: number;
+};
+
 export function getResourceFromResourceTiming(
   msg: ResourceTiming,
   sessStart: number,
-) {
+): TimedResource {
   const failed = msg.decodedBodySize === -111;
   const timingDataBlocked =
     msg.duration === 0 &&
@@ -189,16 +194,16 @@ export function getResourceFromResourceTiming(
       total: msg.total,
       stalled: msg.stalled,
     },
-  });
+  }) as TimedResource;
 }
 
 export function getResourceFromNetworkRequest(
-  msg: NetworkRequest | Fetch | MobileNetworkCall,
+  msg: NetworkRequest | MobileNetworkCall,
   sessStart: number,
-) {
-  return Resource({
+): TimedResource {
+  // status is text and timings are empty, which IResourceRequest doesn't model
+  const resource: Record<string, any> = {
     ...msg,
-    // @ts-ignore
     type: msg?.type ? msg?.type : ResourceType.XHR,
     success: msg.status < 400,
     status: String(msg.status),
@@ -206,5 +211,6 @@ export function getResourceFromNetworkRequest(
     decodedBodySize:
       'transferredBodySize' in msg ? msg.transferredBodySize : undefined,
     timings: {},
-  });
+  };
+  return Resource(resource) as TimedResource;
 }
