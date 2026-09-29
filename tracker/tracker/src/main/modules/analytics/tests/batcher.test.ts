@@ -143,6 +143,22 @@ describe('Batcher', () => {
     ])
   })
 
+  test('squashed set_property_once keeps the first value for a repeated key', () => {
+    batcher.addEvent(makePeopleEvent('set_property_once', 1, { plan: 'free', a: 1 }, 'visitor-a'))
+    batcher.addEvent(makePeopleEvent('set_property_once', 2, { plan: 'pro', b: 2 }, 'visitor-a'))
+
+    const peopleBatch = batcher.getBatches().data[categories.people]
+
+    expect(peopleBatch).toEqual([
+      {
+        type: 'set_property_once',
+        user_id: 'visitor-a',
+        timestamp: 2,
+        payload: { plan: 'free', a: 1, b: 2 },
+      },
+    ])
+  })
+
   test('user_id survives the serialized flush body', () => {
     batcher.addEvent(makePeopleEvent('set_property', 1, { a: 1 }, 'visitor-a'))
     batcher.addEvent(makePeopleEvent('set_property', 2, { b: 2 }, 'visitor-a'))
