@@ -11,7 +11,7 @@ func (c *projectsImpl) GetProjectByKeyAndTenant(projectKey string, tenantId int)
 	if proj, ok := c.projectsByKeys.Get(cacheKey); ok {
 		return proj.(*Project), nil
 	}
-	if proj, err := c.cache.GetByKey(projectKey); err == nil {
+	if proj, err := c.cache.GetByKey(projectKey); err == nil && proj.TenantID == tenantId {
 		c.projectsByKeys.Set(cacheKey, proj)
 		return proj, nil
 	}
