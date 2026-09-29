@@ -278,6 +278,9 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	if err != nil {
 		return nil, err
 	}
+	if w, ok := favService.(Worker); ok {
+		workers = append(workers, w)
+	}
 
 	return &serviceBuilder{
 		sessionAPI:         sessionHandlers,
