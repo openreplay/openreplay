@@ -186,7 +186,7 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	page := 1   // Default page number
 	if val := query.Get("limit"); val != "" {
 		if l, err := strconv.Atoi(val); err == nil && l > 0 {
-			limit = l
+			limit = clampLimit(l)
 		}
 	}
 	if val := query.Get("page"); val != "" {
@@ -295,4 +295,13 @@ func (e *handlersImpl) deleteCard(w http.ResponseWriter, r *http.Request) {
 func (e *handlersImpl) getCardSessions(w http.ResponseWriter, r *http.Request) {
 	// TODO: implement this
 	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, fmt.Errorf("not implemented"), time.Now(), r.URL.Path, 0)
+}
+
+const maxListLimit = 200
+
+func clampLimit(l int) int {
+	if l > maxListLimit {
+		return maxListLimit
+	}
+	return l
 }

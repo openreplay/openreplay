@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 
@@ -199,8 +200,8 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	params := []interface{}{projectID}
 	idx := 2
 	if name := filters.GetNameFilter(); name != nil {
-		conds = append(conds, fmt.Sprintf("m.name ILIKE $%d", idx))
-		params = append(params, "%"+*name+"%")
+		conds = append(conds, fmt.Sprintf("m.name ILIKE $%d ESCAPE '\\'", idx))
+		params = append(params, buildNamePattern(*name))
 		idx++
 	}
 	if t := filters.GetMetricTypeFilter(); t != nil {
@@ -242,31 +243,7 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	params = append(params, offset)
 	offsetIdx := idx
 
-	query := fmt.Sprintf(
-		`SELECT
-			m.metric_id,
-			m.project_id,
-			m.user_id,
-			u.email,
-			u.name   AS user_name,
-			m.name,
-			m.metric_type,
-			m.view_type,
-			m.metric_of,
-			m.metric_value,
-			m.metric_format,
-			m.is_public,
-			m.created_at,
-			m.edited_at,
-			m.deleted_at
-		 FROM public.metrics m
-		 %s
-		 %s
-		 %s
-		 LIMIT $%d
-		 OFFSET $%d`,
-		joinClause, where, order, limitIdx, offsetIdx,
-	)
+	query := buildListQuery(joinClause, where, order, limitIdx, offsetIdx)
 	rows, err := s.pgconn.Query(query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("get paginated: %w", err)
@@ -274,6 +251,7 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	defer rows.Close()
 
 	var cards []CardListItem
+	var total, rowTotal int
 	for rows.Next() {
 		var c CardListItem
 		if err := rows.Scan(
@@ -292,19 +270,55 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 			&c.CreatedAt,
 			&c.EditedAt,
 			&c.DeletedAt,
+			&rowTotal,
 		); err != nil {
 			return nil, fmt.Errorf("scan paginated card: %w", err)
 		}
+		total = rowTotal
 		cards = append(cards, c)
 	}
 
-	countParams := params[:len(params)-2]
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.metrics m %s %s", joinClause, where)
-	var total int
-	if err := s.pgconn.QueryRow(countQuery, countParams...).Scan(&total); err != nil {
-		return nil, fmt.Errorf("count cards: %w", err)
+	if len(cards) == 0 && offset > 0 {
+		countParams := params[:len(params)-2]
+		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.metrics m %s %s", joinClause, where)
+		if err := s.pgconn.QueryRow(countQuery, countParams...).Scan(&total); err != nil {
+			return nil, fmt.Errorf("count cards: %w", err)
+		}
 	}
 	return &GetCardsResponsePaginated{Cards: cards, Total: total}, nil
+}
+
+func buildNamePattern(name string) string {
+	return "%" + postgres.EscapeILIKE(name) + "%"
+}
+
+func buildListQuery(joinClause, where, order string, limitIdx, offsetIdx int) string {
+	return fmt.Sprintf(
+		`SELECT
+			m.metric_id,
+			m.project_id,
+			m.user_id,
+			u.email,
+			u.name   AS user_name,
+			m.name,
+			m.metric_type,
+			m.view_type,
+			m.metric_of,
+			m.metric_value,
+			m.metric_format,
+			m.is_public,
+			m.created_at,
+			m.edited_at,
+			m.deleted_at,
+			COUNT(*) OVER() AS total_count
+		 FROM public.metrics m
+		 %s
+		 %s
+		 %s
+		 LIMIT $%d
+		 OFFSET $%d`,
+		joinClause, where, order, limitIdx, offsetIdx,
+	)
 }
 
 func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error) {
