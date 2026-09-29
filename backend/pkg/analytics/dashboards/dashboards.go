@@ -11,6 +11,11 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
+const (
+	errNotFound     = "not_found: dashboard not found"
+	errAccessDenied = "access_denied: user does not have access"
+)
+
 type Dashboards interface {
 	Create(projectId int, userId uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error)
 	Get(projectId int, dashboardId int, userId uint64) (*GetDashboardResponse, error)
@@ -55,6 +60,29 @@ func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboa
 		return nil, fmt.Errorf("failed to create dashboard: %w", err)
 	}
 	return dashboard, nil
+}
+
+func evaluateAccess(ownerID *int, isPublic bool, userID uint64) error {
+	if !isPublic && (ownerID == nil || uint64(*ownerID) != userID) {
+		return errors.New(errAccessDenied)
+	}
+	return nil
+}
+
+func (s *dashboardsImpl) checkAccess(projectId int, dashboardID int, userID uint64) error {
+	var ownerID *int
+	var isPublic bool
+	err := s.pgconn.QueryRow(
+		`SELECT user_id, is_public FROM dashboards WHERE dashboard_id = $1 AND project_id = $2 AND deleted_at IS NULL`,
+		dashboardID, projectId,
+	).Scan(&ownerID, &isPublic)
+	if err != nil {
+		if postgres.IsNoRowsErr(err) {
+			return errors.New(errNotFound)
+		}
+		return fmt.Errorf("error fetching dashboard: %w", err)
+	}
+	return evaluateAccess(ownerID, isPublic, userID)
 }
 
 func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*GetDashboardResponse, error) {
@@ -127,7 +155,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			return nil, errors.New("not_found: dashboard not found")
+			return nil, errors.New(errNotFound)
 		}
 		return nil, fmt.Errorf("error fetching dashboard: %w", err)
 	}
@@ -136,8 +164,8 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		return nil, fmt.Errorf("error unmarshalling metrics: %w", err)
 	}
 
-	if !dashboard.IsPublic && (ownerID == nil || uint64(*ownerID) != userID) {
-		return nil, fmt.Errorf("access_denied: user does not have access")
+	if err := evaluateAccess(ownerID, dashboard.IsPublic, userID); err != nil {
+		return nil, err
 	}
 
 	return dashboard, nil
@@ -178,10 +206,8 @@ func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsRes
 }
 
 func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error) {
-	// First check if the dashboard exists and user has access
-	_, err := s.Get(projectId, dashboardID, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get dashboard: %w", err)
+	if err := s.checkAccess(projectId, dashboardID, userID); err != nil {
+		return nil, err
 	}
 
 	sql := `
@@ -191,7 +217,7 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
 
 	dashboard := &GetDashboardResponse{}
-	err = s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId).Scan(
+	err := s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.UserID,
@@ -208,6 +234,10 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 }
 
 func (s *dashboardsImpl) Delete(projectId int, dashboardID int, userID uint64) error {
+	if err := s.checkAccess(projectId, dashboardID, userID); err != nil {
+		return err
+	}
+
 	sql := `
 		UPDATE dashboards
 		SET deleted_at = now()
@@ -255,13 +285,13 @@ func (s *dashboardsImpl) GetMetricsWithConfig(projectId int, metricIDs []int) ([
 	return metrics, nil
 }
 
-func (s *dashboardsImpl) GetExistingWidgets(dashboardId int, metricIDs []int) (map[int]bool, error) {
+func (s *dashboardsImpl) GetExistingWidgets(tx *pool.Tx, dashboardId int, metricIDs []int) (map[int]bool, error) {
 	sql := `
 		SELECT metric_id
 		FROM public.dashboard_widgets
 		WHERE dashboard_id = $1 AND metric_id = ANY($2)
 	`
-	rows, err := s.pgconn.Query(sql, dashboardId, metricIDs)
+	rows, err := tx.TxQuery(sql, dashboardId, metricIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -280,10 +310,10 @@ func (s *dashboardsImpl) GetExistingWidgets(dashboardId int, metricIDs []int) (m
 	return existingWidgets, nil
 }
 
-func (s *dashboardsImpl) GetNextPosition(dashboardId int) (int, error) {
+func (s *dashboardsImpl) GetNextPosition(tx *pool.Tx, dashboardId int) (int, error) {
 	sql := `SELECT COALESCE(MAX((config->>'position')::int), 0) + 1 FROM public.dashboard_widgets WHERE dashboard_id = $1`
 	var nextPosition int
-	err := s.pgconn.QueryRow(sql, dashboardId).Scan(&nextPosition)
+	err := tx.TxQueryRow(sql, dashboardId).Scan(&nextPosition)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get next position: %w", err)
 	}
@@ -291,8 +321,7 @@ func (s *dashboardsImpl) GetNextPosition(dashboardId int) (int, error) {
 }
 
 func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error {
-	// Verify dashboard exists and user has access
-	_, err := s.Get(projectId, dashboardId, userId)
+	err := s.checkAccess(projectId, dashboardId, userId)
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard: %w", err)
 	}
@@ -314,8 +343,18 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 		metricConfigMap[metric.MetricID] = metric.DefaultConfig
 	}
 
-	// Check existing widgets in bulk
-	existingWidgets, err := s.GetExistingWidgets(dashboardId, req.MetricIDs)
+	tx, err := s.pgconn.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			tx.TxRollback()
+		}
+	}()
+
+	existingWidgets, err := s.GetExistingWidgets(tx, dashboardId, req.MetricIDs)
 	if err != nil {
 		return fmt.Errorf("failed to check existing widgets: %w", err)
 	}
@@ -333,20 +372,8 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 		return nil
 	}
 
-	// Begin transaction for bulk insert
-	tx, err := s.pgconn.Begin()
-	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
-	}
-
-	defer func() {
-		if err != nil {
-			tx.TxRollback()
-		}
-	}()
-
 	// Get starting position for new widgets
-	startPosition, err := s.GetNextPosition(dashboardId)
+	startPosition, err := s.GetNextPosition(tx, dashboardId)
 	if err != nil {
 		return fmt.Errorf("failed to get next position: %w", err)
 	}
@@ -403,13 +430,13 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 	if err := tx.TxCommit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
+	committed = true
 
 	return nil
 }
 
 func (s *dashboardsImpl) UpdateWidgetPosition(projectId int, dashboardId int, userId uint64, widgetId int, config map[string]interface{}) error {
-	// Verify dashboard exists and user has access
-	_, err := s.Get(projectId, dashboardId, userId)
+	err := s.checkAccess(projectId, dashboardId, userId)
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard: %w", err)
 	}
@@ -448,8 +475,7 @@ func (s *dashboardsImpl) UpdateWidgetPosition(projectId int, dashboardId int, us
 }
 
 func (s *dashboardsImpl) DeleteCard(projectId int, dashboardId int, userId uint64, cardId int) error {
-	// Verify dashboard exists and user has access
-	_, err := s.Get(projectId, dashboardId, userId)
+	err := s.checkAccess(projectId, dashboardId, userId)
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard: %w", err)
 	}
