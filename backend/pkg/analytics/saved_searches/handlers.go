@@ -38,7 +38,7 @@ func parseWithStats(r *http.Request) bool {
 	v := r.URL.Query().Get("withStats")
 	b, err := strconv.ParseBool(v)
 	if err != nil {
-		return true
+		return false
 	}
 	return b
 }
@@ -134,7 +134,7 @@ func (e *handlersImpl) getSavedSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := e.savedSearches.Get(projectID, searchID)
+	resp, err := e.savedSearches.Get(projectID, searchID, parseWithStats(r))
 	if err != nil {
 		if errors.Is(err, ErrSavedSearchNotFound) {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)

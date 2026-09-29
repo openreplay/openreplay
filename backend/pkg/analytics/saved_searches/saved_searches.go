@@ -39,7 +39,7 @@ type SegmentsListItem struct {
 
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
-	Get(projectID int, searchID string) (*model.SavedSearch, error)
+	Get(projectID int, searchID string, withStats bool) (*model.SavedSearch, error)
 	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string, withStats bool) ([]*model.SavedSearch, int, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
@@ -132,7 +132,7 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 	}, nil
 }
 
-func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSearch, error) {
+func (s *savedSearchesImpl) Get(projectID int, searchID string, withStats bool) (*model.SavedSearch, error) {
 	ctx := context.Background()
 
 	const selectQuery = `
@@ -171,9 +171,11 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 		return nil, fmt.Errorf("unmarshal search data: %w", err)
 	}
 
-	stats := s.getSearchStats(ctx, projectID, &savedSearch.Data)
-	savedSearch.SessionsCount = stats.SessionsCount
-	savedSearch.UsersCount = stats.UsersCount
+	if withStats {
+		stats := s.getSearchStats(ctx, projectID, &savedSearch.Data)
+		savedSearch.SessionsCount = stats.SessionsCount
+		savedSearch.UsersCount = stats.UsersCount
+	}
 
 	return &savedSearch, nil
 }

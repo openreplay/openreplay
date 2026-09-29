@@ -77,13 +77,27 @@ type CardUpdateRequest struct {
 	CardBase
 }
 
-type GetCardsResponse struct {
-	Cards []Card `json:"cards"`
+type CardListItem struct {
+	CardID       int64      `json:"metricId"`
+	ProjectID    int64      `json:"projectId"`
+	UserID       int64      `json:"userId"`
+	OwnerEmail   *string    `json:"ownerEmail,omitempty"`
+	OwnerName    *string    `json:"ownerName,omitempty"`
+	Name         string     `json:"name"`
+	MetricType   string     `json:"metricType"`
+	ViewType     string     `json:"viewType"`
+	MetricOf     string     `json:"metricOf"`
+	MetricValue  []string   `json:"metricValue"`
+	MetricFormat string     `json:"metricFormat"`
+	IsPublic     bool       `json:"isPublic"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	EditedAt     *time.Time `json:"updatedAt,omitempty"`
+	DeletedAt    *time.Time `json:"deletedAt,omitempty"`
 }
 
 type GetCardsResponsePaginated struct {
-	Cards []Card `json:"list"`
-	Total int    `json:"total"`
+	Cards []CardListItem `json:"list"`
+	Total int            `json:"total"`
 }
 
 /************************************************************

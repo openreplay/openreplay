@@ -27,13 +27,21 @@ type GetDashboardResponse struct {
 	Dashboard
 }
 
-type GetDashboardsResponsePaginated struct {
-	Dashboards []Dashboard `json:"dashboards"`
-	Total      uint64      `json:"total"`
+type DashboardListItem struct {
+	DashboardID int       `json:"dashboardId"`
+	ProjectID   int       `json:"projectId"`
+	UserID      int       `json:"-"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IsPublic    bool      `json:"isPublic"`
+	IsPinned    bool      `json:"isPinned"`
+	OwnerEmail  string    `json:"ownerEmail"`
+	OwnerName   string    `json:"ownerName"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 type GetDashboardsResponse struct {
-	Dashboards []Dashboard `json:"dashboards"`
+	Dashboards []DashboardListItem `json:"dashboards"`
 }
 
 // REQUESTS
@@ -44,15 +52,6 @@ type CreateDashboardRequest struct {
 	IsPublic    bool   `json:"isPublic"`
 	IsPinned    bool   `json:"isPinned"`
 	Metrics     []int  `json:"metrics"`
-}
-
-type GetDashboardsRequest struct {
-	Page     uint64 `json:"page"`
-	Limit    uint64 `json:"limit"`
-	IsPublic bool   `json:"isPublic"`
-	Order    string `json:"order"`
-	Query    string `json:"query"`
-	OrderBy  string `json:"orderBy"`
 }
 
 type UpdateDashboardRequest struct {

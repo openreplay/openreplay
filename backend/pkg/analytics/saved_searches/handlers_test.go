@@ -12,20 +12,20 @@ func TestParseWithStats(t *testing.T) {
 		query string
 		want  bool
 	}{
-		{"absent", "", true},
+		{"absent", "", false},
 		{"false", "withStats=false", false},
 		{"true", "withStats=true", true},
 		{"zero", "withStats=0", false},
 		{"one", "withStats=1", true},
 		{"upperFalse", "withStats=FALSE", false},
-		{"garbage", "withStats=nope", true},
+		{"garbage", "withStats=nope", false},
 		{"lowerF", "withStats=f", false},
 		{"upperF", "withStats=F", false},
 		{"lowerT", "withStats=t", true},
 		{"upperT", "withStats=T", true},
-		{"emptyValue", "withStats=", true},
-		{"off", "withStats=off", true},
-		{"no", "withStats=no", true},
+		{"emptyValue", "withStats=", false},
+		{"off", "withStats=off", false},
+		{"no", "withStats=no", false},
 	}
 
 	for _, tt := range tests {
