@@ -121,12 +121,17 @@ class Batcher {
           })
           continue
         }
-        // merge payloads, taking priority to the latest one
+        // merge payloads, taking priority to the latest one; set_once is the
+        // exception, the first value for a key is the one the backend would keep
+        const payload =
+          event.type === mutationTypes.setPropertyOnce
+            ? { ...(event.payload ?? {}), ...(prev.payload ?? {}) }
+            : { ...(prev.payload ?? {}), ...(event.payload ?? {}) }
         uniqueEventsByType.set(eventKey, {
           type: event.type,
           user_id: event.user_id,
           timestamp: event.timestamp,
-          payload: { ...(prev.payload ?? {}), ...(event.payload ?? {}) },
+          payload,
         })
       } else {
         uniqueEventsByType.set(eventKey, event)
