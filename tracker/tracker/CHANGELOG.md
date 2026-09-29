@@ -1,3 +1,7 @@
+## 19.0.1
+
+- fix squashing order for analytics batcher to prevent dropping original values by "set_once" actions (by [@samrah-rup](https://github.com/sarmah-rup) fixes #4941)
+
 ## 19.0.0
 
 - click rage, dead click, CPU and memory issue detection moved from the backend into the tracker worker; detected issues are sent as issue messages with correct message indexes (#4861)
