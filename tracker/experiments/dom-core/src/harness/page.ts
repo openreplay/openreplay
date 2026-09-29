@@ -200,6 +200,22 @@ const H = {
     t.stop()
     return { n, created, later, err }
   },
+  /** encoded bytes per message type, the way the worker writes them (type + 3-byte size + body) */
+  sizesByType(msgs: any[]) {
+    const enc = new MessageEncoder(64 * 1024 * 1024)
+    const out: Record<number, { n: number; bytes: number }> = {}
+    for (const m of msgs) {
+      const before = enc.getCurrentOffset()
+      enc.uint(m[0])
+      enc.skip(3)
+      if (!enc.encode(m)) continue
+      const e = (out[m[0]] ??= { n: 0, bytes: 0 })
+      e.n++
+      e.bytes += enc.getCurrentOffset() - before
+      if (enc.getCurrentOffset() > 60 * 1024 * 1024) enc.reset()
+    }
+    return out
+  },
   expected() {
     return expectedTree()
   },

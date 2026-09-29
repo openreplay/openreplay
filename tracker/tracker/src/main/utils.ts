@@ -236,6 +236,15 @@ export function generateRandomId(len?: number) {
   return Array.from(arr, dec2hex).join('')
 }
 
+/** e.g. `UTC+05:30` */
+export function getTimezone() {
+  const offset = new Date().getTimezoneOffset() * -1
+  const sign = offset >= 0 ? '+' : '-'
+  const hours = Math.floor(Math.abs(offset) / 60)
+  const minutes = Math.abs(offset) % 60
+  return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
 export function inIframe() {
   try {
     return window.self && window.top && window.self !== window.top

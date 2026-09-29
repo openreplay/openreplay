@@ -1,12 +1,15 @@
 import BeaconProxy from "./beaconProxy";
 import FetchProxy from "./fetchProxy";
 import XHRProxy from "./xhrProxy";
+import hookAxios, { AxiosInstance } from "./axiosHook";
 import { INetworkMessage, RequestResponseData } from "./types";
 
 export {
   BeaconProxy,
   FetchProxy,
   XHRProxy,
+  hookAxios,
+  AxiosInstance,
   INetworkMessage,
   RequestResponseData,
 };

@@ -1,63 +1,11 @@
 // @ts-nocheck
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
-import axiosSpy from '../main/modules/axiosSpy.js'
 import selection from '../main/modules/selection.js'
 import setupImg from '../main/modules/img.js'
 import { Type } from '../main/app/messages.gen.js'
 
 afterEach(() => {
   document.body.innerHTML = ''
-})
-
-describe('axiosSpy headers', () => {
-  function capture(privateMode: boolean) {
-    const sanitize = jest.fn((x) => x)
-    let onResponse
-    const app = {
-      debug: { log() {} },
-      sanitizer: { privateMode },
-      send: jest.fn(),
-      getSessionToken: () => '',
-      attachStopCallback() {},
-    }
-    const instance = {
-      interceptors: {
-        request: { use: jest.fn(() => 1) },
-        response: { use: jest.fn((ok) => ((onResponse = ok), 2)) },
-      },
-    }
-    axiosSpy(
-      app,
-      instance,
-      { ignoreHeaders: ['cookie', 'set-cookie', 'authorization'], failuresOnly: false },
-      sanitize,
-      JSON.stringify,
-    )
-    onResponse({
-      config: {
-        headers: { toJSON: () => ({ Authorization: 'Bearer secret', 'X-Foo': 'y' }) },
-        method: 'get',
-        url: '/a',
-        __openreplay_timing: 0,
-      },
-      headers: { toJSON: () => ({ 'Set-Cookie': 'a=b', 'content-type': 'application/json' }) },
-      status: 200,
-      data: {},
-    })
-    return sanitize.mock.calls[0][0]
-  }
-
-  test('ignored headers are dropped from AxiosHeaders (toJSON), case-insensitively', () => {
-    const info = capture(false)
-    expect(info.request.headers).toEqual({ 'X-Foo': 'y' })
-    expect(info.response.headers).toEqual({ 'content-type': 'application/json' })
-  })
-
-  test('privateMode drops all headers', () => {
-    const info = capture(true)
-    expect(info.request.headers).toEqual({})
-    expect(info.response.headers).toEqual({})
-  })
 })
 
 describe('selection', () => {

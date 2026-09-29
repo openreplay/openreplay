@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const flushPromises = async () => {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let i = 0; i < 5; i++) await Promise.resolve();
 };
 
 
@@ -219,7 +218,7 @@ describe("FetchProxy", () => {
     expect(msg.responseSize).toBe(3);
   });
 
-  it("does not clone for chunked responses and still returns the Response", async () => {
+  it("records chunked responses and still returns the Response", async () => {
     const response = new Response("streaming", {
       status: 200,
       headers: {
@@ -227,7 +226,6 @@ describe("FetchProxy", () => {
         "transfer-encoding": "chunked",
       },
     });
-    const cloneSpy = vi.spyOn(Response.prototype, "clone");
     (globalThis.fetch as any).mockResolvedValue(response);
 
     const wrapped = FetchProxy.create(
@@ -240,9 +238,9 @@ describe("FetchProxy", () => {
     );
 
     const resp = await wrapped("https://api.example.com/stream", {});
-    expect(resp).toBeInstanceOf(Response);
-    expect(cloneSpy).not.toHaveBeenCalled();
-    expect(sendMessage).not.toHaveBeenCalled();
-    cloneSpy.mockRestore();
+    expect(resp).toBe(response);
+    expect(await resp.text()).toBe("streaming");
+    await flushPromises();
+    expect(sendMessage).toHaveBeenCalledTimes(1);
   });
 });
