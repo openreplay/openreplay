@@ -173,20 +173,6 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	u := r.Context().Value("userData").(*user.User)
-	_, err = e.dashboards.Get(projectID, dashboardID, u.ID)
-	if err != nil {
-		// Map errors to appropriate HTTP status codes
-		if err.Error() == "not_found: dashboard not found" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		} else {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		}
-		return
-	}
-
 	req := &UpdateDashboardRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
@@ -196,6 +182,10 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	currentUser := r.Context().Value("userData").(*user.User)
 	resp, err := e.dashboards.Update(projectID, dashboardID, currentUser.ID, req)
 	if err != nil {
+		if err.Error() == "not_found: dashboard not found" || err.Error() == "access_denied: user does not have access" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+			return
+		}
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -210,7 +200,7 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		err = e.dashboards.AddCards(projectID, dashboardID, currentUser.ID, addCardsReq)
 		if err != nil {
 			// Log the error but don't fail the entire update operation
-			e.log.Error(r.Context(), "Failed to add cards to dashboard during update", "error", err)
+			e.log.Error(r.Context(), "Failed to add cards to dashboard during update: %s", err)
 		}
 	}
 
@@ -234,21 +224,13 @@ func (e *handlersImpl) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := r.Context().Value("userData").(*user.User)
-	_, err = e.dashboards.Get(projectID, dashboardID, u.ID)
-	if err != nil {
-		// Map errors to appropriate HTTP status codes
-		if err.Error() == "not_found: dashboard not found" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		} else if err.Error() == "access_denied: user does not have access" {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
-		} else {
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		}
-		return
-	}
 
 	err = e.dashboards.Delete(projectID, dashboardID, u.ID)
 	if err != nil {
+		if err.Error() == "not_found: dashboard not found" || err.Error() == "access_denied: user does not have access" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+			return
+		}
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
