@@ -24,6 +24,7 @@ type Database interface {
 	RecordBulkDroppedRows(size float64, db, table string)
 	IncreaseBulkSendRetries(db, table string)
 	RecordCHQueueDepth(size float64)
+	IncreaseUserConflicts()
 	List() []prometheus.Collector
 }
 
@@ -44,3 +45,4 @@ func (d *databaseImpl) IncreaseSaverMessages(platform, outcome string)          
 func (d *databaseImpl) RecordBulkDroppedRows(size float64, db, table string)               {}
 func (d *databaseImpl) IncreaseBulkSendRetries(db, table string)                           {}
 func (d *databaseImpl) RecordCHQueueDepth(size float64)                                    {}
+func (d *databaseImpl) IncreaseUserConflicts()                                             {}

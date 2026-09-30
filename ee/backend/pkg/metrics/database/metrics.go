@@ -26,6 +26,7 @@ type Database interface {
 	RecordBulkDroppedRows(size float64, db, table string)
 	IncreaseBulkSendRetries(db, table string)
 	RecordCHQueueDepth(size float64)
+	IncreaseUserConflicts()
 	List() []prometheus.Collector
 }
 
@@ -42,6 +43,7 @@ type databaseImpl struct {
 	bulkDroppedRows           *prometheus.CounterVec
 	bulkSendRetries           *prometheus.CounterVec
 	chQueueDepth              prometheus.Gauge
+	userConflicts             prometheus.Counter
 }
 
 func New(serviceName string) Database {
@@ -58,6 +60,7 @@ func New(serviceName string) Database {
 		bulkDroppedRows:           newBulkDroppedRows(serviceName),
 		bulkSendRetries:           newBulkSendRetries(serviceName),
 		chQueueDepth:              newCHQueueDepth(serviceName),
+		userConflicts:             newUserConflicts(serviceName),
 	}
 }
 
@@ -75,6 +78,7 @@ func (d *databaseImpl) List() []prometheus.Collector {
 		d.bulkDroppedRows,
 		d.bulkSendRetries,
 		d.chQueueDepth,
+		d.userConflicts,
 	}
 }
 
@@ -262,4 +266,18 @@ func newCHQueueDepth(serviceName string) prometheus.Gauge {
 
 func (d *databaseImpl) RecordCHQueueDepth(size float64) {
 	d.chQueueDepth.Set(size)
+}
+
+func newUserConflicts(serviceName string) prometheus.Counter {
+	return prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "pa_user_conflicts_total",
+			Help:      "A counter displaying product-analytics users whose row in ClickHouse was changed by another writer between our read and our write.",
+		},
+	)
+}
+
+func (d *databaseImpl) IncreaseUserConflicts() {
+	d.userConflicts.Inc()
 }
