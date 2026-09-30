@@ -109,6 +109,9 @@ env:
   LOGLEVEL: INFO
   JWT_EXPIRATION: "86400"
   SCIM_ACCESS_TOKEN_EXPIRE_SECONDS: "86400"
+  SCIM_AUTH_CODE_EXPIRE_SECONDS: "600"
+  # comma-separated hosts /sso/scim/v2/authorize may redirect to; ".domain.com" matches sub-domains
+  SCIM_ALLOWED_REDIRECT_HOSTS: ".okta.com,.oktapreview.com,.okta-emea.com"
 
 
 nodeSelector: {}

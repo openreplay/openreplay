@@ -1,5 +1,7 @@
-from urllib.parse import urlencode
+import logging
+from urllib.parse import urlencode, urlparse
 
+from decouple import config, Csv
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
 from scim2_server import utils
@@ -14,6 +16,8 @@ from routers.scim import users, groups, helpers
 from routers.scim.backends import PostgresBackend
 from routers.scim.postgres_resource import PostgresResource
 from routers.scim.providers import MultiTenantProvider
+
+logger = logging.getLogger(__name__)
 
 b = PostgresBackend()
 b.register_postgres_resource(
@@ -52,6 +56,45 @@ for resource_type in helpers.load_custom_resource_types().values():
 
 public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
 
+# Lifetime of an authorization code issued by /authorize (RFC 6749 §4.1.2 recommends <= 10 minutes)
+AUTH_CODE_EXPIRE_SECONDS = config("SCIM_AUTH_CODE_EXPIRE_SECONDS", default=600, cast=int)
+
+# Hosts that /authorize is allowed to redirect to.
+# An entry starting with "." matches the domain and all of its sub-domains.
+# Defaults cover Okta's provisioning OAuth callback domains.
+ALLOWED_REDIRECT_HOSTS = [
+    h.strip().lower()
+    for h in config(
+        "SCIM_ALLOWED_REDIRECT_HOSTS",
+        cast=Csv(),
+        default="system-admin.okta.com,system-admin.oktapreview.com,system-admin.okta-emea.com",
+    )
+    if h.strip()
+]
+
+
+def _is_allowed_redirect_uri(redirect_uri: str) -> bool:
+    try:
+        parsed = urlparse(redirect_uri)
+    except ValueError:
+        return False
+    if parsed.scheme != "https":
+        return False
+    # no credentials, no fragment, no empty host
+    if parsed.username is not None or parsed.password is not None or parsed.fragment:
+        return False
+    host = parsed.hostname
+    if not host:
+        return False
+    host = host.lower()
+    for allowed in ALLOWED_REDIRECT_HOSTS:
+        if allowed.startswith("."):
+            if host == allowed[1:] or host.endswith(allowed):
+                return True
+        elif host == allowed:
+            return True
+    return False
+
 
 @public_app.post("/token/")
 @public_app.post("/token")
@@ -85,32 +128,26 @@ async def post_token(r: Request):
             cur.execute(
                 cur.mogrify(
                     """ \
-                    SELECT *
-                    FROM public.scim_auth_codes
+                    UPDATE public.scim_auth_codes
+                    SET used= TRUE
                     WHERE auth_code = %(auth_code)s
                       AND tenant_id = %(tenant_id)s
-                      AND NOT used LIMIT 1;
+                      AND NOT used
+                      AND created_at > (now() AT TIME ZONE 'utc') - %(expire_seconds)s * INTERVAL '1 second'
+                    RETURNING auth_code_id;
                     """,
-                    {"auth_code": code, "tenant_id": tenant["tenant_id"]},
+                    {
+                        "auth_code": code,
+                        "tenant_id": tenant["tenant_id"],
+                        "expire_seconds": AUTH_CODE_EXPIRE_SECONDS,
+                    },
                 )
             )
             row = cur.fetchone()
             if row is None:
                 raise HTTPException(
-                    status_code=401, detail="Invalid code/client_id pair"
+                    status_code=401, detail="Invalid or expired code/client_id pair"
                 )
-            cur.execute(
-                cur.mogrify(
-                    """
-                    UPDATE public.scim_auth_codes
-                    SET used= TRUE
-                    WHERE auth_code = %(auth_code)s
-                      AND tenant_id = %(tenant_id)s
-                      AND used IS FALSE
-                    """,
-                    {"auth_code": code, "tenant_id": tenant["tenant_id"]},
-                )
-            )
 
     access_token, refresh_token, expires_in = create_tokens(
         tenant_id=tenant["tenant_id"]
@@ -134,6 +171,11 @@ async def get_authorize(
         redirect_uri: str,
         state: str | None = None,
 ):
+    if response_type != "code":
+        raise HTTPException(status_code=400, detail="Unsupported response_type")
+    if not _is_allowed_redirect_uri(redirect_uri):
+        logger.error(f"!!! Invalid redirect_uri: {redirect_uri}")
+        raise HTTPException(status_code=400, detail="Invalid redirect_uri")
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -153,15 +195,17 @@ async def get_authorize(
         cur.execute(
             cur.mogrify(
                 """ \
-                WITH u AS (
-                UPDATE public.scim_auth_codes
-                SET used= TRUE
-                WHERE tenant_id = %(tenant_id)s )
+                WITH purge AS (
+                DELETE
+                FROM public.scim_auth_codes
+                WHERE tenant_id = %(tenant_id)s
+                  AND (used OR created_at <= (now() AT TIME ZONE 'utc') - %(expire_seconds)s * INTERVAL '1 second') )
                 INSERT
                 INTO public.scim_auth_codes (tenant_id)
-                VALUES (%(tenant_id)s) RETURNING auth_code
+                VALUES (%(tenant_id)s)
+                    RETURNING auth_code
                 """,
-                {"tenant_id": tenant_id},
+                {"tenant_id": tenant_id, "expire_seconds": AUTH_CODE_EXPIRE_SECONDS},
             )
         )
         code = cur.fetchone()
