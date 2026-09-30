@@ -35,6 +35,26 @@ CREATE INDEX IF NOT EXISTS dashboards_project_id_idx ON public.dashboards (proje
 CREATE INDEX IF NOT EXISTS dashboard_widgets_dashboard_id_metric_id_idx ON public.dashboard_widgets (dashboard_id, metric_id);
 DROP INDEX IF EXISTS public.user_favorite_sessions_user_id_session_id_idx;
 
+
+CREATE TABLE IF NOT EXISTS public.mcp_authentication_tokens
+(
+    user_id   integer                     NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
+    client_id text                        NOT NULL,
+    state     text                        NOT NULL,
+    jti       text                        NOT NULL DEFAULT generate_api_key(10),
+    iat       timestamp without time zone NULL     DEFAULT NULL,
+    generated bool                                 DEFAULT FALSE,
+    PRIMARY KEY (user_id, client_id, state)
+);
+
+CREATE TABLE IF NOT EXISTS public.mcp_app_users
+(
+    user_id    integer                     NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
+    client_id  text                        NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    PRIMARY KEY (user_id, client_id)
+);
+
 COMMIT;
 
 \elif :is_next
