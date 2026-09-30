@@ -60,13 +60,15 @@ type Connector interface {
 	OnBatchEnd(topic string, partition int32, offset int64)
 	TrackOffset(topic string, partition int32, offset int64)
 	AddCommitter(committer OffsetCommitter)
+	AfterSend(hook func(flushedAt time.Time))
 	Stop() error
 }
 
 type task struct {
-	seq   uint64
-	bulks []Batch
-	snap  qtypes.Offsets
+	seq       uint64
+	bulks     []Batch
+	snap      qtypes.Offsets
+	flushedAt time.Time
 }
 
 func NewTask() *task {
@@ -91,6 +93,7 @@ type connectorImpl struct {
 	pending        qtypes.Offsets
 	needToFlush    bool
 	committers     []OffsetCommitter
+	sentHooks      []func(time.Time)
 	seq            uint64 // last assigned task seq
 	workerTask     chan *task
 	inflight       chan struct{}
@@ -196,6 +199,12 @@ func (c *connectorImpl) AddCommitter(committer OffsetCommitter) {
 	c.mu.Unlock()
 }
 
+func (c *connectorImpl) AfterSend(hook func(flushedAt time.Time)) {
+	c.mu.Lock()
+	c.sentHooks = append(c.sentHooks, hook)
+	c.mu.Unlock()
+}
+
 func (c *connectorImpl) TrackOffset(topic string, partition int32, offset int64) {
 	c.mu.Lock()
 	if c.pending[topic] == nil {
@@ -247,6 +256,7 @@ func (c *connectorImpl) flush() {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
 	newTask.snap = copyOffsets(c.pending)
+	newTask.flushedAt = time.Now()
 	c.seq++
 	newTask.seq = c.seq
 	c.needToFlush = false
@@ -405,6 +415,12 @@ func (c *connectorImpl) worker() {
 }
 
 func (c *connectorImpl) markCompleted(t *task) {
+	c.mu.Lock()
+	hooks := c.sentHooks
+	c.mu.Unlock()
+	for _, hook := range hooks {
+		hook(t.flushedAt)
+	}
 	cs := c.commits
 	cs.mu.Lock()
 	cs.done[t.seq] = t

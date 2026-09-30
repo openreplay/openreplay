@@ -21,7 +21,6 @@ import (
 var ErrUserNotFound = errors.New("user not found")
 
 const (
-	pendingReadback = time.Minute
 	pendingTTL      = 10 * time.Minute
 	maxDistinctSeen = 300_000
 )
@@ -38,12 +37,14 @@ type rowSink interface {
 	InsertUser(user *model.User) error
 	InsertUserTombstone(projectID uint16, userID string) error
 	InsertUserDistinctID(projectID uint16, distinctID, userID string) error
+	AfterSend(hook func(flushedAt time.Time))
 }
 
 type pendingUser struct {
 	user   *model.User
 	at     time.Time
 	readTs time.Time
+	sentAt time.Time
 }
 
 type usersImpl struct {
@@ -68,8 +69,20 @@ func NewUsers(log logger.Logger, conn driver.Conn, sink rowSink, sessions sessio
 		pending:      make(map[string]*pendingUser),
 		distinctSeen: make(map[string]bool),
 	}
+	sink.AfterSend(u.markSent)
 	go u.sweeper()
 	return u, nil
+}
+
+func (u *usersImpl) markSent(flushedAt time.Time) {
+	now := time.Now()
+	u.mu.Lock()
+	for _, p := range u.pending {
+		if p.sentAt.IsZero() && !p.at.After(flushedAt) {
+			p.sentAt = now
+		}
+	}
+	u.mu.Unlock()
 }
 
 var selectQuery = `SELECT project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen", _is_deleted AS _deleted, _timestamp from product_analytics.users WHERE project_id = ? AND "$user_id" = ? ORDER BY _timestamp DESC LIMIT 1`
@@ -134,7 +147,7 @@ func (u *usersImpl) current(projectID uint32, userID string) (*model.User, error
 	u.mu.Lock()
 	p := u.pending[key]
 	u.mu.Unlock()
-	if p != nil && time.Since(p.at) < pendingReadback {
+	if p != nil && p.sentAt.IsZero() {
 		return cloneUser(p.user), nil
 	}
 	user, err := u.fetch(projectID, userID)
@@ -145,18 +158,13 @@ func (u *usersImpl) current(projectID uint32, userID string) (*model.User, error
 		return cloneUser(p.user), nil
 	}
 	u.mu.Lock()
-	defer u.mu.Unlock()
-	if user.Timestamp.After(p.readTs) && !sameUser(user, p.user) {
+	delete(u.pending, key)
+	u.mu.Unlock()
+	if user.Timestamp.After(p.readTs) && !user.Timestamp.After(p.sentAt.Add(time.Second)) && !sameUser(user, p.user) {
 		u.metrics.IncreaseUserConflicts()
-		u.log.Warn(context.Background(), "user %s in project %d was changed by another writer, taking the newer version", userID, projectID)
-		u.pending[key] = &pendingUser{user: cloneUser(user), at: time.Now(), readTs: user.Timestamp}
-		return user, nil
+		u.log.Warn(context.Background(), "user %s in project %d was changed by another writer between our read and our write", userID, projectID)
 	}
-	if user.Timestamp.After(p.readTs) {
-		p.readTs = user.Timestamp
-	}
-	p.at = time.Now()
-	return cloneUser(p.user), nil
+	return user, nil
 }
 
 func (u *usersImpl) write(user *model.User) error {
