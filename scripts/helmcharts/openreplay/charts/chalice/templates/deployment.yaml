@@ -80,6 +80,9 @@ spec:
             - name: JWT_SPOT_SECRET
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-spot-secret" "ctx" .) | nindent 18 }}
+            - name: JWT_MCP_SECRET
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-mcp-secret" "ctx" .) | nindent 18 }}
             - name: LICENSE_KEY
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "license-key" "ctx" .) | nindent 18 }}
