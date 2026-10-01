@@ -203,7 +203,8 @@ Pipfile.lock
 /chalicelib/core/issues/
 /chalicelib/core/jobs.py
 /chalicelib/core/log_tools/*
-/chalicelib/core/mcp/*
+/chalicelib/core/mcp/__init__.py
+/chalicelib/core/mcp/tracer.py
 /chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
 /chalicelib/core/saved_search.py

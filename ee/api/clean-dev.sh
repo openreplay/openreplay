@@ -25,7 +25,7 @@ rm -rf ./chalicelib/core/integrations_manager.py
 rm -rf ./chalicelib/core/issues
 rm -rf ./chalicelib/core/jobs.py
 rm -rf ./chalicelib/core/log_tools
-rm -rf ./chalicelib/core/mcp
+find ./chalicelib/core/mcp -maxdepth 1 -name "*.py" ! -name "authorizers.py" -delete
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/saved_search.py
