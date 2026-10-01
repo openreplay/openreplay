@@ -428,8 +428,6 @@ LIMIT %d OFFSET %d;`,
 		)
 	}
 
-	logQuery(fmt.Sprintf("TableQueryBuilder.buildQuery: %s", query))
-
 	qp.Set("projectId", r.ProjectId)
 	qp.Set("startTimestamp", r.StartTimestamp)
 	qp.Set("endTimestamp", r.EndTimestamp)

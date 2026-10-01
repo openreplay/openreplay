@@ -160,7 +160,6 @@ WHERE %s
 ORDER BY e.created_at
 LIMIT 500;`, where)
 
-	logQuery(fmt.Sprintf("HeatmapQueryBuilder.buildQuery: %s", q))
 	return q, qp.Values(), nil
 }
 
@@ -230,6 +229,5 @@ WHERE %s
 ORDER BY e.created_at
 LIMIT 500;`, where)
 
-	logQuery(fmt.Sprintf("HeatmapQueryBuilder.buildClickRageQuery: %s", q))
 	return q, qp.Values(), nil
 }
