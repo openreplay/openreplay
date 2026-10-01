@@ -49,12 +49,18 @@ func (r fakeRow) Scan(dest ...interface{}) error {
 }
 
 type fakePool struct {
-	row fakeRow
+	tenantID int
+	row      fakeRow
 }
 
 func (p *fakePool) Query(sql string, args ...interface{}) (pgx.Rows, error) { return nil, nil }
-func (p *fakePool) QueryRow(sql string, args ...interface{}) pgx.Row        { return p.row }
-func (p *fakePool) Exec(sql string, arguments ...interface{}) error         { return nil }
+func (p *fakePool) QueryRow(sql string, args ...interface{}) pgx.Row {
+	if len(args) < 2 || args[1] != p.tenantID {
+		return fakeRow{err: pgx.ErrNoRows}
+	}
+	return p.row
+}
+func (p *fakePool) Exec(sql string, arguments ...interface{}) error { return nil }
 func (p *fakePool) ExecContext(ctx context.Context, sql string, arguments ...interface{}) error {
 	return nil
 }
@@ -72,7 +78,7 @@ func TestGetProjectByKeyAndTenant_CacheTenantMismatch(t *testing.T) {
 		cache:          redisCache,
 		projectsByID:   cache.New(time.Minute, time.Minute),
 		projectsByKeys: cache.New(time.Minute, time.Minute),
-		db: &fakePool{row: fakeRow{
+		db: &fakePool{tenantID: 2, row: fakeRow{
 			projectID: 9,
 		}},
 	}
@@ -95,7 +101,7 @@ func TestGetProjectByKeyAndTenant_CacheTenantMatch(t *testing.T) {
 		cache:          redisCache,
 		projectsByID:   cache.New(time.Minute, time.Minute),
 		projectsByKeys: cache.New(time.Minute, time.Minute),
-		db:             &fakePool{row: fakeRow{err: errNotReached}},
+		db:             &fakePool{tenantID: 1, row: fakeRow{err: errNotReached}},
 	}
 
 	got, err := c.GetProjectByKeyAndTenant(key, 1)
@@ -104,5 +110,29 @@ func TestGetProjectByKeyAndTenant_CacheTenantMatch(t *testing.T) {
 	}
 	if got.ProjectID != 7 {
 		t.Fatalf("expected the cached project for the matching tenant, got %d", got.ProjectID)
+	}
+}
+
+func TestGetProjectByKeyAndTenant_OtherTenantKeyRejected(t *testing.T) {
+	const key = "shared-key"
+	redisCache := &fakeTenantCache{byKey: map[string]*Project{
+		key: {ProjectID: 7, ProjectKey: key, TenantID: 1},
+	}}
+	c := &projectsImpl{
+		cache:          redisCache,
+		projectsByID:   cache.New(time.Minute, time.Minute),
+		projectsByKeys: cache.New(time.Minute, time.Minute),
+		db:             &fakePool{tenantID: 1, row: fakeRow{projectID: 7}},
+	}
+
+	got, err := c.GetProjectByKeyAndTenant(key, 2)
+	if !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("expected pgx.ErrNoRows for another tenant's key, got err=%v project=%v", err, got)
+	}
+	if got != nil {
+		t.Fatalf("expected no project for another tenant's key, got project %d", got.ProjectID)
+	}
+	if _, ok := c.projectsByKeys.Get(key + ":2"); ok {
+		t.Fatalf("other tenant's project must not be cached for tenant 2")
 	}
 }

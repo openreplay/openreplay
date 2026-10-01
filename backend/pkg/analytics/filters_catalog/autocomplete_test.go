@@ -15,6 +15,10 @@ func TestStringToSQLLike(t *testing.T) {
 		"a_c":   `%a\_c%`,
 		`a\c`:   `%a\\c%`,
 		"*abc*": "%abc%",
+		"abc*":  "%abc%",
+		"*abc":  "%abc%",
+		"^abc*": "abc%",
+		"*abc$": "%abc",
 	}
 	for in, want := range cases {
 		if got := stringToSQLLike(in); got != want {

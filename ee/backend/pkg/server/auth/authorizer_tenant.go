@@ -26,7 +26,7 @@ func (a *authImpl) isAuthorizedApiKey(apiKey string, projectKey string) (*tenant
 
 	_, err = a.projects.GetProjectByKeyAndTenant(projectKey, dbTenant.TenantID)
 	if err != nil {
-		a.log.Warn(context.WithValue(context.Background(), "projectKey", projectKey), "Unauthorized request, wrong api key for project %s", projectKey)
+		a.log.Warn(context.Background(), "Unauthorized request, wrong api key for project %q", projectKey)
 		return nil, err
 	}
 

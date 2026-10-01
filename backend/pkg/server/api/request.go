@@ -29,7 +29,7 @@ func GetProject(r *http.Request) (uint32, error) {
 	}
 	projectID, err := ParseUint32(raw)
 	if err != nil || projectID == 0 {
-		return 0, fmt.Errorf("invalid project id: %s", raw)
+		return 0, fmt.Errorf("invalid project id: %q", raw)
 	}
 	return projectID, nil
 }
