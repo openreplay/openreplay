@@ -10,9 +10,11 @@ func TestStringToSQLLike(t *testing.T) {
 		"^abc$": "abc",
 		"a*c":   "%a%c%",
 		"a  b":  "%a b%",
-		"%abc":  "%abc%",
-		"abc%":  "%abc%",
-		"%abc%": "%abc%",
+		"%abc":  `%\%abc%`,
+		"abc%":  `%abc\%%`,
+		"a_c":   `%a\_c%`,
+		`a\c`:   `%a\\c%`,
+		"*abc*": "%abc%",
 	}
 	for in, want := range cases {
 		if got := stringToSQLLike(in); got != want {

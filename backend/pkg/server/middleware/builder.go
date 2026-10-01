@@ -71,13 +71,13 @@ func NewMiddlewareBuilder(
 		return nil, fmt.Errorf("error creating auditrail middleware: %s", err)
 	}
 	return &baseMiddlewareBuilderImpl{
-		middlewares: []api.RouterMiddleware{compression, healthCheck, corsCheck, authenticator, perms, rateLimiter, audiTrail},
+		middlewares: []api.RouterMiddleware{NewSecurityHeaders(), compression, healthCheck, corsCheck, authenticator, perms, rateLimiter, audiTrail},
 	}, nil
 }
 
 func NewMinimalMiddlewareBuilder(http *common.HTTP) (api.MiddlewareBuilder, error) {
 	return &baseMiddlewareBuilderImpl{
-		middlewares: []api.RouterMiddleware{NewHealthCheck(), NewCors(http.UseAccessControlHeaders)},
+		middlewares: []api.RouterMiddleware{NewSecurityHeaders(), NewHealthCheck(), NewCors(http.UseAccessControlHeaders)},
 	}, nil
 }
 
@@ -95,6 +95,20 @@ func NewCompression() (api.RouterMiddleware, error) {
 
 func (b *compressionImpl) Middleware(next http.Handler) http.Handler {
 	return b.wrapper(next)
+}
+
+type securityHeadersImpl struct{}
+
+func NewSecurityHeaders() api.RouterMiddleware {
+	return &securityHeadersImpl{}
+}
+
+func (b *securityHeadersImpl) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		next.ServeHTTP(w, r)
+	})
 }
 
 type healthCheckImpl struct{}

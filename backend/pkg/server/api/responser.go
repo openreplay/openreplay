@@ -52,7 +52,11 @@ func (r *responserImpl) ResponseWithJSON(log logger.Logger, ctx context.Context,
 
 func (r *responserImpl) ResponseWithError(log logger.Logger, ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
 	log.Error(ctx, "response error, code: %d, error: %s", code, err)
-	body, err := json.Marshal(&response{Errors: []string{err.Error()}})
+	msg := "internal server error"
+	if code < http.StatusInternalServerError && err != nil {
+		msg = err.Error()
+	}
+	body, err := json.Marshal(&response{Errors: []string{msg}})
 	if err != nil {
 		log.Error(ctx, "can't marshal response: %s", err)
 	} else {

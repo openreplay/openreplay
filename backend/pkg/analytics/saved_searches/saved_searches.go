@@ -39,7 +39,7 @@ type SegmentsListItem struct {
 
 type SavedSearches interface {
 	Save(projectID int, userID uint64, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
-	Get(projectID int, searchID string) (*model.SavedSearch, error)
+	Get(projectID int, userID uint64, searchID string) (*model.SavedSearch, error)
 	List(ctx context.Context, projectID int, userID uint64, limit, offset int, sort, order string, withStats bool) ([]*model.SavedSearch, int, error)
 	Update(projectID int, userID uint64, searchID string, req *model.SavedSearchRequest) (*model.SavedSearchResponse, error)
 	Delete(projectID int, userID uint64, searchID string) error
@@ -132,7 +132,7 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 	}, nil
 }
 
-func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSearch, error) {
+func (s *savedSearchesImpl) Get(projectID int, userID uint64, searchID string) (*model.SavedSearch, error) {
 	ctx := context.Background()
 
 	const selectQuery = `
@@ -141,12 +141,13 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string) (*model.SavedSea
 		FROM public.saved_searches
 		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
 			AND (expires_at IS NULL OR expires_at > NOW())
+			AND (user_id=$3 OR is_public OR is_share)
 	`
 
 	var savedSearch model.SavedSearch
 	var searchDataJSON []byte
 
-	err := s.pgconn.QueryRow(selectQuery, searchID, projectID).Scan(
+	err := s.pgconn.QueryRow(selectQuery, searchID, projectID, userID).Scan(
 		&savedSearch.SearchID,
 		&savedSearch.ProjectID,
 		&savedSearch.UserID,

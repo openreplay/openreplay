@@ -52,6 +52,10 @@ func (p *permissionsImpl) checkPermissions(r *http.Request) error {
 		return strings.HasPrefix(p, "SERVICE_") != user.ServiceAccount
 	})
 
+	if len(perms) == 0 {
+		return fmt.Errorf("unauthorized request, no applicable permissions for route")
+	}
+
 	for _, perm := range perms {
 		if _, ok := user.Permissions[perm]; !ok {
 			return fmt.Errorf("unauthorized request, permission %s is required", perm)

@@ -198,7 +198,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	if err != nil {
 		return nil, err
 	}
-	favHandlers, err := favoriteAPI.NewHandlers(log, responser, favService)
+	favHandlers, err := favoriteAPI.NewHandlers(log, responser, favService, sessionService)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	if err != nil {
 		return nil, err
 	}
-	noteHandlers, err := noteAPI.NewHandlers(log, &cfg.HTTP, responser, noteService)
+	noteHandlers, err := noteAPI.NewHandlers(log, &cfg.HTTP, responser, noteService, sessionService)
 	if err != nil {
 		return nil, err
 	}
