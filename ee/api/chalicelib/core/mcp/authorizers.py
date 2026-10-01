@@ -93,7 +93,10 @@ def get_token_by_state(client_id, state):
               AND state = %(state)s
               AND NOT generated 
             RETURNING *,EXTRACT(epoch FROM iat)::BIGINT AS iat,
-                1 AS tenant_id;""",
+                (SELECT tenant_id 
+                 FROM public.users 
+                 WHERE users.user_id = mcp_authentication_tokens.user_id 
+                    AND users.deleted_at IS NULL) AS tenant_id;""",
             {"client_id": client_id, "state": state},
         )
         cur.execute(query=query)
