@@ -12,6 +12,12 @@ import {resolveCountryValue} from "./countries.js";
 // SaaS we strip that `/api` segment so the path becomes `/v2/<siteId>/...`,
 // `/v1/login`, etc., matching api.openreplay.com's routing.
 export function buildApiUrl(appUrl: string, endpoint: string): string {
+    // The endpoint is appended to the host verbatim, so anything but a plain
+    // path (".evil.com/x", "@evil.com/x") would move the request, and the JWT
+    // sent with it, to another host.
+    if (!endpoint.startsWith('/') || endpoint.startsWith('//')) {
+        throw new Error(`Invalid API endpoint "${endpoint}": must be a path starting with a single "/"`);
+    }
     const trimmed = appUrl.replace(/\/+$/, '');
     let isSaas = false;
     let host = trimmed;
@@ -26,19 +32,23 @@ export function buildApiUrl(appUrl: string, endpoint: string): string {
         // fall through and treat as self-hosted
     }
 
+    let url: string;
     if (isSaas) {
         const path = endpoint
             .replace(/^\/v2\/api\//, '/v2/')
             .replace(/^\/api\//, '/');
-        return `${host}${path}`;
+        url = `${host}${path}`;
+    } else if (endpoint.startsWith('/v2/api/') || endpoint.startsWith('/api/')) {
+        // Self-hosted: these paths already include the prefix
+        url = `${host}${endpoint}`;
+    } else {
+        url = `${host}/api${endpoint}`;
     }
 
-    // Self-hosted: paths starting with /v2/api/ or /api/ already include the
-    // prefix; bare paths get /api prepended.
-    if (endpoint.startsWith('/v2/api/') || endpoint.startsWith('/api/')) {
-        return `${host}${endpoint}`;
+    if (new URL(url).host !== new URL(host).host) {
+        throw new Error(`Invalid API endpoint "${endpoint}": resolves outside ${new URL(host).host}`);
     }
-    return `${host}/api${endpoint}`;
+    return url;
 }
 
 // Helper function to make authenticated API requests
@@ -67,6 +77,19 @@ export async function makeApiRequest(endpoint: string, options: RequestInit = {}
         throw new Error(`API request failed: ${response.status} ${response.statusText} - ${error}`);
     }
 
+    // Self-hosted instances answer unknown API paths with the frontend's
+    // index.html and a 200, so the status alone doesn't prove we hit the API.
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.includes("json")) {
+        // A redirect to HTML is an auth proxy (SSO, Cloudflare Access) sending
+        // us to its login page, not a missing endpoint. Our JWT can't get past
+        // it, so re-running OpenReplay's login wouldn't help either.
+        if (response.redirected) {
+            throw new Error(`API request to ${url} was redirected to ${response.url} (${contentType || "no content type"}) — the instance sits behind a login proxy this server can't authenticate with`);
+        }
+        throw new Error(`API request to ${url} returned ${contentType || "no content type"} instead of JSON — the endpoint does not exist on this instance`);
+    }
+
     return response.json();
 }
 
@@ -80,13 +103,18 @@ export async function fetchFilters(siteId: string) {
         throw new Error("AUTH_ERROR: Not authenticated");
     }
 
-    const {data} = await makeApiRequest(`/pa/${siteId}/filters`);
+    const {data} = await makeApiRequest(`/v2/api/${siteId}/filters`);
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error(`Unexpected filters response for project ${siteId}: expected an object keyed by category`);
+    }
     state.projectFilters[siteId] = data;
     console.error(`[SERVER] Cached filters for site ${siteId}`);
     return data;
 }
 
-// Get filters from cache or fetch them
+// Get filters from cache or fetch them. Throws when the definitions can't be
+// loaded: callers build queries from them, and a query built without them
+// either drops the filters or mislabels events.
 export async function getOrFetchFilters(siteId: string) {
     if (state.projectFilters[siteId]) {
         return state.projectFilters[siteId];
@@ -95,7 +123,16 @@ export async function getOrFetchFilters(siteId: string) {
         return await fetchFilters(siteId);
     } catch (err) {
         console.error(`[SERVER] Failed to fetch filters for site ${siteId}:`, err);
-        return null;
+        const reason = err instanceof Error ? err.message : String(err);
+        throw new Error(`Could not load filter definitions for project ${siteId}: ${reason}`);
+    }
+}
+
+async function getFiltersForQuery(siteId: string) {
+    try {
+        return await getOrFetchFilters(siteId);
+    } catch (err) {
+        throw new Error(`${(err as Error).message}. The query was not run, since it can't be built correctly without them.`);
     }
 }
 
@@ -127,8 +164,8 @@ export async function resolveFilters(
     siteId: string,
     modelFilters: ModelFilter[],
 ): Promise<any[]> {
-    const filterDefs = await getOrFetchFilters(siteId);
-    if (!filterDefs) return [];
+    if (modelFilters.length === 0) return [];
+    const filterDefs = await getFiltersForQuery(siteId);
 
     // Index defs by name, remembering which category they came from.
     // First-seen wins so events take precedence over same-named entries
@@ -173,6 +210,37 @@ export async function resolveFilters(
         const def = lookup?.def;
         const isEvent = lookup?.category === "events";
 
+        // Segments and features are references, not attributes; these mirror the
+        // frontend's shapes. The backend expands a filter with a searchId into
+        // the segment's saved filters.
+        if (lookup?.category === "segments") {
+            return {
+                value: [String(def.searchId)],
+                operator: "is",
+                dataType: "string",
+                propertyOrder: "and",
+                filters: [],
+                isEvent: true,
+                name: def.name,
+                autoCaptured: false,
+                isSegment: true,
+                searchId: String(def.searchId),
+            };
+        }
+        if (lookup?.category === "features") {
+            return {
+                value: [String(def.tagId)],
+                operator: "is",
+                dataType: "string",
+                propertyOrder: "and",
+                filters: [],
+                isEvent: true,
+                name: "TAG_TRIGGER",
+                autoCaptured: false,
+                isSegment: false,
+            };
+        }
+
         const subFilters = (mf.properties || []).map(buildPropertyFilter);
 
         // When an event has properties, the top-level value is empty —
@@ -195,29 +263,81 @@ export async function resolveFilters(
 
 // --- Data fetching ---
 
+export const DAY_MS = 24 * 60 * 60 * 1000;
+
+export type DateRange = { startTs: number; endTs: number; custom: boolean };
+
+// A bare "YYYY-MM-DD" is a whole calendar day in local time (the server runs on
+// the user's machine): midnight as a start, the next midnight as an end.
+// `new Date("2026-10-01")` would give UTC midnight, and as an end bound drop
+// everything recorded that day.
+function parseDateBound(value: string, isEnd: boolean): number {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!m) return new Date(value).getTime();
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + (isEnd ? 1 : 0)).getTime();
+}
+
+// Turn optional ISO start/end dates into a query range. A missing end is now,
+// a missing start is `defaultSpanMs` before the end, and the end never runs past now.
+export function parseDateRange(startDate?: string, endDate?: string, defaultSpanMs: number = DAY_MS): DateRange {
+    const now = Date.now();
+    const endTs = Math.min(endDate ? parseDateBound(endDate, true) : now, now);
+    const startTs = startDate ? parseDateBound(startDate, false) : endTs - defaultSpanMs;
+    if (isNaN(startTs) || isNaN(endTs)) {
+        throw new Error(`Invalid date format. startDate="${startDate}", endDate="${endDate}". Use ISO 8601 format like "2025-02-10".`);
+    }
+    if (startTs >= endTs) {
+        throw new Error("startDate must be before endDate (and not in the future)");
+    }
+    return {startTs, endTs, custom: Boolean(startDate || endDate)};
+}
+
+// Resolve a tool's siteId/projectName pair to a project ID. The project list is
+// reloaded once on a miss, so a cold start or a newly created project still resolves.
+export async function resolveSiteId(args: {siteId?: string; projectName?: string}): Promise<string> {
+    if (args.siteId) return args.siteId;
+    if (!args.projectName) {
+        throw new Error("Either siteId or projectName must be provided");
+    }
+    let projectId = getProjectIdByName(args.projectName);
+    if (!projectId) {
+        await fetchProjects();
+        projectId = getProjectIdByName(args.projectName);
+    }
+    if (!projectId) {
+        const available = state.projects.map((p) => p.name).join(", ");
+        throw new Error(`Project "${args.projectName}" not found. Available projects: ${available}`);
+    }
+    return projectId;
+}
+
 // Fetch recent sessions from OpenReplay
-export async function fetchRecentSessions(siteId: string = "5", limit: number = 10, filters: any[] = []) {
+export async function fetchRecentSessions(
+    siteId: string,
+    limit: number,
+    filters: any[],
+    range: DateRange,
+) {
     console.error(`[SERVER] Fetching recent sessions for site ${siteId}...`);
 
     if (!state.jwt) {
         throw new Error("AUTH_ERROR: Not authenticated");
     }
 
-    const now = Date.now();
-    const yesterday = now - 24 * 60 * 60 * 1000;
+    const {startTs, endTs} = range;
 
     const searchPayload = {
         filters: filters,
-        rangeValue: "LAST_24_HOURS",
-        startDate: yesterday,
-        endDate: now,
+        rangeValue: range.custom ? "CUSTOM_RANGE" : "LAST_24_HOURS",
+        startDate: startTs,
+        endDate: endTs,
         sort: "startTs",
         order: "desc",
         viewed: false,
         eventsOrder: "then",
         limit,
-        startTimestamp: Math.floor(yesterday / 1000) * 1000,
-        endTimestamp: Math.floor(now / 1000) * 1000,
+        startTimestamp: Math.floor(startTs / 1000) * 1000,
+        endTimestamp: Math.floor(endTs / 1000) * 1000,
         page: 1,
     };
 
@@ -230,7 +350,10 @@ export async function fetchRecentSessions(siteId: string = "5", limit: number = 
 
     if (!data.sessions || data.sessions.length === 0) {
         console.error('Used params', siteId, searchPayload, "\n data", data);
-        throw new Error("No sessions found in the last 24 hours");
+        const span = range.custom
+            ? `between ${new Date(startTs).toISOString()} and ${new Date(endTs).toISOString()}`
+            : "in the last 24 hours (pass startDate to search further back)";
+        throw new Error(`No sessions found ${span}`);
     }
 
     // Construct player URLs for each session — use the UI URL directly.
@@ -539,11 +662,16 @@ export type FunnelStepInput = string | { type: string; value?: string; operator?
 // A bare string is shorthand for a LOCATION step matching a URL path.
 // Object steps select an event by name; for autoCaptured=false (custom)
 // events the value is ignored — only the event name is sent.
+// autoCaptured events every project has; a funnel made only of these doesn't
+// need the project's filter definitions.
+const BUILTIN_EVENTS = new Set(["LOCATION", "CLICK", "INPUT", "ISSUE", "ERROR", "REQUEST", "PERFORMANCE"]);
+
 export async function resolveFunnelSteps(
     siteId: string,
     steps: FunnelStepInput[],
 ): Promise<any[]> {
-    const filterDefs = await getOrFetchFilters(siteId);
+    const needsDefs = steps.some((step) => typeof step !== "string" && !BUILTIN_EVENTS.has(step.type));
+    const filterDefs = needsDefs ? await getFiltersForQuery(siteId) : null;
 
     const eventDefs: Record<string, any> = {};
     const eventCategory = (filterDefs as any)?.events;
@@ -704,7 +832,7 @@ export async function fetchEvents(
         filters,
     };
 
-    const {data} = await makeApiRequest(`/${siteId}/events`, {
+    const {data} = await makeApiRequest(`/v2/api/${siteId}/events`, {
         method: "POST",
         body: JSON.stringify(payload),
     });
@@ -741,7 +869,7 @@ export async function fetchUsers(
         query,
     };
 
-    const {data} = await makeApiRequest(`/${siteId}/users`, {
+    const {data} = await makeApiRequest(`/v2/api/${siteId}/users`, {
         method: "POST",
         body: JSON.stringify(payload),
     });
@@ -750,7 +878,11 @@ export async function fetchUsers(
     return data;
 }
 
-// Fetch event properties (custom properties tracked for a given event)
+// Filter-catalog categories holding flat session/user attributes. `event` holds
+// event properties; segments and features are references (see resolveFilters).
+const ATTRIBUTE_CATEGORIES = ["session", "user", "users", "metadata"];
+
+// Fetch event definitions and attribute definitions from the filter catalog
 export async function fetchEventProperties(siteId: string) {
     console.error(`[SERVER] Fetching event properties for site ${siteId}...`);
 
@@ -758,11 +890,12 @@ export async function fetchEventProperties(siteId: string) {
         throw new Error("AUTH_ERROR: Not authenticated");
     }
 
-    const {data} = await makeApiRequest(`/pa/${siteId}/filters`);
+    const data = await fetchFilters(siteId);
 
-    // Extract event-type filters (custom events and their properties)
-    const events = (data || []).filter((f: any) => f.isEvent);
-    const attributes = (data || []).filter((f: any) => !f.isEvent);
+    const events: any[] = data.events?.list ?? [];
+    const attributes: any[] = ATTRIBUTE_CATEGORIES.flatMap((category) =>
+        (data[category]?.list ?? []).map((def: any) => ({...def, category})),
+    );
 
     console.error(`[SERVER] Got ${events.length} events, ${attributes.length} attributes`);
     return {events, attributes};

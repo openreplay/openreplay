@@ -16,7 +16,7 @@ An interactive MCP (Model Context Protocol) app for exploring OpenReplay analyti
 
 ### Prerequisites
 
-- Node.js 20.19+ (or 22.12+) and npm — required by Vite 7
+- Node.js 20.19+ (or 22.12+) and npm — required by Vite 8
 - Claude Desktop or another MCP-enabled host
 - An OpenReplay account (Cloud or self-hosted)
 
@@ -148,7 +148,7 @@ by the app's own UI, not by the model.
 
 ### Server (`server.ts`, `lib/`)
 
-- MCP server over stdio, built on `@modelcontextprotocol/sdk` and `@modelcontextprotocol/ext-apps`
+- MCP server over stdio, built on the MCP SDK v2 packages (`@modelcontextprotocol/server`, `client`, `core`) and `@modelcontextprotocol/ext-apps` 2.x
 - Registers all tools (`lib/tools.ts`), talks to the OpenReplay REST API (`lib/api.ts`)
 - Holds auth and caches in memory (`lib/state.ts`), persisting the JWT to disk
 - Serves the bundled React UI as a single `ui://` resource

@@ -4,7 +4,7 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 import path from 'path';
 import { readFileSync } from 'fs';
 
-const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
+const pkg = JSON.parse(readFileSync(path.resolve(import.meta.dirname, 'package.json'), 'utf-8'));
 
 export default defineConfig({
   plugins: [react(), viteSingleFile()],
@@ -13,7 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@openreplay/player': path.resolve(__dirname, '../player/src'),
+      '@openreplay/player': path.resolve(import.meta.dirname, '../player/src'),
     },
   },
   build: {
@@ -22,10 +22,5 @@ export default defineConfig({
     chunkSizeWarningLimit: 100000000,
     cssCodeSplit: false,
     outDir: 'dist',
-    rollupOptions: {
-      output: {
-        inlineDynamicImports: true,
-      },
-    },
   },
 });

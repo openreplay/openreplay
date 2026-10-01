@@ -85,6 +85,34 @@ export const state = {
   pendingAuthCode: null as string | null,
 };
 
+// Projects and filter definitions belong to one instance and account; anything
+// that switches either must drop them, or lookups resolve against the old one.
+export function clearInstanceCaches() {
+  state.projects = [];
+  state.projectFilters = {};
+}
+
+function normalizeUrl(raw: string): string {
+  try {
+    return new URL(raw).href.replace(/\/+$/, "");
+  } catch {
+    return raw.replace(/\/+$/, "");
+  }
+}
+
+// Point the server at another instance. A JWT is only valid for the instance
+// that minted it, so switching drops it (as loadPersistedState does on launch)
+// rather than sending it to the new host. Returns whether the URL changed.
+export async function setAppUrl(appUrl: string): Promise<boolean> {
+  if (normalizeUrl(appUrl) === normalizeUrl(state.appUrl)) return false;
+  state.appUrl = appUrl;
+  state.jwt = null;
+  state.userData = null;
+  clearInstanceCaches();
+  await savePersistedState();
+  return true;
+}
+
 // Load persisted state from disk
 export async function loadPersistedState() {
   try {

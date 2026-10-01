@@ -1,10 +1,10 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import net from "node:net";
 import dns from "node:dns/promises";
 import { z } from "zod";
-import { state, savePersistedState, clearPersistedState, generateAuthCode, assertHttpsUrl, allowMobUrls, isMobUrlAllowed } from "./state.js";
-import { makeApiRequest, fetchRecentSessions, fetchProjects, getProjectIdByName, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, resolveFunnelSteps, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties, pollForAuth } from "./api.js";
+import { state, savePersistedState, clearPersistedState, clearInstanceCaches, setAppUrl, generateAuthCode, assertHttpsUrl, allowMobUrls, isMobUrlAllowed } from "./state.js";
+import { makeApiRequest, fetchRecentSessions, fetchProjects, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, resolveFunnelSteps, parseDateRange, resolveSiteId, DAY_MS, getOrFetchFilters, fetchEvents, fetchUsers, fetchEventProperties, pollForAuth } from "./api.js";
 import {
   ConfigureBackendSchema,
   LoginJwtSchema,
@@ -193,6 +193,9 @@ function isMobilePlatform(platform: unknown): boolean {
   return typeof platform === "string" && /ios|android/i.test(platform);
 }
 
+const SessionStartDate = z.string().optional().describe("Start of the search window as an ISO 8601 string. Defaults to 24 hours before endDate. Convert relative references like 'last month' to actual dates.");
+const SessionEndDate = z.string().optional().describe("End of the search window as an ISO 8601 string. A bare date includes that whole day. Defaults to now.");
+
 // Register UI tools
 export function registerUITools(server: McpServer, resourceUri: string) {
   // Tool 1: View Recent Sessions
@@ -207,14 +210,17 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         "Renders a rich interactive session list with user info, timing, device details, and play buttons. " +
         "You can specify one of the required parameters: project ID (siteId param) or its name (projectName param). " +
         "Supports filtering by user attributes (country, browser, OS, device, etc.). Call get_available_filters first to see what filters are available. " +
+        "Searches the last 24 hours unless startDate/endDate are given — pass a wider startDate when looking up a specific user's history or older sessions. " +
         "After showing the session list, let the user know they can (1) ask you to replay any session directly here using the built-in session player via view_session_replay, and (2) click the play button on any session in the list to open it in the full OpenReplay UI in their browser. Mention both options to the user. " +
         "TIP: Combine multiple data tools for comprehensive analysis. Use view_recent_sessions with the same filters to drill into sessions related to any chart data.",
-      inputSchema: {
-        siteId: z.string().optional().describe("Site ID (project ID). If not provided, will use projectName or default to 5."),
+      inputSchema: z.object({
+        siteId: z.string().optional().describe("Site ID (project ID). Either siteId or projectName is required."),
         projectName: z.string().optional().describe("Project name to look up. Will be resolved to project ID automatically."),
         limit: z.number().optional().default(10).describe("Number of sessions to fetch (default 10, max 50)"),
+        startDate: SessionStartDate,
+        endDate: SessionEndDate,
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
-      },
+      }),
       _meta: {
         ui: {
           resourceUri,
@@ -229,13 +235,14 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           { description: "Show me sessions with errors", input: { projectName: "MyApp", filters: [{ name: "issue", value: ["js_exception"], operator: "is" }] } },
           { description: "Last 5 sessions on serverless", input: { projectName: "serverless", limit: 5 } },
           { description: "Show me recent sessions of project serverless", input: { projectName: "serverless" } },
-          { description: "Sessions of user tahay@asayer.io", input: {filters: [{name: "userId", value:["tahay@asayer.io"]}] } },
-          { description: "Sessions where the user visited the signup page", input: { filters: [{name: "LOCATION", properties: [{name:"urlPath",value: ["signup"], operator:"contains"}]}] } },
-          { description: "Sessions where the user clicked on subscribe", input: { filters: [{name: "CLICK", properties: [{name:"label",value: ["subscribe"], operator:"is"}]}] } },
-          { description: "Sessions longer than 20 minutes", input: { filters: [{name: "duration", value: [20]}] } },
-          { description: "Sessions shorter than 20 minutes", input: { filters: [{name: "duration", value: [0,20]}] } },
-          { description: "Sessions with failed requests to /api/users", input: { filters: [{name: "REQUEST", properties: [{name:"urlPath",value: ["/api/users"], operator:"is"}, {name:"status",value: [400], operator:">="}]}] } },
-          { description: "Sessions with metadata plan is free", input: { filters: [{name: "metadata_1", value:["free"], operator:"is"}]  }},
+          { description: "Sessions of user tahay@asayer.io", input: { projectName: "MyApp", filters: [{name: "userId", value:["tahay@asayer.io"]}] } },
+          { description: "Sessions of user tahay@asayer.io over the last 30 days", input: { projectName: "MyApp", startDate: "2026-03-11", filters: [{name: "userId", value:["tahay@asayer.io"]}] } },
+          { description: "Sessions where the user visited the signup page", input: { projectName: "MyApp", filters: [{name: "LOCATION", properties: [{name:"urlPath",value: ["signup"], operator:"contains"}]}] } },
+          { description: "Sessions where the user clicked on subscribe", input: { projectName: "MyApp", filters: [{name: "CLICK", properties: [{name:"label",value: ["subscribe"], operator:"is"}]}] } },
+          { description: "Sessions longer than 20 minutes", input: { projectName: "MyApp", filters: [{name: "duration", value: [20]}] } },
+          { description: "Sessions shorter than 20 minutes", input: { projectName: "MyApp", filters: [{name: "duration", value: [0,20]}] } },
+          { description: "Sessions with failed requests to /api/users", input: { projectName: "MyApp", filters: [{name: "REQUEST", properties: [{name:"urlPath",value: ["/api/users"], operator:"is"}, {name:"status",value: [400], operator:">="}]}] } },
+          { description: "Sessions with metadata plan is free", input: { projectName: "MyApp", filters: [{name: "metadata_1", value:["free"], operator:"is"}]  }},
         ],
       },
     },
@@ -244,28 +251,13 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       console.error("[SERVER] Arguments:", JSON.stringify(args, null, 2));
 
       try {
-        let siteId = args.siteId;
-
-        // If projectName is provided, resolve it to projectId
-        if (args.projectName && !siteId) {
-          const resolvedId = getProjectIdByName(args.projectName);
-          if (!resolvedId) {
-            throw new Error(
-              `Project "${args.projectName}" not found. Please call list_projects first to load available projects.`
-            );
-          }
-          siteId = resolvedId;
-        }
+        const siteId = await resolveSiteId(args);
 
         const limit = Math.min(args.limit || 10, 50); // Cap at 50
+        const range = parseDateRange(args.startDate, args.endDate);
+        const resolvedFilters = await resolveFilters(siteId, args.filters ?? []);
 
-        // Resolve filters if provided
-        let resolvedFilters: any[] = [];
-        if (args.filters?.length) {
-          resolvedFilters = await resolveFilters(siteId, args.filters);
-        }
-
-        const sessions = await fetchRecentSessions(siteId, limit, resolvedFilters);
+        const sessions = await fetchRecentSessions(siteId, limit, resolvedFilters, range);
 
         return {
           content: [
@@ -317,13 +309,13 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         "For example, if today is 2025-02-18 and the user says 'last week', use startDate='2025-02-10' and endDate='2025-02-18'. " +
         "Supports filtering by user attributes. Call get_available_filters to see available filters. " +
         "TIP: Combine multiple data tools for comprehensive analysis. Use view_recent_sessions with the same filters to drill into sessions related to any chart data.",
-      inputSchema: {
+      inputSchema: z.object({
         startDate: z.string().describe("Start date as ISO 8601 string (e.g. '2025-02-10' or '2025-02-10T00:00:00'). Convert relative time references to actual dates."),
         endDate: z.string().describe("End date as ISO 8601 string. If the user says 'until now' or doesn't specify, use today's date."),
         siteId: z.string().optional().describe("Site ID (project ID). If not provided, will use projectName."),
         projectName: z.string().optional().describe("Project name to look up. Will be resolved to project ID automatically."),
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
-      },
+      }),
       _meta: {
         ui: {
           resourceUri,
@@ -348,45 +340,9 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       try {
         const parsed = ViewSessionsChartSchema.parse(args);
 
-        let siteId = parsed.siteId;
+        const siteId = await resolveSiteId(parsed);
 
-        // If projectName is provided, resolve it to projectId
-        if (parsed.projectName && !siteId) {
-          const resolvedId = getProjectIdByName(parsed.projectName);
-          if (!resolvedId) {
-            if (state.projects.length === 0) {
-              await fetchProjects();
-              const retryResolvedId = getProjectIdByName(parsed.projectName);
-              if (retryResolvedId) {
-                siteId = retryResolvedId;
-              }
-            }
-            if (!siteId) {
-              const availableProjects = state.projects.map(p => p.name).join(", ");
-              throw new Error(
-                `Project "${parsed.projectName}" not found. Available projects: ${availableProjects}`
-              );
-            }
-          } else {
-            siteId = resolvedId;
-          }
-        }
-
-        if (!siteId) {
-          throw new Error("Either siteId or projectName must be provided");
-        }
-
-        // Parse dates to timestamps
-        const startTs = new Date(parsed.startDate).getTime();
-        const endTs = new Date(parsed.endDate).getTime();
-
-        if (isNaN(startTs) || isNaN(endTs)) {
-          throw new Error(`Invalid date format. startDate="${parsed.startDate}", endDate="${parsed.endDate}". Use ISO 8601 format like "2025-02-10".`);
-        }
-
-        if (startTs >= endTs) {
-          throw new Error("startDate must be before endDate");
-        }
+        const { startTs, endTs } = parseDateRange(parsed.startDate, parsed.endDate);
 
         // Calculate density based on time range
         const rangeMs = endTs - startTs;
@@ -400,11 +356,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           density = Math.min(Math.ceil(rangeHours / 24), 90);
         }
 
-        // Resolve filters if provided
-        let resolvedFilters: any[] = [];
-        if (parsed.filters?.length) {
-          resolvedFilters = await resolveFilters(siteId, parsed.filters);
-        }
+        const resolvedFilters = await resolveFilters(siteId, parsed.filters ?? []);
 
         const rawData = await fetchSessionsTimeseries(siteId, startTs, endTs, density, resolvedFilters);
 
@@ -512,14 +464,14 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         "or leave it empty for the most common paths. " +
         "Supports filtering by user attributes. Call get_available_filters to see available filters. " +
         "TIP: Combine with view_table_chart, view_web_vitals, or view_funnel for deeper analysis. Use view_recent_sessions with the same filters to drill into related sessions.",
-      inputSchema: {
+      inputSchema: z.object({
         startDate: z.string().describe("Start date as ISO 8601 string. Convert relative time references to actual dates."),
         endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
         siteId: z.string().optional().describe("Site ID (project ID). If not provided, will use projectName."),
         projectName: z.string().optional().describe("Project name to look up."),
         startPoint: z.string().optional().describe("URL path to start the journey from (e.g. '/pricing', '/articles/first'). Leave empty for general overview of most popular paths."),
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
-      },
+      }),
       _meta: {
         ui: {
           resourceUri,
@@ -544,45 +496,11 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       try {
         const parsed = ViewUserJourneySchema.parse(args);
 
-        let siteId = parsed.siteId;
+        const siteId = await resolveSiteId(parsed);
 
-        if (parsed.projectName && !siteId) {
-          const resolvedId = getProjectIdByName(parsed.projectName);
-          if (!resolvedId) {
-            if (state.projects.length === 0) {
-              await fetchProjects();
-              const retryResolvedId = getProjectIdByName(parsed.projectName);
-              if (retryResolvedId) {
-                siteId = retryResolvedId;
-              }
-            }
-            if (!siteId) {
-              const availableProjects = state.projects.map(p => p.name).join(", ");
-              throw new Error(
-                `Project "${parsed.projectName}" not found. Available projects: ${availableProjects}`
-              );
-            }
-          } else {
-            siteId = resolvedId;
-          }
-        }
+        const { startTs, endTs } = parseDateRange(parsed.startDate, parsed.endDate);
 
-        if (!siteId) {
-          throw new Error("Either siteId or projectName must be provided");
-        }
-
-        const startTs = new Date(parsed.startDate).getTime();
-        const endTs = new Date(parsed.endDate).getTime();
-
-        if (isNaN(startTs) || isNaN(endTs)) {
-          throw new Error(`Invalid date format. startDate="${parsed.startDate}", endDate="${parsed.endDate}". Use ISO 8601 format.`);
-        }
-
-        // Resolve filters if provided
-        let resolvedFilters: any[] = [];
-        if (parsed.filters?.length) {
-          resolvedFilters = await resolveFilters(siteId, parsed.filters);
-        }
+        const resolvedFilters = await resolveFilters(siteId, parsed.filters ?? []);
 
         let data = await fetchPathAnalysis(siteId, startTs, endTs, parsed.startPoint, resolvedFilters);
 
@@ -683,13 +601,13 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         "You MUST convert time references to ISO date strings. " +
         "Supports filtering by user attributes. " +
         "TIP: Combine with view_chart for trends, view_table_chart for breakdowns, or view_funnel for conversion analysis. Use view_recent_sessions with the same filters to drill into related sessions.",
-      inputSchema: {
+      inputSchema: z.object({
         startDate: z.string().describe("Start date as ISO 8601 string. Convert relative time references to actual dates."),
         endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
         siteId: z.string().optional().describe("Site ID (project ID). If not provided, will use projectName."),
         projectName: z.string().optional().describe("Project name to look up."),
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
-      },
+      }),
       _meta: {
         ui: {
           resourceUri,
@@ -714,45 +632,11 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       try {
         const parsed = ViewWebVitalsSchema.parse(args);
 
-        let siteId = parsed.siteId;
+        const siteId = await resolveSiteId(parsed);
 
-        if (parsed.projectName && !siteId) {
-          const resolvedId = getProjectIdByName(parsed.projectName);
-          if (!resolvedId) {
-            if (state.projects.length === 0) {
-              await fetchProjects();
-              const retryResolvedId = getProjectIdByName(parsed.projectName);
-              if (retryResolvedId) {
-                siteId = retryResolvedId;
-              }
-            }
-            if (!siteId) {
-              const availableProjects = state.projects.map(p => p.name).join(", ");
-              throw new Error(
-                `Project "${parsed.projectName}" not found. Available projects: ${availableProjects}`
-              );
-            }
-          } else {
-            siteId = resolvedId;
-          }
-        }
+        const { startTs, endTs } = parseDateRange(parsed.startDate, parsed.endDate);
 
-        if (!siteId) {
-          throw new Error("Either siteId or projectName must be provided");
-        }
-
-        const startTs = new Date(parsed.startDate).getTime();
-        const endTs = new Date(parsed.endDate).getTime();
-
-        if (isNaN(startTs) || isNaN(endTs)) {
-          throw new Error(`Invalid date format. startDate="${parsed.startDate}", endDate="${parsed.endDate}". Use ISO 8601 format.`);
-        }
-
-        // Resolve filters if provided
-        let resolvedFilters: any[] = [];
-        if (parsed.filters?.length) {
-          resolvedFilters = await resolveFilters(siteId, parsed.filters);
-        }
+        const resolvedFilters = await resolveFilters(siteId, parsed.filters ?? []);
 
         const data = await fetchWebVitals(siteId, startTs, endTs, resolvedFilters);
 
@@ -827,7 +711,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         "Supports filtering by user attributes. " +
         "TIP: Call this tool multiple times with different metricOf values for a comprehensive breakdown. " +
         "Use view_recent_sessions with the same filters to drill into sessions related to this data.",
-      inputSchema: {
+      inputSchema: z.object({
         startDate: z.string().describe("Start date as ISO 8601 string. Convert relative time references to actual dates."),
         endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
         metricOf: z.string().describe("What to rank/count. Values: 'LOCATION' (top pages), 'REQUEST' (top network requests), 'userBrowser' (top browsers), 'userCountry' (top countries), 'userOs' (top OS), 'userDevice' (top devices)."),
@@ -835,7 +719,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         projectName: z.string().optional().describe("Project name to look up."),
         limit: z.number().optional().default(20).describe("Max items to return (default 20)."),
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
-      },
+      }),
       _meta: {
         ui: {
           resourceUri,
@@ -861,45 +745,11 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       try {
         const parsed = ViewTableChartSchema.parse(args);
 
-        let siteId = parsed.siteId;
+        const siteId = await resolveSiteId(parsed);
 
-        if (parsed.projectName && !siteId) {
-          const resolvedId = getProjectIdByName(parsed.projectName);
-          if (!resolvedId) {
-            if (state.projects.length === 0) {
-              await fetchProjects();
-              const retryResolvedId = getProjectIdByName(parsed.projectName);
-              if (retryResolvedId) {
-                siteId = retryResolvedId;
-              }
-            }
-            if (!siteId) {
-              const availableProjects = state.projects.map(p => p.name).join(", ");
-              throw new Error(
-                `Project "${parsed.projectName}" not found. Available projects: ${availableProjects}`
-              );
-            }
-          } else {
-            siteId = resolvedId;
-          }
-        }
+        const { startTs, endTs } = parseDateRange(parsed.startDate, parsed.endDate);
 
-        if (!siteId) {
-          throw new Error("Either siteId or projectName must be provided");
-        }
-
-        const startTs = new Date(parsed.startDate).getTime();
-        const endTs = new Date(parsed.endDate).getTime();
-
-        if (isNaN(startTs) || isNaN(endTs)) {
-          throw new Error(`Invalid date format. startDate="${parsed.startDate}", endDate="${parsed.endDate}". Use ISO 8601 format.`);
-        }
-
-        // Resolve filters if provided
-        let resolvedFilters: any[] = [];
-        if (parsed.filters?.length) {
-          resolvedFilters = await resolveFilters(siteId, parsed.filters);
-        }
+        const resolvedFilters = await resolveFilters(siteId, parsed.filters ?? []);
 
         const data = await fetchTableData(siteId, startTs, endTs, parsed.metricOf, parsed.limit, resolvedFilters);
 
@@ -979,7 +829,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         "You MUST convert time references to ISO date strings. " +
         "TIP: Combine with view_user_journey to see where users actually go instead. " +
         "Use view_recent_sessions with the same filters to drill into related sessions.",
-      inputSchema: {
+      inputSchema: z.object({
         startDate: z.string().describe("Start date as ISO 8601 string. Convert relative time references to actual dates."),
         endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
         steps: z.array(FunnelStepSchema).min(2).describe(
@@ -990,7 +840,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         siteId: z.string().optional().describe("Site ID (project ID). If not provided, will use projectName."),
         projectName: z.string().optional().describe("Project name to look up."),
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
-      },
+      }),
       _meta: {
         ui: {
           resourceUri,
@@ -1017,40 +867,11 @@ export function registerUITools(server: McpServer, resourceUri: string) {
       try {
         const parsed = ViewFunnelSchema.parse(args);
 
-        let siteId = parsed.siteId;
+        const siteId = await resolveSiteId(parsed);
 
-        if (parsed.projectName && !siteId) {
-          const resolvedId = getProjectIdByName(parsed.projectName);
-          if (!resolvedId) {
-            if (state.projects.length === 0) {
-              await fetchProjects();
-              const retryResolvedId = getProjectIdByName(parsed.projectName);
-              if (retryResolvedId) siteId = retryResolvedId;
-            }
-            if (!siteId) {
-              const availableProjects = state.projects.map(p => p.name).join(", ");
-              throw new Error(`Project "${parsed.projectName}" not found. Available projects: ${availableProjects}`);
-            }
-          } else {
-            siteId = resolvedId;
-          }
-        }
+        const { startTs, endTs } = parseDateRange(parsed.startDate, parsed.endDate);
 
-        if (!siteId) {
-          throw new Error("Either siteId or projectName must be provided");
-        }
-
-        const startTs = new Date(parsed.startDate).getTime();
-        const endTs = new Date(parsed.endDate).getTime();
-
-        if (isNaN(startTs) || isNaN(endTs)) {
-          throw new Error(`Invalid date format. Use ISO 8601.`);
-        }
-
-        let resolvedFilters: any[] = [];
-        if (parsed.filters?.length) {
-          resolvedFilters = await resolveFilters(siteId, parsed.filters);
-        }
+        const resolvedFilters = await resolveFilters(siteId, parsed.filters ?? []);
 
         const stepFilters = await resolveFunnelSteps(siteId, parsed.steps);
         let data = await fetchFunnel(siteId, startTs, endTs, stepFilters, resolvedFilters);
@@ -1137,11 +958,11 @@ export function registerUITools(server: McpServer, resourceUri: string) {
         "The user may refer to a session by its position in a previously fetched list. " +
         "After showing the replay, try to provide session analysis based on data you have and" +
         " let the user know they can also open this session directly in the full OpenReplay UI in their browser via a direct link.",
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: z.string().describe("Session ID to replay. Pick from earlier results if user refers by position."),
         siteId: z.string().optional().describe("Site ID (project ID). Use the siteId from earlier session list."),
         projectName: z.string().optional().describe("Project name to look up."),
-      },
+      }),
       _meta: {
         ui: {
           resourceUri,
@@ -1168,29 +989,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           };
         }
 
-        let siteId = parsed.siteId;
-
-        // Resolve project name to ID if needed
-        if (parsed.projectName && !siteId) {
-          if (state.projects.length === 0) {
-            await fetchProjects();
-          }
-          const resolvedId = getProjectIdByName(parsed.projectName);
-          if (!resolvedId) {
-            return {
-              content: [{ type: "text", text: JSON.stringify({ type: "error", error: `Project "${parsed.projectName}" not found` }) }],
-              isError: true,
-            };
-          }
-          siteId = resolvedId;
-        }
-
-        if (!siteId) {
-          return {
-            content: [{ type: "text", text: JSON.stringify({ type: "error", error: "Either siteId or projectName must be provided" }) }],
-            isError: true,
-          };
-        }
+        const siteId = await resolveSiteId(parsed);
 
         // Fetch session replay metadata
         console.error(`[SERVER] Fetching replay metadata for session ${parsed.sessionId}...`);
@@ -1265,10 +1064,10 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Re-fetch signed mob file URLs for a session replay (internal use by UI only)",
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: z.string().describe("Session ID"),
         siteId: z.string().optional().describe("Site ID"),
-      },
+      }),
     },
     async (args: any) => {
       try {
@@ -1329,9 +1128,9 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Fetch a mob file by URL and return base64 (internal use by UI only)",
-      inputSchema: {
+      inputSchema: z.object({
         url: z.string().describe("Mob file URL"),
-      },
+      }),
     },
     async (args: any) => {
       let url: string;
@@ -1374,9 +1173,9 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Fetch an external stylesheet by URL and return base64 (internal use by UI only)",
-      inputSchema: {
+      inputSchema: z.object({
         url: z.string().describe("Stylesheet URL"),
-      },
+      }),
     },
     async (args: any) => {
       let url: string;
@@ -1409,9 +1208,9 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: false },
       description: "Configure the OpenReplay instance URL. Pass the URL the user types into their browser; the API host is derived automatically (api.openreplay.com for SaaS, <host>/api otherwise).",
-      inputSchema: {
+      inputSchema: z.object({
         appUrl: z.string().describe("OpenReplay instance URL (e.g. https://app.openreplay.com or https://openreplay.your-company.com)"),
-      },
+      }),
       _meta: {
         examples: [
           { description: "Use OpenReplay Cloud", input: { appUrl: "https://app.openreplay.com" } },
@@ -1422,12 +1221,13 @@ export function registerInternalTools(server: McpServer) {
     async (args) => {
       console.error("[SERVER] configure_backend called:", args);
       const parsed = ConfigureBackendSchema.parse(args);
-      state.appUrl = assertHttpsUrl(parsed.appUrl);
+      const switched = await setAppUrl(assertHttpsUrl(parsed.appUrl));
       return {
         content: [
           {
             type: "text",
-            text: `OpenReplay URL configured: ${state.appUrl}`,
+            text: `OpenReplay URL configured: ${state.appUrl}` +
+              (switched ? ". Signed out of the previous instance — log in again with login_browser." : ""),
           },
         ],
       };
@@ -1442,15 +1242,16 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: false, openWorldHint: false },
       description: "Authenticate with OpenReplay using a JWT token (for testing).",
-      inputSchema: {
+      inputSchema: z.object({
         jwt: z.string().describe("JWT token for authentication"),
-      },
+      }),
     },
     async (args) => {
       console.error("[SERVER] login_jwt called");
       const parsed = LoginJwtSchema.parse(args);
       state.jwt = parsed.jwt;
       state.userData = { authenticated: true };
+      clearInstanceCaches();
 
       await savePersistedState();
 
@@ -1478,9 +1279,9 @@ export function registerInternalTools(server: McpServer) {
         "and ask them to open it in their browser and click 'Authorize' in the OpenReplay tab, " +
         "then call complete_login to finish the flow. " +
         "Use this whenever the user needs to log in. The only alternative is login_jwt for a raw token.",
-      inputSchema: {
+      inputSchema: z.object({
         appUrl: z.string().optional().describe("OpenReplay instance URL (optional, uses current if already configured)"),
-      },
+      }),
       _meta: {
         examples: [
           { description: "Log me in (use already-configured instance)", input: {} },
@@ -1493,7 +1294,7 @@ export function registerInternalTools(server: McpServer) {
       // Validate any model-supplied URL up front; reject non-https before it
       // ever reaches an authorize link or API request.
       if (parsed.appUrl) {
-        state.appUrl = assertHttpsUrl(parsed.appUrl);
+        await setAppUrl(assertHttpsUrl(parsed.appUrl));
       }
       const appUrl = assertHttpsUrl(state.appUrl);
 
@@ -1538,10 +1339,10 @@ export function registerInternalTools(server: McpServer) {
         "Finalize browser-based login started by login_browser. Polls OpenReplay for approval. " +
         "Call this AFTER the user confirms they clicked 'Authorize' in the browser. " +
         "Returns auth_success on approval, or auth_pending if not yet approved (call again to keep waiting).",
-      inputSchema: {
+      inputSchema: z.object({
         state: z.string().optional().describe("Auth state code from login_browser. Defaults to the most recent pending code."),
         timeoutMs: z.number().optional().describe("How long to poll before returning still-pending. Default 60000."),
-      },
+      }),
     },
     async (args) => {
       const parsed = CompleteLoginSchema.parse(args);
@@ -1593,6 +1394,7 @@ export function registerInternalTools(server: McpServer) {
       state.jwt = result.jwt;
       state.userData = { authenticated: true };
       state.pendingAuthCode = null;
+      clearInstanceCaches();
       await savePersistedState();
 
       return {
@@ -1619,11 +1421,11 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Fetch chart data from OpenReplay API",
-      inputSchema: {
+      inputSchema: z.object({
         endpoint: z.string().describe("API endpoint to fetch chart data from"),
         params: z.looseRecord(z.string(), z.any()).optional().describe("Query parameters"),
         siteId: z.string().optional().describe("Site ID (project ID)"),
-      },
+      }),
     },
     async (args) => {
       console.error("[SERVER] fetch_chart_data called:", args);
@@ -1663,10 +1465,10 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: true, openWorldHint: false },
       description: "Get session replay URL",
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: z.string().describe("Session ID to get replay URL for"),
         siteId: z.string().optional().describe("Site ID (project ID)"),
-      },
+      }),
       _meta: {
         examples: [
           { description: "Get replay URL for a session", input: { sessionId: "7891234567890", siteId: "1" } },
@@ -1730,6 +1532,7 @@ export function registerInternalTools(server: McpServer) {
       console.error("[SERVER] logout called");
       state.jwt = null;
       state.userData = null;
+      clearInstanceCaches();
 
       // Clear persisted state
       await clearPersistedState();
@@ -1788,9 +1591,9 @@ export function registerInternalTools(server: McpServer) {
     {
       annotations: { readOnlyHint: true, openWorldHint: false },
       description: "Get the project ID for a given project name. Must call list_projects first to populate the project cache.",
-      inputSchema: {
+      inputSchema: z.object({
         projectName: z.string().describe("Project name to look up"),
-      },
+      }),
       _meta: {
         examples: [
           { description: "What is the project ID for MyApp", input: { projectName: "MyApp" } },
@@ -1800,19 +1603,7 @@ export function registerInternalTools(server: McpServer) {
     async (args) => {
       console.error("[SERVER] get_project_id called:", args);
       const parsed = GetProjectIdSchema.parse(args);
-
-      if (state.projects.length === 0) {
-        throw new Error("No projects loaded. Please call list_projects first.");
-      }
-
-      const projectId = getProjectIdByName(parsed.projectName);
-
-      if (!projectId) {
-        const availableProjects = state.projects.map(p => p.name).join(", ");
-        throw new Error(
-          `Project "${parsed.projectName}" not found. Available projects: ${availableProjects}`
-        );
-      }
+      const projectId = await resolveSiteId({ projectName: parsed.projectName });
 
       return {
         content: [
@@ -1837,25 +1628,29 @@ export function registerInternalTools(server: McpServer) {
       annotations: { readOnlyHint: true, openWorldHint: true },
       description: "Internal tool: fetch sessions as raw JSON without UI. Only use this when you specifically need raw session data for processing, analysis, getting more data, or when the user explicitly asks for JSON output. " +
         "For normal session listing that you need to present to user, ALWAYS prefer view_recent_sessions instead which shows a rich interactive UI. " +
-        "This tool automatically resolves project names to IDs. Supports filtering by user attributes.",
-      inputSchema: {
+        "This tool automatically resolves project names to IDs. Supports filtering by user attributes. " +
+        "Searches the last 24 hours unless startDate/endDate are given.",
+      inputSchema: z.object({
         projectName: z.string().optional().describe("Project name to look up sessions for"),
         siteId: z.string().optional().describe("Site ID (project ID) - use this if you already know the ID"),
         limit: z.number().optional().default(10).describe("Number of sessions to fetch (default 10, max 50)"),
+        startDate: SessionStartDate,
+        endDate: SessionEndDate,
         filters: z.array(FilterItemSchema).optional().describe("Filters to apply. Use get_available_filters to discover valid filter names."),
-      },
+      }),
       _meta: {
         examples: [
           { description: "Fetch 20 sessions for project MyApp", input: { projectName: "MyApp", limit: 20 } },
           { description: "Get sessions from Chrome users in France or Tunisia", input: { siteId: "1", filters: [{ name: "userBrowser", value: ["Chrome"], operator: "is" }, { name: "userCountry", value: ["France", "Tunisia"], operator: "is" }] } },
           { description: "Fetch sessions with JS errors", input: { projectName: "MyApp", filters: [{ name: "issue", value: ["js_exception"], operator: "is" }] } },
-          { description: "Get sessions of a specific user", input: { filters: [{ name: "userId", value: ["tahay@asayer.io"] }] } },
-          { description: "Sessions where user visited the signup page", input: { filters: [{ name: "LOCATION", properties: [{ name: "urlPath", value: ["signup"], operator: "contains" }] }] } },
-          { description: "Sessions where user clicked on subscribe", input: { filters: [{ name: "CLICK", properties: [{ name: "label", value: ["subscribe"], operator: "is" }] }] } },
-          { description: "Sessions longer than 20 minutes", input: { filters: [{ name: "duration", value: [20] }] } },
-          { description: "Sessions shorter than 20 minutes", input: { filters: [{ name: "duration", value: [0, 20] }] } },
-          { description: "Sessions with failed requests to /api/users", input: { filters: [{ name: "REQUEST", properties: [{ name: "urlPath", value: ["/api/users"], operator: "is" }, { name: "status", value: [400], operator: ">=" }] }] } },
-            { description: "Sessions with metadata plan is free ", input: { filters: [{name: "metadata_1", value:["free"], operator:"is"}]  }},
+          { description: "Get sessions of a specific user", input: { projectName: "MyApp", filters: [{ name: "userId", value: ["tahay@asayer.io"] }] } },
+          { description: "Get a user's sessions from the past 2 weeks", input: { projectName: "MyApp", startDate: "2026-03-27", filters: [{ name: "userId", value: ["tahay@asayer.io"] }] } },
+          { description: "Sessions where user visited the signup page", input: { projectName: "MyApp", filters: [{ name: "LOCATION", properties: [{ name: "urlPath", value: ["signup"], operator: "contains" }] }] } },
+          { description: "Sessions where user clicked on subscribe", input: { projectName: "MyApp", filters: [{ name: "CLICK", properties: [{ name: "label", value: ["subscribe"], operator: "is" }] }] } },
+          { description: "Sessions longer than 20 minutes", input: { projectName: "MyApp", filters: [{ name: "duration", value: [20] }] } },
+          { description: "Sessions shorter than 20 minutes", input: { projectName: "MyApp", filters: [{ name: "duration", value: [0, 20] }] } },
+          { description: "Sessions with failed requests to /api/users", input: { projectName: "MyApp", filters: [{ name: "REQUEST", properties: [{ name: "urlPath", value: ["/api/users"], operator: "is" }, { name: "status", value: [400], operator: ">=" }] }] } },
+            { description: "Sessions with metadata plan is free ", input: { projectName: "MyApp", filters: [{name: "metadata_1", value:["free"], operator:"is"}]  }},
         ],
       },
     },
@@ -1866,44 +1661,13 @@ export function registerInternalTools(server: McpServer) {
         throw new Error("Not authenticated. Please login first.");
       }
 
-      let siteId = args.siteId;
-
-      // If projectName is provided, resolve it to projectId
-      if (args.projectName && !siteId) {
-        const resolvedId = getProjectIdByName(args.projectName);
-        if (!resolvedId) {
-          // Try to fetch projects if not loaded
-          if (state.projects.length === 0) {
-            await fetchProjects();
-            const retryResolvedId = getProjectIdByName(args.projectName);
-            if (retryResolvedId) {
-              siteId = retryResolvedId;
-            }
-          }
-          if (!siteId) {
-            const availableProjects = state.projects.map(p => p.name).join(", ");
-            throw new Error(
-              `Project "${args.projectName}" not found. Available projects: ${availableProjects}`
-            );
-          }
-        } else {
-          siteId = resolvedId;
-        }
-      }
-
-      if (!siteId) {
-        throw new Error("Either projectName or siteId must be provided");
-      }
+      const siteId = await resolveSiteId(args);
 
       const limit = Math.min(args.limit || 10, 50);
+      const range = parseDateRange(args.startDate, args.endDate);
+      const resolvedFilters = await resolveFilters(siteId, args.filters ?? []);
 
-      // Resolve filters if provided
-      let resolvedFilters: any[] = [];
-      if (args.filters?.length) {
-        resolvedFilters = await resolveFilters(siteId, args.filters);
-      }
-
-      const sessions = await fetchRecentSessions(siteId, limit, resolvedFilters);
+      const sessions = await fetchRecentSessions(siteId, limit, resolvedFilters, range);
 
       return {
         content: [
@@ -1947,11 +1711,11 @@ export function registerInternalTools(server: McpServer) {
         "in that case, pick the corresponding sessionId and siteId from the earlier results in context. " +
         "The user may also provide a sessionId directly. " +
         "Returns structured data with a summary section first, followed by full replay metadata and events breakdown.",
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: z.string().describe("Session ID to get details for. Pick from earlier fetch_sessions/view_recent_sessions results if user refers to a session by position."),
         siteId: z.string().optional().describe("Site ID (project ID). Use the siteId from the earlier session list if available."),
         projectName: z.string().optional().describe("Project name to look up. Will be resolved to project ID automatically."),
-      },
+      }),
       _meta: {
         examples: [
           { description: "Tell me about this session ID in MyApp", input: { sessionId: "7891234567890", projectName: "MyApp" } },
@@ -1968,33 +1732,7 @@ export function registerInternalTools(server: McpServer) {
         throw new Error("AUTH_ERROR: Not authenticated");
       }
 
-      let siteId = parsed.siteId;
-
-      // If projectName is provided, resolve it to projectId
-      if (parsed.projectName && !siteId) {
-        const resolvedId = getProjectIdByName(parsed.projectName);
-        if (!resolvedId) {
-          if (state.projects.length === 0) {
-            await fetchProjects();
-            const retryResolvedId = getProjectIdByName(parsed.projectName);
-            if (retryResolvedId) {
-              siteId = retryResolvedId;
-            }
-          }
-          if (!siteId) {
-            const availableProjects = state.projects.map(p => p.name).join(", ");
-            throw new Error(
-              `Project "${parsed.projectName}" not found. Available projects: ${availableProjects}`
-            );
-          }
-        } else {
-          siteId = resolvedId;
-        }
-      }
-
-      if (!siteId) {
-        throw new Error("Either siteId or projectName must be provided");
-      }
+      const siteId = await resolveSiteId(parsed);
 
       // Fetch both endpoints in parallel
       const [replay, events] = await Promise.all([
@@ -2064,11 +1802,12 @@ export function registerInternalTools(server: McpServer) {
         "and their possible values. Returns filter names, display names, data types, and sample values. " +
         "Filters are split into: 'events' (e.g. CLICK, LOCATION, REQUEST — these accept 'properties' sub-filters), " +
         "'eventProperties' (valid 'name' values inside an event filter's 'properties' array, e.g. urlPath, label, status), " +
-        "and 'attributes' (flat session/user filters like userCountry, userBrowser).",
-      inputSchema: {
+        "'attributes' (flat session/user filters like userCountry, userBrowser), " +
+        "'segments' (saved user segments) and 'features' (tagged elements), which are used by name alone.",
+      inputSchema: z.object({
         siteId: z.string().optional().describe("Site ID (project ID)."),
         projectName: z.string().optional().describe("Project name to look up."),
-      },
+      }),
       _meta: {
         examples: [
           { description: "What filters are available for MyApp", input: { projectName: "MyApp" } },
@@ -2083,38 +1822,9 @@ export function registerInternalTools(server: McpServer) {
         throw new Error("AUTH_ERROR: Not authenticated");
       }
 
-      let siteId = args.siteId;
-
-      if (args.projectName && !siteId) {
-        const resolvedId = getProjectIdByName(args.projectName);
-        if (!resolvedId) {
-          if (state.projects.length === 0) {
-            await fetchProjects();
-            const retryResolvedId = getProjectIdByName(args.projectName);
-            if (retryResolvedId) {
-              siteId = retryResolvedId;
-            }
-          }
-          if (!siteId) {
-            const availableProjects = state.projects.map(p => p.name).join(", ");
-            throw new Error(
-              `Project "${args.projectName}" not found. Available projects: ${availableProjects}`
-            );
-          }
-        } else {
-          siteId = resolvedId;
-        }
-      }
-
-      if (!siteId) {
-        throw new Error("Either siteId or projectName must be provided");
-      }
+      const siteId = await resolveSiteId(args);
 
       const filterData = await getOrFetchFilters(siteId);
-
-      if (!filterData) {
-        throw new Error("Failed to fetch filters for this project");
-      }
 
       // Group by role: events (accept properties), eventProperties (sub-filter names),
       // and flat attributes (session/user filters). This shape mirrors how the
@@ -2123,6 +1833,8 @@ export function registerInternalTools(server: McpServer) {
       const events: any[] = [];
       const eventProperties: any[] = [];
       const attributes: any[] = [];
+      const segments: any[] = [];
+      const features: any[] = [];
 
       const buildEntry = (filter: any, categoryDisplayName: string) => {
         const entry: any = {
@@ -2146,13 +1858,15 @@ export function registerInternalTools(server: McpServer) {
         const bucket =
           categoryName === "events" ? events :
           categoryName === "event" ? eventProperties :
+          categoryName === "segments" ? segments :
+          categoryName === "features" ? features :
           attributes;
         for (const filter of category.list) {
           bucket.push(buildEntry(filter, categoryDisplayName));
         }
       }
 
-      const totalCount = events.length + eventProperties.length + attributes.length;
+      const totalCount = events.length + eventProperties.length + attributes.length + segments.length + features.length;
 
       return {
         content: [
@@ -2161,10 +1875,13 @@ export function registerInternalTools(server: McpServer) {
             text: JSON.stringify({
               siteId,
               totalCount,
-              usage: "Use 'events' names as top-level filter `name` (with optional `properties` sub-filters drawn from 'eventProperties'). Use 'attributes' names as flat filters with a `value` array.",
+              usage: "Use 'events' names as top-level filter `name` (with optional `properties` sub-filters drawn from 'eventProperties'). Use 'attributes' names as flat filters with a `value` array. " +
+                "Use a 'segments' (saved user segment) or 'features' (tagged element) name as a filter `name` on its own, with no `value`.",
               events,
               eventProperties,
               attributes,
+              segments,
+              features,
             }, null, 2),
           },
         ],
@@ -2184,14 +1901,14 @@ export function registerInternalTools(server: McpServer) {
         "Returns event name, timestamp, user ID, session ID, city, OS, and whether it was auto-captured. " +
         "Use this to understand what events are being tracked, investigate specific event types, " +
         "or get a feed of recent user activity. Supports date range and pagination.",
-      inputSchema: {
+      inputSchema: z.object({
         siteId: z.string().optional().describe("Site ID (project ID)."),
         projectName: z.string().optional().describe("Project name to look up."),
         startDate: z.string().optional().describe("Start date as ISO 8601 string. Defaults to last 24 hours."),
         endDate: z.string().optional().describe("End date as ISO 8601 string. Defaults to now."),
         limit: z.number().optional().default(50).describe("Number of events to fetch (default 50, max 200)."),
         page: z.number().optional().default(1).describe("Page number for pagination."),
-      },
+      }),
       _meta: {
         examples: [
           { description: "Recent events for MyApp (last 24h, default)", input: { projectName: "MyApp" } },
@@ -2208,29 +1925,9 @@ export function registerInternalTools(server: McpServer) {
         throw new Error("AUTH_ERROR: Not authenticated");
       }
 
-      let siteId = args.siteId;
-      if (args.projectName && !siteId) {
-        const resolvedId = getProjectIdByName(args.projectName);
-        if (!resolvedId) {
-          if (state.projects.length === 0) {
-            await fetchProjects();
-            const retryId = getProjectIdByName(args.projectName);
-            if (retryId) siteId = retryId;
-          }
-          if (!siteId) {
-            const available = state.projects.map(p => p.name).join(", ");
-            throw new Error(`Project "${args.projectName}" not found. Available: ${available}`);
-          }
-        } else {
-          siteId = resolvedId;
-        }
-      }
+      const siteId = await resolveSiteId(args);
 
-      if (!siteId) throw new Error("Either siteId or projectName must be provided");
-
-      const now = Date.now();
-      const startTs = args.startDate ? new Date(args.startDate).getTime() : now - 24 * 60 * 60 * 1000;
-      const endTs = args.endDate ? new Date(args.endDate).getTime() : now;
+      const { startTs, endTs } = parseDateRange(args.startDate, args.endDate, DAY_MS);
       const limit = Math.min(args.limit || 50, 200);
 
       const data = await fetchEvents(siteId, startTs, endTs, limit, args.page || 1);
@@ -2262,7 +1959,7 @@ export function registerInternalTools(server: McpServer) {
         "Returns user ID, name, email, location, last seen, and custom properties. " +
         "Use this to understand who your users are, search for specific users, " +
         "or get a list of recently active users. Supports search query and pagination.",
-      inputSchema: {
+      inputSchema: z.object({
         siteId: z.string().optional().describe("Site ID (project ID)."),
         projectName: z.string().optional().describe("Project name to look up."),
         startDate: z.string().optional().describe("Start date as ISO 8601 string. Defaults to last 7 days."),
@@ -2270,7 +1967,7 @@ export function registerInternalTools(server: McpServer) {
         query: z.string().optional().default("").describe("Search query to filter users by name, email, or user ID."),
         limit: z.number().optional().default(50).describe("Number of users to fetch (default 50, max 200)."),
         page: z.number().optional().default(1).describe("Page number for pagination."),
-      },
+      }),
       _meta: {
         examples: [
           { description: "List recent users for MyApp", input: { projectName: "MyApp" } },
@@ -2287,29 +1984,9 @@ export function registerInternalTools(server: McpServer) {
         throw new Error("AUTH_ERROR: Not authenticated");
       }
 
-      let siteId = args.siteId;
-      if (args.projectName && !siteId) {
-        const resolvedId = getProjectIdByName(args.projectName);
-        if (!resolvedId) {
-          if (state.projects.length === 0) {
-            await fetchProjects();
-            const retryId = getProjectIdByName(args.projectName);
-            if (retryId) siteId = retryId;
-          }
-          if (!siteId) {
-            const available = state.projects.map(p => p.name).join(", ");
-            throw new Error(`Project "${args.projectName}" not found. Available: ${available}`);
-          }
-        } else {
-          siteId = resolvedId;
-        }
-      }
+      const siteId = await resolveSiteId(args);
 
-      if (!siteId) throw new Error("Either siteId or projectName must be provided");
-
-      const now = Date.now();
-      const startTs = args.startDate ? new Date(args.startDate).getTime() : now - 7 * 24 * 60 * 60 * 1000;
-      const endTs = args.endDate ? new Date(args.endDate).getTime() : now;
+      const { startTs, endTs } = parseDateRange(args.startDate, args.endDate, 7 * DAY_MS);
       const limit = Math.min(args.limit || 50, 200);
 
       const data = await fetchUsers(siteId, startTs, endTs, limit, args.page || 1, args.query || "");
@@ -2342,10 +2019,10 @@ export function registerInternalTools(server: McpServer) {
         "(2) attributes — user properties and session attributes available for filtering. " +
         "Use this to understand what data is being collected, discover available event names " +
         "for filtering, or audit the tracking setup.",
-      inputSchema: {
+      inputSchema: z.object({
         siteId: z.string().optional().describe("Site ID (project ID)."),
         projectName: z.string().optional().describe("Project name to look up."),
-      },
+      }),
       _meta: {
         examples: [
           { description: "What events are tracked in MyApp", input: { projectName: "MyApp" } },
@@ -2360,25 +2037,7 @@ export function registerInternalTools(server: McpServer) {
         throw new Error("AUTH_ERROR: Not authenticated");
       }
 
-      let siteId = args.siteId;
-      if (args.projectName && !siteId) {
-        const resolvedId = getProjectIdByName(args.projectName);
-        if (!resolvedId) {
-          if (state.projects.length === 0) {
-            await fetchProjects();
-            const retryId = getProjectIdByName(args.projectName);
-            if (retryId) siteId = retryId;
-          }
-          if (!siteId) {
-            const available = state.projects.map(p => p.name).join(", ");
-            throw new Error(`Project "${args.projectName}" not found. Available: ${available}`);
-          }
-        } else {
-          siteId = resolvedId;
-        }
-      }
-
-      if (!siteId) throw new Error("Either siteId or projectName must be provided");
+      const siteId = await resolveSiteId(args);
 
       const data = await fetchEventProperties(siteId);
 
@@ -2392,12 +2051,12 @@ export function registerInternalTools(server: McpServer) {
             events: data.events.map((e: any) => ({
               name: e.name,
               displayName: e.displayName,
-              isEvent: e.isEvent,
               autoCaptured: e.autoCaptured,
             })),
             attributes: data.attributes.map((a: any) => ({
               name: a.name,
               displayName: a.displayName,
+              category: a.category,
               dataType: a.dataType,
             })),
           }, null, 2),
@@ -2423,9 +2082,9 @@ export function registerInternalTools(server: McpServer) {
         "Pass the user's question or relevant keywords as `query`. Returns matching sections from the " +
         "OpenReplay docs (sourced from llms-full.txt), each containing a description and a link to the " +
         "corresponding page on docs.openreplay.com that you can cite to the user.",
-      inputSchema: {
+      inputSchema: z.object({
         query: z.string().optional().describe("Search query — keywords or the user's question. Returns matching sections from the OpenReplay docs. Omit to get the full docs index."),
-      },
+      }),
       _meta: {
         examples: [
           { description: "How do I install the React SDK", input: { query: "react sdk install" } },

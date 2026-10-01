@@ -143,6 +143,10 @@ All 7 UI tools use `["model"]`. The React app only calls tools for auth (`config
 
 `server.registerTool` does NOT support the visibility feature. It's an MCP Apps extension only for `registerAppTool`.
 
+Both take `inputSchema: z.object({...})` (MCP SDK v2). The raw-shape form `inputSchema: {...}` is
+deprecated in v2 and loses handler result typing (`type: "text"` widens to `string`). Tools with no
+`inputSchema` get the request context as their first callback argument, not the tool args.
+
 ### Tool Description Steering
 
 Tool descriptions double as instructions for the AI model:
@@ -170,7 +174,13 @@ dropped, since it was minted against a different instance.
 
 One URL only — the address the user types in their browser. `buildApiUrl` derives the API
 host from it: `app.openreplay.com` -> `api.openreplay.com` with the `/api` path segment
-stripped, anything else -> `<host>/api`.
+stripped, anything else -> `<host>/api`. It rejects endpoints that aren't a plain `/path` and
+checks the final host, since the JWT goes wherever the URL points (`fetch_chart_data` takes
+the endpoint from the model).
+
+Switching instance (`configure_backend`, `login_browser` with `appUrl`) goes through
+`setAppUrl`, which drops the JWT and the project/filter caches — a token is only valid
+for the instance that minted it.
 
 ### Authentication
 
@@ -187,7 +197,14 @@ Error convention: if `state.jwt` is null, throw `"AUTH_ERROR: Not authenticated"
 | `/v2/api/{siteId}/sessions/{sessionId}/replay` | GET | Session replay metadata + mob file URLs |
 | `/v2/api/{siteId}/sessions/{sessionId}/events` | GET | Session events |
 | `/v2/api/{siteId}/cards/try` | POST | All analytics (charts, journeys, vitals, tables, funnels) |
-| `/api/pa/{siteId}/filters` | GET | Available filter definitions |
+| `/v2/api/{siteId}/filters` | GET | Filter catalog: object keyed by category (`events`, `event`, `session`, `user`, `users`, `metadata`, `segments`, `features`), each `{total, displayName, scope, list}` |
+| `/v2/api/{siteId}/events` | POST | Data-management event feed |
+| `/v2/api/{siteId}/users` | POST | Data-management user list |
+
+Pass endpoints with their full self-hosted prefix (`/v2/api/...` or `/api/...`). A bare
+path gets `/api` prepended, and on self-hosted an unknown path under the origin returns the
+frontend's `index.html` with a `200` — `makeApiRequest` rejects non-JSON responses so this
+surfaces as an error instead of a parse failure further down.
 
 The replay endpoint returns signed S3 URLs for mob files (`domURL` for web, `videoURL` for
 the mobile screen video), `startTs`, `duration`, `platform`, and — on instances with file
@@ -256,7 +273,13 @@ X-axis labels based on range:
 
 1. Model sends simplified filters: `[{ name: "userCountry", value: ["France"], operator: "is" }]`
 2. Server calls `resolveFilters(siteId, modelFilters)` which:
-   - Fetches/caches filter definitions from `/api/pa/{siteId}/filters`
+   - Fetches/caches filter definitions from `/v2/api/{siteId}/filters`
+   - **Throws if the definitions can't be loaded.** Never fall back to an unfiltered query:
+     the API answers it with the project's latest sessions, which reads as a filtered
+     result (e.g. another user's sessions for a "sessions of user X" request)
+   - Segments become `{isSegment: true, searchId}` (the backend expands them into the
+     segment's saved filters) and features become `TAG_TRIGGER` with `[tagId]`, matching
+     the frontend
    - Looks up each filter's `dataType`, `autoCaptured`, `isEvent` from definitions
    - Special-cases `userCountry`: resolves country names to ISO codes via `resolveCountryValue`
    - Builds full API filter objects
@@ -271,7 +294,7 @@ X-axis labels based on range:
 
 ### Filter caching
 
-Filters are cached in `state.projectFilters[siteId]`. `getOrFetchFilters` returns cache if available, otherwise fetches. Cache is never cleared — in-memory only.
+Filters are cached in `state.projectFilters[siteId]`. `getOrFetchFilters` returns cache if available, otherwise fetches. In-memory only; `clearInstanceCaches` drops it (with `state.projects`) on login, logout and instance switch.
 
 ### Limitations
 
@@ -281,28 +304,14 @@ Event-level nested filters (e.g. filtering sessions with 4xx network requests) r
 
 ## Project Name -> ID Resolution
 
-Multiple tools accept `projectName` as an alternative to `siteId`. The resolution pattern:
+Tools that take `siteId` or `projectName` resolve them with `resolveSiteId(args)` (`lib/api.ts`).
+A `siteId` wins; a name is looked up in `state.projects`, and the list is reloaded once on a
+miss so a cold start or a newly created project still resolves. Don't hand-roll this in a
+new tool — the old copy-pasted blocks drifted (some never loaded projects).
 
-```typescript
-let siteId = args.siteId;
-if (args.projectName && !siteId) {
-  const resolvedId = getProjectIdByName(args.projectName);
-  if (!resolvedId) {
-    if (state.projects.length === 0) {
-      await fetchProjects();  // Auto-fetch if cache empty
-      const retryId = getProjectIdByName(args.projectName);
-      if (retryId) siteId = retryId;
-    }
-    if (!siteId) {
-      throw new Error(`Project "${args.projectName}" not found. Available: ${...}`);
-    }
-  } else {
-    siteId = resolvedId;
-  }
-}
-```
-
-This pattern repeats in every tool that needs project resolution. Copy this block when adding a new tool.
+Date ranges go through `parseDateRange(startDate, endDate, defaultSpanMs)`. A bare
+`YYYY-MM-DD` is a whole local calendar day (as an end bound it is inclusive), and the end
+is clamped to now.
 
 ---
 
@@ -602,7 +611,7 @@ Only works client-side (in the React app, not in server-side tool handlers).
 
 6. **Web Vitals requires a LOCATION event filter** in `series[0].filter.filters` even when filtering all pages — the API endpoint requires it. `fetchWebVitals` adds this automatically.
 
-7. **`fetchRecentSessions` hardcodes `LAST_24_HOURS`** as the time range. Configurable ranges would need `startDate`/`endDate` params.
+7. **Session search defaults to the last 24 hours.** `view_recent_sessions` and `fetch_sessions` take optional `startDate`/`endDate`; `parseDateRange` validates them and `rangeValue` switches to `CUSTOM_RANGE`.
 
 8. **JWT tokens expire.** The persisted token in `~/.openreplay-mcp/config.json` may go stale. The auth overlay handles re-auth.
 
