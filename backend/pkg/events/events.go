@@ -35,8 +35,8 @@ type Events interface {
 	GetErrorsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]errorEvent, error)
 	GetCustomsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error)
 	GetIssueEventsBySessionID(projID uint32, sessID uint64, lower, upper time.Time) (issues []interface{}, incidents []interface{}, clickRage []interface{}, err error)
-	GetMobileCrashesBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error)
-	GetMobileCustomsBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error)
+	GetMobileCrashesBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error)
+	GetMobileCustomsBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error)
 	GetClickMaps(projID uint32, sessID uint64, url string) ([]interface{}, error)
 }
 
@@ -507,20 +507,21 @@ type mobileEvent struct {
 	Timestamp    int64     `ch:"timestamp" json:"timestamp"`
 }
 
-func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error) {
+func (e *eventsImpl) GetMobileCrashesBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
 	query := `SELECT ` + "`$properties`" + `AS auto_captures,
 				properties,
 				created_at,
 				'CRASH' AS type,
 				` + "`$event_name`" + ` AS name
 			  FROM product_analytics.events
-			  WHERE session_id = ?
+			  WHERE project_id = ?
+				AND session_id = ?
 				AND NOT ` + "`$auto_captured`" + `
 				AND ` + "`$event_name`" + ` = 'CRASH'
 				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID, lower, upper); err != nil {
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, projID, sessID, lower, upper); err != nil {
 		return nil, fmt.Errorf("query mobile crashes: %s", err)
 	}
 	res := make([]interface{}, 0, len(sessEvents))
@@ -531,20 +532,21 @@ func (e *eventsImpl) GetMobileCrashesBySessionID(sessID uint64, lower, upper tim
 	return res, nil
 }
 
-func (e *eventsImpl) GetMobileCustomsBySessionID(sessID uint64, lower, upper time.Time) ([]interface{}, error) {
+func (e *eventsImpl) GetMobileCustomsBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
 	query := `SELECT ` + "`$properties`" + `AS auto_captures,
 				properties,
 				created_at,
 				'CUSTOM' AS type,
 				` + "`$event_name`" + `AS name
 			  FROM product_analytics.events
-			  WHERE session_id = ?
+			  WHERE project_id = ?
+				AND session_id = ?
 				AND NOT ` + "`$auto_captured`" + `
 				AND created_at BETWEEN ? AND ?
 			  ORDER BY created_at;`
 	sessEvents := make([]mobileEvent, 0)
 	res := make([]interface{}, 0, len(sessEvents))
-	if err := e.chConn.Select(context.Background(), &sessEvents, query, sessID, lower, upper); err != nil {
+	if err := e.chConn.Select(context.Background(), &sessEvents, query, projID, sessID, lower, upper); err != nil {
 		return nil, fmt.Errorf("query mobile customs: %s", err)
 	}
 	for _, sessEvent := range sessEvents {

@@ -16,20 +16,24 @@ const autocompleteCacheTTL = 180 * time.Second
 
 var multiSpaceRe = regexp.MustCompile(` +`)
 
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`, `*`, `%`)
+
 func stringToSQLLike(value string) string {
 	value = multiSpaceRe.ReplaceAllString(value, " ")
-	value = strings.ReplaceAll(value, "*", "%")
+	prefix, suffix := "%", "%"
 	if strings.HasPrefix(value, "^") {
 		value = value[1:]
-	} else if !strings.HasPrefix(value, "%") {
-		value = "%" + value
+		prefix = ""
+	} else if strings.HasPrefix(value, "*") {
+		prefix = ""
 	}
 	if strings.HasSuffix(value, "$") {
 		value = value[:len(value)-1]
-	} else if !strings.HasSuffix(value, "%") {
-		value = value + "%"
+		suffix = ""
+	} else if strings.HasSuffix(value, "*") {
+		suffix = ""
 	}
-	return value
+	return prefix + likeEscaper.Replace(value) + suffix
 }
 
 func scanAutocompleteRows(rows driver.Rows) ([]model.AutocompleteRow, error) {

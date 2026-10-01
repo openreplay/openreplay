@@ -28,6 +28,7 @@ type projectsImpl struct {
 	cache          Cache
 	projectsByID   cache.Cache
 	projectsByKeys cache.Cache
+	activeByID     cache.Cache
 }
 
 func New(log logger.Logger, db pool.Pool, redis *redis.Client, metrics database.Database) Projects {
@@ -38,6 +39,7 @@ func New(log logger.Logger, db pool.Pool, redis *redis.Client, metrics database.
 		cache:          cl,
 		projectsByID:   cache.New(time.Minute*5, time.Minute*10),
 		projectsByKeys: cache.New(time.Minute*5, time.Minute*10),
+		activeByID:     cache.New(time.Second*30, time.Minute),
 	}
 }
 
@@ -82,21 +84,13 @@ func (c *projectsImpl) GetProjectByKey(projectKey string) (*Project, error) {
 }
 
 func (c *projectsImpl) GetProjectNotDeleted(projectID uint32) (*Project, error) {
-	if proj, ok := c.projectsByID.Get(projectID); ok {
+	if proj, ok := c.activeByID.Get(projectID); ok {
 		return proj.(*Project), nil
-	}
-	if proj, err := c.cache.GetByID(projectID); err == nil {
-		c.projectsByID.Set(projectID, proj)
-		return proj, nil
 	}
 	p, err := c.getProjectNotDeleted(projectID)
 	if err != nil {
 		return nil, err
 	}
-	c.projectsByID.Set(projectID, p)
-	if err = c.cache.Set(p); err != nil && !errors.Is(err, ErrDisabledCache) {
-		ctx := context.WithValue(context.Background(), "projectID", projectID)
-		c.log.Error(ctx, "failed to cache project: %s", err)
-	}
+	c.activeByID.Set(projectID, p)
 	return p, nil
 }

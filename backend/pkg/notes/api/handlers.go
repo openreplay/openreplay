@@ -14,6 +14,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/notes"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/session"
 )
 
 type handlersImpl struct {
@@ -21,14 +22,16 @@ type handlersImpl struct {
 	responser     api.Responser
 	jsonSizeLimit int64
 	notes         notes.Notes
+	sessions      session.Service
 }
 
-func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, notes notes.Notes) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *common.HTTP, responser api.Responser, notes notes.Notes, sessions session.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
 		jsonSizeLimit: cfg.JsonWithDataSizeLimit,
 		notes:         notes,
+		sessions:      sessions,
 	}, nil
 }
 
@@ -84,6 +87,13 @@ func (h *handlersImpl) createNote(w http.ResponseWriter, r *http.Request) {
 	currUser := api.GetUser(r)
 	if currUser == nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("unauthorized"), startTime, r.URL.Path, bodySize)
+		return
+	}
+	if exists, err := h.sessions.IsExists(projID, sessID); err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	} else if !exists {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, errors.New("session not found"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	newNote := &notes.Note{

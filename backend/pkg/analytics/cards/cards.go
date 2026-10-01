@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 
@@ -218,8 +219,8 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	params := []interface{}{projectID}
 	idx := 2
 	if name := filters.GetNameFilter(); name != nil {
-		conds = append(conds, fmt.Sprintf("m.name ILIKE $%d", idx))
-		params = append(params, "%"+*name+"%")
+		conds = append(conds, fmt.Sprintf("m.name ILIKE $%d ESCAPE '\\'", idx))
+		params = append(params, "%"+postgres.EscapeILIKE(*name)+"%")
 		idx++
 	}
 	if t := filters.GetMetricTypeFilter(); t != nil {

@@ -134,7 +134,8 @@ func (e *handlersImpl) getSavedSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := e.savedSearches.Get(projectID, searchID)
+	currentUser := r.Context().Value("userData").(*user.User)
+	resp, err := e.savedSearches.Get(projectID, currentUser.ID, searchID)
 	if err != nil {
 		if errors.Is(err, ErrSavedSearchNotFound) {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)

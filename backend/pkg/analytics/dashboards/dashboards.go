@@ -287,8 +287,8 @@ func buildBaseQuery(projectId int, userID uint64, req *GetDashboardsRequest) (st
 
 	// Handle search query
 	if req.Query != "" {
-		conditions = append(conditions, "(d.name ILIKE $3 OR d.description ILIKE $3)")
-		args = append(args, "%"+req.Query+"%")
+		conditions = append(conditions, "(d.name ILIKE $3 ESCAPE '\\' OR d.description ILIKE $3 ESCAPE '\\')")
+		args = append(args, "%"+postgres.EscapeILIKE(req.Query)+"%")
 	}
 
 	conditions = append(conditions, "d.deleted_at IS NULL")

@@ -9,12 +9,14 @@ import (
 	"openreplay/backend/pkg/favorite"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/session"
 )
 
 type handlersImpl struct {
 	log       logger.Logger
 	responser api.Responser
 	favorites favorite.Favorites
+	sessions  session.Service
 }
 
 func (h *handlersImpl) GetAll() []*api.Description {
@@ -23,11 +25,12 @@ func (h *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, responser api.Responser, favorites favorite.Favorites) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, responser api.Responser, favorites favorite.Favorites, sessions session.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:       log,
 		responser: responser,
 		favorites: favorites,
+		sessions:  sessions,
 	}, nil
 }
 
@@ -52,6 +55,14 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 		userID = user.GetIDAsString()
 	} else {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("no user id"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if exists, err := h.sessions.IsExists(projID, sessID); err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	} else if !exists {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusNotFound, errors.New("session not found"), startTime, r.URL.Path, bodySize)
 		return
 	}
 

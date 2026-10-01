@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -25,7 +26,7 @@ func (a *authImpl) isAuthorizedApiKey(apiKey string, projectKey string) (*tenant
 
 	_, err = a.projects.GetProjectByKeyAndTenant(projectKey, dbTenant.TenantID)
 	if err != nil {
-		a.log.Warn(nil, "Unauthorized request, wrong api key: %s", a)
+		a.log.Warn(context.WithValue(context.Background(), "projectKey", projectKey), "Unauthorized request, wrong api key for project %s", projectKey)
 		return nil, err
 	}
 
