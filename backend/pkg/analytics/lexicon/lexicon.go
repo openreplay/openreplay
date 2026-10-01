@@ -44,10 +44,11 @@ type HiddenProperty struct {
 const (
 	DefaultPropertiesLimit = 500
 	MaxPropertiesLimit     = 500
+	MaxEventsLimit         = 500
 )
 
 type Lexicon interface {
-	GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string) ([]model.LexiconEvent, uint64, error)
+	GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string, limit, offset int) ([]model.LexiconEvent, uint64, error)
 	GetProperties(ctx context.Context, projID uint32, source *string, eventName *string, limit, offset int) ([]model.LexiconProperty, uint64, error)
 	UpdateEvent(ctx context.Context, projID uint32, req model.UpdateEventRequest, userID string) error
 	UpdateProperty(ctx context.Context, projID uint32, req model.UpdatePropertyRequest, userID string) error
@@ -79,13 +80,13 @@ func New(log logger.Logger, chConn driver.Conn, catalog CatalogInvalidator) Lexi
 	}
 }
 
-func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string) ([]model.LexiconEvent, uint64, error) {
+func buildDistinctEventsQuery(projID uint32, propertyName *string, limit, offset int) (string, []interface{}) {
 	customizedEventsSubquery := `
 	          LEFT JOIN (
 	              SELECT project_id, event_name, auto_captured, display_name, description, status
 	              FROM product_analytics.all_events_customized
 	              WHERE _is_deleted = false
-	                AND project_id = ` + fmt.Sprintf("%d", projID) + `
+	                AND project_id = ?
 	              ORDER BY _timestamp DESC
 	              LIMIT 1 BY project_id, event_name, auto_captured
 	          ) aec
@@ -97,20 +98,21 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	                 if(aec.display_name != '', aec.display_name, or_event_display_name(ae.event_name)) AS display_name,
 	                 if(aec.description != '', aec.description, or_event_description(ae.event_name)) AS description,
 	                 coalesce(nullIf(aec.status, ''), 'visible') AS status,
-	                 ae.auto_captured,
+	                 ae.auto_captured AS auto_captured,
 	                 sumMerge(aeg.data_count) AS data_count,
-	                 ae.query_count_l30days,
-	                 ae.created_at
+	                 ae.query_count_l30days AS query_count_l30days,
+	                 ae.created_at AS created_at,
+	                 ae._timestamp AS sort_ts
 	          FROM product_analytics.all_events ae
 	          LEFT JOIN (
 	              SELECT project_id, value, data_count
 	              FROM product_analytics.autocomplete_events_grouped
-	              WHERE project_id = ` + fmt.Sprintf("%d", projID) + `
+	              WHERE project_id = ?
 	          ) aeg
 	              ON ae.project_id = aeg.project_id
 	              AND ae.event_name = aeg.value` + customizedEventsSubquery
 
-	args := []interface{}{projID}
+	args := []interface{}{projID, projID, projID}
 
 	if propertyName != nil {
 		subquery += `
@@ -134,7 +136,23 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	          ORDER BY ae._timestamp DESC, display_name
 	          LIMIT 1 BY ae.project_id, ae.auto_captured, ae.event_name`
 
-	query := `SELECT COUNT(1) OVER () AS total, * FROM (` + subquery + `)`
+	query := `SELECT COUNT(1) OVER () AS total, name, display_name, description, status, auto_captured, data_count, query_count_l30days, created_at FROM (` + subquery + `) ORDER BY sort_ts DESC, display_name, name, auto_captured`
+	if limit > 0 {
+		query += ` LIMIT ? OFFSET ?`
+		args = append(args, limit, offset)
+	}
+
+	return query, args
+}
+
+func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, propertyName *string, limit, offset int) ([]model.LexiconEvent, uint64, error) {
+	if limit > MaxEventsLimit {
+		limit = MaxEventsLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	query, args := buildDistinctEventsQuery(projID, propertyName, limit, offset)
 
 	e.log.Debug(ctx, "GetDistinctEvents query: %s, args: %v", query, args)
 

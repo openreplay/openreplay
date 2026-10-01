@@ -329,40 +329,9 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 	alias := NormalizeAlias(tableAlias)
 
 	if filter.IsEvent {
-		var sb strings.Builder
-
-		sb.WriteString("(")
-		sb.WriteString(alias)
-		sb.WriteString(`"$event_name" = `)
-		sb.WriteString(qp.Add(filter.Name))
-
-		if filter.AutoCaptured {
-			sb.WriteString(" AND ")
-			sb.WriteString(alias)
-			sb.WriteString(`"$auto_captured"`)
-		}
-
-		if len(filter.Filters) > 0 {
-			var subConditions []string
-			for _, sub := range filter.Filters {
-				if subCond := BuildFilterCondition(tableAlias, sub, userAlias, mappings, qp); subCond != "" {
-					subConditions = append(subConditions, subCond)
-				}
-			}
-
-			if len(subConditions) > 0 {
-				joinOp := " AND "
-				if filter.PropertyOrder == PropertyOrderOr {
-					joinOp = " OR "
-				}
-				sb.WriteString(" AND (")
-				sb.WriteString(strings.Join(subConditions, joinOp))
-				sb.WriteString(")")
-			}
-		}
-
-		sb.WriteString(")")
-		return sb.String()
+		return BuildEventFilterCondition(tableAlias, filter, qp, func(sub Filter) string {
+			return BuildFilterCondition(tableAlias, sub, userAlias, mappings, qp)
+		})
 	}
 
 	column := filter.Name
@@ -424,4 +393,42 @@ func BuildFilterCondition(tableAlias string, filter Filter, userAlias string, ma
 	}
 
 	return BuildOperatorCondition(fullCol, string(operator), values, nature, dataType, qp)
+}
+
+func BuildEventFilterCondition(tableAlias string, filter Filter, qp *Params, subBuilder func(Filter) string) string {
+	alias := NormalizeAlias(tableAlias)
+	var sb strings.Builder
+
+	sb.WriteString("(")
+	sb.WriteString(alias)
+	sb.WriteString(`"$event_name" = `)
+	sb.WriteString(qp.Add(filter.Name))
+
+	if filter.AutoCaptured {
+		sb.WriteString(" AND ")
+		sb.WriteString(alias)
+		sb.WriteString(`"$auto_captured"`)
+	}
+
+	if len(filter.Filters) > 0 {
+		var subConditions []string
+		for _, sub := range filter.Filters {
+			if subCond := subBuilder(sub); subCond != "" {
+				subConditions = append(subConditions, subCond)
+			}
+		}
+
+		if len(subConditions) > 0 {
+			joinOp := " AND "
+			if filter.PropertyOrder == PropertyOrderOr {
+				joinOp = " OR "
+			}
+			sb.WriteString(" AND (")
+			sb.WriteString(strings.Join(subConditions, joinOp))
+			sb.WriteString(")")
+		}
+	}
+
+	sb.WriteString(")")
+	return sb.String()
 }

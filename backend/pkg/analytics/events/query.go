@@ -9,19 +9,61 @@ import (
 	"openreplay/backend/pkg/analytics/lexicon"
 )
 
+type userMode int
+
+const (
+	userModeNone userMode = iota
+	userModeLegacy
+	userModeSemiJoin
+)
+
+type userContext struct {
+	mode userMode
+	proj uint32
+}
+
+func (uc *userContext) condition(tableAlias string, filter filters.Filter, mappings filters.FilterMappings, qp *filters.Params) string {
+	if filter.IsEvent {
+		return filters.BuildEventFilterCondition(tableAlias, filter, qp, func(sub filters.Filter) string {
+			return uc.condition(tableAlias, sub, mappings, qp)
+		})
+	}
+	if !filters.IsUserOnlyColumn(filter.Name) {
+		return filters.BuildFilterCondition(tableAlias, filter, "", mappings, qp)
+	}
+	switch uc.mode {
+	case userModeLegacy:
+		return filters.BuildFilterCondition(tableAlias, filter, "u", mappings, qp)
+	case userModeSemiJoin:
+		return filters.BuildUserSemiJoinCondition(tableAlias, filter, uc.proj, mappings, qp)
+	}
+	return filters.BuildFilterCondition(tableAlias, filter, "", mappings, qp)
+}
+
 func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter, hiddenProps []lexicon.HiddenProperty, qp *filters.Params) ([]string, bool) {
+	needsUserJoin := filters.HasUserOnlyFilters(filtersSlice)
+	uc := &userContext{mode: userModeNone}
+	if needsUserJoin {
+		uc.mode = userModeLegacy
+	}
+	return buildEventSearchConditions(tableAlias, filtersSlice, hiddenProps, uc, qp), needsUserJoin
+}
+
+func BuildEventSearchQueryForProject(tableAlias string, projID uint32, filtersSlice []filters.Filter, hiddenProps []lexicon.HiddenProperty, qp *filters.Params) []string {
+	uc := &userContext{mode: userModeNone, proj: projID}
+	if filters.HasUserOnlyFilters(filtersSlice) {
+		uc.mode = userModeSemiJoin
+	}
+	return buildEventSearchConditions(tableAlias, filtersSlice, hiddenProps, uc, qp)
+}
+
+func buildEventSearchConditions(tableAlias string, filtersSlice []filters.Filter, hiddenProps []lexicon.HiddenProperty, uc *userContext, qp *filters.Params) []string {
 	if tableAlias == "" {
 		tableAlias = "e"
 	}
 
 	eventFilters := make([]filters.Filter, 0)
 	nonEventConditions := make([]string, 0)
-	needsUserJoin := filters.HasUserOnlyFilters(filtersSlice)
-
-	userAlias := ""
-	if needsUserJoin {
-		userAlias = "u"
-	}
 
 	mappings := filters.FilterMappings{
 		ColumnMapping:       model.ColumnMapping,
@@ -41,7 +83,7 @@ func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter, hid
 			if isHiddenPropertyFilter(filter, mappings, hiddenPropsMap) {
 				continue
 			}
-			if cond := filters.BuildFilterCondition(tableAlias, filter, userAlias, mappings, qp); cond != "" {
+			if cond := uc.condition(tableAlias, filter, mappings, qp); cond != "" {
 				nonEventConditions = append(nonEventConditions, cond)
 			}
 		}
@@ -50,14 +92,12 @@ func BuildEventSearchQuery(tableAlias string, filtersSlice []filters.Filter, hid
 	conditions := make([]string, 0)
 
 	if len(eventFilters) > 0 {
-		if eventCond := buildOptimizedEventCondition(tableAlias, eventFilters, userAlias, mappings, hiddenPropsMap, qp); eventCond != "" {
+		if eventCond := buildOptimizedEventCondition(tableAlias, eventFilters, uc, mappings, hiddenPropsMap, qp); eventCond != "" {
 			conditions = append(conditions, eventCond)
 		}
 	}
 
-	conditions = append(conditions, nonEventConditions...)
-
-	return conditions, needsUserJoin
+	return append(conditions, nonEventConditions...)
 }
 
 func isPropertyFilter(filter filters.Filter, mappings filters.FilterMappings) bool {
@@ -82,7 +122,7 @@ func isHiddenPropertyFilter(filter filters.Filter, mappings filters.FilterMappin
 	return hiddenPropsMap[keyAuto]
 }
 
-func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filter, userAlias string, mappings filters.FilterMappings, hiddenPropsMap map[string]bool, qp *filters.Params) string {
+func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filter, uc *userContext, mappings filters.FilterMappings, hiddenPropsMap map[string]bool, qp *filters.Params) string {
 	if len(eventFilters) == 0 {
 		return ""
 	}
@@ -90,7 +130,7 @@ func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filt
 	alias := filters.NormalizeAlias(tableAlias)
 
 	if len(eventFilters) == 1 {
-		return buildEventFilterCondition(tableAlias, eventFilters[0], userAlias, mappings, hiddenPropsMap, qp)
+		return buildEventFilterCondition(tableAlias, eventFilters[0], uc, mappings, hiddenPropsMap, qp)
 	}
 
 	autoCapturedEvents := make([]filters.Filter, 0)
@@ -108,13 +148,13 @@ func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filt
 
 	// Build condition for autoCaptured events
 	if len(autoCapturedEvents) > 0 {
-		if cond := buildEventGroupCondition(alias, autoCapturedEvents, true, userAlias, mappings, hiddenPropsMap, qp); cond != "" {
+		if cond := buildEventGroupCondition(alias, autoCapturedEvents, true, uc, mappings, hiddenPropsMap, qp); cond != "" {
 			groupConditions = append(groupConditions, cond)
 		}
 	}
 
 	if len(nonAutoCapturedEvents) > 0 {
-		if cond := buildEventGroupCondition(alias, nonAutoCapturedEvents, false, userAlias, mappings, hiddenPropsMap, qp); cond != "" {
+		if cond := buildEventGroupCondition(alias, nonAutoCapturedEvents, false, uc, mappings, hiddenPropsMap, qp); cond != "" {
 			groupConditions = append(groupConditions, cond)
 		}
 	}
@@ -130,7 +170,7 @@ func buildOptimizedEventCondition(tableAlias string, eventFilters []filters.Filt
 	return "(" + strings.Join(groupConditions, " OR ") + ")"
 }
 
-func buildEventFilterCondition(tableAlias string, eventFilter filters.Filter, userAlias string, mappings filters.FilterMappings, hiddenPropsMap map[string]bool, qp *filters.Params) string {
+func buildEventFilterCondition(tableAlias string, eventFilter filters.Filter, uc *userContext, mappings filters.FilterMappings, hiddenPropsMap map[string]bool, qp *filters.Params) string {
 	alias := filters.NormalizeAlias(tableAlias)
 
 	var sb strings.Builder
@@ -151,7 +191,7 @@ func buildEventFilterCondition(tableAlias string, eventFilter filters.Filter, us
 			if isHiddenPropertyFilter(subFilter, mappings, hiddenPropsMap) {
 				continue
 			}
-			if subCond := filters.BuildFilterCondition(tableAlias, subFilter, userAlias, mappings, qp); subCond != "" {
+			if subCond := uc.condition(tableAlias, subFilter, mappings, qp); subCond != "" {
 				subConditions = append(subConditions, subCond)
 			}
 		}
@@ -167,13 +207,13 @@ func buildEventFilterCondition(tableAlias string, eventFilter filters.Filter, us
 	return sb.String()
 }
 
-func buildEventGroupCondition(alias string, eventFilters []filters.Filter, isAutoCaptured bool, userAlias string, mappings filters.FilterMappings, hiddenPropsMap map[string]bool, qp *filters.Params) string {
+func buildEventGroupCondition(alias string, eventFilters []filters.Filter, isAutoCaptured bool, uc *userContext, mappings filters.FilterMappings, hiddenPropsMap map[string]bool, qp *filters.Params) string {
 	if len(eventFilters) == 0 {
 		return ""
 	}
 
 	if len(eventFilters) == 1 {
-		return buildEventFilterCondition(strings.TrimSuffix(alias, "."), eventFilters[0], userAlias, mappings, hiddenPropsMap, qp)
+		return buildEventFilterCondition(strings.TrimSuffix(alias, "."), eventFilters[0], uc, mappings, hiddenPropsMap, qp)
 	}
 
 	// Use IN for event names (multiple events in same autoCaptured group)
@@ -207,7 +247,7 @@ func buildEventGroupCondition(alias string, eventFilters []filters.Filter, isAut
 				if isHiddenPropertyFilter(subFilter, mappings, hiddenPropsMap) {
 					continue
 				}
-				if cond := filters.BuildFilterCondition(strings.TrimSuffix(alias, "."), subFilter, userAlias, mappings, qp); cond != "" {
+				if cond := uc.condition(strings.TrimSuffix(alias, "."), subFilter, mappings, qp); cond != "" {
 					allSubConds = append(allSubConds, cond)
 				}
 			}

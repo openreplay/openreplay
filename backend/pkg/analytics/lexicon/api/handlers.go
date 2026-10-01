@@ -3,7 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"openreplay/backend/pkg/analytics/filters"
@@ -49,6 +51,8 @@ func (h *handlersImpl) GetAll() []*api.Description {
 // @Produce json
 // @Param project path uint true "Project ID"
 // @Param propertyName query string false "Property name filter"
+// @Param limit query int false "Number of events to return (max 500; all events when omitted)"
+// @Param page query int false "Page number for pagination (default 1, used with limit)"
 // @Success 200 {object} model.LexiconEventsResponse
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 413 {object} api.ErrorResponse
@@ -66,7 +70,9 @@ func (h *handlersImpl) getDistinctEvents(r *api.RequestContext) (any, int, error
 		propertyName = &propertyNameParam
 	}
 
-	events, total, err := h.lexicon.GetDistinctEvents(r.Request.Context(), projID, propertyName)
+	limit, offset := parseEventsPagination(r.Request.URL.Query())
+
+	events, total, err := h.lexicon.GetDistinctEvents(r.Request.Context(), projID, propertyName, limit, offset)
 	if err != nil {
 		h.log.Error(r.Request.Context(), "failed to get events for project %d: %v", projID, err)
 		return nil, http.StatusInternalServerError, err
@@ -230,4 +236,19 @@ func (h *handlersImpl) updateProperty(r *api.RequestContext) (any, int, error) {
 	}
 
 	return map[string]interface{}{"success": true}, 0, nil
+}
+
+func parseEventsPagination(q url.Values) (int, int) {
+	limit, err := strconv.Atoi(q.Get("limit"))
+	if err != nil || limit <= 0 {
+		return 0, 0
+	}
+	if limit > lexicon.MaxEventsLimit {
+		limit = lexicon.MaxEventsLimit
+	}
+	page := 1
+	if parsed, err := strconv.Atoi(q.Get("page")); err == nil && parsed > 0 && parsed <= math.MaxInt32/limit {
+		page = parsed
+	}
+	return limit, filters.CalculateOffset(page, limit)
 }

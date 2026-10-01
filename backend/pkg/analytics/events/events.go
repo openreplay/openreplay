@@ -33,7 +33,7 @@ func New(log logger.Logger, conn driver.Conn, lex lexicon.Lexicon) (Events, erro
 	}, nil
 }
 
-func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSearchRequest, hiddenEvents []lexicon.HiddenEvent, hiddenProps []lexicon.HiddenProperty, qp *filters.Params) (whereClause string, needsUserJoin bool) {
+func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSearchRequest, hiddenEvents []lexicon.HiddenEvent, hiddenProps []lexicon.HiddenProperty, qp *filters.Params) string {
 	qp.Set("projectId", projID)
 	qp.Set("startDate", filters.ConvertMillisToTime(req.StartDate))
 	qp.Set("endDate", filters.ConvertMillisToTime(req.EndDate))
@@ -53,24 +53,15 @@ func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSear
 		baseConditions = append(baseConditions, fmt.Sprintf(`(e."$event_name", e."$auto_captured") NOT IN (%s)`, strings.Join(placeholders, ", ")))
 	}
 
-	filterConditions, needsUserJoin := BuildEventSearchQuery("e", req.Filters, hiddenProps, qp)
-	whereClause = filters.BuildWhereClause(baseConditions, filterConditions)
-
-	return whereClause, needsUserJoin
+	filterConditions := BuildEventSearchQueryForProject("e", projID, req.Filters, hiddenProps, qp)
+	return filters.BuildWhereClause(baseConditions, filterConditions)
 }
 
-func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy string, sortOrder filters.SortOrderType, needsUserJoin bool) string {
+func (e *eventsImpl) buildSearchQueryWithCount(whereClause string, selectColumns []string, sortBy string, sortOrder filters.SortOrderType) string {
 	var sb strings.Builder
 	sb.WriteString("SELECT COUNT(*) OVER() as total_count, ")
 	sb.WriteString(strings.Join(selectColumns, ", "))
 	sb.WriteString(" FROM product_analytics.events AS e")
-
-	if needsUserJoin {
-		sb.WriteString(" LEFT JOIN (")
-		sb.WriteString("SELECT * FROM product_analytics.users WHERE project_id = @projectId")
-		sb.WriteString(" ORDER BY _timestamp DESC LIMIT 1 BY project_id, \"$user_id\"")
-		sb.WriteString(") AS u ON e.project_id = u.project_id AND e.\"$user_id\" = u.\"$user_id\"")
-	}
 
 	sb.WriteString(" WHERE ")
 	sb.WriteString(whereClause)
@@ -124,13 +115,13 @@ func (e *eventsImpl) SearchEvents(ctx context.Context, projID uint32, req *model
 	offset := filters.CalculateOffset(req.Page, req.Limit)
 
 	qp := filters.NewParams()
-	whereClause, needsUserJoin := e.buildSearchQueryParams(projID, req, lexHiddenEvents, hiddenProps, qp)
+	whereClause := e.buildSearchQueryParams(projID, req, lexHiddenEvents, hiddenProps, qp)
 
 	selectColumns := BuildSelectColumns("e", req.Columns)
 	sortBy := "e." + ValidateSortColumn(string(req.SortBy))
 	sortOrder := filters.ValidateSortOrder(string(req.SortOrder))
 
-	query := e.buildSearchQueryWithCount(whereClause, selectColumns, sortBy, sortOrder, needsUserJoin)
+	query := e.buildSearchQueryWithCount(whereClause, selectColumns, sortBy, sortOrder)
 	qp.Set("limit", req.Limit)
 	qp.Set("offset", offset)
 
