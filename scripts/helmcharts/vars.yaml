@@ -131,6 +131,7 @@ global:
   tokenSecret: "{{randAlphaNum 20}}"
   jwtRefreshSecret: "{{randAlphaNum 20}}"
   jwtSpotRefreshSecret: "{{randAlphaNum 20}}"
+  jwtMcpSecret: "{{randAlphaNum 20}}"
   # SCIM authentication secrets for chalice service (optional)
   # Uncomment and set these values if SCIM authentication is required
   # scimAccessSecretKey: "{{randAlphaNum 20}}"
