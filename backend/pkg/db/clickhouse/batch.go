@@ -36,6 +36,7 @@ type batchImpl struct {
 	sizeLimit     int
 	key           func(args []interface{}) string
 	index         map[string]int
+	refresh       func(rows [][]interface{}) [][]interface{}
 }
 
 func (b *batchImpl) isWebEvents() bool {
@@ -115,6 +116,9 @@ func (b *batchImpl) MarkFlushed() {
 func (b *batchImpl) Send() error {
 	if len(b.values) == 0 {
 		return nil
+	}
+	if b.refresh != nil {
+		b.values = b.refresh(b.values)
 	}
 	start := time.Now()
 	batch, err := b.conn.PrepareBatch(context.Background(), b.query)

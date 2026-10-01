@@ -27,6 +27,7 @@ type Database interface {
 	IncreaseBulkSendRetries(db, table string)
 	RecordCHQueueDepth(size float64)
 	IncreaseUserConflicts()
+	IncreaseUserStateFallbacks()
 	List() []prometheus.Collector
 }
 
@@ -44,6 +45,7 @@ type databaseImpl struct {
 	bulkSendRetries           *prometheus.CounterVec
 	chQueueDepth              prometheus.Gauge
 	userConflicts             prometheus.Counter
+	userStateFallbacks        prometheus.Counter
 }
 
 func New(serviceName string) Database {
@@ -61,6 +63,7 @@ func New(serviceName string) Database {
 		bulkSendRetries:           newBulkSendRetries(serviceName),
 		chQueueDepth:              newCHQueueDepth(serviceName),
 		userConflicts:             newUserConflicts(serviceName),
+		userStateFallbacks:        newUserStateFallbacks(serviceName),
 	}
 }
 
@@ -79,6 +82,7 @@ func (d *databaseImpl) List() []prometheus.Collector {
 		d.bulkSendRetries,
 		d.chQueueDepth,
 		d.userConflicts,
+		d.userStateFallbacks,
 	}
 }
 
@@ -273,11 +277,25 @@ func newUserConflicts(serviceName string) prometheus.Counter {
 		prometheus.CounterOpts{
 			Namespace: serviceName,
 			Name:      "pa_user_conflicts_total",
-			Help:      "A counter displaying product-analytics users whose row in ClickHouse was changed by another writer between our read and our write.",
+			Help:      "A counter displaying product-analytics user writes that lost a compare-and-swap race and were retried on the fresh row.",
 		},
 	)
 }
 
 func (d *databaseImpl) IncreaseUserConflicts() {
 	d.userConflicts.Inc()
+}
+
+func newUserStateFallbacks(serviceName string) prometheus.Counter {
+	return prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "pa_user_state_fallbacks_total",
+			Help:      "A counter displaying product-analytics user operations served from process memory because the shared state store failed.",
+		},
+	)
+}
+
+func (d *databaseImpl) IncreaseUserStateFallbacks() {
+	d.userStateFallbacks.Inc()
 }

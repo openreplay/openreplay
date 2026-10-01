@@ -12,6 +12,8 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"openreplay/backend/pkg/db/clickhouse"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/sdk/model"
@@ -21,15 +23,15 @@ import (
 var ErrUserNotFound = errors.New("user not found")
 
 const (
-	pendingTTL      = 10 * time.Minute
 	maxDistinctSeen = 300_000
+	maxStoreRetries = 10
 )
 
 type Users interface {
-	Add(session *sessions.Session, user *model.User) error
-	Get(projectID uint32, userID string) (*model.User, error)
-	Create(session *sessions.Session, user *model.User) error
-	Update(user *model.User) error
+	Add(session *sessions.Session, userID string) error
+	Set(session *sessions.Session, userID string, props map[string]interface{}) error
+	SetOnce(session *sessions.Session, userID string, props map[string]interface{}) error
+	Increment(session *sessions.Session, userID string, props map[string]interface{}) error
 	Delete(projectID uint32, userID string) error
 }
 
@@ -38,13 +40,15 @@ type rowSink interface {
 	InsertUserTombstone(projectID uint16, userID string) error
 	InsertUserDistinctID(projectID uint16, distinctID, userID string) error
 	AfterSend(hook func(flushedAt time.Time))
+	SetRowRefresher(table string, refresh func(rows [][]interface{}) [][]interface{})
 }
 
-type pendingUser struct {
-	user   *model.User
-	at     time.Time
-	readTs time.Time
-	sentAt time.Time
+type userState interface {
+	load(key string) (*model.User, uint64, bool, error)
+	loadMany(keys []string) (map[string]*model.User, error)
+	create(key string, user *model.User) (bool, error)
+	store(key string, user *model.User, version uint64) (bool, error)
+	delete(key string) error
 }
 
 type usersImpl struct {
@@ -53,36 +57,31 @@ type usersImpl struct {
 	sink     rowSink
 	sessions sessions.Sessions
 	metrics  database.Database
+	state    userState
+	memory   *memoryState
 
 	mu           sync.Mutex
-	pending      map[string]*pendingUser
 	distinctSeen map[string]bool
 }
 
-func NewUsers(log logger.Logger, conn driver.Conn, sink rowSink, sessions sessions.Sessions, metrics database.Database) (Users, error) {
+func NewUsers(log logger.Logger, conn driver.Conn, sink rowSink, sessions sessions.Sessions, metrics database.Database, client *redis.Client, stateTTL time.Duration) (Users, error) {
 	u := &usersImpl{
 		log:          log,
 		conn:         conn,
 		sink:         sink,
 		sessions:     sessions,
 		metrics:      metrics,
-		pending:      make(map[string]*pendingUser),
+		memory:       newMemoryState(),
 		distinctSeen: make(map[string]bool),
 	}
-	sink.AfterSend(u.markSent)
-	go u.sweeper()
-	return u, nil
-}
-
-func (u *usersImpl) markSent(flushedAt time.Time) {
-	now := time.Now()
-	u.mu.Lock()
-	for _, p := range u.pending {
-		if p.sentAt.IsZero() && !p.at.After(flushedAt) {
-			p.sentAt = now
-		}
+	u.state = u.memory
+	if st := newRedisState(client, stateTTL); st != nil {
+		u.state = st
 	}
-	u.mu.Unlock()
+	sink.AfterSend(u.memory.markSent)
+	sink.SetRowRefresher("pa_users", u.refresh)
+	go u.memory.sweeper()
+	return u, nil
 }
 
 var selectQuery = `SELECT project_id, "$user_id", "$email", "$name", "$first_name", "$last_name", "$phone", "$avatar", properties, group_id1, group_id2, group_id3, group_id4, group_id5, group_id6, "$sdk_edition", "$sdk_version", "$current_url", "$initial_referrer", "$referring_domain", initial_utm_source, initial_utm_medium, initial_utm_campaign, "$country", "$state", "$city", "$or_api_endpoint", "$created_at", "$first_event_at", "$last_seen", _is_deleted AS _deleted, _timestamp from product_analytics.users WHERE project_id = ? AND "$user_id" = ? ORDER BY _timestamp DESC LIMIT 1`
@@ -112,18 +111,6 @@ func cloneUser(u *model.User) *model.User {
 	return &c
 }
 
-func sameUser(a, b *model.User) bool {
-	return a.Email == b.Email && a.Name == b.Name && a.FirstName == b.FirstName && a.LastName == b.LastName &&
-		a.Phone == b.Phone && a.Avatar == b.Avatar && a.PropertiesString() == b.PropertiesString() &&
-		a.LastSeen.Unix() == b.LastSeen.Unix() &&
-		strings.Join(a.GroupID1, ",") == strings.Join(b.GroupID1, ",") &&
-		strings.Join(a.GroupID2, ",") == strings.Join(b.GroupID2, ",") &&
-		strings.Join(a.GroupID3, ",") == strings.Join(b.GroupID3, ",") &&
-		strings.Join(a.GroupID4, ",") == strings.Join(b.GroupID4, ",") &&
-		strings.Join(a.GroupID5, ",") == strings.Join(b.GroupID5, ",") &&
-		strings.Join(a.GroupID6, ",") == strings.Join(b.GroupID6, ",")
-}
-
 func (u *usersImpl) fetch(projectID uint32, userID string) (*model.User, error) {
 	user := &model.User{}
 	if err := u.conn.QueryRow(context.Background(), selectQuery, projectID, userID).ScanStruct(user); err != nil {
@@ -141,108 +128,9 @@ func (u *usersImpl) fetch(projectID uint32, userID string) (*model.User, error) 
 	return user, nil
 }
 
-// A pending row older than pendingReadback is checked against ClickHouse: a newer, different row there wins.
-func (u *usersImpl) current(projectID uint32, userID string) (*model.User, error) {
-	key := userKey(projectID, userID)
-	u.mu.Lock()
-	p := u.pending[key]
-	u.mu.Unlock()
-	if p != nil && p.sentAt.IsZero() {
-		return cloneUser(p.user), nil
-	}
-	user, err := u.fetch(projectID, userID)
-	if p == nil {
-		return user, err
-	}
-	if err != nil {
-		return cloneUser(p.user), nil
-	}
-	u.mu.Lock()
-	delete(u.pending, key)
-	u.mu.Unlock()
-	if user.Timestamp.After(p.readTs) && !user.Timestamp.After(p.sentAt.Add(time.Second)) && !sameUser(user, p.user) {
-		u.metrics.IncreaseUserConflicts()
-		u.log.Warn(context.Background(), "user %s in project %d was changed by another writer between our read and our write", userID, projectID)
-	}
-	return user, nil
-}
-
-func (u *usersImpl) write(user *model.User) error {
-	key := userKey(uint32(user.ProjectID), user.UserID)
-	u.mu.Lock()
-	readTs := user.Timestamp
-	if p := u.pending[key]; p != nil && p.readTs.After(readTs) {
-		readTs = p.readTs
-	}
-	u.pending[key] = &pendingUser{user: cloneUser(user), at: time.Now(), readTs: readTs}
-	u.mu.Unlock()
-	return u.sink.InsertUser(user)
-}
-
-func (u *usersImpl) markDistinct(dk string) bool {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	if u.distinctSeen[dk] {
-		return false
-	}
-	if len(u.distinctSeen) >= maxDistinctSeen {
-		u.distinctSeen = make(map[string]bool)
-	}
-	u.distinctSeen[dk] = true
-	return true
-}
-
-func (u *usersImpl) sweep(now time.Time) {
-	u.mu.Lock()
-	for k, p := range u.pending {
-		if now.Sub(p.at) > pendingTTL {
-			delete(u.pending, k)
-		}
-	}
-	u.mu.Unlock()
-}
-
-func (u *usersImpl) sweeper() {
-	for now := range time.Tick(time.Minute) {
-		u.sweep(now)
-	}
-}
-
-func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
-	user.UserID = strings.TrimSpace(user.UserID)
-	if user.UserID == "" {
-		u.log.Debug(context.Background(), "add user with empty userID, session: %d", session.SessionID)
-		return nil
-	}
-	if session.UserID != nil && *session.UserID == user.UserID {
-		u.log.Debug(context.Background(), "user %s already exists", user.UserID)
-		return nil
-	}
-	if err := u.sessions.UpdateUserID(session.SessionID, user.UserID); err != nil {
-		u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
-	}
-	session.UserID = &user.UserID
-
-	dk := distinctKey(session.ProjectID, session.UserUUID, user.UserID)
-	currUser, err := u.current(session.ProjectID, user.UserID)
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
-		u.log.Error(context.Background(), "can't get user: %s", err)
-	}
-	if currUser == nil {
-		return u.create(session, user)
-	}
-	if u.markDistinct(dk) {
-		if err := u.sink.InsertUserDistinctID(uint16(session.ProjectID), session.UserUUID, user.UserID); err != nil {
-			u.log.Error(context.Background(), "can't add user ID to distinct user table: %s", user.UserID)
-		}
-	}
-	currUser.LastSeen = time.Now()
-	return u.write(currUser)
-}
-
-func (u *usersImpl) create(session *sessions.Session, user *model.User) error {
-	u.log.Debug(context.Background(), "sess: %d,user to insert: %+v", session.SessionID, user)
+func newUserFromSession(session *sessions.Session, userID string) *model.User {
 	started := time.UnixMilli(int64(session.Timestamp))
+	user := model.NewUser(userID)
 	user.ProjectID = uint16(session.ProjectID)
 	user.SdkEdition = "tracker"
 	user.SdkVersion = session.TrackerVersion
@@ -256,17 +144,7 @@ func (u *usersImpl) create(session *sessions.Session, user *model.User) error {
 	user.CreatedAt = started
 	user.FirstEventAt = started
 	user.LastSeen = started
-	if user.Properties == nil {
-		user.Properties = make(map[string]interface{})
-	}
-	if err := u.write(user); err != nil {
-		return fmt.Errorf("can't insert user to users table: %s", err)
-	}
-	if err := u.sink.InsertUserDistinctID(uint16(session.ProjectID), session.UserUUID, user.UserID); err != nil {
-		return fmt.Errorf("can't insert user to users_distinct_id table: %s", err)
-	}
-	u.markDistinct(distinctKey(session.ProjectID, session.UserUUID, user.UserID))
-	return nil
+	return user
 }
 
 func deref(s *string) string {
@@ -276,33 +154,156 @@ func deref(s *string) string {
 	return *s
 }
 
-func (u *usersImpl) Get(projectID uint32, userID string) (*model.User, error) {
-	return u.current(projectID, userID)
+func (u *usersImpl) mutate(session *sessions.Session, userID string, fn func(user *model.User, isNew bool)) (*model.User, error) {
+	key := userKey(session.ProjectID, userID)
+	st := u.state
+	for attempt := 0; attempt < maxStoreRetries; attempt++ {
+		user, version, found, err := st.load(key)
+		if err != nil {
+			st = u.degrade(key, err)
+			continue
+		}
+		isNew := false
+		if !found {
+			user, err = u.fetch(session.ProjectID, userID)
+			if err != nil && !errors.Is(err, ErrUserNotFound) {
+				return nil, err
+			}
+			if user == nil {
+				user = newUserFromSession(session, userID)
+				isNew = true
+			}
+			created, err := st.create(key, user)
+			if err != nil {
+				st = u.degrade(key, err)
+				continue
+			}
+			if !created {
+				continue
+			}
+			version = 0
+		}
+		fn(user, isNew)
+		stored, err := st.store(key, user, version)
+		if err != nil {
+			st = u.degrade(key, err)
+			continue
+		}
+		if !stored {
+			u.metrics.IncreaseUserConflicts()
+			continue
+		}
+		return user, u.sink.InsertUser(user)
+	}
+	return nil, fmt.Errorf("can't store user %s after %d attempts", userID, maxStoreRetries)
 }
 
-func (u *usersImpl) Create(session *sessions.Session, user *model.User) error {
-	user.UserID = strings.TrimSpace(user.UserID)
-	if user.UserID == "" {
-		u.log.Debug(context.Background(), "create user with empty userID, session: %d", session.SessionID)
+func (u *usersImpl) degrade(key string, err error) userState {
+	u.log.Warn(context.Background(), "user state unavailable for %s, using process memory: %s", key, err)
+	u.metrics.IncreaseUserStateFallbacks()
+	return u.memory
+}
+
+func (u *usersImpl) bindDevice(session *sessions.Session, userID string) {
+	dk := distinctKey(session.ProjectID, session.UserUUID, userID)
+	u.mu.Lock()
+	seen := u.distinctSeen[dk]
+	if !seen {
+		if len(u.distinctSeen) >= maxDistinctSeen {
+			u.distinctSeen = make(map[string]bool)
+		}
+		u.distinctSeen[dk] = true
+	}
+	u.mu.Unlock()
+	if seen {
+		return
+	}
+	if err := u.sink.InsertUserDistinctID(uint16(session.ProjectID), session.UserUUID, userID); err != nil {
+		u.log.Error(context.Background(), "can't add user ID to distinct user table: %s", userID)
+	}
+}
+
+func (u *usersImpl) Add(session *sessions.Session, userID string) error {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
+		u.log.Debug(context.Background(), "add user with empty userID, session: %d", session.SessionID)
 		return nil
 	}
-	if session.UserID == nil || *session.UserID != user.UserID {
-		if err := u.sessions.UpdateUserID(session.SessionID, user.UserID); err != nil {
-			u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
-		}
-		session.UserID = &user.UserID
+	if session.UserID != nil && *session.UserID == userID {
+		u.log.Debug(context.Background(), "user %s already exists", userID)
+		return nil
 	}
-	return u.create(session, user)
+	if err := u.sessions.UpdateUserID(session.SessionID, userID); err != nil {
+		u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
+	}
+	session.UserID = &userID
+	if _, err := u.mutate(session, userID, func(user *model.User, isNew bool) {
+		if !isNew {
+			user.LastSeen = time.Now()
+		}
+	}); err != nil {
+		return err
+	}
+	u.bindDevice(session, userID)
+	return nil
 }
 
-func (u *usersImpl) Update(user *model.User) error {
-	u.log.Debug(context.Background(), "user to update: %+v", user)
-	return u.write(user)
+func (u *usersImpl) Set(session *sessions.Session, userID string, props map[string]interface{}) error {
+	_, err := u.mutate(session, userID, func(user *model.User, _ bool) {
+		for k, v := range props {
+			user.SetProperty(k, v)
+		}
+	})
+	return err
+}
+
+func (u *usersImpl) SetOnce(session *sessions.Session, userID string, props map[string]interface{}) error {
+	_, err := u.mutate(session, userID, func(user *model.User, _ bool) {
+		for k, v := range props {
+			user.SetPropertyOnce(k, v)
+		}
+	})
+	return err
+}
+
+func (u *usersImpl) Increment(session *sessions.Session, userID string, props map[string]interface{}) error {
+	_, err := u.mutate(session, userID, func(user *model.User, _ bool) {
+		for k, v := range props {
+			user.IncrementProperty(k, v)
+		}
+	})
+	return err
 }
 
 func (u *usersImpl) Delete(projectID uint32, userID string) error {
-	u.mu.Lock()
-	delete(u.pending, userKey(projectID, userID))
-	u.mu.Unlock()
+	key := userKey(projectID, userID)
+	if err := u.state.delete(key); err != nil {
+		u.degrade(key, err)
+	}
+	u.memory.delete(key)
 	return u.sink.InsertUserTombstone(uint16(projectID), userID)
+}
+
+func (u *usersImpl) refresh(rows [][]interface{}) [][]interface{} {
+	keys := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if row[len(row)-1] == uint8(1) {
+			continue
+		}
+		keys = append(keys, userKey(uint32(row[0].(uint16)), row[1].(string)))
+	}
+	latest, err := u.state.loadMany(keys)
+	if err != nil {
+		u.log.Warn(context.Background(), "can't refresh users batch from state: %s", err)
+		return rows
+	}
+	for i, row := range rows {
+		if row[len(row)-1] == uint8(1) {
+			continue
+		}
+		if user, ok := latest[userKey(uint32(row[0].(uint16)), row[1].(string))]; ok {
+			rows[i] = clickhouse.UserRow(user)
+		}
+	}
+	return rows
 }

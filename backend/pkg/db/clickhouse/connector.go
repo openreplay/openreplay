@@ -61,6 +61,7 @@ type Connector interface {
 	TrackOffset(topic string, partition int32, offset int64)
 	AddCommitter(committer OffsetCommitter)
 	AfterSend(hook func(flushedAt time.Time))
+	SetRowRefresher(table string, refresh func(rows [][]interface{}) [][]interface{})
 	Stop() error
 }
 
@@ -94,6 +95,7 @@ type connectorImpl struct {
 	needToFlush    bool
 	committers     []OffsetCommitter
 	sentHooks      []func(time.Time)
+	refreshers     map[string]func([][]interface{}) [][]interface{}
 	seq            uint64 // last assigned task seq
 	workerTask     chan *task
 	inflight       chan struct{}
@@ -176,8 +178,23 @@ func (c *connectorImpl) newBatch(name, query string) error {
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
+	if refresh := c.refreshers[name]; refresh != nil {
+		batch.(*batchImpl).refresh = refresh
+	}
 	c.batches[name] = batch
 	return nil
+}
+
+func (c *connectorImpl) SetRowRefresher(table string, refresh func(rows [][]interface{}) [][]interface{}) {
+	c.mu.Lock()
+	if c.refreshers == nil {
+		c.refreshers = make(map[string]func([][]interface{}) [][]interface{})
+	}
+	c.refreshers[table] = refresh
+	if b, ok := c.batches[table]; ok {
+		b.(*batchImpl).refresh = refresh
+	}
+	c.mu.Unlock()
 }
 
 func userKey(args []interface{}) string {
@@ -1697,14 +1714,18 @@ func cropStringPtr(s *string) *string {
 
 var noDeleteTime = time.Unix(0, 0)
 
-func (c *connectorImpl) InsertUser(u *sdkmodel.User) error {
-	if err := c.appendTo("pa_users",
+func UserRow(u *sdkmodel.User) []interface{} {
+	return []interface{}{
 		u.ProjectID, u.UserID, u.Email, u.Name, u.FirstName, u.LastName, u.Phone, u.Avatar,
 		u.PropertiesString(), u.GroupID1, u.GroupID2, u.GroupID3, u.GroupID4, u.GroupID5, u.GroupID6,
 		u.SdkEdition, u.SdkVersion, u.CurrentUrl, u.InitialRef, u.RefDomain,
 		u.UtmSource, u.UtmMedium, u.UtmCampaign, u.Country, u.State, u.City, u.OrApiEndpoint,
 		u.CreatedAt, u.FirstEventAt, u.LastSeen, noDeleteTime, uint8(0),
-	); err != nil {
+	}
+}
+
+func (c *connectorImpl) InsertUser(u *sdkmodel.User) error {
+	if err := c.appendTo("pa_users", UserRow(u)...); err != nil {
 		c.checkError("pa_users", err)
 		return fmt.Errorf("can't append to pa_users batch: %s", err)
 	}

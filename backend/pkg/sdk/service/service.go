@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -117,53 +116,20 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 				}
 				switch action.Type {
 				case model.UserActionIdentify:
-					if err = ds.users.Add(sessInfo, model.NewUser(action.UserID)); err != nil {
-						ds.log.Error(context.Background(), "can't add user to session: %d, err: %s", sessID, err)
-						continue
-					}
+					err = ds.users.Add(sessInfo, action.UserID)
 				case model.UserActionDelete:
-					if err = ds.users.Delete(sessInfo.ProjectID, action.UserID); err != nil {
-						ds.log.Error(context.Background(), "can't delete user: %s", err)
-					}
+					err = ds.users.Delete(sessInfo.ProjectID, action.UserID)
+				case model.UserActionSetProperty:
+					err = ds.users.Set(sessInfo, action.UserID, action.Payload)
+				case model.UserActionSetPropertyOnce:
+					err = ds.users.SetOnce(sessInfo, action.UserID, action.Payload)
+				case model.UserActionIncrementProperty:
+					err = ds.users.Increment(sessInfo, action.UserID, action.Payload)
 				default:
-					if action.Payload == nil || len(action.Payload) == 0 {
-						ds.log.Warn(context.Background(), "empty payload")
-						continue
-					}
-					user, err := ds.users.Get(sessInfo.ProjectID, action.UserID)
-					isNew := errors.Is(err, ErrUserNotFound)
-					if err != nil && !isNew {
-						ds.log.Error(context.Background(), "can't get user: %s, userID: %s", err, action.UserID)
-						continue
-					}
-					// User hasn't been identified yet (or has been deleted);
-					// create a new one, so the property update (or event) isn't dropped.
-					if isNew {
-						ds.log.Warn(context.Background(), "user not found, creating new user from session: %d, userID: %s", sessID, action.UserID)
-						user = model.NewUser(action.UserID)
-					}
-
-					switch action.Type {
-					case model.UserActionSetProperty:
-						for key, val := range action.Payload {
-							user.SetProperty(key, val)
-						}
-					case model.UserActionSetPropertyOnce:
-						for key, val := range action.Payload {
-							user.SetPropertyOnce(key, val)
-						}
-					case model.UserActionIncrementProperty:
-						for key, val := range action.Payload {
-							user.IncrementProperty(key, val)
-						}
-					}
-					if isNew {
-						if err = ds.users.Create(sessInfo, user); err != nil {
-							ds.log.Error(context.Background(), "can't create user: %s, userID: %s", err, action.UserID)
-						}
-					} else if err = ds.users.Update(user); err != nil {
-						ds.log.Error(context.Background(), "can't insert user: %s", err)
-					}
+					ds.log.Warn(context.Background(), "unknown user action %s for session: %d", action.Type, sessID)
+				}
+				if err != nil {
+					ds.log.Error(context.Background(), "can't apply user action %s for session: %d, err: %s", action.Type, sessID, err)
 				}
 			}
 
