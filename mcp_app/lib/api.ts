@@ -311,6 +311,13 @@ export async function resolveSiteId(args: {siteId?: string; projectName?: string
     return projectId;
 }
 
+// What the session list renders plus what the model needs to pick a session.
+// The search response carries far more, and the whole result lands in context.
+const SESSION_FIELDS = [
+    "sessionId", "userId", "userAnonymousId", "startTs", "duration", "eventsCount", "errorsCount",
+    "pagesCount", "issueTypes", "userBrowser", "userOs", "userDeviceType", "userCountry", "userCity", "metadata",
+];
+
 // Fetch recent sessions from OpenReplay
 export async function fetchRecentSessions(
     siteId: string,
@@ -363,7 +370,7 @@ export async function fetchRecentSessions(
     const baseUrl = state.appUrl.replace(/\/+$/, '');
 
     const sessions = data.sessions.map((session: any) => ({
-        ...session,
+        ...Object.fromEntries(SESSION_FIELDS.filter((k) => session[k] !== undefined).map((k) => [k, session[k]])),
         replayUrl: `${baseUrl}/${siteId}/session/${session.sessionId}`,
     }));
 
@@ -876,29 +883,6 @@ export async function fetchUsers(
 
     console.error(`[SERVER] Got ${data?.users?.length || 0} users (total: ${data?.total || 0})`);
     return data;
-}
-
-// Filter-catalog categories holding flat session/user attributes. `event` holds
-// event properties; segments and features are references (see resolveFilters).
-const ATTRIBUTE_CATEGORIES = ["session", "user", "users", "metadata"];
-
-// Fetch event definitions and attribute definitions from the filter catalog
-export async function fetchEventProperties(siteId: string) {
-    console.error(`[SERVER] Fetching event properties for site ${siteId}...`);
-
-    if (!state.jwt) {
-        throw new Error("AUTH_ERROR: Not authenticated");
-    }
-
-    const data = await fetchFilters(siteId);
-
-    const events: any[] = data.events?.list ?? [];
-    const attributes: any[] = ATTRIBUTE_CATEGORIES.flatMap((category) =>
-        (data[category]?.list ?? []).map((def: any) => ({...def, category})),
-    );
-
-    console.error(`[SERVER] Got ${events.length} events, ${attributes.length} attributes`);
-    return {events, attributes};
 }
 
 export interface PollAttempt {

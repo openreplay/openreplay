@@ -119,15 +119,25 @@ No UI — return plain text/JSON to the model.
 | `logout` | Clear auth and remove persisted token |
 | `get_auth_status` | Check auth state |
 | `list_projects` | Fetch all projects (caches in state) |
-| `get_project_id` | Resolve project name -> ID |
-| `fetch_sessions` | Raw session JSON (no UI) |
 | `fetch_chart_data` | Generic API proxy |
-| `get_session_replay` | Get session replay URL |
 | `get_session_details` | Session replay metadata + events |
-| `get_available_filters` | Filter catalog for a project |
-| `_refresh_replay_urls` | Re-fetch signed mob file URLs + fileKey (internal, called by UI when URLs expire) |
+| `get_available_filters` | Filter catalog for a project (events, event properties, attributes, segments, features) |
+| `fetch_events` / `fetch_users` | Data-management queries |
+| `search_docs` | Search the OpenReplay docs index |
+
+App-only tools (`registerAppTool` with `visibility: ["app"]`, hidden from the model):
+
+| Tool | Purpose |
+|------|---------|
+| `_refresh_replay_urls` | Re-fetch signed mob file URLs + fileKey when they expire |
 | `_fetch_mob_file` | Fetch a mob file by URL, return base64. Only fetches URLs this server minted (see `allowMobUrls`), capped at 128 MB |
 | `_fetch_css` | Fetch an external stylesheet for the replay iframe, return base64. Stricter guard — these URLs come from the recorded page (see `assertProxyableCssUrl`), capped at 5 MB |
+
+Don't add tools that overlap an existing one: every definition ships in each conversation's
+context. `fetch_sessions`, `get_project_id`, `get_session_replay` and `fetch_event_definitions`
+were removed for that reason — `view_recent_sessions` already returns compact session JSON,
+every tool resolves `projectName`, sessions carry `replayUrl`, and `get_available_filters`
+reads the same catalog.
 
 ### Tool Visibility (MCP Apps extension)
 
@@ -139,9 +149,17 @@ Only applies to `registerAppTool`. Set in `_meta.ui.visibility`:
 | `["app"]` | React app can call via `callServerTool()`, hidden from model |
 | `["model", "app"]` | Both (default if omitted) |
 
-All 7 UI tools use `["model"]`. The React app only calls tools for auth (`configure_backend`, `login_browser`, `complete_login`) and replay internals (`_refresh_replay_urls`, `_fetch_mob_file`, `_fetch_css`) — those are internal tools and don't use visibility.
+The UI tools use `["model"]`, except `view_session_replay`, which is `["model", "app"]` because
+the session list's play button calls it. The three `_` tools are `["app"]`. The app also calls
+`configure_backend`, `login_browser` and `complete_login`, which are plain `server.registerTool`
+tools and therefore default to both. A host that enforces visibility rejects an app call to a
+`["model"]` tool, so check this whenever the UI starts calling a new tool.
 
 `server.registerTool` does NOT support the visibility feature. It's an MCP Apps extension only for `registerAppTool`.
+
+Input schemas live in `lib/schemas.ts` and are passed to registration as-is; handlers get the
+parsed args (defaults applied) and must not re-parse. Keep descriptions short — the filter
+grammar is described once, in `get_available_filters`.
 
 Both take `inputSchema: z.object({...})` (MCP SDK v2). The raw-shape form `inputSchema: {...}` is
 deprecated in v2 and loses handler result typing (`type: "text"` widens to `string`). Tools with no
@@ -156,7 +174,7 @@ Tool descriptions double as instructions for the AI model:
 description: "PREFERRED tool for fetching and displaying sessions. Always use this tool when..."
 
 // Demoted: model should only pick this in specific cases
-description: "Internal tool: fetch sessions as raw JSON without UI. Only use this when..."
+description: "Internal tool: ... Only use this when..."
 ```
 
 All UI tools include a TIP in their description guiding the model to use `view_recent_sessions` with the same filters for session drill-down.
@@ -611,7 +629,7 @@ Only works client-side (in the React app, not in server-side tool handlers).
 
 6. **Web Vitals requires a LOCATION event filter** in `series[0].filter.filters` even when filtering all pages — the API endpoint requires it. `fetchWebVitals` adds this automatically.
 
-7. **Session search defaults to the last 24 hours.** `view_recent_sessions` and `fetch_sessions` take optional `startDate`/`endDate`; `parseDateRange` validates them and `rangeValue` switches to `CUSTOM_RANGE`.
+7. **Session search defaults to the last 24 hours.** `view_recent_sessions` takes optional `startDate`/`endDate`; `parseDateRange` validates them and `rangeValue` switches to `CUSTOM_RANGE`. It returns only `SESSION_FIELDS` (`lib/api.ts`) per session, since the whole result goes into the model's context.
 
 8. **JWT tokens expire.** The persisted token in `~/.openreplay-mcp/config.json` may go stale. The auth overlay handles re-auth.
 
@@ -623,7 +641,7 @@ Only works client-side (in the React app, not in server-side tool handlers).
 
 12. **Replay CSS uses a separate proxy, `_fetch_css`**, not `_fetch_mob_file`. Stylesheet hrefs come from the recorded page rather than from our API, so they get the stricter SSRF guard. Don't collapse the two tools back together.
 
-13. **`_refresh_replay_urls`, `_fetch_mob_file` and `_fetch_css` are prefixed with `_`** to signal they're internal tools called by the UI only, not by the AI model.
+13. **`_refresh_replay_urls`, `_fetch_mob_file` and `_fetch_css` are app-only** (`visibility: ["app"]`), so the model never sees them. Hosts that predate visibility still list them, which is what the `_` prefix is for.
 
 14. **Version lives in `package.json` only.** `lib/version.ts` reads it at runtime for the MCP `serverInfo`; `vite.config.ts` injects it as `__APP_VERSION__` for the app's `appInfo`. `manifest.json` carries its own copy — bump both when releasing.
 

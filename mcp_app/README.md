@@ -132,17 +132,15 @@ These render a view alongside the result.
 | `login_jwt` | Authenticate with a raw JWT (advanced / service account) |
 | `logout` | Clear auth and delete the persisted token |
 | `get_auth_status` | Check authentication state |
-| `list_projects` / `get_project_id` | List projects; resolve a name to an ID |
+| `list_projects` | List projects (every tool also accepts `projectName`) |
 | `get_available_filters` | Filter catalog for a project |
-| `fetch_sessions` | Raw session JSON, no UI |
 | `get_session_details` | Replay metadata + session events |
-| `get_session_replay` | Replay URL for a session |
-| `fetch_events` / `fetch_event_definitions` / `fetch_users` | Data-management queries |
+| `fetch_events` / `fetch_users` | Data-management queries |
 | `fetch_chart_data` | Generic `/cards/try` proxy |
 | `search_docs` | Search the OpenReplay documentation index |
 
-Tools prefixed with `_` (`_refresh_replay_urls`, `_fetch_mob_file`, `_fetch_css`) are called
-by the app's own UI, not by the model.
+Tools prefixed with `_` (`_refresh_replay_urls`, `_fetch_mob_file`, `_fetch_css`) are app-only
+(`visibility: ["app"]`): the UI calls them and hosts hide them from the model.
 
 ## Architecture
 

@@ -1,113 +1,163 @@
 import {z} from "zod";
 
-export const ConfigureBackendSchema = z.object({
-    appUrl: z.string().describe("OpenReplay instance URL (e.g. https://app.openreplay.com or https://openreplay.your-company.com). The API host is derived automatically."),
-});
+// Every tool's inputSchema lives here and is passed to registerTool as-is, so
+// what the model sees and what the handler receives can't drift apart. Keep
+// descriptions short: they ship in every conversation's tool list, and the
+// filter grammar is spelled out once, in get_available_filters.
 
-export const LoginJwtSchema = z.object({
-    jwt: z.string().describe("JWT token for authentication"),
-});
+const SiteId = z.string().optional().describe("Project ID. Either siteId or projectName is required.");
+const ProjectName = z.string().optional().describe("Project name, resolved to its ID automatically.");
+const StartDate = z.string().describe("ISO 8601 date, e.g. '2026-02-10'. Convert relative references ('last week') to dates.");
+const EndDate = z.string().describe("ISO 8601 date. A bare date includes that whole day; use today for 'until now'.");
 
-export const LoginBrowserSchema = z.object({
-    appUrl: z.string().optional().describe("OpenReplay instance URL (optional, uses current if already configured)"),
-});
-
-export const CompleteLoginSchema = z.object({
-    state: z.string().optional().describe("Auth state code returned from login_browser. Defaults to the most recent pending code."),
-    timeoutMs: z.number().optional().describe("How long to wait for approval before returning still-pending. Default 60000."),
-});
-
-export const FetchChartDataSchema = z.object({
-    endpoint: z.string().describe("API endpoint to fetch chart data from"),
-    params: z.looseRecord(z.string(), z.any()).optional().describe("Query parameters"),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-});
-
-export const GetSessionReplaySchema = z.object({
-    sessionId: z.string().describe("Session ID to get replay URL for"),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-});
-
-export const GetProjectIdSchema = z.object({
-    projectName: z.string().describe("Project name to look up"),
-});
+// The operators backend/pkg/analytics/model Filter accepts (there is no "!=").
+const Operator = z.enum(["is", "isNot", "isAny", "isUndefined", "contains", "notContains", "startsWith", "endsWith", "regex", "=", "<", ">", "<=", ">="])
+    .optional().default("is");
 
 export const FilterPropertySchema = z.object({
-    name: z.string().describe("Property name (e.g. 'urlPath', 'urlHost', 'label', 'selector', 'status', 'method', 'duration', 'message'). Discoverable via get_available_filters under the 'event' / Event Properties category."),
-    value: z.array(z.union([z.string(), z.number()])).describe("Property values. Use numbers for numeric properties (status, duration, etc.)."),
-    operator: z.string().optional().default("is").describe("Operator: 'is', 'isNot', 'contains', 'notContains', 'startsWith', 'endsWith', 'regex'; for numeric values: '=', '!=', '<', '<=', '>', '>='")
+    name: z.string().describe("Event property from get_available_filters 'eventProperties', e.g. urlPath, label, status"),
+    value: z.array(z.union([z.string(), z.number()])),
+    operator: Operator,
 });
 
 export const FilterItemSchema = z.object({
-    name: z.string().describe("Filter name (e.g. 'userCountry', 'userBrowser', 'userOs', 'userDevice', or an event name like 'CLICK', 'LOCATION', 'REQUEST', 'INPUT', 'ERROR', or a custom event name). Discoverable via get_available_filters."),
-    value: z.array(z.union([z.string(), z.number()])).optional().describe("Filter values. For countries use full name like 'France'. For event filters, leave empty (or omit) and use 'properties' to narrow by attributes like urlPath, label, status, etc."),
-    operator: z.string().optional().default("is").describe("Operator: 'is', 'isNot', 'contains', 'notContains', 'startsWith', 'endsWith', 'regex'; for numeric values: '=', '!=', '<', '<=', '>', '>='"),
-    properties: z.array(FilterPropertySchema).optional().describe("Sub-filters for events only (e.g. CLICK, LOCATION, REQUEST, INPUT, ERROR, custom events). Each entry narrows the event by an attribute. Example for 'visited /signup': name='LOCATION', properties=[{name:'urlPath', value:['/signup'], operator:'contains'}]. Non-event filters must NOT use this field.")
+    name: z.string().describe("A name from get_available_filters: attribute (userCountry, userId), event (LOCATION, CLICK), segment or feature"),
+    value: z.array(z.union([z.string(), z.number()])).optional().describe("Omit for events narrowed by properties, and for segments/features"),
+    operator: Operator,
+    properties: z.array(FilterPropertySchema).optional().describe("Events only, e.g. LOCATION with [{name:'urlPath', value:['/signup'], operator:'contains'}]"),
+});
+
+const Filters = z.array(FilterItemSchema).optional();
+
+export const ViewRecentSessionsSchema = z.object({
+    siteId: SiteId,
+    projectName: ProjectName,
+    limit: z.number().optional().default(10).describe("Max 50"),
+    startDate: StartDate.optional().describe("ISO 8601 date. Defaults to 24 hours before endDate."),
+    endDate: EndDate.optional().describe("ISO 8601 date, a bare date includes that day. Defaults to now."),
+    filters: Filters,
 });
 
 export const ViewSessionsChartSchema = z.object({
-    startDate: z.string().describe("Start date as an ISO 8601 string (e.g. '2025-02-10' or '2025-02-10T00:00:00'). Convert relative references like 'last week' or 'past 3 days' to actual dates."),
-    endDate: z.string().describe("End date as an ISO 8601 string. Defaults to now if the user says 'until now' or doesn't specify an end."),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-    projectName: z.string().optional().describe("Project name to look up"),
-    filters: z.array(FilterItemSchema).optional().describe("Filters to apply."),
+    startDate: StartDate,
+    endDate: EndDate,
+    siteId: SiteId,
+    projectName: ProjectName,
+    filters: Filters,
 });
 
 export const ViewUserJourneySchema = z.object({
-    startDate: z.string().describe("Start date as ISO 8601 string. Convert relative references to actual dates."),
-    endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-    projectName: z.string().optional().describe("Project name to look up"),
-    startPoint: z.string().optional().describe("URL path to start the journey from (e.g. '/articles/first'). Leave empty for general/most popular paths."),
-    filters: z.array(FilterItemSchema).optional().describe("Filters to apply."),
-});
-
-export const GetSessionDetailsSchema = z.object({
-    sessionId: z.string().describe("Session ID to get detailed information for"),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-    projectName: z.string().optional().describe("Project name to look up"),
+    startDate: StartDate,
+    endDate: EndDate,
+    siteId: SiteId,
+    projectName: ProjectName,
+    startPoint: z.string().optional().describe("URL path to start from, e.g. '/pricing'. Omit for the most popular paths."),
+    filters: Filters,
 });
 
 export const ViewWebVitalsSchema = z.object({
-    startDate: z.string().describe("Start date as ISO 8601 string. Convert relative references to actual dates."),
-    endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-    projectName: z.string().optional().describe("Project name to look up"),
-    filters: z.array(FilterItemSchema).optional().describe("Filters to apply."),
+    startDate: StartDate,
+    endDate: EndDate,
+    siteId: SiteId,
+    projectName: ProjectName,
+    filters: Filters,
 });
 
 export const ViewTableChartSchema = z.object({
-    startDate: z.string().describe("Start date as ISO 8601 string. Convert relative references to actual dates."),
-    endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
-    metricOf: z.string().describe("What to rank/count. Values: 'LOCATION' (top pages), 'REQUEST' (top network requests), 'userBrowser' (top browsers), 'userCountry' (top countries), 'userOs' (top operating systems), 'userDevice' (top devices)."),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-    projectName: z.string().optional().describe("Project name to look up"),
-    limit: z.number().optional().default(20).describe("Max number of items to return (default 20)"),
-    filters: z.array(FilterItemSchema).optional().describe("Filters to apply."),
+    startDate: StartDate,
+    endDate: EndDate,
+    metricOf: z.string().describe("What to rank: LOCATION (pages), REQUEST, userBrowser, userCountry, userOs, userDevice"),
+    siteId: SiteId,
+    projectName: ProjectName,
+    limit: z.number().optional().default(20),
+    filters: Filters,
 });
 
 export const FunnelStepSchema = z.union([
-    z.string().describe("Shorthand: a URL path string is treated as a LOCATION (page view) step, e.g. '/checkout'."),
+    z.string().describe("URL path, shorthand for a LOCATION step"),
     z.object({
-        type: z.string().describe("Event name. Built-in (autoCaptured) events: 'LOCATION' (page view), 'CLICK', 'INPUT' (text input), 'ISSUE'. Or any custom event name (e.g. 'dashboard_list_viewed'). Discoverable via get_available_filters under the 'events' category."),
-        value: z.string().optional().describe("Step value. For LOCATION → matches urlPath. For CLICK/INPUT → matches label. For ISSUE → issue type id (e.g. 'js_exception', 'click_rage', 'crash'). For custom events (autoCaptured=false) → ignored; only the event name is used."),
-        operator: z.string().optional().default("is").describe("Operator for the step's value match. 'is' (default) for exact, 'contains' for partial.")
-    })
+        type: z.string().describe("LOCATION, CLICK, INPUT, ISSUE, or a custom event name"),
+        value: z.string().optional().describe("Matches urlPath (LOCATION), label (CLICK/INPUT) or issue type (ISSUE); ignored for custom events"),
+        operator: z.enum(["is", "contains"]).optional().default("is"),
+    }),
 ]);
 
 export const ViewFunnelSchema = z.object({
-    startDate: z.string().describe("Start date as ISO 8601 string. Convert relative references to actual dates."),
-    endDate: z.string().describe("End date as ISO 8601 string. Use today's date if not specified."),
-    steps: z.array(FunnelStepSchema).min(2).describe(
-        "Ordered list of funnel steps (min 2). A step can be a URL path string (treated as a LOCATION/page-view), or an object with 'type' (event name) and optional 'value'. Mix freely. Example: ['/pricing', { type: 'CLICK', value: 'Subscribe' }, { type: 'purchase_completed' }]."
-    ),
-    siteId: z.string().optional().describe("Site ID (project ID)"),
-    projectName: z.string().optional().describe("Project name to look up"),
-    filters: z.array(FilterItemSchema).optional().describe("Filters to apply."),
+    startDate: StartDate,
+    endDate: EndDate,
+    steps: z.array(FunnelStepSchema).min(2).describe("Ordered steps, e.g. ['/pricing', {type:'CLICK', value:'Subscribe'}, {type:'purchase_completed'}]"),
+    siteId: SiteId,
+    projectName: ProjectName,
+    filters: Filters,
 });
 
-export const ViewSessionReplaySchema = z.object({
-    sessionId: z.string().describe("Session ID to replay. Pick from earlier fetch_sessions/view_recent_sessions results."),
-    siteId: z.string().optional().describe("Site ID (project ID). Use the siteId from the earlier session list if available."),
-    projectName: z.string().optional().describe("Project name to look up. Will be resolved to project ID automatically."),
+const SessionRef = {
+    sessionId: z.string().describe("From an earlier session list, also when the user refers to one by position"),
+    siteId: SiteId,
+    projectName: ProjectName,
+};
+
+export const ViewSessionReplaySchema = z.object(SessionRef);
+
+export const GetSessionDetailsSchema = z.object(SessionRef);
+
+export const ProjectSchema = z.object({
+    siteId: SiteId,
+    projectName: ProjectName,
+});
+
+export const FetchEventsSchema = z.object({
+    siteId: SiteId,
+    projectName: ProjectName,
+    startDate: z.string().optional().describe("ISO 8601 date. Defaults to 24 hours ago."),
+    endDate: z.string().optional().describe("ISO 8601 date. Defaults to now."),
+    limit: z.number().optional().default(50).describe("Max 200"),
+    page: z.number().optional().default(1),
+});
+
+export const FetchUsersSchema = z.object({
+    siteId: SiteId,
+    projectName: ProjectName,
+    startDate: z.string().optional().describe("ISO 8601 date. Defaults to 7 days ago."),
+    endDate: z.string().optional().describe("ISO 8601 date. Defaults to now."),
+    query: z.string().optional().default("").describe("Matches name, email or user ID"),
+    limit: z.number().optional().default(50).describe("Max 200"),
+    page: z.number().optional().default(1),
+});
+
+export const FetchChartDataSchema = z.object({
+    endpoint: z.string().describe("API path, e.g. /v2/api/{siteId}/..."),
+    params: z.looseRecord(z.string(), z.any()).optional().describe("Query parameters"),
+    siteId: z.string().optional(),
+});
+
+export const SearchDocsSchema = z.object({
+    query: z.string().optional().describe("Keywords or the user's question. Omit for the full docs index."),
+});
+
+export const ConfigureBackendSchema = z.object({
+    appUrl: z.string().describe("Instance URL as opened in the browser, e.g. https://openreplay.your-company.com"),
+});
+
+export const LoginBrowserSchema = z.object({
+    appUrl: z.string().optional().describe("Instance URL; defaults to the configured one"),
+});
+
+export const CompleteLoginSchema = z.object({
+    state: z.string().optional().describe("State code from login_browser; defaults to the latest"),
+    timeoutMs: z.number().optional().describe("How long to wait for approval. Default 60000."),
+});
+
+export const LoginJwtSchema = z.object({
+    jwt: z.string(),
+});
+
+// Called by the UI only (registered app-only, hidden from the model).
+export const RefreshReplayUrlsSchema = z.object({
+    sessionId: z.string(),
+    siteId: z.string().optional(),
+});
+
+export const FetchUrlSchema = z.object({
+    url: z.string(),
 });
