@@ -1,5 +1,6 @@
 import type { Socket } from './types';
 import type { Store } from '../../common/types';
+import { createEmitter, listen, safeQuery } from './utils';
 
 export enum SessionRecordingStatus {
   Off,
@@ -12,10 +13,16 @@ export interface State {
   currentTab?: string;
 }
 
-export default class ScreenRecording {
-  private assistVersion = 1;
+const BUSY_REPLY_WINDOW = 5000;
 
+export default class ScreenRecording {
   onDeny: () => void = () => {};
+
+  private readonly unsubscribe: () => void;
+
+  private readonly emitData: (event: string, data?: any) => void;
+
+  private requestSentAt = 0;
 
   static readonly INITIAL_STATE: Readonly<State> = {
     recordingState: SessionRecordingStatus.Off,
@@ -31,18 +38,49 @@ export default class ScreenRecording {
       | undefined,
     private getAssistVersion: () => number,
   ) {
-    socket.on('recording_accepted', () => {
-      this.toggleRecording(true);
+    this.emitData = createEmitter(
+      socket,
+      getAssistVersion,
+      () => this.store.get().currentTab,
+    );
+    // the tracker broadcasts these to every agent in the room without naming
+    // the recipient, so only the agent in the matching state reacts
+    this.unsubscribe = listen(socket, {
+      recording_accepted: () => {
+        if (this.state === SessionRecordingStatus.Requesting) {
+          this.toggleRecording(true);
+        }
+      },
+      recording_rejected: () => {
+        if (this.state === SessionRecordingStatus.Requesting) {
+          this.toggleRecording(false);
+          this.onDeny();
+        }
+      },
+      recording_busy: () => {
+        // busy answers a request immediately; an older pending request of ours
+        // is still waiting for the user and must not be reset by someone else's
+        if (
+          this.state === SessionRecordingStatus.Requesting &&
+          Date.now() - this.requestSentAt < BUSY_REPLY_WINDOW
+        ) {
+          this.store.update({ recordingState: SessionRecordingStatus.Off });
+          this.onRecordingBusy();
+        }
+      },
+      SESSION_DISCONNECTED: () => this.resetPendingRequest(),
+      disconnect: () => this.resetPendingRequest(),
     });
-    socket.on('recording_rejected', () => {
-      this.toggleRecording(false);
-      this.onDeny();
-    });
-    socket.on('recording_busy', () => {
-      this.onRecordingBusy();
-    });
+  }
 
-    this.assistVersion = getAssistVersion();
+  private get state() {
+    return this.store.get().recordingState;
+  }
+
+  private resetPendingRequest() {
+    if (this.state === SessionRecordingStatus.Requesting) {
+      this.store.update({ recordingState: SessionRecordingStatus.Off });
+    }
   }
 
   private onRecordingBusy = () => {
@@ -57,24 +95,14 @@ export default class ScreenRecording {
     if (recordingState === SessionRecordingStatus.Requesting) return;
 
     this.store.update({ recordingState: SessionRecordingStatus.Requesting });
+    this.requestSentAt = Date.now();
     this.emitData(
       'request_recording',
       JSON.stringify({
         ...this.agentInfo,
-        query: document.location.search,
+        query: safeQuery(),
       }),
     );
-  };
-
-  private emitData = (event: string, data?: any) => {
-    if (this.getAssistVersion() === 1) {
-      this.socket.emit(event, data);
-    } else {
-      this.socket.emit(event, {
-        meta: { tabId: this.store.get().currentTab },
-        data,
-      });
-    }
   };
 
   stopRecording = () => {
@@ -91,4 +119,8 @@ export default class ScreenRecording {
 
     this.onToggle(isAccepted);
   };
+
+  clean() {
+    this.unsubscribe();
+  }
 }

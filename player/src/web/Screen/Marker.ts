@@ -2,34 +2,6 @@ import { finder } from '@medv/finder';
 import type Screen from './Screen';
 import styles from './marker.module.css';
 
-const metaCharsMap = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-  '/': '&#x2F;',
-  '`': '&#x60;',
-  '=': '&#x3D;',
-};
-
-function escapeHtml(str: string) {
-  return String(str).replace(
-    /[&<>"'`=\/]/g,
-    (s) =>
-      // @ts-ignore
-      metaCharsMap[s],
-  );
-}
-
-function escapeRegExp(string: string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function safeString(string: string) {
-  return escapeHtml(escapeRegExp(string));
-}
-
 export default class Marker {
   private _target: Element | null = null;
 
@@ -98,19 +70,9 @@ export default class Marker {
   private autodefineTarget() {
     if (this.selector && this.screen.document) {
       try {
-        const fitTargets = this.screen.document.querySelectorAll(this.selector);
-        if (fitTargets.length === 0) {
-          this._target = null;
-        } else {
-          this._target = fitTargets[0];
-          // const cursorTarget = this.screen.getCursorTarget();
-          // fitTargets.forEach((target) => {
-          //   if (target.contains(cursorTarget)) {
-          //     this._target = target;
-          //   }
-          // });
-        }
+        this._target = this.screen.document.querySelector(this.selector);
       } catch (e) {
+        this._target = null;
         console.info(e);
       }
     } else {
@@ -121,7 +83,6 @@ export default class Marker {
   markBySelector(selector: string) {
     this.selector = selector;
     this.lastSelector = selector;
-    this.autodefineTarget();
     this.redraw();
   }
 
@@ -149,8 +110,7 @@ export default class Marker {
         root: this.screen.document.body,
         seedMinLength: 3,
         optimizedMinLength: 2,
-        threshold: 1000,
-        maxNumberOfTries: 10_000,
+        maxNumberOfPathChecks: 10_000,
       });
       this.selectorCache.set(el, selector);
       this.lastSelector = selector;
@@ -190,6 +150,8 @@ export default class Marker {
       const upscale = (1 / replayScale).toFixed(3);
       const yShift = ((1 - replayScale) / 2) * 100;
       this.tooltip.style.transform = `scale(${upscale}) translateY(-${yShift + 0.5}%)`;
+    } else {
+      this.tooltip.style.transform = '';
     }
     this.tooltipSelector.textContent = this.selector
       ? this.selector

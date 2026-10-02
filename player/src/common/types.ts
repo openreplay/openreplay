@@ -52,7 +52,8 @@ export interface SessionFilesInfo {
   errors: Record<string, any>[];
   agentInfo?: { email: string; name: string };
   canvasURL?: string[];
-  mobileFrames?: string;
+  /** the API sends a list; older callers passed a single url */
+  mobileFrames?: string | string[];
   trackerVersion: string;
 }
 

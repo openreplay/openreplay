@@ -1,38 +1,45 @@
 interface TabSegment {
   start: number;
-  end?: number;
+  /** exclusive, except for the last segment */
+  end: number;
   tabId: string;
 }
 
+/** Which tab produced the DOM messages at a given time, built incrementally while loading. */
 export default class MessageTabSourceManager {
   segments: TabSegment[] = [];
 
-  currentTab = '';
+  private current: TabSegment | null = null;
+
+  /** Messages are expected in time order. */
+  processMessage = (msg: { tabId: string; time: number }) => {
+    if (!msg.tabId) return;
+    const current = this.current;
+    if (current && current.tabId === msg.tabId) {
+      current.end = Math.max(current.end, msg.time + 1);
+      return;
+    }
+    if (current) {
+      current.end = msg.time;
+    }
+    this.current = { start: msg.time, end: msg.time + 1, tabId: msg.tabId };
+    this.segments.push(this.current);
+  };
+
   processMessages = (messages: { tabId: string; time: number }[]) => {
-    this.currentTab = messages[0].tabId;
-    let currSegment: TabSegment = {
-      start: messages[0].time,
-      end: undefined,
-      tabId: messages[0].tabId,
-    };
-    messages.slice(1).forEach((msg, i) => {
-      if (msg.tabId !== this.currentTab) {
-        currSegment.end = msg.time;
-        this.segments.push(currSegment);
-        this.currentTab = msg.tabId;
-        currSegment = { start: msg.time, tabId: msg.tabId };
-      }
-      if (i === messages.length - 2) {
-        currSegment.end = msg.time + 1;
-        this.segments.push(currSegment);
-      }
-    });
+    messages.forEach(this.processMessage);
   };
 
   findTab = (time: number) => {
-    const segment = this.segments.find(
-      (s) => s.start <= time && (s.end ? s.end >= time : true),
-    );
-    return segment ? segment.tabId : null;
+    const { segments } = this;
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i];
+      const isLast = i === segments.length - 1;
+      // at a switch time the new tab wins
+      if (s.start <= time && (time < s.end || (isLast && time <= s.end))) {
+        return s.tabId;
+      }
+    }
+    return null;
   };
 }

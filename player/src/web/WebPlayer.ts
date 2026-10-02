@@ -1,6 +1,7 @@
 import { Log, LogLevel, SessionFilesInfo } from '../index';
 
 import type { Store } from '../index';
+import { isPlayerDebug } from '../config';
 import { Message } from './messages';
 import Player from '../player/Player';
 import MessageLoader from './MessageLoader';
@@ -26,6 +27,10 @@ export default class WebPlayer extends Player {
   protected readonly messageManager: MessageManager;
   protected readonly messageLoader: MessageLoader;
   private targetMarker: TargetMarker;
+  private scaleFrame = 0;
+  private readonly globalJumpToTime = (time: number, silent?: boolean) =>
+    this.jump(time, silent);
+  private devTools: Record<string, any> | null = null;
 
   constructor(
     protected wpState: Store<typeof WebPlayer.INITIAL_STATE>,
@@ -95,11 +100,17 @@ export default class WebPlayer extends Player {
       endTime, // : 0,
     });
 
-    Object.assign(window, {
-      playerJumpToTime: this.jump.bind(this),
-    });
-    // @ts-ignore
-    Object.assign(window.__OPENREPLAY_DEV_TOOLS__, {
+    // @ts-ignore external automation hook
+    window.playerJumpToTime = this.globalJumpToTime;
+    this.exposeDevTools(session);
+  }
+
+  private exposeDevTools(session: SessionFilesInfo) {
+    // @ts-ignore host-provided debug console (frontend/app/dev/console.js)
+    const devTools = window.__OPENREPLAY_DEV_TOOLS__;
+    if (!devTools || typeof devTools !== 'object') return;
+    this.devTools = devTools;
+    Object.assign(devTools, {
       player: this,
       getNode: (nodeId: number, tabId?: string) => {
         if (tabId) {
@@ -111,6 +122,9 @@ export default class WebPlayer extends Player {
         }
       },
       getNodeMessages: (nodeId: number, tabId?: string) => {
+        if (!isPlayerDebug()) {
+          console.log('Raw messages are kept only in debug mode (logStuff(true), reload)');
+        }
         let messages = this.messageLoader.rawMessages.filter(
           (m) => m.id === nodeId,
         );
@@ -157,6 +171,7 @@ export default class WebPlayer extends Player {
     this.messageManager.setSession(session);
     void this.messageLoader.loadFiles();
 
+    this.targetMarker.destroy();
     this.targetMarker = new TargetMarker(this.screen, this.wpState);
     this.inspectorController = new InspectorController(
       this.screen,
@@ -170,8 +185,8 @@ export default class WebPlayer extends Player {
       endTime, // : 0,
     });
 
-    // @ts-ignore
-    window.playerJumpToTime = this.jump.bind(this);
+    // @ts-ignore external automation hook
+    window.playerJumpToTime = this.globalJumpToTime;
   }
 
   updateLists = (session: any) => {
@@ -194,19 +209,27 @@ export default class WebPlayer extends Player {
   attach = (parent: HTMLElement, isClickmap?: boolean) => {
     this.screen.attach(parent);
     if (!isClickmap) {
-      window.addEventListener('resize', this.scale);
+      window.removeEventListener('resize', this.onWindowResize);
+      window.addEventListener('resize', this.onWindowResize);
       this.scale();
     }
   };
 
-  scale = () => {
-    const { width, height } = this.wpState.get();
-    if (!this.screen && !this.inspectorController) return;
-    // sometimes happens in live assist sessions for some reason
-    this.screen?.scale?.({ width, height });
-    this.inspectorController?.scale?.({ width, height });
+  /** Resize events fire many times per frame while dragging; scale at most once per frame. */
+  private onWindowResize = () => {
+    if (this.scaleFrame) return;
+    this.scaleFrame = requestAnimationFrame(() => {
+      this.scaleFrame = 0;
+      this.scale();
+    });
+  };
 
-    this.targetMarker.updateMarkedTargets();
+  scale = () => {
+    // sometimes called after clean() (live assist, late resize)
+    if (!this.screen) return;
+    const { width, height } = this.wpState.get();
+    this.screen.scale({ width, height });
+    this.targetMarker?.updateMarkedTargets();
   };
 
   // delayed message decoding for state plugins
@@ -266,14 +289,28 @@ export default class WebPlayer extends Player {
     }
   };
 
-  clean = () => {
+  clean() {
+    window.removeEventListener('resize', this.onWindowResize);
+    cancelAnimationFrame(this.scaleFrame);
+    this.messageLoader.clean();
     super.clean();
+    this.targetMarker?.destroy();
     this.screen?.clean?.();
     // @ts-ignore
     this.screen = undefined;
-    this.messageLoader.clean();
     // @ts-ignore
     this.messageManager = undefined;
-    window.removeEventListener('resize', this.scale);
-  };
+    // @ts-ignore
+    if (window.playerJumpToTime === this.globalJumpToTime) {
+      // @ts-ignore
+      delete window.playerJumpToTime;
+    }
+    if (this.devTools?.player === this) {
+      delete this.devTools.player;
+      delete this.devTools.getNode;
+      delete this.devTools.getNodeMessages;
+      delete this.devTools.getDebugData;
+    }
+    this.devTools = null;
+  }
 }

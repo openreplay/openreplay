@@ -6,6 +6,8 @@
  * the open picker, highlight the recorded value, and dismiss it on the next
  * interaction event (click / focus / input) that isn't the select itself.
  */
+import { getDocumentOffset } from './frameGeometry';
+
 export default class SelectDropdown {
   private readonly container: HTMLDivElement;
   private currentSelect: HTMLSelectElement | null = null;
@@ -17,7 +19,14 @@ export default class SelectDropdown {
   // before the picker closes. This is a pick confirmation, not an idle timeout.
   private static readonly CONFIRM_MS = 450;
 
-  constructor(private readonly overlay: HTMLDivElement) {
+  /**
+   * @param getRootWindow - the replay iframe's window; the overlay shares its
+   * viewport, so selects in nested iframes are offset by their frames' positions
+   */
+  constructor(
+    private readonly overlay: HTMLDivElement,
+    private readonly getRootWindow: () => Window | null,
+  ) {
     this.container = document.createElement('div');
     Object.assign(this.container.style, {
       position: 'absolute',
@@ -61,13 +70,13 @@ export default class SelectDropdown {
     this.detachScroll();
     this.currentSelect = select;
     this.render(select);
-    // The overlay shares the iframe's coordinate origin and scales with it, so
-    // iframe-viewport coords from getBoundingClientRect map straight to overlay
-    // coords. Anchor under the select.
+    // The overlay shares the replay iframe's coordinate origin and scales with
+    // it; selects inside nested iframes also need their frames' offsets.
+    const offset = getDocumentOffset(select.ownerDocument, this.getRootWindow());
     Object.assign(this.container.style, {
       display: 'block',
-      left: `${rect.left}px`,
-      top: `${rect.bottom}px`,
+      left: `${rect.left + offset.x}px`,
+      top: `${rect.bottom + offset.y}px`,
       minWidth: `${rect.width}px`,
     });
     // The dropdown is anchored at a fixed point; once the page scrolls the select

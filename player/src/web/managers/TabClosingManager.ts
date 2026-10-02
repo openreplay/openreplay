@@ -8,20 +8,21 @@ export default class TabClosingManager extends ListWalker<{
 
   closedTabs: Set<string> = new Set();
 
-  moveReady(t: number): Promise<string | null> {
+  /** @returns id of the last closed tab passed, 'reset' after a rewind, or null if nothing changed */
+  moveReady(t: number): string | null {
+    let didReset = false;
     if (t < this.currentTime) {
       this.reset();
       this.closedTabs = new Set();
-      return Promise.resolve('reset');
+      didReset = true;
     }
     this.currentTime = t;
     const msg = this.moveGetLast(t);
 
     if (msg) {
-      const ids = this.listNow.map((m) => m.tabId);
-      this.closedTabs = new Set(ids);
-      return Promise.resolve(msg.tabId);
+      this.closedTabs = new Set(this.listNow.map((m) => m.tabId));
+      return msg.tabId;
     }
-    return Promise.resolve(null);
+    return didReset ? 'reset' : null;
   }
 }

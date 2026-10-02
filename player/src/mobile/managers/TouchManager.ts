@@ -1,16 +1,21 @@
 import { MOUSE_TRAIL } from '../../constants';
 import ListWalker from '../../common/ListWalker';
-import MouseTrail, { SwipeEvent } from '../../web/addons/MouseTrail';
+import MouseTrail from '../../web/addons/MouseTrail';
 import type { MobileClickEvent, MobileSwipeEvent } from '../../web/messages';
 import { MType } from '../../web/messages';
 import type Screen from '../../web/Screen/Screen';
+
+/** Same window as web clicks: only touches this recent get a pulse. */
+const TOUCH_PULSE_WINDOW = 600;
 
 export default class TouchManager extends ListWalker<
   MobileClickEvent | MobileSwipeEvent
 > {
   private touchTrail: MouseTrail | undefined;
 
-  private readonly removeTouchTrail: boolean = false;
+  private canvas: HTMLCanvasElement | undefined;
+
+  private lastT = 0;
 
   /**
    * Touch coordinates arrive in the device's own logical points, but the canvas
@@ -24,17 +29,14 @@ export default class TouchManager extends ListWalker<
 
   constructor(private screen: Screen) {
     super();
-    const canvas = document.createElement('canvas');
-    canvas.id = 'openreplay-touch-trail';
-    // canvas.className = styles.canvas;
-
-    this.removeTouchTrail = localStorage.getItem(MOUSE_TRAIL) === 'false';
-    if (!this.removeTouchTrail) {
-      this.touchTrail = new MouseTrail(canvas, true);
+    if (localStorage.getItem(MOUSE_TRAIL) === 'false') {
+      return;
     }
-
-    this.screen.overlay.appendChild(canvas);
-    this.touchTrail?.createContext();
+    this.canvas = document.createElement('canvas');
+    this.canvas.id = 'openreplay-touch-trail';
+    this.touchTrail = new MouseTrail(this.canvas, true);
+    this.screen.overlay.appendChild(this.canvas);
+    this.touchTrail.createContext();
   }
 
   public updateDimensions({
@@ -54,23 +56,25 @@ export default class TouchManager extends ListWalker<
   }
 
   public move(t: number) {
-    const lastTouch = this.moveGetLast(t);
-    if (lastTouch) {
-      if (lastTouch.tp === MType.MobileSwipeEvent) {
-        // not using swipe rn
-        // this.touchTrail?.createSwipeTrail({
-        //   x: lastTouch.x,
-        //   y: lastTouch.y,
-        //   direction: lastTouch.direction
-        // } as SwipeEvent)
-      } else {
-        this.touchTrail?.addTouch(
-          lastTouch.x * this.scaleX,
-          lastTouch.y * this.scaleY,
-        );
-        // this.screen.cursor.move(lastTouch);
-        // this.screen.cursor.mobileClick();
-      }
+    if (t < this.lastT) {
+      this.touchTrail?.clear();
     }
+    this.lastT = t;
+    // swipes are stored but not drawn; a swipe must not hide a click in the same frame
+    this.moveApply(t, (touch) => {
+      if (
+        touch.tp === MType.MobileClickEvent &&
+        t - touch.time < TOUCH_PULSE_WINDOW
+      ) {
+        this.touchTrail?.addTouch(touch.x * this.scaleX, touch.y * this.scaleY);
+      }
+    });
+  }
+
+  public destroy() {
+    this.touchTrail?.destroy();
+    this.touchTrail = undefined;
+    this.canvas?.remove();
+    this.canvas = undefined;
   }
 }

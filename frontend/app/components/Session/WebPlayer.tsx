@@ -1,6 +1,6 @@
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { createWebPlayer } from 'Player';
-import { makeAutoObservable } from 'mobx';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -110,7 +110,7 @@ function WebPlayer(props: any) {
     sessionStore.setUserTimezone(session.timezone);
     const [WebPlayerInst, PlayerStore] = createWebPlayer(
       session,
-      (state) => makeAutoObservable(state),
+      wrapPlayerStore,
       toast,
       prefetched,
     );

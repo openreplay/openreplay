@@ -4,18 +4,24 @@ declare global {
   }
 }
 
-function dummyTrack(): MediaStreamTrack {
-  const canvas = document.createElement('canvas'); // , { width: 0, height: 0})
+function dummyTrack(): { track: MediaStreamTrack; stop: () => void } {
+  const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 2; // Doesn't work when 1 (?!)
   const ctx = canvas.getContext('2d');
-  ctx?.fillRect(0, 0, canvas.width, canvas.height);
-  requestAnimationFrame(function draw() {
+  let frame = 0;
+  const draw = () => {
     ctx?.fillRect(0, 0, canvas.width, canvas.height);
-    requestAnimationFrame(draw);
-  });
-  // Also works. Probably it should be done once connected.
-  // setTimeout(() => { ctx?.fillRect(0,0, canvas.width, canvas.height) }, 4000)
-  return canvas.captureStream(60).getTracks()[0];
+    frame = requestAnimationFrame(draw);
+  };
+  draw();
+  const track = canvas.captureStream(60).getTracks()[0];
+  return {
+    track,
+    stop: () => {
+      cancelAnimationFrame(frame);
+      track.stop();
+    },
+  };
 }
 
 export function RequestLocalStream(): Promise<LocalStream> {
@@ -33,37 +39,52 @@ export function RequestLocalStream(): Promise<LocalStream> {
 class _LocalStream {
   private mediaRequested: boolean = false;
 
+  private mediaRequest: Promise<boolean> | null = null;
+
+  private stopped = false;
+
   readonly stream: MediaStream;
 
-  private readonly vdTrack: MediaStreamTrack;
+  private readonly dummyVideo: ReturnType<typeof dummyTrack>;
+
+  private readonly videoTrackListeners = new Set<(t: MediaStreamTrack) => void>();
 
   constructor(aTrack: MediaStreamTrack) {
-    this.vdTrack = dummyTrack();
-    this.stream = new MediaStream([aTrack, this.vdTrack]);
+    this.dummyVideo = dummyTrack();
+    this.stream = new MediaStream([aTrack, this.dummyVideo.track]);
   }
 
   toggleVideo(): Promise<boolean> {
     if (!this.mediaRequested) {
-      return navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((vStream) => {
-          const vTrack = vStream.getVideoTracks()[0];
-          if (!vTrack) {
-            throw new Error('No video track provided');
-          }
-          this.stream.addTrack(vTrack);
-          this.stream.removeTrack(this.vdTrack);
-          this.mediaRequested = true;
-          if (this.onVideoTrackCb) {
-            this.onVideoTrackCb(vTrack);
-          }
-          return true;
-        })
-        .catch((e) => {
-          // TODO: log
-          console.error(e);
-          return false;
-        });
+      if (!this.mediaRequest) {
+        this.mediaRequest = navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then((vStream) => {
+            if (this.stopped) {
+              vStream.getTracks().forEach((t) => t.stop());
+              return false;
+            }
+            const vTrack = vStream.getVideoTracks()[0];
+            if (!vTrack) {
+              throw new Error('No video track provided');
+            }
+            this.stream.addTrack(vTrack);
+            this.stream.removeTrack(this.dummyVideo.track);
+            this.dummyVideo.stop();
+            this.mediaRequested = true;
+            this.videoTrackListeners.forEach((cb) => cb(vTrack));
+            return true;
+          })
+          .catch((e) => {
+            // TODO: log
+            console.error(e);
+            return false;
+          })
+          .finally(() => {
+            this.mediaRequest = null;
+          });
+      }
+      return this.mediaRequest;
     }
     let enabled = true;
     this.stream.getVideoTracks().forEach((track) => {
@@ -80,14 +101,19 @@ class _LocalStream {
     return enabled;
   }
 
-  private onVideoTrackCb: ((t: MediaStreamTrack) => void) | null = null;
-
-  onVideoTrack(cb: (t: MediaStreamTrack) => void) {
-    this.onVideoTrackCb = cb;
+  /** @returns unsubscribe */
+  onVideoTrack(cb: (t: MediaStreamTrack) => void): () => void {
+    this.videoTrackListeners.add(cb);
+    return () => {
+      this.videoTrackListeners.delete(cb);
+    };
   }
 
   stop() {
+    this.stopped = true;
     this.stream.getTracks().forEach((t) => t.stop());
+    this.dummyVideo.stop();
+    this.videoTrackListeners.clear();
   }
 }
 

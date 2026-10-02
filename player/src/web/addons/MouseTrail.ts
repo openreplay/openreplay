@@ -2,11 +2,13 @@
  * Inspired by Bryan C (@bryjch at codepen)
  * */
 
-const LINE_DURATION = 3.5;
-const LINE_DURATION_MOBILE = 5;
+const FRAME_MS = 1000 / 60;
+/** Trail lifetime; the old frame-counted values (3.5 / 5) expressed in milliseconds at 60fps. */
+const LINE_DURATION_MS = ((3.5 * 1000) / 60) * FRAME_MS;
+const LINE_DURATION_MOBILE_MS = ((5 * 1000) / 60) * FRAME_MS;
 const LINE_WIDTH_START = 5;
 
-const TOUCH_PULSE_FRAMES = 60;
+const TOUCH_PULSE_MS = 60 * FRAME_MS;
 const TOUCH_PULSE_BASE_RADIUS = 8;
 const TOUCH_PULSE_PEAK_RADIUS = 22;
 const TOUCH_PULSE_ALPHA = 0.35;
@@ -18,12 +20,17 @@ export type SwipeEvent = {
   direction: 'up' | 'down' | 'left' | 'right';
 };
 
+type Point = { x: number; y: number; born: number };
+type TouchPulse = { x: number; y: number; born: number };
+
+/**
+ * Draws on its own canvas only while there is something to draw: the frame
+ * loop stops once every point has faded and restarts on the next point.
+ */
 export default class MouseTrail {
   public isActive = true;
 
   public context: CanvasRenderingContext2D;
-
-  private dimensions = { width: 0, height: 0 };
 
   private readonly lineDuration: number;
 
@@ -31,44 +38,27 @@ export default class MouseTrail {
 
   private touchPulses: TouchPulse[] = [];
 
+  private frameId = 0;
+
   constructor(
     private readonly canvas: HTMLCanvasElement,
     isNativeMobile: boolean = false,
   ) {
-    // @ts-ignore patching window
-    window.requestAnimFrame =
-      window.requestAnimationFrame ||
-      // @ts-ignore
-      window.webkitRequestAnimationFrame ||
-      // @ts-ignore
-      window.mozRequestAnimationFrame ||
-      // @ts-ignore
-      window.oRequestAnimationFrame ||
-      // @ts-ignore
-      window.msRequestAnimationFrame ||
-      function (callback: any) {
-        window.setTimeout(callback, 1000 / 60);
-      };
-
-    this.lineDuration = isNativeMobile ? LINE_DURATION_MOBILE : LINE_DURATION;
+    this.lineDuration = isNativeMobile
+      ? LINE_DURATION_MOBILE_MS
+      : LINE_DURATION_MS;
   }
 
   resizeCanvas = (w: number, h: number) => {
     if (this.context !== undefined) {
-      this.context.canvas.width = w;
-      this.context.canvas.height = h;
       this.canvas.width = w;
       this.canvas.height = h;
-
-      this.dimensions.width = w;
-      this.dimensions.height = h;
     }
   };
 
   createContext = () => {
     if (this.canvas) {
       this.context = this.canvas.getContext('2d')!;
-      this.init();
     } else {
       console.error('Canvas element not found');
     }
@@ -78,131 +68,100 @@ export default class MouseTrail {
     this.addPoint(x + 7, y + 7);
   };
 
-  init = () => {
-    if (this.isActive) {
-      this.animatePoints();
-      // @ts-ignore patched
-      window.requestAnimFrame(this.init);
-    }
-  };
-
-  animatePoints = () => {
-    this.context.clearRect(
-      0,
-      0,
-      this.context.canvas.width,
-      this.context.canvas.height,
-    );
-
-    const duration = (this.lineDuration * 1000) / 60;
-    const { points } = this;
-    let point;
-    let lastPoint;
-
-    for (let i = 0; i < points.length; i++) {
-      point = points[i];
-
-      if (points[i - 1] !== undefined) {
-        lastPoint = points[i - 1];
-      } else {
-        lastPoint = points[i];
-      }
-
-      point.lifetime! += 1;
-
-      // 3500/60 = 58.333333333333336
-      if (point.lifetime! > duration) {
-        points.splice(i, 1);
-        continue;
-      }
-
-      const inc = point.lifetime! / duration; // 0 to 1 over lineDuration
-      const dec = 1 - inc;
-
-      const spreadRate = LINE_WIDTH_START * (1 - inc);
-      this.context.lineJoin = 'round';
-      this.context.lineWidth = spreadRate;
-      this.context.strokeStyle = `rgba(60, 170, 170, ${dec})`;
-
-      this.context.beginPath();
-      this.context.moveTo(lastPoint.x, lastPoint.y);
-      this.context.lineTo(point.x, point.y);
-      this.context.stroke();
-      this.context.closePath();
-    }
-
-    this.drawTouchPulses();
-  };
-
   addPoint = (x: number, y: number) => {
-    const point = new Point(x, y, 0);
-    this.points.push(point);
+    this.points.push({ x, y, born: performance.now() });
+    this.schedule();
   };
 
   addTouch = (x: number, y: number) => {
-    this.touchPulses.push({ x, y: y + TOUCH_PULSE_Y_OFFSET, lifetime: 0 });
+    this.touchPulses.push({
+      x,
+      y: y + TOUCH_PULSE_Y_OFFSET,
+      born: performance.now(),
+    });
+    this.schedule();
   };
 
-  private drawTouchPulses = () => {
+  /** Drops everything drawn so far (e.g. on seek, so no streak joins the old and new position). */
+  clear = () => {
+    this.points = [];
+    this.touchPulses = [];
+    this.context?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  };
+
+  destroy = () => {
+    this.isActive = false;
+    cancelAnimationFrame(this.frameId);
+    this.frameId = 0;
+    this.points = [];
+    this.touchPulses = [];
+    this.canvas.remove();
+  };
+
+  private schedule() {
+    if (!this.frameId && this.isActive && this.context) {
+      this.frameId = requestAnimationFrame(this.frame);
+    }
+  }
+
+  private frame = () => {
+    this.frameId = 0;
+    if (!this.isActive) return;
+    this.draw(performance.now());
+    if (this.points.length || this.touchPulses.length) {
+      this.schedule();
+    }
+  };
+
+  private draw(now: number) {
+    const ctx = this.context;
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.lineJoin = 'round';
+
+    // compact in place: splicing inside the loop would skip the next point
+    const { points } = this;
+    let kept = 0;
+    let lastPoint: Point | undefined;
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      const inc = (now - point.born) / this.lineDuration; // 0 to 1 over the lifetime
+      if (inc > 1) continue;
+      points[kept++] = point;
+      const from = lastPoint ?? point;
+      lastPoint = point;
+
+      ctx.lineWidth = LINE_WIDTH_START * (1 - inc);
+      ctx.strokeStyle = `rgba(60, 170, 170, ${1 - inc})`;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(point.x, point.y);
+      ctx.stroke();
+      ctx.closePath();
+    }
+    points.length = kept;
+
+    this.drawTouchPulses(now);
+  }
+
+  private drawTouchPulses(now: number) {
     const pulses = this.touchPulses;
-    for (let i = pulses.length - 1; i >= 0; i--) {
-      const pulse = pulses[i]!;
-      pulse.lifetime += 1;
+    let kept = 0;
+    for (let i = 0; i < pulses.length; i++) {
+      const pulse = pulses[i];
+      const t = (now - pulse.born) / TOUCH_PULSE_MS;
+      if (t > 1) continue;
+      pulses[kept++] = pulse;
 
-      if (pulse.lifetime > TOUCH_PULSE_FRAMES) {
-        pulses.splice(i, 1);
-        continue;
-      }
-
-      const t = pulse.lifetime / TOUCH_PULSE_FRAMES;
       const wave = Math.sin(Math.PI * t);
       const radius =
         TOUCH_PULSE_BASE_RADIUS +
         (TOUCH_PULSE_PEAK_RADIUS - TOUCH_PULSE_BASE_RADIUS) * wave;
-      const alpha = TOUCH_PULSE_ALPHA * wave;
-
       this.context.beginPath();
       this.context.arc(pulse.x, pulse.y, radius, 0, Math.PI * 2);
-      this.context.fillStyle = `rgba(128, 128, 128, ${alpha})`;
+      this.context.fillStyle = `rgba(128, 128, 128, ${TOUCH_PULSE_ALPHA * wave})`;
       this.context.fill();
       this.context.closePath();
     }
-  };
-}
-
-type TouchPulse = { x: number; y: number; lifetime: number };
-
-type Coords = { x: number; y: number };
-
-class Point {
-  constructor(
-    public x: number,
-    public y: number,
-    public lifetime?: number,
-  ) {}
-
-  static distance(a: Coords, b: Coords) {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  static midPoint(a: Coords, b: Coords) {
-    const mx = a.x + (b.x - a.x) * 0.5;
-    const my = a.y + (b.y - a.y) * 0.5;
-
-    return new Point(mx, my);
-  }
-
-  static angle(a: Coords, b: Coords) {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-
-    return Math.atan2(dy, dx);
-  }
-
-  get pos() {
-    return `${this.x},${this.y}`;
+    pulses.length = kept;
   }
 }

@@ -2,7 +2,22 @@ import type { Store } from '../../common/types';
 import type Screen from '../Screen/Screen';
 import type { Point } from '../Screen/types';
 import { clickmapStyles } from './clickmapStyles';
-import heatmapRenderer from './simpleHeatmap';
+import SimpleHeatmap from './simpleHeatmap';
+
+// Past these the browser either refuses to allocate the canvas (blank heatmap)
+// or every colorize pass costs hundreds of MB, so tall pages render downscaled.
+const MAX_CANVAS_SIDE = 16384;
+const MAX_CANVAS_AREA = 24_000_000;
+
+export function getCanvasDownscale(width: number, height: number): number {
+  if (width <= 0 || height <= 0) return 1;
+  return Math.min(
+    1,
+    MAX_CANVAS_SIDE / width,
+    MAX_CANVAS_SIDE / height,
+    Math.sqrt(MAX_CANVAS_AREA / (width * height)),
+  );
+}
 
 function getOffset(el: Element, innerWindow: Window) {
   const rect = el.getBoundingClientRect();
@@ -35,9 +50,14 @@ export interface State {
   activeTargetIndex: number;
 }
 
+/** Normalized (percent, 2 decimals) cluster corners: [[x1, y1], [x2, y2]]. */
+export type ClusterCoords = string[][];
+
 export default class TargetMarker {
   private clickMapOverlay: HTMLCanvasElement | null = null;
-  private onCluster?: (coords: any) => void = undefined;
+  private heatmap: SimpleHeatmap | null = null;
+  private onCluster?: (coords: ClusterCoords) => void = undefined;
+  private rectRefreshTimeout?: ReturnType<typeof setTimeout>;
 
   static INITIAL_STATE: State = {
     markedTargets: null,
@@ -49,7 +69,7 @@ export default class TargetMarker {
     private readonly store: Store<State>,
   ) {}
 
-  setOnCluster = (onCluster: (coords: any) => void) => {
+  setOnCluster = (onCluster: (coords: ClusterCoords) => void) => {
     this.onCluster = onCluster;
   };
 
@@ -57,15 +77,11 @@ export default class TargetMarker {
     const { markedTargets } = this.store.get();
     if (markedTargets) {
       this.store.update({
-        markedTargets: markedTargets.map((mt: any) => ({
+        markedTargets: markedTargets.map((mt) => ({
           ...mt,
           boundingRect: this.calculateRelativeBoundingRect(mt.el),
         })),
       });
-    }
-
-    if (heatmapRenderer.checkReady()) {
-      heatmapRenderer.resize().draw();
     }
   }
 
@@ -103,20 +119,13 @@ export default class TargetMarker {
         // behavior hack TODO: fix it somehow when they will decide to remove it from browser api
         // @ts-ignore
         window.scrollTo({ top: scrollToY, behavior: 'instant' });
-        setTimeout(() => {
-          if (!markedTargets) {
-            return;
-          }
-          this.store.update({
-            markedTargets: markedTargets.map((t) =>
-              t === target
-                ? {
-                    ...target,
-                    boundingRect: this.calculateRelativeBoundingRect(target.el),
-                  }
-                : t,
-            ),
-          });
+        if (this.rectRefreshTimeout) {
+          clearTimeout(this.rectRefreshTimeout);
+        }
+        // every marker moved with the scroll, not only the active one
+        this.rectRefreshTimeout = setTimeout(() => {
+          this.rectRefreshTimeout = undefined;
+          this.updateMarkedTargets();
         }, 0);
       }
     }
@@ -156,7 +165,7 @@ export default class TargetMarker {
 
   injectTargets(clicks: { normalizedX: number; normalizedY: number }[] | null) {
     if (clicks && this.screen.document) {
-      this.clickMapOverlay?.remove();
+      this.removeClickMap();
       const overlay = document.createElement('canvas');
       const scrollHeight =
         this.screen.document?.documentElement.scrollHeight || 0;
@@ -176,12 +185,12 @@ export default class TargetMarker {
       // if we want to inject overlay inside the replay itself:
       // this.screen.document.body.appendChild(overlay);
 
-      const pointMap: Record<
-        string,
-        { times: number; data: number[]; original: any }
-      > = {};
-      overlay.width = scrollWidth;
-      overlay.height = scrollHeight;
+      // Backing store may be smaller than the CSS size; everything below works in backing pixels.
+      const k = getCanvasDownscale(scrollWidth, scrollHeight);
+      overlay.width = Math.max(1, Math.round(scrollWidth * k));
+      overlay.height = Math.max(1, Math.round(scrollHeight * k));
+
+      const pointMap: Record<string, { times: number; data: number[] }> = {};
       let maxIntensity = 0;
 
       clicks.forEach((point) => {
@@ -189,13 +198,14 @@ export default class TargetMarker {
         const x = roundToSecond(point.normalizedX);
         const key = `${y}-${x}`;
         if (pointMap[key]) {
-          const times = pointMap[key].times + 1;
-          maxIntensity = Math.max(maxIntensity, times);
-          pointMap[key].times = times;
+          pointMap[key].times += 1;
         } else {
-          const clickData = [(x / 100) * scrollWidth, (y / 100) * scrollHeight];
-          pointMap[key] = { times: 1, data: clickData, original: point };
+          pointMap[key] = {
+            times: 1,
+            data: [(x / 100) * overlay.width, (y / 100) * overlay.height],
+          };
         }
+        maxIntensity = Math.max(maxIntensity, pointMap[key].times);
       });
 
       const heatmapData: number[][] = [];
@@ -204,32 +214,43 @@ export default class TargetMarker {
         heatmapData.push([...data, times]);
       }
 
-      const setToNormalized = (coords: number[]) => {
-        return [
-          `${roundToSecond((coords[0] / scrollWidth) * 100)}`,
-          `${roundToSecond((coords[1] / scrollHeight) * 100)}`,
-        ];
-      };
+      const setToNormalized = (coords: number[]) => [
+        `${roundToSecond((coords[0] / overlay.width) * 100)}`,
+        `${roundToSecond((coords[1] / overlay.height) * 100)}`,
+      ];
 
-      const onClusterSelect = (coords: any[]) => {
-        // [[x1, y1], [x2, y2]]
-        const normalizedSet = coords.map(setToNormalized);
-        this.onCluster?.(normalizedSet);
-        console.log('Cluster bounds:', normalizedSet);
+      const onClusterSelect = (coords: number[][]) => {
+        this.onCluster?.(coords.map(setToNormalized));
       };
-      heatmapRenderer
+      this.heatmap = new SimpleHeatmap()
         .setCanvas(overlay)
         .setData(heatmapData)
-        .setRadius(15, 10)
+        .setRadius(15 * k, 10 * k)
         .setMax(maxIntensity)
         .resize()
         .draw()
         .enableInteractions(onClusterSelect);
     } else {
       this.store.update({ markedTargets: null });
-      this.clickMapOverlay?.remove();
-      this.clickMapOverlay = null;
+      this.removeClickMap();
     }
+  }
+
+  private removeClickMap() {
+    this.heatmap?.destroy();
+    this.heatmap = null;
+    this.clickMapOverlay?.remove();
+    this.clickMapOverlay = null;
+  }
+
+  destroy() {
+    if (this.rectRefreshTimeout) {
+      clearTimeout(this.rectRefreshTimeout);
+      this.rectRefreshTimeout = undefined;
+    }
+    this.removeClickMap();
+    this.onCluster = undefined;
+    this.actualScroll = null;
   }
 }
 

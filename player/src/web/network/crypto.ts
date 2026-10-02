@@ -20,6 +20,12 @@ export function decryptSessionBytes(
 
   return crypto.subtle
     .importKey('raw', byteKey, { name: 'AES-CBC' }, false, ['decrypt'])
-    .then((key) => crypto.subtle.decrypt({ name: 'AES-CBC', iv }, key, cypher))
+    .then((key) =>
+      crypto.subtle.decrypt(
+        { name: 'AES-CBC', iv },
+        key,
+        cypher as BufferSource,
+      ),
+    )
     .then((bArray: ArrayBuffer) => new Uint8Array(bArray));
 }

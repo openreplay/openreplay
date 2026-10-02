@@ -21,11 +21,33 @@ export default class ListWalkerWithMarks<
     );
   }
 
-  append(item: T) {
+  protected onAdd(item: T) {
     if (this.isMarked(item)) {
       this._markCount++;
     }
-    super.append(item);
+  }
+
+  protected onRemove(item: T) {
+    if (this.isMarked(item)) {
+      this._markCount--;
+    }
+  }
+
+  protected onPassedInsert(item: T) {
+    if (this.isMarked(item)) {
+      this._markCountNow++;
+    }
+  }
+
+  protected onPassedRemove(item: T) {
+    if (this.isMarked(item)) {
+      this._markCountNow--;
+    }
+  }
+
+  reset() {
+    super.reset();
+    this._markCountNow = 0;
   }
 
   protected moveNext() {

@@ -1,6 +1,9 @@
-class SimpleHeatmap {
+export default class SimpleHeatmap {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D | null;
+  /** Colorized heat layer without hover/selection overlays, so interactions only blit it. */
+  private base: HTMLCanvasElement | null = null;
+  private baseDirty = true;
   private width: number;
   private height: number;
   private max: number;
@@ -40,6 +43,9 @@ class SimpleHeatmap {
    * Call this before providing data; sizes are read from the canvas element.
    */
   setCanvas(canvas: HTMLCanvasElement): this {
+    if (this.canvas && this.canvas !== canvas) {
+      this.disableInteractions();
+    }
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.width = canvas.width;
@@ -49,6 +55,7 @@ class SimpleHeatmap {
     this.hoveredIndex = null;
     this.selectedIndex = null;
     this.clustersDirty = true;
+    this.baseDirty = true;
     return this;
   }
 
@@ -58,7 +65,10 @@ class SimpleHeatmap {
    */
   setData(data: number[][]): this {
     this.data = data;
+    this.hoveredIndex = null;
+    this.selectedIndex = null;
     this.clustersDirty = true;
+    this.baseDirty = true;
     return this;
   }
 
@@ -67,6 +77,7 @@ class SimpleHeatmap {
    */
   setMax(max: number): this {
     this.max = max;
+    this.baseDirty = true;
     return this;
   }
 
@@ -76,6 +87,7 @@ class SimpleHeatmap {
   add(point: number[]): this {
     this.data.push(point);
     this.clustersDirty = true;
+    this.baseDirty = true;
     return this;
   }
 
@@ -88,7 +100,16 @@ class SimpleHeatmap {
     this.selectedIndex = null;
     this.clusters = [];
     this.clustersDirty = false;
+    this.base = null;
+    this.baseDirty = true;
     return this;
+  }
+
+  /** Detach from the canvas and drop all rendering state. */
+  destroy(): void {
+    this.disableInteractions();
+    this.clear();
+    this.ctx = null;
   }
 
   /**
@@ -119,6 +140,7 @@ class SimpleHeatmap {
     this.r = r2;
 
     this.clustersDirty = true;
+    this.baseDirty = true;
 
     return this;
   }
@@ -134,8 +156,15 @@ class SimpleHeatmap {
    * Sync internal width/height with the current canvas size.
    */
   resize(): this {
-    this.width = this.canvas.width;
-    this.height = this.canvas.height;
+    if (
+      this.width !== this.canvas.width ||
+      this.height !== this.canvas.height
+    ) {
+      this.width = this.canvas.width;
+      this.height = this.canvas.height;
+      this.clustersDirty = true;
+      this.baseDirty = true;
+    }
     return this;
   }
 
@@ -161,6 +190,7 @@ class SimpleHeatmap {
     ctx.fillRect(0, 0, 1, 256);
 
     this.grad = ctx.getImageData(0, 0, 1, 256).data;
+    this.baseDirty = true;
 
     return this;
   }
@@ -176,32 +206,50 @@ class SimpleHeatmap {
     const { ctx } = this;
     if (!ctx || this.width === 0 || this.height === 0) return this;
 
-    this.lastMinOpacity = minOpacity;
+    if (minOpacity !== this.lastMinOpacity) {
+      this.lastMinOpacity = minOpacity;
+      this.baseDirty = true;
+    }
 
     if (this.clustersDirty) this.computeClusters();
+    if (this.baseDirty || !this.base) this.renderBase(minOpacity);
 
     ctx.clearRect(0, 0, this.width, this.height);
+    if (this.base) ctx.drawImage(this.base, 0, 0);
+    this.drawSelectionBoxes();
+
+    return this;
+  }
+
+  private renderBase(minOpacity: number): void {
+    const base = this.base ?? this.createCanvas();
+    if (base.width !== this.width || base.height !== this.height) {
+      base.width = this.width;
+      base.height = this.height;
+    }
+    const bctx = base.getContext('2d');
+    if (!bctx) return;
+    bctx.clearRect(0, 0, this.width, this.height);
 
     this.data.forEach((p) => {
-      ctx.globalAlpha = Math.min(
+      bctx.globalAlpha = Math.min(
         Math.max((p[2] ?? 1) / this.max, minOpacity),
         1,
       );
-      ctx.drawImage(this.circle, p[0] - this.r, p[1] - this.r);
+      bctx.drawImage(this.circle, p[0] - this.r, p[1] - this.r);
     });
+    bctx.globalAlpha = 1;
 
     try {
-      const colored = ctx.getImageData(0, 0, this.width, this.height);
+      const colored = bctx.getImageData(0, 0, this.width, this.height);
       this.colorize(colored.data, this.grad);
-      ctx.putImageData(colored, 0, 0);
+      bctx.putImageData(colored, 0, 0);
     } catch (e) {
       console.error('Error while colorizing heatmap:', e);
     }
 
-    ctx.globalAlpha = 1;
-    this.drawSelectionBoxes();
-
-    return this;
+    this.base = base;
+    this.baseDirty = false;
   }
 
   private colorize(
@@ -249,6 +297,7 @@ class SimpleHeatmap {
   ): this {
     if (!this.canvas) return this;
     if (!this.r) this.setRadius(this.defaultRadius);
+    this.disableInteractions();
 
     this._onMouseMove = (e: MouseEvent) => {
       const { x, y } = this.getMousePos(e);
@@ -354,8 +403,15 @@ class SimpleHeatmap {
 
     ctx.save();
 
-    if (this.hoveredIndex !== null) {
-      const [x1, y1, x2, y2] = this.clusters[this.hoveredIndex].bbox;
+    const hovered =
+      this.hoveredIndex !== null ? this.clusters[this.hoveredIndex] : undefined;
+    const selected =
+      this.selectedIndex !== null
+        ? this.clusters[this.selectedIndex]
+        : undefined;
+
+    if (hovered && this.hoveredIndex !== null) {
+      const [x1, y1, x2, y2] = hovered.bbox;
       const w = x2 - x1;
       const h = y2 - y1;
       ctx.setLineDash([6, 4]);
@@ -368,8 +424,8 @@ class SimpleHeatmap {
       this.drawTooltip(this.hoveredIndex);
     }
 
-    if (this.selectedIndex !== null) {
-      const [x1, y1, x2, y2] = this.clusters[this.selectedIndex].bbox;
+    if (selected) {
+      const [x1, y1, x2, y2] = selected.bbox;
       const w = x2 - x1;
       const h = y2 - y1;
       ctx.setLineDash([]);
@@ -548,7 +604,3 @@ class SimpleHeatmap {
     return Math.max(8, base);
   }
 }
-
-const heatmapRenderer = new SimpleHeatmap();
-
-export default heatmapRenderer;

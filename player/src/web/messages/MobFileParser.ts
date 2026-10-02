@@ -1,47 +1,56 @@
 import unpack from '../../common/unpack';
 import type { PlayerMsg } from '../../common/types';
-import { fixMessageOrder, sortIframes } from './messageOrder';
+import { fixMessageOrder } from './messageOrder';
 import MFileReader from './MFileReader';
 import TrackerReader from './TrackerReader';
 import { MType } from './raw.gen';
+import { detectProtoFormat, stripHeader } from './protoFormat';
 
-function checkProtoFormat(binary: Uint8Array): 1 | 2 | 3 {
-  if (binary.length < 8) return 1;
-  for (let i = 0; i < 7; i++) {
-    if (binary[i] !== 0xff) return 1;
-  }
-  if (binary[7] === 0xfe) return 2;
-  if (binary[7] === 0xfd) return 3;
-  return 1;
+export interface MobFileParserOptions {
+  /** Breaks ties when the first file has no format header */
+  trackerVersion?: string;
+  /** Mobile recordings are always v1 whatever their header says, and every message carries an absolute timestamp */
+  mobile?: boolean;
 }
 
-function stripHeader(data: Uint8Array): Uint8Array {
-  if (data.length < 8) return data;
-  for (let i = 0; i < 7; i++) {
-    if (data[i] !== 0xff) return data;
+function normalizeReduxTime(msg: PlayerMsg, startTime: number) {
+  const m = msg as PlayerMsg & { actionTime?: number };
+  if (m.actionTime) {
+    m.time = m.actionTime - startTime;
+  } else {
+    m.actionTime = m.time + startTime;
   }
-  const v = data[7];
-  if (v === 0xff || v === 0xfe || v === 0xfd) return data.slice(8);
-  return data;
 }
 
 /**
- * Standalone parser that mirrors MessageLoader.createV1Parser /
- * createV2Parser exactly (minus encryption + message-manager wiring).
- * Used by the MCP app where we need the same parse output without
- * the rest of the player runtime.
+ * Turns a session's consecutive files (dom.mobs, dom.mobe, ...) into ordered player messages.
+ * Format is detected from the first file; reader state carries over between files.
+ * Shared by MessageLoader and the MCP app.
  */
 export default class MobFileParser {
   private mfileReader: MFileReader | null = null;
   private trackerReader: TrackerReader | null = null;
 
-  constructor(private readonly startTime: number) {}
+  constructor(
+    private readonly startTime: number,
+    private readonly options: MobFileParserOptions = {},
+  ) {}
+
+  /** The v1 stream hit an unreadable message; nothing after it can be parsed. */
+  get readError(): boolean {
+    return !!this.mfileReader?.error;
+  }
 
   feed(rawBytes: Uint8Array): PlayerMsg[] {
-    const data = unpack(rawBytes);
+    return this.parse(unpack(rawBytes));
+  }
 
+  /** Same as feed() for data that is already decompressed. */
+  parse(data: Uint8Array): PlayerMsg[] {
     if (!this.mfileReader && !this.trackerReader) {
-      const version = checkProtoFormat(data);
+      const version = this.options.mobile
+        ? 1
+        : detectProtoFormat(data, this.options.trackerVersion);
       if (version === 2 || version === 3) {
         this.trackerReader = new TrackerReader(this.startTime);
       } else {
@@ -57,7 +66,12 @@ export default class MobFileParser {
     const reader = this.trackerReader!;
     reader.append(stripHeader(data));
     const messages = reader.readBatch() as unknown as PlayerMsg[];
-    return fixMessageOrder(messages).sort(sortIframes);
+    for (const msg of messages) {
+      if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
+        normalizeReduxTime(msg, this.startTime);
+      }
+    }
+    return fixMessageOrder(messages);
   }
 
   private parseV1(data: Uint8Array): PlayerMsg[] {
@@ -66,40 +80,42 @@ export default class MobFileParser {
     reader.checkForIndexes();
 
     const msgs: PlayerMsg[] = [];
-    let m: PlayerMsg | null;
-    // eslint-disable-next-line no-cond-assign
-    while ((m = reader.readNext() as unknown as PlayerMsg | null) !== null) {
-      msgs.push(m);
+    for (let m = reader.readNext(); m; m = reader.readNext()) {
+      msgs.push(m as unknown as PlayerMsg);
     }
-    // Reset error so the next batch can still be attempted
-    reader.error = false;
+    reader.releaseConsumed();
+
+    if (this.options.mobile) {
+      for (const msg of msgs) {
+        const ts = (msg as { timestamp?: unknown }).timestamp;
+        if (typeof ts === 'number') msg.time = ts - this.startTime;
+      }
+      return fixMessageOrder(msgs);
+    }
 
     let artificialStartTime = Infinity;
-    let startTimeSet = false;
-    msgs.forEach((msg: any) => {
+    for (const msg of msgs) {
       if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
-        if ('actionTime' in msg && msg.actionTime) {
-          msg.time = msg.actionTime - this.startTime;
-        } else {
-          msg.actionTime = msg.time + this.startTime;
+        normalizeReduxTime(msg, this.startTime);
+      }
+      if (msg.tp === MType.CreateDocument && msg.time < artificialStartTime) {
+        artificialStartTime = msg.time;
+      }
+    }
+    if (artificialStartTime === Infinity) artificialStartTime = 0;
+
+    // Anything without a time is moved to the first document creation so it isn't applied before it
+    if (artificialStartTime !== 0) {
+      let broken = 0;
+      for (const msg of msgs) {
+        if (!msg.time) {
+          msg.time = artificialStartTime;
+          broken++;
         }
       }
-      if (
-        msg.tp === MType.CreateDocument &&
-        msg.time !== undefined &&
-        msg.time < artificialStartTime
-      ) {
-        artificialStartTime = msg.time;
-        startTimeSet = true;
-      }
-    });
+      if (broken > 0) console.warn('Broken timestamp messages', broken);
+    }
 
-    if (!startTimeSet) artificialStartTime = 0;
-
-    msgs.forEach((msg: any) => {
-      if (!msg.time) msg.time = artificialStartTime;
-    });
-
-    return fixMessageOrder(msgs).sort(sortIframes);
+    return fixMessageOrder(msgs);
   }
 }

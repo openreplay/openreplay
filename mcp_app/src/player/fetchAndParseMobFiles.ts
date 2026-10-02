@@ -85,10 +85,7 @@ export async function fetchAndParseMobFiles(
     };
   }
 
-  // Cross-batch ordering only. MobFileParser already applied `sortIframes`
-  // per batch; re-running it here would hand TimSort a non-transitive
-  // comparator over the whole session (100k+ messages), which is exactly the
-  // hazard messageOrder's bucket sort exists to avoid.
+  // Cross-batch ordering only; MobFileParser already ordered each batch.
   const sorted = fixMessageOrder(allMessages);
   return { messages: sorted };
 }

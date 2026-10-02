@@ -11,6 +11,8 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
 
   private mouseTrail: MouseTrail | undefined;
 
+  private readonly canvas: HTMLCanvasElement;
+
   private readonly removeMouseTrail: boolean = false;
 
   constructor(private screen: Screen) {
@@ -18,6 +20,7 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
     const canvas = document.createElement('canvas');
     canvas.id = 'openreplay-mouse-trail';
     canvas.className = styles.canvas;
+    this.canvas = canvas;
 
     this.removeMouseTrail = localStorage.getItem(MOUSE_TRAIL) === 'false';
     if (!this.removeMouseTrail) {
@@ -27,11 +30,16 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
     this.screen.overlay.appendChild(canvas);
     this.mouseTrail?.createContext();
 
-    const updateSize = (w: number, h: number) =>
-      this.mouseTrail?.resizeCanvas(w, h);
-
-    this.screen.setOnUpdate(updateSize);
+    this.screen.setOnUpdate(this.updateSize);
+    // A manager re-created mid-session would otherwise keep the default 300x150 canvas until the next resize.
+    const dims = this.screen.getLastDimensions();
+    if (dims) {
+      this.updateSize(dims.width, dims.height);
+    }
   }
+
+  private updateSize = (w: number, h: number) =>
+    this.mouseTrail?.resizeCanvas(w, h);
 
   private getCursorTargets() {
     return this.screen.getElementsFromInternalPoint(this.current!);
@@ -54,8 +62,30 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
     });
   }
 
+  private clearHover(): void {
+    this.hoverElements.forEach((elem) => {
+      elem.classList.remove(HOVER_CLASSNAME);
+    });
+    this.hoverElements = [];
+  }
+
+  /** Call on rewind/seek-back: drops stale :hover classes and the trail. */
+  clearTrail(): void {
+    this.clearHover();
+    this.mouseTrail?.clear();
+  }
+
   reset(): void {
-    this.hoverElements.length = 0;
+    super.reset();
+    this.clearTrail();
+  }
+
+  destroy(): void {
+    this.clearHover();
+    this.mouseTrail?.destroy();
+    this.mouseTrail = undefined;
+    this.canvas.remove();
+    this.screen.setOnUpdate(null);
   }
 
   move(t: number) {

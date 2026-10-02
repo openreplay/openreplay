@@ -14,14 +14,31 @@ describe('ListWalker', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  test('append maintains order and prevents out of order inserts', () => {
+  test('append keeps order and inserts out-of-order items by time', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     walker.append({ time: 1 });
     walker.append({ time: 3 });
     expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
 
     walker.append({ time: 2 });
-    expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
-    expect((console.error as jest.Mock).mock.calls.length).toBe(1);
+    walker.append({ time: 0 });
+    expect(walker.list.map((i) => i.time)).toEqual([0, 1, 2, 3]);
+    expect(warn.mock.calls.length).toBe(1);
+    warn.mockRestore();
+  });
+
+  test('insert before the pointer keeps the current item', () => {
+    walker.append({ time: 1, value: 'a' });
+    walker.append({ time: 5, value: 'b' });
+    walker.moveGetLast(5);
+    expect(walker.current?.value).toBe('b');
+    walker.insert({ time: 3, value: 'c' });
+    expect(walker.current?.value).toBe('b');
+    expect(walker.countNow).toBe(3);
+    expect(walker.moveGetLast(5)).toBeNull();
+    walker.removeAt(0);
+    expect(walker.current?.value).toBe('b');
+    expect(walker.countNow).toBe(2);
   });
 
   test('unshift prepends items', () => {
@@ -79,5 +96,28 @@ describe('ListWalker', () => {
     walker.moveApply(1.5, (m) => collected.push(m.time));
     expect(collected).toEqual([1, 2, 1]);
     expect(walker.countNow).toBe(1);
+  });
+});
+
+describe('ListWalkerWithMarks', () => {
+  test('marked counts stay consistent across insert/remove behind the pointer', async () => {
+    const { default: ListWalkerWithMarks } = await import(
+      '../../../player/src/common/ListWalkerWithMarks'
+    );
+    const w = new ListWalkerWithMarks<{ time: number; red?: boolean }>(
+      (i) => !!i.red,
+    );
+    w.append({ time: 1, red: true });
+    w.append({ time: 10 });
+    w.moveGetLast(10);
+    expect(w.markedCountNow).toBe(1);
+    w.insert({ time: 5, red: true });
+    expect(w.markedCount).toBe(2);
+    expect(w.markedCountNow).toBe(2);
+    w.removeAt(0);
+    expect(w.markedCount).toBe(1);
+    expect(w.markedCountNow).toBe(1);
+    w.moveApply(0, () => {});
+    expect(w.markedCountNow).toBe(0);
   });
 });

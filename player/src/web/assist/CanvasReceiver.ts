@@ -1,27 +1,34 @@
 import logger from '../../logger';
-import { VElement } from '../managers/DOM/VirtualDOM';
 import MessageManager from '../MessageManager';
-import { Socket } from 'socket.io-client';
+import type { Socket } from './types';
+import { listen, unwrap } from './utils';
+
+const ATTACH_DELAY = 250;
+const ATTACH_RETRY_DELAY = 1000;
+const ATTACH_RETRIES = 10;
+
+interface CanvasData {
+  video: HTMLVideoElement;
+  canvas: HTMLCanvasElement;
+  canvasCtx: CanvasRenderingContext2D;
+  release: () => void;
+}
 
 export default class CanvasReceiver {
-  private streams: Map<string, MediaStream> = new Map();
-
-  // Store RTCPeerConnection for each remote peer
   private connections: Map<string, RTCPeerConnection> = new Map();
 
-  private cId: string;
+  private canvasesData = new Map<string, CanvasData>();
+
+  private pendingAttach = new Map<string, ReturnType<typeof setTimeout>>();
+
+  private readonly cId: string;
 
   private frameCounter = 0;
-  private canvasesData = new Map<
-    string,
-    {
-      video: HTMLVideoElement;
-      canvas: HTMLCanvasElement;
-      canvasCtx: CanvasRenderingContext2D;
-    }
-  >(new Map());
 
-  // sendSignal – for sending signals (offer/answer/ICE)
+  private rafId: number | null = null;
+
+  private readonly unsubscribe: () => void;
+
   constructor(
     private readonly peerIdPrefix: string,
     private readonly config: RTCIceServer[],
@@ -32,48 +39,52 @@ export default class CanvasReceiver {
     // Form an id like in PeerJS
     this.cId = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
 
-    this.socket.on(
-      'webrtc_canvas_offer',
-      (data: { data: { offer: RTCSessionDescriptionInit; id: string } }) => {
-        const { offer, id } = data.data;
-        if (checkId(id, this.cId)) {
-          this.handleOffer(offer, id);
+    this.unsubscribe = listen(socket, {
+      webrtc_canvas_offer: (payload) => {
+        const data = unwrap<
+          { offer: RTCSessionDescriptionInit; id: string } | undefined
+        >(payload);
+        if (data && this.isOwnId(data.id)) {
+          void this.handleOffer(data.offer, data.id);
         }
       },
-    );
-
-    this.socket.on(
-      'webrtc_canvas_ice_candidate',
-      (data: { data: { candidate: RTCIceCandidateInit; id: string } }) => {
-        const { candidate, id } = data.data;
-        if (checkId(id, this.cId)) {
-          this.handleCandidate(candidate, id);
+      webrtc_canvas_ice_candidate: (payload) => {
+        const data = unwrap<
+          { candidate: RTCIceCandidateInit; id: string } | undefined
+        >(payload);
+        if (data && this.isOwnId(data.id)) {
+          void this.handleCandidate(data.candidate, data.id);
         }
       },
-    );
-
-    this.socket.on('webrtc_canvas_stop', (data: { id: string }) => {
-      const { id } = data;
-      const canvasId = getCanvasId(id);
-      this.connections.delete(id);
-      this.streams.delete(id);
-      this.canvasesData.delete(canvasId);
+      webrtc_canvas_stop: (payload) => {
+        const data = unwrap<{ id: string } | undefined>(payload);
+        if (data && this.isOwnId(data.id)) {
+          this.stopCanvas(data.id);
+        }
+      },
+      webrtc_canvas_restart: () => this.clear(),
     });
+  }
 
-    this.socket.on('webrtc_canvas_restart', () => {
-      this.clear();
-    });
+  private isOwnId(id: unknown): id is string {
+    return typeof id === 'string' && id.startsWith(`${this.cId}-`);
+  }
+
+  /** id is `${peerId}-${agentId}-canvas-${nodeId}` */
+  private canvasIdOf(id: string): string {
+    return id.slice(this.cId.length + 1);
   }
 
   async handleOffer(
     offer: RTCSessionDescriptionInit,
     id: string,
   ): Promise<void> {
+    if (this.connections.has(id)) {
+      this.stopCanvas(id);
+    }
     const pc = new RTCPeerConnection({
       iceServers: this.config,
     });
-
-    // Save the connection
     this.connections.set(id, pc);
 
     pc.onicecandidate = (event) => {
@@ -87,38 +98,32 @@ export default class CanvasReceiver {
 
     pc.ontrack = (event) => {
       const stream = event.streams[0];
-      if (stream) {
-        // Detect canvasId from remote peer id
-        const canvasId = getCanvasId(id);
-        this.streams.set(canvasId, stream);
-        setTimeout(() => {
-          const node = this.getNode(parseInt(canvasId, 10));
-          const videoEl = spawnVideo(
-            stream.clone() as MediaStream,
-            node as VElement,
-          );
-          if (node && videoEl) {
-            this.canvasesData.set(canvasId, {
-              video: videoEl,
-              canvas: node.node as HTMLCanvasElement,
-              canvasCtx: (node.node as HTMLCanvasElement)?.getContext(
-                '2d',
-              ) as CanvasRenderingContext2D,
-            });
-            this.draw();
-          } else {
-            logger.log('NODE', canvasId, 'IS NOT FOUND');
-          }
-        }, 250);
+      if (stream && this.connections.get(id) === pc) {
+        this.attach(this.canvasIdOf(id), stream);
       }
     };
 
-    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    pc.onconnectionstatechange = () => {
+      if (
+        this.connections.get(id) === pc &&
+        (pc.connectionState === 'failed' || pc.connectionState === 'closed')
+      ) {
+        this.stopCanvas(id);
+      }
+    };
 
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    this.socket.emit('webrtc_canvas_answer', { answer, id });
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      if (this.connections.get(id) !== pc) return;
+      this.socket.emit('webrtc_canvas_answer', { answer, id });
+    } catch (e) {
+      logger.error('Canvas stream negotiation failed', id, e);
+      if (this.connections.get(id) === pc) {
+        this.stopCanvas(id);
+      }
+    }
   }
 
   async handleCandidate(
@@ -135,36 +140,132 @@ export default class CanvasReceiver {
     }
   }
 
-  clear() {
-    this.connections.forEach((pc) => {
-      pc.close();
-    });
-    this.connections.clear();
-    this.streams.clear();
-    this.canvasesData.clear();
+  private attach(canvasId: string, stream: MediaStream, attempt = 0) {
+    this.clearPendingAttach(canvasId);
+    const timer = setTimeout(
+      () => {
+        this.pendingAttach.delete(canvasId);
+        const canvas = this.getNode(parseInt(canvasId, 10))?.node as
+          | HTMLCanvasElement
+          | undefined;
+        const canvasCtx =
+          typeof canvas?.getContext === 'function'
+            ? canvas.getContext('2d')
+            : null;
+        if (!canvas || !canvasCtx) {
+          if (attempt < ATTACH_RETRIES) {
+            this.attach(canvasId, stream, attempt + 1);
+          } else {
+            logger.log('NODE', canvasId, 'IS NOT FOUND');
+          }
+          return;
+        }
+        this.canvasesData.get(canvasId)?.release();
+        const { video, release } = spawnVideo(stream.clone());
+        this.canvasesData.set(canvasId, { video, canvas, canvasCtx, release });
+        this.startDrawing();
+      },
+      attempt === 0 ? ATTACH_DELAY : ATTACH_RETRY_DELAY,
+    );
+    this.pendingAttach.set(canvasId, timer);
   }
 
-  draw = () => {
-    if (this.frameCounter % 4 === 0) {
-      if (this.canvasesData.size === 0) {
-        return;
-      }
-      this.canvasesData.forEach((canvasData, id) => {
-        const { video, canvas, canvasCtx } = canvasData;
-        const node = this.getNode(parseInt(id, 10));
-        if (node) {
-          canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        } else {
-          this.canvasesData.delete(id);
+  private clearPendingAttach(canvasId: string) {
+    const timer = this.pendingAttach.get(canvasId);
+    if (timer) {
+      clearTimeout(timer);
+      this.pendingAttach.delete(canvasId);
+    }
+  }
+
+  private detach(canvasId: string) {
+    this.clearPendingAttach(canvasId);
+    this.canvasesData.get(canvasId)?.release();
+    this.canvasesData.delete(canvasId);
+    if (this.canvasesData.size === 0) {
+      this.stopDrawing();
+    }
+  }
+
+  private stopCanvas(id: string) {
+    const pc = this.connections.get(id);
+    if (pc) {
+      closePeer(pc);
+      this.connections.delete(id);
+    }
+    this.detach(this.canvasIdOf(id));
+  }
+
+  clear() {
+    this.connections.forEach(closePeer);
+    this.connections.clear();
+    this.pendingAttach.forEach((timer) => clearTimeout(timer));
+    this.pendingAttach.clear();
+    this.canvasesData.forEach((data) => data.release());
+    this.canvasesData.clear();
+    this.stopDrawing();
+  }
+
+  clean() {
+    this.unsubscribe();
+    this.clear();
+  }
+
+  private startDrawing() {
+    if (this.rafId === null) {
+      this.rafId = requestAnimationFrame(this.draw);
+    }
+  }
+
+  private stopDrawing() {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  private draw = () => {
+    this.rafId = null;
+    if (this.frameCounter++ % 4 === 0) {
+      this.canvasesData.forEach((data, id) => {
+        const node = this.getNode(parseInt(id, 10))?.node as
+          | HTMLCanvasElement
+          | undefined;
+        if (!node) {
+          this.detach(id);
+          return;
         }
+        if (node !== data.canvas) {
+          // the element was re-created (e.g. after a rewind)
+          const ctx =
+            typeof node.getContext === 'function' ? node.getContext('2d') : null;
+          if (!ctx) return;
+          data.canvas = node;
+          data.canvasCtx = ctx;
+        }
+        data.canvasCtx.drawImage(
+          data.video,
+          0,
+          0,
+          data.canvas.width,
+          data.canvas.height,
+        );
       });
     }
-    this.frameCounter++;
-    requestAnimationFrame(() => this.draw());
+    if (this.canvasesData.size > 0) {
+      this.startDrawing();
+    }
   };
 }
 
-function spawnVideo(stream: MediaStream, node: VElement) {
+function closePeer(pc: RTCPeerConnection) {
+  pc.onicecandidate = null;
+  pc.ontrack = null;
+  pc.onconnectionstatechange = null;
+  pc.close();
+}
+
+function spawnVideo(stream: MediaStream) {
   const videoEl = document.createElement('video');
 
   videoEl.srcObject = stream;
@@ -173,66 +274,30 @@ function spawnVideo(stream: MediaStream, node: VElement) {
   videoEl.setAttribute('playsinline', 'true');
   videoEl.setAttribute('crossorigin', 'anonymous');
 
-  videoEl
-    .play()
-    .then(() => true)
-    .catch(() => {
-      logger.warn('Click to unpause canvas stream');
-      // we allow that if user just reloaded the page
-    });
-
   const clearListeners = () => {
     document.removeEventListener('click', startStream);
     videoEl.removeEventListener('playing', clearListeners);
   };
-  videoEl.addEventListener('playing', clearListeners);
-
+  // autoplay can be blocked until the agent interacts with the page
   const startStream = () => {
     videoEl
       .play()
-      .then(() => {
-        clearListeners();
-      })
-      .then(() => console.log('unpaused'))
-      .catch(() => {
-        // we allow that if user just reloaded the page
-      });
-    document.removeEventListener('click', startStream);
+      .then(clearListeners)
+      .catch(() => {});
   };
+  videoEl.addEventListener('playing', clearListeners);
   document.addEventListener('click', startStream);
 
-  return videoEl;
-}
+  videoEl.play().catch(() => {
+    logger.warn('Click to unpause canvas stream');
+  });
 
-function checkId(id: string, cId: string): boolean {
-  return id.includes(cId);
-}
+  const release = () => {
+    clearListeners();
+    videoEl.pause();
+    videoEl.srcObject = null;
+    stream.getTracks().forEach((t) => t.stop());
+  };
 
-function getCanvasId(id: string): string {
-  return id.split('-')[4];
+  return { video: videoEl, release };
 }
-
-/** simple peer example
- * // @ts-ignore
- *     const peer = new SLPeer({ initiator: false })
- *     socket.on('c_signal', ({ data }) => {
- *       console.log('got signal', data)
- *       peer.signal(data.data);
- *       peer.canvasId = data.id;
- *     });
- *
- *     peer.on('signal', (data: any) => {
- *       socket.emit('c_signal', data);
- *     });
- *     peer.on('stream', (stream: MediaStream) => {
- *       console.log('stream ready', stream, peer.canvasId);
- *       this.streams.set(peer.canvasId, stream)
- *       setTimeout(() => {
- *         const node = this.getNode(peer.canvasId)
- *         console.log(peer.canvasId, this.streams, node)
- *         spawnVideo(this.streams.get(peer.canvasId)?.clone(), node, this.screen)
- *       }, 500)
- *     })
- *     peer.on('error', console.error)
- *
- * */

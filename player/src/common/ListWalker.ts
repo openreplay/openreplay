@@ -4,36 +4,90 @@ export default class ListWalker<T extends Timed> {
   /* Pointer to the "current" item */
   private p = 0;
 
+  private warnedOutOfOrder = false;
+
   constructor(private _list: Array<T> = []) {}
 
+  /**
+   * Appends in time order. Out-of-order items (late batches, cross-file splits)
+   * are inserted at their sorted position instead of being dropped.
+   */
   append(m: T): void {
-    if (this.length > 0 && this.last && m.time < this.last.time) {
-      console.error(
-        'Trying to append message with the less time then the list tail:',
-        m.time,
-        'vs',
-        this.last.time,
-        m,
-        this.last,
-        this,
-      );
+    const last = this.last;
+    if (last && m.time < last.time) {
+      if (!this.warnedOutOfOrder) {
+        this.warnedOutOfOrder = true;
+        console.warn(
+          'ListWalker: out-of-order item inserted by time',
+          m.time,
+          'vs tail',
+          last.time,
+        );
+      }
+      this.insert(m);
       return;
     }
     this.list.push(m);
+    this.onAdd(m);
   }
 
   unshift(m: T): void {
     this.list.unshift(m);
+    this.onAdd(m);
+    if (this.p > 0) {
+      this.p++;
+      this.onPassedInsert(m);
+    }
   }
 
+  /** Sorted insert (after items with equal time). O(log n) search, O(1) for in-order items. */
   insert(m: T): void {
-    let index = this.list.findIndex((om) => om.time > m.time);
-    if (index === -1) {
-      index = this.length;
+    const list = this.list;
+    this.onAdd(m);
+    if (list.length === 0 || list[list.length - 1].time <= m.time) {
+      list.push(m);
+      return;
     }
-    const oldList = this.list;
-    this._list = [...oldList.slice(0, index), m, ...oldList.slice(index)];
+    let lo = 0;
+    let hi = list.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (list[mid].time <= m.time) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    list.splice(lo, 0, m);
+    if (lo < this.p) {
+      // keep the pointer on the same "current" item; the new one counts as passed
+      this.p++;
+      this.onPassedInsert(m);
+    }
   }
+
+  /** Removes the item at `index`, keeping the pointer on the same current item. */
+  removeAt(index: number): T | undefined {
+    if (index < 0 || index >= this.list.length) {
+      return undefined;
+    }
+    const [removed] = this.list.splice(index, 1);
+    this.onRemove(removed);
+    if (index < this.p) {
+      this.p--;
+      this.onPassedRemove(removed);
+    }
+    return removed;
+  }
+
+  /** Hooks for subclasses tracking per-item state. */
+  protected onAdd(_m: T): void {}
+
+  protected onRemove(_m: T): void {}
+
+  protected onPassedInsert(_m: T): void {}
+
+  protected onPassedRemove(_m: T): void {}
 
   reset(): void {
     this.p = 0;
@@ -49,10 +103,8 @@ export default class ListWalker<T extends Timed> {
   }
 
   get last(): T | null {
-    if (this.list.length === 0) {
-      return null;
-    }
-    return this.list.slice(-1)[0];
+    const { list } = this;
+    return list.length === 0 ? null : list[list.length - 1];
   }
 
   get current(): T | null {

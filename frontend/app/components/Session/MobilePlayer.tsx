@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Loader } from 'UI';
 import { createIOSPlayer } from 'Player';
-import { makeAutoObservable } from 'mobx';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
 import MobilePlayerHeader from 'Components/Session/Player/MobilePlayer/MobilePlayerHeader';
@@ -50,7 +50,7 @@ function MobilePlayer(props: any) {
     sessionStore.setUserTimezone(session.timezone);
     const [IOSPlayerInst, PlayerStore] = createIOSPlayer(
       session,
-      (state) => makeAutoObservable(state),
+      wrapPlayerStore,
       toast,
     );
     setContextValue({ player: IOSPlayerInst, store: PlayerStore });

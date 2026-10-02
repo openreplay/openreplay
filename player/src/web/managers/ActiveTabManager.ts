@@ -6,7 +6,8 @@ export default class ActiveTabManager extends ListWalker<TabChange> {
 
   tabInstances: Set<string> = new Set();
 
-  moveReady(t: number): Promise<string | null> {
+  /** @returns tab id of the tab change passed while moving, or null if none */
+  moveReady(t: number): string | null {
     if (t < this.currentTime) {
       this.reset();
     }
@@ -14,10 +15,9 @@ export default class ActiveTabManager extends ListWalker<TabChange> {
     const msg = this.moveGetLast(t);
 
     if (msg) {
-      const ids = this.listNow.map((m) => m.tabId);
-      this.tabInstances = new Set(ids);
-      return Promise.resolve(msg.tabId);
+      this.tabInstances = new Set(this.listNow.map((m) => m.tabId));
+      return msg.tabId;
     }
-    return Promise.resolve(null);
+    return null;
   }
 }

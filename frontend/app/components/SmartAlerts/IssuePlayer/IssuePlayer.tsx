@@ -2,7 +2,7 @@ import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
 import { createWebPlayer } from 'Player';
 import { ConfigProvider, Drawer } from 'antd';
-import { makeAutoObservable } from 'mobx';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -111,7 +111,7 @@ function IssuePlayer() {
       | undefined;
     const [inst, store] = createWebPlayer(
       session as any,
-      (state) => makeAutoObservable(state),
+      wrapPlayerStore,
       toast,
       prefetched,
     );

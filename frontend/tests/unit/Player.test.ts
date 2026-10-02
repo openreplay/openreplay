@@ -111,3 +111,76 @@ describe('Player state toggles', () => {
     expect(state.get().playing).toBe(true);
   });
 });
+
+describe('Player lifecycle', () => {
+  it('pause during loading cancels the pending autoplay retry', () => {
+    jest.useFakeTimers();
+    const { player, state } = createPlayer({ ready: false });
+    player.play();
+    player.pause();
+    state.update({ ready: true });
+    jest.advanceTimersByTime(1000);
+    expect(state.get().playing).toBe(false);
+    jest.useRealTimers();
+  });
+
+  it('an explicit pause during a click hold cancels the resume', () => {
+    jest.useFakeTimers();
+    const { player, state } = createPlayer();
+    state.update({ playing: true });
+    player.pauseFor(750);
+    player.pause();
+    jest.advanceTimersByTime(1000);
+    expect(state.get().playing).toBe(false);
+    jest.useRealTimers();
+  });
+
+  it('clean stops retries and removes the autoplay listener', () => {
+    jest.useFakeTimers();
+    const removeSpy = jest.spyOn(document, 'removeEventListener');
+    const { player, state, mm } = createPlayer({ ready: false, autoplay: true });
+    player.clean();
+    state.update({ ready: true });
+    jest.advanceTimersByTime(1000);
+    expect(state.get().playing).toBe(false);
+    expect(mm.clean).toHaveBeenCalled();
+    expect(removeSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+    removeSpy.mockRestore();
+    jest.useRealTimers();
+  });
+});
+
+describe('Player frame loop', () => {
+  it('a click hold triggered from move() stops the running loop', () => {
+    let frames: Array<(t: number) => void> = [];
+    const raf = jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: any) => {
+        frames.push(cb);
+        return frames.length;
+      });
+    const { player, state, mm } = createPlayer();
+    let held = false;
+    mm.move.mockImplementation((t: number) => {
+      if (t > 0 && !held) {
+        held = true;
+        player.pauseFor(750);
+      }
+    });
+    player.play();
+    const run = (t: number) => {
+      const pending = frames;
+      frames = [];
+      pending.forEach((cb) => cb(t));
+    };
+    run(0);
+    run(16);
+    expect(state.get().playing).toBe(false);
+    const timeAtHold = state.get().time;
+    run(32);
+    run(48);
+    expect(frames.length).toBe(0);
+    expect(state.get().time).toBe(timeAtHold);
+    raf.mockRestore();
+  });
+});
