@@ -224,7 +224,8 @@ export default class AssistManager {
       const isOldVersion = messages.meta.version === 1;
       this.assistVersion = isOldVersion ? 1 : 2;
 
-      jmr.append(messages.data); // as RawMessage[]
+      const data = messages.data || messages;
+      jmr.append((Array.isArray(data) ? data : [data]) as TrackerMessage[]);
       if (waitingForMessages) {
         waitingForMessages = false; // TODO: more explicit
         this.setStatus(ConnectionStatus.Connected);

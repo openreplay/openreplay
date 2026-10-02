@@ -64,6 +64,28 @@ describe('DOMManager removed subtrees', () => {
     expect(manager.getNode(5)).toBeDefined();
     expect(manager.getNode(6)).toBeDefined();
   });
+
+  it('keeps a node moved into a shadow root while its old parent is removed', async () => {
+    [
+      { tp: MType.CreateDocument, time: 0 },
+      el(1, 0, 0, 'BODY'),
+      el(2, 1, 0, 'DIV'),
+      el(5, 2, 0, 'I'),
+      { tp: MType.CreateTextNode, id: 6, parentID: 5, index: 0, time: 0 },
+      el(7, 1, 1, 'MY-HOST'),
+      { tp: MType.CreateIFrameDocument, frameID: 7, id: 8, time: 0 },
+    ].forEach((m) => manager.append(m as any));
+    await manager.moveReady(0);
+
+    // the shadow root applies its insert asynchronously, after the batch
+    manager.append({ tp: MType.MoveNode, id: 5, parentID: 8, index: 0, time: 10 } as any);
+    manager.append({ tp: MType.RemoveNode, id: 2, time: 10 } as any);
+    await manager.moveReady(10);
+
+    expect(manager.getNode(2)).toBeUndefined();
+    expect(manager.getNode(5)).toBeDefined();
+    expect(manager.getNode(6)).toBeDefined();
+  });
 });
 
 describe('TabClosingManager', () => {
@@ -109,5 +131,13 @@ describe('Lists', () => {
     const back = lists.moveGetState(5);
     expect(back.logListNow).toEqual([]);
     expect(back.logMarkedCountNow).toBe(0);
+  });
+
+  it('publishes a late item inserted behind the playhead on the next move', () => {
+    const lists = new Lists({ log: [{ time: 10 }, { time: 20 }] } as any);
+    expect(lists.moveGetState(25).logListNow).toHaveLength(2);
+    expect(lists.moveGetState(26).logListNow).toBeUndefined();
+    lists.lists.log.insert({ time: 15 } as any);
+    expect(lists.moveGetState(27).logListNow).toHaveLength(3);
   });
 });

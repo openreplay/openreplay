@@ -182,6 +182,7 @@ export default class IOSMessageManager implements IMessageManager {
    * parsed and again afterwards), so it replaces what it injected last time.
    */
   public updateLists(lists: Partial<InitialLists>) {
+    if (this.disposed) return;
     const { exceptions: exceptionsList, log, frustrations } = this.lists.lists;
     const remove = (walker: typeof log | typeof frustrations, item: any) => {
       const index = walker.list.indexOf(item);

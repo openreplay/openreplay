@@ -57,7 +57,7 @@ runs:
         COBERTURA: ${{ inputs.cobertura }}
       run: |
         pipx run --spec diff-cover==10.6.0 diff-cover $COBERTURA \
-          --compare-branch=origin/dev \
+          --compare-branch="origin/${{ github.base_ref || 'dev' }}" \
           --exclude '*.gen.ts' 'version.ts' \
           --format json:diff-cov.json
 

@@ -286,8 +286,9 @@ export default class Call {
     socketId?: string;
     localPeerId?: string;
   }) {
+    let pc: RTCPeerConnection | undefined;
     try {
-      const pc = this.createPeerConnection({
+      pc = this.createPeerConnection({
         remotePeerId,
         localPeerId,
         isAgent,
@@ -309,6 +310,8 @@ export default class Call {
       }
     } catch (e: any) {
       logger.error(e);
+      // a redial replaced (and closed) this peer: its failure is not the call's
+      if (pc && this.connections[remotePeerId] !== pc) return;
       if (isAgent) {
         this.agentDisconnected(remotePeerId);
       } else {

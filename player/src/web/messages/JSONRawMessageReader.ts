@@ -40,6 +40,9 @@ export default class JSONRawMessageReader {
         return rewriteMessage(rawMsg);
       }
     }
+    // drained: don't keep the last batch alive until the next one arrives
+    this.messages = [];
+    this.p = 0;
     return null;
   }
 }

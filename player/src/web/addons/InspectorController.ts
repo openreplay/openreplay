@@ -21,10 +21,8 @@ export default class InspectorController {
   ) {
     screen.overlay.addEventListener('contextmenu', () => {
       screen.overlay.style.display = 'none';
-      const doc = screen.document;
-      if (!doc) {
-        return;
-      }
+      // the replay iframe ignores pointer events; they reach the player doc
+      const doc = screen.overlay.ownerDocument;
       const returnOverlay = () => {
         screen.overlay.style.display = 'block';
         doc.removeEventListener('mousemove', returnOverlay);

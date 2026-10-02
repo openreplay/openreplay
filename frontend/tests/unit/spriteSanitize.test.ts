@@ -49,6 +49,13 @@ describe('sprite sanitization', () => {
     expect(svg.querySelector('circle')).not.toBeNull();
   });
 
+  it('checks xlink hrefs whatever prefix the namespace is bound to', () => {
+    const svg = parseSanitizedSvg(
+      '<svg xmlns="http://www.w3.org/2000/svg" xmlns:p="http://www.w3.org/1999/xlink"><a p:href="javascript:window.__pwned=1"><circle r="1"/></a></svg>',
+    )!;
+    expect(svg.querySelector('a')!.attributes.length).toBe(0);
+  });
+
   it('rejects markup that is not SVG', () => {
     expect(parseSanitizedSvg('<div>x</div>')).toBeNull();
     expect(parseSanitizedSvg('plain text')).toBeNull();

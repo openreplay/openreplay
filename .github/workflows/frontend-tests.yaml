@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-        # Full history for the merge-base with origin/dev; blobs are fetched lazily.
+        # Full history for the merge-base with the base branch; blobs are fetched lazily.
         with:
           fetch-depth: 0
           filter: blob:none

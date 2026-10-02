@@ -2,6 +2,7 @@ import ListWalker from '../../common/ListWalker';
 import parseFrames, { FrameSnapshot } from '../../common/parseFrames';
 import unpack from '../../common/unpack';
 import unpackTar, { TarFile } from '../../common/tarball';
+import { requestTarball } from '../../web/network/loadFiles';
 
 interface Snapshots {
   [timestamp: number]: TarFile | FrameSnapshot;
@@ -36,11 +37,7 @@ export default class SnapshotManager extends ListWalker<Timestamp> {
   }
 
   public async loadTar(url: string, sessionStart: number, signal?: AbortSignal) {
-    const res = await fetch(url, { signal });
-    if (!res.ok) {
-      throw new Error(`Failed to fetch frames archive: ${res.status}`);
-    }
-    const tar = unpack(new Uint8Array(await res.arrayBuffer()));
+    const tar = unpack(await requestTarball(url, signal));
     const files = await unpackTar(tar);
     if (this.disposed) return;
     this.mapToSnapshots(files, sessionStart);

@@ -216,7 +216,10 @@ function isDangerousAnimation(el: Element): boolean {
 
 function sanitizeSvgAttributes(el: Element): void {
   for (const attr of Array.from(el.attributes)) {
-    if (!sanitizeAttribute(el.localName, attr.name, attr.value)) {
+    // any prefix can be bound to the xlink namespace (`p:href`)
+    const name =
+      attr.namespaceURI === XLINK_NS ? `xlink:${attr.localName}` : attr.name;
+    if (!sanitizeAttribute(el.localName, name, attr.value)) {
       el.removeAttributeNode(attr);
     }
   }

@@ -143,15 +143,21 @@ export default class Lists {
 
   private publishedMarkedCounts: Partial<StateMarkedCountNow> = {};
 
+  /** countNow of each list when its "now" slice was last published */
+  private publishedCounts: Partial<
+    Record<(typeof LIST_NAMES)[number], number>
+  > = {};
+
   /** Moves every list to `t`; returns only the "now" values that changed. */
   moveGetState(t: number): Partial<StateNow> {
     const state: Partial<State> = {};
     LIST_NAMES.forEach((name) => {
       const list = this.lists[name];
-      const before = list.countNow;
       list.moveGetLast(t);
-      // countNow, not the return value: moving back before the first item returns nothing
-      if (list.countNow !== before) {
+      // vs the last published count, not the one before moving: a late item
+      // inserted behind the pointer changes the slice without any move
+      if (list.countNow !== this.publishedCounts[name]) {
+        this.publishedCounts[name] = list.countNow;
         (state as Record<string, unknown>)[`${name}ListNow`] = list.listNow;
       }
     });
@@ -170,6 +176,7 @@ export default class Lists {
   resetListNowStates = (): State => {
     const state = LIST_NAMES.reduce((state, name) => {
       state[`${name}ListNow`] = [];
+      this.publishedCounts[name] = 0;
       return state;
     }, {} as Partial<StateListNow>);
     MARKED_LIST_NAMES.forEach((name) => {

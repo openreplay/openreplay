@@ -101,8 +101,18 @@ export default class MessageLoader {
         return;
       }
       if (this.signal.aborted) return;
+      let msgs: PlayerMsg[];
       try {
-        const msgs = parser.parse(data);
+        msgs = parser.parse(data);
+      } catch (e) {
+        if (isAbortError(e) || this.signal.aborted) return;
+        // same as an undecodable first file: let the caller fall back
+        if (fileNum === 1) throw e;
+        console.error(e);
+        this.uiErrorHandler?.error(`Error parsing file: ${e?.message ?? e}`);
+        return;
+      }
+      try {
         if (parser.readError && !readErrorReported) {
           readErrorReported = true;
           this.uiErrorHandler?.error('Error parsing file: unreadable message');
@@ -114,7 +124,7 @@ export default class MessageLoader {
       } catch (e) {
         if (isAbortError(e) || this.signal.aborted) return;
         console.error(e);
-        this.uiErrorHandler?.error(`Error parsing file: ${e?.message ?? e}`);
+        this.uiErrorHandler?.error(`Error processing file: ${e?.message ?? e}`);
       }
     };
   }
@@ -346,7 +356,10 @@ export default class MessageLoader {
       await domParser(secondDomData.value);
     }
     if (devtoolsData.status === 'fulfilled') {
-      await devtoolsParser(devtoolsData.value);
+      // devtools are optional: a bad file must not fail the DOM that loaded
+      await devtoolsParser(devtoolsData.value).catch((e) => {
+        if (!isAbortError(e)) console.error('Error parsing EFS devtools', e);
+      });
     }
     if (this.signal.aborted) return;
     this.store.update({ domLoading: false, devtoolsLoading: false });

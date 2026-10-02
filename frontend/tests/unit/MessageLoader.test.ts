@@ -209,6 +209,20 @@ describe('MessageLoader.createNewParser', () => {
     expect(loader.rawMessages.length).toBe(0);
   });
 
+  test('rethrows a parse failure on the first file so the caller can fall back', async () => {
+    const loader = new MessageLoader(
+      mockSession({}),
+      createStore() as any,
+      createManager() as any,
+      false,
+    );
+    readNextMock.mockImplementationOnce(() => {
+      throw new Error('bad body');
+    });
+    const parser = loader.createNewParser(false, jest.fn(), 'file');
+    await expect(parser(new Uint8Array(8).fill(0xff))).rejects.toThrow('bad body');
+  });
+
   test('stops parsing once cleaned', async () => {
     const loader = new MessageLoader(
       mockSession({}),
@@ -238,5 +252,26 @@ describe('MessageLoader.loadFiles', () => {
     await loader.loadFiles();
     expect(manager.onFileReadFailed).toHaveBeenCalled();
     expect(manager.onFileReadSuccess).not.toHaveBeenCalled();
+  });
+
+  test('an unreadable EFS devtools file does not fail the EFS dom that loaded', async () => {
+    const { loadFiles, requestEFSDom, requestEFSDevtools } = jest.requireMock(
+      '../../../player/src/web/network/loadFiles',
+    ) as any;
+    loadFiles.mockRejectedValueOnce('Bad file status code 404');
+    requestEFSDom.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    requestEFSDevtools.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    // dom file reads fine, the devtools one is broken
+    readNextMock.mockReturnValueOnce(null).mockImplementationOnce(() => {
+      throw new Error('bad devtools');
+    });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const session = mockSession({});
+    session.domURL = ['d1'];
+    const manager = createManager();
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false);
+    await loader.loadFiles();
+    expect(manager.onFileReadSuccess).toHaveBeenCalled();
+    expect(manager.onFileReadFailed).not.toHaveBeenCalled();
   });
 });
