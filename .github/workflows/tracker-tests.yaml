@@ -25,6 +25,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      actions: read
     steps:
       - uses: actions/checkout@v5
         # Full history for the merge-base with origin/dev; blobs are fetched lazily.
@@ -51,12 +52,12 @@ jobs:
           cd tracker
           bun install --frozen-lockfile
 
-      # Cobertura records absolute source roots; lcov paths are package-relative
-      # and diff-cover can't map them back to the git diff.
+      # Cobertura for diff-cover (lcov paths are package-relative and can't be
+      # mapped back to the git diff); json-summary for the totals.
       - name: Jest tests
         run: |
           cd tracker/tracker
-          bun run test:ci --coverageReporters=text --coverageReporters=cobertura
+          bun run test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
 
       - name: Building test
         run: |
@@ -73,27 +74,21 @@ jobs:
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
-          bun run test:ci --coverageReporters=text --coverageReporters=cobertura
+          bun run test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
 
       - name: (TA) Building test
         run: |
           cd tracker/tracker-assist
           bun run build
 
-      - name: Diff coverage
-        if: github.event_name == 'pull_request'
-        run: |
-          pipx run --spec diff-cover==10.6.0 diff-cover \
-            tracker/tracker/coverage/cobertura-coverage.xml \
-            tracker/tracker-assist/coverage/cobertura-coverage.xml \
-            --compare-branch=origin/dev \
-            --exclude '*.gen.ts' 'version.ts' \
-            --format markdown:diff-cov.md
-          cat diff-cov.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Comment diff coverage on PR
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: marocchino/sticky-pull-request-comment@v2
+      - name: Coverage report
+        uses: ./.github/composite-actions/coverage-report
         with:
-          header: tracker-coverage
-          path: diff-cov.md
+          name: tracker
+          title: Tracker coverage
+          cobertura: >-
+            tracker/tracker/coverage/cobertura-coverage.xml
+            tracker/tracker-assist/coverage/cobertura-coverage.xml
+          summaries: >-
+            tracker=tracker/tracker/coverage/coverage-summary.json
+            tracker-assist=tracker/tracker-assist/coverage/coverage-summary.json

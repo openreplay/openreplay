@@ -1,0 +1,78 @@
+name: 'Coverage report'
+description: 'Stores total coverage on dev pushes; on PRs posts a compact comment with dev vs PR coverage and changed-lines coverage'
+inputs:
+  name:
+    required: true
+    description: 'Key for the dev baseline artifact and the sticky PR comment'
+  title:
+    required: true
+    description: 'Comment heading'
+  cobertura:
+    required: true
+    description: 'Space-separated Cobertura reports for diff-cover'
+  summaries:
+    required: true
+    description: 'Space-separated label=path/to/coverage-summary.json pairs'
+runs:
+  using: 'composite'
+  steps:
+    - name: Collect coverage summaries
+      shell: bash
+      env:
+        SUMMARIES: ${{ inputs.summaries }}
+      run: |
+        mkdir -p coverage-summary
+        for pair in $SUMMARIES; do
+          cp "${pair#*=}" "coverage-summary/${pair%%=*}.json"
+        done
+
+    - name: Upload dev baseline
+      if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+      uses: actions/upload-artifact@v5
+      with:
+        name: ${{ inputs.name }}-coverage-summary
+        path: coverage-summary/
+        retention-days: 90
+
+    - name: Download dev baseline
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        ARTIFACT: ${{ inputs.name }}-coverage-summary
+      run: |
+        workflow=$(basename "${GITHUB_WORKFLOW_REF%%@*}")
+        run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" \
+          --branch dev --event push --status success --limit 1 \
+          --json databaseId --jq '.[0].databaseId // empty')
+        if [ -n "$run_id" ]; then
+          gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir coverage-baseline \
+            || echo "No $ARTIFACT artifact in run $run_id"
+        fi
+
+    - name: Diff coverage
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        COBERTURA: ${{ inputs.cobertura }}
+      run: |
+        pipx run --spec diff-cover==10.6.0 diff-cover $COBERTURA \
+          --compare-branch=origin/dev \
+          --exclude '*.gen.ts' 'version.ts' \
+          --format json:diff-cov.json
+
+    - name: Render report
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        TITLE: ${{ inputs.title }}
+      run: |
+        node "$GITHUB_ACTION_PATH/report.mjs" "$TITLE" diff-cov.json coverage-summary coverage-baseline > coverage-report.md
+        cat coverage-report.md >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Comment on PR
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: ${{ inputs.name }}-coverage
+        path: coverage-report.md

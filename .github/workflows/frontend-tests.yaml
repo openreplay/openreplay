@@ -6,6 +6,15 @@ on:
       - 'frontend/**'
       - 'player/**'
       - '.github/workflows/frontend-tests.yaml'
+      - '.github/composite-actions/coverage-report/**'
+  # dev pushes store the coverage baseline that PRs compare against
+  push:
+    branches: [ "dev" ]
+    paths:
+      - 'frontend/**'
+      - 'player/**'
+      - '.github/workflows/frontend-tests.yaml'
+      - '.github/composite-actions/coverage-report/**'
 
 permissions:
   contents: read
@@ -20,6 +29,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      actions: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -45,24 +55,16 @@ jobs:
         working-directory: frontend
         run: yarn --immutable
 
-      # Cobertura records absolute source roots; lcov paths are relative to
-      # frontend/ (../player/...) and diff-cover can't map them to the git diff.
+      # Cobertura for diff-cover (lcov paths are relative to frontend/ and can't be
+      # mapped back to the git diff); json-summary for the totals.
       - name: Run tests
         working-directory: frontend
-        run: yarn test:ci --coverageReporters=text --coverageReporters=cobertura
+        run: yarn test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
 
-      - name: Diff coverage
-        run: |
-          pipx run --spec diff-cover==10.6.0 diff-cover \
-            frontend/coverage/cobertura-coverage.xml \
-            --compare-branch=origin/dev \
-            --exclude '*.gen.ts' 'version.ts' \
-            --format markdown:diff-cov.md
-          cat diff-cov.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Comment diff coverage on PR
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: marocchino/sticky-pull-request-comment@v2
+      - name: Coverage report
+        uses: ./.github/composite-actions/coverage-report
         with:
-          header: ui-coverage
-          path: diff-cov.md
+          name: ui
+          title: UI coverage
+          cobertura: frontend/coverage/cobertura-coverage.xml
+          summaries: ui=frontend/coverage/coverage-summary.json
