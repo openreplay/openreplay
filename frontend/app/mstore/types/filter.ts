@@ -405,18 +405,6 @@ export default class FilterStore implements IFilterStore {
     });
   }
 
-  addWebvitalsDefaultFilters() {
-    const locationFilter = filterStore.findEvent({
-      name: FilterKey.LOCATION,
-      autoCaptured: true,
-    });
-
-    runInAction(() => {
-      this.filters = []; // Clear existing filters
-      this.addFilter(locationFilter);
-    });
-  }
-
   addOrUpdateFilter(filterData: FilterData) {
     const index = this.filters.findIndex((f) => f.key === filterData.key);
     const dataWithCheckedValue = {
