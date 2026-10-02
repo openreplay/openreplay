@@ -436,18 +436,10 @@ function cleanup() {
     MINIO_ACCESS_KEY=$(yq 'explode(.) | .global.s3.accessKey' ${OR_DIR}/vars.yaml)
     MINIO_SECRET_KEY=$(yq 'explode(.) | .global.s3.secretKey' ${OR_DIR}/vars.yaml)
     MINIO_HOST=$(yq 'explode(.) | .global.s3.endpoint' ${OR_DIR}/vars.yaml)
-    # Read minio image from vars.yaml so airgap containerd resolves digest-pinned image.
-    local minio_reg minio_repo minio_tag minio_image
-    minio_reg=$(yq 'explode(.) | .minio.image.registry // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
-    minio_repo=$(yq 'explode(.) | .minio.image.repository // "minio"' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "minio")
-    minio_tag=$(yq 'explode(.) | .minio.image.tag // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
-    if [[ -n "$minio_reg" && "$minio_reg" != "null" ]]; then
-        minio_image="${minio_reg}/${minio_repo}${minio_tag:+:${minio_tag}}"
-    elif [[ -n "$minio_tag" && "$minio_tag" != "null" ]]; then
-        minio_image="${minio_repo}:${minio_tag}"
-    else
-        minio_image="ghcr.io/openreplay/minio"
-    fi
+    # RustFS is a server image and does not contain bash or the MinIO Client.
+    # Use a dedicated S3 client image; allow air-gapped registry overrides.
+    local minio_client_image
+    minio_client_image="${MINIO_CLIENT_IMAGE:-ghcr.io/openreplay/minio:2025}"
     kubectl delete po -n "${APP_NS}" minio-cleanup &>/dev/null || true
     cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -459,7 +451,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: minio-cleanup
-    image: $minio_image
+    image: $minio_client_image
     command: ["/bin/bash"]
     args:
       - -c
