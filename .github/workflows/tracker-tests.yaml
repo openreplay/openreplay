@@ -22,8 +22,15 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     name: Build and test Tracker
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v5
+        # Full history for the merge-base with origin/dev; blobs are fetched lazily.
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -44,10 +51,12 @@ jobs:
           cd tracker
           bun install --frozen-lockfile
 
+      # Cobertura records absolute source roots; lcov paths are package-relative
+      # and diff-cover can't map them back to the git diff.
       - name: Jest tests
         run: |
           cd tracker/tracker
-          bun run test:ci
+          bun run test:ci --coverageReporters=text --coverageReporters=cobertura
 
       - name: Building test
         run: |
@@ -64,16 +73,27 @@ jobs:
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
-          bun run test:ci
+          bun run test:ci --coverageReporters=text --coverageReporters=cobertura
 
       - name: (TA) Building test
         run: |
           cd tracker/tracker-assist
           bun run build
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Diff coverage
+        if: github.event_name == 'pull_request'
+        run: |
+          pipx run --spec diff-cover==10.6.0 diff-cover \
+            tracker/tracker/coverage/cobertura-coverage.xml \
+            tracker/tracker-assist/coverage/cobertura-coverage.xml \
+            --compare-branch=origin/dev \
+            --exclude '*.gen.ts' 'version.ts' \
+            --format markdown:diff-cov.md
+          cat diff-cov.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment diff coverage on PR
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: tracker
-          name: tracker
+          header: tracker-coverage
+          path: diff-cov.md
