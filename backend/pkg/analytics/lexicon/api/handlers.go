@@ -247,7 +247,7 @@ func parseEventsPagination(q url.Values) (int, int) {
 		limit = lexicon.MaxEventsLimit
 	}
 	page := 1
-	if parsed, err := strconv.Atoi(q.Get("page")); err == nil && parsed > 0 && parsed <= math.MaxInt32/limit {
+	if parsed, err := strconv.Atoi(q.Get("page")); err == nil && parsed > 0 && parsed-1 <= math.MaxInt32/limit {
 		page = parsed
 	}
 	return limit, filters.CalculateOffset(page, limit)

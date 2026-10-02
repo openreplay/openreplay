@@ -2,26 +2,26 @@ package dashboards
 
 import (
 	"encoding/json"
+	"reflect"
+	"sort"
 	"testing"
 )
 
 func TestDashboardJSONKeys(t *testing.T) {
 	tests := []struct {
-		name    string
-		value   any
-		absent  []string
-		present []string
+		name  string
+		value any
+		keys  []string
 	}{
 		{
-			name:    "list item",
-			value:   DashboardListItem{},
-			absent:  []string{"widgets"},
-			present: []string{"dashboardId", "projectId", "name", "description", "isPublic", "isPinned", "ownerEmail", "ownerName", "createdAt"},
+			name:  "list item",
+			value: DashboardListItem{},
+			keys:  []string{"createdAt", "dashboardId", "description", "isPinned", "isPublic", "name", "ownerEmail", "ownerName", "projectId"},
 		},
 		{
-			name:    "detail response",
-			value:   GetDashboardResponse{},
-			present: []string{"widgets", "dashboardId", "name"},
+			name:  "detail response",
+			value: GetDashboardResponse{},
+			keys:  []string{"createdAt", "dashboardId", "description", "isPinned", "isPublic", "name", "ownerEmail", "ownerName", "projectId", "widgets"},
 		},
 	}
 	for _, tt := range tests {
@@ -34,15 +34,13 @@ func TestDashboardJSONKeys(t *testing.T) {
 			if err := json.Unmarshal(b, &m); err != nil {
 				t.Fatal(err)
 			}
-			for _, k := range tt.absent {
-				if _, ok := m[k]; ok {
-					t.Errorf("unexpected key %q", k)
-				}
+			got := make([]string, 0, len(m))
+			for k := range m {
+				got = append(got, k)
 			}
-			for _, k := range tt.present {
-				if _, ok := m[k]; !ok {
-					t.Errorf("missing key %q", k)
-				}
+			sort.Strings(got)
+			if !reflect.DeepEqual(got, tt.keys) {
+				t.Errorf("keys\n got %v\nwant %v", got, tt.keys)
 			}
 		})
 	}

@@ -80,7 +80,7 @@ func New(log logger.Logger, chConn driver.Conn, catalog CatalogInvalidator) Lexi
 	}
 }
 
-func buildDistinctEventsQuery(projID uint32, propertyName *string, limit, offset int) (string, []interface{}) {
+func distinctEventsSubquery(projID uint32, propertyName *string) (string, []interface{}) {
 	customizedEventsSubquery := `
 	          LEFT JOIN (
 	              SELECT project_id, event_name, auto_captured, display_name, description, status
@@ -136,6 +136,16 @@ func buildDistinctEventsQuery(projID uint32, propertyName *string, limit, offset
 	          ORDER BY ae._timestamp DESC, display_name
 	          LIMIT 1 BY ae.project_id, ae.auto_captured, ae.event_name`
 
+	return subquery, args
+}
+
+func buildDistinctEventsCountQuery(projID uint32, propertyName *string) (string, []interface{}) {
+	subquery, args := distinctEventsSubquery(projID, propertyName)
+	return `SELECT COUNT(1) FROM (` + subquery + `)`, args
+}
+
+func buildDistinctEventsQuery(projID uint32, propertyName *string, limit, offset int) (string, []interface{}) {
+	subquery, args := distinctEventsSubquery(projID, propertyName)
 	query := `SELECT COUNT(1) OVER () AS total, name, display_name, description, status, auto_captured, data_count, query_count_l30days, created_at FROM (` + subquery + `) ORDER BY sort_ts DESC, display_name, name, auto_captured`
 	if limit > 0 {
 		query += ` LIMIT ? OFFSET ?`
@@ -163,7 +173,7 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	}
 	defer rows.Close()
 
-	var events []model.LexiconEvent
+	events := []model.LexiconEvent{}
 	var total uint64
 	for rows.Next() {
 		var event model.LexiconEvent
@@ -187,6 +197,14 @@ func (e *lexiconImpl) GetDistinctEvents(ctx context.Context, projID uint32, prop
 	if err := rows.Err(); err != nil {
 		e.log.Error(ctx, "error iterating distinct event rows for project %d: %v", projID, err)
 		return nil, 0, fmt.Errorf("error processing distinct event results: %w", err)
+	}
+
+	if len(events) == 0 && limit > 0 && offset > 0 {
+		countQuery, countArgs := buildDistinctEventsCountQuery(projID, propertyName)
+		if err := e.chConn.QueryRow(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+			e.log.Error(ctx, "failed to count distinct events for project %d: %v", projID, err)
+			return nil, 0, fmt.Errorf("failed to count distinct events for project %d: %w", projID, err)
+		}
 	}
 
 	return events, total, nil

@@ -176,15 +176,11 @@ func TestBuildEventSearchQueryForProjectMultiEventGroup(t *testing.T) {
 	if len(conds) != 1 {
 		t.Fatalf("conds %v", conds)
 	}
-	got := render(t, conds[0], qp)
-	for _, want := range []string{
-		`e."$event_name" IN ('a', 'b')`,
-		wantUserCond(proj, `"$email"`, `''`, `u."$email" = 'x'`),
-		wantUserCond(proj, `"$name"`, `''`, `NOT (u."$name" ILIKE '%y%')`),
-	} {
-		if !strings.Contains(got, want) {
-			t.Errorf("missing %s\nin %s", want, got)
-		}
+	want := `(e."$event_name" IN ('a', 'b') AND (` +
+		wantUserCond(proj, `"$email"`, `''`, `u."$email" = 'x'`) + ` OR ` +
+		wantUserCond(proj, `"$name"`, `''`, `NOT (u."$name" ILIKE '%y%')`) + `))`
+	if got := render(t, conds[0], qp); got != want {
+		t.Errorf("cond\n got %s\nwant %s", got, want)
 	}
 }
 
