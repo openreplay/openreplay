@@ -432,6 +432,56 @@ function cleanup() {
         --env PGPASSWORD="$pgpassword" \
         --env PGPORT="$pgport" \
         --image "$pg_image" -- psql -c "$cleanup_query"
+    # Run clickhouse cleanup (sessions in the UI are surfaced from clickhouse)
+    ch_host=$(yq 'explode(.) | .global.clickhouse.chHost' ${OR_DIR}/vars.yaml)
+    ch_user=$(yq 'explode(.) | .global.clickhouse.username' ${OR_DIR}/vars.yaml)
+    ch_password=$(yq 'explode(.) | .global.clickhouse.password' ${OR_DIR}/vars.yaml)
+    ch_port=$(yq 'explode(.) | .global.clickhouse.service.dataPort' ${OR_DIR}/vars.yaml)
+    ch_tls=$(yq 'explode(.) | .global.clickhouse.use_tls' ${OR_DIR}/vars.yaml)
+    [[ -z $ch_host || $ch_host == "null" ]] && ch_host="clickhouse-openreplay-clickhouse.db.svc.cluster.local"
+    [[ -z $ch_user || $ch_user == "null" ]] && ch_user="default"
+    [[ -z $ch_port || $ch_port == "null" ]] && ch_port="9000"
+    ch_password_args=()
+    [[ -n $ch_password && $ch_password != "null" ]] && ch_password_args=(--password "$ch_password")
+    ch_secure_args=()
+    [[ $ch_tls == "true" ]] && ch_secure_args=(--secure)
+    ch_cleanup_queries=(
+        "ALTER TABLE experimental.sessions DELETE WHERE datetime < '${delete_from_date}'"
+        "ALTER TABLE product_analytics.events DELETE WHERE created_at < '${delete_from_date}'"
+    )
+    [[ $EE ]] && ch_cleanup_queries=(
+        "ALTER TABLE experimental.sessions DELETE WHERE datetime < '${delete_from_date}' AND session_id NOT IN (SELECT session_id FROM experimental.user_favorite_sessions)"
+        "ALTER TABLE product_analytics.events DELETE WHERE created_at < '${delete_from_date}' AND session_id NOT IN (SELECT session_id FROM experimental.user_favorite_sessions)"
+    )
+    # Read clickhouse image from vars.yaml so airgap containerd resolves digest-pinned image.
+    # Fallback to clickhouse-server for non-airgap installs that haven't set the field.
+    local ch_reg ch_repo ch_tag ch_image
+    ch_reg=$(yq 'explode(.) | .clickhouse.image.registry // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
+    ch_repo=$(yq 'explode(.) | .clickhouse.image.repository // "clickhouse/clickhouse-server"' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "clickhouse/clickhouse-server")
+    ch_tag=$(yq 'explode(.) | .clickhouse.image.tag // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
+    if [[ -n "$ch_reg" && "$ch_reg" != "null" ]]; then
+        ch_image="${ch_reg}/${ch_repo}${ch_tag:+:${ch_tag}}"
+    elif [[ -n "$ch_tag" && "$ch_tag" != "null" ]]; then
+        ch_image="${ch_repo}:${ch_tag}"
+    else
+        ch_image="${ch_repo:-clickhouse/clickhouse-server}:25.1-alpine"
+    fi
+    kubectl delete po -n "${APP_NS}" clickhouse-cleanup &>/dev/null || true
+    kubectl run clickhouse-cleanup -n "${APP_NS}" \
+        --restart=Never \
+        --image "$ch_image" -- clickhouse-client \
+        --host "$ch_host" --port "$ch_port" --user "$ch_user" \
+        "${ch_password_args[@]}" "${ch_secure_args[@]}" \
+        --query "${ch_cleanup_queries[0]}" \
+        --query "${ch_cleanup_queries[1]}"
+    # Best effort cleanup of the legacy events table (written by releases before v1.23).
+    kubectl delete po -n "${APP_NS}" clickhouse-cleanup-legacy &>/dev/null || true
+    kubectl run clickhouse-cleanup-legacy -n "${APP_NS}" \
+        --restart=Never \
+        --image "$ch_image" -- clickhouse-client \
+        --host "$ch_host" --port "$ch_port" --user "$ch_user" \
+        "${ch_password_args[@]}" "${ch_secure_args[@]}" \
+        --query "ALTER TABLE experimental.events DELETE WHERE datetime < '${delete_from_date}'" || log warn "Legacy clickhouse events table not cleaned (it may not exist on fresh installs)."
     # Run minio cleanup
     MINIO_ACCESS_KEY=$(yq 'explode(.) | .global.s3.accessKey' ${OR_DIR}/vars.yaml)
     MINIO_SECRET_KEY=$(yq 'explode(.) | .global.s3.secretKey' ${OR_DIR}/vars.yaml)
@@ -475,6 +525,7 @@ spec:
       value: "$MINIO_SECRET_KEY"
 EOF
     log info "Postgres data cleanup process initiated. Postgres will automatically vacuum deleted rows when the database is idle. This may take up a few days to free the disk space."
+    log info "Clickhouse (where sessions are surfaced from) cleanup process initiated. Clickhouse applies the deletions as background mutations, which may take a while on large tables."
     log info "Minio (where recordings are stored) cleanup process initiated."
     log info "Run ${BWHITE}openreplay -s${GREEN} to check the status of the cleanup process and available disk space."
     return
