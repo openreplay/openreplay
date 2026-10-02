@@ -34,11 +34,11 @@ func getIDFromRequest(r *http.Request, key string) (int, error) {
 	return id, nil
 }
 
-func parseWithStats(r *http.Request) bool {
+func parseWithStats(r *http.Request, def bool) bool {
 	v := r.URL.Query().Get("withStats")
 	b, err := strconv.ParseBool(v)
 	if err != nil {
-		return false
+		return def
 	}
 	return b
 }
@@ -134,7 +134,7 @@ func (e *handlersImpl) getSavedSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := e.savedSearches.Get(projectID, searchID, parseWithStats(r))
+	resp, err := e.savedSearches.Get(projectID, searchID, parseWithStats(r, true))
 	if err != nil {
 		if errors.Is(err, ErrSavedSearchNotFound) {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
@@ -203,7 +203,7 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 		order = o
 	}
 
-	withStats := parseWithStats(r)
+	withStats := parseWithStats(r, false)
 
 	searches, total, err := e.savedSearches.List(r.Context(), projectID, currentUser.ID, limit, offset, sort, order, withStats)
 	if err != nil {

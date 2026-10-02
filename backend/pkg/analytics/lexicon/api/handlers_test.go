@@ -20,8 +20,8 @@ func TestParseEventsPagination(t *testing.T) {
 		{"limit and page", "limit=25&page=3", 25, 50},
 		{"invalid page", "limit=25&page=0", 25, 0},
 		{"page beyond offset range", "limit=25&page=9223372036854775807", 25, 0},
-		{"page just beyond offset range", "limit=500&page=4294968", 500, 0},
-		{"last valid page", "limit=500&page=4294967", 500, 2147483000},
+		{"page just beyond offset range", "limit=500&page=4294969", 500, 0},
+		{"last valid page", "limit=500&page=4294968", 500, 2147483500},
 		{"clamped", "limit=9999&page=2", 500, 500},
 	}
 	for _, tt := range tests {

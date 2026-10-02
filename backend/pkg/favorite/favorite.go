@@ -13,6 +13,8 @@ import (
 	"openreplay/backend/pkg/objectstorage"
 )
 
+const toggleAttempts = 3
+
 type Favorites interface {
 	DoFavorite(ctx context.Context, projectID uint32, sessionID uint64, userID string) error
 }
@@ -44,17 +46,22 @@ func (f *favoritesImpl) DoFavorite(ctx context.Context, projectID uint32, sessio
 func (f *favoritesImpl) toggle(sessionID uint64, userID string) (bool, error) {
 	var id uint64
 	removeSQL := `DELETE FROM public.user_favorite_sessions WHERE user_id = $1 AND session_id = $2 RETURNING session_id;`
-	err := f.conn.QueryRow(removeSQL, userID, sessionID).Scan(&id)
-	if err == nil {
-		return false, nil
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return false, fmt.Errorf("failed to remove favorite: %s", err)
-	}
 	addSQL := `INSERT INTO public.user_favorite_sessions(user_id, session_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING session_id;`
-	err = f.conn.QueryRow(addSQL, userID, sessionID).Scan(&id)
-	if err == nil || errors.Is(err, pgx.ErrNoRows) {
-		return true, nil
+	for attempt := 0; attempt < toggleAttempts; attempt++ {
+		err := f.conn.QueryRow(removeSQL, userID, sessionID).Scan(&id)
+		if err == nil {
+			return false, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return false, fmt.Errorf("failed to remove favorite: %s", err)
+		}
+		err = f.conn.QueryRow(addSQL, userID, sessionID).Scan(&id)
+		if err == nil {
+			return true, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return false, fmt.Errorf("failed to add favorite: %s", err)
+		}
 	}
-	return false, fmt.Errorf("failed to add favorite: %s", err)
+	return false, fmt.Errorf("failed to toggle favorite: concurrent updates for session %d", sessionID)
 }

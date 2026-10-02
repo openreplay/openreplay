@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 	"unicode"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/logger"
 )
 
@@ -595,8 +595,6 @@ func (e *eventsImpl) GetClickMaps(projID uint32, sessID uint64, url string) ([]i
 	return response, nil
 }
 
-var likeReplacer = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
-
 func likePrefixPattern(prefix string) string {
-	return likeReplacer.Replace(prefix) + "%"
+	return filters.EscapeLikePattern(prefix) + "%"
 }

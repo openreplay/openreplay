@@ -87,6 +87,8 @@ func TestDistinctEventsQueryRunsOnClickHouse(t *testing.T) {
 		{"paged", nil, 2, 1, []string{"d", "a"}, "4"},
 		{"property unpaged", &prop, 0, 0, []string{"b", "a", "c"}, "3"},
 		{"property paged", &prop, 1, 1, []string{"a"}, "3"},
+		{"past last page", nil, 2, 10, nil, "4"},
+		{"property past last page", &prop, 2, 10, nil, "3"},
 	}
 	for _, analyzer := range []string{"0", "1"} {
 		for _, tt := range tests {
@@ -101,6 +103,9 @@ func TestDistinctEventsQueryRunsOnClickHouse(t *testing.T) {
 				}
 				var names []string
 				for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+					if line == "" {
+						continue
+					}
 					cols := strings.Split(line, "\t")
 					if len(cols) != 9 {
 						t.Fatalf("expected 9 columns, got %d: %q", len(cols), line)
@@ -112,6 +117,15 @@ func TestDistinctEventsQueryRunsOnClickHouse(t *testing.T) {
 				}
 				if !reflect.DeepEqual(names, tt.wantNames) {
 					t.Errorf("names = %v, want %v", names, tt.wantNames)
+				}
+				countQuery, countArgs := buildDistinctEventsCountQuery(1, tt.propertyName)
+				countSQL := distinctEventsSchema + inlineArgs(countQuery, countArgs) + " FORMAT TSV;"
+				countOut, err := exec.CommandContext(ctx, bin, "local", "--multiquery", "--enable_analyzer="+analyzer, "--query", countSQL).CombinedOutput()
+				if err != nil {
+					t.Fatalf("clickhouse count failed: %v\n%s", err, countOut)
+				}
+				if got := strings.TrimSpace(string(countOut)); got != tt.wantTotal {
+					t.Errorf("count = %s, want %s", got, tt.wantTotal)
 				}
 			})
 		}
