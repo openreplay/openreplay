@@ -78,6 +78,12 @@ function WidgetView({
   const [metricNotFound, setMetricNotFound] = useState(false);
   const [initialInstance, setInitialInstance] = useState();
   const isClickMap = widget.metricType === HEATMAP;
+  // keeps the chart from fetching with the placeholder widget while the preset loads
+  const [cardReady, setCardReady] = useState(
+    () =>
+      (!!metricId && metricId !== 'create') ||
+      !new URLSearchParams(location.search).get('mk'),
+  );
 
   useEffect(() => {
     const sync = async () => {
@@ -87,6 +93,7 @@ function WidgetView({
         if (!mk) return;
         const selectedCard = CARD_LIST(t).find((c) => c.key === mk) as CardType;
         if (!selectedCard) return;
+        setCardReady(false);
 
         const cardData: any = {
           metricType: selectedCard.cardType,
@@ -114,10 +121,12 @@ function WidgetView({
             } else if (f.isEvent) {
               const props = await filterStore.getEventFilters(f.id);
               const defaults = props?.filter((p) => p.defaultProperty) || [];
-              if (selectedCard.cardType === WEBVITALS) {
-                defaults[0].operator = 'isAny';
-              }
-              f.filters = defaults;
+              f.filters =
+                selectedCard.cardType === WEBVITALS
+                  ? defaults.map((d, i) =>
+                      i === 0 ? { ...d, operator: 'isAny' } : d,
+                    )
+                  : defaults;
             }
             filters.push(f);
           }
@@ -176,15 +185,13 @@ function WidgetView({
         }
 
         if (selectedCard.cardType === WEBVITALS) {
-          cardData.series = [new FilterSeries()];
           cardData.series[0].maxEvents = 1;
-          cardData.series[0].filter.addWebvitalsDefaultFilters();
         }
 
         metricStore.merge(cardData);
       }
     };
-    sync();
+    sync().finally(() => setCardReady(true));
   }, [metricId, location.search, metricStore]);
 
   useEffect(() => {
@@ -252,7 +259,7 @@ function WidgetView({
   };
 
   return (
-    <Loader loading={loading}>
+    <Loader loading={loading || !cardReady}>
       <Prompt
         when={hasChanged}
         message={(loc: any) =>
