@@ -38,12 +38,13 @@ function WebPlayer(props: any) {
       setContextValue({ player: WebPlayerInst, store: PlayerStore });
       WebPlayerInst.setOnCluster((coords) => {
         const click = filterStore.findEvent({ name: FilterKey.CLICK });
-        const normalizedXFilter = filterStore
-          .getCurrentProjectFilters()
-          .find((f) => f.name === 'normalized_x');
-        const normalizedYFilter = filterStore
-          .getCurrentProjectFilters()
-          .find((f) => f.name === 'normalized_y');
+        const projectFilters = filterStore.getCurrentProjectFilters();
+        const normalizedXFilter = projectFilters.find(
+          (f) => f.name === 'normalizedX',
+        );
+        const normalizedYFilter = projectFilters.find(
+          (f) => f.name === 'normalizedY',
+        );
         if (normalizedXFilter && normalizedYFilter) {
           // [x1, y1], [x2, y2]
           coords.forEach((set, i) => {
