@@ -1,8 +1,12 @@
-// usage: node report.mjs <title> <diff-cover.json> <current summaries dir> <baseline summaries dir>
+// usage: node report.mjs <title> <diff-cover.json> <current summaries dir> <baseline summaries dir> [base branch]
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const [title, diffFile, currentDir, baselineDir] = process.argv.slice(2);
+const [title, diffFile, currentDir, baselineDir, baseArg] = process.argv.slice(2);
+const baseRef = baseArg || 'dev';
+const hasBaseline =
+  existsSync(baselineDir) &&
+  readdirSync(baselineDir).some((f) => f.endsWith('.json'));
 
 const linesPct = (file) => {
   if (!existsSync(file)) return null;
@@ -34,4 +38,8 @@ console.log(`### ${title}
 |---|--:|--:|--:|
 ${rows.join('\n')}
 
-Changed lines vs dev: ${changed}`);
+Changed lines vs ${baseRef}: ${changed}${
+  hasBaseline
+    ? ''
+    : '\n\n_No dev baseline yet: no successful dev run has uploaded this report._'
+}`);

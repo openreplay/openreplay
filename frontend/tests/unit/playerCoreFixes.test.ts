@@ -86,6 +86,29 @@ describe('DOMManager removed subtrees', () => {
     expect(manager.getNode(5)).toBeDefined();
     expect(manager.getNode(6)).toBeDefined();
   });
+
+  it('keeps protecting a node waiting for a root that is not ready in later batches', async () => {
+    [
+      { tp: MType.CreateDocument, time: 0 },
+      el(1, 0, 0, 'BODY'),
+      el(2, 1, 0, 'DIV'),
+      el(5, 2, 0, 'I'),
+      { tp: MType.CreateTextNode, id: 6, parentID: 5, index: 0, time: 0 },
+      // never mounted, so its document root never becomes ready
+      el(9, 77, 0, 'IFRAME'),
+      { tp: MType.CreateIFrameDocument, frameID: 9, id: 10, time: 0 },
+    ].forEach((m) => manager.append(m as any));
+    await manager.moveReady(0);
+
+    manager.append({ tp: MType.MoveNode, id: 5, parentID: 10, index: 0, time: 10 } as any);
+    await manager.moveReady(10);
+    manager.append({ tp: MType.RemoveNode, id: 2, time: 20 } as any);
+    await manager.moveReady(20);
+
+    expect(manager.getNode(2)).toBeUndefined();
+    expect(manager.getNode(5)).toBeDefined();
+    expect(manager.getNode(6)).toBeDefined();
+  });
 });
 
 describe('TabClosingManager', () => {

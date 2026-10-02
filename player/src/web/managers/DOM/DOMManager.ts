@@ -104,8 +104,8 @@ export default class DOMManager extends ListWalker<Message> {
   private showVModeBadge?: () => void;
   /** Subtree roots removed during the current batch; their descendants get forgotten after it. */
   private removedRoots: VElement[] = [];
-  /** Moved into an iframe/shadow root this batch: that insert is async,
-   * so they still sit under their old parent during cleanup. */
+  /** Moved into an iframe/shadow root that isn't ready yet (maybe for several
+   * batches): until the insert applies they sit under their old parent. */
   private pendingRootInserts = new Set<VElement | VText>();
 
   constructor(params: {
@@ -253,10 +253,12 @@ export default class DOMManager extends ListWalker<Message> {
       }
     }
 
+    parent.insertChildAt(child, index);
     if (parent instanceof OnloadVRoot) {
       this.pendingRootInserts.add(child);
+      // queued after the insert above, so it runs once the child has moved
+      parent.whenReady(() => this.pendingRootInserts.delete(child));
     }
-    parent.insertChildAt(child, index);
   }
 
   private attachSpriteMap(body: VElement): void {
@@ -912,9 +914,8 @@ export default class DOMManager extends ListWalker<Message> {
    * (no longer under the removed root) by then.
    */
   private forgetRemovedSubtrees() {
-    const pending = this.pendingRootInserts;
-    this.pendingRootInserts = new Set();
     if (this.removedRoots.length === 0) return;
+    const pending = this.pendingRootInserts;
     const stack: VElement[] = this.removedRoots.filter((r) => !r.parentNode);
     this.removedRoots = [];
     while (stack.length) {

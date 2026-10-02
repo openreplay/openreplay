@@ -254,6 +254,31 @@ describe('MessageLoader.loadFiles', () => {
     expect(manager.onFileReadSuccess).not.toHaveBeenCalled();
   });
 
+  test('a broken first EFS dom file falls through to the second one', async () => {
+    const { loadFiles, requestEFSDom, requestSecondEFSDom } = jest.requireMock(
+      '../../../player/src/web/network/loadFiles',
+    ) as any;
+    loadFiles.mockRejectedValueOnce('Bad file status code 404');
+    requestEFSDom.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    requestSecondEFSDom.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    const msg = { tp: MType.SetNodeAttribute, time: 5 };
+    readNextMock
+      .mockImplementationOnce(() => {
+        throw new Error('bad first file');
+      })
+      .mockReturnValueOnce(msg)
+      .mockReturnValueOnce(null);
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const session = mockSession({});
+    session.domURL = ['d1'];
+    const manager = createManager();
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false);
+    await loader.loadFiles();
+    expect(manager.distributeMessage).toHaveBeenCalledWith(msg);
+    expect(manager.onFileReadSuccess).toHaveBeenCalled();
+    expect(manager.onFileReadFailed).not.toHaveBeenCalled();
+  });
+
   test('an unreadable EFS devtools file does not fail the EFS dom that loaded', async () => {
     const { loadFiles, requestEFSDom, requestEFSDevtools } = jest.requireMock(
       '../../../player/src/web/network/loadFiles',

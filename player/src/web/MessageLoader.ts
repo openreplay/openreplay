@@ -350,7 +350,13 @@ export default class MessageLoader {
     );
 
     if (domData.status === 'fulfilled') {
-      await domParser(domData.value);
+      try {
+        await domParser(domData.value);
+      } catch (e) {
+        // the second file alone still beats a failed load
+        if (secondDomData.status !== 'fulfilled') throw e;
+        console.error('Error parsing EFS dom', e);
+      }
     }
     if (secondDomData.status === 'fulfilled') {
       await domParser(secondDomData.value);

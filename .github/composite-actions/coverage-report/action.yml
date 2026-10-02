@@ -66,8 +66,9 @@ runs:
       shell: bash
       env:
         TITLE: ${{ inputs.title }}
+        BASE_REF: ${{ github.base_ref }}
       run: |
-        node "$GITHUB_ACTION_PATH/report.mjs" "$TITLE" diff-cov.json coverage-summary coverage-baseline > coverage-report.md
+        node "$GITHUB_ACTION_PATH/report.mjs" "$TITLE" diff-cov.json coverage-summary coverage-baseline "$BASE_REF" > coverage-report.md
         cat coverage-report.md >> "$GITHUB_STEP_SUMMARY"
 
     - name: Comment on PR
