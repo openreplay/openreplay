@@ -1,4 +1,4 @@
-urllib3==2.7.0
+urllib3==2.8.0
 requests==2.34.2
 boto3==1.43.97
 pyjwt==2.14.0
