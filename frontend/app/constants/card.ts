@@ -1,7 +1,10 @@
-import { IconNames } from 'App/components/ui/SVG';
 import { FilterKey } from 'Types/filter/filterType';
-import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
 import { TFunction } from 'i18next';
+
+import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
+import { IconNames } from 'App/components/ui/SVG';
+
+import ENV from '../../env';
 
 export interface CardType {
   title: string;
@@ -24,6 +27,14 @@ export const RETENTION = 'retention';
 export const INSIGHTS = 'insights'; // SaaS and EE
 export const PERFORMANCE = 'performance';
 export const WEBVITALS = 'webVital';
+
+const BACKEND_MAX_DASHBOARD_SERIES = 5;
+const configuredSeriesLimit = Number(ENV.DASHBOARD_SERIES_LIMIT);
+
+export const MAX_DASHBOARD_SERIES =
+  Number.isInteger(configuredSeriesLimit) && configuredSeriesLimit > 0
+    ? Math.min(configuredSeriesLimit, BACKEND_MAX_DASHBOARD_SERIES)
+    : BACKEND_MAX_DASHBOARD_SERIES;
 
 export const CATEGORIES = {
   product_analytics: 'product_analytics',
