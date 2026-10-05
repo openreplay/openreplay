@@ -200,7 +200,7 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		err = e.dashboards.AddCards(projectID, dashboardID, currentUser.ID, addCardsReq)
 		if err != nil {
 			// Log the error but don't fail the entire update operation
-			e.log.Error(r.Context(), "Failed to add cards to dashboard during update: %s", err)
+			e.log.Error(r.Context(), "Failed to add cards to dashboard during update: %v", err)
 		}
 	}
 
