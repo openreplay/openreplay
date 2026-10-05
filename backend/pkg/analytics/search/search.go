@@ -88,13 +88,13 @@ FROM experimental.sessions AS s
 	%s
 WHERE %s
 ORDER BY %s %s
-LIMIT %d OFFSET %d;`
-	viewedSessionsJoinTemplate = `ANY LEFT JOIN (
+LIMIT @limit OFFSET @offset;`
+	viewedSessionsJoin = `ANY LEFT JOIN (
 	SELECT DISTINCT session_id
 	FROM experimental.user_viewed_sessions
-	WHERE user_id    = %d
-	  AND project_id = %d
-	  AND _timestamp >= toDateTime(%d)
+	WHERE user_id    = @userId
+	  AND project_id = @projectId
+	  AND _timestamp >= toDateTime(@startSec)
 ) AS viewed_sessions ON (viewed_sessions.session_id=s.session_id)`
 )
 
@@ -134,39 +134,45 @@ type sessionsQueryComponents struct {
 	sessionsWhere   []string
 	sortField       string
 	sortOrder       string
-	limit           int
-	offset          int
 	params          *charts.Params
 }
 
-func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, req *model.SessionsSearchRequest) *sessionsQueryComponents {
-	startSec := req.StartDate / 1000
-	endSec := req.EndDate / 1000
-	offset := (req.Page - 1) * req.Limit
-
+// buildSessionsQueryComponents assembles the reusable pieces of a sessions
+// search query for the given filters. All values (project, time range, user,
+// pagination and filter values) are bound as named parameters collected in
+// the returned components' params. The main table is experimental.sessions,
+// so session filters run on its own columns; the events table is only
+// consulted through semi-join subqueries when event filters are present.
+func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, req *model.SessionsSearchRequest, filters []model.Filter, eventsOrder string, includeNegative bool) *sessionsQueryComponents {
 	qp := charts.NewParams()
-	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s", qp)
-	sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
-		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+	qp.Set("projectId", projectId)
+	qp.Set("startSec", req.StartDate/1000)
+	qp.Set("endSec", req.EndDate/1000)
+	qp.Set("userId", userId)
+	qp.Set("limit", req.Limit)
+	qp.Set("offset", (req.Page-1)*req.Limit)
+
+	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(filters, eventsOrder, "e", "s", qp)
+	sessionsWhere = append([]string{
+		"s.project_id = @projectId",
+		"s.datetime BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
 	}, sessionsWhere...)
 
 	var eventsInnerJoin string
 	var leftAntiJoin string
 
-	conds := make([]string, 0)
-
 	if len(eventsWhere) > 0 || len(filtersWhere) > 0 {
-		conds = append([]string{
-			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-		}, conds...)
+		conds := []string{
+			"e.project_id = @projectId",
+			"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
+		}
 		conds = append(conds, filtersWhere...)
 
 		if len(eventsWhere) == 1 {
 			conds = append(conds, eventsWhere[0])
 		}
 
-		joinClause := charts.BuildJoinClause(req.EventsOrder, eventsWhere)
+		joinClause := charts.BuildJoinClause(eventsOrder, eventsWhere)
 		eventsInnerJoin = fmt.Sprintf(`ANY INNER JOIN (
 		SELECT DISTINCT session_id
 		FROM product_analytics.events AS e
@@ -176,19 +182,19 @@ func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, 
 			strings.Join(conds, " AND \n"), joinClause)
 	}
 
-	if len(negativeEventsWhere) > 0 {
-		conds = append([]string{
-			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-		}, conds...)
-		conds = append(conds, negativeEventsWhere...)
+	if includeNegative && len(negativeEventsWhere) > 0 {
+		negConds := []string{
+			"e.project_id = @projectId",
+			"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
+		}
+		negConds = append(negConds, negativeEventsWhere...)
 
 		leftAntiJoin = fmt.Sprintf(`LEFT ANTI JOIN (
 		SELECT DISTINCT session_id
 		FROM product_analytics.events AS e
 		WHERE %s
 	) AS negative_sessions USING (session_id)`,
-			strings.Join(conds, " AND \n"))
+			strings.Join(negConds, " AND \n"))
 	}
 
 	sortField := sortOptions[req.Sort]
@@ -200,23 +206,19 @@ func (s *searchImpl) buildSessionsQueryComponents(projectId int, userId uint64, 
 		sortOrder = "ASC"
 	}
 
-	viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
-
 	return &sessionsQueryComponents{
 		eventsInnerJoin: eventsInnerJoin,
 		leftAntiJoin:    leftAntiJoin,
-		viewedJoin:      viewedJoin,
+		viewedJoin:      viewedSessionsJoin,
 		sessionsWhere:   sessionsWhere,
 		sortField:       sortField,
 		sortOrder:       sortOrder,
-		limit:           req.Limit,
-		offset:          offset,
 		params:          qp,
 	}
 }
 
 func (s *searchImpl) getSingleSessions(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.GetSessionsResponse, error) {
-	qc := s.buildSessionsQueryComponents(projectId, userId, req)
+	qc := s.buildSessionsQueryComponents(projectId, userId, req, req.Filters, req.EventsOrder, true)
 
 	var metasMap map[string]string = s.getMetadataColumns(projectId)
 	var metas string = ""
@@ -231,8 +233,6 @@ func (s *searchImpl) getSingleSessions(ctx context.Context, projectId int, userI
 		strings.Join(qc.sessionsWhere, " AND "),
 		qc.sortField,
 		qc.sortOrder,
-		qc.limit,
-		qc.offset,
 	)
 
 	resp := &model.GetSessionsResponse{Sessions: make([]model.Session, 0)}
@@ -252,80 +252,28 @@ func (s *searchImpl) getSingleSessions(ctx context.Context, projectId int, userI
 }
 
 func (s *searchImpl) getSeriesSessions(ctx context.Context, projectId int, userId uint64, req *model.SessionsSearchRequest) (*model.SeriesSessionsResponse, error) {
-	startSec := req.StartDate / 1000
-	endSec := req.EndDate / 1000
-	offset := (req.Page - 1) * req.Limit
-
 	response := &model.SeriesSessionsResponse{
 		Series: make([]model.SeriesSessionData, 0, len(req.Series)),
 	}
-	var metasMap map[string]string
+	metasMap := s.getMetadataColumns(projectId)
+	var metas string = ""
+	if len(metasMap) > 0 {
+		metas = "," + strings.Join(sortedMetadataColumns(metasMap), ",")
+	}
 	for i, series := range req.Series {
-		// Create a copy of the request with series-specific filters
-		seriesReq := &model.SessionsSearchRequest{
-			Filters:     series.Filter.Filters,
-			Sort:        req.Sort,
-			Order:       req.Order,
-			EventsOrder: string(series.Filter.EventsOrder),
-			Limit:       req.Limit,
-		}
+		// Each series uses its own filters and events order.
+		// LEFT ANTI JOIN (negative event filters) is not supported in the
+		// series context yet.
+		qc := s.buildSessionsQueryComponents(projectId, userId, req, series.Filter.Filters, string(series.Filter.EventsOrder), false)
 
-		qp := charts.NewParams()
-		eventsWhere, filtersWhere, _, sessionsWhere := charts.BuildWhere(seriesReq.Filters, seriesReq.EventsOrder, "e", "s", qp)
-		sessionsWhere = append([]string{fmt.Sprintf("s.project_id = %d", projectId),
-			fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-		}, sessionsWhere...)
-
-		var eventsInnerJoin string
-
-		conds := make([]string, 0, len(seriesReq.Filters)+2)
-
-		if len(eventsWhere) > 0 || len(filtersWhere) > 0 {
-			conds = append([]string{
-				fmt.Sprintf("e.project_id = %d", projectId),
-				fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-			}, conds...)
-			conds = append(conds, filtersWhere...)
-
-			if len(eventsWhere) == 1 {
-				conds = append(conds, eventsWhere[0])
-			}
-
-			joinClause := charts.BuildJoinClause(seriesReq.EventsOrder, eventsWhere)
-			eventsInnerJoin = fmt.Sprintf(`ANY INNER JOIN (
-			SELECT DISTINCT session_id
-			FROM product_analytics.events AS e
-			WHERE %s
-			%s
-		) AS fs USING (session_id)`,
-				strings.Join(conds, " AND \n"), joinClause)
-		}
-
-		sortField := sortOptions[seriesReq.Sort]
-		if sortField == "" {
-			sortField = sortOptions["datetime"]
-		}
-		sortOrder := "DESC"
-		if strings.EqualFold(seriesReq.Order, "ASC") {
-			sortOrder = "ASC"
-		}
-
-		viewedJoin := fmt.Sprintf(viewedSessionsJoinTemplate, userId, projectId, startSec)
-		metasMap = s.getMetadataColumns(projectId)
-		var metas string = ""
-		if len(metasMap) > 0 {
-			metas = "," + strings.Join(sortedMetadataColumns(metasMap), ",")
-		}
 		query := fmt.Sprintf(sessionsQuery,
 			metas,
-			eventsInnerJoin,
-			"", //LEFT ANTI JOIN not supported in series context yet
-			viewedJoin,
-			strings.Join(sessionsWhere, " AND "),
-			sortField,
-			sortOrder,
-			seriesReq.Limit,
-			offset,
+			qc.eventsInnerJoin,
+			"",
+			qc.viewedJoin,
+			strings.Join(qc.sessionsWhere, " AND "),
+			qc.sortField,
+			qc.sortOrder,
 		)
 
 		seriesData := model.SeriesSessionData{
@@ -335,7 +283,7 @@ func (s *searchImpl) getSeriesSessions(ctx context.Context, projectId int, userI
 		}
 
 		_start := time.Now()
-		if err := s.chConn.Select(ctx, &seriesData.Sessions, query, qp.Args()...); err != nil {
+		if err := s.chConn.Select(ctx, &seriesData.Sessions, query, qc.params.Args()...); err != nil {
 			if time.Since(_start) > 2*time.Second {
 				s.Logger.Warn(ctx, "Slow getSeriesSessions [series %d]: %s", i, query)
 			}
@@ -507,26 +455,30 @@ LIMIT $3 OFFSET $4`,
 const countsQuerySettings = "max_execution_time = 10, max_threads = 4, " +
 	"use_query_cache = 1, query_cache_ttl = 1800, query_cache_min_query_duration = 200"
 
+// buildCountsQuery builds the sessions/users count query. All values bind as
+// named parameters collected in qp ("@projectId", "@startSec", "@endSec" plus
+// the "@pN" filter values).
 func buildCountsQuery(projectId int, req *model.SessionsSearchRequest, qp *charts.Params) string {
-	startSec := req.StartDate / 1000
-	endSec := req.EndDate / 1000
+	qp.Set("projectId", projectId)
+	qp.Set("startSec", req.StartDate/1000)
+	qp.Set("endSec", req.EndDate/1000)
 
 	eventsWhere, filtersWhere, negativeEventsWhere, sessionsWhere := charts.BuildWhere(req.Filters, req.EventsOrder, "e", "s", qp)
 	sessionsWhere = append([]string{
-		fmt.Sprintf("s.project_id = %d", projectId),
-		fmt.Sprintf("s.datetime >= toDateTime(%d)", startSec),
-		fmt.Sprintf("s.datetime < toDateTime(%d)", endSec),
+		"s.project_id = @projectId",
+		"s.datetime >= toDateTime(@startSec)",
+		"s.datetime < toDateTime(@endSec)",
 	}, sessionsWhere...)
 
-	if sub := eventSessionsSubquery(projectId, startSec, endSec, eventsWhere, filtersWhere, req.EventsOrder); sub != "" {
+	if sub := eventSessionsSubquery(eventsWhere, filtersWhere, req.EventsOrder); sub != "" {
 		sessionsWhere = append(sessionsWhere, fmt.Sprintf("s.session_id IN (%s\n\t)", sub))
 	}
 
 	if len(negativeEventsWhere) > 0 {
 		negConds := []string{
-			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at >= toDateTime(%d)", startSec),
-			fmt.Sprintf("e.created_at < toDateTime(%d)", endSec),
+			"e.project_id = @projectId",
+			"e.created_at >= toDateTime(@startSec)",
+			"e.created_at < toDateTime(@endSec)",
 		}
 		negConds = append(negConds, negativeEventsWhere...)
 		sessionsWhere = append(sessionsWhere, fmt.Sprintf(`s.session_id NOT IN (
@@ -547,15 +499,18 @@ SETTINGS %s;`,
 	)
 }
 
-func eventSessionsSubquery(projectId int, startSec, endSec int64, eventsWhere, filtersWhere []string, eventsOrder string) string {
+// eventSessionsSubquery returns the events-table semi-join subquery for the
+// given pre-rendered conditions. It relies on the "@projectId", "@startSec"
+// and "@endSec" parameters set by its caller.
+func eventSessionsSubquery(eventsWhere, filtersWhere []string, eventsOrder string) string {
 	if len(eventsWhere) == 0 && len(filtersWhere) == 0 {
 		return ""
 	}
 
 	conds := []string{
-		fmt.Sprintf("e.project_id = %d", projectId),
-		fmt.Sprintf("e.created_at >= toDateTime(%d)", startSec),
-		fmt.Sprintf("e.created_at < toDateTime(%d)", endSec),
+		"e.project_id = @projectId",
+		"e.created_at >= toDateTime(@startSec)",
+		"e.created_at < toDateTime(@endSec)",
 	}
 	conds = append(conds, filtersWhere...)
 
@@ -609,7 +564,7 @@ func (s *searchImpl) GetSessionIds(ctx context.Context, projectId int, userId ui
 		return nil, err
 	}
 
-	qc := s.buildSessionsQueryComponents(projectId, userId, req)
+	qc := s.buildSessionsQueryComponents(projectId, userId, req, req.Filters, req.EventsOrder, true)
 
 	query := fmt.Sprintf(`
 SELECT
@@ -619,14 +574,12 @@ FROM experimental.sessions AS s
 	%s
 WHERE %s
 ORDER BY %s %s
-LIMIT %d OFFSET %d;`,
+LIMIT @limit OFFSET @offset;`,
 		qc.eventsInnerJoin,
 		qc.leftAntiJoin,
 		strings.Join(qc.sessionsWhere, " AND "),
 		qc.sortField,
 		qc.sortOrder,
-		qc.limit,
-		qc.offset,
 	)
 
 	_start := time.Now()

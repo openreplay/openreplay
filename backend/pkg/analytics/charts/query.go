@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"openreplay/backend/pkg/logger"
-	"reflect"
 	"regexp"
 	"slices"
 	"strconv"
@@ -468,31 +467,17 @@ func inClause(expr string, values []string, negate, isNumeric bool, qp *Params) 
 	return fmt.Sprintf("%s %s (%s)", expr, op, strings.Join(bound, ", "))
 }
 
-func buildStaticEventWhere(p *Payload) string {
+func buildStaticEventWhere(p *Payload, qp *Params) string {
 	conditions := []string{
 		"main.project_id = @projectId",
 		"main.created_at >= toDateTime(@startTimestamp / 1000)",
 		"main.created_at <= toDateTime(@endTimestamp / 1000)",
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
-		conditions = append(conditions, fmt.Sprintf("main.sample_key < %d", p.SampleRate))
+		qp.Set("sampleRate", p.SampleRate)
+		conditions = append(conditions, "main.sample_key < @sampleRate")
 	}
 	return strings.Join(conditions, " AND ")
-}
-
-func BuildDefaultWhere(p *Payload, tableAlias string, timeColumn ...string) []string {
-	col := "created_at"
-	if len(timeColumn) > 0 && timeColumn[0] != "" {
-		col = timeColumn[0]
-	}
-	conditions := []string{
-		fmt.Sprintf("%s.project_id = @projectId", tableAlias),
-		fmt.Sprintf("%s.%s BETWEEN toDateTime(@startTimestamp/1000) AND toDateTime(@endTimestamp/1000)", tableAlias, col),
-	}
-	if p.SampleRate > 0 && p.SampleRate < 100 {
-		conditions = append(conditions, fmt.Sprintf("%s.sample_key < %d", tableAlias, p.SampleRate))
-	}
-	return conditions
 }
 
 func getStepSize(startTimestamp uint64, endTimestamp uint64, density int, factor int) uint64 {
@@ -548,25 +533,38 @@ func reverseNegativeFilter(f model.Filter) model.Filter {
 	}
 	return f
 }
-func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string, qp *Params, isSessionJoin ...bool) (events, eventFilters, negativeEventFilters, sessionFilters []string) {
+
+// BuildWhere splits filters into per-table condition groups. The generated
+// SQL only carries "@pN" placeholders; the values accumulate in qp and are
+// bound when the query is executed.
+//
+// When preferEventColumns is true, session-level filters that have an
+// equivalent column on product_analytics.events (see sessionColumnsOnEvents)
+// are rendered on eventsAlias and returned in eventFilters, so queries whose
+// main table is the events table do not need a join with
+// experimental.sessions for them. Only session-only filters (duration,
+// platform, user_device, rev_id, metadata, issue, ...) are then returned in
+// sessionFilters.
+func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, sessionsAlias string, qp *Params, preferEventColumns ...bool) (events, eventFilters, negativeEventFilters, sessionFilters []string) {
 	events = make([]string, 0)
 	eventFilters = make([]string, 0)
 	negativeEventFilters = make([]string, 0)
 	sessionFilters = make([]string, 0)
-	//sessionColumns := GetSessionColumns(len(isSessionJoin) > 0 && isSessionJoin[0])
+	sessionFiltersOnEvents := len(preferEventColumns) > 0 && preferEventColumns[0]
 
-	var sessionFiltersList, eventFiltersList, negativeEvents []model.Filter
+	var sessionFiltersList, sessionFiltersOnEventsList, eventFiltersList, negativeEvents []model.Filter
 	for _, f := range filters {
 		// Not all !f.IsEvent are from sessions, because UI can send a $properties filter without specifying an event (global properties filters)
 		var isEvent bool = f.IsEvent
 		if !f.IsEvent {
-			filterName := f.Name
-			if f.AutoCaptured {
-				filterName = CamelToSnake(f.Name)
-			}
+			filterName := sessionFilterName(f)
 
 			if _, ok := SessionColumns[filterName]; ok || f.AutoCaptured && IsMetadataColumn(filterName) {
-				sessionFiltersList = append(sessionFiltersList, f)
+				if sessionFiltersOnEvents && CanRunOnEventsTable(f) {
+					sessionFiltersOnEventsList = append(sessionFiltersOnEventsList, f)
+				} else {
+					sessionFiltersList = append(sessionFiltersList, f)
+				}
 			} else {
 				isEvent = true
 			}
@@ -589,6 +587,7 @@ func BuildWhere(filters []model.Filter, eventsOrder string, eventsAlias, session
 	}, qp)
 	events = append(events, evConds...)
 	eventFilters = append(eventFilters, misc...)
+	eventFilters = append(eventFilters, BuildSessionConditionsOnEvents(sessionFiltersOnEventsList, eventsAlias, qp)...)
 
 	nevConds, _, _ := BuildEventConditions(negativeEvents, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
@@ -735,41 +734,13 @@ func FilterOutTypes(filters []model.Filter, typesToRemove []string) (kept []mode
 	return
 }
 
-func isSlice(v interface{}) bool {
-	return reflect.TypeOf(v).Kind() == reflect.Slice
-}
+// convertParams converts a name -> value map into clickhouse driver arguments.
 func convertParams(params map[string]any) []interface{} {
 	chParams := make([]interface{}, 0, len(params))
 	for k, v := range params {
-		//if isSlice(v) {
-		//	stringSlice := v.([]string)
-		//	if len(stringSlice) == 0 {
-		//		v = 0
-		//		continue
-		//	}
-		//	v = "['" + strings.Join(stringSlice, "', '") + "']"
-		//} else {
-		//	v = fmt.Sprintf("%v", v) // Convert non-slice values to string
-		//}
-		//chParams = append(chParams, clickhouse.Named(k, v.(string)))
 		chParams = append(chParams, clickhouse.Named(k, v))
 	}
 	return chParams
-
-}
-
-func GetSessionColumns(join ...bool) map[string][]string {
-	if len(join) > 0 && join[0] {
-		keys := []string{"user_id", "user_anonymous_id", "user_device", "platform",
-			"user_browser", "user_os", "user_os_version", "user_browser_version",
-			"user_country", "user_state", "user_city", "referrer"}
-		out := make(map[string][]string, len(keys))
-		for _, k := range keys {
-			out[k] = SessionColumns[k]
-		}
-		return out
-	}
-	return SessionColumns
 }
 
 func BuildEventsJoinClause(eventsOrder model.EventOrder, eventConditions []string, tableAlias string) (string, []string, error) {
