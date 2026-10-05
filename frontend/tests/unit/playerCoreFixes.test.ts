@@ -15,6 +15,10 @@ const el = (id: number, parentID: number, index: number, tag: string, time = 0) 
   time,
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('DOMManager removed subtrees', () => {
   let frame: HTMLIFrameElement;
   let manager: DOMManager;
@@ -38,7 +42,6 @@ describe('DOMManager removed subtrees', () => {
 
   afterEach(() => {
     frame.remove();
-    jest.restoreAllMocks();
   });
 
   it('forgets descendants of a removed node but keeps ones moved out in the same batch', async () => {
@@ -109,6 +112,22 @@ describe('DOMManager removed subtrees', () => {
     expect(manager.getNode(5)).toBeDefined();
     expect(manager.getNode(6)).toBeDefined();
   });
+
+  it('releases nodes waiting for a root that never got ready on a new document', async () => {
+    [
+      { tp: MType.CreateDocument, time: 0 },
+      el(1, 0, 0, 'BODY'),
+      el(5, 1, 0, 'I'),
+      el(9, 77, 0, 'IFRAME'),
+      { tp: MType.CreateIFrameDocument, frameID: 9, id: 10, time: 0 },
+      { tp: MType.MoveNode, id: 5, parentID: 10, index: 0, time: 10 },
+      { tp: MType.CreateDocument, time: 20 },
+    ].forEach((m) => manager.append(m as any));
+    await manager.moveReady(10);
+    expect((manager as any).pendingRootInserts.size).toBe(1);
+    await manager.moveReady(20);
+    expect((manager as any).pendingRootInserts.size).toBe(0);
+  });
 });
 
 describe('TabClosingManager', () => {
@@ -117,10 +136,13 @@ describe('TabClosingManager', () => {
     m.append({ tabId: 'a', time: 30 });
     m.append({ tabId: 'b', time: 200 });
     expect(m.moveReady(300)).toBe('b');
-    expect(m.moveReady(60)).toBeTruthy();
+    expect(m.moveReady(60)).toBe('a');
     expect(Array.from(m.closedTabs)).toEqual(['a']);
     expect(m.moveReady(61)).toBeNull();
     expect(Array.from(m.closedTabs)).toEqual(['a']);
+    // rewinding before every close still tells the caller to redraw
+    expect(m.moveReady(10)).toBe('reset');
+    expect(m.closedTabs.size).toBe(0);
   });
 });
 
@@ -134,7 +156,6 @@ describe('HookManager', () => {
     const log = jest.spyOn(console, 'log').mockImplementation(() => {});
     expect(h.moveReady(5)).toBe(true);
     expect(log).toHaveBeenCalledWith('TRIGGER:LOCATION_url:a');
-    log.mockRestore();
   });
 });
 

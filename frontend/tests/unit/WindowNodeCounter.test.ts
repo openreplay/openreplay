@@ -63,6 +63,19 @@ describe('WindowNodeCounter', () => {
     expect(c.count).toBe(0);
   });
 
+  test('ignores a move under the node itself or its own subtree', () => {
+    const c = new WindowNodeCounter();
+    add(c, 1, 0);
+    add(c, 2, 1);
+    add(c, 3, 2);
+    expect(c.moveNode({ id: 1, parentID: 3, time: 0 })).toBe(false);
+    expect(c.moveNode({ id: 1, parentID: 1, time: 0 })).toBe(false);
+    expect(c.count).toBe(3);
+    // the tree is still intact
+    c.removeNode({ id: 1 });
+    expect(c.count).toBe(0);
+  });
+
   test('removed subtrees are forgotten, so their ids can be reused', () => {
     const c = new WindowNodeCounter();
     add(c, 1, 0);

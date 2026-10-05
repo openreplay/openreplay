@@ -104,6 +104,10 @@ export default class WindowNodeCounter {
       );
       return false;
     }
+    // a move under its own subtree (stale order within a mutation) would make bubbleCount loop forever
+    for (let p: NodeCounter | null = parent; p; p = p.parent) {
+      if (p === node) return false;
+    }
     node.moveTo(parent);
     return true;
   }

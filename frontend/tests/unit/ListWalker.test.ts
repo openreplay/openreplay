@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import ListWalker from '../../../player/src/common/ListWalker';
 import type { Timed } from '../../../player/src/common/types';
 
@@ -11,7 +11,10 @@ describe('ListWalker', () => {
 
   beforeEach(() => {
     walker = new ListWalker<Item>([]);
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   test('append keeps order and inserts out-of-order items by time', () => {
@@ -24,7 +27,6 @@ describe('ListWalker', () => {
     walker.append({ time: 0 });
     expect(walker.list.map((i) => i.time)).toEqual([0, 1, 2, 3]);
     expect(warn.mock.calls.length).toBe(1);
-    warn.mockRestore();
   });
 
   test('insert before the pointer keeps the current item', () => {

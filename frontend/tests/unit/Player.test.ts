@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import SimpleStore from '../../../player/src/common/SimpleStore';
 import Player, { SPEED_OPTIONS } from '../../../player/src/player/Player';
 
@@ -16,6 +16,8 @@ class DummyMM {
   sortDomRemoveMessages = jest.fn();
 }
 
+const players: Player[] = [];
+
 function createPlayer(overrides: Record<string, any> = {}) {
   const state = new SimpleStore({
     ...Player.INITIAL_STATE,
@@ -26,11 +28,19 @@ function createPlayer(overrides: Record<string, any> = {}) {
   });
   const mm = new DummyMM();
   const player = new Player(state as any, mm as any);
+  players.push(player);
   return { player, state, mm };
 }
 
 beforeEach(() => {
   localStorage.clear();
+});
+
+// also runs after a failed expect
+afterEach(() => {
+  jest.restoreAllMocks();
+  players.splice(0).forEach((p) => p.clean());
+  jest.useRealTimers();
 });
 
 describe('Player speed controls', () => {
@@ -121,7 +131,6 @@ describe('Player lifecycle', () => {
     state.update({ ready: true });
     jest.advanceTimersByTime(1000);
     expect(state.get().playing).toBe(false);
-    jest.useRealTimers();
   });
 
   it('an explicit pause during a click hold cancels the resume', () => {
@@ -132,7 +141,6 @@ describe('Player lifecycle', () => {
     player.pause();
     jest.advanceTimersByTime(1000);
     expect(state.get().playing).toBe(false);
-    jest.useRealTimers();
   });
 
   it('clean stops retries and removes the autoplay listener', () => {
@@ -145,15 +153,13 @@ describe('Player lifecycle', () => {
     expect(state.get().playing).toBe(false);
     expect(mm.clean).toHaveBeenCalled();
     expect(removeSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
-    removeSpy.mockRestore();
-    jest.useRealTimers();
   });
 });
 
 describe('Player frame loop', () => {
   it('a click hold triggered from move() stops the running loop', () => {
     let frames: Array<(t: number) => void> = [];
-    const raf = jest
+    jest
       .spyOn(window, 'requestAnimationFrame')
       .mockImplementation((cb: any) => {
         frames.push(cb);
@@ -181,6 +187,5 @@ describe('Player frame loop', () => {
     run(48);
     expect(frames.length).toBe(0);
     expect(state.get().time).toBe(timeAtHold);
-    raf.mockRestore();
   });
 });

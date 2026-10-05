@@ -141,6 +141,28 @@ export default class AssistManager {
     return `${this.session.projectKey}-${this.session.sessionId}`;
   }
 
+  private socketCloseTimeout: ReturnType<typeof setTimeout> | undefined;
+
+  // the tracker streams to every connected agent; don't keep it busy for an idle background tab
+  private onVisChange = () => {
+    clearTimeout(this.socketCloseTimeout);
+    if (document.hidden) {
+      this.socketCloseTimeout = setTimeout(() => {
+        const { calling, remoteControl, recordingState } = this.store.get();
+        if (
+          document.hidden &&
+          calling === CallingState.NoCall &&
+          remoteControl === RemoteControlStatus.Disabled &&
+          recordingState === SessionRecordingStatus.Off
+        ) {
+          this.socket?.close();
+        }
+      }, 30000);
+    } else if (this.socket && !this.socket.active) {
+      this.socket.open();
+    }
+  };
+
   private socket: Socket | null = null;
 
   private disconnectTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -210,8 +232,9 @@ export default class AssistManager {
     });
     socket.on('disconnect', (reason) => {
       waitingForMessages = true;
+      // socket.io only reconnects by itself after transport-level drops
       this.setStatus(
-        reason === 'io client disconnect'
+        reason === 'io client disconnect' || reason === 'io server disconnect'
           ? ConnectionStatus.Closed
           : ConnectionStatus.Connecting,
       );
@@ -381,6 +404,7 @@ export default class AssistManager {
       socket,
     );
 
+    document.addEventListener('visibilitychange', this.onVisChange);
   }
 
   private getIceServers = () => {
@@ -460,5 +484,7 @@ export default class AssistManager {
     this.socket = null;
     this.clearDisconnectTimeout();
     this.clearInactiveTimeout();
+    clearTimeout(this.socketCloseTimeout);
+    document.removeEventListener('visibilitychange', this.onVisChange);
   }
 }

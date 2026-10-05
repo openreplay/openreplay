@@ -410,6 +410,7 @@ export default class DOMManager extends ListWalker<Message> {
         const vDoc = OnloadVRoot.fromDocumentNode(doc);
         vDoc.insertChildAt(vHTMLElement, 0);
         this.olVRoots.clear();
+        this.pendingRootInserts.clear();
         this.olVRoots.set(0, vDoc); // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
         // Maybetodo: start Document as 0-node in tracker

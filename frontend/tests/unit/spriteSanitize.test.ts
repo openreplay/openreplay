@@ -3,7 +3,7 @@
  * it is untrusted: it must never reach an innerHTML sink and must lose anything that
  * can run script before it is imported into any document.
  */
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest, afterEach } from '@jest/globals';
 import {
   parseSanitizedSvg,
   parseSanitizedSvgContent,
@@ -40,6 +40,10 @@ function assertClean(root: Element) {
   }
 }
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('sprite sanitization', () => {
   it('strips script-capable content from recorded SVG', () => {
     const svg = parseSanitizedSvg(PAYLOAD)!;
@@ -74,7 +78,9 @@ describe('sprite sanitization', () => {
   it('sprite host imports sanitized nodes instead of parsing HTML', () => {
     const host = new VSpriteMap('svg', true, 0, 0);
     host.setContent(`<symbol id="s1">${XHTML_IMG}<path d="M0 0"/></symbol>`);
+    const setInnerHTML = jest.spyOn(Element.prototype, 'innerHTML', 'set');
     host.applyChanges();
+    expect(setInnerHTML).not.toHaveBeenCalled();
     const node = host.node;
     expect(node.querySelector('#s1 path')).not.toBeNull();
     expect(node.querySelector('img')).toBeNull();

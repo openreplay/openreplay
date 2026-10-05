@@ -219,6 +219,14 @@ describe('MobFileParser', () => {
     );
     expect(msgs[0]).toMatchObject({ tp: MType.MobileEvent, time: 600 });
   });
+
+  test('mobile files are read as v1 even with a v2 header', () => {
+    const p = new MobFileParser(1000, { mobile: true });
+    const msgs = p.parse(
+      bytes(V2_HEADER, [MType.MobileEvent, ...uint(1600), ...uint(0), ...str('n'), ...str('p')]),
+    );
+    expect(msgs[0]).toMatchObject({ tp: MType.MobileEvent, time: 600 });
+  });
 });
 
 describe('JSONRawMessageReader', () => {
@@ -237,6 +245,7 @@ describe('loadFiles', () => {
   const realFetch = window.fetch;
   afterEach(() => {
     window.fetch = realFetch;
+    jest.useRealTimers();
   });
 
   const ok = () =>
@@ -248,13 +257,31 @@ describe('loadFiles', () => {
   });
 
   test('retries network failures', async () => {
+    jest.useFakeTimers();
     const fetchMock = jest
       .fn<typeof fetch>()
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
       .mockResolvedValueOnce(ok());
     window.fetch = fetchMock;
     const onData = jest.fn();
-    await loadFiles(['u1'], onData);
+    const loading = loadFiles(['u1'], onData);
+    await jest.advanceTimersByTimeAsync(300);
+    await loading;
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onData).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([503, 408, 429])('retries a transient %i status', async (status) => {
+    jest.useFakeTimers();
+    const fetchMock = jest
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce({ status, url: 'u' } as Response)
+      .mockResolvedValueOnce(ok());
+    window.fetch = fetchMock;
+    const onData = jest.fn();
+    const loading = loadFiles(['u1'], onData);
+    await jest.advanceTimersByTimeAsync(300);
+    await loading;
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(onData).toHaveBeenCalledTimes(1);
   });
@@ -268,17 +295,21 @@ describe('loadFiles', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  test('passes the abort signal and stops on abort', async () => {
+  test('passes the abort signal and stops when aborted during a retry backoff', async () => {
+    jest.useFakeTimers();
     const controller = new AbortController();
-    const fetchMock = jest.fn<typeof fetch>((_, init) => {
-      expect(init?.signal).toBe(controller.signal);
-      controller.abort();
-      return Promise.reject(new DOMException('Aborted', 'AbortError'));
-    });
+    const fetchMock = jest
+      .fn<typeof fetch>()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValue(ok());
     window.fetch = fetchMock;
-    await expect(
+    const loading = expect(
       loadFiles(['u1'], jest.fn(), false, controller.signal),
     ).rejects.toMatchObject({ name: 'AbortError' });
+    await jest.advanceTimersByTimeAsync(100);
+    controller.abort();
+    await loading;
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1]?.signal).toBe(controller.signal);
   });
 });

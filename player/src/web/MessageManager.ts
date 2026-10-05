@@ -320,7 +320,7 @@ export default class MessageManager {
     this.tabCloseManager = new TabClosingManager();
     this.hookManager = new HookManager();
     this.hookManager.setTypes(HOOK_TYPES);
-    this.connectionInfoManger.reset();
+    this.connectionInfoManger = new ConnectionManager();
     this.tabChangeEvents = [];
     this.lastT = 0;
 
@@ -632,6 +632,8 @@ export default class MessageManager {
   clean() {
     this.mouseMoveManager.destroy();
     Object.values(this.tabs).forEach((tab) => tab.destroy());
+    // a publish still queued from the last batch must not bring the old value back
+    this.lastMessageTime = 0;
     this.state.update(MessageManager.INITIAL_STATE);
   }
 }

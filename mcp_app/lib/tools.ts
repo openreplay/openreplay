@@ -981,6 +981,7 @@ export function registerUITools(server: McpServer, resourceUri: string) {
           // Present when the instance has file encryption enabled; the UI needs
           // it to decrypt each mob file before parsing.
           fileKey: replay.fileKey,
+          trackerVersion: replay.trackerVersion,
         };
 
         return {
@@ -1052,6 +1053,7 @@ export function registerInternalTools(server: McpServer) {
               startTs: replay.startTs,
               duration: replay.duration,
               fileKey: replay.fileKey,
+              trackerVersion: replay.trackerVersion,
             }),
           }],
         };

@@ -301,7 +301,8 @@ export default class TabSessionManager {
           );
           this.canvasManagers[managerId] = {
             manager,
-            start: msg.timestamp,
+            // same clock as canvasReplayWalker, which restarts the manager
+            start: msg.time,
             running: false,
           };
           this.canvasReplayWalker.append(msg);
@@ -540,7 +541,7 @@ export default class TabSessionManager {
     if (t < this.lastMoveTime) {
       // canvases that start after the new position restart when playback reaches them
       Object.values(this.canvasManagers).forEach((entry) => {
-        if (entry.running && entry.start - this.sessionStart > t) {
+        if (entry.running && entry.start > t) {
           entry.running = false;
           entry.manager.reset();
         }
@@ -589,12 +590,14 @@ export default class TabSessionManager {
    * */
   public sortDomRemoveMessages = (msgs: Message[]) => {
     const headChildrenMsgIds = new Set<number>();
+    let indexed = false;
     msgs.forEach((m) => {
       // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
       if (m.parentID === 1) headChildrenMsgIds.add(m.id);
+      if ((m as { _index?: number })._index !== undefined) indexed = true;
     });
-    // the comparator only ever reorders removals of <head> children
-    if (headChildrenMsgIds.size === 0) return;
+    // with no <head> children the comparator is a no-op; only the _index tiebreak (indexed v1 files) still reorders
+    if (headChildrenMsgIds.size === 0 && !indexed) return;
     this.pagesManager.sortPages((m1, m2) => {
       if (m1.time === m2.time) {
         if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {

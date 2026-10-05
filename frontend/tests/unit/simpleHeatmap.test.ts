@@ -195,9 +195,9 @@ describe('getCanvasDownscale', () => {
   });
 
   test('caps the longest side and the total area', () => {
-    const tall = getCanvasDownscale(1440, 40000);
-    expect(40000 * tall).toBeLessThanOrEqual(16384);
-    const huge = getCanvasDownscale(8000, 8000);
-    expect(8000 * huge * 8000 * huge).toBeLessThanOrEqual(24_000_000 + 1);
+    expect(getCanvasDownscale(1440, 40000)).toBeCloseTo(16384 / 40000);
+    expect(getCanvasDownscale(8000, 8000)).toBeCloseTo(
+      Math.sqrt(24_000_000 / 64_000_000),
+    );
   });
 });

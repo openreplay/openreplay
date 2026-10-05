@@ -28,6 +28,7 @@ export async function fetchAndParseMobFiles(
   startTs: number,
   callServerTool: CallServerTool,
   fileKey?: string,
+  trackerVersion?: string,
 ): Promise<{ messages: any[]; error?: string; expired?: boolean }> {
   const errors: string[] = [];
   const allMessages: any[] = [];
@@ -37,7 +38,7 @@ export async function fetchAndParseMobFiles(
   // Single parser instance across all batches — format detected from the
   // first file, reader state shared across continuation files (dom.mobs +
   // dom.mobe). Mirrors MessageLoader's per-session parser pipeline.
-  const parser = new MobFileParser(startTs);
+  const parser = new MobFileParser(startTs, { trackerVersion });
 
   for (let i = 0; i < fileUrls.length; i++) {
     const url = fileUrls[i];

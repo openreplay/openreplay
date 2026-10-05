@@ -87,6 +87,8 @@ export default class Lists {
     }, {} as Partial<StateList>) as StateList;
   }
 
+  private publishedMarkedCounts: Partial<StateMarkedCountNow> = {};
+
   /** countNow of each list when its "now" slice was last published */
   private publishedCounts: Partial<
     Record<(typeof LIST_NAMES)[number], number>
@@ -107,7 +109,12 @@ export default class Lists {
     });
     // read after walking, otherwise the counts lag one move behind
     MARKED_LIST_NAMES.forEach((name) => {
-      state[`${name}MarkedCountNow`] = this.lists[name].markedCountNow;
+      const key = `${name}MarkedCountNow` as const;
+      const count = this.lists[name].markedCountNow;
+      if (this.publishedMarkedCounts[key] !== count) {
+        this.publishedMarkedCounts[key] = count;
+        state[key] = count;
+      }
     });
     return state;
   }
@@ -120,7 +127,9 @@ export default class Lists {
       this.publishedCounts[name] = this.lists[name].countNow;
     });
     MARKED_LIST_NAMES.forEach((name) => {
-      state[`${name}MarkedCountNow`] = this.lists[name].markedCountNow;
+      const key = `${name}MarkedCountNow` as const;
+      state[key] = this.publishedMarkedCounts[key] =
+        this.lists[name].markedCountNow;
     });
     return state as StateNow;
   }

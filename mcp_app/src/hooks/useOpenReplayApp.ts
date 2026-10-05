@@ -19,6 +19,7 @@ interface AppState {
     sessionId: string;
     siteId: string;
     fileKey?: string;
+    trackerVersion?: string;
   } | null;
   showAuthOverlay: boolean;
   authError: string | null;
@@ -158,6 +159,7 @@ export function useOpenReplayApp() {
               sessionId: data.sessionId,
               siteId: data.siteId,
               fileKey: data.fileKey,
+              trackerVersion: data.trackerVersion,
             },
             showAuthOverlay: false,
             authError: null,

@@ -18,7 +18,7 @@ export type PerformanceChartPoint = {
 export default class IOSPerformanceTrackManager extends ListWalker<
   MobilePerformanceEvent
 > {
-  private chart: Array<PerformanceChartPoint> = [];
+  private chart = new ListWalker<PerformanceChartPoint>();
 
   private isInBg = false;
 
@@ -26,17 +26,6 @@ export default class IOSPerformanceTrackManager extends ListWalker<
     cpu: null,
     memory: null,
   };
-
-  private pushPoint(point: PerformanceChartPoint) {
-    const { chart } = this;
-    if (!chart.length || chart[chart.length - 1].time <= point.time) {
-      chart.push(point);
-      return;
-    }
-    let i = chart.length;
-    while (i > 0 && chart[i - 1].time > point.time) i--;
-    chart.splice(i, 0, point);
-  }
 
   append(msg: MobilePerformanceEvent): void {
     if (!SUPPORTED_TYPES.has(msg.name)) {
@@ -51,7 +40,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<
       const isBackground = msg.value === 1;
       if (isBackground === this.isInBg) return;
       this.isInBg = isBackground;
-      this.pushPoint({
+      this.chart.insert({
         time: msg.time,
         cpu: null,
         memory: null,
@@ -70,7 +59,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<
       this.lastData.cpu = cpu;
     }
 
-    this.pushPoint({
+    this.chart.insert({
       time: msg.time,
       cpu,
       memory,
@@ -80,6 +69,6 @@ export default class IOSPerformanceTrackManager extends ListWalker<
   }
 
   get chartData(): Array<PerformanceChartPoint> {
-    return this.chart;
+    return this.chart.list;
   }
 }

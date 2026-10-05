@@ -264,6 +264,7 @@ function App() {
             sessionId={state.replayData.sessionId}
             siteId={state.replayData.siteId}
             fileKey={state.replayData.fileKey}
+            trackerVersion={state.replayData.trackerVersion}
             callServerTool={callServerTool}
             app={app}
             onBack={
