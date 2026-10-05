@@ -2,9 +2,15 @@ import logger from '../../logger';
 import ListWalker from '../../common/ListWalker';
 
 import { Message, MType } from '../messages';
+import type { StringDict, StringDictGlobal } from '../messages';
 
 import type Screen from '../Screen/Screen';
 import DOMManager from './DOM/DOMManager';
+
+const GLOBAL_DICT_TYPES = new Set<number>([
+  MType.StringDict,
+  MType.StringDictGlobal,
+]);
 
 export default class PagesManager extends ListWalker<DOMManager> {
   private currentPage: DOMManager | null = null;
@@ -16,7 +22,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
    */
   private stringDicts: Record<number, string>[] = [{}];
 
-  private globalDictionary: Map<string, string> = new Map();
+  private globalDictionary: Map<string | number, string> = new Map();
 
   constructor(
     private screen: Screen,
@@ -37,8 +43,9 @@ export default class PagesManager extends ListWalker<DOMManager> {
   };
 
   appendMessage(m: Message): void {
-    if ([MType.StringDict, MType.StringDictGlobal].includes(m.tp)) {
-      this.globalDictionary.set(m.key, m.value);
+    if (GLOBAL_DICT_TYPES.has(m.tp)) {
+      const dict = m as StringDict | StringDictGlobal;
+      this.globalDictionary.set(dict.key, dict.value);
       return;
     }
     if (m.tp === MType.StringDictDeprecated) {
@@ -52,6 +59,11 @@ export default class PagesManager extends ListWalker<DOMManager> {
       return;
     }
     if (m.tp === MType.CreateDocument) {
+      if (this.last && m.time < this.last.time) {
+        // pages must stay append-only: messages always go to the newest page
+        logger.warn('Out of order CreateDocument, skipping:', m);
+        return;
+      }
       if (!this.falseOrder) {
         this.stringDicts.unshift({});
       }
@@ -64,7 +76,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
           time: m.time,
           setCssLoading: this.setCssLoading,
           globalDict: {
-            get: (key: string) => this.globalDictionary.get(key),
+            get: (key: string | number) => this.globalDictionary.get(key),
             all: () => Object.fromEntries(this.globalDictionary),
           },
           virtualMode: this.virtualMode,

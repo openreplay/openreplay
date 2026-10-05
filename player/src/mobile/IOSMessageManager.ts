@@ -78,12 +78,22 @@ export interface State extends ScreenState, ListsState {
   orientation: 'portrait' | 'landscapeLeft' | 'landscapeRight';
 }
 
-const userEvents = [
+const userEvents = new Set<number>([
   MType.MobileSwipeEvent,
   MType.MobileClickEvent,
   MType.MobileInputEvent,
   MType.MobileScreenChanges,
-];
+]);
+const performanceStats = new Set(['background', 'memoryUsage', 'mainThreadCPU']);
+const performanceWarningsSet = new Set(performanceWarnings);
+/** Recorded but not replayed yet. */
+const IGNORED_TYPES = new Set<number>([
+  MType.MobileBatchMeta,
+  MType.MobileScreenChanges,
+  MType.MobileInputEvent,
+  MType.MobileInternalError,
+  MType.MobileIssueEvent,
+]);
 
 export default class IOSMessageManager implements IMessageManager {
   static INITIAL_STATE: State = {
@@ -128,6 +138,19 @@ export default class IOSMessageManager implements IMessageManager {
     time: number;
   }>();
 
+  private lastMessageTimeScheduled = false;
+
+  private disposed = false;
+
+  private dimensions?: Parameters<TouchManager['updateDimensions']>[0];
+
+  /** Session-level items injected by updateLists, replaced (not duplicated) on every call. */
+  private injectedExceptions: any[] = [];
+
+  private injectedFrustrations: any[] = [];
+
+  private warnedTypes = new Set<number>();
+
   constructor(
     private readonly session: Record<string, any>,
     private readonly state: Store<State & { time: number }>,
@@ -150,24 +173,39 @@ export default class IOSMessageManager implements IMessageManager {
     sourceWidth?: number;
     sourceHeight?: number;
   }) {
+    this.dimensions = dimensions;
     this.touchManager.updateDimensions(dimensions);
   }
 
+  /**
+   * Called by the UI whenever session data changes (possibly before any file is
+   * parsed and again afterwards), so it replaces what it injected last time.
+   */
   public updateLists(lists: Partial<InitialLists>) {
-    const { exceptions } = lists;
-    exceptions?.forEach((e) => {
-      this.lists.lists.exceptions.insert(e);
-      this.lists.lists.log.insert(e);
+    if (this.disposed) return;
+    const { exceptions: exceptionsList, log, frustrations } = this.lists.lists;
+    const remove = (walker: typeof log | typeof frustrations, item: any) => {
+      const index = walker.list.indexOf(item);
+      if (index !== -1) walker.removeAt(index);
+    };
+    this.injectedExceptions.forEach((e) => {
+      remove(exceptionsList, e);
+      remove(log, e);
     });
-    lists.frustrations?.forEach((f) => {
-      this.lists.lists.frustrations.insert(f);
-    });
+    this.injectedFrustrations.forEach((f) => remove(frustrations, f));
 
-    const eventCount = this.lists.lists.event.count; // lists?.event?.length || 0;
-    const currentState = this.state.get();
+    this.injectedExceptions = lists.exceptions ?? [];
+    this.injectedFrustrations = lists.frustrations ?? [];
+    this.injectedExceptions.forEach((e) => {
+      exceptionsList.insert(e);
+      log.insert(e);
+    });
+    this.injectedFrustrations.forEach((f) => frustrations.insert(f));
+
     this.state.update({
-      eventCount: currentState.eventCount + eventCount,
+      eventCount: this.lists.lists.event.length,
       ...this.lists.getFullListsState(),
+      ...this.lists.getNowState(),
     });
   }
 
@@ -179,9 +217,9 @@ export default class IOSMessageManager implements IMessageManager {
   private waitingForFiles: boolean = false;
 
   public onFileReadSuccess = () => {
+    if (this.disposed) return;
     const newState: Partial<State> = {
-      ...this.state.get(),
-      eventCount: this.lists?.lists.event?.length || 0,
+      eventCount: this.lists.lists.event.length,
       performanceChartData: this.performanceManager.chartData,
       ...this.lists.getFullListsState(),
     };
@@ -194,12 +232,14 @@ export default class IOSMessageManager implements IMessageManager {
   };
 
   public onFileReadFailed = (...e: any[]) => {
+    if (this.disposed) return;
     logger.error(e);
     this.state.update({ error: true });
     this.uiErrorHandler?.error('Error requesting a session file');
   };
 
   public onFileReadFinally = () => {
+    if (this.disposed) return;
     this.waitingForFiles = false;
     this.state.update({ messagesProcessed: true });
   };
@@ -211,7 +251,13 @@ export default class IOSMessageManager implements IMessageManager {
   };
 
   resetMessageManagers() {
+    const touches = this.touchManager.list;
+    this.touchManager.destroy();
     this.touchManager = new TouchManager(this.screen);
+    touches.forEach((touch) => this.touchManager.append(touch));
+    if (this.dimensions) {
+      this.touchManager.updateDimensions(this.dimensions);
+    }
     this.activityManager = new ActivityManager(
       this.session.duration.milliseconds,
     );
@@ -220,25 +266,20 @@ export default class IOSMessageManager implements IMessageManager {
   move(t: number): any {
     const stateToUpdate: Record<string, any> = {};
 
-    const lastPerformanceTrackMessage = this.performanceManager.moveGetLast(t);
-    const lastAppFocusMessage = this.appFocusTracker.moveGetLast(t);
-    if (lastPerformanceTrackMessage) {
-      Object.assign(stateToUpdate, {
-        performanceChartTime: lastPerformanceTrackMessage.time,
-      });
+    // derive state from the walker position, not from moveGetLast's return:
+    // it returns nothing when moving back before the first item
+    if (moved(this.performanceManager, t)) {
+      stateToUpdate.performanceChartTime =
+        this.performanceManager.current?.time ?? 0;
     }
-    if (lastAppFocusMessage) {
-      Object.assign(stateToUpdate, {
-        inBackground: lastAppFocusMessage.value === 1,
-      });
+    if (moved(this.appFocusTracker, t)) {
+      stateToUpdate.inBackground = this.appFocusTracker.current?.value === 1;
     }
-
-    const orientation = this.orientationManager.moveGetLast(t);
-    if (orientation) {
-      const newOrientation = getMobileOrientation(orientation.value);
-      Object.assign(stateToUpdate, {
-        orientation: newOrientation,
-      });
+    if (moved(this.orientationManager, t)) {
+      const current = this.orientationManager.current;
+      stateToUpdate.orientation = current
+        ? getMobileOrientation(current.value)
+        : 'portrait';
     }
 
     this.touchManager.move(t);
@@ -257,37 +298,46 @@ export default class IOSMessageManager implements IMessageManager {
       });
     }
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
-    Object.assign(stateToUpdate, {
-      performanceListNow: this.lists.lists.performance.listNow,
-    });
     Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
   }
 
+  private publishLastMessageTime = () => {
+    this.lastMessageTimeScheduled = false;
+    if (this.disposed) return;
+    this.state.update({ lastMessageTime: this.lastMessageTime });
+  };
+
   distributeMessage = (msg: Message & { tabId: string }): void => {
-    if (msg.tp === 9999) return;
-    // @ts-ignore
-    const fixedTime = msg.timestamp - this.sessionStart;
-    msg.time = fixedTime;
-    const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
-    this.lastMessageTime = lastMessageTime;
-    this.state.update({ lastMessageTime });
-    if (userEvents.includes(msg.tp)) {
+    if ((msg.tp as number) === 9999 || this.disposed) return;
+    // @ts-ignore mobile messages carry absolute timestamps
+    if (typeof msg.timestamp === 'number') {
+      // @ts-ignore
+      msg.time = msg.timestamp - this.sessionStart;
+    }
+    if (msg.time > this.lastMessageTime) {
+      this.lastMessageTime = msg.time;
+      if (!this.lastMessageTimeScheduled) {
+        this.lastMessageTimeScheduled = true;
+        queueMicrotask(this.publishLastMessageTime);
+      }
+    }
+    if (userEvents.has(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
 
     switch (msg.tp) {
       case MType.MobilePerformanceEvent:
-        const performanceStats = ['background', 'memoryUsage', 'mainThreadCPU'];
-        if (performanceStats.includes(msg.name)) {
+        if (performanceStats.has(msg.name)) {
           this.performanceManager.append(msg);
           if (msg.name === 'background') {
             this.appFocusTracker.append(msg);
           }
         }
-        if (msg.name === 'orientation') {
+        // UIDeviceOrientation: only 1-4 are orientations (0 unknown, 5/6 face up/down)
+        if (msg.name === 'orientation' && msg.value >= 1 && msg.value <= 4) {
           this.orientationManager.append(msg);
         }
-        if (performanceWarnings.includes(msg.name)) {
+        if (performanceWarningsSet.has(msg.name)) {
           // @ts-ignore
           const item = perfWarningFrustrations[msg.name];
           this.lists.lists.performance.append({
@@ -299,9 +349,6 @@ export default class IOSMessageManager implements IMessageManager {
           } as any);
         }
         break;
-      // case MType.IosInputEvent:
-      //   console.log('input', msg)
-      //   break;
       case MType.MobileNetworkCall:
         this.lists.lists.fetch.insert(
           getResourceFromNetworkRequest(msg, this.sessionStart),
@@ -319,39 +366,40 @@ export default class IOSMessageManager implements IMessageManager {
         this.touchManager.append(msg);
         break;
       case MType.MobileLog:
-        const log = { ...msg, level: msg.severity };
         // @ts-ignore
-        this.lists.lists.log.append(Log(log));
+        this.lists.lists.log.append(Log(msg));
         break;
       case MType.MobileGraphQl:
         this.lists.lists.graphql.insert(msg);
         break;
-      case MType.MobileBatchMeta:
-          console.log('batch meta', msg);
-          break;
       default:
-        console.log('unrecognized', msg);
-        // stuff
+        if (!IGNORED_TYPES.has(msg.tp) && !this.warnedTypes.has(msg.tp)) {
+          this.warnedTypes.add(msg.tp);
+          console.debug('Unrecognized mobile message type', msg.tp);
+        }
         break;
     }
   };
 
   setMessagesLoading = (messagesLoading: boolean) => {
+    if (this.disposed) return;
     this.screen.display(!messagesLoading);
     // @ts-ignore idk
     this.state.update({ messagesLoading, ready: !messagesLoading });
   };
 
-  private setSize({ height, width }: { height: number; width: number }) {
-    this.screen.scale({ height, width });
-    this.state.update({ width, height });
-  }
-
-  // TODO: clean managers?
   clean() {
+    this.disposed = true;
+    this.touchManager.destroy();
     this.snapshotManager?.clean();
     this.state.update(IOSMessageManager.INITIAL_STATE);
   }
+}
+
+function moved(walker: ListWalker<any>, t: number): boolean {
+  const before = walker.countNow;
+  walker.moveGetLast(t);
+  return walker.countNow !== before;
 }
 
 const getMobileOrientation = (orientationRaw: number) => {

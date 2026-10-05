@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import SimpleStore from '../../../player/src/common/SimpleStore';
 import Player, { SPEED_OPTIONS } from '../../../player/src/player/Player';
 
@@ -16,6 +16,8 @@ class DummyMM {
   sortDomRemoveMessages = jest.fn();
 }
 
+const players: Player[] = [];
+
 function createPlayer(overrides: Record<string, any> = {}) {
   const state = new SimpleStore({
     ...Player.INITIAL_STATE,
@@ -26,11 +28,19 @@ function createPlayer(overrides: Record<string, any> = {}) {
   });
   const mm = new DummyMM();
   const player = new Player(state as any, mm as any);
+  players.push(player);
   return { player, state, mm };
 }
 
 beforeEach(() => {
   localStorage.clear();
+});
+
+// also runs after a failed expect
+afterEach(() => {
+  jest.restoreAllMocks();
+  players.splice(0).forEach((p) => p.clean());
+  jest.useRealTimers();
 });
 
 describe('Player speed controls', () => {
@@ -109,5 +119,73 @@ describe('Player state toggles', () => {
   it('auto plays on init when autoplay true', () => {
     const { state } = createPlayer({ autoplay: true });
     expect(state.get().playing).toBe(true);
+  });
+});
+
+describe('Player lifecycle', () => {
+  it('pause during loading cancels the pending autoplay retry', () => {
+    jest.useFakeTimers();
+    const { player, state } = createPlayer({ ready: false });
+    player.play();
+    player.pause();
+    state.update({ ready: true });
+    jest.advanceTimersByTime(1000);
+    expect(state.get().playing).toBe(false);
+  });
+
+  it('an explicit pause during a click hold cancels the resume', () => {
+    jest.useFakeTimers();
+    const { player, state } = createPlayer();
+    state.update({ playing: true });
+    player.pauseFor(750);
+    player.pause();
+    jest.advanceTimersByTime(1000);
+    expect(state.get().playing).toBe(false);
+  });
+
+  it('clean stops retries and removes the autoplay listener', () => {
+    jest.useFakeTimers();
+    const removeSpy = jest.spyOn(document, 'removeEventListener');
+    const { player, state, mm } = createPlayer({ ready: false, autoplay: true });
+    player.clean();
+    state.update({ ready: true });
+    jest.advanceTimersByTime(1000);
+    expect(state.get().playing).toBe(false);
+    expect(mm.clean).toHaveBeenCalled();
+    expect(removeSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+  });
+});
+
+describe('Player frame loop', () => {
+  it('a click hold triggered from move() stops the running loop', () => {
+    let frames: Array<(t: number) => void> = [];
+    jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: any) => {
+        frames.push(cb);
+        return frames.length;
+      });
+    const { player, state, mm } = createPlayer();
+    let held = false;
+    mm.move.mockImplementation((t: number) => {
+      if (t > 0 && !held) {
+        held = true;
+        player.pauseFor(750);
+      }
+    });
+    player.play();
+    const run = (t: number) => {
+      const pending = frames;
+      frames = [];
+      pending.forEach((cb) => cb(t));
+    };
+    run(0);
+    run(16);
+    expect(state.get().playing).toBe(false);
+    const timeAtHold = state.get().time;
+    run(32);
+    run(48);
+    expect(frames.length).toBe(0);
+    expect(state.get().time).toBe(timeAtHold);
   });
 });

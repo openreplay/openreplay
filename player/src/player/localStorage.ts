@@ -3,7 +3,7 @@ export function number(key: string, dflt = 0): number {
   if (stVal === null) {
     return dflt;
   }
-  const val = parseInt(stVal);
+  const val = parseFloat(stVal);
   if (isNaN(val)) {
     return dflt;
   }

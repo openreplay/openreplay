@@ -7,19 +7,17 @@ export interface ILongAnimationTask {
   firstUIEventTimestamp: number;
   startTime: number;
   time: number;
-  scripts: [
-    {
-      name: string;
-      duration: number;
-      invoker: string;
-      invokerType: string;
-      pauseDuration: number;
-      sourceURL: string;
-      sourceFunctionName: string;
-      sourceCharPosition: number;
-      forcedStyleAndLayoutDuration: number;
-    },
-  ];
+  scripts: {
+    name: string;
+    duration: number;
+    invoker: string;
+    invokerType: string;
+    pauseDuration: number;
+    sourceURL: string;
+    sourceFunctionName: string;
+    sourceCharPosition: number;
+    forcedStyleAndLayoutDuration: number;
+  }[];
   isRed: boolean;
   key: string;
 }
@@ -40,7 +38,7 @@ function shortId(len = 6) {
 }
 
 export const getLongTask = (msg: LongAnimationTask): ILongAnimationTask => {
-  let scripts = [];
+  let scripts: ILongAnimationTask['scripts'] = [];
   try {
     scripts = JSON.parse(msg.scripts);
   } catch (e) {

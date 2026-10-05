@@ -1,30 +1,6 @@
 import { Message } from '../web/messages';
 import type { Store, Interval } from '../common/types';
 
-const fps = 60;
-const performance: { now: () => number } = window.performance || {
-  now: Date.now.bind(Date),
-};
-const requestAnimationFrame: typeof window.requestAnimationFrame =
-  window.requestAnimationFrame ||
-  // @ts-ignore
-  window.webkitRequestAnimationFrame ||
-  // @ts-ignore
-  window.mozRequestAnimationFrame ||
-  // @ts-ignore
-  window.oRequestAnimationFrame ||
-  // @ts-ignore
-  window.msRequestAnimationFrame ||
-  ((callback) =>
-    window.setTimeout(() => {
-      callback(performance.now());
-    }, 1000 / fps));
-const cancelAnimationFrame =
-  window.cancelAnimationFrame ||
-  // @ts-ignore
-  window.mozCancelAnimationFrame ||
-  window.clearTimeout;
-
 export interface IMessageManager {
   onFileReadSuccess(): void;
   onFileReadFailed(e: any): void;
@@ -73,12 +49,40 @@ export default class Animator {
 
   private animationFrameRequestId: number = 0;
 
+  private playRetryTimeout?: ReturnType<typeof setTimeout>;
+
+  private freezeTimeout?: ReturnType<typeof setTimeout>;
+
+  private destroyed = false;
+
+  /**
+   * Bumped whenever a frame loop starts or stops. move() runs synchronously inside
+   * the frame handler and may pause playback (click hold), so a loop checks it is
+   * still current before scheduling its next frame.
+   */
+  private animationGeneration = 0;
+
+  private readonly globalJump = (time: number, silent?: boolean) =>
+    this.jump(time, silent);
+
   constructor(
     private store: Store<GetState>,
     private mm: IMessageManager,
   ) {
+    // @ts-ignore external automation hook
+    window.playerJump = this.globalJump;
+  }
+
+  /** Stops the frame loop and every pending timer; the instance can't play afterwards. */
+  protected destroyAnimator() {
+    this.destroyed = true;
+    this.pause();
+    clearTimeout(this.freezeTimeout);
     // @ts-ignore
-    window.playerJump = this.jump.bind(this);
+    if (window.playerJump === this.globalJump) {
+      // @ts-ignore
+      delete window.playerJump;
+    }
   }
 
   private setTime(time: number) {
@@ -86,14 +90,21 @@ export default class Animator {
       time,
       completed: false,
     });
-    this.mm.move(time);
+    try {
+      this.mm.move(time);
+    } catch (e) {
+      // a failing frame must not silently stop the loop
+      console.error('Player: failed to apply time', time, e);
+    }
   }
 
   private startAnimation() {
+    const generation = ++this.animationGeneration;
     let prevTime = this.store.get().time;
     let animationPrevTime = performance.now();
 
     const frameHandler = (animationCurrentTime: number) => {
+      if (this.destroyed || generation !== this.animationGeneration) return;
       const {
         speed,
         skip,
@@ -156,28 +167,38 @@ export default class Animator {
       // ===
 
       this.setTime(time);
-      this.animationFrameRequestId = requestAnimationFrame(frameHandler);
+      if (generation !== this.animationGeneration) return;
+      this.animationFrameRequestId = window.requestAnimationFrame(frameHandler);
     };
-    this.animationFrameRequestId = requestAnimationFrame(frameHandler);
+    this.animationFrameRequestId = window.requestAnimationFrame(frameHandler);
   }
 
   play = () => {
+    clearTimeout(this.playRetryTimeout);
+    if (this.destroyed) return;
     const { freeze, ready } = this.store.get();
     if (freeze) return this.pause();
     if (ready) {
-      cancelAnimationFrame(this.animationFrameRequestId);
+      window.cancelAnimationFrame(this.animationFrameRequestId);
       this.store.update({ playing: true });
       this.startAnimation();
     } else {
-      setTimeout(() => {
-        this.play();
-      }, 250);
+      // pause() cancels this, so a pause during loading is respected
+      this.playRetryTimeout = setTimeout(this.play, 250);
     }
   };
 
-  pause = () => {
-    cancelAnimationFrame(this.animationFrameRequestId);
+  private stopAnimation() {
+    this.animationGeneration++;
+    window.cancelAnimationFrame(this.animationFrameRequestId);
+    clearTimeout(this.playRetryTimeout);
     this.store.update({ playing: false });
+  }
+
+  pause = () => {
+    clearTimeout(this.resumeTimeout);
+    this.resumeTimeout = undefined;
+    this.stopAnimation();
   };
 
   private resumeTimeout?: ReturnType<typeof setTimeout>;
@@ -185,31 +206,37 @@ export default class Animator {
   /**
    * Briefly pause playback, then resume (used to hold on a highlighted click).
    * No-op when not currently playing so it never starts a paused/stepped replay.
+   * Any explicit pause() during the hold cancels the resume.
    */
   pauseFor = (ms: number) => {
     if (!this.store.get().playing) return;
-    this.pause();
-    if (this.resumeTimeout) clearTimeout(this.resumeTimeout);
+    this.stopAnimation();
+    clearTimeout(this.resumeTimeout);
     this.resumeTimeout = setTimeout(() => {
       this.resumeTimeout = undefined;
       const { playing, completed } = this.store.get();
-      // resume only if the user hasn't manually played/finished in the meantime
       if (!playing && !completed) this.play();
     }, ms);
   };
 
   freeze = () => {
     return new Promise<void>((res) => {
-      if (this.store.get().ready) {
-        // making sure that replay is displayed completely
-        setTimeout(() => {
-          cancelAnimationFrame(this.animationFrameRequestId);
-          this.store.update({ freeze: true, playing: false });
-          res();
-        }, 250);
-      } else {
-        setTimeout(() => res(this.freeze()), 250);
-      }
+      const attempt = () => {
+        if (this.destroyed) return res();
+        if (this.store.get().ready) {
+          // making sure that replay is displayed completely
+          this.freezeTimeout = setTimeout(() => {
+            if (this.destroyed) return res();
+            this.animationGeneration++;
+            window.cancelAnimationFrame(this.animationFrameRequestId);
+            this.store.update({ freeze: true, playing: false });
+            res();
+          }, 250);
+        } else {
+          this.freezeTimeout = setTimeout(attempt, 250);
+        }
+      };
+      attempt();
     });
   };
 
@@ -235,9 +262,10 @@ export default class Animator {
   // jump by index?
   jump = (time: number, silent?: boolean) => {
     if (this.store.get().playing && this.store.get().ready) {
-      cancelAnimationFrame(this.animationFrameRequestId);
+      window.cancelAnimationFrame(this.animationFrameRequestId);
       this.setTime(time);
-      if (!silent) {
+      // setTime may have paused playback (click hold)
+      if (!silent && this.store.get().playing) {
         this.startAnimation();
       }
       this.store.update({ livePlay: time === this.store.get().endTime });

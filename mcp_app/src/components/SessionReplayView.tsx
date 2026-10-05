@@ -11,6 +11,7 @@ interface SessionReplayViewProps {
   siteId: string;
   /** Present when the instance encrypts recording files. */
   fileKey?: string;
+  trackerVersion?: string;
   callServerTool: (req: { name: string; arguments: Record<string, unknown> }) => Promise<any>;
   app?: any;
   onBack?: () => void;
@@ -33,7 +34,7 @@ const OR_ICON_SVG = `<svg viewBox="0 0 52 59" xmlns="http://www.w3.org/2000/svg"
   </g>
 </svg>`;
 
-export default function SessionReplayView({ fileUrls, startTs, duration, sessionId, siteId, fileKey, callServerTool, app, onBack }: SessionReplayViewProps) {
+export default function SessionReplayView({ fileUrls, startTs, duration, sessionId, siteId, fileKey, trackerVersion, callServerTool, app, onBack }: SessionReplayViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<ReplayEngine | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,6 +138,7 @@ export default function SessionReplayView({ fileUrls, startTs, duration, session
           currentStartTs,
           callServerTool,
           currentFileKey,
+          trackerVersion,
         );
 
         if (cancelled) return;
@@ -165,7 +167,7 @@ export default function SessionReplayView({ fileUrls, startTs, duration, session
       engine.clean();
       engineRef.current = null;
     };
-  }, [urls, currentStartTs, currentDuration, currentFileKey, handleStateChange, callServerTool]);
+  }, [urls, currentStartTs, currentDuration, currentFileKey, trackerVersion, handleStateChange, callServerTool]);
 
   // Track playing state in a ref so the IntersectionObserver callback reads
   // fresh values without re-registering the observer on every frame.

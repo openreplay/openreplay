@@ -1,19 +1,30 @@
-import { describe, expect, test, jest, beforeEach } from '@jest/globals';
+import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals';
 import MessageLoader from '../../../player/src/web/MessageLoader';
 import { MType } from '../../../player/src/web/messages';
 import fs from 'fs';
 import path from 'path';
 import { TextDecoder } from 'util';
 
-const loadFilesMock = jest.fn(async () => {});
-
 jest.mock('../../../player/src/web/network/loadFiles', () => ({
   __esModule: true,
+  NO_URLS: 'No-urls-provided',
+  isAbortError: (e: any) => e?.name === 'AbortError',
   loadFiles: jest.fn(async () => {}),
   requestTarball: jest.fn(),
-  requestEFSDom: jest.fn(),
-  requestEFSDevtools: jest.fn(),
+  requestEFSDom: jest.fn(async () => {
+    throw 'No-efs-file';
+  }),
+  requestSecondEFSDom: jest.fn(async () => {
+    throw 'No-efs-file';
+  }),
+  requestEFSDevtools: jest.fn(async () => {
+    throw 'No-efs-file';
+  }),
 }));
+
+const { loadFiles: loadFilesMock } = jest.requireMock(
+  '../../../player/src/web/network/loadFiles',
+) as { loadFiles: jest.Mock };
 
 const decryptSessionBytesMock = jest.fn((b: Uint8Array) => Promise.resolve(b));
 
@@ -44,6 +55,7 @@ jest.mock('../../../player/src/web/messages/MFileReader', () => {
         append: jest.fn(),
         checkForIndexes: jest.fn(),
         readNext: readNextMock,
+        releaseConsumed: jest.fn(),
       };
     }),
   };
@@ -76,6 +88,10 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('MessageLoader.loadDomFiles', () => {
   test('loads dom files and updates store', async () => {
     const session = mockSession({});
@@ -90,6 +106,12 @@ describe('MessageLoader.loadDomFiles', () => {
     const parser = jest.fn();
     await loader.loadDomFiles(['u1', 'u2'], parser);
 
+    expect(loadFilesMock).toHaveBeenCalledWith(
+      ['u1', 'u2'],
+      parser,
+      true,
+      expect.any(AbortSignal),
+    );
     expect(store.update).toHaveBeenNthCalledWith(1, { domLoading: true });
     expect(store.update).toHaveBeenNthCalledWith(2, { domLoading: false });
   });
@@ -123,11 +145,15 @@ describe('MessageLoader.loadDevtools', () => {
     const parser = jest.fn();
     await loader.loadDevtools(parser);
 
+    expect(loadFilesMock).toHaveBeenCalledWith(
+      ['d1'],
+      parser,
+      true,
+      expect.any(AbortSignal),
+    );
     expect(store.update).toHaveBeenCalledWith({ devtoolsLoading: true });
-    expect(store.update).toHaveBeenLastCalledWith({
-      ...manager.getListsFullState(),
-      devtoolsLoading: false,
-    });
+    // lists live in per-tab state; the loader only toggles the flag
+    expect(store.update).toHaveBeenLastCalledWith({ devtoolsLoading: false });
   });
 
   test('skips devtools for clickmap', async () => {
@@ -178,6 +204,58 @@ describe('MessageLoader.preloadFirstFile', () => {
   });
 });
 
+describe('MessageLoader.preloadFirstFile failure', () => {
+  test('a failed preload re-fetches the first file with a fresh parser', async () => {
+    const session = mockSession({});
+    session.domURL = ['d1'];
+    const loader = new MessageLoader(session, createStore() as any, createManager() as any, false);
+    const broken = jest.fn(() => Promise.reject(new Error('bad preload')));
+    const fresh = jest.fn(() => Promise.resolve());
+    jest
+      .spyOn(loader, 'createNewParser')
+      .mockReturnValueOnce(broken)
+      .mockReturnValue(fresh);
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await loader.preloadFirstFile(new Uint8Array([1]), 'key');
+    expect(loader.preloaded).toBe(false);
+    expect(loader.mobParser).toBeUndefined();
+
+    await loader.loadFiles();
+    expect(loadFilesMock).toHaveBeenCalledWith(['d1'], fresh, false, expect.any(AbortSignal));
+  });
+});
+
+describe('MessageLoader.loadMobs', () => {
+  test('a failed later file is reported while the loaded part still plays', async () => {
+    loadFilesMock
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce('Bad file status code 500');
+    const session = mockSession({});
+    session.domURL = ['d1', 'd2'];
+    const manager = createManager();
+    const uiErrorHandler = { error: jest.fn() };
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false, uiErrorHandler);
+    await loader.loadFiles();
+    expect(uiErrorHandler.error).toHaveBeenCalledTimes(1);
+    expect(manager.onFileReadSuccess).toHaveBeenCalled();
+    expect(manager.onFileReadFailed).not.toHaveBeenCalled();
+  });
+
+  test('aborted downloads are not reported as failures', async () => {
+    const abort = Object.assign(new Error('aborted'), { name: 'AbortError' });
+    loadFilesMock.mockResolvedValueOnce(undefined).mockRejectedValueOnce(abort);
+    const session = mockSession({});
+    session.domURL = ['d1', 'd2'];
+    const manager = createManager();
+    const uiErrorHandler = { error: jest.fn() };
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false, uiErrorHandler);
+    await loader.loadFiles();
+    expect(uiErrorHandler.error).not.toHaveBeenCalled();
+    expect(manager.onFileReadSuccess).toHaveBeenCalled();
+  });
+});
+
 describe('MessageLoader.createNewParser', () => {
   test('parses messages and sorts them', async () => {
     const loader = new MessageLoader(
@@ -197,9 +275,102 @@ describe('MessageLoader.createNewParser', () => {
 
     const onDone = jest.fn();
     const parser = loader.createNewParser(false, onDone, 'file');
-    await parser(new Uint8Array());
+    // v1 header: 8x 0xff
+    await parser(new Uint8Array(8).fill(0xff));
 
     expect(onDone).toHaveBeenCalledWith([msgs[1], msgs[0]], 'file 1');
-    expect(loader.rawMessages.length).toBe(2);
+    // raw copies are kept only in debug mode
+    expect(loader.rawMessages.length).toBe(0);
+  });
+
+  test('rethrows a parse failure on the first file so the caller can fall back', async () => {
+    const loader = new MessageLoader(
+      mockSession({}),
+      createStore() as any,
+      createManager() as any,
+      false,
+    );
+    readNextMock.mockImplementationOnce(() => {
+      throw new Error('bad body');
+    });
+    const parser = loader.createNewParser(false, jest.fn(), 'file');
+    await expect(parser(new Uint8Array(8).fill(0xff))).rejects.toThrow('bad body');
+  });
+
+  test('stops parsing once cleaned', async () => {
+    const loader = new MessageLoader(
+      mockSession({}),
+      createStore() as any,
+      createManager() as any,
+      false,
+    );
+    const onDone = jest.fn();
+    const parser = loader.createNewParser(false, onDone, 'file');
+    loader.clean();
+    await parser(new Uint8Array(8).fill(0xff));
+    expect(onDone).not.toHaveBeenCalled();
+  });
+});
+
+describe('MessageLoader.loadFiles', () => {
+  test('reports failure when both the files and the EFS backup are missing', async () => {
+    const { loadFiles, requestEFSDom } = jest.requireMock(
+      '../../../player/src/web/network/loadFiles',
+    ) as any;
+    loadFiles.mockRejectedValueOnce('Bad file status code 404');
+    requestEFSDom.mockRejectedValueOnce('No-efs-file');
+    const session = mockSession({});
+    session.domURL = ['d1'];
+    const manager = createManager();
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false);
+    await loader.loadFiles();
+    expect(manager.onFileReadFailed).toHaveBeenCalled();
+    expect(manager.onFileReadSuccess).not.toHaveBeenCalled();
+  });
+
+  test('a broken first EFS dom file falls through to the second one', async () => {
+    const { loadFiles, requestEFSDom, requestSecondEFSDom } = jest.requireMock(
+      '../../../player/src/web/network/loadFiles',
+    ) as any;
+    loadFiles.mockRejectedValueOnce('Bad file status code 404');
+    requestEFSDom.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    requestSecondEFSDom.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    const msg = { tp: MType.SetNodeAttribute, time: 5 };
+    readNextMock
+      .mockImplementationOnce(() => {
+        throw new Error('bad first file');
+      })
+      .mockReturnValueOnce(msg)
+      .mockReturnValueOnce(null);
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const session = mockSession({});
+    session.domURL = ['d1'];
+    const manager = createManager();
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false);
+    await loader.loadFiles();
+    expect(manager.distributeMessage).toHaveBeenCalledWith(msg);
+    expect(manager.onFileReadSuccess).toHaveBeenCalled();
+    expect(manager.onFileReadFailed).not.toHaveBeenCalled();
+  });
+
+  test('an unreadable EFS devtools file does not fail the EFS dom that loaded', async () => {
+    const { loadFiles, requestEFSDom, requestEFSDevtools } = jest.requireMock(
+      '../../../player/src/web/network/loadFiles',
+    ) as any;
+    loadFiles.mockRejectedValueOnce('Bad file status code 404');
+    requestEFSDom.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    requestEFSDevtools.mockResolvedValueOnce(new Uint8Array(8).fill(0xff));
+    // dom file reads fine, the devtools one is broken
+    readNextMock.mockReturnValueOnce(null).mockImplementationOnce(() => {
+      throw new Error('bad devtools');
+    });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const session = mockSession({});
+    session.domURL = ['d1'];
+    const manager = createManager();
+    const loader = new MessageLoader(session, createStore() as any, manager as any, false);
+    await loader.loadFiles();
+    expect(manager.onFileReadSuccess).toHaveBeenCalled();
+    expect(manager.onFileReadFailed).not.toHaveBeenCalled();
   });
 });

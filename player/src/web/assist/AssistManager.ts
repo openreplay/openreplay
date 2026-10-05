@@ -3,7 +3,8 @@ import type { Socket } from 'socket.io-client';
 import type { PlayerMsg, Store } from '../../index';
 import CanvasReceiver from './CanvasReceiver';
 import { gunzipSync } from 'fflate';
-import { Message, MType } from '../messages';
+import { MType } from '../messages';
+import type { TrackerMessage } from '../messages/tracker.gen';
 import type Screen from '../Screen/Screen';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader';
@@ -14,6 +15,7 @@ import { debounceCall } from '../../debounce';
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 import io from 'socket.io-client';
 import { getPlayerConfig } from '../../config';
+import { safeQuery } from './utils';
 
 export enum ConnectionStatus {
   Connecting,
@@ -61,13 +63,6 @@ export function getStatusText(status: ConnectionStatus): string {
   }
 }
 
-// export interface State {
-//   peerConnectionStatus: ConnectionStatus;
-//   assistStart: number;
-// }
-
-const MAX_RECONNECTION_COUNT = 4;
-
 export default class AssistManager {
   assistVersion = 1;
 
@@ -82,8 +77,6 @@ export default class AssistManager {
     ...ScreenRecording.INITIAL_STATE,
   };
 
-  private agentIds: string[] = [];
-
   // TODO: Session type
   constructor(
     private session: any,
@@ -91,7 +84,9 @@ export default class AssistManager {
     private handleMessage: (m: PlayerMsg, index: number) => void,
     private screen: Screen,
     private config: RTCIceServer[] | null,
-    private store: Store<typeof AssistManager.INITIAL_STATE>,
+    private store: Store<
+      typeof AssistManager.INITIAL_STATE & { tabs: Set<string> }
+    >,
     private getNode: MessageManager['getNode'],
     public readonly agentId: number,
     private readonly updateSpriteMap: () => void,
@@ -101,6 +96,12 @@ export default class AssistManager {
   ) {}
 
   public getAssistVersion = () => this.assistVersion;
+
+  /** One pending sprite-map refresh per burst of sprite messages. */
+  private updateSpriteMapDebounced = debounceCall(
+    () => this.updateSpriteMap(),
+    250,
+  );
 
   private get borderStyle() {
     const { recordingState, remoteControl } = this.store.get();
@@ -115,6 +116,7 @@ export default class AssistManager {
   }
 
   private setStatus(status: ConnectionStatus) {
+    if (this.cleaned) return;
     if (
       this.store.get().peerConnectionStatus === ConnectionStatus.Disconnected &&
       status !== ConnectionStatus.Connected
@@ -141,22 +143,23 @@ export default class AssistManager {
 
   private socketCloseTimeout: ReturnType<typeof setTimeout> | undefined;
 
+  // the tracker streams to every connected agent; don't keep it busy for an idle background tab
   private onVisChange = () => {
-    this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout);
+    clearTimeout(this.socketCloseTimeout);
     if (document.hidden) {
       this.socketCloseTimeout = setTimeout(() => {
-        const state = this.store.get();
+        const { calling, remoteControl, recordingState } = this.store.get();
         if (
           document.hidden &&
-          // TODO: should it be RemoteControlStatus.Disabled? (check)
-          state.calling === CallingState.NoCall &&
-          state.remoteControl === RemoteControlStatus.Enabled
+          calling === CallingState.NoCall &&
+          remoteControl === RemoteControlStatus.Disabled &&
+          recordingState === SessionRecordingStatus.Off
         ) {
           this.socket?.close();
         }
       }, 30000);
-    } else {
-      this.socket?.open();
+    } else if (this.socket && !this.socket.active) {
+      this.socket.open();
     }
   };
 
@@ -201,9 +204,6 @@ export default class AssistManager {
       auth: {
         token: agentToken,
       },
-      extraHeaders: {
-        sessionId: this.session.sessionId,
-      },
       query: {
         peerId: this.peerID,
         projectId,
@@ -212,31 +212,43 @@ export default class AssistManager {
           ...this.session.agentInfo,
           id: agentId,
           peerId: this.peerID,
-          query: document.location.search,
+          query: safeQuery(),
         }),
         config: JSON.stringify(this.getIceServers()),
       },
     }));
-
-    // socket.onAny((event, ...args) => {
-    //   logger.log(`📩 Socket: ${event}`, args);
-    // });
 
     socket.on('connect', () => {
       waitingForMessages = true;
       // TODO: reconnect happens frequently on bad network
       this.setStatus(ConnectionStatus.WaitingMessages);
     });
+    // handshake/auth failures (expired agent token, unreachable ws-assist) only surface here
+    socket.on('connect_error', (e) => {
+      console.warn('Socket connection error: ', e);
+      if (!socket.active) {
+        this.setStatus(ConnectionStatus.Error);
+      }
+    });
+    socket.on('disconnect', (reason) => {
+      waitingForMessages = true;
+      // socket.io only reconnects by itself after transport-level drops
+      this.setStatus(
+        reason === 'io client disconnect' || reason === 'io server disconnect'
+          ? ConnectionStatus.Closed
+          : ConnectionStatus.Connecting,
+      );
+    });
 
     const processMessages = (messages: {
       meta: { version: number; tabId: string };
-      data: Message[];
+      data: TrackerMessage[];
     }) => {
       const isOldVersion = messages.meta.version === 1;
       this.assistVersion = isOldVersion ? 1 : 2;
 
       const data = messages.data || messages;
-      jmr.append(data); // as RawMessage[]
+      jmr.append((Array.isArray(data) ? data : [data]) as TrackerMessage[]);
       if (waitingForMessages) {
         waitingForMessages = false; // TODO: more explicit
         this.setStatus(ConnectionStatus.Connected);
@@ -251,10 +263,11 @@ export default class AssistManager {
       }
 
       for (let msg = reader.readNext(); msg !== null; msg = reader.readNext()) {
-        if (msg.tp === MType.SetNodeAttribute) {
-          if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
-            debounceCall(this.updateSpriteMap, 250)();
-          }
+        if (
+          msg.tp === MType.SetNodeAttribute &&
+          msg.value.includes('_$OPENREPLAY_SPRITE$_')
+        ) {
+          this.updateSpriteMapDebounced();
         }
         this.handleMessage(msg, msg._index);
       }
@@ -298,8 +311,8 @@ export default class AssistManager {
       }
 
       if (typeof active === 'boolean') {
-        this.clearInactiveTimeout();
         if (active) {
+          this.clearInactiveTimeout();
           if (!waitingForMessages) {
             this.setStatus(ConnectionStatus.Connected);
           }
@@ -308,8 +321,12 @@ export default class AssistManager {
           if (!this.inactiveTabs.includes(tabId)) {
             this.inactiveTabs.push(tabId);
           }
-          if (tabId === undefined || tabId === currentTab) {
+          if (
+            (tabId === undefined || tabId === currentTab) &&
+            !this.inactiveTimeout
+          ) {
             this.inactiveTimeout = setTimeout(() => {
+              this.inactiveTimeout = undefined;
               // @ts-ignore
               const { tabs } = this.store.get();
               if (this.inactiveTabs.length === tabs.size) {
@@ -318,12 +335,6 @@ export default class AssistManager {
             }, 10000);
           }
         }
-      }
-      if (data.agentIds) {
-        const filteredAgentIds = this.agentIds.filter(
-          (id: string) => id.split('-')[3] !== agentId.toString(),
-        );
-        this.agentIds = filteredAgentIds;
       }
     });
     socket.on('session_confirm_pending', () => {
@@ -338,10 +349,13 @@ export default class AssistManager {
       this.store.update({ sessionConfirmation: SessionConfirmStatus.None });
       this.uiErrorHandler?.error('User denied the live session view request');
     });
-    socket.on('SESSION_DISCONNECTED', (e) => {
+    socket.on('SESSION_DISCONNECTED', () => {
       waitingForMessages = true;
-      this.clearDisconnectTimeout();
+      // the server answers every agent event with this while the tab is gone;
+      // re-arming would postpone "Disconnected" for as long as the agent moves the mouse
+      if (this.disconnectTimeout) return;
       this.disconnectTimeout = setTimeout(() => {
+        this.disconnectTimeout = undefined;
         this.setStatus(ConnectionStatus.Disconnected);
       }, 30000);
     });
@@ -362,7 +376,6 @@ export default class AssistManager {
         ...this.session.agentInfo,
         id: agentId,
       },
-      this.agentIds,
     );
     this.remoteControl = new RemoteControl(
       this.store,
@@ -458,22 +471,20 @@ export default class AssistManager {
     ...args: Parameters<Call['toggleVideoLocalStream']>
   ) => this.callManager?.toggleVideoLocalStream(...args);
 
-  addPeerCall = (...args: Parameters<Call['addPeerCall']>) =>
-    this.callManager?.addPeerCall(...args);
-
   /* ==== Cleaning ==== */
   private cleaned = false;
 
   clean() {
     this.cleaned = true; // sometimes cleaned before modules loaded
     this.remoteControl?.clean();
+    this.screenRecording?.clean();
     this.callManager?.clean();
-    this.canvasReceiver?.clear();
+    this.canvasReceiver?.clean();
     this.socket?.close();
     this.socket = null;
     this.clearDisconnectTimeout();
     this.clearInactiveTimeout();
-    this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout);
+    clearTimeout(this.socketCloseTimeout);
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 }

@@ -6,6 +6,15 @@ on:
       - 'frontend/**'
       - 'player/**'
       - '.github/workflows/frontend-tests.yaml'
+      - '.github/composite-actions/coverage-report/**'
+  # dev pushes store the coverage baseline that PRs compare against
+  push:
+    branches: [ "dev" ]
+    paths:
+      - 'frontend/**'
+      - 'player/**'
+      - '.github/workflows/frontend-tests.yaml'
+      - '.github/composite-actions/coverage-report/**'
 
 permissions:
   contents: read
@@ -17,9 +26,17 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        # Full history for the merge-base with the base branch; blobs are fetched lazily.
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -38,14 +55,16 @@ jobs:
         working-directory: frontend
         run: yarn --immutable
 
+      # Cobertura for diff-cover (lcov paths are relative to frontend/ and can't be
+      # mapped back to the git diff); json-summary for the totals.
       - name: Run tests
         working-directory: frontend
-        run: yarn test:ci
+        run: yarn test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Coverage report
+        uses: ./.github/composite-actions/coverage-report
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: frontend/coverage/
-          flags: ui
           name: ui
+          title: UI coverage
+          cobertura: frontend/coverage/cobertura-coverage.xml
+          summaries: ui=frontend/coverage/coverage-summary.json

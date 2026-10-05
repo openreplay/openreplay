@@ -181,7 +181,7 @@ const DevtoolsButtons = observer(
       logMarkedCountNow,
       messagesLoading,
       stackMarkedCountNow,
-      resourceMarkedCountNow,
+      fetchMarkedCountNow,
     } = store.get();
 
     const showExceptions = exceptionsList.length > 0;
@@ -237,7 +237,7 @@ const DevtoolsButtons = observer(
           onClick={() => toggleBottomTools(NETWORK)}
           active={bottomBlock === NETWORK}
           label={t('Network')}
-          hasErrors={resourceMarkedCountNow > 0}
+          hasErrors={fetchMarkedCountNow > 0}
         />
         {showExceptions ? (
           <ControlButton

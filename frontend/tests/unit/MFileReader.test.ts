@@ -1,6 +1,6 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, jest, afterEach } from '@jest/globals';
 import MFileReader from '../../../player/src/web/messages/MFileReader';
-import { MType } from '../../../player/src/web/messages/raw.gen';
+import { MType, VALID_TP_SET } from '../../../player/src/web/messages/raw.gen';
 
 function encodeUint(value: number): Uint8Array {
   const bytes: number[] = [];
@@ -25,6 +25,10 @@ function concat(...parts: Uint8Array[]): Uint8Array {
   return out;
 }
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('MFileReader', () => {
   test('checkForIndexes detects missing indexes and skips header', () => {
     const data = new Uint8Array(9).fill(0xff);
@@ -43,5 +47,30 @@ describe('MFileReader', () => {
     const msg = reader.readNext();
     expect(msg).toEqual({ tp: 9999, tabId: '', time: 0 });
     expect(reader['startTime']).toBe(2000);
+  });
+
+  test('an unreadable message only loses the rest of its file', () => {
+    const BAD_TP = 240;
+    expect(VALID_TP_SET.has(BAD_TP)).toBe(false);
+    jest.spyOn(console, 'debug').mockImplementation(() => {});
+    const reader = new MFileReader(new Uint8Array(0), 0, { error: jest.fn() } as any);
+    reader['noIndexes'] = true;
+    reader.append(
+      concat(
+        encodeUint(MType.RemoveNode),
+        encodeUint(1),
+        encodeUint(BAD_TP),
+        encodeUint(MType.RemoveNode),
+        encodeUint(2),
+      ),
+    );
+    expect(reader.readNext()).toMatchObject({ tp: MType.RemoveNode, id: 1 });
+    expect(reader.readNext()).toBeNull();
+    expect(reader.error).toBe(true);
+
+    reader.append(concat(encodeUint(MType.RemoveNode), encodeUint(3)));
+    expect(reader.error).toBe(false);
+    expect(reader.readNext()).toMatchObject({ tp: MType.RemoveNode, id: 3 });
+    expect(reader.readNext()).toBeNull();
   });
 });

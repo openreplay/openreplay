@@ -1,11 +1,12 @@
 import ListWalker from '../../common/ListWalker';
-import type { IosPerformanceEvent } from '../../web/messages';
+import type { MobilePerformanceEvent } from '../../web/messages';
 
 const performanceEvTypes = {
   MemoryUsage: 'memoryUsage',
   MainThreadCPU: 'mainThreadCPU',
   Background: 'background',
 };
+const SUPPORTED_TYPES = new Set(Object.values(performanceEvTypes));
 
 export type PerformanceChartPoint = {
   time: number;
@@ -14,8 +15,10 @@ export type PerformanceChartPoint = {
   isBackground: boolean;
 };
 
-export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanceEvent> {
-  private chart: Array<PerformanceChartPoint> = [];
+export default class IOSPerformanceTrackManager extends ListWalker<
+  MobilePerformanceEvent
+> {
+  private chart = new ListWalker<PerformanceChartPoint>();
 
   private isInBg = false;
 
@@ -24,9 +27,9 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
     memory: null,
   };
 
-  append(msg: IosPerformanceEvent): void {
-    if (!Object.values(performanceEvTypes).includes(msg.name)) {
-      return console.log('Unsupported performance event type', msg.name);
+  append(msg: MobilePerformanceEvent): void {
+    if (!SUPPORTED_TYPES.has(msg.name)) {
+      return;
     }
 
     let cpu: number | null = null;
@@ -37,7 +40,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
       const isBackground = msg.value === 1;
       if (isBackground === this.isInBg) return;
       this.isInBg = isBackground;
-      this.chart.push({
+      this.chart.insert({
         time: msg.time,
         cpu: null,
         memory: null,
@@ -56,7 +59,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
       this.lastData.cpu = cpu;
     }
 
-    this.chart.push({
+    this.chart.insert({
       time: msg.time,
       cpu,
       memory,
@@ -66,6 +69,6 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
   }
 
   get chartData(): Array<PerformanceChartPoint> {
-    return this.chart;
+    return this.chart.list;
   }
 }

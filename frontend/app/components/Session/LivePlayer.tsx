@@ -1,7 +1,7 @@
 import { audioContextManager } from 'App/utils/screenRecorder';
 import React, { useEffect, useState } from 'react';
 import withPermissions from 'HOCs/withPermissions';
-import { makeAutoObservable } from 'mobx';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
 import { createLiveWebPlayer } from 'Player';
 import Session from 'App/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
@@ -62,7 +62,7 @@ function LivePlayer({ isMultiview, customSession, query }: Props) {
         credentials,
         userId,
         projectId,
-        (state) => makeAutoObservable(state),
+        wrapPlayerStore,
         toast,
       );
       setContextValue({ player, store });

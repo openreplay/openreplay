@@ -3,12 +3,16 @@ import type { Message } from './message.gen';
 import type { RawMessage } from './raw.gen';
 import { MType, VALID_TP_SET } from './raw.gen';
 import RawMessageReader from './RawMessageReader.gen';
+import { headerVersion } from './protoFormat';
 import rewriteMessage from './rewriter/rewriteMessage';
+
+const INDEX_SIZE = 8;
 
 // TODO: composition instead of inheritance
 // needSkipMessage() and next() methods here use buf and p protected properties,
 export default class MFileReader extends RawMessageReader {
-  private pLastMessageID: number = 0;
+  /** Index of the last message read; later messages with a lower index are duplicates */
+  private lastIndex: number = -1;
 
   private currentTime: number = 0;
 
@@ -26,21 +30,20 @@ export default class MFileReader extends RawMessageReader {
     super(data);
   }
 
+  /** An unreadable message only loses the rest of its file: files start on a message boundary. */
+  append(buf: Uint8Array): void {
+    if (this.error) {
+      this.p = this.buf.length;
+      this.error = false;
+    }
+    super.append(buf);
+  }
+
   public checkForIndexes() {
     // 8-byte header (0xff x7 + version byte) — skip it
-    const hasHeader =
-      this.buf.length >= 8 &&
-      this.buf.slice(this.p, this.p + 7).every((b) => b === 0xff) &&
-      (this.buf[this.p + 7] === 0xff ||
-        this.buf[this.p + 7] === 0xfe ||
-        this.buf[this.p + 7] === 0xfd);
-
-    if (hasHeader && !this.headerSkipped) {
+    if (!this.headerSkipped && headerVersion(this.buf, this.p)) {
       this.skip(8);
       this.headerSkipped = true;
-      // Set pLastMessageID past the header so needSkipMessage
-      // doesn't compare real indexes against the 0xFF header bytes
-      this.pLastMessageID = this.p;
     }
 
     // After header, detect if data has 8-byte LE indexes before each message.
@@ -58,13 +61,9 @@ export default class MFileReader extends RawMessageReader {
           // Not a valid tp → must be an index
           this.noIndexes = false;
         } else {
-          // Could be tp or index. Read 8-byte LE value.
-          let id = 0;
-          for (let i = 0; i < 8; i++) {
-            id += this.buf[this.p + i] * 2 ** (8 * i);
-          }
           // Small sequential index (1, 2, ...) vs message content:
           // If the 8-byte value is small AND byte[p+8] is a valid tp, likely has indexes
+          const id = this.readIndexAt(this.p);
           const byteAfterIndex = this.buf[this.p + 8];
           if (id <= 0xffffffffffff && VALID_TP_SET.has(byteAfterIndex)) {
             this.noIndexes = false;
@@ -78,22 +77,21 @@ export default class MFileReader extends RawMessageReader {
     }
   }
 
-  private needSkipMessage(): boolean {
-    if (this.p === 0) return false;
-    for (let i = 7; i >= 0; i--) {
-      if (this.buf[this.p + i] !== this.buf[this.pLastMessageID + i]) {
-        return this.buf[this.p + i] < this.buf[this.pLastMessageID + i];
-      }
-    }
-    return false;
-  }
-
-  private getLastMessageID(): number {
+  private readIndexAt(pos: number): number {
     let id = 0;
-    for (let i = 0; i < 8; i++) {
-      id += this.buf[this.p + i] * 2 ** (8 * i);
+    for (let i = 0; i < INDEX_SIZE; i++) {
+      id += this.buf[pos + i] * 2 ** (8 * i);
     }
     return id;
+  }
+
+  private hasIndexAt(pos: number): boolean {
+    return pos + INDEX_SIZE <= this.buf.length;
+  }
+
+  private needSkipMessage(): boolean {
+    if (this.lastIndex < 0 || !this.hasIndexAt(this.p)) return false;
+    return this.readIndexAt(this.p) < this.lastIndex;
   }
 
   /**
@@ -104,11 +102,18 @@ export default class MFileReader extends RawMessageReader {
    * via super.append
    * */
   private readRawMessage(): RawMessage | null {
+    const start = this.p;
     try {
       if (!this.noIndexes) {
-        this.skip(8);
+        if (!this.hasIndexAt(this.p)) return null;
+        this.skip(INDEX_SIZE);
       }
-      return super.readMessage();
+      const msg = super.readMessage();
+      if (msg === null) {
+        // keep the index too, so the message is re-read whole after append()
+        this.p = start;
+      }
+      return msg;
     } catch (e) {
       this.logger.error('Read message error:', e);
       this.error = true;
@@ -119,51 +124,59 @@ export default class MFileReader extends RawMessageReader {
   currentTab = 'back-compatability';
 
   readNext(): (Message & { tabId: string; _index?: number }) | null {
-    if (this.error || !this.hasNextByte()) {
-      return null;
-    }
-
-    while (!this.noIndexes && this.needSkipMessage()) {
-      const skippedMessage = this.readRawMessage();
-      if (!skippedMessage) {
+    for (;;) {
+      if (this.error || !this.hasNextByte()) {
         return null;
       }
-      Logger.group('Openreplay: Skipping messages ', skippedMessage);
-    }
-    this.pLastMessageID = this.noIndexes ? 0 : this.p;
 
-    const rMsg = this.readRawMessage();
-    if (!rMsg) {
-      return null;
-    }
-
-    if (rMsg.tp === MType.TabData) {
-      this.currentTab = rMsg.tabId;
-      return this.readNext();
-    }
-    if (rMsg.tp === MType.Timestamp) {
-      if (!this.startTime) {
-        this.startTime = rMsg.timestamp;
+      let skipped = 0;
+      while (!this.noIndexes && this.needSkipMessage()) {
+        if (!this.readRawMessage()) {
+          return null;
+        }
+        skipped++;
       }
-      this.currentTime = rMsg.timestamp - this.startTime;
-      return {
-        tp: 9999,
-        tabId: '',
-        time: this.currentTime,
+      if (skipped > 0) {
+        Logger.log(`Openreplay: skipped ${skipped} out-of-order messages`);
+      }
+
+      const index =
+        this.noIndexes || !this.hasIndexAt(this.p) ? 0 : this.readIndexAt(this.p);
+      const rMsg = this.readRawMessage();
+      if (!rMsg) {
+        return null;
+      }
+      if (!this.noIndexes) {
+        this.lastIndex = index;
+      }
+
+      if (rMsg.tp === MType.TabData) {
+        this.currentTab = rMsg.tabId;
+        continue;
+      }
+      if (rMsg.tp === MType.Timestamp) {
+        if (!this.startTime) {
+          this.startTime = rMsg.timestamp;
+        }
+        this.currentTime = rMsg.timestamp - this.startTime;
+        return {
+          tp: 9999,
+          tabId: '',
+          time: this.currentTime,
+        } as unknown as Message & { tabId: string };
+      }
+
+      const msg = rewriteMessage(rMsg) as Message & {
+        tabId: string;
+        _index?: number;
       };
+      // mobile streams have no Timestamp messages; MobFileParser times them from msg.timestamp
+      msg.time = this.currentTime;
+      msg.tabId = this.currentTab;
+      if (!this.noIndexes) {
+        msg._index = index;
+      }
+      return msg;
     }
-
-    const index = this.noIndexes ? 0 : this.getLastMessageID();
-    const msg = Object.assign(
-      rewriteMessage(rMsg),
-      {
-        // @ts-ignore
-        time: this.currentTime ?? rMsg.timestamp - this.startTime!,
-        tabId: this.currentTab,
-      },
-      !this.noIndexes ? { _index: index } : {},
-    );
-
-    return msg;
   }
 }

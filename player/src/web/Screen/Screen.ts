@@ -4,6 +4,7 @@ import SelectDropdown from './SelectDropdown';
 
 import type { Point, Dimensions } from './types';
 import { isHTMLElement, isSelectElement } from '../../guards';
+import { getDocumentOffset, getElementsFromPointDeep } from './frameGeometry';
 
 export type State = Dimensions;
 
@@ -18,58 +19,18 @@ export enum ScaleMode {
   AdjustParentHeight,
 }
 
-function getElementsFromInternalPoint(
-  doc: Document,
-  { x, y }: Point,
-): Element[] {
-  // @ts-ignore (IE, Edge)
-  if (typeof doc.msElementsFromRect === 'function') {
-    // @ts-ignore
-    return Array.prototype.slice.call(doc.msElementsFromRect(x, y)) || [];
-  }
-
-  if (typeof doc.elementsFromPoint === 'function') {
-    return doc.elementsFromPoint(x, y);
-  }
-  const el = doc.elementFromPoint(x, y);
-  return el ? [el] : [];
-}
-
-function getElementsFromInternalPointDeep(
-  doc: Document,
-  point: Point,
-): Element[] {
-  const elements = getElementsFromInternalPoint(doc, point);
-  // is it performant though??
-  for (let i = 0; i < elements.length; i++) {
-    const el = elements[i];
-    if (isIframe(el)) {
-      const iDoc = el.contentDocument;
-      if (iDoc) {
-        const iPoint: Point = {
-          x: point.x - el.clientLeft,
-          y: point.y - el.clientTop,
-        };
-        elements.push(...getElementsFromInternalPointDeep(iDoc, iPoint));
-      }
-    }
-  }
-  return elements;
-}
-
-function isIframe(el: Element): el is HTMLIFrameElement {
-  return el.tagName === 'IFRAME';
-}
+type UpdateHook = (w: number, h: number) => void;
 
 export default class Screen {
   readonly overlay: HTMLDivElement;
   readonly cursor: Cursor;
   readonly selectMenu: SelectDropdown;
-  private selectionTargets: Element[];
+  private selectionTargets: Element[] = [];
   private readonly iframe: HTMLIFrameElement;
   private readonly screen: HTMLDivElement;
   private parentElement: HTMLElement | null = null;
-  private onUpdateHook: (w: number, h: number) => void;
+  private onUpdateHook: UpdateHook | undefined;
+  private lastDimensions: Dimensions | null = null;
 
   constructor(
     private readonly isMobile: boolean,
@@ -99,7 +60,7 @@ export default class Screen {
     this.screen = screen;
 
     this.cursor = new Cursor(this.overlay, isMobile); // TODO: move outside
-    this.selectMenu = new SelectDropdown(this.overlay);
+    this.selectMenu = new SelectDropdown(this.overlay, () => this.window);
   }
 
   private remoteControlActive = false;
@@ -157,9 +118,11 @@ export default class Screen {
     }
     this.clickHighlightBox = null;
     this.selectMenu.remove(); // clears its pending timer + scroll listener
+    this.onUpdateHook = undefined;
     this.iframe?.remove?.();
     this.overlay?.remove?.();
     this.screen?.remove?.();
+    this.parentElement = null;
   }
 
   attach(parentElement: HTMLElement) {
@@ -217,14 +180,9 @@ export default class Screen {
     return this.iframe.style;
   }
 
-  public boundingRect: DOMRect | null = null;
-
   private getBoundingClientRect(): DOMRect {
-    if (this.boundingRect === null) {
-      // TODO: use this.screen instead in order to separate overlay functionality
-      return (this.boundingRect = this.screen.getBoundingClientRect()); // expensive operation?
-    }
-    return this.boundingRect;
+    // Always re-read: the player can move (host scroll, panels, banners) without scale() being called.
+    return this.screen.getBoundingClientRect();
   }
 
   getInternalViewportCoordinates({ x, y }: Point): Point {
@@ -265,7 +223,7 @@ export default class Screen {
     if (!doc) {
       return [];
     }
-    return getElementsFromInternalPointDeep(doc, point);
+    return getElementsFromPointDeep(doc, point);
   }
 
   getElementFromPoint(point: Point): Element | null {
@@ -299,8 +257,13 @@ export default class Screen {
     return this.scaleRatio;
   }
 
+  getLastDimensions(): Dimensions | null {
+    return this.lastDimensions;
+  }
+
   scale({ height, width }: Dimensions) {
     if (!this.parentElement) return;
+    this.lastDimensions = { width, height };
     const { offsetWidth, offsetHeight } = this.parentElement;
 
     let translate = '';
@@ -342,13 +305,13 @@ export default class Screen {
       width: `${width}px`,
     });
 
-    this.boundingRect = this.screen.getBoundingClientRect();
     this.onUpdateHook?.(width, height);
   }
 
-  setOnUpdate(cb: any) {
-    this.onUpdateHook = cb;
+  setOnUpdate(cb: UpdateHook | null) {
+    this.onUpdateHook = cb ?? undefined;
   }
+
 
   public createSelection(nodes: Element[]) {
     this.overlay.append(...nodes);
@@ -381,17 +344,10 @@ export default class Screen {
     const rect = node.getBoundingClientRect();
     if (!rect.width && !rect.height) return;
 
-    // Add each ancestor iframe's offset until we reach the replay root window,
-    // so a click inside a nested iframe still lines up in the overlay.
-    let left = rect.left;
-    let top = rect.top;
-    let win: Window | null = node.ownerDocument.defaultView;
-    while (win && win !== this.window && win.frameElement) {
-      const frameRect = win.frameElement.getBoundingClientRect();
-      left += frameRect.left;
-      top += frameRect.top;
-      win = win.parent === win ? null : win.parent;
-    }
+    // A click inside a nested iframe still has to line up in the overlay.
+    const offset = getDocumentOffset(node.ownerDocument, this.window);
+    const left = rect.left + offset.x;
+    const top = rect.top + offset.y;
 
     if (this.clickHighlightTimeout) {
       clearTimeout(this.clickHighlightTimeout);

@@ -188,3 +188,112 @@ export function sanitizeCssText(cssText: string): string {
   CSS_SCRIPT_CONSTRUCTS.lastIndex = 0;
   return cssText.replace(CSS_SCRIPT_CONSTRUCTS, '/* blocked */');
 }
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+/** SVG elements that can run script or host HTML/navigable content. */
+const FORBIDDEN_SVG_TAGS = new Set([
+  'script',
+  'foreignobject',
+  'iframe',
+  'object',
+  'embed',
+  'handler',
+  'listener',
+]);
+const SVG_ANIMATION_TAGS = new Set([
+  'set',
+  'animate',
+  'animatemotion',
+  'animatetransform',
+]);
+
+function isDangerousAnimation(el: Element): boolean {
+  const target = (el.getAttribute('attributeName') || '').toLowerCase();
+  return target.startsWith('on') || target === 'href' || target === 'xlink:href';
+}
+
+function sanitizeSvgAttributes(el: Element): void {
+  for (const attr of Array.from(el.attributes)) {
+    // any prefix can be bound to the xlink namespace (`p:href`)
+    const name =
+      attr.namespaceURI === XLINK_NS ? `xlink:${attr.localName}` : attr.name;
+    if (!sanitizeAttribute(el.localName, name, attr.value)) {
+      el.removeAttributeNode(attr);
+    }
+  }
+}
+
+/**
+ * Strips everything but SVG elements and text from a recorded SVG subtree:
+ * script-capable elements, non-SVG namespaces (e.g. XHTML inside the SVG),
+ * comments/processing instructions (their serialization re-parses differently
+ * in HTML), event handler attributes and script-scheme URLs.
+ */
+export function sanitizeSvgTree(root: Element): void {
+  sanitizeSvgAttributes(root);
+  for (const child of Array.from(root.childNodes)) {
+    if (child.nodeType === Node.TEXT_NODE) {
+      continue;
+    }
+    if (child.nodeType === Node.CDATA_SECTION_NODE) {
+      root.replaceChild(
+        (root.ownerDocument as Document).createTextNode(child.nodeValue || ''),
+        child,
+      );
+      continue;
+    }
+    if (child.nodeType !== Node.ELEMENT_NODE) {
+      root.removeChild(child);
+      continue;
+    }
+    const el = child as Element;
+    const tag = el.localName.toLowerCase();
+    if (
+      el.namespaceURI !== SVG_NS ||
+      FORBIDDEN_SVG_TAGS.has(tag) ||
+      (SVG_ANIMATION_TAGS.has(tag) && isDangerousAnimation(el))
+    ) {
+      root.removeChild(el);
+      continue;
+    }
+    sanitizeSvgTree(el);
+  }
+}
+
+/**
+ * Parses recorded SVG markup in an inert document and sanitizes it.
+ * Never use innerHTML for recorded markup: an element owned by a live document
+ * starts loading (and firing handlers) even while detached.
+ * Strict XML first; the tracker serializes in-page sprites as HTML (`&nbsp;`,
+ * undeclared `xlink:`), which only the HTML parser accepts. DOMParser documents
+ * have no browsing context, so nothing loads or runs before sanitization.
+ * @returns the sanitized <svg> root, or null if the markup holds no SVG
+ */
+export function parseSanitizedSvg(markup: string): SVGSVGElement | null {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(markup, 'image/svg+xml');
+  let root: Element | null = xmlDoc.documentElement;
+  if (
+    !root ||
+    root.namespaceURI !== SVG_NS ||
+    root.localName !== 'svg' ||
+    xmlDoc.getElementsByTagName('parsererror').length > 0
+  ) {
+    const htmlDoc = parser.parseFromString(markup, 'text/html');
+    root = htmlDoc.body.firstElementChild;
+    if (!root || root.namespaceURI !== SVG_NS || root.localName !== 'svg') {
+      return null;
+    }
+  }
+  sanitizeSvgTree(root);
+  return root as unknown as SVGSVGElement;
+}
+
+/** Parses sprite symbols markup (children of an <svg>) into a sanitized <svg> root. */
+export function parseSanitizedSvgContent(content: string): SVGSVGElement | null {
+  return parseSanitizedSvg(
+    `<svg xmlns="${SVG_NS}" xmlns:xlink="${XLINK_NS}">${content}</svg>`,
+  );
+}

@@ -67,13 +67,14 @@ export default class Lists {
   constructor(initialLists: Partial<InitialLists> = {}) {
     const lists: Partial<ListsObject> = {};
     for (const name of SIMPLE_LIST_NAMES) {
-      lists[name] = new ListWalker(initialLists[name]);
+      // own copy: walkers mutate their list, and every tab gets the same session arrays
+      lists[name] = new ListWalker(initialLists[name]?.slice());
     }
     for (const name of MARKED_LIST_NAMES) {
       // TODO: provide types
       lists[name] = new ListWalkerWithMarks(
         (el) => el.isRed,
-        initialLists[name],
+        initialLists[name]?.slice(),
       );
     }
     this.lists = lists as ListsObject;
@@ -86,19 +87,50 @@ export default class Lists {
     }, {} as Partial<StateList>) as StateList;
   }
 
-  moveGetState(t: number): StateNow {
-    return LIST_NAMES.reduce(
-      (state, name) => {
-        const lastMsg = this.lists[name].moveGetLast(t); // index: name === 'exceptions' ? undefined : index);
-        if (lastMsg != null) {
-          state[`${name}ListNow`] = this.lists[name].listNow;
-        }
-        return state;
-      },
-      MARKED_LIST_NAMES.reduce((state, name) => {
-        state[`${name}MarkedCountNow`] = this.lists[name].markedCountNow; // Red --> Marked
-        return state;
-      }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
-    ) as State;
+  private publishedMarkedCounts: Partial<StateMarkedCountNow> = {};
+
+  /** countNow of each list when its "now" slice was last published */
+  private publishedCounts: Partial<
+    Record<(typeof LIST_NAMES)[number], number>
+  > = {};
+
+  /** Moves every list to `t`; returns only the "now" values that changed. */
+  moveGetState(t: number): Partial<StateNow> {
+    const state: Partial<State> = {};
+    LIST_NAMES.forEach((name) => {
+      const list = this.lists[name];
+      list.moveGetLast(t);
+      // vs the last published count: a late insert behind the pointer
+      // changes the slice without any move
+      if (list.countNow !== this.publishedCounts[name]) {
+        this.publishedCounts[name] = list.countNow;
+        state[`${name}ListNow`] = list.listNow;
+      }
+    });
+    // read after walking, otherwise the counts lag one move behind
+    MARKED_LIST_NAMES.forEach((name) => {
+      const key = `${name}MarkedCountNow` as const;
+      const count = this.lists[name].markedCountNow;
+      if (this.publishedMarkedCounts[key] !== count) {
+        this.publishedMarkedCounts[key] = count;
+        state[key] = count;
+      }
+    });
+    return state;
+  }
+
+  /** Current "now" state of every list, without moving. */
+  getNowState(): StateNow {
+    const state: Partial<State> = {};
+    LIST_NAMES.forEach((name) => {
+      state[`${name}ListNow`] = this.lists[name].listNow;
+      this.publishedCounts[name] = this.lists[name].countNow;
+    });
+    MARKED_LIST_NAMES.forEach((name) => {
+      const key = `${name}MarkedCountNow` as const;
+      state[key] = this.publishedMarkedCounts[key] =
+        this.lists[name].markedCountNow;
+    });
+    return state as StateNow;
   }
 }

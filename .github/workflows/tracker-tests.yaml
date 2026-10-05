@@ -22,8 +22,16 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     name: Build and test Tracker
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
     steps:
       - uses: actions/checkout@v5
+        # Full history for the merge-base with the base branch; blobs are fetched lazily.
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -44,10 +52,12 @@ jobs:
           cd tracker
           bun install --frozen-lockfile
 
+      # Cobertura for diff-cover (lcov paths are package-relative and can't be
+      # mapped back to the git diff); json-summary for the totals.
       - name: Jest tests
         run: |
           cd tracker/tracker
-          bun run test:ci
+          bun run test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
 
       - name: Building test
         run: |
@@ -64,16 +74,21 @@ jobs:
       - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
-          bun run test:ci
+          bun run test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
 
       - name: (TA) Building test
         run: |
           cd tracker/tracker-assist
           bun run build
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Coverage report
+        uses: ./.github/composite-actions/coverage-report
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: tracker
           name: tracker
+          title: Tracker coverage
+          cobertura: >-
+            tracker/tracker/coverage/cobertura-coverage.xml
+            tracker/tracker-assist/coverage/cobertura-coverage.xml
+          summaries: >-
+            tracker=tracker/tracker/coverage/coverage-summary.json
+            tracker-assist=tracker/tracker-assist/coverage/coverage-summary.json

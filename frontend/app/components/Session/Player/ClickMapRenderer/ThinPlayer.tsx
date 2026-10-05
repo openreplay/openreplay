@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createClickMapPlayer } from 'Player';
-import { makeAutoObservable } from 'mobx';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
@@ -31,7 +31,7 @@ function WebPlayer(props: any) {
     const init = () => {
       const [WebPlayerInst, PlayerStore] = createClickMapPlayer(
         session,
-        (state) => makeAutoObservable(state),
+        wrapPlayerStore,
         toast,
       );
       playerRef.current = WebPlayerInst;
