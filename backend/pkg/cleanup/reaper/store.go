@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lib/pq"
 	goredis "github.com/redis/go-redis/v9"
 
 	"openreplay/backend/pkg/cleanup/registry"
@@ -59,7 +58,7 @@ func (s *pgSource) Durations(sessionIDs []uint64) (map[uint64]*uint64, error) {
 	rows, err := s.db.Query(`
 		SELECT session_id, duration
 		FROM sessions
-		WHERE session_id = ANY($1)`, pq.Array(sessionIDs))
+		WHERE session_id = ANY($1)`, sessionIDs)
 	if err != nil {
 		return nil, err
 	}

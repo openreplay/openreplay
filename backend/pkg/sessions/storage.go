@@ -3,8 +3,6 @@ package sessions
 import (
 	"fmt"
 
-	"github.com/lib/pq"
-
 	"openreplay/backend/pkg/db/postgres/pool"
 )
 
@@ -190,7 +188,7 @@ func scanSession(row scannable) (*Session, error) {
 func (s *storageImpl) GetMany(sessionIDs []uint64) ([]*Session, error) {
 	rows, err := s.db.Query(`SELECT `+sessionColumns+`
 		FROM sessions
-		WHERE session_id = ANY($1)`, pq.Array(sessionIDs))
+		WHERE session_id = ANY($1)`, sessionIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +242,7 @@ func (s *storageImpl) UpdateDurations(updates map[uint64]uint64) (map[uint64]uin
 		END
 		FROM unnest($1::bigint[], $2::bigint[]) AS v(session_id, ts)
 		WHERE s.session_id = v.session_id
-		RETURNING s.session_id, s.duration`, pq.Array(ids), pq.Array(timestamps))
+		RETURNING s.session_id, s.duration`, ids, timestamps)
 	if err != nil {
 		return nil, err
 	}
