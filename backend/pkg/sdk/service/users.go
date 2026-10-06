@@ -236,6 +236,17 @@ func (u *usersImpl) bindDevice(session *sessions.Session, userID string) {
 	}
 }
 
+func (u *usersImpl) identify(session *sessions.Session, userID string) {
+	if session.UserID != nil && *session.UserID == userID {
+		return
+	}
+	if err := u.sessions.UpdateUserID(session.SessionID, userID); err != nil {
+		u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
+	}
+	session.UserID = &userID
+	u.bindDevice(session, userID)
+}
+
 func (u *usersImpl) Add(session *sessions.Session, userID string) error {
 	userID = strings.TrimSpace(userID)
 	if userID == "" {
@@ -246,22 +257,17 @@ func (u *usersImpl) Add(session *sessions.Session, userID string) error {
 		u.log.Debug(context.Background(), "user %s already exists", userID)
 		return nil
 	}
-	if err := u.sessions.UpdateUserID(session.SessionID, userID); err != nil {
-		u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
-	}
-	session.UserID = &userID
-	if _, err := u.mutate(session, userID, func(user *model.User, isNew bool) {
+	u.identify(session, userID)
+	_, err := u.mutate(session, userID, func(user *model.User, isNew bool) {
 		if !isNew {
 			user.LastSeen = time.Now()
 		}
-	}); err != nil {
-		return err
-	}
-	u.bindDevice(session, userID)
-	return nil
+	})
+	return err
 }
 
 func (u *usersImpl) Set(session *sessions.Session, userID string, props map[string]interface{}) error {
+	u.identify(session, userID)
 	_, err := u.mutate(session, userID, func(user *model.User, _ bool) {
 		for k, v := range props {
 			user.SetProperty(k, v)
@@ -271,6 +277,7 @@ func (u *usersImpl) Set(session *sessions.Session, userID string, props map[stri
 }
 
 func (u *usersImpl) SetOnce(session *sessions.Session, userID string, props map[string]interface{}) error {
+	u.identify(session, userID)
 	_, err := u.mutate(session, userID, func(user *model.User, _ bool) {
 		for k, v := range props {
 			user.SetPropertyOnce(k, v)
@@ -280,6 +287,7 @@ func (u *usersImpl) SetOnce(session *sessions.Session, userID string, props map[
 }
 
 func (u *usersImpl) Increment(session *sessions.Session, userID string, props map[string]interface{}) error {
+	u.identify(session, userID)
 	_, err := u.mutate(session, userID, func(user *model.User, _ bool) {
 		for k, v := range props {
 			user.IncrementProperty(k, v)
