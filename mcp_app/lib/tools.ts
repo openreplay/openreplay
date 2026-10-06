@@ -24,7 +24,15 @@ import {
   SearchDocsSchema,
   RefreshReplayUrlsSchema,
   FetchUrlSchema,
+  ListSmartIssuesSchema,
+  GetSmartIssueSchema,
+  ListSmartTestsSchema,
+  GetSmartTestSchema,
+  ListSmartTestRunsSchema,
+  GetSmartTestRunSchema,
+  TriggerSmartTestRunSchema,
 } from "./schemas.js";
+import { fetchSmartIssues, fetchSmartIssue, fetchSmartTests, fetchSmartTest, fetchSmartTestRuns, fetchSmartTestRun, triggerSmartTestRun } from "./agents.js";
 
 // Format timestamp for chart x-axis labels based on time range
 function formatChartTimestamp(ts: number, rangeHours: number): string {
@@ -1864,4 +1872,181 @@ export function registerInternalTools(server: McpServer) {
     }
   );
   console.error("[SERVER] search_docs tool registered");
+}
+
+const MAX_AGENT_PAGE = 100;
+const clampLimit = (n: number, max = MAX_AGENT_PAGE) => Math.min(Math.max(Math.floor(n), 1), max);
+const jsonResult = (data: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(data) }] });
+
+// Smart Issues and Smart Tests (the UI's "Agents" section). Data only: no
+// view, the model formats the result.
+export function registerAgentTools(server: McpServer) {
+  server.registerTool(
+    "list_smart_issues",
+    {
+      annotations: { readOnlyHint: true, openWorldHint: true },
+      description:
+        "List Smart Issues: problems OpenReplay's AI agent found by watching session replays (errors, UI/UX friction, slowness), " +
+        "ranked by impact. Returns issue ids, impact, affected sessions, labels and links. Defaults to the last 7 days. " +
+        "Use get_smart_issue for an issue's description and example sessions.",
+      inputSchema: ListSmartIssuesSchema,
+    },
+    async (args) => {
+      console.error("[SERVER] list_smart_issues called:", args);
+      const siteId = await resolveSiteId(args);
+      const { startTs, endTs } = parseDateRange(args.startDate, args.endDate, 7 * DAY_MS);
+      const limit = clampLimit(args.limit);
+      const data = await fetchSmartIssues(siteId, {
+        range: [startTs, endTs],
+        limit,
+        page: args.page,
+        sortBy: args.sortBy,
+        visibility: args.visibility,
+        query: args.query,
+        category: args.category,
+        critical: args.critical,
+      });
+      return jsonResult({
+        siteId,
+        range: { start: new Date(startTs).toISOString(), end: new Date(endTs).toISOString() },
+        page: args.page,
+        limit,
+        ...data,
+      });
+    }
+  );
+
+  server.registerTool(
+    "get_smart_issue",
+    {
+      annotations: { readOnlyHint: true, openWorldHint: true },
+      description:
+        "Get one Smart Issue: its description plus example sessions, each with a journey summary, steps, " +
+        "the moment the issue happened (issueAtMs from session start) and a replay link. " +
+        "Pass a sessionId to view_session_replay to play it inline.",
+      inputSchema: GetSmartIssueSchema,
+    },
+    async (args) => {
+      console.error("[SERVER] get_smart_issue called:", args);
+      const siteId = await resolveSiteId(args);
+      const { startTs, endTs } = parseDateRange(args.startDate, args.endDate, 7 * DAY_MS);
+      const data = await fetchSmartIssue(siteId, args.issueId, [startTs, endTs], {
+        limit: clampLimit(args.sessionsLimit, 50),
+        query: args.sessionQuery,
+      });
+      return jsonResult({
+        siteId,
+        range: { start: new Date(startTs).toISOString(), end: new Date(endTs).toISOString() },
+        ...data,
+      });
+    }
+  );
+
+  server.registerTool(
+    "list_smart_tests",
+    {
+      annotations: { readOnlyHint: true, openWorldHint: true },
+      description:
+        "List Smart Tests: AI-driven browser tests that run written scenarios against the user's site, manually or on a cron schedule. " +
+        "Returns status, schedule, environments, last/next run and links. Use get_smart_test for steps and recent runs.",
+      inputSchema: ListSmartTestsSchema,
+    },
+    async (args) => {
+      console.error("[SERVER] list_smart_tests called:", args);
+      const siteId = await resolveSiteId(args);
+      const limit = clampLimit(args.limit);
+      const data = await fetchSmartTests(siteId, {
+        limit,
+        page: args.page,
+        name: args.name,
+        status: args.status,
+        tags: args.tags,
+        needsReview: args.needsReview,
+      });
+      return jsonResult({ siteId, page: args.page, limit, ...data });
+    }
+  );
+
+  server.registerTool(
+    "get_smart_test",
+    {
+      annotations: { readOnlyHint: true, openWorldHint: true },
+      description: "Get one Smart Test: scenario, steps, expected result, environments and its most recent runs.",
+      inputSchema: GetSmartTestSchema,
+    },
+    async (args) => {
+      console.error("[SERVER] get_smart_test called:", args);
+      const siteId = await resolveSiteId(args);
+      const data = await fetchSmartTest(siteId, args.testId, clampLimit(args.runsLimit, 50));
+      return jsonResult({ siteId, ...data });
+    }
+  );
+
+  server.registerTool(
+    "list_smart_test_runs",
+    {
+      annotations: { readOnlyHint: true, openWorldHint: true },
+      description:
+        "List Smart Test runs, newest first, across the project or for one test. Filter by status to find failures. " +
+        "Use get_smart_test_run for step-by-step results.",
+      inputSchema: ListSmartTestRunsSchema,
+    },
+    async (args) => {
+      console.error("[SERVER] list_smart_test_runs called:", args);
+      const siteId = await resolveSiteId(args);
+      const limit = clampLimit(args.limit);
+      let from: string | undefined;
+      let to: string | undefined;
+      if (args.startDate || args.endDate) {
+        const { startTs, endTs } = parseDateRange(args.startDate, args.endDate, 7 * DAY_MS);
+        from = new Date(startTs).toISOString();
+        to = new Date(endTs).toISOString();
+      }
+      const data = await fetchSmartTestRuns(siteId, {
+        limit,
+        page: args.page,
+        testId: args.testId,
+        status: args.status,
+        name: args.name,
+        from,
+        to,
+      });
+      return jsonResult({ siteId, page: args.page, limit, ...data });
+    }
+  );
+
+  server.registerTool(
+    "get_smart_test_run",
+    {
+      annotations: { readOnlyHint: true, openWorldHint: true },
+      description:
+        "Get one Smart Test run: the runner's summary, per-step results with the agent's actions, " +
+        "the failing step and its error, JS errors and failed network requests.",
+      inputSchema: GetSmartTestRunSchema,
+    },
+    async (args) => {
+      console.error("[SERVER] get_smart_test_run called:", args);
+      const siteId = await resolveSiteId(args);
+      const data = await fetchSmartTestRun(siteId, args.runId);
+      return jsonResult({ siteId, run: data });
+    }
+  );
+
+  server.registerTool(
+    "trigger_smart_test_run",
+    {
+      annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+      description:
+        "Start a Smart Test run now. It drives a real browser against the live site, and tests with hasSideEffects " +
+        "create real data (orders, accounts, payments), so only call this when the user asked for a run. " +
+        "Returns on dispatch; follow up with list_smart_test_runs filtered by testId.",
+      inputSchema: TriggerSmartTestRunSchema,
+    },
+    async (args) => {
+      console.error("[SERVER] trigger_smart_test_run called:", args);
+      const siteId = await resolveSiteId(args);
+      const result = await triggerSmartTestRun(siteId, args.testId);
+      return jsonResult({ siteId, testId: args.testId, status: result?.status ?? "dispatched" });
+    }
+  );
 }

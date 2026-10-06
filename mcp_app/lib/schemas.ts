@@ -161,3 +161,76 @@ export const RefreshReplayUrlsSchema = z.object({
 export const FetchUrlSchema = z.object({
     url: z.string(),
 });
+
+// Smart Issues / Smart Tests (the UI's "Agents" section).
+const AgentStartDate = z.string().optional().describe("ISO 8601 date. Defaults to 7 days before endDate.");
+const AgentEndDate = z.string().optional().describe("ISO 8601 date, a bare date includes that day. Defaults to now.");
+
+export const ListSmartIssuesSchema = z.object({
+    siteId: SiteId,
+    projectName: ProjectName,
+    startDate: AgentStartDate,
+    endDate: AgentEndDate,
+    query: z.string().optional().describe("Matches issue names"),
+    category: z.enum(["Errors", "UI/UX", "Slowness"]).optional(),
+    critical: z.boolean().optional().describe("Only issues flagged critical"),
+    sortBy: z.enum(["impact", "count", "recency", "firstSeen"]).optional().default("impact"),
+    visibility: z.enum(["active", "hidden", "all"]).optional().default("active"),
+    limit: z.number().optional().default(20).describe("Max 100"),
+    page: z.number().optional().default(1),
+});
+
+export const GetSmartIssueSchema = z.object({
+    issueId: z.string().describe("From list_smart_issues"),
+    siteId: SiteId,
+    projectName: ProjectName,
+    startDate: AgentStartDate,
+    endDate: AgentEndDate,
+    sessionsLimit: z.number().optional().default(10).describe("Example sessions to include, max 50"),
+    sessionQuery: z.string().optional().describe("Rank example sessions by relevance to this text (AI search); omit for newest first"),
+});
+
+const TestStatus = z.enum(["draft", "approved", "rejected", "active", "paused"]);
+const RunStatus = z.enum(["dispatched", "running", "passed", "failed", "error", "timeout"]);
+
+export const ListSmartTestsSchema = z.object({
+    siteId: SiteId,
+    projectName: ProjectName,
+    name: z.string().optional().describe("Matches test names"),
+    status: TestStatus.optional(),
+    tags: z.array(z.string()).optional().describe("Tests having any of these tags"),
+    needsReview: z.boolean().optional().describe("true: only tests with a runner-proposed change awaiting review"),
+    limit: z.number().optional().default(25).describe("Max 100"),
+    page: z.number().optional().default(1),
+});
+
+const TestRef = {
+    testId: z.string().describe("From list_smart_tests"),
+    siteId: SiteId,
+    projectName: ProjectName,
+};
+
+export const GetSmartTestSchema = z.object({
+    ...TestRef,
+    runsLimit: z.number().optional().default(5).describe("Recent runs to include, max 50"),
+});
+
+export const TriggerSmartTestRunSchema = z.object(TestRef);
+
+export const ListSmartTestRunsSchema = z.object({
+    siteId: SiteId,
+    projectName: ProjectName,
+    testId: z.string().optional().describe("Only runs of this test"),
+    status: z.array(RunStatus).optional().describe("Any of these, e.g. ['failed','error','timeout'] for all failures"),
+    name: z.string().optional().describe("Matches test names"),
+    startDate: z.string().optional().describe("ISO 8601 date; bounds run start. Omit both dates for all time."),
+    endDate: z.string().optional().describe("ISO 8601 date, a bare date includes that day"),
+    limit: z.number().optional().default(25).describe("Max 100"),
+    page: z.number().optional().default(1),
+});
+
+export const GetSmartTestRunSchema = z.object({
+    runId: z.string().describe("From list_smart_test_runs or get_smart_test"),
+    siteId: SiteId,
+    projectName: ProjectName,
+});

@@ -38,8 +38,9 @@ export function buildApiUrl(appUrl: string, endpoint: string): string {
             .replace(/^\/v2\/api\//, '/v2/')
             .replace(/^\/api\//, '/');
         url = `${host}${path}`;
-    } else if (endpoint.startsWith('/v2/api/') || endpoint.startsWith('/api/')) {
-        // Self-hosted: these paths already include the prefix
+    } else if (endpoint.startsWith('/v2/api/') || endpoint.startsWith('/api/') || endpoint.startsWith('/v2/smart-issues/')) {
+        // Self-hosted: these paths already include the prefix. Smart issues sit
+        // at the origin root, outside /api (the frontend's `noChalice` routing).
         url = `${host}${endpoint}`;
     } else {
         url = `${host}/api${endpoint}`;

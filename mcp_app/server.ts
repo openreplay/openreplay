@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadPersistedState, abortAllPolls } from "./lib/state.js";
 import { APP_VERSION } from "./lib/version.js";
-import { registerUITools, registerInternalTools, uiConnectDomains } from "./lib/tools.js";
+import { registerUITools, registerInternalTools, registerAgentTools, uiConnectDomains } from "./lib/tools.js";
 
 const __dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = existsSync(path.join(__dirname, "dist", "index.html"))
@@ -27,6 +27,7 @@ console.error("[SERVER] MCP server instance created");
 // Register all tools
 registerUITools(server, resourceUri);
 registerInternalTools(server);
+registerAgentTools(server);
 
 // Register the UI resource
 console.error("[SERVER] Registering UI resource...");

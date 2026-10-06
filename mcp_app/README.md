@@ -139,6 +139,21 @@ These render a view alongside the result.
 | `fetch_chart_data` | Generic `/cards/try` proxy |
 | `search_docs` | Search the OpenReplay documentation index |
 
+### Agent tools
+
+Smart Issues and Smart Tests (the "Agents" section of the OpenReplay UI). No view: they return
+compact JSON and the model presents it.
+
+| Tool | Purpose |
+|------|---------|
+| `list_smart_issues` | AI-detected issues ranked by impact (default last 7 days) |
+| `get_smart_issue` | Issue description + example sessions with journey steps and replay links |
+| `list_smart_tests` | AI browser tests: status, schedule, environments, last/next run |
+| `get_smart_test` | Scenario, steps, expected result + recent runs |
+| `list_smart_test_runs` | Runs across the project or for one test, filterable by status |
+| `get_smart_test_run` | Per-step results, failing step and error, JS errors, failed requests |
+| `trigger_smart_test_run` | Start a run now (the only tool here that changes anything) |
+
 Tools prefixed with `_` (`_refresh_replay_urls`, `_fetch_mob_file`, `_fetch_css`) are app-only
 (`visibility: ["app"]`): the UI calls them and hosts hide them from the model.
 

@@ -9,8 +9,9 @@ Reference: https://modelcontextprotocol.github.io/ext-apps/api/documents/Pattern
 ```
 server.ts                    MCP server entry point (stdio transport)
 lib/
-  tools.ts                   All tool registrations (UI + internal)
+  tools.ts                   All tool registrations (UI + internal + agent)
   api.ts                     OpenReplay REST API client functions
+  agents.ts                  Smart Issues / Smart Tests API calls + compaction for the model
   state.ts                   In-memory state (auth, projects, filter cache, mob-URL allowlist)
   schemas.ts                 Zod validation schemas for tool inputs
   version.ts                 APP_VERSION, read from package.json at runtime
@@ -125,6 +126,24 @@ No UI — return plain text/JSON to the model.
 | `fetch_events` / `fetch_users` | Data-management queries |
 | `search_docs` | Search the OpenReplay docs index |
 
+### Agent Tools (`registerAgentTools`, plain `server.registerTool`)
+
+Smart Issues and Smart Tests — the UI's "Agents" section. No view: they return compact JSON
+and the model formats it. The frontend clients are the contract
+(`frontend/app/components/SmartAlerts/api.ts`, `frontend/app/components/Client/SmartTests/api.ts`).
+
+| Tool | Purpose |
+|------|---------|
+| `list_smart_issues` / `get_smart_issue` | Issue list; one issue + example sessions (`/search`) |
+| `list_smart_tests` / `get_smart_test` | Test list; one test + recent runs |
+| `list_smart_test_runs` / `get_smart_test_run` | Run list; one run's step results from the runner's `results.json` |
+| `trigger_smart_test_run` | The only write. Runs against the live site, so it's described as user-initiated only |
+
+`lib/agents.ts` trims every response to what the model needs: environment `variables` are
+never returned (they hold the runner's login credentials and headers), runner text is clipped,
+labels below the UI's 70% ratio floor are dropped. `GET /tests/{id}` stamps the test's
+write-once `seenAt`, so `get_smart_test` clears the UI's "new" badge, same as opening it there.
+
 App-only tools (`registerAppTool` with `visibility: ["app"]`, hidden from the model):
 
 | Tool | Purpose |
@@ -218,8 +237,13 @@ Error convention: if `state.jwt` is null, throw `"AUTH_ERROR: Not authenticated"
 | `/v2/api/{siteId}/filters` | GET | Filter catalog: object keyed by category (`events`, `event`, `session`, `user`, `users`, `metadata`, `segments`, `features`), each `{total, displayName, scope, list}` |
 | `/v2/api/{siteId}/events` | POST | Data-management event feed |
 | `/v2/api/{siteId}/users` | POST | Data-management user list |
+| `/v2/smart-issues/{siteId}[/issue,/search]` | POST/GET | Smart Issues (responses wrapped in `data`) |
+| `/v2/api/{siteId}/browser-tests/{tests,runs,environments}` | GET/POST | Smart Tests (responses **not** wrapped in `data`) |
 
-Pass endpoints with their full self-hosted prefix (`/v2/api/...` or `/api/...`). A bare
+Pass endpoints with their full self-hosted prefix (`/v2/api/...` or `/api/...`).
+`/v2/smart-issues/...` is the exception: it lives at the origin root on both shapes
+(`api.openreplay.com/v2/smart-issues`, `<host>/v2/smart-issues`), matching the frontend's
+`noChalice` routing. A bare
 path gets `/api` prepended, and on self-hosted an unknown path under the origin returns the
 frontend's `index.html` with a `200` — `makeApiRequest` rejects non-JSON responses so this
 surfaces as an error instead of a parse failure further down.
