@@ -351,7 +351,11 @@ func (u *usersImpl) refresh(rows [][]interface{}) [][]interface{} {
 			continue
 		}
 		if user, ok := latest[userKey(uint32(row[0].(uint16)), row[1].(string))]; ok {
-			rows[i] = clickhouse.UserRow(user)
+			if user.Deleted != 0 {
+				rows[i] = clickhouse.UserTombstoneRow(row[0].(uint16), row[1].(string))
+			} else {
+				rows[i] = clickhouse.UserRow(user)
+			}
 		}
 	}
 	return rows

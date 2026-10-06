@@ -1718,14 +1718,18 @@ func (c *connectorImpl) InsertUser(u *sdkmodel.User) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertUserTombstone(projectID uint16, userID string) error {
+func UserTombstoneRow(projectID uint16, userID string) []interface{} {
 	now := time.Now()
-	if err := c.appendTo("pa_users",
+	return []interface{}{
 		projectID, userID, "", "", "", "", "", "",
 		"{}", []string{}, []string{}, []string{}, []string{}, []string{}, []string{},
 		"", "", "", "", "", "", "", "", "", "", "", "",
 		now, now, now, now, uint8(1),
-	); err != nil {
+	}
+}
+
+func (c *connectorImpl) InsertUserTombstone(projectID uint16, userID string) error {
+	if err := c.appendTo("pa_users", UserTombstoneRow(projectID, userID)...); err != nil {
 		c.checkError("pa_users", err)
 		return fmt.Errorf("can't append to pa_users batch: %s", err)
 	}

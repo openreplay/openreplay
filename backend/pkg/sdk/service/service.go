@@ -339,6 +339,7 @@ func (ds *dataSaverImpl) run() {
 
 		case <-ds.done:
 			ds.updateWg.Wait()
+			ds.releaseLeaderLock(ctx)
 			close(ds.stopped)
 			return
 
