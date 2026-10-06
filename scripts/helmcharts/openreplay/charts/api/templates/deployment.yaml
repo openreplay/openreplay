@@ -67,6 +67,12 @@ spec:
             - name: ASSIST_JWT_SECRET
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "assist-jwt-secret" "ctx" .) | nindent 18 }}
+            - name: JWT_MCP_SECRET
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "jwt-mcp-secret" "ctx" .) | nindent 18 }}
+            # chalice signs MCP tokens with HS512 (api/env.default); the Go default is HS256
+            - name: JWT_MCP_ALGORITHM
+              value: HS512
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef: {{- include "openreplay.secrets" (dict "key" "access-key" "ctx" .) | nindent 18 }}
