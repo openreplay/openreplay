@@ -60,7 +60,6 @@ type Connector interface {
 	OnBatchEnd(topic string, partition int32, offset int64)
 	TrackOffset(topic string, partition int32, offset int64)
 	AddCommitter(committer OffsetCommitter)
-	AfterSend(hook func(flushedAt time.Time))
 	SetRowRefresher(table string, refresh func(rows [][]interface{}) [][]interface{})
 	Stop() error
 }
@@ -94,7 +93,6 @@ type connectorImpl struct {
 	pending        qtypes.Offsets
 	needToFlush    bool
 	committers     []OffsetCommitter
-	sentHooks      []func(time.Time)
 	refreshers     map[string]func([][]interface{}) [][]interface{}
 	seq            uint64 // last assigned task seq
 	workerTask     chan *task
@@ -213,12 +211,6 @@ func (c *connectorImpl) prepare() error {
 func (c *connectorImpl) AddCommitter(committer OffsetCommitter) {
 	c.mu.Lock()
 	c.committers = append(c.committers, committer)
-	c.mu.Unlock()
-}
-
-func (c *connectorImpl) AfterSend(hook func(flushedAt time.Time)) {
-	c.mu.Lock()
-	c.sentHooks = append(c.sentHooks, hook)
 	c.mu.Unlock()
 }
 
@@ -432,12 +424,6 @@ func (c *connectorImpl) worker() {
 }
 
 func (c *connectorImpl) markCompleted(t *task) {
-	c.mu.Lock()
-	hooks := c.sentHooks
-	c.mu.Unlock()
-	for _, hook := range hooks {
-		hook(t.flushedAt)
-	}
 	cs := c.commits
 	cs.mu.Lock()
 	cs.done[t.seq] = t
