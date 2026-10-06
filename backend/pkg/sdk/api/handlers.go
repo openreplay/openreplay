@@ -143,7 +143,7 @@ func (e *handlersImpl) startSession(w http.ResponseWriter, r *http.Request) {
 		TrackerVersion:     req.SDKVersion,
 		Timezone:           req.Timezone,
 	}); err != nil {
-		e.log.Error(r.Context(), "failed to add new session session: %s, err: %s", sessionID, err)
+		e.log.Error(r.Context(), "failed to add new session session: %d, err: %s", sessionID, err)
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't save a session info"), startTime, r.URL.Path, bodySize)
 		return
 	}
