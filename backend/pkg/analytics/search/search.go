@@ -19,7 +19,6 @@ import (
 	"openreplay/backend/pkg/projects"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/lib/pq"
 )
 
 type Search interface {
@@ -474,7 +473,7 @@ LIMIT $3 OFFSET $4`,
 			&session.UserState,
 			&session.EventsCount,
 			&session.PagesCount,
-			pq.Array(&session.IssueTypes),
+			&session.IssueTypes,
 			&session.Viewed,
 			&session.TotalNumberOfSessions,
 			&session.Metadata1,
