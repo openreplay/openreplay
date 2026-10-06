@@ -21,6 +21,7 @@ IGNORE_ROUTES = [
     {"method": ["*"], "path": "/announcements"},
     {"method": ["*"], "path": "/client"},
     {"method": ["*"], "path": "/account"},
+    {"method": ["*"], "path": "/account/password"},
     {"method": ["GET"], "path": "/projects"},
     {"method": ["*"], "path": "/{projectId}/sessions/search2"},
     {"method": ["GET"], "path": "/{projectId}/sessions2/favorite"},
@@ -49,8 +50,21 @@ IGNORE_ROUTES = [
     {"method": ["GET"], "path": "/{projectId}/tags"},
     {"method": ["GET"], "path": "/limits"},
 ]
-IGNORE_IN_PAYLOAD = ["token", "password", "authorizationToken", "authHeader", "xQueryKey", "awsSecretAccessKey",
-                     "serviceAccountCredentials", "accessKey", "applicationKey", "apiKey"]
+SENSITIVE_KEY_PARTS = ["password", "passphrase", "token", "secret", "apikey", "accesskey", "applicationkey",
+                       "querykey", "authheader", "authorization", "credentials"]
+
+
+def __is_sensitive_key(key) -> bool:
+    normalized = re.sub(r"[^a-z]", "", str(key).lower())
+    return any(part in normalized for part in SENSITIVE_KEY_PARTS)
+
+
+def __hide_sensitive(value):
+    if isinstance(value, dict):
+        return {k: "HIDDEN" if __is_sensitive_key(k) else __hide_sensitive(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [__hide_sensitive(v) for v in value]
+    return value
 
 
 class TraceSchema(BaseModel):
@@ -108,9 +122,7 @@ async def process_trace(action: str, path_format: str, request: Request, respons
         except Exception:
             pass
         if body:
-            intersect = list(set(body.keys()) & set(IGNORE_IN_PAYLOAD))
-            for attribute in intersect:
-                body[attribute] = "HIDDEN"
+            body = __hide_sensitive(body)
     current_trace = TraceSchema(tenant_id=current_context.tenant_id,
                                 user_id=current_context.user_id if isinstance(current_context, CurrentContext) \
                                     else None,
@@ -118,7 +130,7 @@ async def process_trace(action: str, path_format: str, request: Request, respons
                                 action=action,
                                 endpoint=str(request.url.path), method=request.method,
                                 payload=body,
-                                parameters=dict(request.query_params),
+                                parameters=__hide_sensitive(dict(request.query_params)),
                                 status=response.status_code,
                                 path_format=path_format,
                                 created_at=TimeUTC.now())
