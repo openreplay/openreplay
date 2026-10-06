@@ -7,7 +7,7 @@ import (
 	"openreplay/backend/pkg/sdk/model"
 )
 
-const memoryStateTTL = 60 * time.Second
+const memoryStateTTL = 5 * time.Minute
 
 type memoryEntry struct {
 	user    *model.User
