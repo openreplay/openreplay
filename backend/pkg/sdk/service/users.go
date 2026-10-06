@@ -164,7 +164,12 @@ func (u *usersImpl) mutate(session *sessions.Session, userID string, fn func(use
 			continue
 		}
 		isNew := false
-		if !found {
+		switch {
+		case found && user.Deleted != 0:
+			// user is pending deletion; start fresh so a stale database row is not resurrected
+			user = newUserFromSession(session, userID)
+			isNew = true
+		case !found:
 			user, err = u.fetch(session.ProjectID, userID)
 			if err != nil && !errors.Is(err, ErrUserNotFound) {
 				return nil, err
@@ -275,13 +280,41 @@ func (u *usersImpl) Increment(session *sessions.Session, userID string, props ma
 	return err
 }
 
+func deletedMarker(projectID uint32, userID string) *model.User {
+	return &model.User{
+		ProjectID:  uint16(projectID),
+		UserID:     userID,
+		Deleted:    1,
+		Properties: map[string]interface{}{},
+	}
+}
+
 func (u *usersImpl) Delete(projectID uint32, userID string) error {
 	key := userKey(projectID, userID)
-	if err := u.state.delete(key); err != nil {
-		u.degrade(key, err)
+	st := u.state
+	for attempt := 0; attempt < maxStoreRetries; attempt++ {
+		_, version, found, err := st.load(key)
+		if err != nil {
+			st = u.degrade(key, err)
+			continue
+		}
+		marker := deletedMarker(projectID, userID)
+		var ok bool
+		if found {
+			ok, err = st.store(key, marker, version)
+		} else {
+			ok, err = st.create(key, marker)
+		}
+		if err != nil {
+			st = u.degrade(key, err)
+			continue
+		}
+		if !ok {
+			continue
+		}
+		return u.sink.InsertUserTombstone(uint16(projectID), userID)
 	}
-	u.memory.delete(key)
-	return u.sink.InsertUserTombstone(uint16(projectID), userID)
+	return fmt.Errorf("can't mark user %s deleted after %d attempts", userID, maxStoreRetries)
 }
 
 func (u *usersImpl) refresh(rows [][]interface{}) [][]interface{} {
